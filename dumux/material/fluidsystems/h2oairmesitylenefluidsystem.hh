@@ -48,22 +48,18 @@ namespace FluidSystems
  * \brief A compositional fluid with water and molecular nitrogen as
  *        components in both, the liquid and the gas phase.
  */
-template <class Scalar>
+template <class Scalar,
+          class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
 class H2OAirMesitylene
-    : public BaseFluidSystem<Scalar, H2OAirMesitylene<Scalar> >
+    : public BaseFluidSystem<Scalar, H2OAirMesitylene<Scalar, H2OType> >
 {
-    typedef H2OAirMesitylene<Scalar> ThisType;
+    typedef H2OAirMesitylene<Scalar, H2OType> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
-
-    typedef Dumux::H2O<Scalar> IapwsH2O;
-    typedef Dumux::TabulatedComponent<Scalar, IapwsH2O> TabulatedH2O;
-    typedef Dumux::SimpleH2O<Scalar> SimpleH2O;
 
 public:
     typedef Dumux::Mesitylene<Scalar> NAPL;
     typedef Dumux::Air<Scalar> Air;
-//    typedef TabulatedH2O H2O;
-    typedef IapwsH2O H2O;
+    typedef H2OType H2O;
 
 
     static const int numPhases = 3;
@@ -119,8 +115,8 @@ public:
                       << nTemp*nPress
                       << " entries).\n";
 
-            TabulatedH2O::init(tempMin, tempMax, nTemp,
-                               pressMin, pressMax, nPress);
+            H2O::init(tempMin, tempMax, nTemp,
+                      pressMin, pressMax, nPress);
         }
     }
 
@@ -534,6 +530,49 @@ private:
 
 };
 } // end namespace FluidSystems
+
+#ifdef DUMUX_PROPERTIES_HH
+// forward defintions of the property tags
+namespace Properties {
+    NEW_PROP_TAG(Scalar);
+    NEW_PROP_TAG(Components);
+}
+
+/*!
+ * \brief A twophase fluid system with water and air as components.
+ *
+ * This is an adapter to use Dumux::H2OAirMesityleneFluidSystem<TypeTag>, as is
+ * done with most other classes in Dumux.
+ *  This fluidsystem is applied by default with the tabulated version of
+ *  water of the IAPWS-formulation.
+ *
+ *  To change the component formulation (ie to use nontabulated or
+ *  incompressible water), or to switch on verbosity of tabulation,
+ *  use the property system and the property "Components":
+ *
+ *        // Select desired version of the component
+ *        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
+ *        {
+ *            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ * 
+ *        // Do not use the defaults !
+ *        //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ * 
+ *        // Apply e.g. untabulated water:
+ *        typedef Dumux::H2O<Scalar> H2O;
+ *        };
+ *
+ *   Also remember to initialize tabulated components (FluidSystem::init()), while this
+ *   is not necessary for non-tabularized ones.
+ */
+template<class TypeTag>
+class H2OAirMesityleneFluidSystem
+: public FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                        typename GET_PROP(TypeTag, Components)::H2O,
+                                        GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
+{};
+#endif
+
 } // end namespace Dumux
 
 #endif
