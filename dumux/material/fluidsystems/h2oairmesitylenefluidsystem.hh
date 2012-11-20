@@ -539,7 +539,7 @@ namespace Properties {
 }
 
 /*!
- * \brief A twophase fluid system with water and air as components.
+ * \brief A threephase fluid system with water, air and mesitylene as components.
  *
  * This is an adapter to use Dumux::H2OAirMesityleneFluidSystem<TypeTag>, as is
  * done with most other classes in Dumux.
