@@ -62,11 +62,11 @@ namespace FluidSystems{
  */
 template<class Scalar,
          class CO2Table,
-         class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>,
-         class BrineRawComponent = Dumux::Brine<Scalar, Dumux::H2O<Scalar>>,
+         class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >,
+         class BrineRawComponent = Dumux::Brine<Scalar, Dumux::H2O<Scalar> >,
          class Brinetype = Dumux::TabulatedComponent<Scalar, BrineRawComponent> >
 class BrineCO2
-: public BaseFluidSystem<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype>>
+: public BaseFluidSystem<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> >
 {
     typedef BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> ThisType;
     typedef BaseFluidSystem <Scalar, ThisType> Base;
@@ -749,7 +749,7 @@ SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
             typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
                 // Do not use the defaults that are the following
                 //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
-                //    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar>>  BrineRawComponent;
+                //    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar> >  BrineRawComponent;
                 //    typedef Dumux::TabulatedComponent<Scalar,BrineRawComponent > Brine;
 
             // Apply the following component classes:

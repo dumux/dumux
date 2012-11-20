@@ -68,7 +68,7 @@ public:
     typedef Dumux::CH4<Scalar> CH4;
     typedef Dumux::SimpleCO2<Scalar> SimpleCO2;
     typedef Dumux::SimpleH2O<Scalar> SimpleH2O;
-    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar>> BrineRawComponent;
+    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar> > BrineRawComponent;
     typedef Dumux::TabulatedComponent<Scalar, BrineRawComponent > Brine;
 
     static void init()
