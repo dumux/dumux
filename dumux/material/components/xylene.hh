@@ -167,7 +167,7 @@ public:
         // fit over a certain temperature range. This suggests choosing an interval of integration being in the actual fit range.
         // I.e. choosing T=273.15K  as reference point for liquid enthalpy.
 
-        constexpr Scalar sqrt1over3 = std::sqrt(1./3.);
+        const Scalar sqrt1over3 = std::sqrt(1./3.);
         const Scalar TEval1 = 0.5*(temperature-273.15)*        sqrt1over3 + 0.5*(273.15+temperature)  ; // evaluation points according to Gauss-Legendre integration
         const Scalar TEval2 = 0.5*(temperature-273.15)* (-1)*  sqrt1over3 + 0.5*(273.15+temperature)  ; // evaluation points according to Gauss-Legendre integration
 
