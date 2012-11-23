@@ -65,6 +65,14 @@ CHECK_CXX_SOURCE_COMPILES(
 "  HAVE_NULLPTR
 )
 
+# tuple
+CHECK_CXX_SOURCE_COMPILES(
+"  #include <tuple> 
+   int main(void) {
+    return 0; }
+"  HAVE_TUPLE
+)
+
 # array and fill
 # CHECK_CXX_SOURCE_COMPILES("
 #     #include <array>

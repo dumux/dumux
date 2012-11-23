@@ -84,6 +84,7 @@
 /* Define to 1 if you have __attribute__((unused)) */
 #cmakedefine HAS_ATTRIBUTE_UNUSED ${HAS_ATTRIBUTE_UNUSED}
 
+#cmakedefine HAVE_TUPLE 1
 #cmakedefine HAVE_NULLPTR 1
 #cmakedefine HAVE_STATIC_ASSERT 1
 #cmakedefine HAVE_VARIADIC_TEMPLATES 1
