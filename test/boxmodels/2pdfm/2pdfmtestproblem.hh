@@ -105,14 +105,14 @@ SET_BOOL_PROP(TwoPDFMTestProblem, ProblemEnableGravity, false);
  * \brief Soil contamination problem involving a DNAPL migration into a
  *        fully water saturated media
  *
- * This problem uses the \ref TwoPBoxDFMModel.
+ * This problem uses the \ref TwoPDFMModel.
  *
  * This problem should typically be simulated until \f$t_{\text{end}}
  * \approx 100\,000\;s\f$ is reached. A good choice for the initial time step
  * size is \f$t_{\text{inital}} = 1\;s\f$.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2pDFM grids/defaultgrid.net 1e6 1
+ * <tt>./test_2pDFM grids/defaultgrid.net 1e6 1</tt>
  */
 template <class TypeTag >
 class TwoPDFMTestProblem : public PorousMediaBoxProblem<TypeTag>
@@ -164,7 +164,7 @@ public:
      * \param gridView The grid view
      * \param isDuneFractureVertex Vector of bools which indicates fracture vertices
      * \param isDuneFractureEdge Vector of bools which indicates fracture edges
-     * \param inactivateFractures Deactivates fractures
+     * \param fractureEdgesIdx Vector of edge indices which are fractures
      */
     TwoPDFMTestProblem(TimeManager &timeManager,
                        const GridView &gridView,

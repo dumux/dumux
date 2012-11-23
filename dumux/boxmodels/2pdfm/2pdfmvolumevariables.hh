@@ -85,14 +85,14 @@ public:
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
                 int scvIdx,
-                bool oldSol)
+                bool isOldSol)
     {
         ParentType::update(priVars,
                            problem,
                            element,
                            fvGeometry,
                            scvIdx,
-                           oldSol);
+                           isOldSol);
 
         this->completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
 
@@ -111,8 +111,8 @@ public:
         porosityMatrix_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
 
         // energy related quantities not belonging to the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, oldSol);
-        asImp_().updateFracture(priVars, problem, element, fvGeometry, scvIdx, oldSol);
+        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        asImp_().updateFracture(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
@@ -122,14 +122,15 @@ public:
      * \param problem The problem which needs to be simulated.
      * \param element The DUNE Codim<0> entity for which the volume variables ought to be calculated
      * \param fvGeometry The finite volume geometry of the element
-     * \param oldSol Tells whether the model's previous or current solution should be used.
+     * \param scvIdx Sub-control volume index
+     * \param isOldSol Tells whether the model's previous or current solution should be used.
      */
     void updateFracture(const PrimaryVariables &priVars,
                         const Problem &problem,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
                         int scvIdx,
-                        bool oldSol)
+                        bool isOldSol)
     {
         PrimaryVariables varsFracture;
         const MaterialLawParams &materialParamsMatrix =

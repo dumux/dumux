@@ -89,7 +89,7 @@ public:
     /*!
      * \brief Reads the file formats obtained with the Artmesh generator
      * 
-     * \param
+     * \param artFileName Path to the Artmesh file.
      */
     void read_art_file(const char *artFileName)
     {
@@ -508,7 +508,6 @@ public:
      * \brief Constructor
      * 
      * \param grid The grid
-     * \param geomArt Artmesh reader
      */
     FractureMapper (const GridType& grid)
         : grid_(grid),

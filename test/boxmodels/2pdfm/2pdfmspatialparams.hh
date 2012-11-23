@@ -310,7 +310,7 @@ public:
      * \brief Returns the width of the fracture.
      * 
      * \param element The current element
-     * \param globalFaceIdx Face index of which the width is returned
+     * \param localFaceIdx Local face index of which the width is returned
      */
     Scalar fractureWidth(const Element &element, int localFaceIdx) const
     {
@@ -338,6 +338,7 @@ public:
      * 
      * \param isDuneFractureVertex Vector of bools which indicates fracture vertices
      * \param isDuneFractureEdge Vector of bools which indicates fracture edges
+     * \param fractureEdgesIdx Vector of edge indices which are fractures
      * \param inactivateFractures Deactivates fractures
      */
     const void setFractureBoolVectors(const std::vector<bool>& isDuneFractureVertex,
