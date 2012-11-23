@@ -103,3 +103,10 @@
 #  define DUMUX_ALWAYS_INLINE
 #endif
 
+#cmakedefine HAVE_CONSTEXPR 1
+#if !HAVE_CONSTEXPR
+#define constexpr const
+#endif
+
+
+

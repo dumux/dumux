@@ -73,6 +73,14 @@ CHECK_CXX_SOURCE_COMPILES(
 "  HAVE_TUPLE
 )
 
+# constexpr
+CHECK_CXX_SOURCE_COMPILES(
+"  int main(void) {
+    constexpr double g = 9.81;
+    return 0; }
+"  HAVE_CONSTEXPR
+)
+
 # array and fill
 # CHECK_CXX_SOURCE_COMPILES("
 #     #include <array>
