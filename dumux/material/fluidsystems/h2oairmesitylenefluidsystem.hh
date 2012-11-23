@@ -568,8 +568,7 @@ namespace Properties {
 template<class TypeTag>
 class H2OAirMesityleneFluidSystem
 : public FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                        typename GET_PROP(TypeTag, Components)::H2O,
-                                        GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
+                                        typename GET_PROP(TypeTag, Components)::H2O>
 {};
 #endif
 
