@@ -20,7 +20,8 @@ AC_CONFIG_FILES([dumux.pc
     dumux/boxmodels/2p/Makefile 
     dumux/boxmodels/2p2c/Makefile 
     dumux/boxmodels/2p2cni/Makefile 
-    dumux/boxmodels/2pni/Makefile 
+    dumux/boxmodels/2pni/Makefile
+    dumux/boxmodels/2pdfm/Makefile 
     dumux/boxmodels/3p3c/Makefile 
     dumux/boxmodels/3p3cni/Makefile 
     dumux/boxmodels/common/Makefile 
