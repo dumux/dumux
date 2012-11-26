@@ -89,7 +89,7 @@ public:
      *        the sub-control volume.
      */
     Scalar thermalConductivity(const int phaseIdx) const
-    { FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); };
+    { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); };
 
 
 protected:
