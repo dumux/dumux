@@ -27,7 +27,7 @@
  * \brief test for the two-phase box model
  */
 #include "config.h"
-#include "lensccproblem.hh"
+#include "lensproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -66,6 +66,6 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
-    typedef TTAG(LensProblem) TypeTag;
+    typedef TTAG(LensCCProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
 }

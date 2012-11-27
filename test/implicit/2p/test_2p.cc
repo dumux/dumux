@@ -61,6 +61,6 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
-    typedef TTAG(LensProblem) TypeTag;
+    typedef TTAG(LensBoxProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
 }
