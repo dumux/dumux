@@ -68,6 +68,6 @@ public:
 template <class Scalar>
 const Scalar IdealGas<Scalar>::R = Dumux::Constants<Scalar>::R;
 
-} // end namepace
+} // end namespace
 
 #endif

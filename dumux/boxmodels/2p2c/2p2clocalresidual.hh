@@ -23,8 +23,8 @@
  *        using the two-phase two-component box model.
  */
 
-#ifndef DUMUX_NEW_2P2C_LOCAL_RESIDUAL_BASE_HH
-#define DUMUX_NEW_2P2C_LOCAL_RESIDUAL_BASE_HH
+#ifndef DUMUX_2P2C_LOCAL_RESIDUAL_BASE_HH
+#define DUMUX_2P2C_LOCAL_RESIDUAL_BASE_HH
 
 #include <dumux/boxmodels/common/boxmodel.hh>
 #include <dumux/common/math.hh>
@@ -36,8 +36,6 @@
 
 #include <iostream>
 #include <vector>
-
-//#define VELOCITY_OUTPUT 1 // uncomment this line if an output of the velocity is needed
 
 namespace Dumux
 {
