@@ -30,7 +30,7 @@
 
 #include <dune/grid/common/gridenums.hh>
 
-#include <dumux/ccmodels/common/ccproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
 #include <dumux/linear/vertexborderlistfromgrid.hh>
 #include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
 #include <dumux/parallel/vertexhandles.hh>

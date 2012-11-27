@@ -26,11 +26,18 @@
 #ifndef DUMUX_POROUS_MEDIA_CC_ROBLEM_HH
 #define DUMUX_POROUS_MEDIA_CC_PROBLEM_HH
 
-#include <dumux/ccmodels/common/ccproblem.hh>
+#include <dumux/implicit/cellcentered/ccproblem.hh>
 #include "ccproperties.hh"
 
 namespace Dumux
 {
+    
+namespace Properties
+{
+    NEW_PROP_TAG(SpatialParams);
+    NEW_PROP_TAG(ProblemEnableGravity);
+}
+
 /*!
  * \ingroup CCBaseProblems
  * \brief Base class for all fully implicit cell centered porous media problems
