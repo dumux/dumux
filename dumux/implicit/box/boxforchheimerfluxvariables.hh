@@ -31,7 +31,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
-#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
 
 namespace Dumux
 {

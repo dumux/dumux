@@ -28,7 +28,7 @@
 #include <dumux/boxmodels/2p/2pmodel.hh>
 
 // The base prous media box problem
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
 
 // The DUNE grid used
 #if HAVE_ALUGRID

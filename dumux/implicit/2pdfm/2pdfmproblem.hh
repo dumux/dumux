@@ -21,7 +21,7 @@
 #ifndef DUMUX_BOXMODELS_2PDFM_PROBLEM_HH
 #define DUMUX_BOXMODELS_2PDFM_PROBLEM_HH
 
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
 #include "2pdfmproperties.hh"
 
 namespace Dumux

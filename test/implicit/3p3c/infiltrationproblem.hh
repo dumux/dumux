@@ -32,7 +32,7 @@
 #include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
 
 #include <dumux/boxmodels/3p3c/3p3cmodel.hh>
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
 
 #include "infiltrationspatialparameters.hh"
 

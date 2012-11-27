@@ -36,7 +36,7 @@
 #include <dune/grid/io/file/gmshreader.hh>
 
 #include <dumux/boxmodels/1p/1pmodel.hh>
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 

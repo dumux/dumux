@@ -27,7 +27,7 @@
 #define DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
 #define VELOCITY_OUTPUT 1 //1 turns velocity output on, 0 turns it off
 
-#include <dumux/boxmodels/common/boxmodel.hh>
+#include <dumux/implicit/box/boxmodel.hh>
 
 #include <dumux/boxmodels/1p2c/1p2cproperties.hh>
 #include <dumux/boxmodels/1p2c/1p2cvolumevariables.hh>

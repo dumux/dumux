@@ -27,7 +27,7 @@
 #include <dune/istl/superlu.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/boxmodels/common/boxproperties.hh>
+#include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 

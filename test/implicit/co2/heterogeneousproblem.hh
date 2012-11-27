@@ -35,8 +35,8 @@
 #include <dumux/boxmodels/co2/co2model.hh>
 #include <dumux/boxmodels/co2/co2volumevariables.hh>
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
-#include <dumux/boxmodels/common/intersectiontovertexbc.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/intersectiontovertexbc.hh>
 
 #include "heterogeneousspatialparameters.hh"
 #include "heterogeneousco2tables.hh"

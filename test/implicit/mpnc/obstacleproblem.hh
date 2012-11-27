@@ -32,7 +32,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/boxmodels/mpnc/mpncmodel.hh>
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>

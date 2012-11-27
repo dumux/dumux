@@ -31,7 +31,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/boxmodels/1p2c/1p2cmodel.hh>
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
 #include "1p2coutflowspatialparams.hh"

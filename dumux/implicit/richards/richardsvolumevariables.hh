@@ -27,7 +27,7 @@
 #include "richardsproperties.hh"
 
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
-#include <dumux/boxmodels/common/boxvolumevariables.hh>
+#include <dumux/implicit/box/boxvolumevariables.hh>
 
 namespace Dumux
 {

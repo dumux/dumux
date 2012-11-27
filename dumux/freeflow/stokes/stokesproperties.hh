@@ -29,7 +29,7 @@
 #ifndef DUMUX_STOKESPROPERTIES_HH
 #define DUMUX_STOKESPROPERTIES_HH
 
-#include <dumux/boxmodels/common/boxproperties.hh>
+#include <dumux/implicit/box/boxproperties.hh>
 
 namespace Dumux
 {

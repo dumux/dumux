@@ -24,7 +24,7 @@
 #ifndef DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 #define DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 
-#include <dumux/boxmodels/common/boxlocalresidual.hh>
+#include <dumux/implicit/box/boxlocalresidual.hh>
 
 #include "richardsvolumevariables.hh"
 
