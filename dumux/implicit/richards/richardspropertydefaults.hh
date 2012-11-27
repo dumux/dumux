@@ -49,46 +49,46 @@ namespace Properties {
 // Properties values
 //////////////////////////////////////////////////////////////////
 //! Number of equations required by the model
-SET_INT_PROP(BoxRichards, NumEq, 1);
+SET_INT_PROP(Richards, NumEq, 1);
 //! Number of fluid phases considered
-SET_INT_PROP(BoxRichards, NumPhases, 2);
+SET_INT_PROP(Richards, NumPhases, 2);
 
 //! The local residual operator
-SET_TYPE_PROP(BoxRichards,
+SET_TYPE_PROP(Richards,
               LocalResidual,
               RichardsLocalResidual<TypeTag>);
 
 //! The global model used
-SET_TYPE_PROP(BoxRichards, Model, RichardsModel<TypeTag>);
+SET_TYPE_PROP(Richards, Model, RichardsModel<TypeTag>);
 
 //! The class for the volume averaged quantities
-SET_TYPE_PROP(BoxRichards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
+SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
 
 //! The class for the quantities required for the flux calculation
-SET_TYPE_PROP(BoxRichards, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(Richards, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! The class of the newton controller
-SET_TYPE_PROP(BoxRichards, NewtonController, RichardsNewtonController<TypeTag>);
+SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);
 
 //! The upwind weight for the mass conservation equations
-SET_SCALAR_PROP(BoxRichards, ImplicitMassUpwindWeight, 1.0);
+SET_SCALAR_PROP(Richards, ImplicitMassUpwindWeight, 1.0);
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxRichards, ImplicitMobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(Richards, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The class with all index definitions for the model
-SET_TYPE_PROP(BoxRichards, Indices, RichardsIndices<TypeTag>);
+SET_TYPE_PROP(Richards, Indices, RichardsIndices<TypeTag>);
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxRichards, SpatialParams, BoxSpatialParams<TypeTag>);
+SET_TYPE_PROP(Richards, SpatialParams, BoxSpatialParams<TypeTag>);
 
 /*!
  * \brief Set type of the parameter objects for the material law
  *
  * By default this is just retrieved from the material law.
  */
-SET_PROP(BoxRichards, MaterialLawParams)
+SET_PROP(Richards, MaterialLawParams)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -107,7 +107,7 @@ public:
  * of the liquid phase is _much_ lower than the viscosity of the
  * wetting phase.
  */
-SET_PROP(BoxRichards, WettingPhase)
+SET_PROP(Richards, WettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
@@ -122,7 +122,7 @@ public:
  * specified by the problem for the Richards model to work because the
  * Richards model does not conserve the non-wetting phase.
  */
-SET_PROP(BoxRichards, NonwettingPhase)
+SET_PROP(Richards, NonwettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
@@ -138,7 +138,7 @@ public:
  * using different fluid systems in conjunction with the Richards
  * model only makes very limited sense.
  */
-SET_PROP(BoxRichards, FluidSystem)
+SET_PROP(Richards, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
@@ -151,7 +151,7 @@ public:
 };
 
 // enable gravity by default
-SET_BOOL_PROP(BoxRichards, ProblemEnableGravity, true);
+SET_BOOL_PROP(Richards, ProblemEnableGravity, true);
 
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.

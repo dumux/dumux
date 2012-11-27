@@ -49,36 +49,36 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Property defaults
 //////////////////////////////////////////////////////////////////
-SET_INT_PROP(BoxTwoPDFM, NumEq, 2); //!< set the number of equations to 2
-SET_INT_PROP(BoxTwoPDFM, NumPhases, 2); //!< The number of phases in the 2p model is 2
+SET_INT_PROP(TwoPDFM, NumEq, 2); //!< set the number of equations to 2
+SET_INT_PROP(TwoPDFM, NumPhases, 2); //!< The number of phases in the 2p model is 2
 
 //! Set the default formulation to pWsN
-SET_INT_PROP(BoxTwoPDFM,
+SET_INT_PROP(TwoPDFM,
              Formulation,
              TwoPFormulation::pwSn);
 
 //! Use the 2p local jacobian operator for the 2p model
-SET_TYPE_PROP(BoxTwoPDFM,
+SET_TYPE_PROP(TwoPDFM,
               LocalResidual,
               TwoPDFMLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPDFM, Model, TwoPDFMModel<TypeTag>);
+SET_TYPE_PROP(TwoPDFM, Model, TwoPDFMModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoPDFM, VolumeVariables, TwoPDFMVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoPDFM, VolumeVariables, TwoPDFMVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoPDFM, FluxVariables, TwoPDFMFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoPDFM, FluxVariables, TwoPDFMFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(BoxTwoPDFM, ImplicitMassUpwindWeight, 1.0);
+SET_SCALAR_PROP(TwoPDFM, ImplicitMassUpwindWeight, 1.0);
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxTwoPDFM, ImplicitMobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(TwoPDFM, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2pDFM model
-SET_PROP(BoxTwoPDFM, Indices)
+SET_PROP(TwoPDFM, Indices)
 { private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
  public:
@@ -88,31 +88,31 @@ SET_PROP(BoxTwoPDFM, Indices)
 
 //! The spatial parameters to be employed.
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxTwoPDFM, SpatialParams, BoxSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPDFM, SpatialParams, BoxSpatialParams<TypeTag>);
 
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_TYPE_PROP(BoxTwoPDFM,
+SET_TYPE_PROP(TwoPDFM,
               MaterialLawParams,
               typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
-SET_PROP(BoxTwoPDFM, WettingPhase)
+SET_PROP(TwoPDFM, WettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
-SET_PROP(BoxTwoPDFM, NonwettingPhase)
+SET_PROP(TwoPDFM, NonwettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
-SET_PROP(BoxTwoPDFM, FluidSystem)
+SET_PROP(TwoPDFM, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
@@ -124,7 +124,7 @@ public:
                                                 NonwettingPhase> type;
 };
 
-SET_PROP(BoxTwoPDFM, FluidState)
+SET_PROP(TwoPDFM, FluidState)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -134,10 +134,10 @@ public:
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(BoxTwoPDFM, VtkAddVelocity, false);
+SET_BOOL_PROP(TwoPDFM, VtkAddVelocity, false);
 
 // enable gravity by default
-SET_BOOL_PROP(BoxTwoPDFM, ProblemEnableGravity, true);
+SET_BOOL_PROP(TwoPDFM, ProblemEnableGravity, true);
 } // end namespace Properties
 } // end namespace Dumux
 

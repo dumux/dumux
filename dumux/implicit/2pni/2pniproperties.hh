@@ -38,8 +38,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the non-isothermal two-phase problems
-NEW_TYPE_TAG(BoxTwoPNI, INHERITS_FROM(BoxTwoP));
+//! The type tags for the implicit non-isothermal two-phase problems
+NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
+NEW_TYPE_TAG(BoxTwoPNI, INHERITS_FROM(BoxModel, TwoPNI));
+NEW_TYPE_TAG(CCTwoPNI, INHERITS_FROM(CCModel, TwoPNI));
 
 }
 }

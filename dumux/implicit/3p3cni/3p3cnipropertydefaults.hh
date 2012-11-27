@@ -45,25 +45,25 @@ namespace Properties
 // Property values
 //////////////////////////////////////////////////////////////////
 
-SET_INT_PROP(BoxThreePThreeCNI, NumEq, 4); //!< set the number of equations to 4
+SET_INT_PROP(ThreePThreeCNI, NumEq, 4); //!< set the number of equations to 4
 
 //! Use the 3p3cni local jacobian operator for the 3p3cni model
-SET_TYPE_PROP(BoxThreePThreeCNI,
+SET_TYPE_PROP(ThreePThreeCNI,
               LocalResidual,
               ThreePThreeCNILocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxThreePThreeCNI, Model, ThreePThreeCNIModel<TypeTag>);
+SET_TYPE_PROP(ThreePThreeCNI, Model, ThreePThreeCNIModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxThreePThreeCNI, VolumeVariables, ThreePThreeCNIVolumeVariables<TypeTag>);
+SET_TYPE_PROP(ThreePThreeCNI, VolumeVariables, ThreePThreeCNIVolumeVariables<TypeTag>);
 
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxThreePThreeCNI, FluxVariables, ThreePThreeCNIFluxVariables<TypeTag>);
+SET_TYPE_PROP(ThreePThreeCNI, FluxVariables, ThreePThreeCNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal 3p3c model
-SET_TYPE_PROP(BoxThreePThreeCNI, Indices, ThreePThreeCNIIndices<TypeTag, 0>);
+SET_TYPE_PROP(ThreePThreeCNI, Indices, ThreePThreeCNIIndices<TypeTag, 0>);
 
 }
 

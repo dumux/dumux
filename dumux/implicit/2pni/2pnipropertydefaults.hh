@@ -46,24 +46,24 @@ namespace Properties
 // Property values
 //////////////////////////////////////////////////////////////////
 
-SET_INT_PROP(BoxTwoPNI, NumEq, 3); //!< set the number of equations to 3
+SET_INT_PROP(TwoPNI, NumEq, 3); //!< set the number of equations to 3
 
 //! Use the 2pni local jacobian operator for the 2pni model
-SET_TYPE_PROP(BoxTwoPNI,
+SET_TYPE_PROP(TwoPNI,
               LocalResidual,
               TwoPNILocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPNI, Model, TwoPNIModel<TypeTag>);
+SET_TYPE_PROP(TwoPNI, Model, TwoPNIModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoPNI, VolumeVariables, TwoPNIVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoPNI, VolumeVariables, TwoPNIVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoPNI, FluxVariables, TwoPNIFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoPNI, FluxVariables, TwoPNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal two-phase model
-SET_TYPE_PROP(BoxTwoPNI, Indices, TwoPNIIndices<TypeTag, 0>);
+SET_TYPE_PROP(TwoPNI, Indices, TwoPNIIndices<TypeTag, 0>);
 
 }
 

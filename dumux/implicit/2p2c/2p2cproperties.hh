@@ -30,6 +30,7 @@
 #define DUMUX_2P2C_PROPERTIES_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
 
 namespace Dumux
 {
@@ -40,8 +41,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the isothermal single phase problems
-NEW_TYPE_TAG(BoxTwoPTwoC, INHERITS_FROM(BoxModel));
+//! The type tags for the implicit two-phase two-component problems
+NEW_TYPE_TAG(TwoPTwoC);
+NEW_TYPE_TAG(BoxTwoPTwoC, INHERITS_FROM(BoxModel, TwoPTwoC));
+NEW_TYPE_TAG(CCTwoPTwoC, INHERITS_FROM(CCModel, TwoPTwoC));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

@@ -49,42 +49,42 @@ namespace Dumux
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
-SET_INT_PROP(BoxOneP, NumEq, 1); //!< set the number of equations to 1
-SET_INT_PROP(BoxOneP, NumPhases, 1); //!< The number of phases in the 1p model is 1
+SET_INT_PROP(OneP, NumEq, 1); //!< set the number of equations to 1
+SET_INT_PROP(OneP, NumPhases, 1); //!< The number of phases in the 1p model is 1
 
 //! The local residual function
-SET_TYPE_PROP(BoxOneP,
+SET_TYPE_PROP(OneP,
               LocalResidual,
               OnePLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxOneP, Model, OnePBoxModel<TypeTag>);
+SET_TYPE_PROP(OneP, Model, OnePBoxModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxOneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
+SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxOneP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(OneP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(BoxOneP, Indices, OnePIndices);
+SET_TYPE_PROP(OneP, Indices, OnePIndices);
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParamsOneP by default.
-SET_TYPE_PROP(BoxOneP, SpatialParams, BoxSpatialParamsOneP<TypeTag>);
+SET_TYPE_PROP(OneP, SpatialParams, BoxSpatialParamsOneP<TypeTag>);
 
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.
-SET_SCALAR_PROP(BoxOneP, ImplicitMassUpwindWeight, 0.5);
+SET_SCALAR_PROP(OneP, ImplicitMassUpwindWeight, 0.5);
 
 //! weight for the upwind mobility in the velocity calculation
 //! fluxes. Use central differences by default.
-SET_SCALAR_PROP(BoxOneP, ImplicitMobilityUpwindWeight, 0.5);
+SET_SCALAR_PROP(OneP, ImplicitMobilityUpwindWeight, 0.5);
 
 //! The fluid system to use by default
-SET_TYPE_PROP(BoxOneP, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
+SET_TYPE_PROP(OneP, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
 
-SET_PROP(BoxOneP, Fluid)
+SET_PROP(OneP, Fluid)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
@@ -92,7 +92,7 @@ public:
 };
 
 // enable gravity by default
-SET_BOOL_PROP(BoxOneP, ProblemEnableGravity, true);
+SET_BOOL_PROP(OneP, ProblemEnableGravity, true);
 
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.

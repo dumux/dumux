@@ -45,25 +45,25 @@ namespace Properties
 // Property values
 //////////////////////////////////////////////////////////////////
 
-SET_INT_PROP(BoxTwoPTwoCNI, NumEq, 3); //!< set the number of equations to 3
+SET_INT_PROP(TwoPTwoCNI, NumEq, 3); //!< set the number of equations to 3
 
 //! Use the 2p2cni local jacobian operator for the 2p2cni model
-SET_TYPE_PROP(BoxTwoPTwoCNI,
+SET_TYPE_PROP(TwoPTwoCNI,
               LocalResidual,
               TwoPTwoCNILocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPTwoCNI, Model, TwoPTwoCNIModel<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCNI, Model, TwoPTwoCNIModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoPTwoCNI, VolumeVariables, TwoPTwoCNIVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCNI, VolumeVariables, TwoPTwoCNIVolumeVariables<TypeTag>);
 
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoPTwoCNI, FluxVariables, TwoPTwoCNIFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCNI, FluxVariables, TwoPTwoCNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal 2p2c model
-SET_PROP(BoxTwoPTwoCNI, Indices) 
+SET_PROP(TwoPTwoCNI, Indices) 
 { private:
     enum { formulation = GET_PROP_VALUE(TypeTag, Formulation) };
  public:

@@ -28,6 +28,7 @@
 #define DUMUX_BOXMODELS_2PDFM_PROPERTIES_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
 
 namespace Dumux
 {
@@ -42,8 +43,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for 2pDFM problems
-NEW_TYPE_TAG(BoxTwoPDFM, INHERITS_FROM(BoxModel));
+//! The type tags for the implicit two-phase DFM problems
+NEW_TYPE_TAG(TwoPDFM);
+NEW_TYPE_TAG(BoxTwoPDFM, INHERITS_FROM(BoxModel, TwoPDFM));
+NEW_TYPE_TAG(CCTwoPDFM, INHERITS_FROM(CCModel, TwoPDFM));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

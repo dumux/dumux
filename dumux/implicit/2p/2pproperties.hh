@@ -31,6 +31,7 @@
 #define DUMUX_2P_PROPERTIES_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
 
 namespace Dumux
 {
@@ -47,8 +48,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the two-phase problems
-NEW_TYPE_TAG(BoxTwoP, INHERITS_FROM(BoxModel));
+//! The type tags for the implicit two-phase problems
+NEW_TYPE_TAG(TwoP);
+NEW_TYPE_TAG(BoxTwoP, INHERITS_FROM(BoxModel, TwoP));
+NEW_TYPE_TAG(CCTwoP, INHERITS_FROM(CCModel, TwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
