@@ -46,7 +46,7 @@
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
-#include "lensccspatialparams.hh"
+#include "lensspatialparams.hh"
 
 namespace Dumux
 {

@@ -91,7 +91,8 @@ public:
     typedef typename MaterialLaw::Params MaterialLawParams;
 
     LensSpatialParams(const GridView& gridView)
-        : ParentType(gridView)
+    : ParentType(gridView), 
+      isBox_(GET_PROP_VALUE(TypeTag, ImplicitIsBox))
     {
         try
         {
@@ -145,7 +146,15 @@ public:
                                  const FVElementGeometry &fvElemGeom,
                                  int scvIdx) const
     {
-        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
+        if (!isBox_ && scvIdx > 0)
+            return intrinsicPermeability(*(fvElemGeom.neighbors[scvIdx]), fvElemGeom, 0);
+        
+        GlobalPosition globalPos;
+        if (isBox_)
+            globalPos = fvElemGeom.subContVol[scvIdx].global;
+        else 
+            globalPos = element.geometry().center();
+        
         if (isInLens_(globalPos))
             return lensK_;
         return outerK_;
@@ -176,8 +185,15 @@ public:
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const
     {
-        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
-
+        if (!isBox_ && scvIdx > 0)
+            return materialLawParams(*(fvElemGeom.neighbors[scvIdx]), fvElemGeom, 0);
+        
+        GlobalPosition globalPos;
+        if (isBox_)
+            globalPos = fvElemGeom.subContVol[scvIdx].global;
+        else 
+            globalPos = element.geometry().center();
+        
         if (isInLens_(globalPos))
             return lensMaterialParams_;
         return outerMaterialParams_;
@@ -201,6 +217,7 @@ private:
     Scalar outerK_;
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
+    const bool isBox_;
 };
 
 } // end namespace
