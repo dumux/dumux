@@ -528,8 +528,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         // due to "safety cell" around subdomain, both cells I and J
         // have single-phase conditions, although one is in 2p domain.
         int phaseIdx = std::min(cellDataI.subdomain(), cellDataJ.subdomain());
-        // determine respective equation Idx
-        int contiEqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
 
         Scalar rhoMean = 0.5 * (cellDataI.density(phaseIdx) + cellDataJ.density(phaseIdx));
         //Scalar density = 0;
