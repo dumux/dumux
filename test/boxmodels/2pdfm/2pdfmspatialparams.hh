@@ -24,7 +24,6 @@
 #define DUMUX_TEST_2PDFM_SPATIAL_PARAMETERS_HH
 
 #include <dumux/boxmodels/2pdfm/2pdfmmodel.hh>
-#include <dumux/io/artmeshreader.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/spatialparams/boxspatialparams.hh>
@@ -34,18 +33,18 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class TwoPDFMSpatialParameters;
+class TwoPDFMSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TwoPDFMSpatialParameters);
+NEW_TYPE_TAG(TwoPDFMSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPDFMSpatialParameters, SpatialParams, Dumux::TwoPDFMSpatialParameters<TypeTag>);
+SET_TYPE_PROP(TwoPDFMSpatialParams, SpatialParams, Dumux::TwoPDFMSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(TwoPDFMSpatialParameters, MaterialLaw)
+SET_PROP(TwoPDFMSpatialParams, MaterialLaw)
 {
 private:
     // define the material law which is parameterized by effective
@@ -64,7 +63,7 @@ public:
  *        twophase box model
  */
 template<class TypeTag>
-class TwoPDFMSpatialParameters : public BoxSpatialParams<TypeTag>
+class TwoPDFMSpatialParams : public BoxSpatialParams<TypeTag>
 {
 
     template<int dim>
@@ -75,14 +74,6 @@ class TwoPDFMSpatialParameters : public BoxSpatialParams<TypeTag>
             return gt.dim() == dim - 1;
         }
     };
-    template<int dim>
-    struct VertexLayout
-    {
-        bool contains (Dune::GeometryType gt)
-        {
-            return gt.dim() == 0;
-        }
-    };
 
     typedef BoxSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -90,8 +81,8 @@ class TwoPDFMSpatialParameters : public BoxSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
 
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,VertexLayout> VertexMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,FaceLayout> FaceMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout> FaceMapper;
 
     enum {
         dim = GridView::dimension,
@@ -108,21 +99,13 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    TwoPDFMSpatialParameters(const GridView& gridView)
-        : ParentType(gridView)
+    TwoPDFMSpatialParams(const GridView& gridView)
+        : ParentType(gridView), gridView_(gridView),
+        faceMapper_(gridView), vertexMapper_(gridView),
+        fractureMapper_(gridView)
     {
-        gridView_     = 0;
-        facemapper_   = 0;
-        vertexmapper_ = 0;
+        inactivateFractures_ = false;
 
-        setupFractureMatrixSoilParameters();
-    }
-
-    /**
-     * Set the soil properties of fractures and domain.
-     */
-    void setupFractureMatrixSoilParameters()
-    {
         Scalar mD = 1e-12 * 1e-3; //miliDarcy
 
         SwrF_    = 0.00;
@@ -150,6 +133,8 @@ public:
         porosityMatrix_   =    0.25;
         porosityFracture_ = 0.10;
         fractureWidth_    = 1e-2;
+
+        fractureMapper_.map();
     }
 
     /*!
@@ -234,7 +219,7 @@ public:
                                                     const FVElementGeometry &fvGeometry,
                                                     int scvIdx) const
     {
-        int globalIdx = vertexmapper().map(element, scvIdx, dim);
+        DUNE_UNUSED int globalIdx = vertexMapper_.map(element, scvIdx, dim);
 
         // be picky if called for non-fracture vertices
         assert(isVertexFracture(globalIdx));
@@ -254,8 +239,8 @@ public:
         {
             return false;
         }
-        int globalIdx = vertexmapper().map(element, localVertexIdx, dim);
-        return isDuneFractureVertex_[globalIdx];
+        int globalIdx = vertexMapper_.map(element, localVertexIdx, dim);
+        return fractureMapper_.isDuneFractureVertex(globalIdx);
     }
 
     /*!
@@ -269,7 +254,7 @@ public:
         {
             return false;
         }
-        return isDuneFractureVertex_[globalIdx];
+        return fractureMapper_.isDuneFractureVertex(globalIdx);
     }
 
     /*!
@@ -280,21 +265,9 @@ public:
      */
     bool isEdgeFracture(const Element &element, int localFaceIdx) const
     {
-        int globalIdx = facemapper().map(element, localFaceIdx, 1);
-        return isDuneFractureEdge_[globalIdx];
+        int globalIdx = faceMapper_.map(element, localFaceIdx, 1);
+        return fractureMapper_.isDuneFractureEdge(globalIdx);
     }
-
-    /*!
-     * \brief Returns the vertex mapper.
-     */
-    const VertexMapper &vertexmapper() const
-    { return *vertexmapper_; }
-
-    /*!
-     * \brief Returns the face mapper.
-     */
-    const FaceMapper &facemapper() const
-    { return *facemapper_; }
 
     /*!
      * \brief Returns the width of the fracture.
@@ -317,41 +290,6 @@ public:
         return fractureWidth_;
     }
 
-    /*!
-     * \brief Set the grid view.
-     * 
-     * \param gv The new grid view to be set.
-     */
-    void setGridView(const GridView &gv)
-     {
-        delete gridView_;
-        delete facemapper_;
-        delete vertexmapper_;
-
-        gridView_ = new GridView(gv);
-        facemapper_ = new FaceMapper(gv);
-        vertexmapper_ = new VertexMapper(gv);
-     }
-
-    /*!
-     * \brief Set which vertices and edges are fractures.
-     * 
-     * \param isDuneFractureVertex Vector of bools which indicates fracture vertices
-     * \param isDuneFractureEdge Vector of bools which indicates fracture edges
-     * \param fractureEdgesIdx Vector of edge indices which are fractures
-     * \param inactivateFractures Deactivates fractures
-     */
-    const void setFractureBoolVectors(const std::vector<bool>& isDuneFractureVertex,
-                                      const std::vector<bool>& isDuneFractureEdge,
-                                      const std::vector<int>& fractureEdgesIdx,
-                                      bool inactivateFractures)
-    {
-        isDuneFractureVertex_ = isDuneFractureVertex;
-        isDuneFractureEdge_   = isDuneFractureEdge;
-        inactivateFractures_  = inactivateFractures;
-        fractureEdgesIdx_     = fractureEdgesIdx;
-    }
-    
     Scalar SwrF_;
     Scalar SwrM_;
     Scalar SnrF_;
@@ -362,8 +300,6 @@ public:
     Scalar pdM_;
 
 private:
-    MaterialLawParams materialParams_;
-
     Scalar KMatrix_;
     Scalar KFracture_;
     Scalar porosityMatrix_;
@@ -375,14 +311,11 @@ private:
     MaterialLawParams rockMatrixMaterialParams_;
     bool inactivateFractures_;
 
-    std::vector<bool> isFracture_;
-    std::vector<bool> isDuneFractureVertex_;
-    std::vector<bool> isDuneFractureEdge_;
-    std::vector<int>  fractureEdgesIdx_;
-
-    VertexMapper *vertexmapper_;
-    FaceMapper *facemapper_;
-    GridView *gridView_;
+    const GridView gridView_;
+    const FaceMapper faceMapper_;
+    const VertexMapper vertexMapper_;
+    
+    Dumux::FractureMapper<TypeTag> fractureMapper_;
 };
 
 } // end namespace

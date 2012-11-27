@@ -36,6 +36,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/io/artgridcreator.hh>
 
 #include "2pdfmspatialparams.hh"
 
@@ -47,7 +48,7 @@ class TwoPDFMTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TwoPDFMTestProblem, INHERITS_FROM(BoxTwoPDFM, TwoPDFMSpatialParameters));
+NEW_TYPE_TAG(TwoPDFMTestProblem, INHERITS_FROM(BoxTwoPDFM, TwoPDFMSpatialParams));
 
 // Set the grid type
 #if HAVE_UG
@@ -55,6 +56,9 @@ SET_TYPE_PROP(TwoPDFMTestProblem, Grid, Dune::UGGrid<2>);
 #else
 SET_TYPE_PROP(TwoPDFMTestProblem, Grid, Dune::YaspGrid<2>);
 #endif
+
+// set the GridCreator property
+SET_TYPE_PROP(TwoPDFMTestProblem, GridCreator, Dumux::ArtGridCreator<TypeTag>);
 
 // Set the problem property
 SET_TYPE_PROP(TwoPDFMTestProblem, Problem, Dumux::TwoPDFMTestProblem<TypeTag>);
@@ -145,13 +149,10 @@ class TwoPDFMTestProblem : public PorousMediaBoxProblem<TypeTag>
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GridType::ctype DT;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -167,25 +168,12 @@ public:
      * \param fractureEdgesIdx Vector of edge indices which are fractures
      */
     TwoPDFMTestProblem(TimeManager &timeManager,
-                       const GridView &gridView,
-                       std::vector<bool>& isDuneFractureVertex,
-                       std::vector<bool>& isDuneFractureEdge,
-                       std::vector<int>& fractureEdgesIdx)
+                       const GridView &gridView)
         : ParentType(timeManager, gridView),
-          isDuneFractureVertex_(isDuneFractureVertex),
-          isDuneFractureEdge_(isDuneFractureEdge),
-          fractureEdgesIdx_(fractureEdgesIdx),
           useInterfaceCondition_(true)
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
-
-        inactivateFractures_ = false;
-        this->spatialParams().setGridView(gridView);
-        this->spatialParams().setFractureBoolVectors(isDuneFractureVertex_,
-                isDuneFractureEdge_, fractureEdgesIdx_, inactivateFractures_);
-        bboxMin_ = this->bboxMin();
-        bboxMax_ = this->bboxMax();
     }
 
     /*!
@@ -385,51 +373,10 @@ private:
         return globalPos[1] > this->bboxMax()[1] - eps_;
     }
 
-    bool onInlet_(const GlobalPosition &globalPos) const
-    {
-        Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
-        Scalar lambda = (this->bboxMax()[0] - globalPos[0])/width;
-        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
-    }
-
-    bool upperRightCorner(const GlobalPosition &globalPos) const
-    {
-        return ((globalPos[0]>bboxMax_[0] - eps_)
-                &&(globalPos[1]>bboxMax_[1] - eps_));
-    }
-    
-    /*!
-     * \brief Checks whether the fracture intersects the boundary.
-     * 
-     * \param element The current element
-     * \param scvIdx Index of the sub-control volume to be checked
-     */
-    bool isFractureVertexOnBoundary_(const Element &element, int scvIdx) const
-    {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-        int globalIdx = this->soil().vertexmapper().map(element, scvIdx, dim);
-
-        int isVF = this->soil().isVertexFracture(globalIdx);
-        return ((isVF && onUpperBoundary_(globalPos))
-                 || (isVF && onLowerBoundary_(globalPos))
-                 || (isVF && onLeftBoundary_(globalPos))
-                 || (isVF && onRightBoundary_(globalPos)));
-    }
-
     Scalar temperature_;
     Scalar eps_;
 
-    GlobalPosition bboxMin_;
-    GlobalPosition bboxMax_;
-    std::vector<bool> isDuneFractureVertex_;
-    std::vector<bool> isDuneFractureEdge_;
-    std::vector<bool> fractureVolFractionVector;
-    std::vector<int> fractureEdgesIdx_;
-    std::vector<Scalar> distNodesOnBoundary;
-
     bool useInterfaceCondition_;
-    bool inactivateFractures_;
-
 };
 } //end namespace
 

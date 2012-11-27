@@ -30,14 +30,26 @@
  *        reading in parameters.
  *
  * \param progName  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
  */
-void usage(const char *progName)
+void usage(const char *progName, const std::string &errorMsg)
 {
-    std::string errorMessageOut = "\nUsage: ";
-                errorMessageOut += progName;
-                errorMessageOut += " [--restart restartTime] grid tEnd dt\n";
-    std::cout << errorMessageOut << std::endl;
-    exit(1);
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+        errorMessageOut += progName;
+        errorMessageOut += " [options]\n";
+        errorMessageOut += errorMsg;
+        errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
+        "\t-TimeManager.TEnd              End of the simulation [s] \n"
+        "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
+        "\t-Grid.File                     Name of the file containing the grid \n"
+        "\t                               definition in ART format\n"
+        "\n";
+        
+        std::cout << errorMessageOut
+        << "\n";
+    }
 }
 
 ////////////////////////
@@ -45,92 +57,6 @@ void usage(const char *progName)
 ////////////////////////
 int main(int argc, char** argv)
 {
-    try {
-        FILE *file;
-        typedef TTAG(TwoPDFMTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
-        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
-        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
-
-        // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
-
-        ////////////////////////////////////////////////////////////
-        // parse the command line arguments
-        ////////////////////////////////////////////////////////////
-        if (argc < 4)
-        {
-            usage(argv[0]);
-        }
-
-        // deal with the restart stuff
-        int argPos = 1;
-        bool restart = false;
-        double restartTime = 0;
-        if (std::string("--restart") == argv[argPos])
-        {
-            restart = true;
-            ++argPos;
-
-            std::istringstream(argv[argPos++]) >> restartTime;
-        }
-
-        if (argc - argPos != 3)
-        {
-            usage(argv[0]);
-        }
-
-        // read the initial time step and the end time
-        double tEnd, dt;
-        const char *artFileName = argv[argPos++];
-        std::istringstream(argv[argPos++]) >> tEnd;
-        std::istringstream(argv[argPos++]) >> dt;
-        file = fopen(artFileName,"r");
-        if (file == NULL)
-        {
-            std::cout << "Could not open artmesh file '" 
-                      << artFileName << "'" << std::endl;
-            exit(1);
-        }
-
-        ////////////////////////////////////////////////////////////
-        // create the grid from ART Reader
-        ////////////////////////////////////////////////////////////
-
-        Dumux::ArtReader<Grid> dfmArtmeshGeometry; // instantiate ArtReader
-        Grid *gridT;
-        dfmArtmeshGeometry.read_art_file(artFileName);
-        gridT = dfmArtmeshGeometry.createGrid();
-        gridT->loadBalance();
-        Dumux::FractureMapper<Grid> ModelARTReader(*gridT, dfmArtmeshGeometry); // map fractures to grid
-        ModelARTReader.fractureMapper();
-
-        ////////////////////////////////////////////////////////////
-        // instantiate and run the concrete problem
-        ////////////////////////////////////////////////////////////
-        // instantiate and run the concrete problem
-        TimeManager timeManager;
-        Problem problem(timeManager,
-                            gridT->leafView(),
-                            ModelARTReader.isDuneFractureVertex_,
-                            ModelARTReader.isDuneFractureEdge_,
-                            ModelARTReader.fractureEdgesIdx_);
-        timeManager.init(problem, 0, dt, tEnd, restart);
-        if (restart)
-        {
-            problem.restart(restartTime);
-        }
-        timeManager.run();
-        return 0;
-    }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        throw;
-    }
-    return EXIT_SUCCESS;
+    typedef TTAG(TwoPDFMTestProblem) ProblemTypeTag;
+    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
