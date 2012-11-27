@@ -203,6 +203,8 @@ SET_INT_PROP(CCModel, LinearSolverMaxIterations, 250);
 //! set number of equations of the mathematical model as default
 SET_INT_PROP(CCModel, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
 
+//! indicate that this is no box discretization
+SET_BOOL_PROP(CCModel, ImplicitIsBox, false);
 } // namespace Properties
 } // namespace Dumux
 
