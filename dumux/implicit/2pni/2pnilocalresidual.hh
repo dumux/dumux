@@ -28,10 +28,10 @@
 
 #include "2pniproperties.hh"
 
-#include <dumux/boxmodels/2p/2plocalresidual.hh>
+#include <dumux/implicit/2p/2plocalresidual.hh>
 
-#include <dumux/boxmodels/2pni/2pnivolumevariables.hh>
-#include <dumux/boxmodels/2pni/2pnifluxvariables.hh>
+#include <dumux/implicit/2pni/2pnivolumevariables.hh>
+#include <dumux/implicit/2pni/2pnifluxvariables.hh>
 
 namespace Dumux
 {

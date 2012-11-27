@@ -28,7 +28,7 @@
 #ifndef DUMUX_2P2CNI_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P2CNI_PROPERTY_DEFAULTS_HH
 
-#include <dumux/boxmodels/2p2c/2p2cpropertydefaults.hh>
+#include <dumux/implicit/2p2c/2p2cpropertydefaults.hh>
 
 #include "2p2cnimodel.hh"
 #include "2p2cniindices.hh"

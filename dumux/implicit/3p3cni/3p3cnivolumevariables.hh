@@ -26,7 +26,7 @@
 #ifndef DUMUX_3P3CNI_VOLUME_VARIABLES_HH
 #define DUMUX_3P3CNI_VOLUME_VARIABLES_HH
 
-#include <dumux/boxmodels/3p3c/3p3cvolumevariables.hh>
+#include <dumux/implicit/3p3c/3p3cvolumevariables.hh>
 
 
 namespace Dumux

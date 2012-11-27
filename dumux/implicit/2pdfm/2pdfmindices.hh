@@ -24,7 +24,7 @@
 #ifndef DUMUX_BOXMODELS_2PDFM_INDICES_HH
 #define DUMUX_BOXMODELS_2PDFM_INDICES_HH
 
-#include<dumux/boxmodels/2p/2pindices.hh>
+#include<dumux/implicit/2p/2pindices.hh>
 
 namespace Dumux
 {

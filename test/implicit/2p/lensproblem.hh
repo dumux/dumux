@@ -35,7 +35,7 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
-#include <dumux/boxmodels/2p/2pmodel.hh>
+#include <dumux/implicit/2p/2pmodel.hh>
 #include <dumux/implicit/box/porousmediaboxproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>

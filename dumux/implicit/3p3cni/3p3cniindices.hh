@@ -25,7 +25,7 @@
 #ifndef DUMUX_3P3CNI_INDICES_HH
 #define DUMUX_3P3CNI_INDICES_HH
 
-#include <dumux/boxmodels/3p3c/3p3cindices.hh>
+#include <dumux/implicit/3p3c/3p3cindices.hh>
 
 namespace Dumux
 {

@@ -23,7 +23,7 @@
 #ifndef DUMUX_BOXMODELS_2PDFM_LOCAL_RESIDUAL_HH
 #define DUMUX_BOXMODELS_2PDFM_LOCAL_RESIDUAL_HH
 
-#include <dumux/boxmodels/2p/2plocalresidual.hh>
+#include <dumux/implicit/2p/2plocalresidual.hh>
 #include "2pdfmproperties.hh"
 
 namespace Dumux

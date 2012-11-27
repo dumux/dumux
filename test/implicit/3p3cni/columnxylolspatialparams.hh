@@ -24,7 +24,7 @@
 #ifndef DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
 #define DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
 
-#include <dumux/boxmodels/3p3c/3p3cindices.hh>
+#include <dumux/implicit/3p3c/3p3cindices.hh>
 #include <dumux/material/spatialparams/boxspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3pparams.hh>

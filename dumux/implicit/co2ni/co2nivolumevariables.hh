@@ -29,7 +29,7 @@
 #ifndef DUMUX_CO2NI_VOLUME_VARIABLES_HH
 #define DUMUX_CO2NI_VOLUME_VARIABLES_HH
 
-#include <dumux/boxmodels/co2/co2volumevariables.hh>
+#include <dumux/implicit/co2/co2volumevariables.hh>
 
 namespace Dumux
 {

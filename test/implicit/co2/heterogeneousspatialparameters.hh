@@ -35,7 +35,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/boxmodels/co2/co2model.hh>
+#include <dumux/implicit/co2/co2model.hh>
 
 namespace Dumux
 {

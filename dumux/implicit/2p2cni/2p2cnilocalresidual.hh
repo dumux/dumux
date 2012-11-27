@@ -26,11 +26,11 @@
 #ifndef DUMUX_NEW_2P2CNI_LOCAL_RESIDUAL_HH
 #define DUMUX_NEW_2P2CNI_LOCAL_RESIDUAL_HH
 
-#include <dumux/boxmodels/2p2c/2p2clocalresidual.hh>
+#include <dumux/implicit/2p2c/2p2clocalresidual.hh>
 
-#include <dumux/boxmodels/2p2cni/2p2cnivolumevariables.hh>
-#include <dumux/boxmodels/2p2cni/2p2cnifluxvariables.hh>
-#include <dumux/boxmodels/2p2cni/2p2cniproperties.hh>
+#include <dumux/implicit/2p2cni/2p2cnivolumevariables.hh>
+#include <dumux/implicit/2p2cni/2p2cnifluxvariables.hh>
+#include <dumux/implicit/2p2cni/2p2cniproperties.hh>
 
 namespace Dumux
 {

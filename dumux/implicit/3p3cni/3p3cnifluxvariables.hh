@@ -29,7 +29,7 @@
 #define DUMUX_3P3CNI_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
-#include <dumux/boxmodels/3p3c/3p3cfluxvariables.hh>
+#include <dumux/implicit/3p3c/3p3cfluxvariables.hh>
 
 namespace Dumux
 {
