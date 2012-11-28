@@ -133,14 +133,23 @@ protected:
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
         Tensor K;
-        spatialParams.meanK(K,
-                            spatialParams.intrinsicPermeability(element,
-                                                                this->fvGeometry_,
-                                                                this->face().i),
-                            spatialParams.intrinsicPermeability(element,
-                                                                this->fvGeometry_,
-                                                                this->face().j));
-
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            spatialParams.meanK(K,
+                                spatialParams.intrinsicPermeability(element,
+                                                                    fvGeometry_,
+                                                                    face().i),
+                                spatialParams.intrinsicPermeability(element,
+                                                                    fvGeometry_,
+                                                                    face().j));
+        }
+        else
+        {
+            spatialParams.meanK(K,
+                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().i]),
+                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().j]));
+        }
+        
         // obtain the Forchheimer coefficient from the spatial parameters
         const Scalar forchCoeff = spatialParams.forchCoeff(element,
                                                           this->fvGeometry_,

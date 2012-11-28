@@ -146,16 +146,13 @@ public:
                                  const FVElementGeometry &fvElemGeom,
                                  int scvIdx) const
     {
-        if (!isBox_ && scvIdx > 0)
-            return intrinsicPermeability(*(fvElemGeom.neighbors[scvIdx]), fvElemGeom, 0);
-        
         const GlobalPosition& globalPos = fvElemGeom.subContVol[scvIdx].global;
         
         if (isInLens_(globalPos))
             return lensK_;
         return outerK_;
     }
-
+    
     /*!
      * \brief Porosity
      *
@@ -181,9 +178,6 @@ public:
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const
     {
-        if (!isBox_ && scvIdx > 0)
-            return materialLawParams(*(fvElemGeom.neighbors[scvIdx]), fvElemGeom, 0);
-        
         const GlobalPosition& globalPos = fvElemGeom.subContVol[scvIdx].global;
         
         if (isInLens_(globalPos))

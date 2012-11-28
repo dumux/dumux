@@ -351,14 +351,22 @@ protected:
                      const ElementVolumeVariables &elemVolVars)
     {
         const SpatialParams &sp = problem.spatialParams();
-        sp.meanK(K_,
-                 sp.intrinsicPermeability(element,
-                                          fvGeometry_,
-                                          face().i),
-                 sp.intrinsicPermeability(element,
-                                          fvGeometry_,
-                                          face().j));
-
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            sp.meanK(K_,
+                     sp.intrinsicPermeability(element,
+                                              fvGeometry_,
+                                              face().i),
+                     sp.intrinsicPermeability(element,
+                                              fvGeometry_,
+                                              face().j));
+        }
+        else
+        {
+            sp.meanK(K_,
+                     sp.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().i]),
+                     sp.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().j]));
+        }
     }
 
     /*!
