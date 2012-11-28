@@ -21,6 +21,9 @@ LensLowerLeftY = 2.0 # [m] y-coordinate of the lower left lens corner
 LensUpperRightX = 4.0 # [m] x-coordinate of the upper right lens corner
 LensUpperRightY = 3.0 # [m] y-coordinate of the upper right lens corner
 
+[Problem]
+Name = lensbox # for output files
+
 ###############################################################
 # Simulation restart
 #

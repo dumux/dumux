@@ -91,8 +91,7 @@ public:
     typedef typename MaterialLaw::Params MaterialLawParams;
 
     LensSpatialParams(const GridView& gridView)
-    : ParentType(gridView), 
-      isBox_(GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+    : ParentType(gridView)
     {
         try
         {
@@ -203,7 +202,6 @@ private:
     Scalar outerK_;
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
-    const bool isBox_;
 };
 
 } // end namespace
