@@ -149,11 +149,7 @@ public:
         if (!isBox_ && scvIdx > 0)
             return intrinsicPermeability(*(fvElemGeom.neighbors[scvIdx]), fvElemGeom, 0);
         
-        GlobalPosition globalPos;
-        if (isBox_)
-            globalPos = fvElemGeom.subContVol[scvIdx].global;
-        else 
-            globalPos = element.geometry().center();
+        const GlobalPosition& globalPos = fvElemGeom.subContVol[scvIdx].global;
         
         if (isInLens_(globalPos))
             return lensK_;
@@ -188,11 +184,7 @@ public:
         if (!isBox_ && scvIdx > 0)
             return materialLawParams(*(fvElemGeom.neighbors[scvIdx]), fvElemGeom, 0);
         
-        GlobalPosition globalPos;
-        if (isBox_)
-            globalPos = fvElemGeom.subContVol[scvIdx].global;
-        else 
-            globalPos = element.geometry().center();
+        const GlobalPosition& globalPos = fvElemGeom.subContVol[scvIdx].global;
         
         if (isInLens_(globalPos))
             return lensMaterialParams_;
