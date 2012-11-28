@@ -137,17 +137,17 @@ protected:
         {
             spatialParams.meanK(K,
                                 spatialParams.intrinsicPermeability(element,
-                                                                    fvGeometry_,
-                                                                    face().i),
+                                                                    this->fvGeometry_,
+                                                                    this->face().i),
                                 spatialParams.intrinsicPermeability(element,
-                                                                    fvGeometry_,
-                                                                    face().j));
+                                                                    this->fvGeometry_,
+                                                                    this->face().j));
         }
         else
         {
             spatialParams.meanK(K,
-                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().i]),
-                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().j]));
+                                spatialParams.elementIntrinsicPermeability(*this->fvGeometry_.neighbors[this->face().i]),
+                                spatialParams.elementIntrinsicPermeability(*this->fvGeometry_.neighbors[this->face().j]));
         }
         
         // obtain the Forchheimer coefficient from the spatial parameters
