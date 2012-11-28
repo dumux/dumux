@@ -32,7 +32,7 @@
 
 #include "diffusion/fluxvariables.hh"
 #include "energy/mpncfluxvariablesenergy.hh"
-#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include <dumux/implicit/box/boxforchheimerfluxvariables.hh>
 
 namespace Dumux

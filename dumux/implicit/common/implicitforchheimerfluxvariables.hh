@@ -31,7 +31,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
-#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 
 namespace Dumux
 {
@@ -76,7 +76,7 @@ NEW_PROP_TAG(ProblemEnableGravity);
  */
 template <class TypeTag>
 class BoxForchheimerFluxVariables
-    : public BoxDarcyFluxVariables<TypeTag>
+    : public ImplicitDarcyFluxVariables<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -113,7 +113,7 @@ public:
                  const unsigned int faceIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        :   BoxDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+        :   ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
         calculateNormalVelocity_(problem, element, elemVolVars);
     }
@@ -133,14 +133,23 @@ protected:
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
         Tensor K;
-        spatialParams.meanK(K,
-                            spatialParams.intrinsicPermeability(element,
-                                                                this->fvGeometry_,
-                                                                this->face().i),
-                            spatialParams.intrinsicPermeability(element,
-                                                                this->fvGeometry_,
-                                                                this->face().j));
-
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            spatialParams.meanK(K,
+                                spatialParams.intrinsicPermeability(element,
+                                                                    fvGeometry_,
+                                                                    face().i),
+                                spatialParams.intrinsicPermeability(element,
+                                                                    fvGeometry_,
+                                                                    face().j));
+        }
+        else
+        {
+            spatialParams.meanK(K,
+                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().i]),
+                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().j]));
+        }
+        
         // obtain the Forchheimer coefficient from the spatial parameters
         const Scalar forchCoeff = spatialParams.forchCoeff(element,
                                                           this->fvGeometry_,

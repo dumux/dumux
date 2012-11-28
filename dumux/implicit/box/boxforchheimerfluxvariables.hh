@@ -31,7 +31,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
-#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 
 namespace Dumux
 {
@@ -76,7 +76,7 @@ NEW_PROP_TAG(ProblemEnableGravity);
  */
 template <class TypeTag>
 class BoxForchheimerFluxVariables
-    : public BoxDarcyFluxVariables<TypeTag>
+    : public ImplicitDarcyFluxVariables<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -113,7 +113,7 @@ public:
                  const unsigned int faceIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        :   BoxDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+        :   ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
         calculateNormalVelocity_(problem, element, elemVolVars);
     }

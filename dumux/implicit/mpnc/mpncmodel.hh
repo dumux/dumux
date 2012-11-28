@@ -38,7 +38,7 @@ namespace Dumux
  * denoted by the upper index \f$\kappa \in \{ 1, \dots, N \} \f$.
  *
  * The momentum approximation can be selected via "BaseFluxVariables":
- * Darcy (BoxDarcyFluxVariables) and Forchheimer (BoxForchheimerFluxVariables)
+ * Darcy (ImplicitDarcyFluxVariables) and Forchheimer (BoxForchheimerFluxVariables)
  * relations are available for all Box models.
  *
  * By inserting this into the equations for the conservation of the
