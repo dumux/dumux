@@ -98,7 +98,7 @@ SET_INT_PROP(Forchheimer2pProblem, ImplicitNumericDifferenceMethod, +1);
 SET_TYPE_PROP(Forchheimer2pProblem, Scalar, double);
 
 // decide how to calculate velocity: Darcy / Forchheimer
-SET_TYPE_PROP(Forchheimer2pProblem, BaseFluxVariables, BoxForchheimerFluxVariables<TypeTag>);
+SET_TYPE_PROP(Forchheimer2pProblem, BaseFluxVariables, ImplicitForchheimerFluxVariables<TypeTag>);
 
 SET_BOOL_PROP(Forchheimer2pProblem, VtkAddVelocities, true);
 }
