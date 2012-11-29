@@ -24,12 +24,12 @@
 #ifndef DUMUX_BOX_MODEL_HH
 #define DUMUX_BOX_MODEL_HH
 
-#include "boxproperties.hh"
-#include "boxpropertydefaults.hh"
+#include "implicitproperties.hh"
+#include "implicitpropertydefaults.hh"
 
-#include "boxelementvolumevariables.hh"
-#include "boxlocaljacobian.hh"
-#include "boxlocalresidual.hh"
+#include "implicitelementvolumevariables.hh"
+#include "implicitlocaljacobian.hh"
+#include "implicitlocalresidual.hh"
 
 #include <dumux/parallel/vertexhandles.hh>
 

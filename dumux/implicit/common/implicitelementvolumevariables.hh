@@ -24,7 +24,7 @@
 #ifndef DUMUX_BOX_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_BOX_ELEMENT_VOLUME_VARIABLES_HH
 
-#include "boxproperties.hh"
+#include "implicitproperties.hh"
 
 
 namespace Dumux

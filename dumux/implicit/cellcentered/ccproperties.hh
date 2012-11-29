@@ -19,11 +19,6 @@
 #ifndef DUMUX_CC_PROPERTIES_HH
 #define DUMUX_CC_PROPERTIES_HH
 
-#include <dumux/common/propertysystem.hh>
-
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/implicit/common/implicitproperties.hh>
 
 /*!
@@ -49,7 +44,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the box-scheme
-NEW_TYPE_TAG(CCModel, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, ImplicitModel));
+NEW_TYPE_TAG(CCModel, INHERITS_FROM(ImplicitBase));
 }
 }
 
