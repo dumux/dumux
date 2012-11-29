@@ -16,22 +16,18 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_BOX_PROPERTIES_HH
-#define DUMUX_BOX_PROPERTIES_HH
+#ifndef DUMUX_IMPLICIT_PROPERTIES_HH
+#define DUMUX_IMPLICIT_PROPERTIES_HH
 
 #include <dumux/common/propertysystem.hh>
 
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
-
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
- * \ingroup BoxModel
+ * \ingroup ImplicitProperties
+ * \ingroup ImplicitModel
  * \file
  * \brief Specify the shape functions, operator assemblers, etc
- *        used for the BoxModel.
+ *        used for the ImplicitModel.
  */
 namespace Dumux
 {
@@ -39,16 +35,9 @@ namespace Dumux
 namespace Properties
 {
 /*!
- * \ingroup BoxModel
+ * \ingroup ImplicitModel
  */
 // \{
-
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
-
-//! The type tag for models based on the box-scheme
-NEW_TYPE_TAG(BoxModel, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, ImplicitModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -58,7 +47,6 @@ NEW_PROP_TAG(Grid);     //!< The type of the DUNE grid
 NEW_PROP_TAG(GridView); //!< The type of the grid view
 
 NEW_PROP_TAG(FVElementGeometry); //! The type of the finite-volume geometry in the box scheme
-NEW_PROP_TAG(EvalGradientsAtSCVCenter); //! Evaluate shape function gradients additionally at the sub-control volume center
 
 NEW_PROP_TAG(Problem); //!< The type of the problem
 NEW_PROP_TAG(BaseModel); //!< The type of the base class of the model
@@ -122,9 +110,6 @@ NEW_PROP_TAG(ImplicitNumericDifferenceMethod);
  */
 NEW_PROP_TAG(ImplicitEnableHints);
 
-//! indicates whether two-point flux should be used
-NEW_PROP_TAG(ImplicitUseTwoPointFlux); 
-
 // mappers from local to global indices
 
 //! maper for vertices
@@ -133,6 +118,9 @@ NEW_PROP_TAG(VertexMapper);
 NEW_PROP_TAG(ElementMapper);
 //! maper for degrees of freedom
 NEW_PROP_TAG(DofMapper);
+
+//! indicate whether discretization is box or not
+NEW_PROP_TAG(ImplicitIsBox);
 
 }
 }
