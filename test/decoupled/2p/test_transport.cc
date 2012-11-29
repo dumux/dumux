@@ -24,15 +24,10 @@
  */
 #include "config.h"
 
-#include "test_transportproblem.hh"
-#include <dumux/common/start.hh>
-
-
-#include <dune/grid/common/gridinfo.hh>
-#include <dune/common/exceptions.hh>
-#include <dune/common/mpihelper.hh>
 #include <iostream>
 
+#include "test_transportproblem.hh"
+#include <dumux/common/start.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -68,4 +63,3 @@ int main(int argc, char** argv)
     typedef TTAG(TransportTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
-
