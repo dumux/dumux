@@ -49,6 +49,7 @@ namespace Properties
 {
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Grid);
+NEW_PROP_TAG(GridView);
 NEW_PROP_TAG(GridCreator);
 }
     
