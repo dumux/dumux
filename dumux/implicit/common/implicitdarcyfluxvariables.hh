@@ -257,9 +257,17 @@ protected:
         }
         else
         {
+            const Element& elementI = *fvGeometry_.neighbors[face().i];
+            FVElementGeometry fvGeometryI;
+            fvGeometryI.subContVol[0].global = elementI.geometry().center();
+            
+            const Element& elementJ = *fvGeometry_.neighbors[face().j];
+            FVElementGeometry fvGeometryJ;
+            fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
+            
             spatialParams.meanK(K,
-                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().i]),
-                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().j]));
+                                spatialParams.intrinsicPermeability(elementI, fvGeometryI, 0),
+                                spatialParams.intrinsicPermeability(elementJ, fvGeometryJ, 0));
         }
         
         // loop over all phases

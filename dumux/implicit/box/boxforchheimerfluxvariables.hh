@@ -145,9 +145,17 @@ protected:
         }
         else
         {
+            const Element& elementI = *this->fvGeometry_.neighbors[this->face().i];
+            FVElementGeometry fvGeometryI;
+            fvGeometryI.subContVol[0].global = elementI.geometry().center();
+            
+            const Element& elementJ = *this->fvGeometry_.neighbors[this->face().j];
+            FVElementGeometry fvGeometryJ;
+            fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
+            
             spatialParams.meanK(K,
-                                spatialParams.elementIntrinsicPermeability(*this->fvGeometry_.neighbors[this->face().i]),
-                                spatialParams.elementIntrinsicPermeability(*this->fvGeometry_.neighbors[this->face().j]));
+                                spatialParams.intrinsicPermeability(elementI, fvGeometryI, 0),
+                                spatialParams.intrinsicPermeability(elementJ, fvGeometryJ, 0));
         }
         
         // obtain the Forchheimer coefficient from the spatial parameters

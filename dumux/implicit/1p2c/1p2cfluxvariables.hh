@@ -363,9 +363,17 @@ protected:
         }
         else
         {
+            const Element& elementI = *fvGeometry_.neighbors[face().i];
+            FVElementGeometry fvGeometryI;
+            fvGeometryI.subContVol[0].global = elementI.geometry().center();
+            
+            const Element& elementJ = *fvGeometry_.neighbors[face().j];
+            FVElementGeometry fvGeometryJ;
+            fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
+            
             sp.meanK(K_,
-                     sp.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().i]),
-                     sp.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().j]));
+                     sp.intrinsicPermeability(elementI, fvGeometryI, 0),
+                     sp.intrinsicPermeability(elementJ, fvGeometryJ, 0));
         }
     }
 
