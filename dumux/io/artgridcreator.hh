@@ -495,7 +495,7 @@ public:
     /*!
      * \brief Constructor
      * 
-     * \param grid The grid
+     * \param gridView The grid view
      */
     FractureMapper (const GridView& gridView)
     : gridView_(gridView),
