@@ -23,7 +23,7 @@
 #ifndef DUMUX_STOKES_PROBLEM_HH
 #define DUMUX_STOKES_PROBLEM_HH
 
-#include <dumux/implicit/box/boxproblem.hh>
+#include <dumux/implicit/common/implicitproblem.hh>
 
 #include "stokesproperties.hh"
 

@@ -26,7 +26,7 @@
 
 #include "boxproperties.hh"
 
-#include <dumux/implicit/box/boxproblem.hh>
+#include <dumux/implicit/common/implicitproblem.hh>
 
 namespace Dumux
 {
@@ -41,9 +41,9 @@ NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered i
  * \brief Base class for all porous media box problems
  */
 template<class TypeTag>
-class PorousMediaBoxProblem : public BoxProblem<TypeTag>
+class PorousMediaBoxProblem : public ImplicitProblem<TypeTag>
 {
-    typedef BoxProblem<TypeTag> ParentType;
+    typedef ImplicitProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;

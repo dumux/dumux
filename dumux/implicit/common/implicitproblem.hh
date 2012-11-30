@@ -18,10 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the box scheme
+ * \brief Base class for all fully implicit problems
  */
-#ifndef DUMUX_BOX_PROBLEM_HH
-#define DUMUX_BOX_PROBLEM_HH
+#ifndef DUMUX_IMPLICIT_PROBLEM_HH
+#define DUMUX_IMPLICIT_PROBLEM_HH
 
 #include "implicitproperties.hh"
 
@@ -31,8 +31,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxModel
- * \ingroup BoxBaseProblems
+ * \ingroup ImplicitModel
+ * \ingroup ImplicitBaseProblems
  * \brief Base class for all problems which use the box scheme.
  *
  * \note All quantities are specified assuming a threedimensional
@@ -41,7 +41,7 @@ namespace Dumux
  *       cross section of \f$1m \times 1m\f$.
  */
 template<class TypeTag>
-class BoxProblem
+class ImplicitProblem
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
@@ -77,8 +77,10 @@ private:
     typedef typename GridView::Grid::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
     // copying a problem is not a good idea
-    BoxProblem(const BoxProblem &);
+    ImplicitProblem(const ImplicitProblem &);
 
 public:
     /*!
@@ -87,7 +89,7 @@ public:
      * \param timeManager The TimeManager which is used by the simulation
      * \param gridView The simulation's idea about physical space
      */
-    BoxProblem(TimeManager &timeManager, const GridView &gridView)
+    ImplicitProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView)
         , bboxMin_(std::numeric_limits<double>::max())
         , bboxMax_(-std::numeric_limits<double>::max())
@@ -120,7 +122,7 @@ public:
         resultWriter_ = NULL;
     }
 
-    ~BoxProblem()
+    ~ImplicitProblem()
     {
         delete resultWriter_;
     };
@@ -149,8 +151,30 @@ public:
     void boundaryTypes(BoundaryTypes &values,
                        const Vertex &vertex) const
     {
+        if (!isBox) 
+            DUNE_THROW(Dune::InvalidStateException, 
+                       "boundaryTypes(..., vertex) called for cell-centered method.");
+            
         // forward it to the method which only takes the global coordinate
         asImp_().boundaryTypesAtPos(values, vertex.geometry().center());
+    }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param values The boundary types for the conservation equations
+     * \param intersection The intersection for which the boundary type is set
+     */
+    void boundaryTypes(BoundaryTypes &values,
+                       const Intersection &intersection) const
+    {
+        if (isBox) 
+            DUNE_THROW(Dune::InvalidStateException, 
+                       "boundaryTypes(..., intersection) called for box method.");
+            
+        // forward it to the method which only takes the global coordinate
+        asImp_().boundaryTypesAtPos(values, intersection.geometry().center());
     }
 
     /*!
@@ -170,7 +194,6 @@ public:
                    "a boundaryTypes() method.");
     }
 
-
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
@@ -183,8 +206,32 @@ public:
     void dirichlet(PrimaryVariables &values,
                    const Vertex &vertex) const
     {
+        if (!isBox) 
+            DUNE_THROW(Dune::InvalidStateException, 
+                       "dirichlet(..., vertex) called for cell-centered method.");
+            
         // forward it to the method which only takes the global coordinate
         asImp_().dirichletAtPos(values, vertex.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param intersection The intersection for which the condition is evaluated
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void dirichlet(PrimaryVariables &values,
+                   const Intersection &intersection) const
+    {
+        if (isBox) 
+            DUNE_THROW(Dune::InvalidStateException, 
+                       "dirichlet(..., intersection) called for box method.");
+
+        // forward it to the method which only takes the global coordinate
+        asImp_().dirichletAtPos(values, intersection.geometry().center());
     }
 
     /*!

@@ -26,7 +26,7 @@
 #ifndef DUMUX_POROUS_MEDIA_CC_PROBLEM_HH
 #define DUMUX_POROUS_MEDIA_CC_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/ccproblem.hh>
+#include <dumux/implicit/common/implicitproblem.hh>
 #include "ccproperties.hh"
 
 namespace Dumux
@@ -43,9 +43,9 @@ namespace Properties
  * \brief Base class for all fully implicit cell centered porous media problems
  */
 template<class TypeTag>
-class PorousMediaCCProblem : public CCProblem<TypeTag>
+class PorousMediaCCProblem : public ImplicitProblem<TypeTag>
 {
-    typedef CCProblem<TypeTag> ParentType;
+    typedef ImplicitProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;

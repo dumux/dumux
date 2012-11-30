@@ -56,7 +56,7 @@ public:
      * jacobian assembler, etc inside the constructor.
      *
      * If the problem requires information from these, the
-     * BoxProblem::init() method be overloaded.
+     * ImplicitProblem::init() method be overloaded.
      *
      * \param timeManager The TimeManager which keeps track of time
      * \param gridView The GridView used by the problem.
