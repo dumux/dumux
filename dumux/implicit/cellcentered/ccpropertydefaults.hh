@@ -36,7 +36,6 @@
 #include "ccmodel.hh"
 #include "ccfvelementgeometry.hh"
 #include "ccelementboundarytypes.hh"
-#include "cclocaljacobian.hh"
 #include "cclocalresidual.hh"
 #include "ccelementvolumevariables.hh"
 #include "ccproperties.hh"
@@ -62,9 +61,6 @@ SET_TYPE_PROP(CCModel, BaseLocalResidual, Dumux::CCLocalResidual<TypeTag>);
 
 //! Set the BaseModel to CCModel
 SET_TYPE_PROP(CCModel, BaseModel, Dumux::CCModel<TypeTag>);
-
-//! The local jacobian operator for the box scheme
-SET_TYPE_PROP(CCModel, LocalJacobian, Dumux::CCLocalJacobian<TypeTag>);
 
 //! An array of secondary variable containers
 SET_TYPE_PROP(CCModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag>);

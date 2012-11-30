@@ -587,6 +587,7 @@ public:
     int numEdges; //!< number of edges
     int numFaces; //!< number of faces (0 in < 3D)
     int numSCV; //!< number of subcontrol volumes
+    int numNeighbors; //!< needed for compatibility with cc models
     int numFAP; //!< number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
     
@@ -614,6 +615,7 @@ public:
         numEdges = referenceElement.size(dim-1);
         numFaces = (dim<3)?0:referenceElement.size(1);
         numSCV = numVertices;
+        numNeighbors = 0;
 
         bool useTwoPointFlux
             = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseTwoPointFlux);

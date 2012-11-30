@@ -33,6 +33,7 @@
 #include <dumux/common/timemanager.hh>
 
 #include "implicitproperties.hh"
+#include "implicitlocaljacobian.hh"
 #include "implicitvolumevariables.hh"
 
 namespace Dumux {
@@ -73,7 +74,10 @@ SET_TYPE_PROP(ImplicitBase,
                                                         Dune::MCMGElementLayout>);
 
 //! The volume variable class, to be overloaded by the model
-SET_TYPE_PROP(BoxModel, VolumeVariables, Dumux::ImplicitVolumeVariables<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, VolumeVariables, Dumux::ImplicitVolumeVariables<TypeTag>);
+
+//! The local jacobian operator for the box scheme
+SET_TYPE_PROP(ImplicitBase, LocalJacobian, Dumux::ImplicitLocalJacobian<TypeTag>);
 
 //! The type of a solution for the whole grid at a fixed time
 SET_TYPE_PROP(ImplicitBase,
