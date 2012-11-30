@@ -90,6 +90,11 @@ public:
         typedef typename GV::IndexSet IS;
         typedef typename GV::template Codim<0>::Iterator Iterator;
         typedef typename GV::IntersectionIterator IntersectionIterator;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+#else
+        typedef typename Geometry::Jacobian JacobianInverseTransposed;    
+#endif
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,FaceLayout> FM;
         typedef typename Grid::ctype ct;
@@ -281,8 +286,8 @@ public:
             }
 
             // get the transposed Jacobian of the element mapping
-            const Dune::FieldMatrix<ct,dim,dim>& jacobianInv = geometry.jacobianInverseTransposed(local);
-            Dune::FieldMatrix<ct,dim,dim> jacobianT(jacobianInv);
+            const JacobianInverseTransposed& jacobianInv = geometry.jacobianInverseTransposed(local);
+            JacobianInverseTransposed jacobianT(jacobianInv);
             jacobianT.invert();
 
             // calculate the element velocity by the Piola transformation
@@ -381,6 +386,11 @@ public:
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+#else
+        typedef typename Geometry::Jacobian JacobianInverseTransposed;    
+#endif
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
 
         ElementMapper elementMapper(gridView);
@@ -519,8 +529,8 @@ public:
             }
 
             // get the transposed Jacobian of the element mapping
-            const Dune::FieldMatrix<Scalar,dim,dim>& jacobianInv = geometry.jacobianInverseTransposed(local);
-            Dune::FieldMatrix<Scalar,dim,dim> jacobianT(jacobianInv);
+            const JacobianInverseTransposed& jacobianInv = geometry.jacobianInverseTransposed(local);
+            JacobianInverseTransposed jacobianT(jacobianInv);
             jacobianT.invert();
             //Dune::FieldMatrix<Scalar,dim,dim> jacobianT(0);
 
