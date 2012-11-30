@@ -61,7 +61,7 @@ class ThreePThreeCNIVolumeVariables : public ThreePThreeCVolumeVariables<TypeTag
 
 public:
     /*!
-     * \copydoc BoxVolumeVariables::update
+     * \copydoc ImplicitVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,

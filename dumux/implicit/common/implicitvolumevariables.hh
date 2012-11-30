@@ -22,8 +22,8 @@
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
-#ifndef DUMUX_BOX_VOLUME_VARIABLES_HH
-#define DUMUX_BOX_VOLUME_VARIABLES_HH
+#ifndef DUMUX_IMPLICIT_VOLUME_VARIABLES_HH
+#define DUMUX_IMPLICIT_VOLUME_VARIABLES_HH
 
 #include "implicitproperties.hh"
 
@@ -33,13 +33,13 @@ namespace Dumux
 {
 
 /*!
- * \ingroup BoxModel
- * \ingroup BoxVolumeVariables
+ * \ingroup ImplicitModel
+ * \ingroup ImplicitVolumeVariables
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
 template <class TypeTag>
-class BoxVolumeVariables
+class ImplicitVolumeVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
 
@@ -53,11 +53,11 @@ class BoxVolumeVariables
 
 public:
     // default constructor
-    BoxVolumeVariables()
+    ImplicitVolumeVariables()
     { evalPoint_ = 0; };
 
     // copy constructor
-    BoxVolumeVariables(const BoxVolumeVariables &v)
+    ImplicitVolumeVariables(const ImplicitVolumeVariables &v)
     {
         evalPoint_ = 0;
         priVars_ = v.priVars_;
@@ -67,7 +67,7 @@ public:
     /*!
      * \brief Assignment operator
      */
-    BoxVolumeVariables &operator=(const BoxVolumeVariables &v)
+    ImplicitVolumeVariables &operator=(const ImplicitVolumeVariables &v)
     {
         evalPoint_ = 0;
         priVars_ = v.priVars_;

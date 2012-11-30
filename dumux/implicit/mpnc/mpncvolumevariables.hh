@@ -31,26 +31,26 @@
 #include "mass/mpncvolumevariablesmass.hh"
 #include "mpncvolumevariablesia.hh"
 
-#include <dumux/implicit/box/boxvolumevariables.hh>
+#include <dumux/implicit/common/implicitvolumevariables.hh>
 #include <dumux/material/constraintsolvers/ncpflash.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup MPNCModel
- * \ingroup BoxVolumeVariables
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the M-phase, N-component model.
  */
 template <class TypeTag>
 class MPNCVolumeVariables
-    : public BoxVolumeVariables<TypeTag>
+    : public ImplicitVolumeVariables<TypeTag>
     , public MPNCVolumeVariablesIA<TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic), GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
     , public MPNCVolumeVariablesMass<TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic)>
     , public MPNCVolumeVariablesDiffusion<TypeTag, GET_PROP_VALUE(TypeTag, EnableDiffusion) || GET_PROP_VALUE(TypeTag, EnableKinetic)>
     , public MPNCVolumeVariablesEnergy<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergy), GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
 {
-    typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef ImplicitVolumeVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -93,7 +93,7 @@ public:
     }
 
     /*!
-     * \copydoc BoxVolumeVariables::update
+     * \copydoc ImplicitVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,

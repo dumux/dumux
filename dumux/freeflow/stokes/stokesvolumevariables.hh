@@ -26,7 +26,7 @@
 #define DUMUX_STOKES_VOLUME_VARIABLES_HH
 
 #include "stokesproperties.hh"
-#include "dumux/implicit/box/boxvolumevariables.hh"
+#include "dumux/implicit/common/implicitvolumevariables.hh"
 
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 

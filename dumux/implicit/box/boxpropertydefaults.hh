@@ -35,7 +35,6 @@
 #include "boxlocaljacobian.hh"
 #include "boxlocalresidual.hh"
 #include "boxelementvolumevariables.hh"
-#include "boxvolumevariables.hh"
 #include "boxproperties.hh"
 
 namespace Dumux {

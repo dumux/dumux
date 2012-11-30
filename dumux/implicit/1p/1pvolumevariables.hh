@@ -25,7 +25,7 @@
 #define DUMUX_1P_VOLUME_VARIABLES_HH
 
 #include "1pproperties.hh"
-#include <dumux/implicit/box/boxvolumevariables.hh>
+#include <dumux/implicit/common/implicitvolumevariables.hh>
 
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 
@@ -34,14 +34,14 @@ namespace Dumux
 
 /*!
  * \ingroup OnePBoxModel
- * \ingroup BoxVolumeVariables
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
-class OnePVolumeVariables : public BoxVolumeVariables<TypeTag>
+class OnePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef ImplicitVolumeVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -59,7 +59,7 @@ public:
     typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> FluidState;
 
     /*!
-     * \copydoc BoxVolumeVariables::update
+     * \copydoc ImplicitVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
