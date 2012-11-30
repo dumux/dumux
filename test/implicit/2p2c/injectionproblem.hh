@@ -27,7 +27,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 #include "injectionspatialparams.hh"
@@ -89,9 +89,9 @@ SET_BOOL_PROP(InjectionProblem, VtkAddVelocity, false);
  * <tt>./test_2p2c -parameterFile ./test_2p2c.input</tt>
  */
 template <class TypeTag>
-class InjectionProblem : public PorousMediaBoxProblem<TypeTag>
+class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

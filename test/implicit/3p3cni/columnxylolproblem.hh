@@ -33,7 +33,7 @@
 #include <dumux/material/fluidsystems/h2oairxylenefluidsystem.hh>
 
 #include <dumux/implicit/3p3cni/3p3cnimodel.hh>
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 
 #include "columnxylolspatialparams.hh"
 
@@ -84,13 +84,13 @@ SET_SCALAR_PROP(ColumnProblem, TimeManagerMaxTimeStepSize, 4.);
  *
  *  */
 template <class TypeTag >
-class ColumnProblem : public PorousMediaBoxProblem<TypeTag>
+class ColumnProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Grid Grid;
 
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;

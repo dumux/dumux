@@ -35,7 +35,7 @@
 #include <dumux/common/cubegridcreator.hh>
 
 #include <dumux/implicit/2pni/2pnimodel.hh>
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
@@ -143,9 +143,9 @@ SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
  * <tt>./test_2pni -parameterFile test_2pni.input</tt>
  */
 template<class TypeTag>
-class InjectionProblem2PNI : public PorousMediaBoxProblem<TypeTag>
+class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 

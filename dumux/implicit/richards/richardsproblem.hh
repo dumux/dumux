@@ -23,7 +23,7 @@
 #ifndef DUMUX_RICHARDS_PROBLEM_HH
 #define DUMUX_RICHARDS_PROBLEM_HH
 
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 
 #include "richardsproperties.hh"
 
@@ -37,9 +37,9 @@ namespace Dumux
  * For a description of the Richards model, see Dumux::RichardsModel
  */
 template<class TypeTag>
-class RichardsBoxProblem : public PorousMediaBoxProblem<TypeTag>
+class RichardsBoxProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

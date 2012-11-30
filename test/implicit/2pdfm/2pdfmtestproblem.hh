@@ -32,7 +32,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/implicit/2pdfm/2pdfmmodel.hh>
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
@@ -119,9 +119,9 @@ SET_BOOL_PROP(TwoPDFMTestProblem, ProblemEnableGravity, false);
  * <tt>./test_2pDFM grids/defaultgrid.net 1e6 1</tt>
  */
 template <class TypeTag >
-class TwoPDFMTestProblem : public PorousMediaBoxProblem<TypeTag>
+class TwoPDFMTestProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;

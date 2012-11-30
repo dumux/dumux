@@ -35,7 +35,7 @@
 #include <dumux/implicit/co2/co2model.hh>
 #include <dumux/implicit/co2/co2volumevariables.hh>
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/box/intersectiontovertexbc.hh>
 
 #include "heterogeneousspatialparameters.hh"
@@ -121,9 +121,9 @@ SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
  * <tt>./test_co2 </tt>
  */
 template <class TypeTag = TTAG(HeterogeneousProblem)>
-class HeterogeneousProblem : public PorousMediaBoxProblem<TypeTag>
+class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
