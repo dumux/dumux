@@ -24,14 +24,18 @@
  */
 #include "config.h"
 
-#include "test_multiphysics2p2cproblem.hh"
-
-#include <dune/grid/common/gridinfo.hh>
+#include <iostream>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/version.hh>
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+#include <dune/common/parallel/mpihelper.hh>
+#else
 #include <dune/common/mpihelper.hh>
+#endif
+#include <dune/grid/common/gridinfo.hh>
 
-#include <iostream>
+#include "test_multiphysics2p2cproblem.hh"
 
 ////////////////////////
 // the main function
