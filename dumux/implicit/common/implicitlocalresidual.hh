@@ -20,8 +20,8 @@
  * \file
  * \brief Calculates the residual of models based on the box scheme element-wise.
  */
-#ifndef DUMUX_BOX_LOCAL_RESIDUAL_HH
-#define DUMUX_BOX_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_IMPLICIT_LOCAL_RESIDUAL_HH
+#define DUMUX_IMPLICIT_LOCAL_RESIDUAL_HH
 
 #include <dune/istl/matrix.hh>
 #include <dune/grid/common/geometry.hh>
@@ -33,15 +33,15 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitModel
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the residual matrix for models
- *        based on the box scheme.
+ *        using a fully implicit discretization.
  *
  * \todo Please doc me more!
  */
 template<class TypeTag>
-class BoxLocalResidual
+class ImplicitLocalResidual
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
@@ -49,22 +49,10 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
-    enum {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
-        dim = GridView::dimension
-    };
-
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef typename GridView::Grid::ctype CoordScalar;
-    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
-
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -73,13 +61,13 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     // copying the local residual class is not a good idea
-    BoxLocalResidual(const BoxLocalResidual &);
+    ImplicitLocalResidual(const ImplicitLocalResidual &);
 
 public:
-    BoxLocalResidual()
+    ImplicitLocalResidual()
     { }
 
-    ~BoxLocalResidual()
+    ~ImplicitLocalResidual()
     { }
 
     /*!
@@ -190,7 +178,7 @@ public:
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
 
-        residual_.resize(fvGeometry_().numVertices);
+        residual_.resize(fvGeometry_().numSCV);
         residual_ = 0;
 
         bcTypesPtr_ = &bcTypes;
@@ -225,7 +213,7 @@ public:
         Valgrind::CheckDefined(curVolVars);
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry.numVertices; i++) {
+        for (int i = 0; i < prevVolVars.size(); i++) {
             prevVolVars[i].checkDefined();
             curVolVars[i].checkDefined();
         }
@@ -238,9 +226,9 @@ public:
         curVolVarsPtr_ = &curVolVars;
 
         // resize the vectors for all terms
-        int numVerts = fvGeometry_().numVertices;
-        residual_.resize(numVerts);
-        storageTerm_.resize(numVerts);
+        int numSCV = fvGeometry_().numSCV;
+        residual_.resize(numSCV);
+        storageTerm_.resize(numSCV);
 
         residual_ = 0.0;
         storageTerm_ = 0.0;
@@ -248,14 +236,14 @@ public:
         asImp_().evalFluxes_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numVertices; i++)
+        for (int i=0; i < fvGeometry_().numSCV; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
 
         asImp_().evalVolumeTerms_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numVertices; i++) {
+        for (int i=0; i < fvGeometry_().numSCV; i++) {
             Valgrind::CheckDefined(residual_[i]);
         }
 #endif // HAVE_VALGRIND
@@ -264,7 +252,7 @@ public:
         asImp_().evalBoundary_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numVertices; i++)
+        for (int i=0; i < fvGeometry_().numSCV; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
     }
@@ -322,7 +310,7 @@ protected:
         if (bcTypes_().hasNeumann() || bcTypes_().hasOutflow())
             asImp_().evalBoundaryFluxes_();
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numVertices; i++)
+        for (int i=0; i < fvGeometry_().numSCV; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
 
@@ -331,208 +319,17 @@ protected:
     }
 
     /*!
-     * \brief Set the values of the Dirichlet boundary control volumes
-     *        of the current element.
-     */
-    void evalDirichlet_()
-    {
-        PrimaryVariables dirichletValues(0);
-        for (int scvIdx = 0; scvIdx < fvGeometry_().numVertices; ++scvIdx) {
-            const BoundaryTypes &bcTypes = bcTypes_(scvIdx);
-            
-            if (bcTypes.hasDirichlet()) {
-                // ask the problem for the dirichlet values
-                const VertexPointer vPtr = element_().template subEntity<dim>(scvIdx);
-                Valgrind::SetUndefined(dirichletValues);
-                asImp_().problem_().dirichlet(dirichletValues, *vPtr);
-
-                // set the dirichlet conditions
-                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-                    if (bcTypes.isDirichlet(eqIdx)) {
-                        int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                        assert(0 <= pvIdx && pvIdx < numEq);
-                        Valgrind::CheckDefined(dirichletValues[pvIdx]);
-
-                        residual_[scvIdx][eqIdx] =
-                                curPriVar_(scvIdx, pvIdx) - dirichletValues[pvIdx];
-
-                        storageTerm_[scvIdx][eqIdx] = 0.0;
-                    }
-                }
-            }
-        }
-    }
-
-    /*!
-     * \brief Add all Neumann and outflow boundary conditions to the local
-     *        residual.
-     */
-    void evalBoundaryFluxes_()
-    {
-        Dune::GeometryType geoType = element_().geometry().type();
-        const ReferenceElement &refElement = ReferenceElements::general(geoType);
-
-        IntersectionIterator isIt = gridView_().ibegin(element_());
-        const IntersectionIterator &endIt = gridView_().iend(element_());
-        for (; isIt != endIt; ++isIt)
-        {
-            // handle only faces on the boundary
-            if (isIt->boundary()) {
-                // Assemble the boundary for all vertices of the current
-                // face
-                int faceIdx = isIt->indexInInside();
-                int numFaceVerts = refElement.size(faceIdx, 1, dim);
-                for (int faceVertIdx = 0;
-                    faceVertIdx < numFaceVerts;
-                    ++faceVertIdx)
-                {
-                    int scvIdx = refElement.subEntity(faceIdx,
-                                                        1,
-                                                        faceVertIdx,
-                                                        dim);
-
-                    int boundaryFaceIdx =
-                        fvGeometry_().boundaryFaceIndex(faceIdx, faceVertIdx);
-
-                    // add the residual of all vertices of the boundary
-                    // segment
-                    asImp_().evalNeumannSegment_(isIt,
-                                                scvIdx,
-                                                boundaryFaceIdx);
-                    // evaluate the outflow conditions at the boundary face
-                    // ATTENTION: This is so far a beta version that is only for the 2p2c and 2p2cni model
-                    //              available and not thoroughly tested.
-                    asImp_().evalOutflowSegment_(isIt,
-                                                scvIdx,
-                                                boundaryFaceIdx);
-                }
-            }
-        }
-    }
-
-    /*!
-     * \brief Add Neumann boundary conditions for a single sub-control
-     *        volume face to the local residual.
-     */
-    void evalNeumannSegment_(const IntersectionIterator &isIt,
-                             const int scvIdx,
-                             const int boundaryFaceIdx)
-    {
-        // temporary vector to store the neumann boundary fluxes
-        PrimaryVariables neumannFlux(0.0);
-        const BoundaryTypes &bcTypes = bcTypes_(scvIdx);
-
-        // deal with neumann boundaries
-        if (bcTypes.hasNeumann()) {
-            Valgrind::SetUndefined(neumannFlux);
-            problem_().boxSDNeumann(neumannFlux,
-                                    element_(),
-                                    fvGeometry_(),
-                                    *isIt,
-                                    scvIdx,
-                                    boundaryFaceIdx,
-                                    curVolVars_());
-            neumannFlux *=
-                fvGeometry_().boundaryFace[boundaryFaceIdx].area
-                * curVolVars_(scvIdx).extrusionFactor();
-            Valgrind::CheckDefined(neumannFlux);
-
-            // set the neumann conditions
-            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-                if (!bcTypes.isNeumann(eqIdx))
-                    continue;
-                residual_[scvIdx][eqIdx] += neumannFlux[eqIdx];
-            }
-        }
-    }
-
-    /*!
-    * \brief Add outflow boundary conditions for a single sub-control
-    *        volume face to the local residual.
-    *
-    * \param isIt   The intersection iterator of current element
-    * \param scvIdx The index of the considered face of the sub-control volume
-    * \param boundaryFaceIdx The index of the considered boundary face of the sub control volume
-    */
-    void evalOutflowSegment_(const IntersectionIterator &isIt,
-                            const int scvIdx,
-                            const int boundaryFaceIdx)
-    {
-        const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-        // deal with outflow boundaries
-        if (bcTypes.hasOutflow())
-        {
-            //calculate outflow fluxes
-            PrimaryVariables values(0.0);
-            asImp_().computeFlux(values, boundaryFaceIdx, true);
-            Valgrind::CheckDefined(values);
-            
-            for (int equationIdx = 0; equationIdx < numEq; ++equationIdx)
-            {
-                if (!bcTypes.isOutflow(equationIdx) )
-                    continue;
-                // deduce outflow
-                this->residual_[scvIdx][equationIdx] += values[equationIdx];
-            }
-        }
-    }
-
-    /*!
-     * \brief Add the flux terms to the local residual of all
-     *        sub-control volumes of the current element.
-     */
-    void evalFluxes_()
-    {
-        // calculate the mass flux over the faces and subtract
-        // it from the local rates
-        for (int scvfIdx = 0; scvfIdx < fvGeometry_().numEdges; scvfIdx++)
-        {
-            int i = fvGeometry_().subContVolFace[scvfIdx].i;
-            int j = fvGeometry_().subContVolFace[scvfIdx].j;
-
-            PrimaryVariables flux;
-
-            Valgrind::SetUndefined(flux);
-            asImp_().computeFlux(flux, scvfIdx);
-            Valgrind::CheckDefined(flux);
-
-            Scalar extrusionFactor =
-                (curVolVars_(i).extrusionFactor()
-                 + curVolVars_(j).extrusionFactor())
-                / 2;
-            flux *= extrusionFactor;
-
-            // The balance equation for a finite volume is:
-            //
-            // dStorage/dt = Flux + Source
-            //
-            // where the 'Flux' and the 'Source' terms represent the
-            // mass per second which _ENTER_ the finite
-            // volume. Re-arranging this, we get
-            //
-            // dStorage/dt - Source - Flux = 0
-            //
-            // Since the flux calculated by computeFlux() goes _OUT_
-            // of sub-control volume i and _INTO_ sub-control volume
-            // j, we need to add the flux to finite volume i and
-            // subtract it from finite volume j
-            residual_[i] += flux;
-            residual_[j] -= flux;
-        }
-    }
-
-    /*!
      * \brief Set the local residual to the storage terms of all
      *        sub-control volumes of the current element.
      */
     void evalStorage_()
     {
-        storageTerm_.resize(fvGeometry_().numVertices);
+        storageTerm_.resize(fvGeometry_().numSCV);
         storageTerm_ = 0;
 
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
-        for (int scvIdx = 0; scvIdx < fvGeometry_().numVertices; scvIdx++) {
+        for (int scvIdx = 0; scvIdx < fvGeometry_().numSCV; scvIdx++) {
             Valgrind::SetUndefined(storageTerm_[scvIdx]);
             asImp_().computeStorage(storageTerm_[scvIdx], scvIdx, /*isOldSol=*/false);
             storageTerm_[scvIdx] *=
@@ -550,7 +347,7 @@ protected:
     void evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
-        for (int scvIdx = 0; scvIdx < fvGeometry_().numVertices; scvIdx++)
+        for (int scvIdx = 0; scvIdx < fvGeometry_().numSCV; scvIdx++)
         {
             Scalar extrusionFactor =
                 curVolVars_(scvIdx).extrusionFactor();
@@ -601,12 +398,6 @@ protected:
      */
     const Model &model_() const
     { return problem_().model(); };
-
-    /*!
-     * \brief Returns a reference to the vertex mapper.
-     */
-    const VertexMapper &vertexMapper_() const
-    { return problem_().vertexMapper(); };
 
     /*!
      * \brief Returns a reference to the grid view.
