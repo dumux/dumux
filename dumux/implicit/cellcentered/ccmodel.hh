@@ -32,9 +32,9 @@
 #include "ccpropertydefaults.hh"
 
 #include "ccelementvolumevariables.hh"
-#include "cclocaljacobian.hh"
 #include "cclocalresidual.hh"
 
+#include <dumux/implicit/common/implicitlocaljacobian.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
 #include <dune/grid/common/geometry.hh>
