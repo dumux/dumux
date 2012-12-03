@@ -25,7 +25,7 @@
 #ifndef DUMUX_GENERALLENSSPATIALPARAMS_HH
 #define DUMUX_GENERALLENSSPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/spatialparams/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

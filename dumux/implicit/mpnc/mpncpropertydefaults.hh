@@ -34,7 +34,7 @@
 #include "energy/mpncvtkwriterenergy.hh"
 
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 
 /*!
@@ -188,8 +188,8 @@ SET_SCALAR_PROP(MPNC, ImplicitMassUpwindWeight, 1.0);
 SET_SCALAR_PROP(MPNC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The spatial parameters to be employed. 
-//! Use BoxSpatialParams by default.
-SET_TYPE_PROP(MPNC, SpatialParams, BoxSpatialParams<TypeTag>);
+//! Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(MPNC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 //! The VTK writer module for common quantities
 SET_PROP(MPNC, MPNCVtkCommonModule)

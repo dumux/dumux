@@ -25,7 +25,7 @@
 #ifndef DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMS_HH
 #define DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/boxspatialparams1p.hh>
+#include <dumux/material/spatialparams/implicitspatialparams1p.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -41,9 +41,9 @@ namespace Dumux
  *        outflow problem.
  */
 template<class TypeTag>
-class OnePTwoCOutflowSpatialParams : public BoxSpatialParamsOneP<TypeTag>
+class OnePTwoCOutflowSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
-    typedef BoxSpatialParamsOneP<TypeTag> ParentType;
+    typedef ImplicitSpatialParamsOneP<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

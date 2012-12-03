@@ -26,7 +26,7 @@
 #define DUMUX_TUTORIAL_SPATIAL_PARAMS_COUPLED_HH
 
 // include parent spatialparameters
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 // include material laws
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh> /*@\label{tutorial-coupled:rawLawInclude}@*/
@@ -68,7 +68,7 @@ public:
  *        which uses the twophase box model.
  */
 template<class TypeTag>
-class TutorialSpatialParamsCoupled: public BoxSpatialParams<TypeTag> /*@\label{tutorial-coupled:tutorialSpatialParameters}@*/
+class TutorialSpatialParamsCoupled: public ImplicitSpatialParams<TypeTag> /*@\label{tutorial-coupled:tutorialSpatialParameters}@*/
 {
     // Get informations for current implementation via property system
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -142,7 +142,7 @@ public:
 
     // constructor
     TutorialSpatialParamsCoupled(const GridView& gridView) :
-        BoxSpatialParams<TypeTag>(gridView),
+        ImplicitSpatialParams<TypeTag>(gridView),
         K_(0)
     {
         //set main diagonal entries of the permeability tensor to a value

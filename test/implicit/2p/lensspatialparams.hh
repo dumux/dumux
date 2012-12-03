@@ -25,7 +25,7 @@
 #ifndef DUMUX_LENS_SPATIAL_PARAMS_HH
 #define DUMUX_LENS_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -67,9 +67,9 @@ public:
  *        twophase box model
  */
 template<class TypeTag>
-class LensSpatialParams : public BoxSpatialParams<TypeTag>
+class LensSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParams<TypeTag> ParentType;
+    typedef ImplicitSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

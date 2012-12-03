@@ -25,7 +25,7 @@
 #define DUMUX_KUEVETTE3P3CNI_SPATIAL_PARAMS_HH
 
 #include <dumux/implicit/3p3c/3p3cindices.hh>
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3pparams.hh>
 
@@ -62,9 +62,9 @@ SET_PROP(KuevetteSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for the kuevette problem
  */
 template<class TypeTag>
-class KuevetteSpatialParams : public BoxSpatialParams<TypeTag>
+class KuevetteSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParams<TypeTag> ParentType;
+    typedef ImplicitSpatialParams<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

@@ -37,7 +37,7 @@
 #include "1p2cfluxvariables.hh"
 #include "1p2cindices.hh"
 
-#include <dumux/material/spatialparams/boxspatialparams1p.hh>
+#include <dumux/material/spatialparams/implicitspatialparams1p.hh>
 
 namespace Dumux
 {
@@ -73,8 +73,8 @@ SET_SCALAR_PROP(OnePTwoC, ImplicitMassUpwindWeight, 1.0);
 SET_TYPE_PROP(OnePTwoC, Indices, Dumux::OnePTwoCIndices<TypeTag, 0>);
 
 //! The spatial parameters to be employed. 
-//! Use BoxSpatialParamsOneP by default.
-SET_TYPE_PROP(OnePTwoC, SpatialParams, BoxSpatialParamsOneP<TypeTag>);
+//! Use ImplicitSpatialParamsOneP by default.
+SET_TYPE_PROP(OnePTwoC, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
 
 //! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
 SET_INT_PROP(OnePTwoC, PhaseIdx, 0);

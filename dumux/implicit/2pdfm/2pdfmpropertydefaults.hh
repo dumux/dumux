@@ -33,7 +33,7 @@
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 #include "2pdfmmodel.hh"
 #include "2pdfmproblem.hh"
@@ -87,8 +87,8 @@ SET_PROP(TwoPDFM, Indices)
 
 
 //! The spatial parameters to be employed.
-//! Use BoxSpatialParams by default.
-SET_TYPE_PROP(TwoPDFM, SpatialParams, BoxSpatialParams<TypeTag>);
+//! Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(TwoPDFM, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 /*!
  * \brief Set the property for the material parameters by extracting

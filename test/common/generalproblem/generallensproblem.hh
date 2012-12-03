@@ -116,7 +116,7 @@ SET_PROP(BoxGeneralLensProblem, ProblemBaseClass)
 // Set the problem property
 SET_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass)
 {
-    typedef Dumux::BoxSpatialParams<TypeTag> type;
+    typedef Dumux::ImplicitSpatialParams<TypeTag> type;
 };
 
 

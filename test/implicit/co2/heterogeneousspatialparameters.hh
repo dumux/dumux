@@ -30,7 +30,7 @@
 #ifndef DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 #define DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -73,9 +73,9 @@ public:
  *        problem which uses the isothermal CO2 box model
  */
 template<class TypeTag>
-class HeterogeneousSpatialParams : public BoxSpatialParams<TypeTag>
+class HeterogeneousSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParams<TypeTag> ParentType;
+    typedef ImplicitSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef Dune::GridPtr<Grid> GridPointer;

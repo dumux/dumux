@@ -39,7 +39,7 @@
 // #include "3p3cboundaryvariables.hh"
 
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 namespace Dumux
 {
@@ -123,8 +123,8 @@ SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
 SET_TYPE_PROP(ThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
 
 //! The spatial parameters to be employed. 
-//! Use BoxSpatialParams by default.
-SET_TYPE_PROP(ThreePThreeC, SpatialParams, BoxSpatialParams<TypeTag>);
+//! Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(ThreePThreeC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 // enable gravity by default
 SET_BOOL_PROP(ThreePThreeC, ProblemEnableGravity, true);
