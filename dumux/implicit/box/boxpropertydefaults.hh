@@ -29,7 +29,6 @@
 
 #include <dumux/implicit/common/implicitpropertydefaults.hh>
 #include "boxassembler.hh"
-#include "boxmodel.hh"
 #include "boxfvelementgeometry.hh"
 #include "boxelementboundarytypes.hh"
 #include "boxlocalresidual.hh"
@@ -59,9 +58,6 @@ SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, VertexMapper)
 
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, Dumux::BoxLocalResidual<TypeTag>);
-
-//! Set the BaseModel to BoxModel
-SET_TYPE_PROP(BoxModel, BaseModel, Dumux::BoxModel<TypeTag>);
 
 //! An array of secondary variable containers
 SET_TYPE_PROP(BoxModel, ElementVolumeVariables, Dumux::BoxElementVolumeVariables<TypeTag>);

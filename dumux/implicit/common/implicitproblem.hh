@@ -24,6 +24,7 @@
 #define DUMUX_IMPLICIT_PROBLEM_HH
 
 #include "implicitproperties.hh"
+#include "implicitmodel.hh"
 
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>

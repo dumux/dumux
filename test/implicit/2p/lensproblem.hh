@@ -255,7 +255,7 @@ public:
     void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
     {
-        values = 0;
+        values = 0.0;
     }
 
     // \}

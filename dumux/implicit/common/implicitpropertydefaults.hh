@@ -33,6 +33,7 @@
 #include <dumux/common/timemanager.hh>
 
 #include "implicitproperties.hh"
+#include "implicitmodel.hh"
 #include "implicitlocaljacobian.hh"
 #include "implicitvolumevariables.hh"
 
@@ -72,6 +73,9 @@ SET_TYPE_PROP(ImplicitBase,
               ElementMapper,
               Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
                                                         Dune::MCMGElementLayout>);
+
+//! Set the BaseModel to ImplicitModel
+SET_TYPE_PROP(ImplicitBase, BaseModel, Dumux::ImplicitModel<TypeTag>);
 
 //! The volume variable class, to be overloaded by the model
 SET_TYPE_PROP(ImplicitBase, VolumeVariables, Dumux::ImplicitVolumeVariables<TypeTag>);

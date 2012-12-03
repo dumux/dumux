@@ -25,7 +25,7 @@
 #ifndef DUMUX_3P3C_LOCAL_RESIDUAL_HH
 #define DUMUX_3P3C_LOCAL_RESIDUAL_HH
 
-#include <dumux/implicit/box/boxmodel.hh>
+#include <dumux/boxmodels/common/boxmodel.hh>
 #include <dumux/common/math.hh>
 
 #include "3p3cproperties.hh"
