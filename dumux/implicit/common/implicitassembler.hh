@@ -299,12 +299,30 @@ public:
     }
 
     /*!
+     * \brief Force to reassemble a given degree of freedom
+     * next time the assemble() method is called.
+     *
+     * \param globalIdx The global index of the degree of freedom
+     */
+    void markDofRed(const int globalIdx)
+    {
+        if (!enablePartialReassemble_())
+            return;
+
+        if (isBox)
+            vertexColor_[globalIdx] = Red;
+        else 
+            elementColor_[globalIdx] = Red;
+    }
+
+    /*!
      * \brief Force to reassemble a given vertex next time the
      *        assemble() method is called.
      *
      * \param globalVertIdx The global index of the vertex which ought
      *                      to be red.
      */
+    DUNE_DEPRECATED_MSG("Use markDofRed instead.")
     void markVertexRed(const int globalVertIdx)
     {
         if (!enablePartialReassemble_())

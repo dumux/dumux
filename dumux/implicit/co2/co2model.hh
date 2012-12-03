@@ -115,8 +115,8 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
      {
          bool wasSwitched = false;
 
-         for (unsigned i = 0; i < ParentType::staticVertexDat_.size(); ++i)
-             ParentType::staticVertexDat_[i].visited = false;
+         for (unsigned i = 0; i < ParentType::staticDat_.size(); ++i)
+             ParentType::staticDat_[i].visited = false;
 
          unsigned numDofs = this->numDofs();
          unsigned numVertices = this->problem_().gridView().size(dim);
@@ -137,10 +137,10 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
                  else
                      globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
 
-                 if (ParentType::staticVertexDat_[globalIdx].visited)
+                 if (ParentType::staticDat_[globalIdx].visited)
                      continue;
 
-                 ParentType::staticVertexDat_[globalIdx].visited = true;
+                 ParentType::staticDat_[globalIdx].visited = true;
                  volVars.update(curGlobalSol[globalIdx],
                                 this->problem_(),
                                 *eIt,
@@ -181,7 +181,7 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
          typename FluidSystem::ParameterCache paramCache;
            // evaluate primary variable switch
            bool wouldSwitch = false;
-           int phasePresence = ParentType::staticVertexDat_[globalIdx].phasePresence;
+           int phasePresence = ParentType::staticDat_[globalIdx].phasePresence;
            int newPhasePresence = phasePresence;
 
            // check if a primary var switch is necessary
@@ -194,7 +194,7 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
                if(xnw > xnwMax)
                    wouldSwitch = true;
 
-               if (ParentType::staticVertexDat_[globalIdx].wasSwitched)
+               if (ParentType::staticDat_[globalIdx].wasSwitched)
                    xnwMax *= 1.02;
 
                //If mole fraction is higher than the equilibrium mole fraction make a phase switch
@@ -220,7 +220,7 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
                //If mole fraction is higher than the equilibrium mole fraction make a phase switch
                if(xwn > xwnMax)
                    wouldSwitch = true;
-               if (ParentType::staticVertexDat_[globalIdx].wasSwitched)
+               if (ParentType::staticDat_[globalIdx].wasSwitched)
                    xwnMax *= 1.02;
 
 
@@ -241,7 +241,7 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
            else if (phasePresence == bothPhases)
            {
                Scalar Smin = 0.0;
-               if (ParentType::staticVertexDat_[globalIdx].wasSwitched)
+               if (ParentType::staticDat_[globalIdx].wasSwitched)
                    Smin = -0.01;
 
                if (volVars.saturation(nPhaseIdx) <= Smin)
@@ -270,8 +270,8 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
                }
            }
 
-           ParentType::staticVertexDat_[globalIdx].phasePresence = newPhasePresence;
-           ParentType::staticVertexDat_[globalIdx].wasSwitched = wouldSwitch;
+           ParentType::staticDat_[globalIdx].phasePresence = newPhasePresence;
+           ParentType::staticDat_[globalIdx].wasSwitched = wouldSwitch;
            return phasePresence != newPhasePresence;
        }
 
