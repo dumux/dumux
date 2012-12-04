@@ -59,6 +59,8 @@ class OnePBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum { dim = GridView::dimension };
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
     /*!
      * \brief \copybrief Dumux::BoxModel::addOutputVtkFields
@@ -73,9 +75,9 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
 
         // create the required scalar fields
-        unsigned numVertices = this->problem_().gridView().size(dim);
-        ScalarField *p = writer.allocateManagedBuffer(numVertices);
-        ScalarField *K = writer.allocateManagedBuffer(numVertices);
+        unsigned numDofs = this->numDofs();
+        ScalarField *p = writer.allocateManagedBuffer(numDofs);
+        ScalarField *K = writer.allocateManagedBuffer(numDofs);
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
@@ -94,27 +96,40 @@ public:
             fvGeometry.update(this->gridView_(), *elemIt);
             elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
 
-            int numVerts = elemIt->template count<dim> ();
-            for (int i = 0; i < numVerts; ++i)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                int globalIdx;
+                if (isBox)
+                    globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
+                else 
+                    globalIdx = this->elementMapper().map(*elemIt);
+
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
                                fvGeometry,
-                               i,
+                               scvIdx,
                                false);
                 const SpatialParams &spatialParams = this->problem_().spatialParams();
 
                 (*p)[globalIdx] = volVars.pressure();
                 (*K)[globalIdx]= spatialParams.intrinsicPermeability(*elemIt,
                                                                      fvGeometry,
-                                                                     i);
+                                                                     scvIdx);
             }
         }
 
-        writer.attachVertexData(*p, "p");
-        writer.attachVertexData(*K, "K");
+        if (isBox)
+        {
+            writer.attachVertexData(*p, "p");
+            writer.attachVertexData(*K, "K");
+        }
+        else 
+        {
+            writer.attachCellData(*p, "p");
+            writer.attachCellData(*K, "K");
+        }
+        
         writer.attachCellData(*rank, "process rank");
     }
 };
