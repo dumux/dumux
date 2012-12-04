@@ -50,4 +50,6 @@ NEW_TYPE_TAG(CCModel, INHERITS_FROM(ImplicitBase));
 
 // \}
 
+#include "ccpropertydefaults.hh"
+
 #endif

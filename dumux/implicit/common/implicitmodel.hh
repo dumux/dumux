@@ -510,7 +510,12 @@ public:
      */
     template <class Restarter>
     void serialize(Restarter &res)
-    { res.template serializeEntities<dim>(asImp_(), this->gridView_()); }
+    {
+        if (isBox)
+            res.template serializeEntities<dim>(asImp_(), this->gridView_()); 
+        else
+            res.template serializeEntities<0>(asImp_(), this->gridView_());
+    }
 
     /*!
      * \brief Deserializes the state of the model.
@@ -522,7 +527,11 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
-        res.template deserializeEntities<dim>(asImp_(), this->gridView_());
+        if (isBox)
+            res.template deserializeEntities<dim>(asImp_(), this->gridView_());
+        else
+            res.template deserializeEntities<0>(asImp_(), this->gridView_());
+        
         prevSol() = curSol();
     }
 
