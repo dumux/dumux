@@ -16,7 +16,7 @@ TEnd = 1e4 # [s]
 File = ./grids/test_2p2c.dgf 
 
 [Problem]
-Name = injection # [-] the name of the output files
+Name = injectionbox # [-] the name of the output files
 
 InitialTemperature = 313.15 # [K] 40°C initial temperature in the reservoir
 DepthBOR = 2700 # [m] depth below ground surface 
