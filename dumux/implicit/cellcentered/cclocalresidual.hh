@@ -180,9 +180,10 @@ protected:
         // deal with outflow boundaries
         if (bcTypes.hasOutflow())
         {
+            unsigned bfIdx = isIt->indexInInside();
             PrimaryVariables values(0.0);
             this->asImp_().computeFlux(values, 
-                                       /*boundaryFaceIdx=*/isIt->indexInInside(), 
+                                       bfIdx, 
                                        true);
             Valgrind::CheckDefined(values);
             
