@@ -81,10 +81,18 @@ protected:
     {
         PrimaryVariables dirichletValues(0);
 
-        const BoundaryTypes &bcTypes = this->bcTypes_(0);
-        if (! bcTypes.hasDirichlet())
-            return;
-
+        BoundaryTypes bcTypes;
+        IntersectionIterator isIt = this->problem_().gridView().ibegin(this->element_());
+        IntersectionIterator isEndIt = this->problem_().gridView().iend(this->element_());
+        for (; isIt != isEndIt; ++isIt) {
+            if (!isIt->boundary())
+                continue;
+            
+            this->problem_().boundaryTypes(bcTypes, *isIt);
+            if (bcTypes.hasDirichlet())
+                break;
+        }
+        
         Valgrind::SetUndefined(dirichletValues);
         // HACK: ask for Dirichlet value at element center
         this->asImp_().problem_().dirichletAtPos(dirichletValues, this->element_().geometry().center());
@@ -166,7 +174,8 @@ protected:
      */
     void evalOutflowSegment_(const IntersectionIterator &isIt)
     {
-        const BoundaryTypes &bcTypes = this->bcTypes_(0);
+        BoundaryTypes bcTypes;
+        this->problem_().boundaryTypes(bcTypes, *isIt);
         
         // deal with outflow boundaries
         if (bcTypes.hasOutflow())
