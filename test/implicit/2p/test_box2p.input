@@ -22,7 +22,7 @@ LensUpperRightX = 4.0 # [m] x-coordinate of the upper right lens corner
 LensUpperRightY = 3.0 # [m] y-coordinate of the upper right lens corner
 
 [Problem]
-Name = lensbox # for output files
+Name = lensbox # name passed to the output routines
 
 ###############################################################
 # Simulation restart

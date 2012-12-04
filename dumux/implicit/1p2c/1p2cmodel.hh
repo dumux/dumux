@@ -90,6 +90,8 @@ class OnePTwoCBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
     /*!
      * \brief Constructor. Sets the upwind weight.
@@ -112,40 +114,47 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
+        bool velocityOutput = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity);
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
 
         // create the required scalar fields
-        unsigned numVertices = this->problem_().gridView().size(dim);
-        ScalarField &pressure = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &delp = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &moleFraction0 = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &moleFraction1 = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &massFraction0 = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &massFraction1 = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
-#ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        ScalarField &velocityX = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &velocityY = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &velocityZ = *writer.allocateManagedBuffer(numVertices);
+        unsigned numDofs = this->numDofs();
+        ScalarField &pressure = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &delp = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &moleFraction0 = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &moleFraction1 = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &massFraction0 = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &massFraction1 = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &rho = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &mu = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &velocityX = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &velocityY = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &velocityZ = *writer.allocateManagedBuffer(numDofs);
         //use vertical faces for vx and horizontal faces for vy calculation
-        std::vector<DimVector> boxSurface(numVertices);
-        // initialize velocity fields
-          for (unsigned int i = 0; i < numVertices; ++i)
-          {
+        std::vector<DimVector> boxSurface(numDofs);
+        
+        // velocity output currently only works for the box discretization
+        if (!isBox)
+            velocityOutput = false;
+        
+        if (velocityOutput)
+        {
+            // initialize velocity fields
+            for (unsigned int i = 0; i < numDofs; ++i)
+            {
+                velocityX[i] = 0;
+                if (dim > 1)
+                {
+                    velocityY[i] = 0;
+                }
+                if (dim > 2)
+                {
+                    velocityZ[i] = 0;
+                }
+                boxSurface[i] = Scalar(0.0); // initialize the boundary surface of the fv-boxes
+            }
+        }
 
-              velocityX[i] = 0;
-              if (dim > 1)
-              {
-                  velocityY[i] = 0;
-              }
-              if (dim > 2)
-              {
-                  velocityZ[i] = 0;
-              }
-              boxSurface[i] = Scalar(0.0); // initialize the boundary surface of the fv-boxes
-          }
-#endif
         unsigned numElements = this->gridView_().size(0);
         ScalarField &rank =
                 *writer.allocateManagedBuffer(numElements);
@@ -164,15 +173,19 @@ public:
             fvGeometry.update(this->gridView_(), *elemIt);
             elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
 
-            int numVerts = elemIt->template count<dim> ();
-            for (int i = 0; i < numVerts; ++i)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                int globalIdx;
+                if (isBox)
+                    globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
+                else 
+                    globalIdx = this->elementMapper().map(*elemIt);
+
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
                                fvGeometry,
-                               i,
+                               scvIdx,
                                false);
 
                 pressure[globalIdx] = volVars.pressure();
@@ -185,134 +198,161 @@ public:
                 mu[globalIdx] = volVars.viscosity();
             }
 
-#ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-            // In the box method, the velocity is evaluated on the FE-Grid. However, to get an
-            // average apparent velocity at the vertex, all contributing velocities have to be interpolated.
-            DimVector velocity;
-
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                               *elemIt,
-                               fvGeometry,
-                               false /* isOldSol? */);
-            // loop over the phases
-            for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; faceIdx++)
+            if (velocityOutput)
             {
-                velocity = 0.0;
-                //prepare the flux calculations (set up and prepare geometry, FE gradients)
-                FluxVariables fluxVars(this->problem_(),
-                                       *elemIt,
-                                       fvGeometry,
-                                       faceIdx,
-                                       elemVolVars);
+                // In the box method, the velocity is evaluated on the FE-Grid. However, to get an
+                // average apparent velocity at the vertex, all contributing velocities have to be interpolated.
+                DimVector velocity;
+
+                ElementVolumeVariables elemVolVars;
+                elemVolVars.update(this->problem_(),
+                                *elemIt,
+                                fvGeometry,
+                                false /* isOldSol? */);
+                // loop over the phases
+                for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; faceIdx++)
+                {
+                    velocity = 0.0;
+                    //prepare the flux calculations (set up and prepare geometry, FE gradients)
+                    FluxVariables fluxVars(this->problem_(),
+                                        *elemIt,
+                                        fvGeometry,
+                                        faceIdx,
+                                        elemVolVars);
+
+                    //use vertical faces for vx and horizontal faces for vy calculation
+                    DimVector xVector(0), yVector(0);
+                    xVector[0] = 1; yVector[1] = 1;
+
+                    Dune::SeqScalarProduct<DimVector> sp;
+
+                    Scalar xDir = std::abs(sp.dot(fluxVars.face().normal, xVector));
+                    Scalar yDir = std::abs(sp.dot(fluxVars.face().normal, yVector));
+
+                    // up+downstream node
+                    const VolumeVariables &up =
+                        elemVolVars[fluxVars.upstreamIdx()];
+                    const VolumeVariables &dn =
+                        elemVolVars[fluxVars.downstreamIdx()];
+
+                    //get surface area to weight velocity at the IP with the surface area
+                    Scalar scvfArea = fluxVars.face().normal.two_norm();
+
+                    int vertIIdx = this->problem_().vertexMapper().map(
+                        *elemIt, fluxVars.face().i, dim);
+                    int vertJIdx = this->problem_().vertexMapper().map(
+                        *elemIt, fluxVars.face().j, dim);
+
+                    //use vertical faces (horizontal noraml vector) to calculate vx
+                    //in case of heterogeneities it seams to be better to define intrinisc permeability elementwise
+                    if(xDir > yDir)//(fluxVars.face().normal[0] > 1e-10 || fluxVars.face().normal[0] < -1e-10)// (xDir > yDir)
+                    {
+                        // get darcy velocity
+                        //calculate (v n) n/A
+                        Scalar tmp = fluxVars.KmvpNormal();
+                        velocity = fluxVars.face().normal;
+                        velocity *= tmp;
+                        velocity /= scvfArea;
+                        velocity *= (upwindWeight_ / up.viscosity() +
+                                    (1 - upwindWeight_)/ dn.viscosity());
+
+                        // add surface area for weighting purposes
+                        boxSurface[vertIIdx][0] += scvfArea;
+                        boxSurface[vertJIdx][0] += scvfArea;
+
+                        velocityX[vertJIdx] += velocity[0];
+                        velocityX[vertIIdx] += velocity[0];
+
+                    }
+                    if (yDir > xDir)//(fluxVars.face().normal[1] > 1e-10 || fluxVars.face().normal[1] < -1e-10)// (yDir > xDir)
+                    {
+                        // get darcy velocity
+                        //calculate (v n) n/A
+                        Scalar tmp = fluxVars.KmvpNormal();
+                        velocity = fluxVars.face().normal;
+                        velocity *= tmp;
+                        velocity /= scvfArea;
+                        velocity *= (upwindWeight_ / up.viscosity() +
+                                    (1 - upwindWeight_)/ dn.viscosity());
+
+                        // add surface area for weighting purposes
+                        boxSurface[vertIIdx][1] += scvfArea;
+                        boxSurface[vertJIdx][1] += scvfArea;
+
+                        velocityY[vertJIdx] += velocity[1];
+                        velocityY[vertIIdx] += velocity[1];
+                    }
+                }
+            }
+        }
+        
+        if (velocityOutput)
+        {
+            // normalize the velocities at the vertices
+            // calculate the bounding box of the grid view
+            VertexIterator vIt = this->gridView_().template begin<dim>();
+            const VertexIterator vEndIt = this->gridView_().template end<dim>();
+            for (; vIt!=vEndIt; ++vIt)
+            {
+                int i = this->problem_().vertexMapper().map(*vIt);
 
                 //use vertical faces for vx and horizontal faces for vy calculation
-                DimVector xVector(0), yVector(0);
-                xVector[0] = 1; yVector[1] = 1;
-
-                Dune::SeqScalarProduct<DimVector> sp;
-
-                Scalar xDir = std::abs(sp.dot(fluxVars.face().normal, xVector));
-                Scalar yDir = std::abs(sp.dot(fluxVars.face().normal, yVector));
-
-                // up+downstream node
-                const VolumeVariables &up =
-                    elemVolVars[fluxVars.upstreamIdx()];
-                const VolumeVariables &dn =
-                    elemVolVars[fluxVars.downstreamIdx()];
-
-                //get surface area to weight velocity at the IP with the surface area
-                Scalar scvfArea = fluxVars.face().normal.two_norm();
-
-                int vertIIdx = this->problem_().vertexMapper().map(
-                    *elemIt, fluxVars.face().i, dim);
-                int vertJIdx = this->problem_().vertexMapper().map(
-                    *elemIt, fluxVars.face().j, dim);
-
-                //use vertical faces (horizontal noraml vector) to calculate vx
-                //in case of heterogeneities it seams to be better to define intrinisc permeability elementwise
-                if(xDir > yDir)//(fluxVars.face().normal[0] > 1e-10 || fluxVars.face().normal[0] < -1e-10)// (xDir > yDir)
+                velocityX[i] /= boxSurface[i][0];
+                if (dim >= 2)
                 {
-                    // get darcy velocity
-                    //calculate (v n) n/A
-                    Scalar tmp = fluxVars.KmvpNormal();
-                    velocity = fluxVars.face().normal;
-                    velocity *= tmp;
-                    velocity /= scvfArea;
-                    velocity *= (upwindWeight_ / up.viscosity() +
-                                 (1 - upwindWeight_)/ dn.viscosity());
-
-                    // add surface area for weighting purposes
-                    boxSurface[vertIIdx][0] += scvfArea;
-                    boxSurface[vertJIdx][0] += scvfArea;
-
-                    velocityX[vertJIdx] += velocity[0];
-                    velocityX[vertIIdx] += velocity[0];
-
+                    velocityY[i] /= boxSurface[i][1];
                 }
-                if (yDir > xDir)//(fluxVars.face().normal[1] > 1e-10 || fluxVars.face().normal[1] < -1e-10)// (yDir > xDir)
+                if (dim == 3)
                 {
-                    // get darcy velocity
-                    //calculate (v n) n/A
-                    Scalar tmp = fluxVars.KmvpNormal();
-                    velocity = fluxVars.face().normal;
-                    velocity *= tmp;
-                    velocity /= scvfArea;
-                    velocity *= (upwindWeight_ / up.viscosity() +
-                                 (1 - upwindWeight_)/ dn.viscosity());
-
-                    // add surface area for weighting purposes
-                    boxSurface[vertIIdx][1] += scvfArea;
-                    boxSurface[vertJIdx][1] += scvfArea;
-
-                    velocityY[vertJIdx] += velocity[1];
-                    velocityY[vertIIdx] += velocity[1];
+                    velocityZ[i] /= boxSurface[i][2];
                 }
             }
-#endif
         }
-#ifdef VELOCITY_OUTPUT
-        // normalize the velocities at the vertices
-        // calculate the bounding box of the grid view
-        VertexIterator vIt = this->gridView_().template begin<dim>();
-        const VertexIterator vEndIt = this->gridView_().template end<dim>();
-        for (; vIt!=vEndIt; ++vIt)
+
+        if (isBox)
         {
-            int i = this->problem_().vertexMapper().map(*vIt);
+            writer.attachVertexData(pressure, "P");
+            writer.attachVertexData(delp, "delp");
+            if (velocityOutput)
+            {
+                writer.attachVertexData(velocityX, "Vx");
+                writer.attachVertexData(velocityY, "Vy");
+                if (dim > 2)
+                    writer.attachVertexData(velocityZ, "Vz");
+            }
+            char nameMoleFraction0[42], nameMoleFraction1[42];
+            snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
+            snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
+            writer.attachVertexData(moleFraction0, nameMoleFraction0);
+            writer.attachVertexData(moleFraction1, nameMoleFraction1);
 
-            //use vertical faces for vx and horizontal faces for vy calculation
-            velocityX[i] /= boxSurface[i][0];
-            if (dim >= 2)
-            {
-                velocityY[i] /= boxSurface[i][1];
-            }
-            if (dim == 3)
-            {
-                velocityZ[i] /= boxSurface[i][2];
-            }
+            char nameMassFraction0[42], nameMassFraction1[42];
+            snprintf(nameMassFraction0, 42, "X_%s", FluidSystem::componentName(0));
+            snprintf(nameMassFraction1, 42, "X_%s", FluidSystem::componentName(1));
+            writer.attachVertexData(massFraction0, nameMassFraction0);
+            writer.attachVertexData(massFraction1, nameMassFraction1);
+            writer.attachVertexData(rho, "rho");
+            writer.attachVertexData(mu, "mu");
         }
-#endif
-        writer.attachVertexData(pressure, "P");
-        writer.attachVertexData(delp, "delp");
-#ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        writer.attachVertexData(velocityX, "Vx");
-        writer.attachVertexData(velocityY, "Vy");
-        if (dim > 2)
-            writer.attachVertexData(velocityZ, "Vz");
-#endif
-        char nameMoleFraction0[42], nameMoleFraction1[42];
-        snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
-        snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
-        writer.attachVertexData(moleFraction0, nameMoleFraction0);
-        writer.attachVertexData(moleFraction1, nameMoleFraction1);
+        else 
+        {
+            writer.attachCellData(pressure, "P");
+            writer.attachCellData(delp, "delp");
+            char nameMoleFraction0[42], nameMoleFraction1[42];
+            snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
+            snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
+            writer.attachCellData(moleFraction0, nameMoleFraction0);
+            writer.attachCellData(moleFraction1, nameMoleFraction1);
 
-        char nameMassFraction0[42], nameMassFraction1[42];
-        snprintf(nameMassFraction0, 42, "X_%s", FluidSystem::componentName(0));
-        snprintf(nameMassFraction1, 42, "X_%s", FluidSystem::componentName(1));
-        writer.attachVertexData(massFraction0, nameMassFraction0);
-        writer.attachVertexData(massFraction1, nameMassFraction1);
-        writer.attachVertexData(rho, "rho");
-        writer.attachVertexData(mu, "mu");
+            char nameMassFraction0[42], nameMassFraction1[42];
+            snprintf(nameMassFraction0, 42, "X_%s", FluidSystem::componentName(0));
+            snprintf(nameMassFraction1, 42, "X_%s", FluidSystem::componentName(1));
+            writer.attachCellData(massFraction0, nameMassFraction0);
+            writer.attachCellData(massFraction1, nameMassFraction1);
+            writer.attachCellData(rho, "rho");
+            writer.attachCellData(mu, "mu");            
+        }
+        
         writer.attachCellData(rank, "process rank");
     }
 

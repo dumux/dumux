@@ -455,7 +455,7 @@ protected:
         dispersionTensor_ = 0;
         for (int i=0; i<dim; i++)
             for (int j = 0; j<dim; j++)
-                dispersionTensor_[i][j]=velocity[i]*velocity[j];
+                dispersionTensor_[i][j] = velocity[i]*velocity[j];
 
         //normalize velocity product --> vv^T/||v||, [m/s]
         Scalar vNorm = velocity.two_norm();
