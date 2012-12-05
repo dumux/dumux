@@ -159,14 +159,14 @@ public:
      *        potential gradient.
      *
      * \param element The current finite element
-     * \param fvGeomtry The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvGeomtry,
+                                       const FVElementGeometry &fvGeometry,
                                        const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeomtry.subContVol[scvIdx].global;
+        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(pos))
             return fineK_;
         return coarseK_;
@@ -176,15 +176,15 @@ public:
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
      * \param element The finite element
-     * \param fvGeomtry The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
     double porosity(const Element &element,
-                    const FVElementGeometry &fvGeomtry,
+                    const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeomtry.subContVol[scvIdx].global;
+        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(pos))
             return finePorosity_;
         else
@@ -196,14 +196,14 @@ public:
      * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
      * \param element The current finite element
-     * \param fvGeomtry The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     const MaterialLawParams& materialLawParams(const Element &element,
-                                               const FVElementGeometry &fvGeomtry,
+                                               const FVElementGeometry &fvGeometry,
                                                const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeomtry.subContVol[scvIdx].global;
+        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(pos))
             return fineMaterialParams_;
         else
@@ -216,18 +216,18 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvGeomtry The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
     double heatCapacity(const Element &element,
-                        const FVElementGeometry &fvGeomtry,
+                        const FVElementGeometry &fvGeometry,
                         const int scvIdx) const
     {
         return
             850 // specific heat capacity [J / (kg K)]
             * 2650 // density of sand [kg/m^3]
-            * (1 - porosity(element, fvGeomtry, scvIdx));
+            * (1 - porosity(element, fvGeometry, scvIdx));
     }
 
     /*!
@@ -241,7 +241,7 @@ public:
      * \param elemVolVars The volume variables
      * \param tempGrad The temperature gradient
      * \param element The current finite element
-     * \param fvGeomtry The finite volume geometry of the current element
+     * \param fvGeometry The finite volume geometry of the current element
      * \param faceIdx The local index of the sub-control volume face where
      *                    the matrix heat flux should be calculated
      */
@@ -250,7 +250,7 @@ public:
                         const ElementVolumeVariables &elemVolVars,
                         const DimVector &tempGrad,
                         const Element &element,
-                        const FVElementGeometry &fvGeomtry,
+                        const FVElementGeometry &fvGeometry,
                         const int faceIdx) const
     {
         static const Scalar ldry = 0.35;
@@ -258,8 +258,8 @@ public:
         static const Scalar lSn1 = 0.65;
 
         // arithmetic mean of the liquid saturation and the porosity
-        const int i = fvGeomtry.subContVolFace[faceIdx].i;
-        const int j = fvGeomtry.subContVolFace[faceIdx].j;
+        const int i = fvGeometry.subContVolFace[faceIdx].i;
+        const int j = fvGeometry.subContVolFace[faceIdx].j;
         Scalar Sw = std::max(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
                                    elemVolVars[j].saturation(wPhaseIdx)) / 2);
         Scalar Sn = std::max(0.0, (elemVolVars[i].saturation(nPhaseIdx) +

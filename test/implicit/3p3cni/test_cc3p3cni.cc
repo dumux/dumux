@@ -24,7 +24,6 @@
 #include "config.h"
 //#include "kuevetteproblem.hh"
 #include "columnxylolproblem.hh"
-//#include "permdruckproblem.hh"
 #include <dumux/common/start.hh>
 
 
@@ -56,7 +55,7 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-//    typedef TTAG(KuevetteProblem) ProblemTypeTag;
-    typedef TTAG(ColumnProblem) ProblemTypeTag;
+//    typedef TTAG(KuevetteCCProblem) ProblemTypeTag;
+    typedef TTAG(ColumnCCProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

@@ -15,6 +15,9 @@ TEnd = 200 # [s]
 [Grid]
 File = ./grids/column.dgf
 
+[Problem]
+Name = columnxylolbox # name passed to the output routines
+
 ###############################################################
 # Simulation restart
 #
