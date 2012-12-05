@@ -281,10 +281,11 @@ protected:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // retrieve the source term intrinsic to the problem
-        this->problem_().source(source,
-                                this->element_(),
-                                this->fvGeometry_(),
-                                scvIdx);
+        this->problem_().boxSDSource(source,
+                                     this->element_(),
+                                     this->fvGeometry_(),
+                                     scvIdx,
+                                     this->curVolVars_());
 
         // ATTENTION: The source term of the mass balance has to be chosen as
         // div (q_momentum) in the problem file
