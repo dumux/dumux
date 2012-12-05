@@ -101,6 +101,8 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
     typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
     //! The type of the object returned by the fluidState() method
     typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
@@ -186,10 +188,10 @@ public:
         unsigned numVertices = problem.gridView().size(dim);
 
         int globalIdx;
-        if (numDofs != numVertices) // element data
-            globalIdx = problem.model().dofMapper().map(element);
-        else
+        if (isBox) // vertex data
             globalIdx = problem.model().dofMapper().map(element, scvIdx, dim);
+        else
+            globalIdx = problem.model().dofMapper().map(element);
 
         int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
 

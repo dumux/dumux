@@ -15,6 +15,9 @@ TEnd = 864000 # [s]
 [Grid]
 File = ./grids/test_3p3c.dgf
 
+[Problem]
+Name = infiltrationbox
+
 ###############################################################
 # Simulation restart
 #
