@@ -54,6 +54,8 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum { dim = GridView::dimension };
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
     /*!
      * \brief Constructor
@@ -92,15 +94,20 @@ public:
             const ElementIterator elemEndIt = gridView.template end<0>();
             for (; elemIt != elemEndIt; ++elemIt) {
                 fvGeometry.update(gridView, *elemIt);
-                for (int i = 0; i < fvGeometry.numSCV; ++i) {
-                    int globI = this->problem_().vertexMapper().map(*elemIt, i, dim);
+                for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+                {
+                    int globalIdx;
+                    if (isBox)
+                        globalIdx = this->problem_().vertexMapper().map(*elemIt, scvIdx, dim);
+                    else 
+                        globalIdx = this->problem_().elementMapper().map(*elemIt);
 
                     // calculate the old wetting phase saturation
                     const SpatialParams &spatialParams = this->problem_().spatialParams();
-                    const MaterialLawParams &mp = spatialParams.materialLawParams(*elemIt, fvGeometry, i);
+                    const MaterialLawParams &mp = spatialParams.materialLawParams(*elemIt, fvGeometry, scvIdx);
                     Scalar pcMin = MaterialLaw::pC(mp, 1.0);
-                    Scalar pW = uLastIter[globI][pwIdx];
-                    Scalar pN = std::max(this->problem_().referencePressure(*elemIt, fvGeometry, i),
+                    Scalar pW = uLastIter[globalIdx][pwIdx];
+                    Scalar pN = std::max(this->problem_().referencePressure(*elemIt, fvGeometry, scvIdx),
                                          pW + pcMin);
                     Scalar pcOld = pN - pW;
                     Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::Sw(mp, pcOld));
@@ -111,9 +118,9 @@ public:
                     Scalar pwMax = pN - MaterialLaw::pC(mp, SwOld + 0.2);
 
                     // clamp the result
-                    pW = uCurrentIter[globI][pwIdx];
+                    pW = uCurrentIter[globalIdx][pwIdx];
                     pW = std::max(pwMin, std::min(pW, pwMax));
-                    uCurrentIter[globI][pwIdx] = pW;
+                    uCurrentIter[globalIdx][pwIdx] = pW;
 
                 }
             }

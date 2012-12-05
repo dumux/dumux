@@ -119,6 +119,8 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum { dim = GridView::dimension };
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
     /*!
      * \brief All relevant primary and secondary of a given
@@ -132,25 +134,27 @@ public:
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
 
+        // get the number of degrees of freedom
+        unsigned numDofs = this->numDofs();
+
         // create the required scalar fields
-        unsigned numVertices = this->problem_().gridView().size(dim);
-        ScalarField *pW = writer.allocateManagedBuffer(numVertices);
-        ScalarField *pN = writer.allocateManagedBuffer(numVertices);
-        ScalarField *pC = writer.allocateManagedBuffer(numVertices);
-        ScalarField *Sw = writer.allocateManagedBuffer(numVertices);
-        ScalarField *Sn = writer.allocateManagedBuffer(numVertices);
-        ScalarField *rhoW = writer.allocateManagedBuffer(numVertices);
-        ScalarField *rhoN = writer.allocateManagedBuffer(numVertices);
-        ScalarField *mobW = writer.allocateManagedBuffer(numVertices);
-        ScalarField *mobN = writer.allocateManagedBuffer(numVertices);
-        ScalarField *poro = writer.allocateManagedBuffer(numVertices);
-        ScalarField *Te = writer.allocateManagedBuffer(numVertices);
+        ScalarField *pW = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pN = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pC = writer.allocateManagedBuffer(numDofs);
+        ScalarField *Sw = writer.allocateManagedBuffer(numDofs);
+        ScalarField *Sn = writer.allocateManagedBuffer(numDofs);
+        ScalarField *rhoW = writer.allocateManagedBuffer(numDofs);
+        ScalarField *rhoN = writer.allocateManagedBuffer(numDofs);
+        ScalarField *mobW = writer.allocateManagedBuffer(numDofs);
+        ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
+        ScalarField *poro = writer.allocateManagedBuffer(numDofs);
+        ScalarField *Te = writer.allocateManagedBuffer(numDofs);
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =
                 writer.allocateManagedBuffer (numElements);
 
-        FVElementGeometry fvElemGeom;
+        FVElementGeometry fvGeometry;
         VolumeVariables volVars;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
@@ -160,17 +164,21 @@ public:
             int idx = this->problem_().model().elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
 
-            fvElemGeom.update(this->gridView_(), *elemIt);
+            fvGeometry.update(this->gridView_(), *elemIt);
 
-            int numVerts = elemIt->template count<dim> ();
-            for (int i = 0; i < numVerts; ++i)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                int globalIdx;
+                if (isBox)
+                    globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
+                else 
+                    globalIdx = this->elementMapper().map(*elemIt);
+
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom,
-                               i,
+                               fvGeometry,
+                               scvIdx,
                                false);
 
                 (*pW)[globalIdx] = volVars.pressure(wPhaseIdx);
@@ -187,17 +195,34 @@ public:
             }
         }
 
-        writer.attachVertexData(*Sn, "Sn");
-        writer.attachVertexData(*Sw, "Sw");
-        writer.attachVertexData(*pN, "pn");
-        writer.attachVertexData(*pW, "pw");
-        writer.attachVertexData(*pC, "pc");
-        writer.attachVertexData(*rhoW, "rhoW");
-        writer.attachVertexData(*rhoN, "rhoN");
-        writer.attachVertexData(*mobW, "mobW");
-        writer.attachVertexData(*mobN, "mobN");
-        writer.attachVertexData(*poro, "porosity");
-        writer.attachVertexData(*Te, "temperature");
+        if (isBox) // vertex data
+        {
+            writer.attachVertexData(*Sn, "Sn");
+            writer.attachVertexData(*Sw, "Sw");
+            writer.attachVertexData(*pN, "pn");
+            writer.attachVertexData(*pW, "pw");
+            writer.attachVertexData(*pC, "pc");
+            writer.attachVertexData(*rhoW, "rhoW");
+            writer.attachVertexData(*rhoN, "rhoN");
+            writer.attachVertexData(*mobW, "mobW");
+            writer.attachVertexData(*mobN, "mobN");
+            writer.attachVertexData(*poro, "porosity");
+            writer.attachVertexData(*Te, "temperature");
+        }
+        else // cell data
+        {
+            writer.attachCellData(*Sn, "Sn");
+            writer.attachCellData(*Sw, "Sw");
+            writer.attachCellData(*pN, "pn");
+            writer.attachCellData(*pW, "pw");
+            writer.attachCellData(*pC, "pc");
+            writer.attachCellData(*rhoW, "rhoW");
+            writer.attachCellData(*rhoN, "rhoN");
+            writer.attachCellData(*mobW, "mobW");
+            writer.attachCellData(*mobN, "mobN");
+            writer.attachCellData(*poro, "porosity");
+            writer.attachCellData(*Te, "temperature");
+        }
         writer.attachCellData(*rank, "process rank");
     }
 };
