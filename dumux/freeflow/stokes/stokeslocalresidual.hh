@@ -299,11 +299,11 @@ protected:
         DimVector pressureGradAtSCVCenter(0.0);
         DimVector grad(0.0);
 
-        for (int vertexIdx = 0; vertexIdx < this->fvGeometry_().numVertices; vertexIdx++)
+        for (int scvIdx = 0; scvIdx < this->fvGeometry_().numVertices; scvIdx++)
         {
-            grad = this->fvGeometry_().subContVol[scvIdx].gradCenter[vertexIdx];
+            grad = this->fvGeometry_().subContVol[scvIdx].gradCenter[scvIdx];
             Valgrind::CheckDefined(grad);
-            grad *= elemVolVars[vertexIdx].pressure();
+            grad *= elemVolVars[scvIdx].pressure();
 
             pressureGradAtSCVCenter += grad;
         }
@@ -327,11 +327,11 @@ protected:
         assert(this->residual_.size() == this->fvGeometry_().numVertices);
         const ReferenceElement &refElement = ReferenceElements::general(this->element_().geometry().type());
 
-        // loop over vertices of the element
-        for (int vertexIdx = 0; vertexIdx < this->fvGeometry_().numVertices; vertexIdx++)
+        // loop over sub-control volums of the element
+        for (int scvIdx = 0; scvIdx < this->fvGeometry_().numVertices; scvIdx++)
         {
             // consider only SCVs on the boundary
-            if (this->fvGeometry_().subContVol[vertexIdx].inner)
+            if (this->fvGeometry_().subContVol[scvIdx].inner)
                 continue;
 
             // important at corners of the grid
@@ -340,7 +340,7 @@ protected:
             int numberOfOuterFaces = 0;
             // evaluate boundary conditions for the intersections of
             // the current element
-            const BoundaryTypes &bcTypes = this->bcTypes_(vertexIdx);
+            const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
             IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
             const IntersectionIterator &endIt = this->gridView_().iend(this->element_());
             for (; isIt != endIt; ++isIt)
@@ -359,7 +359,7 @@ protected:
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
                     if (refElement.subEntity(faceIdx, 1, faceVertIdx, dim)
-                        != vertexIdx)
+                        != scvIdx)
                         continue;
 
                     const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(faceIdx, faceVertIdx);
@@ -386,7 +386,7 @@ protected:
                         for (unsigned int i=0; i < this->residual_.size(); i++)
                             Valgrind::CheckDefined(this->residual_[i]);
                         for (int dimIdx=0; dimIdx < dim; ++dimIdx)
-                            momentumResidual[dimIdx] = this->residual_[vertexIdx][momentumXIdx+dimIdx];
+                            momentumResidual[dimIdx] = this->residual_[scvIdx][momentumXIdx+dimIdx];
 
                         //Sign is right!!!: boundary flux: -mu grad v n
                         //but to compensate outernormal -> residual - (-mu grad v n)
@@ -395,8 +395,8 @@ protected:
                     }
 
                     // evaluate fluxes at a single boundary segment
-                    asImp_()->evalNeumannSegment_(isIt, vertexIdx, boundaryFaceIdx, boundaryVars);
-                    asImp_()->evalOutflowSegment_(isIt, vertexIdx, boundaryFaceIdx, boundaryVars);
+                    asImp_()->evalNeumannSegment_(isIt, scvIdx, boundaryFaceIdx, boundaryVars);
+                    asImp_()->evalOutflowSegment_(isIt, scvIdx, boundaryFaceIdx, boundaryVars);
 
                     // count the number of outer faces to determine, if we are on
                     // a corner point and if an interpolation should be done
@@ -408,13 +408,13 @@ protected:
             {
                 // replace the mass balance by the sum of the residua of the momentum balance
                 if (momentumBalanceDirichlet_(bcTypes))
-                    replaceMassbalanceResidual_(momentumResidual, averagedNormal, vertexIdx);
+                    replaceMassbalanceResidual_(momentumResidual, averagedNormal, scvIdx);
                 else // de-stabilize (remove alpha*grad p - alpha div f
                      // from computeFlux on the boundary)
-                    removeStabilizationAtBoundary_(vertexIdx);
+                    removeStabilizationAtBoundary_(scvIdx);
             }
             if (numberOfOuterFaces == 2)
-                interpolateCornerPoints_(bcTypes, vertexIdx);
+                interpolateCornerPoints_(bcTypes, scvIdx);
         } // end loop over element vertices
 
         // evaluate the dirichlet conditions of the element
@@ -534,7 +534,7 @@ protected:
     /*!
      * \brief Remove the alpha stabilization at boundaries.
      */
-    void removeStabilizationAtBoundary_(const int vertexIdx)
+    void removeStabilizationAtBoundary_(const int scvIdx)
     {
         if (stabilizationAlpha_ != 0)
         {
@@ -550,7 +550,7 @@ protected:
                 const int i = this->fvGeometry_().subContVolFace[faceIdx].i;
                 const int j = this->fvGeometry_().subContVolFace[faceIdx].j;
 
-                if (i != vertexIdx && j != vertexIdx)
+                if (i != scvIdx && j != scvIdx)
                     continue;
 
                 const Scalar alphaH2 = stabilizationAlpha_*
@@ -560,21 +560,22 @@ protected:
 
                 stabilizationTerm *= alphaH2;
 
-                if (vertexIdx == i)
+                if (scvIdx == i)
                     this->residual_[i][massBalanceIdx] += stabilizationTerm;
-                if (vertexIdx == j)
+                if (scvIdx == j)
                     this->residual_[j][massBalanceIdx] -= stabilizationTerm;
             }
 
             //destabilize source term
-            PrimaryVariables q(0.0);
-            this->problem_().source(q,
-                                    this->element_(),
-                                    this->fvGeometry_(),
-                                    vertexIdx);
-            const Scalar alphaH2 = stabilizationAlpha_*this->fvGeometry_().subContVol[vertexIdx].volume;
-            this->residual_[vertexIdx][massBalanceIdx] += alphaH2*q[massBalanceIdx]*
-                this->fvGeometry_().subContVol[vertexIdx].volume;
+            PrimaryVariables source(0.0);
+            this->problem_().boxSDSource(source,
+                                     this->element_(),
+                                     this->fvGeometry_(),
+                                     scvIdx,
+                                     this->curVolVars_());
+            const Scalar alphaH2 = stabilizationAlpha_ * this->fvGeometry_().subContVol[scvIdx].volume;
+            this->residual_[scvIdx][massBalanceIdx] += alphaH2 * source[massBalanceIdx] *
+                this->fvGeometry_().subContVol[scvIdx].volume;
         }
     }
 
@@ -582,22 +583,22 @@ protected:
      * \brief Interpolate the pressure at corner points of the grid, thus taking the degree of freedom there. 
      * 		  This is required due to stability reasons.
      */
-    void interpolateCornerPoints_(const BoundaryTypes &bcTypes, const int vertexIdx)
+    void interpolateCornerPoints_(const BoundaryTypes &bcTypes, const int scvIdx)
     {
         // TODO: 3D
         if (bcTypes.isCouplingInflow(massBalanceIdx) || bcTypes.isCouplingOutflow(massBalanceIdx))
         {
-            if (vertexIdx == 0 || vertexIdx == 3)
-                this->residual_[vertexIdx][massBalanceIdx] =
+            if (scvIdx == 0 || scvIdx == 3)
+                this->residual_[scvIdx][massBalanceIdx] =
                     this->curPriVars_(0)[pressureIdx] - this->curPriVars_(3)[pressureIdx];
-            if (vertexIdx == 1 || vertexIdx == 2)
-                this->residual_[vertexIdx][massBalanceIdx] =
+            if (scvIdx == 1 || scvIdx == 2)
+                this->residual_[scvIdx][massBalanceIdx] =
                     this->curPriVars_(1)[pressureIdx] - this->curPriVars_(2)[pressureIdx];
         }
         else
         {
             if (!bcTypes.isDirichlet(massBalanceIdx)) // do nothing in case of dirichlet
-                this->residual_[vertexIdx][massBalanceIdx] =
+                this->residual_[scvIdx][massBalanceIdx] =
                     this->curPriVars_(0)[pressureIdx] + this->curPriVars_(3)[pressureIdx]-
                     this->curPriVars_(1)[pressureIdx] - this->curPriVars_(2)[pressureIdx];
         }
@@ -609,14 +610,14 @@ protected:
      */
     void replaceMassbalanceResidual_(const DimVector& momentumResidual,
                                      DimVector& averagedNormal,
-                                     const int vertexIdx)
+                                     const int scvIdx)
     {
         assert(averagedNormal.two_norm() != 0.0);
 
         // divide averagedNormal by its length
         averagedNormal /= averagedNormal.two_norm();
         // replace the mass balance by the sum of the residuals of the momentum balances
-        this->residual_[vertexIdx][massBalanceIdx] = momentumResidual*averagedNormal;
+        this->residual_[scvIdx][massBalanceIdx] = momentumResidual*averagedNormal;
     }
 
     /*!
