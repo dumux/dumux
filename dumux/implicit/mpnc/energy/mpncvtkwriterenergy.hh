@@ -61,7 +61,8 @@ class MPNCVtkWriterEnergy : public MPNCVtkWriterModule<TypeTag>
 
     typedef typename ParentType::ScalarVector ScalarVector;
     typedef typename ParentType::PhaseVector PhaseVector;
-
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    
 public:
     MPNCVtkWriterEnergy(const Problem &problem)
         : ParentType(problem)
@@ -76,7 +77,7 @@ public:
     template <class MultiWriter>
     void allocBuffers(MultiWriter &writer)
     {
-        if (temperatureOutput_) this->resizeScalarBuffer_(temperature_);
+        if (temperatureOutput_) this->resizeScalarBuffer_(temperature_, isBox);
     }
 
     /*!
@@ -105,7 +106,7 @@ public:
     void commitBuffers(MultiWriter &writer)
     {
         if (temperatureOutput_)
-            this->commitScalarBuffer_(writer, "T", temperature_);
+            this->commitScalarBuffer_(writer, "T", temperature_, isBox);
     }
 
 private:
@@ -142,7 +143,7 @@ class MPNCVtkWriterEnergy<TypeTag, /* enableEnergy = */ true, /* enableKineticEn
 
     typedef typename ParentType::ScalarVector ScalarVector;
     typedef typename ParentType::PhaseVector PhaseVector;
-
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
 public:
     MPNCVtkWriterEnergy(const Problem &problem)
@@ -160,9 +161,9 @@ public:
     template <class MultiWriter>
     void allocBuffers(MultiWriter &writer)
     {
-        if (temperatureOutput_) this->resizeScalarBuffer_(temperature_);
-        if (enthalpyOutput_) this->resizePhaseBuffer_(enthalpy_);
-        if (internalEnergyOutput_) this->resizePhaseBuffer_(internalEnergy_);
+        if (temperatureOutput_) this->resizeScalarBuffer_(temperature_, isBox);
+        if (enthalpyOutput_) this->resizePhaseBuffer_(enthalpy_, isBox);
+        if (internalEnergyOutput_) this->resizePhaseBuffer_(internalEnergy_, isBox);
     }
 
     /*!
@@ -196,11 +197,11 @@ public:
     void commitBuffers(MultiWriter &writer)
     {
         if (temperatureOutput_)
-            this->commitScalarBuffer_(writer, "T", temperature_);
+            this->commitScalarBuffer_(writer, "T", temperature_, isBox);
         if (enthalpyOutput_)
-            this->commitPhaseBuffer_(writer, "h_%s", enthalpy_);
+            this->commitPhaseBuffer_(writer, "h_%s", enthalpy_, isBox);
         if (internalEnergyOutput_)
-            this->commitPhaseBuffer_(writer, "u_%s", internalEnergy_);
+            this->commitPhaseBuffer_(writer, "u_%s", internalEnergy_, isBox);
     }
 
 private:

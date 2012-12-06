@@ -62,7 +62,8 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::BlockVector<DimVector> DimField;
     typedef Dune::array<DimField, numPhases> PhaseDimField;
-
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    
 public:
     MPNCVtkWriterCommon(const Problem &problem)
         : ParentType(problem)
@@ -78,6 +79,10 @@ public:
         massFracOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddMassFractions);
         moleFracOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddMoleFractions);
         molarityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddMolarities);
+        
+        // velocity output currently only works for box
+        if (!isBox)
+            velocityOutput_ = false;
     }
 
     /*!
@@ -88,42 +93,47 @@ public:
     void allocBuffers(MultiWriter &writer)
     {
         if (porosityOutput_)
-            this->resizeScalarBuffer_(porosity_);
+            this->resizeScalarBuffer_(porosity_, isBox);
         if (boundaryTypesOutput_)
-            this->resizeScalarBuffer_(boundaryTypes_);
+            this->resizeScalarBuffer_(boundaryTypes_, isBox);
 
         if (velocityOutput_) {
-            Scalar nVerts = this->problem_.gridView().size(dim);
+            Scalar nDofs = this->problem_.model().numDofs();
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                velocity_[phaseIdx].resize(nVerts);
+                velocity_[phaseIdx].resize(nDofs);
                 velocity_[phaseIdx] = 0;
             }
-            this->resizeScalarBuffer_(boxSurface_);
+            this->resizeScalarBuffer_(boxSurface_, isBox);
         }
 
-        if (saturationOutput_) this->resizePhaseBuffer_(saturation_);
-        if (pressureOutput_) this->resizePhaseBuffer_(pressure_);
-        if (densityOutput_) this->resizePhaseBuffer_(density_);
-        if (mobilityOutput_) this->resizePhaseBuffer_(mobility_);
-        if (averageMolarMassOutput_) this->resizePhaseBuffer_(averageMolarMass_);
-        if (moleFracOutput_) this->resizePhaseComponentBuffer_(moleFrac_);
-        if (massFracOutput_) this->resizePhaseComponentBuffer_(massFrac_);
-        if (molarityOutput_) this->resizePhaseComponentBuffer_(molarity_);
+        if (saturationOutput_) this->resizePhaseBuffer_(saturation_, isBox);
+        if (pressureOutput_) this->resizePhaseBuffer_(pressure_, isBox);
+        if (densityOutput_) this->resizePhaseBuffer_(density_, isBox);
+        if (mobilityOutput_) this->resizePhaseBuffer_(mobility_, isBox);
+        if (averageMolarMassOutput_) this->resizePhaseBuffer_(averageMolarMass_, isBox);
+        if (moleFracOutput_) this->resizePhaseComponentBuffer_(moleFrac_, isBox);
+        if (massFracOutput_) this->resizePhaseComponentBuffer_(massFrac_, isBox);
+        if (molarityOutput_) this->resizePhaseComponentBuffer_(molarity_, isBox);
     }
 
     /*!
      * \brief Modify the internal buffers according to the volume
      *        variables seen on an element
      */
-    void processElement(const Element &elem,
+    void processElement(const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        int numLocalVertices = elem.geometry().corners();
-        for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
-            int globalIdx = this->problem_.vertexMapper().map(elem, localVertexIdx, dim);
-            const VolumeVariables &volVars = elemVolVars[localVertexIdx];
+        for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+        {
+            int globalIdx;
+            if (isBox) // vertex data
+                globalIdx = this->problem_.vertexMapper().map(element, scvIdx, dim);
+            else
+                globalIdx = this->problem_.elementMapper().map(element);
+            
+            const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (porosityOutput_) porosity_[globalIdx] = volVars.porosity();
 
@@ -132,7 +142,7 @@ public:
             // is used for a dirichlet condition
             int tmp = 0;
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-                if (elemBcTypes[localVertexIdx].isDirichlet(eqIdx))
+                if (elemBcTypes[scvIdx].isDirichlet(eqIdx))
                     tmp += (1 << eqIdx);
             }
             if (boundaryTypesOutput_) boundaryTypes_[globalIdx] = tmp;
@@ -155,13 +165,13 @@ public:
         if (velocityOutput_) {
             for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; ++ faceIdx) {
                 int i = fvGeometry.subContVolFace[faceIdx].i;
-                int I = this->problem_.vertexMapper().map(elem, i, dim);
+                int I = this->problem_.vertexMapper().map(element, i, dim);
 
                 int j = fvGeometry.subContVolFace[faceIdx].j;
-                int J = this->problem_.vertexMapper().map(elem, j, dim);
+                int J = this->problem_.vertexMapper().map(element, j, dim);
 
                 FluxVariables fluxVars(this->problem_,
-                                       elem,
+                                       element,
                                        fvGeometry,
                                        faceIdx,
                                        elemVolVars);
@@ -191,41 +201,41 @@ public:
     void commitBuffers(MultiWriter &writer)
     {
         if (saturationOutput_)
-            this->commitPhaseBuffer_(writer, "S_%s", saturation_);
+            this->commitPhaseBuffer_(writer, "S_%s", saturation_, isBox);
 
         if (pressureOutput_)
-            this->commitPhaseBuffer_(writer, "p_%s", pressure_);
+            this->commitPhaseBuffer_(writer, "p_%s", pressure_, isBox);
 
         if (densityOutput_)
-            this->commitPhaseBuffer_(writer, "rho_%s", density_);
+            this->commitPhaseBuffer_(writer, "rho_%s", density_, isBox);
 
         if (averageMolarMassOutput_)
-            this->commitPhaseBuffer_(writer, "M_%s", averageMolarMass_);
+            this->commitPhaseBuffer_(writer, "M_%s", averageMolarMass_, isBox);
 
         if (mobilityOutput_)
-            this->commitPhaseBuffer_(writer, "lambda_%s", mobility_);
+            this->commitPhaseBuffer_(writer, "lambda_%s", mobility_, isBox);
 
         if (porosityOutput_)
-            this->commitScalarBuffer_(writer, "porosity", porosity_);
+            this->commitScalarBuffer_(writer, "porosity", porosity_, isBox);
 
         if (boundaryTypesOutput_)
-            this->commitScalarBuffer_(writer, "boundary types", boundaryTypes_);
+            this->commitScalarBuffer_(writer, "boundary types", boundaryTypes_, isBox);
 
         if (moleFracOutput_)
-            this->commitPhaseComponentBuffer_(writer, "x_%s^%s", moleFrac_);
+            this->commitPhaseComponentBuffer_(writer, "x_%s^%s", moleFrac_, isBox);
 
         if (massFracOutput_)
-            this->commitPhaseComponentBuffer_(writer, "X_%s^%s", massFrac_);
+            this->commitPhaseComponentBuffer_(writer, "X_%s^%s", massFrac_, isBox);
 
         if(molarityOutput_)
-            this->commitPhaseComponentBuffer_(writer, "c_%s^%s", molarity_);
+            this->commitPhaseComponentBuffer_(writer, "c_%s^%s", molarity_, isBox);
 
         if (velocityOutput_) {
-            int nVerts = this->problem_.gridView().size(dim);
+            int nDofs = this->problem_.model().numDofs();
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 // first, divide the velocity field by the
                 // respective finite volume's surface area
-                for (int i = 0; i < nVerts; ++i)
+                for (int i = 0; i < nDofs; ++i)
                     velocity_[phaseIdx][i] /= boxSurface_[i];
                 // commit the phase velocity
                 std::ostringstream oss;
