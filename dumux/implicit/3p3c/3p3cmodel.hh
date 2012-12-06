@@ -326,10 +326,10 @@ public:
             for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
                 int globalIdx;
-                if (numDofs == numElements) // element data
-                    globalIdx = idx;
-                else
+                if (isBox) // vertex data
                     globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
+                else
+                    globalIdx = idx;
 
                 volVars.update(sol[globalIdx],
                                this->problem_(),
