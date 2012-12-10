@@ -99,6 +99,7 @@ class TwoPModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -140,7 +141,7 @@ public:
         VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numDofs);
         VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numDofs);
 
-        if(velocityOutput) // check if velocity output is demanded
+        if (velocityOutput) // check if velocity output is demanded
         {
             // initialize velocity fields
             for (unsigned int i = 0; i < numDofs; ++i)
@@ -161,7 +162,7 @@ public:
         ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt)
         {
-            if(velocityOutput && !elemIt->geometry().type().isCube()){
+            if (velocityOutput && !elemIt->geometry().type().isCube()){
                 DUNE_THROW(Dune::InvalidStateException,
                            "Currently, velocity output only works for cubes. "
                            "Please set the EnableVelocityOutput property to false!");
@@ -173,11 +174,7 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx;
-                if (isBox)
-                    globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
-                else 
-                    globalIdx = this->elementMapper().map(*elemIt);
+                int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
                 volVars.update(sol[globalIdx],
                                this->problem_(),
@@ -197,13 +194,13 @@ public:
                 (*mobN)[globalIdx] = volVars.mobility(nPhaseIdx);
                 (*poro)[globalIdx] = volVars.porosity();
                 (*Te)[globalIdx] = volVars.temperature();
-                if(velocityOutput)
+                if (velocityOutput)
                 {
                     (*cellNum)[globalIdx] += 1;
                 }
             }
 
-            if(velocityOutput)
+            if (velocityOutput)
             {
                 // calculate vertex velocities
                 GlobalPosition tmpVelocity[numPhases];
@@ -261,11 +258,11 @@ public:
                        tmpVelocity[phaseIdx] = localNormal;
                        tmpVelocity[phaseIdx] *= q[phaseIdx];
 
-                       if(phaseIdx == wPhaseIdx){
+                       if (phaseIdx == wPhaseIdx){
                            scvVelocityW[fluxVars.face().i] += tmpVelocity[phaseIdx];
                            scvVelocityW[fluxVars.face().j] += tmpVelocity[phaseIdx];
                        }
-                       else if(phaseIdx == nPhaseIdx){
+                       else if (phaseIdx == nPhaseIdx){
                            scvVelocityN[fluxVars.face().i] += tmpVelocity[phaseIdx];
                            scvVelocityN[fluxVars.face().j] += tmpVelocity[phaseIdx];
                        }
@@ -280,18 +277,18 @@ public:
                     = elemIt->geometry().jacobianTransposed(localPos);
 
                 // transform vertex velocities from local to global coordinates
-                for (int i = 0; i < fvGeometry.numSCV; ++i)
+                for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
                 {
-                    int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                    int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
                     // calculate the subcontrolvolume velocity by the Piola transformation
                     Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
 
-                    jacobianT2.mtv(scvVelocityW[i], scvVelocity);
+                    jacobianT2.mtv(scvVelocityW[scvIdx], scvVelocity);
                     scvVelocity /= elemIt->geometry().integrationElement(localPos);
                     // add up the wetting phase subcontrolvolume velocities for each vertex
                     (*velocityW)[globalIdx] += scvVelocity;
 
-                    jacobianT2.mtv(scvVelocityN[i], scvVelocity);
+                    jacobianT2.mtv(scvVelocityN[scvIdx], scvVelocity);
                     scvVelocity /= elemIt->geometry().integrationElement(localPos);
                     // add up the nonwetting phase subcontrolvolume velocities for each vertex
                     (*velocityN)[globalIdx] += scvVelocity;
@@ -299,43 +296,26 @@ public:
             }
         }
 
-        if (isBox) // vertex data
+        writer.attachDofData(*Sn, "Sn", isBox);
+        writer.attachDofData(*Sw, "Sw", isBox);
+        writer.attachDofData(*pN, "pn", isBox);
+        writer.attachDofData(*pW, "pw", isBox);
+        writer.attachDofData(*pC, "pc", isBox);
+        writer.attachDofData(*rhoW, "rhoW", isBox);
+        writer.attachDofData(*rhoN, "rhoN", isBox);
+        writer.attachDofData(*mobW, "mobW", isBox);
+        writer.attachDofData(*mobN, "mobN", isBox);
+        writer.attachDofData(*poro, "porosity", isBox);
+        writer.attachDofData(*Te, "temperature", isBox);
+        if (velocityOutput) // check if velocity output is demanded
         {
-            writer.attachVertexData(*Sn, "Sn");
-            writer.attachVertexData(*Sw, "Sw");
-            writer.attachVertexData(*pN, "pn");
-            writer.attachVertexData(*pW, "pw");
-            writer.attachVertexData(*pC, "pc");
-            writer.attachVertexData(*rhoW, "rhoW");
-            writer.attachVertexData(*rhoN, "rhoN");
-            writer.attachVertexData(*mobW, "mobW");
-            writer.attachVertexData(*mobN, "mobN");
-            writer.attachVertexData(*poro, "porosity");
-            writer.attachVertexData(*Te, "temperature");
-            if(velocityOutput) // check if velocity output is demanded
-            {
-                // divide the vertex velocities by the number of adjacent scvs i.e. cells
-                for(unsigned int globalIdx = 0; globalIdx < velocityW->size(); ++globalIdx){
-                    (*velocityW)[globalIdx] /= (*cellNum)[globalIdx];
-                    (*velocityN)[globalIdx] /= (*cellNum)[globalIdx];
-                }
-                writer.attachVertexData(*velocityW,  "velocityW", dim);
-                writer.attachVertexData(*velocityN,  "velocityN", dim);
+            // divide the vertex velocities by the number of adjacent scvs i.e. cells
+            for(unsigned int globalIdx = 0; globalIdx < velocityW->size(); ++globalIdx){
+                (*velocityW)[globalIdx] /= (*cellNum)[globalIdx];
+                (*velocityN)[globalIdx] /= (*cellNum)[globalIdx];
             }
-        }
-        else // cell data
-        {
-            writer.attachCellData(*Sn, "Sn");
-            writer.attachCellData(*Sw, "Sw");
-            writer.attachCellData(*pN, "pn");
-            writer.attachCellData(*pW, "pw");
-            writer.attachCellData(*pC, "pc");
-            writer.attachCellData(*rhoW, "rhoW");
-            writer.attachCellData(*rhoN, "rhoN");
-            writer.attachCellData(*mobW, "mobW");
-            writer.attachCellData(*mobN, "mobN");
-            writer.attachCellData(*poro, "porosity");
-            writer.attachCellData(*Te, "temperature");
+            writer.attachDofData(*velocityW, "velocityW", isBox, dim);
+            writer.attachDofData(*velocityN, "velocityN", isBox, dim);
         }
         writer.attachCellData(*rank, "process rank");
     }

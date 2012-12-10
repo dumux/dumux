@@ -100,8 +100,10 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
      typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
      typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+     enum { dofCodim = isBox ? dim : 0 };
 
- public:
+public:
 
 
      /*!
@@ -118,24 +120,16 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
          for (unsigned i = 0; i < ParentType::staticDat_.size(); ++i)
              ParentType::staticDat_[i].visited = false;
 
-         unsigned numDofs = this->numDofs();
-         unsigned numVertices = this->problem_().gridView().size(dim);
-
          FVElementGeometry fvGeometry;
          static VolumeVariables volVars;
-         ElementIterator eIt = this->gridView_().template begin<0> ();
-         const ElementIterator &eEndIt = this->gridView_().template end<0> ();
-         for (; eIt != eEndIt; ++eIt)
+         ElementIterator elemIt = this->gridView_().template begin<0> ();
+         const ElementIterator &elemEndIt = this->gridView_().template end<0> ();
+         for (; elemIt != elemEndIt; ++elemIt)
          {
-             fvGeometry.update(this->gridView_(), *eIt);
+             fvGeometry.update(this->gridView_(), *elemIt);
              for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
              {
-                 int globalIdx;
-
-                 if (numDofs != numVertices)
-                     globalIdx = this->elementMapper().map(*eIt);
-                 else
-                     globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
+                 int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
                  if (ParentType::staticDat_[globalIdx].visited)
                      continue;
@@ -143,17 +137,17 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
                  ParentType::staticDat_[globalIdx].visited = true;
                  volVars.update(curGlobalSol[globalIdx],
                                 this->problem_(),
-                                *eIt,
+                                *elemIt,
                                 fvGeometry,
                                 scvIdx,
                                 false);
-                 const GlobalPosition &globalPos = eIt->geometry().corner(scvIdx);
+                 const GlobalPosition &globalPos = elemIt->geometry().corner(scvIdx);
                  if (primaryVarSwitch_(curGlobalSol,
                                        volVars,
                                        globalIdx,
                                        globalPos))
                  {
-                     this->jacobianAssembler().markVertexRed(globalIdx);
+                     this->jacobianAssembler().markDofRed(globalIdx);
                      wasSwitched = true;
                  }
              }

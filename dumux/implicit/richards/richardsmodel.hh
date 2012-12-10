@@ -120,6 +120,7 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum { dim = GridView::dimension };
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -168,11 +169,7 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx;
-                if (isBox)
-                    globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
-                else 
-                    globalIdx = this->elementMapper().map(*elemIt);
+                int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
                 volVars.update(sol[globalIdx],
                                this->problem_(),
@@ -195,34 +192,17 @@ public:
             }
         }
 
-        if (isBox) // vertex data
-        {
-            writer.attachVertexData(*Sn, "Sn");
-            writer.attachVertexData(*Sw, "Sw");
-            writer.attachVertexData(*pN, "pn");
-            writer.attachVertexData(*pW, "pw");
-            writer.attachVertexData(*pC, "pc");
-            writer.attachVertexData(*rhoW, "rhoW");
-            writer.attachVertexData(*rhoN, "rhoN");
-            writer.attachVertexData(*mobW, "mobW");
-            writer.attachVertexData(*mobN, "mobN");
-            writer.attachVertexData(*poro, "porosity");
-            writer.attachVertexData(*Te, "temperature");
-        }
-        else // cell data
-        {
-            writer.attachCellData(*Sn, "Sn");
-            writer.attachCellData(*Sw, "Sw");
-            writer.attachCellData(*pN, "pn");
-            writer.attachCellData(*pW, "pw");
-            writer.attachCellData(*pC, "pc");
-            writer.attachCellData(*rhoW, "rhoW");
-            writer.attachCellData(*rhoN, "rhoN");
-            writer.attachCellData(*mobW, "mobW");
-            writer.attachCellData(*mobN, "mobN");
-            writer.attachCellData(*poro, "porosity");
-            writer.attachCellData(*Te, "temperature");
-        }
+        writer.attachDofData(*Sn, "Sn", isBox);
+        writer.attachDofData(*Sw, "Sw", isBox);
+        writer.attachDofData(*pN, "pn", isBox);
+        writer.attachDofData(*pW, "pw", isBox);
+        writer.attachDofData(*pC, "pc", isBox);
+        writer.attachDofData(*rhoW, "rhoW", isBox);
+        writer.attachDofData(*rhoN, "rhoN", isBox);
+        writer.attachDofData(*mobW, "mobW", isBox);
+        writer.attachDofData(*mobN, "mobN", isBox);
+        writer.attachDofData(*poro, "porosity", isBox);
+        writer.attachDofData(*Te, "temperature", isBox);
         writer.attachCellData(*rank, "process rank");
     }
 };

@@ -57,6 +57,7 @@ class MPNCVtkWriterMass : public MPNCVtkWriterModule<TypeTag>
     enum { dim = GridView::dimension };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
     
     typedef typename ParentType::ComponentVector ComponentVector;
     bool fugacityOutput_;
@@ -82,15 +83,14 @@ public:
      * \brief Modify the internal buffers according to the volume
      *        variables seen on an element
      */
-    void processElement(const Element &elem,
-                        const FVElementGeometry &fvElemGeom,
+    void processElement(const Element &element,
+                        const FVElementGeometry &fvGeometry,
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        int numLocalVertices = elem.geometry().corners();
-        for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
-            int globalIdx = this->problem_.vertexMapper().map(elem, localVertexIdx, dim);
-            const VolumeVariables &volVars = elemVolVars[localVertexIdx];
+        for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx) {
+            const unsigned int globalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
+            const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (fugacityOutput_) {
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {

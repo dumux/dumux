@@ -91,6 +91,7 @@ class OnePTwoCBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -175,11 +176,7 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx;
-                if (isBox)
-                    globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
-                else 
-                    globalIdx = this->elementMapper().map(*elemIt);
+                int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
                 volVars.update(sol[globalIdx],
                                this->problem_(),
@@ -245,7 +242,7 @@ public:
 
                     //use vertical faces (horizontal noraml vector) to calculate vx
                     //in case of heterogeneities it seams to be better to define intrinisc permeability elementwise
-                    if(xDir > yDir)//(fluxVars.face().normal[0] > 1e-10 || fluxVars.face().normal[0] < -1e-10)// (xDir > yDir)
+                    if (xDir > yDir)//(fluxVars.face().normal[0] > 1e-10 || fluxVars.face().normal[0] < -1e-10)// (xDir > yDir)
                     {
                         // get darcy velocity
                         //calculate (v n) n/A
@@ -309,50 +306,28 @@ public:
             }
         }
 
-        if (isBox)
+        writer.attachDofData(pressure, "P", isBox);
+        writer.attachDofData(delp, "delp", isBox);
+        if (velocityOutput)
         {
-            writer.attachVertexData(pressure, "P");
-            writer.attachVertexData(delp, "delp");
-            if (velocityOutput)
-            {
-                writer.attachVertexData(velocityX, "Vx");
-                writer.attachVertexData(velocityY, "Vy");
-                if (dim > 2)
-                    writer.attachVertexData(velocityZ, "Vz");
-            }
-            char nameMoleFraction0[42], nameMoleFraction1[42];
-            snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
-            snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
-            writer.attachVertexData(moleFraction0, nameMoleFraction0);
-            writer.attachVertexData(moleFraction1, nameMoleFraction1);
-
-            char nameMassFraction0[42], nameMassFraction1[42];
-            snprintf(nameMassFraction0, 42, "X_%s", FluidSystem::componentName(0));
-            snprintf(nameMassFraction1, 42, "X_%s", FluidSystem::componentName(1));
-            writer.attachVertexData(massFraction0, nameMassFraction0);
-            writer.attachVertexData(massFraction1, nameMassFraction1);
-            writer.attachVertexData(rho, "rho");
-            writer.attachVertexData(mu, "mu");
+            writer.attachDofData(velocityX, "Vx", isBox);
+            writer.attachDofData(velocityY, "Vy", isBox);
+            if (dim > 2)
+                writer.attachDofData(velocityZ, "Vz", isBox);
         }
-        else 
-        {
-            writer.attachCellData(pressure, "P");
-            writer.attachCellData(delp, "delp");
-            char nameMoleFraction0[42], nameMoleFraction1[42];
-            snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
-            snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
-            writer.attachCellData(moleFraction0, nameMoleFraction0);
-            writer.attachCellData(moleFraction1, nameMoleFraction1);
+        char nameMoleFraction0[42], nameMoleFraction1[42];
+        snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
+        snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
+        writer.attachDofData(moleFraction0, nameMoleFraction0, isBox);
+        writer.attachDofData(moleFraction1, nameMoleFraction1, isBox);
 
-            char nameMassFraction0[42], nameMassFraction1[42];
-            snprintf(nameMassFraction0, 42, "X_%s", FluidSystem::componentName(0));
-            snprintf(nameMassFraction1, 42, "X_%s", FluidSystem::componentName(1));
-            writer.attachCellData(massFraction0, nameMassFraction0);
-            writer.attachCellData(massFraction1, nameMassFraction1);
-            writer.attachCellData(rho, "rho");
-            writer.attachCellData(mu, "mu");            
-        }
-        
+        char nameMassFraction0[42], nameMassFraction1[42];
+        snprintf(nameMassFraction0, 42, "X_%s", FluidSystem::componentName(0));
+        snprintf(nameMassFraction1, 42, "X_%s", FluidSystem::componentName(1));
+        writer.attachDofData(massFraction0, nameMassFraction0, isBox);
+        writer.attachDofData(massFraction1, nameMassFraction1, isBox);
+        writer.attachDofData(rho, "rho", isBox);
+        writer.attachDofData(mu, "mu", isBox);
         writer.attachCellData(rank, "process rank");
     }
 

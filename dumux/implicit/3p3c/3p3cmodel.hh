@@ -140,6 +140,7 @@ class ThreePThreeCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -206,10 +207,10 @@ public:
     {
         storage = 0;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        const ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            this->localResidual().evalPhaseStorage(*eIt, phaseIdx);
+        ElementIterator elemIt = this->gridView_().template begin<0>();
+        const ElementIterator elemEndIt = this->gridView_().template end<0>();
+        for (; elemIt != elemEndIt; ++elemIt) {
+            this->localResidual().evalPhaseStorage(*elemIt, phaseIdx);
 
             for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
                 storage += this->localResidual().storageTerm()[i];
@@ -325,11 +326,7 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx;
-                if (isBox) // vertex data
-                    globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
-                else
-                    globalIdx = idx;
+                int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
                 volVars.update(sol[globalIdx],
                                this->problem_(),
@@ -362,64 +359,32 @@ public:
 
         }
 
-        if (isBox) // vertex data
-        {
-            writer.attachVertexData(*saturation[wPhaseIdx], "Sw");
-            writer.attachVertexData(*saturation[nPhaseIdx], "Sn");
-            writer.attachVertexData(*saturation[gPhaseIdx], "Sg");
-            writer.attachVertexData(*pressure[wPhaseIdx], "pw");
-            writer.attachVertexData(*pressure[nPhaseIdx], "pn");
-            writer.attachVertexData(*pressure[gPhaseIdx], "pg");
-            writer.attachVertexData(*density[wPhaseIdx], "rhow");
-            writer.attachVertexData(*density[nPhaseIdx], "rhon");
-            writer.attachVertexData(*density[gPhaseIdx], "rhog");
+        writer.attachDofData(*saturation[wPhaseIdx], "Sw", isBox);
+        writer.attachDofData(*saturation[nPhaseIdx], "Sn", isBox);
+        writer.attachDofData(*saturation[gPhaseIdx], "Sg", isBox);
+        writer.attachDofData(*pressure[wPhaseIdx], "pw", isBox);
+        writer.attachDofData(*pressure[nPhaseIdx], "pn", isBox);
+        writer.attachDofData(*pressure[gPhaseIdx], "pg", isBox);
+        writer.attachDofData(*density[wPhaseIdx], "rhow", isBox);
+        writer.attachDofData(*density[nPhaseIdx], "rhon", isBox);
+        writer.attachDofData(*density[gPhaseIdx], "rhog", isBox);
 
-            for (int i = 0; i < numPhases; ++i)
-            {
-                for (int j = 0; j < numComponents; ++j)
-                {
-                    std::ostringstream oss;
-                    oss << "x^"
-                        << FluidSystem::phaseName(i)
-                        << "_"
-                        << FluidSystem::componentName(j);
-                    writer.attachVertexData(*moleFraction[i][j], oss.str().c_str());
-                }
-            }
-            writer.attachVertexData(*poro, "porosity");
-            writer.attachVertexData(*perm, "permeability");
-            writer.attachVertexData(*temperature, "temperature");
-            writer.attachVertexData(*phasePresence, "phase presence");
-        }
-        else // cell data
+        for (int i = 0; i < numPhases; ++i)
         {
-            writer.attachCellData(*saturation[wPhaseIdx], "Sw");
-            writer.attachCellData(*saturation[nPhaseIdx], "Sn");
-            writer.attachCellData(*saturation[gPhaseIdx], "Sg");
-            writer.attachCellData(*pressure[wPhaseIdx], "pw");
-            writer.attachCellData(*pressure[nPhaseIdx], "pn");
-            writer.attachCellData(*pressure[gPhaseIdx], "pg");
-            writer.attachCellData(*density[wPhaseIdx], "rhow");
-            writer.attachCellData(*density[nPhaseIdx], "rhon");
-            writer.attachCellData(*density[gPhaseIdx], "rhog");
-
-            for (int i = 0; i < numPhases; ++i)
+            for (int j = 0; j < numComponents; ++j)
             {
-                for (int j = 0; j < numComponents; ++j)
-                {
-                    std::ostringstream oss;
-                    oss << "x^"
-                        << FluidSystem::phaseName(i)
-                        << "_"
-                        << FluidSystem::componentName(j);
-                    writer.attachCellData(*moleFraction[i][j], oss.str().c_str());
-                }
+                std::ostringstream oss;
+                oss << "x^"
+                    << FluidSystem::phaseName(i)
+                    << "_"
+                    << FluidSystem::componentName(j);
+                writer.attachDofData(*moleFraction[i][j], oss.str().c_str(), isBox);
             }
-            writer.attachCellData(*poro, "porosity");
-            writer.attachCellData(*perm, "permeability");
-            writer.attachCellData(*temperature, "temperature");
-            writer.attachCellData(*phasePresence, "phase presence");
         }
+        writer.attachDofData(*poro, "porosity", isBox);
+        writer.attachDofData(*perm, "permeability", isBox);
+        writer.attachDofData(*temperature, "temperature", isBox);
+        writer.attachDofData(*phasePresence, "phase presence", isBox);
         
         writer.attachCellData(*rank, "process rank");
     }
@@ -483,19 +448,14 @@ public:
 
         FVElementGeometry fvGeometry;
         static VolumeVariables volVars;
-        ElementIterator eIt = this->gridView_().template begin<0> ();
-        const ElementIterator &eEndIt = this->gridView_().template end<0> ();
-        for (; eIt != eEndIt; ++eIt)
+        ElementIterator elemIt = this->gridView_().template begin<0> ();
+        const ElementIterator &elemEndIt = this->gridView_().template end<0> ();
+        for (; elemIt != elemEndIt; ++elemIt)
         {
-            fvGeometry.update(this->gridView_(), *eIt);
+            fvGeometry.update(this->gridView_(), *elemIt);
             for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx;
-
-                if (isBox)
-                    globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
-                else
-                    globalIdx = this->elementMapper().map(*eIt);
+                int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
                 if (staticDat_[globalIdx].visited)
                     continue;
@@ -503,7 +463,7 @@ public:
                 staticDat_[globalIdx].visited = true;
                 volVars.update(curGlobalSol[globalIdx],
                                this->problem_(),
-                               *eIt,
+                               *elemIt,
                                fvGeometry,
                                scvIdx,
                                false);

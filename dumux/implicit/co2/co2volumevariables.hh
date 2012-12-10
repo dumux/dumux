@@ -87,6 +87,8 @@ class CO2VolumeVariables: public TwoPTwoCVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum { dim = GridView::dimension};
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
     static const Scalar R; // universial nonwetting constant
 
@@ -112,7 +114,7 @@ public:
                 const int scvIdx,
                 const bool isOldSol)
     {
-    	// Update BoxVolVars but not 2p2cvolvars
+        // Update BoxVolVars but not 2p2cvolvars
         // ToDo: Is BaseClassType the right name?
         BaseClassType::update(priVars,
                 problem,
@@ -121,14 +123,7 @@ public:
                 scvIdx,
                 isOldSol);
 
-        unsigned numDofs = problem.model().numDofs();
-        unsigned numVertices = problem.gridView().size(dim);
-
-        int globalIdx;
-        if (numDofs != numVertices) // element data
-            globalIdx = problem.model().dofMapper().map(element);
-        else
-            globalIdx = problem.model().dofMapper().map(element, scvIdx, dim);
+        int globalIdx = problem.model().dofMapper().map(element, scvIdx, dofCodim);
 
         int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
 

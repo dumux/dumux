@@ -63,6 +63,7 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
     typedef Dune::BlockVector<DimVector> DimField;
     typedef Dune::array<DimField, numPhases> PhaseDimField;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
     
 public:
     MPNCVtkWriterCommon(const Problem &problem)
@@ -127,11 +128,7 @@ public:
     {
         for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
         {
-            int globalIdx;
-            if (isBox) // vertex data
-                globalIdx = this->problem_.vertexMapper().map(element, scvIdx, dim);
-            else
-                globalIdx = this->problem_.elementMapper().map(element);
+            int globalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
             
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 

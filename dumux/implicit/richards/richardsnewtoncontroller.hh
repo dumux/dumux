@@ -55,6 +55,7 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum { dim = GridView::dimension };
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -96,11 +97,7 @@ public:
                 fvGeometry.update(gridView, *elemIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
                 {
-                    int globalIdx;
-                    if (isBox)
-                        globalIdx = this->problem_().vertexMapper().map(*elemIt, scvIdx, dim);
-                    else 
-                        globalIdx = this->problem_().elementMapper().map(*elemIt);
+                    int globalIdx = this->model_().dofMapper().map(*elemIt, scvIdx, dofCodim);
 
                     // calculate the old wetting phase saturation
                     const SpatialParams &spatialParams = this->problem_().spatialParams();
