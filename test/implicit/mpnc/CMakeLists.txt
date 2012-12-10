@@ -18,7 +18,7 @@ link_directories(${DumuxLinkDirectories})
 include_directories(${DumuxIncludeDirectories})
 
 # make sure the grids are present in the build directory
-add_custom_command(TARGET "test_mpnc"
+add_custom_command(TARGET "test_boxmpnc"
                    POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E
                         copy_directory 
