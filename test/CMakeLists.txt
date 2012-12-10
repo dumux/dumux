@@ -1,4 +1,4 @@
-add_subdirectory("boxmodels")
+add_subdirectory("implicit")
 add_subdirectory("common")
 add_subdirectory("decoupled")
 add_subdirectory("freeflow")

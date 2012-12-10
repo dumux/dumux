@@ -26,8 +26,8 @@
 #define DUMUX_STOKES_VOLUME_VARIABLES_HH
 
 #include "stokesproperties.hh"
-#include "dumux/implicit/common/implicitvolumevariables.hh"
 
+#include <dumux/implicit/common/implicitvolumevariables.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 
 namespace Dumux
@@ -40,9 +40,9 @@ namespace Dumux
  *        finite volume in the Stokes box model.
  */
 template <class TypeTag>
-class StokesVolumeVariables : public BoxVolumeVariables<TypeTag>
+class StokesVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef ImplicitVolumeVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
