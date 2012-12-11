@@ -27,10 +27,7 @@
 #ifndef DUMUX_3P3C_MODEL_HH
 #define DUMUX_3P3C_MODEL_HH
 
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
-
 #include "3p3cproperties.hh"
-#include "3p3clocalresidual.hh"
 
 namespace Dumux
 {

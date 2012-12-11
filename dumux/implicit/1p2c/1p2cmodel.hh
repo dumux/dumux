@@ -28,9 +28,6 @@
 #define DUMUX_ONEP_TWOC_MODEL_HH
 
 #include "1p2cproperties.hh"
-#include "1p2clocalresidual.hh"
-
-#include <dumux/boxmodels/common/boxmodel.hh>
 
 namespace Dumux
 {

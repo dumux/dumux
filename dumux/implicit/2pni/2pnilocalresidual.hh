@@ -27,11 +27,7 @@
 #define DUMUX_NEW_2PNI_LOCAL_RESIDUAL_HH
 
 #include "2pniproperties.hh"
-
 #include <dumux/implicit/2p/2plocalresidual.hh>
-
-#include <dumux/implicit/2pni/2pnivolumevariables.hh>
-#include <dumux/implicit/2pni/2pnifluxvariables.hh>
 
 namespace Dumux
 {

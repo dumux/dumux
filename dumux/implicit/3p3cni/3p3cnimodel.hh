@@ -24,6 +24,7 @@
 #ifndef DUMUX_NEW_3P3CNI_MODEL_HH
 #define DUMUX_NEW_3P3CNI_MODEL_HH
 
+#include "3p3cniproperties.hh"
 #include <dumux/implicit/3p3c/3p3cmodel.hh>
 
 namespace Dumux {

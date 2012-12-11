@@ -36,7 +36,7 @@
 #include "3p3cvolumevariables.hh"
 #include "3p3cproperties.hh"
 #include "3p3cnewtoncontroller.hh"
-// #include "3p3cboundaryvariables.hh"
+#include "3p3clocalresidual.hh"
 
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>

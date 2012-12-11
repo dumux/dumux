@@ -26,16 +26,7 @@
 #ifndef DUMUX_2P2C_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_2P2C_LOCAL_RESIDUAL_BASE_HH
 
-#include <dumux/boxmodels/common/boxmodel.hh>
-#include <dumux/common/math.hh>
-
 #include "2p2cproperties.hh"
-#include "2p2cvolumevariables.hh"
-#include "2p2cfluxvariables.hh"
-#include "2p2cnewtoncontroller.hh"
-
-#include <iostream>
-#include <vector>
 
 namespace Dumux
 {

@@ -25,19 +25,7 @@
 #ifndef DUMUX_3P3C_LOCAL_RESIDUAL_HH
 #define DUMUX_3P3C_LOCAL_RESIDUAL_HH
 
-#include <dumux/boxmodels/common/boxmodel.hh>
-#include <dumux/common/math.hh>
-
 #include "3p3cproperties.hh"
-#include "3p3cvolumevariables.hh"
-#include "3p3cfluxvariables.hh"
-#include "3p3cnewtoncontroller.hh"
-#include "3p3cproperties.hh"
-
-#include <iostream>
-#include <vector>
-
-//#define VELOCITY_OUTPUT 1 // uncomment this line if an output of the velocity is needed
 
 namespace Dumux
 {

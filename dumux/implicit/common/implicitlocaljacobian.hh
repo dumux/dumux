@@ -25,6 +25,9 @@
 
 #include <dune/istl/matrix.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/valgrind.hh>
+
+#include "implicitproperties.hh"
 
 namespace Dumux
 {

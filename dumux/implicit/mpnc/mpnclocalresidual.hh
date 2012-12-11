@@ -23,9 +23,7 @@
 #include "diffusion/diffusion.hh"
 #include "energy/mpnclocalresidualenergy.hh"
 #include "mass/mpnclocalresidualmass.hh"
-
-#include <dumux/boxmodels/common/boxmodel.hh>
-#include <dumux/common/math.hh>
+#include "mpncproperties.hh"
 
 namespace Dumux
 {

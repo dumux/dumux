@@ -33,6 +33,7 @@
 #include "2p2cfluxvariables.hh"
 #include "2p2cvolumevariables.hh"
 #include "2p2cproperties.hh"
+#include "2p2clocalresidual.hh"
 #include "2p2cnewtoncontroller.hh"
 
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>

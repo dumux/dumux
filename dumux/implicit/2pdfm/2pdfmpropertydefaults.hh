@@ -41,6 +41,7 @@
 #include "2pdfmfluxvariables.hh"
 #include "2pdfmvolumevariables.hh"
 #include "2pdfmproperties.hh"
+#include "2pdfmlocalresidual.hh"
 
 namespace Dumux
 {

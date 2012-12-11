@@ -30,9 +30,9 @@
 
 #include "2pmodel.hh"
 #include "2pindices.hh"
-#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include "2pvolumevariables.hh"
 #include "2pproperties.hh"
+#include "2plocalresidual.hh"
 
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -40,6 +40,7 @@
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 
 namespace Dumux
 {

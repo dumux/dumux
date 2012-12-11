@@ -26,10 +26,7 @@
 #define DUMUX_BOXMODELS_2PDFM_MODEL_HH
 
 #include <dumux/implicit/2p/2pmodel.hh>
-
 #include "2pdfmproperties.hh"
-#include "2pdfmlocalresidual.hh"
-#include "2pdfmproblem.hh"
 
 namespace Dumux
 {

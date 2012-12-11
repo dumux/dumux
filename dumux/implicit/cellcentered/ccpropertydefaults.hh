@@ -41,9 +41,12 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag>
-class CCModel;
+// forward declarations
+template<class TypeTag> class CCModel;
+template<class TypeTag> class CCLocalResidual;
+template<class TypeTag> class CCElementBoundaryTypes;
+template<class TypeTag> class CCElementVolumeVariables;
+template<class TypeTag> class CCFVElementGeometry;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry
