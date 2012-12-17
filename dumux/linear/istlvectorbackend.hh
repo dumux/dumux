@@ -3,11 +3,11 @@
 /*****************************************************************************
  *   This file is based on the file of DUNE-PDELab with the same name,       *
  *   http://www.dune-project.org/pdelab/.                                    *
- *   Some changes are made such that the backends work for the vectors and   *
+ *   Some changes are made such that the backend works for the vectors and   *
  *   matrices used in Dumux.                                                 *
  *****************************************************************************/
-#ifndef DUNE_ISTLVECTORBACKEND_HH
-#define DUNE_ISTLVECTORBACKEND_HH
+#ifndef DUMUX_ISTLVECTORBACKEND_HH
+#define DUMUX_ISTLVECTORBACKEND_HH
 
 #include<vector>
 
@@ -17,6 +17,17 @@
 #include <dune/pdelab/backend/istlmatrixbackend.hh>
 
 namespace Dumux {
+
+    template<typename Backend, typename GridFunctionSpace, typename FieldType>
+    struct BackendVectorSelectorHelper
+    {};
+
+    template<typename GridFunctionSpace, typename FieldType>
+    struct BackendVectorSelector
+    {
+      typedef typename GridFunctionSpace::Traits::BackendType Backend;
+      typedef typename BackendVectorSelectorHelper<Backend, GridFunctionSpace, FieldType>::Type Type;
+    };
 
     template<int> class ISTLVectorBackend;
 
@@ -218,7 +229,7 @@ namespace Dumux {
       };
 
       //export Matrix Backend Type
-      typedef ISTLBCRSMatrixBackend<BLOCKSIZE,BLOCKSIZE> MatrixBackend;
+      typedef Dune::PDELab::ISTLBCRSMatrixBackend<BLOCKSIZE,BLOCKSIZE> MatrixBackend;
 
       //! container construction
 

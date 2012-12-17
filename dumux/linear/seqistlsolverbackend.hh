@@ -6,8 +6,8 @@
  *   Some changes are made such that the backends work for the vectors and   *
  *   matrices used in Dumux.                                                 *
  *****************************************************************************/
-#ifndef DUNE_SEQISTLSOLVERBACKEND_HH
-#define DUNE_SEQISTLSOLVERBACKEND_HH
+#ifndef DUMUX_SEQISTLSOLVERBACKEND_HH
+#define DUMUX_SEQISTLSOLVERBACKEND_HH
 
 #include <dune/common/deprecated.hh>
 #include <dune/common/mpihelper.hh>
@@ -76,7 +76,7 @@ namespace Dumux {
     template<template<class,class,class,int> class Preconditioner,
              template<class> class Solver>
     class ISTLBackend_SEQ_Base
-      : public SequentialNorm, public LinearResultStorage
+      : public Dune::PDELab::SequentialNorm, public Dune::PDELab::LinearResultStorage
     {
     public:
       /*! \brief make a linear solver object
@@ -123,7 +123,7 @@ namespace Dumux {
 
     template<template<typename> class Solver>
     class ISTLBackend_SEQ_ILU0 
-      :  public SequentialNorm, public LinearResultStorage
+      :  public Dune::PDELab::SequentialNorm, public Dune::PDELab::LinearResultStorage
     {
     public:
       /*! \brief make a linear solver object
@@ -166,7 +166,7 @@ namespace Dumux {
 
     template<template<typename> class Solver>
     class ISTLBackend_SEQ_ILUn
-      :  public SequentialNorm, public LinearResultStorage
+      :  public Dune::PDELab::SequentialNorm, public Dune::PDELab::LinearResultStorage
     {
     public:
       /*! \brief make a linear solver object
@@ -384,7 +384,7 @@ namespace Dumux {
      * @brief Solver backend using SuperLU as a direct solver.
      */
     class ISTLBackend_SEQ_SuperLU
-      : public SequentialNorm, public LinearResultStorage
+      : public Dune::PDELab::SequentialNorm, public Dune::PDELab::LinearResultStorage
     {
     public:
       /*! \brief make a linear solver object
@@ -433,7 +433,7 @@ namespace Dumux {
 
     //! Solver to be used for explicit time-steppers with (block-)diagonal mass matrix
     class ISTLBackend_SEQ_ExplicitDiagonal
-      : public SequentialNorm, public LinearResultStorage
+      : public Dune::PDELab::SequentialNorm, public Dune::PDELab::LinearResultStorage
     {
     public:
       /*! \brief make a linear solver object
@@ -491,13 +491,13 @@ namespace Dumux {
     };
       
     template<class GO, template<class,class,class,int> class Preconditioner, template<class> class Solver>
-    class ISTLBackend_SEQ_AMG : public LinearResultStorage
+    class ISTLBackend_SEQ_AMG : public Dune::PDELab::LinearResultStorage
     {
       typedef typename GO::Traits::TrialGridFunctionSpace GFS;
       typedef typename GO::Traits::Jacobian M;
       typedef typename M::BaseT MatrixType;
       typedef typename GO::Traits::Domain V;
-      typedef typename BlockProcessor<GFS>::template AMGVectorTypeSelector<V>::Type VectorType;
+      typedef typename Dune::PDELab::BlockProcessor<GFS>::template AMGVectorTypeSelector<V>::Type VectorType;
       typedef Preconditioner<MatrixType,VectorType,VectorType,1> Smoother;
       typedef Dune::MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
       typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
@@ -550,7 +550,7 @@ namespace Dumux {
       */
       void apply(MatrixType& A, V& z, V& r, typename V::ElementType reduction)
       {
-        Timer watch;
+        Dune::Timer watch;
         MatrixType& mat=A;
         typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
           Dune::Amg::FirstDiagonal> > Criterion;
@@ -572,7 +572,7 @@ namespace Dumux {
         Dune::InverseOperatorResult stat;
 
         Solver<VectorType> solver(oop,*amg,reduction,maxiter,verbose);
-        solver.apply(BlockProcessor<GFS>::getVector(z),BlockProcessor<GFS>::getVector(r),stat);
+        solver.apply(Dune::PDELab::BlockProcessor<GFS>::getVector(z),Dune::PDELab::BlockProcessor<GFS>::getVector(r),stat);
         stats.tsolve= watch.elapsed();
         res.converged  = stat.converged;
         res.iterations = stat.iterations;

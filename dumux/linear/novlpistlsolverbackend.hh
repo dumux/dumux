@@ -6,8 +6,8 @@
  *   Some changes are made such that the backends work for the vectors and   *
  *   matrices used in Dumux.                                                 *
  *****************************************************************************/
-#ifndef DUNE_NOVLPISTLSOLVERBACKEND_HH
-#define DUNE_NOVLPISTLSOLVERBACKEND_HH
+#ifndef DUMUX_NOVLPISTLSOLVERBACKEND_HH
+#define DUMUX_NOVLPISTLSOLVERBACKEND_HH
 
 #include <cstddef>
 
@@ -83,7 +83,7 @@ namespace Dumux {
        *             without the helper_ parameter instead.
        */
       NonoverlappingOperator (const GFS& gfs_, const M& A,
-                              const ParallelISTLHelper<GFS>& helper_)
+                              const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
         DUNE_DEPRECATED
         : gfs(gfs_), _A_(A)
       {
@@ -163,7 +163,7 @@ namespace Dumux {
 
       /*! \brief Constructor needs to know the grid function space
        */
-      NonoverlappingScalarProduct (const GFS& gfs_, const ParallelISTLHelper<GFS>& helper_)
+      NonoverlappingScalarProduct (const GFS& gfs_, const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
         : gfs(gfs_), helper(helper_)
       {}
 
@@ -202,7 +202,7 @@ namespace Dumux {
 
     private:
       const GFS& gfs;
-      const ParallelISTLHelper<GFS>& helper;
+      const Dune::PDELab::ParallelISTLHelper<GFS>& helper;
     };
 
     // parallel Richardson preconditioner
@@ -224,7 +224,7 @@ namespace Dumux {
       };
 
       //! \brief Constructor.
-      NonoverlappingRichardson (const GFS& gfs_, const ParallelISTLHelper<GFS>& helper_)
+      NonoverlappingRichardson (const GFS& gfs_, const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
         : gfs(gfs_), helper(helper_)
       {
       }
@@ -249,7 +249,7 @@ namespace Dumux {
 
     private:
       const GFS& gfs;
-      const ParallelISTLHelper<GFS>& helper;
+      const Dune::PDELab::ParallelISTLHelper<GFS>& helper;
     };
 
     //! parallel non-overlapping Jacobi preconditioner
@@ -315,10 +315,10 @@ namespace Dumux {
         for(std::size_t i = 0; i < gfsSize; ++i)
           DBackend::access(diagonal, i) = MBackend::access(m, i, i);
 
-        AddDataHandle<GFS, Diagonal> addDH(gfs, diagonal);
+        Dune::PDELab::AddDataHandle<GFS, Diagonal> addDH(gfs, diagonal);
         gfs.gridView().communicate(addDH,
-                                   InteriorBorder_InteriorBorder_Interface,
-                                   ForwardCommunication);
+                                   Dune::InteriorBorder_InteriorBorder_Interface,
+                                   Dune::ForwardCommunication);
       }
 
       //! Prepare the preconditioner.
@@ -374,7 +374,7 @@ namespace Dumux {
       typename V::ElementType norm (const V& v) const
       {
         V x(v); // make a copy because it has to be made consistent
-        typedef Dune::PDELab::NonoverlappingScalarProduct<GFS,V> PSP;
+        typedef NonoverlappingScalarProduct<GFS,V> PSP;
         PSP psp(gfs,phelper);
         psp.make_consistent(x);
         return psp.norm(x);
@@ -390,11 +390,11 @@ namespace Dumux {
       template<class M, class V, class W>
       void apply(M& A, V& z, W& r, typename V::ElementType reduction)
       {
-        typedef Dune::PDELab::NonoverlappingOperator<GFS,M,V,W> POP;
+        typedef NonoverlappingOperator<GFS,M,V,W> POP;
         POP pop(gfs,A);
-        typedef Dune::PDELab::NonoverlappingScalarProduct<GFS,V> PSP;
+        typedef NonoverlappingScalarProduct<GFS,V> PSP;
         PSP psp(gfs,phelper);
-        typedef Dune::PDELab::NonoverlappingRichardson<GFS,V,W> PRICH;
+        typedef NonoverlappingRichardson<GFS,V,W> PRICH;
         PRICH prich(gfs,phelper);
         int verb=0;
         if (gfs.gridView().comm().rank()==0) verb=verbose;
@@ -430,7 +430,7 @@ namespace Dumux {
 
       const GFS& gfs;
       PHELPER phelper;
-      LinearSolverResult<double> res;
+      Dune::PDELab::LinearSolverResult<double> res;
       unsigned maxiter;
       int verbose;
 
@@ -491,8 +491,8 @@ namespace Dumux {
 
         int verb=0;
         if (gfs.gridView().comm().rank()==0) verb=verbose;
-        CGSolver<V> solver(pop,psp,ppre,reduction,maxiter,verb);
-        InverseOperatorResult stat;
+        Dune::CGSolver<V> solver(pop,psp,ppre,reduction,maxiter,verb);
+        Dune::InverseOperatorResult stat;
         solver.apply(z,r,stat);
         res.converged  = stat.converged;
         res.iterations = stat.iterations;
@@ -502,7 +502,7 @@ namespace Dumux {
       }
 
       //! Return access to result data
-      const LinearSolverResult<double>& result() const
+      const Dune::PDELab::LinearSolverResult<double>& result() const
       { return res; }
     };
 
@@ -531,7 +531,7 @@ namespace Dumux {
       typename V::ElementType norm (const V& v) const
       {
         V x(v); // make a copy because it has to be made consistent
-        typedef Dune::PDELab::NonoverlappingScalarProduct<GFS,V> PSP;
+        typedef NonoverlappingScalarProduct<GFS,V> PSP;
         PSP psp(gfs,phelper);
         psp.make_consistent(x);
         return psp.norm(x);
@@ -547,11 +547,11 @@ namespace Dumux {
       template<class M, class V, class W>
       void apply(M& A, V& z, W& r, typename V::ElementType reduction)
       {
-        typedef Dune::PDELab::NonoverlappingOperator<GFS,M,V,W> POP;
+        typedef NonoverlappingOperator<GFS,M,V,W> POP;
         POP pop(gfs,A);
-        typedef Dune::PDELab::NonoverlappingScalarProduct<GFS,V> PSP;
+        typedef NonoverlappingScalarProduct<GFS,V> PSP;
         PSP psp(gfs,phelper);
-        typedef Dune::PDELab::NonoverlappingRichardson<GFS,V,W> PRICH;
+        typedef NonoverlappingRichardson<GFS,V,W> PRICH;
         PRICH prich(gfs,phelper);
         int verb=0;
         if (gfs.gridView().comm().rank()==0) verb=verbose;
@@ -606,7 +606,7 @@ namespace Dumux {
       template<class V>
       typename V::ElementType norm (const V& v) const
       {
-        typedef Dune::PDELab::NonoverlappingScalarProduct<GFS,V> PSP;
+        typedef NonoverlappingScalarProduct<GFS,V> PSP;
         V x(v); // make a copy because it has to be made consistent
         PSP psp(gfs,phelper);
         psp.make_consistent(x);
@@ -684,7 +684,7 @@ namespace Dumux {
         VertexIterator vertexEndIt = gridView_.template end<dim>();
         for (VertexIterator vertexIt = gridView_.template begin<dim>(); vertexIt != vertexEndIt; ++vertexIt)
         {
-          if (vertexIt->partitionType() == BorderEntity)
+          if (vertexIt->partitionType() == Dune::BorderEntity)
           {
             int localIdx = gridView_.indexSet().index(*vertexIt);
             IdType globalIdx = gridView_.grid().globalIdSet().id(*vertexIt);
@@ -701,7 +701,7 @@ namespace Dumux {
 
       //! A DataHandle class to exchange matrix sparsity patterns
       class MatPatternExchange
-        : public CommDataHandleIF<MatPatternExchange,IdType> {
+        : public Dune::CommDataHandleIF<MatPatternExchange,IdType> {
         typedef typename Matrix::RowIterator RowIterator;
         typedef typename Matrix::ColIterator ColIterator;
       public:
@@ -792,7 +792,7 @@ namespace Dumux {
         MatPatternExchange (const GridView& gridView,
                             const std::map<IdType,int>& g2i,
                             const std::map<int,IdType>& i2g, Matrix& A, 
-                            const ParallelISTLHelper<GFS>& helper)
+                            const Dune::PDELab::ParallelISTLHelper<GFS>& helper)
           : gridView_(gridView), gid2Index_(g2i), index2GID_(i2g),
             sparsity_(A.N()), A_(A), helper_(helper)
         {}
@@ -803,7 +803,7 @@ namespace Dumux {
         const std::map<int,IdType>& index2GID_;
         std::vector<std::set<int> > sparsity_;
         Matrix& A_;
-        const ParallelISTLHelper<GFS>& helper_;
+        const Dune::PDELab::ParallelISTLHelper<GFS>& helper_;
       };
       
       //! Local matrix blocks associated with the global id set
@@ -817,7 +817,7 @@ namespace Dumux {
 
       //! A DataHandle class to exchange matrix entries
       class MatEntryExchange
-      : public CommDataHandleIF<MatEntryExchange,MatEntry> {
+      : public Dune::CommDataHandleIF<MatEntryExchange,MatEntry> {
         typedef typename Matrix::RowIterator RowIterator;
         typedef typename Matrix::ColIterator ColIterator;
       public:
@@ -911,14 +911,14 @@ namespace Dumux {
           @param A Matrix to operate on.
           @param helper ParallelelISTLHelper.
       */
-      void getextendedmatrix (Matrix& A,const ParallelISTLHelper<GFS>& helper)
+      void getextendedmatrix (Matrix& A,const Dune::PDELab::ParallelISTLHelper<GFS>& helper)
       {
         if (gridView_.comm().size() > 1) {
           Matrix tmp(A);
           std::size_t nnz=0;        
           // get entries from other processes
           MatPatternExchange datahandle(gridView_, gid2Index_, index2GID_, A, helper);
-          gridView_.communicate(datahandle, InteriorBorder_InteriorBorder_Interface, ForwardCommunication);
+          gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
           std::vector<std::set<int> >& sparsity = datahandle.sparsity();
           // add own entries, count number of nonzeros
           for (RowIterator i = A.begin(); i != A.end(); ++i){
@@ -954,7 +954,7 @@ namespace Dumux {
         if (gridView_.comm().size() > 1)
         {
           MatEntryExchange datahandle(gridView_, gid2Index_, index2GID_, A);
-          gridView_.communicate(datahandle, InteriorBorder_InteriorBorder_Interface, ForwardCommunication);
+          gridView_.communicate(datahandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
         }
       }
 
@@ -993,7 +993,7 @@ namespace Dumux {
       typename Vector::ElementType norm (const Vector& v) const
       {
         Vector x(v); // make a copy because it has to be made consistent
-        typedef Dune::PDELab::NonoverlappingScalarProduct<GFS,Vector> PSP;
+        typedef NonoverlappingScalarProduct<GFS,Vector> PSP;
         PSP psp(gfs,phelper);
         psp.make_consistent(x);
         return psp.norm(x);
@@ -1009,10 +1009,10 @@ namespace Dumux {
       template<class M, class V, class W>
       void apply(M& A, V& z, W& r, typename V::ElementType reduction)
       { 
-        typedef typename CommSelector<96,Dune::MPIHelper::isFake>::type Comm;
+        typedef typename Dune::PDELab::CommSelector<96,Dune::MPIHelper::isFake>::type Comm;
         typedef typename M::BaseT MatrixType;
         MatrixType& mat=A.base();
-        typedef typename BlockProcessor<GFS>::template AMGVectorTypeSelector<V>::Type VectorType;
+        typedef typename Dune::PDELab::BlockProcessor<GFS>::template AMGVectorTypeSelector<V>::Type VectorType;
 #if HAVE_MPI
         Comm oocc(gfs.gridView().comm(),Dune::SolverCategory::nonoverlapping);
         typedef VertexExchanger<GO,MatrixType> Exchanger;
@@ -1133,15 +1133,15 @@ namespace Dumux {
     
     template<class GO,int s, template<class,class,class,int> class Preconditioner,
              template<class> class Solver>
-    class ISTLBackend_AMG_NOVLP : public LinearResultStorage
+    class ISTLBackend_AMG_NOVLP : public Dune::PDELab::LinearResultStorage
     {
       typedef typename GO::Traits::TrialGridFunctionSpace GFS;
       typedef typename Dune::PDELab::ParallelISTLHelper<GFS> PHELPER;
       typedef typename GO::Traits::Jacobian M;
       typedef typename M::BaseT MatrixType;
       typedef typename GO::Traits::Domain V;
-      typedef typename BlockProcessor<GFS>::template AMGVectorTypeSelector<V>::Type VectorType;
-      typedef typename CommSelector<s,Dune::MPIHelper::isFake>::type Comm;
+      typedef typename Dune::PDELab::BlockProcessor<GFS>::template AMGVectorTypeSelector<V>::Type VectorType;
+      typedef typename Dune::PDELab::CommSelector<s,Dune::MPIHelper::isFake>::type Comm;
 #if HAVE_MPI
       typedef Preconditioner<MatrixType,VectorType,VectorType,1> Smoother;
       typedef Dune::NonoverlappingBlockPreconditioner<Comm,Smoother> ParSmoother;
@@ -1209,7 +1209,7 @@ namespace Dumux {
       typename V::ElementType norm (const V& v) const
       {
         V x(v); // make a copy because it has to be made consistent
-        typedef Dune::PDELab::NonoverlappingScalarProduct<GFS,V> PSP;
+        typedef NonoverlappingScalarProduct<GFS,V> PSP;
         PSP psp(gfs,phelper);
         psp.make_consistent(x);
         return psp.norm(x);
@@ -1217,7 +1217,7 @@ namespace Dumux {
       
       void apply(MatrixType& A, V& z, V& r, typename V::ElementType reduction)
       {
-        Timer watch;
+        Dune::Timer watch;
         MatrixType& mat=A;
         typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
           Dune::Amg::FirstDiagonal> > Criterion;
@@ -1264,7 +1264,7 @@ namespace Dumux {
         }
         watch.reset();
         Solver<VectorType> solver(oop,sp,*amg,reduction,maxiter,verb);
-        solver.apply(BlockProcessor<GFS>::getVector(z),BlockProcessor<GFS>::getVector(r),stat);
+        solver.apply(Dune::PDELab::BlockProcessor<GFS>::getVector(z),Dune::PDELab::BlockProcessor<GFS>::getVector(r),stat);
         stats.tsolve= watch.elapsed();
         res.converged  = stat.converged;
         res.iterations = stat.iterations;

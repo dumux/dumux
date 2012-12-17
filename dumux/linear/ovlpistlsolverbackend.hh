@@ -6,8 +6,8 @@
  *   Some changes are made such that the backends work for the vectors and   *
  *   matrices used in Dumux.                                                 *
  *****************************************************************************/
-#ifndef DUNE_OVLPISTLSOLVERBACKEND_HH
-#define DUNE_OVLPISTLSOLVERBACKEND_HH
+#ifndef DUMUX_OVLPISTLSOLVERBACKEND_HH
+#define DUMUX_OVLPISTLSOLVERBACKEND_HH
 
 #include <dune/common/deprecated.hh>
 #include <dune/common/mpihelper.hh>
@@ -97,7 +97,7 @@ namespace Dumux {
 
       /*! \brief Constructor needs to know the grid function space
        */
-      OverlappingScalarProduct (const GFS& gfs_, const ParallelISTLHelper<GFS>& helper_)
+      OverlappingScalarProduct (const GFS& gfs_, const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
         : gfs(gfs_), helper(helper_)
       {}
 
@@ -128,7 +128,7 @@ namespace Dumux {
 
     private:
       const GFS& gfs;
-      const ParallelISTLHelper<GFS>& helper;
+      const Dune::PDELab::ParallelISTLHelper<GFS>& helper;
     };
 
     // wrapped sequential preconditioner
@@ -153,7 +153,7 @@ namespace Dumux {
 
       //! Constructor.
       OverlappingWrappedPreconditioner (const GFS& gfs_, P& prec_, const CC& cc_,
-                                        const ParallelISTLHelper<GFS>& helper_)
+                                        const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
         : gfs(gfs_), prec(prec_), cc(cc_), helper(helper_)
       {}
 
@@ -190,7 +190,7 @@ namespace Dumux {
       const GFS& gfs;
       P& prec;
       const CC& cc;
-      const ParallelISTLHelper<GFS>& helper;
+      const Dune::PDELab::ParallelISTLHelper<GFS>& helper;
     };
 
 
@@ -284,7 +284,7 @@ namespace Dumux {
         \param helper_ The parallel istl helper.
       */
       RestrictedSuperLUSubdomainSolver (const GFS& gfs_, const M& A_,
-                                        const ParallelISTLHelper<GFS>& helper_)
+                                        const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
         : gfs(gfs_), A(A_), solver(A_,false), helper(helper_) // this does the decomposition
       {}
 
@@ -316,7 +316,7 @@ namespace Dumux {
       const GFS& gfs;
       const M& A;
       Dune::SuperLU<ISTLM> solver;
-      const ParallelISTLHelper<GFS>& helper;
+      const Dune::PDELab::ParallelISTLHelper<GFS>& helper;
     };
 #endif
 
@@ -354,20 +354,20 @@ namespace Dumux {
         return sqrt(static_cast<double>(this->dot(x,x)));
       }
 
-      const  ParallelISTLHelper<GFS>& parallelHelper()
+      const  Dune::PDELab::ParallelISTLHelper<GFS>& parallelHelper()
       {
         return helper;
       }
       
     private:
       const GFS& gfs;
-      ParallelISTLHelper<GFS> helper;
+      Dune::PDELab::ParallelISTLHelper<GFS> helper;
     };
     
 
     template<typename GFS, typename X>
     class OVLPScalarProduct
-      : public ScalarProduct<X>
+      : public Dune::ScalarProduct<X>
     {
     public:
       enum {category=Dune::SolverCategory::overlapping};
@@ -392,7 +392,7 @@ namespace Dumux {
              template<class,class,class,int> class Preconditioner,
              template<class> class Solver>
     class ISTLBackend_OVLP_Base
-      : public OVLPScalarProductImplementation<GFS>, public LinearResultStorage
+      : public OVLPScalarProductImplementation<GFS>, public Dune::PDELab::LinearResultStorage
     {
     public:
       /*! \brief make a linear solver object
@@ -418,13 +418,13 @@ namespace Dumux {
       template<class M, class V, class W>
       void apply(M& A, V& z, W& r, typename V::ElementType reduction)
       {
-        typedef Dune::PDELab::OverlappingOperator<C,M,V,W> POP;
+        typedef OverlappingOperator<C,M,V,W> POP;
         POP pop(c,A);
         typedef OVLPScalarProduct<GFS,V> PSP;
         PSP psp(*this);
         typedef Preconditioner<M,V,W,1> SeqPrec;
         SeqPrec seqprec(A,steps,1.0);
-        typedef Dune::PDELab::OverlappingWrappedPreconditioner<C,GFS,SeqPrec> WPREC;
+        typedef OverlappingWrappedPreconditioner<C,GFS,SeqPrec> WPREC;
         WPREC wprec(gfs,seqprec,c,this->parallelHelper());
         int verb=0;
         if (gfs.gridView().comm().rank()==0) verb=verbose;
@@ -449,7 +449,7 @@ namespace Dumux {
     template<class GFS, class C,
              template<class> class Solver>
     class ISTLBackend_OVLP_ILU0_Base
-      : public OVLPScalarProductImplementation<GFS>, public LinearResultStorage
+      : public OVLPScalarProductImplementation<GFS>, public Dune::PDELab::LinearResultStorage
     {
     public:
       /*! \brief make a linear solver object
@@ -473,13 +473,13 @@ namespace Dumux {
       template<class M, class V, class W>
       void apply(M& A, V& z, W& r, typename V::ElementType reduction)
       {
-        typedef Dune::PDELab::OverlappingOperator<C,M,V,W> POP;
+        typedef OverlappingOperator<C,M,V,W> POP;
         POP pop(c,A);
         typedef OVLPScalarProduct<GFS,V> PSP;
         PSP psp(*this);
-        typedef SeqILU0<M,V,W,1> SeqPrec;
+        typedef Dune::SeqILU0<M,V,W,1> SeqPrec;
         SeqPrec seqprec(A,1.0);
-        typedef Dune::PDELab::OverlappingWrappedPreconditioner<C,GFS,SeqPrec> WPREC;
+        typedef OverlappingWrappedPreconditioner<C,GFS,SeqPrec> WPREC;
         WPREC wprec(gfs,seqprec,c,this->parallelHelper());
         int verb=0;
         if (gfs.gridView().comm().rank()==0) verb=verbose;
@@ -575,7 +575,7 @@ namespace Dumux {
 
     template<class GFS, class C, template<typename> class Solver>
     class ISTLBackend_OVLP_SuperLU_Base
-      : public OVLPScalarProductImplementation<GFS>, public LinearResultStorage
+      : public OVLPScalarProductImplementation<GFS>, public Dune::PDELab::LinearResultStorage
     {
     public:
       /*! \brief make a linear solver object
@@ -600,12 +600,12 @@ namespace Dumux {
       template<class M, class V, class W>
       void apply(M& A, V& z, W& r, typename V::ElementType reduction)
       {
-        typedef Dune::PDELab::OverlappingOperator<C,M,V,W> POP;
+        typedef OverlappingOperator<C,M,V,W> POP;
         POP pop(c,A);
         typedef OVLPScalarProduct<GFS,V> PSP;
         PSP psp(*this);
 #if HAVE_SUPERLU
-        typedef Dune::PDELab::SuperLUSubdomainSolver<GFS,M,V,W> PREC;
+        typedef SuperLUSubdomainSolver<GFS,M,V,W> PREC;
         PREC prec(gfs,A);
         int verb=0;
         if (gfs.gridView().comm().rank()==0) verb=verbose;
@@ -686,7 +686,7 @@ namespace Dumux {
      */
     template<class GFS>
     class ISTLBackend_OVLP_ExplicitDiagonal
-      : public LinearResultStorage
+      : public Dune::PDELab::LinearResultStorage
     {
     public:
       /*! \brief make a linear solver object
@@ -709,7 +709,7 @@ namespace Dumux {
       typename V::ElementType norm(const V& v) const
       {
         dune_static_assert
-          (AlwaysFalse<V>::value,
+          (Dune::AlwaysFalse<V>::value,
            "ISTLBackend_OVLP_ExplicitDiagonal::norm() should not be "
            "neccessary, so we skipped the implementation.  If you have a "
            "scenario where you need it, please implement it or report back to "
@@ -770,15 +770,15 @@ namespace Dumux {
 
     template<class GO, int s, template<class,class,class,int> class Preconditioner,
              template<class> class Solver>
-    class ISTLBackend_AMG : public LinearResultStorage
+    class ISTLBackend_AMG : public Dune::PDELab::LinearResultStorage
     {
       typedef typename GO::Traits::TrialGridFunctionSpace GFS;
       typedef typename Dune::PDELab::ParallelISTLHelper<GFS> PHELPER;
       typedef typename GO::Traits::Jacobian M;
       typedef typename M::BaseT MatrixType;
       typedef typename GO::Traits::Domain V;
-      typedef typename BlockProcessor<GFS>::template AMGVectorTypeSelector<V>::Type VectorType;
-      typedef typename CommSelector<s,Dune::MPIHelper::isFake>::type Comm;
+      typedef typename Dune::PDELab::BlockProcessor<GFS>::template AMGVectorTypeSelector<V>::Type VectorType;
+      typedef typename Dune::PDELab::CommSelector<s,Dune::MPIHelper::isFake>::type Comm;
 #if HAVE_MPI
       typedef Preconditioner<MatrixType,VectorType,VectorType,1> Smoother;
       typedef Dune::BlockPreconditioner<VectorType,VectorType,Comm,Smoother> ParSmoother;
@@ -849,7 +849,7 @@ namespace Dumux {
       */
       typename V::ElementType norm (const V& v) const
       {
-        typedef Dune::PDELab::OverlappingScalarProduct<GFS,V> PSP;
+        typedef OverlappingScalarProduct<GFS,V> PSP;
         PSP psp(gfs,phelper);
         return psp.norm(v);
       }
@@ -864,7 +864,7 @@ namespace Dumux {
       template <class Vector>
       void apply(MatrixType& A, Vector& z, Vector& r, typename V::ElementType reduction)
       {
-        Timer watch;
+        Dune::Timer watch;
         Comm oocc(gfs.gridView().comm());
         MatrixType& mat=A;
         typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
@@ -898,7 +898,7 @@ namespace Dumux {
         Solver<VectorType> solver(oop,sp,*amg,reduction,maxiter,verb);
         Dune::InverseOperatorResult stat;
         
-//        solver.apply(BlockProcessor<GFS>::getVector(z),BlockProcessor<GFS>::getVector(r),stat);
+//        solver.apply(Dune::PDELab::BlockProcessor<GFS>::getVector(z),Dune::PDELab::BlockProcessor<GFS>::getVector(r),stat);
         solver.apply(z,r,stat);
         stats.tsolve= watch.elapsed();
         res.converged  = stat.converged;
