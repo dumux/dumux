@@ -95,7 +95,7 @@ public:
             const ElementIterator elemEndIt = gridView.template end<0>();
             for (; elemIt != elemEndIt; ++elemIt) {
                 fvGeometry.update(gridView, *elemIt);
-                for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
                     int globalIdx = this->model_().dofMapper().map(*elemIt, scvIdx, dofCodim);
 

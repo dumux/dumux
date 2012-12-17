@@ -110,24 +110,28 @@ public:
     int numVertices; //!< number of verts
     int numEdges; //!< number of edges
     int numFaces; //!< number of faces (0 in < 3D)
-    int numSCV; //!< number of subcontrol volumes
+    int numScv; //!< number of subcontrol volumes
+    int numSCV; //!< \deprecated number of subcontrol volumes
     int numNeighbors; //!< number of neighboring elements including the element itself
-    int numFAP; //!< number of flux approximation points
+    int numFap; //!< number of flux approximation points
+    int numFAP; //!< \deprecated number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< stores pointers for the neighboring elements
     
-    void updateInner(const Element& e)
+    void updateInner(const Element& element)
     {
-        const Geometry& geometry = e.geometry();
+        const Geometry& geometry = element.geometry();
 
         elementVolume = geometry.volume();
         elementGlobal = geometry.center();
         elementLocal = geometry.local(elementGlobal);
 
-        numVertices = e.template count<dim>();
-        numEdges = e.template count<dim-1>();
-        numFaces = (dim<3)? 0 : e.template count<1>();
-        numSCV = 1;
-        numFAP = 2;
+        numVertices = element.template count<dim>();
+        numEdges = element.template count<dim-1>();
+        numFaces = (dim<3)? 0 : element.template count<1>();
+        numScv = 1;
+        numSCV = numScv;
+        numFap = 2;
+        numFAP = numFap;
         
         subContVol[0].local = elementLocal;
         subContVol[0].global = elementGlobal;
@@ -138,19 +142,19 @@ public:
         numNeighbors = 1;
         neighbors.clear();
         neighbors.reserve(maxNE);
-        ElementPointer elementPointer(e);
+        ElementPointer elementPointer(element);
         neighbors.push_back(elementPointer);
     }
     
-    void update(const GridView& gridView, const Element& e)
+    void update(const GridView& gridView, const Element& element)
     {
-        updateInner(e);
+        updateInner(element);
         
-        const Geometry& geometry = e.geometry();
+        const Geometry& geometry = element.geometry();
 
         // fill neighbor information and control volume face data:
-        IntersectionIterator endit = gridView.iend(e);
-        for (IntersectionIterator it = gridView.ibegin(e); it != endit; ++it)
+        IntersectionIterator endit = gridView.iend(element);
+        for (IntersectionIterator it = gridView.ibegin(element); it != endit; ++it)
         {
             // neighbor information and inner cvf data:
             if (it->neighbor())

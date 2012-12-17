@@ -586,9 +586,11 @@ public:
     int numVertices; //!< number of verts
     int numEdges; //!< number of edges
     int numFaces; //!< number of faces (0 in < 3D)
-    int numSCV; //!< number of subcontrol volumes
+    int numScv; //!< number of subcontrol volumes
+    int numSCV; //!< \deprecated number of subcontrol volumes
     int numNeighbors; //!< needed for compatibility with cc models
-    int numFAP; //!< number of flux approximation points
+    int numFap; //!< number of flux approximation points
+    int numFAP; //!< \deprecated number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
     
     const LocalFiniteElementCache feCache_;
@@ -614,15 +616,17 @@ public:
         numVertices = referenceElement.size(dim);
         numEdges = referenceElement.size(dim-1);
         numFaces = (dim<3)?0:referenceElement.size(1);
-        numSCV = numVertices;
+        numScv = numVertices;
+        numSCV = numScv;
         numNeighbors = 0;
 
         bool useTwoPointFlux
             = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseTwoPointFlux);
         if (useTwoPointFlux)
-            numFAP = 2;
+            numFap = 2;
         else
-            numFAP = numVertices;
+            numFap = numVertices;
+        numFAP = numFap;
 
         // corners:
         for (int vert = 0; vert < numVertices; vert++) {

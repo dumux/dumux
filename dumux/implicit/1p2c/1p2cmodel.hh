@@ -171,7 +171,7 @@ public:
             fvGeometry.update(this->gridView_(), *elemIt);
             elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
                 int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 

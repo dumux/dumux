@@ -115,7 +115,7 @@ public:
 
         // calculate the phase storage for all sub-control volumes
         for (int scvIdx=0;
-             scvIdx < fvGeometry.numSCV;
+             scvIdx < fvGeometry.numScv;
              scvIdx++)
         {
             PrimaryVariables tmpPriVars(0.0);
@@ -219,7 +219,7 @@ public:
                          curVolVars,
                          bcType);
 
-        for (int i = 0; i < this->fvGeometry_().numSCV; ++i) {
+        for (int i = 0; i < this->fvGeometry_().numScv; ++i) {
             // add the two auxiliary equations, make sure that the
             // dirichlet boundary condition is conserved
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)

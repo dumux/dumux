@@ -90,7 +90,7 @@ public:
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx) {
+        for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx) {
             const unsigned int globalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 
@@ -176,7 +176,7 @@ public:
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx) {
+        for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx) {
             int gobalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 

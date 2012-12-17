@@ -86,7 +86,7 @@ public:
         // calculate temperature gradient using finite element
         // gradients
         Vector temperatureGrad(0);
-        for (int idx = 0; idx < fvGeometry.numFAP; idx++)
+        for (int idx = 0; idx < fvGeometry.numFap; idx++)
         {
             Vector feGrad = this->face().grad[idx];
 

@@ -109,7 +109,7 @@ protected:
         // calculate densities at the integration points of the face
         DimVector tmp(0.0);
         for (int idx = 0;
-             idx < this->fvGeometry_.numFAP;
+             idx < this->fvGeometry_.numFap;
              idx++) // loop over adjacent vertices
         {
             // index for the element volume variables 
@@ -135,7 +135,7 @@ protected:
         // calculate gradients
         DimVector tmp(0.0);
         for (int idx = 0;
-             idx < this->fvGeometry_.numFAP;
+             idx < this->fvGeometry_.numFap;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx

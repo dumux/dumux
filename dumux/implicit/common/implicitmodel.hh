@@ -883,7 +883,7 @@ protected:
             fvGeometry.update(gridView_(), *eIt);
 
             // loop over all element vertices, i.e. sub control volumes
-            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; scvIdx++)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
             {
                 // get the global index of the degree of freedom
                 int globalIdx = dofMapper().map(*eIt, scvIdx, dofCodim);
