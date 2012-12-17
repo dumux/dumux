@@ -24,8 +24,6 @@
 #ifndef DUMUX_AMGBACKEND_HH
 #define DUMUX_AMGBACKEND_HH
 
-#include <dune/pdelab/finiteelementmap/p0fem.hh>
-#include <dune/pdelab/finiteelementmap/q1fem.hh>
 #include <dune/pdelab/gridoperator/gridoperator.hh>
 
 #include "linearsolverproperties.hh"
@@ -40,8 +38,10 @@ namespace Properties
 NEW_PROP_TAG(GridOperator);
 NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(GridView);
-NEW_PROP_TAG(ImplicitIsBox);
 NEW_PROP_TAG(NumEq);
+NEW_PROP_TAG(ImplicitIsBox);
+NEW_PROP_TAG(ImplicitLocalFemMap);
+NEW_PROP_TAG(ImplicitPDELabBackend);
 }
 
 template <class Matrix, class Vector>
@@ -70,17 +70,15 @@ void scaleLinearSystem(Matrix& matrix, Vector& rhs)
 /*!
  * \brief Provides a linear solver using the PDELab AMG backend.
  */
-template <class TypeTag, class LocalFemMap, class PDELabBackend>
+template <class TypeTag>
 class AMGBackend
 {
-public:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    
+    typedef typename GET_PROP_TYPE(TypeTag, ImplicitLocalFemMap) LocalFemMap;
+    typedef typename GET_PROP_TYPE(TypeTag, ImplicitPDELabBackend) PDELabBackend;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum { dim = GridView::dimension };
-
     typedef typename Dune::PDELab::NoConstraints Constraints;
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     typedef Dune::PDELab::GridFunctionSpace<GridView, 
@@ -94,8 +92,6 @@ private:
                                                 > GridFunctionSpace;
     typedef typename GridFunctionSpace::template ConstraintsContainer<Scalar>::Type ConstraintsTrafo;
     typedef int LocalOperator;
-
-public:
     typedef Dune::PDELab::GridOperator<GridFunctionSpace,
                                        GridFunctionSpace,
                                        LocalOperator,
@@ -106,6 +102,7 @@ public:
                                        true
                                       > GridOperator;
 
+public:
     AMGBackend(const Problem& problem)
     : problem_(problem)
     {}
@@ -140,44 +137,6 @@ private:
     const Problem& problem_;
     PDELabBackend *imp_;
     Dune::InverseOperatorResult result_;
-};
-
-template <class TypeTag>
-class CCAMGBackend : public AMGBackend<TypeTag, 
-                                       Dune::PDELab::P0LocalFiniteElementMap<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                             typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                             AMGBackend::GridView::dimension>, 
-                                       ISTLBackend_BCGS_AMG_SSOR<typename AMGBackend::GridOperator> >
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename AMGBackend<TypeTag, 
-                                Dune::PDELab::P0LocalFiniteElementMap<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                      typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                      typename AMGBackend::GridView::dimension>, 
-                                ISTLBackend_BCGS_AMG_SSOR<typename AMGBackend::GridOperator> > ParentType;
-public:
-    CCAMGBackend(const Problem& problem)
-    : ParentType(problem)
-    {}
-};
-
-template <class TypeTag>
-class BoxAMGBackend : public AMGBackend<TypeTag, 
-                                       Dune::PDELab::Q1LocalFiniteElementMap<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                             typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                             typename AMGBackend::GridView::dimension>, 
-                                       ISTLBackend_NOVLP_BCGS_AMG_SSOR<typename AMGBackend::GridOperator> >
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename AMGBackend<TypeTag, 
-                                Dune::PDELab::P0LocalFiniteElementMap<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                      typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                      typename AMGBackend::GridView::dimension>, 
-                                ISTLBackend_NOVLP_BCGS_AMG_SSOR<typename AMGBackend::GridOperator> > ParentType;
-public:
-    BoxAMGBackend(const Problem& problem)
-    : ParentType(problem)
-    {}
 };
 
 template <class TypeTag>

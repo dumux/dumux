@@ -31,6 +31,12 @@
 #ifndef DUMUX_CC_PROPERTY_DEFAULTS_HH
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
 
+#if HAVE_DUNE_PDELAB
+#include <dune/pdelab/finiteelementmap/p0fem.hh>
+#include <dumux/linear/ovlpistlsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
+#endif
+
 #include <dumux/implicit/common/implicitpropertydefaults.hh>
 #include "ccassembler.hh"
 #include "ccfvelementgeometry.hh"
@@ -69,6 +75,25 @@ SET_TYPE_PROP(CCModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(CCModel, ImplicitIsBox, false);
+
+#if HAVE_DUNE_PDELAB
+//! use the element-wise constant local FEM space by default
+SET_PROP(CCModel, ImplicitLocalFemSpace)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum{dim = GridView::dimension};
+public:
+    typedef Dune::PDELab::P0LocalFiniteElementMap<Scalar,Scalar,dim>  type;
+};
+
+SET_PROP(CCModel, ImplicitPDELabBackend)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef Dumux::ISTLBackend_BCGS_AMG_SSOR<GridOperator> type;
+};
+#endif
 
 } // namespace Properties
 } // namespace Dumux

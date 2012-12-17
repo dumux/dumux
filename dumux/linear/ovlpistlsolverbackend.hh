@@ -41,7 +41,7 @@ namespace Dumux {
 
     // operator that resets result to zero at constrained DOFS
     template<class CC, class M, class X, class Y>
-    class OverlappingOperator : public Dune::AssembledLinearOperator<M,X,Y>
+    class PDELabOverlappingOperator : public Dune::AssembledLinearOperator<M,X,Y>
     {
     public:
       //! export types
@@ -53,7 +53,7 @@ namespace Dumux {
       //redefine the category, that is the only difference
       enum {category=Dune::SolverCategory::overlapping};
 
-      OverlappingOperator (const CC& cc_, const M& A)
+      PDELabOverlappingOperator (const CC& cc_, const M& A)
         : cc(cc_), _A_(A)
       {}
 
@@ -85,7 +85,7 @@ namespace Dumux {
     // new scalar product assuming at least overlap 1
     // uses unique partitioning of nodes for parallelization
     template<class GFS, class X>
-    class OverlappingScalarProduct : public Dune::ScalarProduct<X>
+    class PDELabOverlappingScalarProduct : public Dune::ScalarProduct<X>
     {
     public:
       //! export types
@@ -97,7 +97,7 @@ namespace Dumux {
 
       /*! \brief Constructor needs to know the grid function space
        */
-      OverlappingScalarProduct (const GFS& gfs_, const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
+      PDELabOverlappingScalarProduct (const GFS& gfs_, const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
         : gfs(gfs_), helper(helper_)
       {}
 
@@ -418,7 +418,7 @@ namespace Dumux {
       template<class M, class V, class W>
       void apply(M& A, V& z, W& r, typename V::ElementType reduction)
       {
-        typedef OverlappingOperator<C,M,V,W> POP;
+        typedef PDELabOverlappingOperator<C,M,V,W> POP;
         POP pop(c,A);
         typedef OVLPScalarProduct<GFS,V> PSP;
         PSP psp(*this);
@@ -473,7 +473,7 @@ namespace Dumux {
       template<class M, class V, class W>
       void apply(M& A, V& z, W& r, typename V::ElementType reduction)
       {
-        typedef OverlappingOperator<C,M,V,W> POP;
+        typedef PDELabOverlappingOperator<C,M,V,W> POP;
         POP pop(c,A);
         typedef OVLPScalarProduct<GFS,V> PSP;
         PSP psp(*this);
@@ -600,7 +600,7 @@ namespace Dumux {
       template<class M, class V, class W>
       void apply(M& A, V& z, W& r, typename V::ElementType reduction)
       {
-        typedef OverlappingOperator<C,M,V,W> POP;
+        typedef PDELabOverlappingOperator<C,M,V,W> POP;
         POP pop(c,A);
         typedef OVLPScalarProduct<GFS,V> PSP;
         PSP psp(*this);
@@ -849,7 +849,7 @@ namespace Dumux {
       */
       typename V::ElementType norm (const V& v) const
       {
-        typedef OverlappingScalarProduct<GFS,V> PSP;
+        typedef PDELabOverlappingScalarProduct<GFS,V> PSP;
         PSP psp(gfs,phelper);
         return psp.norm(v);
       }

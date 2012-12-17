@@ -28,6 +28,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
 
+#include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/vertexborderlistfromgrid.hh>
@@ -36,7 +37,6 @@
 #include <dumux/linear/overlappingpreconditioner.hh>
 #include <dumux/linear/overlappingscalarproduct.hh>
 #include <dumux/linear/overlappingoperator.hh>
-#include <dumux/implicit/box/boxproperties.hh>
 
 namespace Dumux
 {

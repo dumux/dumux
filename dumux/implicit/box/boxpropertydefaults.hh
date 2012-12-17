@@ -27,6 +27,12 @@
 #ifndef DUMUX_BOX_PROPERTY_DEFAULTS_HH
 #define DUMUX_BOX_PROPERTY_DEFAULTS_HH
 
+#if HAVE_DUNE_PDELAB
+#include <dune/pdelab/finiteelementmap/q1fem.hh>
+#include <dumux/linear/novlpistlsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
+#endif
+
 #include <dumux/implicit/common/implicitpropertydefaults.hh>
 #include "boxassembler.hh"
 #include "boxfvelementgeometry.hh"
@@ -73,6 +79,25 @@ SET_BOOL_PROP(BoxModel, ImplicitUseTwoPointFlux, false);
 
 //! indicate that this is a box discretization
 SET_BOOL_PROP(BoxModel, ImplicitIsBox, true);
+
+#if HAVE_DUNE_PDELAB
+//! use the local FEM space associated with cubes by default
+SET_PROP(BoxModel, ImplicitLocalFemSpace)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum{dim = GridView::dimension};
+public:
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type;
+};
+
+SET_PROP(BoxModel, ImplicitPDELabBackend)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef Dumux::ISTLBackend_NOVLP_BCGS_AMG_SSOR<GridOperator> type;
+};
+#endif
 
 } // namespace Properties
 } // namespace Dumux
