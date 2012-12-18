@@ -82,7 +82,7 @@ SET_BOOL_PROP(BoxModel, ImplicitIsBox, true);
 
 #if HAVE_DUNE_PDELAB
 //! use the local FEM space associated with cubes by default
-SET_PROP(BoxModel, ImplicitLocalFemSpace)
+SET_PROP(BoxModel, ImplicitLocalFemMap)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

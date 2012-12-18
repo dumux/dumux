@@ -134,7 +134,7 @@ NEW_PROP_TAG(DofMapper);
 NEW_PROP_TAG(ImplicitIsBox);
 
 //! the local fem space used for the AMG backend
-NEW_PROP_TAG(ImplicitLocalFemSpace);
+NEW_PROP_TAG(ImplicitLocalFemMap);
 
 //! the PDELab backend used for the AMG backend
 NEW_PROP_TAG(ImplicitPDELabBackend);

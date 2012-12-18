@@ -18,17 +18,6 @@
 
 namespace Dumux {
 
-    template<typename Backend, typename GridFunctionSpace, typename FieldType>
-    struct BackendVectorSelectorHelper
-    {};
-
-    template<typename GridFunctionSpace, typename FieldType>
-    struct BackendVectorSelector
-    {
-      typedef typename GridFunctionSpace::Traits::BackendType Backend;
-      typedef typename BackendVectorSelectorHelper<Backend, GridFunctionSpace, FieldType>::Type Type;
-    };
-
     template<int> class ISTLVectorBackend;
 
     template<typename T, typename E, int BLOCKSIZE>
@@ -259,15 +248,19 @@ namespace Dumux {
         return c.base()[i/BLOCKSIZE][i%BLOCKSIZE];
       }
     };
+} // namespace Dumux
 
+namespace Dune {
+namespace PDELab {
+    
     template<int BLOCKSIZE,typename T, typename E>
-    struct BackendVectorSelectorHelper<ISTLVectorBackend<BLOCKSIZE>, T, E>
+    struct BackendVectorSelectorHelper<Dumux::ISTLVectorBackend<BLOCKSIZE>, T, E>
     {
-      typedef ISTLBlockVectorContainer<T,E,BLOCKSIZE> Type;
+      typedef Dumux::ISTLBlockVectorContainer<T,E,BLOCKSIZE> Type;
     };
 
+}
+}
 
-
-} // namespace Dumux
 
 #endif

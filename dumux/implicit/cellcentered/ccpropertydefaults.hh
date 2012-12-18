@@ -32,7 +32,7 @@
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
 
 #if HAVE_DUNE_PDELAB
-#include <dune/pdelab/finiteelementmap/p0fem.hh>
+#include <dumux/linear/p0fem.hh>
 #include <dumux/linear/ovlpistlsolverbackend.hh>
 #include <dumux/linear/amgbackend.hh>
 #endif
@@ -78,13 +78,13 @@ SET_BOOL_PROP(CCModel, ImplicitIsBox, false);
 
 #if HAVE_DUNE_PDELAB
 //! use the element-wise constant local FEM space by default
-SET_PROP(CCModel, ImplicitLocalFemSpace)
+SET_PROP(CCModel, ImplicitLocalFemMap)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum{dim = GridView::dimension};
 public:
-    typedef Dune::PDELab::P0LocalFiniteElementMap<Scalar,Scalar,dim>  type;
+    typedef Dumux::P0LocalFiniteElementMap<Scalar,Scalar,dim>  type;
 };
 
 SET_PROP(CCModel, ImplicitPDELabBackend)

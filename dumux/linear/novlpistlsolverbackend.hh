@@ -485,7 +485,7 @@ namespace Dumux {
         PSP psp(gfs,phelper);
 
         typedef typename M::ElementType MField;
-        typedef typename BackendVectorSelector<GFS,MField>::Type Diagonal;
+        typedef typename Dune::PDELab::BackendVectorSelector<GFS,MField>::Type Diagonal;
         typedef NonoverlappingJacobi<Diagonal,V,W> PPre;
         PPre ppre(gfs,A);
 

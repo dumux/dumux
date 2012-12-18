@@ -76,7 +76,6 @@ class AMGBackend
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ImplicitLocalFemMap) LocalFemMap;
-    typedef typename GET_PROP_TYPE(TypeTag, ImplicitPDELabBackend) PDELabBackend;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum { dim = GridView::dimension };
     typedef typename Dune::PDELab::NoConstraints Constraints;
@@ -84,7 +83,7 @@ class AMGBackend
     typedef Dune::PDELab::GridFunctionSpace<GridView, 
                                             LocalFemMap, 
                                             Constraints, 
-                                            Dumux::ISTLVectorBackend<numEq> 
+                                            ISTLVectorBackend<numEq> 
                                            > ScalarGridFunctionSpace;
     typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, 
                                                  numEq, 
@@ -92,7 +91,9 @@ class AMGBackend
                                                 > GridFunctionSpace;
     typedef typename GridFunctionSpace::template ConstraintsContainer<Scalar>::Type ConstraintsTrafo;
     typedef int LocalOperator;
-    typedef Dune::PDELab::GridOperator<GridFunctionSpace,
+
+public:
+    typedef typename Dune::PDELab::GridOperator<GridFunctionSpace,
                                        GridFunctionSpace,
                                        LocalOperator,
                                        Dune::PDELab::ISTLBCRSMatrixBackend<numEq, numEq>,
@@ -101,19 +102,23 @@ class AMGBackend
                                        ConstraintsTrafo,
                                        true
                                       > GridOperator;
+    typedef typename GET_PROP_TYPE(TypeTag, ImplicitPDELabBackend) PDELabBackend;
 
-public:
     AMGBackend(const Problem& problem)
     : problem_(problem)
-    {}
+    {
+        fem_ = new LocalFemMap();
+        constraints_ = new Constraints();
+        scalarGridFunctionSpace_ = new ScalarGridFunctionSpace(problem.gridView(), *fem_, *constraints_);
+        gridFunctionSpace_ = new GridFunctionSpace(*scalarGridFunctionSpace_);
+        imp_ = new PDELabBackend(gridFunctionSpace_,
+                GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations),
+                GET_PROP_VALUE(TypeTag, LinearSolverVerbosity));
+    }
 
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        imp_ = new PDELabBackend(problem_.gridFunctionSpace(),
-                GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations),
-                GET_PROP_VALUE(TypeTag, LinearSolverVerbosity));
-
         static const double residReduction = GET_PROP_VALUE(TypeTag, LinearSolverResidualReduction);
         imp_->apply(A, x, b, residReduction);
 
@@ -135,6 +140,10 @@ public:
 
 private:
     const Problem& problem_;
+    LocalFemMap *fem_;
+    Constraints *constraints_;
+    ScalarGridFunctionSpace *scalarGridFunctionSpace_;
+    GridFunctionSpace *gridFunctionSpace_;
     PDELabBackend *imp_;
     Dune::InverseOperatorResult result_;
 };
