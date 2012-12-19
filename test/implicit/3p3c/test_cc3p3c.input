@@ -1,7 +1,7 @@
 ###############################################################
-# Parameter file for test_3p3cni.
+# Parameter file for test_3p3c.
 # Everything behind a '#' is a comment.
-# Type "./test_3p3cni --help" for more information.
+# Type "./test_3p3c --help" for more information.
 ###############################################################
 
 ###############################################################
@@ -9,11 +9,14 @@
 ###############################################################
 
 [TimeManager]
-DtInitial = 1 # [s]
-TEnd = 200 # [s]
+DtInitial = 60 # [s]
+TEnd = 864000 # [s]
 
 [Grid]
-File = ./grids/column.dgf
+File = ./grids/test_3p3c.dgf
+
+[Problem]
+Name = infiltrationcc
 
 ###############################################################
 # Simulation restart

@@ -19,14 +19,11 @@
 /*!
  * \file
  *
- * \brief test for the 3p3cni box model
+ * \brief test for the 3p3c box model
  */
 #include "config.h"
-//#include "kuevetteproblem.hh"
-#include "columnxylolproblem.hh"
-//#include "permdruckproblem.hh"
+#include "infiltrationproblem.hh"
 #include <dumux/common/start.hh>
-
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -56,7 +53,7 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-//    typedef TTAG(KuevetteProblem) ProblemTypeTag;
-    typedef TTAG(ColumnProblem) ProblemTypeTag;
+    typedef TTAG(InfiltrationBoxProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
+

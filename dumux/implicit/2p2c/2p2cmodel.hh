@@ -266,9 +266,9 @@ public:
     }
 
     /*!
-     * \brief Returns the phase presence of the current or the old solution of a vertex.
+     * \brief Returns the phase presence of the current or the old solution of a degree of freedom.
      *
-     * \param globalIdx The global vertex index
+     * \param globalIdx The global index of the degree of freedom
      * \param oldSol Evaluate function with solution of current or previous time step
      */
     int phasePresence(int globalIdx, bool oldSol) const

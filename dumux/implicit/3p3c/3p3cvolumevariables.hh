@@ -100,6 +100,8 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     static const Scalar R; // universial gas constant
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
     //! The type of the object returned by the fluidState() method
     typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
@@ -128,8 +130,13 @@ public:
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
-        int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
-        int phasePresence = problem.model().phasePresence(globalVertIdx, isOldSol);
+        int globalIdx;
+        if (isBox) // vertex data
+            globalIdx = problem.model().dofMapper().map(element, scvIdx, dim);
+        else
+            globalIdx = problem.model().dofMapper().map(element);
+
+        int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
 
         Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);
         fluidState_.setTemperature(temp);
