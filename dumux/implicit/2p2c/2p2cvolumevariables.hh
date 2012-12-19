@@ -44,14 +44,14 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup BoxVolumeVariables
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, two-component model.
  */
 template <class TypeTag>
-class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
+class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef ImplicitVolumeVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -106,7 +106,7 @@ public:
     typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
     /*!
-     * \copydoc BoxVolumeVariables::update
+     * \copydoc ImplicitVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,

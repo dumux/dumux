@@ -33,7 +33,7 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPDFMBoxModel
- * \ingroup BoxVolumeVariables
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase discrete fracture-matrix model.
  */
@@ -78,7 +78,7 @@ class TwoPDFMVolumeVariables : public TwoPVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \copydoc BoxVolumeVariables::update
+     * \copydoc ImplicitVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,

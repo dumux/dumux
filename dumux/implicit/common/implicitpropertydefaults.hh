@@ -31,11 +31,9 @@
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/timemanager.hh>
-#include <dumux/implicit/box/boxvolumevariables.hh>
 
 #include "implicitproperties.hh"
-
-#include <limits>
+#include "implicitvolumevariables.hh"
 
 namespace Dumux {
 
@@ -75,33 +73,25 @@ SET_TYPE_PROP(ImplicitBase,
                                                         Dune::MCMGElementLayout>);
 
 //! The volume variable class, to be overloaded by the model
-SET_TYPE_PROP(BoxModel, VolumeVariables, Dumux::BoxVolumeVariables<TypeTag>);
+SET_TYPE_PROP(BoxModel, VolumeVariables, Dumux::ImplicitVolumeVariables<TypeTag>);
 
-/*!
- * \brief The type of a solution for the whole grid at a fixed time.
- */
+//! The type of a solution for the whole grid at a fixed time
 SET_TYPE_PROP(ImplicitBase,
               SolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
 
-/*!
- * \brief The type of a solution for a whole element.
- */
+//! The type of a solution for a whole element
 SET_TYPE_PROP(ImplicitBase,
               ElementSolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
 
-/*!
- * \brief A vector of primary variables.
- */
+//! A vector of primary variables
 SET_TYPE_PROP(ImplicitBase,
               PrimaryVariables,
               Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
                                 GET_PROP_VALUE(TypeTag, NumEq)>);
 
-/*!
- * \brief Boundary types at a single degree of freedom.
- */
+//! Boundary types at a single degree of freedom
 SET_TYPE_PROP(ImplicitBase,
               BoundaryTypes,
               Dumux::BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
@@ -115,10 +105,10 @@ SET_INT_PROP(ImplicitBase, ImplicitNumericDifferenceMethod, +1);
 //! do not use hints by default
 SET_BOOL_PROP(ImplicitBase, ImplicitEnableHints, false);
 
-// disable jacobian matrix recycling by default
+//! disable jacobian matrix recycling by default
 SET_BOOL_PROP(ImplicitBase, ImplicitEnableJacobianRecycling, false);
 
-// disable partial reassembling by default
+//! disable partial reassembling by default
 SET_BOOL_PROP(ImplicitBase, ImplicitEnablePartialReassemble, false);
 
 //! Set the type of a global jacobian matrix from the solution types
@@ -132,7 +122,7 @@ public:
     typedef typename Dune::BCRSMatrix<MatrixBlock> type;
 };
 
-// use the stabilized BiCG solver preconditioned by the ILU-0 by default
+//! use the stabilized BiCG solver preconditioned by the ILU-0 by default
 SET_TYPE_PROP(ImplicitBase, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
 
 // if the deflection of the newton method is large, we do not

@@ -48,9 +48,9 @@ namespace Dumux
  *        finite volume in the two-phase, two-component model.
  */
 template <class TypeTag>
-class ThreePThreeCVolumeVariables : public BoxVolumeVariables<TypeTag>
+class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef ImplicitVolumeVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -106,7 +106,7 @@ public:
 
 
     /*!
-     * \copydoc BoxVolumeVariables::update
+     * \copydoc ImplicitVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,

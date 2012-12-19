@@ -27,23 +27,23 @@
 #include "richardsproperties.hh"
 
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
-#include <dumux/implicit/box/boxvolumevariables.hh>
+#include <dumux/implicit/common/implicitvolumevariables.hh>
 
 namespace Dumux
 {
 
 /*!
  * \ingroup RichardsModel
- * \ingroup BoxVolumeVariables
+ * \ingroup ImplicitVolumeVariables
  * \brief Volume averaged quantities required by the Richards model.
  *
  * This contains the quantities which are are constant within a finite
  * volume in the Richards model
  */
 template <class TypeTag>
-class RichardsVolumeVariables : public BoxVolumeVariables<TypeTag>
+class RichardsVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef ImplicitVolumeVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -69,7 +69,7 @@ public:
     typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> FluidState;
 
     /*!
-     * \copydoc BoxVolumeVariables::update
+     * \copydoc ImplicitVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,

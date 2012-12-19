@@ -24,7 +24,7 @@
 #ifndef DUMUX_1P2C_VOLUME_VARIABLES_HH
 #define DUMUX_1P2C_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/box/boxvolumevariables.hh>
+#include <dumux/implicit/common/implicitvolumevariables.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
 #include "1p2cproperties.hh"
@@ -34,14 +34,14 @@ namespace Dumux
 
 /*!
  * \ingroup OnePTwoCBoxModel
- * \ingroup BoxVolumeVariables
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the single-phase, two-component model.
  */
 template <class TypeTag>
-class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
+class OnePTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef ImplicitVolumeVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
@@ -74,7 +74,7 @@ public:
     typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
     /*!
-     * \copydoc BoxVolumeVariables::update
+     * \copydoc ImplicitVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
