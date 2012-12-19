@@ -134,6 +134,8 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
     /*!
      * \brief Initialize the static data with the initial solution.
@@ -145,9 +147,8 @@ public:
         ParentType::init(problem);
 
         unsigned numDofs = this->numDofs();
-        unsigned numVertices = this->problem_().gridView().size(dim);
 
-        staticVertexDat_.resize(numDofs);
+        staticDat_.resize(numDofs);
 
         setSwitched_(false);
 
@@ -161,7 +162,7 @@ public:
                 velocityOutput_ = false;
             }
 
-            if (numDofs != numVertices) // i.e. cell-centered discretization
+            if (!isBox) // i.e. cell-centered discretization
             {
                 velocityOutput_ = false;
 
@@ -169,20 +170,20 @@ public:
                 const GlobalPosition &globalPos = eIt->geometry().center();
 
                 // initialize phase presence
-                staticVertexDat_[globalIdx].phasePresence
+                staticDat_[globalIdx].phasePresence
                     = this->problem_().initialPhasePresence(*(this->gridView_().template begin<dim>()),
                                                             globalIdx, globalPos);
-                staticVertexDat_[globalIdx].wasSwitched = false;
+                staticDat_[globalIdx].wasSwitched = false;
 
-                staticVertexDat_[globalIdx].oldPhasePresence
-                    = staticVertexDat_[globalIdx].phasePresence;
+                staticDat_[globalIdx].oldPhasePresence
+                    = staticDat_[globalIdx].phasePresence;
             }
         }
 
         if (velocityOutput_ != GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity))
             std::cout << "ATTENTION: Velocity output only works for cubes and is set to false for simplices\n";
 
-        if (numDofs == numVertices) // i.e. vertex-centered discretization
+        if (isBox) // i.e. vertex-centered discretization
         {
             VertexIterator vIt = this->gridView_().template begin<dim> ();
             const VertexIterator &vEndIt = this->gridView_().template end<dim> ();
@@ -192,13 +193,13 @@ public:
                 const GlobalPosition &globalPos = vIt->geometry().corner(0);
 
                 // initialize phase presence
-                staticVertexDat_[globalIdx].phasePresence
+                staticDat_[globalIdx].phasePresence
                     = this->problem_().initialPhasePresence(*vIt, globalIdx,
                                                         globalPos);
-                staticVertexDat_[globalIdx].wasSwitched = false;
+                staticDat_[globalIdx].wasSwitched = false;
 
-                staticVertexDat_[globalIdx].oldPhasePresence
-                    = staticVertexDat_[globalIdx].phasePresence;
+                staticDat_[globalIdx].oldPhasePresence
+                    = staticDat_[globalIdx].phasePresence;
             }
         }
     }
@@ -272,8 +273,8 @@ public:
      */
     int phasePresence(int globalIdx, bool oldSol) const
     {
-        return oldSol ? staticVertexDat_[globalIdx].oldPhasePresence
-            : staticVertexDat_[globalIdx].phasePresence;
+        return oldSol ? staticDat_[globalIdx].oldPhasePresence
+            : staticDat_[globalIdx].phasePresence;
     }
 
     /*!
@@ -291,14 +292,14 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
 
-        // create the required scalar fields
+        // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
-        unsigned numVertices = this->problem_().gridView().size(dim);
 
-        // velocity output currently only works for vertex data
-        if (numDofs != numVertices)
+        // velocity output currently only works for the box discretization
+        if (!isBox)
           velocityOutput_ = false;
 
+        // create the required scalar fields
         ScalarField *sN    = writer.allocateManagedBuffer(numDofs);
         ScalarField *sW    = writer.allocateManagedBuffer(numDofs);
         ScalarField *pN    = writer.allocateManagedBuffer(numDofs);
@@ -378,7 +379,7 @@ public:
                 (*poro)[globalIdx]  = volVars.porosity();
                 (*temperature)[globalIdx] = volVars.temperature();
                 (*phasePresence)[globalIdx]
-                    = staticVertexDat_[globalIdx].phasePresence;
+                    = staticDat_[globalIdx].phasePresence;
                 if(velocityOutput_)
                 {
                     (*cellNum)[globalIdx] += 1;
@@ -491,31 +492,7 @@ public:
             }
         }
 
-        if (numDofs == numElements) // element data
-        {
-            writer.attachCellData(*sN,     "Sn");
-            writer.attachCellData(*sW,     "Sw");
-            writer.attachCellData(*pN,     "pN");
-            writer.attachCellData(*pW,     "pW");
-            writer.attachCellData(*pC,     "pC");
-            writer.attachCellData(*rhoW,   "rhoW");
-            writer.attachCellData(*rhoN,   "rhoN");
-            writer.attachCellData(*mobW,   "mobW");
-            writer.attachCellData(*mobN,   "mobN");
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            {
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    std::ostringstream oss;
-                    oss << "X_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
-                    writer.attachCellData(*massFrac[phaseIdx][compIdx], oss.str());
-                }
-            }
-            writer.attachCellData(*poro, "porosity");
-            writer.attachCellData(*temperature,    "temperature");
-            writer.attachCellData(*phasePresence,  "phase presence");
-        }
-        else
+        if (isBox) // vertex data
         {
             writer.attachVertexData(*sN,     "Sn");
             writer.attachVertexData(*sW,     "Sw");
@@ -545,6 +522,30 @@ public:
                 writer.attachVertexData(*velocityN,  "velocityN", dim);
             }
         }
+        else // cell data
+        {
+            writer.attachCellData(*sN,     "Sn");
+            writer.attachCellData(*sW,     "Sw");
+            writer.attachCellData(*pN,     "pN");
+            writer.attachCellData(*pW,     "pW");
+            writer.attachCellData(*pC,     "pC");
+            writer.attachCellData(*rhoW,   "rhoW");
+            writer.attachCellData(*rhoN,   "rhoN");
+            writer.attachCellData(*mobW,   "mobW");
+            writer.attachCellData(*mobN,   "mobN");
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    std::ostringstream oss;
+                    oss << "X_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
+                    writer.attachCellData(*massFrac[phaseIdx][compIdx], oss.str());
+                }
+            }
+            writer.attachCellData(*poro, "porosity");
+            writer.attachCellData(*temperature,    "temperature");
+            writer.attachCellData(*phasePresence,  "phase presence");
+        }
 
         writer.attachCellData(*rank, "process rank");
     }
@@ -565,7 +566,7 @@ public:
         if (!outStream.good())
             DUNE_THROW(Dune::IOError, "Could not serialize entity " << globalIdx);
 
-        outStream << staticVertexDat_[globalIdx].phasePresence << " ";
+        outStream << staticDat_[globalIdx].phasePresence << " ";
     }
 
     /*!
@@ -586,9 +587,9 @@ public:
             DUNE_THROW(Dune::IOError,
                        "Could not deserialize entity " << globalIdx);
 
-        inStream >> staticVertexDat_[globalIdx].phasePresence;
-        staticVertexDat_[globalIdx].oldPhasePresence
-            = staticVertexDat_[globalIdx].phasePresence;
+        inStream >> staticDat_[globalIdx].phasePresence;
+        staticDat_[globalIdx].oldPhasePresence
+            = staticDat_[globalIdx].phasePresence;
 
     }
 
@@ -603,11 +604,8 @@ public:
     {
         bool wasSwitched = false;
 
-        for (unsigned i = 0; i < staticVertexDat_.size(); ++i)
-            staticVertexDat_[i].visited = false;
-
-        unsigned numDofs = this->numDofs();
-        unsigned numVertices = this->problem_().gridView().size(dim);
+        for (unsigned i = 0; i < staticDat_.size(); ++i)
+            staticDat_[i].visited = false;
 
         FVElementGeometry fvGeometry;
         static VolumeVariables volVars;
@@ -620,28 +618,28 @@ public:
             {
                 int globalIdx;
 
-                if (numDofs != numVertices)
-                    globalIdx = this->elementMapper().map(*eIt);
-                else
+                if (isBox)
                     globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
+                else
+                    globalIdx = this->elementMapper().map(*eIt);
 
-                if (staticVertexDat_[globalIdx].visited)
+                if (staticDat_[globalIdx].visited)
                     continue;
 
-                staticVertexDat_[globalIdx].visited = true;
+                staticDat_[globalIdx].visited = true;
                 volVars.update(curGlobalSol[globalIdx],
                                this->problem_(),
                                *eIt,
                                fvGeometry,
                                scvIdx,
                                false);
-                const GlobalPosition &globalPos = eIt->geometry().corner(scvIdx);
+                const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
                 if (primaryVarSwitch_(curGlobalSol,
                                       volVars,
                                       globalIdx,
                                       globalPos))
                 {
-                    this->jacobianAssembler().markVertexRed(globalIdx);
+                    this->jacobianAssembler().markDofRed(globalIdx);
                     wasSwitched = true;
                 }
             }
@@ -677,11 +675,11 @@ protected:
      */
     void resetPhasePresence_()
     {
-        for (unsigned int idx = 0; idx < staticVertexDat_.size(); ++idx)
+        for (unsigned int idx = 0; idx < staticDat_.size(); ++idx)
         {
-            staticVertexDat_[idx].phasePresence
-                = staticVertexDat_[idx].oldPhasePresence;
-            staticVertexDat_[idx].wasSwitched = false;
+            staticDat_[idx].phasePresence
+                = staticDat_[idx].oldPhasePresence;
+            staticDat_[idx].wasSwitched = false;
         }
     }
 
@@ -690,11 +688,11 @@ protected:
      */
     void updateOldPhasePresence_()
     {
-        for (unsigned int idx = 0; idx < staticVertexDat_.size(); ++idx)
+        for (unsigned int idx = 0; idx < staticDat_.size(); ++idx)
         {
-            staticVertexDat_[idx].oldPhasePresence
-                = staticVertexDat_[idx].phasePresence;
-            staticVertexDat_[idx].wasSwitched = false;
+            staticDat_[idx].oldPhasePresence
+                = staticDat_[idx].phasePresence;
+            staticDat_[idx].wasSwitched = false;
         }
     }
 
@@ -715,7 +713,7 @@ protected:
     {
         // evaluate primary variable switch
         bool wouldSwitch = false;
-        int phasePresence = staticVertexDat_[globalIdx].phasePresence;
+        int phasePresence = staticDat_[globalIdx].phasePresence;
         int newPhasePresence = phasePresence;
 
         // check if a primary var switch is necessary
@@ -728,7 +726,7 @@ protected:
             Scalar xwMax = 1.0;
             if (xww + xwn > xwMax)
                 wouldSwitch = true;
-            if (staticVertexDat_[globalIdx].wasSwitched)
+            if (staticDat_[globalIdx].wasSwitched)
                 xwMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
@@ -756,7 +754,7 @@ protected:
             Scalar xgMax = 1.0;
             if (xnw + xnn > xgMax)
                 wouldSwitch = true;
-            if (staticVertexDat_[globalIdx].wasSwitched)
+            if (staticDat_[globalIdx].wasSwitched)
                 xgMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
@@ -777,7 +775,7 @@ protected:
         else if (phasePresence == bothPhases)
         {
             Scalar Smin = 0.0;
-            if (staticVertexDat_[globalIdx].wasSwitched)
+            if (staticDat_[globalIdx].wasSwitched)
                 Smin = -0.01;
 
             if (volVars.saturation(nPhaseIdx) <= Smin)
@@ -806,14 +804,14 @@ protected:
             }
         }
 
-        staticVertexDat_[globalIdx].phasePresence = newPhasePresence;
-        staticVertexDat_[globalIdx].wasSwitched = wouldSwitch;
+        staticDat_[globalIdx].phasePresence = newPhasePresence;
+        staticDat_[globalIdx].wasSwitched = wouldSwitch;
         return phasePresence != newPhasePresence;
     }
 
 protected:
     // parameters given in constructor
-    std::vector<StaticVars> staticVertexDat_;
+    std::vector<StaticVars> staticDat_;
     bool switchFlag_;
     bool velocityOutput_;
 };
