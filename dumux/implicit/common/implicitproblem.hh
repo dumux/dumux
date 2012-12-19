@@ -217,7 +217,7 @@ public:
      * potentially solution dependent and requires some box method
      * specific things.
      *
-     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
+     * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
@@ -249,7 +249,7 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
+     * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
@@ -274,7 +274,7 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
+     * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param pos The position of the boundary face's integration point in global coordinates
      *
      * For this method, the \a values parameter stores the mass flux
@@ -299,7 +299,7 @@ public:
      * potentially solution dependent and requires some box method
      * specific things.
      *
-     * \param values The source and sink values for the conservation equations
+     * \param values The source and sink values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
@@ -323,7 +323,7 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
-     * \param values The source and sink values for the conservation equations
+     * \param values The source and sink values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
@@ -345,7 +345,7 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
-     * \param values The source and sink values for the conservation equations
+     * \param values The source and sink values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param pos The position of the center of the finite volume
      *            for which the source term ought to be
      *            specified in global coordinates

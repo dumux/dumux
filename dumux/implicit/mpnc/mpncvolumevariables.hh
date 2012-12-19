@@ -64,6 +64,19 @@ class MPNCVolumeVariables
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
+
+    enum {dimWorld=GridView::dimensionworld};
+    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
+    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
+
+    // formulations
+    enum {
+        pressureFormulation = GET_PROP_VALUE(TypeTag, PressureFormulation),
+        mostWettingFirst    = MpNcPressureFormulation::mostWettingFirst,
+        leastWettingFirst   = MpNcPressureFormulation::leastWettingFirst
+    };
+
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
@@ -138,7 +151,6 @@ public:
         /////////////
         // set the phase pressures
         /////////////
-
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
@@ -146,9 +158,23 @@ public:
         Scalar capPress[numPhases];
         MaterialLaw::capillaryPressures(capPress, materialParams, fluidState_);
         // add to the pressure of the first fluid phase
-        Scalar p0 = priVars[p0Idx];
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
-            fluidState_.setPressure(phaseIdx, p0 - capPress[0] + capPress[phaseIdx]);
+
+        // depending on which pressure is stored in the primary variables
+        if(pressureFormulation == mostWettingFirst){
+            // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
+            // For two phases this means that there is one pressure as primary variable: pw
+            const Scalar pw = priVars[p0Idx];
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                fluidState_.setPressure(phaseIdx, pw - capPress[0] + capPress[phaseIdx]);
+        }
+        else if(pressureFormulation == leastWettingFirst){
+            // This means that the pressures are sorted from the least wetting to the most wetting-1 in the primary variables vector.
+            // For two phases this means that there is one pressure as primary variable: pn
+            const Scalar pn = priVars[p0Idx];
+            for (int phaseIdx = numPhases-1; phaseIdx >= 0; --phaseIdx)
+                fluidState_.setPressure(phaseIdx, pn - capPress[numPhases-1] + capPress[phaseIdx]);
+        }
+        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << pressureFormulation << " is invalid.");
 
         /////////////
         // set the fluid compositions
@@ -240,7 +266,9 @@ public:
      *        the control volume.
      */
     Scalar mobility(const unsigned int phaseIdx) const
-    { return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx); }
+    {
+        return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx);
+    }
 
     /*!
      * \brief Returns the viscosity of a given phase within

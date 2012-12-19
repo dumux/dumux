@@ -51,6 +51,8 @@ NEW_PROP_TAG(Indices); //!< Enumerations for the model
 
 NEW_PROP_TAG(BaseFluxVariables); //!< The type of velocity calculation that is to be used
 
+NEW_PROP_TAG(PressureFormulation);   //!< The formulation of the model
+
 NEW_PROP_TAG(MPNCVtkCommonModule); //!< Vtk writer module for writing the common quantities into the VTK output file
 NEW_PROP_TAG(MPNCVtkMassModule); //!< Vtk writer module for writing the mass related quantities into the VTK output file
 NEW_PROP_TAG(MPNCVtkEnergyModule); //!< Vtk writer module for writing the energy related quantities into the VTK output file
@@ -60,6 +62,7 @@ NEW_PROP_TAG(VelocityAveragingInModel);//!< Should the averaging of velocities b
 
 //! specify which quantities are written to the vtk output files
 NEW_PROP_TAG(VtkAddPorosity);
+NEW_PROP_TAG(VtkAddPermeability);
 NEW_PROP_TAG(VtkAddBoundaryTypes);
 NEW_PROP_TAG(VtkAddSaturations);
 NEW_PROP_TAG(VtkAddPressures);

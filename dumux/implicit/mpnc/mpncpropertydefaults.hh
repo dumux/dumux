@@ -52,6 +52,12 @@ namespace Properties
 // default property values
 //////////////////////////////////////////////////////////////////
 
+
+//! Set the default pressure formulation to the pressure of the (most) wetting phase
+SET_INT_PROP(BoxMPNC,
+             PressureFormulation,
+             MpNcPressureFormulation::mostWettingFirst);
+
 /*!
  * \brief Set the property for the number of components.
  *
@@ -247,6 +253,7 @@ SET_BOOL_PROP(BoxMPNC, VelocityAveragingInModel, false);
 
 //! Specify what to add to the VTK output by default
 SET_BOOL_PROP(BoxMPNC, VtkAddPorosity, true);
+SET_BOOL_PROP(BoxMPNC, VtkAddPermeability, false);
 SET_BOOL_PROP(BoxMPNC, VtkAddBoundaryTypes, false);
 SET_BOOL_PROP(BoxMPNC, VtkAddSaturations, true);
 SET_BOOL_PROP(BoxMPNC, VtkAddPressures, true);
