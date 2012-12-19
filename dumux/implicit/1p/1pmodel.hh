@@ -60,6 +60,7 @@ class OnePBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum { dim = GridView::dimension };
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -98,11 +99,7 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx;
-                if (isBox)
-                    globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
-                else 
-                    globalIdx = this->elementMapper().map(*elemIt);
+                int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
                 volVars.update(sol[globalIdx],
                                this->problem_(),
@@ -113,23 +110,14 @@ public:
                 const SpatialParams &spatialParams = this->problem_().spatialParams();
 
                 (*p)[globalIdx] = volVars.pressure();
-                (*K)[globalIdx]= spatialParams.intrinsicPermeability(*elemIt,
+                (*K)[globalIdx] = spatialParams.intrinsicPermeability(*elemIt,
                                                                      fvGeometry,
                                                                      scvIdx);
             }
         }
 
-        if (isBox)
-        {
-            writer.attachVertexData(*p, "p");
-            writer.attachVertexData(*K, "K");
-        }
-        else 
-        {
-            writer.attachCellData(*p, "p");
-            writer.attachCellData(*K, "K");
-        }
-        
+        writer.attachDofData(*p, "p", isBox);
+        writer.attachDofData(*K, "K", isBox);
         writer.attachCellData(*rank, "process rank");
     }
 };

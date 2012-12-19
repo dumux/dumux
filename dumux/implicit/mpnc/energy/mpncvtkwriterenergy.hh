@@ -62,6 +62,7 @@ class MPNCVtkWriterEnergy : public MPNCVtkWriterModule<TypeTag>
     typedef typename ParentType::ScalarVector ScalarVector;
     typedef typename ParentType::PhaseVector PhaseVector;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
     
 public:
     MPNCVtkWriterEnergy(const Problem &problem)
@@ -84,15 +85,14 @@ public:
      * \brief Modify the internal buffers according to the volume
      *        variables seen on an element
      */
-    void processElement(const Element &elem,
+    void processElement(const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        int numLocalVertices = elem.geometry().corners();
-        for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
-            const unsigned int globalIdx = this->problem_.vertexMapper().map(elem, localVertexIdx, dim);
-            const VolumeVariables &volVars = elemVolVars[localVertexIdx];
+        for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx) {
+            const unsigned int globalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
+            const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (temperatureOutput_)
                 temperature_[globalIdx] = volVars.fluidState().temperature(/*phaseIdx=*/0);
@@ -144,6 +144,7 @@ class MPNCVtkWriterEnergy<TypeTag, /* enableEnergy = */ true, /* enableKineticEn
     typedef typename ParentType::ScalarVector ScalarVector;
     typedef typename ParentType::PhaseVector PhaseVector;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     MPNCVtkWriterEnergy(const Problem &problem)
@@ -170,15 +171,14 @@ public:
      * \brief Modify the internal buffers according to the volume
      *        variables seen on an element
      */
-    void processElement(const Element &elem,
+    void processElement(const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        const unsigned int numLocalVertices = elem.geometry().corners();
-        for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
-            int gobalIdx = this->problem_.vertexMapper().map(elem, localVertexIdx, dim);
-            const VolumeVariables &volVars = elemVolVars[localVertexIdx];
+        for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx) {
+            int gobalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
+            const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (temperatureOutput_) temperature_[gobalIdx] = volVars.fluidState().temperature(/*phaseIdx=*/0);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {

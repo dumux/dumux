@@ -220,6 +220,22 @@ public:
     }
 
     /*!
+     * \brief Add data associated with degrees of freedom to the output.
+     *
+     * This is a wrapper for the functions attachVertexData and attachCelldata. 
+     * Depending on the value of \param isVertexData, the appropriate function 
+     * is selected.
+     */
+    template <class DataBuffer>
+    void attachDofData(DataBuffer &buf, std::string name, bool isVertexData, int nComps = 1)
+    {
+        if (isVertexData)
+            attachVertexData(buf, name, nComps);
+        else 
+            attachCellData(buf, name, nComps);
+    }
+
+    /*!
      * \brief Finalizes the current writer.
      *
      * This means that everything will be written to disk, except if

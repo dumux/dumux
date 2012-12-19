@@ -102,6 +102,7 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     //! The type of the object returned by the fluidState() method
@@ -184,14 +185,7 @@ public:
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
-        unsigned numDofs = problem.model().numDofs();
-        unsigned numVertices = problem.gridView().size(dim);
-
-        int globalIdx;
-        if (isBox) // vertex data
-            globalIdx = problem.model().dofMapper().map(element, scvIdx, dim);
-        else
-            globalIdx = problem.model().dofMapper().map(element);
+        int globalIdx = problem.model().dofMapper().map(element, scvIdx, dofCodim);
 
         int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
 

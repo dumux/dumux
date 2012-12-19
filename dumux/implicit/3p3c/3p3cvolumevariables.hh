@@ -101,6 +101,7 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     static const Scalar R; // universial gas constant
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     //! The type of the object returned by the fluidState() method
@@ -130,11 +131,7 @@ public:
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
-        int globalIdx;
-        if (isBox) // vertex data
-            globalIdx = problem.model().dofMapper().map(element, scvIdx, dim);
-        else
-            globalIdx = problem.model().dofMapper().map(element);
+        int globalIdx = problem.model().dofMapper().map(element, scvIdx, dofCodim);
 
         int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
 

@@ -78,6 +78,7 @@ class ImplicitModel
     typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
     
     // copying a model is not a good idea
     ImplicitModel(const ImplicitModel &);
@@ -884,18 +885,8 @@ protected:
             // loop over all element vertices, i.e. sub control volumes
             for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; scvIdx++)
             {
-                int globalIdx;
-                
-                if (isBox)
-                {
-                    // map the local vertex index to the global one
-                    globalIdx = vertexMapper().map(*eIt, scvIdx, dim);
-                }
-                else
-                {
-                    // get the global index of the element
-                    globalIdx = elementMapper().map(*eIt);
-                }
+                // get the global index of the degree of freedom
+                int globalIdx = dofMapper().map(*eIt, scvIdx, dofCodim);
 
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
