@@ -102,22 +102,12 @@ public:
         , newtonCtl_(asImp_())
     {
         // calculate the bounding box of the local partition of the grid view
-//        VertexIterator vIt = gridView.template begin<dim>();
-//        const VertexIterator vEndIt = gridView.template end<dim>();
-//        for (; vIt!=vEndIt; ++vIt) {
-//            for (int i=0; i<dim; i++) {
-//                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().corner(0)[i]);
-//                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
-//            }
-//        }
-
-        // HACK due to current handling of Dirichlet boundary conditions
-        ElementIterator it = gridView.template begin<0>();
-        const ElementIterator endIt = gridView.template end<0>();
-        for (; it!=endIt; ++it) {
+        VertexIterator vIt = gridView.template begin<dim>();
+        const VertexIterator vEndIt = gridView.template end<dim>();
+        for (; vIt!=vEndIt; ++vIt) {
             for (int i=0; i<dim; i++) {
-                bboxMin_[i] = std::min(bboxMin_[i], it->geometry().center()[i]);
-                bboxMax_[i] = std::max(bboxMax_[i], it->geometry().center()[i]);
+                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().corner(0)[i]);
+                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
             }
         }
 

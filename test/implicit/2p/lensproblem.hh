@@ -202,11 +202,15 @@ public:
      */
     LensProblem(TimeManager &timeManager,
                 const GridView &gridView)
-    : ParentType(timeManager, gridView), 
-      isBox_(GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+    : ParentType(timeManager, gridView)
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
+        
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, 
+                                             std::string, 
+                                             Problem, 
+                                             Name);
     }
 
     /*!
@@ -221,10 +225,7 @@ public:
      */
     const char *name() const
     {
-        if (isBox_)
-            return "lensbox"; 
-        else
-            return "lenscc";
+        return name_.c_str();
     }
 
     /*!
@@ -301,40 +302,15 @@ public:
         
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
         
-        if (isBox_)
-        {
-            if (onLeftBoundary_(globalPos))
-            {
-                Scalar height = this->bboxMax()[1] - this->bboxMin()[1];
-                Scalar depth = this->bboxMax()[1] - globalPos[1];
-                Scalar alpha = (1 + 1.5/height);
-
-                // hydrostatic pressure scaled by alpha
-                values[pwIdx] = 1e5 - alpha*densityW*this->gravity()[1]*depth;
-                values[SnIdx] = 0.0;
-            }
-            else if (onRightBoundary_(globalPos))
-            {
-                Scalar depth = this->bboxMax()[1] - globalPos[1];
-
-                // hydrostatic pressure
-                values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
-                values[SnIdx] = 0.0;
-            }
-            else
-                values = 0.0;
-        }
-        else 
-        {
-            Scalar height = 4.0;//this->bboxMax()[1] - this->bboxMin()[1];
-            Scalar depth = 4.0 - globalPos[1];//this->bboxMax()[1] - globalPos[1];
-            Scalar alpha = 1 + 1.5/height;
-            Scalar factor = (6.0*alpha + (1.0 - alpha)*globalPos[0])/6.0;
-            
-            // hydrostatic pressure scaled by alpha
-            values[pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
-            values[SnIdx] = 0.0;
-        }
+        Scalar height = this->bboxMax()[1] - this->bboxMin()[1];
+        Scalar depth = this->bboxMax()[1] - globalPos[1];
+        Scalar alpha = 1 + 1.5/height;
+        Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
+        Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
+        
+        // hydrostatic pressure scaled by alpha
+        values[pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
+        values[SnIdx] = 0.0;
     }
 
     /*!
@@ -382,11 +358,7 @@ public:
         
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
-        Scalar depth;
-        if (isBox_)
-            depth = this->bboxMax()[1] - globalPos[1];
-        else 
-            depth = 4.0 - globalPos[1];
+        Scalar depth = this->bboxMax()[1] - globalPos[1];
         
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
@@ -418,23 +390,14 @@ private:
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        if (isBox_)
-        {
-            Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
-            Scalar lambda = (this->bboxMax()[0] - globalPos[0])/width;
-            return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
-        }
-        else 
-        {
-            Scalar width = 6.0;//this->bboxMax()[0] - this->bboxMin()[0];
-            Scalar lambda = (6.0/*this->bboxMax()[0]*/ - globalPos[0])/width;
-            return (globalPos[1] > 4.0 - eps_) && 0.5 < lambda && lambda < 2.0/3.0;
-        }
+        Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
+        Scalar lambda = (this->bboxMax()[0] - globalPos[0])/width;
+        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
     Scalar temperature_;
     Scalar eps_;
-    const bool isBox_;
+    std::string name_;
 };
 } //end namespace
 
