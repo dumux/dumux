@@ -28,7 +28,6 @@
 #include "boxpropertydefaults.hh"
 
 #include "boxelementvolumevariables.hh"
-#include "boxlocaljacobian.hh"
 #include "boxlocalresidual.hh"
 
 #include <dumux/parallel/vertexhandles.hh>

@@ -32,7 +32,6 @@
 #include "boxmodel.hh"
 #include "boxfvelementgeometry.hh"
 #include "boxelementboundarytypes.hh"
-#include "boxlocaljacobian.hh"
 #include "boxlocalresidual.hh"
 #include "boxelementvolumevariables.hh"
 #include "boxproperties.hh"
@@ -63,9 +62,6 @@ SET_TYPE_PROP(BoxModel, BaseLocalResidual, Dumux::BoxLocalResidual<TypeTag>);
 
 //! Set the BaseModel to BoxModel
 SET_TYPE_PROP(BoxModel, BaseModel, Dumux::BoxModel<TypeTag>);
-
-//! The local jacobian operator for the box scheme
-SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
 
 //! An array of secondary variable containers
 SET_TYPE_PROP(BoxModel, ElementVolumeVariables, Dumux::BoxElementVolumeVariables<TypeTag>);

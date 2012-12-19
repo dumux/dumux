@@ -25,7 +25,7 @@
 
 #include <dune/istl/matrix.hh>
 #include "stokesproperties.hh"
-#include <dumux/implicit/box/boxlocaljacobian.hh>
+#include <dumux/implicit/common/implicitlocaljacobian.hh>
 
 namespace Dumux
 {
@@ -38,13 +38,13 @@ namespace Dumux
  * The momentum balance equation uses larger epsilons than the rest.
  */
 template<class TypeTag>
-class StokesLocalJacobian : public BoxLocalJacobian<TypeTag>
+class StokesLocalJacobian : public ImplicitLocalJacobian<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 public:
-    //! \copydoc BoxLocalJacobian::numericEpsilon()
+    //! \copydoc ImplicitLocalJacobian::numericEpsilon()
     Scalar numericEpsilon(const int scvIdx,
                           const int pvIdx) const
     {

@@ -20,19 +20,17 @@
  * \file
  * \brief Caculates the Jacobian of the local residual for box models
  */
-#ifndef DUMUX_BOX_LOCAL_JACOBIAN_HH
-#define DUMUX_BOX_LOCAL_JACOBIAN_HH
+#ifndef DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
+#define DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
 
 #include <dune/istl/matrix.hh>
-
 #include <dumux/common/math.hh>
-#include "implicitelementboundarytypes.hh"
 
 namespace Dumux
 {
 /*!
- * \ingroup BoxModel
- * \ingroup BoxLocalJacobian
+ * \ingroup ImplicitModel
+ * \ingroup ImplicitLocalJacobian
  * \brief Calculates the Jacobian of the local residual for box models
  *
  * The default behavior is to use numeric differentiation, i.e.
@@ -63,7 +61,7 @@ namespace Dumux
  * evaluation point and \f$\epsilon\f$ is a small value larger than 0.
  */
 template<class TypeTag>
-class BoxLocalJacobian
+class ImplicitLocalJacobian
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, LocalJacobian) Implementation;
@@ -72,6 +70,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
 
     enum {
@@ -94,11 +93,13 @@ private:
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
     typedef Dune::Matrix<MatrixBlock> LocalBlockMatrix;
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
     // copying a local jacobian is not a good idea
-    BoxLocalJacobian(const BoxLocalJacobian &);
+    ImplicitLocalJacobian(const ImplicitLocalJacobian &);
 
 public:
-    BoxLocalJacobian()
+    ImplicitLocalJacobian()
     {
         numericDifferenceMethod_ = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
         Valgrind::SetUndefined(problemPtr_);
@@ -119,8 +120,16 @@ public:
         localResidual_.init(prob);
 
         // assume quadrilinears as elements with most vertices
-        A_.setSize(2<<dim, 2<<dim);
-        storageJacobian_.resize(2<<dim);
+        if (isBox)
+        {
+            A_.setSize(2<<dim, 2<<dim);
+            storageJacobian_.resize(2<<dim);
+        }
+        else 
+        {
+            A_.setSize(1, 2<<dim);
+            storageJacobian_.resize(1);
+        }
     }
 
     /*!
@@ -176,19 +185,28 @@ public:
         model_().updatePVWeights(element_(), curVolVars_);
 
         // calculate the local jacobian matrix
-        int numVertices = fvElemGeom_.numVertices;
-        ElementSolutionVector partialDeriv(numVertices);
-        PrimaryVariables storageDeriv;
-        for (int j = 0; j < numVertices; j++) {
+        int numRows, numCols;
+        if (isBox)
+        {
+            numRows = numCols = fvElemGeom_.numVertices;
+        }
+        else 
+        {
+            numRows = 1;
+            numCols = fvElemGeom_.numNeighbors;
+        }
+        ElementSolutionVector partialDeriv(numRows);
+        PrimaryVariables storageDeriv(0.0);
+        for (int col = 0; col < numCols; col++) {
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++) {
                 asImp_().evalPartialDerivative_(partialDeriv,
                                                 storageDeriv,
-                                                j,
+                                                col,
                                                 pvIdx);
 
                 // update the local stiffness matrix with the current partial
                 // derivatives
-                updateLocalJacobian_(j,
+                updateLocalJacobian_(col,
                                      pvIdx,
                                      partialDeriv,
                                      storageDeriv);
@@ -328,10 +346,9 @@ protected:
      */
     void reset_()
     {
-        int n = element_().template count<dim>();
-        for (int i = 0; i < n; ++ i) {
+        for (int i = 0; i < A_.N(); ++ i) {
             storageJacobian_[i] = 0.0;
-            for (int j = 0; j < n; ++ j) {
+            for (int j = 0; j < A_.M(); ++ j) {
                 A_[i][j] = 0.0;
             }
         }
@@ -374,26 +391,37 @@ protected:
      * \param partialDeriv The vector storing the partial derivatives of all
      *              equations
      * \param storageDeriv the mass matrix contributions
-     * \param scvIdx The sub-control volume index of the current
-     *               finite element for which the partial derivative
-     *               ought to be calculated
-     * \param pvIdx The index of the primary variable at the scvIdx'
-     *              sub-control volume of the current finite element
-     *              for which the partial derivative ought to be
-     *              calculated
+     * \param col The block column index of the degree of freedom 
+     *            for which the partial derivative is calculated.
+     *            Box: a sub-control volume index.
+     *            Cell centered: a neighbor index.
+     * \param pvIdx The index of the primary variable 
+     *              for which the partial derivative is calculated
      */
     void evalPartialDerivative_(ElementSolutionVector &partialDeriv,
                                 PrimaryVariables &storageDeriv,
-                                const int scvIdx,
+                                const int col,
                                 const int pvIdx)
     {
-        int globalIdx = vertexMapper_().map(element_(), scvIdx, dim);
+        int globalIdx;
+        FVElementGeometry neighborFVGeom;
+        ElementPointer neighbor(element_());
+        if (isBox)
+        {
+            globalIdx = vertexMapper_().map(element_(), col, dim);
+        }
+        else
+        {
+            neighbor = fvElemGeom_.neighbors[col];
+            neighborFVGeom.updateInner(*neighbor);
+            globalIdx = problemPtr_->elementMapper().map(*neighbor);
+        }
 
         PrimaryVariables priVars(model_().curSol()[globalIdx]);
-        VolumeVariables origVolVars(curVolVars_[scvIdx]);
+        VolumeVariables origVolVars(curVolVars_[col]);
 
-        curVolVars_[scvIdx].setEvalPoint(&origVolVars);
-        Scalar eps = asImp_().numericEpsilon(scvIdx, pvIdx);
+        curVolVars_[col].setEvalPoint(&origVolVars);
+        Scalar eps = asImp_().numericEpsilon(col, pvIdx);
         Scalar delta = 0;
 
         if (numericDifferenceMethod_ >= 0) {
@@ -405,12 +433,21 @@ protected:
             delta += eps;
 
             // calculate the residual
-            curVolVars_[scvIdx].update(priVars,
-                                       problem_(),
-                                       element_(),
-                                       fvElemGeom_,
-                                       scvIdx,
-                                       false);
+            if (isBox)
+                curVolVars_[col].update(priVars,
+                                        problem_(),
+                                        element_(),
+                                        fvElemGeom_,
+                                        col,
+                                        false);
+            else
+                curVolVars_[col].update(priVars,
+                                        problem_(),
+                                        *neighbor,
+                                        neighborFVGeom,
+                                        /*scvIdx=*/0,
+                                        false);
+                   
             localResidual().eval(element_(),
                                  fvElemGeom_,
                                  prevVolVars_,
@@ -419,14 +456,15 @@ protected:
 
             // store the residual and the storage term
             partialDeriv = localResidual().residual();
-            storageDeriv = localResidual().storageTerm()[scvIdx];
+            if (isBox || col == 0)
+                storageDeriv = localResidual().storageTerm()[col];
         }
         else {
             // we are using backward differences, i.e. we don't need
             // to calculate f(x + \epsilon) and we can recycle the
             // (already calculated) residual f(x)
             partialDeriv = residual_;
-            storageDeriv = storageTerm_[scvIdx];
+            storageDeriv = storageTerm_[col];
         }
 
 
@@ -439,26 +477,37 @@ protected:
             delta += eps;
 
             // calculate residual again
-            curVolVars_[scvIdx].update(priVars,
-                                       problem_(),
-                                       element_(),
-                                       fvElemGeom_,
-                                       scvIdx,
-                                       false);
+            if (isBox)
+                curVolVars_[col].update(priVars,
+                                        problem_(),
+                                        element_(),
+                                        fvElemGeom_,
+                                        col,
+                                        false);
+            else
+                curVolVars_[col].update(priVars,
+                                        problem_(),
+                                        *neighbor,
+                                        neighborFVGeom,
+                                        /*scvIdx=*/0,
+                                        false);
+
             localResidual().eval(element_(),
                                  fvElemGeom_,
                                  prevVolVars_,
                                  curVolVars_,
                                  bcTypes_);
             partialDeriv -= localResidual().residual();
-            storageDeriv -= localResidual().storageTerm()[scvIdx];
+            if (isBox || col == 0)
+                storageDeriv -= localResidual().storageTerm()[col];
         }
         else {
             // we are using forward differences, i.e. we don't need to
             // calculate f(x - \epsilon) and we can recycle the
             // (already calculated) residual f(x)
             partialDeriv -= residual_;
-            storageDeriv -= storageTerm_[scvIdx];
+            if (isBox || col == 0)
+                storageDeriv -= storageTerm_[col];
         }
 
         // divide difference in residuals by the magnitude of the
@@ -467,7 +516,7 @@ protected:
         storageDeriv /= delta;
 
         // restore the original state of the element's volume variables
-        curVolVars_[scvIdx] = origVolVars;
+        curVolVars_[col] = origVolVars;
 
 #if HAVE_VALGRIND
         for (unsigned i = 0; i < partialDeriv.size(); ++i)
@@ -478,29 +527,32 @@ protected:
     /*!
      * \brief Updates the current local Jacobian matrix with the
      *        partial derivatives of all equations in regard to the
-     *        primary variable 'pvIdx' at vertex 'scvIdx' .
+     *        primary variable 'pvIdx' at dof 'col' .
      */
-    void updateLocalJacobian_(const int scvIdx,
+    void updateLocalJacobian_(const int col,
                               const int pvIdx,
                               const ElementSolutionVector &partialDeriv,
                               const PrimaryVariables &storageDeriv)
     {
         // store the derivative of the storage term
-        for (int eqIdx = 0; eqIdx < numEq; eqIdx++) {
-            storageJacobian_[scvIdx][eqIdx][pvIdx] = storageDeriv[eqIdx];
+        if (isBox || col == 0)
+        {
+            for (int eqIdx = 0; eqIdx < numEq; eqIdx++) {
+                storageJacobian_[col][eqIdx][pvIdx] = storageDeriv[eqIdx];
+            }
         }
 
-        for (int i = 0; i < fvElemGeom_.numVertices; i++)
+        for (int i = 0; i < fvElemGeom_.numSCV; i++)
         {
             // Green vertices are not to be changed!
-            if (jacAsm_().vertexColor(element_(), i) != Green) {
+            if (!isBox || jacAsm_().vertexColor(element_(), i) != Green) {
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++) {
-                    // A[i][scvIdx][eqIdx][pvIdx] is the rate of change of
-                    // the residual of equation 'eqIdx' at vertex 'i'
-                    // depending on the primary variable 'pvIdx' at vertex
-                    // 'scvIdx'.
-                    this->A_[i][scvIdx][eqIdx][pvIdx] = partialDeriv[i][eqIdx];
-                    Valgrind::CheckDefined(this->A_[i][scvIdx][eqIdx][pvIdx]);
+                    // A[i][col][eqIdx][pvIdx] is the rate of change of
+                    // the residual of equation 'eqIdx' at dof 'i'
+                    // depending on the primary variable 'pvIdx' at dof
+                    // 'col'.
+                    this->A_[i][col][eqIdx][pvIdx] = partialDeriv[i][eqIdx];
+                    Valgrind::CheckDefined(this->A_[i][col][eqIdx][pvIdx]);
                 }
             }
         }
