@@ -39,7 +39,7 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/1pfluidsystem.hh>
-#include <dumux/material/spatialparams/boxspatialparams1p.hh>
+#include <dumux/material/spatialparams/implicitspatialparams1p.hh>
 
 namespace Dumux
 {
@@ -70,8 +70,8 @@ SET_TYPE_PROP(OneP, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 SET_TYPE_PROP(OneP, Indices, OnePIndices);
 
 //! The spatial parameters to be employed. 
-//! Use BoxSpatialParamsOneP by default.
-SET_TYPE_PROP(OneP, SpatialParams, BoxSpatialParamsOneP<TypeTag>);
+//! Use ImplicitSpatialParamsOneP by default.
+SET_TYPE_PROP(OneP, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
 
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.

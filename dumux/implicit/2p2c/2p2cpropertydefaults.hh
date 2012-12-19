@@ -36,7 +36,7 @@
 #include "2p2cnewtoncontroller.hh"
 
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 namespace Dumux
 {
@@ -139,8 +139,8 @@ SET_PROP(TwoPTwoC, Indices)
 };
 
 //! The spatial parameters to be employed. 
-//! Use BoxSpatialParams by default.
-SET_TYPE_PROP(TwoPTwoC, SpatialParams, BoxSpatialParams<TypeTag>);
+//! Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(TwoPTwoC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 // disable velocity output by default
 SET_BOOL_PROP(TwoPTwoC, VtkAddVelocity, false);

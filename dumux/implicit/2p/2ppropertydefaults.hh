@@ -39,7 +39,7 @@
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 namespace Dumux
 {
@@ -82,8 +82,8 @@ SET_TYPE_PROP(TwoP,
               TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>);
 
 //! The spatial parameters to be employed. 
-//! Use BoxSpatialParams by default.
-SET_TYPE_PROP(TwoP, SpatialParams, BoxSpatialParams<TypeTag>);
+//! Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(TwoP, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 /*!
  * \brief Set the property for the material parameters by extracting

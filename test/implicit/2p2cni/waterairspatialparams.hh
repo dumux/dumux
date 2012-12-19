@@ -24,7 +24,7 @@
 #ifndef DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
 #define DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -66,9 +66,9 @@ SET_PROP(WaterAirSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for the water-air problem
  */
 template<class TypeTag>
-class WaterAirSpatialParams : public BoxSpatialParams<TypeTag>
+class WaterAirSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParams<TypeTag> ParentType;
+    typedef ImplicitSpatialParams<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

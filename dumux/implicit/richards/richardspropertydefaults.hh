@@ -38,7 +38,7 @@
 
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 namespace Dumux
 {
@@ -80,8 +80,8 @@ SET_SCALAR_PROP(Richards, ImplicitMobilityUpwindWeight, 1.0);
 SET_TYPE_PROP(Richards, Indices, RichardsIndices<TypeTag>);
 
 //! The spatial parameters to be employed. 
-//! Use BoxSpatialParams by default.
-SET_TYPE_PROP(Richards, SpatialParams, BoxSpatialParams<TypeTag>);
+//! Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(Richards, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 /*!
  * \brief Set type of the parameter objects for the material law

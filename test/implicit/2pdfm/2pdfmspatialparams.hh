@@ -26,7 +26,7 @@
 #include <dumux/implicit/2pdfm/2pdfmmodel.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 namespace Dumux
 {
@@ -63,7 +63,7 @@ public:
  *        twophase box model
  */
 template<class TypeTag>
-class TwoPDFMSpatialParams : public BoxSpatialParams<TypeTag>
+class TwoPDFMSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
 
     template<int dim>
@@ -75,7 +75,7 @@ class TwoPDFMSpatialParams : public BoxSpatialParams<TypeTag>
         }
     };
 
-    typedef BoxSpatialParams<TypeTag> ParentType;
+    typedef ImplicitSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

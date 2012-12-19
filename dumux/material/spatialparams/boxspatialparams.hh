@@ -26,14 +26,9 @@
 #ifndef DUMUX_BOX_SPATIAL_PARAMS_HH
 #define DUMUX_BOX_SPATIAL_PARAMS_HH
 
-#include "boxspatialparams1p.hh"
+#include "implicitspatialparams.hh"
 
 namespace Dumux {
-// forward declaration of property tags
-namespace Properties {
-NEW_PROP_TAG(MaterialLaw);
-NEW_PROP_TAG(MaterialLawParams);
-}
 
 /*!
  * \ingroup SpatialParameters
@@ -45,95 +40,16 @@ NEW_PROP_TAG(MaterialLawParams);
  *        box method.
  */
 template<class TypeTag>
-class BoxSpatialParams: public BoxSpatialParamsOneP<TypeTag>
+class BoxSpatialParams: public ImplicitSpatialParams<TypeTag>
 {
+    typedef ImplicitSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
-
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
-
-    enum {
-        dimWorld = GridView::dimensionworld
-    };
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> Vector;
 
 public:
+    DUNE_DEPRECATED_MSG("Use ImplicitSpatialParams from dumux/material/spatialparams/implicitspatialparams.hh instead.")
     BoxSpatialParams(const GridView &gridView)
-    :BoxSpatialParamsOneP<TypeTag>(gridView)
+    : ParentType(gridView)
     { }
-
-    /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
-     *
-     * \param element The current element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume.
-     * \return the material parameters object
-     */
-    const MaterialLawParams& materialLawParams(const Element &element,
-            const FVElementGeometry &fvGeometry,
-            int scvIdx) const
-    {
-            return asImp_().materialLawParamsAtPos(element.geometry().center());
-    }
-
-    /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
-     *
-     * \return the material parameters object
-     * \param globalPos The position of the center of the element
-     */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a materialLawParamsAtPos() method.");
-    }
-
-    /*!
-     * \brief Calculate the heat flux \f$[W/m^2]\f$ through the
-     *        rock matrix based on the temperature gradient \f$[K / m]\f$
-     *        at the integration point of a (boundary or SCV) face
-     *
-     * This is only required for non-isothermal models that use outflow
-     * boundary conditions.
-     *
-     * \param heatFlux The resulting heat flux vector
-     * \param fluxVars The flux variables
-     * \param elemVolVars The volume variables
-     * \param face The boundary or sub-control-volume face
-     * \param element The current finite element
-     * \param fvGeometry The finite volume geometry of the current element
-     * \tparam FaceType The type of the face (boundary face / SCV face)
-     */
-    template <class FaceType>
-    void boundaryMatrixHeatFlux(Vector &heatFlux,
-            const FluxVariables &fluxVars,
-            const ElementVolumeVariables &elemVolVars,
-            const FaceType &face,
-            const Element &element,
-            const FVElementGeometry &fvGeometry) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a matrixHeatFlux() method.");
-    }
-
-private:
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 };
 
 } // namespace Dumux
