@@ -167,7 +167,7 @@ public:
 
             fvGeometry.update(this->gridView_(), *elemIt);
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
                 int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 

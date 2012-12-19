@@ -75,7 +75,7 @@ public:
 
         DimVector tmp ;
         for (int idx = 0;
-             idx < fvGeometry.numFAP;
+             idx < fvGeometry.numFap;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx

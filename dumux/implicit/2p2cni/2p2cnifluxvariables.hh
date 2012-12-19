@@ -103,7 +103,7 @@ protected:
         // gradients
         temperatureGrad_ = 0;
         DimVector tmp(0.0);
-        for (int idx = 0; idx < this->fvGeometry_.numFAP; idx++)
+        for (int idx = 0; idx < this->fvGeometry_.numFap; idx++)
         {
             tmp = this->face().grad[idx];
 

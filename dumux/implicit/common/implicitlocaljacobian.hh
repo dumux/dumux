@@ -545,7 +545,7 @@ protected:
             }
         }
 
-        for (int i = 0; i < fvElemGeom_.numSCV; i++)
+        for (int i = 0; i < fvElemGeom_.numScv; i++)
         {
             // Green vertices are not to be changed!
             if (!isBox || jacAsm_().vertexColor(element_(), i) != Green) {

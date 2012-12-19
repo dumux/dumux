@@ -178,7 +178,7 @@ public:
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
 
-        residual_.resize(fvGeometry_().numSCV);
+        residual_.resize(fvGeometry_().numScv);
         residual_ = 0;
 
         bcTypesPtr_ = &bcTypes;
@@ -226,9 +226,9 @@ public:
         curVolVarsPtr_ = &curVolVars;
 
         // resize the vectors for all terms
-        int numSCV = fvGeometry_().numSCV;
-        residual_.resize(numSCV);
-        storageTerm_.resize(numSCV);
+        int numScv = fvGeometry_().numScv;
+        residual_.resize(numScv);
+        storageTerm_.resize(numScv);
 
         residual_ = 0.0;
         storageTerm_ = 0.0;
@@ -236,14 +236,14 @@ public:
         asImp_().evalFluxes_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numSCV; i++)
+        for (int i=0; i < fvGeometry_().numScv; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
 
         asImp_().evalVolumeTerms_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numSCV; i++) {
+        for (int i=0; i < fvGeometry_().numScv; i++) {
             Valgrind::CheckDefined(residual_[i]);
         }
 #endif // HAVE_VALGRIND
@@ -252,7 +252,7 @@ public:
         asImp_().evalBoundary_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numSCV; i++)
+        for (int i=0; i < fvGeometry_().numScv; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
     }
@@ -310,7 +310,7 @@ protected:
         if (bcTypes_().hasNeumann() || bcTypes_().hasOutflow())
             asImp_().evalBoundaryFluxes_();
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeometry_().numSCV; i++)
+        for (int i=0; i < fvGeometry_().numScv; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
 
@@ -324,12 +324,12 @@ protected:
      */
     void evalStorage_()
     {
-        storageTerm_.resize(fvGeometry_().numSCV);
+        storageTerm_.resize(fvGeometry_().numScv);
         storageTerm_ = 0;
 
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
-        for (int scvIdx = 0; scvIdx < fvGeometry_().numSCV; scvIdx++) {
+        for (int scvIdx = 0; scvIdx < fvGeometry_().numScv; scvIdx++) {
             Valgrind::SetUndefined(storageTerm_[scvIdx]);
             asImp_().computeStorage(storageTerm_[scvIdx], scvIdx, /*isOldSol=*/false);
             storageTerm_[scvIdx] *=
@@ -347,7 +347,7 @@ protected:
     void evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
-        for (int scvIdx = 0; scvIdx < fvGeometry_().numSCV; scvIdx++)
+        for (int scvIdx = 0; scvIdx < fvGeometry_().numScv; scvIdx++)
         {
             Scalar extrusionFactor =
                 curVolVars_(scvIdx).extrusionFactor();

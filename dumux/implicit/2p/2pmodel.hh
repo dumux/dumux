@@ -171,7 +171,7 @@ public:
 
             fvGeometry.update(this->gridView_(), *elemIt);
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
                 int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
@@ -276,7 +276,7 @@ public:
                     = elemIt->geometry().jacobianTransposed(localPos);
 
                 // transform vertex velocities from local to global coordinates
-                for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
                     int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
                     // calculate the subcontrolvolume velocity by the Piola transformation

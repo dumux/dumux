@@ -105,7 +105,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         ElementVolumeVariables elemVolVars;
         elemVolVars.update(this->problem_(), element, fvGeometry, false);
 
-        this->storageTerm_.resize(fvGeometry.numSCV);
+        this->storageTerm_.resize(fvGeometry.numScv);
         this->storageTerm_ = 0;
 
         this->elemPtr_ = &element;
@@ -310,7 +310,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     void evalPhaseStorage_(const int phaseIdx)
     {
         // evaluate the storage terms of a single phase
-        for (int i=0; i < this->fvGeometry_().numSCV; i++) {
+        for (int i=0; i < this->fvGeometry_().numScv; i++) {
             PrimaryVariables &storage = this->storageTerm_[i];
             const ElementVolumeVariables &elemVolVars = this->curVolVars_();
             const VolumeVariables &volVars = elemVolVars[i];

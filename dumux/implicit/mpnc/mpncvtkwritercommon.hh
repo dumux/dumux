@@ -129,7 +129,7 @@ public:
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+        for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
         {
             int globalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
             

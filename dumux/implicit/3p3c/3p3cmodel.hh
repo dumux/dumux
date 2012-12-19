@@ -321,7 +321,7 @@ public:
             (*rank)[idx] = this->gridView_().comm().rank();
             fvGeometry.update(this->gridView_(), *elemIt);
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
                 int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
@@ -450,7 +450,7 @@ public:
         for (; elemIt != elemEndIt; ++elemIt)
         {
             fvGeometry.update(this->gridView_(), *elemIt);
-            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
                 int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
