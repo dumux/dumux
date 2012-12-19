@@ -138,7 +138,7 @@ public:
             if (porosityOutput_) porosity_[globalIdx] = volVars.porosity();
 
             // works for scalar permeability in spatialparameters
-            if (permeabilityOutput_) permeability_[globalIdx] = this->problem_.spatialParams().intrinsicPermeability(elem,fvGeometry,localVertexIdx);
+            if (permeabilityOutput_) permeability_[globalIdx] = this->problem_.spatialParams().intrinsicPermeability(element,fvGeometry,scvIdx);
 
             // calculate a single value for the boundary type: use one
             // bit for each equation and set it to 1 if the equation
