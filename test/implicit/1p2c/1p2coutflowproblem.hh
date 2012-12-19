@@ -51,7 +51,7 @@ NEW_TYPE_TAG(OnePTwoCOutflowCCProblem, INHERITS_FROM(CCModel, OnePTwoCOutflowPro
 // Set the grid type
 SET_PROP(OnePTwoCOutflowProblem, Grid)
 {
-#if 0 //HAVE_UG
+#if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
     typedef Dune::SGrid<2, 2> type;
@@ -205,17 +205,15 @@ public:
         if(globalPos[0] < eps_ || globalPos[0] > this->bboxMax()[0] - eps_)
         {
             values.setAllDirichlet();
-            std::cout << "set Dirichlet values at pos " << globalPos << std::endl;
         }
         else
         {
             values.setAllNeumann();
-            std::cout << "set Neumann values at pos " << globalPos << std::endl;
         }
         
-        //outflow condition for the transport equation at right boundary
-        //if(globalPos[0] > this->bboxMax()[0] - eps_)
-        //    values.setOutflow(transportEqIdx);
+        // outflow condition for the transport equation at right boundary
+        if(globalPos[0] > this->bboxMax()[0] - eps_)
+            values.setOutflow(transportEqIdx);
     }
 
     /*!
@@ -229,12 +227,11 @@ public:
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        std::cout << "set Dirichlet values " << values << " at pos " << globalPos << std::endl;
         initial_(values, globalPos);
-        std::cout << "set Dirichlet values " << values << " at pos " << globalPos << std::endl;
+
         //condition for the N2 molefraction at left boundary
-        //if (globalPos[0] < 0.5*(this->bboxMin()[0] + this->bboxMax()[0]))
-        //    values[massOrMoleFracIdx] = 2.0e-5;
+        if (globalPos[0] < 0.5*(this->bboxMin()[0] + this->bboxMax()[0]))
+            values[massOrMoleFracIdx] = 2.0e-5;
     }
 
     /*!

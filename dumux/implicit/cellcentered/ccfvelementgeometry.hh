@@ -96,6 +96,7 @@ public:
         Dune::FieldVector<Vector, maxNFAP> grad; //!< derivatives of shape functions at ip
         Dune::FieldVector<Scalar, maxNFAP> shapeValue; //!< value of shape functions at ip
         Dune::FieldVector<int, maxNFAP> fapIndices; //!< indices w.r.t.neighbors of the flux approximation points
+        unsigned faceIdx;
     };
 
     typedef SubControlVolumeFace BoundaryFace; //!< compatibility typedef
@@ -183,6 +184,8 @@ public:
                 
                 subContVolFace[k].fapIndices[0] = subContVolFace[k].i;
                 subContVolFace[k].fapIndices[1] = subContVolFace[k].j;
+                
+                subContVolFace[k].faceIdx = it->indexInInside();
             }
 
             // boundary cvf data
@@ -199,7 +202,7 @@ public:
 
                 GlobalPosition distVec = elementGlobal;
                 distVec -= boundaryFace[bfIdx].ipGlobal;
-                distVec /= distVec.two_norm2();
+                distVec /= 2.0*distVec.two_norm2();
                 
                 // gradients using a two-point flux approximation
                 for (int idx = 0; idx < 2; idx++)
@@ -207,7 +210,41 @@ public:
                     boundaryFace[bfIdx].grad[idx] = distVec;
                     boundaryFace[bfIdx].shapeValue[idx] = 0.5;
                 }
-                boundaryFace[bfIdx].grad[1] *= -1.0;
+                boundaryFace[bfIdx].grad[0] *= -1.0;
+                
+                boundaryFace[bfIdx].fapIndices[0] = boundaryFace[bfIdx].i;
+                boundaryFace[bfIdx].fapIndices[1] = boundaryFace[bfIdx].j;
+            }
+        }
+        
+        for (int nIdx = 0; nIdx < numNeighbors-1; nIdx++)
+        {
+            switch (subContVolFace[nIdx].faceIdx)
+            {
+                case 0:
+                    boundaryFace[1].j = nIdx+1;
+                    boundaryFace[1].fapIndices[1] = boundaryFace[1].j;
+                    break;
+                case 1:
+                    boundaryFace[0].j = nIdx+1;
+                    boundaryFace[0].fapIndices[1] = boundaryFace[0].j;
+                    break;
+                case 2:
+                    boundaryFace[3].j = nIdx+1;
+                    boundaryFace[3].fapIndices[1] = boundaryFace[3].j;
+                    break;
+                case 3:
+                    boundaryFace[2].j = nIdx+1;
+                    boundaryFace[2].fapIndices[1] = boundaryFace[2].j;
+                    break;
+                case 4:
+                    boundaryFace[5].j = nIdx+1;
+                    boundaryFace[5].fapIndices[1] = boundaryFace[5].j;
+                    break;
+                case 5:
+                    boundaryFace[4].j = nIdx+1;
+                    boundaryFace[4].fapIndices[1] = boundaryFace[4].j;
+                    break;
             }
         }
     }
