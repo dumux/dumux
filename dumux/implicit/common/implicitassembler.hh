@@ -19,26 +19,22 @@
 /*!
  * \file
  *
- * \brief An assembler for the global Jacobian matrix for models using the box discretization.
+ * \brief An assembler for the global Jacobian matrix for fully implicit models.
  */
-#ifndef DUMUX_BOX_ASSEMBLER_HH
-#define DUMUX_BOX_ASSEMBLER_HH
+#ifndef DUMUX_IMPLICIT_ASSEMBLER_HH
+#define DUMUX_IMPLICIT_ASSEMBLER_HH
 
-#include <dune/grid/common/gridenums.hh>
-
-#include <dumux/implicit/box/boxproperties.hh>
-#include <dumux/linear/vertexborderlistfromgrid.hh>
-#include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
-#include <dumux/parallel/vertexhandles.hh>
+#include "implicitproperties.hh"
 
 namespace Dumux {
 
 /*!
- * \brief An assembler for the global Jacobian matrix for models using the box discretization.
+ * \brief An assembler for the global Jacobian matrix for fully implicit models.
  */
 template<class TypeTag>
-class BoxAssembler
+class ImplicitAssembler
 {
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -59,8 +55,10 @@ class BoxAssembler
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
     typedef Dune::FieldVector<Scalar, numEq> VectorBlock;
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
     // copying the jacobian assembler is not a good idea
-    BoxAssembler(const BoxAssembler &);
+    ImplicitAssembler(const ImplicitAssembler &);
 
 public:
     /*!
@@ -96,7 +94,7 @@ public:
         Green = 3
     };
 
-    BoxAssembler()
+    ImplicitAssembler()
     {
         problemPtr_ = 0;
         matrix_ = 0;
@@ -107,7 +105,7 @@ public:
         reassembleAccuracy_ = 0.0;
     }
 
-    ~BoxAssembler()
+    ~ImplicitAssembler()
     {
         delete matrix_;
     }
@@ -126,7 +124,7 @@ public:
         problemPtr_ = &problem;
 
         // initialize the BCRS matrix
-        createMatrix_();
+        asImp_().createMatrix_();
 
         // initialize the jacobian matrix and the right hand side
         // vector
@@ -135,15 +133,16 @@ public:
 
         int numVerts = gridView_().size(dim);
         int numElems = gridView_().size(0);
+        int numDofs = problem.model().numDofs();
 
-        residual_.resize(numVerts);
+        residual_.resize(numDofs);
 
         // initialize the storage part of the Jacobian matrix. Since
         // we only need this if Jacobian matrix recycling is enabled,
         // we do not waste space if it is disabled
         if (enableJacobianRecycling_()) {
-            storageJacobian_.resize(numVerts);
-            storageTerm_.resize(numVerts);
+            storageJacobian_.resize(numDofs);
+            storageTerm_.resize(numDofs);
         }
 
         if (gridView_().comm().size() > 1)
@@ -153,9 +152,10 @@ public:
 
         // initialize data needed for partial reassembly
         if (enablePartialReassemble_()) {
-            vertexColor_.resize(numVerts);
-            vertexDelta_.resize(numVerts);
+            delta_.resize(numDofs);
             elementColor_.resize(numElems);
+            if (isBox)
+                vertexColor_.resize(numVerts);
         }
         reassembleAll();
     }
@@ -248,8 +248,8 @@ public:
             std::fill(elementColor_.begin(),
                       elementColor_.end(),
                       Red);
-            std::fill(vertexDelta_.begin(),
-                      vertexDelta_.end(),
+            std::fill(delta_.begin(),
+                      delta_.end(),
                       0.0);
         }
     }
@@ -283,7 +283,7 @@ public:
         // update the vector with the distances of the current
         // evaluation point used for linearization from the original
         // evaluation point
-        for (unsigned int i = 0; i < vertexDelta_.size(); ++i) {
+        for (unsigned int i = 0; i < delta_.size(); ++i) {
             PrimaryVariables currentPriVars(u[i]);
             PrimaryVariables nextPriVars(currentPriVars);
             nextPriVars -= uDelta[i];
@@ -293,7 +293,7 @@ public:
             Scalar dist = model_().relativeErrorVertex(i,
                                                        currentPriVars,
                                                        nextPriVars);
-            vertexDelta_[i] += std::abs(dist);
+            delta_[i] += std::abs(dist);
         }
 
     }
@@ -317,17 +317,6 @@ public:
      * \brief Determine the colors of vertices and elements for partial
      *        reassembly given a relative tolerance.
      *
-     * The following approach is used:
-     *
-     * - Set all vertices and elements to 'green'
-     * - Mark all vertices as 'red' which exhibit an relative error above
-     *   the tolerance
-     * - Mark all elements which feature a 'red' vetex as 'red'
-     * - Mark all vertices which are not 'red' and are part of a
-     *   'red' element as 'yellow'
-     * - Mark all elements which are not 'red' and contain a
-     *   'yellow' vertex as 'yellow'
-     *
      * \param relTol The relative error below which a vertex won't be
      *               reassembled. Note that this specifies the
      *               worst-case relative error between the last
@@ -336,140 +325,7 @@ public:
      */
     void computeColors(const Scalar relTol)
     {
-        if (!enablePartialReassemble_())
-            return;
-
-        ElementIterator elemIt = gridView_().template begin<0>();
-        ElementIterator elemEndIt = gridView_().template end<0>();
-
-        // mark the red vertices and update the tolerance of the
-        // linearization which actually will get achieved
-        nextReassembleAccuracy_ = 0;
-        for (unsigned int i = 0; i < vertexColor_.size(); ++i) {
-            if (vertexDelta_[i] > relTol)
-                // mark vertex as red if discrepancy is larger than
-                // the relative tolerance
-                vertexColor_[i] = Red;
-            else
-                nextReassembleAccuracy_ =
-                    std::max(nextReassembleAccuracy_, vertexDelta_[i]);
-        }
-
-        // Mark all red elements
-        for (; elemIt != elemEndIt; ++elemIt) {
-            // find out whether the current element features a red
-            // vertex
-            bool isRed = false;
-            int numVerts = elemIt->template count<dim>();
-            for (int i=0; i < numVerts; ++i) {
-                int globalI = vertexMapper_().map(*elemIt, i, dim);
-                if (vertexColor_[globalI] == Red) {
-                    isRed = true;
-                    break;
-                }
-            }
-
-            // if yes, the element color is also red, else it is not
-            // red, i.e. green for the mean time
-            int globalElemIdx = elementMapper_().map(*elemIt);
-            if (isRed)
-                elementColor_[globalElemIdx] = Red;
-            else
-                elementColor_[globalElemIdx] = Green;
-        }
-
-        // Mark yellow vertices (as orange for the mean time)
-        elemIt = gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
-            if (elementColor_[elemIdx] != Red)
-                continue; // non-red elements do not tint vertices
-                          // yellow!
-
-            int numVerts = elemIt->template count<dim>();
-            for (int i=0; i < numVerts; ++i) {
-                int globalI = vertexMapper_().map(*elemIt, i, dim);
-                // if a vertex is already red, don't recolor it to
-                // yellow!
-                if (vertexColor_[globalI] != Red) {
-                    vertexColor_[globalI] = Orange;
-                }
-            }
-        }
-
-        // at this point we communicate the yellow vertices to the
-        // neighboring processes because a neigbor process may not see
-        // the red vertex for yellow border vertices
-        VertexHandleMin<EntityColor, std::vector<EntityColor>,  VertexMapper>
-            minHandle(vertexColor_, vertexMapper_());
-        gridView_().communicate(minHandle,
-                                Dune::InteriorBorder_InteriorBorder_Interface,
-                                Dune::ForwardCommunication);
-
-        // Mark yellow elements
-        elemIt = gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
-            if (elementColor_[elemIdx] == Red) {
-                continue; // element is red already!
-            }
-
-            // check whether the element features a yellow
-            // (resp. orange at this point) vertex
-            bool isYellow = false;
-            int numVerts = elemIt->template count<dim>();
-            for (int i=0; i < numVerts; ++i) {
-                int globalI = vertexMapper_().map(*elemIt, i, dim);
-                if (vertexColor_[globalI] == Orange) {
-                    isYellow = true;
-                    break;
-                }
-            }
-
-            if (isYellow)
-                elementColor_[elemIdx] = Yellow;
-        }
-
-        // Demote orange vertices to yellow ones if it has at least
-        // one green element as a neighbor.
-        elemIt = gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
-            if (elementColor_[elemIdx] != Green)
-                continue; // yellow and red elements do not make
-                          // orange vertices yellow!
-
-            int numVerts = elemIt->template count<dim>();
-            for (int i=0; i < numVerts; ++i) {
-                int globalI = vertexMapper_().map(*elemIt, i, dim);
-                // if a vertex is orange, recolor it to yellow!
-                if (vertexColor_[globalI] == Orange)
-                    vertexColor_[globalI] = Yellow;
-            }
-        }
-
-        // demote the border orange vertices
-        VertexHandleMax<EntityColor, std::vector<EntityColor>,  VertexMapper>
-            maxHandle(vertexColor_,
-                      vertexMapper_());
-        gridView_().communicate(maxHandle,
-                                Dune::InteriorBorder_InteriorBorder_Interface,
-                                Dune::ForwardCommunication);
-
-        // promote the remaining orange vertices to red
-        for (unsigned int i=0; i < vertexColor_.size(); ++i) {
-            // if a vertex is green or yellow don't do anything!
-            if (vertexColor_[i] == Green || vertexColor_[i] == Yellow)
-                continue;
-
-            // make sure the vertex is red (this is a no-op vertices
-            // which are already red!)
-            vertexColor_[i] = Red;
-
-            // set the error of this vertex to 0 because the system
-            // will be consistently linearized at this vertex
-            vertexDelta_[i] = 0.0;
-        }
+        asImp_().computeColors_(relTol);
     }
 
     /*!
@@ -541,79 +397,12 @@ public:
     SolutionVector& residual() 
     { return residual_; }
 
-private:
+protected:
     static bool enableJacobianRecycling_()
     { return GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling); }
     static bool enablePartialReassemble_()
     { return GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble); }
 
-    // Construct the BCRS matrix for the global jacobian
-    void createMatrix_()
-    {
-        int numVerticesGlobal = gridView_().size(dim);
-
-        // allocate raw matrix
-        matrix_ = new JacobianMatrix(numVerticesGlobal, numVerticesGlobal, JacobianMatrix::random);
-
-        // find out the global indices of the neighboring vertices of
-        // each vertex
-        typedef std::set<int> NeighborSet;
-        std::vector<NeighborSet> neighbors(numVerticesGlobal);
-        ElementIterator eIt = gridView_().template begin<0>();
-        const ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            const Element &elem = *eIt;
-            int numVerticesLocal = elem.template count<dim>();
-
-            // if the element is not in the interior or the process
-            // border, all dofs just contain main-diagonal entries
-            if (elem.partitionType() != Dune::InteriorEntity &&
-                elem.partitionType() != Dune::BorderEntity)
-            {
-                for (int i = 0; i < numVerticesLocal; ++i) {
-                    int globalI = vertexMapper_().map(*eIt, i, dim);
-                    neighbors[globalI].insert(globalI);
-                }
-            }
-            else
-            {
-                // loop over all element vertices
-                for (int i = 0; i < numVerticesLocal - 1; ++i) {
-                    int globalI = vertexMapper_().map(*eIt, i, dim);
-                    for (int j = i + 1; j < numVerticesLocal; ++j) {
-                        int globalJ = vertexMapper_().map(*eIt, j, dim);
-                        // make sure that vertex j is in the neighbor set
-                        // of vertex i and vice-versa
-                        neighbors[globalI].insert(globalJ);
-                        neighbors[globalJ].insert(globalI);
-                    }
-                }
-            }
-        }
-
-        // make vertices neighbors to themselfs
-        for (int i = 0; i < numVerticesGlobal; ++i) {
-            neighbors[i].insert(i);
-        }
-        
-        // allocate space for the rows of the matrix
-        for (int i = 0; i < numVerticesGlobal; ++i) {
-            matrix_->setrowsize(i, neighbors[i].size());
-        }
-        matrix_->endrowsizes();
-
-        // fill the rows with indices. each vertex talks to all of its
-        // neighbors. (it also talks to itself since vertices are
-        // sometimes quite egocentric.)
-        for (int i = 0; i < numVerticesGlobal; ++i) {
-            typename NeighborSet::iterator nIt = neighbors[i].begin();
-            typename NeighborSet::iterator nEndIt = neighbors[i].end();
-            for (; nIt != nEndIt; ++nIt) {
-                matrix_->addindex(i, *nIt);
-            }
-        }
-        matrix_->endindices();
-    }
 
     // reset the global linear system of equations. if partial
     // reassemble is enabled, this means that the jacobian matrix must
@@ -634,8 +423,7 @@ private:
 
             // reset the parts needed for Jacobian recycling
             if (enableJacobianRecycling_()) {
-                int numVerticesGlobal = matrix_->N();
-                for (int i=0; i < numVerticesGlobal; ++ i) {
+                for (int i = 0; i < matrix_->N(); i++) {
                     storageJacobian_[i] = 0;
                     storageTerm_[i] = 0;
                 }
@@ -646,24 +434,22 @@ private:
 
         // reset all entries corrosponding to a red or yellow vertex
         for (unsigned int rowIdx = 0; rowIdx < matrix_->N(); ++rowIdx) {
-            if (vertexColor_[rowIdx] == Green)
-                continue; // the equations for this control volume are
-                          // already below the treshold
+            if ((isBox && vertexColor_[rowIdx] != Green)
+                || (!isBox && elementColor_[rowIdx] != Green))
+            {
+                // reset the parts needed for Jacobian recycling
+                if (enableJacobianRecycling_()) {
+                    storageJacobian_[rowIdx] = 0;
+                    storageTerm_[rowIdx] = 0;
+                }
 
-            // here we have yellow or red vertices...
-
-            // reset the parts needed for Jacobian recycling
-            if (enableJacobianRecycling_()) {
-                storageJacobian_[rowIdx] = 0;
-                storageTerm_[rowIdx] = 0;
-            }
-
-            // set all matrix entries in the row to 0
-            typedef typename JacobianMatrix::ColIterator ColIterator;
-            ColIterator colIt = (*matrix_)[rowIdx].begin();
-            const ColIterator &colEndIt = (*matrix_)[rowIdx].end();
-            for (; colIt != colEndIt; ++colIt) {
-                (*colIt) = 0.0;
+                // set all matrix entries in the row to 0
+                typedef typename JacobianMatrix::ColIterator ColIterator;
+                ColIterator colIt = (*matrix_)[rowIdx].begin();
+                const ColIterator &colEndIt = (*matrix_)[rowIdx].end();
+                for (; colIt != colEndIt; ++colIt) {
+                    (*colIt) = 0.0;
+                }
             }
         }
     }
@@ -677,8 +463,7 @@ private:
         // here and be done with it...
         Scalar curDt = problem_().timeManager().timeStepSize();
         if (reuseMatrix_) {
-            int numVerticesGlobal = storageJacobian_.size();
-            for (int i = 0; i < numVerticesGlobal; ++i) {
+            for (int i = 0; i < matrix_->N(); i++) {
                 // rescale the mass term of the jacobian matrix
                 MatrixBlock &J_i_i = (*matrix_)[i][i];
 
@@ -710,106 +495,18 @@ private:
         ElementIterator elemEndIt = gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
             const Element &elem = *elemIt;
-            if (elem.partitionType() != Dune::InteriorEntity  &&
-                elem.partitionType() != Dune::BorderEntity)
+            if (elem.partitionType() == Dune::GhostEntity)
             {
-                assembleGhostElement_(elem);
+                asImp_().assembleGhostElement_(elem);
             }
             else
             {
-                assembleElement_(elem);
+                asImp_().assembleElement_(elem);
             }
         }
     }
 
-    // assemble a non-ghost element
-    void assembleElement_(const Element &elem)
-    {
-        if (enablePartialReassemble_()) {
-            int globalElemIdx = model_().elementMapper().map(elem);
-            if (elementColor_[globalElemIdx] == Green) {
-                ++greenElems_;
-
-                assembleGreenElement_(elem);
-                return;
-            }
-        }
-
-        model_().localJacobian().assemble(elem);
-
-        int numVerticesLocal = elem.template count<dim>();
-        for (int i=0; i < numVerticesLocal; ++ i) {
-            int globI = vertexMapper_().map(elem, i, dim);
-
-            // update the right hand side
-            residual_[globI] += model_().localJacobian().residual(i);
-            for (int j = 0; j < residual_[globI].dimension; ++j)
-                assert(std::isfinite(residual_[globI][j]));
-            if (enableJacobianRecycling_()) {
-                storageTerm_[globI] +=
-                    model_().localJacobian().storageTerm(i);
-            }
-
-            // only update the jacobian matrix for non-green vertices
-            if (vertexColor(globI) != Green) {
-                if (enableJacobianRecycling_())
-                    storageJacobian_[globI] +=
-                        model_().localJacobian().storageJacobian(i);
-
-                // update the jacobian matrix
-                for (int j=0; j < numVerticesLocal; ++ j) {
-                    int globJ = vertexMapper_().map(elem, j, dim);
-                    (*matrix_)[globI][globJ] +=
-                        model_().localJacobian().mat(i,j);
-                }
-            }
-        }
-    }
-
-    // "assemble" a green element. green elements only get the
-    // residual updated, but the jacobian is left alone...
-    void assembleGreenElement_(const Element &elem)
-    {
-        model_().localResidual().eval(elem);
-
-        int numVerticesLocal = elem.template count<dim>();
-        for (int i=0; i < numVerticesLocal; ++ i) {
-            int globI = vertexMapper_().map(elem, i, dim);
-
-            // update the right hand side
-            residual_[globI] += model_().localResidual().residual(i);
-            if (enableJacobianRecycling_())
-                storageTerm_[globI] += model_().localResidual().storageTerm(i);
-        }
-    }
-
-    // "assemble" a ghost element
-    void assembleGhostElement_(const Element &elem)
-    {
-        int numVerticesLocal = elem.template count<dim>();
-        for (int i=0; i < numVerticesLocal; ++i) {
-            const VertexPointer vp = elem.template subEntity<dim>(i);
-
-            if (vp->partitionType() == Dune::InteriorEntity ||
-                vp->partitionType() == Dune::BorderEntity)
-            {
-                // do not change the non-ghost vertices
-                continue;
-            }
-
-            // set main diagonal entries for the vertex
-            int vIdx = vertexMapper_().map(*vp);
-            typedef typename JacobianMatrix::block_type BlockType;
-            BlockType &J = (*matrix_)[vIdx][vIdx];
-            for (int j = 0; j < BlockType::rows; ++j)
-                J[j][j] = 1.0;
-
-            // set residual for the vertex
-            residual_[vIdx] = 0;
-        }
-    }
-
-
+protected:
     Problem &problem_()
     { return *problemPtr_; }
     const Problem &problem_() const
@@ -844,13 +541,19 @@ private:
     // attributes required for partial jacobian reassembly
     std::vector<EntityColor> vertexColor_;
     std::vector<EntityColor> elementColor_;
-    std::vector<Scalar> vertexDelta_;
+    std::vector<Scalar> delta_;
 
     int totalElems_;
     int greenElems_;
 
     Scalar nextReassembleAccuracy_;
     Scalar reassembleAccuracy_;
+
+private:
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
 };
 
 } // namespace Dumux
