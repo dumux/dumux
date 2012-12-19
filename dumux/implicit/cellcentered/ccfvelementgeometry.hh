@@ -114,7 +114,7 @@ public:
     int numFAP; //!< number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< stores pointers for the neighboring elements
     
-    void updateInner(const GridView& gridView, const Element& e)
+    void updateInner(const Element& e)
     {
         const Geometry& geometry = e.geometry();
 
@@ -143,7 +143,7 @@ public:
     
     void update(const GridView& gridView, const Element& e)
     {
-        updateInner(gridView, e);
+        updateInner(e);
         
         const Geometry& geometry = e.geometry();
 

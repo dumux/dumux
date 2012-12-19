@@ -90,7 +90,7 @@ public:
                     = globalSol[problem.elementMapper().map(neighbor)];
 
             FVElementGeometry neighborFVGeom;
-            neighborFVGeom.updateInner(problem.gridView(), neighbor);
+            neighborFVGeom.updateInner(neighbor);
             
             (*this)[i].update(solI,
                               problem,

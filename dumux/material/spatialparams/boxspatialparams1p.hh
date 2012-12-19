@@ -107,6 +107,13 @@ public:
                 result[i][j] = harmonicMean(K1[i][j], K2[i][j]);
     }
 
+    Scalar elementIntrinsicPermeability (const Element &element) const
+    {
+        FVElementGeometry fvGeometry;
+        fvGeometry.subContVol[0].global = element.geometry().center();
+        return asImp_().intrinsicPermeability(element, fvGeometry, /*scvIdx=*/0);
+    }
+    
     /*!
      * \brief Function for defining the intrinsic (absolute) permeability.
      *

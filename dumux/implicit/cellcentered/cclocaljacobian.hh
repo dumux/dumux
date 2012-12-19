@@ -390,7 +390,7 @@ protected:
     {
         const Element& neighbor = *(fvElemGeom_.neighbors[neighborIdx]);
 	FVElementGeometry neighborFVGeom;
-	neighborFVGeom.updateInner(problemPtr_->gridView(), neighbor);
+	neighborFVGeom.updateInner(neighbor);
 	
         int globalIdx = problemPtr_->elementMapper().map(neighbor);
 

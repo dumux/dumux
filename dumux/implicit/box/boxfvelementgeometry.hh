@@ -591,7 +591,10 @@ public:
     std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
     
     const LocalFiniteElementCache feCache_;
-
+    
+    void updateInner(const Element& element) //!< needed for compatibility with cc models
+    {}
+    
     void update(const GridView& gridView, const Element& element)
     {
         const Geometry& geometry = element.geometry();

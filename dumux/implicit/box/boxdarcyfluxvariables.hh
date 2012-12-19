@@ -91,7 +91,7 @@ public:
                  const int faceIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
+    : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
         mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
         calculateGradients_(problem, element, elemVolVars);
@@ -165,17 +165,7 @@ public:
     }
 
 protected:
-    const FVElementGeometry &fvGeometry_;   //!< Information about the geometry of discretization
-    const unsigned int faceIdx_;            //!< The index of the sub control volume face
-    const bool      onBoundary_;                //!< Specifying whether we are currently on the boundary of the simulation domain
-    unsigned int    upstreamIdx_[numPhases] , downstreamIdx_[numPhases]; //!< local index of the upstream / downstream vertex
-    Scalar          volumeFlux_[numPhases] ;    //!< Velocity multiplied with normal (magnitude=area)
-    DimVector       velocity_[numPhases] ;      //!< The velocity as determined by Darcy's law or by the Forchheimer relation
-    Scalar          kGradPNormal_[numPhases] ;  //!< Permeability multiplied with gradient in potential, multiplied with normal (magnitude=area)
-    DimVector       kGradP_[numPhases] ; //!< Permeability multiplied with gradient in potential
-    DimVector       gradPotential_[numPhases] ; //!< Gradient of potential, which drives flow
-    Scalar          mobilityUpwindWeight_;      //!< Upwind weight for mobility. Set to one for full upstream weighting
-
+    
     /*
      * \brief Calculation of the potential gradients
      *
@@ -255,13 +245,23 @@ protected:
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
         Tensor K;
-        spatialParams.meanK(K,
-                            spatialParams.intrinsicPermeability(element,
-                                                                fvGeometry_,
-                                                                face().i),
-                            spatialParams.intrinsicPermeability(element,
-                                                                fvGeometry_,
-                                                                face().j));
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            spatialParams.meanK(K,
+                                spatialParams.intrinsicPermeability(element,
+                                                                    fvGeometry_,
+                                                                    face().i),
+                                spatialParams.intrinsicPermeability(element,
+                                                                    fvGeometry_,
+                                                                    face().j));
+        }
+        else
+        {
+            spatialParams.meanK(K,
+                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().i]),
+                                spatialParams.elementIntrinsicPermeability(*fvGeometry_.neighbors[face().j]));
+        }
+        
         // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
@@ -306,6 +306,17 @@ protected:
             volumeFlux_[phaseIdx] = velocity_[phaseIdx] * face().normal ;
         }// loop all phases
     }
+
+    const FVElementGeometry &fvGeometry_;   //!< Information about the geometry of discretization
+    const unsigned int faceIdx_;            //!< The index of the sub control volume face
+    const bool      onBoundary_;                //!< Specifying whether we are currently on the boundary of the simulation domain
+    unsigned int    upstreamIdx_[numPhases] , downstreamIdx_[numPhases]; //!< local index of the upstream / downstream vertex
+    Scalar          volumeFlux_[numPhases] ;    //!< Velocity multiplied with normal (magnitude=area)
+    DimVector       velocity_[numPhases] ;      //!< The velocity as determined by Darcy's law or by the Forchheimer relation
+    Scalar          kGradPNormal_[numPhases] ;  //!< Permeability multiplied with gradient in potential, multiplied with normal (magnitude=area)
+    DimVector       kGradP_[numPhases] ; //!< Permeability multiplied with gradient in potential
+    DimVector       gradPotential_[numPhases] ; //!< Gradient of potential, which drives flow
+    Scalar          mobilityUpwindWeight_;      //!< Upwind weight for mobility. Set to one for full upstream weighting
 };
 
 } // end namespace
