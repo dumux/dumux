@@ -128,12 +128,16 @@ NEW_PROP_TAG(ImplicitEnableHints);
 
 // mappers from local to global indices
 
-//! maper for vertices
+//! mapper for vertices
 NEW_PROP_TAG(VertexMapper);
-//! maper for elements
+//! mapper for elements
 NEW_PROP_TAG(ElementMapper);
-//! maper for degrees of freedom
+//! mapper for degrees of freedom
 NEW_PROP_TAG(DofMapper);
+
+//! indicate whether discretization is box or not
+NEW_PROP_TAG(ImplicitIsBox);
+
 }
 }
 

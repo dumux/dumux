@@ -321,6 +321,7 @@ class BoxFVElementGeometry
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<Scalar,dimWorld> Vector;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
@@ -587,7 +588,8 @@ public:
     int numFaces; //!< number of faces (0 in < 3D)
     int numSCV; //!< number of subcontrol volumes
     int numFAP; //!< number of flux approximation points
-
+    std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
+    
     const LocalFiniteElementCache feCache_;
 
     void update(const GridView& gridView, const Element& element)

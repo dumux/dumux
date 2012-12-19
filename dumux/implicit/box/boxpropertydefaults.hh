@@ -201,6 +201,9 @@ SET_INT_PROP(BoxModel, LinearSolverMaxIterations, 250);
 //! set number of equations of the mathematical model as default
 SET_INT_PROP(BoxModel, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
 
+//! indicate that this is a box discretization
+SET_BOOL_PROP(BoxModel, ImplicitIsBox, true);
+
 } // namespace Properties
 } // namespace Dumux
 
