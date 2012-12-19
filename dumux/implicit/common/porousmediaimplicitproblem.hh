@@ -24,7 +24,7 @@
 #ifndef DUMUX_POROUS_MEDIA_BOX_PROBLEM_HH
 #define DUMUX_POROUS_MEDIA_BOX_PROBLEM_HH
 
-#include "boxproperties.hh"
+#include "implicitproperties.hh"
 
 #include <dumux/implicit/box/boxproblem.hh>
 

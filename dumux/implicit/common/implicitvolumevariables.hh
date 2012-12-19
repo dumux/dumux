@@ -25,7 +25,7 @@
 #ifndef DUMUX_BOX_VOLUME_VARIABLES_HH
 #define DUMUX_BOX_VOLUME_VARIABLES_HH
 
-#include "boxproperties.hh"
+#include "implicitproperties.hh"
 
 #include <dumux/common/valgrind.hh>
 

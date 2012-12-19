@@ -24,7 +24,7 @@
 #ifndef DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 
-#include "boxproperties.hh"
+#include "implicitproperties.hh"
 
 #include <dumux/common/valgrind.hh>
 

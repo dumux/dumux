@@ -28,7 +28,7 @@
 
 #include <dumux/common/valgrind.hh>
 
-#include "boxproperties.hh"
+#include "implicitproperties.hh"
 
 namespace Dumux
 {

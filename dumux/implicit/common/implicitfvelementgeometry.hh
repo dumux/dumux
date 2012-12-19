@@ -32,7 +32,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/propertysystem.hh>
-#include "boxproperties.hh"
+#include <dumux/implicit/box/boxproperties.hh>
 
 namespace Dumux
 {

@@ -31,9 +31,7 @@
 #ifndef DUMUX_CC_PROPERTY_DEFAULTS_HH
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
 
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/nonlinear/newtoncontroller.hh>
-
+#include <dumux/implicit/common/implicitpropertydefaults.hh>
 #include "ccassembler.hh"
 #include "ccmodel.hh"
 #include "ccfvelementgeometry.hh"
@@ -41,14 +39,7 @@
 #include "cclocaljacobian.hh"
 #include "cclocalresidual.hh"
 #include "ccelementvolumevariables.hh"
-#include <dumux/implicit/box/boxvolumevariables.hh>
-
-#include <dumux/common/boundarytypes.hh>
-#include <dumux/common/timemanager.hh>
-
 #include "ccproperties.hh"
-
-#include <limits>
 
 namespace Dumux {
 
@@ -57,45 +48,11 @@ template<class TypeTag>
 class CCModel;
 
 namespace Properties {
-//////////////////////////////////////////////////////////////////
-// Some defaults for very fundamental properties
-//////////////////////////////////////////////////////////////////
-
-//! Set the default type for the time manager
-SET_TYPE_PROP(CCModel, TimeManager, Dumux::TimeManager<TypeTag>);
-
-//////////////////////////////////////////////////////////////////
-// Properties
-//////////////////////////////////////////////////////////////////
-
-//! Use the leaf grid view if not defined otherwise
-SET_TYPE_PROP(CCModel,
-              GridView,
-              typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
-
 //! Set the default for the FVElementGeometry
 SET_TYPE_PROP(CCModel, FVElementGeometry, Dumux::CCFVElementGeometry<TypeTag>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCModel, ElementBoundaryTypes, Dumux::CCElementBoundaryTypes<TypeTag>);
-
-//! use the plain newton method for the box scheme by default
-SET_TYPE_PROP(CCModel, NewtonMethod, Dumux::NewtonMethod<TypeTag>);
-
-//! use the plain newton controller for the box scheme by default
-SET_TYPE_PROP(CCModel, NewtonController, Dumux::NewtonController<TypeTag>);
-
-//! Mapper for the grid view's vertices.
-SET_TYPE_PROP(CCModel,
-              VertexMapper,
-              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
-                                                        Dune::MCMGVertexLayout>);
-
-//! Mapper for the grid view's elements.
-SET_TYPE_PROP(CCModel,
-              ElementMapper,
-              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
-                                                        Dune::MCMGElementLayout>);
 
 //! Mapper for the degrees of freedoms.
 SET_TYPE_PROP(CCModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper));
@@ -109,102 +66,15 @@ SET_TYPE_PROP(CCModel, BaseModel, Dumux::CCModel<TypeTag>);
 //! The local jacobian operator for the box scheme
 SET_TYPE_PROP(CCModel, LocalJacobian, Dumux::CCLocalJacobian<TypeTag>);
 
-/*!
- * \brief The type of a solution for the whole grid at a fixed time.
- */
-SET_TYPE_PROP(CCModel,
-              SolutionVector,
-              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
-
-/*!
- * \brief The type of a solution for a whole element.
- */
-SET_TYPE_PROP(CCModel,
-              ElementSolutionVector,
-              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
-
-/*!
- * \brief A vector of primary variables.
- */
-SET_TYPE_PROP(CCModel,
-              PrimaryVariables,
-              Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                GET_PROP_VALUE(TypeTag, NumEq)>);
-
-/*!
- * \brief The volume variable class.
- *
- * This should almost certainly be overloaded by the model...
- */
-SET_TYPE_PROP(CCModel, VolumeVariables, Dumux::BoxVolumeVariables<TypeTag>);
-
-/*!
- * \brief An array of secondary variable containers.
- */
+//! An array of secondary variable containers
 SET_TYPE_PROP(CCModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag>);
 
-/*!
- * \brief Boundary types at a single degree of freedom.
- */
-SET_TYPE_PROP(CCModel,
-              BoundaryTypes,
-              Dumux::BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
-
-/*!
- * \brief Assembler for the global jacobian matrix.
- */
+//! Assembler for the global jacobian matrix
 SET_TYPE_PROP(CCModel, JacobianAssembler, Dumux::CCAssembler<TypeTag>);
-
-//! use an unlimited time step size by default
-#if 0
-// requires GCC 4.6 and above to call the constexpr function of
-// numeric_limits
-SET_SCALAR_PROP(CCModel, TimeManagerMaxTimeStepSize, std::numeric_limits<Scalar>::infinity());
-#else
-SET_SCALAR_PROP(CCModel, TimeManagerMaxTimeStepSize, 1e100);
-#endif
-
-//! use forward differences to calculate the jacobian by default
-SET_INT_PROP(CCModel, ImplicitNumericDifferenceMethod, +1);
-
-//! do not use hints by default
-SET_BOOL_PROP(CCModel, ImplicitEnableHints, false);
-
-// disable jacobian matrix recycling by default
-SET_BOOL_PROP(CCModel, ImplicitEnableJacobianRecycling, false);
-
-// disable partial reassembling by default
-SET_BOOL_PROP(CCModel, ImplicitEnablePartialReassemble, false);
-
-//! Set the type of a global jacobian matrix from the solution types
-SET_PROP(CCModel, JacobianMatrix)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    typedef typename Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
-public:
-    typedef typename Dune::BCRSMatrix<MatrixBlock> type;
-};
-
-// use the stabilized BiCG solver preconditioned by the ILU-0 by default
-SET_TYPE_PROP(CCModel, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
-
-// if the deflection of the newton method is large, we do not
-// need to solve the linear approximation accurately. Assuming
-// that the initial value for the delta vector u is quite
-// close to the final value, a reduction of 6 orders of
-// magnitude in the defect should be sufficient...
-SET_SCALAR_PROP(CCModel, LinearSolverResidualReduction, 1e-6);
-
-//! set the default number of maximum iterations for the linear solver
-SET_INT_PROP(CCModel, LinearSolverMaxIterations, 250);
-
-//! set number of equations of the mathematical model as default
-SET_INT_PROP(CCModel, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(CCModel, ImplicitIsBox, false);
+
 } // namespace Properties
 } // namespace Dumux
 

@@ -23,7 +23,7 @@
  * \file
  * \brief Base class for all problems which use the two-phase box model
  */
-#ifndef DUMUX_POROUS_MEDIA_CC_ROBLEM_HH
+#ifndef DUMUX_POROUS_MEDIA_CC_PROBLEM_HH
 #define DUMUX_POROUS_MEDIA_CC_PROBLEM_HH
 
 #include <dumux/implicit/cellcentered/ccproblem.hh>

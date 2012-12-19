@@ -18,39 +18,26 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
- * \ingroup BoxModel
+ * \ingroup ImplicitProperties
+ * \ingroup ImplicitModel
  * \file
  *
- * \brief Default properties for box models
+ * \brief Default properties for implicit models
  */
-#ifndef DUMUX_BOX_PROPERTY_DEFAULTS_HH
-#define DUMUX_BOX_PROPERTY_DEFAULTS_HH
+#ifndef DUMUX_IMPLICIT_PROPERTY_DEFAULTS_HH
+#define DUMUX_IMPLICIT_PROPERTY_DEFAULTS_HH
 
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
-
-#include "boxassembler.hh"
-#include "boxmodel.hh"
-#include "boxfvelementgeometry.hh"
-#include "boxelementboundarytypes.hh"
-#include "boxlocaljacobian.hh"
-#include "boxlocalresidual.hh"
-#include "boxelementvolumevariables.hh"
-#include "boxvolumevariables.hh"
-
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/timemanager.hh>
+#include <dumux/implicit/box/boxvolumevariables.hh>
 
-#include "boxproperties.hh"
+#include "implicitproperties.hh"
 
 #include <limits>
 
 namespace Dumux {
-
-// forward declaration
-template<class TypeTag>
-class BoxModel;
 
 namespace Properties {
 //////////////////////////////////////////////////////////////////
@@ -58,124 +45,84 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! Set the default type for the time manager
-SET_TYPE_PROP(BoxModel, TimeManager, Dumux::TimeManager<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, TimeManager, Dumux::TimeManager<TypeTag>);
 
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
 
 //! Use the leaf grid view if not defined otherwise
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(ImplicitBase,
               GridView,
               typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
 
-//! Set the default for the FVElementGeometry
-SET_TYPE_PROP(BoxModel, FVElementGeometry, Dumux::BoxFVElementGeometry<TypeTag>);
-
-//! Disable evaluation of shape function gradients at the sub-control volume center by default
-// The shape function gradients at the sub-control volume center are currently only
-// needed for the stokes and the linear elastic models
-SET_BOOL_PROP(BoxModel, EvalGradientsAtSCVCenter, false);
-
-//! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, Dumux::BoxElementBoundaryTypes<TypeTag>);
-
 //! use the plain newton method for the box scheme by default
-SET_TYPE_PROP(BoxModel, NewtonMethod, Dumux::NewtonMethod<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, NewtonMethod, Dumux::NewtonMethod<TypeTag>);
 
 //! use the plain newton controller for the box scheme by default
-SET_TYPE_PROP(BoxModel, NewtonController, Dumux::NewtonController<TypeTag>);
+SET_TYPE_PROP(ImplicitBase, NewtonController, Dumux::NewtonController<TypeTag>);
 
 //! Mapper for the grid view's vertices.
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(ImplicitBase,
               VertexMapper,
               Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
                                                         Dune::MCMGVertexLayout>);
 
 //! Mapper for the grid view's elements.
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(ImplicitBase,
               ElementMapper,
               Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
                                                         Dune::MCMGElementLayout>);
 
-//! Mapper for the degrees of freedoms.
-SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, VertexMapper));
-
-//! Set the BaseLocalResidual to BoxLocalResidual
-SET_TYPE_PROP(BoxModel, BaseLocalResidual, Dumux::BoxLocalResidual<TypeTag>);
-
-//! Set the BaseModel to BoxModel
-SET_TYPE_PROP(BoxModel, BaseModel, Dumux::BoxModel<TypeTag>);
-
-//! The local jacobian operator for the box scheme
-SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
+//! The volume variable class, to be overloaded by the model
+SET_TYPE_PROP(BoxModel, VolumeVariables, Dumux::BoxVolumeVariables<TypeTag>);
 
 /*!
  * \brief The type of a solution for the whole grid at a fixed time.
  */
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(ImplicitBase,
               SolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
 
 /*!
  * \brief The type of a solution for a whole element.
  */
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(ImplicitBase,
               ElementSolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
 
 /*!
  * \brief A vector of primary variables.
  */
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(ImplicitBase,
               PrimaryVariables,
               Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
                                 GET_PROP_VALUE(TypeTag, NumEq)>);
 
 /*!
- * \brief The volume variable class.
- *
- * This should almost certainly be overloaded by the model...
- */
-SET_TYPE_PROP(BoxModel, VolumeVariables, Dumux::BoxVolumeVariables<TypeTag>);
-
-/*!
- * \brief An array of secondary variable containers.
- */
-SET_TYPE_PROP(BoxModel, ElementVolumeVariables, Dumux::BoxElementVolumeVariables<TypeTag>);
-
-/*!
  * \brief Boundary types at a single degree of freedom.
  */
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(ImplicitBase,
               BoundaryTypes,
               Dumux::BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
 
-/*!
- * \brief Assembler for the global jacobian matrix.
- */
-SET_TYPE_PROP(BoxModel, JacobianAssembler, Dumux::BoxAssembler<TypeTag>);
-
 //! use an unlimited time step size by default
-SET_SCALAR_PROP(BoxModel, TimeManagerMaxTimeStepSize, 1e100);
+SET_SCALAR_PROP(ImplicitBase, TimeManagerMaxTimeStepSize, 1e100);
 
 //! use forward differences to calculate the jacobian by default
-SET_INT_PROP(BoxModel, ImplicitNumericDifferenceMethod, +1);
+SET_INT_PROP(ImplicitBase, ImplicitNumericDifferenceMethod, +1);
 
 //! do not use hints by default
-SET_BOOL_PROP(BoxModel, ImplicitEnableHints, false);
+SET_BOOL_PROP(ImplicitBase, ImplicitEnableHints, false);
 
 // disable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxModel, ImplicitEnableJacobianRecycling, false);
+SET_BOOL_PROP(ImplicitBase, ImplicitEnableJacobianRecycling, false);
 
 // disable partial reassembling by default
-SET_BOOL_PROP(BoxModel, ImplicitEnablePartialReassemble, false);
-
-// disable two-point-flux by default
-SET_BOOL_PROP(BoxModel, ImplicitUseTwoPointFlux, false);
+SET_BOOL_PROP(ImplicitBase, ImplicitEnablePartialReassemble, false);
 
 //! Set the type of a global jacobian matrix from the solution types
-SET_PROP(BoxModel, JacobianMatrix)
+SET_PROP(ImplicitBase, JacobianMatrix)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -186,20 +133,20 @@ public:
 };
 
 // use the stabilized BiCG solver preconditioned by the ILU-0 by default
-SET_TYPE_PROP(BoxModel, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_TYPE_PROP(ImplicitBase, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
 
 // if the deflection of the newton method is large, we do not
 // need to solve the linear approximation accurately. Assuming
 // that the initial value for the delta vector u is quite
 // close to the final value, a reduction of 6 orders of
 // magnitude in the defect should be sufficient...
-SET_SCALAR_PROP(BoxModel, LinearSolverResidualReduction, 1e-6);
+SET_SCALAR_PROP(ImplicitBase, LinearSolverResidualReduction, 1e-6);
 
 //! set the default number of maximum iterations for the linear solver
-SET_INT_PROP(BoxModel, LinearSolverMaxIterations, 250);
+SET_INT_PROP(ImplicitBase, LinearSolverMaxIterations, 250);
 
 //! set number of equations of the mathematical model as default
-SET_INT_PROP(BoxModel, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
+SET_INT_PROP(ImplicitBase, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
 
 } // namespace Properties
 } // namespace Dumux

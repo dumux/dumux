@@ -23,7 +23,7 @@
 #ifndef DUMUX_BOX_PROBLEM_HH
 #define DUMUX_BOX_PROBLEM_HH
 
-#include "boxproperties.hh"
+#include "implicitproperties.hh"
 
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
