@@ -56,7 +56,8 @@ class MPNCVtkWriterMass : public MPNCVtkWriterModule<TypeTag>
 
     enum { dim = GridView::dimension };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    
     typedef typename ParentType::ComponentVector ComponentVector;
     bool fugacityOutput_;
 
@@ -74,7 +75,7 @@ public:
     template <class MultiWriter>
     void allocBuffers(MultiWriter &writer)
     {
-        if (fugacityOutput_) this->resizeComponentBuffer_(fugacity_);
+        if (fugacityOutput_) this->resizeComponentBuffer_(fugacity_, isBox);
     }
 
     /*!
@@ -106,7 +107,7 @@ public:
     void commitBuffers(MultiWriter &writer)
     {
         if (fugacityOutput_)
-            this->commitComponentBuffer_(writer, "f_%s", fugacity_);
+            this->commitComponentBuffer_(writer, "f_%s", fugacity_, isBox);
     }
 
 private:
