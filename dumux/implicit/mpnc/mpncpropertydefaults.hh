@@ -234,6 +234,11 @@ SET_PROP(MPNC, FluidState){
         typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
+//! Set the default pressure formulation to the pressure of the (most) wetting phase
+SET_INT_PROP(MPNC,
+             PressureFormulation,
+             MpNcPressureFormulation::mostWettingFirst);
+
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
