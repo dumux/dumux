@@ -39,6 +39,10 @@
 
 namespace Dumux {
 
+// forward declarations
+template <class TypeTag> class NewtonController;
+template <class TypeTag> class BoxBiCGStabILU0Solver;
+
 namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Some defaults for very fundamental properties

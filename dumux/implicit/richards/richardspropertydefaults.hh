@@ -31,14 +31,15 @@
 #include "richardsmodel.hh"
 #include "richardsproblem.hh"
 #include "richardsindices.hh"
-#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include "richardsvolumevariables.hh"
 #include "richardsproperties.hh"
 #include "richardsnewtoncontroller.hh"
+#include "richardslocalresidual.hh"
 
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 
 namespace Dumux
 {

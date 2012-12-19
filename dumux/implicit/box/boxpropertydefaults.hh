@@ -37,9 +37,12 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag>
-class BoxModel;
+// forward declarations
+template<class TypeTag> class BoxModel;
+template<class TypeTag> class BoxLocalResidual;
+template<class TypeTag> class BoxElementBoundaryTypes;
+template<class TypeTag> class BoxElementVolumeVariables;
+template<class TypeTag> class BoxFVElementGeometry;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry

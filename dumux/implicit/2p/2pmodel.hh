@@ -27,7 +27,6 @@
 #define DUMUX_TWOP_MODEL_HH
 
 #include "2pproperties.hh"
-#include "2plocalresidual.hh"
 
 namespace Dumux
 {

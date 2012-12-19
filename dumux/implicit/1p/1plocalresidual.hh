@@ -25,9 +25,6 @@
 #ifndef DUMUX_1P_LOCAL_RESIDUAL_HH
 #define DUMUX_1P_LOCAL_RESIDUAL_HH
 
-#include <dumux/implicit/box/boxlocalresidual.hh>
-
-#include "1pvolumevariables.hh"
 #include "1pproperties.hh"
 
 namespace Dumux

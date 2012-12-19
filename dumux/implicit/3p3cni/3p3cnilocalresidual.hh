@@ -26,13 +26,8 @@
 #ifndef DUMUX_NEW_3P3CNI_LOCAL_RESIDUAL_HH
 #define DUMUX_NEW_3P3CNI_LOCAL_RESIDUAL_HH
 
-#include <dumux/implicit/3p3c/3p3clocalresidual.hh>
-
-
-#include "3p3cnivolumevariables.hh"
-#include "3p3cnifluxvariables.hh"
-
 #include "3p3cniproperties.hh"
+#include <dumux/implicit/3p3c/3p3clocalresidual.hh>
 
 namespace Dumux
 {

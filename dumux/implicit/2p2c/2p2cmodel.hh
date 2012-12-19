@@ -25,7 +25,7 @@
 #define DUMUX_2P2C_MODEL_HH
 
 #include "2p2cproperties.hh"
-#include "2p2clocalresidual.hh"
+#include "2p2cindices.hh"
 
 namespace Dumux
 {

@@ -26,15 +26,7 @@
 #ifndef DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
 #define DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
 
-#include <dumux/boxmodels/common/boxmodel.hh>
-
-#include <dumux/implicit/1p2c/1p2cproperties.hh>
-#include <dumux/implicit/1p2c/1p2cvolumevariables.hh>
-#include <dumux/implicit/1p2c/1p2cfluxvariables.hh>
-
-#include <dune/common/collectivecommunication.hh>
-#include <vector>
-#include <iostream>
+#include "1p2cproperties.hh"
 
 namespace Dumux
 {
