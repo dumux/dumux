@@ -26,8 +26,8 @@
 #ifndef DUMUX_STOKES_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_STOKES_LOCAL_RESIDUAL_BASE_HH
 
-#include <dumux/boxmodels/common/boxmodel.hh>
-//#include <dumux/boxmodels/common/boxcouplinglocalresidual.hh>
+#include <dumux/implicit/box/boxmodel.hh>
+//#include <dumux/implicit/box/boxcouplinglocalresidual.hh>
 
 #include "stokesproperties.hh"
 #include "stokesvolumevariables.hh"

@@ -27,7 +27,7 @@
 #ifndef DUMUX_1P_MODEL_HH
 #define DUMUX_1P_MODEL_HH
 
-#include <dumux/boxmodels/common/boxmodel.hh>
+#include <dumux/implicit/box/boxmodel.hh>
 
 #include "1plocalresidual.hh"
 

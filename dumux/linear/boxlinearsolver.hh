@@ -36,7 +36,7 @@
 #include <dumux/linear/overlappingpreconditioner.hh>
 #include <dumux/linear/overlappingscalarproduct.hh>
 #include <dumux/linear/overlappingoperator.hh>
-#include <dumux/boxmodels/common/boxproperties.hh>
+#include <dumux/implicit/box/boxproperties.hh>
 
 namespace Dumux
 {

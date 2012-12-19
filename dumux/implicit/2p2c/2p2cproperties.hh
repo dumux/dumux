@@ -29,7 +29,7 @@
 #ifndef DUMUX_2P2C_PROPERTIES_HH
 #define DUMUX_2P2C_PROPERTIES_HH
 
-#include <dumux/boxmodels/common/boxproperties.hh>
+#include <dumux/implicit/box/boxproperties.hh>
 
 namespace Dumux
 {

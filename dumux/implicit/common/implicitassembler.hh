@@ -26,7 +26,7 @@
 
 #include <dune/grid/common/gridenums.hh>
 
-#include <dumux/boxmodels/common/boxproperties.hh>
+#include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/linear/vertexborderlistfromgrid.hh>
 #include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
 #include <dumux/parallel/vertexhandles.hh>

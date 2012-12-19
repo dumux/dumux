@@ -35,7 +35,7 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
 //box model
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
 #include <dumux/boxmodels/2p/2pmodel.hh>
 
 //decoupled model

@@ -32,7 +32,7 @@
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 #include <dumux/boxmodels/2p2cni/2p2cnimodel.hh>
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
 
 #include "waterairspatialparams.hh"
 

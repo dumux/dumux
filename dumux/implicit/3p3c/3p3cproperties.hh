@@ -27,7 +27,7 @@
 #ifndef DUMUX_3P3C_PROPERTIES_HH
 #define DUMUX_3P3C_PROPERTIES_HH
 
-#include <dumux/boxmodels/common/boxproperties.hh>
+#include <dumux/implicit/box/boxproperties.hh>
 
 namespace Dumux
 {

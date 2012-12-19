@@ -27,12 +27,12 @@
 #ifndef DUMUX_1P_PROPERTY_DEFAULTS_HH
 #define DUMUX_1P_PROPERTY_DEFAULTS_HH
 
-#include <dumux/boxmodels/common/boxproperties.hh>
+#include <dumux/implicit/box/boxproperties.hh>
 
 #include "1pmodel.hh"
 #include "1plocalresidual.hh"
 #include "1pvolumevariables.hh"
-#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
 #include "1pindices.hh"
 
 #include <dumux/material/fluidsystems/gasphase.hh>

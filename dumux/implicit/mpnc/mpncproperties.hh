@@ -19,7 +19,7 @@
 #ifndef DUMUX_MPNC_PROPERTIES_HH
 #define DUMUX_MPNC_PROPERTIES_HH
 
-#include <dumux/boxmodels/common/boxproperties.hh>
+#include <dumux/implicit/box/boxproperties.hh>
 
 /*!
  * \ingroup Properties

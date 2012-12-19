@@ -26,7 +26,7 @@
 #ifndef DUMUX_2P2C_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_2P2C_LOCAL_RESIDUAL_BASE_HH
 
-#include <dumux/boxmodels/common/boxmodel.hh>
+#include <dumux/implicit/box/boxmodel.hh>
 #include <dumux/common/math.hh>
 
 #include "2p2cproperties.hh"

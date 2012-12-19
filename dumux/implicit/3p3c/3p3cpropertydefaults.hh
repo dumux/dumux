@@ -38,7 +38,7 @@
 #include "3p3cnewtoncontroller.hh"
 // #include "3p3cboundaryvariables.hh"
 
-#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
 #include <dumux/material/spatialparams/boxspatialparams.hh>
 
 namespace Dumux

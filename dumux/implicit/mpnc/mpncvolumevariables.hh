@@ -31,7 +31,7 @@
 #include "mass/mpncvolumevariablesmass.hh"
 #include "mpncvolumevariablesia.hh"
 
-#include <dumux/boxmodels/common/boxvolumevariables.hh>
+#include <dumux/implicit/box/boxvolumevariables.hh>
 #include <dumux/material/constraintsolvers/ncpflash.hh>
 
 namespace Dumux

@@ -31,7 +31,7 @@
 #include "richardsmodel.hh"
 #include "richardsproblem.hh"
 #include "richardsindices.hh"
-#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
 #include "richardsvolumevariables.hh"
 #include "richardsproperties.hh"
 #include "richardsnewtoncontroller.hh"

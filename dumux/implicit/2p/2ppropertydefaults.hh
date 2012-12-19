@@ -30,7 +30,7 @@
 
 #include "2pmodel.hh"
 #include "2pindices.hh"
-#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
 #include "2pvolumevariables.hh"
 #include "2pproperties.hh"
 

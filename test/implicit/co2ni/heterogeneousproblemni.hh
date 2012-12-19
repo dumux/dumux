@@ -34,8 +34,8 @@
 #include <dumux/boxmodels/co2ni/co2nimodel.hh>
 #include <dumux/boxmodels/co2ni/co2nivolumevariables.hh>
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
-#include <dumux/boxmodels/common/intersectiontovertexbc.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/intersectiontovertexbc.hh>
 
 
 #include "heterogeneousspatialparametersni.hh"

@@ -26,7 +26,7 @@
 
 #include "boxproperties.hh"
 
-#include <dumux/boxmodels/common/boxproblem.hh>
+#include <dumux/implicit/box/boxproblem.hh>
 
 namespace Dumux
 {

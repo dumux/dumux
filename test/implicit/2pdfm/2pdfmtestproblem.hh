@@ -32,7 +32,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/boxmodels/2pdfm/2pdfmmodel.hh>
-#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+#include <dumux/implicit/box/porousmediaboxproblem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
