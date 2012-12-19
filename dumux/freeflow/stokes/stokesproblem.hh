@@ -36,9 +36,9 @@ namespace Dumux
  * This implements gravity (if desired) and a function returning the temperature.
  */
 template<class TypeTag>
-class StokesProblem : public BoxProblem<TypeTag>
+class StokesProblem : public ImplicitProblem<TypeTag>
 {
-    typedef BoxProblem<TypeTag> ParentType;
+    typedef ImplicitProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

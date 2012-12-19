@@ -1,12 +1,15 @@
-add_executable("test_1p2c" test_1p2c.cc)
-target_link_libraries("test_1p2c" ${DumuxLinkLibraries})
+add_executable("test_box1p2c" test_box1p2c.cc)
+target_link_libraries("test_box1p2c" ${DumuxLinkLibraries})
+
+add_executable("test_cc1p2c" test_cc1p2c.cc)
+target_link_libraries("test_cc1p2c" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
 link_directories(${DumuxLinkDirectories})
 include_directories(${DumuxIncludeDirectories})
 
 # make sure the grids are present in the build directory
-add_custom_command(TARGET "test_1p2c"
+add_custom_command(TARGET "test_box1p2c"
                    POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E
                         copy_directory 

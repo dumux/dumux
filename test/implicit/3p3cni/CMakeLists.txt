@@ -1,5 +1,8 @@
-add_executable("test_3p3cni" test_3p3cni.cc)
-target_link_libraries("test_3p3cni" ${DumuxLinkLibraries})
+add_executable("test_box3p3cni" test_box3p3cni.cc)
+target_link_libraries("test_box3p3cni" ${DumuxLinkLibraries})
+
+add_executable("test_cc3p3cni" test_cc3p3cni.cc)
+target_link_libraries("test_cc3p3cni" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
 link_directories(${DumuxLinkDirectories})
@@ -7,7 +10,7 @@ include_directories(${DumuxIncludeDirectories})
 
 
 # make sure the grids are present in the build directory
-add_custom_command(TARGET "test_3p3cni"
+add_custom_command(TARGET "test_box3p3cni"
                    POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E
                         copy_directory 

@@ -78,8 +78,11 @@ SET_TYPE_PROP(OnePTwoCOutflowProblem,
               SpatialParams,
               Dumux::OnePTwoCOutflowSpatialParams<TypeTag>);
 
-//Define whether mole(true) or mass (false) fractions are used
+// Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(OnePTwoCOutflowProblem, UseMoles, false);
+
+// Enable velocity output
+SET_BOOL_PROP(OnePTwoCOutflowProblem, VtkAddVelocity, true);
 
 // Disable gravity
 SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
