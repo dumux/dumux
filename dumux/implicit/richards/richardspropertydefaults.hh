@@ -31,7 +31,7 @@
 #include "richardsmodel.hh"
 #include "richardsproblem.hh"
 #include "richardsindices.hh"
-#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include "richardsvolumevariables.hh"
 #include "richardsproperties.hh"
 #include "richardsnewtoncontroller.hh"
@@ -65,7 +65,7 @@ SET_TYPE_PROP(Richards, Model, RichardsModel<TypeTag>);
 SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
 
 //! The class for the quantities required for the flux calculation
-SET_TYPE_PROP(Richards, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(Richards, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! The class of the newton controller
 SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);

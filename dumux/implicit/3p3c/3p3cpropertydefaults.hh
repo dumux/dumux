@@ -38,7 +38,7 @@
 #include "3p3cnewtoncontroller.hh"
 // #include "3p3cboundaryvariables.hh"
 
-#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include <dumux/material/spatialparams/boxspatialparams.hh>
 
 namespace Dumux
@@ -108,7 +108,7 @@ SET_TYPE_PROP(ThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag
 SET_TYPE_PROP(ThreePThreeC, FluxVariables, ThreePThreeCFluxVariables<TypeTag>);
 
 //! define the base flux variables to realize Darcy flow
-SET_TYPE_PROP(ThreePThreeC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
 SET_SCALAR_PROP(ThreePThreeC, ImplicitMassUpwindWeight, 1.0);

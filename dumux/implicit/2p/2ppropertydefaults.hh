@@ -30,7 +30,7 @@
 
 #include "2pmodel.hh"
 #include "2pindices.hh"
-#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include "2pvolumevariables.hh"
 #include "2pproperties.hh"
 
@@ -68,7 +68,7 @@ SET_TYPE_PROP(TwoP, Model, TwoPModel<TypeTag>);
 SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(TwoP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoP, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(TwoP, ImplicitMassUpwindWeight, 1.0);

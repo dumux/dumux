@@ -145,7 +145,7 @@ public:
     /*!
      * \brief Returns the mobility.
      * 
-     * This function enables the use of BoxDarcyFluxVariables 
+     * This function enables the use of ImplicitDarcyFluxVariables 
      * with the 1p box model, ALTHOUGH the term mobility is
      * usually not employed in the one phase context. 
      *

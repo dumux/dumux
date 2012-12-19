@@ -27,7 +27,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
-#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 
 #include "2pdfmproperties.hh"
 
@@ -45,7 +45,7 @@ namespace Dumux
  * the intergration point, etc.
  */
 template <class TypeTag>
-class TwoPDFMFluxVariables : public BoxDarcyFluxVariables<TypeTag>
+class TwoPDFMFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -86,7 +86,7 @@ public:
                  int faceIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        : BoxDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary), 
+        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary), 
           fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
         faceSCV_ = &this->face();

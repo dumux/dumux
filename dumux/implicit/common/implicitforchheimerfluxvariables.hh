@@ -24,14 +24,14 @@
  *        according to the Forchheimer-relation between velocity and pressure.
  *
  */
-#ifndef DUMUX_BOX_FORCHHEIMER_FLUX_VARIABLES_HH
-#define DUMUX_BOX_FORCHHEIMER_FLUX_VARIABLES_HH
+#ifndef DUMUX_IMPLICIT_FORCHHEIMER_FLUX_VARIABLES_HH
+#define DUMUX_IMPLICIT_FORCHHEIMER_FLUX_VARIABLES_HH
 
-#include "boxproperties.hh"
+#include "implicitproperties.hh"
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
-#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 
 namespace Dumux
 {
@@ -46,8 +46,8 @@ NEW_PROP_TAG(ProblemEnableGravity);
 }   
 
 /*!
- * \ingroup BoxModel
- * \ingroup BoxFluxVariables
+ * \ingroup ImplicitModel
+ * \ingroup ImplicitFluxVariables
  * \brief Evaluates the normal component of the Forchheimer velocity
  *        on a (sub)control volume face.
  *
@@ -75,8 +75,8 @@ NEW_PROP_TAG(ProblemEnableGravity);
  *          form as the relative permeabilities.
  */
 template <class TypeTag>
-class BoxForchheimerFluxVariables
-    : public BoxDarcyFluxVariables<TypeTag>
+class ImplicitForchheimerFluxVariables
+    : public ImplicitDarcyFluxVariables<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -107,13 +107,13 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
-    BoxForchheimerFluxVariables(const Problem &problem,
+    ImplicitForchheimerFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  const unsigned int faceIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        :   BoxDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+        :   ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
         calculateNormalVelocity_(problem, element, elemVolVars);
     }
@@ -133,14 +133,31 @@ protected:
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
         Tensor K;
-        spatialParams.meanK(K,
-                            spatialParams.intrinsicPermeability(element,
-                                                                this->fvGeometry_,
-                                                                this->face().i),
-                            spatialParams.intrinsicPermeability(element,
-                                                                this->fvGeometry_,
-                                                                this->face().j));
-
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            spatialParams.meanK(K,
+                                spatialParams.intrinsicPermeability(element,
+                                                                    this->fvGeometry_,
+                                                                    this->face().i),
+                                spatialParams.intrinsicPermeability(element,
+                                                                    this->fvGeometry_,
+                                                                    this->face().j));
+        }
+        else
+        {
+            const Element& elementI = *this->fvGeometry_.neighbors[this->face().i];
+            FVElementGeometry fvGeometryI;
+            fvGeometryI.subContVol[0].global = elementI.geometry().center();
+            
+            const Element& elementJ = *this->fvGeometry_.neighbors[this->face().j];
+            FVElementGeometry fvGeometryJ;
+            fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
+            
+            spatialParams.meanK(K,
+                                spatialParams.intrinsicPermeability(elementI, fvGeometryI, 0),
+                                spatialParams.intrinsicPermeability(elementJ, fvGeometryJ, 0));
+        }
+        
         // obtain the Forchheimer coefficient from the spatial parameters
         const Scalar forchCoeff = spatialParams.forchCoeff(element,
                                                           this->fvGeometry_,

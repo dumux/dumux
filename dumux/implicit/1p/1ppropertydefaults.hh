@@ -32,7 +32,7 @@
 #include "1pmodel.hh"
 #include "1plocalresidual.hh"
 #include "1pvolumevariables.hh"
-#include <dumux/implicit/box/boxdarcyfluxvariables.hh>
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include "1pindices.hh"
 
 #include <dumux/material/fluidsystems/gasphase.hh>
@@ -64,7 +64,7 @@ SET_TYPE_PROP(OneP, Model, OnePBoxModel<TypeTag>);
 SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(OneP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(OneP, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(OneP, Indices, OnePIndices);
