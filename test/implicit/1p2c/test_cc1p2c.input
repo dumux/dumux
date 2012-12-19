@@ -1,7 +1,7 @@
 ###############################################################
-# Parameter file for test_2p.
+# Parameter file for test_1p2c.
 # Everything behind a '#' is a comment.
-# Type "./test_2p --help" for more information.
+# Type "./test_1p2c --help" for more information.
 ###############################################################
 
 ###############################################################
@@ -9,20 +9,14 @@
 ###############################################################
 
 [TimeManager]
-DtInitial = 250 # [s]
-TEnd = 3000 # [s]
+DtInitial = 1 # [s]
+TEnd = 100 # [s]
 
 [Grid]
-File = ./grids/test_2p.dgf 
-
-[SpatialParams]
-LensLowerLeftX = 1.0 # [m] x-coordinate of the lower left lens corner 
-LensLowerLeftY = 2.0 # [m] y-coordinate of the lower left lens corner
-LensUpperRightX = 4.0 # [m] x-coordinate of the upper right lens corner
-LensUpperRightY = 3.0 # [m] y-coordinate of the upper right lens corner
+File = ./grids/test_1p2c.dgf
 
 [Problem]
-Name = lenscc # name passed to the output routines
+Name = outflowcc # name passed to the output routines
 
 ###############################################################
 # Simulation restart

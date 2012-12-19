@@ -40,8 +40,10 @@ class InjectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(BoxTwoPTwoC, InjectionSpatialParams));
-
+NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
+NEW_TYPE_TAG(InjectionBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
+NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCModel, InjectionProblem));
+    
 // Set the grid type
 SET_PROP(InjectionProblem, Grid)
 {
@@ -130,6 +132,8 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
 public:
     /*!
@@ -243,12 +247,11 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param values The boundary types for the conservation equations
-     * \param vertex The vertex for which the boundary type is set
+     * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
+    void boundaryTypesAtPos(BoundaryTypes &values, 
+                            const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         if (globalPos[0] < eps_)
             values.setAllDirichlet();
         else
@@ -260,14 +263,12 @@ public:
      *        boundary segment.
      *
      * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex for which the boundary type is set
+     * \param globalPos The position for which the bc type should be evaluated
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         initial_(values, globalPos);
     }
 
@@ -292,10 +293,15 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
         values = 0;
-        if (globalPos[1] < 15 && globalPos[1] > 5) {
+        
+        GlobalPosition globalPos;
+        if (isBox)
+            globalPos = element.geometry().corner(scvIdx);
+        else 
+            globalPos = is.geometry().center();
+
+        if (globalPos[1] < 15 && globalPos[1] > 7) {
             values[contiN2EqIdx] = -1e-3; // kg/(s*m^2)
         }
     }
@@ -311,20 +317,13 @@ public:
      * \brief Evaluate the initial value for a control volume.
      *
      * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param scvIdx The local vertex index
+     * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 int scvIdx) const
+    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
         initial_(values, globalPos);
     }
 
