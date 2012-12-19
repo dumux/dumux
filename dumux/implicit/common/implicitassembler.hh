@@ -290,9 +290,9 @@ public:
 
             // we need to add the distance the solution was moved for
             // this vertex
-            Scalar dist = model_().relativeErrorVertex(i,
-                                                       currentPriVars,
-                                                       nextPriVars);
+            Scalar dist = model_().relativeErrorDof(i,
+                                                    currentPriVars,
+                                                    nextPriVars);
             delta_[i] += std::abs(dist);
         }
 

@@ -346,10 +346,10 @@ public:
             PrimaryVariables uNewI = uLastIter[i];
             uNewI -= deltaU[i];
 
-            Scalar vertError = model_().relativeErrorVertex(i,
-                                                            uLastIter[i],
-                                                            uNewI);
-            error_ = std::max(error_, vertError);
+            Scalar dofError = model_().relativeErrorDof(i,
+                                                        uLastIter[i],
+                                                        uNewI);
+            error_ = std::max(error_, dofError);
 
         }
 

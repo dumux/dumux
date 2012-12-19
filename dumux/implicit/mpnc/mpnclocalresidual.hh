@@ -24,7 +24,7 @@
 #include "energy/mpnclocalresidualenergy.hh"
 #include "mass/mpnclocalresidualmass.hh"
 
-#include <dumux/implicit/box/boxmodel.hh>
+#include <dumux/boxmodels/common/boxmodel.hh>
 #include <dumux/common/math.hh>
 
 namespace Dumux

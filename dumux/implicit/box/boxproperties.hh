@@ -59,4 +59,6 @@ NEW_PROP_TAG(ImplicitUseTwoPointFlux); //! indicates whether two-point flux shou
 
 // \}
 
+#include "boxpropertydefaults.hh"
+
 #endif

@@ -33,7 +33,6 @@
 
 #include <dumux/implicit/common/implicitpropertydefaults.hh>
 #include "ccassembler.hh"
-#include "ccmodel.hh"
 #include "ccfvelementgeometry.hh"
 #include "ccelementboundarytypes.hh"
 #include "cclocalresidual.hh"
@@ -58,9 +57,6 @@ SET_TYPE_PROP(CCModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper)
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCModel, BaseLocalResidual, Dumux::CCLocalResidual<TypeTag>);
-
-//! Set the BaseModel to CCModel
-SET_TYPE_PROP(CCModel, BaseModel, Dumux::CCModel<TypeTag>);
 
 //! An array of secondary variable containers
 SET_TYPE_PROP(CCModel, ElementVolumeVariables, Dumux::CCElementVolumeVariables<TypeTag>);
