@@ -1,4 +1,4 @@
-SUBDIRS = boxmodels common decoupled freeflow io linear material nonlinear parallel
+SUBDIRS = boxmodels common decoupled freeflow implicit io linear material nonlinear parallel
 
 dumuxdir = $(includedir)/dumux
 

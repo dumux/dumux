@@ -163,6 +163,9 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
+     * \param isDuneFractureVertex Vector of bools which indicates fracture vertices
+     * \param isDuneFractureEdge Vector of bools which indicates fracture edges
+     * \param fractureEdgesIdx Vector of edge indices which are fractures
      */
     TwoPDFMTestProblem(TimeManager &timeManager,
                        const GridView &gridView)

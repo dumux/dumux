@@ -1,4 +1,4 @@
-SUBDIRS = boxmodels common decoupled freeflow material
+SUBDIRS = common decoupled freeflow implicit material
 
 EXTRA_DIST = CMakeLists.txt
 

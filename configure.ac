@@ -56,6 +56,26 @@ AC_CONFIG_FILES([dumux.pc
     dumux/freeflow/stokes/Makefile
     dumux/freeflow/stokes2c/Makefile
     dumux/freeflow/stokes2cni/Makefile
+    dumux/implicit/Makefile 
+    dumux/implicit/1p/Makefile 
+    dumux/implicit/1p2c/Makefile 
+    dumux/implicit/2p/Makefile 
+    dumux/implicit/2p2c/Makefile 
+    dumux/implicit/2p2cni/Makefile 
+    dumux/implicit/2pni/Makefile
+    dumux/implicit/2pdfm/Makefile 
+    dumux/implicit/3p3c/Makefile 
+    dumux/implicit/3p3cni/Makefile 
+    dumux/implicit/box/Makefile 
+    dumux/implicit/cellcentered/Makefile 
+    dumux/implicit/common/Makefile 
+    dumux/implicit/co2/Makefile
+    dumux/implicit/co2ni/Makefile
+    dumux/implicit/mpnc/Makefile 
+    dumux/implicit/mpnc/diffusion/Makefile
+    dumux/implicit/mpnc/energy/Makefile
+    dumux/implicit/mpnc/mass/Makefile
+    dumux/implicit/richards/Makefile 
     dumux/io/Makefile
     dumux/linear/Makefile
     dumux/material/Makefile 
@@ -75,20 +95,20 @@ AC_CONFIG_FILES([dumux.pc
     dumux/parallel/Makefile 
     m4/Makefile
     test/Makefile
-    test/boxmodels/Makefile 
-    test/boxmodels/1p/Makefile 
-    test/boxmodels/2p/Makefile 
-    test/boxmodels/2pni/Makefile
-    test/boxmodels/1p2c/Makefile 
-    test/boxmodels/2p2c/Makefile
-    test/boxmodels/2p2cni/Makefile
-    test/boxmodels/2pdfm/Makefile
-    test/boxmodels/3p3c/Makefile
-    test/boxmodels/3p3cni/Makefile
-    test/boxmodels/co2/Makefile
-    test/boxmodels/co2ni/Makefile
-    test/boxmodels/mpnc/Makefile
-    test/boxmodels/richards/Makefile  
+    test/implicit/Makefile 
+    test/implicit/1p/Makefile 
+    test/implicit/2p/Makefile 
+    test/implicit/2pni/Makefile
+    test/implicit/1p2c/Makefile 
+    test/implicit/2p2c/Makefile
+    test/implicit/2p2cni/Makefile
+    test/implicit/2pdfm/Makefile
+    test/implicit/3p3c/Makefile
+    test/implicit/3p3cni/Makefile
+    test/implicit/co2/Makefile
+    test/implicit/co2ni/Makefile
+    test/implicit/mpnc/Makefile
+    test/implicit/richards/Makefile  
     test/common/Makefile
     test/common/generalproblem/Makefile
     test/common/propertysystem/Makefile
