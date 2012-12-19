@@ -19,10 +19,11 @@
 /*!
  * \file
  *
- * \brief test for the 2p2cni box model
+ * \brief test for the 2pni box model
  */
 #include "config.h"
-#include "waterairproblem.hh"
+
+#include "injectionproblem2pni.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -43,16 +44,21 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
                                         "\t-TimeManager.TEnd      End of the simulation [s] \n"
                                         "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-                                        "\t-Grid.File             Name of the file containing the grid \n"
-                                        "\t                       definition in DGF format\n";
+                                        "\t-Grid.NumberOfCellsX   Resolution in x-direction [-]\n"
+                                        "\t-Grid.NumberOfCellsY   Resolution in y-direction [-]\n"
+                                        "\t-Grid.UpperRightX      Length of the domain [m]\n"
+                                        "\t-Grid.UpperRightY      Height of the domain [m]\n";
 
         std::cout << errorMessageOut
                   << "\n";
     }
 }
 
+////////////////////////
+// the main function
+////////////////////////
 int main(int argc, char** argv)
 {
-    typedef TTAG(WaterAirProblem) ProblemTypeTag;
+    typedef TTAG(InjectionBoxProblem2PNI) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

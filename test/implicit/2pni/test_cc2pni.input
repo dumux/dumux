@@ -19,6 +19,9 @@ NumberOfCellsY = 16 # [-] resolution in y-direction
 UpperRightX = 60 # [m] length of the domain
 UpperRightY = 40 # [m] height of the domain
 
+[Problem]
+Name = injection2pnicc
+
 ###############################################################
 # Simulation restart
 #
