@@ -31,7 +31,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/boxmodels/mpnc/mpncmodel.hh>
+#include <dumux/implicit/mpnc/mpncmodel.hh>
 #include <dumux/implicit/box/porousmediaboxproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>

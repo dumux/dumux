@@ -25,7 +25,7 @@
 #ifndef DUMUX_2P2CNI_INDICES_HH
 #define DUMUX_2P2CNI_INDICES_HH
 
-#include <dumux/boxmodels/2p2c/2p2cindices.hh>
+#include <dumux/implicit/2p2c/2p2cindices.hh>
 
 namespace Dumux
 {

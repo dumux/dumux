@@ -28,7 +28,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 
-#include <dumux/boxmodels/mpnc/mpncproperties.hh>
+#include <dumux/implicit/mpnc/mpncproperties.hh>
 
 namespace Dumux {
 

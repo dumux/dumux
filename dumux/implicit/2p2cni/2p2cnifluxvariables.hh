@@ -29,7 +29,7 @@
 #define DUMUX_2P2CNI_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
-#include <dumux/boxmodels/2p2c/2p2cfluxvariables.hh>
+#include <dumux/implicit/2p2c/2p2cfluxvariables.hh>
 
 namespace Dumux
 {

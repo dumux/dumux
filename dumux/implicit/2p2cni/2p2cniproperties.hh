@@ -28,7 +28,7 @@
 #ifndef DUMUX_2P2CNI_PROPERTIES_HH
 #define DUMUX_2P2CNI_PROPERTIES_HH
 
-#include <dumux/boxmodels/2p2c/2p2cproperties.hh>
+#include <dumux/implicit/2p2c/2p2cproperties.hh>
 
 namespace Dumux
 {

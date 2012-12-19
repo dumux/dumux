@@ -29,7 +29,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/boxmodels/2p2cni/2p2cnimodel.hh>
+#include <dumux/implicit/2p2cni/2p2cnimodel.hh>
 
 namespace Dumux
 {

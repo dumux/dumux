@@ -29,9 +29,9 @@
 
 #include <dumux/implicit/box/boxmodel.hh>
 
-#include <dumux/boxmodels/1p2c/1p2cproperties.hh>
-#include <dumux/boxmodels/1p2c/1p2cvolumevariables.hh>
-#include <dumux/boxmodels/1p2c/1p2cfluxvariables.hh>
+#include <dumux/implicit/1p2c/1p2cproperties.hh>
+#include <dumux/implicit/1p2c/1p2cvolumevariables.hh>
+#include <dumux/implicit/1p2c/1p2cfluxvariables.hh>
 
 #include <dune/common/collectivecommunication.hh>
 #include <vector>

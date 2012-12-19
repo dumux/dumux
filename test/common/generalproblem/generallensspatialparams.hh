@@ -30,7 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/boxmodels/2p/2pmodel.hh>
+#include <dumux/implicit/2p/2pmodel.hh>
 
 namespace Dumux
 {

@@ -24,7 +24,7 @@
 #ifndef DUMUX_2PNI_MODEL_HH
 #define DUMUX_2PNI_MODEL_HH
 
-#include <dumux/boxmodels/2p/2pmodel.hh>
+#include <dumux/implicit/2p/2pmodel.hh>
 
 namespace Dumux {
 

@@ -26,7 +26,7 @@
 
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 
-#include <dumux/boxmodels/2p2c/2p2cmodel.hh>
+#include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/implicit/box/porousmediaboxproblem.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 

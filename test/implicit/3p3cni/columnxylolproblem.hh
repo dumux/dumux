@@ -32,7 +32,7 @@
 
 #include <dumux/material/fluidsystems/h2oairxylenefluidsystem.hh>
 
-#include <dumux/boxmodels/3p3cni/3p3cnimodel.hh>
+#include <dumux/implicit/3p3cni/3p3cnimodel.hh>
 #include <dumux/implicit/box/porousmediaboxproblem.hh>
 
 #include "columnxylolspatialparams.hh"

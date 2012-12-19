@@ -31,8 +31,8 @@
 #endif
 
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dumux/boxmodels/co2ni/co2nimodel.hh>
-#include <dumux/boxmodels/co2ni/co2nivolumevariables.hh>
+#include <dumux/implicit/co2ni/co2nimodel.hh>
+#include <dumux/implicit/co2ni/co2nivolumevariables.hh>
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
 #include <dumux/implicit/box/porousmediaboxproblem.hh>
 #include <dumux/implicit/box/intersectiontovertexbc.hh>

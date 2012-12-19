@@ -25,7 +25,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/boxmodels/mpnc/mpncmodel.hh>
+#include <dumux/implicit/mpnc/mpncmodel.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/mplinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
 

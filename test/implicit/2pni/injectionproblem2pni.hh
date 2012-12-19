@@ -34,7 +34,7 @@
 #include <dumux/common/simplexgridcreator.hh>
 #include <dumux/common/cubegridcreator.hh>
 
-#include <dumux/boxmodels/2pni/2pnimodel.hh>
+#include <dumux/implicit/2pni/2pnimodel.hh>
 #include <dumux/implicit/box/porousmediaboxproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>

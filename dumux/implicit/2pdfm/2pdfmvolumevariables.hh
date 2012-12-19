@@ -25,7 +25,7 @@
 
 #include <dune/common/fvector.hh>
 
-#include <dumux/boxmodels/2p/2pvolumevariables.hh>
+#include <dumux/implicit/2p/2pvolumevariables.hh>
 
 #include "2pdfmproperties.hh"
 

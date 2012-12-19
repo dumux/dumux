@@ -27,7 +27,7 @@
 #ifndef DUMUX_CO2NI_MODEL_HH
 #define DUMUX_CO2NI_MODEL_HH
 
-#include <dumux/boxmodels/co2/co2model.hh>
+#include <dumux/implicit/co2/co2model.hh>
 
 namespace Dumux {
 /*!
@@ -51,6 +51,6 @@ class CO2NIModel : public CO2Model<TypeTag>
 
 }
 
-#include <dumux/boxmodels/2p2cni/2p2cnipropertydefaults.hh>
+#include <dumux/implicit/2p2cni/2p2cnipropertydefaults.hh>
 
 #endif
