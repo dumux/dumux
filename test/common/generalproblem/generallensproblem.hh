@@ -35,7 +35,7 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
 //box model
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/2p/2pmodel.hh>
 
 //decoupled model
@@ -110,7 +110,7 @@ NEW_TYPE_TAG(BoxGeneralLensProblem, INHERITS_FROM(BoxTwoP, GeneralLensProblem));
 // Set the problem property
 SET_PROP(BoxGeneralLensProblem, ProblemBaseClass)
 {
-    typedef Dumux::PorousMediaBoxProblem<TypeTag> type;
+    typedef Dumux::ImplicitPorousMediaProblem<TypeTag> type;
 };
 
 // Set the problem property

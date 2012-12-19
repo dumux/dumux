@@ -21,7 +21,7 @@
 #ifndef DUMUX_BOXMODELS_2PDFM_PROBLEM_HH
 #define DUMUX_BOXMODELS_2PDFM_PROBLEM_HH
 
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include "2pdfmproperties.hh"
 
 namespace Dumux
@@ -32,9 +32,9 @@ namespace Dumux
  * \brief Base class for all problems which use the two-phase box model
  */
 template<class TypeTag>
-class TwoPDFMProblem : public PorousMediaBoxProblem<TypeTag>
+class TwoPDFMProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -48,7 +48,7 @@ public:
      * \param gridView The grid view
      * \param verbose Turn verbosity on or off
      */
-    DUNE_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
+    DUNE_DEPRECATED_MSG("use ImplicitPorousMediaProblem instead")
     TwoPDFMProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 bool verbose = true)

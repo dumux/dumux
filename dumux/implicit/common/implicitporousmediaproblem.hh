@@ -19,14 +19,14 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the two-phase box model
+ * \brief Base class for all fully implicit porous media problems
  */
-#ifndef DUMUX_POROUS_MEDIA_BOX_PROBLEM_HH
-#define DUMUX_POROUS_MEDIA_BOX_PROBLEM_HH
+#ifndef DUMUX_IMPLICIT_POROUS_MEDIA_PROBLEM_HH
+#define DUMUX_IMPLICIT_POROUS_MEDIA_PROBLEM_HH
 
-#include "boxproperties.hh"
+#include "implicitproperties.hh"
 
-#include <dumux/implicit/box/boxproblem.hh>
+#include <dumux/implicit/common/implicitproblem.hh>
 
 namespace Dumux
 {
@@ -41,9 +41,9 @@ NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered i
  * \brief Base class for all porous media box problems
  */
 template<class TypeTag>
-class PorousMediaBoxProblem : public BoxProblem<TypeTag>
+class ImplicitPorousMediaProblem : public ImplicitProblem<TypeTag>
 {
-    typedef BoxProblem<TypeTag> ParentType;
+    typedef ImplicitProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
@@ -62,6 +62,8 @@ class PorousMediaBoxProblem : public BoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
     /*!
      * \brief The constructor
@@ -70,7 +72,7 @@ public:
      * \param gridView The grid view
      * \param verbose Turn verbosity on or off
      */
-    PorousMediaBoxProblem(TimeManager &timeManager,
+    ImplicitPorousMediaProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 const bool verbose = true)
         : ParentType(timeManager, gridView),
@@ -83,7 +85,7 @@ public:
             gravity_[dim-1]  = -9.81;
     }
 
-    ~PorousMediaBoxProblem()
+    ~ImplicitPorousMediaProblem()
     {
         if (newSpatialParams_)
             delete spatialParams_;
@@ -108,8 +110,13 @@ public:
     Scalar boxTemperature(const Element &element,
                           const FVElementGeometry fvGeometry,
                           const int scvIdx) const
-    { return asImp_().temperatureAtPos(fvGeometry.subContVol[scvIdx].global); }
-
+    {
+        if (isBox)
+            return asImp_().temperatureAtPos(fvGeometry.subContVol[scvIdx].global); 
+        else
+            return asImp_().temperatureAtPos(fvGeometry.neighbors[scvIdx]->geometry().center());
+    }
+    
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
      *
@@ -140,7 +147,12 @@ public:
     const DimVector &boxGravity(const Element &element,
                                 const FVElementGeometry &fvGeometry,
                                 const int scvIdx) const
-    { return asImp_().gravityAtPos(fvGeometry.subContVol[scvIdx].global); }
+    {
+        if (isBox)
+            return asImp_().gravityAtPos(fvGeometry.subContVol[scvIdx].global); 
+        else
+            return asImp_().gravityAtPos(fvGeometry.neighbors[scvIdx]->geometry().center());
+    }
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
@@ -156,7 +168,7 @@ public:
      *
      * This method is used for problems where the gravitational
      * acceleration does not depend on the spatial position. The
-     * default behaviour is that if the <tt>EnableGravity</tt>
+     * default behaviour is that if the <tt>ProblemEnableGravity</tt>
      * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
      * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      */

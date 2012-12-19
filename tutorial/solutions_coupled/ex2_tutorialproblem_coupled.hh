@@ -28,7 +28,7 @@
 #include <dumux/implicit/2p/2pmodel.hh>
 
 // The base prous media box problem
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 
 // The DUNE grid used
 #include <dune/grid/alugrid.hh>
@@ -83,9 +83,9 @@ SET_BOOL_PROP(Ex2TutorialProblemCoupled, EnableGravity, false); /*@\label{tutori
  * \brief  Tutorial problem for a fully coupled twophase box model.
  */
 template <class TypeTag>
-class Ex2TutorialProblemCoupled : public PorousMediaBoxProblem<TypeTag> /*@\label{tutorial-coupled:def-problem}@*/
+class Ex2TutorialProblemCoupled : public ImplicitPorousMediaProblem<TypeTag> /*@\label{tutorial-coupled:def-problem}@*/
 {
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 

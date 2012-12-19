@@ -158,7 +158,7 @@ public:
      */
     // \{
 
-    //! \copydoc BoxProblem::boundaryTypes()
+    //! \copydoc ImplicitProblem::boundaryTypes()
     void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
     {
         const GlobalPosition globalPos = vertex.geometry().center();
@@ -179,7 +179,7 @@ public:
             values.setDirichlet(massBalanceIdx);
     }
 
-    //! \copydoc BoxProblem::dirichlet()
+    //! \copydoc ImplicitProblem::dirichlet()
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
         const GlobalPosition globalPos = vertex.geometry().center();
@@ -228,7 +228,7 @@ public:
      */
     // \{
 
-    //! \copydoc BoxProblem::source()
+    //! \copydoc ImplicitProblem::source()
     void source(PrimaryVariables &values,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
@@ -239,7 +239,7 @@ public:
         values = Scalar(0.0);
     }
 
-    //! \copydoc BoxProblem::initial()
+    //! \copydoc ImplicitProblem::initial()
     void initial(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,

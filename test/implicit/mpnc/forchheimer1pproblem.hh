@@ -32,7 +32,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/mpnc/mpncmodel.hh>
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
@@ -132,9 +132,9 @@ SET_BOOL_PROP(Forchheimer1pProblem, VtkAddVelocities, true);
  */
 template <class TypeTag>
 class Forchheimer1pProblem
-    : public PorousMediaBoxProblem<TypeTag>
+    : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;

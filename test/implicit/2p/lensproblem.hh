@@ -36,8 +36,8 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/implicit/2p/2pmodel.hh>
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
-#include <dumux/implicit/cellcentered/porousmediaccproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/cellcentered/ccpropertydefaults.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
@@ -115,8 +115,8 @@ SET_SCALAR_PROP(LensProblem, LinearSolverPreconditionerRelaxation, 1.0);
 SET_BOOL_PROP(LensProblem, ProblemEnableGravity, true);
 
 NEW_PROP_TAG(BaseProblem);
-SET_TYPE_PROP(LensBoxProblem, BaseProblem, PorousMediaBoxProblem<TypeTag>);
-SET_TYPE_PROP(LensCCProblem, BaseProblem, PorousMediaCCProblem<TypeTag>);
+SET_TYPE_PROP(LensBoxProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(LensCCProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
 }
 

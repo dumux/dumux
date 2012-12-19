@@ -31,7 +31,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/1p2c/1p2cmodel.hh>
-#include <dumux/implicit/box/porousmediaboxproblem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
 #include "1p2coutflowspatialparams.hh"
@@ -108,9 +108,9 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
  * <tt>./test_1p2c -parameterFile ./test_1p2c.input</tt>
  */
 template <class TypeTag>
-class OnePTwoCOutflowProblem : public PorousMediaBoxProblem<TypeTag>
+class OnePTwoCOutflowProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef PorousMediaBoxProblem<TypeTag> ParentType;
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
