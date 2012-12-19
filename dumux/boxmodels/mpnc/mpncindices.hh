@@ -26,6 +26,20 @@
 
 namespace Dumux
 {
+
+/*!
+ * \ingroup MPNCModel
+ * \ingroup BoxIndices
+ * \brief Enumerates the formulations which the 2p2c model accepts.
+ */
+struct MpNcPressureFormulation
+{
+    enum {
+        mostWettingFirst,
+        leastWettingFirst
+    };
+};
+
 /*!
  * \ingroup MPNCModel
  * \ingroup BoxIndices

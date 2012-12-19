@@ -68,6 +68,7 @@ public:
         : ParentType(problem)
     {
         porosityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity);
+        permeabilityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability);
         boundaryTypesOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddBoundaryTypes);
         saturationOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddSaturations);
         pressureOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPressures);
@@ -89,6 +90,8 @@ public:
     {
         if (porosityOutput_)
             this->resizeScalarBuffer_(porosity_);
+        if (permeabilityOutput_)
+            this->resizeScalarBuffer_(permeability_);
         if (boundaryTypesOutput_)
             this->resizeScalarBuffer_(boundaryTypes_);
 
@@ -126,6 +129,9 @@ public:
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
             if (porosityOutput_) porosity_[globalIdx] = volVars.porosity();
+
+            // works for scalar permeability in spatialparameters
+            if (permeabilityOutput_) permeability_[globalIdx] = this->problem_.spatialParams().intrinsicPermeability(elem,fvGeometry,localVertexIdx);
 
             // calculate a single value for the boundary type: use one
             // bit for each equation and set it to 1 if the equation
@@ -239,6 +245,7 @@ public:
 
 private:
     bool porosityOutput_;
+    bool permeabilityOutput_ ;
     bool boundaryTypesOutput_;
     bool saturationOutput_;
     bool pressureOutput_;
@@ -260,6 +267,7 @@ private:
     ScalarVector boxSurface_;
 
     ScalarVector porosity_;
+    ScalarVector permeability_;
     ScalarVector temperature_;
     ScalarVector boundaryTypes_;
 

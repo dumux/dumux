@@ -62,7 +62,7 @@ namespace Dumux {
  * this also sums up to M*(N + 2).
  *
  * We use the following catches: Capillary pressures are taken
- * into accout expicitly, so that only the pressure of the first
+ * into account explicitly, so that only the pressure of the first
  * phase is solved implicitly, also the closure condition for the
  * saturations is taken into account explicitly, which means, that
  * we don't need to implicitly solve for the last
