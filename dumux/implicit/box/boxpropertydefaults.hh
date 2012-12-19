@@ -27,6 +27,12 @@
 #ifndef DUMUX_BOX_PROPERTY_DEFAULTS_HH
 #define DUMUX_BOX_PROPERTY_DEFAULTS_HH
 
+#if HAVE_DUNE_PDELAB
+#include <dune/pdelab/finiteelementmap/q1fem.hh>
+#include <dune/pdelab/backend/novlpistlsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
+#endif
+
 #include <dumux/implicit/common/implicitpropertydefaults.hh>
 #include "boxassembler.hh"
 #include "boxfvelementgeometry.hh"
@@ -43,6 +49,7 @@ template<class TypeTag> class BoxLocalResidual;
 template<class TypeTag> class BoxElementBoundaryTypes;
 template<class TypeTag> class BoxElementVolumeVariables;
 template<class TypeTag> class BoxFVElementGeometry;
+template<class TypeTag> class AMGBackend;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry
@@ -73,6 +80,32 @@ SET_BOOL_PROP(BoxModel, ImplicitUseTwoPointFlux, false);
 
 //! indicate that this is a box discretization
 SET_BOOL_PROP(BoxModel, ImplicitIsBox, true);
+
+#if HAVE_DUNE_PDELAB
+//! use the local FEM space associated with cubes by default
+SET_PROP(BoxModel, ImplicitLocalFemMap)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum{dim = GridView::dimension};
+public:
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type;
+};
+
+SET_PROP(BoxModel, ImplicitPDELabBackend)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_AMG_SSOR<GridOperator> type;
+};
+
+/*SET_PROP(BoxModel, SolutionVector)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef typename GridOperator::Traits::Domain type;
+};*/
+#endif
 
 } // namespace Properties
 } // namespace Dumux
