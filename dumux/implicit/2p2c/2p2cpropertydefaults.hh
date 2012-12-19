@@ -52,7 +52,7 @@ namespace Properties {
  * We just forward the number from the fluid system and use an static
  * assert to make sure it is 2.
  */
-SET_PROP(BoxTwoPTwoC, NumComponents)
+SET_PROP(TwoPTwoC, NumComponents)
 {
  private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -70,7 +70,7 @@ SET_PROP(BoxTwoPTwoC, NumComponents)
  * We just forward the number from the fluid system and use an static
  * assert to make sure it is 2.
  */
-SET_PROP(BoxTwoPTwoC, NumPhases)
+SET_PROP(TwoPTwoC, NumPhases)
 {
  private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -81,21 +81,21 @@ SET_PROP(BoxTwoPTwoC, NumPhases)
                   "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 };
 
-SET_INT_PROP(BoxTwoPTwoC, NumEq, 2); //!< set the number of equations to 2
+SET_INT_PROP(TwoPTwoC, NumEq, 2); //!< set the number of equations to 2
 
 //! Set the default formulation to pw-Sn
-SET_INT_PROP(BoxTwoPTwoC,
+SET_INT_PROP(TwoPTwoC,
              Formulation,
              TwoPTwoCFormulation::pwSn);
 
 //! set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(BoxTwoPTwoC, ReplaceCompEqIdx, 2);
+SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, 2);
 
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_PROP(BoxTwoPTwoC, MaterialLawParams)
+SET_PROP(TwoPTwoC, MaterialLawParams)
 {
  private:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -105,33 +105,33 @@ SET_PROP(BoxTwoPTwoC, MaterialLawParams)
 };
 
 //! Use the 2p2c local jacobian operator for the 2p2c model
-SET_TYPE_PROP(BoxTwoPTwoC,
+SET_TYPE_PROP(TwoPTwoC,
               LocalResidual,
               TwoPTwoCLocalResidual<TypeTag>);
 
 //! Use the 2p2c specific newton controller for the 2p2c model
-SET_TYPE_PROP(BoxTwoPTwoC, NewtonController, TwoPTwoCNewtonController<TypeTag>);
+SET_TYPE_PROP(TwoPTwoC, NewtonController, TwoPTwoCNewtonController<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPTwoC, Model, TwoPTwoCModel<TypeTag>);
+SET_TYPE_PROP(TwoPTwoC, Model, TwoPTwoCModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
 
 //! define the base flux variables to realize Darcy flow
-SET_TYPE_PROP(BoxTwoPTwoC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoPTwoC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(BoxTwoPTwoC, ImplicitMassUpwindWeight, 1.0);
+SET_SCALAR_PROP(TwoPTwoC, ImplicitMassUpwindWeight, 1.0);
 
 //! set default mobility upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(BoxTwoPTwoC, ImplicitMobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(TwoPTwoC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p2c model
-SET_PROP(BoxTwoPTwoC, Indices) 
+SET_PROP(TwoPTwoC, Indices) 
 { private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
  public:
@@ -140,13 +140,13 @@ SET_PROP(BoxTwoPTwoC, Indices)
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxTwoPTwoC, SpatialParams, BoxSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPTwoC, SpatialParams, BoxSpatialParams<TypeTag>);
 
 // disable velocity output by default
-SET_BOOL_PROP(BoxTwoPTwoC, VtkAddVelocity, false);
+SET_BOOL_PROP(TwoPTwoC, VtkAddVelocity, false);
 
 // enable gravity by default
-SET_BOOL_PROP(BoxTwoPTwoC, ProblemEnableGravity, true);
+SET_BOOL_PROP(TwoPTwoC, ProblemEnableGravity, true);
 
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.

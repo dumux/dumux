@@ -48,66 +48,66 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Property defaults
 //////////////////////////////////////////////////////////////////
-SET_INT_PROP(BoxTwoP, NumEq, 2); //!< set the number of equations to 2
-SET_INT_PROP(BoxTwoP, NumPhases, 2); //!< The number of phases in the 2p model is 2
+SET_INT_PROP(TwoP, NumEq, 2); //!< set the number of equations to 2
+SET_INT_PROP(TwoP, NumPhases, 2); //!< The number of phases in the 2p model is 2
 
 //! Set the default formulation to pWsN
-SET_INT_PROP(BoxTwoP,
+SET_INT_PROP(TwoP,
              Formulation,
              TwoPFormulation::pwSn);
 
 //! Use the 2p local jacobian operator for the 2p model
-SET_TYPE_PROP(BoxTwoP,
+SET_TYPE_PROP(TwoP,
               LocalResidual,
               TwoPLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoP, Model, TwoPModel<TypeTag>);
+SET_TYPE_PROP(TwoP, Model, TwoPModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(BoxTwoP, ImplicitMassUpwindWeight, 1.0);
+SET_SCALAR_PROP(TwoP, ImplicitMassUpwindWeight, 1.0);
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxTwoP, ImplicitMobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(TwoP, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p model
-SET_TYPE_PROP(BoxTwoP, 
+SET_TYPE_PROP(TwoP, 
               Indices, 
               TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>);
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxTwoP, SpatialParams, BoxSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoP, SpatialParams, BoxSpatialParams<TypeTag>);
 
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_TYPE_PROP(BoxTwoP,
+SET_TYPE_PROP(TwoP,
               MaterialLawParams,
               typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
-SET_PROP(BoxTwoP, WettingPhase)
+SET_PROP(TwoP, WettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
-SET_PROP(BoxTwoP, NonwettingPhase)
+SET_PROP(TwoP, NonwettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
-SET_PROP(BoxTwoP, FluidSystem)
+SET_PROP(TwoP, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
@@ -119,7 +119,7 @@ public:
                                                 NonwettingPhase> type;
 };
 
-SET_PROP(BoxTwoP, FluidState)
+SET_PROP(TwoP, FluidState)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -129,10 +129,10 @@ public:
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(BoxTwoP, VtkAddVelocity, false);
+SET_BOOL_PROP(TwoP, VtkAddVelocity, false);
 
 // enable gravity by default
-SET_BOOL_PROP(BoxTwoP, ProblemEnableGravity, true);
+SET_BOOL_PROP(TwoP, ProblemEnableGravity, true);
 
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.

@@ -52,18 +52,12 @@ namespace Properties
 // default property values
 //////////////////////////////////////////////////////////////////
 
-
-//! Set the default pressure formulation to the pressure of the (most) wetting phase
-SET_INT_PROP(BoxMPNC,
-             PressureFormulation,
-             MpNcPressureFormulation::mostWettingFirst);
-
 /*!
  * \brief Set the property for the number of components.
  *
  * We just forward the number from the fluid system.
  */
-SET_PROP(BoxMPNC, NumComponents)
+SET_PROP(MPNC, NumComponents)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -78,7 +72,7 @@ public:
  * We just forward the number from the fluid system and use an static
  * assert to make sure it is 2.
  */
-SET_PROP(BoxMPNC, NumPhases)
+SET_PROP(MPNC, NumPhases)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -90,7 +84,7 @@ public:
 /*!
  * \brief Set the property for the number of equations and primary variables.
  */
-SET_PROP(BoxMPNC, NumEq)
+SET_PROP(MPNC, NumEq)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -103,7 +97,7 @@ public:
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_PROP(BoxMPNC, MaterialLawParams)
+SET_PROP(MPNC, MaterialLawParams)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -118,7 +112,7 @@ public:
  *
  *        \deprecated version. Use "ConstraintSolver" instead of "CompositionFromFugacitiesSolver"
  */
-SET_PROP(BoxMPNC, CompositionFromFugacitiesSolver) // DEPRECATED version. Use "ConstraintSolver" instead of "CompositionFromFugacitiesSolver"
+SET_PROP(MPNC, CompositionFromFugacitiesSolver) // DEPRECATED version. Use "ConstraintSolver" instead of "CompositionFromFugacitiesSolver"
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -132,7 +126,7 @@ public:
  * \brief Set the thermodynamic constraint solver which calculates the
  *        composition of any phase given all component fugacities.
  */
-SET_PROP(BoxMPNC, ConstraintSolver)
+SET_PROP(MPNC, ConstraintSolver)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -144,68 +138,68 @@ public:
 
 
 //! Use the MpNc local jacobian operator for the MpNc model
-SET_TYPE_PROP(BoxMPNC,
+SET_TYPE_PROP(MPNC,
               LocalResidual,
               MPNCLocalResidual<TypeTag>);
 
 //! Use the MpNc specific newton controller for the MpNc model
-SET_PROP(BoxMPNC, NewtonController)
+SET_PROP(MPNC, NewtonController)
 {public:
     typedef MPNCNewtonController<TypeTag> type;
 };
 
 //! the Model property
-SET_TYPE_PROP(BoxMPNC, Model, MPNCModel<TypeTag>);
+SET_TYPE_PROP(MPNC, Model, MPNCModel<TypeTag>);
 
 //! use an isothermal model by default
-SET_BOOL_PROP(BoxMPNC, EnableEnergy, false);
+SET_BOOL_PROP(MPNC, EnableEnergy, false);
 
 //! disable diffusion by default
-SET_BOOL_PROP(BoxMPNC, EnableDiffusion, false);
+SET_BOOL_PROP(MPNC, EnableDiffusion, false);
 
 //! disable kinetic mass transfer by default
-SET_BOOL_PROP(BoxMPNC, EnableKinetic, false);
+SET_BOOL_PROP(MPNC, EnableKinetic, false);
 
 //! disable kinetic energy transfer by default
-SET_BOOL_PROP(BoxMPNC, EnableKineticEnergy, false);
+SET_BOOL_PROP(MPNC, EnableKineticEnergy, false);
 
 //! enable smooth upwinding by default
-SET_BOOL_PROP(BoxMPNC, ImplicitEnableSmoothUpwinding, false);
+SET_BOOL_PROP(MPNC, ImplicitEnableSmoothUpwinding, false);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxMPNC, VolumeVariables, MPNCVolumeVariables<TypeTag>);
+SET_TYPE_PROP(MPNC, VolumeVariables, MPNCVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxMPNC, FluxVariables, MPNCFluxVariables<TypeTag>);
+SET_TYPE_PROP(MPNC, FluxVariables, MPNCFluxVariables<TypeTag>);
 
 //! the Base of the Fluxvariables property (Darcy / Forchheimer)
-SET_TYPE_PROP(BoxMPNC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(MPNC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! truncate the newton update for the first few Newton iterations of a time step
-SET_BOOL_PROP(BoxMPNC, NewtonEnableChop, true);
+SET_BOOL_PROP(MPNC, NewtonEnableChop, true);
 
 //! The indices required by the mpnc model
-SET_TYPE_PROP(BoxMPNC, Indices, MPNCIndices<TypeTag, 0>);
+SET_TYPE_PROP(MPNC, Indices, MPNCIndices<TypeTag, 0>);
 
 //! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(BoxMPNC, ImplicitMassUpwindWeight, 1.0);
+SET_SCALAR_PROP(MPNC, ImplicitMassUpwindWeight, 1.0);
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxMPNC, ImplicitMobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(MPNC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxMPNC, SpatialParams, BoxSpatialParams<TypeTag>);
+SET_TYPE_PROP(MPNC, SpatialParams, BoxSpatialParams<TypeTag>);
 
 //! The VTK writer module for common quantities
-SET_PROP(BoxMPNC, MPNCVtkCommonModule)
+SET_PROP(MPNC, MPNCVtkCommonModule)
 {
     typedef MPNCVtkWriterCommon<TypeTag> type;
 };
 
 //! The VTK writer module for quantities which are specific for each
 //! mass module
-SET_PROP(BoxMPNC, MPNCVtkMassModule)
+SET_PROP(MPNC, MPNCVtkMassModule)
 {
 private: enum { enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic) };
 public: typedef MPNCVtkWriterMass<TypeTag, enableKinetic> type;
@@ -213,7 +207,7 @@ public: typedef MPNCVtkWriterMass<TypeTag, enableKinetic> type;
 
 //! The VTK writer module for quantities which are specific for each
 //! energy module
-SET_PROP(BoxMPNC, MPNCVtkEnergyModule)
+SET_PROP(MPNC, MPNCVtkEnergyModule)
 {
 private:
     enum { enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy) };
@@ -223,7 +217,7 @@ public:
 };
 
 //! The VTK writer for user specified data (does nothing by default)
-SET_PROP(BoxMPNC, MPNCVtkCustomModule)
+SET_PROP(MPNC, MPNCVtkCustomModule)
 { typedef MPNCVtkWriterModule<TypeTag> type; };
 
 /*!
@@ -232,7 +226,7 @@ SET_PROP(BoxMPNC, MPNCVtkCustomModule)
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(BoxMPNC, FluidState){
+SET_PROP(MPNC, FluidState){
     private:
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -249,35 +243,35 @@ SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
 
 
 //!< Should the averaging of velocities be done in the Model? (By default in the output)
-SET_BOOL_PROP(BoxMPNC, VelocityAveragingInModel, false);
+SET_BOOL_PROP(MPNC, VelocityAveragingInModel, false);
 
 //! Specify what to add to the VTK output by default
-SET_BOOL_PROP(BoxMPNC, VtkAddPorosity, true);
-SET_BOOL_PROP(BoxMPNC, VtkAddPermeability, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddBoundaryTypes, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddSaturations, true);
-SET_BOOL_PROP(BoxMPNC, VtkAddPressures, true);
-SET_BOOL_PROP(BoxMPNC, VtkAddVarPressures, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddVelocities, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddDensities, true);
-SET_BOOL_PROP(BoxMPNC, VtkAddMobilities, true);
-SET_BOOL_PROP(BoxMPNC, VtkAddAverageMolarMass, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddMassFractions, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddMoleFractions, true);
-SET_BOOL_PROP(BoxMPNC, VtkAddMolarities, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddFugacities, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddFugacityCoefficients, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddTemperatures, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddEnthalpies, true);
-SET_BOOL_PROP(BoxMPNC, VtkAddInternalEnergies, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddReynolds, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddPrandtl, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddNusselt, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddInterfacialArea, false);
-SET_BOOL_PROP(BoxMPNC, VtkAddxEquil, false);
+SET_BOOL_PROP(MPNC, VtkAddPorosity, true);
+SET_BOOL_PROP(MPNC, VtkAddPermeability, false);
+SET_BOOL_PROP(MPNC, VtkAddBoundaryTypes, false);
+SET_BOOL_PROP(MPNC, VtkAddSaturations, true);
+SET_BOOL_PROP(MPNC, VtkAddPressures, true);
+SET_BOOL_PROP(MPNC, VtkAddVarPressures, false);
+SET_BOOL_PROP(MPNC, VtkAddVelocities, false);
+SET_BOOL_PROP(MPNC, VtkAddDensities, true);
+SET_BOOL_PROP(MPNC, VtkAddMobilities, true);
+SET_BOOL_PROP(MPNC, VtkAddAverageMolarMass, false);
+SET_BOOL_PROP(MPNC, VtkAddMassFractions, false);
+SET_BOOL_PROP(MPNC, VtkAddMoleFractions, true);
+SET_BOOL_PROP(MPNC, VtkAddMolarities, false);
+SET_BOOL_PROP(MPNC, VtkAddFugacities, false);
+SET_BOOL_PROP(MPNC, VtkAddFugacityCoefficients, false);
+SET_BOOL_PROP(MPNC, VtkAddTemperatures, false);
+SET_BOOL_PROP(MPNC, VtkAddEnthalpies, true);
+SET_BOOL_PROP(MPNC, VtkAddInternalEnergies, false);
+SET_BOOL_PROP(MPNC, VtkAddReynolds, false);
+SET_BOOL_PROP(MPNC, VtkAddPrandtl, false);
+SET_BOOL_PROP(MPNC, VtkAddNusselt, false);
+SET_BOOL_PROP(MPNC, VtkAddInterfacialArea, false);
+SET_BOOL_PROP(MPNC, VtkAddxEquil, false);
 
 // enable gravity by default
-SET_BOOL_PROP(BoxMPNC, ProblemEnableGravity, true);
+SET_BOOL_PROP(MPNC, ProblemEnableGravity, true);
 
 }
 

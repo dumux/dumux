@@ -28,6 +28,7 @@
 #define DUMUX_1P_PROPERTIES_DATA_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
 
 namespace Dumux
 {
@@ -41,8 +42,10 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the isothermal single phase problems
-NEW_TYPE_TAG(BoxOneP, INHERITS_FROM(BoxModel));
+//! The type tags for the implicit single-phase problems
+NEW_TYPE_TAG(OneP);
+NEW_TYPE_TAG(BoxOneP, INHERITS_FROM(BoxModel, OneP));
+NEW_TYPE_TAG(CCOneP, INHERITS_FROM(CCModel, OneP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

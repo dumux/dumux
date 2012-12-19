@@ -20,6 +20,7 @@
 #define DUMUX_MPNC_PROPERTIES_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
 
 /*!
  * \ingroup Properties
@@ -37,10 +38,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-/*!
- * \brief Define the type tag for the compositional twophase box model.
- */
-NEW_TYPE_TAG(BoxMPNC, INHERITS_FROM(BoxModel));
+//! The type tags for the implicit m-phase n-component problems
+NEW_TYPE_TAG(MPNC);
+NEW_TYPE_TAG(BoxMPNC, INHERITS_FROM(BoxModel, MPNC));
+NEW_TYPE_TAG(CCMPNC, INHERITS_FROM(CCModel, MPNC));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

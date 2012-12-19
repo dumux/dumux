@@ -28,6 +28,7 @@
 #define DUMUX_3P3C_PROPERTIES_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
 
 namespace Dumux
 {
@@ -38,8 +39,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the isothermal single phase problems
-NEW_TYPE_TAG(BoxThreePThreeC, INHERITS_FROM(BoxModel));
+//! The type tags for the implicit three-phase three-component problems
+NEW_TYPE_TAG(ThreePThreeC);
+NEW_TYPE_TAG(BoxThreePThreeC, INHERITS_FROM(BoxModel, ThreePThreeC));
+NEW_TYPE_TAG(CCThreePThreeC, INHERITS_FROM(CCModel, ThreePThreeC));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

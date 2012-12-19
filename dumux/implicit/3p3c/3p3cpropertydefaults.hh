@@ -55,7 +55,7 @@ namespace Properties {
  * We just forward the number from the fluid system and use an static
  * assert to make sure it is 2.
  */
-SET_PROP(BoxThreePThreeC, NumComponents)
+SET_PROP(ThreePThreeC, NumComponents)
 {
  private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -73,7 +73,7 @@ SET_PROP(BoxThreePThreeC, NumComponents)
  * We just forward the number from the fluid system and use an static
  * assert to make sure it is 2.
  */
-SET_PROP(BoxThreePThreeC, NumPhases)
+SET_PROP(ThreePThreeC, NumPhases)
 {
  private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -84,50 +84,50 @@ SET_PROP(BoxThreePThreeC, NumPhases)
                   "Only fluid systems with 3 phases are supported by the 3p3c model!");
 };
 
-SET_INT_PROP(BoxThreePThreeC, NumEq, 3); //!< set the number of equations to 2
+SET_INT_PROP(ThreePThreeC, NumEq, 3); //!< set the number of equations to 2
 
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_TYPE_PROP(BoxThreePThreeC, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
+SET_TYPE_PROP(ThreePThreeC, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
 //! The local residual function of the conservation equations
-SET_TYPE_PROP(BoxThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
 
 //! Use the 3p3c specific newton controller for the 3p3c model
-SET_TYPE_PROP(BoxThreePThreeC, NewtonController, ThreePThreeCNewtonController<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, NewtonController, ThreePThreeCNewtonController<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxThreePThreeC, Model, ThreePThreeCModel<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, Model, ThreePThreeCModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxThreePThreeC, FluxVariables, ThreePThreeCFluxVariables<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, FluxVariables, ThreePThreeCFluxVariables<TypeTag>);
 
 //! define the base flux variables to realize Darcy flow
-SET_TYPE_PROP(BoxThreePThreeC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
-SET_SCALAR_PROP(BoxThreePThreeC, ImplicitMassUpwindWeight, 1.0);
+SET_SCALAR_PROP(ThreePThreeC, ImplicitMassUpwindWeight, 1.0);
 
 //! set default mobility upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(BoxThreePThreeC, ImplicitMobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(ThreePThreeC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! Determines whether a constraint solver should be used explicitly
-SET_BOOL_PROP(BoxThreePThreeC, UseConstraintSolver, false);
+SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
 
 //! The indices required by the isothermal 3p3c model
-SET_TYPE_PROP(BoxThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
+SET_TYPE_PROP(ThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxThreePThreeC, SpatialParams, BoxSpatialParams<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, SpatialParams, BoxSpatialParams<TypeTag>);
 
 // enable gravity by default
-SET_BOOL_PROP(BoxThreePThreeC, ProblemEnableGravity, true);
+SET_BOOL_PROP(ThreePThreeC, ProblemEnableGravity, true);
 
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.

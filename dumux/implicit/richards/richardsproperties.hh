@@ -29,6 +29,7 @@
 #define DUMUX_RICHARDS_PROPERTIES_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
 
 namespace Dumux
 {
@@ -42,8 +43,10 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for problems discretized using the Richards model
-NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxModel));
+//! The type tags for the implicit Richards problems
+NEW_TYPE_TAG(Richards);
+NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxModel, Richards));
+NEW_TYPE_TAG(CCRichards, INHERITS_FROM(CCModel, Richards));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

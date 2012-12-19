@@ -39,8 +39,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the non-isothermal three-phase, three-component problems
-NEW_TYPE_TAG(BoxThreePThreeCNI, INHERITS_FROM(BoxThreePThreeC));
+//! The type tags for the implicit non-isothermal three-phase three-component problems
+NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC));
+NEW_TYPE_TAG(BoxThreePThreeCNI, INHERITS_FROM(BoxModel, ThreePThreeCNI));
+NEW_TYPE_TAG(CCThreePThreeCNI, INHERITS_FROM(CCModel, ThreePThreeCNI));
 }
 }
 
