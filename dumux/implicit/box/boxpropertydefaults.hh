@@ -29,7 +29,7 @@
 
 #if HAVE_DUNE_PDELAB
 #include <dune/pdelab/finiteelementmap/q1fem.hh>
-#include <dumux/linear/novlpistlsolverbackend.hh>
+#include <dune/pdelab/backend/novlpistlsolverbackend.hh>
 #include <dumux/linear/amgbackend.hh>
 #endif
 
@@ -49,6 +49,7 @@ template<class TypeTag> class BoxLocalResidual;
 template<class TypeTag> class BoxElementBoundaryTypes;
 template<class TypeTag> class BoxElementVolumeVariables;
 template<class TypeTag> class BoxFVElementGeometry;
+template<class TypeTag> class AMGBackend;
 
 namespace Properties {
 //! Set the default for the FVElementGeometry
@@ -95,8 +96,15 @@ SET_PROP(BoxModel, ImplicitPDELabBackend)
 {
     typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
 public:
-    typedef Dumux::ISTLBackend_NOVLP_BCGS_AMG_SSOR<GridOperator> type;
+    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_AMG_SSOR<GridOperator> type;
 };
+
+/*SET_PROP(BoxModel, SolutionVector)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef typename GridOperator::Traits::Domain type;
+};*/
 #endif
 
 } // namespace Properties

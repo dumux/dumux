@@ -27,12 +27,17 @@
 #include <dune/pdelab/gridoperator/gridoperator.hh>
 
 #include "linearsolverproperties.hh"
-#include "novlpistlsolverbackend.hh"
-#include "ovlpistlsolverbackend.hh"
-#include "seqistlsolverbackend.hh"
+#include <dune/pdelab/backend/novlpistlsolverbackend.hh>
+#include <dune/pdelab/backend/ovlpistlsolverbackend.hh>
+#include <dune/pdelab/backend/seqistlsolverbackend.hh>
+#include <dune/pdelab/backend/istlvectorbackend.hh>
 
 namespace Dumux {
 
+namespace PDELab {
+template <class TypeTag> class BoxISTLVectorBackend;
+}
+    
 namespace Properties
 {
 NEW_PROP_TAG(GridOperator);
@@ -83,7 +88,7 @@ class AMGBackend
     typedef Dune::PDELab::GridFunctionSpace<GridView, 
                                             LocalFemMap, 
                                             Constraints, 
-                                            ISTLVectorBackend<numEq> 
+                                            Dune::PDELab::ISTLVectorBackend<numEq> 
                                            > ScalarGridFunctionSpace;
     typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, 
                                                  numEq, 
@@ -111,7 +116,7 @@ public:
         constraints_ = new Constraints();
         scalarGridFunctionSpace_ = new ScalarGridFunctionSpace(problem.gridView(), *fem_, *constraints_);
         gridFunctionSpace_ = new GridFunctionSpace(*scalarGridFunctionSpace_);
-        imp_ = new PDELabBackend(gridFunctionSpace_,
+        imp_ = new PDELabBackend(*gridFunctionSpace_,
                 GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations),
                 GET_PROP_VALUE(TypeTag, LinearSolverVerbosity));
     }
@@ -153,7 +158,7 @@ class SeqAMGBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridOperator) GridOperator;
-    typedef ISTLBackend_SEQ_BCGS_AMG_SSOR<GridOperator> PDELabBackend;
+    typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_AMG_SSOR<GridOperator> PDELabBackend;
 public:
 
     SeqAMGBackend(const Problem& problem)
@@ -197,7 +202,7 @@ class ScaledSeqAMGBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridOperator) GridOperator;
-    typedef ISTLBackend_SEQ_BCGS_AMG_SSOR<GridOperator> PDELabBackend;
+    typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_AMG_SSOR<GridOperator> PDELabBackend;
 public:
 
     ScaledSeqAMGBackend(const Problem& problem)

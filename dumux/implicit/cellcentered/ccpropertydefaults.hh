@@ -33,7 +33,7 @@
 
 #if HAVE_DUNE_PDELAB
 #include <dumux/linear/p0fem.hh>
-#include <dumux/linear/ovlpistlsolverbackend.hh>
+#include <dune/pdelab/backend/ovlpistlsolverbackend.hh>
 #include <dumux/linear/amgbackend.hh>
 #endif
 
@@ -91,7 +91,7 @@ SET_PROP(CCModel, ImplicitPDELabBackend)
 {
     typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
 public:
-    typedef Dumux::ISTLBackend_BCGS_AMG_SSOR<GridOperator> type;
+    typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<GridOperator> type;
 };
 #endif
 
