@@ -29,6 +29,7 @@
 #include "diffusion/volumevariables.hh"
 #include "energy/mpncvolumevariablesenergy.hh"
 #include "mass/mpncvolumevariablesmass.hh"
+#include "mpncindices.hh"
 #include "mpncvolumevariablesia.hh"
 
 #include <dumux/implicit/common/implicitvolumevariables.hh>
