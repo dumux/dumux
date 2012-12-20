@@ -19,36 +19,97 @@
 /*!
  * \file
  *
- * \brief Provides a linear solver using the PDELab AMG backend.
+ * \brief Provides linear solvers using the PDELab AMG backends.
  */
 #ifndef DUMUX_AMGBACKEND_HH
 #define DUMUX_AMGBACKEND_HH
 
 #include <dune/pdelab/gridoperator/gridoperator.hh>
-
-#include "linearsolverproperties.hh"
 #include <dune/pdelab/backend/novlpistlsolverbackend.hh>
 #include <dune/pdelab/backend/ovlpistlsolverbackend.hh>
 #include <dune/pdelab/backend/seqistlsolverbackend.hh>
 #include <dune/pdelab/backend/istlvectorbackend.hh>
 
+#include <dune/pdelab/finiteelementmap/q1fem.hh>
+#include <dumux/linear/p0fem.hh>
+
+#include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
+#include "linearsolverproperties.hh"
+
 namespace Dumux {
 
-namespace PDELab {
-template <class TypeTag> class BoxISTLVectorBackend;
-}
-    
+// forward declaration for the property definitions
+template <class TypeTag> class AMGBackend;
+
 namespace Properties
 {
-NEW_PROP_TAG(GridOperator);
-NEW_PROP_TAG(Problem);
-NEW_PROP_TAG(GridView);
-NEW_PROP_TAG(NumEq);
-NEW_PROP_TAG(ImplicitIsBox);
+//! the PDELab finite element map used for the gridfunctionspace
 NEW_PROP_TAG(ImplicitLocalFemMap);
+
+//! box: use the (multi-)linear local FEM space associated with cubes by default
+SET_PROP(BoxModel, ImplicitLocalFemMap)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum{dim = GridView::dimension};
+public:
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type;
+};
+
+//! cell-centered: use the element-wise constant local FEM space by default
+SET_PROP(CCModel, ImplicitLocalFemMap)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum{dim = GridView::dimension};
+public:
+    typedef Dumux::P0LocalFiniteElementMap<Scalar,Scalar,dim>  type;
+};
+
+//! the type of the employed PDELab backend
 NEW_PROP_TAG(ImplicitPDELabBackend);
+
+//! box: use the non-overlapping PDELab AMG backend
+SET_PROP(BoxModel, ImplicitPDELabBackend)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_AMG_SSOR<GridOperator> type;
+};
+
+//! cell-centered: use the overlapping PDELab AMG backend
+SET_PROP(CCModel, ImplicitPDELabBackend)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<GridOperator> type;
+};
+
+//! box: reset the type of solution vector to be PDELab conforming
+SET_PROP(BoxModel, SolutionVector)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef typename GridOperator::Traits::Domain type;
+};
+
+//! cell-centered: reset the type of solution vector to be PDELab conforming
+SET_PROP(CCModel, SolutionVector)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef typename GridOperator::Traits::Domain type;
+};
 }
 
+/*!
+ * \brief Scale the linear system by the inverse of 
+ * its (block-)diagonal entries.
+ * 
+ * \param matrix the matrix to scale
+ * \param rhs the right hand side vector to scale
+ */
 template <class Matrix, class Vector>
 void scaleLinearSystem(Matrix& matrix, Vector& rhs)
 {
@@ -73,7 +134,7 @@ void scaleLinearSystem(Matrix& matrix, Vector& rhs)
 }
 
 /*!
- * \brief Provides a linear solver using the PDELab AMG backend.
+ * \brief Provides a linear solver using the parallel PDELab AMG backend.
  */
 template <class TypeTag>
 class AMGBackend
@@ -109,6 +170,11 @@ public:
                                       > GridOperator;
     typedef typename GET_PROP_TYPE(TypeTag, ImplicitPDELabBackend) PDELabBackend;
 
+    /*!
+     * \brief Construct the backend.
+     * 
+     * \param problem the problem at hand
+     */
     AMGBackend(const Problem& problem)
     : problem_(problem)
     {
@@ -121,6 +187,13 @@ public:
                 GET_PROP_VALUE(TypeTag, LinearSolverVerbosity));
     }
 
+    /*!
+     * \brief Solve a linear system.
+     * 
+     * \param A the matrix
+     * \param x the seeked solution vector, containing the initial solution upon entry
+     * \param b the right hand side vector
+     */
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
@@ -133,16 +206,26 @@ public:
         result_.reduction  = imp_->result().reduction;
         result_.conv_rate  = imp_->result().conv_rate;
 
-        delete imp_;
-
         return result_.converged;
     }
 
+    /*!
+     * \brief The result containing the convergence history.
+     */
     const Dune::InverseOperatorResult& result() const
     {
         return result_;
     }
 
+    ~AMGBackend()
+    {
+        delete imp_;
+        delete gridFunctionSpace_;
+        delete scalarGridFunctionSpace_;
+        delete constraints_;
+        delete fem_;
+    }
+    
 private:
     const Problem& problem_;
     LocalFemMap *fem_;
@@ -153,18 +236,33 @@ private:
     Dune::InverseOperatorResult result_;
 };
 
+/*!
+ * \brief Provides a linear solver using the sequential PDELab AMG backend.
+ */
 template <class TypeTag>
 class SeqAMGBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridOperator) GridOperator;
+    typedef typename AMGBackend<TypeTag>::GridOperator GridOperator;
     typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_AMG_SSOR<GridOperator> PDELabBackend;
 public:
 
+    /*!
+     * \brief Construct the backend.
+     * 
+     * \param problem the problem at hand
+     */
     SeqAMGBackend(const Problem& problem)
     : problem_(problem)
     {}
 
+    /*!
+     * \brief Solve a linear system.
+     * 
+     * \param A the matrix
+     * \param x the seeked solution vector, containing the initial solution upon entry
+     * \param b the right hand side vector
+     */
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
@@ -186,6 +284,9 @@ public:
         return result_.converged;
     }
 
+    /*!
+     * \brief The result containing the convergence history.
+     */
     const Dune::InverseOperatorResult& result() const
     {
         return result_;
@@ -197,18 +298,36 @@ private:
     Dune::InverseOperatorResult result_;
 };
 
+/*!
+ * \brief Provides a linear solver using the sequential PDELab AMG backend.
+ * 
+ * The linear system is scaled beforehand, possibly improving the 
+ * convergence behavior of the iterative solver.
+ */
 template <class TypeTag>
 class ScaledSeqAMGBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridOperator) GridOperator;
+    typedef typename AMGBackend<TypeTag>::GridOperator GridOperator;
     typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_AMG_SSOR<GridOperator> PDELabBackend;
 public:
 
+    /*!
+     * \brief Construct the backend.
+     * 
+     * \param problem the problem at hand
+     */
     ScaledSeqAMGBackend(const Problem& problem)
     : problem_(problem)
     {}
 
+    /*!
+     * \brief Solve a linear system.
+     * 
+     * \param A the matrix
+     * \param x the seeked solution vector, containing the initial solution upon entry
+     * \param b the right hand side vector
+     */
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
@@ -232,6 +351,9 @@ public:
         return result_.converged;
     }
 
+    /*!
+     * \brief The result containing the convergence history.
+     */
     const Dune::InverseOperatorResult& result() const
     {
         return result_;
