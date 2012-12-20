@@ -223,7 +223,7 @@ public:
      * \brief Add data associated with degrees of freedom to the output.
      *
      * This is a wrapper for the functions attachVertexData and attachCelldata. 
-     * Depending on the value of \param isVertexData, the appropriate function 
+     * Depending on the value of \a isVertexData, the appropriate function 
      * is selected.
      */
     template <class DataBuffer>
