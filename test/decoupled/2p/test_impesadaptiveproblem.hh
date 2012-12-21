@@ -27,7 +27,7 @@
 #if HAVE_ALUGRID
 
 #include <dune/grid/alugrid/2d/alugrid.hh>
-#include <dumux/common/cubegridcreator.hh>
+#include <dumux/io/cubegridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>

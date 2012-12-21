@@ -224,7 +224,7 @@ int start_(int argc,
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    // Set by default (dumux/common/basicproperties.hh) to DgfGridCreator (dumux/common/dgfgridcreator.hh)
+    // Set by default (dumux/common/basicproperties.hh) to DgfGridCreator (dumux/io/dgfgridcreator.hh)
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;

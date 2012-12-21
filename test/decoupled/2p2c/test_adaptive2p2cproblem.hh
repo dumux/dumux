@@ -27,7 +27,7 @@
 #include <dune/grid/alugrid.hh>
 // #include <dune/grid/uggrid.hh>
 
-#include <dumux/common/cubegridcreator.hh>
+#include <dumux/io/cubegridcreator.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/decoupled/2p2c/2p2cadaptiveproperties.hh>

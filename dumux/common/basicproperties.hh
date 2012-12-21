@@ -30,7 +30,7 @@
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/dgfgridcreator.hh>
+#include <dumux/io/dgfgridcreator.hh>
 
 namespace Dumux
 {

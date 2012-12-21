@@ -26,7 +26,7 @@
 
 // the grid includes
 #include <dune/grid/yaspgrid.hh>
-#include <dumux/common/cubegridcreator.hh>
+#include <dumux/io/cubegridcreator.hh>
 
 // dumux 2p-decoupled environment
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>

@@ -31,8 +31,8 @@
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #endif
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dumux/common/simplexgridcreator.hh>
-#include <dumux/common/cubegridcreator.hh>
+#include <dumux/io/simplexgridcreator.hh>
+#include <dumux/io/cubegridcreator.hh>
 
 #include <dumux/implicit/2pni/2pnimodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
