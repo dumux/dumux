@@ -478,7 +478,7 @@ add_test(test_transport        bin/runTest.sh references/test_transport-referenc
 add_test(test_impes            bin/runTest.sh references/test_impes-reference.vtu            test_impes-00013.vtu            test/decoupled/2p/test_impes)
 add_test(test_mpfao2p          bin/runTest.sh references/test_mpfao2p-reference.vtu          test_mpfa2p-00007.vtu           test/decoupled/2p/test_mpfa2p -ModelType MPFAO)
 add_test(test_mpfal2p          bin/runTest.sh references/test_mpfal2p-reference.vtu          test_mpfa2p-00007.vtu           test/decoupled/2p/test_mpfa2p -ModelType MPFAL)
-add_test(test_mpfal2padaptive  bin/runTest.sh references/test_mpfal2padaptive-reference.vtu  test_mpfa2p-00004.vtu           test/decoupled/2p/test_mpfa2p -ModelType MPFALAdaptive -TimeManager.TEnd 2e4)
+add_test(test_mpfal2padaptive  bin/runTest.sh references/test_mpfal2padaptive-reference.vtu  test_mpfa2p-00007.vtu           test/decoupled/2p/test_mpfa2p -ModelType MPFALAdaptive)
 add_test(test_impesadaptive    bin/runTest.sh references/test_2padaptive-reference.vtu       test_2padaptive-00007.vtu       test/decoupled/2p/test_impesadaptive)
 add_test(test_adaptive2p2c     bin/runTest.sh references/test_adaptive2p2c-reference.vtu     test_adaptive2p2c-00008.vtu     test/decoupled/2p2c/test_adaptive2p2c)
 add_test(test_dec2p2c          bin/runTest.sh references/test_dec2p2c-reference.vtu          test_dec2p2c-00021.vtu          test/decoupled/2p2c/test_dec2p2c)
