@@ -126,8 +126,15 @@ class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
 public:
+    MPNCModel()
+    : vtkWriter_(0) 
+    {}
+    
     ~MPNCModel()
-    { delete vtkWriter_; };
+    { 
+        if (vtkWriter_)
+            delete vtkWriter_; 
+    }
 
     void init(Problem &problem)
     {

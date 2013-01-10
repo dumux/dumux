@@ -99,6 +99,7 @@ public:
         , timeManager_(&timeManager)
         , newtonMethod_(asImp_())
         , newtonCtl_(asImp_())
+        , resultWriter_(0)
     {
         // calculate the bounding box of the local partition of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -119,13 +120,12 @@ public:
 
         // set a default name for the problem
         simName_ = "sim";
-
-        resultWriter_ = NULL;
     }
 
     ~ImplicitProblem()
     {
-        delete resultWriter_;
+        if (resultWriter_)
+            delete resultWriter_;
     };
 
 
