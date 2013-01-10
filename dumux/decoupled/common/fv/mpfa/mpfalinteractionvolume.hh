@@ -42,9 +42,9 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     enum
-    {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
+        {
+            dim = GridView::dimension, dimWorld = GridView::dimensionworld
+        };
 
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 
@@ -61,11 +61,11 @@ private:
 
 public:
     enum FaceTypes
-    {
-        inside = 1,
-        boundary = 0,
-        outside = -1
-    };
+        {
+            inside = 1,
+            boundary = 0,
+            outside = -1
+        };
 
     //! Constructs a FVMPFALInteractionVolume object
     FVMPFALInteractionVolume() :
@@ -102,6 +102,9 @@ public:
         facePos_ = FieldVectorVector(DimVector(0.0));
         normal_ = FieldVectorVector(DimVector(0.0));
         elementNum_ = 0;
+        boundaryTypes_.clear();
+        neumannValues_.clear();
+        dirichletValues_.clear();
     }
 
     //! Mark storage as completed
@@ -392,13 +395,13 @@ public:
         {
             if (elements_[i].size() > 0)
             {
-            std::cout<<"element "<<i<<":\n";
-            std::cout<<"element position: "<<elements_[i][0]->geometry().center()<<"\n";
-            std::cout<<"face indices on element: "<<indexOnElement_[i]<<"\n";
-            std::cout<<"face normals on element: "<<normal_[i]<<"\n";
-            std::cout<<"face areas on element: "<<faceArea_[i]<<"\n";
-            std::cout<<"face position on element: "<<facePos_[i]<<"\n";
-            std::cout<<"face type: "<<faceType_[i]<<"\n";
+                std::cout<<"element "<<i<<":\n";
+                std::cout<<"element position: "<<elements_[i][0]->geometry().center()<<"\n";
+                std::cout<<"face indices on element: "<<indexOnElement_[i]<<"\n";
+                std::cout<<"face normals on element: "<<normal_[i]<<"\n";
+                std::cout<<"face areas on element: "<<faceArea_[i]<<"\n";
+                std::cout<<"face position on element: "<<facePos_[i]<<"\n";
+                std::cout<<"face type: "<<faceType_[i]<<"\n";
             }
         }
     }
