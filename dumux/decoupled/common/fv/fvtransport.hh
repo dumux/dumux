@@ -244,6 +244,8 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         CellData& cellDataI = problem_.variables().cellData(globalIdxI);
 
         Scalar update = 0;
+        evalCflFluxFunction().reset();
+
         // run through all intersections with neighbors and boundary
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)

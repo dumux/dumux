@@ -114,6 +114,10 @@ public:
         return 0.0;
     }
 
+    //! reset function
+    void reset()
+    {}
+
     /*! @brief Constructs a EvalCflFlux instance */
     EvalCflFlux ()
     {}

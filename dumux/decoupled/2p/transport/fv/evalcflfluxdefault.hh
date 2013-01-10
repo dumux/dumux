@@ -111,6 +111,15 @@ public:
             return (getCFLFluxFunction(element) * element.geometry().volume());
     }
 
+    //! resets the accumulated CFL-fluxes to zero
+    void reset()
+    {
+        fluxWettingOut_ = 0;
+        fluxNonwettingOut_ = 0;
+        fluxIn_ = 0;
+        fluxOut_ = 0;
+    }
+
     /*! \brief Constructs an EvalCflFluxDefault object
      *
      * \param problem A problem type object
@@ -209,19 +218,6 @@ private:
             return fluxOut_;
     }
 
-
-protected:
-
-    //! resets the accumulated CFL-fluxes to zero
-    void reset()
-    {
-        fluxWettingOut_ = 0;
-        fluxNonwettingOut_ = 0;
-        fluxIn_ = 0;
-        fluxOut_ = 0;
-    }
-
-private:
     Problem& problem_;//problem data
     Scalar fluxWettingOut_;
     Scalar fluxNonwettingOut_;
@@ -272,8 +268,6 @@ typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCFL
 
     //determine timestep
     Scalar cFLFluxFunction = std::min(cFLFluxIn, cFLFluxOut);
-
-    reset();
 
     return cFLFluxFunction;
 }
