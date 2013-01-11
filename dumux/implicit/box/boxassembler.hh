@@ -24,6 +24,7 @@
 #ifndef DUMUX_BOX_ASSEMBLER_HH
 #define DUMUX_BOX_ASSEMBLER_HH
 
+#include <dumux/common/exceptions.hh>
 #include <dumux/implicit/common/implicitassembler.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
@@ -302,8 +303,12 @@ private:
 
             // update the right hand side
             this->residual_[globI] += this->model_().localJacobian().residual(i);
-            for (int j = 0; j < this->residual_[globI].dimension; ++j)
-                assert(std::isfinite(this->residual_[globI][j]));
+            for (int j = 0; j < this->residual_[globI].dimension; ++j) {
+                if (!std::isfinite(this->residual_[globI][j])) {
+                    DUNE_THROW(NumericalProblem, 
+                               "residual_[" << globI "][" << j << "] is not finite");
+                }
+            }
             if (this->enableJacobianRecycling_()) {
                 this->storageTerm_[globI] +=
                     this->model_().localJacobian().storageTerm(i);
