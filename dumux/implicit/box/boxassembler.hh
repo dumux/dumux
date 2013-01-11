@@ -306,7 +306,7 @@ private:
             for (int j = 0; j < this->residual_[globI].dimension; ++j) {
                 if (!std::isfinite(this->residual_[globI][j])) {
                     DUNE_THROW(NumericalProblem, 
-                               "residual_[" << globI "][" << j << "] is not finite");
+                               "residual_[" << globI << "][" << j << "] is not finite");
                 }
             }
             if (this->enableJacobianRecycling_()) {
