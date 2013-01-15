@@ -271,7 +271,7 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
             {
                 ElementPointer neighborPointer2 = isItI->outside();
 
-                // make sure we do not chose elemntI as third element
+                // make sure we do not choose elemntI as third element
                 // -> faces with hanging node have more than one intersection but only one face index!
                 if (neighborPointer2 != elementJ && isItI->indexInInside() == isIndexI)
                 {
