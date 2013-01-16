@@ -1,20 +1,104 @@
-Differences Between DuMuX 2.2 and DuMuX 2.3
+Differences Between DuMuX 2.2 and DuMuX 2.3 (up to r10000)
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
+  - A fully implicit two-phase discrete-fracture-matrix model has been added, 
+    see test/implicit/2pdfm.
 
-* IMMEDIATE INTERFACE CHANGES not allowing a deprecation period:
-    
+  - Almost all porous media fully implicit models now can either use a
+    vertex-centered (box) or a cell-centered spatial discretization. The choice
+    of the spatial discretization method is controlled by deriving the problem
+    type tag either from BoxModel or CCModel. This allows for a uniform problem
+    description, as long as the boundaryTypesAtPos and dirichletAtPos methods
+    can be used. By evaluating the compile-time property ImplicitIsBox, it is 
+    easily possible to separately handle the different discretizations inside 
+    am common method. See the tests in test/implicit for examples. 
+    Correspondingly, the directory structure has been adapted. 
+    Old:             New:
+    dumux/           dumux/
+      boxmodels/       implicit/
+        common/          common/
+        1p/              box/
+        1p2c/            cellcentered/
+        2p/              1p/
+        ...              ...
+    test/            test/
+      boxmodels/       implicit/
+        1p/              1p/
+          test_1p          test_box1p
+        ...                test_cc1p
+                         ...
+
+  - A backend for the ISTL AMG solver has been included, based on the
+    corresponding DUNE-PDELab backends. It can be used for the fully 
+    implicit and the decoupled models, see \TODO FS#177. DUNE-PDELab 
+    and possibly DUNE-ISTL have to be patched, see the file README 
+    in the patches directory.
+
+  - The decoupled models have been parallelized, see \TODO FS#177. 
+    They work in parallel only if the AMGBackend is used as linear 
+    solver. No dynamic loadbalancing can be done yet. 
+
+  - The MPNC model can use either the most wetting or the most non-wetting phase
+    pressure as primary variable. This is controlled via the property 
+    "PressureFormulation."
+
+  - The table of available parameters has been improved, see 
+    http://www.dumux.org/doxygen-stable/html-2.2/a00838.php
+
+* IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+  - The property Salinity used in the BrineCO2FluidSystem 
+    has been renamed to ProblemSalinity. 
+
 * Deprecated CLASSES/FILES, to be removed after 2.3:
+  - The following headers in dumux/boxmodels/ have been deprecated and forward 
+    to the corresponding headers in dumux/implicit/box: 
+    boxassembler.hh, boxelementvolumevariables.hh, boxlocalresidual.hh,
+    boxpropertydefaults.hh, boxelementboundarytypes.hh, boxfvelementgeometry.hh,
+    boxproperties.hh, intersectiontovertexbc.hh
 
-* Deprecated PROPERTY NAMES, to be removed after 2.3: BEWARE: The compiler will not 
-  print any warning if a deprecated property name is used.
+  - All headers in the following subdirectories of dumux/boxmodels have been 
+    deprecated and forward to the headers in the corresponding subdirectories 
+    of dumux/implicit:
+    1p, 1p2c, 2p, 2p2c, 2p2cni, 2pdfm, 2pni, 
+    3p3c, 3p3cni, co2, co2ni, mpnc, richards
 
-* Deprecated CONSTANTS/ENUMS, to be removed after 2.3: BEWARE: The compiler will not 
-  print any warning if a deprecated constant/enum is used.
-  
-* DELETED member functions, which have been deprecated in DuMuX 2.3:
-  - DUMUX_DEPRECATED_MSG and DUMUX_UNUSED have been removed.
+  - Some box-specific classes "Box..." in dumux/boxmodels/common could be 
+    completely replaced by unified "Implicit..." classes in 
+    dumux/implicit/common: 
+    ...DarcyFluxVariables, ...darcyfluxvariables.hh 
+    ...ForchheimerFluxVariables, ...forchheimerfluxvariables.hh 
+    ...LocalJacobian, ...localjacobian.hh
+    ...Model, ...model.hh
+    ...PorousMediaProblem, ...porousmediaproblem.hh
+    ...Problem, ...problem.hh
+    ...VolumeVariables, ...volumevariables.hh
+
+  - The box-specific spatial parameter classes BoxSpatialParams... in 
+    dumux/material/boxspatialparams....hh have been deprecated in favor of 
+    ImplicitSpatialParams... in dumux/material/implicitspatialparams....hh.
+
+  - The GridCreatorheaders from dumux/common have been moved to dumux/io: 
+    cubegridcreator.hh, dgfgridcreator.hh, simplexgridcreator.hh
+
+* Deprecated PROPERTY NAMES, to be removed after 2.3: BEWARE: The compiler will
+  not print any warning if a deprecated property name is used.
+  - CompositionFromFugacitiesSolver has been renamed to Constraintsolver.
+
+* Deprecated CONSTANTS/ENUMS, to be removed after 2.3: BEWARE: The compiler will
+  not print any warning if a deprecated constant/enum is used.
+
+* Deprecated MEMBER FUNCTIONS, to be removed after 2.3:
+
+* Deprecated public MEMBER VARIABLES, to be removed after 2.3: BEWARE: The
+  compiler will not print any warning if a deprecated public member variable 
+  is used.
+  - numFAP and numSCV in BoxFVElementGeometry have been renamed to 
+    numFap and numScv, respectively.
+
+* DELETED classes/files, property names, constants/enums, 
+  member functions, which have been deprecated in DuMuX 2.2:
+  Everything listed as deprecated below has been removed.
 
 
 Differences Between DuMuX 2.1 and DuMuX 2.2
@@ -63,9 +147,9 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
   - From Dune 2.2 on, FieldVector::size is a method rather than an enum value.
     It is mandatory to add the flag --enable-fieldvector-size-is-method to the
     CONFIGURE_FLAGS. An example is given in the opts file dumux/debug.opts.
-  - Implicit models: TwoPIndices, TwoPNIIndices, and RichardsIndices additionally 
-    get TypeTag as template parameter. If the Indices are not obtained via the 
-    property, this has to be adapted.
+  - Implicit models: TwoPIndices, TwoPNIIndices, and RichardsIndices 
+    additionally get TypeTag as template parameter. If the Indices are not 
+    obtained via the property, this has to be adapted.
 
   - Implicit models: All model-specific computeFlux functions in 
     ...localresidual.hh have to get an additional bool parameter onBoundary, 
@@ -76,10 +160,10 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     for details.
     
 * Deprecated CLASSES/FILES, to be removed after 2.2:
-  - Model specific base box problems: The common functionality has been collected 
-    in PorousMediaBoxProblem in dumux/boxmodels/common/porousmediaboxproblem.hh. 
-    The problem can be derived from PorousMediaBoxProblem, instead of the model 
-    specific base problem: 
+  - Model specific base box problems: The common functionality has been 
+    collected in PorousMediaBoxProblem in 
+    dumux/boxmodels/common/porousmediaboxproblem.hh. The problem can be derived 
+    from PorousMediaBoxProblem, instead of the model specific base problem: 
     OnePBoxProblem, dumux/boxmodels/1p/1pproblem.hh,
     OnePTwoCBoxProblem, dumux/boxmodels/1p2c/1p2cproblem.hh,
     TwoPProblem, dumux/boxmodels/2p/2pproblem.hh,
@@ -107,32 +191,33 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     SimpleDNAPL, simplednapl.hh -> DNAPL, napl.hh
     Oil, oil.hh -> LNAPL, lnapl.hh
 
-  - Some MPFA-O method files/classes have been moved to a new subdirectory "omethod"
-    in dumux/decoupled/2p/diffusion/fvmpfa: 
+  - Some MPFA-O method files/classes have been moved to a new subdirectory 
+    "omethod" in dumux/decoupled/2p/diffusion/fvmpfa: 
     fvmpfaopressure2p.hh, fvmpfaovelocity2p.hh, fvmpfaopressureproperties2p.hh
 
-  - DUMUX_UNUSED is deprecated and will be removed after 2.2. It should be replaced 
-    by the upstream version DUNE_UNUSED.
+  - DUMUX_UNUSED is deprecated and will be removed after 2.2. It should be 
+    replaced by the upstream version DUNE_UNUSED.
   
-  - DUMUX_DEPRECATED_MSG is deprecated and will be removed after 2.2. It should be 
-    replaced by the upstream version DUNE_DEPRECATED_MSG.
+  - DUMUX_DEPRECATED_MSG is deprecated and will be removed after 2.2. It should
+    be replaced by the upstream version DUNE_DEPRECATED_MSG.
 
-* Deprecated PROPERTY NAMES, to be removed after 2.2: BEWARE: The compiler will not 
-  print any warning if a deprecated property name is used. 
+* Deprecated PROPERTY NAMES, to be removed after 2.2: BEWARE: The compiler will
+  not print any warning if a deprecated property name is used. 
   - The "SpatialParameters" property has been renamed to "SpatialParams".
   
   - The model specific "...Indices" property has been renamed to "Indices".
 
-* Deprecated CONSTANTS/ENUMS, to be removed after 2.2: BEWARE: The compiler will not 
-  print any warning if a deprecated constant/enum is used.
-  - In the 2p2c/ni and 3p3c/ni models, all indices related to phase and components 
-    can be pre/suffixed with "w", "n" and, for three phases, with "g". 
-    dumux/boxmodels/2p2c/...: All "l", "g" pre/suffixes have been replaced by "w", "n".
-    dumux/boxmodels/3p3c/...: All "c", "a" pre/suffixes have been replaced by "n", "g".
+* Deprecated CONSTANTS/ENUMS, to be removed after 2.2: BEWARE: The compiler will
+  not print any warning if a deprecated constant/enum is used.
+  - In the 2p2c/ni and 3p3c/ni models, all indices related to phase and 
+    components can be pre/suffixed with "w", "n" and, 
+    for three phases, with "g". 
+    boxmodels/2p2c/...: "l", "g" pre/suffixes have been replaced by "w", "n".
+    boxmodels/3p3c/...: "c", "a" pre/suffixes have been replaced by "n", "g".
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.2:
-  - Spatial parameters: The spatialParameters member functions of the base problems
-    have been replaced by spatialParams: 
+  - Spatial parameters: The spatialParameters member functions of the base 
+    problems have been replaced by spatialParams: 
     dumux/boxmodels/common/porousmediaboxproblem.hh, 
     dumux/decoupled/1p/diffusion/diffusionproblem...hh,
     dumux/decoupled/2p/impes/impesproblem2p.hh,
@@ -153,11 +238,11 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
   - Box models: The primaryVarWeight() functions are no longer used for the 
     evaluation of the relative error. 
 
-  - Element and FVElementGeometry: The elem_() and fvElemGeom_() member function 
+  - Element and FVElementGeometry: The elem_() and fvElemGeom_() member function
     of BoxLocalResidual have been replaced by element_() and fvGeometry_(). 
     
-  - Primary variables: All "...primaryVar/s" member functions have been replaced by 
-    "...priVar/s": 
+  - Primary variables: All "...primaryVar/s" member functions have been replaced
+    by "...priVar/s": 
     dumux/boxmodels/common/boxlocalresidual.hh, 
     dumux/boxmodels/common/boxvolumevariables.hh.
 
