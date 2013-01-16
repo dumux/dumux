@@ -193,26 +193,31 @@ A leaked out password can be used by evil persons to abuse a software repository
 \section{Patching \Dune or external libraries}
 Patching of \Dune modules in order to work together with \Dumux can be necessary for several reasons.
 Software like a compiler or even a standard library
-changes at times. But, for example, a certain release of a software component that we depend on, may not reflect that change and thus it has to be modified.
+changes at times. But, for example, a certain release of a software component that we depend on, 
+may not reflect that change and thus it has to be modified.
 In the dynamic developing process of software which depends on other modules it is not always feasible 
-to adapt everything to the most recent version of each module. Consequently, patches exist or they will be brought into existence. They may fix problems with a certain module
+to adapt everything to the most recent version of each module. Consequently, patches exist or 
+they will be brought into existence. They may fix problems with a certain module
 of a certain release without introducing too much structural change. It can also happen 
 that a release gets amendments (updates) and a formerly useful patch becomes obsolete.
 
-\Dumux contains patches and documentation about their usage and application within the directory \texttt{dumux/patches}.
+\Dumux contains patches and documentation about their usage and application within the 
+directory \texttt{dumux/patches}.
 Please check the README file in that directory for recent information. 
-In general, a patch can be applied as follows (the exact command or the used parameters may be slightly different).
-We include here an example of a patch against 2.0 release of \Dune for \Dumux release 2.0 for purpose of showing how a patch gets applied. Note this patch is no longer necessary for \Dune 2.2 releases.
+In general, a patch can be applied as follows 
+(the exact command or the used parameters may be slightly different).
+We include here an example of a patch against the 1.0.1 release of \Dune-PDELab 
+for the \Dumux release 2.3 for purpose of showing how a patch gets applied. 
 
 \begin{lstlisting}[style=Bash]
 $ # make sure you are in DUNE-Root
-$ cd dune-istl
-$ patch -p1 < ../dumux/patches/dune-istl-2.0.patch
+$ cd dune-pdelab
+$ patch -p1 < ../dumux/patches/pdelab-1.0.1.patch
 \end{lstlisting}
 
 It can be removed by 
 \begin{lstlisting}[style=Bash]
-$ path -p1 -R < ../dumux/patches/dune-istl-2.0.patch
+$ path -p1 -R < ../dumux/patches/pdelab-1.0.1.patch
 \end{lstlisting}
 
 The \texttt{checkout-dumux} script also applies patches, if not explicitly requested not to do so.
