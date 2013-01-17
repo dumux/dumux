@@ -277,6 +277,18 @@ public:
     };
 
     /*!
+     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
+     *        temperature.
+     *
+     * The method is only called by the decoupled flash, so tabulating is omitted.
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar vaporTemperature(Scalar p)
+    {
+            return RawComponent::vaporTemperature(p);
+    };
+
+    /*!
      * \brief Specific enthalpy of the gas \f$\mathrm{[J/kg]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
