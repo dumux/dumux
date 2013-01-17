@@ -283,9 +283,9 @@ public:
      * The method is only called by the decoupled flash, so tabulating is omitted.
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar vaporTemperature(Scalar p)
+    static Scalar vaporTemperature(Scalar pressure)
     {
-            return RawComponent::vaporTemperature(p);
+            return RawComponent::vaporTemperature(pressure);
     };
 
     /*!
