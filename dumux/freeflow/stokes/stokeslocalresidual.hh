@@ -299,11 +299,11 @@ protected:
         DimVector pressureGradAtSCVCenter(0.0);
         DimVector grad(0.0);
 
-        for (int scvIdx = 0; scvIdx < this->fvGeometry_().numVertices; scvIdx++)
+        for (int scvIdx2 = 0; scvIdx2 < this->fvGeometry_().numVertices; scvIdx2++)
         {
-            grad = this->fvGeometry_().subContVol[scvIdx].gradCenter[scvIdx];
+            grad = this->fvGeometry_().subContVol[scvIdx].gradCenter[scvIdx2];
             Valgrind::CheckDefined(grad);
-            grad *= elemVolVars[scvIdx].pressure();
+            grad *= elemVolVars[scvIdx2].pressure();
 
             pressureGradAtSCVCenter += grad;
         }
