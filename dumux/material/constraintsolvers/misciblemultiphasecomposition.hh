@@ -162,7 +162,19 @@ public:
         }
 
         // solve for all mole fractions
-        M.solve(x, b);
+        try
+        {
+            M.solve(x, b);
+        }
+        catch (Dune::FMatrixError & e) {
+            DUNE_THROW(NumericalProblem,
+                    "Matrix for composition of phases could not be solved. \n"
+                    "Throwing NumericalProblem for trying with smaller timestep.");
+        }
+        catch (...) {
+            std::cerr << "Unknown exception thrown!\n";
+            exit(1);
+        }
 
         // set all mole fractions and the the additional quantities in
         // the fluid state
