@@ -42,9 +42,10 @@ struct Stokes2cniCommonIndices : public Stokes2cCommonIndices<TypeTag, PVOffset>
 public:
     // number of dimensions
     static const int dim = StokesCommonIndices<TypeTag>::dim;
-    static const int energyEqIdx = PVOffset + dim+2; //! The index for the energy balance equation
-    static const int temperatureIdx = energyEqIdx; //! The index for temperature in primary variable vectors
+    static const int energyEqIdx = PVOffset + dim+2; //!< The index for the energy balance equation
+    static const int temperatureIdx = energyEqIdx; //!< The index for temperature in primary variable vectors
 };
-} // end namespace
+// \}
+} // end namespace Dumux
 
 #endif
