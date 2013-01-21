@@ -1,8 +1,9 @@
-check_PROGRAMS = test_co2
+check_PROGRAMS = test_boxco2 test_ccco2
 
 noinst_HEADERS = *.hh
 EXTRA_DIST = CMakeLists.txt *reference.vtu *.input grids/*.dgf co2values.inc
 
-test_co2_SOURCES = test_co2.cc
+test_boxco2_SOURCES = test_boxco2.cc
+test_ccco2_SOURCES = test_ccco2.cc
 
 include $(top_srcdir)/am/global-rules

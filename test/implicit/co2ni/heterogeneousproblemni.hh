@@ -51,8 +51,9 @@ class HeterogeneousProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(HeterogeneousProblem, INHERITS_FROM(BoxTwoPTwoCNI, HeterogeneousSpatialParams));
-
+NEW_TYPE_TAG(HeterogeneousProblem, INHERITS_FROM(TwoPTwoCNI, HeterogeneousSpatialParams));
+NEW_TYPE_TAG(HeterogeneousBoxProblem, INHERITS_FROM(BoxModel, HeterogeneousProblem));
+NEW_TYPE_TAG(HeterogeneousCCProblem, INHERITS_FROM(CCModel, HeterogeneousProblem));
 
 
 // Set the grid type
@@ -65,7 +66,7 @@ SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_PROP(HeterogeneousProblem, Problem)
 {
-    typedef Dumux::HeterogeneousProblem<TTAG(HeterogeneousProblem)> type;
+    typedef Dumux::HeterogeneousProblem<TypeTag> type;
 };
 
 // Set fluid configuration
@@ -111,7 +112,7 @@ SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
  * To run the simulation execute the following line in shell:
  * <tt>./test_co2 </tt>
  */
-template <class TypeTag = TTAG(HeterogeneousProblem)>
+template <class TypeTag >
 class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
@@ -164,6 +165,8 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(CO2Table)) CO2Table;
     typedef Dumux::CO2<Scalar, CO2Table> CO2;
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -255,20 +258,24 @@ public:
     void addOutputVtkFields()
         {
             typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-            unsigned numVertices = this->gridView().size(dim);
+
+            // get the number of degrees of freedom
+            unsigned numDofs = this->model().numDofs();
+            unsigned numElements = this->gridView().size(0);
 
             //create required scalar fields
-            ScalarField *Kxx = this->resultWriter().allocateManagedBuffer(numVertices);
-            ScalarField *boxVolume = this->resultWriter().allocateManagedBuffer(numVertices);
-            ScalarField *enthalpyW = this->resultWriter().allocateManagedBuffer(numVertices);
-            ScalarField *enthalpyN = this->resultWriter().allocateManagedBuffer(numVertices);
+            ScalarField *Kxx = this->resultWriter().allocateManagedBuffer(numElements);
+            ScalarField *cellPorosity = this->resultWriter().allocateManagedBuffer(numElements);
+            ScalarField *boxVolume = this->resultWriter().allocateManagedBuffer(numDofs);
+            ScalarField *enthalpyW = this->resultWriter().allocateManagedBuffer(numDofs);
+            ScalarField *enthalpyN = this->resultWriter().allocateManagedBuffer(numDofs);
             (*boxVolume) = 0;
 
             //Fill the scalar fields with values
-            unsigned numElements = this->gridView().size(0);
+
             ScalarField *rank = this->resultWriter().allocateManagedBuffer(numElements);
 
-            FVElementGeometry fvElemGeom;
+            FVElementGeometry fvGeometry;
             VolumeVariables volVars;
 
             ElementIterator elemIt = this->gridView().template begin<0>();
@@ -277,32 +284,32 @@ public:
             {
                 int idx = this->elementMapper().map(*elemIt);
                 (*rank)[idx] = this->gridView().comm().rank();
-                fvElemGeom.update(this->gridView(), *elemIt);
+                fvGeometry.update(this->gridView(), *elemIt);
 
-                int numVerts = elemIt->template count<dim> ();
 
-                for (int i = 0; i < numVerts; ++i)
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                    int globalIdx = this->model().dofMapper().map(*elemIt, scvIdx, dofCodim);
                     volVars.update(this->model().curSol()[globalIdx],
                                    *this,
                                    *elemIt,
-                                   fvElemGeom,
-                                   i,
+                                   fvGeometry,
+                                   scvIdx,
                                    false);
-                    (*boxVolume)[globalIdx] += fvElemGeom.subContVol[i].volume;
-                    Scalar perm =  this->spatialParams().intrinsicPermeability(*elemIt, fvElemGeom, i);
-                    (*Kxx)[globalIdx] = perm;
+                    (*boxVolume)[globalIdx] += fvGeometry.subContVol[scvIdx].volume;
                     (*enthalpyW)[globalIdx] = volVars.enthalpy(lPhaseIdx);
                     (*enthalpyN)[globalIdx] = volVars.enthalpy(gPhaseIdx);
                 }
+                (*Kxx)[idx] = this->spatialParams().intrinsicPermeability(*elemIt, fvGeometry, /*element data*/ 0);
+                (*cellPorosity)[idx] = this->spatialParams().porosity(*elemIt, fvGeometry, /*element data*/ 0);
             }
 
             //pass the scalar fields to the vtkwriter
-            this->resultWriter().attachVertexData(*boxVolume, "boxVolume");
-            this->resultWriter().attachVertexData(*Kxx, "Kxx");
-            this->resultWriter().attachVertexData(*enthalpyW, "enthalpyW");
-            this->resultWriter().attachVertexData(*enthalpyN, "enthalpyN");
+            this->resultWriter().attachDofData(*boxVolume, "boxVolume", isBox);
+            this->resultWriter().attachDofData(*Kxx, "Kxx", false); //element data
+            this->resultWriter().attachDofData(*cellPorosity, "cellwisePorosity", false); //element data
+            this->resultWriter().attachDofData(*enthalpyW, "enthalpyW", isBox);
+            this->resultWriter().attachDofData(*enthalpyN, "enthalpyN", isBox);
 
         }
 
@@ -314,18 +321,22 @@ public:
     const std::string name() const
     { return name_; }
 
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
-     */
     Scalar boxTemperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
     {
         const GlobalPosition globalPos = fvElemGeom.subContVol[scvIdx].global;
         return temperature_(globalPos);
-    };
+    }
+
+//    /*!
+//     * \brief Returns the temperature within the domain.
+//     * \param globalPos The global position
+//     */
+//    Scalar temperatureAtPos(const GlobalPosition globalPos) const
+//    {
+//        return temperature_(globalPos);
+//    };
 
     void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
@@ -393,6 +404,19 @@ public:
         initial_(values, globalPos);
     }
 
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        boundary segment.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param globalPos The global position
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    {
+        initial_(values, globalPos);
+    }
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.

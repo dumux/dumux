@@ -38,6 +38,7 @@
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/box/intersectiontovertexbc.hh>
 
+
 #include "heterogeneousspatialparameters.hh"
 #include "heterogeneousco2tables.hh"
 
@@ -49,10 +50,13 @@ class HeterogeneousProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(HeterogeneousProblem, INHERITS_FROM(BoxTwoPTwoC, HeterogeneousSpatialParams));
+NEW_TYPE_TAG(HeterogeneousProblem, INHERITS_FROM(TwoPTwoC, HeterogeneousSpatialParams));
+NEW_TYPE_TAG(HeterogeneousBoxProblem, INHERITS_FROM(BoxModel, HeterogeneousProblem));
+NEW_TYPE_TAG(HeterogeneousCCProblem, INHERITS_FROM(CCModel, HeterogeneousProblem));
 
-
-
+//NEW_PROP_TAG(BaseProblem);
+//SET_TYPE_PROP(HeterogeneousBoxProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
+//SET_TYPE_PROP(HeterogeneousCCProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 //// Set the grid type
 //SET_PROP(HeterogeneousProblem, Grid)
 //{
@@ -74,7 +78,7 @@ SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_PROP(HeterogeneousProblem, Problem)
 {
-    typedef Dumux::HeterogeneousProblem<TTAG(HeterogeneousProblem)> type;
+    typedef Dumux::HeterogeneousProblem<TypeTag> type;
 };
 
 // Set fluid configuration
@@ -120,11 +124,11 @@ SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
  * To run the simulation execute the following line in shell:
  * <tt>./test_co2 </tt>
  */
-template <class TypeTag = TTAG(HeterogeneousProblem)>
+template <class TypeTag >
 class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
+    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef Dune::GridPtr<Grid> GridPointer;
@@ -168,6 +172,8 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(CO2Table)) CO2Table;
     typedef Dumux::CO2<Scalar, CO2Table> CO2;
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -253,52 +259,52 @@ public:
 
     void addOutputVtkFields()
         {
-            typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-            unsigned numVertices = this->gridView().size(dim);
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
 
-            //create required scalar fields
-            ScalarField *Kxx = this->resultWriter().allocateManagedBuffer(numVertices);
-            ScalarField *boxVolume = this->resultWriter().allocateManagedBuffer(numVertices);
+         // get the number of degrees of freedom
+         unsigned numDofs = this->model().numDofs();
+         unsigned numElements = this->gridView().size(0);
 
-            (*boxVolume) = 0;
+         //create required scalar fields
+         ScalarField *Kxx = this->resultWriter().allocateManagedBuffer(numElements);
+         ScalarField *cellPorosity = this->resultWriter().allocateManagedBuffer(numElements);
+         ScalarField *boxVolume = this->resultWriter().allocateManagedBuffer(numDofs);
+         (*boxVolume) = 0;
 
-            //Fill the scalar fields with values
-            unsigned numElements = this->gridView().size(0);
-            ScalarField *rank = this->resultWriter().allocateManagedBuffer(numElements);
+         //Fill the scalar fields with values
+         ScalarField *rank = this->resultWriter().allocateManagedBuffer(numElements);
 
-            FVElementGeometry fvElemGeom;
-            VolumeVariables volVars;
+         FVElementGeometry fvGeometry;
+         VolumeVariables volVars;
 
-            ElementIterator elemIt = this->gridView().template begin<0>();
-            ElementIterator elemEndIt = this->gridView().template end<0>();
-            for (; elemIt != elemEndIt; ++elemIt)
-            {
-                int idx = this->elementMapper().map(*elemIt);
-                (*rank)[idx] = this->gridView().comm().rank();
-                fvElemGeom.update(this->gridView(), *elemIt);
+         ElementIterator elemIt = this->gridView().template begin<0>();
+         ElementIterator elemEndIt = this->gridView().template end<0>();
+         for (; elemIt != elemEndIt; ++elemIt)
+         {
+             int idx = this->elementMapper().map(*elemIt);
+             (*rank)[idx] = this->gridView().comm().rank();
+             fvGeometry.update(this->gridView(), *elemIt);
 
-                int numVerts = elemIt->template count<dim> ();
 
-                for (int i = 0; i < numVerts; ++i)
-                {
-                    int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                    volVars.update(this->model().curSol()[globalIdx],
-                                   *this,
-                                   *elemIt,
-                                   fvElemGeom,
-                                   i,
-                                   false);
-                    (*boxVolume)[globalIdx] += fvElemGeom.subContVol[i].volume;
-                    Scalar perm =  this->spatialParams().intrinsicPermeability(*elemIt, fvElemGeom, i);
-                    (*Kxx)[globalIdx] = perm;
-//                    (*Kzz)[globalIdx] =   perm[dim-1][dim-1];
-                }
-            }
+             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+             {
+                 int globalIdx = this->model().dofMapper().map(*elemIt, scvIdx, dofCodim);
+                 volVars.update(this->model().curSol()[globalIdx],
+                                *this,
+                                *elemIt,
+                                fvGeometry,
+                                scvIdx,
+                                false);
+                 (*boxVolume)[globalIdx] += fvGeometry.subContVol[scvIdx].volume;
+             }
+             (*Kxx)[idx] = this->spatialParams().intrinsicPermeability(*elemIt, fvGeometry, /*element data*/ 0);
+             (*cellPorosity)[idx] = this->spatialParams().porosity(*elemIt, fvGeometry, /*element data*/ 0);
+         }
 
-            //pass the scalar fields to the vtkwriter
-            this->resultWriter().attachVertexData(*boxVolume, "boxVolume");
-            this->resultWriter().attachVertexData(*Kxx, "Kxx");
-
+         //pass the scalar fields to the vtkwriter
+         this->resultWriter().attachDofData(*Kxx, "Kxx", false); //element data
+         this->resultWriter().attachDofData(*cellPorosity, "cellwisePorosity", false); //element data
+         this->resultWriter().attachDofData(*boxVolume, "boxVolume", isBox);
         }
     /*!
      * \name Problem parameters
@@ -394,6 +400,21 @@ public:
         initial_(values, globalPos);
     }
 
+
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        boundary segment.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param is The intersection between element and boundary
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    {
+        initial_(values, globalPos);
+    }
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.

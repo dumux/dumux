@@ -22,10 +22,11 @@
 /*!
  * \file
  *
- * \brief Test for the 2p2c box model.
+ * \brief Test for the CO2 box model.
  */
 #include "config.h"
-#include "heterogeneousproblemni.hh"
+#include "heterogeneousproblem.hh"
+
 #include <dumux/common/start.hh>
 
 /*!
@@ -66,7 +67,7 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
 #if HAVE_ALUGRID
-    typedef TTAG(HeterogeneousProblem) ProblemTypeTag;
+    typedef TTAG(HeterogeneousCCProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
     std::cout << "Test skipped, it needs ALUGrid." << std::endl;
