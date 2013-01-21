@@ -53,13 +53,14 @@ class TwoPNIFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum { dimWorld = GridView::dimensionworld };
 
     typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> DimVector;
 
 public:
 
@@ -83,31 +84,9 @@ public:
                    const bool onBoundary = false)
         : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
-        // calculate temperature gradient using finite element
-        // gradients
-        Vector temperatureGrad(0);
-        for (int idx = 0; idx < fvGeometry.numFap; idx++)
-        {
-            Vector feGrad = this->face().grad[idx];
+        faceIdx_ = faceIdx;
 
-            // index for the element volume variables 
-            int volVarsIdx = this->face().fapIndices[idx];
-            
-            feGrad *= elemVolVars[volVarsIdx].temperature();
-            temperatureGrad += feGrad;
-        }
-
-        // The spatial parameters calculates the actual heat flux vector
-        Vector heatFlux;
-        problem.spatialParams().matrixHeatFlux(heatFlux,
-                                                   *this,
-                                                   elemVolVars,
-                                                   temperatureGrad,
-                                                   element,
-                                                   fvGeometry,
-                                                   faceIdx);
-        // project the heat flux vector on the face's normal vector
-        normalMatrixHeatFlux_ = heatFlux * this->face().normal;
+        calculateValues_(problem, element, elemVolVars);
     }
 
     /*!
@@ -118,10 +97,74 @@ public:
     Scalar normalMatrixHeatFlux() const
     { return normalMatrixHeatFlux_; }
 
+
+    /*!
+     * \brief The local temperature gradient at the IP of the considered scv face.
+     */
+    DimVector temperatureGradient() const
+    { return temperatureGrad_; }
+
+    /*!
+     * \brief The harmonically averaged effective thermal conductivity.
+     */
+    Scalar effThermalConductivity() const
+    { return lambdaEff_; }
+
+protected:
+    void calculateValues_(const Problem &problem,
+                          const Element &element,
+                          const ElementVolumeVariables &elemVolVars)
+    {
+        // calculate temperature gradient using finite element
+        // gradients
+        temperatureGrad_ = 0;
+        DimVector tmp(0.0);
+        for (int idx = 0; idx < this->fvGeometry_.numFap; idx++)
+        {
+            tmp = this->face().grad[idx];
+
+            // index for the element volume variables 
+            int volVarsIdx = this->face().fapIndices[idx];
+
+            tmp *= elemVolVars[volVarsIdx].temperature();
+            temperatureGrad_ += tmp;
+        }
+
+        lambdaEff_ = 0;
+        calculateEffThermalConductivity_(problem, element, elemVolVars);
+
+        // project the heat flux vector on the face's normal vector
+        normalMatrixHeatFlux_ = temperatureGrad_*
+                                this->face().normal;
+        normalMatrixHeatFlux_ *= -lambdaEff_;
+    }
+
+    void calculateEffThermalConductivity_(const Problem &problem,
+                                        const Element &element,
+                                        const ElementVolumeVariables &elemVolVars)
+    {
+        const Scalar lambdaI = ThermalConductivityModel::effectiveThermalConductivity(element,
+                                                                    elemVolVars,
+                                                                    this->fvGeometry_,
+                                                                    problem.spatialParams(),
+                                                                    this->face().i);
+        const Scalar lambdaJ = ThermalConductivityModel::effectiveThermalConductivity(element,
+                                                                    elemVolVars,
+                                                                    this->fvGeometry_,
+                                                                    problem.spatialParams(),
+                                                                    this->face().j);
+        // -> harmonic mean
+        lambdaEff_ = harmonicMean(lambdaI, lambdaJ);
+    }
+
+
 private:
+    Scalar lambdaEff_;
     Scalar normalMatrixHeatFlux_;
+    DimVector temperatureGrad_;
+    int faceIdx_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

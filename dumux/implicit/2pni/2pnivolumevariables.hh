@@ -79,6 +79,14 @@ public:
     Scalar heatCapacity() const
     { return heatCapacity_; };
 
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the fluid phase in
+     *        the sub-control volume.
+     */
+    Scalar thermalConductivity(const int phaseIdx) const
+    { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); };
+
+
 protected:
     // this method gets called by the parent class. since this method
     // is protected, we are friends with our parent..

@@ -43,6 +43,12 @@ NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
 NEW_TYPE_TAG(BoxTwoPNI, INHERITS_FROM(BoxModel, TwoPNI));
 NEW_TYPE_TAG(CCTwoPNI, INHERITS_FROM(CCModel, TwoPNI));
 
+//////////////////////////////////////////////////////////////////
+// Property tags
+//////////////////////////////////////////////////////////////////
+
+NEW_PROP_TAG(ThermalConductivityModel);   //!< The model for the effective thermal conductivity
+
 }
 }
 

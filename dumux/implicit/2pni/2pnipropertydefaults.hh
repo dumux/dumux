@@ -36,6 +36,8 @@
 #include "2pnifluxvariables.hh"
 #include "2pniindices.hh"
 
+#include <dumux/material/fluidmatrixinteractions/2p/somerton.hh>
+
 namespace Dumux
 {
 
@@ -64,6 +66,9 @@ SET_TYPE_PROP(TwoPNI, FluxVariables, TwoPNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal two-phase model
 SET_TYPE_PROP(TwoPNI, Indices, TwoPNIIndices<TypeTag, 0>);
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_TYPE_PROP(TwoPNI, ThermalConductivityModel, Somerton<TypeTag>);
 
 }
 
