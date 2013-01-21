@@ -43,6 +43,12 @@ namespace Properties
 NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC));
 NEW_TYPE_TAG(BoxTwoPTwoCNI, INHERITS_FROM(BoxModel, TwoPTwoCNI));
 NEW_TYPE_TAG(CCTwoPTwoCNI, INHERITS_FROM(CCModel, TwoPTwoCNI));
+
+//////////////////////////////////////////////////////////////////
+// Property tags
+//////////////////////////////////////////////////////////////////
+
+NEW_PROP_TAG(ThermalConductivityModel);   //!< The model for the effective thermal conductivity
 }
 }
 
