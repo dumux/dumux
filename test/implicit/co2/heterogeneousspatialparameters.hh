@@ -24,7 +24,7 @@
  * \file
  *
  * \brief Definition of the spatial parameters for the injection
- *        problem which uses the isothermal CO2 box model
+ *        problem which uses the non-isothermal or isothermal CO2 box or cc model
  */
 
 #ifndef DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
@@ -70,7 +70,7 @@ public:
  * \ingroup CO2Model
  * \ingroup BoxTestProblems
  * \brief Definition of the spatial parameters for the injection
- *        problem which uses the isothermal CO2 box model
+ *        problem which uses the non-isothermal or isothermal CO2NI box or cc model
  */
 template<class TypeTag>
 class HeterogeneousSpatialParams : public ImplicitSpatialParams<TypeTag>
@@ -114,13 +114,16 @@ public:
     {
         /*
          * Layer Index Setup:
-         * barrierTop = 4
-         * barrierMiddle = 5
-         * reservoir = 6
+         * barrierTop = 1
+         * barrierMiddle = 2
+         * reservoir = 3
          */
         barrierTop_ = 1;
         barrierMiddle_ = 2;
         reservoir_ = 3;
+
+        // heat conductivity of granite
+        lambdaSolid_ = 2.8;
 
         //Set the permeability tensor for the layers
         //Scalar anisotropy = 0.1;
@@ -165,7 +168,6 @@ public:
             int elemIdx = (*gridPtr_)->leafView().indexSet().index(*elemIt);
             int param = (*gridPtr_).parameters(*elemIt)[0];
             paramIdx_[elemIdx] = param;
-            //std::cout<<"param: "<<paramIdx_[elemIdx]<<std::endl;
         }
 
     }
@@ -251,51 +253,21 @@ public:
     }
 
     /*!
-     * \brief Calculate the heat flux \f$[W/m^2]\f$ through the
-     *        rock matrix based on the temperature gradient \f$[K / m]\f$
+     * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the porous material.
      *
-     * This is only required for non-isothermal models.
-     *
-     * \param heatFlux The resulting heat flux vector
-     * \param fluxDat The flux variables
-     * \param vDat The volume variables
-     * \param tempGrad The temperature gradient
-     * \param element The current finite element
-     * \param fvElemGeom The finite volume geometry of the current element
-     * \param scvfIdx The local index of the sub-control volume face where
-     *                    the matrix heat flux should be calculated
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
+     *                    the heat capacity needs to be defined
      */
-    void matrixHeatFlux(Vector &heatFlux,
-                        const FluxVariables &fluxDat,
-                        const ElementVolumeVariables &vDat,
-                        const Vector &tempGrad,
-                        const Element &element,
-                        const FVElementGeometry &fvElemGeom,
-                        int scvfIdx) const
+    Scalar thermalConductivitySolid(const Element &element,
+                                    const FVElementGeometry &fvGeometry,
+                                    const int scvIdx) const
     {
-        static const Scalar lWater = 0.6;
-        static const Scalar lGranite = 2.8;
-
-        // arithmetic mean of the liquid saturation and the porosity
-        const int i = fvElemGeom.subContVolFace[scvfIdx].i;
-        const int j = fvElemGeom.subContVolFace[scvfIdx].j;
-        Scalar Sl = std::max<Scalar>(0.0, (vDat[i].saturation(lPhaseIdx) +
-                                           vDat[j].saturation(lPhaseIdx)) / 2);
-        Scalar poro = (porosity(element, fvElemGeom, i) +
-                       porosity(element, fvElemGeom, j)) / 2;
-
-        Scalar lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-        Scalar ldry = pow(lGranite, (1-poro));
-
-        // the heat conductivity of the matrix. in general this is a
-        // tensorial value, but we assume isotropic heat conductivity.
-        Scalar heatCond = ldry + sqrt(Sl) * (ldry - lsat);
-
-        // the matrix heat flux is the negative temperature gradient
-        // times the heat conductivity.
-        heatFlux = tempGrad;
-        heatFlux *= -heatCond;
+        return lambdaSolid_;
     }
+
+
 
 private:
 
@@ -312,6 +284,7 @@ private:
     Scalar barrierTopK_;
     Scalar barrierMiddleK_;
     Scalar reservoirK_;
+    Scalar lambdaSolid_;
 
     MaterialLawParams materialParams_;
 

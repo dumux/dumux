@@ -36,9 +36,8 @@
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/box/intersectiontovertexbc.hh>
+#include <test/implicit/co2/heterogeneousspatialparameters.hh>
 
-
-#include "heterogeneousspatialparametersni.hh"
 #include "heterogeneousco2tables.hh"
 
 #define ISOTHERMAL 0

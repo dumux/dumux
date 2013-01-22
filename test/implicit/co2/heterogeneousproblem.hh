@@ -106,7 +106,7 @@ SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
 
 /*!
  * \ingroup CO2Model
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Problem where CO2 is injected under a low permeable layer in a depth of 1200m.
  *
  * The domain is sized 200m times 100m and consists of four layers, a
@@ -122,7 +122,7 @@ SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
  * These boundary ids can be imported into the problem where the boundary conditions can then be assigned accordingly.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_co2 </tt>
+ * <tt>./test_ccco2 </tt> or <tt>./test_boxco2 </tt>
  */
 template <class TypeTag >
 class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
