@@ -73,7 +73,7 @@ public:
                                                const ElementVolumeVariables &elemVolVars,
                                                const FVElementGeometry &fvGeometry,
                                                const SpatialParams &spatialParams,
-                                               const int scvIdx) const
+                                               const int scvIdx)
     {
         const Scalar lambdaSolid = spatialParams.thermalConductivitySolid(element, fvGeometry, scvIdx);
         const Scalar porosity = spatialParams.porosity(element, fvGeometry, scvIdx);
