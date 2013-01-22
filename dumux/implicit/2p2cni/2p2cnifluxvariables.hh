@@ -30,6 +30,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/implicit/2p2c/2p2cfluxvariables.hh>
+#include "2p2cniproperties.hh"
 
 namespace Dumux
 {
@@ -98,7 +99,7 @@ public:
      */
     DimVector temperatureGradient() const
     { return temperatureGrad_; }
-    
+
     /*!
      * \brief The harmonically averaged effective thermal conductivity.
      */
@@ -118,7 +119,7 @@ protected:
         {
             tmp = this->face().grad[idx];
 
-            // index for the element volume variables 
+            // index for the element volume variables
             int volVarsIdx = this->face().fapIndices[idx];
 
             tmp *= elemVolVars[volVarsIdx].temperature();
@@ -129,8 +130,7 @@ protected:
         calculateEffThermalConductivity_(problem, element, elemVolVars);
 
         // project the heat flux vector on the face's normal vector
-        normalMatrixHeatFlux_ = temperatureGrad_*
-                                this->face().normal;
+        normalMatrixHeatFlux_ = temperatureGrad_* this->face().normal;
         normalMatrixHeatFlux_ *= -lambdaEff_;
     }
 
@@ -139,17 +139,17 @@ protected:
                                           const ElementVolumeVariables &elemVolVars)
     {
         const Scalar lambdaI =
-                ThermalConductivityModel::effectiveThermalConductivity(element,
-                                                                       elemVolVars,
-                                                                       this->fvGeometry_,
-                                                                       problem.spatialParams(),
-                                                                       this->face().i);
+            ThermalConductivityModel::effectiveThermalConductivity(element,
+                                                                   elemVolVars,
+                                                                   this->fvGeometry_,
+                                                                   problem.spatialParams(),
+                                                                   this->face().i);
         const Scalar lambdaJ =
-                ThermalConductivityModel::effectiveThermalConductivity(element,
-                                                                       elemVolVars,
-                                                                       this->fvGeometry_,
-                                                                       problem.spatialParams(),
-                                                                       this->face().j);
+            ThermalConductivityModel::effectiveThermalConductivity(element,
+                                                                   elemVolVars,
+                                                                   this->fvGeometry_,
+                                                                   problem.spatialParams(),
+                                                                   this->face().j);
         // -> harmonic mean
         lambdaEff_ = harmonicMean(lambdaI, lambdaJ);
     }
