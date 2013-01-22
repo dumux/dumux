@@ -207,6 +207,91 @@ std::string usageTextBlock()
 
 /*!
  * \ingroup Start
+ * \brief Dumux start and end message.
+ *
+ * Selects random messages to write out at the start and end of a simulation run.
+ * \param start Indicates if the simulation is starting (=true) or ending (=false).
+ */
+void dumuxMessage_(bool start)
+{
+    static int dice_;
+    if(start)
+    {
+        std::srand(std::time(0));
+        // roll the dice to decide which start message will be displayed:
+        dice_ = std::rand() % 7;
+    }
+
+
+    switch (dice_)
+    {
+        case 0:
+            if(start)
+                std::cout <<
+                    "Welcome aboard DuMuX airlines. Please fasten your seatbelts!"<<
+                    " Emergency exits are near the time integration.\n";
+            else
+                std::cout << "We hope that you enjoyed simulating with us\n"
+                    << "and that you will choose us next time, too.\n";
+        break;
+        case 1:
+            if(start)
+                std::cout << "Let's get the cow off the ice.\n";
+            else
+                std::cout << "Dumux got the cow off the ice.\n";
+        break;
+        case 2:
+            if(start)
+                std::cout << "Science, my lad, is made up of mistakes, but they are"
+                    <<" mistakes which it is useful to make, because they lead little"
+                    <<" by little to the truth. Jules Verne, A journey to the center of the earth\n";
+            else
+                std::cout <<" [We see that] science is eminently perfectible, and that each theory has "
+                <<"constantly to give way to a fresh one. Jules Verne, Journey to the Center of the Earth\n";
+
+        break;
+        case 3:
+            if(start)
+                std::cout << "Wherever he saw a hole he always wanted to know the depth of it. "
+                <<" To him this was important.  Jules Verne, A journey to the center of the earth\n";
+            else
+                std::cout << "We may brave human laws, but we cannot resist natural ones. "
+                <<" - Jules Verne, 20,000 Leagues Under the Sea\n";
+        break;
+        case 4:
+            if(start)
+                std::cout << "Silence - to delight Bernd.\n";
+            else
+                std::cout << "\n \n";
+        break;
+        case 5:
+                std::cout << "Don't panic... !\n";
+        break;
+        case 6:
+            if(start)
+                std::cout << "You idiot! You signed the order to destroy Earth! - Douglas Adams, HGttG\n";
+            else
+                std::cout << "Marvin: I've been talking to the main computer.\n Arthur: And?\n"
+                << "Marvin: It hates me. - Douglas Adams, HGttG\n";
+        break;
+        case 7:
+            if(start)
+                std::cout << "In the beginning the Universe was created. This has made a lot of "
+                          << "people very angry and has been widely regarded as a bad move.! - Douglas Adams, HGttG \n";
+            else
+                std::cout << "Forty-two. I checked it very thoroughly, and that quite definitely is the answer. I think "
+                 << "the problem, to be quite honest with you, is that you\'ve never actually known what the question is."
+                 << "  - Douglas Adams, HGttG \n";
+        break;
+        //TODO: If you add a case, you have to increase the modulus at the beginning of the function!
+
+        default:    // silence to delight Bernd
+            return ;
+    }
+}
+
+/*!
+ * \ingroup Start
  *
  * \brief Provides a main function which reads in parameters from the
  *        command line and a parameter file.
@@ -315,6 +400,9 @@ int start_(int argc,
     }
     parameterFile.close();
 
+    // output dumux start message
+    dumuxMessage_(true);
+
     bool printProps = false;
     if (ParameterTree::tree().hasKey("PrintProperties") 
         || ParameterTree::tree().hasKey("TimeManager.PrintProperties"))
@@ -376,6 +464,8 @@ int start_(int argc,
     Problem problem(timeManager, GridCreator::grid().leafView());
     timeManager.init(problem, restartTime, dt, tEnd, restart);
     timeManager.run();
+    // output dumux end message
+    dumuxMessage_(false);
 
     if (printParams && mpiHelper.rank() == 0) {
         Dumux::Parameters::print<TypeTag>();

@@ -85,10 +85,6 @@ public:
         finished_ = false;
 
         episodeLength_ = 1e100;
-
-        if (verbose_)
-            std::cout <<
-                "Welcome aboard DuMuX airlines. Please fasten your seatbelts! Emergency exits are near the time integration.\n";
     }
 
     /*!
@@ -428,9 +424,7 @@ public:
             int numProcesses = Dune::MPIHelper::getCollectiveCommunication().size();
             std::cout << "Simulation took " << timer_.elapsed() <<" seconds on "
                       << numProcesses << " processes.\n"
-                      << "The cumulative CPU time was " << timer_.elapsed()*numProcesses << " seconds.\n"
-                      << "We hope that you enjoyed simulating with us\n"
-                      << "and that you will choose us next time, too.\n";
+                      << "The cumulative CPU time was " << timer_.elapsed()*numProcesses << " seconds.\n";
         }
     }
 

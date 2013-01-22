@@ -45,6 +45,8 @@ Differences Between DuMuX 2.2 and DuMuX 2.3 (up to r10000)
 
   - The table of available parameters has been improved, see 
     http://www.dumux.org/doxygen-stable/html-2.2/a00838.php
+    
+  - Introduced new selection of start/stop messages, \TODO FS#170.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - The property Salinity used in the BrineCO2FluidSystem 
