@@ -73,18 +73,18 @@ public:
                                                const ElementVolumeVariables &elemVolVars,
                                                const FVElementGeometry &fvGeometry,
                                                const SpatialParams &spatialParams,
-                                               const int scvIdx)
+                                               const int scvIdx) const
     {
         const Scalar lambdaSolid = spatialParams.thermalConductivitySolid(element, fvGeometry, scvIdx);
-        const Scalar poro = spatialParams.porosity(element, fvGeometry, scvIdx);
+        const Scalar porosity = spatialParams.porosity(element, fvGeometry, scvIdx);
 
         const Scalar Sw = std::max<Scalar>(0.0, elemVolVars[scvIdx].saturation(wPhaseIdx));
         const Scalar lWater = elemVolVars[scvIdx].thermalConductivity(wPhaseIdx);
 
-        const Scalar lsat = pow(lambdaSolid, (1-poro)) * pow(lWater, poro);
-        const Scalar ldry = pow(lambdaSolid, (1-poro));
+        const Scalar lSat = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lWater, porosity);
+        const Scalar lDry = std::pow(lambdaSolid, (1.0 - porosity));
 
-        return ldry + sqrt(Sw) * (ldry - lsat);
+        return lDry + std::sqrt(Sw) * (lDry - lSat);
     }
 };
 }
