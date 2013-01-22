@@ -74,13 +74,13 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
-    /*
+    /*!
      * \brief The constructor
      *
      * \param problem The problem
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
-    * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary Distinguishes if we are on a SCV face or on a boundary face
      */
