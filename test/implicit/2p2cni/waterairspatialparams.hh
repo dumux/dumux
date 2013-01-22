@@ -209,7 +209,10 @@ public:
     /*!
      * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the porous material.
      *
-     * \param pos The global position
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
+     *                    the heat capacity needs to be defined
      */
     Scalar thermalConductivitySolid(const Element &element,
                                     const FVElementGeometry &fvGeometry,

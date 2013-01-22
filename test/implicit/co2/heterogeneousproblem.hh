@@ -156,7 +156,6 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
         contiCO2EqIdx = conti0EqIdx + CO2Idx
     };
 
-
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
@@ -222,11 +221,8 @@ public:
          * - Reporting whether it was used does not work
          * - Overwriting on command line not possible
         */
-
         GridPointer *gridPtr = &GridCreator::gridPtr();
         this->spatialParams().setParams(gridPtr);
-
-
 
         eps_ = 1e-6;
 
@@ -324,8 +320,6 @@ public:
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-
-
     Scalar boxTemperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
@@ -334,6 +328,12 @@ public:
         return temperature_(globalPos);
     };
 
+    /*!
+     * \brief Return the sources within the domain.
+     *
+     * \param values Stores the source values, acts as return value
+     * \param globalPos The global position
+     */
     void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
     {
@@ -354,7 +354,6 @@ public:
      * \param values The boundary types for the conservation equations
      * \param vertex The vertex for which the boundary type is set
      */
-
     void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
     {
         intersectionToVertexBC_.boundaryTypes(values, vertex);
@@ -368,8 +367,6 @@ public:
      * \param is specifies the intersection at which boundary
      *           condition is to set
      */
-
-
     void boundaryTypes(BoundaryTypes &values, const Intersection &is) const
     {
         int boundaryId = is.boundaryId();
@@ -400,14 +397,12 @@ public:
         initial_(values, globalPos);
     }
 
-
-
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
      * \param values The dirichlet values for the primary variables
-     * \param is The intersection between element and boundary
+     * \param globalPos The global position
      *
      * For this method, the \a values parameter stores primary variables.
      */
@@ -415,6 +410,7 @@ public:
     {
         initial_(values, globalPos);
     }
+
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.

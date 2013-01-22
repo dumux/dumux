@@ -321,35 +321,36 @@ public:
     const std::string name() const
     { return name_; }
 
+    /*!
+     * \brief Returns the temperature within the domain.
+     *
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index
+     */
     Scalar boxTemperature(const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       int scvIdx) const
+                          const FVElementGeometry &fvElemGeom,
+                          int scvIdx) const
     {
         const GlobalPosition globalPos = fvElemGeom.subContVol[scvIdx].global;
         return temperature_(globalPos);
     }
 
-//    /*!
-//     * \brief Returns the temperature within the domain.
-//     * \param globalPos The global position
-//     */
-//    Scalar temperatureAtPos(const GlobalPosition globalPos) const
-//    {
-//        return temperature_(globalPos);
-//    };
-
+    /*!
+     * \brief Returns the sources within the domain.
+     *
+     * \param values Stores the source values, acts as return value
+     * \param globalPos The global position
+     */
     void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
     {
         values = 0;
     }
 
-
-
     /*!
      * \name Boundary conditions
      */
-
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -372,8 +373,6 @@ public:
      * \param is specifies the intersection at which boundary
      *           condition is to set
      */
-
-
     void boundaryTypes(BoundaryTypes &values, const Intersection &is) const
     {
         int boundaryId = is.boundaryId();
@@ -417,6 +416,7 @@ public:
     {
         initial_(values, globalPos);
     }
+
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.

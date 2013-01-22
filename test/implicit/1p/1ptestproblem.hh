@@ -174,11 +174,16 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10C
 
-
-    void sourceAtPos(PrimaryVariables &priVars,
+    /*!
+     * \brief Return the sources within the domain.
+     *
+     * \param values Stores the source values, acts as return value
+     * \param globalPos The global position
+     */
+    void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
     {
-        priVars = 0;
+        values = 0;
     }
     // \}
     /*!

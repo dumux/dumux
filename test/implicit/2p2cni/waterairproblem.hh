@@ -199,6 +199,12 @@ public:
     };
 #endif
 
+    /*!
+     * \brief Return the sources within the domain.
+     *
+     * \param values Stores the source values, acts as return value
+     * \param globalPos The global position
+     */
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
