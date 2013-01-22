@@ -67,7 +67,7 @@ class TwoPDFMVolumeVariables : public TwoPVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::UGGrid<2> GridType;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) GridType;
     typedef typename GridType::ctype DT;
     enum {
             dim = GridView::dimension,

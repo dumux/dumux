@@ -54,6 +54,7 @@ NEW_TYPE_TAG(TwoPDFMTestProblem, INHERITS_FROM(BoxTwoPDFM, TwoPDFMSpatialParams)
 #if HAVE_UG
 SET_TYPE_PROP(TwoPDFMTestProblem, Grid, Dune::UGGrid<2>);
 #else
+#warning External grid UG needed to run this example.
 SET_TYPE_PROP(TwoPDFMTestProblem, Grid, Dune::YaspGrid<2>);
 #endif
 

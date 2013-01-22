@@ -55,7 +55,7 @@ protected:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef Dune::UGGrid<2> GridType;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) GridType;
     typedef typename GridType::ctype DT;
     enum {
         dim = GridView::dimension,
