@@ -213,7 +213,7 @@ public:
         Valgrind::CheckDefined(curVolVars);
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i = 0; i < prevVolVars.size(); i++) {
+        for (unsigned int i = 0; i < prevVolVars.size(); i++) {
             prevVolVars[i].checkDefined();
             curVolVars[i].checkDefined();
         }

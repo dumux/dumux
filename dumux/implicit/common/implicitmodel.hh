@@ -686,7 +686,7 @@ public:
             def[eqIdx] = writer.allocateManagedBuffer(numDofs);
         }
 
-        for (int globalIdx = 0; globalIdx < u.size(); globalIdx++)
+        for (unsigned int globalIdx = 0; globalIdx < u.size(); globalIdx++)
         {
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) 
             {
@@ -933,7 +933,7 @@ protected:
         if (isBox)
         {
             // divide all primary variables by the volume of their boxes
-            for (int i = 0; i < uCur_.size(); ++i) {
+            for (unsigned int i = 0; i < uCur_.size(); ++i) {
                 uCur_[i] /= boxVolume(i);
             }
         }

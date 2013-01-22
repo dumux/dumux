@@ -349,9 +349,9 @@ protected:
      */
     void reset_()
     {
-        for (int i = 0; i < A_.N(); ++ i) {
+        for (unsigned int i = 0; i < A_.N(); ++ i) {
             storageJacobian_[i] = 0.0;
-            for (int j = 0; j < A_.M(); ++ j) {
+            for (unsigned int j = 0; j < A_.M(); ++ j) {
                 A_[i][j] = 0.0;
             }
         }
