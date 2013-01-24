@@ -2,13 +2,13 @@
 
 In this section setting up a new folder is described. In fact it is very easy to create a new folder, but getting \Dumux to know the new folder takes some steps which will be explained in more detail below:
 
-\begin{itemize}
+\begin{enumerate}
  \item create new folder with content
  \item adapt \verb+Makefile.am+
  \item insert new folder in \verb+Makefile.am+ of the directory above
  \item adapt \verb+configure.ac+ in the \verb+$DUMUX_ROOT+ (the directory you checked out, probably dumux)
  \item newly compile \Dumux
-\end{itemize}
+\end{enumerate}
 
 \noindent In more detail:
 
@@ -49,7 +49,29 @@ All occurrences of \verb+test_2p+ need to be replaced by the name of the new pro
 
 \textbf{Fifth}: Compile \Dumux as described in Section \ref{install}.
 
+\paragraph{Committing a new folder to the svn repository}
+For those who work with svn and want to commit a newly setup folder to the repository, additional guidelines apply:
+
+\begin{enumerate}
+ \item use svn attributes to ignore files which are automatically created by a dunecontrol run
+ \item make headercheck
+ \item test doxygen
+\end{enumerate}
+
+\noindent In more detail:
+
+\textbf{First}: The command \verb+svn status+ marks all files not under version control with a question mark. Because dunecontrol creates a lot of files automatically this output becomes relatively crowded and one might overlook ``real'' files which have to be added (they also will not be shown by a \verb+svn status -q+).
+
+How to set the svn attributes:
+\begin{itemize}
+ \item[{\em eclipse}] right click on the file/folder $\rightarrow$ ``team'' $\rightarrow$ ``add to svn:ignore\dots''
+ \item[{\em kdesvn}] right click on the file/folder $\rightarrow$ ``ignore/unignore current item''
+ \item[{\em shell}] \verb+svn propset svn:ignore svnignoretest .+
+\end{itemize}
+Commit the changes for example in the command line with \verb+svn commit -m+ to the repository.
 
 
 
+\textbf{Second}:
 
+\textbf{Third}:
