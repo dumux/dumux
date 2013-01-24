@@ -127,8 +127,14 @@ public:
      */
     void initialize()
     {
-        totalConcentration_[wCompIdx].resize(problem_.gridView().size(0));
-        totalConcentration_[nCompIdx].resize(problem_.gridView().size(0));
+        // resize update vector and set to zero
+        int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
+        totalConcentration_.resize(transportedQuantities);
+        for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
+        {
+            totalConcentration_[eqNumber].resize(problem().gridView().size(0));
+            totalConcentration_[eqNumber] = 0;
+        }
     };
 
     //! \brief Write transport variables into the output files
@@ -203,10 +209,6 @@ public:
     FVTransport2P2C(Problem& problem) :
         totalConcentration_(0.),problem_(problem), switchNormals(false)
     {
-        totalConcentration_.resize(GET_PROP_VALUE(TypeTag, NumComponents));
-        totalConcentration_[wCompIdx].resize(problem.gridView().size(0));
-        totalConcentration_[nCompIdx].resize(problem.gridView().size(0));
-
         restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,int, Impet, RestrictFluxInTransport);
     }
 
