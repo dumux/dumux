@@ -55,7 +55,7 @@ Differences Between DuMuX 2.2 and DuMuX 2.3 (up to r10000)
   - The property Salinity used in the BrineCO2FluidSystem 
     has been renamed to ProblemSalinity. 
   - The matrixHeatFlux(...) and boundaryMatrixHeatFlux(...) methods in the spatial
-	parameters of nonisothermal implicit twophase models has been removed.
+	parameters of nonisothermal implicit twophase models have been removed.
 	Instead, the computation of the effective thermal conductivity has been sourced 
 	out to the fluidmatrixinteractions in a separate file (somerton), which
 	can be exchanged. The spatial parameters file needs a method 
