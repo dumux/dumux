@@ -177,11 +177,11 @@ available:
   For the typical case, in which all equations have the same boundary
   condition type at a certain position, there are two methods that set the appropriate conditions
   for all primary variables / equations: \texttt{setAllDirichlet()} and \texttt{setAllNeumann()}.
-\item [vertex:] The boundary condition and the Dirichlet values are
+\item [vertex:] The boundary condition type and the Dirichlet values are
   specified for a vertex, which represents a control volume in the box
   discretization. This avoids the specification of two different
-  boundary condition types for one equation at different control
-  volumes.  Be aware that the second parameter is a Dune grid entity
+  boundary condition types for one equation at different sub-control
+  volumes of one control volume.  Be aware that the second parameter is a Dune grid entity
   with the codimension \texttt{dim}.
 \end{description}
 
