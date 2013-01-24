@@ -64,6 +64,12 @@ class TwoPNIFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
     typedef typename GridView::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> DimVector;
 
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    enum {
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx
+    };
+
 public:
 
     /*
@@ -144,18 +150,21 @@ protected:
                                           const Element &element,
                                           const ElementVolumeVariables &elemVolVars)
     {
+        const unsigned i = this->face().i;
+        const unsigned j = this->face().j;
+
         const Scalar lambdaI =
-            ThermalConductivityModel::effectiveThermalConductivity(element,
-                                                                   elemVolVars,
-                                                                   this->fvGeometry_,
-                                                                   problem.spatialParams(),
-                                                                   this->face().i);
+            ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].saturation(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(element, this->fvGeometry_, i),
+                                                                   problem.spatialParams().porosity(element, this->fvGeometry_, i));
         const Scalar lambdaJ =
-            ThermalConductivityModel::effectiveThermalConductivity(element,
-                                                                   elemVolVars,
-                                                                   this->fvGeometry_,
-                                                                   problem.spatialParams(),
-                                                                   this->face().j);
+            ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].saturation(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(element, this->fvGeometry_, j),
+                                                                   problem.spatialParams().porosity(element, this->fvGeometry_, j));
         // -> harmonic mean
         lambdaEff_ = harmonicMean(lambdaI, lambdaJ);
     }

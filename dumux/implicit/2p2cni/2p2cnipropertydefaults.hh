@@ -36,7 +36,7 @@
 #include "2p2cnivolumevariables.hh"
 #include "2p2cnifluxvariables.hh"
 
-#include <dumux/material/fluidmatrixinteractions/2p/somerton.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 namespace Dumux
 {
@@ -73,7 +73,12 @@ SET_PROP(TwoPTwoCNI, Indices)
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_TYPE_PROP(TwoPTwoCNI, ThermalConductivityModel, Somerton<TypeTag>);
+SET_PROP(TwoPTwoCNI, ThermalConductivityModel)
+{ private :
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+  public:
+    typedef ThermalConductivitySomerton<Scalar> type;
+};
 
 }
 

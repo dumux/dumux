@@ -115,7 +115,7 @@ public:
      * \param fvGeometry The finite volume geometry of the current element
      * \tparam FaceType The type of the face (boundary face / SCV face)
      */
-    template <class FaceType>
+    template <class FaceType> DUNE_DEPRECATED_MSG("Method not used anymore!")
     void boundaryMatrixHeatFlux(Vector &heatFlux,
             const FluxVariables &fluxVars,
             const ElementVolumeVariables &elemVolVars,
