@@ -4,7 +4,6 @@ GXX_WARNING_OPTS=" \
     -Wmissing-include-dirs \
     -Wcast-align \
     -Wno-sign-compare \
-    -Wno-packed-bitfield-compat \
     -Wno-unused-parameter"
 
 # additional -W flags for g++ which will lead to many warnings in
