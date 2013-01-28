@@ -99,7 +99,7 @@ This means that at least the necessary parameters are listed here.
 For more information about the input file please refer to section \ref{sec:inputFiles}.
 
 
-\subsection{The Problem Class}
+\subsection{The Problem Class}\label{tutorial-coupled:problem}
 
 When solving a problem using \Dumux, the most important file is the
 so-called \textit{problem file} as shown in
@@ -142,7 +142,7 @@ non-wetting phase on line \ref{tutorial-coupled:nonwettingPhase}. The
 last property, which is set in line \ref{tutorial-coupled:gravity},
 tells the model not to use gravity.
 
-Parameters which are specific to a physical set-up to be simulated,
+\label{tutorial-coupled:boundaryStart}Parameters which are specific to a physical set-up to be simulated,
 such as boundary and initial conditions, source terms or temperature
 within the domain, and which are required to solve the differential
 equations of the models are specified via a \textit{problem} class. If
@@ -191,7 +191,7 @@ coordinates. The left boundary is hence not detected by checking, if the
 first coordinate of the global position is equal to zero, but by testing whether it is
 smaller than a very small value \texttt{eps\_}.
 
-Methods which make statements about boundary segments of the grid
+Methods for box models which make statements about boundary segments of the grid
 (such as \texttt{neumann()}) are called with six arguments:
 \begin{description}
 \item[values:] A vector \texttt{neumann()}, in which the mass fluxes per area unit
