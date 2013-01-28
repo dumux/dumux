@@ -563,8 +563,7 @@ public:
      */
     Scalar nextTimeStepSize(const Scalar dt)
     {
-        return std::min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize),
-                        newtonCtl_.suggestTimeStepSize(dt));
+        return newtonCtl_.suggestTimeStepSize(dt);
     };
 
     /*!

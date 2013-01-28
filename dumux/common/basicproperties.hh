@@ -74,6 +74,13 @@ NEW_PROP_TAG(ModelParameterGroup);
 //! Property which provides a GridCreator (manages grids)
 NEW_PROP_TAG(GridCreator);
 
+/*!
+ * \brief Specify the maximum size of a time integration [s].
+ *
+ * The default is to not limit the step size.
+ */
+NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
+
 //! Property to define the output level
 NEW_PROP_TAG(VtkOutputLevel);
 
@@ -85,6 +92,9 @@ NEW_PROP_TAG(VtkOutputLevel);
 
 //! Set the default type of scalar values to double
 SET_TYPE_PROP(NumericModel, Scalar, double);
+
+//! use an unlimited time step size by default
+SET_SCALAR_PROP(NumericModel, TimeManagerMaxTimeStepSize, std::numeric_limits<typename GET_PROP_TYPE(TypeTag,Scalar)>::max());
 
 //! Set the ParameterTree property
 SET_PROP(NumericModel, ParameterTree)

@@ -244,7 +244,8 @@ public:
             return 0.0;
 
         return
-            std::min(episodeMaxTimeStepSize(),
+            std::min(std::min(episodeMaxTimeStepSize(),
+                    GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize)),
                      std::max<Scalar>(0.0, endTime() - time()));
     };
 

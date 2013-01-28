@@ -95,12 +95,6 @@ NEW_PROP_TAG(ImplicitEnableJacobianRecycling);
 //! elements where at least one vertex is above the specified
 //! tolerance
 NEW_PROP_TAG(ImplicitEnablePartialReassemble);
-/*!
- * \brief Specify the maximum size of a time integration [s].
- *
- * The default is to not limit the step size.
- */
-NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
 
 /*!
  * \brief Specify which kind of method should be used to numerically

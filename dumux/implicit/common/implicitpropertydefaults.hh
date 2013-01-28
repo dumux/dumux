@@ -108,9 +108,6 @@ SET_TYPE_PROP(ImplicitBase,
               BoundaryTypes,
               Dumux::BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
 
-//! use an unlimited time step size by default
-SET_SCALAR_PROP(ImplicitBase, TimeManagerMaxTimeStepSize, 1e100);
-
 //! use forward differences to calculate the jacobian by default
 SET_INT_PROP(ImplicitBase, ImplicitNumericDifferenceMethod, +1);
 
