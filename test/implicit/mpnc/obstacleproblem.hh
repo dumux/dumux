@@ -72,7 +72,7 @@ public:
 SET_BOOL_PROP(ObstacleProblem, ImplicitEnableSmoothUpwinding, true);
 
 // Enable molecular diffusion of the components?
-SET_BOOL_PROP(ObstacleProblem, EnableDiffusion, false);
+SET_BOOL_PROP(ObstacleProblem, EnableDiffusion, true);
 
 // Use the chopped Newton method?
 SET_BOOL_PROP(ObstacleProblem, NewtonEnableChop, true);
@@ -167,7 +167,7 @@ public:
         : ParentType(timeManager, gridView)
     {
         eps_ = 1e-6;
-        temperature_ = 273.15 + 25; // -> 25°C
+        temperature_ = 273.15 + 25; // -> 25DegC
 
         // initialize the tables of the fluid system
         Scalar Tmin = temperature_ - 1.0;

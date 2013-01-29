@@ -76,7 +76,6 @@ protected:
             fluxes[compIdx] =
                 - xGrad *
                 molarDensity *
-                fluxVars.face().normal.two_norm() * // because we want a mole flux and not an area specific flux
                 fluxVars.porousDiffCoeffL(compIdx) ;
         }
     }
