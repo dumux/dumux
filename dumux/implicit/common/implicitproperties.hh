@@ -124,6 +124,10 @@ NEW_PROP_TAG(ElementMapper);
 //! mapper for degrees of freedom
 NEW_PROP_TAG(DofMapper);
 
+//! the maximum allowed number of timestep divisions for the
+//! Newton solver
+NEW_PROP_TAG(ImplicitMaxTimeStepDivisions);
+
 //! indicate whether discretization is box or not
 NEW_PROP_TAG(ImplicitIsBox);
 

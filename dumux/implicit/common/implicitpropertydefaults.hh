@@ -147,6 +147,9 @@ SET_INT_PROP(ImplicitBase, LinearSolverMaxIterations, 250);
 //! set number of equations of the mathematical model as default
 SET_INT_PROP(ImplicitBase, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
 
+//! set number of maximum timestep divisions to 10
+SET_INT_PROP(ImplicitBase, ImplicitMaxTimeStepDivisions, 10);
+
 } // namespace Properties
 } // namespace Dumux
 

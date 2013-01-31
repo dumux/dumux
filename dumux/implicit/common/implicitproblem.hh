@@ -509,7 +509,8 @@ public:
      */
     void timeIntegration()
     {
-        const int maxFails = 10;
+        const int maxFails =
+                GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, MaxTimeStepDivisions);
         for (int i = 0; i < maxFails; ++i) {
             if (model_.update(newtonMethod_, newtonCtl_))
                 return;
