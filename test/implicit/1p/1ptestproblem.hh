@@ -39,6 +39,7 @@
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/linear/amgbackend.hh>
 
 #include "1ptestspatialparams.hh"
 
@@ -52,6 +53,8 @@ namespace Properties
 NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(OnePTestBoxProblem, INHERITS_FROM(BoxModel, OnePTestProblem));
 NEW_TYPE_TAG(OnePTestCCProblem, INHERITS_FROM(CCModel, OnePTestProblem));
+NEW_TYPE_TAG(OnePTestBoxProblemWithAMG, INHERITS_FROM(OnePTestBoxProblem));
+NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
 
 SET_PROP(OnePTestProblem, Fluid)
 {
@@ -64,8 +67,8 @@ public:
 // Set the grid type
 SET_PROP(OnePTestProblem, Grid)
 {
-    typedef Dune::SGrid<2, 2> type;
-    //typedef Dune::YaspGrid<2> type;
+  //typedef Dune::SGrid<2, 2> type;
+  typedef Dune::YaspGrid<2> type;
   //typedef Dune::UGGrid<2> type;
   //typedef Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming> type;
 };
@@ -83,6 +86,10 @@ SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTa
 SET_INT_PROP(OnePTestProblem, LinearSolverVerbosity, 0);
 SET_INT_PROP(OnePTestProblem, LinearSolverPreconditionerIterations, 1);
 SET_SCALAR_PROP(OnePTestProblem, LinearSolverPreconditionerRelaxation, 1.0);
+
+// Solver settings for the tests using AMG
+SET_TYPE_PROP(OnePTestBoxProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
+SET_TYPE_PROP(OnePTestCCProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
 
 // Enable gravity
 SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);

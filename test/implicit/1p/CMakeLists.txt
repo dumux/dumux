@@ -2,8 +2,14 @@
 add_executable("test_box1p" test_box1p.cc)
 target_link_libraries("test_box1p" ${DumuxLinkLibraries})
 
+add_executable("test_box1pwithamg" test_box1pwithamg.cc)
+target_link_libraries("test_box1pwithamg" ${DumuxLinkLibraries})
+
 add_executable("test_cc1p" test_cc1p.cc)
 target_link_libraries("test_cc1p" ${DumuxLinkLibraries})
+
+add_executable("test_cc1pwithamg" test_cc1pwithamg.cc)
+target_link_libraries("test_cc1pwithamg" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
 link_directories(${DumuxLinkDirectories})
