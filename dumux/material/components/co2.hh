@@ -255,7 +255,7 @@ public:
     /*!
      * \brief The dynamic viscosity [N/m^3*s] of CO2.
      * Equations given in: - Vesovic et al., 1990
-     *                        - Fenhour etl al., 1998
+     *                     - Fenhour et al., 1998
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {

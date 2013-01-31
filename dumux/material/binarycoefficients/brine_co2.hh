@@ -48,7 +48,8 @@ public:
     /*!
      * \brief Binary diffusion coefficent [m^2/s] of water in the CO2 phase.
      *
-     * According to "Diffusion of Water in Liquid and Supercritical Carbon Dioxide: An NMR Study",Bin Xu et al., 2002
+     * According to "Diffusion of Water in Liquid and Supercritical Carbon 
+     * Dioxide: An NMR Study", Bin Xu et al., 2002.
      * \param temperature the temperature [K]
      * \param pressure the phase pressure [Pa]
      */
