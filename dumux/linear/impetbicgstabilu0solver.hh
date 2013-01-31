@@ -88,7 +88,7 @@ public:
         overlapMatrix_ = 0;
         overlapb_ = 0;
         overlapx_ = 0;
-    };
+    }
 
     ~IMPETBiCGStabILU0Solver()
     { cleanup_(); }
@@ -105,7 +105,7 @@ public:
     {
         cleanup_();
         prepare_();
-    };
+    }
 
     /*!
      * \brief Actually solve the linear system of equations.
@@ -166,7 +166,7 @@ public:
 
         // return the result of the solver
         return result.converged;
-    };
+    }
 
 private:
     void prepare_(const Matrix &M)
@@ -184,7 +184,7 @@ private:
         // solution
         overlapb_ = new OverlappingVector(overlapMatrix_->overlap());
         overlapx_ = new OverlappingVector(*overlapb_);
-    };
+    }
 
     void cleanup_()
     {
@@ -196,7 +196,7 @@ private:
         overlapMatrix_ = 0;
         overlapb_ = 0;
         overlapx_ = 0;
-    };
+    }
 
     const Problem &problem_;
 

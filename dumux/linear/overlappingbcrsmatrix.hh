@@ -68,7 +68,7 @@ public:
     OverlappingBCRSMatrix(const OverlappingBCRSMatrix &M)
         : ParentType(M)
     {
-    };
+    }
 
     OverlappingBCRSMatrix(const BCRSMatrix &M,
                           const BorderList &foreignBorderList,
@@ -84,7 +84,7 @@ public:
         // build the overlapping matrix from the non-overlapping
         // matrix and the overlap
         build_(M);
-    };
+    }
 
     ~OverlappingBCRSMatrix()
     {
@@ -386,7 +386,7 @@ private:
         // entries
         entryValuesSendBuff_[peerRank] = new MpiBuffer<block_type>(numEntries);
 #endif // HAVE_MPI
-    };
+    }
 
     // receive the overlap indices to a peer
     void receiveRowIndices_(int peerRank)
@@ -435,7 +435,7 @@ private:
             }
         }
 #endif // HAVE_MPI
-    };
+    }
 
     // communicates and adds up the contents of overlapping rows
     void syncAdd_()
@@ -517,7 +517,7 @@ private:
             for (int j = 0; j < mpiRowSizesSendBuff[i]; ++j) {
                 Index domColIdx = mpiColIndicesSendBuff[k];
                 for (; colIt.index() < domColIdx; ++colIt)
-                { };
+                { }
                 assert(colIt.index() == domColIdx);
 
                 mpiSendBuff[k] = (*colIt);

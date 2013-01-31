@@ -126,7 +126,7 @@ public:
     {
         if (resultWriter_)
             delete resultWriter_;
-    };
+    }
 
 
     /*!
@@ -857,7 +857,7 @@ protected:
 private:
     // makes sure that the result writer exists
     void createResultWriter_()
-    { if (!resultWriter_) resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name()); };
+    { if (!resultWriter_) resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name()); }
 
     std::string simName_;
     const GridView gridView_;

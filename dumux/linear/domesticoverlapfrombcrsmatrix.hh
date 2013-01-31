@@ -102,7 +102,7 @@ public:
      * rank) triples for all indices on a process border.
      */
     const BorderList& borderList() const
-    { return foreignOverlap_.borderList(); };
+    { return foreignOverlap_.borderList(); }
 
 
     /*!
@@ -111,20 +111,20 @@ public:
     bool isBorder(int domesticIdx) const
     {
         return isLocal(domesticIdx) && foreignOverlap_.isBorder(domesticIdx);
-    };
+    }
 
     /*!
      * \brief Returns true iff a domestic index is a front index.
      */
     bool isFront(int domesticIdx) const
-    { return borderDistance_[domesticIdx] == foreignOverlap_.overlapSize(); };
+    { return borderDistance_[domesticIdx] == foreignOverlap_.overlapSize(); }
 
     /*!
      * \brief Returns the number of processes which "see" a given
      *        index.
      */
     int numPeers(int domesticIdx) const
-    { return domesticOverlapByIndex_[domesticIdx].size(); };
+    { return domesticOverlapByIndex_[domesticIdx].size(); }
 
     /*!
      * \brief Returns whether a given domestic index is a front index
@@ -138,7 +138,7 @@ public:
             return false; // not seen by the process
 
         return it->second == foreignOverlap_.overlapSize();
-    };
+    }
 
     /*!
      * \brief Return the number of processes which "see" a domestic
@@ -159,7 +159,7 @@ public:
         }
 
         return result;
-    };
+    }
 
     /*!
      * \brief Returns the rank of the current process.
@@ -224,7 +224,7 @@ public:
      * \brief Returns the number local indices
      */
     int numLocal() const
-    { return foreignOverlap_.numLocal(); };
+    { return foreignOverlap_.numLocal(); }
 
     /*!
      * \brief Returns the number domestic indices.
@@ -233,14 +233,14 @@ public:
      * plus its copies of indices in the overlap regions
      */
     int numDomestic() const
-    { return globalIndices_.numDomestic(); };
+    { return globalIndices_.numDomestic(); }
 
     /*!
      * \brief Return true if a domestic index is local for the process
      *        (i.e. interior or border)
      */
     bool isLocal(int domesticIdx) const
-    { return domesticIdx < numLocal(); };
+    { return domesticIdx < numLocal(); }
 
     /*!
      * \brief Return true iff the current process is the master of a
@@ -251,7 +251,7 @@ public:
         if (!isLocal(domesticIdx))
             return false;
         return foreignOverlap_.masterOf(domesticIdx) == myRank_;
-    };
+    }
 
     /*!
      * \brief Return true iff a given index is shared by more than one process
@@ -261,7 +261,7 @@ public:
         if (!isLocal(domesticIdx))
             return false;
         return foreignOverlap_.isShared(domesticIdx);
-    };
+    }
 
     /*!
      * \brief Return true iff a given rank is the master of a given
@@ -285,7 +285,7 @@ public:
         }
 
         return masterIdx == peerRank;
-    };
+    }
 
     /*!
      * \brief Print the foreign overlap for debugging purposes.
@@ -293,7 +293,7 @@ public:
     void print() const
     {
         globalIndices_.print();
-    };
+    }
 
     /*!
      * \brief Returns a domestic index given a global one
@@ -360,7 +360,7 @@ protected:
             int peerRank = *peerIt;
             waitSendIndices_(peerRank);
         }
-    };
+    }
 
     void sendIndicesToPeer_(int peerRank)
     {
@@ -432,7 +432,7 @@ protected:
             peersSendBuff_[peerRank][i]->wait();
             delete peersSendBuff_[peerRank][i];
         }
-    };
+    }
 
     void receiveIndicesFromPeer_(int peerRank)
     {

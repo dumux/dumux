@@ -54,13 +54,13 @@ public:
     }
 
     ~NewtonConvergenceWriter()
-    { delete vtkMultiWriter_; };
+    { delete vtkMultiWriter_; }
 
     void beginTimestep()
     {
         ++timeStepIndex_;
         iteration_ = 0;
-    };
+    }
 
     void beginIteration(const GridView &gv)
     {
@@ -68,21 +68,21 @@ public:
         if (!vtkMultiWriter_)
             vtkMultiWriter_ = new VtkMultiWriter(gv, "convergence");
         vtkMultiWriter_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
-    };
+    }
 
     void writeFields(const SolutionVector &uLastIter,
                      const SolutionVector &deltaU)
     {
         ctl_.method().model().addConvergenceVtkFields(*vtkMultiWriter_, uLastIter, deltaU);
-    };
+    }
 
     void endIteration()
-    { vtkMultiWriter_->endWrite(); };
+    { vtkMultiWriter_->endWrite(); }
 
     void endTimestep()
     {
         iteration_ = 0;
-    };
+    }
 
 private:
     int timeStepIndex_;
