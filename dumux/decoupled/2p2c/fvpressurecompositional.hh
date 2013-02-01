@@ -302,7 +302,7 @@ public:
     {
         std::cout << "Writing debug for current time step\n";
         initializationOutputWriter_.beginWrite(problem_.timeManager().time() + pseudoTS);
-        addOutputVtkFields(initializationOutputWriter_);
+        asImp_().addOutputVtkFields(initializationOutputWriter_);
 
 #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
         int size_ = problem_.gridView().size(0);
@@ -614,9 +614,10 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                             pressure, problem_.spatialParams().porosity(*eIt), temperature_);
                 }
             } //end conc initial condition
-            cellData.calculateMassConcentration(problem_.spatialParams().porosity(*eIt));
-
         } //end compositional
+
+        cellData.calculateMassConcentration(problem_.spatialParams().porosity(*eIt));
+
         problem_.transportModel().totalConcentration(wCompIdx,globalIdx) = cellData.massConcentration(wCompIdx);
         problem_.transportModel().totalConcentration(nCompIdx,globalIdx) = cellData.massConcentration(nCompIdx);
 
