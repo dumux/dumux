@@ -61,14 +61,15 @@ For those who work with svn and want to commit a newly setup folder to the repos
 \noindent In more detail:
 
 \textbf{First}: The command \verb+svn status+ marks all files not under version control with a question mark. Because dunecontrol creates a lot of files automatically this output becomes relatively crowded and one might overlook ``real'' files which have to be added (they also will not be shown by a \verb+svn status -q+).
+For the stable part of \Dumux there is the rule to ignore and only to ignore the folder {\em .deps} and the files {\em Makefile} and {\em Makefile.in}.
 
 How to set the svn attributes:
 \begin{itemize}
  \item[{\em eclipse}] right click on the file/folder $\rightarrow$ ``team'' $\rightarrow$ ``add to svn:ignore\dots''
  \item[{\em kdesvn}] right click on the file/folder $\rightarrow$ ``ignore/unignore current item''
- \item[{\em shell}] \verb+svn propset svn:ignore svnignoretest .+
+ \item[{\em shell}] \verb+svn propset svn:ignore FILETOIGNORE .+
 \end{itemize}
-Commit the changes for example in the command line with \verb+svn commit -m+ to the repository.
+Commit the changes for example in the command line with \verb+svn commit -m+ to the repository. It is also possible to use wildcards, e.g., if you want to ignore all vtu-files in your application folder in dumux-devel set \verb+FILETOIGNORE+ to \verb+'*.vtu'+. Remember that such a ignore is only allowed in dumux-devel and not in the stable dumux.
 
 
 
