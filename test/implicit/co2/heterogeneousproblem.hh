@@ -121,7 +121,7 @@ SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
  * between different parts of the boundary.
  * These boundary ids can be imported into the problem where the boundary conditions can then be assigned accordingly.
  *
- * To run the simulation execute the following line in shell:
+ * To run the simulation execute the following line in shell (works with the box and cell centered spatial discretization method):
  * <tt>./test_ccco2 </tt> or <tt>./test_boxco2 </tt>
  */
 template <class TypeTag >

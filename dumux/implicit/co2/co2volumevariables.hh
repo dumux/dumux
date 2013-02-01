@@ -30,7 +30,7 @@ namespace Dumux
  * \ingroup CO2Model
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the non-isothermal two-phase, two-component
+ *        finite volume in the isothermal CO2
  *        model.
  */
 template <class TypeTag>

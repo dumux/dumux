@@ -22,7 +22,7 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX scheme to the two-phase two-component flow model without constraint solver.
+ * \brief Adaption of the BOX or CC scheme to the two-phase two-component flow model without constraint solver.
  */
 #ifndef DUMUX_CO2_MODEL_HH
 #define DUMUX_CO2_MODEL_HH
@@ -33,7 +33,7 @@ namespace Dumux
 {
 /*!
  * \ingroup CO2Model
- * \brief Adaption of the BOX scheme to the non-isothermal two-phase two-component flow model.
+ * \brief Adaption of the BOX or CC scheme to the non-isothermal two-phase two-component flow model.
  *   See TwoPTwoCModel for reference to the equations used.
  *   The CO2 model is derived from the 2p2c model. In the CO2 model the phase switch criterion
  *   is different from the 2p2c model.

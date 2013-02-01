@@ -46,54 +46,54 @@ namespace Dumux
 {
 
 template <class TypeTag>
-class HeterogeneousProblem;
+class HeterogeneousNIProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(HeterogeneousProblem, INHERITS_FROM(TwoPTwoCNI, HeterogeneousSpatialParams));
-NEW_TYPE_TAG(HeterogeneousBoxProblem, INHERITS_FROM(BoxModel, HeterogeneousProblem));
-NEW_TYPE_TAG(HeterogeneousCCProblem, INHERITS_FROM(CCModel, HeterogeneousProblem));
+NEW_TYPE_TAG(HeterogeneousNIProblem, INHERITS_FROM(TwoPTwoCNI, HeterogeneousSpatialParams));
+NEW_TYPE_TAG(HeterogeneousNIBoxProblem, INHERITS_FROM(BoxModel, HeterogeneousNIProblem));
+NEW_TYPE_TAG(HeterogeneousNICCProblem, INHERITS_FROM(CCModel, HeterogeneousNIProblem));
 
 
 // Set the grid type
 #if HAVE_ALUGRID
-SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(HeterogeneousNIProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #else
-SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(HeterogeneousNIProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_PROP(HeterogeneousProblem, Problem)
+SET_PROP(HeterogeneousNIProblem, Problem)
 {
-    typedef Dumux::HeterogeneousProblem<TypeTag> type;
+    typedef Dumux::HeterogeneousNIProblem<TypeTag> type;
 };
 
 // Set fluid configuration
-SET_PROP(HeterogeneousProblem, FluidSystem)
+SET_PROP(HeterogeneousNIProblem, FluidSystem)
 {
     typedef Dumux::BrineCO2FluidSystem<TypeTag> type;
 };
 
 // Set the CO2 table to be used; in this case not the the default table
-SET_TYPE_PROP(HeterogeneousProblem, CO2Table, Dumux::Heterogeneous::CO2Tables);
+SET_TYPE_PROP(HeterogeneousNIProblem, CO2Table, Dumux::Heterogeneous::CO2Tables);
 // Set the salinity mass fraction of the brine in the reservoir
-SET_SCALAR_PROP(HeterogeneousProblem, ProblemSalinity, 1e-1);
+SET_SCALAR_PROP(HeterogeneousNIProblem, ProblemSalinity, 1e-1);
 
 //! the CO2 Model and VolumeVariables properties
-SET_TYPE_PROP(HeterogeneousProblem, Model, CO2NIModel<TypeTag>);
-SET_TYPE_PROP(HeterogeneousProblem, VolumeVariables, CO2NIVolumeVariables<TypeTag>);
+SET_TYPE_PROP(HeterogeneousNIProblem, Model, CO2NIModel<TypeTag>);
+SET_TYPE_PROP(HeterogeneousNIProblem, VolumeVariables, CO2NIVolumeVariables<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(HeterogeneousProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(HeterogeneousNIProblem, ProblemEnableGravity, true);
 
-SET_BOOL_PROP(HeterogeneousProblem, ImplicitEnableJacobianRecycling, false);
-SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
+SET_BOOL_PROP(HeterogeneousNIProblem, ImplicitEnableJacobianRecycling, false);
+SET_BOOL_PROP(HeterogeneousNIProblem, VtkAddVelocity, false);
 }
 
 
 /*!
  * \ingroup CO2NIModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Problem where CO2 is injected under a low permeable layer in a depth of 1200m.
  *
  * The domain is sized 200m times 100m and consists of four layers, a
@@ -108,11 +108,11 @@ SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
  * between different parts of the boundary.
  * These boundary ids can be imported into the problem where the boundary conditions can then be assigned accordingly.
  *
- * To run the simulation execute the following line in shell:
- * <tt>./test_co2 </tt>
+ * To run the simulation execute the following line in shell (works with the box and cell centered spatial discretization method):
+ * <tt>./test_ccco2ni </tt> or <tt>./test_boxco2ni </tt>
  */
 template <class TypeTag >
-class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
+class HeterogeneousNIProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
@@ -174,7 +174,7 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    HeterogeneousProblem(TimeManager &timeManager,
+    HeterogeneousNIProblem(TimeManager &timeManager,
                      const GridView &gridView)
         : ParentType(timeManager, GridCreator::grid().leafView()),
           //Boundary Id Setup:

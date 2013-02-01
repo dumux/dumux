@@ -23,7 +23,7 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the non-isothermal two-phase, two-component
+ *        finite volume in the non-isothermal CO2
  *        model.
  */
 #ifndef DUMUX_CO2NI_VOLUME_VARIABLES_HH
@@ -38,7 +38,7 @@ namespace Dumux
  * \ingroup CO2NIModel
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the non-isothermal two-phase, two-component
+ *        finite volume in the non-isothermal CO2
  *        model.
  */
 template <class TypeTag>

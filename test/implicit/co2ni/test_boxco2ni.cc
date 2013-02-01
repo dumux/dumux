@@ -66,7 +66,7 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
 #if HAVE_ALUGRID
-    typedef TTAG(HeterogeneousBoxProblem) ProblemTypeTag;
+    typedef TTAG(HeterogeneousNIBoxProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
     std::cout << "Test skipped, it needs ALUGrid." << std::endl;
