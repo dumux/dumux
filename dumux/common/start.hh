@@ -288,6 +288,7 @@ void dumuxMessage_(bool start)
         default:    // silence to delight Bernd
             return ;
     }
+    std::cout << std::endl;
 }
 
 /*!
@@ -307,6 +308,9 @@ int start_(int argc,
            char **argv,
            void (*usage)(const char *, const std::string &))
 {
+    // output dumux start message
+    dumuxMessage_(true);
+
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     // Set by default (dumux/common/basicproperties.hh) to DgfGridCreator (dumux/io/dgfgridcreator.hh)
@@ -399,9 +403,6 @@ int start_(int argc,
                                                /*overwrite=*/false);
     }
     parameterFile.close();
-
-    // output dumux start message
-    dumuxMessage_(true);
 
     bool printProps = false;
     if (ParameterTree::tree().hasKey("PrintProperties") 
