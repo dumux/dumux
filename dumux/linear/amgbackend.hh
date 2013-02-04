@@ -45,10 +45,10 @@ template <class TypeTag> class AMGBackend;
 namespace Properties
 {
 //! the PDELab finite element map used for the gridfunctionspace
-NEW_PROP_TAG(ImplicitLocalFemMap);
+NEW_PROP_TAG(AMGLocalFemMap);
 
 //! box: use the (multi-)linear local FEM space associated with cubes by default
-SET_PROP(BoxModel, ImplicitLocalFemMap)
+SET_PROP(BoxModel, AMGLocalFemMap)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -58,7 +58,17 @@ public:
 };
 
 //! cell-centered: use the element-wise constant local FEM space by default
-SET_PROP(CCModel, ImplicitLocalFemMap)
+SET_PROP(CCModel, AMGLocalFemMap)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum{dim = GridView::dimension};
+public:
+    typedef Dumux::P0LocalFiniteElementMap<Scalar,Scalar,dim>  type;
+};
+
+//! decoupled models: use the element-wise constant local FEM space by default
+SET_PROP(DecoupledModel, AMGLocalFemMap)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -68,10 +78,10 @@ public:
 };
 
 //! the type of the employed PDELab backend
-NEW_PROP_TAG(ImplicitPDELabBackend);
+NEW_PROP_TAG(AMGPDELabBackend);
 
 //! box: use the non-overlapping PDELab AMG backend
-SET_PROP(BoxModel, ImplicitPDELabBackend)
+SET_PROP(BoxModel, AMGPDELabBackend)
 {
     typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
 public:
@@ -79,7 +89,15 @@ public:
 };
 
 //! cell-centered: use the overlapping PDELab AMG backend
-SET_PROP(CCModel, ImplicitPDELabBackend)
+SET_PROP(CCModel, AMGPDELabBackend)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<GridOperator> type;
+};
+
+//! decoupled model: use the overlapping PDELab AMG backend
+SET_PROP(DecoupledModel, AMGPDELabBackend)
 {
     typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
 public:
@@ -101,6 +119,32 @@ SET_PROP(CCModel, SolutionVector)
 public:
     typedef typename GridOperator::Traits::Domain type;
 };
+
+
+//! decoupled model: reset the type of solution vector to be PDELab conforming
+SET_PROP(DecoupledModel, PressureSolutionVector)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef typename GridOperator::Traits::Domain type;
+};
+
+//! decoupled model: reset the type of solution vector to be PDELab conforming
+SET_PROP(DecoupledModel, PressureRHSVector)
+{
+    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+public:
+    typedef typename GridOperator::Traits::Domain type;
+};
+
+//! set a property JacobianMatrix also for the decoupled models
+SET_PROP(DecoupledModel, JacobianMatrix)
+{
+public:
+    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) type;
+};
+
+
 }
 
 /*!
@@ -141,11 +185,12 @@ class AMGBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, ImplicitLocalFemMap) LocalFemMap;
+    typedef typename GET_PROP_TYPE(TypeTag, AMGLocalFemMap) LocalFemMap;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum { dim = GridView::dimension };
     typedef typename Dune::PDELab::NoConstraints Constraints;
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+    enum { numEq = JacobianMatrix::block_type::rows};
     typedef Dune::PDELab::GridFunctionSpace<GridView, 
                                             LocalFemMap, 
                                             Constraints, 
@@ -168,7 +213,7 @@ public:
                                        ConstraintsTrafo,
                                        true
                                       > GridOperator;
-    typedef typename GET_PROP_TYPE(TypeTag, ImplicitPDELabBackend) PDELabBackend;
+    typedef typename GET_PROP_TYPE(TypeTag, AMGPDELabBackend) PDELabBackend;
 
     /*!
      * \brief Construct the backend.

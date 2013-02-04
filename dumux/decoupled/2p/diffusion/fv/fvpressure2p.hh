@@ -101,6 +101,7 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureSolutionVector) PressureSolutionVector;
 
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
@@ -190,13 +191,12 @@ public:
         this->solve();
         if (solveTwice)
         {
-            Dune::BlockVector < Dune::FieldVector<Scalar, 1>
-                    > pressureOld(this->pressure());
+            PressureSolutionVector pressureOld(this->pressure());
 
             this->assemble(false);
             this->solve();
 
-            Dune::BlockVector < Dune::FieldVector<Scalar, 1> > pressureDiff(pressureOld);
+            PressureSolutionVector pressureDiff(pressureOld);
             pressureDiff -= this->pressure();
             pressureOld = this->pressure();
             Scalar pressureNorm = pressureDiff.infinity_norm();

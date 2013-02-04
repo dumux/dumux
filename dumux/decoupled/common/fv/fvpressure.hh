@@ -47,10 +47,6 @@ template<class TypeTag> class FVPressure
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    ///@cond 0
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolution;
-    ///@endcond
-
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     enum
     {
@@ -105,11 +101,11 @@ protected:
     void solve();
 
     //!Returns the vector containing the pressure solution
-    ScalarSolution& pressure()
+    PressureSolution& pressure()
     {   return pressure_;}
 
     //!Returns the vector containing the pressure solution
-    const ScalarSolution& pressure() const
+    const PressureSolution& pressure() const
     {   return pressure_;}
 
 public:
