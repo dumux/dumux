@@ -35,6 +35,7 @@
 
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
+#include <dumux/decoupled/common/pressureproperties.hh>
 #include "linearsolverproperties.hh"
 
 namespace Dumux {
