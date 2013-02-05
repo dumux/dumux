@@ -510,4 +510,4 @@ if(SUPERLU_FOUND)
   add_test(test_navierstokes bin/runTest.sh references/navierstokes-reference.vtu navierstokes-00008.vtu test/freeflow/navierstokes/test_navierstokes -Grid.File test/freeflow/navierstokes/grids/test_navierstokes.dgf)
 endif(SUPERLU_FOUND)
 
-add_test(test_restart  bin/runTest.sh references/co2box-reference.vtu            heterogeneous-00020.vtu            test/implicit/co2/test_boxco2 -Grid.File test/implicit/co2/grids/heterogeneousSmall.dgf -Restart 42008.6 -TimeManager.DtInitial 23452.1)
+add_test(test_restart  bin/runTest.sh references/co2box-reference.vtu            heterogeneousbox-00020.vtu            test/implicit/co2/test_boxco2 -Grid.File test/implicit/co2/grids/heterogeneousSmall.dgf -Restart 42008.6 -TimeManager.DtInitial 23452.1)
