@@ -253,14 +253,14 @@ void dirichletAtPos(PrimaryVariables &bcValues, const GlobalPosition& globalPos)
  */
 void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalPos) const
 {
-    this->setZero(neumannValues, Indices::contiWEqIdx);
+    this->setZero(neumannValues);
 }
 /*!
  * \copydoc Dumux::IMPETProblem::source()
  */
 void source(PrimaryVariables &values, const Element &element)
 {
-    this->setZero(values, Indices::contiWEqIdx);
+    this->setZero(values);
     ElementPointer father(element);
     // access level 1 entity
     while (father->level() != this->gridAdapt().getMinLevel())
