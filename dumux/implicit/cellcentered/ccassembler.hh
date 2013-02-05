@@ -134,7 +134,7 @@ private:
         int nElems = this->gridView_().size(0);
 
         // allocate raw matrix
-        this->matrix_ = new JacobianMatrix(nElems, nElems, JacobianMatrix::random);
+        this->matrix_ = Dune::make_shared<JacobianMatrix>(nElems, nElems, JacobianMatrix::random);
 
         // find out the global indices of the neighboring elements of
         // each element

@@ -224,13 +224,13 @@ public:
     AMGBackend(const Problem& problem)
     : problem_(problem)
     {
-        fem_ = new LocalFemMap();
-        constraints_ = new Constraints();
-        scalarGridFunctionSpace_ = new ScalarGridFunctionSpace(problem.gridView(), *fem_, *constraints_);
-        gridFunctionSpace_ = new GridFunctionSpace(*scalarGridFunctionSpace_);
-        imp_ = new PDELabBackend(*gridFunctionSpace_,
-                GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations),
-                GET_PROP_VALUE(TypeTag, LinearSolverVerbosity));
+        fem_ = Dune::make_shared<LocalFemMap>();
+        constraints_ = Dune::make_shared<Constraints>();
+        scalarGridFunctionSpace_ = Dune::make_shared<ScalarGridFunctionSpace>(problem.gridView(), *fem_, *constraints_);
+        gridFunctionSpace_ = Dune::make_shared<GridFunctionSpace>(*scalarGridFunctionSpace_);
+        int maxIt = GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations);
+        int verbosity = GET_PROP_VALUE(TypeTag, LinearSolverVerbosity);
+        imp_ = Dune::make_shared<PDELabBackend>(*gridFunctionSpace_, maxIt, verbosity);
     }
 
     /*!
@@ -262,23 +262,14 @@ public:
     {
         return result_;
     }
-
-    ~AMGBackend()
-    {
-        delete imp_;
-        delete gridFunctionSpace_;
-        delete scalarGridFunctionSpace_;
-        delete constraints_;
-        delete fem_;
-    }
     
 private:
     const Problem& problem_;
-    LocalFemMap *fem_;
-    Constraints *constraints_;
-    ScalarGridFunctionSpace *scalarGridFunctionSpace_;
-    GridFunctionSpace *gridFunctionSpace_;
-    PDELabBackend *imp_;
+    Dune::shared_ptr<LocalFemMap> fem_;
+    Dune::shared_ptr<Constraints> constraints_;
+    Dune::shared_ptr<ScalarGridFunctionSpace> scalarGridFunctionSpace_;
+    Dune::shared_ptr<GridFunctionSpace> gridFunctionSpace_;
+    Dune::shared_ptr<PDELabBackend> imp_;
     Dune::InverseOperatorResult result_;
 };
 
@@ -312,9 +303,9 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        imp_ = new PDELabBackend(
-                GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations),
-                GET_PROP_VALUE(TypeTag, LinearSolverVerbosity));
+        int maxIt = GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations);
+        int verbosity = GET_PROP_VALUE(TypeTag, LinearSolverVerbosity);
+        imp_ = Dune::make_shared<PDELabBackend>(maxIt, verbosity);
 
         static const double residReduction = GET_PROP_VALUE(TypeTag, LinearSolverResidualReduction);
         imp_->apply(A, x, b, residReduction);
@@ -325,8 +316,8 @@ public:
         result_.reduction  = imp_->result().reduction;
         result_.conv_rate  = imp_->result().conv_rate;
 
-        delete imp_;
-
+        imp_.template reset<PDELabBackend>(0);
+        
         return result_.converged;
     }
 
@@ -340,7 +331,7 @@ public:
 
 private:
     const Problem& problem_;
-    PDELabBackend *imp_;
+    Dune::shared_ptr<PDELabBackend> imp_;
     Dune::InverseOperatorResult result_;
 };
 
@@ -379,10 +370,10 @@ public:
     {
         scaleLinearSystem(A, b);
 
-        imp_ = new PDELabBackend(
-                GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations),
-                GET_PROP_VALUE(TypeTag, LinearSolverVerbosity));
-
+        int maxIt = GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations);
+        int verbosity = GET_PROP_VALUE(TypeTag, LinearSolverVerbosity);
+        imp_ = Dune::make_shared<PDELabBackend>(maxIt, verbosity);
+        
         static const double residReduction = GET_PROP_VALUE(TypeTag, LinearSolverResidualReduction);
         imp_->apply(A, x, b, residReduction);
 
@@ -392,8 +383,8 @@ public:
         result_.reduction  = imp_->result().reduction;
         result_.conv_rate  = imp_->result().conv_rate;
 
-        delete imp_;
-
+        imp_.template reset<PDELabBackend>(0);
+        
         return result_.converged;
     }
 
@@ -407,7 +398,7 @@ public:
 
 private:
     const Problem& problem_;
-    PDELabBackend *imp_;
+    Dune::shared_ptr<PDELabBackend> imp_;
     Dune::InverseOperatorResult result_;
 };
 

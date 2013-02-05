@@ -99,7 +99,6 @@ public:
         , timeManager_(&timeManager)
         , newtonMethod_(asImp_())
         , newtonCtl_(asImp_())
-        , resultWriter_(0)
     {
         // calculate the bounding box of the local partition of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -121,13 +120,6 @@ public:
         // set a default name for the problem
         simName_ = "sim";
     }
-
-    ~ImplicitProblem()
-    {
-        if (resultWriter_)
-            delete resultWriter_;
-    }
-
 
     /*!
      * \brief Called by the Dumux::TimeManager in order to
@@ -857,7 +849,10 @@ protected:
 private:
     // makes sure that the result writer exists
     void createResultWriter_()
-    { if (!resultWriter_) resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name()); }
+    { 
+        if (!resultWriter_) 
+            resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+    }
 
     std::string simName_;
     const GridView gridView_;
@@ -875,7 +870,7 @@ private:
     NewtonMethod newtonMethod_;
     NewtonController newtonCtl_;
 
-    VtkMultiWriter *resultWriter_;
+    Dune::shared_ptr<VtkMultiWriter> resultWriter_;
 };
 
 }

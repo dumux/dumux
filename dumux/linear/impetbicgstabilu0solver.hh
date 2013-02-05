@@ -82,14 +82,10 @@ class IMPETBiCGStabILU0Solver
 
 public:
     IMPETBiCGStabILU0Solver(const Problem &problem, int overlapSize=1)
-        : problem_(problem)
-        , overlapSize_(overlapSize)
-    {
-        overlapMatrix_ = 0;
-        overlapb_ = 0;
-        overlapx_ = 0;
-    }
-
+    : problem_(problem)
+    , overlapSize_(overlapSize)
+    {}
+        
     ~IMPETBiCGStabILU0Solver()
     { cleanup_(); }
 
@@ -175,35 +171,30 @@ private:
             borderListCreator(problem_.gridView(), problem_.elementMapper());
 
         // create the overlapping Jacobian matrix
-        overlapMatrix_ = new OverlappingMatrix (M,
+        overlapMatrix_ = Dune::make_shared<OverlappingMatrix> (M,
                                                 borderListCreator.foreignBorderList(),
                                                 borderListCreator.domesticBorderList(),
                                                 overlapSize_);
 
         // create the overlapping vectors for the residual and the
         // solution
-        overlapb_ = new OverlappingVector(overlapMatrix_->overlap());
-        overlapx_ = new OverlappingVector(*overlapb_);
+        overlapb_ = Dune::make_shared<OverlappingVector>(overlapMatrix_->overlap());
+        overlapx_ = Dune::make_shared<OverlappingVector>(*overlapb_);
     }
 
     void cleanup_()
     {
-        // create the overlapping Jacobian matrix and vectors
-        delete overlapMatrix_;
-        delete overlapb_;
-        delete overlapx_;
-
-        overlapMatrix_ = 0;
-        overlapb_ = 0;
-        overlapx_ = 0;
+        overlapMatrix_.template reset<OverlappingMatrix>(0);
+        overlapb_.template reset<OverlappingVector>(0);
+        overlapx_.template reset<OverlappingVector>(0);
     }
-
+    
     const Problem &problem_;
 
     int overlapSize_;
-    OverlappingMatrix *overlapMatrix_;
-    OverlappingVector *overlapb_;
-    OverlappingVector *overlapx_;
+    Dune::shared_ptr<OverlappingMatrix> overlapMatrix_;
+    Dune::shared_ptr<OverlappingVector> overlapb_;
+    Dune::shared_ptr<OverlappingVector> overlapx_;
 };
 
 } // namespace Dumux

@@ -220,7 +220,7 @@ private:
         int numVerticesGlobal = this->gridView_().size(dim);
 
         // allocate raw matrix
-        this->matrix_ = new JacobianMatrix(numVerticesGlobal, numVerticesGlobal, JacobianMatrix::random);
+        this->matrix_ = Dune::make_shared<JacobianMatrix>(numVerticesGlobal, numVerticesGlobal, JacobianMatrix::random);
 
         // find out the global indices of the neighboring vertices of
         // each vertex

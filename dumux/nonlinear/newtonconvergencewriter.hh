@@ -46,15 +46,11 @@ public:
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
     NewtonConvergenceWriter(NewtonController &ctl)
-        : ctl_(ctl)
+    : ctl_(ctl)
     {
         timeStepIndex_ = 0;
         iteration_ = 0;
-        vtkMultiWriter_ = 0;
     }
-
-    ~NewtonConvergenceWriter()
-    { delete vtkMultiWriter_; }
 
     void beginTimestep()
     {
@@ -66,7 +62,7 @@ public:
     {
         ++ iteration_;
         if (!vtkMultiWriter_)
-            vtkMultiWriter_ = new VtkMultiWriter(gv, "convergence");
+            vtkMultiWriter_ = Dune::make_shared<VtkMultiWriter>(gv, "convergence");
         vtkMultiWriter_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
     }
 
@@ -87,7 +83,7 @@ public:
 private:
     int timeStepIndex_;
     int iteration_;
-    VtkMultiWriter *vtkMultiWriter_;
+    Dune::shared_ptr<VtkMultiWriter> vtkMultiWriter_;
     NewtonController &ctl_;
 };
 

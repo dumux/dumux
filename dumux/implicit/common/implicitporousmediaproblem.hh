@@ -78,16 +78,10 @@ public:
           gravity_(0)
     {
         newSpatialParams_ = true;
-        spatialParams_ = new SpatialParams(gridView);
+        spatialParams_ = Dune::make_shared<SpatialParams>(gridView);
 
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim-1]  = -9.81;
-    }
-
-    ~ImplicitPorousMediaProblem()
-    {
-        if (newSpatialParams_)
-            delete spatialParams_;
     }
 
     /*!
@@ -199,7 +193,7 @@ protected:
     DimVector gravity_;
 
     // fluids and material properties
-    SpatialParams*  spatialParams_;
+    Dune::shared_ptr<SpatialParams> spatialParams_;
     bool newSpatialParams_;
 };
 

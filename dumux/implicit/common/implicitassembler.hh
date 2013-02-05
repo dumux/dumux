@@ -95,19 +95,12 @@ public:
     };
 
     ImplicitAssembler()
+    : problemPtr_(0)
     {
-        problemPtr_ = 0;
-        matrix_ = 0;
-
         // set reassemble accuracy to 0, so that if partial reassembly
         // of the jacobian matrix is disabled, the reassemble accuracy
         // is always smaller than the current relative tolerance
         reassembleAccuracy_ = 0.0;
-    }
-
-    ~ImplicitAssembler()
-    {
-        delete matrix_;
     }
 
     /*!
@@ -543,7 +536,7 @@ protected:
     Problem *problemPtr_;
 
     // the jacobian matrix
-    JacobianMatrix *matrix_;
+    Dune::shared_ptr<JacobianMatrix> matrix_;
     // the right-hand side
     SolutionVector residual_;
 

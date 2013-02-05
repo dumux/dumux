@@ -88,12 +88,10 @@ public:
      * \brief The constructor.
      */
     ImplicitModel()
+    : problemPtr_(0)
     {
         enableHints_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableHints);
     }
-
-    ~ImplicitModel()
-    { delete jacAsm_;  }
 
     /*!
      * \brief Apply the initial conditions to the model.
@@ -114,7 +112,7 @@ public:
             boxVolume_.resize(nDofs);
 
         localJacobian_.init(problem_());
-        jacAsm_ = new JacobianAssembler();
+        jacAsm_ = Dune::make_shared<JacobianAssembler>();
         jacAsm_->init(problem_());
 
         asImp_().applyInitialSolution_();
@@ -637,8 +635,8 @@ public:
      */
     void resetJacobianAssembler ()
     {
-        delete jacAsm_;
-        jacAsm_ = new JacobianAssembler;
+        jacAsm_.template reset<JacobianAssembler>(0);
+        jacAsm_ = Dune::make_shared<JacobianAssembler>();
         jacAsm_->init(problem_());
     }
 
@@ -999,7 +997,7 @@ protected:
     LocalJacobian localJacobian_;
     // Linearizes the problem at the current time step using the
     // local jacobian
-    JacobianAssembler *jacAsm_;
+    Dune::shared_ptr<JacobianAssembler> jacAsm_;
 
     // the set of all indices of vertices on the boundary
     std::vector<bool> boundaryIndices_;

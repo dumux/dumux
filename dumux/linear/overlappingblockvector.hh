@@ -285,7 +285,7 @@ private:
 #if HAVE_MPI
         // create array for the front indices
         int numDomestic = overlap_->numDomestic();
-        frontMaster_ = Dune::shared_ptr<std::vector<ProcessRank> >(new std::vector<ProcessRank>(numDomestic, -1));
+        frontMaster_ = Dune::make_shared<std::vector<ProcessRank> >(numDomestic, -1);
 
         typename PeerSet::const_iterator peerIt;
         typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
@@ -297,9 +297,9 @@ private:
 
             const DomesticOverlapWithPeer &domesticOverlap = overlap_->domesticOverlapWithPeer(peerRank);
             int numEntries = domesticOverlap.size();
-            numIndicesSendBuff_[peerRank] = Dune::shared_ptr<MpiBuffer<int> >(new MpiBuffer<int>(1));
-            indicesSendBuff_[peerRank] = Dune::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numEntries));
-            valuesSendBuff_[peerRank] = Dune::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numEntries));
+            numIndicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<int> >(1);
+            indicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<RowIndex> >(numEntries);
+            valuesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<FieldVector> >(numEntries);
 
             // fill the indices buffer with global indices
             MpiBuffer<RowIndex> &indicesSendBuff = *indicesSendBuff_[peerRank];
@@ -330,8 +330,8 @@ private:
             numRows = numRowsRecvBuff[0];
 
             // then, create the MPI buffers
-            indicesRecvBuff_[peerRank] = Dune::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numRows));
-            valuesRecvBuff_[peerRank] = Dune::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numRows));
+            indicesRecvBuff_[peerRank] = Dune::make_shared<MpiBuffer<RowIndex> >(numRows);
+            valuesRecvBuff_[peerRank] = Dune::make_shared<MpiBuffer<FieldVector> >(numRows);
             MpiBuffer<RowIndex> &indicesRecvBuff = *indicesRecvBuff_[peerRank];
 
             // next, receive the actual indices

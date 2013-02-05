@@ -126,20 +126,10 @@ class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
 public:
-    MPNCModel()
-    : vtkWriter_(0) 
-    {}
-    
-    ~MPNCModel()
-    { 
-        if (vtkWriter_)
-            delete vtkWriter_; 
-    }
-
     void init(Problem &problem)
     {
         ParentType::init(problem);
-        vtkWriter_ = new MPNCVtkWriter(problem);
+        vtkWriter_ = Dune::make_shared<MPNCVtkWriter>(problem);
 
         if (this->gridView_().comm().rank() == 0)
             std::cout
@@ -185,7 +175,7 @@ public:
         vtkWriter_->addCurrentSolution(writer);
     }
 
-    MPNCVtkWriter *vtkWriter_;
+    Dune::shared_ptr<MPNCVtkWriter> vtkWriter_;
 };
 
 }

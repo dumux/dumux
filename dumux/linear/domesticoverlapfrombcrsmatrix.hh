@@ -372,12 +372,12 @@ protected:
         // indices stemming from the overlap (i.e. without the border
         // indices)
         int numIndices = foreignOverlap.size();
-        numIndicesSendBuff_[peerRank] = new MpiBuffer<int>(1);
+        numIndicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<int> >(1);
         (*numIndicesSendBuff_[peerRank])[0] = numIndices;
         numIndicesSendBuff_[peerRank]->send(peerRank);
 
         // create MPI buffers
-        indicesSendBuff_[peerRank] = new MpiBuffer<IndexDistanceNpeers>(numIndices);
+        indicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<IndexDistanceNpeers> >(numIndices);
 
         // then send the additional indices themselfs
         ForeignOverlapWithPeer::const_iterator overlapIt = foreignOverlap.begin();
@@ -397,7 +397,7 @@ protected:
                                     numPeers);
 
             // send all peer ranks which see the given index
-            peersSendBuff_[peerRank].push_back(new MpiBuffer<int>(2*numPeers));
+            peersSendBuff_[peerRank].push_back(Dune::make_shared<MpiBuffer<int> >(2*numPeers));
             typename std::map<ProcessRank, BorderDistance>::const_iterator it = foreignIndexOverlap.begin();
             typename std::map<ProcessRank, BorderDistance>::const_iterator endIt = foreignIndexOverlap.end();
             for (int j = 0; it != endIt; ++it, ++j)
@@ -419,10 +419,10 @@ protected:
     void waitSendIndices_(int peerRank)
     {
         numIndicesSendBuff_[peerRank]->wait();
-        delete numIndicesSendBuff_[peerRank];
+        numIndicesSendBuff_[peerRank].template reset<MpiBuffer<int> >(0);
 
         indicesSendBuff_[peerRank]->wait();
-        delete indicesSendBuff_[peerRank];
+        indicesSendBuff_[peerRank].template reset<MpiBuffer<IndexDistanceNpeers> >(0);
 
         const ForeignOverlapWithPeer &foreignPeerOverlap
             = foreignOverlap_.foreignOverlapWithPeer(peerRank);
@@ -430,7 +430,7 @@ protected:
         ForeignOverlapWithPeer::const_iterator overlapEndIt = foreignPeerOverlap.end();
         for (int i = 0; overlapIt != overlapEndIt; ++overlapIt, ++i) {
             peersSendBuff_[peerRank][i]->wait();
-            delete peersSendBuff_[peerRank][i];
+            peersSendBuff_[peerRank][i].template reset<MpiBuffer<int> >(0);
         }
     }
 
@@ -498,9 +498,9 @@ protected:
     DomesticOverlapByIndex domesticOverlapByIndex_;
     std::vector<int> borderDistance_;
 
-    std::map<ProcessRank, MpiBuffer<int>* > numIndicesSendBuff_;
-    std::map<ProcessRank, MpiBuffer<IndexDistanceNpeers>* > indicesSendBuff_;
-    std::map<ProcessRank, std::vector<MpiBuffer<int>*> > peersSendBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<int> > > numIndicesSendBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<IndexDistanceNpeers> > > indicesSendBuff_;
+    std::map<ProcessRank, std::vector<Dune::shared_ptr<MpiBuffer<int> > > > peersSendBuff_;
     GlobalIndices globalIndices_;
     PeerSet peerSet_;
 };

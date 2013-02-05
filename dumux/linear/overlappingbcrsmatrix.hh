@@ -75,7 +75,7 @@ public:
                           const BorderList &domesticBorderList,
                           int overlapSize)
     {
-        overlap_ = Dune::shared_ptr<Overlap>(new Overlap(M, foreignBorderList, domesticBorderList, overlapSize));
+        overlap_ = Dune::make_shared<Overlap>(M, foreignBorderList, domesticBorderList, overlapSize);
         myRank_ = 0;
 #if HAVE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
@@ -84,31 +84,6 @@ public:
         // build the overlapping matrix from the non-overlapping
         // matrix and the overlap
         build_(M);
-    }
-
-    ~OverlappingBCRSMatrix()
-    {
-        if (overlap_.use_count() == 0)
-            return;
-
-        // delete all MPI buffers
-        const PeerSet &peerSet = overlap_->foreignOverlap().peerSet();
-        typename PeerSet::const_iterator peerIt = peerSet.begin();
-        typename PeerSet::const_iterator peerEndIt = peerSet.end();
-        for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
-
-            delete rowSizesRecvBuff_[peerRank];
-            delete rowIndicesRecvBuff_[peerRank];
-            delete entryIndicesRecvBuff_[peerRank];
-            delete entryValuesRecvBuff_[peerRank];
-
-            delete numRowsSendBuff_[peerRank];
-            delete rowSizesSendBuff_[peerRank];
-            delete rowIndicesSendBuff_[peerRank];
-            delete entryIndicesSendBuff_[peerRank];
-            delete entryValuesSendBuff_[peerRank];
-        }
     }
 
     /*!
@@ -326,12 +301,12 @@ private:
 
         // send size of foreign overlap to peer
         int numOverlapRows = peerOverlap.size();
-        numRowsSendBuff_[peerRank] = new MpiBuffer<int>(1);
+        numRowsSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<int> >(1);
         (*numRowsSendBuff_[peerRank])[0] = numOverlapRows;
         numRowsSendBuff_[peerRank]->send(peerRank);
 
-        rowSizesSendBuff_[peerRank] = new MpiBuffer<Index>(numOverlapRows);
-        rowIndicesSendBuff_[peerRank] = new MpiBuffer<Index>(numOverlapRows);
+        rowSizesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<Index> >(numOverlapRows);
+        rowIndicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<Index> >(numOverlapRows);
 
         // create the row size MPI buffer
         int numEntries = 0;
@@ -363,7 +338,7 @@ private:
 
         // create and fill the MPI buffer for the indices of the
         // matrix entries
-        entryIndicesSendBuff_[peerRank] = new MpiBuffer<Index>(numEntries);
+        entryIndicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<Index> >(numEntries);
         i = 0;
         it = peerOverlap.begin();
         for (; it != endIt; ++it) {
@@ -384,7 +359,7 @@ private:
 
         // create the send buffers for the values of the matrix
         // entries
-        entryValuesSendBuff_[peerRank] = new MpiBuffer<block_type>(numEntries);
+        entryValuesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<block_type> >(numEntries);
 #endif // HAVE_MPI
     }
 
@@ -400,8 +375,8 @@ private:
 
         // create receive buffer for the row sizes and receive them
         // from the peer
-        rowIndicesRecvBuff_[peerRank] = new MpiBuffer<Index>(numOverlapRows);
-        rowSizesRecvBuff_[peerRank] = new MpiBuffer<int>(numOverlapRows);
+        rowIndicesRecvBuff_[peerRank] = Dune::make_shared<MpiBuffer<Index> >(numOverlapRows);
+        rowSizesRecvBuff_[peerRank] = Dune::make_shared<MpiBuffer<int> >(numOverlapRows);
         rowIndicesRecvBuff_[peerRank]->receive(peerRank);
         rowSizesRecvBuff_[peerRank]->receive(peerRank);
 
@@ -413,8 +388,8 @@ private:
         }
 
         // create the buffer to store the column indices of the matrix entries
-        entryIndicesRecvBuff_[peerRank] = new MpiBuffer<Index>(totalIndices);
-        entryValuesRecvBuff_[peerRank] = new MpiBuffer<block_type>(totalIndices);
+        entryIndicesRecvBuff_[peerRank] = Dune::make_shared<MpiBuffer<Index> >(totalIndices);
+        entryValuesRecvBuff_[peerRank] = Dune::make_shared<MpiBuffer<block_type> >(totalIndices);
 
         // communicate with the peer
         entryIndicesRecvBuff_[peerRank]->receive(peerRank);
@@ -595,16 +570,16 @@ private:
     Entries entries_;
     Dune::shared_ptr<Overlap> overlap_;
 
-    std::map<ProcessRank, MpiBuffer<int>* > rowSizesRecvBuff_;
-    std::map<ProcessRank, MpiBuffer<int>* > rowIndicesRecvBuff_;
-    std::map<ProcessRank, MpiBuffer<int>* > entryIndicesRecvBuff_;
-    std::map<ProcessRank, MpiBuffer<block_type>* > entryValuesRecvBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<int> > > rowSizesRecvBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<int> > > rowIndicesRecvBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<int> > > entryIndicesRecvBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<block_type> > > entryValuesRecvBuff_;
 
-    std::map<ProcessRank, MpiBuffer<int>* > numRowsSendBuff_;
-    std::map<ProcessRank, MpiBuffer<int>* > rowSizesSendBuff_;
-    std::map<ProcessRank, MpiBuffer<int>* > rowIndicesSendBuff_;
-    std::map<ProcessRank, MpiBuffer<int>* > entryIndicesSendBuff_;
-    std::map<ProcessRank, MpiBuffer<block_type>* > entryValuesSendBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<int> > > numRowsSendBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<int> > > rowSizesSendBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<int> > > rowIndicesSendBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<int> > > entryIndicesSendBuff_;
+    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<block_type> > > entryValuesSendBuff_;
 };
 
 } // namespace Dumux
