@@ -228,7 +228,7 @@ protected:
     bool enableMPFA; //!< Enables mpfa method to calculate the fluxes near hanging nodes
     bool enableSecondHalfEdge; //!< If possible, 2 interaction volumes are used for the mpfa method near hanging nodes
     //! The 2p Mpfa pressure module, that is only used for the calulation of transmissibility of the second interaction volumes
-    FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>* pressureModelAdaptive2p_;
+    Dune::shared_ptr<FVMPFAL2PFABoundPressure2PAdaptive<TypeTag> > pressureModelAdaptive2p_;
 };
 
 
@@ -1205,7 +1205,7 @@ int FVPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersection
 
 
     if(!pressureModelAdaptive2p_)
-        pressureModelAdaptive2p_= new FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>(problem()) ;
+        pressureModelAdaptive2p_= Dune::make_shared<FVMPFAL2PFABoundPressure2PAdaptive<TypeTag> >(problem()) ;
     // create Interaction Volume object
     Dumux::FVMPFALInteractionVolume<TypeTag> interactionVolume;
 

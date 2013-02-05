@@ -76,7 +76,7 @@ private:
 private:
     int subdomain_;
     int fluidStateType_;
-    SimpleFluidState* simpleFluidState_;
+    Dune::shared_ptr<SimpleFluidState> simpleFluidState_;
 
 //    FluxData fluxData_;
 public:
@@ -285,12 +285,11 @@ public:
         fluidStateType_ = simple;
         if(this->fluidState_)
         {
-            delete this->fluidState_;
-            this->fluidState_ = NULL;
+            this->fluidState_.template reset<FluidState>(0);
         }
 
         if(!simpleFluidState_)
-            simpleFluidState_ = new SimpleFluidState;
+            simpleFluidState_ = Dune::make_shared<SimpleFluidState>();
         return *simpleFluidState_;
     }
     //! Allows manipulation of the complex fluid state
@@ -303,12 +302,11 @@ public:
         fluidStateType_ = complex;
         if(simpleFluidState_)
         {
-            delete simpleFluidState_;
-            simpleFluidState_ = NULL;
+            simpleFluidState_.template reset<SimpleFluidState>(0);
         }
 
         if(!this->fluidState_)
-            this->fluidState_ = new FluidState;
+            this->fluidState_ = Dune::make_shared<FluidState>();
         return *this->fluidState_;
     }
 

@@ -84,13 +84,12 @@ protected:
     int globalIdx_;
     Scalar perimeter_;
 
-    FluidState* fluidState_;
+    Dune::shared_ptr<FluidState> fluidState_;
     FluxData fluxData_;
 public:
 
     //! Constructor for a local CellData object
-    CellData2P2C() :
-        fluidState_(0)
+    CellData2P2C()
     {
         for (int i = 0; i < numPhases;i++)
         {
@@ -360,7 +359,7 @@ public:
     FluidState& manipulateFluidState()
     {
         if(!fluidState_)
-            fluidState_ = new FluidState;
+            fluidState_ = Dune::make_shared<FluidState>();
         return *fluidState_;
     }
 

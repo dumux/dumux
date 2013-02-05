@@ -179,13 +179,7 @@ public:
     FVTransport(Problem& problem) :
             problem_(problem), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals))
     {
-        evalCflFluxFunction_ = new EvalCflFluxFunction(problem);
-    }
-
-    //! Destructor
-    ~FVTransport()
-    {
-        delete evalCflFluxFunction_;
+        evalCflFluxFunction_ = Dune::make_shared<EvalCflFluxFunction>(problem);
     }
 
 private:
@@ -200,7 +194,7 @@ private:
     Problem& problem_;
     bool switchNormals_;
 
-    EvalCflFluxFunction* evalCflFluxFunction_;
+    Dune::shared_ptr<EvalCflFluxFunction> evalCflFluxFunction_;
 };
 
 /*! \brief Calculate the update vector.

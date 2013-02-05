@@ -80,8 +80,7 @@ public:
         : ParentType(timeManager, gridView),
         gravity_(0)
     {
-        newSpatialParams_ = true;
-        spatialParams_ = new SpatialParams(gridView);
+        spatialParams_ = Dune::make_shared<SpatialParams>(gridView);
 
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
@@ -98,20 +97,9 @@ public:
         : ParentType(timeManager, gridView),
         gravity_(0),spatialParams_(&spatialParams)
     {
-        newSpatialParams_ = false;
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = - 9.81;
-    }
-
-
-    //! Destructor
-    virtual ~IMPESProblem2P()
-    {
-        if (newSpatialParams_)
-        {
-        delete spatialParams_;
-        }
     }
 
     /*!
@@ -204,8 +192,7 @@ private:
     GlobalPosition gravity_;
 
     // fluids and material properties
-    SpatialParams*  spatialParams_;
-    bool newSpatialParams_;
+    Dune::shared_ptr<SpatialParams> spatialParams_;
 };
 
 }

@@ -401,26 +401,18 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Velocity type not supported!");
         }
 
-        capillaryFlux_ = new CapillaryFlux(problem);
-        gravityFlux_ = new GravityFlux(problem);
-        velocity_ = new Velocity(problem);
+        capillaryFlux_ = Dune::make_shared<CapillaryFlux>(problem);
+        gravityFlux_ = Dune::make_shared<GravityFlux>(problem);
+        velocity_ = Dune::make_shared<Velocity>(problem);
 
         vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
-    //! Destructor
-    ~FVSaturation2P()
-    {
-        delete capillaryFlux_;
-        delete gravityFlux_;
-        delete velocity_;
-    }
-
 private:
     Problem& problem_;
-    Velocity* velocity_;
-    CapillaryFlux* capillaryFlux_;
-    GravityFlux* gravityFlux_;
+    Dune::shared_ptr<Velocity> velocity_;
+    Dune::shared_ptr<CapillaryFlux> capillaryFlux_;
+    Dune::shared_ptr<GravityFlux> gravityFlux_;
 
     int vtkOutputLevel_;
 
