@@ -1,4 +1,4 @@
-Differences Between DuMuX 2.2 and DuMuX 2.3 (up to r10000)
+Differences Between DuMuX 2.2 and DuMuX 2.3
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
@@ -31,13 +31,16 @@ Differences Between DuMuX 2.2 and DuMuX 2.3 (up to r10000)
 
   - A backend for the ISTL AMG solver has been included, based on the
     corresponding DUNE-PDELab backends. It can be used for the fully 
-    implicit and the decoupled models, see \TODO FS#177. DUNE-PDELab 
-    and possibly DUNE-ISTL have to be patched, see the file README 
-    in the patches directory.
+    implicit and the decoupled models, see test_*1pwithamg in 
+    test/implicit/1p and test_impeswithamg in test/decoupled/2p. 
+    DUNE-PDELab and possibly DUNE-ISTL have to be patched, see the file 
+    README in the patches directory. Furthermore, the preprocessor 
+    variable USE_AMGBACKEND has to be defined, see the corresponding 
+    Makefile.ams.
 
-  - The decoupled models have been parallelized, see \TODO FS#177. 
-    They work in parallel only if the AMGBackend is used as linear 
-    solver. No dynamic loadbalancing can be done yet. 
+  - The decoupled models have been parallelized, see test_impeswithamg in 
+    test/decoupled/2p. They work in parallel only if the AMGBackend is used 
+    as linear solver. No dynamic loadbalancing can be done yet. 
 
   - The MPNC model can use either the most wetting or the most non-wetting phase
     pressure as primary variable. This is controlled via the property 
@@ -47,21 +50,23 @@ Differences Between DuMuX 2.2 and DuMuX 2.3 (up to r10000)
     http://www.dumux.org/doxygen-stable/html-2.2/a00838.php
 
   - Improved handling of the conductive heat fluxes in the non-isothermal implicit  
-	two-phase models, see \TODO FS#172.
+    two-phase models, see the problem files in test/implicit/2p(2c)ni.
 
-  - Introduced new selection of start/stop messages, \TODO FS#170.
+  - Introduced new selection of start/stop messages.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - The property Salinity used in the BrineCO2FluidSystem 
     has been renamed to ProblemSalinity. 
+
   - The matrixHeatFlux(...) and boundaryMatrixHeatFlux(...) methods in the spatial
-	parameters of nonisothermal implicit twophase models have been removed.
-	Instead, the computation of the effective thermal conductivity has been sourced 
-	out to the fluidmatrixinteractions in a separate file (somerton), which
-	can be exchanged. The spatial parameters file needs a method 
-	thermalConductivitySolid(...), where the thermal conductivity of the solid
-	material only is specified. The rest is computed in the respective
-	flux variables.
+    parameters of nonisothermal implicit twophase models have been removed.
+    Instead, the computation of the effective thermal conductivity has been sourced 
+    out to the fluidmatrixinteractions in a separate file 
+    dumux/material/fluidmatrixinteractions/thermalconductivitysomerton.hh, which
+    can be exchanged. The spatial parameters file needs a method 
+    thermalConductivitySolid(...), where the thermal conductivity of the solid
+    material only is specified. The rest is computed in the respective
+    flux variables.
 
 * Deprecated CLASSES/FILES, to be removed after 2.3:
   - The following headers in dumux/boxmodels/ have been deprecated and forward 
