@@ -48,7 +48,7 @@
 
 #include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
 
-#if HAVE_DUNE_PDELAB
+#ifdef USE_AMGBACKEND
 #include <dumux/linear/amgbackend.hh>
 #endif
 
@@ -128,7 +128,7 @@ SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<Typ
 
 SET_SCALAR_PROP(IMPESTestProblem, ImpetCFLFactor, 0.95);
 
-#if HAVE_DUNE_PDELAB
+#ifdef USE_AMGBACKEND
 // set up an additional problem where the AMG backend is used
 NEW_TYPE_TAG(IMPESTestProblemWithAMG, INHERITS_FROM(IMPESTestProblem));
 // use the AMG backend for the corresponding test

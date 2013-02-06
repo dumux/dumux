@@ -12,6 +12,7 @@ test_impes_SOURCES = test_impes.cc
 test_impesadaptive_SOURCES = test_impesadaptive.cc
 
 test_impeswithamg_SOURCES = test_impeswithamg.cc
+test_impeswithamg_CXXFLAGS = -DUSE_AMGBACKEND
 
 test_transport_SOURCES = test_transport.cc
 
