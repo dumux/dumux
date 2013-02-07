@@ -44,7 +44,7 @@ class ThermalConductivitySomerton
 {
 public:
     /*!
-     * \brief Returns the effective thermal conductivity \f$[W/m^2]\f$ after Somerton (1974).
+     * \brief Returns the effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974).
      *
      * The material law is:
      * \f[
@@ -57,7 +57,7 @@ public:
      * \param lambdaSolid the thermal conductivity of the solid phase
      * \param porosity The porosity
      *
-     * \return Effective thermal conductivity \f$[W/m^2]\f$ after Somerton (1974)
+     * \return Effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
      */
     static Scalar effectiveThermalConductivity(const Scalar Sw,
                                                const Scalar lambdaW,
