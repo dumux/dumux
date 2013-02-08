@@ -275,7 +275,10 @@ public:
         ElementIterator elemIt = gridView_().template begin<0>();
         const ElementIterator elemEndIt = gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
-            localResidual().evalStorage(*elemIt);
+    	   if(elemIt->partitionType() == Dune::InteriorEntity)
+	   {
+ 
+           localResidual().evalStorage(*elemIt);
 
             if (isBox)
             {
@@ -286,6 +289,7 @@ public:
             {
                 storage += localResidual().storageTerm()[0];
             }
+	  }	
         }
 
         if (gridView_().comm().size() > 1)
