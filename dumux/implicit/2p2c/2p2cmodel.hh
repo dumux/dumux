@@ -219,12 +219,16 @@ public:
         ElementIterator elemIt = this->gridView_().template begin<0>();
         const ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
-            this->localResidual().evalPhaseStorage(*elemIt, phaseIdx);
+         if(elemIt->partitionType() == Dune::InteriorEntity)
+           {
+ 
+
+	   this->localResidual().evalPhaseStorage(*elemIt, phaseIdx);
 
             for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
                 storage += this->localResidual().storageTerm()[i];
-        }
-
+          }
+	}
         if (this->gridView_().comm().size() > 1)
             storage = this->gridView_().comm().sum(storage);
     }
