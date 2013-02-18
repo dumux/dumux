@@ -33,6 +33,7 @@ namespace Dumux {
 /*!
  * \ingroup CO2NIModel
  * \brief Adaption of the BOX or CC scheme to the non-isothermal two-phase two-component flow model.
+ *
  *   See TwoPTwoCNI model for reference to the equations.
  *   The CO2NI model is derived from the CO2 model. In the CO2 model the phase switch criterion
  *   is different from the 2p2c model.

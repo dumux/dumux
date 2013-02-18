@@ -64,8 +64,8 @@ namespace Dumux {
  * Energy balance equation:
  * \f[
 \frac{\partial (\varrho_g  u_g)}{\partial t}
-+ \boldsymbol{\nabla} \boldsymbol{\cdot} \varrho_g h_g {\boldsymbol{v}}_g
-- \lambda_g \boldsymbol{\nabla} T - q_T = 0
++ \boldsymbol{\nabla} \left( \boldsymbol{\cdot} \varrho_g h_g {\boldsymbol{v}}_g
+- \lambda_g \boldsymbol{\nabla} T \right) - q_T = 0
  * \f]
  *
  * This is discretized using a fully-coupled vertex
