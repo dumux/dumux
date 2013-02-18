@@ -27,7 +27,7 @@
 // The numerical model
 #include <dumux/implicit/2p/2pmodel.hh>
 
-// The base prous media box problem
+// The base porous media box problem
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 
 // The DUNE grid used

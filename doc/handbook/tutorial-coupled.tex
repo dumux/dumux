@@ -93,7 +93,7 @@ default parameter file for the tutorial problem.
 To provide an error message, the usage message which is displayed to
 the user if the simulation is called incorrectly, is printed via the
 custom function which is defined on
-line~\ref{tutorial-coupled:usage-function}. 
+line~\ref{tutorial-coupled:usage-function} in the main file. 
 In this function the usage message is customized to the problem at hand. 
 This means that at least the necessary parameters are listed here.  
 For more information about the input file please refer to section \ref{sec:inputFiles}.
@@ -114,9 +114,9 @@ First, a new type tag is created for the problem in line
 tag inherits all properties from the \texttt{BoxTwoP} type tag, which
 means that for this problem the two-phase box model is chosen as
 discretization scheme. Further, it inherits from the spatial
-parameters type tag, which is defined in the problem-dependent spatial
-parameters file (line
-\ref{tutorial-coupled:define-spatialparameters-typetag}).  On line
+parameters type tag, which is defined in line
+\ref{tutorial-coupled:define-spatialparameters-typetag} of the problem-dependent spatial
+parameters file.  On line
 \ref{tutorial-coupled:set-problem}, a problem class is attached to the
 new type tag, while the grid which is going to be used is defined in
 line \ref{tutorial-coupled:set-grid} -- in this case that is
@@ -145,9 +145,8 @@ tells the model not to use gravity.
 \label{tutorial-coupled:boundaryStart}Parameters which are specific to a physical set-up to be simulated,
 such as boundary and initial conditions, source terms or temperature
 within the domain, and which are required to solve the differential
-equations of the models are specified via a \textit{problem} class. If
-the two-phase box model is used, this class should be derived from
-\texttt{TwoPBoxProblem} as done in line
+equations of the models are specified via a \textit{problem} class. This class 
+should be derived from \texttt{ImplicitPorousMediaProblem} as done in line
 \ref{tutorial-coupled:def-problem}.
 
 The problem class always has at least five methods:
@@ -165,23 +164,23 @@ The problem class always has at least five methods:
   conditions at each vertex.
 \end{itemize}
 
-For the definition of the the boundary condition types and of the
+For the definition of the boundary condition types and of the
 values of the \textsc{Dirichlet} boundaries, two parameters are
 available:
 \begin{description}
- \item [values:]  A vector which stores the result of the method. What
+ \item [bcTypes/values:]  A vector which stores the result of the method. What
   the values in this vector mean is dependent on the method: For
-  \texttt{dirichlet()} it contains the actual values of the primary
-  variables, for \texttt{boundaryTypes()} it contains the boundary 
+  \texttt{dirichlet()}, \texttt{values} contains the actual values of the primary
+  variables, for \texttt{boundaryTypes()}, \texttt{bcTypes} contains the boundary 
   condition types. It has as many entries as the model has primary variables / equations.
   For the typical case, in which all equations have the same boundary
   condition type at a certain position, there are two methods that set the appropriate conditions
   for all primary variables / equations: \texttt{setAllDirichlet()} and \texttt{setAllNeumann()}.
-\item [vertex:] The boundary condition type and the Dirichlet values are
-  specified for a vertex, which represents a control volume in the box
-  discretization. This avoids the specification of two different
-  boundary condition types for one equation at different sub-control
-  volumes of one control volume.  Be aware that the second parameter is a Dune grid entity
+\item [vertex:] The boundary condition and the Dirichlet values are
+  specified for a vertex, which represents a sub-control volume in the box
+  discretization. This inhibits the specification of two different
+  boundary condition types for one equation at one sub-control
+  volume.  Be aware that the second parameter is a Dune grid entity
   with the codimension \texttt{dim}.
 \end{description}
 
@@ -198,18 +197,18 @@ Methods for box models which make statements about boundary segments of the grid
   over the boundary segment are specified.
 \item[element:] The element of the grid where the boundary segment
   is located.
-\item[fvElementGeometry:] The finite-volume geometry induced on the
+\item[fvGeometry:] The finite-volume geometry induced on the
   finite element by the box scheme.
-\item[isIt:] The \texttt{Intersection} of the boundary segment as given by the grid.
+\item[is:] The \texttt{Intersection} of the boundary segment as given by the grid.
 \item[scvIdx:] The index of the sub-control volume in
-  \texttt{fvElementGeometry} which is assigned to the boundary segment.
+  \texttt{fvGeometry} which is assigned to the boundary segment.
 \item[boundaryFaceIdx:] The index of the boundary face in
-  \texttt{fvElementGeometry} which represents the boundary segment.  
+  \texttt{fvGeometry} which represents the boundary segment.  
 \end{description}
 
 Similarly, the \texttt{initial()} and \texttt{source()} methods
 specify properties of control volumes and thus only get
-\texttt{values}, \texttt{element}, \texttt{fvGeomtry} and
+\texttt{values}, \texttt{element}, \texttt{fvGeometry} and
 \texttt{scvIdx} as arguments.
 
 In addition to these five methods, there might be some model-specific
@@ -318,7 +317,7 @@ porosity dependent on the position in the domain.
 
 Next, the method \texttt{materialLawParams()}, defined in line
 \ref{tutorial-coupled:matLawParams}, returns the
-\verb+materialLawParams+ object that is applied at the specified
+\verb+materialParams_+ object that is applied at the specified
 position. Although in this case only one object is returned, in
 general, the problem may be heterogeneous, which necessitates
 returning different objects at different positions in space.  While
@@ -373,7 +372,7 @@ For the visualization of the results using paraview please refer to section \ref
   run the model as explained above.
 
   \item \textbf{Changing  the Shape of the Discrete Elements} \\
-  In order to complete this exercise you need an external grid manager capable of handeling 
+  In order to complete this exercise you need an external grid manager capable of handling 
   simplex grids, like \texttt{ALUGrid}. If this is not the case please skip this exercise.
   Change the types of elements used for discretizing the domain. In line \ref{tutorial-coupled:set-gridcreator} of the problem 
   file  the type of gridcreator is chosen. By choosing a different grid creator you can discretize the domain with different elements. 
@@ -386,8 +385,8 @@ For the visualization of the results using paraview please refer to section \ref
 Now you can change the fluids. Use DNAPL instead of Oil and Brine instead of Water. To do that, you have to select different components via the property system in the problem file:
 \begin{enumerate}
  \item Brine: Brine is thermodynamically very similar to pure water but also considers a fixed amount of salt in the liquid phase. 
-  Hence, the class \texttt{Dumux::Brine} uses a pure water class, such as \texttt{Dumux::H2O}, 
-  as a second template argument after the data type \texttt{<Scalar>}, i.e. \texttt{Dumux::Brine<Scalar, Dumux::H2O>}. The file is located in the folder \texttt{dumux/material/components/}.
+  Hence, the class \texttt{Dumux::Brine} uses a pure water class, such as \texttt{Dumux::H2O<Scalar>}, 
+  as a second template argument after the data type \texttt{<Scalar>}, i.e. \texttt{Dumux::Brine<Scalar, Dumux::H2O<Scalar>>}. The file is located in the folder \texttt{dumux/material/components/}.
   Try to include the file and select the component as the wetting phase via the property system.
  \item DNAPL:  
   Now let's include a DNAPL (\textbf{d}ense \textbf{n}on-\textbf{a}queous \textbf{p}hase \textbf{l}iquid)
@@ -441,7 +440,7 @@ Call the \texttt{set}-functions from the constructor of the \texttt{tutorialspat
 \psfrag{300 m}{$300 \;\text{m}$}
 \centering
 \includegraphics[width=0.5\linewidth,keepaspectratio]{EPS/exercise1_c.eps}
-\caption{Exercise 1f: Set-up of a model domain with a heterogeneity. $\Delta x = 20 \;\text{m}$ $\Delta y = 20\;\text{m}$.}\label{tutorial-coupled:exercise1_d}
+\caption{Exercise 1g: Set-up of a model domain with a heterogeneity. Grid spacing: $\Delta x = 20 \;\text{m}$ $\Delta y = 20\;\text{m}$.}\label{tutorial-coupled:exercise1_d}
 \end{figure}
 domain. You can use the fluids of exercise 1b).\\
 \textbf{Hint:} The current position of the control volume can be obtained using \texttt{element\allowbreak.geometry()\allowbreak.corner(scvIdx)}, which
@@ -455,10 +454,8 @@ sizes.
 \subsubsection{Exercise 2}
 For this exercise you should create a new problem file analogous to
 the file \texttt{tutorialproblem\_coupled.hh} (e.g. with the name
-\texttt{ex2\_tutorialproblem\_coupled.hh} and new spatial parameters
-just like \texttt{tutorialspatialparams\_coupled.hh}. The new
-problem file needs to
-be included in the file \texttt{tutorial\_coupled.cc}).
+\texttt{ex2\_tutorialproblem\_coupled.hh} and new spatial parameters \texttt{ex2\_tutorialspatialparams\_coupled.hh},
+just like \texttt{tutorialspatialparams\_coupled.hh}.
 
 The new files should contain the definition of new classes with names
 that relate to the file name, such as
@@ -487,11 +484,7 @@ saturated with water and the pressure is $p_w = 5 \times
 10^5\;\text{Pa}$.  Oil infiltrates from the left side. Create a grid
 with $20$ cells in $x$-direction and $10$ cells in $y$-direction. The
 simulation time should be set to $10^6\;\text{s}$ with an
-initial time step size of $100\;\text{s}$.
-
-Now include your new problem file in the main file and replace the
-\texttt{TutorialProblemCoupled} type tag by the one you've created and
-compile the program.
+initial time step size of $100\;\text{s}$. Then, you can compile the program.
 
 
 \begin{figure}[ht]
