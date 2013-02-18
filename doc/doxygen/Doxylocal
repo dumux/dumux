@@ -2,7 +2,7 @@
 # please us '+=' to add file/directories to the lists
 
 ENABLED_SECTIONS       = 
-EXCLUDE_PATTERNS       = */.svn/* 
+EXCLUDE_PATTERNS       = */.svn/*, */dumux/boxmodels/*
 
 PREDEFINED            += "NEW_PROP_TAG(name)=Property tag name" \
                          "NEW_TYPE_TAG(name)=Type tag name"                        
