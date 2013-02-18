@@ -1,6 +1,11 @@
-\section{Box method - A short introduction}\label{box}
+\section{Implicit Spatial Discretization Schemes}\label{spatialdiscretization}
 
-For the spatial discretization the so called BOX-method is used which unites the advantages of the finite-volume (FV) and finite-element (FE) methods. 
+For the implicit models there are two spatial discretization schemes (BOX and Cell Centered Finite Volume Method) available which are shortly introduced 
+in this section.
+
+\subsection{Box method - A short introduction}\label{box}
+
+The so called BOX-method is unites the advantages of the finite-volume (FV) and finite-element (FE) methods. 
 
 First, the model domain $G$ is discretized with a FE mesh consisting of nodes i and corresponding elements $E_k$. Then, a secondary FV mesh is constructed by connecting the midpoints and barycenters of the elements surrounding node i creating a box $B_i$ around node i (see Figure \ref{pc:box}a). 
 
@@ -118,3 +123,23 @@ The consideration of the time discretization and inserting $W_j = 1$ finally lea
 \label{eq:discfin} 
 	V_i \frac{\hat u_i^{n+1} - \hat u_i^{n}}{\Delta t} + \int_{\partial B_i}  F(\tilde u^{n+1}) \cdot \mathbf n  \;  d{\varGamma}_{B_i} - V_i \: q^{n+1} \: = 0 
 \end{equation}
+
+\subsection{Cell Centered Finite Volume Method - A short introduction}\label{cc}
+
+\begin{figure} [h]
+\centering
+\includegraphics[width=0.4\linewidth,keepaspectratio]{EPS/cc_disc}
+\caption{\label{pc:cc} Discretization of the Cell Centered Finite Volume Method}
+\end{figure}
+
+The cell centered finite volume method uses the elements of the grid as control volumes. 
+For each control volume all discrete values are determined at the element/control volume center (see Figure~\ref{pc:cc}). 
+The mass or energy fluxes are evaluated at the integration points ($x_{ij}$), which are located at the midpoints of the control 
+volume faces. This is a two point flux approximation since the flux between the element/control volume centers $i$ and $j$ is calculated
+only with information from these two points. In contrast the BOX-method uses a multi-point flux approximation where all nodes of the 
+element influence the flux between two specific nodes. \\
+Neumann boundary conditions are applied at the boundary control volume faces and Dirichlet boundary conditions at the boundary control volumes. \\
+The cell centered finite volume method is robust and mass conservative but should only be applied for structured grids 
+(the control volume face normal vector ($n_{ij}$) should be parallel to the direction of the gradient between the two element/control 
+volume centers). 
+
