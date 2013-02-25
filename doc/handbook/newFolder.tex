@@ -1,13 +1,13 @@
 \section{Setup of a New Folder}
 
-In this section setting up a new folder is described. In fact it is very easy to create a new folder, but getting \Dumux to know the new folder takes some steps which will be explained in more detail below:
+In this section setting up a new folder is described. In fact it is easy to create a new folder, but getting the build system to know the new folder takes some steps:
 
-\begin{enumerate}
+\begin{enumerate}[1)]
  \item create new folder with content
  \item adapt \verb+Makefile.am+
  \item insert new folder in \verb+Makefile.am+ of the directory above
  \item adapt \verb+configure.ac+ in the \verb+$DUMUX_ROOT+ (the directory you checked out, probably dumux)
- \item newly compile \Dumux
+ \item rerun dunecontrol / autogen for \Dumux
 \end{enumerate}
 
 \noindent In more detail:
@@ -45,34 +45,32 @@ All occurrences of \verb+test_2p+ need to be replaced by the name of the new pro
 
  \verb+AC_CONFIG_FILES([Makefile+ 
 
- \noindent a line, declaring a new Makefile, needs to be included. The Makefile itself will be generated automatically. For keeping track of the included files, inserting in alphabetical order is good practice. The new line could read: \verb+test/New_Project/Makefile+ 
+ \noindent a line, declaring a new Makefile, needs to be included. The Makefile itself will be generated automatically during the autogen run which is triggered by dunecontrol. For keeping track of the included files, inserting in alphabetical order is good practice. The new line could read: \verb+test/New_Project/Makefile+ 
 
-\textbf{Fifth}: Compile \Dumux as described in Section \ref{install}.
+\textbf{Fifth}: Recreate the build system by running dunecontrol as described in Section \ref{install}.
 
-\paragraph{Committing a new folder to the svn repository}
-For those who work with svn and want to commit a newly setup folder to the repository, additional guidelines apply:
+\paragraph{Committing a new folder to the Subversion repository}
+For those who work with Subversion (svn) and want to commit a newly setup folder to the repository, additional guidelines apply:
 
-\begin{enumerate}
+\begin{enumerate}[1)]
  \item use svn attributes to ignore files which are automatically created by a dunecontrol run
- \item make headercheck
- \item test doxygen
+ \item test \texttt{make headercheck}
+ \item test Doxygen
 \end{enumerate}
 
 \noindent In more detail:
 
-\textbf{First}: The command \verb+svn status+ marks all files not under version control with a question mark. Because dunecontrol creates a lot of files automatically this output becomes relatively crowded and one might overlook ``real'' files which have to be added (they also will not be shown by a \verb+svn status -q+).
-For the stable part of \Dumux there is the rule to ignore and only to ignore the folder {\em .deps} and the files {\em Makefile} and {\em Makefile.in}.
+\textbf{First}: The command \verb+svn status+ marks all files which are not under version control with a question mark. Because dunecontrol creates a lot of files automatically this output becomes crowded and one might overlook ``real'' files which have to be added (they also will not be shown by a \verb+svn status -q+).
+For the stable part of \Dumux there is the rule to ignore and only to ignore the folder {\em .deps}, executables \texttt{test\_*}, and the files {\em Makefile} and {\em Makefile.in}.
 
 How to set the svn attributes:
 \begin{itemize}
- \item[{\em eclipse}] right click on the file/folder $\rightarrow$ ``team'' $\rightarrow$ ``add to svn:ignore\dots''
- \item[{\em kdesvn}] right click on the file/folder $\rightarrow$ ``ignore/unignore current item''
- \item[{\em shell}] \verb+svn propset svn:ignore FILETOIGNORE .+
+ \item{\em eclipse}: right click on the file/folder $\rightarrow$ ``team'' $\rightarrow$ ``add to svn:ignore\dots''
+ \item{\em kdesvn}: right click on the file/folder $\rightarrow$ ``ignore/unignore current item''
+ \item{\em svn on shell}: \verb+svn propset svn:ignore FILETOIGNORE .+
 \end{itemize}
-Commit the changes for example in the command line with \verb+svn commit -m+ to the repository. It is also possible to use wildcards, e.g., if you want to ignore all vtu-files in your application folder in dumux-devel set \verb+FILETOIGNORE+ to \verb+'*.vtu'+. Remember that such a ignore is only allowed in dumux-devel and not in the stable dumux.
+Commit the changes for example in the command line with \verb+svn commit -m+ to the repository. It is also possible to use wildcards, e.\,g., if you want to ignore all vtu-files in your application folder in dumux-devel set \verb+FILETOIGNORE+ to \verb+'*.vtu'+. Remember that such an ignore is only allowed in dumux-devel and not in the stable dumux.
 
+\textbf{Second}: It is good practice that every header includes everything it uses by itself and does not rely on the includes from headers that are included by themselves. This can be tested with \texttt{make headercheck} and should be done before committing to stable dumux.
 
-
-\textbf{Second}:
-
-\textbf{Third}:
+\textbf{Third}: Run \texttt{make doc} in the \texttt{\$DUMUX\_ROOT} directory to generate the class documentation by Doxygen. Have a look into \texttt{\$DUMUX\_ROOT/doc/doxygen/doxyerror.log} whether one of your files have errors or are causing warnings. Please fix them.
