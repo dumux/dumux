@@ -1,7 +1,7 @@
 check_PROGRAMS = test_box2p test_cc2p
 
 noinst_HEADERS = *.hh
-EXTRA_DIST=*reference.vtu *.input grids/*.dgf CMakeLists.txt
+EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
 
 test_box2p_SOURCES = test_box2p.cc
 test_cc2p_SOURCES = test_cc2p.cc
