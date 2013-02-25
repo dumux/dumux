@@ -49,8 +49,12 @@
 #include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
 
 #ifdef USE_AMGBACKEND
+#if HAVE_DUNE_PDELAB
 #include <dumux/linear/amgbackend.hh>
-#endif
+#else // HAVE_DUNE_PDELAB
+#warning You have to install dune-pdelab to use the AMG backend.
+#endif // HAVE_DUNE_PDELAB
+#endif //USE_AMGBACKEND
 
 namespace Dumux
 {
@@ -128,7 +132,7 @@ SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<Typ
 
 SET_SCALAR_PROP(IMPESTestProblem, ImpetCFLFactor, 0.95);
 
-#ifdef USE_AMGBACKEND
+#if defined(USE_AMGBACKEND) && HAVE_DUNE_PDELAB
 // set up an additional problem where the AMG backend is used
 NEW_TYPE_TAG(IMPESTestProblemWithAMG, INHERITS_FROM(IMPESTestProblem));
 // use the AMG backend for the corresponding test

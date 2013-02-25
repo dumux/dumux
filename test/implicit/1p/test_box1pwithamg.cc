@@ -21,6 +21,8 @@
  *
  * \brief test for the one-phase box model
  */
+#if HAVE_DUNE_PDELAB
+
 #include "config.h"
 #include "1ptestproblem.hh"
 #include <dumux/common/start.hh>
@@ -62,3 +64,15 @@ int main(int argc, char** argv)
     typedef TTAG(OnePTestBoxProblemWithAMG) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
+#else
+
+#warning You need to have dune-pdelab installed to run this test
+
+#include <iostream>
+
+int main()
+{
+    std::cerr << "You need to have dune-pdelab installed to run this test\n";
+    return 77;
+}
+#endif // HAVE_DUNE_PDELAB

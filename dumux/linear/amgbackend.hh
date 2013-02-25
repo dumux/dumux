@@ -24,6 +24,8 @@
 #ifndef DUMUX_AMGBACKEND_HH
 #define DUMUX_AMGBACKEND_HH
 
+#if HAVE_DUNE_PDELAB
+
 #include <dune/pdelab/gridoperator/gridoperator.hh>
 #include <dune/pdelab/backend/novlpistlsolverbackend.hh>
 #include <dune/pdelab/backend/ovlpistlsolverbackend.hh>
@@ -404,4 +406,5 @@ private:
 
 } // namespace Dumux
 
-#endif
+#endif // HAVE_DUNE_PDELAB
+#endif // DUMUX_AMGBACKEND_HH

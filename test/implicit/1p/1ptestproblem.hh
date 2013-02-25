@@ -39,9 +39,14 @@
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+
 #ifdef USE_AMGBACKEND
+#if HAVE_DUNE_PDELAB
 #include <dumux/linear/amgbackend.hh>
-#endif
+#else // HAVE_DUNE_PDELAB
+#warning You have to install dune-pdelab to use the AMG backend.
+#endif // HAVE_DUNE_PDELAB
+#endif //USE_AMGBACKEND
 
 #include "1ptestspatialparams.hh"
 
@@ -87,7 +92,7 @@ SET_INT_PROP(OnePTestProblem, LinearSolverVerbosity, 0);
 SET_INT_PROP(OnePTestProblem, LinearSolverPreconditionerIterations, 1);
 SET_SCALAR_PROP(OnePTestProblem, LinearSolverPreconditionerRelaxation, 1.0);
 
-#ifdef USE_AMGBACKEND
+#if defined(USE_AMGBACKEND) && HAVE_DUNE_PDELAB
 NEW_TYPE_TAG(OnePTestBoxProblemWithAMG, INHERITS_FROM(OnePTestBoxProblem));
 NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
 // Solver settings for the tests using AMG
