@@ -69,9 +69,7 @@ public:
                 bool verbose = true)
         : ParentType(timeManager, gridView)
     {
-        this->newSpatialParams_ = false;
-    delete this->spatialParams_;
-    this->spatialParams_ = &spatialParams;
+        this->spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
     }
 };
 } // end namespace

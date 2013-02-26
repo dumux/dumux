@@ -114,9 +114,11 @@ public:
      */
     TransportProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
         : ParentType(timeManager, gridView),
-        gravity_(0),spatialParams_(spatialParams)
+        gravity_(0)
     {
         cFLFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
+
+        spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
 
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))

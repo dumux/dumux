@@ -194,7 +194,6 @@ protected:
 
     // fluids and material properties
     Dune::shared_ptr<SpatialParams> spatialParams_;
-    bool newSpatialParams_;
 };
 
 }
