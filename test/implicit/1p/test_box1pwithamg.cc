@@ -21,9 +21,10 @@
  *
  * \brief test for the one-phase box model
  */
+#include "config.h"
+
 #if HAVE_DUNE_PDELAB
 
-#include "config.h"
 #include "1ptestproblem.hh"
 #include <dumux/common/start.hh>
 
