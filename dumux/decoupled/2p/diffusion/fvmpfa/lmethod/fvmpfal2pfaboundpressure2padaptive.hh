@@ -2252,7 +2252,7 @@ void FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::assemble()
                         if (i == wPhaseIdx)
                         {
                             //add capillary pressure term to right hand side
-                            this->f_[globalIdx1] += (pcFluxReal[0] - pcFluxReal[1]);
+                            this->f_[globalIdx1] += (pcFluxReal[0] - pcFluxReal[3]);
                             this->f_[globalIdx2] += (pcFluxReal[1] - pcFluxReal[0]);
                             this->f_[globalIdx3] += (pcFluxReal[2] - pcFluxReal[1]);
                             this->f_[globalIdx4] += (pcFluxReal[3] - pcFluxReal[2]);
