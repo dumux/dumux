@@ -450,9 +450,15 @@ public:
      */
     bool shouldWriteRestartFile() const
     {
-        return
-            timeManager().timeStepIndex() > 0 &&
-            (timeManager().timeStepIndex() % int(100*outputInterval_) == 0);
+    	if (outputInterval_ > 0)
+    	{
+    		return
+    				timeManager().timeStepIndex() > 0 &&
+    				(timeManager().timeStepIndex() % int(100*outputInterval_) == 0);
+    	}
+    	else
+    		return
+    				shouldWriteOutput();
     }
 
     /*!
@@ -508,11 +514,11 @@ public:
      */
     void episodeEnd()
     {
-        if (outputTimeInterval_ > 0.0 && !timeManager().willBeFinished())
+        if (outputTimeInterval_ > 0.0 && !timeManager().finished())
         {
             timeManager().startNextEpisode(outputTimeInterval_);
         }
-        else if (!timeManager().willBeFinished())
+        else if (!timeManager().finished())
         {
             std::cerr << "The end of an episode is reached, but the problem "
                     << "does not override the episodeEnd() method. "
