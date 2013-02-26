@@ -212,12 +212,12 @@ for the \Dumux release 2.3 for purpose of showing how a patch gets applied.
 \begin{lstlisting}[style=Bash]
 $ # make sure you are in DUNE-Root
 $ cd dune-pdelab
-$ patch -p1 < ../dumux/patches/pdelab-1.0.1.patch
+$ patch -p0 < ../dumux/patches/pdelab-1.0.1.patch
 \end{lstlisting}
 
 It can be removed by 
 \begin{lstlisting}[style=Bash]
-$ path -p1 -R < ../dumux/patches/pdelab-1.0.1.patch
+$ path -p0 -R < ../dumux/patches/pdelab-1.0.1.patch
 \end{lstlisting}
 
 The \texttt{checkout-dumux} script also applies patches, if not explicitly requested not to do so.
