@@ -22,7 +22,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief An assembler for the global Jacobian matrix for models using the cell centered discretization.
  */
 #ifndef DUMUX_CC_ASSEMBLER_HH
@@ -33,6 +32,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup CCModel
  * \brief An assembler for the global Jacobian matrix for models using the cell centered discretization.
  */
 template<class TypeTag>

@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \ingroup TwoPBoxModel
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup Properties
  * \file
  *
  * \brief Defines default values for the properties required by the
- *        twophase box model.
+ *        twophase fully implicit model.
  */
 #ifndef DUMUX_2P_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P_PROPERTY_DEFAULTS_HH

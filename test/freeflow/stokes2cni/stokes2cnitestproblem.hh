@@ -70,7 +70,7 @@ SET_BOOL_PROP(Stokes2cniTestProblem, ProblemEnableGravity, true);
 
 /*!
  * \ingroup BoxStokes2cniModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Stokes2cni problem with air flowing
  *        from the bottom to the top, blowing away a warm and dry square.
  *

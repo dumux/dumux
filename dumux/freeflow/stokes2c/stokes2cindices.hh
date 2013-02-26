@@ -19,7 +19,6 @@
 
 /*!
  * \file
- *
  * \brief Defines the indices required for the compositional Stokes box model.
  */
 #ifndef DUMUX_STOKES2C_INDICES_HH
@@ -33,7 +32,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxStokes2cModel
- * \ingroup BoxIndices
+ * \ingroup ImplicitIndices
  * \brief The common indices for the compositional Stokes box model.
  *
  * \tparam PVOffset The first index in a primary variable vector.

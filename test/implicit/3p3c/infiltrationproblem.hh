@@ -73,7 +73,7 @@ SET_INT_PROP(InfiltrationProblem, ImplicitNumericDifferenceMethod, 0);
 
 /*!
  * \ingroup ThreePThreeCBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
  *        the unsaturated and the saturated groundwater zone.
  *

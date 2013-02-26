@@ -19,7 +19,6 @@
 
 /*!
  * \file
- *
  * \brief Defines the indices required for the non-isothermal compositional Stokes box model.
  */
 #ifndef DUMUX_STOKES2CNI_INDICES_HH
@@ -33,7 +32,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxStokes2cniModel
- * \ingroup BoxIndices
+ * \ingroup ImplicitIndices
  * \brief Enumerations for the non-isothermal compositional Stokes model
  */
 template <class TypeTag, int PVOffset=0>

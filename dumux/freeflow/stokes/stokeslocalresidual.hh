@@ -43,7 +43,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxStokesModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the local Jacobian matrix for problems
  *        using the Stokes box model.
  *

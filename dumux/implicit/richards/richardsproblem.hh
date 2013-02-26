@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the box scheme
+ * \brief Base class for all fully implicit Richards problems
  */
 #ifndef DUMUX_RICHARDS_PROBLEM_HH
 #define DUMUX_RICHARDS_PROBLEM_HH
@@ -31,8 +31,8 @@ namespace Dumux
 {
 /*!
  * \ingroup RichardsModel
- * \ingroup BoxBaseProblems
- * \brief Base class for all problems which use the two-phase box model
+ * \ingroup ImplicitBaseProblems
+ * \brief Base class for all fully implicit Richards problems
  *
  * For a description of the Richards model, see Dumux::RichardsModel
  */

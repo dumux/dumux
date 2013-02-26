@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Contains the quantities to calculate the energy flux in the
- *        MpNc box model.
+ *        MpNc fully implicit model.
  */
 #ifndef DUMUX_MPNC_ENERGY_FLUX_VARIABLES_HH
 #define DUMUX_MPNC_ENERGY_FLUX_VARIABLES_HH
@@ -34,6 +33,11 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup MPNCModel
+ * \ingroup ImplicitFluxVariables
+ * \brief Variables for the enthalpy fluxes in the MpNc model
+ */
 template <class TypeTag, bool enableEnergy/*=false*/, bool kineticEnergyTransfer/*=false*/>
 class MPNCFluxVariablesEnergy
 {

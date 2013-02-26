@@ -18,11 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the data which is required to calculate
  *        all fluxes of fluid phases over a face of a finite volume,
  *        according to the Forchheimer-relation between velocity and pressure.
- *
  */
 #ifndef DUMUX_IMPLICIT_FORCHHEIMER_FLUX_VARIABLES_HH
 #define DUMUX_IMPLICIT_FORCHHEIMER_FLUX_VARIABLES_HH
@@ -46,7 +44,6 @@ NEW_PROP_TAG(ProblemEnableGravity);
 }   
 
 /*!
- * \ingroup ImplicitModel
  * \ingroup ImplicitFluxVariables
  * \brief Evaluates the normal component of the Forchheimer velocity
  *        on a (sub)control volume face.

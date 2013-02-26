@@ -18,8 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief  Defines the indices for the one-phase box model.
+ * \brief  Defines the indices for the one-phase fully implicit model.
  */
 #ifndef DUMUX_1P_INDICES_HH
 #define DUMUX_1P_INDICES_HH
@@ -30,7 +29,7 @@ namespace Dumux
 
 /*!
  * \ingroup OnePBoxModel
- * \ingroup BoxIndices
+ * \ingroup ImplicitIndices
  * \brief Indices for the one-phase model.
  */
 struct OnePIndices

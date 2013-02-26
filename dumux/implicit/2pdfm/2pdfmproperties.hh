@@ -17,10 +17,10 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for the two phase DFM BOX model.
+ * \brief Defines the properties required for the two phase DFM fully implicit model.
  * 
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup TwoPDFMBoxModel
  */
 

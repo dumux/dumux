@@ -17,6 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \file
  * \brief The indices for the mass flow part of the compositional
  *        multi-phase model.
  */
@@ -28,6 +29,8 @@
 namespace Dumux
 {
 /*!
+ * \ingroup MPNCModel
+ * \ingroup ImplicitIndices
  * \brief The indices required for conservation of mass.
  *
  * This is the specialization for the case without kinetic mass

@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the diffusion module for the flux data of
  *        the fully coupled two-phase N-component model
  */
@@ -31,6 +30,11 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup MPNCModel
+ * \ingroup ImplicitFluxVariables
+ * \brief Variables for the diffusive fluxes in the MpNc model
+ */
 template<class TypeTag, bool enableDiffusion>
 class MPNCFluxVariablesDiffusion
 {

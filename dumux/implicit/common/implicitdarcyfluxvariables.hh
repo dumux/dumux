@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the data which is required to calculate
  *        all fluxes of fluid phases over a face of a finite volume.
  *
@@ -46,7 +45,6 @@ NEW_PROP_TAG(ProblemEnableGravity);
 }   
 
 /*!
- * \ingroup ImplicitModel
  * \ingroup ImplicitFluxVariables
  * \brief Evaluates the normal component of the Darcy velocity 
  * on a (sub)control volume face.

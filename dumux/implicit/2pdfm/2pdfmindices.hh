@@ -17,7 +17,6 @@
 
 /*!
  * \file
- *
  * \brief Defines the indices required for the finite volume in the
  *        two phase discrete fracture-matrix model.
  */
@@ -32,7 +31,7 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPDFMBoxModel
- * \ingroup BoxIndices
+ * \ingroup ImplicitIndices
  * \brief The common indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase discrete fracture-matrix model.
  *

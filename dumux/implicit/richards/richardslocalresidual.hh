@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Element-wise calculation of the residual for the Richards box model.
+ * \brief Element-wise calculation of the residual for the Richards fully implicit model.
  */
 #ifndef DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 #define DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
@@ -30,8 +30,8 @@ namespace Dumux
 {
 /*!
  * \ingroup RichardsModel
- * \ingroup BoxLocalResidual
- * \brief Element-wise calculation of the residual for the Richards box model.
+ * \ingroup ImplicitLocalResidual
+ * \brief Element-wise calculation of the residual for the Richards fully implicit model.
  */
 template<class TypeTag>
 class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)

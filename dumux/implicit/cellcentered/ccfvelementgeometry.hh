@@ -21,9 +21,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Represents the finite volume geometry of a single element in
- *        the box scheme.
+ *        the cell-centered fv scheme.
  */
 #ifndef DUMUX_CC_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_CC_FV_ELEMENTGEOMETRY_HH
@@ -52,8 +51,9 @@ NEW_PROP_TAG(Scalar);
 }
 
 /*!
+ * \ingroup CCModel
  * \brief Represents the finite volume geometry of a single element in
- *        the cell centered fv scheme.
+ *        the cell-centered fv scheme.
  */
 template<class TypeTag>
 class CCFVElementGeometry

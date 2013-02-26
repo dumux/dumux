@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Represents the finite volume geometry of a single element in
  *        the box scheme.
  */
@@ -283,6 +282,7 @@ public:
 /////////////////////
 
 /*!
+ * \ingroup BoxModel
  * \brief Represents the finite volume geometry of a single element in
  *        the box scheme.
  *

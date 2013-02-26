@@ -103,7 +103,7 @@ public:
      * \param priVars The primary variables
      * \param problem The problem
      * \param element The element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */

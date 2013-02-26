@@ -122,7 +122,7 @@ SET_TYPE_PROP(LensCCProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
 /*!
  * \ingroup TwoPBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  *

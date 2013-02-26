@@ -30,9 +30,9 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPDFMBoxModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the two-phase discrete fracture box model.
+ *        using the two-phase discrete fracture fully implicit model.
  */
 template<class TypeTag>
 class TwoPDFMLocalResidual : public TwoPLocalResidual<TypeTag>

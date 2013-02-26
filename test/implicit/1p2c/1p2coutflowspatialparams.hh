@@ -35,7 +35,7 @@ namespace Dumux
 
 /*!
  * \ingroup OnePTwoCBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  *
  * \brief Definition of the spatial parameters for the 1p2c
  *        outflow problem.

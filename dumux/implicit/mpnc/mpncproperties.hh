@@ -24,10 +24,10 @@
 
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup BoxMpNcModel
  * \file
- * \brief  Defines the properties required for the Mp-Nc box model.
+ * \brief  Defines the properties required for the Mp-Nc fully implicit model.
  */
 namespace Dumux
 {

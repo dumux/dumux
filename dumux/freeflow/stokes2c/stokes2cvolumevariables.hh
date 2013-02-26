@@ -33,7 +33,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxStokes2cModel
- * \ingroup BoxVolumeVariables
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-component Stokes box model.
  */

@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup TwoPTwoCModel
  * \file
  *
  * \brief Defines default values for most properties required by the
- *        2p2c box model.
+ *        2p2c fully implicit model.
  */
 #ifndef DUMUX_2P2C_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P2C_PROPERTY_DEFAULTS_HH

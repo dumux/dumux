@@ -18,7 +18,7 @@
 /*!
 * \file
 *
-* \brief Adaption of the box scheme to the two-phase flow in discrete fracture-matrix 
+* \brief Adaption of the fully implicit scheme to the two-phase flow in discrete fracture-matrix 
 *        model.
 */
 
@@ -33,7 +33,7 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPDFMBoxModel
- * \brief A two-phase, isothermal flow model using the box scheme.
+ * \brief A two-phase, isothermal flow model using the fully implicit scheme.
  *
  * This model implements two-phase flow of two immiscible fluids
  * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy

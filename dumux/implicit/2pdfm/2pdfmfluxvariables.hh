@@ -16,7 +16,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the data which is required to calculate
  *        all fluxes of fluid phases over a face of a finite volume in the
  *        two phase discrete fracture-matrix model.
@@ -36,7 +35,7 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPDFMBoxModel
- * \ingroup BoxDFMFluxVariables
+ * \ingroup ImplicitFluxVariables
  * \brief Contains the data which is required to calculate the fluxes of 
  *        the fluid phases over a face of a finite volume for the two-phase
  *        discrete fracture-matrix model.
@@ -74,7 +73,7 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables

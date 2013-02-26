@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup OnePTwoCBoxModel
  * \file
  *
  * \brief Defines some default values for the properties of the the
- *        single-phase, two-component BOX model.
+ *        single-phase, two-component fully implicit model.
  */
 
 #ifndef DUMUX_1P2C_PROPERTY_DEFAULTS_HH

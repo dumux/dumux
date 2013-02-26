@@ -106,7 +106,7 @@ SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
 
 /*!
  * \ingroup OnePBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief  Test problem for the one-phase box model:
  * water is flowing from bottom to top through and around a low permeable lens.
  *

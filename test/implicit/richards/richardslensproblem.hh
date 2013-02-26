@@ -89,7 +89,7 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
 
 /*!
  * \ingroup RichardsModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  *
  * \brief A water infiltration problem with a low-permeability lens
  *        embedded into a high-permeability domain which uses the

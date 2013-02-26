@@ -19,7 +19,6 @@
 
 /*!
  * \file
- *
  * \brief Defines the indices required for the Stokes box model.
  */
 #ifndef DUMUX_STOKES_INDICES_HH
@@ -33,7 +32,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxStokesModel
- * \ingroup BoxIndices
+ * \ingroup ImplicitIndices
  * \brief The common indices for the isothermal stokes model.
  *
  * \tparam PVOffset The first index in a primary variable vector.

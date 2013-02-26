@@ -62,7 +62,7 @@ public:
 
 /**
  * \ingroup MPNCModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */

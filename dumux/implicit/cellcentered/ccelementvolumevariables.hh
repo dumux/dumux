@@ -21,7 +21,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Volume variables gathered on an element
  */
 #ifndef DUMUX_CC_ELEMENT_VOLUME_VARIABLES_HH
@@ -35,7 +34,6 @@ namespace Dumux
 
 /*!
  * \ingroup CCModel
- *
  * \brief This class stores an array of VolumeVariables objects, one
  *        volume variables object for each of the element's vertices
  */

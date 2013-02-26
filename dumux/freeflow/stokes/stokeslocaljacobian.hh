@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Element-wise calculation of the jacobian of the stokes box model.
+ * \brief Element-wise calculation of the Jacobian matrix for the Stokes models.
  */
 #ifndef DUMUX_STOKES_LOCAL_JACOBIAN_HH
 #define DUMUX_STOKES_LOCAL_JACOBIAN_HH
@@ -31,10 +31,10 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxStokesModel
- * \brief Element-wise calculation of the jacobian matrix for models
- *        based on the box scheme.
+ * \ingroup ImplicitLocalJacobian
+ * \brief Element-wise calculation of the Jacobian matrix for the Stokes models.
  *
- * This overloads the numericEpsilon method of the boxlocaljacobian.
+ * This overloads the numericEpsilon method of the ImplicitLocalJacobian.
  * The momentum balance equation uses larger epsilons than the rest.
  */
 template<class TypeTag>

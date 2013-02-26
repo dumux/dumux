@@ -8,310 +8,313 @@
 /*!
  * \defgroup Common Common Infrastucture
  */
-	/*!
-	 * \ingroup Common
-	 * \defgroup Properties Property System
-         	 */
-	/*!
-	 * \ingroup Common
-	 * \defgroup Parameter Parameters
-         * See the file parameterlist for available parameters.
-	 */
-	/*!
-	 * \ingroup Common
-	 * \defgroup Start Starting the Simulation
-	 */
-	/*! 
-	 * \ingroup Common
-	 * \defgroup SimControl Time Manager
-	 */
-	/*! 
-	 * \ingroup Common
-	 * \defgroup Newton Newton Solver
-	 */
-	/*! 
-	 * \ingroup Common
-	 * \defgroup Linear Linear Solver Backends
-	 */
-	/*! 
-	 * \ingroup Common
-	 * \defgroup BC Boundary Conditions
-	 */
-	/*! 
-	 * \ingroup Common
-	 * \defgroup Valgrind Valgrind
-	 */
-	/*! 
-	 * \ingroup Common
-	 * \defgroup Exception Exceptions
-	 */
-	/*! 
-	 * \ingroup Common
-	 * \defgroup Spline Splines
-	 */
-	/*! 
-	 * \ingroup Common
-	 * \defgroup Math Elementary Math Functions
-	 */
+    /*! 
+     * \ingroup Common
+     * \defgroup BC Boundary Conditions
+     */
+    /*! 
+     * \ingroup Common
+     * \defgroup Math Elementary Math Functions
+     */
+    /*! 
+     * \ingroup Common
+     * \defgroup Exception Exceptions
+     */
+    /*! 
+     * \ingroup Common
+     * \defgroup Linear Linear Solver Backends
+     */
+    /*! 
+     * \ingroup Common
+     * \defgroup Newton Newton Solver
+     */
+    /*!
+     * \ingroup Common
+     * \defgroup Parameter Parameters
+     * See the file parameterlist for available parameters.
+     */
+    /*!
+     * \ingroup Common
+     * \defgroup Properties Property System
+     */
+    /*! 
+     * \ingroup Common
+     * \defgroup Spline Splines
+     */
+    /*!
+     * \ingroup Common
+     * \defgroup Start Starting the Simulation
+     */
+    /*! 
+     * \ingroup Common
+     * \defgroup SimControl Time Manager
+     */
+    /*! 
+     * \ingroup Common
+     * \defgroup Valgrind Valgrind
+     */
 
 /****************** Material ******************/
 /*!
  * \defgroup Material Material Properties and Laws
  */
-	/*!
-	 * \ingroup Material
-	 * \defgroup Components Components
-	 */
-		/*!
-		 * \ingroup Components
-		 * \defgroup IAPWS IAPWS
-		 */
-	/*!
-	 * \ingroup Material
-	 * \defgroup Binarycoefficients Binary Coefficients
-	 */
-	/*!
-	 * \ingroup Material
-	 * \defgroup Fluidsystems Fluid Systems
-	 */
-	/*!
-	 * \ingroup Material
-	 * \defgroup SpatialParameters Spatial Parameters
-	 */
-	/*!
-	 * \ingroup Material
-	 *  \defgroup fluidmatrixinteractions Fluid-Matrix Interactions
-	 */
-		/*!
-		 * \ingroup fluidmatrixinteractions
-		 *  \defgroup fluidmatrixinteractionslaws Laws for Fluid-Matrix Interactions
-		 */
-		 /*!
-		 * \ingroup fluidmatrixinteractions
-		 *  \defgroup fluidmatrixinteractionsparams Parameters for Fluid-Matrix Interactions 
-		 */
+    /*!
+     * \ingroup Material
+     * \defgroup Binarycoefficients Binary Coefficients
+     */
+    /*!
+     * \ingroup Material
+     * \defgroup Components Components
+     */
+        /*!
+         * \ingroup Components
+         * \defgroup IAPWS IAPWS
+         */
+    /*!
+     * \ingroup Material
+     * \defgroup Fluidsystems Fluid Systems
+     */
+    /*!
+     * \ingroup Material
+     *  \defgroup fluidmatrixinteractions Fluid-Matrix Interactions
+     */
+        /*!
+         * \ingroup fluidmatrixinteractions
+         *  \defgroup fluidmatrixinteractionslaws Laws for Fluid-Matrix Interactions
+         */
+         /*!
+         * \ingroup fluidmatrixinteractions
+         *  \defgroup fluidmatrixinteractionsparams Parameters for Fluid-Matrix Interactions 
+         */
+    /*!
+     * \ingroup Material
+     * \defgroup SpatialParameters Spatial Parameters
+     */
 
 /****************** Fully Implicit ******************/
 /*!
- * \defgroup BoxModel Fully Implicit Scheme
+ * \defgroup ImplicitModel Fully Implicit Scheme
  */
-	/*!
- 	 * \ingroup BoxModel
- 	 * \defgroup BoxModels Models
- 	 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup OnePBoxModel One-phase
-                 *
-                 * \copydetails Dumux::OnePBoxModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup OnePTwoCBoxModel One-phase Two-component
-                 *
-                 * \copydetails Dumux::OnePTwoCBoxModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup TwoPBoxModel Two-phase 
-                 *
-                 * \copydetails Dumux::TwoPModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup TwoPNIModel Non-isothermal two-phase
-                 *
-                 * \copydetails Dumux::TwoPNIModel
-              	 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup TwoPTwoCModel Two-phase, two-component
-                 *
-                 * \copydetails Dumux::TwoPTwoCModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup TwoPTwoCNIModel Non-isothermal two-phase, two-component
-                 *
-                 * \copydetails Dumux::TwoPTwoCNIModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-                 * \defgroup ThreePThreeCModel Three-phase, three-component
-                 *
-                 * \copydetails Dumux::ThreePThreeCModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-                 * \defgroup ThreePThreeCNIModel Non-isothermal three-phase, three-component
-                 *
-                 * \copydetails Dumux::ThreePThreeCNIModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup MPNCModel M-phase N-component
-                 *
-                 * \copydetails Dumux::MPNCModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup TwoPDFMBoxModel Two-phase flow in discrete fracture-matrix
-                 *
-                 * \copydetails Dumux::TwoPDFMModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup CO2Model CO2
-                 *
-                 * \copydetails Dumux::CO2Model
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup CO2NIModel Non-isothermal CO2
-                 *
-                 * \copydetails Dumux::CO2NIModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup RichardsModel Richards
-                 *
-                 * \copydetails Dumux::RichardsModel
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup BoxStokesModel Stokes
-                 *
-                 * \copydetails Dumux::StokesModel
-		 */
-                /*!
-                 * \ingroup BoxModels
-                 * \defgroup BoxStokes2cModel Two-component Stokes
-                 *
-                 * \copydetails Dumux::Stokes2cModel
-                 */
-                /*!
-                 * \ingroup BoxModels
-                 * \defgroup BoxStokes2cniModel Non-isothermal two-component Stokes
-                 *
-                 * \copydetails Dumux::Stokes2cniModel
-                 */
-	/*!
- 	 * \ingroup BoxModel
- 	 * \defgroup Discretizations Discretizations
- 	 */
-		 /*!
-		 * \ingroup Discretizations
-		 * \defgroup CCModel Cell centered
-		 */
-
-	/*!
-	 * \ingroup BoxModel
-	 * \defgroup BoxBaseProblems Base Problems
-	 */
-	/*!
-	 * \ingroup BoxModel
-	 * \defgroup BoxVolumeVariables Volume Variables
-	 */
-	/*!
-	 * \ingroup BoxModel
-	 * \defgroup BoxFluxVariables Flux Variables
-	 */
-	/*!
-	 * \ingroup BoxModel
-	 * \defgroup BoxLocalResidual Local Residual
-	 */
-	/*!
-	 * \ingroup BoxModel
-	 * \defgroup BoxLocalJacobian Local Jacobian
-	 */
-	/*!
-	 * \ingroup BoxModel
-	 * \defgroup BoxBoundaryTypes Boundary Types
-	 */
-	/*!
-	 * \ingroup BoxModel
-	 * \defgroup BoxIndices Indices
-	 */
-	/*!
-	 * \ingroup BoxModel
-	 * \defgroup BoxProperties Properties
-	 */
-	/*!
-	 * \ingroup BoxModel
-	 * \defgroup BoxTestProblems Test Problems
-	 */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitModels Models
+     */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup OnePBoxModel One-phase
+         *
+         * \copydetails Dumux::OnePBoxModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup OnePTwoCBoxModel One-phase Two-component
+         *
+         * \copydetails Dumux::OnePTwoCBoxModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup RichardsModel Richards
+         *
+         * \copydetails Dumux::RichardsModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup TwoPBoxModel Two-phase 
+         *
+         * \copydetails Dumux::TwoPModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup TwoPNIModel Non-isothermal two-phase
+         *
+         * \copydetails Dumux::TwoPNIModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup TwoPTwoCModel Two-phase, two-component
+         *
+         * \copydetails Dumux::TwoPTwoCModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup TwoPTwoCNIModel Non-isothermal two-phase, two-component
+         *
+         * \copydetails Dumux::TwoPTwoCNIModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup CO2Model CO2
+         *
+         * \copydetails Dumux::CO2Model
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup CO2NIModel Non-isothermal CO2
+         *
+         * \copydetails Dumux::CO2NIModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup TwoPDFMBoxModel Two-phase flow in discrete fracture-matrix
+         *
+         * \copydetails Dumux::TwoPDFMModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup ThreePThreeCModel Three-phase, three-component
+         *
+         * \copydetails Dumux::ThreePThreeCModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup ThreePThreeCNIModel Non-isothermal three-phase, three-component
+         *
+         * \copydetails Dumux::ThreePThreeCNIModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup MPNCModel M-phase N-component
+         *
+         * \copydetails Dumux::MPNCModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup BoxStokesModel Stokes
+         *
+         * \copydetails Dumux::StokesModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup BoxStokes2cModel Two-component Stokes
+         *
+         * \copydetails Dumux::Stokes2cModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup BoxStokes2cniModel Non-isothermal two-component Stokes
+         *
+         * \copydetails Dumux::Stokes2cniModel
+         */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitBaseProblems Base Problems
+     */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup Discretizations Discretizations
+     */
+         /*!
+         * \ingroup Discretizations
+         * \defgroup CCModel Fully implicit cell-centered discretization
+         */
+         /*!
+         * \ingroup Discretizations
+         * \defgroup BoxModel Fully implicit box discretization
+         */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitBoundaryTypes Boundary Types
+     */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitFluxVariables Flux Variables
+     */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitIndices Indices
+     */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitLocalJacobian Local Jacobian
+     */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitLocalResidual Local Residual
+     */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitProperties Properties
+     */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitTestProblems Test Problems
+     */
+    /*!
+     * \ingroup ImplicitModel
+     * \defgroup ImplicitVolumeVariables Volume Variables
+     */
 
 /****************** Sequential ******************/ 
 /*!
  * \defgroup Sequential Sequential Scheme: IMPET (Implicit Pressure Explicit Transport)
  */
  
-	/*!
-	 * \ingroup Sequential
-	 * \defgroup IMPET Models
-	 */	 
-		/*!
-		 * \ingroup IMPET
-		 * \defgroup OnePhase Single Phase (FV)
-		 */ 
-		 	/*!
-			* \ingroup OnePhase
-			* \defgroup Pressure1p Pressure Equation
-			*/
-				/*!
-			 	* \ingroup Pressure1p
-			 	* \defgroup FV1p Finite Volume
-			 	*/	
-		/*!
-		 * \ingroup IMPET
-		 * \defgroup IMPES Immiscible IMPES
-		 */		 
-			/*!
-			 * \ingroup IMPES
-			 * \defgroup Pressure2p Immiscible Pressure Equation
-			 */
-			 	/*!
-			 	* \ingroup Pressure2p
-			 	* \defgroup FVPressure2p Finite Volume
-			 	*/	
-				/*!
-				* \ingroup Pressure2p
-			 	* \defgroup MimeticPressure2p Mimetic Finite Differences
-			 	*/	
-			/*!
-			 * \ingroup IMPES
-			 * \defgroup Saturation2p Immiscible Saturation Transport
-			 */
-			 	/*!
-			 	* \ingroup Saturation2p
-			 	* \defgroup FVSaturation2p Finite Volume
-			 	*/	
-		/*!
-		 * \ingroup IMPET
-		 * \defgroup IMPEC Miscible (Compositional) IMPEC
-		 */
-			/*!
-			 * \ingroup IMPEC
-			 * \defgroup multiphase Multiphase Compositional Models
-			 */
-				/*!
-				* \ingroup multiphase
-				* \defgroup Adaptive2p2c (Grid-)Adaptive Multiphase Compositional Models
-				*/
-			/*!
-			 * \ingroup IMPEC
-			 * \defgroup multiphysics Multiphysics Compositional Models
-			 */
-	/*!
-	 * \ingroup Sequential
-	 * \defgroup IMPETproblems Base Problems
-	 */
-	/*!
-	 * \ingroup Sequential
-	 * \defgroup IMPETProperties Properties
-	 */
-	/*!
-	 * \ingroup Sequential
-	 * \defgroup IMPETtests Test Problems
-	 */
+    /*!
+     * \ingroup Sequential
+     * \defgroup IMPET Models
+     */     
+        /*!
+         * \ingroup IMPET
+         * \defgroup OnePhase Single Phase (FV)
+         */ 
+            /*!
+             * \ingroup OnePhase
+             * \defgroup Pressure1p Pressure Equation
+             */
+                /*!
+                 * \ingroup Pressure1p
+                 * \defgroup FV1p Finite Volume
+                 */    
+        /*!
+         * \ingroup IMPET
+         * \defgroup IMPES Immiscible IMPES
+         */         
+            /*!
+             * \ingroup IMPES
+             * \defgroup Pressure2p Immiscible Pressure Equation
+             */
+                /*!
+                 * \ingroup Pressure2p
+                 * \defgroup FVPressure2p Finite Volume
+                 */    
+                /*!
+                * \ingroup Pressure2p
+                * \defgroup MimeticPressure2p Mimetic Finite Differences
+                */    
+            /*!
+             * \ingroup IMPES
+             * \defgroup Saturation2p Immiscible Saturation Transport
+             */
+                /*!
+                 * \ingroup Saturation2p
+                 * \defgroup FVSaturation2p Finite Volume
+                 */    
+        /*!
+         * \ingroup IMPET
+         * \defgroup IMPEC Miscible (Compositional) IMPEC
+         */
+            /*!
+             * \ingroup IMPEC
+             * \defgroup multiphase Multiphase Compositional Models
+             */
+                /*!
+                * \ingroup multiphase
+                * \defgroup Adaptive2p2c (Grid-)Adaptive Multiphase Compositional Models
+                */
+            /*!
+             * \ingroup IMPEC
+             * \defgroup multiphysics Multiphysics Compositional Models
+             */
+    /*!
+     * \ingroup Sequential
+     * \defgroup IMPETproblems Base Problems
+     */
+    /*!
+     * \ingroup Sequential
+     * \defgroup IMPETProperties Properties
+     */
+    /*!
+     * \ingroup Sequential
+     * \defgroup IMPETtests Test Problems
+     */
 

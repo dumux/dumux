@@ -106,7 +106,7 @@ SET_BOOL_PROP(Forchheimer2pProblem, VtkAddVelocities, true);
 
 /*!
  * \ingroup MPNCModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Problem where liquid water is injected by means of a
  *        dirchlet condition on the left of the domain.
  *        Velocity according to Forchheimer.

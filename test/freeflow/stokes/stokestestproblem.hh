@@ -73,7 +73,7 @@ SET_BOOL_PROP(StokesTestProblem, ProblemEnableGravity, false);
 
 /*!
  * \ingroup BoxStokesModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Stokes flow problem with nitrogen (N2) flowing
  *        from the left to the right.
  *

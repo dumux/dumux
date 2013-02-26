@@ -34,7 +34,7 @@ namespace Dumux
 {
   /**
    * \ingroup BoxStokesModel
-   * \ingroup BoxTestProblems
+   * \ingroup ImplicitTestProblems
    *
    * \brief Properties of pure molecular nitrogen \f$N_2\f$ with constant
    *        viscosity.

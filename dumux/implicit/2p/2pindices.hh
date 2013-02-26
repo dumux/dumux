@@ -19,8 +19,7 @@
 
 /*!
  * \file
- *
- * \brief Defines the indices required for the two-phase box model.
+ * \brief Defines the indices required for the two-phase fully implicit model.
  */
 #ifndef DUMUX_BOX_2P_INDICES_HH
 #define DUMUX_BOX_2P_INDICES_HH
@@ -31,18 +30,23 @@ namespace Dumux
 {
 // \{
 
+
 /*!
  * \ingroup TwoPBoxModel
- * \ingroup BoxIndices
- * \brief The common indices for the isothermal two-phase model.
+ * \ingroup ImplicitIndices
+ * \brief Specificy whether a pw-Sn or a pn-Sw formulation is used.
  */
-
 struct TwoPFormulation
 {
     static const int pwSn = 0; //!< Pw and Sn as primary variables
     static const int pnSw = 1; //!< Pn and Sw as primary variables
 };
 
+/*!
+ * \ingroup TwoPBoxModel
+ * \ingroup ImplicitIndices
+ * \brief The common indices for the isothermal two-phase model.
+ */
 template <class TypeTag>
 struct TwoPCommonIndices
 {
@@ -54,6 +58,8 @@ struct TwoPCommonIndices
 };
 
 /*!
+ * \ingroup TwoPBoxModel
+ * \ingroup ImplicitIndices
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
@@ -81,7 +87,9 @@ struct TwoPIndices
 };
 
 /*!
- * \brief The indices for the \f$p_w-S_n\f$ formulation of the
+ * \ingroup TwoPBoxModel
+ * \ingroup ImplicitIndices
+ * \brief The indices for the \f$p_n-S_w\f$ formulation of the
  *        isothermal two-phase model.
  *
  * \tparam PVOffset The first index in a primary variable vector.

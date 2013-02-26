@@ -20,7 +20,7 @@
 /*!
 * \file
 *
-* \brief Adaption of the box scheme to the Richards model.
+* \brief Adaption of the fully implicit scheme to the Richards model.
 */
 #ifndef DUMUX_RICHARDS_MODEL_HH
 #define DUMUX_RICHARDS_MODEL_HH

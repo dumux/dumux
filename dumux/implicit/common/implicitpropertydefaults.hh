@@ -19,9 +19,7 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup ImplicitModel
  * \file
- *
  * \brief Default properties for implicit models
  */
 #ifndef DUMUX_IMPLICIT_PROPERTY_DEFAULTS_HH

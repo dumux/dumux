@@ -20,8 +20,8 @@
  * \file
  *
  * \brief Base class for all models which use the one-phase,
- *        box model.
- *        Adaption of the BOX scheme to the one-phase flow model.
+ *        fully implicit model.
+ *        Adaption of the fully implicit scheme to the one-phase flow model.
  */
 
 #ifndef DUMUX_1P_MODEL_HH
@@ -33,7 +33,7 @@ namespace Dumux
 {
 /*!
  * \ingroup OnePBoxModel
- * \brief A single-phase, isothermal flow model using the box scheme.
+ * \brief A single-phase, isothermal flow model using the fully implicit scheme.
  *
  * Single-phase, isothermal flow model, which solves the mass
  * continuity equation

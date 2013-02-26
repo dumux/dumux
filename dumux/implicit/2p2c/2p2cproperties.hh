@@ -18,13 +18,13 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup TwoPTwoCModel
  */
 /*!
  * \file
  *
- * \brief Defines the properties required for the 2p2c BOX model.
+ * \brief Defines the properties required for the 2p2c fully implicit model.
  */
 #ifndef DUMUX_2P2C_PROPERTIES_HH
 #define DUMUX_2P2C_PROPERTIES_HH

@@ -32,7 +32,6 @@
 namespace Dumux
 {
 /*!
- * \ingroup ImplicitModel
  * \ingroup ImplicitLocalJacobian
  * \brief Calculates the Jacobian of the local residual for box models
  *

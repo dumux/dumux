@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the two-phase two-component box model.
+ *        using the three-phase three-component fully implicit model.
  */
 #ifndef DUMUX_3P3C_LOCAL_RESIDUAL_HH
 #define DUMUX_3P3C_LOCAL_RESIDUAL_HH
@@ -31,8 +31,9 @@ namespace Dumux
 {
 /*!
  * \ingroup ThreePThreeCModel
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the two-phase two-component box model.
+ *        using the three-phase three-component fully implicit model.
  *
  * This class is used to fill the gaps in BoxLocalResidual for the 3P3C flow.
  */

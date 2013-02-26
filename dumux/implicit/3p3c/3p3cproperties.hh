@@ -22,7 +22,7 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for the 3p3c BOX model.
+ * \brief Defines the properties required for the 3p3c fully implicit model.
  */
 #ifndef DUMUX_3P3C_PROPERTIES_HH
 #define DUMUX_3P3C_PROPERTIES_HH

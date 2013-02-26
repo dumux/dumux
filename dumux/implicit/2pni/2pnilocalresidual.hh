@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the non-isothermal two-phase box model.
+ *        using the non-isothermal two-phase fully implicit model.
  *
  */
 #ifndef DUMUX_NEW_2PNI_LOCAL_RESIDUAL_HH
@@ -33,9 +33,9 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPNIModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the non-isothermal two-phase box model.
+ *        using the non-isothermal two-phase fully implicit model.
  */
 
 template<class TypeTag>

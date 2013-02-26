@@ -35,7 +35,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the residual for models
  *        based on the fully implicit box scheme.
  *

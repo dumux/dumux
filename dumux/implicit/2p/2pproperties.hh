@@ -18,13 +18,13 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup TwoPBoxModel
  */
 /*!
  * \file
  *
- * \brief Defines the properties required for the twophase BOX model.
+ * \brief Defines the properties required for the twophase fully implicit model.
  */
 
 #ifndef DUMUX_2P_PROPERTIES_HH

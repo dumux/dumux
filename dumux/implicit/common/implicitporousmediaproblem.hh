@@ -36,8 +36,8 @@ NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered i
 }
 
 /*!
- * \ingroup BoxBaseProblems
- * \brief Base class for all porous media box problems
+ * \ingroup ImplicitBaseProblems
+ * \brief Base class for all fully implicit porous media problems
  */
 template<class TypeTag>
 class ImplicitPorousMediaProblem : public ImplicitProblem<TypeTag>

@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup TwoPTwoCNIModel
  * \file
  *
  * \brief Defines default values for most properties required by the 2p2cni
- *        box model.
+ *        fully implicit model.
  */
 #ifndef DUMUX_2P2CNI_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P2CNI_PROPERTY_DEFAULTS_HH

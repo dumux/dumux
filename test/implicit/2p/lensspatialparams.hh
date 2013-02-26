@@ -62,7 +62,7 @@ public:
 }
 /*!
  * \ingroup TwoPBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the LensProblem which uses the
  *        twophase box model
  */

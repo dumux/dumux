@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the data which is required to calculate
  *        the fluxes of the Stokes model over a face of a finite volume.
  *
@@ -37,7 +36,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxStokesModel
- * \ingroup BoxFluxVariables
+ * \ingroup ImplicitFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate the mass and momentum fluxes over the face of a
  *        sub-control volume for the Stokes box model.

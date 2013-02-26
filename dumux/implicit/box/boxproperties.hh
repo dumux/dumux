@@ -23,7 +23,7 @@
 
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup BoxModel
  * \file
  * \brief Specify the shape functions, operator assemblers, etc
@@ -34,9 +34,6 @@ namespace Dumux
 
 namespace Properties
 {
-/*!
- * \ingroup BoxModel
- */
 // \{
 
 //////////////////////////////////////////////////////////////////

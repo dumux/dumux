@@ -23,7 +23,7 @@
  * \file
  *
  * \brief Defines default values for most properties required by the
- *        3p3c box model.
+ *        3p3c fully implicit model.
  */
 #ifndef DUMUX_3P3C_PROPERTY_DEFAULTS_HH
 #define DUMUX_3P3C_PROPERTY_DEFAULTS_HH

@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Base class for models using box discretization
  */
 #ifndef DUMUX_IMPLICIT_MODEL_HH
@@ -36,7 +35,6 @@ namespace Dumux
 
 /*!
  * \ingroup ImplicitModel
- *
  * \brief The base class for the vertex centered finite volume
  *        discretization scheme.
  */

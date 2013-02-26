@@ -29,9 +29,9 @@ namespace Dumux
 {
 /*!
  * \ingroup MPNCModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief two-phase, N-component specific details needed to
- *        approximately calculate the local defect in the BOX scheme.
+ *        approximately calculate the local defect in the fully implicit scheme.
  *
  * This class is used to fill the gaps in BoxLocalResidual for the
  * two-phase, N-component twophase flow.

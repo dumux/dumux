@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the data which is required to calculate
  *        all fluxes (mass of components and energy) over a face of a finite volume.
  *
@@ -36,6 +35,7 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePThreeCNIModel
+ * \ingroup ImplicitFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate all fluxes (mass of components and energy) over a face of a finite
  *        volume for the non-isothermal three-phase, three-component model.
@@ -71,7 +71,7 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables

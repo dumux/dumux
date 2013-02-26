@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the two-phase DFM box model
+ * \brief Base class for all problems which use the two-phase DFM fully implicit model
  */
 #ifndef DUMUX_BOXMODELS_2PDFM_PROBLEM_HH
 #define DUMUX_BOXMODELS_2PDFM_PROBLEM_HH
@@ -27,9 +27,9 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxBaseProblems
- * \ingroup TwoPBoxModel
- * \brief Base class for all problems which use the two-phase box model
+ * \ingroup ImplicitBaseProblems
+ * \ingroup TwoPDFMBoxModel
+ * \brief Base class for all problems which use the two-phase DFM fully implicit model
  */
 template<class TypeTag>
 class TwoPDFMProblem : public ImplicitPorousMediaProblem<TypeTag>

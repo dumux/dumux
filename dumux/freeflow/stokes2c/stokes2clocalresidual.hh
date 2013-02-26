@@ -35,7 +35,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxStokes2cModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the compositional Stokes box model. This is derived
  *        from the Stokes box model.

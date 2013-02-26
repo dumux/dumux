@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the two-phase two-component box model.
+ *        using the two-phase two-component fully implicit model.
  */
 
 #ifndef DUMUX_2P2C_LOCAL_RESIDUAL_BASE_HH
@@ -32,9 +32,9 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the two-phase two-component box model.
+ *        using the two-phase two-component fully implicit model.
  *
  * This class is used to fill the gaps in BoxLocalResidual for the 2P-2C flow.
  */

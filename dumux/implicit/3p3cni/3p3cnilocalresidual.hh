@@ -19,8 +19,8 @@
 /*!
  * \file
  *
- * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the non-isothermal three-phase three-component box model.
+ * \brief Element-wise calculation of the residual for problems
+ *        using the non-isothermal three-phase three-component fully implicit model.
  *
  */
 #ifndef DUMUX_NEW_3P3CNI_LOCAL_RESIDUAL_HH
@@ -33,8 +33,9 @@ namespace Dumux
 {
 /*!
  * \ingroup ThreePThreeCNIModel
- * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the three-phase three-component box model.
+ * \ingroup ImplicitLocalResidual
+ * \brief Element-wise calculation of the residual for problems
+ *        using the non-isothermal three-phase three-component fully implicit model.
  */
 template<class TypeTag>
 class ThreePThreeCNILocalResidual : public ThreePThreeCLocalResidual<TypeTag>

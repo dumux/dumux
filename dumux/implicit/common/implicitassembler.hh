@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief An assembler for the global Jacobian matrix for fully implicit models.
  */
 #ifndef DUMUX_IMPLICIT_ASSEMBLER_HH
@@ -29,6 +28,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup ImplicitModel
  * \brief An assembler for the global Jacobian matrix for fully implicit models.
  */
 template<class TypeTag>

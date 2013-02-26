@@ -85,7 +85,7 @@ namespace Dumux
 
   /*!
    * \ingroup BoxStokesModel
-   * \ingroup BoxTestProblems
+   * \ingroup ImplicitTestProblems
    * \brief Stokes flow problem with modified nitrogen (N2) circulating in
    *        a cavity. (lid-driven cavity-flow)
    *

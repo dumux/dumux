@@ -33,7 +33,6 @@
 namespace Dumux
 {
 /*!
- * \ingroup ImplicitModel
  * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the residual matrix for models
  *        using a fully implicit discretization.

@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
@@ -33,7 +32,6 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
  * \ingroup ImplicitVolumeVariables
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.

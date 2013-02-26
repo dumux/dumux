@@ -20,8 +20,8 @@
  * \file
  *
  * \brief Base class for all models which use the single-phase,
- *        two-component box model.
- *        Adaption of the BOX scheme to the one-phase two-component flow model.
+ *        two-component fully implicit model.
+ *        Adaption of the fully implicit scheme to the one-phase two-component flow model.
  */
 
 #ifndef DUMUX_ONEP_TWOC_MODEL_HH
@@ -34,7 +34,7 @@ namespace Dumux
 
 /*!
  * \ingroup OnePTwoCBoxModel
- * \brief Adaption of the BOX scheme to the one-phase two-component flow model.
+ * \brief Adaption of the fully implicit scheme to the one-phase two-component flow model.
  *
  * This model implements a one-phase flow of a compressible fluid, that consists of two components,
  * using a standard Darcy

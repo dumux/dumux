@@ -91,7 +91,7 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
 
 /*!
  * \ingroup OnePTwoCBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  *
  * \brief Definition of a problem, for the 1p2c box problem:
  * Nitrogen is dissolved in the water phase and

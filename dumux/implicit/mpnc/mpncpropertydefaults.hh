@@ -39,10 +39,10 @@
 
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup BoxMpNcModel
  * \file
- * \brief  Default properties for the Mp-Nc box model.
+ * \brief  Default properties for the Mp-Nc fully implicit model.
  */
 namespace Dumux
 {

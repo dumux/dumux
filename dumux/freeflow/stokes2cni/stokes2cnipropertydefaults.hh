@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup BoxStokes2cniModel
  *
  * \file

@@ -62,7 +62,7 @@ SET_PROP(WaterAirSpatialParams, MaterialLaw)
 
 /*!
  * \ingroup TwoPTwoCNIModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the water-air problem
  */
 template<class TypeTag>

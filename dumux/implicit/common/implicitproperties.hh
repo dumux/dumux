@@ -28,7 +28,6 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup ImplicitModel
  * \file
  * \brief Specify the shape functions, operator assemblers, etc
  *        used for the ImplicitModel.
@@ -38,9 +37,6 @@ namespace Dumux
 
 namespace Properties
 {
-/*!
- * \ingroup ImplicitModel
- */
 // \{
 
 //////////////////////////////////////////////////////////////////

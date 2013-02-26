@@ -17,6 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \file
  * \brief The indices for the non-isothermal part of the compositional
  *        multi-phase model.
  */
@@ -26,6 +27,8 @@
 namespace Dumux
 {
 /*!
+ * \ingroup MPNCModel
+ * \ingroup ImplicitIndices
  * \brief The indices for the energy equation.
  *
  * This is a dummy class for the isothermal case.
@@ -48,6 +51,8 @@ public:
 };
 
 /*!
+ * \ingroup MPNCModel
+ * \ingroup ImplicitIndices
  * \brief The indices required for the energy equation.
  */
 template <int PVOffset>

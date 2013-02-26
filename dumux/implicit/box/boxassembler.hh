@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief An assembler for the global Jacobian matrix for models using the box discretization.
  */
 #ifndef DUMUX_BOX_ASSEMBLER_HH
@@ -31,6 +30,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup BoxModel
  * \brief An assembler for the global Jacobian matrix for models using the box discretization.
  */
 template<class TypeTag>

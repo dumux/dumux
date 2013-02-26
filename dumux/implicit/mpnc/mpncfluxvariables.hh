@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the data which is required to calculate
  *        all fluxes of components over a face of a finite volume.
  *
@@ -40,10 +39,10 @@ namespace Dumux
 
 /*!
  * \ingroup MPNCModel
- * \ingroup BoxFluxVariables
- * \brief This template class contains the data which is required to
+ * \ingroup ImplicitFluxVariables
+ * \brief This class contains the data which is required to
  *        calculate all fluxes of components over a face of a finite
- *        volume for the two-phase, three-component model.
+ *        volume for the MpNc model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the intergration point, etc.
@@ -82,7 +81,7 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables

@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the data which is required to calculate the
  *        component fluxes over a face of a finite volume.
  *
@@ -41,7 +40,7 @@ NEW_PROP_TAG(Stokes2cIndices); //!< Enumerations for the compositional stokes mo
 
 /*!
  * \ingroup BoxStokes2cModel
- * \ingroup BoxFluxVariables
+ * \ingroup ImplicitFluxVariables
  * \brief This template class contains data which is required to
  *        calculate the component fluxes over a face of a finite
  *        volume for the compositional Stokes model.

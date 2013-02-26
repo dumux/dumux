@@ -21,7 +21,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Boundary types gathered on an element
  */
 #ifndef DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
@@ -36,8 +35,7 @@ namespace Dumux
 
 /*!
  * \ingroup CCModel
- * \ingroup CCBoundaryTypes
- *
+ * \ingroup ImplicitBoundaryTypes
  * \brief This class stores an array of BoundaryTypes objects
  */
 template<class TypeTag>

@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup OnePBoxModel
  * \file
  *
- * \brief Defines the properties required for the one-phase BOX model.
+ * \brief Defines the properties required for the one-phase fully implicit model.
  */
 #ifndef DUMUX_1P_PROPERTIES_DATA_HH
 #define DUMUX_1P_PROPERTIES_DATA_HH

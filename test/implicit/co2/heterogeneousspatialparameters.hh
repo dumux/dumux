@@ -68,7 +68,7 @@ public:
 
 /*!
  * \ingroup CO2Model
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the HeterogeneousProblem and HeterogeneousNIProblem
  */
 template<class TypeTag>

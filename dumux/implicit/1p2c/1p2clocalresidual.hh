@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Element-wise calculation the local Jacobian for the single-phase,
- *        two-component model in the BOX scheme.
+ *        two-component model in the fully implicit scheme.
  */
 
 #ifndef DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
@@ -33,9 +33,9 @@ namespace Dumux
 /*!
  *
  * \ingroup OnePTwoCBoxModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Calculate the local Jacobian for the single-phase,
- *        two-component model in the BOX scheme.
+ *        two-component model in the fully implicit scheme.
  *
  *  This class is used to fill the gaps in BoxLocalResidual for the 1p2c flow and transport.
  */

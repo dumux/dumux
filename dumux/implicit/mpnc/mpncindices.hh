@@ -16,6 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \brief The primary variable and equation indices for the MpNc model.
+ */
 #ifndef DUMUX_MPNC_INDICES_HH
 #define DUMUX_MPNC_INDICES_HH
 
@@ -29,8 +33,8 @@ namespace Dumux
 
 /*!
  * \ingroup MPNCModel
- * \ingroup BoxIndices
- * \brief Enumerates the formulations which the 2p2c model accepts.
+ * \ingroup ImplicitIndices
+ * \brief Enumerates the formulations which the MpNc model accepts.
  */
 struct MpNcPressureFormulation
 {
@@ -42,9 +46,8 @@ struct MpNcPressureFormulation
 
 /*!
  * \ingroup MPNCModel
- * \ingroup BoxIndices
- * \brief The primary variable and equation indices for the MpNc
- *        model.
+ * \ingroup ImplicitIndices
+ * \brief The primary variable and equation indices for the MpNc model.
  */
 template <class TypeTag, int BasePVOffset = 0>
 struct MPNCIndices :

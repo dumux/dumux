@@ -87,7 +87,7 @@ SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
 
 /*!
  * \ingroup ThreePThreeCNIBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Non-isothermal gas injection problem where a gas (e.g. steam/air)
  *        is injected into a unsaturated porous medium with a residually
  *        trapped NAPL contamination.

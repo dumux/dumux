@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX scheme to the two-phase two-component flow model.
+ * \brief Adaption of the fully implicit scheme to the two-phase two-component flow model.
  */
 #ifndef DUMUX_2P2C_MODEL_HH
 #define DUMUX_2P2C_MODEL_HH
@@ -31,7 +31,7 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPTwoCModel
- * \brief Adaption of the BOX scheme to the two-phase two-component flow model.
+ * \brief Adaption of the fully implicit scheme to the two-phase two-component flow model.
  *
  * This model implements two-phase two-component flow of two compressible and
  * partially miscible fluids \f$\alpha \in \{ w, n \}\f$ composed of the two components

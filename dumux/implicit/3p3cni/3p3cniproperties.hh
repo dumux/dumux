@@ -23,7 +23,7 @@
  * \file
  *
  * \brief Defines the properties required for the non-isothermal three-phase,
- * three-component BOX model.
+ * three-component fully implicit model.
  */
 #ifndef DUMUX_3P3CNI_PROPERTIES_HH
 #define DUMUX_3P3CNI_PROPERTIES_HH

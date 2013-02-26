@@ -19,8 +19,7 @@
 
 /*!
  * \file
- *
- * \brief Defines the indices required for the 2p2c BOX model.
+ * \brief Defines the indices required for the 2p2c fully implicit model.
  */
 #ifndef DUMUX_2P2C_INDICES_HH
 #define DUMUX_2P2C_INDICES_HH
@@ -33,7 +32,7 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup BoxIndices
+ * \ingroup ImplicitIndices
  * \brief Enumerates the formulations which the 2p2c model accepts.
  */
 struct TwoPTwoCFormulation
@@ -45,6 +44,8 @@ struct TwoPTwoCFormulation
 };
 
 /*!
+ * \ingroup TwoPTwoCModel
+ * \ingroup ImplicitIndices
  * \brief The indices for the isothermal TwoPTwoC model.
  *
  * \tparam formulation The formulation, either pwSn or pnSw.
@@ -85,6 +86,8 @@ public:
 };
 
 /*!
+ * \ingroup TwoPTwoCModel
+ * \ingroup ImplicitIndices
  * \brief The indices for the isothermal TwoPTwoC model in the pn-Sw
  *        formulation.
  *

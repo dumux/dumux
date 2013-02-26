@@ -102,7 +102,7 @@ SET_TYPE_PROP(ObstacleProblem, Scalar, double);
 
 /*!
  * \ingroup MPNCModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Problem where liquid water is injected -- by means of a
  *        Dirichlet condition on the lower right of the domain -- which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.

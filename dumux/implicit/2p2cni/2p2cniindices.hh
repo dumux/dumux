@@ -19,8 +19,7 @@
 
 /*!
  * \file
- *
- * \brief Defines the indices used by the 2p2cni box model
+ * \brief Defines the indices used by the 2p2cni model
  */
 #ifndef DUMUX_2P2CNI_INDICES_HH
 #define DUMUX_2P2CNI_INDICES_HH
@@ -33,8 +32,8 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPTwoCNIModel
- * \ingroup BoxIndices
- * \brief Enumerations for the non-isothermal 2-phase 2-component model
+ * \ingroup ImplicitIndices
+ * \brief Indices for the non-isothermal 2-phase 2-component model
  *
  * \tparam formulation The formulation, either pwSn or pnSw.
  * \tparam PVOffset The first index in a primary variable vector.

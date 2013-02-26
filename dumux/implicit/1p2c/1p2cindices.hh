@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Defines the primary variable and equation indices used by
  *        the 1p2c model
  */
@@ -34,7 +33,7 @@ namespace Dumux
 
 /*!
  * \ingroup OnePTwoCBoxModel
- * \ingroup BoxIndices
+ * \ingroup ImplicitIndices
  * \brief The indices for the isothermal single-phase, two-component model.
  */
 template <class TypeTag, int PVOffset = 0>

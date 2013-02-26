@@ -19,7 +19,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the box scheme
+ * \brief Convert intersection boundary types to vertex boundary types 
  */
 #ifndef DUMUX_INTERSECTIONTOVERTEXBC_HH
 #define DUMUX_INTERSECTIONTOVERTEXBC_HH
@@ -29,6 +29,10 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup BoxModel
+ * \brief Convert intersection boundary types to vertex boundary types 
+ */
 template<typename TypeTag> 
 class IntersectionToVertexBC
 {

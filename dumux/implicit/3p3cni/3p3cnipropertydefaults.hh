@@ -23,7 +23,7 @@
  * \file
  *
  * \brief Defines default values for most properties required by the 3p3cni
- *        box model.
+ *        fully implicit model.
  */
 #ifndef DUMUX_3P3CNI_PROPERTY_DEFAULTS_HH
 #define DUMUX_3P3CNI_PROPERTY_DEFAULTS_HH

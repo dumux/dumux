@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX scheme to the non-isothermal three-phase three-component flow model.
+ * \brief Adaption of the fully implicit scheme to the non-isothermal three-phase three-component flow model.
  */
 #ifndef DUMUX_NEW_3P3CNI_MODEL_HH
 #define DUMUX_NEW_3P3CNI_MODEL_HH
@@ -30,7 +30,7 @@
 namespace Dumux {
 /*!
  * \ingroup ThreePThreeCNIModel
- * \brief Adaption of the BOX scheme to the non-isothermal three-phase three-component flow model.
+ * \brief Adaption of the fully implicit scheme to the non-isothermal three-phase three-component flow model.
  *
  * This model implements three-phase three-component flow of three fluid phases
  * \f$\alpha \in \{ water, gas, NAPL \}\f$ each composed of up to three components

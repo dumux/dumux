@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Element-wise calculation of the residual for the two-phase box model.
+ * \brief Element-wise calculation of the residual for the two-phase fully implicit model.
  */
 #ifndef DUMUX_TWOP_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_TWOP_LOCAL_RESIDUAL_BASE_HH
@@ -30,9 +30,9 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPBoxModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the two-phase box model.
+ *        using the two-phase fully implicit model.
  *
  * This class is also used for the non-isothermal model, which means
  * that it uses static polymorphism.

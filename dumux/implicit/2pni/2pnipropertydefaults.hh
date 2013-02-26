@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  *  \ingroup TwoPNIBoxModel
  * \file
  *
  * \brief Defines the default values for most of the properties
- *        required by the non-isotherm two-phase box model.
+ *        required by the non-isotherm two-phase fully implicit model.
  */
 
 #ifndef DUMUX_2PNI_PROPERTY_DEFAULTS_HH

@@ -18,11 +18,11 @@
  * \file
  *
  * \brief Defines default values for the properties required by the
- *        2pDFM box model.
+ *        2pDFM fully implicit model.
  * 
  * \ingroup Properties
  * \ingroup TwoPDFMBoxModel
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  */
 #ifndef DUMUX_BOXMODELS_2PDFM_PROPERTY_DEFAULTS_HH
 #define DUMUX_BOXMODELS_2PDFM_PROPERTY_DEFAULTS_HH

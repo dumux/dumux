@@ -59,7 +59,7 @@ public:
 }
 /*!
  * \ingroup TwoPBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the 2PDFMProblem which uses the
  *        twophase box model
  */

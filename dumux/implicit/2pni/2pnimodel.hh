@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX scheme to the non-isothermal twophase flow model.
+ * \brief Adaption of the fully implicit scheme to the non-isothermal twophase flow model.
  */
 #ifndef DUMUX_2PNI_MODEL_HH
 #define DUMUX_2PNI_MODEL_HH
@@ -31,7 +31,7 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPNIBoxModel
- * \brief A two-phase, non-isothermal flow model using the box scheme.
+ * \brief A two-phase, non-isothermal flow model using the fully implicit scheme.
  *
  * This model implements a non-isothermal two-phase flow for two
  * immiscible fluids \f$\alpha \in \{ w, n \}\f$. Using the standard

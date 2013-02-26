@@ -71,7 +71,7 @@ SET_BOOL_PROP(Stokes2cTestProblem, ProblemEnableGravity, false);
 
 /*!
  * \ingroup BoxStokes2cModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Stokes transport problem with dryer air flowing
  *        from the top to the bottom.
  *

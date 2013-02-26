@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the data which is required to calculate the
  *        energy fluxes over a face of a finite volume.
  *
@@ -36,7 +35,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxStokes2cniModel
- * \ingroup BoxFluxVariables
+ * \ingroup ImplicitFluxVariables
  * \brief This template class contains data which is required to
  *        calculate the energy fluxes over a face of a finite
  *        volume for the non-isothermal compositional Stokes box model.

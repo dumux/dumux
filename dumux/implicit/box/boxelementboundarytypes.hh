@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Boundary types gathered on an element
  */
 #ifndef DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
@@ -33,8 +32,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxModel
- * \ingroup BoxBoundaryTypes
- *
+ * \ingroup ImplicitBoundaryTypes
  * \brief This class stores an array of BoundaryTypes objects
  */
 template<class TypeTag>

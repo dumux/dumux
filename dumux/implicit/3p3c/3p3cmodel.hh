@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX scheme to the three-phase three-component flow model.
+ * \brief Adaption of the fully implicit scheme to the three-phase three-component flow model.
  *
  * The model is designed for simulating three fluid phases with water, gas, and
  * a liquid contaminant (NAPL - non-aqueous phase liquid)
@@ -33,7 +33,7 @@ namespace Dumux
 {
 /*!
  * \ingroup ThreePThreeCModel
- * \brief Adaption of the BOX scheme to the three-phase three-component flow model.
+ * \brief Adaption of the fully implicit scheme to the three-phase three-component flow model.
  *
  * This model implements three-phase three-component flow of three fluid phases
  * \f$\alpha \in \{ water, gas, NAPL \}\f$ each composed of up to three components

@@ -75,7 +75,7 @@ SET_BOOL_PROP(InjectionProblem, VtkAddVelocity, false);
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  *
  * The domain is sized 60m times 40m and consists of two layers, a moderately

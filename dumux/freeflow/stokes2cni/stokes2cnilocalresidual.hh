@@ -35,7 +35,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxStokes2cniModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the non-isothermal compositional Stokes box model. This class is derived
  *        from the stokes2c box local residual and adds the energy balance equation.

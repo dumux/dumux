@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup TwoPTwoCNIModel
  * \file
  *
  * \brief Defines the properties required for the non-isothermal two-phase,
- * two-component BOX model.
+ * two-component fully implicit model.
  */
 #ifndef DUMUX_2P2CNI_PROPERTIES_HH
 #define DUMUX_2P2CNI_PROPERTIES_HH

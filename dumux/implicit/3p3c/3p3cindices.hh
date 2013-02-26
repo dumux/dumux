@@ -18,8 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Defines the indices required for the 3p3c BOX model.
+ * \brief Defines the indices required for the 3p3c model.
  */
 #ifndef DUMUX_3P3C_INDICES_HH
 #define DUMUX_3P3C_INDICES_HH
@@ -30,7 +29,9 @@ namespace Dumux
 {
 
 /*!
- * \brief The indices for the isothermal ThreePThreeC model.
+ * \ingroup ThreePThreeCModel
+ * \ingroup ImplicitIndices
+ * \brief The indices for the isothermal 3p3c model.
  *
  * \tparam formulation The formulation, only pgSwSn
  * \tparam PVOffset The first index in a primary variable vector.

@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief This file contains the data which is required to calculate
  *        all fluxes of fluid phases over a face of a finite volume.
  *
@@ -39,7 +38,7 @@ namespace Dumux
 
 /*!
  * \ingroup OnePTwoCBoxModel
- * \ingroup BoxFluxVariables
+ * \ingroup ImplicitFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate the fluxes of the fluid phases over a face of a
  *        finite volume for the one-phase, two-component model.
@@ -82,7 +81,7 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param scvfIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables

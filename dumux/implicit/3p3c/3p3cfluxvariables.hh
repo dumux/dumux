@@ -18,13 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief   This file contains the data which is required to calculate
  *          all fluxes of components over a face of a finite volume for
- *          the two-phase, two-component model.
- */
-/*!
- * \ingroup ThreePThreeCModel
+ *          the three-phase, three-component model.
  */
 #ifndef DUMUX_3P3C_FLUX_VARIABLES_HH
 #define DUMUX_3P3C_FLUX_VARIABLES_HH
@@ -38,9 +34,11 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup ThreePThreeCModel
+ * \ingroup ImplicitFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate all fluxes of components over a face of a finite
- *        volume for the two-phase, two-component model.
+ *        volume for the three-phase, three-component model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the integration point, etc.
@@ -89,7 +87,7 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables

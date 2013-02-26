@@ -32,9 +32,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup ImplicitModel
  * \ingroup ImplicitBaseProblems
- * \brief Base class for all problems which use the box scheme.
+ * \brief Base class for all fully implicit problems
  *
  * \note All quantities are specified assuming a threedimensional
  *       world. Problems discretized using 2D grids are assumed to be

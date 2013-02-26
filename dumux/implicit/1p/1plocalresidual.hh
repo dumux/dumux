@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the one-phase box model.
+ *        using the one-phase fully implicit model.
  */
 #ifndef DUMUX_1P_LOCAL_RESIDUAL_HH
 #define DUMUX_1P_LOCAL_RESIDUAL_HH
@@ -31,9 +31,9 @@ namespace Dumux
 {
 /*!
  * \ingroup OnePBoxModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the one-phase box model.
+ *        using the one-phase fully implicit model.
  */
 template<class TypeTag>
 class OnePLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)

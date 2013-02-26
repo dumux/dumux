@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup RichardsModel
  * \file
  *
  * \brief Contains the default definitions for the properties required
- *        by the Richards box model.
+ *        by the Richards fully implicit model.
  */
 #ifndef DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH
 #define DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH

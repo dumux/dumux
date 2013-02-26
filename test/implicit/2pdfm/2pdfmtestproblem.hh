@@ -106,7 +106,7 @@ SET_BOOL_PROP(TwoPDFMTestProblem, ProblemEnableGravity, false);
 
 /*!
  * \ingroup TwoPDFMBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Soil contamination problem involving a DNAPL migration into a
  *        fully water saturated media
  *

@@ -64,7 +64,7 @@ SET_PROP(InjectionSpatialParams, MaterialLaw)
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup BoxTestProblems
+ * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the injection
  *        problem which uses the isothermal 2p2c box model
  */

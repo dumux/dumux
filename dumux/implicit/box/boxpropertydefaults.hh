@@ -18,10 +18,9 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup BoxProperties
+ * \ingroup ImplicitProperties
  * \ingroup BoxModel
  * \file
- *
  * \brief Default properties for box models
  */
 #ifndef DUMUX_BOX_PROPERTY_DEFAULTS_HH
