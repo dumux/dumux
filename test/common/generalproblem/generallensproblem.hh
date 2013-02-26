@@ -43,8 +43,6 @@
 #include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 
-#include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
-
 #include "generallensspatialparams.hh"
 
 namespace Dumux
@@ -144,9 +142,7 @@ SET_INT_PROP(DecoupledGeneralLensProblem, Formulation,
 
 SET_INT_PROP(DecoupledGeneralLensProblem, VtkOutputLevel, 1);
 
-SET_TYPE_PROP(DecoupledGeneralLensProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
-
-SET_SCALAR_PROP(DecoupledGeneralLensProblem, ImpetCFLFactor, 1.0);
+SET_SCALAR_PROP(DecoupledGeneralLensProblem, ImpetCFLFactor, 0.95);
 }
 
 /*!
