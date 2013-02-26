@@ -1,4 +1,9 @@
-SUBDIRS = common decoupled freeflow implicit material
+SUBDIRS = common \
+          decoupled \
+          freeflow \
+          implicit \
+          material \
+          references
 
 EXTRA_DIST = CMakeLists.txt
 

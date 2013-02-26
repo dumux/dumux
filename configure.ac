@@ -128,6 +128,7 @@ AC_CONFIG_FILES([dumux.pc
     test/material/ncpflash/Makefile
     test/material/pengrobinson/Makefile
     test/material/tabulation/Makefile
+    test/references/Makefile
     tutorial/Makefile
 ])
 
