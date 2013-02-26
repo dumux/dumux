@@ -107,7 +107,8 @@ public:
             }
         }
 
-        timeManager_ = Dune::make_shared<TimeManager>(verbose);
+        timeManager_ = new TimeManager(verbose);
+        newTimeManager_ = true;
 
         model_ = Dune::make_shared<Model>(asImp_()) ;
     }
@@ -122,6 +123,7 @@ public:
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(&timeManager),
+          newTimeManager_(false), 
           variables_(gridView),
           outputInterval_(1)
     {
@@ -134,10 +136,17 @@ public:
                 bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().center()[i]);
             }
         }
-
+        
         model_ = Dune::make_shared<Model>(asImp_()) ;
     }
 
+    //! Destructor
+    ~OneModelProblem()
+    {
+        if (newTimeManager_)
+            delete timeManager_;
+    }
+    
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
@@ -626,7 +635,8 @@ private:
     GlobalPosition bboxMin_;
     GlobalPosition bboxMax_;
 
-    Dune::shared_ptr<TimeManager> timeManager_;
+    TimeManager *timeManager_;
+    bool newTimeManager_;
 
     Variables variables_;
 
