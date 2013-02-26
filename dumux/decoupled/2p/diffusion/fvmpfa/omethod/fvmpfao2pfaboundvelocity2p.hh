@@ -237,11 +237,11 @@ public:
                 for (int i = 0; i < dim; i++)
                 refVelocity[i] = 0.5 * (fluxW[2*i + 1] - fluxW[2*i]);
 
-                const DimVector& localPos =
+                const DimVector localPos =
                 ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
-                const DimMatrix& jacobianT = eIt->geometry().jacobianTransposed(localPos);
+                const DimMatrix jacobianT = eIt->geometry().jacobianTransposed(localPos);
 
                 // calculate the element velocity by the Piola transformation
                 DimVector elementVelocity(0);
