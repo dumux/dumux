@@ -45,7 +45,6 @@ namespace Dumux
 namespace Properties
 {
 NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(Grid);
 NEW_PROP_TAG(GridCreator);
 NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(TimeManager);
@@ -312,7 +311,6 @@ int start_(int argc,
     dumuxMessage_(true);
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     // Set by default (dumux/common/basicproperties.hh) to DgfGridCreator (dumux/io/dgfgridcreator.hh)
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
