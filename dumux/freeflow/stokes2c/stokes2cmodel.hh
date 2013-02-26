@@ -84,7 +84,7 @@ class Stokes2cModel : public StokesModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
 public:
-    //! \copydoc BoxModel::addOutputVtkFields
+    //! \copydoc ImplicitModel::addOutputVtkFields
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)

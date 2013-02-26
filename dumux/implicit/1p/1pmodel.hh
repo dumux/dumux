@@ -62,7 +62,7 @@ class OnePBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
 public:
     /*!
-     * \brief \copybrief Dumux::BoxModel::addOutputVtkFields
+     * \brief \copybrief Dumux::ImplicitModel::addOutputVtkFields
      *
      * Specialization for the OnePBoxModel, adding the pressure and
      * the process rank to the VTK writer.

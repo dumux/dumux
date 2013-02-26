@@ -103,7 +103,7 @@ public:
     }
 
     /*!
-     * \brief \copybrief Dumux::BoxModel::addOutputVtkFields
+     * \brief \copybrief ImplicitModel::addOutputVtkFields
      *
      * Specialization for the OnePTwoCBoxModel, adding pressure,
      * mass and mole fractions, and the process rank to the VTK writer.

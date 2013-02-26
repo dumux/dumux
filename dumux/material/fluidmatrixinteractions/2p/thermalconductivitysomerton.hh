@@ -61,7 +61,7 @@ public:
      */
     static Scalar effectiveThermalConductivity(const Scalar Sw,
                                                const Scalar lambdaW,
-                                               const Scalar lamdaN,
+                                               const Scalar lambdaN,
                                                const Scalar lambdaSolid,
                                                const Scalar porosity)
     {

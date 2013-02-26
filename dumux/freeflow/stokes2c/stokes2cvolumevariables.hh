@@ -64,7 +64,7 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \copydoc BoxVolumeVariables::update()
+     * \copydoc ImplicitVolumeVariables::update()
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -100,7 +100,7 @@ public:
     };
 
     /*!
-     * \copydoc BoxModel::completeFluidState()
+     * \copydoc ImplicitModel::completeFluidState()
      * \param isOldSol Specifies whether this is the previous solution or the current one
      */
     static void completeFluidState(const PrimaryVariables& priVars,

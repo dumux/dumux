@@ -137,7 +137,7 @@ public:
         flux = this->problem_.gridView().comm().sum(flux);
     }
 
-    //! \copydoc BoxModel::addOutputVtkFields
+    //! \copydoc ImplicitModel::addOutputVtkFields
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)

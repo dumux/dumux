@@ -43,7 +43,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for models based on the box-scheme
+//! The type tag for models based on the cell-centered scheme
 NEW_TYPE_TAG(CCModel, INHERITS_FROM(ImplicitBase));
 }
 }
