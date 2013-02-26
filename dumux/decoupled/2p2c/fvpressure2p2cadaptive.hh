@@ -188,7 +188,7 @@ public:
      * \param problem a problem class object
      */
     FVPressure2P2CAdaptive(Problem& problem) : FVPressure2P2C<TypeTag>(problem),
-            problem_(problem), pressureModelAdaptive2p_(0)
+            problem_(problem)
     {
         enableVolumeIntegral = GET_PARAM_FROM_GROUP(TypeTag,bool, Impet, EnableVolumeIntegral);
         enableMPFA= GET_PARAM_FROM_GROUP(TypeTag,bool, GridAdapt, EnableMultiPointFluxApproximation);
