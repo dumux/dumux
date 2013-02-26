@@ -15,6 +15,6 @@ SUBDIRS = 1p \
           mpnc \
           richards
 
-boxmodelsdir = $(includedir)/dumux/boxmodels
+implicitdir = $(includedir)/dumux/implicit
 
 include $(top_srcdir)/am/global-rules
