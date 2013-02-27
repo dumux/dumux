@@ -9,8 +9,9 @@ INCLUDE(DumuxMacros)
 DumuxSetup("DUNE_geometry" "dune-geometry" "DUNE")
 
 DumuxFindIncludeDir("dune/geometry/type.hh")
+DumuxFindLibrary("dunegeometry")
 
-DumuxRequiredLibsFound()
+DumuxRequiredLibsFound("dunegeometry")
 DumuxIncludeDirsFound()
 DumuxCheckFound()
 
