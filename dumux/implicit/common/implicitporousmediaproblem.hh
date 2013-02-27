@@ -77,7 +77,6 @@ public:
         : ParentType(timeManager, gridView),
           gravity_(0)
     {
-        newSpatialParams_ = true;
         spatialParams_ = Dune::make_shared<SpatialParams>(gridView);
 
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
