@@ -17,8 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file mplinearmaterialparams.hh
- *
+ * \file
+ * 
+ * \brief Implements a linear saturation-capillary pressure relation
+ * 
  * Implements a linear saturation-capillary pressure relation for
  * M-phase fluid systems.
  */

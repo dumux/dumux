@@ -17,8 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file vangenuchtenparams.hh Specification of the material params
- *       for the van Genuchten capillary pressure model.
+ * \file 
+ * 
+ * \brief Specification of the material params for the van Genuchten 
+ *        capillary pressure model.
  *
  * In comparison to the 2p version, this parameter container also includes
  * the residual saturations, as their inclusion is very model-specific.

@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/**
+ * \file
+ * 
+ * \brief Definition of the spatial params properties for the Forchheimer problem
+ *
+ */
+
 #ifndef DUMUX_FORCHHEIMER_SPATIAL_PARAMS_HH
 #define DUMUX_FORCHHEIMER_SPATIAL_PARAMS_HH
 

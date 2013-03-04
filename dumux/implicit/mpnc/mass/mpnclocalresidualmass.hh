@@ -32,6 +32,7 @@
 namespace Dumux
 {
 /*!
+ * \file
  * \brief The mass conservation part of the Mp-Nc model.
  *
  * This is the class represents methods which are shared amongst all

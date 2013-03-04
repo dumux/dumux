@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \brief M-phase, N-component specific details needed to
+ *        approximately calculate the local defect in the fully implicit scheme.
+ *
+ */
 #ifndef DUMUX_MPNC_LOCAL_RESIDUAL_HH
 #define DUMUX_MPNC_LOCAL_RESIDUAL_HH
 
@@ -30,10 +36,10 @@ namespace Dumux
 /*!
  * \ingroup MPNCModel
  * \ingroup ImplicitLocalResidual
- * \brief two-phase, N-component specific details needed to
+ * \brief M-phase, N-component specific details needed to
  *        approximately calculate the local defect in the fully implicit scheme.
  *
- * This class is used to fill the gaps in BoxLocalResidual for the
+ * This class is used to fill the gaps in ImplicitLocalResidual for the
  * two-phase, N-component twophase flow.
  */
 template<class TypeTag>

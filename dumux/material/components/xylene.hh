@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * 
+ * \ingroup Components
+ * 
+ * \brief Properties of xylene.
+ */
 #ifndef DUMUX_XYLENE_HH
 #define DUMUX_XYLENE_HH
 

@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \brief A fully implicit model for M-phase, N-component flow using
+ *        vertex centered finite volumes.
+ * 
+ */
+
 #ifndef DUMUX_MPNC_MODEL_HH
 #define DUMUX_MPNC_MODEL_HH
 

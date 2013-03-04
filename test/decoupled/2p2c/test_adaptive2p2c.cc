@@ -14,6 +14,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Test for the adaptive 2p2c model
+ */
 #include "config.h"
 
 #include "test_adaptive2p2cproblem.hh"

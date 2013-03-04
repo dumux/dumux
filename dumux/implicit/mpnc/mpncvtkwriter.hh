@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \brief Writes the VTK output files for a solution of the Mp-Nc model.
+ */
+
 #ifndef DUMUX_MPNC_VTK_WRITER_HH
 #define DUMUX_MPNC_VTK_WRITER_HH
 

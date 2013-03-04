@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief A VTK writer module which adheres to the required API but
+ *        does nothing.
+ */
+
 #ifndef DUMUX_MPNC_VTK_BASE_WRITER_HH
 #define DUMUX_MPNC_VTK_BASE_WRITER_HH
 

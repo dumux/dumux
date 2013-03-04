@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/**
+ * \file
+ * 
+ * \brief The spatial parameters for the ObstacleProblem
+ */
+
 #ifndef DUMUX_OBSTACLE_SPATIAL_PARAMS_HH
 #define DUMUX_OBSTACLE_SPATIAL_PARAMS_HH
 

@@ -19,6 +19,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Contains the quantities which are constant within a
+ *        finite volume in the non-isothermal CO2
+ *        model.
+ */
 #ifndef DUMUX_CO2_VOLUME_VARIABLES_HH
 #define DUMUX_CO2_VOLUME_VARIABLES_HH
 
