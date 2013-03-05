@@ -1,12 +1,7 @@
 # add build targets
 add_executable("test_stokes" test_stokes.cc)
 target_link_libraries("test_stokes" ${DumuxLinkLibraries})
-if(SUPERLU_FOUND)
-  set_target_properties("test_stokes"
-    PROPERTIES
-    COMPILE_FLAGS ${SUPERLU_CPPFLAGS})
-  target_link_libraries("test_stokes" ${SUPERLU_LIBS})
-endif(SUPERLU_FOUND)
+add_dune_superlu_flags("test_stokes")
 
 # add required libraries and includes to the build flags
 link_directories(${DumuxLinkDirectories})
