@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Contains the mass conservation part of the volume variables
+ * \brief Contains the mass conservation part of the volume variables.
  */
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_MASS_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_MASS_HH
@@ -32,7 +32,7 @@ namespace Dumux
 {
 /*!
  * \brief The compositional part of the volume variables if chemical
- *        equilibrium _is_ assumed
+ *        equilibrium _is_ assumed.
  */
 template <class TypeTag, bool enableKinetic /* = false */>
 class MPNCVolumeVariablesMass

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A fully implicit model for M-phase, N-component flow using
+ * \brief A fully implicit model for MpNc flow using
  *        vertex centered finite volumes.
  * 
  */
@@ -35,7 +35,7 @@ namespace Dumux
 {
 /*!
  * \ingroup MPNCModel
- * \brief A fully implicit model for M-phase, N-component flow using
+ * \brief A fully implicit model for MpNc flow using
  *        vertex centered finite volumes.
  *
  * This model implements a \f$M\f$-phase flow of a fluid mixture

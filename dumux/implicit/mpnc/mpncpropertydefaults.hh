@@ -42,7 +42,7 @@
  * \ingroup ImplicitProperties
  * \ingroup BoxMpNcModel
  * \file
- * \brief  Default properties for the Mp-Nc fully implicit model.
+ * \brief  Default properties for the MpNc fully implicit model.
  */
 namespace Dumux
 {
@@ -68,9 +68,6 @@ public:
 
 /*!
  * \brief Set the property for the number of fluid phases.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 2.
  */
 SET_PROP(MPNC, NumPhases)
 {

@@ -20,8 +20,7 @@
  * \file
  *
  * \brief Contains the secondary variables (Quantities which are
- *        constant within a finite volume) of the M-phase, N-component
- *        model.
+ *        constant within a finite volume) of the MpNc model.
  */
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_HH
@@ -41,7 +40,7 @@ namespace Dumux
  * \ingroup MPNCModel
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the M-phase, N-component model.
+ *        finite volume in the MpNc model.
  */
 template <class TypeTag>
 class MPNCVolumeVariables

@@ -27,7 +27,7 @@
  * \ingroup ImplicitProperties
  * \ingroup BoxMpNcModel
  * \file
- * \brief  Defines the properties required for the Mp-Nc fully implicit model.
+ * \brief  Defines the properties required for the MpNc fully implicit model.
  */
 namespace Dumux
 {

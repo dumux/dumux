@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief M-phase, N-component specific details needed to
- *        approximately calculate the local defect in the fully implicit scheme.
+ * \brief MpNc specific details needed to approximately calculate the local
+ *        defect in the fully implicit scheme.
  *
  */
 #ifndef DUMUX_MPNC_LOCAL_RESIDUAL_HH
@@ -36,11 +36,11 @@ namespace Dumux
 /*!
  * \ingroup MPNCModel
  * \ingroup ImplicitLocalResidual
- * \brief M-phase, N-component specific details needed to
- *        approximately calculate the local defect in the fully implicit scheme.
+ * \brief MpNc specific details needed to approximately calculate the local
+ *        defect in the fully implicit scheme.
  *
  * This class is used to fill the gaps in ImplicitLocalResidual for the
- * two-phase, N-component twophase flow.
+ * MpNc flow.
  */
 template<class TypeTag>
 class MPNCLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)

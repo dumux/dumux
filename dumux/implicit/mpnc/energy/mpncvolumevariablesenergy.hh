@@ -19,8 +19,7 @@
 /*!
  * \file
  *
- * \brief Contains the energy part of volume variables of the M-phase,
- *        N-component model.
+ * \brief Contains the energy part of volume variables of the MpNc model.
  */
 #ifndef DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_HH
@@ -32,7 +31,7 @@ namespace Dumux
 {
 /*!
  * \brief Contains the energy related quantities which are constant within a
- *        finite volume in the two-phase, N-component model.
+ *        finite volume in a MpNc model.
  *
  * This is the dummy class for the isothermal case. Note that we're
  * only isothermal in the sense that the temperature at a location and

@@ -33,7 +33,7 @@ namespace Dumux
 {
 /*!
  * \file
- * \brief The mass conservation part of the Mp-Nc model.
+ * \brief The mass conservation part of the MpNc model.
  *
  * This is the class represents methods which are shared amongst all
  * mass conservation modules.
@@ -220,7 +220,7 @@ public:
 };
 
 /*!
- * \brief The mass conservation part of the Mp-Nc model.
+ * \brief The mass conservation part of the MpNc model.
  *
  * This is the specialization for the case where kinetic mass transfer
  * is _not_ considered.

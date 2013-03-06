@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Writes the VTK output files for a solution of the Mp-Nc model.
+ * \brief Writes the VTK output files for a solution of the MpNc model.
  */
 
 #ifndef DUMUX_MPNC_VTK_WRITER_HH
@@ -33,7 +33,7 @@ namespace Dumux
 /*!
  * \ingroup MPNCModel
  * \brief Writes the VTK output files for a
- * solution of the Mp-Nc model.
+ * solution of the MpNc model.
  */
 template<class TypeTag>
 class MPNCVtkWriter

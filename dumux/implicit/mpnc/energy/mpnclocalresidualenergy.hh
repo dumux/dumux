@@ -20,8 +20,7 @@
  * \file
  *
  * \brief This file contains the parts of the local residual to
- *        calculate the heat flux in the fully coupled two-phase
- *        N-component model
+ *        calculate the heat flux in the fully coupled MpNc model.
  */
 #ifndef DUMUX_MPNC_LOCAL_RESIDUAL_ENERGY_HH
 #define DUMUX_MPNC_LOCAL_RESIDUAL_ENERGY_HH
