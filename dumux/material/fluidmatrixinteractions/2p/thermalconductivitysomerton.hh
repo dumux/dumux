@@ -48,7 +48,7 @@ public:
      *
      * The material law is:
      * \f[
-     l_eff = l_solid + (l_wet - l_solid)
+     l_eff = l_solid + \sqrt(S_w)(l_wet - l_solid)
      \f]
      *
      * \param Sw The saturation of the wetting phase
@@ -69,9 +69,8 @@ public:
         const Scalar lSat = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaW, porosity);
         const Scalar lDry = std::pow(lambdaSolid, (1.0 - porosity));
 
-        return lDry + std::sqrt(satW) * (lDry - lSat);
+        return lDry + std::sqrt(satW) * (lSat - lDry);
     }
-
 };
 }
 #endif
