@@ -49,7 +49,7 @@ private:
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    ///@cond 0
+    ///@cond false
     typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
     ///@endcond
 
