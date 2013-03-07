@@ -67,7 +67,7 @@ class TestDiffusionSpatialParams: public FVSpatialParams<TypeTag>
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
-    ///@cond 0
+    ///@cond false
     typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolution;
     ///@endcond
     enum

@@ -120,7 +120,9 @@ SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
  * also contains so-called boundary ids which can be used assigned during the grid creation in order to differentiate
  * between different parts of the boundary.
  * These boundary ids can be imported into the problem where the boundary conditions can then be assigned accordingly.
- *
+ * 
+ * This problem uses the \ref OnePTwoCBoxModel model.
+ * 
  * To run the simulation execute the following line in shell (works with the box and cell centered spatial discretization method):
  * <tt>./test_ccco2 </tt> or <tt>./test_boxco2 </tt>
  */
