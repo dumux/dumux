@@ -176,7 +176,7 @@ Doxygen documentation should be considered.
 \draw (fsys)--(2.4,-7);
 
 \draw [->](c3)--(6.5,9) node [right,text width=12.5cm,align=left] 
-  {Common files of the implicit (box- and cell-centered) models and the de-\\[-4pt]coupled models: time integration, start routine, the  property system, ...};
+  {Common files of the implicit (box and cell centered) models and the de-\\[-4pt]coupled models: time integration, start routine, the  property system, ...};
 \draw [->](spec3)--(6.5,8) node [right,text width=12.5cm,align=left] 
   {Specific model definition for the decoupled formulation. In each model \\[-4pt]folder are subdirectories for the implicit pressure  equation, sorted by \\[-4pt]discretization method, and for the explicit transport.};
 \draw [->](c2)--(6.5,7) node [right,text width=12.5cm,align=left] 
@@ -215,6 +215,8 @@ Doxygen documentation should be considered.
 \draw [->](para)--(6.5,-10) node [right,text width=12.5cm,align=left] 
   {Files for parallel programming.};
 \end{tikzpicture}
+\caption{Structure of the directory \texttt{dumux} containing the \Dumux source files.}
+\label{fig:dumux-structure}
 \end{sidewaysfigure}
 
 % \begin{landscape}
