@@ -4,13 +4,8 @@ noinst_HEADERS = *.hh
 EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
 
 test_box1p_SOURCES = test_box1p.cc
-
 test_cc1p_SOURCES = test_cc1p.cc
-
 test_box1pwithamg_SOURCES = test_box1pwithamg.cc
-test_box1pwithamg_CXXFLAGS = -DUSE_AMGBACKEND
-
 test_cc1pwithamg_SOURCES = test_cc1pwithamg.cc
-test_cc1pwithamg_CXXFLAGS = -DUSE_AMGBACKEND
 
 include $(top_srcdir)/am/global-rules

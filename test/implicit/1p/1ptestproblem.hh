@@ -40,13 +40,17 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#ifdef USE_AMGBACKEND
 #if HAVE_DUNE_PDELAB
+
+// Check if DUNE-PDELab has been patched for our needs. 
+// TODO: this should be replaced by a proper configure test.
+#include <dune/pdelab/backend/istlvectorbackend.hh>
+
+#ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
 #include <dumux/linear/amgbackend.hh>
-#else // HAVE_DUNE_PDELAB
-#warning You have to install dune-pdelab to use the AMG backend.
+#endif // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
+
 #endif // HAVE_DUNE_PDELAB
-#endif //USE_AMGBACKEND
 
 #include "1ptestspatialparams.hh"
 
@@ -92,7 +96,7 @@ SET_INT_PROP(OnePTestProblem, LinearSolverVerbosity, 0);
 SET_INT_PROP(OnePTestProblem, LinearSolverPreconditionerIterations, 1);
 SET_SCALAR_PROP(OnePTestProblem, LinearSolverPreconditionerRelaxation, 1.0);
 
-#if defined(USE_AMGBACKEND) && HAVE_DUNE_PDELAB
+#ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
 NEW_TYPE_TAG(OnePTestBoxProblemWithAMG, INHERITS_FROM(OnePTestBoxProblem));
 NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
 // Solver settings for the tests using AMG

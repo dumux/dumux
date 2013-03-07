@@ -1,8 +1,19 @@
 Index: dune/pdelab/backend/istlvectorbackend.hh
 ===================================================================
---- dune/pdelab/backend/istlvectorbackend.hh	(revision 2221)
+--- dune/pdelab/backend/istlvectorbackend.hh	(revision 2292)
 +++ dune/pdelab/backend/istlvectorbackend.hh	(working copy)
-@@ -30,6 +30,8 @@
+@@ -3,6 +3,10 @@
+ #ifndef DUNE_ISTLVECTORBACKEND_HH
+ #define DUNE_ISTLVECTORBACKEND_HH
+ 
++// Needed to detect in Dumux whether PDELab is patched.
++// TODO: this should be replaced by a proper configure test.
++#define DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
++
+ #include<vector>
+ 
+ #include<dune/common/fvector.hh>
+@@ -30,6 +34,8 @@
        typedef typename ContainerType::size_type size_type;
        typedef ISTLVectorBackend<BLOCKSIZE> Backend;
  
@@ -11,7 +22,7 @@ Index: dune/pdelab/backend/istlvectorbackend.hh
        ISTLBlockVectorContainer (const T& t_) : container(t_.globalSize()/BLOCKSIZE)
        {}
        ISTLBlockVectorContainer (const T& t_, const E& e) : container(t_.globalSize()/BLOCKSIZE)
-@@ -89,6 +91,11 @@
+@@ -89,6 +95,11 @@
          return container.two_norm();
        }
  
@@ -23,7 +34,7 @@ Index: dune/pdelab/backend/istlvectorbackend.hh
        typename Dune::template FieldTraits<E>::real_type one_norm() const
        {
          return container.one_norm();
-@@ -163,6 +170,16 @@
+@@ -163,6 +174,16 @@
          return container.size()*BLOCKSIZE;
        }
  
@@ -42,7 +53,7 @@ Index: dune/pdelab/backend/istlvectorbackend.hh
        {
 Index: dune/pdelab/backend/novlpistlsolverbackend.hh
 ===================================================================
---- dune/pdelab/backend/novlpistlsolverbackend.hh	(revision 2221)
+--- dune/pdelab/backend/novlpistlsolverbackend.hh	(revision 2292)
 +++ dune/pdelab/backend/novlpistlsolverbackend.hh	(working copy)
 @@ -1153,7 +1153,7 @@
                              int verbose_=1, bool reuse_=false,
@@ -68,7 +79,7 @@ Index: dune/pdelab/backend/novlpistlsolverbackend.hh
  #if HAVE_MPI
 Index: dune/pdelab/backend/ovlpistlsolverbackend.hh
 ===================================================================
---- dune/pdelab/backend/ovlpistlsolverbackend.hh	(revision 2221)
+--- dune/pdelab/backend/ovlpistlsolverbackend.hh	(revision 2292)
 +++ dune/pdelab/backend/ovlpistlsolverbackend.hh	(working copy)
 @@ -794,7 +794,7 @@
        ISTLBackend_AMG(const GFS& gfs_, unsigned maxiter_=5000, 
@@ -79,12 +90,13 @@ Index: dune/pdelab/backend/ovlpistlsolverbackend.hh
            verbose(verbose_), reuse(reuse_), firstapply(true),
            usesuperlu(usesuperlu_)
        {
-@@ -855,11 +855,11 @@
+@@ -855,11 +855,12 @@
          \param[in] r right hand side
          \param[in] reduction to be achieved
        */
 -      void apply(M& A, V& z, V& r, typename V::ElementType reduction)
-+      void apply(MatrixType& A, V& z, V& r, typename V::ElementType reduction)
++      template <class Vector>
++      void apply(MatrixType& A, Vector& z, Vector& r, typename V::ElementType reduction)
        {
          Timer watch;
          Comm oocc(gfs.gridView().comm());
@@ -93,9 +105,19 @@ Index: dune/pdelab/backend/ovlpistlsolverbackend.hh
          typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
            Dune::Amg::FirstDiagonal> > Criterion;
  #if HAVE_MPI
+@@ -891,7 +892,8 @@
+         Solver<VectorType> solver(oop,sp,*amg,reduction,maxiter,verb);
+         Dune::InverseOperatorResult stat;
+         
+-        solver.apply(BlockProcessor<GFS>::getVector(z),BlockProcessor<GFS>::getVector(r),stat);
++//        solver.apply(BlockProcessor<GFS>::getVector(z),BlockProcessor<GFS>::getVector(r),stat);
++        solver.apply(z,r,stat);
+         stats.tsolve= watch.elapsed();
+         res.converged  = stat.converged;
+         res.iterations = stat.iterations;
 Index: dune/pdelab/backend/seqistlsolverbackend.hh
 ===================================================================
---- dune/pdelab/backend/seqistlsolverbackend.hh	(revision 2221)
+--- dune/pdelab/backend/seqistlsolverbackend.hh	(revision 2292)
 +++ dune/pdelab/backend/seqistlsolverbackend.hh	(working copy)
 @@ -542,10 +542,10 @@
          \param[in] r right hand side
