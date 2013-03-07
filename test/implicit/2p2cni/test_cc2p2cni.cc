@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 2p2cni box model
+ * \brief test for the 2p2cni CC model
  */
 #include "config.h"
 #include "waterairproblem.hh"

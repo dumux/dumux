@@ -24,7 +24,7 @@
 /*!
  * \file
  *
- * \brief test for the two-phase box model
+ * \brief test for the two-phase CC model
  */
 #include "config.h"
 #include "lensproblem.hh"

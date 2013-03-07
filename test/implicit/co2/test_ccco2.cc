@@ -22,7 +22,7 @@
 /*!
  * \file
  *
- * \brief Test for the CO2 box model.
+ * \brief Test for the CO2 CC model.
  */
 #include "config.h"
 #include "heterogeneousproblem.hh"

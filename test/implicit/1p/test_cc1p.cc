@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the one-phase box model
+ * \brief test for the one-phase CC model
  */
 #include "config.h"
 #include "1ptestproblem.hh"

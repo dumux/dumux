@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the 2p2c box model.
+ * \brief Test for the 2p2c CC model.
  */
 #include "config.h"
 #include "injectionproblem.hh"

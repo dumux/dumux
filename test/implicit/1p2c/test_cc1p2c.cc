@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 1p2c box model
+ * \brief test for the 1p2c CC model
  */
 #include "config.h"
 #include "1p2coutflowproblem.hh"

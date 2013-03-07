@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 2pni box model
+ * \brief test for the 2pni CC model
  */
 #include "config.h"
 

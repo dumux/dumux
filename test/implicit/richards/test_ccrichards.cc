@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the Richards box model.
+ * \brief Test for the Richards CC model.
  */
 #include "config.h"
 #include "richardslensproblem.hh"

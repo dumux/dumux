@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 3p3cni box model
+ * \brief test for the 3p3cni CC model
  */
 #include "config.h"
 //#include "kuevetteproblem.hh"

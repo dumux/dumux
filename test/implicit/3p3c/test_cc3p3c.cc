@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 3p3c box model
+ * \brief test for the 3p3c CC model
  */
 #include "config.h"
 #include "infiltrationproblem.hh"

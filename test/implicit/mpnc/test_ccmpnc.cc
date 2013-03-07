@@ -20,7 +20,7 @@
 /**
  * \file
  *
- * \brief Test for the MpNc box model.
+ * \brief Test for the MpNc CC model.
  */
 #include "config.h"
 #include "obstacleproblem.hh"
