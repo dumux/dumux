@@ -40,27 +40,29 @@ namespace Dumux
  * using a standard Darcy
  * approach as the equation for the conservation of momentum:
  \f[
- v_{D} = - \frac{\textbf K}{\mu}
- \left(\text{grad} p - \varrho {\textbf g} \right)
+ v = - \frac{\textbf K}{\mu}
+ \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
  \f]
  *
  * Gravity can be enabled or disabled via the property system.
  * By inserting this into the continuity equation, one gets
  \f[
- \Phi \frac{\partial \varrho}{\partial t} - \text{div} \left\{
-   \varrho \frac{\textbf K}{\mu}  \left(\text{grad}\, p - \varrho {\textbf g} \right)
+ \phi\frac{\partial \varrho}{\partial t} - \text{div} \left\{
+   \varrho \frac{\textbf K}{\mu}  \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
  \right\} = q \;,
  \f]
  *
- * The transport of the components is described by the following equation:
+ * The transport of the components \f$\kappa \in \{ w, a \}\f$ is described by the following equation:
  \f[
- \Phi \frac{ \partial \varrho x}{\partial t} - \text{div} \left( \varrho \frac{{\textbf K} x}{\mu} \left( \text{grad}\, p -
- \varrho {\textbf g} \right) + \varrho \tau \Phi D \text{grad} x \right) = q.
+ \phi \frac{ \partial \varrho X^\kappa}{\partial t}
+ - \text{div} \left\lbrace \varrho X^\kappa \frac{{\textbf K}}{\mu} \left( \textbf{grad}\, p -
+ \varrho {\textbf g} \right)
+ + \varrho D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa \right\rbrace = q.
  \f]
  *
- * All equations are discretized using a fully-coupled vertex-centered
- * finite volume (box) scheme as spatial and
- * the implicit Euler method as time discretization.
+ * All equations are discretized using a vertex-centered finite volume (box)
+ * or cell-centered finite volume scheme as spatial
+ * and the implicit Euler method as time discretization.
  *
  * The primary variables are the pressure \f$p\f$ and the mole or mass fraction of dissolved component \f$x\f$.
  */

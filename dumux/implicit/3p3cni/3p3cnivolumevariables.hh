@@ -41,7 +41,7 @@ namespace Dumux
 template <class TypeTag>
 class ThreePThreeCNIVolumeVariables : public ThreePThreeCVolumeVariables<TypeTag>
 {
-    //! \cond 0
+    //! \cond false
     typedef ThreePThreeCVolumeVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

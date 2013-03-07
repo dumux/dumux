@@ -38,12 +38,12 @@ namespace Dumux {
  * multiphase Darcy approach, the mass conservation equations for both
  * phases can be described as follows:
  * \f[
- \phi \frac{\partial \phi \varrho_\alpha S_\alpha}{\partial t}
+ \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
  - 
  \text{div} 
  \left\{ 
- \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mathrm{K}
- \left( \textrm{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
+ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
+ \left( \textbf{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
  \right\}
  -
  q_\alpha = 0 \qquad \alpha \in \{w, n\}
@@ -54,7 +54,7 @@ namespace Dumux {
  * matrix and the fluids: 
  
  \f{align*}{
- \frac{\partial \phi \sum_\alpha \varrho_\alpha u_\alpha S_\alpha}{\partial t}
+ \phi \frac{\partial \sum_\alpha \varrho_\alpha u_\alpha S_\alpha}{\partial t}
  & + 
  \left( 1 - \phi \right) \frac{\partial (\varrho_s c_s T)}{\partial t}
  - 
@@ -72,9 +72,9 @@ namespace Dumux {
  * p_\alpha/\varrho_\alpha\f$ is the specific internal energy of the
  * phase.
  *
- * The equations are discretized using a fully-coupled vertex centered
- * finite volume (box) scheme as spatial and the implicit Euler method
- * as time discretization.
+ * All equations are discretized using a vertex-centered finite volume (box)
+ * or cell-centered finite volume scheme as spatial
+ * and the implicit Euler method as time discretization.
  *
  * Currently the model supports choosing either \f$p_w\f$, \f$S_n\f$
  * and \f$T\f$ or \f$p_n\f$, \f$S_w\f$ and \f$T\f$ as primary

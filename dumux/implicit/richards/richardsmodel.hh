@@ -40,14 +40,14 @@ namespace Dumux
  *
  * In the unsaturated zone, Richards' equation
  \f[
- \frac{\partial\;\phi S_w \rho_w}{\partial t}
+ \frac{\partial\;\phi S_w \varrho_w}{\partial t}
  -
- \text{div} \left(
- \rho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;
- \text{\textbf{grad}}\left(
- p_w - g\rho_w
+ \text{div} \left\lbrace
+ \varrho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;
+ \left( \text{\textbf{grad}}
+ p_w - \varrho_w \textbf{g}
  \right)
- \right)
+ \right\rbrace
  =
  q_w,
  \f]
@@ -56,18 +56,19 @@ namespace Dumux
  * 
  * It can be derived from the two-phase equations, i.e.
  \f[
- \frac{\partial\;\phi S_\alpha \rho_\alpha}{\partial t}
+ \phi\frac{\partial S_\alpha \varrho_\alpha}{\partial t}
  -
- \text{div} \left(
- \rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\; \mathbf{K} \;
- \text{\textbf{grad}}\left(
- p_\alpha - g\rho_\alpha
+ \text{div} \left\lbrace
+ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\; \mathbf{K} \;
+ \left( \text{\textbf{grad}}
+ p_\alpha - \varrho_\alpha \textbf{g}
  \right)
- \right)
+ \right\rbrace
  =
  q_\alpha,
  \f]
  * where \f$\alpha \in \{w, n\}\f$ is the fluid phase,
+ * \f$\kappa \in \{ w, a \}\f$ are the components,
  * \f$\rho_\alpha\f$ is the fluid density, \f$S_\alpha\f$ is the fluid
  * saturation, \f$\phi\f$ is the porosity of the soil,
  * \f$k_{r\alpha}\f$ is the relative permeability for the fluid,

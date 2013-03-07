@@ -20,7 +20,7 @@
  * \file
  *
  * \brief This file contains the diffusion module for the vertex data
- *        of the fully coupled two-phase N-component model
+ *        of the fully coupled MpNc model
  */
 #ifndef DUMUX_MPNC_DIFFUSION_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_DIFFUSION_VOLUME_VARIABLES_HH
@@ -30,6 +30,10 @@
 
 namespace Dumux {
 
+/*!
+ * \brief Variables for the diffusive fluxes in the MpNc model within 
+ *        a finite volume.
+ */
 template<class TypeTag, bool enableDiffusion>
 class MPNCVolumeVariablesDiffusion
 {

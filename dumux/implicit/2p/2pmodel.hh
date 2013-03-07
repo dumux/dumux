@@ -53,9 +53,9 @@ namespace Dumux
  \right\} - q_\alpha = 0 \;,
  \f]
  *
- * These equations are discretized by a fully-coupled vertex centered finite volume
- * (box) scheme as spatial and the implicit Euler method as time
- * discretization.
+ * All equations are discretized using a vertex-centered finite volume (box)
+ * or cell-centered finite volume scheme as spatial
+ * and the implicit Euler method as time discretization.
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking

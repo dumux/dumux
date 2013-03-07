@@ -39,7 +39,7 @@ namespace Dumux
  * approach is used as the equation for the conservation of momentum:
  * \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
  * \f]
  *
  * By inserting this into the equations for the conservation of the
@@ -49,16 +49,17 @@ namespace Dumux
  {\partial t}
  - \sum_\alpha  \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
  \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- (\text{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
+ (\textbf{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
  \nonumber \\ \nonumber \\
- &-& \sum_\alpha \text{div} \left\{{\bf D}_{\alpha, pm}^\kappa \varrho_{\alpha} \text{grad}\, X^\kappa_{\alpha} \right\}
+ &-& \sum_\alpha \text{div} \left\{ D_{\alpha,\text{pm}}^\kappa \varrho_{\alpha} \frac{M^\kappa}{M_\alpha}
+ \textbf{grad} x^\kappa_{\alpha} \right\}
  - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a\} \, ,
  \alpha \in \{w, g\}
  \f}
  *
- * This is discretized using a fully-coupled vertex
- * centered finite volume (box) scheme as spatial and
- * the implicit Euler method as temporal discretization.
+ * All equations are discretized using a vertex-centered finite volume (box)
+ * or cell-centered finite volume scheme as spatial
+ * and the implicit Euler method as time discretization.
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking

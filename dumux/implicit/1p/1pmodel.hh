@@ -35,14 +35,21 @@ namespace Dumux
  * \ingroup OnePBoxModel
  * \brief A single-phase, isothermal flow model using the fully implicit scheme.
  *
- * Single-phase, isothermal flow model, which solves the mass
- * continuity equation
+ * Single-phase, isothermal flow model, which uses a standard Darcy approach as the
+ * equation for the conservation of momentum:
  * \f[
- \phi \frac{\partial \varrho}{\partial t} + \text{div} (- \varrho \frac{\textbf K}{\mu} ( \textbf{grad}\, p -\varrho {\textbf g})) = q,
+ v = - \frac{\textbf K}{\mu}
+ \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
  * \f]
- * discretized using a vertex-centered finite volume (box) scheme as
- * spatial and the implicit Euler method as time discretization.  The
- * model supports compressible as well as incompressible fluids.
+ * 
+ * and solves the mass continuity equation:
+ * \f[
+ \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
+ * \f]
+ * All equations are discretized using a vertex-centered finite volume (box)
+ * or cell-centered finite volume scheme as spatial
+ * and the implicit Euler method as time discretization.
+ * The model supports compressible as well as incompressible fluids.
  */
 template<class TypeTag >
 class OnePBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)

@@ -41,29 +41,29 @@ namespace Dumux
  * approach is used as the equation for the conservation of momentum:
  * \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
  * \f]
  *
  * By inserting this into the equations for the conservation of the
  * components, one transport equation for each component is obtained as
  * \f{eqnarray*}
- && \phi \frac{\partial (\sum_\alpha \varrho_{\text{mol}, \alpha} x_\alpha^\kappa
+ && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa
  S_\alpha )}{\partial t}
  - \sum\limits_\alpha \text{div} \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
- \varrho_{\text{mol}, \alpha} x_\alpha^\kappa \mbox{\bf K}
- (\text{grad}\, p_\alpha - \varrho_{\text{mass}, \alpha} \mbox{\bf g}) \right\}
+ \varrho_\alpha x_\alpha^\kappa \mbox{\bf K}
+ (\textbf{grad}\, p_\alpha - \varrho_\alpha \mbox{\bf g}) \right\}
  \nonumber \\
  \nonumber \\
- && - \sum\limits_\alpha \text{div} \left\{ D_{pm}^\kappa \varrho_{\text{mol},
- \alpha } \text{grad}\, x_\alpha^\kappa \right\}
+ && - \sum\limits_\alpha \text{div} \left\{ D_\text{pm}^\kappa \varrho_\alpha \frac{M^\kappa}{M_\alpha}
+ \textbf{grad} x^\kappa_{\alpha} \right\}
  - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha
  \f}
  *
  * Note that these balance equations are molar.
  *
- * The equations are discretized using a fully-coupled vertex
- * centered finite volume (BOX) scheme as spatial scheme and
- * the implicit Euler method as temporal discretization.
+ * All equations are discretized using a vertex-centered finite volume (box)
+ * or cell-centered finite volume scheme as spatial
+ * and the implicit Euler method as time discretization.
  *
  * The model uses commonly applied auxiliary conditions like
  * \f$S_w + S_n + S_g = 1\f$ for the saturations and
