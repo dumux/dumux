@@ -140,7 +140,7 @@ public:
             for (int j = 0; j < numPhases; j++)
             {
                 velocity_[j][i] = 0.;
-                potential_[j][i] = 0.;
+                potential_[i][j] = 0.;
             }
             velocityMarker_[i] = false;
         }
