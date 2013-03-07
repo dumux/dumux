@@ -34,18 +34,18 @@ namespace Dumux
 /*! This model solves equations of the form
  *
  *  \f[
- *  \phi \frac{\partial (\rho_\alpha S_\alpha)}{\partial t} + \textbf{div}\, (\rho_\alpha \boldsymbol{v_\alpha}) = q_\alpha,
+ *  \phi \frac{\partial (\rho_\alpha S_\alpha)}{\partial t} + \text{div}\, (\rho_\alpha \boldsymbol{v_\alpha}) = q_\alpha,
  *  \f]
  *
  *  where \f$ S_\alpha \f$ is the saturation of phase \f$ \alpha \f$ (wetting \f$(w) \f$, non-wetting \f$(n) \f$) and \f$ \boldsymbol v_\alpha \f$ is the phase velocity defined by the multi-phase Darcy equation.
  *  If a phase velocity is reconstructed from the pressure solution it can be directly inserted into the previous equation. In the incompressible case the equation is further divided by the phase density \f$ \rho_\alpha \f$. If a total velocity is reconstructed the saturation equation is reformulated into:
  *
  * \f[
- *  \phi \frac{\partial S_w}{\partial t} + f_w \textbf{div}\, \boldsymbol{v}_{t} + f_w \lambda_n \boldsymbol{K}\left(\textbf{grad}\, p_c + (\rho_n-\rho_w) \, g \, \textbf{grad} z \right)= q_\alpha,
+ *  \phi \frac{\partial S_w}{\partial t} + f_w \text{div}\, \boldsymbol{v}_{t} + f_w \lambda_n \boldsymbol{K}\left(\textbf{grad}\, p_c + (\rho_n-\rho_w) \, g \, \textbf{grad} z \right)= q_\alpha,
  * \f]
  * to get a wetting phase saturation or
  * \f[
- * \phi \frac{\partial S_n}{\partial t} + f_n \textbf{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\textbf{grad}\, p_c + (\rho_n-\rho_w) \, g \, \textbf{grad} z \right)= q_\alpha,
+ * \phi \frac{\partial S_n}{\partial t} + f_n \text{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\textbf{grad}\, p_c + (\rho_n-\rho_w) \, g \, \textbf{grad} z \right)= q_\alpha,
  * \f]
  * if the non-wetting phase saturation is the primary transport variable.
  *
@@ -55,8 +55,9 @@ namespace Dumux
  *
  *  In the IMPES models the default setting is:
  *
- *      - formulation: \f$ p_w-S_w \f$ (Property: <tt>Formulation</tt> defined as <tt>DecoupledTwoPCommonIndices::pwSw</tt>)
- *      - compressibility: disabled (Property: <tt>EnableCompressibility</tt> set to <tt>false</tt>)
+ * formulation: \f$ p_w \f$ - \f$ S_w \f$ (Property: \a Formulation defined as \a DecoupledTwoPCommonIndices::pwSw)
+ * 
+ * compressibility: disabled (Property: \a EnableCompressibility set to \a false)
  *
  * \tparam TypeTag The Type Tag
  */

@@ -35,23 +35,23 @@ namespace Dumux
  *
  * This model solves equations of the form
  * \f[
- * \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) + \textbf{div}\, \boldsymbol{v}_{total} = q.
+ * \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) + \text{div}\, \boldsymbol{v}_{total} = q.
  * \f]
  * The definition of the total velocity \f$\boldsymbol{v}_{total}\f$ depends on the choice of the primary pressure variable.
  * Further, fluids can be assumed to be compressible or incompressible (Property: <tt>EnableCompressibility</tt>).
  * In the incompressible case a wetting \f$(w) \f$ phase pressure as primary variable leads to
  *
  * \f[
- * - \textbf{div}\,  \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_w + f_n \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
+ * - \text{div}\,  \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_w + f_n \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
  * \f]
  *
  * a non-wetting (\f$ n \f$) phase pressure yields
  * \f[
- *  - \textbf{div}\,  \left[\lambda \boldsymbol K  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g  \, \textbf{grad}\, z\right)\right] = q,
+ *  - \text{div}\,  \left[\lambda \boldsymbol K  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g  \, \textbf{grad}\, z\right)\right] = q,
  *  \f]
  * and a global pressure leads to
  * \f[
- * - \textbf{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_{global} + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q.
+ * - \text{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_{global} + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q.
  * \f]
  * Here, \f$ p_\alpha \f$ is a phase pressure, \f$ p_ {global} \f$ the global pressure of a classical fractional flow formulation
  * (see e.g. P. Binning and M. A. Celia, ''Practical implementation of the fractional flow approach to multi-phase flow simulation'', Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
@@ -64,11 +64,11 @@ namespace Dumux
  *
  * The slightly compressible case is only implemented for phase pressures! In this case for a wetting \f$(w) \f$ phase pressure as primary variable the equations are formulated as
  * \f[
- * \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \textbf{div}\,  \left[\lambda \boldsymbol{K} \left(\textbf{grad}\, p_w + f_n \, \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
+ * \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\textbf{grad}\, p_w + f_n \, \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
  * \f]
  * and for a non-wetting (\f$ n \f$) phase pressure as
  *  \f[
- *  \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \textbf{div}\,  \left[\lambda \boldsymbol{K}  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
+ *  \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
  *  \f]
  * In this slightly compressible case the following definitions are valid:  \f$ \lambda = \rho_w \lambda_w + \rho_n \lambda_n \f$, \f$ f_\alpha = (\rho_\alpha \lambda_\alpha) / \lambda \f$
  * This model assumes that temporal changes in density are very small and thus terms of temporal derivatives are negligible in the pressure equation.
@@ -76,8 +76,9 @@ namespace Dumux
  *
  *  In the IMPES models the default setting is:
  *
- *      - formulation: \f$ p_w-S_w \f$ (Property: <tt>Formulation</tt> defined as <tt>DecoupledTwoPCommonIndices::pwSw</tt>)
- *      - compressibility: disabled (Property: <tt>EnableCompressibility</tt> set to <tt>false</tt>)
+ *  - formulation: \f$ p_w-S_w \f$ (Property: \a Formulation defined as \a DecoupledTwoPCommonIndices::pwSw)
+ *  
+ *  - compressibility: disabled (Property: \a EnableCompressibility set to \a false)
  *
  * \tparam TypeTag The Type Tag
  */
