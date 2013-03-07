@@ -121,8 +121,11 @@ SET_TYPE_PROP(ObstacleProblem, Scalar, double);
  * and the right boundary which are Dirichlet conditions with the same
  * values as the initial condition.
  *
+ * This problem uses the \ref MPNCModel.
+ * 
  * To run the simulation execute the following line in shell:
- * <tt>make test_mpnc && ./test_mpnc</tt>
+ * <tt>./test_boxmpnc -parameterFile test_boxmpnc.input</tt> or
+ * <tt>./test_ccmpnc -parameterFile test_ccmpnc.input</tt>
  */
 template <class TypeTag>
 class ObstacleProblem

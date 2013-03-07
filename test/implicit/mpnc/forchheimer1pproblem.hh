@@ -126,9 +126,10 @@ SET_BOOL_PROP(Forchheimer1pProblem, VtkAddVelocities, true);
  *  -> mu = 1e-03 ; cE =0.55; rho = 1000; K = 1e-12; a = mu  /( cE *rho* sqrt(K) );
  *  -> gradP = -41e5;  v = - a /2 + sqrt (a^2/4-sqrt(K)*gradP/(rho *cE))
  *
+ * This problem uses the \ref MPNCModel.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_forchheimer1p</tt>
+ * <tt>./test_forchheimer1p -parameterFile test_forchheimer1p.input</tt>
  */
 template <class TypeTag>
 class Forchheimer1pProblem

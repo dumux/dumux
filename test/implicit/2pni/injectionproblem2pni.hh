@@ -144,7 +144,8 @@ SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
  * This problem uses the \ref TwoPNIModel model.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2pni -parameterFile test_2pni.input</tt>
+ * <tt>./test_box2pni -parameterFile test_box2pni.input</tt> or
+ * <tt>./test_cc2pni -parameterFile test_cc2pni.input</tt>
  */
 template<class TypeTag>
 class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>

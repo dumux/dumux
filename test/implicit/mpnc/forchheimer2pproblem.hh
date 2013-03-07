@@ -120,8 +120,10 @@ SET_BOOL_PROP(Forchheimer2pProblem, VtkAddVelocities, true);
  * This selection is chosen via the BaseFluxVariables property, which can also
  * be set to the Darcy relation.
  *
+ * This problem uses the \ref MPNCModel.
+ * 
  * To run the simulation execute the following line in shell:
- * <tt>./test_forchheimer2p</tt>
+ * <tt>./test_forchheimer2p -parameterFile test_forchheimer2p.input</tt>
  */
 template <class TypeTag>
 class Forchheimer2pProblem

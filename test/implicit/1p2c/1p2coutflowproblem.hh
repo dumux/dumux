@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- * \brief Definition of a problem, for the 1p2c box problem:
+ * \brief Definition of a problem, for the 1p2c problem:
  * Component transport of nitrogen dissolved in the water phase.
  */
 #ifndef DUMUX_1P2C_OUTFLOW_PROBLEM_HH
@@ -93,7 +93,7 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
  * \ingroup OnePTwoCBoxModel
  * \ingroup ImplicitTestProblems
  *
- * \brief Definition of a problem, for the 1p2c box problem:
+ * \brief Definition of a problem, for the 1p2c problem:
  * Nitrogen is dissolved in the water phase and
  * is transported with the water flow from the left side to the right.
  *
@@ -107,10 +107,12 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
  * gradient of 1e5 Pa/m. The nitrogen is transported with the water flow
  * and leaves the domain at the right boundary
  * where an outflow boundary condition is applied.
+ * 
  * This problem uses the \ref OnePTwoCBoxModel model.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_1p2c -parameterFile ./test_1p2c.input</tt>
+ * <tt>./test_box1p2c -parameterFile ./test_box1p2c.input</tt> or 
+ * <tt>./test_cc1p2c -parameterFile ./test_cc1p2c.input</tt>
  */
 template <class TypeTag>
 class OnePTwoCOutflowProblem : public ImplicitPorousMediaProblem<TypeTag>

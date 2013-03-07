@@ -85,10 +85,12 @@ SET_BOOL_PROP(InjectionProblem, VtkAddVelocity, false);
  * Air enters a water-filled aquifer, which is situated 2700m below sea level, at the right boundary
  * (\f$ 5m<y<15m\f$) and migrates upwards due to buoyancy. It accumulates and
  * partially enters the lower permeable aquitard.
+ * 
  * This problem uses the \ref TwoPTwoCModel.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p2c -parameterFile ./test_2p2c.input</tt>
+ * <tt>./test_box2p2c -parameterFile ./test_box2p2c.input</tt> or
+ * <tt>./test_cc2p2c -parameterFile ./test_cc2p2c.input</tt>
  */
 template <class TypeTag>
 class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>

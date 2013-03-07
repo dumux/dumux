@@ -115,8 +115,8 @@ SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
  * To adjust the simulation time it is necessary to edit the file test_3p3cni.input
  *
  * To run the simulation execute:
- *
- * <tt>./test_3p3cni -parameterFile test_3p3cni.input</tt>
+ * <tt>./test_box3p3cni -parameterFile test_box3p3cni.input</tt> or
+ * <tt>./test_cc3p3cni -parameterFile test_cc3p3cni.input</tt>
  *  */
 template <class TypeTag >
 class KuevetteProblem : public ImplicitPorousMediaProblem<TypeTag>

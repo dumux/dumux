@@ -103,7 +103,8 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
  * This problem uses the \ref TwoPTwoCNIModel model.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p2cni -parameterFile test_2p2cni.input</tt>
+ * <tt>./test_box2p2cni -parameterFile test_box2p2cni.input</tt> or
+ * <tt>./test_cc2p2cni -parameterFile test_cc2p2cni.input</tt>
  *  */
 template <class TypeTag >
 class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>

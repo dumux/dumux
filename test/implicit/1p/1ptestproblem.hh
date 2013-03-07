@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A test problem for the one-phase box model:
+ * \brief A test problem for the one-phase model:
  * water is flowing from bottom to top through and around a low permeable lens.
  */
 #ifndef DUMUX_1PTEST_PROBLEM_HH
@@ -107,7 +107,7 @@ SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
 /*!
  * \ingroup OnePBoxModel
  * \ingroup ImplicitTestProblems
- * \brief  Test problem for the one-phase box model:
+ * \brief  Test problem for the one-phase model:
  * water is flowing from bottom to top through and around a low permeable lens.
  *
  * The domain is box shaped. All sides are closed (Neumann 0 boundary)
@@ -118,7 +118,9 @@ SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
  * compared to the surrounding material (\f$ K=10e-10\f$) is defined.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_1p -parameterFile test_1p.input</tt>
+ * <tt>./test_box1p -parameterFile test_box1p.input</tt> or
+ * <tt>./test_cc1p -parameterFile test_cc1p.input</tt>
+ * 
  * The same parameter file can be also used for 3d simulation but you need to change line
  * <tt>typedef Dune::SGrid<2,2> type;</tt> to
  * <tt>typedef Dune::SGrid<3,3> type;</tt> in the problem file
