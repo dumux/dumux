@@ -36,7 +36,7 @@ namespace Dumux
 //! \brief Single Phase Finite Volume Model
 /*! This model solves equations of the form
  * \f[
- *  \textbf{div}\, \boldsymbol v = q.
+ *  \text{div}\, \boldsymbol v = q.
  * \f]
  * The velocity \f$ \boldsymbol v \f$ is the single phase Darcy velocity:
  * \f[
