@@ -52,7 +52,7 @@ namespace Dumux
 /*! A class for computing local stiffness matrix for the diffusion equation
  * \f{eqnarray*}{
  * \text{div} \boldsymbol v_{total} &=& q \\
- * \boldsymbol v_{total} &=& - \lambda \boldsymbol K \text{grad} p
+ * \boldsymbol v_{total} &=& - \lambda \boldsymbol K \textbf{grad} p
  * \f}
  * where \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v_{total} \cdot  \boldsymbol n  = q_N \f$ on \f$ \Gamma_{Neumann} \f$.
  *

@@ -47,7 +47,7 @@ namespace Dumux
  * \f]
  * The total velocity \f$\boldsymbol{v}_{total}\f$ is defined using a global pressure approach. This leads to
  * \f[
- * - \text{div}\, \left(\lambda \boldsymbol K \text{grad}\, p_{global}\right) = q.
+ * - \text{div}\, \left(\lambda \boldsymbol K \textbf{grad}\, p_{global}\right) = q.
  * \f]
  * Here, \f$ p_{global} \f$ is the global pressure of a classical fractional flow formulation
  * (see e.g. ﻿P. Binning and M. A. Celia, “Practical implementation of the fractional flow approach to multi-phase flow simulation,” Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
@@ -108,7 +108,7 @@ template<class TypeTag> class MimeticPressure2P
     typedef Dune::BlockVector< Dune::FieldVector<Scalar, 2*dim> > NormalVelType;
     typedef MimeticOperatorAssembler<Scalar,GridView> OperatorAssembler;
 
-    ///@cond 0
+    ///@cond false
     typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolution;
     ///@endcond
 

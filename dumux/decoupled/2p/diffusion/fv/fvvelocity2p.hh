@@ -35,7 +35,7 @@ namespace Dumux
  * The wetting or the non-wetting phase pressure, or the global pressure has to be given as piecewise constant cell values.
  * The phase velocities are calculated following  Darcy's law as
  * \f[
- * \boldsymbol v_\alpha = \lambda_\alpha \boldsymbol K \left(\text{grad}\, p_\alpha + \rho_\alpha g  \text{grad}\, z \right),
+ * \boldsymbol v_\alpha = \lambda_\alpha \boldsymbol K \left(\textbf{grad}\, p_\alpha + \rho_\alpha g  \textbf{grad}\, z \right),
  * \f]
  * where \f$ p_\alpha \f$ denotes the pressure of phase \f$ _\alpha \f$ (wetting or non-wetting), \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda_\alpha \f$ the phase mobility, \f$ \rho_\alpha \f$ the phase density and \f$ g \f$ the gravity constant.
  * The total velocity is either calculated as sum of the phase velocities
@@ -44,7 +44,7 @@ namespace Dumux
  * \f]
  * or with a given global pressure
  * \f[
- * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right).
+ * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \left(\textbf{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \textbf{grad}\, z\right).
  * \f]
  *
  * \tparam TypeTag The Type Tag

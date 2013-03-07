@@ -38,7 +38,7 @@ class FVMPFAOPressure2P;
  * The global pressure has to be given as piecewise constant cell values.
  * The velocities are calculated as
  * \f[
- * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \text{grad}\, p_{global}.
+ * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \textbf{grad}\, p_{global}.
  * \f]
  *
  * Remark1: only for 2-D quadrilateral grids!

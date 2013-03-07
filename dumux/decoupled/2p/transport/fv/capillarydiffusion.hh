@@ -33,7 +33,7 @@ namespace Dumux
  * Defines the diffusive capillary pressure term of the form
  *
  * \f[
- * \bar \lambda \boldsymbol K \text{grad} \, p_c,
+ * \bar \lambda \boldsymbol K \textbf{grad} \, p_c,
  * \f]
  *
  * where \f$ \bar \lambda = \lambda_w f_n = \lambda_n f_w \f$ and \f$ \lambda \f$ is a phase mobility and \f$ f \f$ a phase fractional flow function,
