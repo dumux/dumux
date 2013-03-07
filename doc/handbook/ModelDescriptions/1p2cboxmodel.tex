@@ -4,13 +4,13 @@
 % file instead!!                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-This model implements a one-\/phase flow of a compressible fluid, that consists of two components, using a standard Darcy approach as the equation for the conservation of momentum\-: \[ v_{D} = - \frac{\textbf K}{\mu} \left(\text{grad} p - \varrho {\textbf g} \right) \]
+This model implements a one-\/phase flow of a compressible fluid, that consists of two components, using a standard Darcy approach as the equation for the conservation of momentum\-: \[ v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho {\textbf g} \right) \]
 
-Gravity can be enabled or disabled via the property system. By inserting this into the continuity equation, one gets \[ \Phi \frac{\partial \varrho}{\partial t} - \text{div} \left\{ \varrho \frac{\textbf K}{\mu} \left(\text{grad}\, p - \varrho {\textbf g} \right) \right\} = q \;, \]
+Gravity can be enabled or disabled via the property system. By inserting this into the continuity equation, one gets \[ \phi\frac{\partial \varrho}{\partial t} - \text{div} \left\{ \varrho \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho {\textbf g} \right) \right\} = q \;, \]
 
-The transport of the components is described by the following equation\-: \[ \Phi \frac{ \partial \varrho x}{\partial t} - \text{div} \left( \varrho \frac{{\textbf K} x}{\mu} \left( \text{grad}\, p - \varrho {\textbf g} \right) + \varrho \tau \Phi D \text{grad} x \right) = q. \]
+The transport of the components $\kappa \in \{ w, a \}$ is described by the following equation\-: \[ \phi \frac{ \partial \varrho X^\kappa}{\partial t} - \text{div} \left\lbrace \varrho X^\kappa \frac{{\textbf K}}{\mu} \left( \textbf{grad}\, p - \varrho {\textbf g} \right) + \varrho D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa \right\rbrace = q. \]
 
-All equations are discretized using a fully-\/coupled vertex-\/centered finite volume (box) scheme as spatial and the implicit Euler method as time discretization.
+All equations are discretized using a vertex-\/centered finite volume (box) or cell-\/centered finite volume scheme as spatial and the implicit Euler method as time discretization.
 
 The primary variables are the pressure $p$ and the mole or mass fraction of dissolved component $x$.
 

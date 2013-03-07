@@ -52,10 +52,11 @@ $x_\alpha^\kappa$ & mole fraction of component $\kappa$ in phase $\alpha$ & $\bo
 $X_\alpha^\kappa$ & mass fraction of component $\kappa$ in phase $\alpha$ & $q^\kappa_\alpha$ & volume source term of $\kappa$ in $\alpha$ \\
 $\varrho_{\text{mol},\alpha}$ & molar density of phase $\alpha$ & $u_\alpha$ & specific internal energy \\
 $\varrho_{\alpha}$ & mass density of phase $\alpha$ & $h_\alpha$ & specific enthalpy \\
-$k_{\text{r}\alpha}$ & relative permeability & $c_\text{s}$ & specific heat enthalpy \\
-$\mu_\alpha$ & phase viscosity & $\lambda_\text{pm}$ & heat conductivity \\
-$D_\alpha^\kappa$ & diffusivity of component $\kappa$ in phase $\alpha$ & $q^h$ & heat source term \\
-$\boldsymbol{v}_\alpha$ & Darcy velocity & $\boldsymbol{v}_{a,\alpha}$  & advective velocity
+$M$ & molar mass of a phase or component & $c_\text{s}$ & specific heat enthalpy \\
+$k_{\text{r}\alpha}$ & relative permeability & $\lambda_\text{pm}$ & heat conductivity \\
+$\mu_\alpha$ & phase viscosity & $q^h$ & heat source term \\
+$D_\alpha^\kappa$ & diffusivity of component $\kappa$ in phase $\alpha$ & $\boldsymbol{v}_{a,\alpha}$  & advective velocity \\
+$\boldsymbol{v}_\alpha$ & Darcy velocity & & \\
 \end{tabular}
 
 
@@ -71,14 +72,14 @@ molar mass balance can be written as:
   \label{A3:eqmass1}
  \phi \frac{\partial (\sum_\alpha \varrho_{\text{mol}, \alpha}
     x_\alpha^\kappa S_\alpha )}{\partial t}  
- - \sum\limits_\alpha \Div \left( \frac{k_{\text{r}
+ - \sum\limits_\alpha \Div \left\lbrace \frac{k_{\text{r}
         \alpha}}{\mu_\alpha} \varrho_{\text{mol}, \alpha}
-    x_\alpha^\kappa K (\grad p_\alpha -
-    \varrho_{\alpha} \boldsymbol{g}) \right)  \\
+    x_\alpha^\kappa \textbf{K} (\grad p_\alpha -
+    \varrho_{\alpha} \boldsymbol{g}) \right\rbrace  \\
   % 
   %
- - \sum\limits_\alpha \Div \left( \tau \phi S_\alpha D_\alpha^\kappa \varrho_{\text{mol},
-      \alpha} \grad x_\alpha^\kappa \right)  
+ - \sum\limits_\alpha \Div \left\lbrace \tau \phi S_\alpha D_\alpha^\kappa \varrho_{\text{mol},
+      \alpha} \grad x_\alpha^\kappa \right\rbrace
  - q^\kappa = 0, \qquad \kappa \in \{\text{w,a,c}\}.
 \end{multline}
 
@@ -94,14 +95,14 @@ Using this definition, the component mass balance is written as:
 \begin{multline}
   \label{A3:eqmass2}
     \frac{\partial C^\kappa}{\partial t} = 
-  \sum\limits_\alpha \Div \left( \frac{k_{\text{r}
+  \sum\limits_\alpha \Div \left\lbrace \frac{k_{\text{r}
         \alpha}}{\mu_\alpha} \varrho_{\text{mass}, \alpha}
-    X_\alpha^\kappa K (\grad p_\alpha +
-    \varrho_{\text{mass}, \alpha} \boldsymbol{g}) \right)  \\
+    X_\alpha^\kappa \textbf{K} (\grad p_\alpha +
+    \varrho_{\text{mass}, \alpha} \boldsymbol{g}) \right\rbrace  \\
   %
   %
-   + \sum\limits_\alpha \Div \left( \tau \phi S_\alpha D_\alpha^\kappa \varrho_{\text{mass},
-      \alpha} \grad X_\alpha^\kappa \right)  
+   + \sum\limits_\alpha \Div \left\lbrace \tau \phi S_\alpha D_\alpha^\kappa \varrho_{\text{mass},
+      \alpha} \frac{M^\kappa}{M_\alpha} \grad x_\alpha^\kappa \right\rbrace 
  + q^\kappa = 0, \qquad \kappa \in \{\text{w,a,c}\}.
 \end{multline}
 
@@ -121,10 +122,10 @@ formulated as:
     T}{\partial t}  
  - \Div \left( \lambda_{\text{pm}} \grad T \right)
    \\
-   - \sum\limits_\alpha \Div \left( \frac{k_{\text{r}
+   - \sum\limits_\alpha \Div \left\lbrace \frac{k_{\text{r}
         \alpha}}{\mu_\alpha} \varrho_{\alpha} h_\alpha
     K \left( \grad p_\alpha - \varrho_{\alpha}
-      \boldsymbol{g} \right) \right)  
+      \boldsymbol{g} \right) \right\rbrace 
  - q^h \; = \; 0.
 \end{multline}
 
@@ -145,12 +146,11 @@ The following description of the available models is automatically extracted
 from the Doxygen documentation.
 % \textbf{TODO}: Unify notation. 
 
-\subsection{Fully-implicit models} 
+\subsection{Fully-implicit models}
 
-The fully-implicit models described in this section are using the box
-scheme as described in Section \ref{box} for spatial and the implicit Euler
+The fully-implicit models described in this section are using the box or the cell centered finite volume method as described in section \ref{box} and \ref{cc} for spatial and the implicit Euler
 method as temporal discretization. The models themselves are located in
-subdirectories of \texttt{dumux/boxmodels} of the \Dumux distribution.
+subdirectories of \texttt{dumux/implicit} of the \Dumux distribution.
 
 \subsubsection{The single-phase model: OnePBoxModel} 
 \input{ModelDescriptions/1pboxmodel}
