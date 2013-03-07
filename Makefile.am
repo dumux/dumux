@@ -8,7 +8,7 @@ EXTRA_DIST = dune.module \
              CHANGELOG COPYING INSTALL.cmake README \
              debug.opts optim.opts 
 
-SUBDIRS = doc dumux m4 test tutorial
+SUBDIRS = doc dumux m4 patches test tutorial
 
 # don't follow the full GNU-standard
 # we need automake 1.9 or later

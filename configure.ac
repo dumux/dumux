@@ -94,6 +94,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/nonlinear/Makefile
     dumux/parallel/Makefile 
     m4/Makefile
+    patches/Makefile
     test/Makefile
     test/implicit/Makefile 
     test/implicit/1p/Makefile 
