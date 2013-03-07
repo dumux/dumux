@@ -41,7 +41,7 @@ namespace Dumux
 template <class TypeTag>
 class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
 {
-    //! \cond 0
+    //! \cond false
     typedef TwoPTwoCVolumeVariables<TypeTag> ParentType;
     typedef typename ParentType::FluidState FluidState;
 

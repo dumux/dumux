@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A MpNc specific controller for the newton solver.
+ * \brief A MpNc specific controller for the newton solver, which knows
+ *       'physically meaningful' solution.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -34,6 +35,10 @@
 
 namespace Dumux {
 
+/*!
+ * \brief A MpNc specific controller for the newton solver, which knows
+ *       'physically meaningful' solution.
+ */
 template <class TypeTag, bool enableKinetic /* = false */>
 class MpNcNewtonChop
 {

@@ -16,6 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \brief The mass conservation part of the MpNc model.
+ */
 #ifndef DUMUX_MPNC_LOCAL_RESIDUAL_MASS_HH
 #define DUMUX_MPNC_LOCAL_RESIDUAL_MASS_HH
 
@@ -32,11 +36,8 @@
 namespace Dumux
 {
 /*!
- * \file
- * \brief The mass conservation part of the MpNc model.
- *
- * This is the class represents methods which are shared amongst all
- * mass conservation modules.
+ * \brief This class represents methods which are shared amongst all
+ *        mass conservation modules.
  */
 template<class TypeTag>
 class MPNCLocalResidualMassCommon

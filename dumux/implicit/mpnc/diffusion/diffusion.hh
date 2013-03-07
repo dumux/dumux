@@ -20,7 +20,7 @@
  * \file
  *
  * \brief This file contains parts to calculate the diffusive flux in
- *        the fully coupled two-phase N-component model
+ *        the fully coupled MpNc model
  */
 #ifndef DUMUX_MPNC_DIFFUSION_HH
 #define DUMUX_MPNC_DIFFUSION_HH
@@ -31,7 +31,9 @@
 #include <dumux/implicit/mpnc/mpncproperties.hh>
 
 namespace Dumux {
-
+/*!
+ * \brief Calculates the diffusive flux in the fully coupled MpNc model.
+ */
 template <class TypeTag, bool enableDiffusion>
 class MPNCDiffusion
 {

@@ -19,7 +19,7 @@
 /*!
  * \file
  * \brief This file contains the diffusion module for the flux data of
- *        the fully coupled two-phase N-component model
+ *        the fully coupled MpNc model
  */
 #ifndef DUMUX_MPNC_DIFFUSION_FLUX_VARIABLES_HH
 #define DUMUX_MPNC_DIFFUSION_FLUX_VARIABLES_HH
