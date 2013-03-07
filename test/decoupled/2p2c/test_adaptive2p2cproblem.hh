@@ -101,10 +101,25 @@ SET_INT_PROP(Adaptive2p2c, PressureFormulation,
 }
 
 /*!
- * \ingroup Adaptive2p2cs
+ * \ingroup Adaptive2p2c
  * \ingroup IMPETtests
  * 
- * \todo Please doc me!
+ * \brief test problem for the grid-adaptive sequential 2p2c model
+ *
+ * The domain is box shaped (2D), as the gird-adaptive model can only run in
+ * two dimensions!. All sides are closed (Neumann 0 boundary)
+ * except the top and bottom boundaries (Dirichlet). A Gas (Air)
+ * is injected over a vertical well in the center of the domain.
+ *
+ * It is the same test as for the non-adaptive compositional models.
+ * The input file can alter the grid adaptation in group [GridAdapt]:
+ * MinLevel and MaxLevel define the refinement levels of the grid.
+ * Afterwards, the refinement tolerances can be specified. On hanging
+ * nodes, an mpfa can be used (EnableMultiPointFluxApproximation = 1), at
+ * best taken both half-edges into account (EnableSecondHalfEdge = 1).
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_adaptive2p2c -parameterFile ./test_adaptive2p2c.input</tt>
  */
 template<class TypeTag = TTAG(Adaptive2p2c)>
 class Adaptive2p2c: public IMPETProblem2P2C<TypeTag>
