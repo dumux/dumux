@@ -19,9 +19,8 @@
 /*!
  * \file
  *
- * \brief Non-isothermal gas injection problem where a gas (e.g. air)
- *        is injected into a fully water saturated medium with a residually
- *        trapped NAPL contamination.
+ * \brief Non-isothermal injection problem where water is injected into a 
+ *        sand column with a NAPL contamination.
  */
 #ifndef DUMUX_COLUMNXYLOLPROBLEM_HH
 #define DUMUX_COLUMNXYLOLPROBLEM_HH
@@ -83,7 +82,30 @@ SET_SCALAR_PROP(ColumnProblem, TimeManagerMaxTimeStepSize, 4.);
 
 /*!
  * \ingroup ThreePThreeCNIBoxModel
+ * \ingroup ImplicitTestProblems
+ * \brief Non-isothermal injection problem where a water is injected into a 
+ *        sand column with a NAPL contamination.
  *
+ * The 2D domain of this test problem is 0.1m long and 1.2m high.
+ * Initially the column is filled with NAPL, gas and water, the NAPL saturation
+ * increases to the bottom of the columns, the water saturation is constant.
+ * Then water is injected from the top with a rate of 0.395710 mol/(s m) and 
+ * an enthalpy of 17452.97 [J/(s m)]. * 
+ * 
+ * Left, right and top boundaries are Neumann boundaries. Left and right are
+ * no-flow boundaries, on top the injection takes places.
+ * The bottom is a Dirichlet boundary.
+ *
+ * This problem uses the \ref ThreePThreeCNIModel.
+ *
+ * This problem should typically be simulated for 200 days.
+ * A good choice for the initial time step size is 1 s.
+ * To adjust the simulation time it is necessary to edit the file test_box3p3cni.input
+ * or test_cc3p3cni.input.
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_box3p3cni -parameterFile test_box3p3cni.input</tt> or
+ * <tt>./test_cc3p3cni -parameterFile test_cc3p3cni.input</tt>
  *  */
 template <class TypeTag >
 class ColumnProblem : public ImplicitPorousMediaProblem<TypeTag>
