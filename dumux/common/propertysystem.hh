@@ -481,7 +481,7 @@ namespace Properties
 // might damage your brain!
 //////////////////////////////////////////////
 
-//! \cond 0
+//! \cond false
 
 namespace PTag {}
 namespace TTag {}

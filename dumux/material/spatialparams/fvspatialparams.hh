@@ -57,7 +57,7 @@ class FVSpatialParams: public FVSpatialParamsOneP<TypeTag>
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    /// @cond 0
+    /// @cond false
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
     /// @endcond
 
