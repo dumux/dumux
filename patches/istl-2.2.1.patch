@@ -1,0 +1,20 @@
+Index: dune/istl/paamg/amg.hh
+===================================================================
+--- dune/istl/paamg/amg.hh	(revision 1705)
++++ dune/istl/paamg/amg.hh	(working copy)
+@@ -504,13 +504,13 @@
+ 		  // We are still participating on this level
+ 		  solver_ = new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()), 
+ 						  *scalarProduct_, 
+-						  *coarseSmoother_, 1E-2, 10000, 0);
++						  *coarseSmoother_, 1E-12, 10000, 0);
+ 		else
+ 		  solver_ = 0;
+ 	      }else
+ 	      solver_ = new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()), 
+ 					      *scalarProduct_, 
+-					      *coarseSmoother_, 1E-2, 1000, 0);
++					      *coarseSmoother_, 1E-12, 1000, 0);
+ 	  }
+       }
+     }
