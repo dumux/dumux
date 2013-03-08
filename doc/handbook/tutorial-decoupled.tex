@@ -211,7 +211,7 @@ The density of the gas is magnitudes smaller than that of oil, so please decreas
 Please reverse the changes of this example, as we still use bulk phases and hence do not need such an extensive fluid system.
  
 \item \textbf{Heterogeneities}  \\
-Set up a model domain with the soil properties given in Figure \ref{tutorial-deoucpled:exercise1_d}. Adjust the boundary conditions so that water is again flowing from left to right.
+Set up a model domain with the soil properties given in figure \ref{tutorial-deoucpled:exercise1_d}. Adjust the boundary conditions so that water is again flowing from left to right.
 \begin{figure}[ht]
 \psfrag{K1 =}{K $= 10^{-8}\text{ m}^2$}
 \psfrag{phi1 =}{$\phi = 0.15$}
@@ -298,7 +298,7 @@ compile the program.
 
 \subsubsection{Exercise 3: Parameter file input.}
 As you have experienced, compilation takes quite some time. Therefore, \Dumux provides a simple method to read in parameters (such as simulation end time or modelling parameters) via \texttt{Paramter Input Files}. The tests in the Test-folder \texttt{/test/} already use this system.\\
-If you look at the Application in \texttt{/test/boxmodels/2p/}, you see that the main file looks rather empty: The parameter file \texttt{test\_2p.input} is read by a standard start procedure, which is called in the main function. This should be adapted for your problem at hand. The program run has to be called with the parameter file as argument. As this is a basic \Dumux feature, the procedure is the equivalent in the decoupled as in the box models.
+If you look at the Application in \texttt{/test/implicit/2p/}, you see that the main file looks rather empty: The parameter file \texttt{test\_box2p.input} is read by a standard start procedure, which is called in the main function. This should be adapted for your problem at hand. The program run has to be called with the parameter file as argument. As this is a basic \Dumux feature, the procedure is the equivalent in the decoupled as in the box models.
 In the code, parameters can be read via the macro \texttt{GET\_RUNTIME\_PARAM(TypeTag, Scalar, MyWonderfulGroup.MyWonderfulParameter);}. In \texttt{test\_2p}, \texttt{MyWonderfulGroup} is the group \texttt{SpatialParams} - any type of groups is applicable, if the group definition in the parameter file is enclosed in square brackets. The parameters are then listed thereafter. Try and use as much parameters as possible via the input file, such as lens dimension, grid resolution, soil properties etc. In addition, certain parameters that are specific to the model, such as the \texttt{CFL}-factor, can be assigned in the parameter file without any further action.
 
 \subsubsection{Exercise 4}
