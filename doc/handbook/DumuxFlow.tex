@@ -199,7 +199,7 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
     \textbf{\textcircled{\ref{prep}}}\verb+problem->timeIntegration()+ \\
     \begin{scriptsize}execute time integration scheme \end{scriptsize}\\
     \textbf{called by}: timemanager.hh\\
-    \textbf{implemented in}: boxproblem.hh\\  
+    \textbf{implemented in}: implicitproblem.hh\\  
 \hline
   \end{tabular}    
 \nextline
@@ -213,8 +213,8 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
     \hline
     \textbf{\textcircled{\ref{prep}}}\verb+model->update()+ \\
     \begin{scriptsize}sth like numerical model\end{scriptsize}\\
-    \textbf{called by}: boxproblem.hh\\
-    \textbf{implemented in}: boxmodel.hh\\  
+    \textbf{called by}: implicitproblem.hh\\
+    \textbf{implemented in}: implicitmodel.hh\\  
 	\hline
   \end{tabular}
     {\scriptsize$\overrightarrow{ }$}
@@ -243,7 +243,7 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
       \rightsquigarrow\textnormal{solver keeps track of things}\\
       \textnormal{catching errors}
       \end{array}$\end{scriptsize}\\
-      \textbf{called by}: boxmodel.hh\\
+      \textbf{called by}: implicitmodel.hh\\
       \textbf{implemented in}: newtonmethod.hh : $\texttt{execute\_()}$\\  
     \hline
   \end{tabular}
@@ -260,7 +260,7 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
     \begin{scriptsize}linearize the problem:  \end{scriptsize}\\
     \begin{scriptsize}add all element contributions to global \textsc{Jacobian} and global residual\end{scriptsize}\\
       \textbf{called by}: newtonmethod.hh\\
-      \textbf{implemented in}: boxassembler.hh\\  
+      \textbf{implemented in}: implicitassembler.hh\\  
 	\hline
   \end{tabular}
     \nextline
@@ -271,8 +271,8 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
 	\textbf{\textcircled{\ref{elem}}}\verb+resetSystem_()+ \\
     \begin{scriptsize} set r.h.s. (i.e. residual) and\end{scriptsize}\\
     \begin{scriptsize} set \textsc{Jacobian} to zero \end{scriptsize}\\
-      \textbf{called by}: boxassembler.hh\\
-      \textbf{implemented in}: boxassembler.hh\\  
+      \textbf{called by}: implicitassembler.hh\\
+      \textbf{implemented in}: implicitassembler.hh\\  
 	\hline
   \end{tabular}
     {\scriptsize$\overrightarrow{\begin{array}{l}
@@ -284,8 +284,8 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
       \hline
       \textbf{\textcircled{\ref{calc}}}\verb+assembleElement_()+ \\
       \begin{scriptsize}call local \textsc{Jacobian} and residual assembly\end{scriptsize}\\
-      \textbf{called by}: boxassembler.hh\\
-      \textbf{implemented in}: boxassembler.hh\\  
+      \textbf{called by}: implicitassembler.hh\\
+      \textbf{implemented in}: implicitassembler.hh\\  
       \hline
      \end{tabular}
 \nextline
@@ -297,8 +297,8 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
      \begin{scriptsize}set curr. element, update element's fin.vol.geom.\end{scriptsize}\\
      \begin{scriptsize}reset local \textsc{Jacobian} to 0\end{scriptsize}\\
      \begin{scriptsize}update types of boundaries on this element\end{scriptsize}\\
-      \textbf{called by}: boxassembler.hh\\
-      \textbf{implemented in}:  boxlocaljacobian.hh\\  
+      \textbf{called by}: implicitassembler.hh\\
+      \textbf{implemented in}:  implicitlocaljacobian.hh\\  
 	\hline
   \end{tabular}
     $\overrightarrow{
@@ -308,8 +308,8 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
       \textbf{\textcircled{\ref{calc}}}\verb+prevVolVars_.update()+, \textbf{\textcircled{\ref{calc}}}\verb+curVolVars_.update()+ \\
     \begin{scriptsize}call model specific update of quantities defined for the volume:\end{scriptsize}\\
     \begin{scriptsize}variables for the \emph{current and previous timestep...!!}\end{scriptsize}\\
-      \textbf{called by}: boxlocaljacobian.hh\\
-      \textbf{implemented in}: boxelementvolumevariables.hh\\  
+      \textbf{called by}: implicitlocaljacobian.hh\\
+      \textbf{implemented in}: implicitelementvolumevariables.hh\\  
 	\hline
   \end{tabular}
 \nextline
@@ -356,7 +356,7 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
     \textbf{\textcircled{\ref{calc}}}\verb+localResidual().eval()+ \\
     \begin{scriptsize}the element's local residual is calculated:\end{scriptsize}\\
     \begin{scriptsize}see the next two stepstones\end{scriptsize}\\
-      \textbf{called by}: boxlocaljacobian.hh\\
+      \textbf{called by}: implicitlocaljacobian.hh\\
       \textbf{implemented in}: boxlocalresidual.hh\\  
      \hline
   \end{tabular}
@@ -433,8 +433,8 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
     \begin{scriptsize}actually calculate the element's (local) \textsc{Jacobian} matrix\end{scriptsize}\\
     \begin{scriptsize}a property chooses backward/central/foward differences\end{scriptsize}\\
     \begin{scriptsize}here: central differences\end{scriptsize}\\
-      \textbf{called by}: boxlocaljacobian.hh\\
-      \textbf{implemented in}: boxlocaljacobian.hh\\  
+      \textbf{called by}: implicitlocaljacobian.hh\\
+      \textbf{implemented in}: implicitlocaljacobian.hh\\  
      \hline
   \end{tabular}
 \nextline
@@ -473,8 +473,8 @@ $\left \lbrace
       \begin{scriptsize}Residual of the current solution is now\end{scriptsize}\\
       \begin{scriptsize}``numerically differentiated'', for the element i.e.\end{scriptsize}\\
       \begin{scriptsize}the local \textsc{Jacobian} matrix is calculated. \end{scriptsize}\\
-      \textbf{called by}: boxassembler.hh \\ 
-      \textbf{implemented in}: boxassembler.hh\\ 
+      \textbf{called by}: implicitassembler.hh \\ 
+      \textbf{implemented in}: implicitassembler.hh\\ 
 	\hline 
   \end{tabular}
   {\scriptsize$\overrightarrow{}$ }
@@ -492,7 +492,7 @@ $\left \lbrace
 		  \verb?    model_().globalJacobian().resdidual(i)? \\ 
       \begin{scriptsize}Add to global residual.\end{scriptsize}\\
       \textbf{called by}: continuing in the function. \\ 
-      \textbf{implemented in}: boxassembler.hh\\ 
+      \textbf{implemented in}: implicitassembler.hh\\ 
 	\hline 
   \end{tabular}
  \nextline
@@ -507,7 +507,7 @@ $\left \lbrace
 		\verb?    model_().localJacobian().mat(i,j)? \\ 
       \begin{scriptsize}Add to global \textsc{Jacobian}.\end{scriptsize}\\
       \textbf{called by}: continuing in the function. \\ 
-      \textbf{implemented in}: boxassembler.hh\\ 
+      \textbf{implemented in}: implicitassembler.hh\\ 
 	\hline 
   \end{tabular}
     {\scriptsize$\overrightarrow{
@@ -521,7 +521,7 @@ $\left \lbrace
       \begin{scriptsize}Assembling of elements to global quantities is done.\end{scriptsize}\\
       %\begin{scriptsize}In case: print partial assembling stuff\end{scriptsize}\\
       \textbf{called by}: continuing in the function. \\ 
-      \textbf{implemented in}: boxassembler.hh\\ 
+      \textbf{implemented in}: implicitassembler.hh\\ 
 	\hline 
   \end{tabular}
 \nextline
@@ -641,8 +641,8 @@ $\left \lbrace
       \hline
       \textbf{\textcircled{\ref{prep}}}\verb+asImp_().updateSuccessful()+ \\
       \begin{scriptsize}Can be filled by the \fbox{\fbox{model}}.\end{scriptsize}\\      
-      \textbf{called by}: boxmodel.hh\\
-      \textbf{implemented in}: boxmodel.hh\\  
+      \textbf{called by}: implicitmodel.hh\\
+      \textbf{implemented in}: implicitmodel.hh\\  
 	\hline 
     \end{tabular}
     {\scriptsize$\overrightarrow
@@ -656,7 +656,7 @@ $\left \lbrace
       \begin{scriptsize}Give the \fbox{\fbox{problem}} the chance to\end{scriptsize}\\
       \begin{scriptsize}post-process the solution.\end{scriptsize}\\      
       \textbf{called by}: timemanager.hh\\
-      \textbf{implemented in}: boxproblem.hh\\  
+      \textbf{implemented in}: implicitproblem.hh\\  
 	\hline 
     \end{tabular}
 \nextline
@@ -672,7 +672,7 @@ $\left \lbrace
       \hline
       \textbf{\textcircled{\ref{prep}}}\verb+newtonCtl_.suggestTimestepSize()+ \\
       \begin{scriptsize}Determine new time step size from number of \textsc{Newton} steps. \end{scriptsize}\\      
-      \textbf{called by}: timemanager.hh, boxproblem.hh\\
+      \textbf{called by}: timemanager.hh, implicitproblem.hh\\
       \textbf{implemented in}: newtoncontroller.hh\\  
 	\hline 
     \end{tabular}
