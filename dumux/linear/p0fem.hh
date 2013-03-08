@@ -19,6 +19,8 @@
 #ifndef DUMUX_P0FEM_HH
 #define DUMUX_P0FEM_HH
 
+#if HAVE_DUNE_PDELAB
+
 #include <dune/geometry/type.hh>
 
 #include <dune/localfunctions/lagrange/p0.hh>
@@ -40,4 +42,5 @@ public:
 
 } // namespace Dumux
 
-#endif
+#endif // HAVE_DUNE_PDELAB
+#endif // DUMUX_P0FEM_HH
