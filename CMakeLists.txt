@@ -2,9 +2,9 @@
 # general stuff
 cmake_minimum_required(VERSION 2.8)
 set(ProjectName            "DuMuX")
-set(ProjectVersion         "2.3-svn")
-set(ProjectMaintainer      "Bernd Flemisch")
-set(ProjectMaintainerEmail "Bernd.Flemisch_at_iws dot uni-stuttgart dot de")
+set(ProjectVersion         "2.4-svn")
+set(ProjectMaintainer      "DuMuX")
+set(ProjectMaintainerEmail "dumux@listserv.uni-stuttgart.de")
 project(${ProjectName} CXX)
 # needed for tests like pthread and BLAS
 enable_language(C)
