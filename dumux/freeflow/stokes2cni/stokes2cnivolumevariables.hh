@@ -76,34 +76,30 @@ public:
                            fvGeometry,
                            scvIdx,
                            isOldSol);
-    };
+    }
 
     /*!
      * \brief Returns the total internal energy of the fluid phase in the
      *        sub-control volume.
      */
     Scalar internalEnergy() const
-    { return this->fluidState_.internalEnergy(phaseIdx); };
+    { return this->fluidState_.internalEnergy(phaseIdx); }
 
     /*!
      * \brief Returns the total enthalpy of the fluid phase in the sub-control
      *        volume.
      */
     Scalar enthalpy() const
-    { return this->fluidState_.enthalpy(phaseIdx); };
+    { return this->fluidState_.enthalpy(phaseIdx); }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the fluid phase in the sub-control volume.
      */
     Scalar thermalConductivity() const
-    { 
-    	return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); 
-    };
-
-	DUNE_DEPRECATED_MSG("use thermalConductivity() instead")
-    Scalar heatConductivity() const
-    { return thermalConductivity(); };
+    {
+        return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); 
+    }
 
 
 protected:

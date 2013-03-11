@@ -78,10 +78,6 @@ public:
     const Scalar thermalConductivity() const
     { return thermalConductivity_; }
 
-	DUNE_DEPRECATED_MSG("use thermalConductivity() instead")    
-    const Scalar heatConductivity() const
-    { return thermalConductivity_; }
-
     /*!
      * \brief Returns the temperature gradient at the integration point.
      */

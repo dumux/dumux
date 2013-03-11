@@ -84,7 +84,6 @@ protected:
         DimVector tmp(0.0);
 
         density_ = Scalar(0);
-        molarDensity_ = Scalar(0);
         viscosity_ = Scalar(0);
         pressure_ = Scalar(0);
         normalvelocity_ = Scalar(0);
@@ -99,8 +98,6 @@ protected:
         {
             // phase density and viscosity at IP
             density_ += elemVolVars[idx].density() *
-                face().shapeValue[idx];
-            molarDensity_ += elemVolVars[idx].molarDensity()*
                 face().shapeValue[idx];
             viscosity_ += elemVolVars[idx].viscosity() *
                 face().shapeValue[idx];
@@ -193,15 +190,6 @@ public:
     { return density_; }
 
     /*!
-     * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
-     * \deprecated Use molarDensity() from Stokes2c model because it does not belong
-     *             to this model.
-     */
-    DUNE_DEPRECATED_MSG("Use molarDensity() from Stokes2c model")
-    const Scalar molarDensity() const
-    { return molarDensity_; }
-
-    /*!
      * \brief Return the dynamic viscosity \f$ \mathrm{[Pa\cdot s]} \f$ at the integration
      *        point.
      */
@@ -273,7 +261,6 @@ protected:
 
     // values at the integration point
     Scalar density_;
-    Scalar molarDensity_;  //!< \deprecated Does not belong to this model but to Stokes2c
     Scalar viscosity_;
     Scalar pressure_;
     Scalar normalvelocity_;

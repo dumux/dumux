@@ -145,16 +145,6 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ of the fluid within the
-     *        sub-control volume.
-     * \deprecated Use molarDensity() from Stokes2c model because it does not belong
-     *             to this model.
-     */
-    DUNE_DEPRECATED_MSG("Use molarDensity() from Stokes2c model")
-    Scalar molarDensity() const
-    { return fluidState_.density(phaseIdx) / fluidState_.averageMolarMass(phaseIdx); }
-
-    /*!
      * \brief Returns the fluid pressure \f$\mathrm{[Pa]}\f$ within
      *        the sub-control volume.
      */
