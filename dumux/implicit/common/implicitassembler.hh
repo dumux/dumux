@@ -309,22 +309,6 @@ public:
     }
 
     /*!
-     * \brief Force to reassemble a given vertex next time the
-     *        assemble() method is called.
-     *
-     * \param globalVertIdx The global index of the vertex which ought
-     *                      to be red.
-     */
-    DUNE_DEPRECATED_MSG("Use markDofRed instead.")
-    void markVertexRed(const int globalVertIdx)
-    {
-        if (!enablePartialReassemble_())
-            return;
-
-        vertexColor_[globalVertIdx] = Red;
-    }
-
-    /*!
      * \brief Determine the colors of vertices and elements for partial
      *        reassembly given a relative tolerance.
      *

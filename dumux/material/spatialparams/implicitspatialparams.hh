@@ -99,35 +99,6 @@ public:
                    "a materialLawParamsAtPos() method.");
     }
 
-    /*!
-     * \brief Calculate the heat flux \f$[W/m^2]\f$ through the
-     *        rock matrix based on the temperature gradient \f$[K / m]\f$
-     *        at the integration point of a (boundary or SCV) face
-     *
-     * This is only required for non-isothermal models that use outflow
-     * boundary conditions.
-     *
-     * \param heatFlux The resulting heat flux vector
-     * \param fluxVars The flux variables
-     * \param elemVolVars The volume variables
-     * \param face The boundary or sub-control-volume face
-     * \param element The current finite element
-     * \param fvGeometry The finite volume geometry of the current element
-     * \tparam FaceType The type of the face (boundary face / SCV face)
-     */
-    template <class FaceType> DUNE_DEPRECATED_MSG("Method not used anymore!")
-    void boundaryMatrixHeatFlux(Vector &heatFlux,
-            const FluxVariables &fluxVars,
-            const ElementVolumeVariables &elemVolVars,
-            const FaceType &face,
-            const Element &element,
-            const FVElementGeometry &fvGeometry) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a matrixHeatFlux() method.");
-    }
-
 private:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }

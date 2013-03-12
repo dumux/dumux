@@ -401,23 +401,6 @@ public:
     }
     
     /*!
-     * \brief Returns the relative error between two vectors of
-     *        primary variables.
-     *
-     * \param vertexIdx The global index of the control volume's
-     *                  associated vertex
-     * \param priVars1 The first vector of primary variables
-     * \param priVars2 The second vector of primary variables
-     */
-    DUNE_DEPRECATED_MSG("Use relativeErrorDof instead.")
-    Scalar relativeErrorVertex(const int vertexIdx,
-                               const PrimaryVariables &priVars1,
-                               const PrimaryVariables &priVars2)
-    {
-        return relativeErrorDof(vertexIdx, priVars1, priVars2);
-    }
-    
-    /*!
      * \brief Try to progress the model to the next timestep.
      *
      * \param solver The non-linear solver

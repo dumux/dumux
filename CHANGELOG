@@ -107,6 +107,13 @@ Differences Between DuMuX 2.2 and DuMuX 2.3
   - numFAP and numSCV in Box(CC)FVElementGeometry have been renamed to 
     numFap and numScv, respectively.
 
+* Deprecated MEMBER FUNCTIONS, to be removed after 2.3:
+  - boundaryMatrixHeatFlux, markVertexRed and relativeErrorVertex 
+    from ImplicitSpatialParams, ImplicitAssembler and ImplicitModel, 
+    respectively. In favor of using 
+    thermalConductivitySolid (see above), markDofRed and relativeErrorDof, 
+    respectively. 
+
 * DELETED classes/files, property names, constants/enums, 
   member functions, which have been deprecated in DuMuX 2.2:
   Everything listed as deprecated below has been removed.
