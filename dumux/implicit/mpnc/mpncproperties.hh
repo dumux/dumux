@@ -98,7 +98,6 @@ NEW_PROP_TAG(FluidSystem);
 
 //! The thermodynamic constraint solver which calculates the
 //! composition of any phase given all component fugacities.
-NEW_PROP_TAG(CompositionFromFugacitiesSolver);
 NEW_PROP_TAG(ConstraintSolver);
 
 //! Enable the energy equation?
