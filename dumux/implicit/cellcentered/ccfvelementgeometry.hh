@@ -111,10 +111,8 @@ public:
     int numEdges; //!< number of edges
     int numFaces; //!< number of faces (0 in < 3D)
     int numScv; //!< number of subcontrol volumes
-    int numSCV; //!< \deprecated number of subcontrol volumes
     int numNeighbors; //!< number of neighboring elements including the element itself
     int numFap; //!< number of flux approximation points
-    int numFAP; //!< \deprecated number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< stores pointers for the neighboring elements
     
     void updateInner(const Element& element)
@@ -129,9 +127,7 @@ public:
         numEdges = element.template count<dim-1>();
         numFaces = (dim<3)? 0 : element.template count<1>();
         numScv = 1;
-        numSCV = numScv;
         numFap = 2;
-        numFAP = numFap;
         
         subContVol[0].local = elementLocal;
         subContVol[0].global = elementGlobal;
