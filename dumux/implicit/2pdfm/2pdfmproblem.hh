@@ -46,20 +46,6 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
-     * \param verbose Turn verbosity on or off
-     */
-    DUNE_DEPRECATED_MSG("use ImplicitPorousMediaProblem instead")
-    TwoPDFMProblem(TimeManager &timeManager,
-                const GridView &gridView,
-                bool verbose = true)
-        : ParentType(timeManager, gridView)
-    {}
-
-    /*!
-     * \brief The constructor
-     *
-     * \param timeManager The time manager
-     * \param gridView The grid view
      * \param spatialParams The spatial parameters object
      * \param verbose Turn verbosity on or off
      */

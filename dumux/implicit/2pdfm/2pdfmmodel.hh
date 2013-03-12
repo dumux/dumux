@@ -100,24 +100,6 @@ class TwoPDFMModel : public TwoPModel<TypeTag>
 
 public:
     /*!
-     * \brief Returns the relative weight of a primary variable for
-     *        calculating relative errors.
-     *
-     * \param globalIdx The global index of the vertex
-     * \param pvIdx The index of the primary variable
-     */
-    DUNE_DEPRECATED
-    Scalar primaryVarWeight(int globalIdx, int pvIdx) const
-    {
-        if (pressureIdx == pvIdx)
-        {
-            return std::min(10.0 / this->prevSol()[globalIdx][pvIdx], 1.0);
-        }
-        
-        return 1.0;
-    }
-
-    /*!
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer.
