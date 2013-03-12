@@ -24,7 +24,7 @@
  * \brief Base class for all models which use the Stokes box model.
  */
 
-#include <dumux/boxmodels/common/boxmodel.hh>
+#include <dumux/implicit/common/implicitmodel.hh>
 
 #include "stokeslocalresidual.hh"
 #include "stokesnewtoncontroller.hh"

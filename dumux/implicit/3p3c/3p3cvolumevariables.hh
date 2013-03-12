@@ -25,7 +25,7 @@
 #ifndef DUMUX_3P3C_VOLUME_VARIABLES_HH
 #define DUMUX_3P3C_VOLUME_VARIABLES_HH
 
-#include <dumux/boxmodels/common/boxmodel.hh>
+#include <dumux/implicit/common/implicitmodel.hh>
 #include <dumux/common/math.hh>
 
 #include <dune/common/collectivecommunication.hh>

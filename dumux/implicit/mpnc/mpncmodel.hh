@@ -29,7 +29,7 @@
 #include "mpncproperties.hh"
 #include "mpncvtkwriter.hh"
 
-#include <dumux/boxmodels/common/boxmodel.hh>
+#include <dumux/implicit/common/implicitmodel.hh>
 
 namespace Dumux
 {
