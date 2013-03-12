@@ -587,10 +587,8 @@ public:
     int numEdges; //!< number of edges
     int numFaces; //!< number of faces (0 in < 3D)
     int numScv; //!< number of subcontrol volumes
-    int numSCV; //!< \deprecated number of subcontrol volumes
     int numNeighbors; //!< needed for compatibility with cc models
     int numFap; //!< number of flux approximation points
-    int numFAP; //!< \deprecated number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
     
     const LocalFiniteElementCache feCache_;
@@ -617,7 +615,6 @@ public:
         numEdges = referenceElement.size(dim-1);
         numFaces = (dim<3)?0:referenceElement.size(1);
         numScv = numVertices;
-        numSCV = numScv;
         numNeighbors = 0;
 
         bool useTwoPointFlux
@@ -626,7 +623,6 @@ public:
             numFap = 2;
         else
             numFap = numVertices;
-        numFAP = numFap;
 
         // corners:
         for (int vert = 0; vert < numVertices; vert++) {
