@@ -1,4 +1,13 @@
-SUBDIRS = boxmodels common decoupled freeflow implicit io linear material nonlinear parallel
+SUBDIRS = \
+	common \
+	decoupled \
+	freeflow \
+	implicit \
+	io \
+	linear \
+	material \
+	nonlinear \
+	parallel
 
 dumuxdir = $(includedir)/dumux
 

@@ -1,5 +1,0 @@
-SUBDIRS = common co2 co2ni 1p 1p2c 2p 2p2c 2p2cni 2pni 2pdfm 3p3c 3p3cni mpnc richards
-
-boxmodelsdir = $(includedir)/dumux/boxmodels
-
-include $(top_srcdir)/am/global-rules

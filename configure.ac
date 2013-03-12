@@ -13,25 +13,7 @@ AC_CONFIG_FILES([dumux.pc
     doc/doxygen/Makefile 
     doc/doxygen/Doxyfile
     doc/handbook/Makefile
-    dumux/Makefile 
-    dumux/boxmodels/Makefile 
-    dumux/boxmodels/1p/Makefile 
-    dumux/boxmodels/1p2c/Makefile 
-    dumux/boxmodels/2p/Makefile 
-    dumux/boxmodels/2p2c/Makefile 
-    dumux/boxmodels/2p2cni/Makefile 
-    dumux/boxmodels/2pni/Makefile
-    dumux/boxmodels/2pdfm/Makefile 
-    dumux/boxmodels/3p3c/Makefile 
-    dumux/boxmodels/3p3cni/Makefile 
-    dumux/boxmodels/common/Makefile 
-    dumux/boxmodels/co2/Makefile
-    dumux/boxmodels/co2ni/Makefile
-    dumux/boxmodels/mpnc/Makefile 
-    dumux/boxmodels/mpnc/diffusion/Makefile
-    dumux/boxmodels/mpnc/energy/Makefile
-    dumux/boxmodels/mpnc/mass/Makefile
-    dumux/boxmodels/richards/Makefile 
+    dumux/Makefile
     dumux/common/Makefile 
     dumux/decoupled/Makefile
     dumux/decoupled/1p/Makefile
