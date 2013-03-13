@@ -49,9 +49,9 @@ public:
     {}
 
     RegularizedVanGenuchtenParams(Scalar vgAlpha,
-                                   Scalar vgN)
+                                  Scalar vgN)
         : Parent(vgAlpha, vgN)
-    {};
+    {}
 
     /*!
      * \brief Threshold saturation below which the capillary pressure
@@ -63,7 +63,7 @@ public:
     Scalar pCLowSw() const
     {
         // Some problems are very sensitive to this value
-        // (e.g. makeing it smaller might result in negative
+        // (e.g. making it smaller might result in negative
         // pressures), if you change it here, you will almost
         // certainly break someone's code!
         //
@@ -72,7 +72,7 @@ public:
         // template parameter for the RegularizedVanGenuchten law!
         return /* PLEASE DO _NOT_ */ 1e-2; /* CHANGE THIS VALUE. READ
                                             * COMMENT ABOVE! */
-   }
+    }
 
     /*!
      * \brief Threshold saturation above which the capillary pressure
@@ -84,7 +84,7 @@ public:
     Scalar pCHighSw() const
     {
         // Some problems are very sensitive to this value
-        // (e.g. makeing it smaller might result in negative
+        // (e.g. making it smaller might result in negative
         // pressures), if you change it here, you will almost
         // certainly break someone's code!
         //
@@ -97,7 +97,7 @@ public:
 
     /*!
      * \brief Threshold saturation below which the relative
-     *        permeability of the non-wetting phase gets regulatized.
+     *        permeability of the non-wetting phase gets regularized.
      *
      * This is just 10%. If you need a different value, overload this
      * class.
@@ -107,7 +107,7 @@ public:
 
     /*!
      * \brief Threshold saturation above which the relative
-     *        permeability of the wetting phase gets regulatized.
+     *        permeability of the wetting phase gets regularized.
      *
      * This is just 90%. If you need a different value, overload this
      * class.
