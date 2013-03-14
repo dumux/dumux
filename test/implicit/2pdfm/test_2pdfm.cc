@@ -25,6 +25,7 @@
 #include "2pdfmtestproblem.hh"
 #include <dumux/common/start.hh>
 
+#if HAVE_UG
 /*!
  * \brief Provides an interface for customizing error messages associated with
  *        reading in parameters.
@@ -46,9 +47,8 @@ void usage(const char *progName, const std::string &errorMsg)
         "\t-Grid.File                     Name of the file containing the grid \n"
         "\t                               definition in ART format\n"
         "\n";
-        
-        std::cout << errorMessageOut
-        << "\n";
+
+        std::cout << errorMessageOut << "\n";
     }
 }
 
@@ -60,3 +60,13 @@ int main(int argc, char** argv)
     typedef TTAG(TwoPDFMTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
+
+#else // HAVE_UG
+
+int main(int argc, char** argv)
+{
+    std::cout << "External grid UG needed to run this example." << std::endl;
+    return 77;
+}
+
+#endif // HAVE_UG

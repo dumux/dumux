@@ -473,7 +473,6 @@ add_test(test_boxmpnc     bin/runTest.sh references/obstaclebox-reference.vtu   
 add_test(test_ccmpnc      bin/runTest.sh references/obstaclecc-reference.vtu        obstaclecc-00010.vtu        test/implicit/mpnc/test_ccmpnc          -Grid.File test/implicit/mpnc/grids/obstacle_24x16.dgf         -TimeManager.TEnd 1e4     -TimeManager.DtInitial 250)
 add_test(test_forchheimer1p    bin/runTest.sh references/forchheimer1p-reference.vtp      test_forchheimer1p-00002.vtp       test/implicit/mpnc/test_forchheimer1p  -Grid.File test/implicit/mpnc/grids/forchheimer1d.dgf)
 add_test(test_forchheimer2p    bin/runTest.sh references/forchheimer2p-reference.vtu      test_forchheimer2p-00009.vtu       test/implicit/mpnc/test_forchheimer2p  -Grid.File test/implicit/mpnc/grids/obstacle_24x16.dgf)
-add_test(test_2pdfm       test/implicit/2pdfm/test_2pdfm)
 if(MPI_FOUND)
   add_test(test_boxrichards bin/runTest.sh references/richardslensbox-reference-parallel.vtu s0002-p0000-richardslensbox-00008.vtu  ${MPIEXEC} -np 2 test/implicit/richards/test_boxrichards -Grid.File test/implicit/richards/grids/richardslens-24x16.dgf -TimeManager.TEnd 3000    -TimeManager.DtInitial 100)
 else(MPI_FOUND)
