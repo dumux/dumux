@@ -17,6 +17,10 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
   compiler will not print any warning if a deprecated public member variable 
   is used.
 
+* Deprecated MACROS, to be removed after 2.4: BEWARE: The compiler will not
+  print any warning if a deprecated macro is used.
+  - DUMUX_ALWAYS_INLINE whether the according attribute is supported
+
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.4:
 
 * DELETED classes/files, property names, constants/enums, 
