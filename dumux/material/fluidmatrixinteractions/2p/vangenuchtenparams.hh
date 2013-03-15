@@ -53,28 +53,28 @@ public:
     };
 
     /*!
-     * \brief Return the \f$\alpha\f$ shape parameter of van Genuchten's
+     * \brief Return the \f$\alpha\f$ shape parameter [1/Pa] of van Genuchten's
      *        curve.
      */
     Scalar vgAlpha() const
     { return vgAlpha_; }
 
     /*!
-     * \brief Set the \f$\alpha\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\alpha\f$ shape parameter [1/Pa] of van Genuchten's
      *        curve.
      */
     void setVgAlpha(Scalar v)
     { vgAlpha_ = v; }
 
     /*!
-     * \brief Return the \f$m\f$ shape parameter of van Genuchten's
+     * \brief Return the \f$m\f$ shape parameter [-] of van Genuchten's
      *        curve.
      */
     Scalar vgM() const
     { return vgM_; }
 
     /*!
-     * \brief Set the \f$m\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$m\f$ shape parameter [-] of van Genuchten's
      *        curve.
      *
      * The \f$n\f$ shape parameter is set to \f$n = \frac{1}{1 - m}\f$
@@ -83,14 +83,14 @@ public:
     { vgM_ = m; vgN_ = 1/(1 - vgM_); }
 
     /*!
-     * \brief Return the \f$n\f$ shape parameter of van Genuchten's
+     * \brief Return the \f$n\f$ shape parameter [-] of van Genuchten's
      *        curve.
      */
     Scalar vgN() const
     { return vgN_; }
 
     /*!
-     * \brief Set the \f$n\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$n\f$ shape parameter [-] of van Genuchten's
      *        curve.
      *
      * The \f$n\f$ shape parameter is set to \f$m = 1 - \frac{1}{n}\f$
