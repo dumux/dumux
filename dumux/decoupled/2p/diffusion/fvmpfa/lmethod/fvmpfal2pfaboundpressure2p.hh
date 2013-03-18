@@ -2242,9 +2242,11 @@ bool FVMPFAL2PFABoundPressure2P<TypeTag>::calculateTransmissibility(
     D += B.leftmultiply(C.rightmultiply(A));
     Dune::FieldMatrix<Scalar,dim,2*dim-dim+1> TL1(D);
 
+    Scalar sR = std::abs(TR1[1][2] - TR1[1][0]);
+    Scalar sL = std::abs(TL1[1][0] - TL1[1][2]);
 
     // 3.decide which triangle (which transmissibility coefficients) to use
-    if (std::abs(TR1[1][0]) < std::abs(TL1[1][0]))
+    if (sR <= sL)
     {
         transmissibility = TR1;
 //        if (isnan(transmissibility.frobenius_norm()))
@@ -2273,7 +2275,7 @@ bool FVMPFAL2PFABoundPressure2P<TypeTag>::calculateTransmissibility(
 //                std::cout<<"\n";
 //        }
 //        std::cout<<"transmissibility = "<<transmissibility<<"\n";
-        return true;
+//        return true;
     }
     else
     {
