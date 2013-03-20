@@ -8,3 +8,10 @@
   patch istl-2.2.0.patch / istl-2.2.1.patch in your directory containing
   DUNE-ISTL 2.2.0 / 2.2.1, e.g.:
   patch -p0 <../dumux/patches/istl-2.2.0.patch
+
+- To use DuMuX with Dune-trunk in versions after 2013-03-20 (dune-common r7429)
+  m4/dumux.m4 must be patched. This will be done in DuMuX-trunk after the
+  Dune 2.3 release. Otherwise dumux-devel and dumux-lecture will not be able
+  to find the module DuMuX.
+  To patch your local copy inside the dumux folder:
+  patch -p0 < ../patches/dumux-m4.patch
