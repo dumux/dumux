@@ -2275,7 +2275,7 @@ bool FVMPFAL2PFABoundPressure2P<TypeTag>::calculateTransmissibility(
 //                std::cout<<"\n";
 //        }
 //        std::cout<<"transmissibility = "<<transmissibility<<"\n";
-//        return true;
+        return true;
     }
     else
     {
