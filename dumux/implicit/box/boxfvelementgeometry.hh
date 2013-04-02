@@ -683,7 +683,6 @@ public:
                 // make sure the normal points to the right direction
                 if (subContVolFace[k].normal * diffVec < 0)
                     subContVolFace[k].normal *= -1;
-
             }
             else if (dim==3) {
                 int leftFace;
@@ -698,6 +697,8 @@ public:
                                         edgeCoord[k], faceCoord[rightFace],
                                         elementGlobal, faceCoord[leftFace]);
             }
+
+            subContVolFace[k].area = subContVolFace[k].normal.two_norm();
 
             if (useTwoPointFlux)
             {
