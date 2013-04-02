@@ -576,8 +576,8 @@ public:
      * \brief Returns true if the current solution should be written to
      *        disk (i.e. as a VTK file)
      *
-     * The default behavior is to write out every the solution for
-     * very time step. This file is intended to be overwritten by the
+     * The default behavior is to write out the solution for
+     * every time step. This function is intended to be overwritten by the
      * implementation.
      */
     bool shouldWriteOutput() const
