@@ -184,7 +184,7 @@ public:
                 pN[globalIdx] = volVars.pressure();
                 delP[globalIdx] = volVars.pressure() - 1e5;
                 rho[globalIdx] = volVars.density();
-                mu[globalIdx] = volVars.viscosity();
+                mu[globalIdx] = volVars.dynamicViscosity();
                 velocity[globalIdx] = volVars.velocity();
             }
         }

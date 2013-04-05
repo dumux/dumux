@@ -148,6 +148,7 @@ public:
      * \brief Returns the fluid pressure \f$\mathrm{[Pa]}\f$ within
      *        the sub-control volume.
      */
+    DUNE_DEPRECATED_MSG("type StokesFluxVariables::viscosity() is deprecated, use StokesFluxVariables::dynamicViscosity() instead.");
     Scalar pressure() const
     { return fluidState_.pressure(phaseIdx); }
 
@@ -161,8 +162,23 @@ public:
      * \brief Returns the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ of the fluid in
      *        the sub-control volume.
      */
+    DUNE_DEPRECATED_MSG("function StokesFluxVariables::viscosity() is deprecated, use StokesFluxVariables::dynamicViscosity() instead.")
     Scalar viscosity() const
+    { return dynamicViscosity(); }
+
+    /*!
+     * \brief Returns the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ of the fluid in
+     *        the sub-control volume.
+     */
+    Scalar dynamicViscosity() const
     { return fluidState_.viscosity(phaseIdx); }
+
+    /*!
+     * \brief Returns the kinematic viscosity \f$ \frac{m^2}{s} \f$ of the fluid in
+     *        the sub-control volume.
+     */
+    Scalar kinematicViscosity() const
+    { return fluidState_.viscosity(phaseIdx) / fluidState_.density(phaseIdx); }
 
     /*!
      * \brief Returns the velocity vector in the sub-control volume.

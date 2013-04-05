@@ -147,7 +147,7 @@ public:
                 Xw  [globalIdx] = volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
                 T   [globalIdx] = volVars.temperature();
                 rho [globalIdx] = volVars.density();
-                mu  [globalIdx] = volVars.viscosity();
+                mu  [globalIdx] = volVars.dynamicViscosity();
                 h   [globalIdx] = volVars.enthalpy();
 //                D   [globalIdx] = volVars.diffusionCoeff();
                 velocity[globalIdx] = volVars.velocity();

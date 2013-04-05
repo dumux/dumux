@@ -209,7 +209,7 @@ protected:
 
         // momentum balance - pressure is evaluated as volume term
         // at the center of the SCV in computeSource
-        // viscosity is upwinded
+        // dynamic viscosity is upwinded
 
         // compute symmetrized gradient for the momentum flux:
         // mu (grad v + (grad v)^t)
@@ -226,7 +226,7 @@ protected:
             // TODO: dilatation term has to be accounted for in outflow, coupling, neumann
             //            velGradComp[velIdx] += 2./3*fluxVars.velocityDiv;
 
-            velGradComp *= fluxVars.viscosity() + fluxVars.eddyViscosity();
+            velGradComp *= fluxVars.dynamicViscosity() + fluxVars.eddyViscosity();
 
             flux[momentumXIdx + velIdx] -=
                 velGradComp*fluxVars.face().normal;
@@ -381,7 +381,7 @@ protected:
                             boundaryVars.face().normal;
 
                         boundaryVars.velocityGrad().umv(boundaryFaceNormal, muGradVelNormal);
-                        muGradVelNormal *= boundaryVars.viscosity();
+                        muGradVelNormal *= boundaryVars.dynamicViscosity();
 
                         for (unsigned int i=0; i < this->residual_.size(); i++)
                             Valgrind::CheckDefined(this->residual_[i]);
@@ -465,7 +465,7 @@ protected:
                     tangent[1] = -elementUnitNormal[0];
                     DimVector tangentialVelGrad;
                     boundaryVars.velocityGrad().mv(tangent, tangentialVelGrad);
-                    tangentialVelGrad *= boundaryVars.viscosity();
+                    tangentialVelGrad *= boundaryVars.dynamicViscosity();
 
                     this->residual_[scvIdx][massBalanceIdx] -= stabilizationBeta_*0.5*
                         this->curVolVars_(scvIdx).pressure();
@@ -525,7 +525,7 @@ protected:
                 boundaryVars.velocityGrad().mv(tangent, tangentialVelGrad);
 
                 this->residual_[scvIdx][massBalanceIdx] -= 0.5*stabilizationBeta_
-                    * boundaryVars.viscosity()
+                    * boundaryVars.dynamicViscosity()
                     * (tangentialVelGrad*tangent);
             }
         }

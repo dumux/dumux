@@ -84,7 +84,7 @@ protected:
         DimVector tmp(0.0);
 
         density_ = Scalar(0);
-        viscosity_ = Scalar(0);
+        dynamicViscosity_ = Scalar(0);
         pressure_ = Scalar(0);
         normalvelocity_ = Scalar(0);
         velocity_ = Scalar(0);
@@ -99,7 +99,7 @@ protected:
             // phase density and viscosity at IP
             density_ += elemVolVars[idx].density() *
                 face().shapeValue[idx];
-            viscosity_ += elemVolVars[idx].viscosity() *
+            dynamicViscosity_ += elemVolVars[idx].dynamicViscosity() *
                 face().shapeValue[idx];
             pressure_ += elemVolVars[idx].pressure() *
                 face().shapeValue[idx];
@@ -133,7 +133,7 @@ protected:
         normalvelocity_ = velocity_ * face().normal;
 
         Valgrind::CheckDefined(density_);
-        Valgrind::CheckDefined(viscosity_);
+        Valgrind::CheckDefined(dynamicViscosity_);
         Valgrind::CheckDefined(normalvelocity_);
         Valgrind::CheckDefined(velocity_);
         Valgrind::CheckDefined(pressureGrad_);
@@ -193,8 +193,23 @@ public:
      * \brief Return the dynamic viscosity \f$ \mathrm{[Pa\cdot s]} \f$ at the integration
      *        point.
      */
+    DUNE_DEPRECATED_MSG("function StokesFluxVariables::viscosity() is deprecated, use StokesFluxVariables::dynamicViscosity() instead.")
     Scalar viscosity() const
-    { return viscosity_; }
+    { return dynamicViscosity(); }
+
+    /*!
+     * \brief Return the dynamic viscosity \f$ \mathrm{[Pa\cdot s]} \f$ at the integration
+     *        point.
+     */
+    Scalar dynamicViscosity() const
+    { return dynamicViscosity_; }
+
+    /*!
+     * \brief Returns the kinematic viscosity \f$ \frac{m^2}{s} \f$ of the fluid in
+     *        the sub-control volume.
+     */
+    Scalar kinematicViscosity() const
+    { return dynamicViscosity_ / density_; }
 
     /*!
      * \brief Return the velocity \f$ \mathrm{[m/s]} \f$ at the integration
@@ -261,7 +276,7 @@ protected:
 
     // values at the integration point
     Scalar density_;
-    Scalar viscosity_;
+    Scalar dynamicViscosity_;
     Scalar pressure_;
     Scalar normalvelocity_;
 //    Scalar velocityDiv_;
