@@ -500,10 +500,11 @@ int start(int argc,
         return 1;
     }
     catch (Dune::DGFException & e) {
-    std::cerr << "DGF exception thrown. "
-                 "Most likely, the DGF file name is wrong "
+    std::cerr << "DGF exception thrown (" << e <<
+                 "). Most likely, the DGF file name is wrong "
                  "or the DGF file is corrupted, "
-                 "e.g. missing hash at end of file or wrong number (dimensions) of entries." << std::endl;
+                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
+                 << std::endl;
     return 2;
     }
     catch (Dune::Exception &e) {
