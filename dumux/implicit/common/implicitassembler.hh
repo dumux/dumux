@@ -418,7 +418,7 @@ protected:
 
             // reset the parts needed for Jacobian recycling
             if (enableJacobianRecycling_()) {
-                for (int i = 0; i < matrix_->N(); i++) {
+                for (unsigned int i = 0; i < matrix_->N(); i++) {
                     storageJacobian_[i] = 0;
                     storageTerm_[i] = 0;
                 }
@@ -458,7 +458,7 @@ protected:
         // here and be done with it...
         Scalar curDt = problem_().timeManager().timeStepSize();
         if (reuseMatrix_) {
-            for (int i = 0; i < matrix_->N(); i++) {
+            for (unsigned int i = 0; i < matrix_->N(); i++) {
                 // rescale the mass term of the jacobian matrix
                 MatrixBlock &J_i_i = (*matrix_)[i][i];
 

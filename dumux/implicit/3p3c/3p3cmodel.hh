@@ -508,7 +508,7 @@ protected:
      */
     void resetPhasePresence_()
     {
-        for (int i = 0; i < this->numDofs(); ++i)
+        for (unsigned int i = 0; i < this->numDofs(); ++i)
         {
             staticDat_[i].phasePresence
                 = staticDat_[i].oldPhasePresence;
@@ -521,7 +521,7 @@ protected:
      */
     void updateOldPhasePresence_()
     {
-        for (int i = 0; i < this->numDofs(); ++i)
+        for (unsigned int i = 0; i < this->numDofs(); ++i)
         {
             staticDat_[i].oldPhasePresence
                 = staticDat_[i].phasePresence;

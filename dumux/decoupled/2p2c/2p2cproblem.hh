@@ -202,7 +202,7 @@ protected:
         else if (equation == -1)
         {
             // set everything to zero
-            for (int i = 0; i < values.size(); i++)
+            for (unsigned int i = 0; i < values.size(); i++)
                 values[i] = 0.;
         }
         else

@@ -123,7 +123,7 @@ private:
         }
         
         // set the discrepancy of the red elements to zero
-        for (int i = 0; i < this->delta_.size(); i++)
+        for (unsigned int i = 0; i < this->delta_.size(); i++)
             if (this->elementColor_[i] == ParentType::Red)
                 this->delta_[i] = 0;
     }
