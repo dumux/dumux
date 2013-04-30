@@ -148,7 +148,6 @@ public:
      * \brief Returns the fluid pressure \f$\mathrm{[Pa]}\f$ within
      *        the sub-control volume.
      */
-    DUNE_DEPRECATED_MSG("type StokesFluxVariables::viscosity() is deprecated, use StokesFluxVariables::dynamicViscosity() instead.");
     Scalar pressure() const
     { return fluidState_.pressure(phaseIdx); }
 
