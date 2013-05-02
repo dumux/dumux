@@ -31,7 +31,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/implicit/2p2c/2p2cproperties.hh>
+#include <dumux/implicit/2p2cni/2p2cnimodel.hh>
 
 namespace Dumux
 {
@@ -106,30 +106,24 @@ public:
     InjectionSpatialParams(const GridView &gridView)
         : ParentType(gridView)
     {
-        layerBottom_ = 22.0;
-
         // intrinsic permeabilities
-        fineK_ = 1e-13;
-        coarseK_ = 1e-12;
+        K_ = GET_RUNTIME_PARAM(TypeTag, Scalar, K_);
+        hoseK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, hoseK_); //1.e-7;
 
         // porosities
-        finePorosity_ = 0.3;
-        coarsePorosity_ = 0.3;
+        Porosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Porosity_);
+        hosePorosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, hosePorosity_); //0.001344;
 
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
+        // heat conductivity 
+        lambdaSolid_ = 1.8;
 
         // residual saturations
-        fineMaterialParams_.setSwr(0.2);
-        fineMaterialParams_.setSnr(0.0);
-        coarseMaterialParams_.setSwr(0.2);
-        coarseMaterialParams_.setSnr(0.0);
+        MaterialParams_.setSwr(0.2);
+        MaterialParams_.setSnr(0.0);
 
         // parameters for the Brooks-Corey law
-        fineMaterialParams_.setPe(1e4);
-        coarseMaterialParams_.setPe(1e4);
-        fineMaterialParams_.setLambda(2.0);
-        coarseMaterialParams_.setLambda(2.0);
+        MaterialParams_.setPe(0);
+        MaterialParams_.setLambda(2.0);
     }
 
     ~InjectionSpatialParams()
@@ -149,8 +143,8 @@ public:
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(globalPos))
-            return fineK_;
-        return coarseK_;
+           return hoseK_;
+        else return K_;
     }
 
     /*!
@@ -165,10 +159,11 @@ public:
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
     {
+
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(globalPos))
-            return finePorosity_;
-        return coarsePorosity_;
+           return hosePorosity_;
+        else return Porosity_;
     }
 
 
@@ -184,9 +179,7 @@ public:
                                                const int scvIdx) const
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
-        return coarseMaterialParams_;
+        return MaterialParams_;
     }
 
     /*!
@@ -227,19 +220,17 @@ public:
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
-    { return globalPos[dim-1] > layerBottom_; };
+    { return globalPos[1] < 2; };
 
-    Scalar fineK_;
-    Scalar coarseK_;
-    Scalar layerBottom_;
+    Scalar K_;
+    Scalar hoseK_;
 
-    Scalar finePorosity_;
-    Scalar coarsePorosity_;
+    Scalar Porosity_;
+    Scalar hosePorosity_;
 
     Scalar lambdaSolid_;
 
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    MaterialLawParams MaterialParams_;
 };
 
 }
