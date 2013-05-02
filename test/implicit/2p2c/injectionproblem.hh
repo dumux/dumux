@@ -26,9 +26,9 @@
 
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 
-#include <dumux/implicit/2p2cni/2p2cnimodel.hh>
+#include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/material/fluidsystems/cs2n2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 #include "injectionspatialparams.hh"
 
@@ -40,7 +40,7 @@ class InjectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPTwoCNI, InjectionSpatialParams));
+NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
 NEW_TYPE_TAG(InjectionBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
 NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCModel, InjectionProblem));
     
@@ -62,7 +62,7 @@ SET_PROP(InjectionProblem, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     static const bool useComplexRelations = false;
  public:
-    typedef Dumux::FluidSystems::CS2N2<Scalar, useComplexRelations> type;
+    typedef Dumux::FluidSystems::H2ON2<Scalar, useComplexRelations> type;
 };
 
 // Enable gravity
@@ -118,8 +118,7 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
         nCompIdx = FluidSystem::nCompIdx,
 
         conti0EqIdx = Indices::conti0EqIdx,
-        contiN2EqIdx = Indices::contiNEqIdx,
-        energyEqIdx = Indices::energyEqIdx
+        contiN2EqIdx = conti0EqIdx + nCompIdx
     };
 
 
@@ -128,7 +127,6 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
@@ -159,6 +157,7 @@ public:
             temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureLow);
             temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureHigh);
             temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InitialTemperature);
+            depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.DepthBOR);
             name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
         }
         catch (Dumux::ParameterException &e) {
@@ -191,26 +190,6 @@ public:
                           /*pmin=*/pressureLow_,
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
-
-
-       // calculate the injection volume
-             injVolume_ = 0.0;
-             FVElementGeometry fvElemGeom;
-             ElementIterator elemIt = this->gridView().template begin<0>();
-             const ElementIterator endIt = this->gridView().template end<0>();
-               for (; elemIt != endIt; ++ elemIt) {
-                   fvElemGeom.update(this->gridView(), *elemIt);
-                   const GlobalPosition &pos = (*elemIt).geometry().center();
-
-                               if (pos[1] >3.95 && pos[1] <4.05)
-                                {
-                                         if (elemIt->partitionType() != Dune::InteriorEntity)
-                                                continue;
-                                             injVolume_ += (*elemIt).geometry().volume();
-                                }
-
-                }
-
     }
 
     /*!
@@ -255,22 +234,7 @@ public:
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
-          values = Scalar(0.0);
-
-            Scalar m1, m2, m3;
-            m1=5.13e-6/injVolume_;
-            m2=8.5e-6/injVolume_;
-            m3=0.15/injVolume_;
-
-            if (this->timeManager().time()<4500.)
-            {
-                if (globalPos[1] >3.95 && globalPos[1] <4.05)
-                        {
-                         values[contiN2EqIdx]=m1;  // N2
-                         values[conti0EqIdx]=m2;  // CS2
-                         values[energyEqIdx]=m3;   // Enthalpy
-                    }
-            }
+        values = 0;
     }
 
     // \}
@@ -290,9 +254,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values, 
                             const GlobalPosition &globalPos) const
     {
-        if (globalPos[1] < eps_)
-            values.setAllDirichlet();
-        else if (globalPos[1] > (6.-eps_))
+        if (globalPos[0] < eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -334,6 +296,16 @@ public:
                  int boundaryFaceIdx) const
     {
         values = 0;
+        
+        GlobalPosition globalPos;
+        if (isBox)
+            globalPos = element.geometry().corner(scvIdx);
+        else 
+            globalPos = is.geometry().center();
+
+        if (globalPos[1] < 15 && globalPos[1] > 7) {
+            values[contiN2EqIdx] = -1e-3; // kg/(s*m^2)
+        }
     }
 
     // \}
@@ -367,7 +339,7 @@ public:
     int initialPhasePresence(const Vertex &vertex,
                              int &globalIdx,
                              const GlobalPosition &globalPos) const
-    { return Indices::nPhaseOnly; }
+    { return Indices::wPhaseOnly; }
 
     // \}
 
@@ -376,17 +348,25 @@ private:
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
+        Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
 
-        values[Indices::pressureIdx] = 1.013e5;
-        values[Indices::switchIdx] = 0.00001;
-        values[Indices::temperatureIdx] = temperature_;
+        Scalar pl = 1e5 - densityW*this->gravity()[1]*(depthBOR_ - globalPos[1]);
+        Scalar moleFracLiquidN2 = pl*0.95/BinaryCoeff::H2O_N2::henry(temperature_);
+        Scalar moleFracLiquidH2O = 1.0 - moleFracLiquidN2;
+
+        Scalar meanM =
+            FluidSystem::molarMass(wCompIdx)*moleFracLiquidH2O +
+            FluidSystem::molarMass(nCompIdx)*moleFracLiquidN2;
+
+        Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
+
+        values[Indices::pressureIdx] = pl;
+        values[Indices::switchIdx] = massFracLiquidN2;
     }
 
     Scalar temperature_;
     Scalar depthBOR_;
     Scalar eps_;
-
-    Scalar injVolume_;
 
     int nTemperature_;
     int nPressure_;
