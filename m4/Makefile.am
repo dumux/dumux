@@ -9,7 +9,8 @@ M4FILES = \
 	cxx0x_constexpr.m4 \
 	dumux.m4 \
 	dumux_always_inline.m4 \
-	dumux_quad.m4
+	dumux_quad.m4 \
+	patched_pdelab.m4
 
 aclocaldir = $(datadir)/aclocal
 aclocal_DATA = $(M4FILES)

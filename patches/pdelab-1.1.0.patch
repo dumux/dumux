@@ -2,17 +2,6 @@ Index: dune/pdelab/backend/istlvectorbackend.hh
 ===================================================================
 --- dune/pdelab/backend/istlvectorbackend.hh	(revision 2292)
 +++ dune/pdelab/backend/istlvectorbackend.hh	(working copy)
-@@ -3,6 +3,10 @@
- #ifndef DUNE_ISTLVECTORBACKEND_HH
- #define DUNE_ISTLVECTORBACKEND_HH
- 
-+// Needed to detect in Dumux whether PDELab is patched.
-+// TODO: this should be replaced by a proper configure test.
-+#define DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
-+
- #include<vector>
- 
- #include<dune/common/fvector.hh>
 @@ -30,6 +34,8 @@
        typedef typename ContainerType::size_type size_type;
        typedef ISTLVectorBackend<BLOCKSIZE> Backend;
