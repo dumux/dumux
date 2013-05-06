@@ -30,6 +30,8 @@ AC_DEFUN([DUMUX_CHECKS],
       AC_DEFINE(constexpr, const, ['set 'constexpr' to 'const' if constexpr is not supported])
   fi
 
+  # Check whether PDELab is patched to be used by DuMuX
+  CHECK_PATCHED_PDELAB
 ])
 
 # checks only relevant for the dumux module itself but not for modules
