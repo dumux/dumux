@@ -264,6 +264,27 @@ if(BOOST_FOUND)
 endif(BOOST_FOUND)
 
 ##############
+# Check for patched DUNE-PDELab
+include(CMakePushCheckState)
+cmake_push_check_state()
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -DHAVE_NULLPTR=${HAVE_NULLPTR}")
+set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${DumuxIncludeDirectories})
+set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${DumuxLinkLibraries})
+
+CHECK_CXX_SOURCE_COMPILES("
+  #include <dune/pdelab/backend/istlvectorbackend.hh>
+
+  int main(void)
+  {
+    Dune::PDELab::ISTLBlockVectorContainer
+      <std::vector<double>, double, 3> blockVectorContainer;
+    return blockVectorContainer.size();
+  }
+" DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
+)
+cmake_pop_check_state()
+
+##############
 # set appropriate compiler flags for debug/release compilation modes
 add_definitions("-std=c++0x -Wall -Wno-sign-compare -fno-strict-aliasing -DUSE_AMGBACKEND")
 

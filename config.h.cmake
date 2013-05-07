@@ -93,6 +93,9 @@
 #cmakedefine HAVE_MALLOC_H 1
 #cmakedefine HAVE_VALGRIND 1
 
+/* Define to 1 if dune-pdelab is patched to be usable by DuMuX */
+#cmakedefine DUNE_PDELAB_IS_PATCHED_FOR_DUMUX ${DUNE_PDELAB_IS_PATCHED_FOR_DUMUX}
+
 #include <dune/common/deprecated.hh>
 #include <dune/common/unused.hh>
 

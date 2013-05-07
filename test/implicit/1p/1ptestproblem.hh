@@ -42,10 +42,7 @@
 
 #if HAVE_DUNE_PDELAB
 
-// Check if DUNE-PDELab has been patched for our needs. 
-// TODO: this should be replaced by a proper configure test.
-#include <dune/pdelab/backend/istlvectorbackend.hh>
-
+// Check if DUNE-PDELab has been patched for our needs.
 #ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
 #include <dumux/linear/amgbackend.hh>
 #endif // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
