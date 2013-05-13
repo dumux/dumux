@@ -96,7 +96,7 @@ public:
         Dune::FieldVector<Vector, maxNFAP> grad; //!< derivatives of shape functions at ip
         Dune::FieldVector<Scalar, maxNFAP> shapeValue; //!< value of shape functions at ip
         Dune::FieldVector<int, maxNFAP> fapIndices; //!< indices w.r.t.neighbors of the flux approximation points
-        unsigned faceIdx;
+        unsigned faceIdx; //!< the index (w.r.t. the element) of the face (codim 1 entity) that the scvf is part of
     };
 
     typedef SubControlVolumeFace BoundaryFace; //!< compatibility typedef
@@ -216,32 +216,43 @@ public:
                 boundaryFace[bfIdx].fapIndices[1] = boundaryFace[bfIdx].j;
             }
         }
-        
+
+        // set the second flux approximation index for the boundary faces 
+        // to be used for the outflow boundary condition
+        // \todo only works for cubes up to now, needs to be generalized to 
+        // other element types
         for (int nIdx = 0; nIdx < numNeighbors-1; nIdx++)
         {
+            // get the index of the codim 1 entity that the scvf belongs to
             switch (subContVolFace[nIdx].faceIdx)
             {
                 case 0:
+                    // take the left neighbor for the right boundary
                     boundaryFace[1].j = nIdx+1;
                     boundaryFace[1].fapIndices[1] = boundaryFace[1].j;
                     break;
                 case 1:
+                    // take the right neighbor for the left boundary
                     boundaryFace[0].j = nIdx+1;
                     boundaryFace[0].fapIndices[1] = boundaryFace[0].j;
                     break;
                 case 2:
+                    // take the top/back neighbor for the bottom/front boundary
                     boundaryFace[3].j = nIdx+1;
                     boundaryFace[3].fapIndices[1] = boundaryFace[3].j;
                     break;
                 case 3:
+                    // take the bottom/front neighbor for the top/back boundary
                     boundaryFace[2].j = nIdx+1;
                     boundaryFace[2].fapIndices[1] = boundaryFace[2].j;
                     break;
                 case 4:
+                    // take the top neighbor for the bottom boundary
                     boundaryFace[5].j = nIdx+1;
                     boundaryFace[5].fapIndices[1] = boundaryFace[5].j;
                     break;
                 case 5:
+                    // take the bottom neighbor for the top boundary
                     boundaryFace[4].j = nIdx+1;
                     boundaryFace[4].fapIndices[1] = boundaryFace[4].j;
                     break;
