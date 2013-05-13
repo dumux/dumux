@@ -117,7 +117,7 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
 
-        FVElementGeometry fvElemGeom;
+        FVElementGeometry fvGeometry;
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
@@ -128,8 +128,8 @@ public:
             int idx = this->elementMapper().map(*elemIt);
             rank[idx] = this->gridView_().comm().rank();
 
-            fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
+            fvGeometry.update(this->gridView_(), *elemIt);
+            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
 
             int numLocalVerts = elemIt->template count<dim>();
             for (int vertexIdx = 0; vertexIdx < numLocalVerts; ++vertexIdx)
@@ -138,7 +138,7 @@ public:
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom,
+                               fvGeometry,
                                vertexIdx,
                                false);
 

@@ -45,7 +45,7 @@ class CCElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeT
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
+    
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
@@ -64,12 +64,12 @@ public:
      *
      * \param problem The problem which needs to be simulated.
      * \param element The DUNE Codim<0> entity for which the volume variables ought to be calculated
-     * \param fvElemGeom The finite volume geometry of the element
+     * \param fvGeometry The finite volume geometry of the element
      * \param oldSol Tells whether the model's previous or current solution should be used.
      */
     void update(const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvElemGeom,
+                const FVElementGeometry &fvGeometry,
                 bool oldSol)
     {
         const SolutionVector &globalSol =
@@ -77,12 +77,12 @@ public:
             problem.model().prevSol():
             problem.model().curSol();
 
-        int numNeighbors = fvElemGeom.numNeighbors;
+        int numNeighbors = fvGeometry.numNeighbors;
         this->resize(numNeighbors);
         
         for (int i = 0; i < numNeighbors; i++)
         {
-            const Element& neighbor = *(fvElemGeom.neighbors[i]);
+            const Element& neighbor = *(fvGeometry.neighbors[i]);
             
             const PrimaryVariables &solI
                     = globalSol[problem.elementMapper().map(neighbor)];
