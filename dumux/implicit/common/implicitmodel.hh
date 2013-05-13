@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for models using box discretization
+ * \brief Base class for fully-implicit models
  */
 #ifndef DUMUX_IMPLICIT_MODEL_HH
 #define DUMUX_IMPLICIT_MODEL_HH

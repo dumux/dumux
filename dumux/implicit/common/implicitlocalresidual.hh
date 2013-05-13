@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Calculates the residual of models based on the box scheme element-wise.
+ * \brief Calculates the element-wise residual of fully-implicit models.
  */
 #ifndef DUMUX_IMPLICIT_LOCAL_RESIDUAL_HH
 #define DUMUX_IMPLICIT_LOCAL_RESIDUAL_HH
@@ -268,7 +268,6 @@ public:
      *        volume of the element.
      *
      * \param scvIdx The local index of the sub-control volume
-     *               (i.e. the element's local vertex index)
      */
     const PrimaryVariables &residual(const int scvIdx) const
     { return residual_[scvIdx]; }

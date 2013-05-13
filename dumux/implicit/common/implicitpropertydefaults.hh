@@ -58,10 +58,10 @@ SET_TYPE_PROP(ImplicitBase,
               GridView,
               typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
 
-//! use the plain newton method for the box scheme by default
+//! use the plain newton method by default
 SET_TYPE_PROP(ImplicitBase, NewtonMethod, Dumux::NewtonMethod<TypeTag>);
 
-//! use the plain newton controller for the box scheme by default
+//! use the plain newton controller by default
 SET_TYPE_PROP(ImplicitBase, NewtonController, Dumux::NewtonController<TypeTag>);
 
 //! Mapper for the grid view's vertices.
@@ -82,7 +82,7 @@ SET_TYPE_PROP(ImplicitBase, BaseModel, Dumux::ImplicitModel<TypeTag>);
 //! The volume variable class, to be overloaded by the model
 SET_TYPE_PROP(ImplicitBase, VolumeVariables, Dumux::ImplicitVolumeVariables<TypeTag>);
 
-//! The local jacobian operator for the box scheme
+//! The local jacobian operator
 SET_TYPE_PROP(ImplicitBase, LocalJacobian, Dumux::ImplicitLocalJacobian<TypeTag>);
 
 //! The type of a solution for the whole grid at a fixed time

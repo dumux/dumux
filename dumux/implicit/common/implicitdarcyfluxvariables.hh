@@ -77,7 +77,7 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables

@@ -91,7 +91,7 @@ public:
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ within a control volume.
      *
-     * This is the discretization specific interface for the box
+     * This is the discretization specific interface for the fully-implicit
      * method. By default it just calls temperature(pos).
      *
      * \param element The DUNE Codim<0> enitiy which intersects with
@@ -133,8 +133,8 @@ public:
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
      *
-     * This is the box discretization specific interface. By default
-     * it just calls gravityAtPos().
+     * This is the discretization specific interface for the fully-implicit method. 
+     * By default it just calls gravityAtPos().
      */
     const DimVector &boxGravity(const Element &element,
                                 const FVElementGeometry &fvGeometry,

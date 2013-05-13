@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Caculates the Jacobian of the local residual for box models
+ * \brief Caculates the Jacobian of the local residual for fully-implicit models
  */
 #ifndef DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
 #define DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
@@ -33,7 +33,7 @@ namespace Dumux
 {
 /*!
  * \ingroup ImplicitLocalJacobian
- * \brief Calculates the Jacobian of the local residual for box models
+ * \brief Calculates the Jacobian of the local residual for fully-implicit models
  *
  * The default behavior is to use numeric differentiation, i.e.
  * forward or backward differences (2nd order), or central
@@ -231,38 +231,38 @@ public:
     { return localResidual_; }
 
     /*!
-     * \brief Returns the Jacobian of the equations at vertex i to the
-     *        primary variables at vertex j.
+     * \brief Returns the Jacobian of the equations at subcontrolvolume i 
+     * to the primary variables at subcontrolvolume j.
      *
-     * \param i The local vertex (or sub-control volume) index on which
+     * \param i The local subcontrolvolume index on which
      *          the equations are defined
-     * \param j The local vertex (or sub-control volume) index which holds
+     * \param j The local subcontrolvolume index which holds
      *          primary variables
      */
     const MatrixBlock &mat(const int i, const int j) const
     { return A_[i][j]; }
 
     /*!
-     * \brief Returns the Jacobian of the storage term at vertex i.
+     * \brief Returns the Jacobian of the storage term at subcontrolvolume i.
      *
-     * \param i The local vertex (or sub-control volume) index
+     * \param i The local subcontrolvolume index
      */
     const MatrixBlock &storageJacobian(const int i) const
     { return storageJacobian_[i]; }
 
     /*!
-     * \brief Returns the residual of the equations at vertex i.
+     * \brief Returns the residual of the equations at subcontrolvolume i.
      *
-     * \param i The local vertex (or sub-control volume) index on which
+     * \param i The local subcontrolvolume index on which
      *          the equations are defined
      */
     const PrimaryVariables &residual(const int i) const
     { return residual_[i]; }
 
     /*!
-     * \brief Returns the storage term for vertex i.
+     * \brief Returns the storage term for subcontrolvolume i.
      *
-     * \param i The local vertex (or sub-control volume) index on which
+     * \param i The local subcontrolvolume index on which
      *          the equations are defined
      */
     const PrimaryVariables &storageTerm(const int i) const
@@ -272,7 +272,7 @@ public:
      * \brief Returns the epsilon value which is added and removed
      *        from the current solution.
      *
-     * \param scvIdx     The local index of the element's vertex for
+     * \param scvIdx     The local index of the element's subcontrolvolume for
      *                   which the local derivative ought to be calculated.
      * \param pvIdx      The index of the primary variable which gets varied
      */

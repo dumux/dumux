@@ -253,14 +253,14 @@ public:
      *        boundary segment.
      *
      * This is the method for the case where the Neumann condition is
-     * potentially solution dependent and requires some box method
-     * specific things.
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
      *
      * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry
      * \param is The intersection between element and boundary
-     * \param scvIdx The local vertex index
+     * \param scvIdx The local subcontrolvolume index
      * \param boundaryFaceIdx The index of the boundary face
      * \param elemVolVars All volume variables for the element
      *
@@ -290,9 +290,9 @@ public:
      *
      * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry
      * \param is The intersection between element and boundary
-     * \param scvIdx The local vertex index
+     * \param scvIdx The local subcontrolvolume index
      * \param boundaryFaceIdx The index of the boundary face
      *
      * For this method, the \a values parameter stores the mass flux
@@ -335,13 +335,13 @@ public:
      *        sub-control-volume.
      *
      * This is the method for the case where the source term is
-     * potentially solution dependent and requires some box method
-     * specific things.
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
      *
      * \param values The source and sink values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param scvIdx The local vertex index
+     * \param fvGeometry The finite-volume geometry
+     * \param scvIdx The local subcontrolvolume index
      * \param elemVolVars All volume variables for the element
      *
      * For this method, the \a values parameter stores the rate mass
@@ -354,7 +354,7 @@ public:
                      const int scvIdx,
                      const ElementVolumeVariables &elemVolVars) const
     {
-        // forward to solution independent, box specific interface
+        // forward to solution independent, fully-implicit specific interface
         asImp_().source(values, element, fvGeometry, scvIdx);
     }
 
@@ -364,8 +364,8 @@ public:
      *
      * \param values The source and sink values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param scvIdx The local vertex index
+     * \param fvGeometry The finite-volume geometry
+     * \param scvIdx The local subcontrolvolume index
      *
      * For this method, the \a values parameter stores the rate mass
      * generated or annihilate per volume unit. Positive values mean
@@ -406,8 +406,8 @@ public:
      *
      * \param values The initial values for the primary variables
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param scvIdx The local vertex index
+     * \param fvGeometry The finite-volume geometry
+     * \param scvIdx The local subcontrolvolume index
      *
      * For this method, the \a values parameter stores primary
      * variables.

@@ -43,7 +43,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
     
-//! The type tag for models based on the box-scheme
+//! The type tag for fully-implicit models
 NEW_TYPE_TAG(ImplicitBase, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, ImplicitModel));
     
 //////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ NEW_TYPE_TAG(ImplicitBase, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, Impl
 NEW_PROP_TAG(Grid);     //!< The type of the DUNE grid
 NEW_PROP_TAG(GridView); //!< The type of the grid view
 
-NEW_PROP_TAG(FVElementGeometry); //! The type of the finite-volume geometry in the box scheme
+NEW_PROP_TAG(FVElementGeometry); //! The type of the finite-volume geometry
 
 NEW_PROP_TAG(Problem); //!< The type of the problem
 NEW_PROP_TAG(BaseModel); //!< The type of the base class of the model
