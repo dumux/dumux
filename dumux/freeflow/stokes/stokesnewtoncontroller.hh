@@ -47,8 +47,8 @@ public:
         this->setRelTolerance(1e-6);
         this->setTargetSteps(10);
         this->setMaxSteps(18);
-    };
+    }
 };
-}
+} // end namespace Dumux
 
 #endif

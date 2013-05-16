@@ -26,7 +26,6 @@
 #define DUMUX_NEWTON_CONTROLLER_HH
 
 #include <dumux/common/propertysystem.hh>
-#include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
 #include <dumux/io/vtkmultiwriter.hh>
@@ -126,7 +125,7 @@ SET_SCALAR_PROP(NewtonMethod, NewtonAbsTolerance, 1e-5);
 SET_INT_PROP(NewtonMethod, NewtonTargetSteps, 10);
 SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
 
-}
+} // end namespace Properties
 
 /*!
  * \ingroup Newton
@@ -188,14 +187,14 @@ public:
 
         verbose_ = true;
         numSteps_ = 0;
-    };
+    }
 
     /*!
      * \brief Destructor
      */
     ~NewtonController()
     {
-    };
+    }
 
     /*!
      * \brief Set the maximum acceptable difference for convergence of
@@ -657,7 +656,7 @@ protected:
             convergenceWriter_.writeFields(uLastIter, deltaU);
             convergenceWriter_.endIteration();
         }
-    };
+    }
 
     void lineSearchUpdate_(SolutionVector &uCurrentIter,
                            const SolutionVector &uLastIter,
