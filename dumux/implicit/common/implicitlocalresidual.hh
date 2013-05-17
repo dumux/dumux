@@ -305,15 +305,33 @@ protected:
      */
     void evalBoundary_()
     {
-        if (bcTypes_().hasNeumann() || bcTypes_().hasOutflow())
+        // Dirichlet boundary conditions are treated differently 
+        // depending on the spatial discretization: for box, 
+        // they are incorporated in a strong sense, whereas for 
+        // cell-centered, they are treated by means of fluxes.
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            if (bcTypes_().hasNeumann() || bcTypes_().hasOutflow())
+                asImp_().evalBoundaryFluxes_();
+
+            if (bcTypes_().hasDirichlet())
+                asImp_().evalDirichlet_();
+        }
+        else 
+        {
             asImp_().evalBoundaryFluxes_();
+        }
+
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvGeometry_().numScv; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
+    }
 
-        if (bcTypes_().hasDirichlet())
-            asImp_().evalDirichlet_();
+    void evalDirichlet_()
+    {
+        DUNE_THROW(Dune::InvalidStateException, 
+                   "evalDirichlet_ has been called but is not implemented");
     }
 
     /*!

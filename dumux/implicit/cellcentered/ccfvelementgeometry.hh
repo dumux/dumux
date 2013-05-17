@@ -148,6 +148,8 @@ public:
         
         const Geometry& geometry = element.geometry();
 
+        bool onBoundary = false;
+
         // fill neighbor information and control volume face data:
         IntersectionIterator endit = gridView.iend(element);
         for (IntersectionIterator it = gridView.ibegin(element); it != endit; ++it)
@@ -191,6 +193,7 @@ public:
             // boundary cvf data
             if (it->boundary())
             {
+                onBoundary = true;
                 int bfIdx = it->indexInInside();
                 boundaryFace[bfIdx].ipGlobal = it->geometry().center();
                 boundaryFace[bfIdx].ipLocal =  geometry.local(boundaryFace[bfIdx].ipGlobal);
@@ -202,7 +205,7 @@ public:
 
                 GlobalPosition distVec = elementGlobal;
                 distVec -= boundaryFace[bfIdx].ipGlobal;
-                distVec /= 2.0*distVec.two_norm2();
+                distVec /= distVec.two_norm2();
                 
                 // gradients using a two-point flux approximation
                 for (int idx = 0; idx < 2; idx++)
@@ -210,52 +213,22 @@ public:
                     boundaryFace[bfIdx].grad[idx] = distVec;
                     boundaryFace[bfIdx].shapeValue[idx] = 0.5;
                 }
-                boundaryFace[bfIdx].grad[0] *= -1.0;
+                boundaryFace[bfIdx].grad[1] *= -1.0;
                 
                 boundaryFace[bfIdx].fapIndices[0] = boundaryFace[bfIdx].i;
                 boundaryFace[bfIdx].fapIndices[1] = boundaryFace[bfIdx].j;
             }
         }
 
-        // set the second flux approximation index for the boundary faces 
-        // to be used for the outflow boundary condition
-        // \todo only works for cubes up to now, needs to be generalized to 
-        // other element types
-        for (int nIdx = 0; nIdx < numNeighbors-1; nIdx++)
+        // treat elements on the boundary
+        if (onBoundary)
         {
-            // get the index of the codim 1 entity that the scvf belongs to
-            switch (subContVolFace[nIdx].faceIdx)
+            ElementPointer elementPointer(element);
+            for (int bfIdx = 0; bfIdx < element.template count<1>(); bfIdx++)
             {
-                case 0:
-                    // take the left neighbor for the right boundary
-                    boundaryFace[1].j = nIdx+1;
-                    boundaryFace[1].fapIndices[1] = boundaryFace[1].j;
-                    break;
-                case 1:
-                    // take the right neighbor for the left boundary
-                    boundaryFace[0].j = nIdx+1;
-                    boundaryFace[0].fapIndices[1] = boundaryFace[0].j;
-                    break;
-                case 2:
-                    // take the top/back neighbor for the bottom/front boundary
-                    boundaryFace[3].j = nIdx+1;
-                    boundaryFace[3].fapIndices[1] = boundaryFace[3].j;
-                    break;
-                case 3:
-                    // take the bottom/front neighbor for the top/back boundary
-                    boundaryFace[2].j = nIdx+1;
-                    boundaryFace[2].fapIndices[1] = boundaryFace[2].j;
-                    break;
-                case 4:
-                    // take the top neighbor for the bottom boundary
-                    boundaryFace[5].j = nIdx+1;
-                    boundaryFace[5].fapIndices[1] = boundaryFace[5].j;
-                    break;
-                case 5:
-                    // take the bottom neighbor for the top boundary
-                    boundaryFace[4].j = nIdx+1;
-                    boundaryFace[4].fapIndices[1] = boundaryFace[4].j;
-                    break;
+                boundaryFace[bfIdx].j = numNeighbors + bfIdx;
+                boundaryFace[bfIdx].fapIndices[1] = boundaryFace[bfIdx].j;
+                neighbors.push_back(elementPointer);
             }
         }
     }

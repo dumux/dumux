@@ -45,9 +45,12 @@ class CCElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeT
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     enum { dim = GridView::dimension };
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
@@ -96,6 +99,44 @@ public:
                               neighborFVGeom,
                               /*scvIdx=*/0,
                               oldSol);
+        }
+
+        // only treat boundary if current solution is evaluated
+        if (!oldSol)
+        {
+            // check if element intersects with a Dirichlet boundary 
+            ElementBoundaryTypes elemBCTypes;
+            elemBCTypes.update(problem, element);
+            if (elemBCTypes.hasDirichlet())
+            {
+                this->resize(numNeighbors + element.template count<1>());
+
+                // add volume variables for the Dirichlet faces
+                IntersectionIterator isIt = problem.gridView().ibegin(element);
+                IntersectionIterator isEndIt = problem.gridView().iend(element);
+                for (; isIt != isEndIt; ++isIt) {
+                    if (!isIt->boundary())
+                        continue;
+
+                    BoundaryTypes bcTypes;
+                    problem.boundaryTypes(bcTypes, *isIt);
+
+                    if (bcTypes.hasDirichlet())
+                    {
+                        PrimaryVariables dirichletValues;
+                        problem.dirichlet(dirichletValues, *isIt);
+
+                        int faceIdx = isIt->indexInInside();
+                        int indexInVariables = numNeighbors + faceIdx;
+                        (*this)[indexInVariables].update(dirichletValues,
+                                                         problem,
+                                                         element,
+                                                         fvGeometry,
+                                                         /*scvIdx=*/0,
+                                                         oldSol);
+                    }
+                }
+            }
         }
     }
 };
