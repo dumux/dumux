@@ -235,7 +235,7 @@ public:
         initial_(values, globalPos);
 
         //condition for the N2 molefraction at left boundary
-        if (globalPos[0] < 0.5*(this->bboxMin()[0] + this->bboxMax()[0]))
+        if (globalPos[0] < eps_)
             values[massOrMoleFracIdx] = 2.0e-5;
     }
 
