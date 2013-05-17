@@ -19,7 +19,7 @@
  *
  * \brief Test for the sequential 2p models
  */
-#define STRUCTUREDGRID 1
+#define PROBLEM 2 // 0 = Buckley-Leverett, 1 = McWhorter, 2 = 2D Lense problem
 
 #include "config.h"
 

@@ -94,7 +94,13 @@ public:
 
     Scalar porosity(const Element& element) const
     {
+#if PROBLEM == 0
+    	return 0.2;
+#elif PROBLEM == 1
+        return 0.3;
+#else
         return 0.4;
+#endif
     }
 
     // return the brooks-corey context depending on the position
@@ -114,6 +120,20 @@ public:
             ParentType(gridView), permBackground_(0), permLenses_(0),
             lensOneLowerLeft_(0), lensOneUpperRight_(0), lensTwoLowerLeft_(0), lensTwoUpperRight_(0), lensThreeLowerLeft_(0), lensThreeUpperRight_(0)
     {
+#if PROBLEM == 0
+        // residual saturations
+        materialLawParamsBackground_.setSwr(0.2);
+        materialLawParamsBackground_.setSnr(0.2);
+
+        materialLawParamsLenses_.setSwr(0.2);
+        materialLawParamsLenses_.setSnr(0.2);
+
+        //parameters for Brooks-Corey law
+
+        // entry pressures function
+        materialLawParamsBackground_.setPe(0.);
+        materialLawParamsLenses_.setPe(0.);
+#elif PROBLEM == 1
         // residual saturations
         materialLawParamsBackground_.setSwr(0.);
         materialLawParamsBackground_.setSnr(0.);
@@ -122,6 +142,20 @@ public:
         materialLawParamsLenses_.setSnr(0.);
 
         //parameters for Brooks-Corey law
+
+        // entry pressures function
+        materialLawParamsBackground_.setPe(5000.);
+        materialLawParamsLenses_.setPe(5000.);
+#else
+        // residual saturations
+        materialLawParamsBackground_.setSwr(0.);
+        materialLawParamsBackground_.setSnr(0.);
+
+        materialLawParamsLenses_.setSwr(0.);
+        materialLawParamsLenses_.setSnr(0.);
+
+        //parameters for Brooks-Corey law
+
         // entry pressures function
         materialLawParamsBackground_.setPe(0.);
         if (ParameterTree::tree().hasKey("SpatialParams.BackgroundEntryPressure"))
@@ -134,16 +168,40 @@ public:
         {
             materialLawParamsLenses_.setPe(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LenseEntryPressure));
         }
+#endif
 
         // Brooks-Corey shape parameters
-        materialLawParamsBackground_.setLambda(3);
-        materialLawParamsLenses_.setLambda(2);
 
+#if PROBLEM == 2
+        materialLawParamsBackground_.setLambda(3);
+        if (ParameterTree::tree().hasKey("SpatialParams.BackgroundLambda"))
+        {
+            materialLawParamsBackground_.setLambda(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, BackgroundLambda));
+        }
+        materialLawParamsLenses_.setLambda(2);
+        if (ParameterTree::tree().hasKey("SpatialParams.LenseLambda"))
+        {
+            materialLawParamsLenses_.setLambda(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LenseLambda));
+        }
+#else
+        materialLawParamsBackground_.setLambda(2);
+        materialLawParamsLenses_.setLambda(2);
+#endif
+
+#if PROBLEM == 0
+        permBackground_[0][0] = 1e-7;
+        permBackground_[1][1] = 1e-7;
+        permLenses_[0][0] = 1e-7;
+        permLenses_[1][1] = 1e-7;
+#else
         permBackground_[0][0] = 1e-10;
         permBackground_[1][1] = 1e-10;
         permLenses_[0][0] = 1e-10;
         permLenses_[1][1] = 1e-10;
+#endif
 
+
+#if PROBLEM == 2
         if (ParameterTree::tree().hasKey("SpatialParams.BackgroundPermeabilityXX"))
         {
             permBackground_[0][0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, BackgroundPermeabilityXX);
@@ -232,6 +290,7 @@ public:
         {
             lensThreeUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensThreeUpperRightY);
         }
+#endif
     }
 
 private:

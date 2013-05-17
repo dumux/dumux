@@ -47,6 +47,8 @@
 #include<dumux/decoupled/2p/impes/gridadaptionindicator2plocal.hh>
 
 #include "test_mpfa2pspatialparams.hh"
+#include "buckleyleverettanalyticsolution.hh"
+#include "mcwhorteranalyticsolution.hh"
 
 namespace Dumux
 {
@@ -68,8 +70,10 @@ SET_PROP(MPFATwoPTestProblem, Grid)
     typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 };
 
-// set the GridCreator property
+#if PROBLEM == 2
+//set the GridCreator property
 SET_TYPE_PROP(MPFATwoPTestProblem, GridCreator, CubeGridCreator<TypeTag>);
+#endif
 
 
 // Set the problem property
@@ -88,6 +92,7 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
+#if PROBLEM == 2
 // Set the non-wetting phase
 SET_PROP(MPFATwoPTestProblem, NonwettingPhase)
 {
@@ -96,13 +101,33 @@ private:
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
 };
+#else
+// Set the non-wetting phase
+SET_PROP(MPFATwoPTestProblem, NonwettingPhase)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+};
+#endif
 
+#if PROBLEM == 1
+SET_INT_PROP(MPFATwoPTestProblem, Formulation, DecoupledTwoPCommonIndices::pnSw);
+#endif
+
+#if PROBLEM == 2
 // Enable gravity
 SET_BOOL_PROP(MPFATwoPTestProblem, ProblemEnableGravity, true);
+#else
+SET_BOOL_PROP(MPFATwoPTestProblem, ProblemEnableGravity, false);
+#endif
 
 SET_TYPE_PROP(MPFATwoPTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 SET_SCALAR_PROP(MPFATwoPTestProblem, ImpetCFLFactor, 1.0);
 SET_TYPE_PROP(MPFATwoPTestProblem, AdaptionIndicator, Dumux::GridAdaptionIndicator2PLocal<TypeTag>);
+
+SET_TYPE_PROP(MPFATwoPTestProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag>);
 
 NEW_TYPE_TAG(FVTwoPTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
 NEW_TYPE_TAG(FVAdaptiveTwoPTestProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestProblem));
@@ -167,7 +192,11 @@ enum
 {
     wPhaseIdx = Indices::wPhaseIdx,
     nPhaseIdx = Indices::nPhaseIdx,
+#if PROBLEM == 1
+    pNIdx = Indices::pnIdx,
+#else
     pWIdx = Indices::pwIdx,
+#endif
     SwIdx = Indices::SwIdx,
     eqIdxPress = Indices::pressEqIdx,
     eqIdxSat = Indices::satEqIdx
@@ -184,8 +213,19 @@ typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 public:
 MPFATwoPTestProblem(TimeManager &timeManager,const GridView &gridView) :
 ParentType(timeManager, gridView)
+#if PROBLEM != 2
+, analyticSolution_(*this)
+#endif
 {
     this->setGrid(GridCreator::grid());
+
+    int refinementFactor = 0;
+    if (ParameterTree::tree().hasKey("Grid.RefinementFactor"))
+    {
+    	refinementFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RefinementFactor);
+    }
+
+    this->grid().globalRefine(refinementFactor);
 
     Scalar inletWidth = 1.0;
     if (ParameterTree::tree().hasKey("Problem.InletWidth"))
@@ -220,6 +260,29 @@ ParentType(timeManager, gridView)
     }
     this->setOutputTimeInterval(outputTimeInterval);
 }
+
+#if PROBLEM != 2
+void init()
+{
+    ParentType::init();
+
+#if PROBLEM == 0
+    Scalar vTot = 3e-6;
+    analyticSolution_.initialize(vTot);
+#endif
+#if PROBLEM == 1
+    analyticSolution_.initialize();
+#endif
+}
+
+void addOutputVtkFields()
+{
+    analyticSolution_.calculateAnalyticSolution();
+
+    ParentType::addOutputVtkFields();
+    analyticSolution_.addOutputVtkFields(this->resultWriter());
+}
+#endif
 
 /*!
  * \name Problem parameters
@@ -282,6 +345,7 @@ void source(PrimaryVariables &values,const Element& element) const
 */
 void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
+#if PROBLEM == 2
     if (isInlet(globalPos))
     {
         bcTypes.setNeumann(eqIdxPress);
@@ -296,11 +360,37 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
         bcTypes.setDirichlet(eqIdxPress);
         bcTypes.setOutflow(eqIdxSat);
     }
+#elif  PROBLEM == 0
+    if (globalPos[0] < eps_)
+    {
+    	bcTypes.setAllDirichlet();
+    }
+    else if (globalPos[0] > this->bboxMax()[0] - eps_)
+    {
+        bcTypes.setNeumann(eqIdxPress);
+        bcTypes.setOutflow(eqIdxSat);
+    }
+    else
+    {
+    	bcTypes.setAllNeumann();
+    }
+#else
+    if (globalPos[0] < eps_)
+    {
+    	bcTypes.setAllDirichlet();
+    }
+    else
+    {
+    	bcTypes.setAllNeumann();
+    }
+#endif
 }
 
 //! set dirichlet condition  (pressure [Pa], saturation [-])
 void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
 {
+    values = 0;
+#if PROBLEM == 2
     Scalar pRef = referencePressureAtPos(globalPos);
     Scalar temp = temperatureAtPos(globalPos);
 
@@ -311,25 +401,52 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
     {
         values[SwIdx] = 0.0;
     }
+#elif PROBLEM == 0
+    if (globalPos[0] < eps_)
+    {
+        values[SwIdx] = 0.8;
+        values[pWIdx] = 1;
+    }
+#else
+    if (globalPos[0] < eps_)
+    {
+        values[SwIdx] = 1.0;
+        values[pNIdx] = 1e5;
+    }
+#endif
 }
 
 //! set neumann condition for phases (flux, [kg/(m^2 s)])
 void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
 {
     values = 0;
+#if PROBLEM == 2
     if (isInlet(globalPos))
     {
         values[nPhaseIdx] = -inFlux_;
     }
-
+#elif PROBLEM == 0
+    if (globalPos[0] > this->bboxMax()[0] - eps_)
+    {
+    	values[nPhaseIdx] = 3e-3;
+    }
+#endif
 }
 
 //! return initial solution -> only saturation values have to be given!
 void initialAtPos(PrimaryVariables &values,
         const GlobalPosition& globalPos) const
 {
+#if PROBLEM == 2
     values[pWIdx] = 0;
     values[SwIdx] = 1.0;
+#elif PROBLEM == 0
+    values[pWIdx] = 0;
+    values[SwIdx] = 0.2;
+#else
+    values[pNIdx] = 0;
+    values[SwIdx] = 0.0;
+#endif
 }
 
 private:
@@ -383,6 +500,12 @@ Scalar inFlux_;
 GlobalPosition inletLeftCoord_;
 GlobalPosition inletRightCoord_;
 static constexpr Scalar eps_ = 1e-6;
+#if PROBLEM == 0
+BuckleyLeverettAnalytic<TypeTag> analyticSolution_;
+#endif
+#if PROBLEM == 1
+McWhorterAnalytic<TypeTag> analyticSolution_;
+#endif
 };
 } //end namespace
 

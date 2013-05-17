@@ -9,10 +9,13 @@
 ############################################################
 [TimeManager]
 TEnd = 5e4# [s]
-DtInitial = 0# [s]
+DtInitial = 5e5# [s]
+SubTimestepVerbosity = 0
 
 [Grid]
-#For nine-spot problem
+#File = grids/test_mpfa2p.dgf#grid for buckley-leverett or mcwhorter problem
+
+#For 2d-lense-problem
 NumberOfCellsX = 10# [-] level 0 resolution in x-direction
 NumberOfCellsY = 10# [-] level 0 resolution in y-direction
 
@@ -23,18 +26,21 @@ UpperRightY = 10# [m] dimension of the grid # 2D
 # Optional arguments
 ############################################################
 [Problem]
-EnableGravity = true
 OutputInterval =0
 OutputTimeInterval = 1e4
 
+#For 2d-lense-problem
 InletWidth = 2
 InjectionFlux = 0.1
 
-#OutputfileName = 
+[Impet]
+#CFLFactor = 10.0 # Use larger time steps and 
+#SubCFLFactor = 0.95 # enable local time-stepping
 
 [Vtk]
-#OutputLevel = 1 # 0 -> only primary variables (default), 1 -> also secondary variables
+OutputLevel = 1 # 0 -> only primary variables (default), 1 -> also secondary variables
 
+#For 2d-lense-problem
 [SpatialParams]
 BackgroundPermeabilityXX = 1e-10
 BackgroundPermeabilityXY = 0
