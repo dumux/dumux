@@ -202,15 +202,60 @@ public:
         }
     }
 
+    /* \brief Writes the current values of the primary transport variable into the variable container
+     *
+     * \copydetails FVTransport::setTransportedQuantity(TransportSolutionType&)
+     *
+     */
+    void setTransportedQuantity(TransportSolutionType& transportedQuantity)
+    {
+        int size = problem_.gridView().size(0);
+        for (int i = 0; i < size; i++)
+        {
+            CellData& cellData = problem_.variables().cellData(i);
+            switch (saturationType_)
+            {
+            case Sw:
+            {
+                Scalar sat = transportedQuantity[i];
+
+                    cellData.setSaturation(wPhaseIdx, sat);
+                    cellData.setSaturation(nPhaseIdx, 1 - sat);
+                break;
+            }
+            case Sn:
+            {
+                Scalar sat = transportedQuantity[i];
+
+                    cellData.setSaturation(wPhaseIdx,1 -sat);
+                    cellData.setSaturation(nPhaseIdx, sat);
+                break;
+            }
+            }
+        }
+    }
+
+    template<class DataEntry>
+    bool inPhysicalRange(DataEntry& entry)
+    {
+    	return (entry > -1e-6 && entry < 1.0 + 1e-6);
+    }
+
     /*! \brief Updates the primary transport variable.
      *
      * \copydetails FVTransport::updateTransportedQuantity(TransportSolutionType&)
      */
     void updateTransportedQuantity(TransportSolutionType& updateVec)
     {
-        updateSaturationSolution(updateVec);
+    	if (this->enableLocalTimeStepping())
+    		this->innerUpdate(updateVec);
+    	else
+    		updateSaturationSolution(updateVec);
+    }
 
-//        std::cout<<"update = "<<updateVec<<"\n";
+    void updateTransportedQuantity(TransportSolutionType& updateVec, Scalar dt)
+    {
+        updateSaturationSolution(updateVec, dt);
     }
 
     /*! \brief Globally updates the saturation solution
@@ -220,6 +265,15 @@ public:
     void updateSaturationSolution(TransportSolutionType& updateVec)
     {
         Scalar dt = problem_.timeManager().timeStepSize();
+        int size = problem_.gridView().size(0);
+        for (int i = 0; i < size; i++)
+        {
+            updateSaturationSolution(i, updateVec[i][0], dt);
+        }
+    }
+
+    void updateSaturationSolution(TransportSolutionType& updateVec, Scalar dt)
+    {
         int size = problem_.gridView().size(0);
         for (int i = 0; i < size; i++)
         {

@@ -58,6 +58,7 @@ NEW_TYPE_TAG(IMPET, INHERITS_FROM(DecoupledModel));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(ImpetCFLFactor);         //!< Scalar factor for additional scaling of the time step
+NEW_PROP_TAG( ImpetSubCFLFactor );//!< Scalar factor for scaling of local sub-time-step
 NEW_PROP_TAG(ImpetIterationFlag); //!< Flag to switch the iteration type of the IMPET scheme
 NEW_PROP_TAG(ImpetIterationNumber); //!< Number of iterations if IMPET iterations are enabled by the IterationFlags
 NEW_PROP_TAG(ImpetMaximumDefect); //!< Maximum Defect if IMPET iterations are enabled by the IterationFlags
@@ -80,6 +81,7 @@ namespace Properties
 SET_TYPE_PROP(IMPET, Model, IMPET<TypeTag>);
 
 //Set defaults
+SET_SCALAR_PROP(IMPET, ImpetSubCFLFactor, 1.0);
 SET_SCALAR_PROP(IMPET, ImpetCFLFactor, 1.0);
 SET_INT_PROP(IMPET, ImpetIterationFlag, 0); //!< 0 = no iterations, 1 = iterate IterationNumber iterations, 2 = iterate until converged or IterationNumber is reached
 SET_INT_PROP(IMPET, ImpetIterationNumber, 2);

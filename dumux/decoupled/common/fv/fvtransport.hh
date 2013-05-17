@@ -23,6 +23,7 @@
 #include <dumux/decoupled/common/transportproperties.hh>
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include <dumux/linear/vectorexchange.hh>
+#include <unordered_map>
 
 /**
  * @file
@@ -31,6 +32,13 @@
 
 namespace Dumux
 {
+namespace Properties
+{
+NEW_PROP_TAG( TimeManagerSubTimestepVerbosity );
+
+SET_INT_PROP(DecoupledModel, TimeManagerSubTimestepVerbosity, 0);
+}
+
 //! \ingroup IMPET
 /*!\brief The finite volume discretization of a transport equation
  *  Base class for finite volume (FV) implementations of an explicitly treated transport equation.
@@ -51,9 +59,9 @@ class FVTransport
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum
-    {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
+        {
+            dim = GridView::dimension, dimWorld = GridView::dimensionworld
+        };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -71,6 +79,15 @@ class FVTransport
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+    struct LocalTimesteppingData
+    {
+        Dune::FieldVector<Scalar, 2*dim> faceFluxes;
+        Dune::FieldVector<Scalar, 2*dim> faceTargetDt;
+        Scalar dt;
+        LocalTimesteppingData():faceFluxes(0.0), faceTargetDt(0.0), dt(0)
+        {}
+    };
+
 protected:
     //! \cond \private
     EvalCflFluxFunction& evalCflFluxFunction()
@@ -84,10 +101,18 @@ protected:
     }
     //! \endcond
 
+    void innerUpdate(TransportSolutionType& updateVec);
+
 public:
 
     // Calculate the update vector.
     void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false);
+
+    void updateTransport(const Scalar t, Scalar& dt, TransportSolutionType& updateVec)
+    {
+        asImp_().updateMaterialLaws();
+        asImp_().update(t, dt, updateVec);
+    }
 
     /*! \brief Function which calculates the flux update
      *
@@ -134,6 +159,15 @@ public:
      */
     void getTransportedQuantity(TransportSolutionType& transportedQuantity);
 
+    template<class DataEntry>
+    bool inPhysicalRange(DataEntry& entry);
+
+    /*! \brief Writes the current values of the primary transport variable into the variable container
+     *
+     * \param transportedQuantity Vector of the size of global numbers of degrees of freedom of the primary transport variable.
+     */
+    void setTransportedQuantity(TransportSolutionType& transportedQuantity);
+
     /*! \brief Updates the primary transport variable.
      *
      * \param updateVec Vector containing the global update.
@@ -170,6 +204,11 @@ public:
     void deserializeEntity(std::istream &instream, const Element &element)
     {}
 
+    bool enableLocalTimeStepping()
+    {
+        return localTimeStepping_;
+    }
+
 
     //! Constructs a FVTransport object
     /**
@@ -177,9 +216,18 @@ public:
      * \param problem A problem class object
      */
     FVTransport(Problem& problem) :
-            problem_(problem), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals))
+        problem_(problem), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)), subCFLFactor_(1.0), accumulatedDt_(0), dtThreshold_(1e-6)
     {
         evalCflFluxFunction_ = Dune::make_shared<EvalCflFluxFunction>(problem);
+
+        Scalar cFLFactor = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
+        subCFLFactor_ = std::min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
+        verbosity_ = GET_PARAM_FROM_GROUP(TypeTag, int, TimeManager, SubTimestepVerbosity);
+
+        localTimeStepping_ = subCFLFactor_/cFLFactor < 1.0 - dtThreshold_;
+
+        if (localTimeStepping_)
+            std::cout<<"max CFL-Number of "<<cFLFactor<<", max Sub-CFL-Number of "<<subCFLFactor_<<": Enable local time-stepping!\n";
     }
 
 private:
@@ -191,11 +239,26 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
+    void updatedTargetDt_(Scalar &dt);
+
+    void resetTimeStepData_()
+    {
+        timeStepData_.clear();
+        accumulatedDt_ = 0;
+    }
+
     Problem& problem_;
     bool switchNormals_;
 
     Dune::shared_ptr<EvalCflFluxFunction> evalCflFluxFunction_;
+    std::vector<LocalTimesteppingData> timeStepData_;
+    bool localTimeStepping_;
+    Scalar subCFLFactor_;
+    Scalar accumulatedDt_;
+    const Scalar dtThreshold_;
+    int verbosity_;
 };
+
 
 /*! \brief Calculate the update vector.
  *  \param t         current time
@@ -214,12 +277,18 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         asImp_().updateMaterialLaws();
     }
 
+    int size = problem_.gridView().size(0);
+    if (localTimeStepping_)
+    {
+        if (timeStepData_.size() != size)
+            timeStepData_.resize(size);
+    }
     // initialize dt very large
-    dt = 1E100;
+    dt = std::numeric_limits<Scalar>::max();
 
     // resize update vector and set to zero
-    updateVec.resize(problem_.gridView().size(0));
-    updateVec = 0;
+    updateVec.resize(size);
+    updateVec = 0.0;
 
     // compute update vector
     ElementIterator eItEnd = problem_.gridView().template end<0>();
@@ -240,30 +309,88 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         Scalar update = 0;
         evalCflFluxFunction().reset();
 
+        if (localTimeStepping_)
+        {
+            LocalTimesteppingData& localData = timeStepData_[globalIdxI];
+            for (int i = 0; i < 2*dim; i++)
+            {
+                if (localData.faceTargetDt[i] < accumulatedDt_ + dtThreshold_)
+                {
+                    localData.faceFluxes[i] = 0.0;
+                }
+            }
+        }
+
         // run through all intersections with neighbors and boundary
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
-       GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
+            GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
             if (switchNormals_)
                 unitOuterNormal *= -1.0;
+
+            int indexInInside = isIt->indexInInside();
 
             // handle interior face
             if (isIt->neighbor())
             {
-                //add flux to update
-                asImp_().getFlux(update, *isIt, cellDataI);
+                if (localTimeStepping_)
+                {
+                    LocalTimesteppingData& localData = timeStepData_[globalIdxI];
+
+                    if (localData.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
+                    {
+                        asImp_().getFlux(localData.faceFluxes[indexInInside], *isIt, cellDataI);
+                    }
+                    else
+                    {
+                        asImp_().getFlux(update, *isIt, cellDataI);//only for time-stepping
+                    }
+                }
+                else
+                {
+                    //add flux to update
+                    asImp_().getFlux(update, *isIt, cellDataI);
+                }
             } //end intersection with neighbor element
             // handle boundary face
             else if (isIt->boundary())
             {
-                //add boundary flux to update
-                asImp_().getFluxOnBoundary(update, *isIt, cellDataI);
+                if (localTimeStepping_)
+                {
+                    LocalTimesteppingData& localData = timeStepData_[globalIdxI];
+                    if (localData.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
+                    {
+                        asImp_().getFluxOnBoundary(localData.faceFluxes[indexInInside], *isIt, cellDataI);
+                    }
+                    else
+                    {
+                        asImp_().getFluxOnBoundary(update, *isIt, cellDataI);//only for time-stepping
+                    }
+                }
+                else
+                {
+                    //add boundary flux to update
+                    asImp_().getFluxOnBoundary(update, *isIt, cellDataI);
+                }
             } //end boundary
         } // end all intersections
 
-        //add flux update to global update vector
-        updateVec[globalIdxI] += update;
+        if (localTimeStepping_)
+        {
+            LocalTimesteppingData& localData = timeStepData_[globalIdxI];
+            for (int i=0; i < 2*dim; i++)
+            {
+                updateVec[globalIdxI] += localData.faceFluxes[i];
+            }
+        }
+        else
+        {
+            //add flux update to global update vector
+            updateVec[globalIdxI] += update;
+        }
+
+        //        std::cout<<"updateVec at "<<eIt->geometry().center()<<" : "<<updateVec[globalIdxI]<<"\n";
 
         //add source to global update vector
         Scalar source = 0.;
@@ -271,24 +398,221 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         updateVec[globalIdxI] += source;
 
         //calculate time step
-        dt = std::min(dt, evalCflFluxFunction().getDt(*eIt));
+        if (localTimeStepping_)
+        {
+            Scalar dtCfl = evalCflFluxFunction().getDt(*eIt);
+
+            timeStepData_[globalIdxI].dt = dtCfl;
+            dt = std::min(dt, dtCfl);
+        }
+        else
+        {
+            //calculate time step
+            dt = std::min(dt, evalCflFluxFunction().getDt(*eIt));
+        }
 
         //store update
         cellDataI.setUpdate(updateVec[globalIdxI]);
     } // end grid traversal
-    
-#if HAVE_MPI        
+
+
+#if HAVE_MPI
     // communicate updated values
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
     typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
     DataHandle dataHandle(problem_.variables().elementMapper(), updateVec);
-    problem_.gridView().template communicate<DataHandle>(dataHandle, 
-                                                         Dune::InteriorBorder_All_Interface, 
+    problem_.gridView().template communicate<DataHandle>(dataHandle,
+                                                         Dune::InteriorBorder_All_Interface,
                                                          Dune::ForwardCommunication);
     dt = problem_.gridView().comm().min(dt);
 #endif
 }
 
+template<class TypeTag>
+void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
+{
+    dt = std::numeric_limits<Scalar>::max();
+
+    // update target time-step-sizes
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    {
+#if HAVE_MPI
+        if (eIt->partitionType() != Dune::InteriorEntity)
+        {
+            continue;
+        }
+#endif
+
+        // cell index
+        int globalIdxI = problem_.variables().index(*eIt);
+
+        LocalTimesteppingData& localDataI = timeStepData_[globalIdxI];
+
+
+        typedef std::unordered_map<int, Scalar > FaceDt;
+        FaceDt faceDt;
+
+        // run through all intersections with neighbors and boundary
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        {
+            int indexInInside = isIt->indexInInside();
+
+            if (isIt->neighbor())
+            {
+                ElementPointer neighbor = isIt->outside();
+                int globalIdxJ = problem_.variables().index(*neighbor);
+
+                int levelI = eIt->level();
+                int levelJ = neighbor->level();
+
+                if (globalIdxI < globalIdxJ && levelI <= levelJ)
+                {
+                    LocalTimesteppingData& localDataJ = timeStepData_[globalIdxJ];
+
+                    int indexInOutside = isIt->indexInOutside();
+
+                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_ || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
+                    {
+                        Scalar timeStep  = std::min(localDataI.dt, localDataJ.dt);
+
+                        if (levelI < levelJ)
+                        {
+                            typename FaceDt::iterator it = faceDt.find(indexInInside);
+                            if (it != faceDt.end())
+                            {
+                                it->second = std::min(it->second, timeStep);
+                            }
+                            else
+                            {
+                                faceDt.insert(std::make_pair(indexInInside, timeStep));
+                            }
+                        }
+                        else
+                        {
+                            localDataI.faceTargetDt[indexInInside] += subCFLFactor_ * timeStep;
+                            localDataJ.faceTargetDt[indexInOutside] += subCFLFactor_ * timeStep;
+                        }
+
+                        dt = std::min(dt, timeStep);
+                    }
+                }
+            }
+            else if (isIt->boundary())
+            {
+                if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
+                {
+                    localDataI.faceTargetDt[indexInInside] += subCFLFactor_ * localDataI.dt;
+                    dt = std::min(dt, subCFLFactor_ * localDataI.dt);
+                }
+            }
+        }
+        if (faceDt.size() > 0)
+        {
+            typename FaceDt::iterator it = faceDt.begin();
+            for (;it != faceDt.end();++it)
+            {
+                localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
+            }
+
+            IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+            {
+                if (isIt->neighbor())
+                {
+                    int indexInInside = isIt->indexInInside();
+
+                    it = faceDt.find(indexInInside);
+                    if (it != faceDt.end())
+                    {
+                        ElementPointer neighbor = isIt->outside();
+                        int globalIdxJ = problem_.variables().index(*neighbor);
+
+                        LocalTimesteppingData& localDataJ = timeStepData_[globalIdxJ];
+
+                        int indexInOutside = isIt->indexInOutside();
+
+                        localDataJ.faceTargetDt[indexInOutside] += subCFLFactor_ * it->second;
+                    }
+                }
+            }
+        }
+    }
+}
+
+template<class TypeTag>
+void FVTransport<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
+{
+    if (localTimeStepping_)
+    {
+        Scalar realDt = problem_.timeManager().timeStepSize();
+
+        Scalar subDt = realDt;
+        updatedTargetDt_(subDt);
+
+        Scalar accumulatedDtOld = accumulatedDt_;
+        accumulatedDt_ += subDt;
+
+        Scalar t = problem_.timeManager().time();
+
+        if (accumulatedDt_ < realDt)
+        {
+            while(true)
+            {
+                Scalar dtCorrection = std::min(0.0, realDt - accumulatedDt_);
+                subDt += dtCorrection;
+
+                if (verbosity_ > 0)
+                    std::cout<<"    Sub-time-step size: "<<subDt<<"\n";
+
+                    TransportSolutionType transportedQuantity;
+                    asImp_().getTransportedQuantity(transportedQuantity);
+
+                    bool stopTimeStep = false;
+                    int size = transportedQuantity.size();
+                    for (int i = 0; i < size; i++)
+                    {
+                        Scalar newVal = transportedQuantity[i] += updateVec[i] * subDt;
+                        if (!asImp_().inPhysicalRange(newVal))
+                        {
+                            stopTimeStep = true;
+                            break;
+                        }
+                    }
+
+                    if (stopTimeStep && accumulatedDtOld > dtThreshold_)
+                    {
+                        problem_.timeManager().setTimeStepSize(accumulatedDtOld);
+                        break;
+                    }
+                    else
+                    {
+                        asImp_().setTransportedQuantity(transportedQuantity);
+                    }
+
+
+                if (accumulatedDt_ >= realDt)
+                {
+                    break;
+                }
+
+                problem_.model().updateTransport(t, subDt, updateVec);
+
+                updatedTargetDt_(subDt);
+
+                accumulatedDtOld = accumulatedDt_;
+                accumulatedDt_ += subDt;
+            }
+        }
+        else
+        {
+            asImp_().updateTransportedQuantity(updateVec, realDt);
+        }
+
+        resetTimeStepData_();
+    }
+}
 }
 #endif

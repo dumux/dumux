@@ -49,11 +49,13 @@ NEW_TYPE_TAG(Transport, INHERITS_FROM(DecoupledModel));
 NEW_PROP_TAG( TransportSolutionType);
 NEW_PROP_TAG( EvalCflFluxFunction ); //!< Type of the evaluation of the CFL-condition
 NEW_PROP_TAG( ImpetCFLFactor );
+NEW_PROP_TAG( ImpetSubCFLFactor );
 NEW_PROP_TAG( ImpetSwitchNormals );
 NEW_PROP_TAG(ImpetPorosityThreshold);
 NEW_PROP_TAG(ImpetDtVariationRestrictionFactor);
 
 SET_SCALAR_PROP(Transport, ImpetCFLFactor, 1.0);
+SET_SCALAR_PROP(Transport, ImpetSubCFLFactor, 1.0);
 
 SET_BOOL_PROP(Transport, ImpetSwitchNormals, false);
 
