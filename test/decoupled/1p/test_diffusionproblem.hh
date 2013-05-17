@@ -194,7 +194,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
         nPhaseIdx = Indices::nPhaseIdx,
         pGlobalIdx = Indices::pGlobalIdx,
         SwIdx = Indices::SwIdx,
-        pressEqIdx = Indices::pressEqIdx
+        pressEqIdx = Indices::pressureEqIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

@@ -17,7 +17,9 @@
 #ifndef DUMUX_BUCKLEYLEVERETT_ANALYTICAL_HH
 #define DUMUX_BUCKLEYLEVERETT_ANALYTICAL_HH
 
+#include <dumux/decoupled/2p/2pproperties.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 /**
  * @file

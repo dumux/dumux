@@ -19,6 +19,8 @@
 #ifndef DUMUX_MCWHORTER_ANALYTIC_HH
 #define DUMUX_MCWHORTER_ANALYTIC_HH
 
+#include <dumux/decoupled/2p/2pproperties.hh>
+
 /**
  * @file
  * @brief  Analytic solution of
