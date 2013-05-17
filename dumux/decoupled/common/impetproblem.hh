@@ -22,6 +22,7 @@
 #include "impetproperties.hh"
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
+#include <dumux/io/adaptivegridrestart.hh>
 
 #include <dumux/decoupled/common/gridadapt.hh>
 
@@ -67,15 +68,15 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
-    {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+        {
+            dim = GridView::dimension,
+            dimWorld = GridView::dimensionworld
+        };
     enum
-    {
-        wetting = 0, nonwetting = 1,
-        adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid)
-    };
+        {
+            wetting = 0, nonwetting = 1,
+            adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid)
+        };
 
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
@@ -92,10 +93,10 @@ private:
     {}
 
 public:
-  /*! \brief Constructs an object of type IMPETProblemProblem
-   * \param timeManager The time manager
-   * \param gridView gridview to the grid.
-   */
+    /*! \brief Constructs an object of type IMPETProblemProblem
+     * \param timeManager The time manager
+     * \param gridView gridview to the grid.
+     */
     IMPETProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),
           bboxMin_(std::numeric_limits<double>::max()),
@@ -157,7 +158,7 @@ public:
      * \param globalPos The position of the center of the boundary intersection
      */
     void boundaryTypesAtPos(BoundaryTypes &bcTypes,
-                       const GlobalPosition &globalPos) const
+                            const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -176,7 +177,7 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     void dirichlet(PrimaryVariables &values,
-            const Intersection &intersection) const
+                   const Intersection &intersection) const
     {
         // forward it to the method which only takes the global coordinate
         asImp_().dirichletAtPos(values, intersection.geometry().center());
@@ -192,7 +193,7 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     void dirichletAtPos(PrimaryVariables &values,
-            const GlobalPosition &globalPos) const
+                        const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -213,7 +214,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     void neumann(PrimaryVariables &values,
-            const Intersection &intersection) const
+                 const Intersection &intersection) const
     {
         // forward it to the interface with only the global position
         asImp_().neumannAtPos(values, intersection.geometry().center());
@@ -230,7 +231,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     void neumannAtPos(PrimaryVariables &values,
-            const GlobalPosition &globalPos) const
+                      const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Neumann conditions)
@@ -271,12 +272,12 @@ public:
      * that mass is created, negative ones mean that it vanishes.
      */
     void sourceAtPos(PrimaryVariables &values,
-            const GlobalPosition &globalPos) const
+                     const GlobalPosition &globalPos) const
     {         // Throw an exception (there is no initial condition)
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
                    "a sourceAtPos() method.");
-        }
+    }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -305,7 +306,7 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     void initialAtPos(PrimaryVariables &values,
-            const GlobalPosition &globalPos) const
+                      const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no initial condition)
         DUNE_THROW(Dune::InvalidStateException,
@@ -450,15 +451,15 @@ public:
      */
     bool shouldWriteRestartFile() const
     {
-    	if (outputInterval_ > 0)
-    	{
-    		return
-    				timeManager().timeStepIndex() > 0 &&
-    				(timeManager().timeStepIndex() % int(100*outputInterval_) == 0);
-    	}
-    	else
-    		return
-    				shouldWriteOutput();
+        if (outputInterval_ > 0)
+        {
+            return
+                timeManager().timeStepIndex() > 0 &&
+                (timeManager().timeStepIndex() % int(100*outputInterval_) == 0);
+        }
+        else
+            return
+                shouldWriteOutput();
     }
 
     /*!
@@ -495,14 +496,14 @@ public:
         if (outputInterval_ > 0)
         {
             if (timeManager().timeStepIndex() % outputInterval_ == 0
-                    || timeManager().willBeFinished()
-                    || timeManager().episodeWillBeOver())
+                || timeManager().willBeFinished()
+                || timeManager().episodeWillBeOver())
             {
                 return true;
             }
         }
         else if (timeManager().willBeFinished()
-                || timeManager().episodeWillBeOver() || timeManager().timeStepIndex() == 0)
+                 || timeManager().episodeWillBeOver() || timeManager().timeStepIndex() == 0)
         {
             return true;
         }
@@ -521,8 +522,8 @@ public:
         else if (!timeManager().finished())
         {
             std::cerr << "The end of an episode is reached, but the problem "
-                    << "does not override the episodeEnd() method. "
-                    << "Doing nothing!\n";
+                      << "does not override the episodeEnd() method. "
+                      << "Doing nothing!\n";
         }
     };
 
@@ -568,14 +569,14 @@ public:
         if (!grid_)
         {
             DUNE_THROW(Dune::InvalidStateException, "Grid was called in problemclass, "
-                << "although it is not specified. Do so by using setGrid() method!");
+                       << "although it is not specified. Do so by using setGrid() method!");
         }
         return *grid_;
     }
     /*!
      * \brief Specifies the grid from outside the problem.
      * \param grid The grid used by the problem.
-    */
+     */
     void setGrid(Grid &grid)
     {
         grid_ = &grid;
@@ -588,7 +589,7 @@ public:
     {
         if (!adaptiveGrid)
             Dune::dgrave << "adaptivity module was called despite "
-                << "adaptivity is disabled in property system \n;" << adaptiveGrid;
+                         << "adaptivity is disabled in property system \n;" << adaptiveGrid;
 
         return *gridAdapt_;
     }
@@ -597,14 +598,14 @@ public:
     {
         if (!adaptiveGrid)
             Dune::dgrave << "adaptivity functionality was called despite "
-                << "adaptivity is disabled in property system \n;" << adaptiveGrid;
+                         << "adaptivity is disabled in property system \n;" << adaptiveGrid;
     }
 
     void postAdapt()
     {
         if (!adaptiveGrid)
             Dune::dgrave << "adaptivity functionality was called despite "
-                << "adaptivity is disabled in property system \n;" << adaptiveGrid;
+                         << "adaptivity is disabled in property system \n;" << adaptiveGrid;
     }
 
     /*!
@@ -719,6 +720,11 @@ public:
         res.template serializeEntities<0> (*transportModel_, gridView_);
 
         res.serializeEnd();
+
+        if (adaptiveGrid)
+        {
+            AdaptiveGridRestart<Grid, dim>::serializeGrid(asImp_());
+        }
     }
 
     /*!
@@ -730,6 +736,13 @@ public:
      */
     void restart(const double tRestart)
     {
+        if (adaptiveGrid)
+        {
+            AdaptiveGridRestart<Grid, dim>::restartGrid(asImp_());
+            variables().initialize();
+            model().initialize();
+        }
+
         typedef Dumux::Restart Restarter;
 
         Restarter res;
@@ -737,6 +750,7 @@ public:
         std::cerr << "Deserialize from file " << res.fileName() << "\n";
 
         timeManager().deserialize(res);
+
         resultWriter().deserialize(res);
 
         // do the actual serialization process: get primary variables
@@ -804,8 +818,8 @@ private:
     { return *static_cast<const Implementation *>(this); }
 
     std::string simname_; // a string for the name of the current simulation,
-                                  // which could be set by means of an program argument,
-                                 // for example.
+    // which could be set by means of an program argument,
+    // for example.
     const GridView gridView_;
     // pointer to a possibly adaptive grid.
     Grid *grid_;
