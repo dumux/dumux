@@ -104,11 +104,10 @@ public:
      */
     Scalar getDt(const Element& element)
     {
-        Scalar porosity = problem_.spatialParams().porosity(element);
-        if (porosity > 1e-6)
-            return (getCFLFluxFunction(element) * problem_.spatialParams().porosity(element) * element.geometry().volume());
-        else
-            return (getCFLFluxFunction(element) * element.geometry().volume());
+        Scalar porosity = std::max(problem_.spatialParams().porosity(element), porosityThreshold_);
+
+        return (getCFLFluxFunction(element) * problem_.spatialParams().porosity(element) * element.geometry().volume());
+
     }
 
     //! resets the accumulated CFL-fluxes to zero

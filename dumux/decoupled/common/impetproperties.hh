@@ -62,7 +62,8 @@ NEW_PROP_TAG(ImpetIterationFlag); //!< Flag to switch the iteration type of the 
 NEW_PROP_TAG(ImpetIterationNumber); //!< Number of iterations if IMPET iterations are enabled by the IterationFlags
 NEW_PROP_TAG(ImpetMaximumDefect); //!< Maximum Defect if IMPET iterations are enabled by the IterationFlags
 NEW_PROP_TAG(ImpetRelaxationFactor); //!< Used for IMPET iterations
-NEW_PROP_TAG(ImpetDtVariationRestrictionFactor);//!<Restricts the variation of a new time step compared to the old one
+NEW_PROP_TAG(ImpetDtVariationRestrictionFactor);
+NEW_PROP_TAG(ImpetPorosityThreshold);
 
 //forward declaration!
 NEW_PROP_TAG( Model );//! The model of the specific problem
@@ -85,6 +86,7 @@ SET_INT_PROP(IMPET, ImpetIterationNumber, 2);
 SET_SCALAR_PROP(IMPET, ImpetMaximumDefect, 1e-5);
 SET_SCALAR_PROP(IMPET, ImpetRelaxationFactor, 1.0);//!< 1 = new solution is new solution, 0 = old solution is new solution
 SET_SCALAR_PROP(IMPET, ImpetDtVariationRestrictionFactor, std::numeric_limits<double>::max());
+SET_SCALAR_PROP(IMPET, ImpetPorosityThreshold, 1e-6);
 }
 }
 

@@ -127,21 +127,22 @@ public:
      */
     Scalar getCFLFluxFunction(const Element& element)
     {
+    	if (rejectForTimeStepping_)
+    		return 1e100;
+
         Scalar cflFluxDefault = getCFLFluxFunctionDefault();
 
-        //        std::cout<<"cflFluxFunctionCoats_ = "<<cflFluxFunctionCoats_<<", cflFluxDefault = "<<cflFluxDefault<<"\n";
-
         if (std::isnan(cflFluxFunctionCoats_) || std::isinf(cflFluxFunctionCoats_))
-        {
-            return 0.99 / cflFluxDefault;
-        }
-        else if (hasHangingNode_)
         {
             return 0.99 / cflFluxDefault;
         }
         else if (cflFluxFunctionCoats_ <= 0)
         {
             return 0.99 / cflFluxDefault;
+        }
+        else if (cflFluxDefault > cflFluxFunctionCoats_)
+        {
+        	return 0.99 / cflFluxDefault;
         }
         else
         {
@@ -155,18 +156,19 @@ public:
      */
     Scalar getDt(const Element& element)
     {
-        Scalar porosity = problem_.spatialParams().porosity(element);
-        if (porosity > 1e-6)
-            return (getCFLFluxFunction(element) * problem_.spatialParams().porosity(element) * element.geometry().volume());
-        else
-            return (getCFLFluxFunction(element) * element.geometry().volume());
+    	if (rejectForTimeStepping_)
+    		return 1e100;
+
+        Scalar porosity = std::max(problem_.spatialParams().porosity(element), porosityThreshold_);
+
+        return (getCFLFluxFunction(element) * porosity * element.geometry().volume());
     }
 
     //! \brief  Resets the Timestep-estimator
     void reset()
     {
         cflFluxFunctionCoats_ = 0;
-        hasHangingNode_ = false;
+        rejectForTimeStepping_ = false;
         fluxWettingOut_ = 0;
         fluxNonwettingOut_ = 0;
         fluxIn_ = 0;
@@ -183,6 +185,8 @@ public:
         reset();
         density_[wPhaseIdx] = 0.;
         density_[nPhaseIdx] = 0.;
+
+        porosityThreshold_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, PorosityThreshold);
     }
 
 private:
@@ -239,13 +243,14 @@ private:
     Scalar fluxNonwettingOut_;
     Scalar fluxOut_;
     Scalar fluxIn_;
-    bool hasHangingNode_;
+    bool rejectForTimeStepping_;
     Scalar density_[numPhases];
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
     const Scalar epsDerivative_;
     const Scalar threshold_;
+    Scalar porosityThreshold_;
 };
 
 template<class TypeTag>
@@ -306,12 +311,10 @@ template<class TypeTag>
 void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
                                              const Intersection& intersection, int phaseIdx)
 {
-    Scalar lambdaT = (lambdaW + lambdaNW);
+	if (rejectForTimeStepping_)
+		return;
 
-    if (lambdaT <= 0.0)
-    {
-        return;
-    }
+    Scalar lambdaT = (lambdaW + lambdaNW);
 
     ElementPointer element = intersection.inside();
 
@@ -322,6 +325,13 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNW, 
     int globalIdxI = problem_.variables().index(*element);
 
     CellData& cellDataI = problem_.variables().cellData(globalIdxI);
+
+    if (cellDataI.pressure(wPhaseIdx) < 0.0 || cellDataI.pressure(nPhaseIdx) < 0.0 )
+    {
+    	rejectForTimeStepping_ = true;
+    	cflFluxFunctionCoats_ = 0;
+    	return;
+    }
 
     int indexInInside = intersection.indexInInside();
 
@@ -343,18 +353,29 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNW, 
         Dune::FieldVector < Scalar, dimWorld > distVec = globalPosNeighbor - globalPos;
 
         // compute distance between cell centers
-        //            Scalar dist = distVec.two_norm();
-        Scalar dist = std::abs(distVec*unitOuterNormal);
+        Scalar dist = distVec.two_norm();
 
         int globalIdxJ = problem_.variables().index(*neighbor);
 
         CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
 
+        if (cellDataJ.pressure(wPhaseIdx) < 0.0 || cellDataJ.pressure(nPhaseIdx) < 0.0 )
+        {
+        	rejectForTimeStepping_ = true;
+        	cflFluxFunctionCoats_ = 0;
+        	return;
+        }
+
         //calculate potential gradients
         if (element.level() != neighbor.level())
         {
-            hasHangingNode_ = true;
+            rejectForTimeStepping_ = true;
             cflFluxFunctionCoats_ = 0;
+            return;
+        }
+
+        if (lambdaT <= 0.0)
+        {
             return;
         }
 
@@ -460,6 +481,11 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNW, 
     }
     else
     {
+        if (lambdaT <= 0.0)
+        {
+            return;
+        }
+
         // center of face in global coordinates
         GlobalPosition globalPosFace = intersection.geometry().center();
 

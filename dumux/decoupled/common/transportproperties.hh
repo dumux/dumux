@@ -50,7 +50,8 @@ NEW_PROP_TAG( TransportSolutionType);
 NEW_PROP_TAG( EvalCflFluxFunction ); //!< Type of the evaluation of the CFL-condition
 NEW_PROP_TAG( ImpetCFLFactor );
 NEW_PROP_TAG( ImpetSwitchNormals );
-NEW_PROP_TAG(ImpetDtVariationRestrictionFactor);//!<Restricts the variation of a new time step compared to the old one
+NEW_PROP_TAG(ImpetPorosityThreshold);
+NEW_PROP_TAG(ImpetDtVariationRestrictionFactor);
 
 SET_SCALAR_PROP(Transport, ImpetCFLFactor, 1.0);
 
@@ -72,6 +73,7 @@ SET_PROP(Transport, TransportSolutionType)
     typedef typename SolutionType::ScalarSolution type;//!<type for vector of scalar properties
 };
 SET_SCALAR_PROP(Transport, ImpetDtVariationRestrictionFactor, std::numeric_limits<double>::max());
+SET_SCALAR_PROP(Transport, ImpetPorosityThreshold, 1e-6);
 }
 }
 
