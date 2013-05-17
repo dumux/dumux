@@ -509,6 +509,31 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential ILUn-preconditioned GMRes solver.
+ */
+template <class TypeTag>
+class ILUnRestartedGMResBackend : public IterativePrecondSolverBackend<TypeTag>
+{
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+  typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+public:
+
+  ILUnRestartedGMResBackend(const Problem& problem)
+  {}
+
+  template<class Matrix, class Vector>
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
+  {
+      typedef Dune::SeqILUn<Matrix, Vector, Vector> Preconditioner;
+      typedef Dune::RestartedGMResSolver<Vector> Solver;
+      const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
+
+      return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
+  }
+};
+
 #if HAVE_SUPERLU
 template <class TypeTag>
 class SuperLUBackend
