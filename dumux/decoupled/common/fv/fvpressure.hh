@@ -97,6 +97,9 @@ protected:
 
     //!Initialize the global matrix of the system of equations to solve
     void initializeMatrix();
+    void initializeMatrixRowSize();
+    void initializeMatrixIndices();
+
 
     /*!\brief Function which assembles the system of equations to be solved
      *
@@ -322,6 +325,16 @@ private:
 template<class TypeTag>
 void FVPressure<TypeTag>::initializeMatrix()
 {
+	initializeMatrixRowSize();
+    A_.endrowsizes();
+	initializeMatrixIndices();
+    A_.endindices();
+}
+
+//!Initialize the global matrix of the system of equations to solve
+template<class TypeTag>
+void FVPressure<TypeTag>::initializeMatrixRowSize()
+{
     // determine matrix row sizes
     ElementIterator eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
@@ -341,9 +354,16 @@ void FVPressure<TypeTag>::initializeMatrix()
         }
         A_.setrowsize(globalIdxI, rowSize);
     }
-    A_.endrowsizes();
 
+    return;
+}
+
+//!Initialize the global matrix of the system of equations to solve
+template<class TypeTag>
+void FVPressure<TypeTag>::initializeMatrixIndices()
+{
     // determine position of matrix entries
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell index
@@ -365,10 +385,10 @@ void FVPressure<TypeTag>::initializeMatrix()
                 A_.addindex(globalIdxI, globalIdxJ);
             }
     }
-    A_.endindices();
 
     return;
 }
+
 
 /*!\brief Function which assembles the system of equations to be solved
  *
