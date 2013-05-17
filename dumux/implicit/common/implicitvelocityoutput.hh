@@ -24,10 +24,19 @@
 #ifndef DUMUX_IMPLICIT_VELOCITYOUTPUT_HH
 #define DUMUX_IMPLICIT_VELOCITYOUTPUT_HH
 
+#include "implicitproperties.hh"
 #include <unordered_map>
+#include <dune/istl/bvector.hh>
+#include <dune/common/fvector.hh>
 
 namespace Dumux
 {
+
+//At the moment this property is defined in the individual models -> should be changed
+namespace Properties
+{
+    NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
+}
 
 template<class TypeTag>
 class ImplicitVelocityOutput
