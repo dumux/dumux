@@ -22,6 +22,7 @@
 // dumux environment
 #include "dumux/common/math.hh"
 #include <dumux/decoupled/common/pressureproperties.hh>
+#include <map>
 /**
  * @file
  * @brief  Finite Volume Diffusion Model
@@ -65,6 +66,11 @@ template<class TypeTag> class FVPressure
     typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) RHSVector;
     typedef typename GET_PROP_TYPE(TypeTag, PressureSolutionVector) PressureSolution;
 
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+
 protected:
 
     /*! Type of the vector of entries
@@ -82,6 +88,11 @@ protected:
         rhs = 1,//!<index for the right hand side entry
         matrix = 0//!<index for the global matrix entry
 
+    };
+
+    enum
+    {
+        pressEqIdx = Indices::pressEqIdx,
     };
 
     //!Initialize the global matrix of the system of equations to solve
@@ -107,6 +118,21 @@ protected:
     //!Returns the vector containing the pressure solution
     const PressureSolution& pressure() const
     {   return pressure_;}
+
+    //!Initialization of the pressure solution vector: Initialization with meaningful values may result in better convergence of the linear solver!
+    void initializePressure()
+    {
+        ElementIterator eItEnd = problem_.gridView().template end<0>();
+        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        {
+            PrimaryVariables initValues;
+            problem_.initial(initValues, *eIt);
+
+            int globalIdx = problem_.variables().index(*eIt);
+
+            pressure_[globalIdx] = initValues[pressEqIdx];
+        }
+    }
 
 public:
     /*! \brief Function which calculates the source entry
@@ -181,13 +207,13 @@ public:
      */
     void initialize()
     {
-        size_ = problem_.gridView().size(0);//resize to make sure the final grid size (after the problem was completely built) is used!
-        A_.setSize(size_, size_);
+        int size = problem_.gridView().size(0);//resize to make sure the final grid size (after the problem was completely built) is used!
+        A_.setSize(size, size);
         A_.setBuildMode(Matrix::random);
-        f_.resize(size_);
-        pressure_.resize(size_);
+        f_.resize(size);
+        pressure_.resize(size);
+        initializePressure();
         asImp_().initializeMatrix();// initialize sparse matrix
-        pressure_ = 0;
     }
 
     /*! \brief Pressure update
@@ -200,6 +226,11 @@ public:
         solve();
 
         return;
+    }
+
+    void calculateVelocity()
+    {
+    	DUNE_THROW(Dune::NotImplemented,"Velocity calculation not implemented in pressure model!");
     }
 
     /*! \brief  Function for serialization of the pressure field.
@@ -238,9 +269,7 @@ public:
      */
     void setFixPressureAtIndex(Scalar pressure, int globalIdx)
     {
-        hasFixPressureAtIndex_ = true;
-        fixPressureAtIndex_ = pressure;
-        idxFixPressureAtIndex_ = globalIdx;
+        fixPressure_.insert(std::make_pair(globalIdx, pressure));
     }
 
     /*! \brief Reset the fixed pressure state
@@ -251,9 +280,12 @@ public:
      */
     void unsetFixPressureAtIndex(int globalIdx)
     {
-        hasFixPressureAtIndex_ = false;
-        fixPressureAtIndex_ = 0.0;
-        idxFixPressureAtIndex_ = 0.0;
+    	fixPressure_.erase(globalIdx);
+    }
+
+    void resetFixPressureAtIndex()
+    {
+    	fixPressure_.clear();
     }
 
     /*! \brief Constructs a FVPressure object
@@ -261,10 +293,7 @@ public:
      * \param problem A problem class object
      */
     FVPressure(Problem& problem) :
-    problem_(problem), size_(problem.gridView().size(0)),
-    fixPressureAtIndex_(0),
-    idxFixPressureAtIndex_(0),
-    hasFixPressureAtIndex_(false)
+    problem_(problem)
     {}
 
 private:
@@ -278,7 +307,6 @@ private:
 
     Problem& problem_;
 
-    int size_;
     PressureSolution pressure_;
 
     std::string solverName_;
@@ -287,9 +315,7 @@ protected:
     Matrix A_;//!<Global stiffnes matrix (sparse matrix which is build by the <tt> initializeMatrix()</tt> function)
     RHSVector f_;//!<Right hand side vector
 private:
-    Scalar fixPressureAtIndex_;
-    Scalar idxFixPressureAtIndex_;
-    bool hasFixPressureAtIndex_;
+    std::map<int, Scalar> fixPressure_;
 };
 
 //!Initialize the global matrix of the system of equations to solve
@@ -470,11 +496,15 @@ void FVPressure<TypeTag>::solve()
         std::cout << __FILE__ << ": solve for pressure" << std::endl;
 
     //set a fixed pressure for a certain cell
-    if (hasFixPressureAtIndex_)
+    if (fixPressure_.size() > 0)
     {
-        A_[idxFixPressureAtIndex_] = 0;
-        A_[idxFixPressureAtIndex_][idxFixPressureAtIndex_] = 1;
-        f_[idxFixPressureAtIndex_] = fixPressureAtIndex_;
+    	typename std::map<int, Scalar>::iterator it = fixPressure_.begin();
+    	for (;it != fixPressure_.end();++it)
+    	{
+    		A_[it->first] = 0;
+        	A_[it->first][it->first] = 1;
+        	f_[it->first] = it->second;
+    	}
     }
 
 //    printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
