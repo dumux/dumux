@@ -151,19 +151,48 @@ protected:
     {
         const unsigned i = this->face().i;
         const unsigned j = this->face().j;
+        Scalar lambdaI, lambdaJ;
 
-        const Scalar lambdaI =
-            ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].saturation(wPhaseIdx),
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            lambdaI =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].saturation(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(nPhaseIdx),
                                                                    problem.spatialParams().thermalConductivitySolid(element, this->fvGeometry_, i),
                                                                    problem.spatialParams().porosity(element, this->fvGeometry_, i));
-        const Scalar lambdaJ =
-            ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].saturation(wPhaseIdx),
+            lambdaJ =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].saturation(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(nPhaseIdx),
                                                                    problem.spatialParams().thermalConductivitySolid(element, this->fvGeometry_, j),
                                                                    problem.spatialParams().porosity(element, this->fvGeometry_, j));
+        }
+        else
+        {
+            const Element& elementI = *this->fvGeometry_.neighbors[i];
+            FVElementGeometry fvGeometryI;
+            fvGeometryI.subContVol[0].global = elementI.geometry().center();
+
+            lambdaI =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].saturation(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(elementI, fvGeometryI, 0),
+                                                                   problem.spatialParams().porosity(elementI, fvGeometryI, 0));
+
+            const Element& elementJ = *this->fvGeometry_.neighbors[j];
+            FVElementGeometry fvGeometryJ;
+            fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
+
+            lambdaJ =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].saturation(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(elementJ, fvGeometryJ, 0),
+                                                                   problem.spatialParams().porosity(elementJ, fvGeometryJ, 0));
+        }
+
         // -> harmonic mean
         lambdaEff_ = harmonicMean(lambdaI, lambdaJ);
     }
