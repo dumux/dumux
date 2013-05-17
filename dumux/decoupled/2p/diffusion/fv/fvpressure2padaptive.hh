@@ -134,17 +134,45 @@ public:
     {
         int gridSize = problem_.gridView().size(0);
         // update RHS vector, matrix
+        if (problem_.gridAdapt().wasAdapted())
+        {
         this->A_.setSize(gridSize, gridSize); //
         this->f_.resize(gridSize);
         this->pressure().resize(gridSize);
 
+
+        for (int i = 0; i < gridSize; i++)
+        {
+            CellData& cellData = problem_.variables().cellData(i);
+
+            switch (pressureType_)
+            {
+            case pw:
+                this->pressure()[i] = cellData.pressure(wPhaseIdx);
+                break;
+            case pn:
+                this->pressure()[i] = cellData.pressure(nPhaseIdx);
+                break;
+            case pglobal:
+            	this->pressure()[i] = cellData.globalPressure();
+            	break;
+            }
+        }
+
         ParentType::initializeMatrix();
+    }
+
 
         ParentType::update();
 
-        velocity_.calculateVelocity();
+        calculateVelocity();
 
         return;
+    }
+
+    void calculateVelocity()
+    {
+    	velocity_.calculateVelocity();
     }
 
     /*! \brief Adds pressure output to the output file

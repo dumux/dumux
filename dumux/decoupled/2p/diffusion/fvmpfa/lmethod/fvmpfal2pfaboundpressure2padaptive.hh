@@ -311,6 +311,21 @@ public:
             this->f_.resize(gridSize);
             this->pressure().resize(gridSize);
 
+            for (int i = 0; i < gridSize; i++)
+            {
+                CellData& cellData = problem_.variables().cellData(i);
+
+                switch (pressureType_)
+                {
+                case pw:
+                    this->pressure()[i] = cellData.pressure(wPhaseIdx);
+                    break;
+                case pn:
+                    this->pressure()[i] = cellData.pressure(nPhaseIdx);
+                    break;
+                }
+            }
+
             initializeMatrix();
             updateInteractionVolumeInfo();
         }
