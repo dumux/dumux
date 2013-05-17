@@ -60,7 +60,7 @@ private:
     enum
         {
             wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-            eqIdxPress = Indices::pressEqIdx,
+            eqIdxPress = Indices::pressureEqIdx,
             eqIdxSat = Indices::satEqIdx,
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };

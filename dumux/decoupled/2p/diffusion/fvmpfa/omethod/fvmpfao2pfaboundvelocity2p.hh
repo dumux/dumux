@@ -107,7 +107,7 @@ template<class TypeTag> class FVMPFAO2PFABoundVelocity2P: public FVMPFAO2PFABoun
         nPhaseIdx = Indices::nPhaseIdx,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-        pressEqIdx = Indices::pressEqIdx,
+        pressEqIdx = Indices::pressureEqIdx,
         satEqIdx = Indices::satEqIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };

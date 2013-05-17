@@ -77,7 +77,7 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
 
     enum
     {
-        pressEqIdx = Indices::pressEqIdx // only one equation!
+        pressEqIdx = Indices::pressureEqIdx // only one equation!
     };
 
     enum

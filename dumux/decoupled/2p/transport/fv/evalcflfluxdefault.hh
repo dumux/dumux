@@ -126,6 +126,7 @@ public:
     EvalCflFluxDefault (Problem& problem)
     : problem_(problem)
     {
+        porosityThreshold_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, PorosityThreshold);
         reset();
     }
 
@@ -222,6 +223,7 @@ private:
     Scalar fluxNonwettingOut_;
     Scalar fluxOut_;
     Scalar fluxIn_;
+    Scalar porosityThreshold_;
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };

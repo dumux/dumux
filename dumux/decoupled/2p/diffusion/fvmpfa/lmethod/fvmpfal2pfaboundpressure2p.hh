@@ -104,7 +104,7 @@ class FVMPFAL2PFABoundPressure2P: public FVPressure<TypeTag>
         nPhaseIdx = Indices::nPhaseIdx,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-        pressEqIdx = Indices::pressEqIdx,
+        pressEqIdx = Indices::pressureEqIdx,
         satEqIdx = Indices::satEqIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };

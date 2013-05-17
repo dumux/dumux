@@ -95,7 +95,7 @@ class FVVelocity2P
         Sn = Indices::saturationNW,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-        eqIdxPress = Indices::pressEqIdx,
+        eqIdxPress = Indices::pressureEqIdx,
         eqIdxSat = Indices::satEqIdx
     };
     enum

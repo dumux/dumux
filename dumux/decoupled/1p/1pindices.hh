@@ -38,7 +38,7 @@ namespace Dumux
 struct DecoupledOnePCommonIndices
 {
     // Formulations
-    static const int pressEqIdx = 0;//!< Index of the pressure equation
+    static const int pressureEqIdx = 0;//!< Index of the pressure equation
 };
 
 // \}

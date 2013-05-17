@@ -81,7 +81,7 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
         Sn = Indices::saturationNW,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-        eqIdxPress = Indices::pressEqIdx,
+        eqIdxPress = Indices::pressureEqIdx,
         eqIdxSat = Indices::satEqIdx
     };
     enum

@@ -95,7 +95,7 @@ template<class TypeTag> class FVMPFAOVelocity2P:public FVMPFAOPressure2P<TypeTag
         nPhaseIdx = Indices::nPhaseIdx,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-        pressEqIdx = Indices::pressEqIdx,
+        pressEqIdx = Indices::pressureEqIdx,
         satEqIdx = Indices::satEqIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };

@@ -92,7 +92,7 @@ protected:
 
     enum
     {
-        pressEqIdx = Indices::pressEqIdx,
+        pressEqIdx = Indices::pressureEqIdx,
     };
 
     //!Initialize the global matrix of the system of equations to solve
