@@ -204,15 +204,33 @@ protected:
         Valgrind::SetUndefined(values);
 
         unsigned bfIdx = isIt->indexInInside();
-        this->asImp_().computeFlux(values, bfIdx, true);
-        values *= this->curVolVars_(0).extrusionFactor();
-
-        // add fluxes to the residual
-        Valgrind::CheckDefined(values);
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        
+        // check for mixed Dirichlet/Neumann conditions
+        if (bcTypes.hasNeumann())
         {
-            if (bcTypes.isDirichlet(eqIdx))
-                this->residual_[0][eqIdx] += values[eqIdx];
+            this->problem_().dirichlet(values, *isIt);
+            Valgrind::CheckDefined(values);
+            
+            // set Dirichlet conditions in a strong sense
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            {
+                if (bcTypes.isDirichlet(eqIdx))
+                    this->residual_[0][eqIdx] 
+                      = this->curPriVar_(0, eqIdx) - values[eqIdx];
+            }
+        }
+        else // pure Dirichlet conditions
+        {
+            this->asImp_().computeFlux(values, bfIdx, true);
+            values *= this->curVolVars_(0).extrusionFactor();
+
+            // add fluxes to the residual
+            Valgrind::CheckDefined(values);
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            {
+                if (bcTypes.isDirichlet(eqIdx))
+                    this->residual_[0][eqIdx] += values[eqIdx];
+            }
         }
     }
 
