@@ -388,22 +388,6 @@ public:
      *        boundary segment.
      *
      * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex for which the boundary type is set
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
-    {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
-        initial_(values, globalPos);
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
-     *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The global position
      *
      * For this method, the \a values parameter stores primary variables.
