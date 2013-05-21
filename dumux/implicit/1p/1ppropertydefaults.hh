@@ -91,6 +91,9 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
+// disable velocity output by default
+SET_BOOL_PROP(OneP, VtkAddVelocity, false);
+
 // enable gravity by default
 SET_BOOL_PROP(OneP, ProblemEnableGravity, true);
 
