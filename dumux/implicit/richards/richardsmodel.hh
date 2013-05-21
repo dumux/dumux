@@ -26,6 +26,7 @@
 #define DUMUX_RICHARDS_MODEL_HH
 
 #include <dumux/implicit/common/implicitmodel.hh>
+#include <dumux/implicit/common/implicitvelocityoutput.hh>
 
 #include "richardslocalresidual.hh"
 #include "richardsproblem.hh"
@@ -108,6 +109,7 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -135,6 +137,7 @@ public:
     void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
 
         // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
@@ -151,13 +154,20 @@ public:
         ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
         ScalarField *poro = writer.allocateManagedBuffer(numDofs);
         ScalarField *Te = writer.allocateManagedBuffer(numDofs);
+        VectorField *velocity = writer.template allocateManagedBuffer<double, dim>(numDofs);
+        ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
+
+        if (velocityOutput.enableOutput())
+        {
+            // initialize velocity field
+            for (unsigned int i = 0; i < numDofs; ++i)
+            {
+                (*velocity)[i] = Scalar(0);
+            }
+        }
 
         unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank =
-                writer.allocateManagedBuffer (numElements);
-
-        FVElementGeometry fvGeometry;
-        VolumeVariables volVars;
+        ScalarField *rank = writer.allocateManagedBuffer (numElements);
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
         ElementIterator elemEndIt = this->gridView_().template end<0>();
@@ -166,32 +176,37 @@ public:
             int idx = this->problem_().model().elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
 
+            FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView_(), *elemIt);
+
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(this->problem_(),
+                               *elemIt,
+                               fvGeometry,
+                               false /* oldSol? */);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
                 int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
-                volVars.update(sol[globalIdx],
-                               this->problem_(),
-                               *elemIt,
-                               fvGeometry,
-                               scvIdx,
-                               false);
-
-                (*pW)[globalIdx] = volVars.pressure(wPhaseIdx);
-                (*pN)[globalIdx] = volVars.pressure(nPhaseIdx);
-                (*pC)[globalIdx] = volVars.capillaryPressure();
-                (*Sw)[globalIdx] = volVars.saturation(wPhaseIdx);
-                (*Sn)[globalIdx] = volVars.saturation(nPhaseIdx);
-                (*rhoW)[globalIdx] = volVars.density(wPhaseIdx);
-                (*rhoN)[globalIdx] = volVars.density(nPhaseIdx);
-                (*mobW)[globalIdx] = volVars.mobility(wPhaseIdx);
-                (*mobN)[globalIdx] = volVars.mobility(nPhaseIdx);
-                (*poro)[globalIdx] = volVars.porosity();
-                (*Te)[globalIdx] = volVars.temperature();
+                (*pW)[globalIdx] = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                (*pN)[globalIdx] = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                (*pC)[globalIdx] = elemVolVars[scvIdx].capillaryPressure();
+                (*Sw)[globalIdx] = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                (*Sn)[globalIdx] = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                (*rhoW)[globalIdx] = elemVolVars[scvIdx].density(wPhaseIdx);
+                (*rhoN)[globalIdx] = elemVolVars[scvIdx].density(nPhaseIdx);
+                (*mobW)[globalIdx] = elemVolVars[scvIdx].mobility(wPhaseIdx);
+                (*mobN)[globalIdx] = elemVolVars[scvIdx].mobility(nPhaseIdx);
+                (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();
+                (*Te)[globalIdx] = elemVolVars[scvIdx].temperature();
             }
+
+            // velocity output
+            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, *elemIt, /*phaseIdx=*/0);
         }
+
+        velocityOutput.completeVelocityCalculation(*velocity);
 
         writer.attachDofData(*Sn, "Sn", isBox);
         writer.attachDofData(*Sw, "Sw", isBox);
@@ -204,6 +219,10 @@ public:
         writer.attachDofData(*mobN, "mobN", isBox);
         writer.attachDofData(*poro, "porosity", isBox);
         writer.attachDofData(*Te, "temperature", isBox);
+        if (velocityOutput.enableOutput())
+        {
+            writer.attachDofData(*velocity,  "velocity", isBox, dim);
+        }
         writer.attachCellData(*rank, "process rank");
     }
 };
