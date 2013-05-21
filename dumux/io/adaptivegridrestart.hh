@@ -35,6 +35,7 @@
 #if HAVE_ALBERTA
 #include <dune/grid/albertagrid/agrid.hh>
 #endif
+#include <dune/grid/utility/grapedataioformattypes.hh>
 
 namespace Dumux
 {

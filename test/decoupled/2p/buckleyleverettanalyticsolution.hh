@@ -265,7 +265,6 @@ private:
             	else
             	{
                     // find x_f next to global coordinate of the vertex
-                    int xnext = 0;
                     for (int i = 0; i < size-1; i++)
                     {
                     	Scalar x = frontParams_[i].second * time;
