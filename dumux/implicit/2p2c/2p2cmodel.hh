@@ -292,8 +292,6 @@ public:
         // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
 
-        // velocity output currently only works for the box discretization
-
         // create the required scalar fields
         ScalarField *sN    = writer.allocateManagedBuffer(numDofs);
         ScalarField *sW    = writer.allocateManagedBuffer(numDofs);
@@ -328,17 +326,17 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        FVElementGeometry fvGeometry;
-        ElementVolumeVariables elemVolVars;
-
         ElementIterator elemIt = this->gridView_().template begin<0>();
         ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt)
         {
             int idx = this->elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
+
+            FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView_(), *elemIt);
 
+            ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
                                *elemIt,
                                fvGeometry,
