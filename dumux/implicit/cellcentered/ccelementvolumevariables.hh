@@ -104,14 +104,16 @@ public:
         // only treat boundary if current solution is evaluated
         if (!oldSol)
         {
-            // check if element intersects with a Dirichlet boundary 
+            // check if element intersects with the boundary 
             ElementBoundaryTypes elemBCTypes;
             elemBCTypes.update(problem, element);
-            if (elemBCTypes.hasDirichlet())
+            if (elemBCTypes.hasDirichlet() 
+                || elemBCTypes.hasNeumann() 
+                || elemBCTypes.hasOutflow())
             {
                 this->resize(numNeighbors + element.template count<1>());
 
-                // add volume variables for the Dirichlet faces
+                // add volume variables for the boundary faces
                 IntersectionIterator isIt = problem.gridView().ibegin(element);
                 IntersectionIterator isEndIt = problem.gridView().iend(element);
                 for (; isIt != isEndIt; ++isIt) {
@@ -121,19 +123,24 @@ public:
                     BoundaryTypes bcTypes;
                     problem.boundaryTypes(bcTypes, *isIt);
 
+                    int faceIdx = isIt->indexInInside();
+                    int indexInVariables = numNeighbors + faceIdx;
+
                     if (bcTypes.hasDirichlet())
                     {
                         PrimaryVariables dirichletValues;
                         problem.dirichlet(dirichletValues, *isIt);
 
-                        int faceIdx = isIt->indexInInside();
-                        int indexInVariables = numNeighbors + faceIdx;
                         (*this)[indexInVariables].update(dirichletValues,
                                                          problem,
                                                          element,
                                                          fvGeometry,
                                                          /*scvIdx=*/0,
                                                          oldSol);
+                    }
+                    else 
+                    {
+                        (*this)[indexInVariables] = (*this)[0];
                     }
                 }
             }
