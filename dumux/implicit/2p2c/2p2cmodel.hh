@@ -372,7 +372,6 @@ public:
             }
 
             // velocity output
-            velocityOutput.initVelocityCalculation(elemVolVars, fvGeometry, *elemIt);
             velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *elemIt, wPhaseIdx);
             velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *elemIt, nPhaseIdx);
 

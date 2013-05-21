@@ -97,72 +97,12 @@ public:
         return velocityOutput_;
     }
 
-    void initVelocityCalculation(const ElementVolumeVariables& elemVolVars,const FVElementGeometry& fvGeometry, const Element& element)
-    {
-        if (velocityOutput_)
-        {
-
-            fluxVariables_.clear();
-
-            if (isBox)
-            {
-                for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; faceIdx++)
-                {
-                    FluxVariables fluxVars(problem_,
-                                           element,
-                                           fvGeometry,
-                                           faceIdx,
-                                           elemVolVars);
-
-
-                    fluxVariables_.push_back(fluxVars);
-                }
-
-                // transform vertex velocities from local to global coordinates
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                {
-                    int globalIdx = problem_.vertexMapper().map(element, scvIdx, dofCodim);
-                    cellNum_[globalIdx] +=1 ;
-                }
-            }
-            else
-            {
-                int faceIdxInside = 0;
-                IntersectionIterator endIsIt = problem_.gridView().iend(element);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(element); isIt != endIsIt; ++isIt)
-                {
-                    if (isIt->neighbor())
-                    {
-                        FluxVariables fluxVars(problem_,
-                                               element,
-                                               fvGeometry,
-                                               faceIdxInside,
-                                               elemVolVars);
-
-
-                        fluxVariables_.push_back(fluxVars);
-
-                        faceIdxInside++;
-                    }
-                    else if (isIt->boundary())
-                    {
-                        int faceIdx = isIt->indexInInside();
-                        FluxVariables fluxVars(problem_,
-                                               element,
-                                               fvGeometry,
-                                               faceIdx,
-                                               elemVolVars,true);
-
-
-                        fluxVariables_.push_back(fluxVars);
-                    }
-                }
-            }
-        }
-    }
-
     template<class VelocityVector>
-    void calculateVelocity(VelocityVector& velocity, const ElementVolumeVariables& elemVolVars,const FVElementGeometry& fvGeometry, const Element& element, int phaseIdx)
+    void calculateVelocity(VelocityVector& velocity,
+                           const ElementVolumeVariables& elemVolVars,
+                           const FVElementGeometry& fvGeometry,
+                           const Element& element, 
+                           int phaseIdx)
     {
         if (velocityOutput_)
         {
@@ -192,7 +132,13 @@ public:
                     const typename Element::Geometry::JacobianTransposed jacobianT1 =
                         element.geometry().jacobianTransposed(localPosIP);
 
-                    const GlobalPosition globalNormal = fluxVariables_[faceIdx].face().normal;
+                    FluxVariables fluxVars(problem_,
+                                           element,
+                                           fvGeometry,
+                                           faceIdx,
+                                           elemVolVars);
+                    
+                    const GlobalPosition globalNormal = fluxVars.face().normal;
 
                     GlobalPosition localNormal(0);
                     jacobianT1.mv(globalNormal, localNormal);
@@ -204,14 +150,14 @@ public:
                     // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolume
                     // face in the reference element.
                     Scalar flux;
-                    flux = fluxVariables_[faceIdx].volumeFlux(phaseIdx) / localArea;
+                    flux = fluxVars.volumeFlux(phaseIdx) / localArea;
 
                     // transform the normal Darcy velocity into a vector
                     tmpVelocity = localNormal;
                     tmpVelocity *= flux;
 
-                    scvVelocities[fluxVariables_[faceIdx].face().i] += tmpVelocity;
-                    scvVelocities[fluxVariables_[faceIdx].face().j] += tmpVelocity;
+                    scvVelocities[fluxVars.face().i] += tmpVelocity;
+                    scvVelocities[fluxVars.face().j] += tmpVelocity;
                 }
 
                 // transform vertex velocities from local to global coordinates
@@ -225,19 +171,47 @@ public:
                     scvVelocity /= element.geometry().integrationElement(localPos);
                     // add up the wetting phase subcontrolvolume velocities for each vertex
                     velocity[globalIdx] += scvVelocity;
+
+                    cellNum_[globalIdx] +=1;
                 }
             }
             else
             {
                 Dune::FieldVector<Scalar, 2*dim> scvVelocities(0.0);
 
-                for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; faceIdx++)
+                int innerFaceIdx = 0;
+                IntersectionIterator endIsIt = problem_.gridView().iend(element);
+                for (IntersectionIterator isIt = problem_.gridView().ibegin(element); 
+                     isIt != endIsIt; ++isIt)
                 {
-                    Scalar flux;
-                    flux = fluxVariables_[faceIdx].volumeFlux(phaseIdx);
-                    scvVelocities[faceIdx] = flux;
-                }
+                    int faceIdx = isIt->indexInInside();
 
+                    if (isIt->neighbor())
+                    {
+                        FluxVariables fluxVars(problem_,
+                                               element,
+                                               fvGeometry,
+                                               innerFaceIdx,
+                                               elemVolVars);
+
+                        Scalar flux = fluxVars.volumeFlux(phaseIdx);
+                        scvVelocities[faceIdx] = flux;
+
+                        innerFaceIdx++;
+                    }
+                    else if (isIt->boundary())
+                    {
+                        FluxVariables fluxVars(problem_,
+                                               element,
+                                               fvGeometry,
+                                               faceIdx,
+                                               elemVolVars,true);
+                        
+                        Scalar flux = fluxVars.volumeFlux(phaseIdx);
+                        scvVelocities[faceIdx] = flux;
+                    }
+                }
+                
                 Dune::FieldVector < CoordScalar, dim > refVelocity(0);
                 for (int i = 0; i < dim; i++)
                     refVelocity[i] = 0.5 * (scvVelocities[2*i + 1] - scvVelocities[2*i]);
@@ -252,7 +226,6 @@ public:
                 velocity[globalIdx]= scvVelocity;
             }
         } // velocity output
-
     }
 
     template<class VelocityVector>
