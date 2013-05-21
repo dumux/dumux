@@ -287,7 +287,7 @@ public:
                     300*pMPa -
                     2400*pMPa*salinity +
                     TempC*(
-                        80.0 -
+                        80.0 +
                         3*TempC -
                         3300*salinity -
                         13*pMPa +
