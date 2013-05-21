@@ -216,8 +216,8 @@ public:
 //        static const Scalar lGranite = 2.8; // [W / (m K ) ]
 //
 //        // arithmetic mean of the liquid saturation and the porosity
-//        const int i = fvElemGeom.subContVolFace[faceIdx].i;
-//        const int j = fvElemGeom.subContVolFace[faceIdx].j;
+//        const int i = fluxDat.face().i;
+//        const int j = fluxDat.face().j;
 //        Scalar Sl = std::max(0.0, (vDat[i].saturation(wPhaseIdx) +
 //                                     vDat[j].saturation(wPhaseIdx)) / 2);
 //        Scalar poro = (porosity(element, fvElemGeom, i) +

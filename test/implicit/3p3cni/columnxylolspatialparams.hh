@@ -263,8 +263,8 @@ public:
         static const Scalar lSn1 = 0.65;
 
         // arithmetic mean of the liquid saturation and the porosity
-        const int i = fvGeometry.subContVolFace[faceIdx].i;
-        const int j = fvGeometry.subContVolFace[faceIdx].j;
+        const int i = fluxDat.face().i;
+        const int j = fluxDat.face().j;
         Scalar Sw = std::max(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
                                    elemVolVars[j].saturation(wPhaseIdx)) / 2);
         Scalar Sn = std::max(0.0, (elemVolVars[i].saturation(nPhaseIdx) +
