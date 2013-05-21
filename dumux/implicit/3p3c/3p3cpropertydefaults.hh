@@ -126,6 +126,9 @@ SET_TYPE_PROP(ThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(ThreePThreeC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
+// disable velocity output by default
+SET_BOOL_PROP(ThreePThreeC, VtkAddVelocity, false);
+
 // enable gravity by default
 SET_BOOL_PROP(ThreePThreeC, ProblemEnableGravity, true);
 
