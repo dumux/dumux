@@ -24,6 +24,7 @@
  * @brief  CFL-flux-function to evaluate a CFL-Condition after Coats 2003
  */
 
+#include <dumux/decoupled/common/impetproperties.hh> 
 #include "evalcflflux.hh"
 
 namespace Dumux

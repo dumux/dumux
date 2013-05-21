@@ -24,6 +24,7 @@
  * @brief  Fluxes to evaluate a CFL-Condition
  */
 
+#include <dumux/decoupled/common/impetproperties.hh> 
 #include "evalcflflux.hh"
 
 namespace Dumux
@@ -106,8 +107,7 @@ public:
     {
         Scalar porosity = std::max(problem_.spatialParams().porosity(element), porosityThreshold_);
 
-        return (getCFLFluxFunction(element) * problem_.spatialParams().porosity(element) * element.geometry().volume());
-
+        return (getCFLFluxFunction(element) * porosity * element.geometry().volume());
     }
 
     //! resets the accumulated CFL-fluxes to zero
