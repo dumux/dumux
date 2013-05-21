@@ -71,6 +71,6 @@ How to set the svn attributes:
 \end{itemize}
 Commit the changes for example in the command line with \verb+svn commit -m+ to the repository. It is also possible to use wildcards, e.\,g., if you want to ignore all vtu-files in your application folder in dumux-devel set \verb+FILETOIGNORE+ to \verb+'*.vtu'+. Remember that such an ignore is only allowed in dumux-devel and not in the stable dumux.
 
-\textbf{Second}: It is good practice that every header includes everything it uses by itself and does not rely on the includes from headers that are included by themselves. This can be tested with \texttt{make headercheck} and should be done before committing to stable dumux.
+\textbf{Second}: It is good practice that every header includes everything it uses by itself and does not rely on the includes from headers that are included by themselves. This can be tested with \texttt{make headercheck} and should be done before committing to stable dumux. To test a specific header, use \texttt{make} \texttt{headercheck} \texttt{HEADER=} and add the header's path.
 
 \textbf{Third}: Run \texttt{make doc} in the \texttt{\$DUMUX\_ROOT} directory to generate the class documentation by Doxygen. Have a look into \texttt{\$DUMUX\_ROOT/doc/doxygen/doxyerror.log} whether one of your files have errors or are causing warnings. Please fix them.
