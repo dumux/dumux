@@ -95,6 +95,8 @@ public:
                           const bool onBoundary = false)
         : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
+        mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
+
         viscosity_ = Scalar(0);
         molarDensity_ = Scalar(0);
         density_ = Scalar(0);
@@ -233,15 +235,31 @@ public:
     * \brief Return the local index of the upstream control volume
     *        for a given phase.
     */
-   int upstreamIdx() const
-   { return upstreamIdx_; }
+    int upstreamIdx() const
+    { return upstreamIdx_; }
 
-   /*!
-    * \brief Return the local index of the downstream control volume
-    *        for a given phase.
-    */
-   int downstreamIdx() const
-   { return downstreamIdx_; }
+    /*!
+     * \brief Return the local index of the downstream control volume
+     *        for a given phase.
+     */
+    int downstreamIdx() const
+    { return downstreamIdx_; }
+
+    /*!
+     * \brief Return the volumetric flux over a face of a given phase.
+     *
+     *        This is the calculated velocity multiplied by the unit normal
+     *        and the area of the face.
+     *        face().normal
+     *        has already the magnitude of the area.
+     *
+     * \param phaseIdx index of the phase
+     */
+    Scalar volumeFlux(const unsigned int phaseIdx) const
+    {
+        assert (phaseIdx == Indices::phaseIdx);
+        return volumeFlux_;
+    }
 
 protected:
 
@@ -401,6 +419,10 @@ protected:
             std::swap(upstreamIdx_,
                       downstreamIdx_);
         }
+
+        volumeFlux_ = KmvpNormal_;
+        volumeFlux_ *= mobilityUpwindWeight_/elemVolVars[upstreamIdx_].viscosity()
+                    + (1.0 - mobilityUpwindWeight_)/elemVolVars[downstreamIdx_].viscosity();
     }
     /*!
     * \brief Calculation of the effective diffusion coefficient.
@@ -493,15 +515,18 @@ protected:
     Scalar KmvpNormal_;
 
     // local index of the upwind vertex for each phase
-   int upstreamIdx_;
-   // local index of the downwind vertex for each phase
-   int downstreamIdx_;
+    int upstreamIdx_;
+    // local index of the downwind vertex for each phase
+    int downstreamIdx_;
 
     //! viscosity of the fluid at the integration point
     Scalar viscosity_;
 
     //! molar densities of the fluid at the integration point
     Scalar molarDensity_, density_;
+
+    Scalar volumeFlux_; //!< Velocity multiplied with normal (magnitude=area)
+    Scalar mobilityUpwindWeight_; //!< Upwind weight for mobility. Set to one for full upstream weighting
 };
 
 } // end namepace

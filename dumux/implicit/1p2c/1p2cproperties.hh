@@ -59,6 +59,7 @@ NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 NEW_PROP_TAG(ImplicitMassUpwindWeight);   //!< The default value of the upwind weight
+NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
 NEW_PROP_TAG(Scaling); //!Defines Scaling of the model
