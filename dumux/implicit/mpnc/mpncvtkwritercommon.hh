@@ -25,6 +25,7 @@
 #ifndef DUMUX_MPNC_VTK_WRITER_COMMON_HH
 #define DUMUX_MPNC_VTK_WRITER_COMMON_HH
 
+#include <dumux/implicit/common/implicitvelocityoutput.hh>
 #include "mpncvtkwritermodule.hh"
 
 namespace Dumux
@@ -67,24 +68,19 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
     
 public:
     MPNCVtkWriterCommon(const Problem &problem)
-        : ParentType(problem)
+    : ParentType(problem), velocityOutput_(problem)
     {
         porosityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPorosity);
         permeabilityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPermeability);
         boundaryTypesOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddBoundaryTypes);
         saturationOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddSaturations);
         pressureOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddPressures);
-        velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocities);
         densityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddDensities);
         mobilityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddMobilities);
         averageMolarMassOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddAverageMolarMass);
         massFracOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddMassFractions);
         moleFracOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddMoleFractions);
         molarityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddMolarities);
-        
-        // velocity output currently only works for box
-        if (!isBox)
-            velocityOutput_ = false;
     }
 
     /*!
@@ -101,13 +97,12 @@ public:
         if (boundaryTypesOutput_)
             this->resizeScalarBuffer_(boundaryTypes_, isBox);
 
-        if (velocityOutput_) {
+        if (velocityOutput_.enableOutput()) {
             Scalar nDofs = this->problem_.model().numDofs();
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 velocity_[phaseIdx].resize(nDofs);
                 velocity_[phaseIdx] = 0;
             }
-            this->resizeScalarBuffer_(boxSurface_, isBox);
         }
 
         if (saturationOutput_) this->resizePhaseBuffer_(saturation_, isBox);
@@ -164,37 +159,10 @@ public:
             }
         }
 
-        // calculate velocities if requested by the problem
-        if (velocityOutput_) {
-            for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; ++ faceIdx) {
-                int i = fvGeometry.subContVolFace[faceIdx].i;
-                int I = this->problem_.vertexMapper().map(element, i, dim);
-
-                int j = fvGeometry.subContVolFace[faceIdx].j;
-                int J = this->problem_.vertexMapper().map(element, j, dim);
-
-                FluxVariables fluxVars(this->problem_,
-                                       element,
-                                       fvGeometry,
-                                       faceIdx,
-                                       elemVolVars);
-
-                Scalar scvfArea = fvGeometry.subContVolFace[faceIdx].normal.two_norm();
-                scvfArea *= fluxVars.extrusionFactor();
-
-                boxSurface_[I] += scvfArea;
-                boxSurface_[J] += scvfArea;
-
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                    Dune::FieldVector<Scalar, dim> velocity;
-                    velocity = fluxVars.velocity(phaseIdx);
-                    velocity *= scvfArea;
-                    velocity_[phaseIdx][I] += velocity;
-                    velocity_[phaseIdx][J] += velocity;
-
-                } // end for all phases
-            } // end for all faces
-        } // end if velocityOutput_
+        // velocity output
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            velocityOutput_.calculateVelocity(velocity_[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
+        }
     }
 
     /*!
@@ -233,19 +201,13 @@ public:
         if(molarityOutput_)
             this->commitPhaseComponentBuffer_(writer, "c_%s^%s", molarity_, isBox);
 
-        if (velocityOutput_) {
-            int nDofs = this->problem_.model().numDofs();
+        if (velocityOutput_.enableOutput()) {
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                // first, divide the velocity field by the
-                // respective finite volume's surface area
-                for (int i = 0; i < nDofs; ++i)
-                    velocity_[phaseIdx][i] /= boxSurface_[i];
-                // commit the phase velocity
+                velocityOutput_.completeVelocityCalculation(velocity_[phaseIdx]);
                 std::ostringstream oss;
                 oss << "velocity_" << FluidSystem::phaseName(phaseIdx);
-                writer.attachVertexData(velocity_[phaseIdx],
-                                        oss.str(),
-                                        dim);
+                writer.attachDofData(velocity_[phaseIdx],
+                                     oss.str(), isBox, dim);
             }
         }
     }
@@ -256,7 +218,6 @@ private:
     bool boundaryTypesOutput_;
     bool saturationOutput_;
     bool pressureOutput_;
-    bool velocityOutput_;
     bool densityOutput_;
     bool mobilityOutput_;
     bool massFracOutput_;
@@ -271,7 +232,6 @@ private:
     PhaseVector averageMolarMass_;
 
     PhaseDimField velocity_;
-    ScalarVector boxSurface_;
 
     ScalarVector porosity_;
     ScalarVector permeability_;
@@ -283,6 +243,8 @@ private:
     PhaseComponentMatrix molarity_;
 
     ComponentVector fugacity_;
+
+    ImplicitVelocityOutput<TypeTag> velocityOutput_;
 };
 
 }
