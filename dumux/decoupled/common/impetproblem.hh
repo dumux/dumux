@@ -309,10 +309,8 @@ public:
     void initialAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
     {
-        // Throw an exception (there is no initial condition)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide "
-                   "a initialAtPos() method.");
+        // initialize with 0 by default
+        values = 0;
     }
 
     /*!
