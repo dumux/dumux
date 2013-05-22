@@ -187,9 +187,6 @@ public:
             velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *elemIt, nPhaseIdx);
         }
 
-        velocityOutput.completeVelocityCalculation(*velocityW);
-        velocityOutput.completeVelocityCalculation(*velocityN);
-
         writer.attachDofData(*Sn, "Sn", isBox);
         writer.attachDofData(*Sw, "Sw", isBox);
         writer.attachDofData(*pN, "pn", isBox);

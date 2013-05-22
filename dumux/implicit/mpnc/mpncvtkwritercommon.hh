@@ -65,7 +65,7 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
     typedef Dune::array<DimField, numPhases> PhaseDimField;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
-    
+
 public:
     MPNCVtkWriterCommon(const Problem &problem)
     : ParentType(problem), velocityOutput_(problem)
@@ -99,7 +99,7 @@ public:
 
         if (velocityOutput_.enableOutput()) {
             Scalar nDofs = this->problem_.model().numDofs();
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 velocity_[phaseIdx].resize(nDofs);
                 velocity_[phaseIdx] = 0;
             }
@@ -127,7 +127,7 @@ public:
         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
         {
             int globalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
-            
+
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (porosityOutput_) porosity_[globalIdx] = volVars.porosity();
@@ -203,7 +203,6 @@ public:
 
         if (velocityOutput_.enableOutput()) {
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                velocityOutput_.completeVelocityCalculation(velocity_[phaseIdx]);
                 std::ostringstream oss;
                 oss << "velocity_" << FluidSystem::phaseName(phaseIdx);
                 writer.attachDofData(velocity_[phaseIdx],

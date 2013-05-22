@@ -70,26 +70,41 @@ public:
      * \param problem The problem to be solved
      */
     ImplicitVelocityOutput(const Problem& problem)
-        : problem_(problem)
+    : problem_(problem)
     {
         // check, if velocity output can be used (works only for cubes so far)
         velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity);
+        if (velocityOutput_ && isBox)
+        {
+            cellNum_.assign(problem_.gridView().size(dofCodim), 0);
+        }
+
         ElementIterator elemIt = problem_.gridView().template begin<0>();
         ElementIterator elemEndIt = problem_.gridView().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt)
         {
-            if (elemIt->geometry().type().isCube() == false){
+            if (elemIt->geometry().type().isCube() == false)
+            {
                 velocityOutput_ = false;
+            }
+
+            if (isBox)
+            {
+                FVElementGeometry fvGeometry;
+                fvGeometry.update(problem_.gridView(), *elemIt);
+
+                // transform vertex velocities from local to global coordinates
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                {
+                    int globalIdx = problem_.vertexMapper().map(*elemIt, scvIdx, dofCodim);
+
+                    cellNum_[globalIdx] += 1;
+                }
             }
         }
 
         if (velocityOutput_ != GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity))
             std::cout << "ATTENTION: Velocity output only works for cubes and is set to false for simplices\n";
-
-        if (velocityOutput_ && isBox)
-        {
-            cellNum_.resize(problem_.gridView().size(dofCodim), 0);
-        }
     }
 
     bool enableOutput()
@@ -137,7 +152,7 @@ public:
                                            fvGeometry,
                                            faceIdx,
                                            elemVolVars);
-                    
+
                     const GlobalPosition globalNormal = fluxVars.face().normal;
 
                     GlobalPosition localNormal(0);
@@ -149,8 +164,7 @@ public:
 
                     // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolume
                     // face in the reference element.
-                    Scalar flux;
-                    flux = fluxVars.volumeFlux(phaseIdx) / localArea;
+                    Scalar flux = fluxVars.volumeFlux(phaseIdx) / localArea;
 
                     // transform the normal Darcy velocity into a vector
                     tmpVelocity = localNormal;
@@ -168,11 +182,9 @@ public:
                     Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
 
                     jacobianT2.mtv(scvVelocities[scvIdx], scvVelocity);
-                    scvVelocity /= element.geometry().integrationElement(localPos);
+                    scvVelocity /= element.geometry().integrationElement(localPos)*cellNum_[globalIdx];
                     // add up the wetting phase subcontrolvolume velocities for each vertex
                     velocity[globalIdx] += scvVelocity;
-
-                    cellNum_[globalIdx] +=1;
                 }
             }
             else
@@ -206,12 +218,12 @@ public:
                                                fvGeometry,
                                                faceIdx,
                                                elemVolVars,true);
-                        
+
                         Scalar flux = fluxVars.volumeFlux(phaseIdx);
                         scvVelocities[faceIdx] = flux;
                     }
                 }
-                
+
                 Dune::FieldVector < CoordScalar, dim > refVelocity(0);
                 for (int i = 0; i < dim; i++)
                     refVelocity[i] = 0.5 * (scvVelocities[2*i + 1] - scvVelocities[2*i]);
@@ -228,32 +240,10 @@ public:
         } // velocity output
     }
 
-    template<class VelocityVector>
-    void completeVelocityCalculation(VelocityVector& velocity)
-    {
-        if (velocityOutput_ && isBox)
-        {
-            unsigned int size =  velocity.size();
-
-            assert(size != cellNum_.size());
-
-
-            // divide the vertex velocities by the number of adjacent scvs i.e. cells
-            for(unsigned int globalIdx = 0; globalIdx < size; ++globalIdx)
-            {
-                velocity[globalIdx] /= cellNum_[globalIdx];
-            }
-            fluxVariables_.clear();
-        }
-    }
 protected:
     const Problem& problem_;
-
-    // parameters given in constructor
     bool velocityOutput_;
     std::vector<int> cellNum_;
-
-    std::vector<FluxVariables> fluxVariables_;
 };
 
 }

@@ -375,9 +375,6 @@ public:
 
         } // loop over elements
 
-        velocityOutput.completeVelocityCalculation(*velocityW);
-        velocityOutput.completeVelocityCalculation(*velocityN);
-
         writer.attachDofData(*sN,     "Sn", isBox);
         writer.attachDofData(*sW,     "Sw", isBox);
         writer.attachDofData(*pN,     "pN", isBox);

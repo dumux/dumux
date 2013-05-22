@@ -379,10 +379,6 @@ public:
 
         }
 
-        velocityOutput.completeVelocityCalculation(*velocityW);
-        velocityOutput.completeVelocityCalculation(*velocityN);
-        velocityOutput.completeVelocityCalculation(*velocityG);
-
         writer.attachDofData(*saturation[wPhaseIdx], "Sw", isBox);
         writer.attachDofData(*saturation[nPhaseIdx], "Sn", isBox);
         writer.attachDofData(*saturation[gPhaseIdx], "Sg", isBox);

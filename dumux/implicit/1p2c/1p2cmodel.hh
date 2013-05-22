@@ -175,8 +175,6 @@ public:
             velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, *elemIt, phaseIdx);
         }
 
-        velocityOutput.completeVelocityCalculation(*velocity);
-
         writer.attachDofData(pressure, "P", isBox);
         writer.attachDofData(delp, "delp", isBox);
         if (velocityOutput.enableOutput())
