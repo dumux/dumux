@@ -215,8 +215,11 @@ protected:
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
                 if (bcTypes.isDirichlet(eqIdx))
+                {
+                    int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
                     this->residual_[0][eqIdx] 
-                      = this->curPriVar_(0, eqIdx) - values[eqIdx];
+                      = this->curPriVar_(0, pvIdx) - values[pvIdx];
+                }
             }
         }
         else // pure Dirichlet conditions
