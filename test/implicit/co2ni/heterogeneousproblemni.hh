@@ -445,19 +445,14 @@ public:
      * \brief Evaluate the initial value for a control volume.
      *
      * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
-     * \param scvIdx The local vertex index
+     * \param globalPos The center of the finite volume which ought to be set.
      *
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 int scvIdx) const
+    void initialAtPos(PrimaryVariables &values,
+                      const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         initial_(values, globalPos);
     }
 
