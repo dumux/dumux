@@ -28,16 +28,8 @@
 #define DUMUX_CC_FV_ELEMENTGEOMETRY_HH
 
 #include <dune/common/version.hh>
+#include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
-
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 2, 0)
-// dune 2.2
-#include <dune/geometry/referenceelements.hh>
-#else
-// dune 2.1
-#include <dune/geometry/referenceelements.hh>
-#endif
-
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/propertysystem.hh>

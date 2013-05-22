@@ -327,7 +327,7 @@ class BoxFVElementGeometry
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-#if DUNE_VERSION_NEWER_REV(DUNE_GRID, 2, 3, 0)
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
 #else
     typedef typename Geometry::Jacobian JacobianInverseTransposed;    
