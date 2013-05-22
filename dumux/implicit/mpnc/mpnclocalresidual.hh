@@ -53,18 +53,21 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
     enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
     typedef MPNCLocalResidualMass<TypeTag, enableKinetic> MassResid;
@@ -225,16 +228,54 @@ public:
                          curVolVars,
                          bcType);
 
-        for (int i = 0; i < this->fvGeometry_().numScv; ++i) {
-            // add the two auxiliary equations, make sure that the
-            // dirichlet boundary condition is conserved
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            {
-                if (!bcType[i].isDirichlet(phase0NcpIdx + phaseIdx))
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox) 
+            || !bcType.hasDirichlet())
+        {
+            for (int i = 0; i < this->fvGeometry_().numScv; ++i) {
+                // add the two auxiliary equations, make sure that the
+                // dirichlet boundary condition is conserved
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 {
-                    this->residual_[i][phase0NcpIdx + phaseIdx] =
-                        this->curVolVars_(i).phaseNcp(phaseIdx);
+                    if (!bcType[i].isDirichlet(phase0NcpIdx + phaseIdx))
+                    {
+                        this->residual_[i][phase0NcpIdx + phaseIdx] =
+                            this->curVolVars_(i).phaseNcp(phaseIdx);
+                    }
                 }
+            }
+        }
+    }
+
+
+    /*!
+     * \brief Add Dirichlet boundary conditions for a single intersection
+     * 
+     * Sets the Dirichlet conditions in a strong sense, in contrast to 
+     * the general handling in CCLocalResidual.
+     */
+    void evalDirichletSegment_(const IntersectionIterator &isIt, 
+                               const BoundaryTypes &bcTypes)
+    {
+        // temporary vector to store the Dirichlet boundary fluxes
+        PrimaryVariables values;
+        Valgrind::SetUndefined(values);
+        this->problem_().dirichlet(values, *isIt);
+        Valgrind::CheckDefined(values);
+
+        // set Dirichlet conditions in a strong sense
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            if (bcTypes.isDirichlet(eqIdx))
+            {
+                int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                this->residual_[0][eqIdx] 
+                  = this->curPriVar_(0, pvIdx) - values[pvIdx];
+            }
+            else if (eqIdx >= phase0NcpIdx)
+            {
+                int phaseIdx = eqIdx - phase0NcpIdx;
+                this->residual_[0][eqIdx] =
+                    this->curVolVars_(0).phaseNcp(phaseIdx);
             }
         }
     }
