@@ -13,6 +13,7 @@ target_link_libraries("test_transport" ${DumuxLinkLibraries})
 
 add_executable("test_mpfa2p" test_mpfa2p.cc)
 target_link_libraries("test_mpfa2p" ${DumuxLinkLibraries})
+add_dune_superlu_flags("test_mpfa2p")
 
 # add required libraries and includes to the build flags 
 link_directories(${DumuxLinkDirectories})
