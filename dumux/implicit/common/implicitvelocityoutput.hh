@@ -88,7 +88,7 @@ public:
                 velocityOutput_ = false;
             }
 
-            if (isBox)
+            if (velocityOutput_ && isBox)
             {
                 FVElementGeometry fvGeometry;
                 fvGeometry.update(problem_.gridView(), *elemIt);
