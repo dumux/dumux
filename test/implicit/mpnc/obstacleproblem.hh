@@ -183,9 +183,6 @@ public:
 
         FluidSystem::init(Tmin, Tmax, nT, pmin, pmax, np);
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
-        
-        const Element& element = *gridView.template begin<0>();
-        elementWidth_ = element.geometry().corner(1)[0] - element.geometry().corner(0)[0];
     }
 
     /*!
@@ -357,9 +354,7 @@ private:
         // set the fluid temperatures
         fs.setTemperature(this->temperatureAtPos(globalPos));
 
-        // the second condition is required for the cell-centered disc
-        if ((isBox && onInlet_(globalPos))
-            || (globalPos[0] > 60 - elementWidth_/2.0 - eps_ && globalPos[1] <= 10)) 
+        if (onInlet_(globalPos))
         {
             // only liquid on inlet
             refPhaseIdx = wPhaseIdx;
@@ -447,7 +442,6 @@ private:
     Scalar temperature_;
     Scalar eps_;
     std::string name_;
-    Scalar elementWidth_;
 };
 } //end namespace
 
