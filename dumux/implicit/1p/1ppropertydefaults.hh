@@ -58,7 +58,7 @@ SET_TYPE_PROP(OneP,
               OnePLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(OneP, Model, OnePBoxModel<TypeTag>);
+SET_TYPE_PROP(OneP, Model, OnePModel<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);

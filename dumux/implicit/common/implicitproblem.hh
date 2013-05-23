@@ -267,7 +267,7 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void boxSDNeumann(PrimaryVariables &values,
+    void solDependentNeumann(PrimaryVariables &values,
                       const Element &element,
                       const FVElementGeometry &fvGeometry,
                       const Intersection &is,
@@ -282,6 +282,25 @@ public:
                          is,
                          scvIdx,
                          boundaryFaceIdx);
+    }
+
+    //! compatibility definition
+    DUNE_DEPRECATED_MSG("use solDependentNeumann instead")
+    void boxSDNeumann(PrimaryVariables &values,
+                      const Element &element,
+                      const FVElementGeometry &fvGeometry,
+                      const Intersection &is,
+                      const int scvIdx,
+                      const int boundaryFaceIdx,
+                      const ElementVolumeVariables &elemVolVars) const
+    {
+        asImp_().solDependentNeumann(values,
+                                     element,
+                                     fvGeometry,
+                                     is,
+                                     scvIdx,
+                                     boundaryFaceIdx, 
+                                     elemVolVars);
     }
 
     /*!
@@ -348,7 +367,7 @@ public:
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void boxSDSource(PrimaryVariables &values,
+    void solDependentSource(PrimaryVariables &values,
                      const Element &element,
                      const FVElementGeometry &fvGeometry,
                      const int scvIdx,
@@ -356,6 +375,17 @@ public:
     {
         // forward to solution independent, fully-implicit specific interface
         asImp_().source(values, element, fvGeometry, scvIdx);
+    }
+
+    //! compatibility definition
+    DUNE_DEPRECATED_MSG("use solDependentSource instead")
+    void boxSDSource(PrimaryVariables &values,
+                     const Element &element,
+                     const FVElementGeometry &fvGeometry,
+                     const int scvIdx,
+                     const ElementVolumeVariables &elemVolVars) const
+    {
+        asImp_().solDependentSource(values, element, fvGeometry, scvIdx, elemVolVars);
     }
 
     /*!

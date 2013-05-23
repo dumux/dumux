@@ -173,7 +173,7 @@ protected:
                             const FVElementGeometry &fvGeometry,
                             const int scvIdx)
     {
-        return problem.boxTemperature(element, fvGeometry, scvIdx);
+        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
     }
 
     /*!

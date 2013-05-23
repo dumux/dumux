@@ -69,7 +69,7 @@ namespace Dumux
  */
 
 template<class TypeTag >
-class OnePTwoCBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)
+class OnePTwoCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -98,15 +98,9 @@ class OnePTwoCBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
 public:
     /*!
-     * \brief Constructor
-     */
-    OnePTwoCBoxModel()
-    {}
-
-    /*!
      * \brief \copybrief ImplicitModel::addOutputVtkFields
      *
-     * Specialization for the OnePTwoCBoxModel, adding pressure,
+     * Specialization for the OnePTwoCModel, adding pressure,
      * mass and mole fractions, and the process rank to the VTK writer.
      */
     template<class MultiWriter>
@@ -197,6 +191,15 @@ public:
         writer.attachCellData(rank, "process rank");
     }
 };
+
+template<class TypeTag >
+class OnePTwoCBoxModel : public OnePTwoCModel<TypeTag>
+{
+public:
+    DUNE_DEPRECATED_MSG("use the class OnePTwoCModel instead")
+    OnePTwoCBoxModel(){}
+};
+
 }
 
 #include "1p2cpropertydefaults.hh"

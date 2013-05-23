@@ -152,12 +152,10 @@ public:
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar boxTemperature(const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       int scvIdx) const
+    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         return 273.15 + 10; // -> 10
-    };
+    }
 
     // \}
 

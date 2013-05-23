@@ -117,7 +117,7 @@ protected:
         Valgrind::SetUndefined(values);
 
         unsigned bfIdx = isIt->indexInInside();
-        this->problem_().boxSDNeumann(values,
+        this->problem_().solDependentNeumann(values,
                                       this->element_(),
                                       this->fvGeometry_(),
                                       *isIt,

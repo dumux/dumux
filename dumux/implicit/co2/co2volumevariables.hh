@@ -369,7 +369,7 @@ protected:
                                const FVElementGeometry &fvGeometry,
                                int scvIdx)
     {
-        return problem.boxTemperature(element, fvGeometry, scvIdx);
+        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
     }
 
     template<class ParameterCache>

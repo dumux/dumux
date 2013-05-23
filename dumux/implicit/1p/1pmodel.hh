@@ -53,7 +53,7 @@ namespace Dumux
  * The model supports compressible as well as incompressible fluids.
  */
 template<class TypeTag >
-class OnePBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)
+class OnePModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -73,7 +73,7 @@ public:
     /*!
      * \brief \copybrief Dumux::ImplicitModel::addOutputVtkFields
      *
-     * Specialization for the OnePBoxModel, adding the pressure and
+     * Specialization for the OnePModel, adding the pressure and
      * the process rank to the VTK writer.
      */
     template<class MultiWriter>
@@ -143,6 +143,15 @@ public:
         writer.attachCellData(*rank, "process rank");
     }
 };
+
+template<class TypeTag >
+class OnePBoxModel : public OnePModel<TypeTag>
+{
+public:
+    DUNE_DEPRECATED_MSG("use the class OnePModel instead")
+    OnePBoxModel(){}
+};
+
 }
 
 #include "1ppropertydefaults.hh"

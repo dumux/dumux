@@ -320,15 +320,15 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * This problem assumes a temperature of 10 degrees Celsius.
+     * \param globalPos The position
+     *
+     * This problem assumes a geothermal gradient with 
+     * a surface temperature of 10 degrees Celsius.
      */
-    Scalar boxTemperature(const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       int scvIdx) const
+    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = fvElemGeom.subContVol[scvIdx].global;
         return temperature_(globalPos);
-    };
+    }
 
     /*!
      * \brief Return the sources within the domain.
@@ -487,7 +487,7 @@ private:
 
     Scalar temperature_(const GlobalPosition globalPos) const
     {
-        Scalar T = 283.0 + (depthBOR_ - globalPos[dim-1])*0.03; // -> 10°C
+        Scalar T = 283.0 + (depthBOR_ - globalPos[dim-1])*0.03; 
         return T;
     };
 

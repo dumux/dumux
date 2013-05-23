@@ -58,7 +58,7 @@ SET_BOOL_PROP(OnePTwoC, UseMoles, false); //!< Define that mass fractions are us
 SET_TYPE_PROP(OnePTwoC, LocalResidual, OnePTwoCLocalResidual<TypeTag>);
 
 //! define the model
-SET_TYPE_PROP(OnePTwoC, Model, OnePTwoCBoxModel<TypeTag>);
+SET_TYPE_PROP(OnePTwoC, Model, OnePTwoCModel<TypeTag>);
 
 //! define the VolumeVariables
 SET_TYPE_PROP(OnePTwoC, VolumeVariables, OnePTwoCVolumeVariables<TypeTag>);

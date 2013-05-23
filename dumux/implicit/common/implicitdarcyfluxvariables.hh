@@ -199,11 +199,8 @@ protected:
             // correct the pressure gradient by the gravitational acceleration
             if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             {
-                // estimate the gravitational acceleration at a given SCV face
-                // using the arithmetic mean
-                DimVector g(problem.boxGravity(element, fvGeometry_, face().i));
-                g += problem.boxGravity(element, fvGeometry_, face().j);
-                g /= 2;
+                // ask for the gravitational acceleration at the given SCV face
+                DimVector g(problem.gravityAtPos(face().ipGlobal));
 
                 // calculate the phase density at the integration point. we
                 // only do this if the wetting phase is present in both cells

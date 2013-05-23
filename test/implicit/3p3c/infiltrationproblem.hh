@@ -187,18 +187,14 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * \param element The element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param scvIdx The local vertex index (SCV index)
+     * \param globalPos The position
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar boxTemperature(const Element &element,
-                          const FVElementGeometry &fvGeometry,
-                          int scvIdx) const
+    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         return temperature_;
-    };
+    }
 
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const

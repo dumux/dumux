@@ -167,7 +167,7 @@ protected:
         // deal with neumann boundaries
         if (bcTypes.hasNeumann()) {
             Valgrind::SetUndefined(neumannFlux);
-            this->problem_().boxSDNeumann(neumannFlux,
+            this->problem_().solDependentNeumann(neumannFlux,
                                           this->element_(),
                                           this->fvGeometry_(),
                                           *isIt,

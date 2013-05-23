@@ -340,17 +340,14 @@ protected:
             Scalar rhoJ = elemVolVars[face().j].density();
             Scalar density = (rhoI + rhoJ)/2;
 
-            // estimate the gravitational acceleration at a given SCV face
-            // using the arithmetic mean
-            DimVector f(problem.boxGravity(element, fvGeometry_, face().i));
-            f += problem.boxGravity(element, fvGeometry_, face().j);
-            f /= 2;
+            // ask for the gravitational acceleration at the given SCV face
+            DimVector g(problem.gravityAtPos(face().ipGlobal));
 
             // make it a force
-            f *= density;
+            g *= density;
 
             // calculate the final potential gradient
-            potentialGrad_ -= f;
+            potentialGrad_ -= g;
         }
     }
 

@@ -72,7 +72,7 @@ public:
                             const unsigned int scvIdx,
                             const Problem &problem) const
     {
-        Scalar T = problem.boxTemperature(element, fvGeometry, scvIdx);
+        Scalar T = problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
         fs.setTemperature(T);
     }
 

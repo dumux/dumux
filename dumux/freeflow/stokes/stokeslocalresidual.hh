@@ -281,7 +281,7 @@ protected:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // retrieve the source term intrinsic to the problem
-        this->problem_().boxSDSource(source,
+        this->problem_().solDependentSource(source,
                                      this->element_(),
                                      this->fvGeometry_(),
                                      scvIdx,
@@ -568,7 +568,7 @@ protected:
 
             //destabilize source term
             PrimaryVariables source(0.0);
-            this->problem_().boxSDSource(source,
+            this->problem_().solDependentSource(source,
                                      this->element_(),
                                      this->fvGeometry_(),
                                      scvIdx,

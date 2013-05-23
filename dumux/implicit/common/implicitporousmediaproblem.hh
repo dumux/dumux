@@ -99,6 +99,7 @@ public:
      * \param fvGeometry The finite volume geometry of the element.
      * \param scvIdx The local index of the sub control volume inside the element
      */
+    DUNE_DEPRECATED_MSG("use temperatureAtPos instead")
     Scalar boxTemperature(const Element &element,
                           const FVElementGeometry fvGeometry,
                           const int scvIdx) const
@@ -136,6 +137,7 @@ public:
      * This is the discretization specific interface for the fully-implicit method. 
      * By default it just calls gravityAtPos().
      */
+    DUNE_DEPRECATED_MSG("use gravityAtPos instead")
     const DimVector &boxGravity(const Element &element,
                                 const FVElementGeometry &fvGeometry,
                                 const int scvIdx) const

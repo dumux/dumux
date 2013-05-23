@@ -136,7 +136,7 @@ public:
      */
     void computeSource(PrimaryVariables &source, const int scvIdx)
     {
-        this->problem_().boxSDSource(source,
+        this->problem_().solDependentSource(source,
                                      this->element_(),
                                      this->fvGeometry_(),
                                      scvIdx,

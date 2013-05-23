@@ -182,7 +182,7 @@ public:
     void computeSource(PrimaryVariables &q, int scvIdx) const
     {
         // retrieve the source term intrinsic to the problem
-        this->problem_().boxSDSource(q,
+        this->problem_().solDependentSource(q,
                                      this->element_(),
                                      this->fvGeometry_(),
                                      scvIdx,

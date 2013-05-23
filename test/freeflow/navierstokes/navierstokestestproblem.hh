@@ -162,12 +162,10 @@ namespace Dumux
        *
        * This problem assumes a constant temperature of 10 degrees Celsius.
        */
-      Scalar boxTemperature(const Element &element,
-                            const FVElementGeometry &fvElemGeom,
-                            const int scvIdx) const
+      Scalar temperatureAtPos(const GlobalPosition &globalPos) const
       {
         return 273.15 + 10; // -> 10C
-      };
+      }
 
       // \}
 
