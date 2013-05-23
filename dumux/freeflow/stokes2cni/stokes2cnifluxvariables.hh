@@ -101,7 +101,7 @@ protected:
         // calculate gradients and secondary variables at IPs
         DimVector tmp(0.0);
         for (int idx = 0;
-             idx < this->fvGeometry_.numVertices;
+             idx < this->fvGeometry_.numScv;
              idx++) // loop over vertices of the element
         {
             thermalConductivity_ += elemVolVars[idx].thermalConductivity() *

@@ -89,12 +89,12 @@ public:
         // gradients
         DimVector temperatureGrad(0);
         DimVector tmp(0.0);
-        for (int vertIdx = 0; vertIdx < fvGeometry.numFap; vertIdx++)
+        for (int idx = 0; idx < this->face().numFap; idx++)
         {
-            tmp = this->face().grad[vertIdx];
+            tmp = this->face().grad[idx];
 
             // index for the element volume variables 
-            int volVarsIdx = this->face().fapIndices[vertIdx];
+            int volVarsIdx = this->face().fapIndices[idx];
 
             tmp *= elemVolVars[volVarsIdx].temperature();
             temperatureGrad += tmp;

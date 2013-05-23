@@ -117,7 +117,7 @@ public:
 
             bool hasLeft = false;
             bool hasRight = false;
-            for (int i = 0; i < fvGeometry.numVertices; i++) {
+            for (int i = 0; i < fvGeometry.numScv; i++) {
                 const GlobalPosition &global = fvGeometry.subContVol[i].global;
                 if (globalI[axis] < coordVal)
                     hasLeft = true;
@@ -127,7 +127,7 @@ public:
             if (!hasLeft || !hasRight)
                 continue;
 
-            for (int i = 0; i < fvGeometry.numVertices; i++) {
+            for (int i = 0; i < fvGeometry.numScv; i++) {
                 const GlobalPosition &global = fvGeometry.subContVol[i].global;
                 if (globalI[axis] < coordVal)
                     flux += this->localResidual().residual(i);

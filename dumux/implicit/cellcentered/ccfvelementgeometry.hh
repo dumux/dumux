@@ -64,7 +64,6 @@ class CCFVElementGeometry
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename Element::Geometry Geometry;
-    typedef Dune::FieldVector<Scalar,dimWorld> Vector;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
@@ -83,11 +82,12 @@ public:
         int i,j; //!< scvf seperates corner i and j of elem
         LocalPosition ipLocal; //!< integration point in local coords
         GlobalPosition ipGlobal; //!< integration point in global coords
-        Vector normal; //!< normal on face pointing to CV j or outward of the domain with length equal to |scvf|
+        GlobalPosition normal; //!< normal on face pointing to CV j or outward of the domain with length equal to |scvf|
         Scalar area; //!< area of face
-        Dune::FieldVector<Vector, maxNFAP> grad; //!< derivatives of shape functions at ip
+        Dune::FieldVector<GlobalPosition, maxNFAP> grad; //!< derivatives of shape functions at ip
         Dune::FieldVector<Scalar, maxNFAP> shapeValue; //!< value of shape functions at ip
         Dune::FieldVector<int, maxNFAP> fapIndices; //!< indices w.r.t.neighbors of the flux approximation points
+        unsigned numFap; //!< number of flux approximation points
         unsigned faceIdx; //!< the index (w.r.t. the element) of the face (codim 1 entity) that the scvf is part of
     };
 
@@ -99,12 +99,13 @@ public:
     SubControlVolume subContVol[1]; //!< data of the sub control volumes
     SubControlVolumeFace subContVolFace[maxNE]; //!< data of the sub control volume faces
     BoundaryFace boundaryFace[maxBF]; //!< data of the boundary faces
-    int numVertices; //!< number of verts
-    int numEdges; //!< number of edges
-    int numFaces; //!< number of faces (0 in < 3D)
+    int numVertices; //!< \deprecated number of verts
+    int numEdges; //!< \deprecated number of edges
+    int numFaces; //!< \deprecated number of faces (0 in < 3D)
     int numScv; //!< number of subcontrol volumes
+    int numScvf; //!< number of inner-domain subcontrolvolume faces 
     int numNeighbors; //!< number of neighboring elements including the element itself
-    int numFap; //!< number of flux approximation points
+    int numFap; //!< \deprecated number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< stores pointers for the neighboring elements
     
     void updateInner(const Element& element)
@@ -115,11 +116,14 @@ public:
         elementGlobal = geometry.center();
         elementLocal = geometry.local(elementGlobal);
 
+        numScv = 1;
+        numScvf = 0;
+        numFap = 2;
+
+        // compatibility initializations of deprecated members
         numVertices = element.template count<dim>();
         numEdges = element.template count<dim-1>();
         numFaces = (dim<3)? 0 : element.template count<1>();
-        numScv = 1;
-        numFap = 2;
         
         subContVol[0].local = elementLocal;
         subContVol[0].global = elementGlobal;
@@ -169,7 +173,8 @@ public:
                 distVec /= distVec.two_norm2();
                 
                 // gradients using a two-point flux approximation
-                for (int idx = 0; idx < 2; idx++)
+                subContVolFace[k].numFap = 2;
+                for (int idx = 0; idx < subContVolFace[k].numFap; idx++)
                 {
                     subContVolFace[k].grad[idx] = distVec;
                     subContVolFace[k].shapeValue[idx] = 0.5;
@@ -200,7 +205,8 @@ public:
                 distVec /= distVec.two_norm2();
                 
                 // gradients using a two-point flux approximation
-                for (int idx = 0; idx < 2; idx++)
+                boundaryFace[bfIdx].numFap = 2;
+                for (int idx = 0; idx < boundaryFace[bfIdx].numFap; idx++)
                 {
                     boundaryFace[bfIdx].grad[idx] = distVec;
                     boundaryFace[bfIdx].shapeValue[idx] = 0.5;
@@ -211,6 +217,9 @@ public:
                 boundaryFace[bfIdx].fapIndices[1] = boundaryFace[bfIdx].j;
             }
         }
+
+        // set the number of inner-domain subcontrolvolume faces
+        numScvf = numNeighbors - 1;
 
         // treat elements on the boundary
         if (onBoundary)

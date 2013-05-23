@@ -124,7 +124,7 @@ private:
         // calculate gradients
     	DimVector tmp(0.0);
         for (int idx = 0;
-             idx < this->fvGeometry_.numFap;
+             idx < this->face().numFap;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx

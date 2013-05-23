@@ -284,7 +284,7 @@ protected:
             // use finite-element gradients
             tmp = 0.0;
             for (int idx = 0;
-                    idx < fvGeometry_.numFap;
+                    idx < face().numFap;
                     idx++) // loop over adjacent vertices
             {
                 // FE gradient at vertex idx

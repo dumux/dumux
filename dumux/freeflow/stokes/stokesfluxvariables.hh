@@ -93,7 +93,7 @@ protected:
 //        velocityDiv_ = Scalar(0);
 
         for (int idx = 0;
-             idx < fvGeometry_.numVertices;
+             idx < fvGeometry_.numScv;
              idx++) // loop over adjacent vertices
         {
             // phase density and viscosity at IP

@@ -111,7 +111,7 @@ public:
         // gradients
         DimVector tmp(0.0);
         DimVector temperatureGradient(0.);
-        for (int idx = 0; idx < fvGeometry.numFap; idx++)
+        for (int idx = 0; idx < face.numFap; idx++)
         {
             tmp = face.grad[idx];
 

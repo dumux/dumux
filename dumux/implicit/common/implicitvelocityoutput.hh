@@ -138,7 +138,7 @@ public:
                 SCVVelocities scvVelocities(pow(2,dim));
                 scvVelocities = 0;
 
-                for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; faceIdx++)
+                for (int faceIdx = 0; faceIdx < fvGeometry.numScvf; faceIdx++)
                 {
                     // local position of integration point
                     const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[faceIdx].ipLocal;

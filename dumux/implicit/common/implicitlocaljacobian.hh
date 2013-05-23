@@ -190,7 +190,7 @@ public:
         int numRows, numCols;
         if (isBox)
         {
-            numRows = numCols = fvElemGeom_.numVertices;
+            numRows = numCols = fvElemGeom_.numScv;
         }
         else 
         {

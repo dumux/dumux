@@ -122,7 +122,7 @@ protected:
 
         // calculate gradients and secondary variables at IPs
         for (int idx = 0;
-             idx < this->fvGeometry_.numVertices;
+             idx < this->fvGeometry_.numScv;
              idx++) // loop over vertices of the element
         {
             molarDensity_ += elemVolVars[idx].molarDensity()*

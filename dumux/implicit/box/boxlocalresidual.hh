@@ -81,7 +81,7 @@ protected:
     void evalDirichlet_()
     {
         PrimaryVariables dirichletValues(0);
-        for (int scvIdx = 0; scvIdx < this->fvGeometry_().numVertices; ++scvIdx) {
+        for (int scvIdx = 0; scvIdx < this->fvGeometry_().numScv; ++scvIdx) {
             const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
             
             if (bcTypes.hasDirichlet()) {
@@ -227,7 +227,7 @@ protected:
     {
         // calculate the mass flux over the faces and subtract
         // it from the local rates
-        for (int scvfIdx = 0; scvfIdx < this->fvGeometry_().numEdges; scvfIdx++)
+        for (int scvfIdx = 0; scvfIdx < this->fvGeometry_().numScvf; scvfIdx++)
         {
             int i = this->fvGeometry_().subContVolFace[scvfIdx].i;
             int j = this->fvGeometry_().subContVolFace[scvfIdx].j;

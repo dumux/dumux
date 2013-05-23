@@ -299,7 +299,7 @@ protected:
         DimVector pressureGradAtSCVCenter(0.0);
         DimVector grad(0.0);
 
-        for (int scvIdx2 = 0; scvIdx2 < this->fvGeometry_().numVertices; scvIdx2++)
+        for (int scvIdx2 = 0; scvIdx2 < this->fvGeometry_().numScv; scvIdx2++)
         {
             grad = this->fvGeometry_().subContVol[scvIdx].gradCenter[scvIdx2];
             Valgrind::CheckDefined(grad);
@@ -324,11 +324,11 @@ protected:
      */
     void evalBoundary_()
     {
-        assert(this->residual_.size() == this->fvGeometry_().numVertices);
+        assert(this->residual_.size() == this->fvGeometry_().numScv);
         const ReferenceElement &refElement = ReferenceElements::general(this->element_().geometry().type());
 
         // loop over sub-control volums of the element
-        for (int scvIdx = 0; scvIdx < this->fvGeometry_().numVertices; scvIdx++)
+        for (int scvIdx = 0; scvIdx < this->fvGeometry_().numScv; scvIdx++)
         {
             // consider only SCVs on the boundary
             if (this->fvGeometry_().subContVol[scvIdx].inner)
@@ -539,7 +539,7 @@ protected:
         if (stabilizationAlpha_ != 0)
         {
             // loop over the edges of the element
-            for (int faceIdx = 0; faceIdx < this->fvGeometry_().numEdges; faceIdx++)
+            for (int faceIdx = 0; faceIdx < this->fvGeometry_().numScvf; faceIdx++)
             {
                 const FluxVariables fluxVars(this->problem_(),
                                              this->element_(),
