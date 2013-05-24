@@ -51,7 +51,10 @@ public:
     /*!
      * \brief This module defines one new primary variable.
      */
-    static const unsigned int NumPrimaryVars = numComponents;
+    static const unsigned int numPrimaryVars = numComponents;
+
+    DUNE_DEPRECATED_MSG("use numPrimaryVars (uncapitalized 'n') instead") 
+    static const unsigned int NumPrimaryVars = numPrimaryVars; //!< \deprecated
 
     /*!
      * \brief Index for the fugacity of the first component in the

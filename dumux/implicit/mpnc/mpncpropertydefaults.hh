@@ -87,7 +87,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 public:
-    static const unsigned int value = Indices::NumPrimaryVars;
+    static const unsigned int value = Indices::numPrimaryVars;
 };
 
 /*!

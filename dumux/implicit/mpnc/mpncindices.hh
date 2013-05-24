@@ -55,7 +55,7 @@ struct MPNCIndices :
                                TypeTag,
                                GET_PROP_VALUE(TypeTag, EnableKinetic) >,
         public MPNCEnergyIndices<BasePVOffset +
-                                 MPNCMassIndices<0, TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic) >::NumPrimaryVars,
+                                 MPNCMassIndices<0, TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic) >::numPrimaryVars,
                                  GET_PROP_VALUE(TypeTag, EnableEnergy),
                                  GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
 {
@@ -67,23 +67,29 @@ private:
             enum { numPhases = FluidSystem::numPhases };
 
             typedef MPNCMassIndices<BasePVOffset, TypeTag, enableKinetic> MassIndices;
-            typedef MPNCEnergyIndices<BasePVOffset + MassIndices::NumPrimaryVars, enableEnergy, enableKineticEnergy> EnergyIndices;
+            typedef MPNCEnergyIndices<BasePVOffset + MassIndices::numPrimaryVars, enableEnergy, enableKineticEnergy> EnergyIndices;
 
 public:
     /*!
      * \brief The number of primary variables / equations.
      */
     // temperature + Mass Balance  + constraints for switch stuff
-    static const unsigned int NumPrimaryVars =
-        MassIndices::NumPrimaryVars +
-        EnergyIndices::NumPrimaryVars +
+    static const unsigned int numPrimaryVars =
+        MassIndices::numPrimaryVars +
+        EnergyIndices::numPrimaryVars +
         numPhases;
+
+    DUNE_DEPRECATED_MSG("use numPrimaryVars (uncapitalized 'n') instead") 
+    static const unsigned int NumPrimaryVars = numPrimaryVars; //!< \deprecated
 
     /*!
      * \brief The number of primary variables / equations of the energy module.
      */
-    static const unsigned int NumPrimaryEnergyVars =
-        EnergyIndices::NumPrimaryVars ;
+    static const unsigned int numPrimaryEnergyVars =
+        EnergyIndices::numPrimaryVars ;
+
+    DUNE_DEPRECATED_MSG("use numPrimaryEnergyVars (uncapitalized 'n') instead") 
+    static const unsigned int NumPrimaryEnergyVars = numPrimaryEnergyVars; //!< \deprecated
 
     /*!
      * \brief Index of the saturation of the first phase in a vector
@@ -93,8 +99,8 @@ public:
      * saturations for the phases [1, ..., numPhases - 1]
      */
     static const unsigned int s0Idx =
-        MassIndices::NumPrimaryVars +
-        EnergyIndices::NumPrimaryVars;
+        MassIndices::numPrimaryVars +
+        EnergyIndices::numPrimaryVars;
 
     DUNE_DEPRECATED_MSG("use s0Idx (uncapitalized 's') instead") 
     static const int S0Idx = s0Idx; //!< \deprecated index of the saturation of the first phase
@@ -104,8 +110,8 @@ public:
      *        primary variables.
      */
     static const unsigned int p0Idx =
-        MassIndices::NumPrimaryVars +
-        EnergyIndices::NumPrimaryVars +
+        MassIndices::numPrimaryVars +
+        EnergyIndices::numPrimaryVars +
         numPhases - 1;
 
     /*!
@@ -114,8 +120,8 @@ public:
      * The index for the remaining phases are consecutive.
      */
     static const unsigned int phase0NcpIdx =
-        MassIndices::NumPrimaryVars +
-        EnergyIndices::NumPrimaryVars;
+        MassIndices::numPrimaryVars +
+        EnergyIndices::numPrimaryVars;
 };
 
 }
