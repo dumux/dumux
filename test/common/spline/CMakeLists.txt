@@ -1,5 +1,7 @@
 # add build targets
 add_executable("test_spline" test_spline.cc)
+add_test(test_spline
+  ${CMAKE_CURRENT_BINARY_DIR}/test_spline)
 
 set(NORMALTESTS test_spline)
 set(ALLTESTS ${NORMALTESTS})
@@ -11,5 +13,4 @@ add_dependencies(${_test_target} ${ALLTESTS})
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})
-  add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})

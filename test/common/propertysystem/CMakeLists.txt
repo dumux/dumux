@@ -1,5 +1,7 @@
 # build the test for the property system
 add_executable("test_propertysystem" test_propertysystem.cc)
+add_test(test_propertysystem
+  ${CMAKE_CURRENT_BINARY_DIR}/test_propertysystem)
 
 set(NORMALTESTS test_propertysystem)
 set(ALLTESTS ${NORMALTESTS})
@@ -11,5 +13,4 @@ add_dependencies(${_test_target} ${ALLTESTS})
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})
-  add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})

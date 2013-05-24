@@ -1,4 +1,6 @@
 add_executable("test_fluidsystems" test_fluidsystems.cc)
+add_test(test_fluidsystems
+  ${CMAKE_CURRENT_BINARY_DIR}/test_fluidsystems)
 
 set(NORMALTESTS test_fluidsystems)
 set(ALLTESTS ${NORMALTESTS})
@@ -10,5 +12,4 @@ add_dependencies(${_test_target} ${ALLTESTS})
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})
-  add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})

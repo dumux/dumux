@@ -4,22 +4,23 @@
 #
 # Usage:
 #
-# runTest.sh REFERENCE_RESULT_FILE TEST_RESULT_FILE TEST_BINARY TEST_ARGS
+# runTest.sh FUZZY_COMPARE REFERENCE_RESULT_FILE TEST_RESULT_FILE TEST_BINARY TEST_ARGS
 #
 
 function usage() {
     echo "Usage:"
     echo
-    echo "runTest.sh REFERENCE_RESULT_FILE TEST_RESULT_FILE TEST_BINARY [TEST_ARGS]"
+    echo "runTest.sh FUZZY_COMPARE REFERENCE_RESULT_FILE TEST_RESULT_FILE TEST_BINARY [TEST_ARGS]"
 };
 
-REFERENCE_RESULT="$1"
-TEST_RESULT="$2"
-TEST_BINARY="$3"
-TEST_ARGS="${@:4:100}"
+FUZZY_COMPARE="$1"
+REFERENCE_RESULT="$2"
+TEST_RESULT="$3"
+TEST_BINARY="$4"
+TEST_ARGS="${@:5:100}"
 
 # make sure we have at least 3 parameters
-if test "$#" -lt 3; then
+if test "$#" -lt 4; then
     echo "Wrong number of parameters"
     echo
     usage
@@ -52,7 +53,7 @@ if ! test -r "$TEST_RESULT"; then
     exit 1
 fi
 
-if ! python bin/fuzzycomparevtu.py "$REFERENCE_RESULT" "$TEST_RESULT"; then
+if ! python "$FUZZY_COMPARE" "$REFERENCE_RESULT" "$TEST_RESULT"; then
     echo "The files \"$TEST_RESULT\" and \"$REFERENCE_RESULT\" are different."
     echo "Make sure the contents of \"$TEST_RESULT\" are still valid and "
     echo "make it the reference result if necessary."

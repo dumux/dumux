@@ -1,4 +1,6 @@
 add_executable("test_immiscibleflash" test_immiscibleflash.cc)
+add_test(test_immiscibleflash
+  ${CMAKE_CURRENT_BINARY_DIR}/test_immiscibleflash)
 
 set(NORMALTESTS test_immiscibleflash)
 set(ALLTESTS ${NORMALTESTS})
@@ -10,5 +12,4 @@ add_dependencies(${_test_target} ${ALLTESTS})
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})
-  add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})

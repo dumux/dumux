@@ -1,9 +1,31 @@
 # add build targets
 add_executable("test_adaptive2p2c" test_adaptive2p2c.cc)
 add_dune_alugrid_flags(test_adaptive2p2c)
-add_executable("test_dec2p2c" test_dec2p2c.cc)
-add_executable("test_multiphysics2p2c" test_multiphysics2p2c.cc)
+add_test(test_adaptive2p2c
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_adaptive2p2c-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_adaptive2p2c-00008.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_adaptive2p2c
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_adaptive2p2c.input)
 
+add_executable("test_dec2p2c" test_dec2p2c.cc)
+add_test(test_dec2p2c
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_dec2p2c-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_dec2p2c-00021.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_dec2p2c
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_dec2p2c.input)
+
+add_executable("test_multiphysics2p2c" test_multiphysics2p2c.cc)
+add_test(test_multiphysics2p2c
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_multiphysics2p2c-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_multiphysics2p2c-00021.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_multiphysics2p2c
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_multiphysics2p2c.input)
 
 set(NORMALTESTS
   test_adaptive2p2c
@@ -18,5 +40,4 @@ add_dependencies(${_test_target} ${ALLTESTS})
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})
-  add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})

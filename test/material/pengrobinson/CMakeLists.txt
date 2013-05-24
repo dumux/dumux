@@ -1,4 +1,6 @@
 add_executable("test_pengrobinson" test_pengrobinson.cc)
+add_test(test_pengrobinson
+  ${CMAKE_CURRENT_BINARY_DIR}/test_pengrobinson)
 
 set(NORMALTESTS test_pengrobinson)
 set(ALLTESTS ${NORMALTESTS})
@@ -10,5 +12,4 @@ add_dependencies(${_test_target} ${ALLTESTS})
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})
-  add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})
