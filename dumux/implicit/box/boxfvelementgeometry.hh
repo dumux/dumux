@@ -945,8 +945,8 @@ public:
 
                 JacobianInverseTransposed jacInvT =
                     geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
-                for (int scvIdx = 0; scvIdx < numScv; scvIdx++)
-                    jacInvT.mv(localJac[scvIdx][0], subContVol[scvIdx].gradCenter[scvIdx]);
+                for (int vert = 0; vert < numScv; vert++)
+                    jacInvT.mv(localJac[vert][0], subContVol[scvIdx].gradCenter[vert]);
             }
         }
     }
