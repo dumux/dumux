@@ -85,11 +85,17 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          The effective saturation of the wetting phase \f$\overline{S}_w\f$
      */
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pC)
     {
         assert(pC >= 0);
 
         return pow(pow(params.vgAlpha()*pC, params.vgN()) + 1, -params.vgM());
+    }
+
+    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
+    static Scalar Sw(const Params &params, Scalar pC)
+    {
+        return sw(params, pC);
     }
 
     /*!

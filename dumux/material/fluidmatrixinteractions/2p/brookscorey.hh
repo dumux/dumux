@@ -88,12 +88,18 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Effective wetting phase saturation calculated as inverse of BrooksCorey constitutive relation.
      */
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pC)
     {
         assert(pC >= 0);
 
         Scalar tmp = pow(pC/params.pe(), -params.lambda());
         return std::min(std::max(tmp, Scalar(0.0)), Scalar(1.0));
+    }
+
+    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
+    static Scalar Sw(const Params &params, Scalar pC)
+    {
+        return sw(params, pC);
     }
 
     /*!

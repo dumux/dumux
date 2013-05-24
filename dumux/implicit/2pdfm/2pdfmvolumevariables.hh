@@ -244,7 +244,7 @@ public:
             /*
              * Inverse capillary pressure function SwM = pcM^(-1)(pcF(SwF))
              */
-            satWMatrix_ = MaterialLaw::Sw(materialParamsMatrix, pCFracture_);
+            satWMatrix_ = MaterialLaw::sw(materialParamsMatrix, pCFracture_);
             satNMatrix_ = 1 - satWMatrix_;
         }
     }

@@ -402,10 +402,10 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
 
     PhaseVector SmobI(0.);
     SmobI[wPhaseIdx] = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(*elementPtrI).Swr())
+                            - problem().spatialParams().materialLawParams(*elementPtrI).swr())
                             , 1e-2);
     SmobI[nPhaseIdx] = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(*elementPtrI).Snr())
+                                - problem().spatialParams().materialLawParams(*elementPtrI).snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
@@ -649,10 +649,10 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
     DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementPtrI));
 
     Scalar SwmobI = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(*elementPtrI).Swr())
+                            - problem().spatialParams().materialLawParams(*elementPtrI).swr())
                             , 1e-2);
     Scalar SnmobI = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(*elementPtrI).Snr())
+                                - problem().spatialParams().materialLawParams(*elementPtrI).snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);

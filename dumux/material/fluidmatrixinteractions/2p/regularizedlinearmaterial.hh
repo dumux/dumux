@@ -97,9 +97,15 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return The effective saturation of the wetting phase \f$\overline{S}_w\f$
      */
+    static Scalar sw(const Params &params, Scalar pC)
+    {
+        return LinearMaterial::sw(params, pC);
+    }
+
+    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
     static Scalar Sw(const Params &params, Scalar pC)
     {
-        return LinearMaterial::Sw(params, pC);
+        return sw(params, pC);
     }
 
     /*!

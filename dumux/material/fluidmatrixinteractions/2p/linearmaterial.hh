@@ -84,9 +84,15 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Effective wetting phase saturation calculated as inverse of the linear constitutive relation.
      */
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pC)
     {
         return 1 - (pC - params.entryPC())/(params.maxPC() - params.entryPC());
+    }
+
+    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
+    static Scalar Sw(const Params &params, Scalar pC)
+    {
+        return sw(params, pC);
     }
 
     /*!

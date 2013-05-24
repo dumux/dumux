@@ -121,8 +121,8 @@ private:
     	ElementIterator dummyElement = problem_.gridView().template begin<0>();
         const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(*dummyElement));
 
-        swr_ = materialLawParams.Swr();
-        snr_ = materialLawParams.Snr();
+        swr_ = materialLawParams.swr();
+        snr_ = materialLawParams.snr();
         Scalar porosity = problem_.spatialParams().porosity(*dummyElement);
 
         FluidState fluidState;

@@ -117,16 +117,16 @@ public:
      *
      * For the non-regularized part:
      *
-     * \copydetails BrooksCorey::Sw()
+     * \copydetails BrooksCorey::sw()
      */
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pC)
     {
         const Scalar Sthres = params.thresholdSw();
 
         // calculate the saturation which corrosponds to the
         // saturation in the non-regularized version of
         // the Brooks-Corey law
-        Scalar Swe = BrooksCorey::Sw(params, pC);
+        Scalar Swe = BrooksCorey::sw(params, pC);
 
         // make sure that the capilary pressure observes a
         // derivative != 0 for 'illegal' saturations. This is
@@ -146,7 +146,13 @@ public:
             return 1.0 + (pC - pC_SweHigh)/m;;
         }
 
-        return BrooksCorey::Sw(params, pC);
+        return BrooksCorey::sw(params, pC);
+    }
+
+    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
+    static Scalar Sw(const Params &params, Scalar pC)
+    {
+        return sw(params, pC);
     }
 
     /*!
@@ -211,7 +217,7 @@ public:
         if (pC < 0)
             Swe = 1.5; // make sure we regularize below
         else
-            Swe = BrooksCorey::Sw(params, pC);
+            Swe = BrooksCorey::sw(params, pC);
 
         // derivative of the regularization
         if (Swe <= Sthres) {

@@ -316,10 +316,10 @@ void FVTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2>&
 
     PhaseVector SmobI(0.);
     SmobI[wPhaseIdx] = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(*elementI).Swr())
+                            - problem().spatialParams().materialLawParams(*elementI).swr())
                             , 1e-2);
     SmobI[nPhaseIdx] = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(*elementI).Snr())
+                                - problem().spatialParams().materialLawParams(*elementI).snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);

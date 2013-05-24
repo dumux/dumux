@@ -139,10 +139,10 @@ public:
      *
      *  For not-regularized part:
      *
-         \copydetails VanGenuchten::Sw()
+         \copydetails VanGenuchten::sw()
      *
      */
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pC)
     {
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
@@ -160,7 +160,7 @@ public:
             return pC/m1 + 1.0;
         }
         else
-            Sw = VanGenuchten::Sw(params, pC);
+            Sw = VanGenuchten::sw(params, pC);
 
         // invert the regularization if necessary
         if (Sw <= SwThLow) {
@@ -183,6 +183,12 @@ public:
         }
 
         return Sw;
+    }
+
+    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
+    static Scalar Sw(const Params &params, Scalar pC)
+    {
+        return sw(params, pC);
     }
 
     /*!
@@ -235,7 +241,7 @@ public:
         if (pC < 0)
             Sw = 1.5; // make sure we regularize below
         else
-            Sw = VanGenuchten::Sw(params, pC);
+            Sw = VanGenuchten::sw(params, pC);
 
         // derivative of the regularization
         if (Sw < params.pCLowSw()) {

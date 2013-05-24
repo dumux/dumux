@@ -80,7 +80,7 @@ public:
      */
     static Scalar pC(const Params &params, Scalar Sw)
     {
-        return EffLaw::pC(params, SwToSwe(params, Sw));
+        return EffLaw::pC(params, swToSwe(params, Sw));
     }
 
     /*!
@@ -94,9 +94,15 @@ public:
      *
      * \return The absolute saturation of the wetting phase \f$S_w\f$
      */
+    static Scalar sw(const Params &params, Scalar pC)
+    {
+        return sweToSw_(params, EffLaw::sw(params, pC));
+    }
+
+    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
     static Scalar Sw(const Params &params, Scalar pC)
     {
-        return SweToSw_(params, EffLaw::Sw(params, pC));
+        return sw(params, pC);
     }
 
     /*!
@@ -116,7 +122,7 @@ public:
     */
     static Scalar dpC_dSw(const Params &params, Scalar Sw)
     {
-        return EffLaw::dpC_dSw(params, SwToSwe(params, Sw) )*dSwe_dSw_(params);
+        return EffLaw::dpC_dSw(params, swToSwe(params, Sw) )*dSwe_dSw_(params);
     }
 
     /*!
@@ -154,7 +160,7 @@ public:
      */
     static Scalar krw(const Params &params, Scalar Sw)
     {
-        return EffLaw::krw(params, SwToSwe(params, Sw));
+        return EffLaw::krw(params, swToSwe(params, Sw));
     };
 
     /*!
@@ -169,7 +175,7 @@ public:
      */
     static Scalar krn(const Params &params, Scalar Sw)
     {
-        return EffLaw::krn(params, SwToSwe(params, Sw));
+        return EffLaw::krn(params, swToSwe(params, Sw));
     }
 
     /*!
@@ -181,9 +187,15 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Effective saturation of the wetting phase.
      */
+    static Scalar swToSwe(const Params &params, Scalar Sw)
+    {
+        return (Sw - params.swr())/(1 - params.swr() - params.snr());
+    }
+
+    DUNE_DEPRECATED_MSG("use swToSwe() (uncapitalized 's') instead")
     static Scalar SwToSwe(const Params &params, Scalar Sw)
     {
-        return (Sw - params.Swr())/(1 - params.Swr() - params.Snr());
+        return swToSwe(params, Sw);
     }
 
     /*!
@@ -195,9 +207,15 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Effective saturation of the non-wetting phase.
      */
+    static Scalar snToSne(const Params &params, Scalar Sn)
+    {
+        return (Sn - params.snr())/(1 - params.swr() - params.snr());
+    }
+
+    DUNE_DEPRECATED_MSG("use snToSne() (uncapitalized 's') instead")
     static Scalar SnToSne(const Params &params, Scalar Sn)
     {
-        return (Sn - params.Snr())/(1 - params.Swr() - params.Snr());
+        return snToSne(params, Sn);
     }
 
 private:
@@ -210,9 +228,9 @@ private:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Absolute saturation of the non-wetting phase.
      */
-    static Scalar SweToSw_(const Params &params, Scalar Swe)
+    static Scalar sweToSw_(const Params &params, Scalar Swe)
     {
-        return Swe*(1 - params.Swr() - params.Snr()) + params.Swr();
+        return Swe*(1 - params.swr() - params.snr()) + params.swr();
     }
 
     /*!
@@ -224,7 +242,7 @@ private:
      * \return          Derivative of the effective saturation w.r.t. the absolute saturation.
      */
     static Scalar dSwe_dSw_(const Params &params)
-    { return 1.0/(1 - params.Swr() - params.Snr()); }
+    { return 1.0/(1 - params.swr() - params.snr()); }
 
     /*!
      * \brief           Derivative of the absolute saturation w.r.t. the effective saturation.
@@ -235,7 +253,7 @@ private:
      * \return          Derivative of the absolute saturation w.r.t. the effective saturation.
      */
     static Scalar dSw_dSwe_(const Params &params)
-    { return 1 - params.Swr() - params.Snr(); }
+    { return 1 - params.swr() - params.snr(); }
 };
 }
 

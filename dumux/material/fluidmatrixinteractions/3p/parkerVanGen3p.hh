@@ -73,7 +73,7 @@ public:
     Scalar pc,pc_prime,Se_regu;
     Scalar PC_VG_REG = 0.01;
 
-    Se   = (Sw-params.Swr())/(1.-params.Sgr());
+    Se   = (Sw-params.swr())/(1.-params.sgr());
 
     /* Snr  = 0.0;   test version   */
 
@@ -96,7 +96,7 @@ public:
             /* value and derivative at regularization point */
             if (Se<=PC_VG_REG) Se_regu = PC_VG_REG; else Se_regu = 1-PC_VG_REG;
             pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN())/params.vgAlpha();
-            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.Sgr()-params.Swr())/params.vgN();
+            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgN();
 
             /* evaluate tangential */
             r        = (Se-Se_regu)*pc_prime+pc;
@@ -117,7 +117,7 @@ public:
     Scalar pc,pc_prime,Se_regu;
     Scalar PC_VG_REG = 0.01;
 
-    Se   = (Sw-params.Swr())/(1.-params.Snr());
+    Se   = (Sw-params.swr())/(1.-params.snr());
 
     /* Snr  = 0.0;   test version   */
 
@@ -140,7 +140,7 @@ public:
             /* value and derivative at regularization point */
             if (Se<=PC_VG_REG) Se_regu = PC_VG_REG; else Se_regu = 1-PC_VG_REG;
             pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN())/params.vgAlpha();
-            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.Snr()-params.Swr())/params.vgN();
+            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgN();
 
             /* evaluate tangential */
             r        = (Se-Se_regu)*pc_prime+pc;
@@ -160,7 +160,7 @@ public:
     Scalar pc,pc_prime,Se_regu;
     Scalar PC_VG_REG = 0.01;
 
-    Se   = (St-params.Swrx())/(1.-params.Swrx());
+    Se   = (St-params.swrx())/(1.-params.swrx());
 
     /* Snr  = 0.0;   test version   */
 
@@ -183,7 +183,7 @@ public:
             /* value and derivative at regularization point */
             if (Se<=PC_VG_REG) Se_regu = PC_VG_REG; else Se_regu = 1-PC_VG_REG;
             pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN())/params.vgAlpha();
-            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.Sgr()-params.Swrx())/params.vgN();
+            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgN();
 
             /* evaluate tangential */
             r        = (Se-Se_regu)*pc_prime+pc;
@@ -201,10 +201,10 @@ public:
         if (Sne<=0.001) Sne=0.0;
         if (Sne>=1.0) Sne=1.0;
 
-        if (Sne>params.Snr()) alpha = 1.0;
+        if (Sne>params.snr()) alpha = 1.0;
         else
         {
-         if (params.Snr()>=0.001) alpha = Sne/params.Snr();
+         if (params.snr()>=0.001) alpha = Sne/params.snr();
          else          alpha = 0.0;
         }
         return(alpha);
@@ -214,9 +214,16 @@ public:
      * \brief The saturation-capillary pressure curve.
      *
      */
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pC)
     {
         DUNE_THROW(Dune::NotImplemented, "Sw(pc) for three phases not implemented! Do it yourself!");
+    }
+
+
+    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
+    static Scalar Sw(const Params &params, Scalar pC)
+    {
+        return sw(params, pC);
     }
 
     /*!
@@ -256,7 +263,7 @@ public:
     {
 
         //transformation to effective saturation
-        Scalar Se = (saturation - params.Swr()) / (1-params.Swr());
+        Scalar Se = (saturation - params.swr()) / (1-params.swr());
 
         /* regularization */
         if(Se > 1.0) return 1.;
@@ -286,8 +293,8 @@ public:
     static Scalar krn(const Params &params, Scalar Sw, Scalar saturation, Scalar Sg)
     {
 
-        Scalar Swe = std::min((Sw - params.Swr()) / (1 - params.Swr()), 1.);
-        Scalar Ste = std::min((Sw +  saturation - params.Swr()) / (1 - params.Swr()), 1.);
+        Scalar Swe = std::min((Sw - params.swr()) / (1 - params.swr()), 1.);
+        Scalar Ste = std::min((Sw +  saturation - params.swr()) / (1 - params.swr()), 1.);
 
         // regularization
         if(Swe <= 0.0) Swe = 0.;
@@ -302,11 +309,11 @@ public:
         if (params.krRegardsSnr())
         {
             // regard Snr in the permeability of the n-phase, see Helmig1997
-            Scalar resIncluded = std::max(std::min((saturation - params.Snr()/ (1-params.Swr())), 1.), 0.);
+            Scalar resIncluded = std::max(std::min((saturation - params.snr()/ (1-params.swr())), 1.), 0.);
             krn_ *= std::sqrt(resIncluded );
         }
         else
-            krn_ *= std::sqrt(saturation / (1 - params.Swr()));   // Hint: (Ste - Swe) = Sn / (1-Srw)
+            krn_ *= std::sqrt(saturation / (1 - params.swr()));   // Hint: (Ste - Swe) = Sn / (1-Srw)
 
 
         return krn_;
@@ -331,7 +338,7 @@ public:
     {
 
         // Se = (Sw+Sn - Sgr)/(1-Sgr)
-        Scalar Se = std::min(((1-saturation) - params.Sgr()) / (1 - params.Sgr()), 1.);
+        Scalar Se = std::min(((1-saturation) - params.sgr()) / (1 - params.sgr()), 1.);
 
 
         /* regularization */
@@ -340,7 +347,7 @@ public:
         Scalar scalFact = 1.;
         if (saturation<=0.1)
         {
-          scalFact = (saturation - params.Sgr())/(0.1 - params.Sgr());
+          scalFact = (saturation - params.sgr())/(0.1 - params.sgr());
           if (scalFact < 0.) scalFact = 0.;
         }
 

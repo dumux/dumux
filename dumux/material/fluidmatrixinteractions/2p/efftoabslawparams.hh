@@ -44,35 +44,43 @@ public:
 
     EffToAbsLawParams()
         : EffLawParams()
-    { Swr_ = Snr_ = 0; }
+    { swr_ = snr_ = 0; }
 
     /*!
      * \brief Return the residual wetting saturation.
      */
+    Scalar swr() const
+    { return swr_; }
+
+    DUNE_DEPRECATED_MSG("use swr() (uncapitalized 's') instead")
     Scalar Swr() const
-    { return Swr_; }
+    { return swr(); }
 
     /*!
      * \brief Set the residual wetting saturation.
      */
     void setSwr(Scalar v)
-    { Swr_ = v; }
+    { swr_ = v; }
 
     /*!
      * \brief Return the residual non-wetting saturation.
      */
+    Scalar snr() const
+    { return snr_; }
+
+    DUNE_DEPRECATED_MSG("use snr() (uncapitalized 's') instead")
     Scalar Snr() const
-    { return Snr_; }
+    { return snr(); }
 
     /*!
      * \brief Set the residual non-wetting saturation.
      */
     void setSnr(Scalar v)
-    { Snr_ = v; }
+    { snr_ = v; }
 
 private:
-    Scalar Swr_;
-    Scalar Snr_;
+    Scalar swr_;
+    Scalar snr_;
 };
 
 }

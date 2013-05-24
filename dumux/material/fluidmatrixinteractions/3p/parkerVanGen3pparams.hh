@@ -114,13 +114,13 @@ public:
         switch (phaseIdx)
         {
         case 0:
-            return Swr_;
+            return swr_;
             break;
         case 1:
-            return Snr_;
+            return snr_;
             break;
         case 2:
-            return Sgr_;
+            return sgr_;
             break;
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
@@ -140,47 +140,63 @@ public:
     /*!
      * \brief Return the residual wetting saturation.
      */
+    Scalar swr() const
+    { return swr_; }
+
+    DUNE_DEPRECATED_MSG("use swr() (uncapitalized 's') instead")
     Scalar Swr() const
-    { return Swr_; }
+    { return swr(); }
 
     /*!
      * \brief Set the residual wetting saturation.
      */
     void setSwr(Scalar input)
-    { Swr_ = input; }
+    { swr_ = input; }
 
     /*!
      * \brief Return the residual non-wetting saturation.
      */
+    Scalar snr() const
+    { return snr_; }
+
+    DUNE_DEPRECATED_MSG("use snr() (uncapitalized 's') instead")
     Scalar Snr() const
-    { return Snr_; }
+    { return snr(); }
 
     /*!
      * \brief Set the residual non-wetting saturation.
      */
     void setSnr(Scalar input)
-    { Snr_ = input; }
+    { snr_ = input; }
 
     /*!
      * \brief Return the residual gas saturation.
      */
+    Scalar sgr() const
+    { return sgr_; }
+
+    DUNE_DEPRECATED_MSG("use sgr() (uncapitalized 's') instead")
     Scalar Sgr() const
-    { return Sgr_; }
+    { return sgr(); }
 
     /*!
      * \brief Set the residual gas saturation.
      */
     void setSgr(Scalar input)
-    { Sgr_ = input; }
+    { sgr_ = input; }
 
+    Scalar swrx() const
+    { return swrx_; }
+
+    DUNE_DEPRECATED_MSG("use swrx() (uncapitalized 's') instead")
     Scalar Swrx() const
-    { return Swrx_; }
+    { return swrx(); }
 
     /*!
      * \brief Set the residual gas saturation.
      */
     void setSwrx(Scalar input)
-    { Swrx_ = input; }
+    { swrx_ = input; }
 
     /*!
      * \brief defines the scaling parameters of capillary pressure between the phases (=1 for Gas-Water)
@@ -247,10 +263,10 @@ private:
     Scalar vgAlpha_;
     Scalar vgM_;
     Scalar vgN_;
-    Scalar Swr_;
-    Scalar Snr_;
-    Scalar Sgr_;
-    Scalar Swrx_;     /* (Sw+Sn)_r */
+    Scalar swr_;
+    Scalar snr_;
+    Scalar sgr_;
+    Scalar swrx_;     /* (Sw+Sn)_r */
 
     Scalar KdNAPL_;
     Scalar rhoBulk_;

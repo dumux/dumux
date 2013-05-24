@@ -232,8 +232,8 @@ private:
 template<class TypeTag>
 typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCFLFluxFunction(const Element& element)
 {
-    Scalar residualSatW = problem_.spatialParams().materialLawParams(element).Swr();
-    Scalar residualSatNW = problem_.spatialParams().materialLawParams(element).Snr();
+    Scalar residualSatW = problem_.spatialParams().materialLawParams(element).swr();
+    Scalar residualSatNW = problem_.spatialParams().materialLawParams(element).snr();
 
     // compute dt restriction
     Scalar volumeCorrectionFactor = 1 - residualSatW - residualSatNW;

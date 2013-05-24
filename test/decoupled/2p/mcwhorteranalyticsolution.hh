@@ -140,8 +140,8 @@ private:
     	ElementIterator dummyElement = problem_.gridView().template begin<0>();
         const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(*dummyElement));
 
-        swr_ = materialLawParams.Swr();
-        snr_ = materialLawParams.Snr();
+        swr_ = materialLawParams.swr();
+        snr_ = materialLawParams.snr();
         porosity_ = problem_.spatialParams().porosity(*dummyElement);
         permeability_ = problem_.spatialParams().intrinsicPermeability(*dummyElement)[0][0];
         PrimaryVariables initVec;
