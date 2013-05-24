@@ -988,7 +988,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     Scalar pc(0.), oldPc(0.);
     if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
     {
-        pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(elementI),
+        pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
                 fluidState.saturation(wPhaseIdx));
         int maxiter = 5; int iterout = -1;
         //start iteration loop
@@ -1016,7 +1016,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             //update with better pressures
             flashSolver.concentrationFlash2p2c(fluidState, Z1, pressure,
                     problem().spatialParams().porosity(elementI), problem().temperatureAtPos(globalPos));
-            pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(elementI),
+            pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
                                 fluidState.saturation(wPhaseIdx));
             // TODO: get right criterion, do output for evaluation
             //converge criterion

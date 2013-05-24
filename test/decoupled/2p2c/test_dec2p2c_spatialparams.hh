@@ -115,8 +115,8 @@ public:
         // parameters for the linear
         // entry pressures function
 
-        materialLawParams_.setEntryPC(0);
-        materialLawParams_.setMaxPC(10000);
+        materialLawParams_.setEntryPc(0);
+        materialLawParams_.setMaxPc(10000);
 
         for(int i = 0; i < dim; i++)
         {

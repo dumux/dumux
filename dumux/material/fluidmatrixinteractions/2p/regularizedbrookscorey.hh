@@ -78,9 +78,9 @@ public:
      *
      * For the non-regularized part:
      *
-     * \copydetails BrooksCorey::pC()
+     * \copydetails BrooksCorey::pc()
      */
-    static Scalar pC(const Params &params, Scalar Swe)
+    static Scalar pc(const Params &params, Scalar Swe)
     {
         const Scalar Sthres = params.thresholdSw();
 
@@ -92,18 +92,24 @@ public:
         // temporarily is in an 'illegal' range.
         if (Swe <= Sthres) {
             Scalar m = BrooksCorey::dpC_dSw(params, Sthres);
-            Scalar pC_SweLow = BrooksCorey::pC(params, Sthres);
+            Scalar pC_SweLow = BrooksCorey::pc(params, Sthres);
             return pC_SweLow + m*(Swe - Sthres);
         }
         else if (Swe > 1.0) {
             Scalar m = BrooksCorey::dpC_dSw(params, 1.0);
-            Scalar pC_SweHigh = BrooksCorey::pC(params, 1.0);
+            Scalar pC_SweHigh = BrooksCorey::pc(params, 1.0);
             return pC_SweHigh + m*(Swe - 1.0);
         }
 
         // if the effective saturation is in an 'reasonable'
         // range, we use the real Brooks-Corey law...
-        return BrooksCorey::pC(params, Swe);
+        return BrooksCorey::pc(params, Swe);
+    }
+
+    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
+    static Scalar pC(const Params &params, Scalar Swe)
+    {
+        return pc(params, Swe);
     }
 
     /*!
@@ -135,14 +141,14 @@ public:
         // saturation moving to the right direction if it
         // temporarily is in an 'illegal' range.
         if (Swe <= Sthres) {
-            // invert the low saturation regularization of pC()
+            // invert the low saturation regularization of pc()
             Scalar m = BrooksCorey::dpC_dSw(params, Sthres);
-            Scalar pC_SweLow = BrooksCorey::pC(params, Sthres);
+            Scalar pC_SweLow = BrooksCorey::pc(params, Sthres);
             return Sthres + (pC - pC_SweLow)/m;
         }
         else if (Swe > 1.0) {
             Scalar m = BrooksCorey::dpC_dSw(params, 1.0);
-            Scalar pC_SweHigh = BrooksCorey::pC(params, 1.0);
+            Scalar pC_SweHigh = BrooksCorey::pc(params, 1.0);
             return 1.0 + (pC - pC_SweHigh)/m;;
         }
 
@@ -174,12 +180,12 @@ public:
 
         // derivative of the regualarization
         if (Swe <= Sthres) {
-            // calculate the slope of the straight line used in pC()
+            // calculate the slope of the straight line used in pc()
             Scalar m = BrooksCorey::dpC_dSw(params, Sthres);
             return m;
         }
         else if (Swe > 1.0) {
-            // calculate the slope of the straight line used in pC()
+            // calculate the slope of the straight line used in pc()
             Scalar m = BrooksCorey::dpC_dSw(params, 1.0);
             return m;
         }
@@ -221,12 +227,12 @@ public:
 
         // derivative of the regularization
         if (Swe <= Sthres) {
-            // calculate the slope of the straight line used in pC()
+            // calculate the slope of the straight line used in pc()
             Scalar m = BrooksCorey::dpC_dSw(params, Sthres);
             return 1/m;
         }
         else if (Swe > 1.0) {
-            // calculate the slope of the straight line used in pC()
+            // calculate the slope of the straight line used in pc()
             Scalar m = BrooksCorey::dpC_dSw(params, 1.0);
             return 1/m;
         }

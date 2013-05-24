@@ -42,10 +42,10 @@ public:
     LinearMaterialParams()
     {}
 
-    LinearMaterialParams(Scalar entryPC, Scalar maxPC)
+    LinearMaterialParams(Scalar entryPc, Scalar maxPc)
     {
-        setEntryPC(entryPC);
-        setMaxPC(maxPC);
+        setEntryPc(entryPc);
+        setMaxPc(maxPc);
     };
 
 
@@ -54,37 +54,61 @@ public:
      *
      * The entry pressure is reached at \f$\overline S_w = 1\f$
      */
-    Scalar entryPC() const
-    { return entryPC_; }
+    Scalar entryPc() const
+    { return entryPc_; }
+
+    DUNE_DEPRECATED_MSG("use entryPc() (uncapitalized 'c') instead")
+    Scalar entryPC()
+    {
+        return entryPc();
+    }
 
     /*!
      * \brief Set the entry pressure for the linear material law.
      *
      * The entry pressure is reached at \f$ \overline S_w = 1\f$
      */
-    void setEntryPC(Scalar v)
-    { entryPC_ = v; }
+    void setEntryPc(Scalar v)
+    { entryPc_ = v; }
+
+    DUNE_DEPRECATED_MSG("use setEntryPc() (uncapitalized 'c') instead")
+    Scalar setEntryPC(Scalar v)
+    {
+        return setEntryPc(v);
+    }
 
     /*!
      * \brief Return the maximum capillary pressure for the linear material law.
      *
      * The maximum capillary pressure is reached at \f$ \overline S_w = 0\f$
      */
-    Scalar maxPC() const
-    { return maxPC_; }
+    Scalar maxPc() const
+    { return maxPc_; }
+
+    DUNE_DEPRECATED_MSG("use maxPc() (uncapitalized 'c') instead")
+    Scalar maxPC()
+    {
+        return maxPc();
+    }
 
     /*!
      * \brief Set the maximum capillary pressure for the linear material law.
      *
      * The maximum capillary pressure is reached at \f$ \overline S_w = 0\f$
      */
-    void setMaxPC(Scalar v)
-    { maxPC_ = v; }
+    void setMaxPc(Scalar v)
+    { maxPc_ = v; }
+
+    DUNE_DEPRECATED_MSG("use setMaxPc() (uncapitalized 'c') instead")
+    Scalar setMaxPC(Scalar v)
+    {
+        return setMaxPc(v);
+    }
 
 
 private:
-    Scalar entryPC_;
-    Scalar maxPC_;
+    Scalar entryPc_;
+    Scalar maxPc_;
 };
 } // namespace Dumux
 

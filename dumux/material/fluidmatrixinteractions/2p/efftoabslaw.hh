@@ -78,9 +78,15 @@ public:
      * \return          Capillary pressure calculated by specific constitutive relation (EffLaw e.g. Brooks & Corey, van Genuchten, linear...)
      *
      */
+    static Scalar pc(const Params &params, Scalar Sw)
+    {
+        return EffLaw::pc(params, swToSwe(params, Sw));
+    }
+
+    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
     static Scalar pC(const Params &params, Scalar Sw)
     {
-        return EffLaw::pC(params, swToSwe(params, Sw));
+        return pc(params, Sw);
     }
 
     /*!

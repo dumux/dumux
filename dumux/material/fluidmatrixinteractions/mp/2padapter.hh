@@ -62,7 +62,7 @@ public:
         values[nPhaseIdx] = 0;
 
         // wetting phase does not get anything added
-        values[wPhaseIdx] = - TwoPLaw::pC(params, state.saturation(wPhaseIdx));
+        values[wPhaseIdx] = - TwoPLaw::pc(params, state.saturation(wPhaseIdx));
     }
 
     /*!

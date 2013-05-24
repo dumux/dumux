@@ -263,7 +263,7 @@ public:
 
         //initial_(values, globalPos, element);
         //const MaterialLawParams& materialParams = this->spatialParams().materialLawParams();;
-        //MaterialLaw::pCGW(materialParams, 1.0);
+        //MaterialLaw::pcgw(materialParams, 1.0);
     }
 
     /*!
@@ -381,7 +381,7 @@ private:
         for (k=1; k<=25; k++)
         {
             Sw = 0.5*(upper+lower);
-            pcGW = MaterialLaw::pCGW(pcParams, Sw);
+            pcGW = MaterialLaw::pcgw(pcParams, Sw);
             Scalar delta = pcGW-pcIn;
             if (delta<0.) delta*=-1.;
             if (delta<bisLimit)

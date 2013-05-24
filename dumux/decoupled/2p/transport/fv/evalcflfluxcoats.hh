@@ -550,12 +550,12 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNW, 
             case pw:
                 {
                     potWBound = bcValues[eqIdxPress] + density_[wPhaseIdx] * gdeltaZ;
-                    potNWBound = bcValues[eqIdxPress] + MaterialLaw::pC(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[nPhaseIdx] * gdeltaZ;
+                    potNWBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[nPhaseIdx] * gdeltaZ;
                     break;
                 }
             case pn:
                 {
-                    potWBound = bcValues[eqIdxPress] - MaterialLaw::pC(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[wPhaseIdx] * gdeltaZ;
+                    potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[wPhaseIdx] * gdeltaZ;
                     potNWBound = bcValues[eqIdxPress] + density_[nPhaseIdx] * gdeltaZ;
                     break;
                 }

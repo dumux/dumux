@@ -532,7 +532,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 Scalar pc=0.;
                 if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
                 {
-                    pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt),
+                    pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt),
                                     sat_0);
                 }
                 else
@@ -595,14 +595,14 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                         //update with better pressures
                         flashSolver.concentrationFlash2p2c(fluidState, Z1_0, pressure,
                                 problem_.spatialParams().porosity(*eIt), problem_.temperatureAtPos(globalPos));
-                        pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt),
+                        pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt),
                                             fluidState.saturation(wPhaseIdx));
                         // TODO: get right criterion, do output for evaluation
                         //converge criterion
                         if (abs(oldPc-pc)<10)
                             iter = maxiter;
 
-                        pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt),
+                        pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt),
                                 fluidState.saturation(wPhaseIdx));
                     }
                 }

@@ -87,14 +87,14 @@ public:
      *
      *  For not-regularized part:
      *
-         \copydetails VanGenuchten::pC()
+         \copydetails VanGenuchten::pc()
      */
-    static Scalar pC(const Params &params, Scalar Swe)
+    static Scalar pc(const Params &params, Scalar Swe)
     {
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
-        const Scalar SwThLow = params.pCLowSw();
-        const Scalar SwThHigh = params.pCHighSw();
+        const Scalar SwThLow = params.pcLowSw();
+        const Scalar SwThHigh = params.pcHighSw();
 
         // make sure that the capillary pressure observes a derivative
         // != 0 for 'illegal' saturations. This is favourable for the
@@ -102,11 +102,11 @@ public:
         // in order to get the saturation moving to the right
         // direction if it temporarily is in an 'illegal' range.
         if (Swe < SwThLow) {
-            return VanGenuchten::pC(params, SwThLow) + mLow_(params)*(Swe - SwThLow);
+            return VanGenuchten::pc(params, SwThLow) + mLow_(params)*(Swe - SwThLow);
         }
         else if (Swe > SwThHigh)
         {
-            Scalar yTh = VanGenuchten::pC(params, SwThHigh);
+            Scalar yTh = VanGenuchten::pc(params, SwThHigh);
             Scalar m1 = (0.0 - yTh)/(1.0 - SwThHigh)*2;
 
             if (Swe < 1.0) {
@@ -125,7 +125,13 @@ public:
 
         // if the effective saturation is in an 'reasonable'
         // range, we use the real van genuchten law...
-        return VanGenuchten::pC(params, Swe);
+        return VanGenuchten::pc(params, Swe);
+    }
+
+    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
+    static Scalar pC(const Params &params, Scalar Swe)
+    {
+        return pc(params, Swe);
     }
 
     /*!
@@ -146,8 +152,8 @@ public:
     {
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
-        const Scalar SwThLow = params.pCLowSw();
-        const Scalar SwThHigh = params.pCHighSw();
+        const Scalar SwThLow = params.pcLowSw();
+        const Scalar SwThHigh = params.pcHighSw();
 
         // calculate the saturation which corrosponds to the
         // saturation in the non-regularized verision of van
@@ -155,7 +161,7 @@ public:
         Scalar Sw;
         if (pC <= 0) {
             // invert straight line for Swe > 1.0
-            Scalar yTh = VanGenuchten::pC(params, SwThHigh);
+            Scalar yTh = VanGenuchten::pc(params, SwThHigh);
             Scalar m1 = (0.0 - yTh)/(1.0 - SwThHigh)*2;
             return pC/m1 + 1.0;
         }
@@ -164,13 +170,13 @@ public:
 
         // invert the regularization if necessary
         if (Sw <= SwThLow) {
-            // invert the low saturation regularization of pC()
-            Scalar pC_SwLow = VanGenuchten::pC(params, SwThLow);
+            // invert the low saturation regularization of pc()
+            Scalar pC_SwLow = VanGenuchten::pc(params, SwThLow);
             return (pC - pC_SwLow)/mLow_(params) + SwThLow;
         }
         else if (Sw > SwThHigh)
         {
-            Scalar yTh = VanGenuchten::pC(params, SwThHigh);
+            Scalar yTh = VanGenuchten::pc(params, SwThHigh);
             Scalar m1 = (0.0 - yTh)/(1.0 - SwThHigh)*2;
 
             // invert spline between threshold Swe and 1.0
@@ -208,12 +214,12 @@ public:
     static Scalar dpC_dSw(const Params &params, Scalar Swe)
     {
         // derivative of the regualarization
-        if (Swe < params.pCLowSw()) {
-            // the slope of the straight line used in pC()
+        if (Swe < params.pcLowSw()) {
+            // the slope of the straight line used in pc()
             return mLow_(params);
         }
-        else if (Swe > params.pCHighSw()) {
-            // the slope of the straight line used in pC()
+        else if (Swe > params.pcHighSw()) {
+            // the slope of the straight line used in pc()
             return mHigh_(params);
         }
 
@@ -244,11 +250,11 @@ public:
             Sw = VanGenuchten::sw(params, pC);
 
         // derivative of the regularization
-        if (Sw < params.pCLowSw()) {
+        if (Sw < params.pcLowSw()) {
             // same as in dpC_dSw() but inverted
             return 1/mLow_(params);
         }
-        if (Sw > params.pCHighSw()) {
+        if (Sw > params.pcHighSw()) {
             // same as in dpC_dSw() but inverted
             return 1/mHigh_(params);
         }
@@ -342,7 +348,7 @@ private:
      */
     static Scalar mLow_(const Params &params)
     {
-        const Scalar SwThLow = params.pCLowSw();
+        const Scalar SwThLow = params.pcLowSw();
 
         return VanGenuchten::dpC_dSw(params, SwThLow);
     }
@@ -357,9 +363,9 @@ private:
      */
     static Scalar mHigh_(const Params &params)
     {
-        const Scalar SwThHigh = params.pCHighSw();
+        const Scalar SwThHigh = params.pcHighSw();
 
-        Scalar pC_SwHigh = VanGenuchten::pC(params, SwThHigh);
+        Scalar pC_SwHigh = VanGenuchten::pc(params, SwThHigh);
         return (0 - pC_SwHigh)/(1.0 - SwThHigh);
     }
 };

@@ -60,7 +60,7 @@ public:
      * This is just 1%. If you need a different value, overload this
      * class.
      */
-    Scalar pCLowSw() const
+    Scalar pcLowSw() const
     {
         // Some problems are very sensitive to this value
         // (e.g. making it smaller might result in negative
@@ -74,6 +74,12 @@ public:
                                             * COMMENT ABOVE! */
     }
 
+    DUNE_DEPRECATED_MSG("use pcLowSw() (uncapitalized 'c') instead")
+    Scalar pCLowSw()
+    {
+        return pcLowSw();
+    }
+
     /*!
      * \brief Threshold saturation above which the capillary pressure
      *        is regularized.
@@ -81,7 +87,7 @@ public:
      * This is just 99%. If you need a different value, overload this
      * class.
      */
-    Scalar pCHighSw() const
+    Scalar pcHighSw() const
     {
         // Some problems are very sensitive to this value
         // (e.g. making it smaller might result in negative
@@ -93,6 +99,12 @@ public:
         // template parameter for the RegularizedVanGenuchten law!
         return /* PLEASE DO _NOT_ */ 99e-2; /* CHANGE THIS VALUE. READ
                                              * COMMENT ABOVE! */
+    }
+
+    DUNE_DEPRECATED_MSG("use pcHighSw() (uncapitalized 'c') instead")
+    Scalar pCHighSw()
+    {
+        return pcHighSw();
     }
 
     /*!

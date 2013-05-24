@@ -137,7 +137,7 @@ public:
             Scalar pW = priVars[pressureIdx];
             fluidState.setPressure(wPhaseIdx, pW);
             fluidState.setPressure(nPhaseIdx,
-                                   pW + MaterialLaw::pC(materialParams, 1 - Sn));
+                                   pW + MaterialLaw::pc(materialParams, 1 - Sn));
         }
         else if (int(formulation) == pnSw) {
             Scalar Sw = priVars[saturationIdx];
@@ -147,7 +147,7 @@ public:
             Scalar pN = priVars[pressureIdx];
             fluidState.setPressure(nPhaseIdx, pN);
             fluidState.setPressure(wPhaseIdx,
-                                   pN - MaterialLaw::pC(materialParams, Sw));
+                                   pN - MaterialLaw::pc(materialParams, Sw));
         }
 
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;

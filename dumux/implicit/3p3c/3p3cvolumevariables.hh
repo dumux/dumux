@@ -186,15 +186,15 @@ public:
         pg_ = priVars[pressureIdx];
 
         // calculate capillary pressures
-        Scalar pCGW = MaterialLaw::pCGW(materialParams, Sw_);
-        Scalar pCNW = MaterialLaw::pCNW(materialParams, Sw_);
-        Scalar pCGN = MaterialLaw::pCGN(materialParams, Sw_ + Sn_);
+        Scalar pcgw = MaterialLaw::pcgw(materialParams, Sw_);
+        Scalar pcnw = MaterialLaw::pcnw(materialParams, Sw_);
+        Scalar pcgn = MaterialLaw::pcgn(materialParams, Sw_ + Sn_);
 
-        Scalar pcAlpha = MaterialLaw::pCAlpha(materialParams, Sn_);
+        Scalar pcAlpha = MaterialLaw::pcalpha(materialParams, Sn_);
         Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
 
-        pn_ = pg_- pcAlpha * pCGN - (1.-pcAlpha)*(pCGW - pcNW1);
-        pw_ = pn_ - pcAlpha * pCNW - (1.-pcAlpha)*pcNW1;
+        pn_ = pg_- pcAlpha * pcgn - (1.-pcAlpha)*(pcgw - pcNW1);
+        pw_ = pn_ - pcAlpha * pcnw - (1.-pcAlpha)*pcNW1;
 
         fluidState_.setPressure(wPhaseIdx, pw_);
         fluidState_.setPressure(gPhaseIdx, pg_);

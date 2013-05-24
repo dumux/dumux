@@ -525,7 +525,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         }
 
         Scalar pressBound = boundValues[pressureIdx];
-        Scalar pcBound = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*element), satW);
+        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satW);
 
         //determine phase pressures from primary pressure variable
         Scalar pressWBound = 0;

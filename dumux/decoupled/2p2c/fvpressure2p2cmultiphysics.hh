@@ -881,7 +881,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
     PhaseVector pressure(0.);
     Scalar pc = 0;
     if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
-        pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(elementI),
+        pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
             ((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign Sw = 1 if wPhase present, else 0
     if(pressureType == wPhaseIdx)
     {

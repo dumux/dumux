@@ -673,7 +673,7 @@ void FVMPFAO2PFABoundVelocity2P<TypeTag>::calculateVelocity()
 
                             }
 
-                            Scalar pcBound = MaterialLaw::pC(
+                            Scalar pcBound = MaterialLaw::pc(
                                     problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
 
                             Scalar gravityDiffBound = (problem_.bboxMax() - globalPosFace) * gravity_

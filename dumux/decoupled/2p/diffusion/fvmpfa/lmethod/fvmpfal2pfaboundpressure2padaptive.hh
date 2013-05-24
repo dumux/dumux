@@ -2652,7 +2652,7 @@ void FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::assemble()
 
                             }
 
-                            Scalar pcBound = MaterialLaw::pC(
+                            Scalar pcBound = MaterialLaw::pc(
                                     problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
 
                             Scalar gravityDiffBound = (problem_.bboxMax() - globalPosFace) * gravity_
@@ -3372,7 +3372,7 @@ void FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::updateMaterialLaws()
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 
-        Scalar pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt), satW);
+        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt), satW);
 
         cellData.setCapillaryPressure(pc);
 

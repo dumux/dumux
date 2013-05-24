@@ -112,8 +112,8 @@ public:
 
         // parameters for the linear law, i.e. minimum and maximum
         // pressures
-        materialParams_.setEntryPC(0.0);
-        materialParams_.setMaxPC(0.0);
+        materialParams_.setEntryPc(0.0);
+        materialParams_.setMaxPc(0.0);
 
 
         /*

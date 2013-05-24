@@ -123,7 +123,7 @@ public:
         Scalar pnRef = problem.referencePressure(element, fvGeometry, scvIdx);
         const MaterialLawParams &matParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-        Scalar minPc = MaterialLaw::pC(matParams, 1.0);
+        Scalar minPc = MaterialLaw::pc(matParams, 1.0);
         fluidState.setPressure(wPhaseIdx, priVars[pwIdx]);
         fluidState.setPressure(nPhaseIdx, std::max(pnRef, priVars[pwIdx] + minPc));
 

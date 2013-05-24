@@ -67,11 +67,17 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Capillary pressure calculated by Brooks & Corey constitutive relation.
      */
-    static Scalar pC(const Params &params, Scalar Swe)
+    static Scalar pc(const Params &params, Scalar Swe)
     {
         assert(0 <= Swe && Swe <= 1);
 
         return params.pe()*pow(Swe, -1.0/params.lambda());
+    }
+
+    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
+    static Scalar pC(const Params &params, Scalar Swe)
+    {
+        return pc(params, Swe);
     }
 
     /*!

@@ -55,12 +55,18 @@ public:
      * \brief The capillary pressure-saturation curve.
      *
      */
-    static Scalar pC(const Params &params, Scalar Sw)
+    static Scalar pc(const Params &params, Scalar Sw)
     {
-        DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pCGN, pCNW, and pcGW");
+        DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pcgn, pcnw, and pcgw");
     }
 
-    static Scalar pCGW(const Params &params, Scalar Sw)
+    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
+    static Scalar pC(const Params &params, Scalar Swe)
+    {
+        return pc(params, Swe);
+    }
+
+    static Scalar pcgw(const Params &params, Scalar Sw)
     {
     /*
          Sw = wetting phase saturation, or,
@@ -104,7 +110,13 @@ public:
         }
     }
 
-    static Scalar pCNW(const Params &params, Scalar Sw)
+    DUNE_DEPRECATED_MSG("use pcgw() (uncapitalized 'cgw') instead")
+    static Scalar pCGW(const Params &params, Scalar Sw)
+    {
+        return pcgw(params, Sw);
+    }
+
+    static Scalar pcnw(const Params &params, Scalar Sw)
     {
     /*
          Sw = wetting phase saturation, or,
@@ -148,7 +160,13 @@ public:
         }
     }
 
-    static Scalar pCGN(const Params &params, Scalar St)
+    DUNE_DEPRECATED_MSG("use pcnw() (uncapitalized 'cnw') instead")
+    static Scalar pCNW(const Params &params, Scalar Sw)
+    {
+        return pcnw(params, Sw);
+    }
+
+    static Scalar pcgn(const Params &params, Scalar St)
     {
     /*
          St = sum of wetting (liquid) phase saturations
@@ -191,7 +209,13 @@ public:
         }
     }
 
-    static Scalar pCAlpha(const Params &params, Scalar Sn)
+    DUNE_DEPRECATED_MSG("use pcgn() (uncapitalized 'cgn') instead")
+    static Scalar pCGN(const Params &params, Scalar St)
+    {
+        return pcgn(params, St);
+    }
+
+    static Scalar pcalpha(const Params &params, Scalar Sn)
     {
         /* continuous transition to zero */
         Scalar alpha,Sne;
@@ -208,6 +232,12 @@ public:
          else          alpha = 0.0;
         }
         return(alpha);
+    }
+
+    DUNE_DEPRECATED_MSG("use pcalpha() (uncapitalized 'ca') instead")
+    static Scalar pCAlpha(const Params &params, Scalar Sn)
+    {
+        return pcalpha(params, Sn);
     }
 
     /*!

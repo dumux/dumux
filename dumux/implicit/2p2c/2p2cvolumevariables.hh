@@ -216,7 +216,7 @@ public:
         // calculate capillary pressure
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-        Scalar pC = MaterialLaw::pC(materialParams, 1 - Sn);
+        Scalar pC = MaterialLaw::pc(materialParams, 1 - Sn);
 
         if (formulation == pwSn) {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);

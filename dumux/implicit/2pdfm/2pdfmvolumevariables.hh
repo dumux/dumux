@@ -144,7 +144,7 @@ public:
         satN_ = satNMatrix_;
         satW_ = satWMatrix_;
 
-        pCMatrix_ = MaterialLaw::pC(materialParamsMatrix, satWMatrix_);
+        pCMatrix_ = MaterialLaw::pc(materialParamsMatrix, satWMatrix_);
         pC_ = pCMatrix_;
         //pressures
         pMatrix[wPhaseIdx] = priVars[pressureIdx];
@@ -169,10 +169,10 @@ public:
 
             satNFracture_ = priVars[saturationIdx];
             satWFracture_ = 1 - satNFracture_;
-            pCFracture_ = MaterialLaw::pC(materialParamsFracture, satWFracture_);
+            pCFracture_ = MaterialLaw::pc(materialParamsFracture, satWFracture_);
             pFract[wPhaseIdx] = priVars[pressureIdx];
             pFract[nPhaseIdx] = pFract[wPhaseIdx] + pCFracture_;
-            pEntryMatrix_ = MaterialLaw::pC(materialParamsMatrix, 1);
+            pEntryMatrix_ = MaterialLaw::pc(materialParamsMatrix, 1);
 
             //use interface condition - extended capillary pressure inteface condition
             if (problem.useInterfaceCondition())

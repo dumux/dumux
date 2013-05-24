@@ -113,10 +113,10 @@ public:
 
         // parameters for the linear law, i.e. minimum and maximum
         // pressures
-        fineMaterialParams_.setEntryPC(0.0);
-        coarseMaterialParams_.setEntryPC(0.0);
-        fineMaterialParams_.setMaxPC(0.0);
-        coarseMaterialParams_.setMaxPC(0.0);
+        fineMaterialParams_.setEntryPc(0.0);
+        coarseMaterialParams_.setEntryPc(0.0);
+        fineMaterialParams_.setMaxPc(0.0);
+        coarseMaterialParams_.setMaxPc(0.0);
 
         /*
         // entry pressures for Brooks-Corey

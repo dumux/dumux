@@ -65,9 +65,15 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Capillary pressure calculated by linear constitutive relation.
      */
+    static Scalar pc(const Params &params, Scalar Swe)
+    {
+        return (1 - Swe)*(params.maxPc() - params.entryPc()) + params.entryPc();
+    }
+
+    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
     static Scalar pC(const Params &params, Scalar Swe)
     {
-        return (1 - Swe)*(params.maxPC() - params.entryPC()) + params.entryPC();
+        return pc(params, Swe);
     }
 
     /*!
@@ -86,7 +92,7 @@ public:
      */
     static Scalar sw(const Params &params, Scalar pC)
     {
-        return 1 - (pC - params.entryPC())/(params.maxPC() - params.entryPC());
+        return 1 - (pC - params.entryPc())/(params.maxPc() - params.entryPc());
     }
 
     DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
@@ -112,7 +118,7 @@ public:
     */
     static Scalar dpC_dSw(const Params &params, Scalar Swe)
     {
-        return - (params.maxPC() - params.entryPC());
+        return - (params.maxPc() - params.entryPc());
     }
 
     /*!
@@ -127,7 +133,7 @@ public:
      */
     static Scalar dSw_dpC(const Params &params, Scalar pC)
     {
-        return - 1/(params.maxPC() - params.entryPC());
+        return - 1/(params.maxPc() - params.entryPc());
     }
 
     /*!

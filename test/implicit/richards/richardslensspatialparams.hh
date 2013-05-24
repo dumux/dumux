@@ -114,10 +114,10 @@ public:
 
         // parameters for the linear law
         // minimum and maximum pressures
-//        lensMaterialParams_.setEntryPC(0);
-//        outerMaterialParams_.setEntryPC(0);
-//        lensMaterialParams_.setMaxPC(0);
-//        outerMaterialParams_.setMaxPC(0);
+//        lensMaterialParams_.setEntryPc(0);
+//        outerMaterialParams_.setEntryPc(0);
+//        lensMaterialParams_.setMaxPc(0);
+//        outerMaterialParams_.setMaxPc(0);
 
         lensK_ = 1e-12;
         outerK_ = 5e-12;

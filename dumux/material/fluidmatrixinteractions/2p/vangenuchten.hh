@@ -65,10 +65,16 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar pC(const Params &params, Scalar Swe)
+    static Scalar pc(const Params &params, Scalar Swe)
     {
         assert(0 <= Swe && Swe <= 1);
         return pow(pow(Swe, -1.0/params.vgM()) - 1, 1.0/params.vgN())/params.vgAlpha();
+    }
+
+    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
+    static Scalar pC(const Params &params, Scalar Swe)
+    {
+        return pc(params, Swe);
     }
 
     /*!

@@ -296,7 +296,7 @@ private:
     {
         Scalar Sw = 0.0;
         Scalar pc =
-            MaterialLaw::pC(this->spatialParams().materialLawParams(pos),
+            MaterialLaw::pc(this->spatialParams().materialLawParams(pos),
                             Sw);
         values[pwIdx] = pnRef_ - pc;
     }
