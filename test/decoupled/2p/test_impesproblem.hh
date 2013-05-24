@@ -182,7 +182,7 @@ enum
 {
     wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
     pWIdx = Indices::pwIdx,
-    SwIdx = Indices::SwIdx,
+    swIdx = Indices::swIdx,
     eqIdxPress = Indices::pressureEqIdx,
     eqIdxSat = Indices::satEqIdx
 };
@@ -289,12 +289,12 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
         {
             values[pWIdx] = 2e5;
         }
-        values[SwIdx] = 0.8;
+        values[swIdx] = 0.8;
     }
     else
     {
         values[pWIdx] = 2e5;
-        values[SwIdx] = 0.2;
+        values[swIdx] = 0.2;
     }
 }
 
@@ -312,7 +312,7 @@ void initial(PrimaryVariables &values,
         const Element& element) const
 {
     values[pWIdx] = 0;
-    values[SwIdx] = 0.2;
+    values[swIdx] = 0.2;
 }
 
 private:

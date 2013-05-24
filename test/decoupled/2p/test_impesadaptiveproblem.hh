@@ -132,7 +132,7 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
         pWIdx = Indices::pwIdx,
-        SwIdx = Indices::SwIdx,
+        swIdx = Indices::swIdx,
         eqIdxPress = Indices::pressureEqIdx,
         eqIdxSat = Indices::satEqIdx
     };
@@ -242,12 +242,12 @@ public:
             {
                 values[pWIdx] = 2e5;
             }
-            values[SwIdx] = 0.8;
+            values[swIdx] = 0.8;
         }
         else
         {
             values[pWIdx] = 2e5;
-            values[SwIdx] = 0.2;
+            values[swIdx] = 0.2;
         }
     }
 
@@ -264,7 +264,7 @@ public:
     void initial(PrimaryVariables &values, const Element& element) const
     {
         values[pWIdx] = 0;
-        values[SwIdx] = 0.2;
+        values[swIdx] = 0.2;
     }
 
 private:

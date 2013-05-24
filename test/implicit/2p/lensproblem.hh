@@ -172,7 +172,7 @@ class LensProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
 
         // primary variable indices
         pwIdx = Indices::pwIdx,
-        SnIdx = Indices::SnIdx,
+        snIdx = Indices::snIdx,
 
         // equation indices
         contiNEqIdx = Indices::contiNEqIdx,
@@ -311,7 +311,7 @@ public:
         
         // hydrostatic pressure scaled by alpha
         values[pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
-        values[SnIdx] = 0.0;
+        values[snIdx] = 0.0;
     }
 
     /*!
@@ -363,7 +363,7 @@ public:
         
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
-        values[SnIdx] = 0.0;
+        values[snIdx] = 0.0;
     }
     // \}
 

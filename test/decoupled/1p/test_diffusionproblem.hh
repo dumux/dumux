@@ -193,7 +193,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
         pGlobalIdx = Indices::pGlobalIdx,
-        SwIdx = Indices::SwIdx,
+        swIdx = Indices::swIdx,
         pressEqIdx = Indices::pressureEqIdx
     };
 
@@ -303,7 +303,7 @@ public:
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
             values[pGlobalIdx] = exact(globalPos);
-            values[SwIdx] = 1.0;
+            values[swIdx] = 1.0;
     }
 
     //! set neumann condition for phases (flux, [kg/(m^2 s)])

@@ -201,7 +201,7 @@ class GeneralLensProblem : public GET_PROP_TYPE(TypeTag, ProblemBaseClass)
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         pwIdx = Indices::pwIdx,
-        SnIdx = Indices::SnIdx,
+        snIdx = Indices::snIdx,
 
         // equation indices
         contiWEqIdx = Indices::contiWEqIdx,
@@ -372,7 +372,7 @@ public:
 
             // hydrostatic pressure scaled by alpha
             values[pwIdx] = 1e5 - alpha*densityW*this->gravity()[1]*depth;
-            values[SnIdx] = 0.0;
+            values[snIdx] = 0.0;
         }
         else if (onRightBoundary_(globalPos))
         {
@@ -380,7 +380,7 @@ public:
 
             // hydrostatic pressure
             values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
-            values[SnIdx] = 0.0;
+            values[snIdx] = 0.0;
         }
         else
             values = 0.0;
@@ -429,7 +429,7 @@ public:
 
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
-        values[SnIdx] = 0.0;
+        values[snIdx] = 0.0;
 
     }
     // \}

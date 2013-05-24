@@ -68,8 +68,13 @@ public:
     static const int switch2Idx = PVOffset + 2; //!< Index 2 of saturation or mole fraction
 
     static const int pgIdx = pressureIdx; //!< Index for gas phase pressure in a solution vector
-    static const int SOrX1Idx = switch1Idx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
-    static const int SOrX2Idx = switch2Idx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
+    static const int sOrX1Idx = switch1Idx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
+    static const int sOrX2Idx = switch2Idx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
+
+    DUNE_DEPRECATED_MSG("use sOrX1Idx (uncapitalized 's') instead") 
+    static const int SOrX1Idx = sOrX1Idx; //!< \deprecated
+    DUNE_DEPRECATED_MSG("use sOrX2Idx (uncapitalized 's') instead") 
+    static const int SOrX2Idx = sOrX2Idx; //!< \deprecated
 
     // equation indices
     static const int conti0EqIdx = PVOffset    + wCompIdx; //!< Index of the mass conservation equation for the water component

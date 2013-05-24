@@ -77,7 +77,10 @@ public:
     static const int switchIdx = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
 
     static const int pwIdx = pressureIdx; //!< Index for wetting phase pressure in a solution vector
-    static const int SnOrXIdx = switchIdx; //!< Index of the either the saturation of the non-wetting phase or the mass fraction secondary component in the only phase
+    static const int snOrXIdx = switchIdx; //!< Index of the either the saturation of the non-wetting phase or the mass fraction secondary component in the only phase
+
+    DUNE_DEPRECATED_MSG("use snOrXIdx (uncapitalized 's') instead") 
+    static const int SnOrXIdx = snOrXIdx; //!< \deprecated
 
     // equation indices
     static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
@@ -117,7 +120,10 @@ public:
     static const int switchIdx = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
 
     static const int pnIdx = pressureIdx; //!< Index for non-wetting phase pressure in a solution vector
-    static const int SwOrXIdx = switchIdx; //!< Index of the either the saturation of the liquid phase or the mass fraction of the secondary component in the only phase
+    static const int swOrXIdx = switchIdx; //!< Index of the either the saturation of the liquid phase or the mass fraction of the secondary component in the only phase
+
+    DUNE_DEPRECATED_MSG("use swOrXIdx (uncapitalized 's') instead") 
+    static const int SwOrXIdx = swOrXIdx; //!< \deprecated
 
     // Equation indices
     static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component

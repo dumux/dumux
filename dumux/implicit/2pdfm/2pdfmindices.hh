@@ -50,7 +50,10 @@ struct TwoPDFMIndices : public TwoPIndices <TypeTag, formulation, PVOffset>
 
     // indices of the primary variables
     static const int pwIdx = PVOffset + 0; //!< Pressure index of the wetting phase
-    static const int SnIdx = PVOffset + 1; //!< Saturation index of the wetting phase
+    static const int snIdx = PVOffset + 1; //!< \deprecated Saturation index of the nonwetting phase
+
+    DUNE_DEPRECATED_MSG("use snIdx (uncapitalized 's') instead") 
+    static const int SnIdx = snIdx; //!< \deprecated Saturation index of the nonwetting phase
 
     // indices of the equations
     static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase

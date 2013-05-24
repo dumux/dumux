@@ -79,7 +79,10 @@ struct TwoPIndices
 
     // indices of the primary variables
     static const int pwIdx = PVOffset + 0; //!< Pressure index of the wetting phase
-    static const int SnIdx = PVOffset + 1; //!< Saturation index of the wetting phase
+    static const int snIdx = PVOffset + 1; //!< \deprecated Saturation index of the nonwetting phase
+
+    DUNE_DEPRECATED_MSG("use snIdx (uncapitalized 's') instead") 
+    static const int SnIdx = snIdx; //!< \deprecated Saturation index of the nonwetting phase
 
     // indices of the equations
     static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
@@ -103,8 +106,11 @@ struct TwoPIndices<TypeTag, TwoPFormulation::pnSw, PVOffset>
     static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
 
     // indices of the primary variables
-    static const int pnIdx = PVOffset + 0; //!< Pressure index of the wetting phase
-    static const int SwIdx = PVOffset + 1; //!< Saturation index of the wetting phase
+    static const int pnIdx = PVOffset + 0; //!< Pressure index of the nonwetting phase
+    static const int swIdx = PVOffset + 1; //!< Saturation index of the wetting phase
+
+    DUNE_DEPRECATED_MSG("use swIdx (uncapitalized 's') instead") 
+    static const int SwIdx = swIdx; //!< \deprecated Saturation index of the wetting phase
 
     // indices of the equations
     static const int contiNEqIdx = PVOffset + 0; //!< Index of the continuity equation of the non-wetting phase

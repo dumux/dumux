@@ -49,7 +49,7 @@ class MpNcNewtonChop
     enum { numPhases =  GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents =  GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { fug0Idx = Indices::fug0Idx };
-    enum { S0Idx = Indices::S0Idx };
+    enum { s0Idx = Indices::s0Idx };
     enum { p0Idx = Indices::p0Idx };
 
 public:
@@ -58,8 +58,8 @@ public:
     {
         for (unsigned int i = 0; i < uLastIter.size(); ++i) {
             for (unsigned int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-                saturationChop_(uCurrentIter[i][S0Idx + phaseIdx],
-                                uLastIter[i][S0Idx + phaseIdx]);
+                saturationChop_(uCurrentIter[i][s0Idx + phaseIdx],
+                                uLastIter[i][s0Idx + phaseIdx]);
             pressureChop_(uCurrentIter[i][p0Idx], uLastIter[i][p0Idx]);
             for (unsigned int comp = 0; comp < numComponents; ++comp) {
                 pressureChop_(uCurrentIter[i][fug0Idx + comp], uLastIter[i][fug0Idx + comp]);
@@ -104,7 +104,7 @@ class MpNcNewtonChop<TypeTag, /*enableKinetic=*/true>
     enum { numPhases =  GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents =  GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { moleFrac00Idx = Indices::moleFrac00Idx };
-    enum { S0Idx = Indices::S0Idx };
+    enum { s0Idx = Indices::s0Idx };
     enum { p0Idx = Indices::p0Idx };
 
 public:
@@ -113,8 +113,8 @@ public:
     {
         for (int i = 0; i < uLastIter.size(); ++i) {
             for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-                saturationChop_(uCurrentIter[i][S0Idx + phaseIdx],
-                                uLastIter[i][S0Idx + phaseIdx]);
+                saturationChop_(uCurrentIter[i][s0Idx + phaseIdx],
+                                uLastIter[i][s0Idx + phaseIdx]);
             pressureChop_(uCurrentIter[i][p0Idx], uLastIter[i][p0Idx]);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
@@ -182,7 +182,7 @@ class MPNCNewtonController : public NewtonController<TypeTag>
     enum {    numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {p0Idx = Indices::p0Idx};
-    enum {S0Idx = Indices::S0Idx};
+    enum {s0Idx = Indices::s0Idx};
 
     typedef MpNcNewtonChop<TypeTag, enableKinetic> NewtonChop;
 

@@ -83,7 +83,7 @@ class MPNCVolumeVariables
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
     enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion) || enableKinetic};
-    enum {S0Idx = Indices::S0Idx};
+    enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -131,8 +131,8 @@ public:
         /////////////
         Scalar sumSat = 0;
         for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx) {
-            sumSat += priVars[S0Idx + phaseIdx];
-            fluidState_.setSaturation(phaseIdx, priVars[S0Idx + phaseIdx]);
+            sumSat += priVars[s0Idx + phaseIdx];
+            fluidState_.setSaturation(phaseIdx, priVars[s0Idx + phaseIdx]);
         }
         Valgrind::CheckDefined(sumSat);
         fluidState_.setSaturation(numPhases - 1, 1.0 - sumSat);

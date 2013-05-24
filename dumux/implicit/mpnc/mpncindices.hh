@@ -92,9 +92,12 @@ public:
      * The following (numPhases - 1) primary variables represent the
      * saturations for the phases [1, ..., numPhases - 1]
      */
-    static const unsigned int S0Idx =
+    static const unsigned int s0Idx =
         MassIndices::NumPrimaryVars +
         EnergyIndices::NumPrimaryVars;
+
+    DUNE_DEPRECATED_MSG("use s0Idx (uncapitalized 's') instead") 
+    static const int S0Idx = s0Idx; //!< \deprecated index of the saturation of the first phase
 
     /*!
      * \brief Index of the first phase' pressure in a vector of

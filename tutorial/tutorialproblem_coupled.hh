@@ -163,7 +163,7 @@ public:
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
         values[Indices::pwIdx] = 200.0e3; // 200 kPa = 2 bar
-        values[Indices::SnIdx] = 0.0; // 0 % oil saturation on left boundary
+        values[Indices::snIdx] = 0.0; // 0 % oil saturation on left boundary
     }
 
     //! Evaluates the boundary conditions for a Neumann boundary
@@ -200,7 +200,7 @@ public:
                  int scvIdx) const
     {
         values[Indices::pwIdx] = 200.0e3; // 200 kPa = 2 bar
-        values[Indices::SnIdx] = 1.0;
+        values[Indices::snIdx] = 1.0;
     }
 
     //! Evaluates the source term for all phases within a given

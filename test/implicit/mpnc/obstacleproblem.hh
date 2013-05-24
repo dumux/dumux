@@ -153,7 +153,7 @@ class ObstacleProblem
     enum {wCompIdx = FluidSystem::wCompIdx};
     enum {nCompIdx = FluidSystem::nCompIdx};
     enum {fug0Idx = Indices::fug0Idx};
-    enum {S0Idx = Indices::S0Idx};
+    enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -419,7 +419,7 @@ private:
 
         // first M - 1 saturations
         for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
-            values[S0Idx + phaseIdx] = fs.saturation(phaseIdx);
+            values[s0Idx + phaseIdx] = fs.saturation(phaseIdx);
 
         // first pressure
         values[p0Idx] = fs.pressure(/*phaseIdx=*/0);
