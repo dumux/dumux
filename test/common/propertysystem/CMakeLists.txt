@@ -1,7 +1,15 @@
 # build the test for the property system
 add_executable("test_propertysystem" test_propertysystem.cc)
-target_link_libraries("test_propertysystem" ${DumuxLinkLibraries})
 
-# add required libraries and includes to the build flags 
-link_directories(${DumuxLinkDirectories})
-include_directories(${DumuxIncludeDirectories})
+set(NORMALTESTS test_propertysystem)
+set(ALLTESTS ${NORMALTESTS})
+
+# We do not want want to build the tests during make all,
+# but just build them on demand
+add_directory_test_target(_test_target)
+add_dependencies(${_test_target} ${ALLTESTS})
+
+foreach(_exe ${ALLTESTS})
+  target_link_libraries(${_exe} ${DUNE_LIBS})
+  add_test(${_exe} ${_exe})
+endforeach(_exe ${ALLTESTS})

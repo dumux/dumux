@@ -6,7 +6,7 @@
 
 /* begin private */
 /* Name of package */
-#define PACKAGE "@DUNE_MOD_NAME"
+#define PACKAGE "@DUNE_MOD_NAME@"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "@DUNE_MAINTAINER@"
