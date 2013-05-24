@@ -29,14 +29,21 @@
 /* end private */
 
 /* Define to 1 if dune-pdelab is patched to be usable by DuMuX */
-/* #undef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX */
+#cmakedefine DUNE_PDELAB_IS_PATCHED_FOR_DUMUX @DUNE_PDELAB_IS_PATCHED_FOR_DUMUX@
 
 /* DEPRECATED: will be removed after DuMuX 2.4. USE WITH CARE: Forces a
    function to be inlined even for non-optimized builds */
+#if @HAVE_ATTRIBUTE_ALWAYS_INLINE@
 #define DUMUX_ALWAYS_INLINE __attribute__((always_inline))
+#endif
+
+/* Define to 1 if constexpr is supported */
+#cmakedefine HAVE_CONSTEXPR @HAVE_CONSTEXPR@
 
 /* 'set 'constexpr' to 'const' if constexpr is not supported */
-/* #undef constexpr */
+#ifndef HAVE_CONSTEXPR
+#define constexpr const
+#endif
 
 /* end dumux
    Everything below here will be overwritten

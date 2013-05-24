@@ -2,7 +2,7 @@
 # nicely, the files for the CMake build system, some README files and
 # a set of default .opts files for dunecontrol.
 EXTRA_DIST = dune.module \
-             cmake/Modules/*.cmake \
+             cmake/modules/*.cmake \
              bin/runTest.sh bin/fuzzycomparevtu.py \
              CMakeLists.txt config.h.cmake \
              CHANGELOG COPYING INSTALL.cmake README \
