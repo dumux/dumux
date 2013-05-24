@@ -23,6 +23,8 @@
  */
 #ifndef DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -584,15 +586,15 @@ public:
     SubControlVolume subContVol[maxNC]; //!< data of the sub control volumes
     SubControlVolumeFace subContVolFace[maxNE]; //!< data of the sub control volume faces
     BoundaryFace boundaryFace[maxBF]; //!< data of the boundary faces
-    GlobalPosition edgeCoord[maxNE]; //!< \deprecated global coordinates of the edge centers
-    GlobalPosition faceCoord[maxNF]; //!< \deprecated global coordinates of the face centers
-    int numVertices; //!< \deprecated number of verts
-    int numEdges; //!< \deprecated number of edges
-    int numFaces; //!< \deprecated number of faces (0 in < 3D)
+    GlobalPosition edgeCoord[maxNE] DUNE_DEPRECATED; //!< \deprecated global coordinates of the edge centers
+    GlobalPosition faceCoord[maxNF] DUNE_DEPRECATED; //!< \deprecated global coordinates of the face centers
+    int numVertices DUNE_DEPRECATED_MSG("use numScv instead"); //!< \deprecated number of verts
+    int numEdges DUNE_DEPRECATED_MSG("use numScvf instead"); //!< \deprecated number of edges
+    int numFaces DUNE_DEPRECATED; //!< \deprecated number of faces (0 in < 3D)
     int numScv; //!< number of subcontrol volumes
     int numScvf; //!< number of inner-domain subcontrolvolume faces 
     int numNeighbors; //!< needed for compatibility with cc models
-    int numFap; //!< \deprecated number of flux approximation points
+    int numFap DUNE_DEPRECATED_MSG("use numFap of the SCVFace instead"); //!< \deprecated number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
     
     const LocalFiniteElementCache feCache_;
@@ -951,8 +953,8 @@ public:
         }
     }
 };
-
 }
 
+#pragma GCC diagnostic pop
 #endif
 
