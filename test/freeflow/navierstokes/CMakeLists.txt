@@ -1,24 +1,18 @@
 # add build targets
 add_executable("test_navierstokes" test_navierstokes.cc)
-if(SUPERLU_FOUND AND (UG_FOUND OR ALUGrid_FOUND))
-  set_target_properties("test_navierstokes"
-    PROPERTIES
-    COMPILE_FLAGS "${UG_CPPFLAGS} ${ALUGrid_CPPFLAGS}")
-  target_link_libraries("test_navierstokes" 
-    ${DumuxLinkLibraries}
-    ${UG_LIBS}
-    ${ALUGrid_LIBS})
-  add_dune_superlu_flags("test_navierstokes")
-endif(SUPERLU_FOUND AND (UG_FOUND OR ALUGrid_FOUND))
+add_dune_superlu_flags(test_navierstokes)
+add_dune_alugrid_flags(test_navierstokes)
+add_dune_ug_flags(test_navierstokes)
 
-# add required libraries and includes to the build flags
-link_directories(${DumuxLinkDirectories})
-include_directories(${DumuxIncludeDirectories})
+set(NORMALTESTS test_navierstokes)
+set(ALLTESTS ${NORMALTESTS})
 
-# make sure the grids are present in the build directory
-add_custom_command(TARGET "test_navierstokes"
-                   POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E
-                        copy_directory 
-                           "${CMAKE_CURRENT_SOURCE_DIR}/grids"
-                           "${CMAKE_CURRENT_BINARY_DIR}/grids")
+# We do not want want to build the tests during make all,
+# but just build them on demand
+add_directory_test_target(_test_target)
+add_dependencies(${_test_target} ${ALLTESTS})
+
+foreach(_exe ${ALLTESTS})
+  target_link_libraries(${_exe} ${DUNE_LIBS})
+  add_test(${_exe} ${_exe})
+endforeach(_exe ${ALLTESTS})

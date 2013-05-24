@@ -29,7 +29,7 @@
 /* end private */
 
 /* Define to 1 if dune-pdelab is patched to be usable by DuMuX */
-#define DUNE_PDELAB_IS_PATCHED_FOR_DUMUX 1
+/* #undef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX */
 
 /* DEPRECATED: will be removed after DuMuX 2.4. USE WITH CARE: Forces a
    function to be inlined even for non-optimized builds */

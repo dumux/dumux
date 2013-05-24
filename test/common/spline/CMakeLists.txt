@@ -13,4 +13,3 @@ foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})
   add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})
-

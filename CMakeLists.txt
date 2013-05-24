@@ -23,7 +23,6 @@ add_subdirectory("tutorial")
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
 
-message("<<<< DUNE_GRID_VERSION: ${DUNE_GRID_VERSION}")
 
 
 # # constexpr

@@ -1,8 +1,14 @@
-# build target for the simple twophase lens problem
 add_executable("test_tabulation" test_tabulation.cc)
-target_link_libraries("test_tabulation" ${DumuxLinkLibraries})
 
-# add required libraries and includes to the build flags 
-link_directories(${DumuxLinkDirectories})
-include_directories(${DumuxIncludeDirectories})
+set(NORMALTESTS test_tabulation)
+set(ALLTESTS ${NORMALTESTS})
 
+# We do not want want to build the tests during make all,
+# but just build them on demand
+add_directory_test_target(_test_target)
+add_dependencies(${_test_target} ${ALLTESTS})
+
+foreach(_exe ${ALLTESTS})
+  target_link_libraries(${_exe} ${DUNE_LIBS})
+  add_test(${_exe} ${_exe})
+endforeach(_exe ${ALLTESTS})
