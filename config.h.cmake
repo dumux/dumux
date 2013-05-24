@@ -1,115 +1,43 @@
-#ifdef CONFIG_H
-#  error "config.h included more than once!"
-#endif
-#define CONFIG_H
+/* begin dumux
+   put the definitions for config.h specific to
+   your project here. Everything above will be
+   overwritten
+*/
 
-#define DUNE_MINIMAL_DEBUG_LEVEL 4
-#cmakedefine HAVE_BOOST 1
-#cmakedefine HAVE_DUNE 1
-#cmakedefine HAVE_DUNE_GRID 1
-#cmakedefine HAVE_DUNE_DISC 1
-#cmakedefine HAVE_DUNE_FEM 1
-#cmakedefine HAVE_DUNE_ISTL 1
-#cmakedefine HAVE_DUNE_LOCALFUNCTIONS 1
-#cmakedefine HAVE_DUNE_PDELAB 1
+/* begin private */
+/* Name of package */
+#define PACKAGE "@DUNE_MOD_NAME"
 
-/* If this is set, the member 'size' of FieldVector is a method rather than an
-   enum */
-#define DUNE_COMMON_FIELDVECTOR_SIZE_IS_METHOD 1
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT "@DUNE_MAINTAINER@"
 
-/* Define to the version of dune-common */
-#cmakedefine DUNE_COMMON_VERSION "${DUNE_COMMON_VERSION}"
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "@DUNE_MOD_NAME@"
 
-/* Define to the major version of dune-common */
-#cmakedefine DUNE_COMMON_VERSION_MAJOR ${DUNE_COMMON_VERSION_MAJOR}
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "@DUNE_MOD_NAME@ @DUNE_MOD_VERSION@"
 
-/* Define to the minor version of dune-common */
-#define DUNE_COMMON_VERSION_MINOR ${DUNE_COMMON_VERSION_MINOR}
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "@DUNE_MOD_NAME@"
 
-/* Define to the revision of dune-common */
-#define DUNE_COMMON_VERSION_REVISION ${DUNE_COMMON_VERSION_REVISION}
+/* Define to the home page for this package. */
+#define PACKAGE_URL "@DUNE_MOD_URL@"
 
-#cmakedefine HAVE_MPI 1
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "@DUNE_MOD_VERSION@"
 
-#define HAVE_UG ${HAVE_UG}
-#if HAVE_MPI && HAVE_UG
-/* use parallel UG if both UG and MPI are available */
-#   define ModelP
-#endif
-
-#ifdef ENABLE_ALUGRID
-#cmakedefine HAVE_ALUGRID 1
-#endif
-
-#ifdef ENABLE_METIS
-#cmakedefine HAVE_METIS 1
-#endif
-
-#ifdef ENABLE_ALBERTA
-#cmakedefine HAVE_ALBERTA 1
-#endif
-
-#cmakedefine PROJECT_NAME             "${PROJECT_NAME}"
-#cmakedefine PROJECT_VERSION          "${PROJECT_VERSION}"
-#cmakedefine PROJECT_MAINTAINER       "${PROJECT_MAINTAINER}"
-#cmakedefine PROJECT_MAINTAINER_EMAIL "${PROJECT_MAINTAINER_EMAIL}"
-
-#cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
-#ifdef HAVE_SUPERLU
-#define SUPERLU_POST_2005_VERSION
-#cmakedefine SUPERLU_MIN_VERSION_4_3
-#endif
-
-/* tr1/array. */
-/*#cmakedefine HAVE_TR1_ARRAY 1*/
-
-/* Define to 1 if the <array> C++0x is available and support array::fill */
-/*#cmakedefine HAVE_ARRAY 1*/
-
-/* Define to 1 if you have the <memory> header file. */
-#cmakedefine HAVE_MEMORY 1
-
-/* The namespace in which SHARED_PTR can be found */
-#cmakedefine SHARED_PTR_NAMESPACE ${SHARED_PTR_NAMESPACE}
-
-/* The header in which SHARED_PTR can be found */
-#cmakedefine SHARED_PTR_HEADER ${SHARED_PTR_HEADER}
-
-/* Define to 1 if SHARED_PTR_NAMESPACE::make_shared is usable */
-#cmakedefine HAVE_MAKE_SHARED 1
-
-/* Define to 1 if you have <boost/make_shared.hpp> */
-#cmakedefine HAVE_BOOST_MAKE_SHARED_HPP 1
-
-/* Define to 1 if you have __attribute__((unused)) */
-#cmakedefine HAS_ATTRIBUTE_UNUSED ${HAS_ATTRIBUTE_UNUSED}
-
-#cmakedefine HAVE_TUPLE 1
-#cmakedefine HAVE_NULLPTR 1
-#cmakedefine HAVE_STATIC_ASSERT 1
-#cmakedefine HAVE_VARIADIC_TEMPLATES 1
-#cmakedefine HAVE_VARIADIC_CONSTRUCTOR_SFINAE 1
-#cmakedefine HAVE_RVALUE_REFERENCES 1
-#cmakedefine HAVE_MALLOC_H 1
-#cmakedefine HAVE_VALGRIND 1
+/* end private */
 
 /* Define to 1 if dune-pdelab is patched to be usable by DuMuX */
-#cmakedefine DUNE_PDELAB_IS_PATCHED_FOR_DUMUX ${DUNE_PDELAB_IS_PATCHED_FOR_DUMUX}
+#define DUNE_PDELAB_IS_PATCHED_FOR_DUMUX 1
 
-#include <dune/common/deprecated.hh>
-#include <dune/common/unused.hh>
+/* DEPRECATED: will be removed after DuMuX 2.4. USE WITH CARE: Forces a
+   function to be inlined even for non-optimized builds */
+#define DUMUX_ALWAYS_INLINE __attribute__((always_inline))
 
-#cmakedefine HAVE_ATTRIBUTE_ALWAYS_INLINE 1
-#if HAVE_ATTRIBUTE_ALWAYS_INLINE
-#  define DUMUX_ALWAYS_INLINE __attribute__((always_inline))
-#else
-#  define DUMUX_ALWAYS_INLINE
-#endif
+/* 'set 'constexpr' to 'const' if constexpr is not supported */
+/* #undef constexpr */
 
-#cmakedefine HAVE_CONSTEXPR 1
-#if !HAVE_CONSTEXPR
-#define constexpr const
-#endif
-
-
-
+/* end dumux
+   Everything below here will be overwritten
+*/

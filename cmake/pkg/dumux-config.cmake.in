@@ -1,0 +1,20 @@
+if(NOT @DUNE_MOD_NAME@_FOUND)
+#compute installation prefix relative to this file
+get_filename_component(_dir "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(_prefix "${_dir}/../../.." ABSOLUTE)
+
+#import the target
+#include("${_prefix}/lib/cmake/@DUNE_MOD_NAME@-targets.cmake")
+
+#report other information
+set(@DUNE_MOD_NAME@_PREFIX "${_prefix}")
+set(@DUNE_MOD_NAME@_INCLUDE_DIRS "${_prefix}/include")
+set(@DUNE_MOD_NAME@_CXX_FLAGS "@CMAKE_CXX_FLAGS@")
+set(@DUNE_MOD_NAME@_CXX_FLAGS_DEBUG "@CMAKE_CXX_FLAGS_DEBUG@")
+set(@DUNE_MOD_NAME@_CXX_FLAGS_MINSIZEREL "@CMAKE_CXX_FLAGS_MINSIZEREL@")
+set(@DUNE_MOD_NAME@_CXX_FLAGS_RELEASE "@CMAKE_CXX_FLAGS_RELEASE@")
+set(@DUNE_MOD_NAME@_CXX_FLAGS_RELWITHDEBINFO "@CMAKE_CXX_FLAGS_RELWITHDEBINFO@")
+set(@DUNE_MOD_NAME@_DEPENDS "@DUNE_DEPENDS@")
+set(@DUNE_MOD_NAME@_SUGGESTS "@DUNE_SUGGESTS@")
+set(@DUNE_MOD_NAME@_MODULE_PATH "@DUNE_INSTALL_MODULEDIR@")
+endif(NOT @DUNE_MOD_NAME@_FOUND)
