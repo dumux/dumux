@@ -86,13 +86,13 @@ class FVVelocity2P
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNW,
+        pn = Indices::pressureNw,
         pglobal = Indices::pressureGlobal,
         vw = Indices::velocityW,
-        vn = Indices::velocityNW,
+        vn = Indices::velocityNw,
         vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNw,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         eqIdxPress = Indices::pressureEqIdx,

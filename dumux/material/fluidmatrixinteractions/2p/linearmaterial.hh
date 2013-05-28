@@ -116,9 +116,15 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of \f$p_c\f$ w.r.t. effective saturation according to linear material relation.
     */
-    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    static Scalar dpc_dsw(const Params &params, Scalar Swe)
     {
         return - (params.maxPc() - params.entryPc());
+    }
+
+    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
+    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    {
+        return dpc_dsw(params, Swe);
     }
 
     /*!
@@ -131,9 +137,15 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of effective saturation w.r.t. \f$p_c\f$ according to linear relation.
      */
-    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    static Scalar dsw_dpc(const Params &params, Scalar pC)
     {
         return - 1/(params.maxPc() - params.entryPc());
+    }
+
+    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
+    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    {
+        return dsw_dpc(params, pC);
     }
 
     /*!

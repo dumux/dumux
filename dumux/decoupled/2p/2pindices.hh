@@ -38,10 +38,22 @@ namespace Dumux
 struct DecoupledTwoPCommonIndices
 {
     // Formulations
-    static const int pwSn = 0; //!< Pw and Sn as primary variables
-    static const int pnSw = 1; //!< Pn and Sw as primary variables
-    static const int pwSw = 2; //!< Pw and Sw as primary variables
-    static const int pnSn = 3; //!< Pn and Sn as primary variables
+    static const int pwsn = 0; //!< Pw and Sn as primary variables
+    DUNE_DEPRECATED_MSG("use pwsn (uncapitalized 's') instead") 
+    static const int pwSn = pwsn; //!< \deprecated
+
+    static const int pnsw = 1; //!< Pn and Sw as primary variables
+    DUNE_DEPRECATED_MSG("use pnsw (uncapitalized 's') instead") 
+    static const int pnSw = pnsw; //!< \deprecated
+
+    static const int pwsw = 2; //!< Pw and Sw as primary variables
+    DUNE_DEPRECATED_MSG("use pwsw (uncapitalized 'S') instead") 
+    static const int pwSw = pwsw; //!< \deprecated
+
+    static const int pnsn = 3; //!< Pn and Sn as primary variables
+    DUNE_DEPRECATED_MSG("use pnsn (uncapitalized 'S') instead") 
+    static const int pnSn = pnsn; //!< \deprecated
+
     static const int pGlobalSw = 4; //!< PGlobal and Sw as primary variables
     static const int pGlobalSn = 5; //!< PGlobal and Sn as primary variables
 
@@ -52,16 +64,26 @@ struct DecoupledTwoPCommonIndices
 
     //saturation flags
     static const int saturationW = 0; //!< Indicates wetting phase saturation
-    static const int saturationNW = 1; //!<  Indicates non-wetting phase saturation
+    static const int saturationNw = 1; //!<  Indicates non-wetting phase saturation
+
+    DUNE_DEPRECATED_MSG("use saturationNw (uncapitalized 'w') instead") 
+    static const int saturationNW = saturationNw; //!< \deprecated
+
     //pressure flags
     static const int pressureW = 0; //!< Indicates wetting phase pressure
-    static const int pressureNW = 1; //!<  Indicates non-wetting phase pressure
+    static const int pressureNw = 1; //!<  Indicates non-wetting phase pressure
     static const int pressureGlobal = 2; //!<  Indicates global-pressure
+
+    DUNE_DEPRECATED_MSG("use pressureNw (uncapitalized 'w') instead") 
+    static const int pressureNW = pressureNw; //!< \deprecated
 
     //velocity flags
     static const int velocityW = 0; //!< Indicates wetting phase velocity
-    static const int velocityNW = 1; //!<  Indicates non-wetting phase velocity
+    static const int velocityNw = 1; //!<  Indicates non-wetting phase velocity
     static const int velocityTotal = 2; //!<  Indicates total velocity
+
+    DUNE_DEPRECATED_MSG("use velocityNw (uncapitalized 'w') instead") 
+    static const int velocityNW = velocityNw; //!< \deprecated
 };
 
 /*!
@@ -71,7 +93,7 @@ struct DecoupledTwoPCommonIndices
  * \tparam formulation Index of the formulation
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <int formulation = DecoupledTwoPCommonIndices::pwSn, int PVOffset = 0>
+template <int formulation = DecoupledTwoPCommonIndices::pwsn, int PVOffset = 0>
 struct DecoupledTwoPIndices : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
@@ -88,9 +110,9 @@ struct DecoupledTwoPIndices : public DecoupledTwoPCommonIndices
     //! \cond \private
     //Set the types of the single models depending on the formulation
     static const int pressureType = pressureW;
-    static const int saturationType = saturationNW;
+    static const int saturationType = saturationNw;
 
-    static const int velocityDefault = velocityNW;
+    static const int velocityDefault = velocityNw;
     //! \endcond
 
     // indices of the equations
@@ -109,7 +131,7 @@ struct DecoupledTwoPIndices : public DecoupledTwoPCommonIndices
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
-struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnSw, PVOffset>
+struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsw, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
@@ -125,7 +147,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnSw, PVOffset>
 
     //! \cond \private
     //Set the types of the single models depending on the formulation
-    static const int pressureType = pressureNW;
+    static const int pressureType = pressureNw;
     static const int saturationType = saturationW;
 
     static const int velocityDefault = velocityW;
@@ -149,7 +171,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnSw, PVOffset>
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
-struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pwSw, PVOffset>
+struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pwsw, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
@@ -187,7 +209,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pwSw, PVOffset>
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
-struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnSn, PVOffset>
+struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsn, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
@@ -203,10 +225,10 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnSn, PVOffset>
 
     //! \cond \private
     //Set the types of the single models depending on the formulation
-    static const int pressureType = pressureNW;
-    static const int saturationType = saturationNW;
+    static const int pressureType = pressureNw;
+    static const int saturationType = saturationNw;
 
-    static const int velocityDefault = velocityNW;
+    static const int velocityDefault = velocityNw;
     //! \endcond
 
     // indices of the equations
@@ -279,7 +301,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSn, PVOffset>
     //! \cond \private
     //Set the types of the single models depending on the formulation
     static const int pressureType = pressureGlobal;
-    static const int saturationType = saturationNW;
+    static const int saturationType = saturationNw;
 
     static const int velocityDefault = velocityTotal;
     //! \endcond

@@ -58,13 +58,13 @@ private:
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNW,
+        pn = Indices::pressureNw,
         pglobal = Indices::pressureGlobal,
         vw = Indices::velocityW,
-        vn = Indices::velocityNW,
+        vn = Indices::velocityNw,
         vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW
+        Sn = Indices::saturationNw
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -95,9 +95,13 @@ public:
 
     /*! \brief Returns the CFL flux-function
      *
-     * \copydetails EvalCflFlux::getCFLFluxFunction(const Element&)
+     * \copydetails EvalCflFlux::getCflFluxFunction(const Element&)
      */
-    Scalar getCFLFluxFunction(const Element& element);
+    Scalar getCflFluxFunction(const Element& element);
+
+    DUNE_DEPRECATED_MSG("use getCflFluxFunction() (uncapitalized 'fl') instead")
+    Scalar getCFLFluxFunction(const Element& element)
+    { return getCflFluxFunction(element); }
 
     /*! \brief  Returns the CFL time-step
      *
@@ -107,7 +111,7 @@ public:
     {
         Scalar porosity = std::max(problem_.spatialParams().porosity(element), porosityThreshold_);
 
-        return (getCFLFluxFunction(element) * porosity * element.geometry().volume());
+        return (getCflFluxFunction(element) * porosity * element.geometry().volume());
     }
 
     //! resets the accumulated CFL-fluxes to zero
@@ -230,7 +234,7 @@ private:
 
 // Returns the CFL flux-function
 template<class TypeTag>
-typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCFLFluxFunction(const Element& element)
+typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCflFluxFunction(const Element& element)
 {
     Scalar residualSatW = problem_.spatialParams().materialLawParams(element).swr();
     Scalar residualSatNW = problem_.spatialParams().materialLawParams(element).snr();

@@ -93,12 +93,12 @@ template<class TypeTag> class FVMPFAL2PFABoundVelocity2P: public FVMPFAL2PFABoun
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNW,
+        pn = Indices::pressureNw,
         pglobal = Indices::pressureGlobal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNw,
         vw = Indices::velocityW,
-        vn = Indices::velocityNW,
+        vn = Indices::velocityNw,
         vt = Indices::velocityTotal
     };
     enum
@@ -796,7 +796,7 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
                             Scalar pcBound = MaterialLaw::pc(
                                     problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
 
-                            Scalar gravityDiffBound = (problem_.bboxMax() - globalPosFace) * problem_.gravity()
+                            Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * problem_.gravity()
                                     * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
                             pcBound += gravityDiffBound;
@@ -809,7 +809,7 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
                             lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
                             lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 
-                            Scalar gdeltaZ = (problem_.bboxMax()-globalPosFace) * gravity_;
+                            Scalar gdeltaZ = (problem_.bBoxMax()-globalPosFace) * gravity_;
                             Scalar potentialBoundW = interactionVolume.getDirichletValues(intVolFaceIdx)[pressureIdx] + density_[wPhaseIdx]*gdeltaZ;
                             Scalar potentialBoundNW = potentialBoundW;
 

@@ -87,7 +87,7 @@ SET_INT_PROP(TwoPTwoC, NumEq, 2); //!< set the number of equations to 2
 //! Set the default formulation to pw-Sn
 SET_INT_PROP(TwoPTwoC,
              Formulation,
-             TwoPTwoCFormulation::pwSn);
+             TwoPTwoCFormulation::pwsn);
 
 //! set as default that no component mass balance is replaced by the total mass balance
 SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, 2);

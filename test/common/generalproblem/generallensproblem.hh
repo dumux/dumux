@@ -138,7 +138,7 @@ SET_PROP(DecoupledGeneralLensProblem, SpatialParamsBaseClass)
 };
 
 SET_INT_PROP(DecoupledGeneralLensProblem, Formulation,
-        DecoupledTwoPCommonIndices::pwSn);
+        DecoupledTwoPCommonIndices::pwsn);
 
 SET_INT_PROP(DecoupledGeneralLensProblem, VtkOutputLevel, 1);
 
@@ -366,8 +366,8 @@ public:
 
         if (onLeftBoundary_(globalPos))
         {
-            Scalar height = this->bboxMax()[1] - this->bboxMin()[1];
-            Scalar depth = this->bboxMax()[1] - globalPos[1];
+            Scalar height = this->bBoxMax()[1] - this->bBoxMin()[1];
+            Scalar depth = this->bBoxMax()[1] - globalPos[1];
             Scalar alpha = (1 + 1.5/height);
 
             // hydrostatic pressure scaled by alpha
@@ -376,7 +376,7 @@ public:
         }
         else if (onRightBoundary_(globalPos))
         {
-            Scalar depth = this->bboxMax()[1] - globalPos[1];
+            Scalar depth = this->bBoxMax()[1] - globalPos[1];
 
             // hydrostatic pressure
             values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
@@ -424,7 +424,7 @@ public:
     void initialAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
     {
-        Scalar depth = this->bboxMax()[1] - globalPos[1];
+        Scalar depth = this->bBoxMax()[1] - globalPos[1];
         Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/1e5);
 
         // hydrostatic pressure
@@ -438,28 +438,28 @@ private:
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->bboxMin()[0] + eps_;
+        return globalPos[0] < this->bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->bboxMax()[0] - eps_;
+        return globalPos[0] > this->bBoxMax()[0] - eps_;
     }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->bboxMin()[1] + eps_;
+        return globalPos[1] < this->bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->bboxMax()[1] - eps_;
+        return globalPos[1] > this->bBoxMax()[1] - eps_;
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
-        Scalar lambda = (this->bboxMax()[0] - globalPos[0])/width;
+        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
+        Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 

@@ -171,7 +171,7 @@ public:
         storageMatrix[nPhaseIdx]    = 0.0;
         //        const GlobalPosition &globalPos = elem.geometry().corner(scvIdx);
 
-        Scalar dSM_dSF = vertDat.dSM_dSF();
+        Scalar dSM_dSF = vertDat.dsm_dsf();
         if (!this->problem_().useInterfaceCondition())
         {
             dSM_dSF = 1.0;

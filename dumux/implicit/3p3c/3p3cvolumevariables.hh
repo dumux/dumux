@@ -190,7 +190,7 @@ public:
         Scalar pcnw = MaterialLaw::pcnw(materialParams, Sw_);
         Scalar pcgn = MaterialLaw::pcgn(materialParams, Sw_ + Sn_);
 
-        Scalar pcAlpha = MaterialLaw::pcalpha(materialParams, Sn_);
+        Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, Sn_);
         Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
 
         pn_ = pg_- pcAlpha * pcgn - (1.-pcAlpha)*(pcgw - pcNW1);

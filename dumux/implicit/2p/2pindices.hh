@@ -38,8 +38,13 @@ namespace Dumux
  */
 struct TwoPFormulation
 {
-    static const int pwSn = 0; //!< Pw and Sn as primary variables
-    static const int pnSw = 1; //!< Pn and Sw as primary variables
+    static const int pwsn = 0; //!< Pw and Sn as primary variables
+    DUNE_DEPRECATED_MSG("use pwsn (uncapitalized 'S') instead") 
+    static const int pwSn = pwsn; //!< \deprecated
+
+    static const int pnsw = 1; //!< Pn and Sw as primary variables
+    DUNE_DEPRECATED_MSG("use pnsw (uncapitalized 'S') instead") 
+    static const int pnSw = pnsw; //!< \deprecated
 };
 
 /*!
@@ -64,11 +69,11 @@ struct TwoPCommonIndices
  *        isothermal two-phase model.
  *
  * \tparam TypeTag The problem type tag
- * \tparam formulation The formulation, either pwSn or pnSw
+ * \tparam formulation The formulation, either pwsn or pnsw
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, 
-          int formulation = TwoPFormulation::pwSn, 
+          int formulation = TwoPFormulation::pwsn, 
           int PVOffset = 0>
 struct TwoPIndices 
 : public TwoPCommonIndices<TypeTag>, TwoPFormulation
@@ -98,7 +103,7 @@ struct TwoPIndices
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset>
-struct TwoPIndices<TypeTag, TwoPFormulation::pnSw, PVOffset>
+struct TwoPIndices<TypeTag, TwoPFormulation::pnsw, PVOffset>
 : public TwoPCommonIndices<TypeTag>, TwoPFormulation
 {
     // Primary variable indices

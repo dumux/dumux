@@ -46,10 +46,10 @@ public:
     VanGenuchtenParams()
     {}
 
-    VanGenuchtenParams(Scalar vgAlpha, Scalar vgN)
+    VanGenuchtenParams(Scalar vgAlpha, Scalar vgn)
     {
         setVgAlpha(vgAlpha);
-        setVgN(vgN);
+        setVgn(vgn);
     };
 
     /*!
@@ -70,8 +70,12 @@ public:
      * \brief Return the \f$m\f$ shape parameter [-] of van Genuchten's
      *        curve.
      */
+    Scalar vgm() const
+    { return vgm_; }
+
+    DUNE_DEPRECATED_MSG("use vgm() (uncapitalized 'm') instead")
     Scalar vgM() const
-    { return vgM_; }
+    { return vgm(); }
 
     /*!
      * \brief Set the \f$m\f$ shape parameter [-] of van Genuchten's
@@ -79,15 +83,23 @@ public:
      *
      * The \f$n\f$ shape parameter is set to \f$n = \frac{1}{1 - m}\f$
      */
+    void setVgm(Scalar m)
+    { vgm_ = m; vgn_ = 1/(1 - vgm_); }
+
+    DUNE_DEPRECATED_MSG("use setVgm() (uncapitalized 'm') instead")
     void setVgM(Scalar m)
-    { vgM_ = m; vgN_ = 1/(1 - vgM_); }
+    { setVgm(m); }
 
     /*!
      * \brief Return the \f$n\f$ shape parameter [-] of van Genuchten's
      *        curve.
      */
+    Scalar vgn() const
+    { return vgn_; }
+
+    DUNE_DEPRECATED_MSG("use vgn() (uncapitalized 'n') instead")
     Scalar vgN() const
-    { return vgN_; }
+    { return vgn(); }
 
     /*!
      * \brief Set the \f$n\f$ shape parameter [-] of van Genuchten's
@@ -95,13 +107,17 @@ public:
      *
      * The \f$n\f$ shape parameter is set to \f$m = 1 - \frac{1}{n}\f$
      */
+    void setVgn(Scalar n)
+    { vgn_ = n; vgm_ = 1 - 1/vgn_; }
+
+    DUNE_DEPRECATED_MSG("use setVgn() (uncapitalized 'n') instead")
     void setVgN(Scalar n)
-    { vgN_ = n; vgM_ = 1 - 1/vgN_; }
+    { setVgn(n); }
 
 private:
     Scalar vgAlpha_;
-    Scalar vgM_;
-    Scalar vgN_;
+    Scalar vgm_;
+    Scalar vgn_;
 };
 } // namespace Dumux
 

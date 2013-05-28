@@ -445,13 +445,13 @@ private:
      * \brief Give back whether the testes position (input) is a specific region (left) in the domain
      */
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    {       return globalPos[0] < this->bboxMin()[0] + eps_;   }
+    {       return globalPos[0] < this->bBoxMin()[0] + eps_;   }
 
     /*!
      * \brief Give back whether the testes position (input) is a specific region (right) in the domain
      */
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    {        return globalPos[0] > this->bboxMax()[0] - eps_;    }
+    {        return globalPos[0] > this->bBoxMax()[0] - eps_;    }
 
     Scalar temperature_;
     Scalar eps_;

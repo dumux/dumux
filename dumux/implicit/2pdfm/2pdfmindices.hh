@@ -36,11 +36,11 @@ namespace Dumux
  *        isothermal two-phase discrete fracture-matrix model.
  *
  * \tparam TypeTag The problem type tag
- * \tparam formulation The formulation, either pwSn or pnSw
+ * \tparam formulation The formulation, either pwsn or pnsw
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, 
-          int formulation = TwoPFormulation::pwSn, 
+          int formulation = TwoPFormulation::pwsn, 
           int PVOffset = 0>
 struct TwoPDFMIndices : public TwoPIndices <TypeTag, formulation, PVOffset>
 {

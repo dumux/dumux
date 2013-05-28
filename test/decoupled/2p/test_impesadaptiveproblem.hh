@@ -213,7 +213,7 @@ public:
         {
             bcTypes.setAllDirichlet();
         }
-        else if (globalPos[0] > this->bboxMax()[0] - eps_)
+        else if (globalPos[0] > this->bBoxMax()[0] - eps_)
         {
             bcTypes.setNeumann(eqIdxPress);
             bcTypes.setOutflow(eqIdxSat);
@@ -236,7 +236,7 @@ public:
                 Scalar pRef = referencePressureAtPos(globalPos);
                 Scalar temp = temperatureAtPos(globalPos);
 
-                values[pWIdx] = (2e5 + (this->bboxMax()[dim-1] - globalPos[dim-1]) * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
+                values[pWIdx] = (2e5 + (this->bBoxMax()[dim-1] - globalPos[dim-1]) * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
             }
             else
             {
@@ -255,7 +255,7 @@ public:
     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         values = 0;
-        if (globalPos[0] > this->bboxMax()[0] - eps_)
+        if (globalPos[0] > this->bBoxMax()[0] - eps_)
         {
             values[nPhaseIdx] = 3e-4;
         }

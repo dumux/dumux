@@ -35,7 +35,7 @@ namespace Dumux
  * \ingroup ImplicitIndices
  * \brief Indices for the non-isothermal 2-phase 2-component model
  *
- * \tparam formulation The formulation, either pwSn or pnSw.
+ * \tparam formulation The formulation, either pwsn or pnsw.
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int formulation, int PVOffset>

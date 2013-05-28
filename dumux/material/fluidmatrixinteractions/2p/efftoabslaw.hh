@@ -126,9 +126,15 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of \f$p_c\f$ w.r.t. effective saturation according to EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
     */
+    static Scalar dpc_dsw(const Params &params, Scalar Sw)
+    {
+        return EffLaw::dpc_dsw(params, swToSwe(params, Sw) )*dswe_dsw_(params);
+    }
+
+    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
     static Scalar dpC_dSw(const Params &params, Scalar Sw)
     {
-        return EffLaw::dpC_dSw(params, swToSwe(params, Sw) )*dSwe_dSw_(params);
+        return dpc_dsw(params, Sw);
     }
 
     /*!
@@ -148,9 +154,15 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of effective saturation w.r.t. \f$p_c\f$ according to EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
      */
+    static Scalar dsw_dpc(const Params &params, Scalar pC)
+    {
+        return EffLaw::dsw_dpc(params, pC)*dsw_dswe_(params);
+    }
+
+    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
     static Scalar dSw_dpC(const Params &params, Scalar pC)
     {
-        return EffLaw::dSw_dpC(params, pC)*dSw_dSwe_(params);
+        return dsw_dpc(params, pC);
     }
 
     /*!
@@ -247,7 +259,7 @@ private:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Derivative of the effective saturation w.r.t. the absolute saturation.
      */
-    static Scalar dSwe_dSw_(const Params &params)
+    static Scalar dswe_dsw_(const Params &params)
     { return 1.0/(1 - params.swr() - params.snr()); }
 
     /*!
@@ -258,7 +270,7 @@ private:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Derivative of the absolute saturation w.r.t. the effective saturation.
      */
-    static Scalar dSw_dSwe_(const Params &params)
+    static Scalar dsw_dswe_(const Params &params)
     { return 1 - params.swr() - params.snr(); }
 };
 }

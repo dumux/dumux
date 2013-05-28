@@ -92,8 +92,8 @@ public:
      */
     OneModelProblem(const GridView &gridView, bool verbose = true)
         : gridView_(gridView),
-          bboxMin_(std::numeric_limits<double>::max()),
-          bboxMax_(-std::numeric_limits<double>::max()),
+          bBoxMin_(std::numeric_limits<double>::max()),
+          bBoxMax_(-std::numeric_limits<double>::max()),
           variables_(gridView),
           outputInterval_(1)
     {
@@ -102,8 +102,8 @@ public:
         const VertexIterator vEndIt = gridView.template end<dim>();
         for (; vIt!=vEndIt; ++vIt) {
             for (int i=0; i<dim; i++) {
-                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().center()[i]);
-                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().center()[i]);
+                bBoxMin_[i] = std::min(bBoxMin_[i], vIt->geometry().center()[i]);
+                bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().center()[i]);
             }
         }
 
@@ -119,8 +119,8 @@ public:
      */
     OneModelProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),
-          bboxMin_(std::numeric_limits<double>::max()),
-          bboxMax_(-std::numeric_limits<double>::max()),
+          bBoxMin_(std::numeric_limits<double>::max()),
+          bBoxMax_(-std::numeric_limits<double>::max()),
           variables_(gridView),
           outputInterval_(1)
     {
@@ -129,8 +129,8 @@ public:
         const VertexIterator vEndIt = gridView.template end<dim>();
         for (; vIt!=vEndIt; ++vIt) {
             for (int i=0; i<dim; i++) {
-                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().center()[i]);
-                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().center()[i]);
+                bBoxMin_[i] = std::min(bBoxMin_[i], vIt->geometry().center()[i]);
+                bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().center()[i]);
             }
         }
         
@@ -493,15 +493,23 @@ public:
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the smallest values.
      */
+    const GlobalPosition &bBoxMin() const
+    { return bBoxMin_; }
+
+    DUNE_DEPRECATED_MSG("use bBoxMin() (capitalized second 'B') instead")
     const GlobalPosition &bboxMin() const
-    { return bboxMin_; }
+    { return bBoxMin(); }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the largest values.
      */
+    const GlobalPosition &bBoxMax() const
+    { return bBoxMax_; }
+
+    DUNE_DEPRECATED_MSG("use bBoxMax() (capitalized second 'B') instead")
     const GlobalPosition &bboxMax() const
-    { return bboxMax_; }
+    { return bBoxMax(); }
 
     /*!
      * \brief Returns TimeManager object used by the simulation
@@ -622,8 +630,8 @@ private:
                                  // for example.
     const GridView gridView_;
 
-    GlobalPosition bboxMin_;
-    GlobalPosition bboxMax_;
+    GlobalPosition bBoxMin_;
+    GlobalPosition bBoxMax_;
 
     Dune::shared_ptr<TimeManager> timeManager_;
 

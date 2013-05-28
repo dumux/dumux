@@ -52,12 +52,12 @@ public:
      *
      * This is simply 10%
      */
-    Scalar sreg(int phaseIdx) const
+    Scalar sReg(int phaseIdx) const
     { return 0.10; }
 
-    DUNE_DEPRECATED_MSG("use sreg() (uncapitalized 's') instead")
+    DUNE_DEPRECATED_MSG("use sReg() (uncapitalized 's', capitalized 'R') instead")
     Scalar Sreg() const
-    { return sreg(); }
+    { return sReg(); }
 
     /*!
      * \brief Return the capillary pressure for a phase \f$\alpha\f$ at \f$S_\alpha=0\f$.

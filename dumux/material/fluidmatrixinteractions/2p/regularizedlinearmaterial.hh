@@ -128,9 +128,15 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
     */
+    static Scalar dpc_dsw(const Params &params, Scalar Swe)
+    {
+        return LinearMaterial::dpc_dsw(params, Swe);
+    }
+
+    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
     static Scalar dpC_dSw(const Params &params, Scalar Swe)
     {
-        return LinearMaterial::dpC_dSw(params, Swe);
+        return dpc_dsw(params, Swe);
     }
 
     /*!
@@ -142,9 +148,15 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
+    static Scalar dsw_dpc(const Params &params, Scalar pC)
+    {
+        return LinearMaterial::dsw_dpc(params, pC);
+    }
+
+    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
     static Scalar dSw_dpC(const Params &params, Scalar pC)
     {
-        return LinearMaterial::dSw_dpC(params, pC);
+        return dsw_dpc(params, pC);
     }
 
     /*!

@@ -372,9 +372,15 @@ public:
      *
      *  \return \f$ \boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \f$
      */
-    Scalar getNTKNu(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
+    Scalar getNtkNu(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
         return normal_[subVolumeIdx][subVolumeFaceIdxInInsideN] * permTimesNu_[subVolumeIdx][subVolumeFaceIdxInInsideNu];
+    }
+
+    DUNE_DEPRECATED_MSG("use getNtkNu() instead")
+    Scalar getNTKNu(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
+    {
+        return getNtkNu(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu);
     }
 
     //! Get \f$ \boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu\f$  for the transmissiblity calculation
@@ -386,13 +392,19 @@ public:
      *
      *  \return \f$ \boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \f$
      */
-    Scalar getNTKrKNu(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
+    Scalar getNtkrkNu(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
         DimVector krKNu(permTimesNu_[subVolumeIdx][subVolumeFaceIdxInInsideNu]);
 
         krKNu *= relPerm;
 
         return normal_[subVolumeIdx][subVolumeFaceIdxInInsideN] * krKNu;
+    }
+
+    DUNE_DEPRECATED_MSG("use getNtkrkNu() instead")
+    Scalar getNTKrKNu(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
+    {
+        return getNtkrkNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu);
     }
 
     //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \right) \f$  for the transmissiblity calculation
@@ -403,9 +415,15 @@ public:
      *
      *  \return \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \right) \f$
      */
+    Scalar getNtkNu_df(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
+    {
+        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkNu(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
+    }
+
+    DUNE_DEPRECATED_MSG("use getNtkNu_df() instead")
     Scalar getNTKNu_by_dF(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
-        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNTKNu(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
+        return getNtkNu_df(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu);
     }
 
     //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \right) \f$  for the transmissiblity calculation
@@ -417,9 +435,15 @@ public:
      *
      *  \return \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \right) \f$
      */
+    Scalar getNtkrkNu_df(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
+    {
+        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkrkNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
+    }
+
+    DUNE_DEPRECATED_MSG("use getNtkrkNu_df() instead")
     Scalar getNTKrKNu_by_dF(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
-        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNTKrKNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
+        return getNtkrkNu_df(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu);
     }
 
 private:

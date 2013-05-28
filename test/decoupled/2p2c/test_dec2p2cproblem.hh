@@ -81,7 +81,7 @@ SET_PROP(TestDecTwoPTwoCProblem, PressureModel)
 };
 
 SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureNW);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
 
 // Select fluid system
 SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
@@ -218,7 +218,7 @@ Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
  */
 void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
-    if (globalPos[0] > this->bboxMax()[0]-1E-6 || globalPos[0] < 1e-6)
+    if (globalPos[0] > this->bBoxMax()[0]-1E-6 || globalPos[0] < 1e-6)
         bcTypes.setAllDirichlet();
     else
         // all other boundaries

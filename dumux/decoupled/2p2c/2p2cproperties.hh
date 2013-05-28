@@ -123,7 +123,7 @@ public:
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoPTwoC,
         PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureNW);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         SaturationFormulation,
@@ -193,7 +193,10 @@ public:
 
     // Ensure pressure fomrulation index coincides with FluidSystem
     static const int pressureW = wPhaseIdx;
-    static const int pressureNW = nPhaseIdx;
+    static const int pressureNw = nPhaseIdx;
+
+    DUNE_DEPRECATED_MSG("use pressureNw (uncapitalized 'w') instead") 
+    static const int pressureNW = pressureNw; //!< \deprecated
 
     // Equation indices
     static const int pressureEqIdx = 0;

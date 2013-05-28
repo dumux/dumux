@@ -78,8 +78,8 @@ class CO2VolumeVariables: public TwoPTwoCVolumeVariables<TypeTag>
     // formulations
     enum {
         formulation = GET_PROP_VALUE(TypeTag, Formulation),
-        pwSn = TwoPTwoCFormulation::pwSn,
-        pnSw = TwoPTwoCFormulation::pnSw
+        pwsn = TwoPTwoCFormulation::pwsn,
+        pnsw = TwoPTwoCFormulation::pnsw
     };
 
     // primary variable indices
@@ -144,9 +144,9 @@ public:
              Sn = 0.0;
          }
          else if (phasePresence == bothPhases) {
-             if (formulation == pwSn)
+             if (formulation == pwsn)
                  Sn = priVars[switchIdx];
-             else if (formulation == pnSw)
+             else if (formulation == pnsw)
                  Sn = 1.0 - priVars[switchIdx];
              else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
          }
@@ -161,11 +161,11 @@ public:
 
           Scalar pC = MaterialLaw::pc(materialParams, 1 - Sn);
 
-          if (formulation == pwSn) {
+          if (formulation == pwsn) {
               ParentType::fluidState_.setPressure(wPhaseIdx, priVars[pressureIdx]);
               ParentType::fluidState_.setPressure(nPhaseIdx, priVars[pressureIdx] + pC);
           }
-          else if (formulation == pnSw) {
+          else if (formulation == pnsw) {
               ParentType::fluidState_.setPressure(nPhaseIdx, priVars[pressureIdx]);
               ParentType::fluidState_.setPressure(wPhaseIdx, priVars[pressureIdx] - pC);
           }

@@ -86,7 +86,7 @@ public:
     /* regularization */
     if (Se<0.0) Se=0.0;
     if (Se>1.0) Se=1.0;
-    vg_m = 1.-1./params.vgN();
+    vg_m = 1.-1./params.vgn();
 
         if (Se>PC_VG_REG && Se<1-PC_VG_REG)
         {
@@ -101,12 +101,12 @@ public:
         {
             /* value and derivative at regularization point */
             if (Se<=PC_VG_REG) Se_regu = PC_VG_REG; else Se_regu = 1-PC_VG_REG;
-            pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN())/params.vgAlpha();
-            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgN();
+            pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn())/params.vgAlpha();
+            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgn();
 
             /* evaluate tangential */
             r        = (Se-Se_regu)*pc_prime+pc;
-            return(r/params.betaGW());
+            return(r/params.betaGw());
         }
     }
 
@@ -136,7 +136,7 @@ public:
     /* regularization */
     if (Se<0.0) Se=0.0;
     if (Se>1.0) Se=1.0;
-    vg_m = 1.-1./params.vgN();
+    vg_m = 1.-1./params.vgn();
 
         if (Se>PC_VG_REG && Se<1-PC_VG_REG)
         {
@@ -151,12 +151,12 @@ public:
         {
             /* value and derivative at regularization point */
             if (Se<=PC_VG_REG) Se_regu = PC_VG_REG; else Se_regu = 1-PC_VG_REG;
-            pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN())/params.vgAlpha();
-            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgN();
+            pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn())/params.vgAlpha();
+            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgn();
 
             /* evaluate tangential */
             r        = (Se-Se_regu)*pc_prime+pc;
-            return(r/params.betaNW());
+            return(r/params.betaNw());
         }
     }
 
@@ -185,7 +185,7 @@ public:
     /* regularization */
     if (Se<0.0) Se=0.0;
     if (Se>1.0) Se=1.0;
-    vg_m = 1.-1./params.vgN();
+    vg_m = 1.-1./params.vgn();
 
         if (Se>PC_VG_REG && Se<1-PC_VG_REG)
         {
@@ -200,12 +200,12 @@ public:
         {
             /* value and derivative at regularization point */
             if (Se<=PC_VG_REG) Se_regu = PC_VG_REG; else Se_regu = 1-PC_VG_REG;
-            pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN())/params.vgAlpha();
-            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgN()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgN();
+            pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn())/params.vgAlpha();
+            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgn();
 
             /* evaluate tangential */
             r        = (Se-Se_regu)*pc_prime+pc;
-            return(r/params.betaGN());
+            return(r/params.betaGn());
         }
     }
 
@@ -215,7 +215,7 @@ public:
         return pcgn(params, St);
     }
 
-    static Scalar pcalpha(const Params &params, Scalar Sn)
+    static Scalar pcAlpha(const Params &params, Scalar Sn)
     {
         /* continuous transition to zero */
         Scalar alpha,Sne;
@@ -234,10 +234,10 @@ public:
         return(alpha);
     }
 
-    DUNE_DEPRECATED_MSG("use pcalpha() (uncapitalized 'ca') instead")
+    DUNE_DEPRECATED_MSG("use pcAlpha() (uncapitalized 'c') instead")
     static Scalar pCAlpha(const Params &params, Scalar Sn)
     {
-        return pcalpha(params, Sn);
+        return pcAlpha(params, Sn);
     }
 
     /*!
@@ -261,18 +261,30 @@ public:
      *        pressure to the effective saturation.
      *
     */
-    static Scalar dpC_dSw(const Params &params, Scalar Sw)
+    static Scalar dpc_dsw(const Params &params, Scalar Sw)
     {
         DUNE_THROW(Dune::NotImplemented, "dpC/dSw for three phases not implemented! Do it yourself!");
+    }
+
+    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
+    static Scalar dpC_dSw(const Params &params, Scalar Sw)
+    {
+        return dpc_dsw(params, Sw);
     }
 
     /*!
      * \brief Returns the partial derivative of the effective
      *        saturation to the capillary pressure.
      */
-    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    static Scalar dsw_dpc(const Params &params, Scalar pC)
     {
         DUNE_THROW(Dune::NotImplemented, "dSw/dpC for three phases not implemented! Do it yourself!");
+    }
+
+    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
+    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    {
+        return dsw_dpc(params, pC);
     }
 
     /*!
@@ -299,7 +311,7 @@ public:
         if(Se > 1.0) return 1.;
         if(Se < 0.0) return 0.;
 
-        Scalar r = 1. - std::pow(1 - std::pow(Se, 1/params.vgM()), params.vgM());
+        Scalar r = 1. - std::pow(1 - std::pow(Se, 1/params.vgm()), params.vgm());
         return std::sqrt(Se)*r*r;
     };
 
@@ -332,8 +344,8 @@ public:
         if(Ste - Swe <= 0.0) return 0.;
 
         Scalar krn_;
-        krn_ = std::pow(1 - std::pow(Swe, 1/params.vgM()), params.vgM());
-        krn_ -= std::pow(1 - std::pow(Ste, 1/params.vgM()), params.vgM());
+        krn_ = std::pow(1 - std::pow(Swe, 1/params.vgm()), params.vgm());
+        krn_ -= std::pow(1 - std::pow(Ste, 1/params.vgm()), params.vgm());
         krn_ *= krn_;
 
         if (params.krRegardsSnr())
@@ -381,7 +393,7 @@ public:
           if (scalFact < 0.) scalFact = 0.;
         }
 
-        Scalar result = scalFact * std::pow(1 - Se, 1.0/3.) * std::pow(1 - std::pow(Se, 1/params.vgM()), 2*params.vgM());
+        Scalar result = scalFact * std::pow(1 - Se, 1.0/3.) * std::pow(1 - std::pow(Se, 1/params.vgm()), 2*params.vgm());
 
         return result;
     };

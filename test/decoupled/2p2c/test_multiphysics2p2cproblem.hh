@@ -80,7 +80,7 @@ SET_PROP(TestMultTwoPTwoCProblem, PressureModel)
 };
 
 SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureNW);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
 
 
 //// Select fluid system

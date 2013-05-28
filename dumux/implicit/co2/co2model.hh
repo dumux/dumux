@@ -79,8 +79,8 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
          nPhaseOnly = Indices::nPhaseOnly,
          bothPhases = Indices::bothPhases,
 
-         pwSn = TwoPTwoCFormulation::pwSn,
-         pnSw = TwoPTwoCFormulation::pnSw,
+         pwsn = TwoPTwoCFormulation::pwsn,
+         pnsw = TwoPTwoCFormulation::pnsw,
          formulation = GET_PROP_VALUE(TypeTag, Formulation)
      };
 
@@ -197,9 +197,9 @@ public:
                              << ", coordinates: " << globalPos << ", xnw > xnwMax: "
                              << xnw << " > "<< xnwMax << std::endl;
                    newPhasePresence = bothPhases;
-                   if (formulation == pnSw)
+                   if (formulation == pnsw)
                        globalSol[globalIdx][switchIdx] = 0.0;
-                   else if (formulation == pwSn)
+                   else if (formulation == pwsn)
                        globalSol[globalIdx][switchIdx] = 1.0;
                }
            }
@@ -224,9 +224,9 @@ public:
                              << xwn << " > "<< xwnMax << std::endl;
 
                    newPhasePresence = bothPhases;
-                   if (formulation == pnSw)
+                   if (formulation == pnsw)
                        globalSol[globalIdx][switchIdx] = 0.999;
-                   else if (formulation == pwSn)
+                   else if (formulation == pwsn)
                        globalSol[globalIdx][switchIdx] = 0.001;
                }
            }

@@ -55,7 +55,7 @@ SET_INT_PROP(TwoP, NumPhases, 2); //!< The number of phases in the 2p model is 2
 //! Set the default formulation to pWsN
 SET_INT_PROP(TwoP,
              Formulation,
-             TwoPFormulation::pwSn);
+             TwoPFormulation::pwsn);
 
 //! Use the 2p local jacobian operator for the 2p model
 SET_TYPE_PROP(TwoP,

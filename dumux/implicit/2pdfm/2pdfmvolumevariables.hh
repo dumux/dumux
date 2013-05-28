@@ -55,8 +55,8 @@ class TwoPDFMVolumeVariables : public TwoPVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        pwSn = Indices::pwSn,
-        pnSw = Indices::pnSw,
+        pwsn = Indices::pwsn,
+        pnsw = Indices::pnsw,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         wPhaseIdx = Indices::wPhaseIdx,
@@ -344,10 +344,16 @@ public:
     { return permeabilityFracture_; }
 
     /*!
-     * \brief Returns the derivative dSM/dSF
+     * \brief Returns the derivative dsm/dsf
      */
-    Scalar dSM_dSF() const
+    Scalar dsm_dsf() const
     { return dSM_dSF_;}
+
+    DUNE_DEPRECATED_MSG("use dsm_dsf() (uncapitalized) instead")
+    Scalar dSM_dSF() const
+    {
+        return dsm_dsf();
+    }
 
 protected:
     FluidState fluidState_;

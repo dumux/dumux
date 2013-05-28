@@ -68,7 +68,7 @@ public:
     static Scalar pc(const Params &params, Scalar Swe)
     {
         assert(0 <= Swe && Swe <= 1);
-        return pow(pow(Swe, -1.0/params.vgM()) - 1, 1.0/params.vgN())/params.vgAlpha();
+        return pow(pow(Swe, -1.0/params.vgm()) - 1, 1.0/params.vgn())/params.vgAlpha();
     }
 
     DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
@@ -95,7 +95,7 @@ public:
     {
         assert(pC >= 0);
 
-        return pow(pow(params.vgAlpha()*pC, params.vgN()) + 1, -params.vgM());
+        return pow(pow(params.vgAlpha()*pC, params.vgn()) + 1, -params.vgm());
     }
 
     DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
@@ -120,13 +120,19 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
     */
-    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    static Scalar dpc_dsw(const Params &params, Scalar Swe)
     {
         assert(0 <= Swe && Swe <= 1);
 
-        Scalar powSwe = pow(Swe, -1/params.vgM());
-        return - 1/params.vgAlpha() * pow(powSwe - 1, 1/params.vgN() - 1)/params.vgN()
-            * powSwe/Swe/params.vgM();
+        Scalar powSwe = pow(Swe, -1/params.vgm());
+        return - 1/params.vgAlpha() * pow(powSwe - 1, 1/params.vgn() - 1)/params.vgn()
+            * powSwe/Swe/params.vgm();
+    }
+
+    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
+    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    {
+        return dpc_dsw(params, Swe);
     }
 
     /*!
@@ -138,13 +144,19 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    static Scalar dsw_dpc(const Params &params, Scalar pC)
     {
         assert(pC >= 0);
 
-        Scalar powAlphaPc = pow(params.vgAlpha()*pC, params.vgN());
-        return -pow(powAlphaPc + 1, -params.vgM()-1)*
-            params.vgM()*powAlphaPc/pC*params.vgN();
+        Scalar powAlphaPc = pow(params.vgAlpha()*pC, params.vgn());
+        return -pow(powAlphaPc + 1, -params.vgm()-1)*
+            params.vgm()*powAlphaPc/pC*params.vgn();
+    }
+
+    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
+    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    {
+        return dsw_dpc(params, pC);
     }
 
     /*!
@@ -160,7 +172,7 @@ public:
     {
         assert(0 <= Swe && Swe <= 1);
 
-        Scalar r = 1. - pow(1 - pow(Swe, 1/params.vgM()), params.vgM());
+        Scalar r = 1. - pow(1 - pow(Swe, 1/params.vgm()), params.vgm());
         return sqrt(Swe)*r*r;
     };
 
@@ -174,14 +186,20 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dkrw_dSw(const Params &params, Scalar Swe)
+    static Scalar dkrw_dsw(const Params &params, Scalar Swe)
     {
         assert(0 <= Swe && Swe <= 1);
 
-        const Scalar x = 1 - std::pow(Swe, 1.0/params.vgM());
-        const Scalar xToM = std::pow(x, params.vgM());
+        const Scalar x = 1 - std::pow(Swe, 1.0/params.vgm());
+        const Scalar xToM = std::pow(x, params.vgm());
         return (1 - xToM)/std::sqrt(Swe) * ( (1 - xToM)/2 + 2*xToM*(1-x)/x );
     };
+
+    DUNE_DEPRECATED_MSG("use dkrw_dsw() (uncapitalized 's') instead")
+    static Scalar dkrw_dSw(const Params &params, Scalar Swe)
+    {
+        return dkrw_dsw(params, Swe);
+    }
 
 
     /*!
@@ -200,7 +218,7 @@ public:
 
         return
             pow(1 - Swe, 1.0/3) *
-            pow(1 - pow(Swe, 1/params.vgM()), 2*params.vgM());
+            pow(1 - pow(Swe, 1/params.vgm()), 2*params.vgm());
     };
 
     /*!
@@ -214,15 +232,21 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dkrn_dSw(const Params &params, Scalar Swe)
+    static Scalar dkrn_dsw(const Params &params, Scalar Swe)
     {
         assert(0 <= Swe && Swe <= 1);
 
-        const Scalar x = std::pow(Swe, 1.0/params.vgM());
+        const Scalar x = std::pow(Swe, 1.0/params.vgm());
         return
-            -std::pow(1 - x, 2*params.vgM())
+            -std::pow(1 - x, 2*params.vgm())
             *std::pow(1 - Swe, -2/3)
             *(1.0/3 + 2*x/Swe);
+    }
+
+    DUNE_DEPRECATED_MSG("use dkrn_dsw() (uncapitalized 's') instead")
+    static Scalar dkrn_dSw(const Params &params, Scalar Swe)
+    {
+        return dkrn_dsw(params, Swe);
     }
 
 };

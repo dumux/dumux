@@ -235,8 +235,8 @@ private:
     {
         const Scalar v1 = 0.5;
         values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = v1*(globalPos[0] - this->bboxMin()[0])*(this->bboxMax()[0] - globalPos[0])
-                                   / (0.25*(this->bboxMax()[0] - this->bboxMin()[0])*(this->bboxMax()[0] - this->bboxMin()[0]));
+        values[velocityYIdx] = v1*(globalPos[0] - this->bBoxMin()[0])*(this->bBoxMax()[0] - globalPos[0])
+                                   / (0.25*(this->bBoxMax()[0] - this->bBoxMin()[0])*(this->bBoxMax()[0] - this->bBoxMin()[0]));
         values[pressureIdx] = 1e5 + 1.189*this->gravity()[1]*globalPos[1];
         values[massOrMoleFracIdx] = 1e-4;
         values[temperatureIdx] = 283.15;
@@ -251,16 +251,16 @@ private:
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < this->bboxMin()[0] + eps_; }
+    { return globalPos[0] < this->bBoxMin()[0] + eps_; }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > this->bboxMax()[0] - eps_; }
+    { return globalPos[0] > this->bBoxMax()[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < this->bboxMin()[1] + eps_; }
+    { return globalPos[1] < this->bBoxMin()[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > this->bboxMax()[1] - eps_; }
+    { return globalPos[1] > this->bBoxMax()[1] - eps_; }
 
     bool onBoundary_(const GlobalPosition &globalPos) const
     {

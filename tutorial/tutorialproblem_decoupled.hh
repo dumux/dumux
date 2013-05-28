@@ -218,7 +218,7 @@ public:
      */
     void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:bctype}@*/
     {
-            if (globalPos[0] < this->bboxMin()[0] + eps_)
+            if (globalPos[0] < this->bBoxMin()[0] + eps_)
             {
                 bcTypes.setDirichlet(pressEqIdx);
                 bcTypes.setDirichlet(satEqIdx);
@@ -260,7 +260,7 @@ public:
     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:neumann}@*/
     {
         values = 0;
-        if (globalPos[0] > this->bboxMax()[0] - eps_)
+        if (globalPos[0] > this->bBoxMax()[0] - eps_)
         {
             values[nPhaseIdx] = 3e-2;
         }

@@ -55,7 +55,7 @@ namespace Dumux
  *
  *  In the IMPES models the default setting is:
  *
- * formulation: \f$ p_w \f$ - \f$ S_w \f$ (Property: \a Formulation defined as \a DecoupledTwoPCommonIndices::pwSw)
+ * formulation: \f$ p_w \f$ - \f$ S_w \f$ (Property: \a Formulation defined as \a DecoupledTwoPCommonIndices::pwsw)
  * 
  * compressibility: disabled (Property: \a EnableCompressibility set to \a false)
  *
@@ -97,13 +97,13 @@ class FVSaturation2P: public FVTransport<TypeTag>
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNW,
+        pn = Indices::pressureNw,
         pglobal = Indices::pressureGlobal,
         vw = Indices::velocityW,
-        vn = Indices::velocityNW,
+        vn = Indices::velocityNw,
         vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW
+        Sn = Indices::saturationNw
     };
     enum
     {

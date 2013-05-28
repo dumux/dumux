@@ -180,7 +180,7 @@ private:
 
         for (int i=0; i<pointNum_; i++)
         {
-            dpcdsw_[i] = MaterialLaw::dpC_dSw(materialLawParams, satVec_[i]);
+            dpcdsw_[i] = MaterialLaw::dpc_dsw(materialLawParams, satVec_[i]);
                     }
 //         std::cout<<"dpcdsw = "<<dpcdsw_<<std::endl;
 

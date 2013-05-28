@@ -104,7 +104,7 @@ SET_INT_PROP(DecoupledTwoP, NumComponents, 1); //!< Each phase consists of 1 pur
 //! Set \f$p_w\f$-\f$S_n\f$ formulation as default two-phase formulation
 SET_INT_PROP(DecoupledTwoP,
     Formulation,
-    DecoupledTwoPCommonIndices::pwSw);
+    DecoupledTwoPCommonIndices::pwsw);
 
 //! Chose the set of indices depending on the chosen formulation
 SET_PROP(DecoupledTwoP, Indices)

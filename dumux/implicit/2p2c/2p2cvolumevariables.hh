@@ -82,8 +82,8 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     // formulations
     enum {
         formulation = GET_PROP_VALUE(TypeTag, Formulation),
-        pwSn = TwoPTwoCFormulation::pwSn,
-        pnSw = TwoPTwoCFormulation::pnSw
+        pwsn = TwoPTwoCFormulation::pwsn,
+        pnsw = TwoPTwoCFormulation::pnsw
     };
 
     // primary variable indices
@@ -199,9 +199,9 @@ public:
             Sn = 0.0;
         }
         else if (phasePresence == bothPhases) {
-            if (formulation == pwSn)
+            if (formulation == pwsn)
                 Sn = priVars[switchIdx];
-            else if (formulation == pnSw)
+            else if (formulation == pnsw)
                 Sn = 1.0 - priVars[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
@@ -218,11 +218,11 @@ public:
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         Scalar pC = MaterialLaw::pc(materialParams, 1 - Sn);
 
-        if (formulation == pwSn) {
+        if (formulation == pwsn) {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pC);
         }
-        else if (formulation == pnSw) {
+        else if (formulation == pnsw) {
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pC);
         }

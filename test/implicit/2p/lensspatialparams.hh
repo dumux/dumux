@@ -118,9 +118,9 @@ public:
         // parameters for the Van Genuchten law
         // alpha and n
         lensMaterialParams_.setVgAlpha(0.00045);
-        lensMaterialParams_.setVgN(7.3);
+        lensMaterialParams_.setVgn(7.3);
         outerMaterialParams_.setVgAlpha(0.0037);
-        outerMaterialParams_.setVgN(4.7);
+        outerMaterialParams_.setVgn(4.7);
 
         // parameters for the linear law
         // minimum and maximum pressures

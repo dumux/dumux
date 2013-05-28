@@ -170,7 +170,7 @@ public:
     {
         const GlobalPosition &globalPos =
             fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
-        Scalar right = this->bboxMax()[0];
+        Scalar right = this->bBoxMax()[0];
         // extraction of oil on the right boundary for approx. 1.e6 seconds
         if (globalPos[0] > right - eps_) {
             // oil outflux of 30 g/(m * s) on the right boundary.

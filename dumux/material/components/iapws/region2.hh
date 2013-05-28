@@ -93,8 +93,14 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
-    static Scalar dtau_dT(Scalar temperature)
+    static Scalar dTau_dt(Scalar temperature)
     { return - 540.0 / (temperature*temperature); }
+
+    DUNE_DEPRECATED_MSG("use dTau_dt() instead")
+    static Scalar dtau_dT(Scalar temperature)
+    {
+        return dTau_dt(temperature);
+    }
 
     /*!
      * \brief Returns the reduced pressure (dimensionless) for IAPWS region 2.
@@ -110,8 +116,14 @@ public:
      *
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dpi_dp(Scalar pressure)
+    static Scalar dPi_dp(Scalar pressure)
     { return 1.0 / 1e6; }
+
+    DUNE_DEPRECATED_MSG("use dPi_dp() (capitalization) instead")
+    static Scalar dpi_dp(Scalar pressure)
+    {
+        return dPi_dp(pressure);
+    }
 
     /*!
      * \brief Returns the derivative of the pressure to the
@@ -119,8 +131,14 @@ public:
      *
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dp_dpi(Scalar pressure)
+    static Scalar dp_dPi(Scalar pressure)
     { return 1e6; }
+
+    DUNE_DEPRECATED_MSG("use dp_dPi() (capitalization) instead")
+    static Scalar dp_dpi(Scalar pressure)
+    {
+        return dp_dPi(pressure);
+    }
 
     /*!
      * \brief The Gibbs free energy for IAPWS region 2 (i.e. sub-critical
@@ -166,7 +184,7 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static Scalar dgamma_dtau(Scalar temperature, Scalar pressure)
+    static Scalar dGamma_dTau(Scalar temperature, Scalar pressure)
     {
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
@@ -192,6 +210,12 @@ public:
         return result;
     }
 
+    DUNE_DEPRECATED_MSG("use dGamma_dTau() (capitalization) instead")
+    static Scalar dgamma_dtau(Scalar temperature, Scalar pressure)
+    {
+        return dGamma_dTau(temperature, pressure);
+    }
+
     /*!
      * \brief The partial derivative of the Gibbs free energy to the
      *        normalized pressure for IAPWS region 2 (i.e. sub-critical
@@ -204,7 +228,7 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static Scalar dgamma_dpi(Scalar temperature, Scalar pressure)
+    static Scalar dGamma_dPi(Scalar temperature, Scalar pressure)
     {
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
@@ -224,6 +248,12 @@ public:
         return result;
     }
 
+    DUNE_DEPRECATED_MSG("use dGamma_dPi() (capitalization) instead")
+    static Scalar dgamma_dpi(Scalar temperature, Scalar pressure)
+    {
+        return dGamma_dPi(temperature, pressure);
+    }
+
     /*!
      * \brief The partial derivative of the Gibbs free energy to the
      *        normalized pressure and to the normalized temperature
@@ -236,7 +266,7 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static Scalar ddgamma_dtaudpi(Scalar temperature, Scalar pressure)
+    static Scalar ddGamma_dTaudPi(Scalar temperature, Scalar pressure)
     {
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
@@ -257,6 +287,12 @@ public:
         return result;
     }
 
+    DUNE_DEPRECATED_MSG("use ddGamma_dTaudPi() (capitalization) instead")
+    static Scalar ddgamma_dtaudpi(Scalar temperature, Scalar pressure)
+    {
+        return ddGamma_dTaudPi(temperature, pressure);
+    }
+
     /*!
      * \brief The second partial derivative of the Gibbs free energy
      *        to the normalized pressure for IAPWS region 2
@@ -269,7 +305,7 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static Scalar ddgamma_ddpi(Scalar temperature, Scalar pressure)
+    static Scalar ddGamma_ddPi(Scalar temperature, Scalar pressure)
     {
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
@@ -290,6 +326,12 @@ public:
         return result;
     }
 
+    DUNE_DEPRECATED_MSG("use ddGamma_ddPi() (capitalization) instead")
+    static Scalar ddgamma_ddpi(Scalar temperature, Scalar pressure)
+    {
+        return ddGamma_ddPi(temperature, pressure);
+    }
+
     /*!
      * \brief The second partial derivative of the Gibbs free energy to the
      *        normalized temperature for IAPWS region 2 (i.e. sub-critical
@@ -302,7 +344,7 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static Scalar ddgamma_ddtau(Scalar temperature, Scalar pressure)
+    static Scalar ddGamma_ddTau(Scalar temperature, Scalar pressure)
     {
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
@@ -328,6 +370,12 @@ public:
         }
 
         return result;
+    }
+
+    DUNE_DEPRECATED_MSG("use ddGamma_ddTau() (capitalization) instead")
+    static Scalar ddgamma_ddtau(Scalar temperature, Scalar pressure)
+    {
+        return ddGamma_ddTau(temperature, pressure);
     }
 
 

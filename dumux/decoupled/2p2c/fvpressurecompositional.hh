@@ -84,7 +84,7 @@ template<class TypeTag> class FVPressureCompositional
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNW
+        pn = Indices::pressureNw
     };
     enum
     {

@@ -79,17 +79,17 @@ public:
     struct AdaptedValues
     {
         Scalar saturationW;
-        Scalar saturationNW;
+        Scalar saturationNw;
         Scalar pressW;
-        Scalar pressNW;
+        Scalar pressNw;
         Scalar volCorr;
         int count;
         AdaptedValues()
         {
             saturationW = 0.;
-            saturationNW = 0.;
+            saturationNw = 0.;
             pressW = 0.;
-            pressNW = 0.;
+            pressNw = 0.;
             count = 0;
             volCorr = 0;
         }
@@ -110,9 +110,9 @@ public:
     void storeAdaptionValues(AdaptedValues& adaptedValues, const Element& element)
     {
         adaptedValues.saturationW = this->saturation(wPhaseIdx);
-        adaptedValues.saturationNW = this->saturation(nPhaseIdx);
+        adaptedValues.saturationNw = this->saturation(nPhaseIdx);
         adaptedValues.pressW = this->pressure(wPhaseIdx);
-        adaptedValues.pressNW = this->pressure(nPhaseIdx);
+        adaptedValues.pressNw = this->pressure(nPhaseIdx);
         adaptedValues.volCorr = this->volumeCorrection();
     }
     //! Stores sons entries into father element for averageing
@@ -130,9 +130,9 @@ public:
                                     const Element& fatherElement)
     {
         adaptedValuesFather.saturationW += adaptedValues.saturationW / adaptedValues.count;
-        adaptedValuesFather.saturationNW += adaptedValues.saturationNW / adaptedValues.count;
+        adaptedValuesFather.saturationNw += adaptedValues.saturationNw / adaptedValues.count;
         adaptedValuesFather.pressW += adaptedValues.pressW / adaptedValues.count;
-        adaptedValuesFather.pressNW += adaptedValues.pressNW / adaptedValues.count;
+        adaptedValuesFather.pressNw += adaptedValues.pressNw / adaptedValues.count;
         adaptedValuesFather.volCorr += adaptedValues.volCorr / adaptedValues.count;
     }
     //! Set adapted values in CellData
@@ -147,9 +147,9 @@ public:
     void setAdaptionValues(AdaptedValues& adaptedValues, const Element& element)
     {
         this->setSaturation(wPhaseIdx, adaptedValues.saturationW / adaptedValues.count);
-        this->setSaturation(nPhaseIdx, adaptedValues.saturationNW / adaptedValues.count);
+        this->setSaturation(nPhaseIdx, adaptedValues.saturationNw / adaptedValues.count);
         this->setPressure(wPhaseIdx, adaptedValues.pressW / adaptedValues.count);
-        this->setPressure(nPhaseIdx, adaptedValues.pressNW / adaptedValues.count);
+        this->setPressure(nPhaseIdx, adaptedValues.pressNw / adaptedValues.count);
         this->setUpdate(adaptedValues.volCorr / adaptedValues.count);
     }
 
@@ -170,9 +170,9 @@ public:
         AdaptedValues& adaptedValues = adaptionMap[son];
         AdaptedValues& adaptedValuesFather = adaptionMap[father];
         adaptedValues.saturationW = adaptedValuesFather.saturationW / adaptedValuesFather.count;
-        adaptedValues.saturationNW = adaptedValuesFather.saturationNW / adaptedValuesFather.count;
+        adaptedValues.saturationNw = adaptedValuesFather.saturationNw / adaptedValuesFather.count;
         adaptedValues.pressW = adaptedValuesFather.pressW / adaptedValuesFather.count;
-        adaptedValues.pressNW = adaptedValuesFather.pressNW / adaptedValuesFather.count;
+        adaptedValues.pressNw = adaptedValuesFather.pressNw / adaptedValuesFather.count;
         adaptedValues.volCorr = adaptedValuesFather.volCorr / adaptedValuesFather.count;
     }
 

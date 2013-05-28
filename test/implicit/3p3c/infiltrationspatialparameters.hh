@@ -121,8 +121,8 @@ public:
 
         // parameters for the 3phase van Genuchten law
         MaterialParams_.setVgAlpha(0.0005);
-        MaterialParams_.setVgN(4.);
-        MaterialParams_.setkrRegardsSnr(false);
+        MaterialParams_.setVgn(4.);
+        MaterialParams_.setKrRegardsSnr(false);
 
         // parameters for adsorption
         MaterialParams_.setKdNAPL(0.);

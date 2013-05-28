@@ -383,7 +383,7 @@ private:
             fs.setPressure(wPhaseIdx, pMax_);
         }
         else {
-            const Scalar interpolation = (globalPos[0] - this->bboxMin()[0] ) / (this->bboxMax()[0] - this->bboxMin()[0]);
+            const Scalar interpolation = (globalPos[0] - this->bBoxMin()[0] ) / (this->bBoxMax()[0] - this->bBoxMin()[0]);
             const Scalar interpolatedPressure = pMax_ - interpolation * (pMax_ - pMin_) ;
 
             // set pressure of the gas phase
@@ -446,25 +446,25 @@ private:
      * \brief Give back whether the testes position (input) is a specific region (left) in the domain
      */
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    {       return globalPos[0] < this->bboxMin()[0] + eps_;   }
+    {       return globalPos[0] < this->bBoxMin()[0] + eps_;   }
 
     /*!
      * \brief Give back whether the testes position (input) is a specific region (right) in the domain
      */
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    {        return globalPos[0] > this->bboxMax()[0] - eps_;    }
+    {        return globalPos[0] > this->bBoxMax()[0] - eps_;    }
 
     /*!
      * \brief Give back whether the testes position (input) is a specific region (down, (gravityDir)) in the domain
      */
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    {        return globalPos[dim-1] < this->bboxMin()[dim-1] + eps_;    }
+    {        return globalPos[dim-1] < this->bBoxMin()[dim-1] + eps_;    }
 
     /*!
      * \brief Give back whether the testes position (input) is a specific region (up, (gravityDir)) in the domain
      */
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    {        return globalPos[dim-1] > this->bboxMax()[dim-1] - eps_;    }
+    {        return globalPos[dim-1] > this->bBoxMax()[dim-1] - eps_;    }
 
     Scalar temperature_;
     Scalar eps_;

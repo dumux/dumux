@@ -221,7 +221,7 @@ public:
             const GlobalPosition &globalPos) const
     {
         double eps = 1.0e-3;
-        if (globalPos[dim-1] < eps || globalPos[dim-1] > this->bboxMax()[dim-1] - eps)
+        if (globalPos[dim-1] < eps || globalPos[dim-1] > this->bBoxMax()[dim-1] - eps)
             values.setAllDirichlet();
         else
             values.setAllNeumann();

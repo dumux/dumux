@@ -124,11 +124,17 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of \f$p_c\f$ w.r.t. effective saturation according to Brooks & Corey.
     */
-    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    static Scalar dpc_dsw(const Params &params, Scalar Swe)
     {
         assert(0 <= Swe && Swe <= 1);
 
         return - params.pe()/params.lambda() * pow(Swe, -1/params.lambda() - 1);
+    }
+
+    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
+    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    {
+        return dpc_dsw(params, Swe);
     }
 
     /*!
@@ -141,11 +147,17 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of effective saturation w.r.t. \f$p_c\f$ according to Brooks & Corey.
      */
-    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    static Scalar dsw_dpc(const Params &params, Scalar pC)
     {
         assert(pC >= 0);
 
         return -params.lambda()/params.pe() * pow(pC/params.pe(), - params.lambda() - 1);
+    }
+
+    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
+    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    {
+        return dsw_dpc(params, pC);
     }
 
     /*!
@@ -177,12 +189,18 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Derivative of the relative permeability of the wetting phase w.r.t. effective wetting phase saturation calculated as implied by Brooks & Corey.
      */
-    static Scalar dkrw_dSw(const Params &params, Scalar Swe)
+    static Scalar dkrw_dsw(const Params &params, Scalar Swe)
     {
         assert(0 <= Swe && Swe <= 1);
 
         return (2.0/params.lambda() + 3)*pow(Swe, 2.0/params.lambda() + 2);
     };
+
+    DUNE_DEPRECATED_MSG("use dkrw_dsw() (uncapitalized 's') instead")
+    static Scalar dkrw_dSw(const Params &params, Scalar Swe)
+    {
+        return dkrw_dsw(params, Swe);
+    }
 
     /*!
      * \brief The relative permeability for the non-wetting phase of
@@ -216,7 +234,7 @@ public:
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Derivative of the relative permeability of the non-wetting phase w.r.t. effective wetting phase saturation calculated as implied by Brooks & Corey.
      */
-    static Scalar dkrn_dSw(const Params &params, Scalar Swe)
+    static Scalar dkrn_dsw(const Params &params, Scalar Swe)
     {
         assert(0 <= Swe && Swe <= 1);
 
@@ -228,7 +246,13 @@ public:
                     Swe*(1.0/params.lambda() + 1.0/2)
                     )
                 );
-    };
+    }
+
+    DUNE_DEPRECATED_MSG("use dkrn_dsw() (uncapitalized 's') instead")
+    static Scalar dkrn_dSw(const Params &params, Scalar Swe)
+    {
+        return dkrn_dsw(params, Swe);
+    }
 
 };
 }

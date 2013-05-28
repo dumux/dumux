@@ -37,10 +37,13 @@ namespace Dumux
  */
 struct TwoPTwoCFormulation
 {
-    enum {
-        pwSn,
-        pnSw
-    };
+    static const int pwsn = 0; //!< Pw and Sn as primary variables
+    DUNE_DEPRECATED_MSG("use pwsn (uncapitalized 'S') instead") 
+    static const int pwSn = pwsn; //!< \deprecated
+
+    static const int pnsw = 1; //!< Pn and Sw as primary variables
+    DUNE_DEPRECATED_MSG("use pnsw (uncapitalized 'S') instead") 
+    static const int pnSw = pnsw; //!< \deprecated
 };
 
 /*!
@@ -48,11 +51,11 @@ struct TwoPTwoCFormulation
  * \ingroup ImplicitIndices
  * \brief The indices for the isothermal TwoPTwoC model.
  *
- * \tparam formulation The formulation, either pwSn or pnSw.
+ * \tparam formulation The formulation, either pwsn or pnsw.
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag,
-          int formulation = TwoPTwoCFormulation::pwSn,
+          int formulation = TwoPTwoCFormulation::pwsn,
           int PVOffset = 0>
 class TwoPTwoCIndices
 {
@@ -97,7 +100,7 @@ public:
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset>
-class TwoPTwoCIndices<TypeTag, TwoPTwoCFormulation::pnSw, PVOffset>
+class TwoPTwoCIndices<TypeTag, TwoPTwoCFormulation::pnsw, PVOffset>
 {
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 

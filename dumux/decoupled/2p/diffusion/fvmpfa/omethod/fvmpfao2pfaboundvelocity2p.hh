@@ -93,12 +93,12 @@ template<class TypeTag> class FVMPFAO2PFABoundVelocity2P: public FVMPFAO2PFABoun
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNW,
+        pn = Indices::pressureNw,
         pglobal = Indices::pressureGlobal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNw,
         vw = Indices::velocityW,
-        vn = Indices::velocityNW,
+        vn = Indices::velocityNw,
         vt = Indices::velocityTotal
     };
     enum
@@ -361,22 +361,22 @@ void FVMPFAO2PFABoundVelocity2P<TypeTag>::calculateVelocity()
             //compute total mobility of cell 1
             Scalar lambdaTotal4 = lambda4[wPhaseIdx] + lambda4[nPhaseIdx];
 
-            Scalar gn12nu14 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal1, 0, 0, 1);
-            Scalar gn12nu12 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal1, 0, 0, 0);
-            Scalar gn14nu14 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal1, 0, 1, 1);
-            Scalar gn14nu12 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal1, 0, 1, 0);
-            Scalar gn12nu23 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal2, 1, 1, 0);
-            Scalar gn12nu21 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal2, 1, 1, 1);
-            Scalar gn23nu23 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal2, 1, 0, 0);
-            Scalar gn23nu21 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal2, 1, 0, 1);
-            Scalar gn43nu32 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal3, 2, 0, 1);
-            Scalar gn43nu34 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal3, 2, 0, 0);
-            Scalar gn23nu32 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal3, 2, 1, 1);
-            Scalar gn23nu34 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal3, 2, 1, 0);
-            Scalar gn43nu41 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal4, 3, 1, 0);
-            Scalar gn43nu43 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal4, 3, 1, 1);
-            Scalar gn14nu41 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal4, 3, 0, 0);
-            Scalar gn14nu43 = interactionVolume.getNTKrKNu_by_dF(lambdaTotal4, 3, 0, 1);
+            Scalar gn12nu14 = interactionVolume.getNtkrkNu_df(lambdaTotal1, 0, 0, 1);
+            Scalar gn12nu12 = interactionVolume.getNtkrkNu_df(lambdaTotal1, 0, 0, 0);
+            Scalar gn14nu14 = interactionVolume.getNtkrkNu_df(lambdaTotal1, 0, 1, 1);
+            Scalar gn14nu12 = interactionVolume.getNtkrkNu_df(lambdaTotal1, 0, 1, 0);
+            Scalar gn12nu23 = interactionVolume.getNtkrkNu_df(lambdaTotal2, 1, 1, 0);
+            Scalar gn12nu21 = interactionVolume.getNtkrkNu_df(lambdaTotal2, 1, 1, 1);
+            Scalar gn23nu23 = interactionVolume.getNtkrkNu_df(lambdaTotal2, 1, 0, 0);
+            Scalar gn23nu21 = interactionVolume.getNtkrkNu_df(lambdaTotal2, 1, 0, 1);
+            Scalar gn43nu32 = interactionVolume.getNtkrkNu_df(lambdaTotal3, 2, 0, 1);
+            Scalar gn43nu34 = interactionVolume.getNtkrkNu_df(lambdaTotal3, 2, 0, 0);
+            Scalar gn23nu32 = interactionVolume.getNtkrkNu_df(lambdaTotal3, 2, 1, 1);
+            Scalar gn23nu34 = interactionVolume.getNtkrkNu_df(lambdaTotal3, 2, 1, 0);
+            Scalar gn43nu41 = interactionVolume.getNtkrkNu_df(lambdaTotal4, 3, 1, 0);
+            Scalar gn43nu43 = interactionVolume.getNtkrkNu_df(lambdaTotal4, 3, 1, 1);
+            Scalar gn14nu41 = interactionVolume.getNtkrkNu_df(lambdaTotal4, 3, 0, 0);
+            Scalar gn14nu43 = interactionVolume.getNtkrkNu_df(lambdaTotal4, 3, 0, 1);
 
             // compute transmissibility matrix T = CA^{-1}B+F
             Dune::FieldMatrix < Scalar, 2 * dim, 2 * dim > C(0), F(0), A(0), B(0);
@@ -676,7 +676,7 @@ void FVMPFAO2PFABoundVelocity2P<TypeTag>::calculateVelocity()
                             Scalar pcBound = MaterialLaw::pc(
                                     problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
 
-                            Scalar gravityDiffBound = (problem_.bboxMax() - globalPosFace) * gravity_
+                            Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_
                                     * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
                             pcBound += gravityDiffBound;
@@ -691,7 +691,7 @@ void FVMPFAO2PFABoundVelocity2P<TypeTag>::calculateVelocity()
                             lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
                             lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 
-                            Scalar gdeltaZ = (problem_.bboxMax()-globalPosFace) * gravity_;
+                            Scalar gdeltaZ = (problem_.bBoxMax()-globalPosFace) * gravity_;
                             Scalar potentialBoundW = interactionVolume.getDirichletValues(intVolFaceIdx)[pressureIdx] + density_[wPhaseIdx]*gdeltaZ;
                             Scalar potentialBoundNW = potentialBoundW;
 

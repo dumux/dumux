@@ -197,8 +197,8 @@ public:
             Scalar dh_dp =
                 Rs*temperature*
                 Region2::tau(temperature)*
-                Region2::dpi_dp(pv)*
-                Region2::ddgamma_dtaudpi(temperature, pv);
+                Region2::dPi_dp(pv)*
+                Region2::ddGamma_dTaudPi(temperature, pv);
 
             return
                 enthalpyRegion2_(temperature, pv) +
@@ -238,8 +238,8 @@ public:
             Scalar dh_dp =
                 Rs * temperature*
                 Region1::tau(temperature)*
-                Region1::dpi_dp(pv)*
-                Region1::ddgamma_dtaudpi(temperature, pv);
+                Region1::dPi_dp(pv)*
+                Region1::ddGamma_dTaudPi(temperature, pv);
 
             return
                 enthalpyRegion1_(temperature, pv) +
@@ -352,14 +352,14 @@ public:
             // calculate the partial derivative of the internal energy
             // to the pressure at the vapor pressure.
             Scalar tau = Region1::tau(temperature);
-            Scalar dgamma_dpi = Region1::dgamma_dpi(temperature, pv);
-            Scalar ddgamma_dtaudpi = Region1::ddgamma_dtaudpi(temperature, pv);
-            Scalar ddgamma_ddpi = Region1::ddgamma_ddpi(temperature, pv);
+            Scalar dGamma_dPi = Region1::dGamma_dPi(temperature, pv);
+            Scalar ddGamma_dTaudPi = Region1::ddGamma_dTaudPi(temperature, pv);
+            Scalar ddGamma_ddPi = Region1::ddGamma_ddPi(temperature, pv);
             Scalar pi = Region1::pi(pv);
-            Scalar dpi_dp = Region1::dpi_dp(pv);
+            Scalar dPi_dp = Region1::dPi_dp(pv);
             Scalar du_dp =
                 Rs*temperature*
-                (tau*dpi_dp*ddgamma_dtaudpi + dpi_dp*dpi_dp*dgamma_dpi + pi*dpi_dp*ddgamma_ddpi);
+                (tau*dPi_dp*ddGamma_dTaudPi + dPi_dp*dPi_dp*dGamma_dPi + pi*dPi_dp*ddGamma_ddPi);
             */
 
             // use a straight line for extrapolation. use forward
@@ -421,14 +421,14 @@ public:
             // calculate the partial derivative of the internal energy
             // to the pressure at the vapor pressure.
             Scalar tau = Region2::tau(temperature);
-            Scalar dgamma_dpi = Region2::dgamma_dpi(temperature, pv);
-            Scalar ddgamma_dtaudpi = Region2::ddgamma_dtaudpi(temperature, pv);
-            Scalar ddgamma_ddpi = Region2::ddgamma_ddpi(temperature, pv);
+            Scalar dGamma_dPi = Region2::dGamma_dPi(temperature, pv);
+            Scalar ddGamma_dTaudPi = Region2::ddGamma_dTaudPi(temperature, pv);
+            Scalar ddGamma_ddPi = Region2::ddGamma_ddPi(temperature, pv);
             Scalar pi = Region2::pi(pv);
-            Scalar dpi_dp = Region2::dpi_dp(pv);
+            Scalar dPi_dp = Region2::dPi_dp(pv);
             Scalar du_dp =
                 Rs*temperature*
-                (tau*dpi_dp*ddgamma_dtaudpi + dpi_dp*dpi_dp*dgamma_dpi + pi*dpi_dp*ddgamma_ddpi);
+                (tau*dPi_dp*ddGamma_dTaudPi + dPi_dp*dPi_dp*dGamma_dPi + pi*dPi_dp*ddGamma_ddPi);
 
             // use a straight line for extrapolation
             Scalar uv = internalEnergyRegion2_(temperature, pv);
@@ -578,15 +578,15 @@ public:
             Scalar dv_dp = (v1 - v0)/eps;
             /*
             Scalar pi = Region2::pi(pv);
-            Scalar dp_dpi = Region2::dp_dpi(pv);
-            Scalar dgamma_dpi = Region2::dgamma_dpi(temperature, pv);
-            Scalar ddgamma_ddpi = Region2::ddgamma_ddpi(temperature, pv);
+            Scalar dp_dPi = Region2::dp_dPi(pv);
+            Scalar dGamma_dPi = Region2::dGamma_dPi(temperature, pv);
+            Scalar ddGamma_ddPi = Region2::ddGamma_ddPi(temperature, pv);
 
             Scalar RT = Rs*temperature;
             Scalar dv_dp =
-                RT/(dp_dpi*pv)
+                RT/(dp_dPi*pv)
                 *
-                (dgamma_dpi + pi*ddgamma_ddpi - v0*dp_dpi/RT);
+                (dGamma_dPi + pi*ddGamma_ddPi - v0*dp_dPi/RT);
             */
 
             // calculate the partial derivative of the density to the
@@ -686,15 +686,15 @@ public:
             /*
             Scalar v0 = volumeRegion1_(temperature, pv);
             Scalar pi = Region1::pi(pv);
-            Scalar dp_dpi = Region1::dp_dpi(pv);
-            Scalar dgamma_dpi = Region1::dgamma_dpi(temperature, pv);
-            Scalar ddgamma_ddpi = Region1::ddgamma_ddpi(temperature, pv);
+            Scalar dp_dPi = Region1::dp_dPi(pv);
+            Scalar dGamma_dPi = Region1::dGamma_dPi(temperature, pv);
+            Scalar ddGamma_ddPi = Region1::ddGamma_ddPi(temperature, pv);
 
             Scalar RT = Rs*temperature;
             Scalar dv_dp =
-                RT/(dp_dpi*pv)
+                RT/(dp_dPi*pv)
                 *
-                (dgamma_dpi + pi*ddgamma_ddpi - v0*dp_dpi/RT);
+                (dGamma_dPi + pi*ddGamma_ddPi - v0*dp_dPi/RT);
             */
 
             // calculate the partial derivative of the density to the
@@ -861,7 +861,7 @@ private:
     {
         return
             Region1::tau(temperature) *
-            Region1::dgamma_dtau(temperature, pressure) *
+            Region1::dGamma_dTau(temperature, pressure) *
             Rs*temperature;
     }
 
@@ -870,7 +870,7 @@ private:
     {
         return
             - pow(Region1::tau(temperature), 2 ) *
-            Region1::ddgamma_ddtau(temperature, pressure) *
+            Region1::ddGamma_ddTau(temperature, pressure) *
             Rs;
     }
 
@@ -878,12 +878,12 @@ private:
     static Scalar heatCap_v_Region1_(Scalar temperature, Scalar pressure)
     {
         double tau = Region1::tau(temperature);
-        double num = Region1::dgamma_dpi(temperature, pressure) - tau * Region1::ddgamma_dtaudpi(temperature, pressure);
-        double diff = pow(num, 2) / Region1::ddgamma_ddpi(temperature, pressure);
+        double num = Region1::dGamma_dPi(temperature, pressure) - tau * Region1::ddGamma_dTaudPi(temperature, pressure);
+        double diff = pow(num, 2) / Region1::ddGamma_ddPi(temperature, pressure);
 
         return
             - pow(tau, 2 ) *
-            Region1::ddgamma_ddtau(temperature, pressure) * Rs +
+            Region1::ddGamma_ddTau(temperature, pressure) * Rs +
             diff;
     }
 
@@ -892,8 +892,8 @@ private:
     {
         return
             Rs * temperature *
-            ( Region1::tau(temperature)*Region1::dgamma_dtau(temperature, pressure) -
-              Region1::pi(pressure)*Region1::dgamma_dpi(temperature, pressure));
+            ( Region1::tau(temperature)*Region1::dGamma_dTau(temperature, pressure) -
+              Region1::pi(pressure)*Region1::dGamma_dPi(temperature, pressure));
     }
 
     // the unregularized specific volume for liquid water
@@ -901,7 +901,7 @@ private:
     {
         return
             Region1::pi(pressure)*
-            Region1::dgamma_dpi(temperature, pressure) *
+            Region1::dGamma_dPi(temperature, pressure) *
             Rs * temperature / pressure;
     }
 
@@ -910,7 +910,7 @@ private:
     {
         return
             Region2::tau(temperature) *
-            Region2::dgamma_dtau(temperature, pressure) *
+            Region2::dGamma_dTau(temperature, pressure) *
             Rs*temperature;
     }
 
@@ -919,8 +919,8 @@ private:
     {
         return
             Rs * temperature *
-            ( Region2::tau(temperature)*Region2::dgamma_dtau(temperature, pressure) -
-              Region2::pi(pressure)*Region2::dgamma_dpi(temperature, pressure));
+            ( Region2::tau(temperature)*Region2::dGamma_dTau(temperature, pressure) -
+              Region2::pi(pressure)*Region2::dGamma_dPi(temperature, pressure));
     }
 
     // the unregularized specific isobaric heat capacity
@@ -928,7 +928,7 @@ private:
     {
         return
             - pow(Region2::tau(temperature), 2 ) *
-            Region2::ddgamma_ddtau(temperature, pressure) *
+            Region2::ddGamma_ddTau(temperature, pressure) *
             Rs;
     }
 
@@ -937,11 +937,11 @@ private:
     {
         double tau = Region2::tau(temperature);
         double pi = Region2::pi(pressure);
-        double num = 1 + pi * Region2::dgamma_dpi(temperature, pressure) + tau * pi * Region2::ddgamma_dtaudpi(temperature, pressure);
-        double diff = num * num / (1 - pi * pi * Region2::ddgamma_ddpi(temperature, pressure));
+        double num = 1 + pi * Region2::dGamma_dPi(temperature, pressure) + tau * pi * Region2::ddGamma_dTaudPi(temperature, pressure);
+        double diff = num * num / (1 - pi * pi * Region2::ddGamma_ddPi(temperature, pressure));
         return
             - pow(tau, 2 ) *
-            Region2::ddgamma_ddtau(temperature, pressure) * Rs
+            Region2::ddGamma_ddTau(temperature, pressure) * Rs
             - diff;
     }
 
@@ -950,7 +950,7 @@ private:
     {
         return
             Region2::pi(pressure)*
-            Region2::dgamma_dpi(temperature, pressure) *
+            Region2::dGamma_dPi(temperature, pressure) *
             Rs * temperature / pressure;
     }
 }; // end class

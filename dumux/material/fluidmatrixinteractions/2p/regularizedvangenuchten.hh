@@ -111,7 +111,7 @@ public:
 
             if (Swe < 1.0) {
                 // use spline between threshold Swe and 1.0
-                Scalar mTh = VanGenuchten::dpC_dSw(params, SwThHigh);
+                Scalar mTh = VanGenuchten::dpc_dsw(params, SwThHigh);
                 Spline<Scalar> sp(SwThHigh, 1.0, // x0, x1
                                   yTh, 0, // y0, y1
                                   mTh, m1); // m0, m1
@@ -180,7 +180,7 @@ public:
             Scalar m1 = (0.0 - yTh)/(1.0 - SwThHigh)*2;
 
             // invert spline between threshold Swe and 1.0
-            Scalar mTh = VanGenuchten::dpC_dSw(params, SwThHigh);
+            Scalar mTh = VanGenuchten::dpc_dsw(params, SwThHigh);
             Spline<Scalar> sp(SwThHigh, 1.0, // x0, x1
                               yTh, 0, // m0, m1
                               mTh, m1); // m0, m1
@@ -208,10 +208,10 @@ public:
     *
     *        For not-regularized part:
     *
-      \copydetails VanGenuchten::dpC_dSw()
+      \copydetails VanGenuchten::dpc_dsw()
     *
     */
-    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    static Scalar dpc_dsw(const Params &params, Scalar Swe)
     {
         // derivative of the regualarization
         if (Swe < params.pcLowSw()) {
@@ -223,7 +223,13 @@ public:
             return mHigh_(params);
         }
 
-        return VanGenuchten::dpC_dSw(params, Swe);
+        return VanGenuchten::dpc_dsw(params, Swe);
+    }
+
+    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
+    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    {
+        return dpc_dsw(params, Swe);
     }
 
     /*!
@@ -236,9 +242,9 @@ public:
      *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line and use that slope (yes, there is a kink :-( ).
      *
      *        For not-regularized part:
-        \copydetails VanGenuchten::dSw_dpC()
+        \copydetails VanGenuchten::dsw_dpc()
      */
-    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    static Scalar dsw_dpc(const Params &params, Scalar pC)
     {
         // calculate the saturation which corrosponds to the
         // saturation in the non-regularized verision of van
@@ -251,15 +257,21 @@ public:
 
         // derivative of the regularization
         if (Sw < params.pcLowSw()) {
-            // same as in dpC_dSw() but inverted
+            // same as in dpc_dsw() but inverted
             return 1/mLow_(params);
         }
         if (Sw > params.pcHighSw()) {
-            // same as in dpC_dSw() but inverted
+            // same as in dpc_dsw() but inverted
             return 1/mHigh_(params);
         }
 
-        return VanGenuchten::dSw_dpC(params, pC);
+        return VanGenuchten::dsw_dpc(params, pC);
+    }
+
+    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
+    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    {
+        return dsw_dpc(params, pC);
     }
 
     /*!
@@ -291,7 +303,7 @@ public:
             typedef Dumux::Spline<Scalar> Spline;
             Spline sp(SwThHigh, 1.0, // x1, x2
                       VanGenuchten::krw(params, SwThHigh), 1.0, // y1, y2
-                      VanGenuchten::dkrw_dSw(params, SwThHigh), 0); // m1, m2
+                      VanGenuchten::dkrw_dsw(params, SwThHigh), 0); // m1, m2
             return sp.eval(Swe);
         }
 
@@ -327,7 +339,7 @@ public:
             typedef Dumux::Spline<Scalar> Spline;
             Spline sp(0.0, SwThLow, // x1, x2
                       1.0, VanGenuchten::krn(params, SwThLow), // y1, y2
-                      0.0, VanGenuchten::dkrn_dSw(params, SwThLow)); // m1, m2
+                      0.0, VanGenuchten::dkrn_dsw(params, SwThLow)); // m1, m2
             return sp.eval(Swe);
         }
 
@@ -350,7 +362,7 @@ private:
     {
         const Scalar SwThLow = params.pcLowSw();
 
-        return VanGenuchten::dpC_dSw(params, SwThLow);
+        return VanGenuchten::dpc_dsw(params, SwThLow);
     }
 
     /*!

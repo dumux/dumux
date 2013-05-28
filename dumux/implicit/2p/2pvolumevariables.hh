@@ -56,8 +56,8 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        pwSn = Indices::pwSn,
-        pnSw = Indices::pnSw,
+        pwsn = Indices::pwsn,
+        pnsw = Indices::pnsw,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         wPhaseIdx = Indices::wPhaseIdx,
@@ -129,7 +129,7 @@ public:
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
 
-        if (int(formulation) == pwSn) {
+        if (int(formulation) == pwsn) {
             Scalar Sn = priVars[saturationIdx];
             fluidState.setSaturation(nPhaseIdx, Sn);
             fluidState.setSaturation(wPhaseIdx, 1 - Sn);
@@ -139,7 +139,7 @@ public:
             fluidState.setPressure(nPhaseIdx,
                                    pW + MaterialLaw::pc(materialParams, 1 - Sn));
         }
-        else if (int(formulation) == pnSw) {
+        else if (int(formulation) == pnsw) {
             Scalar Sw = priVars[saturationIdx];
             fluidState.setSaturation(wPhaseIdx, Sw);
             fluidState.setSaturation(nPhaseIdx, 1 - Sw);

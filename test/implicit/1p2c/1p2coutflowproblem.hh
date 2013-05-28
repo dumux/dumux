@@ -207,7 +207,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values, 
                             const GlobalPosition &globalPos) const
     {
-        if(globalPos[0] < eps_ || globalPos[0] > this->bboxMax()[0] - eps_)
+        if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }
@@ -217,7 +217,7 @@ public:
         }
         
         // outflow condition for the transport equation at right boundary
-        if(globalPos[0] > this->bboxMax()[0] - eps_)
+        if(globalPos[0] > this->bBoxMax()[0] - eps_)
             values.setOutflow(transportEqIdx);
     }
 

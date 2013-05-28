@@ -91,8 +91,8 @@ public:
      */
     ImplicitProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView)
-        , bboxMin_(std::numeric_limits<double>::max())
-        , bboxMax_(-std::numeric_limits<double>::max())
+        , bBoxMin_(std::numeric_limits<double>::max())
+        , bBoxMax_(-std::numeric_limits<double>::max())
         , elementMapper_(gridView)
         , vertexMapper_(gridView)
         , timeManager_(&timeManager)
@@ -104,16 +104,16 @@ public:
         const VertexIterator vEndIt = gridView.template end<dim>();
         for (; vIt!=vEndIt; ++vIt) {
             for (int i=0; i<dim; i++) {
-                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().corner(0)[i]);
-                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
+                bBoxMin_[i] = std::min(bBoxMin_[i], vIt->geometry().corner(0)[i]);
+                bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().corner(0)[i]);
             }
         }
 
         // communicate to get the bounding box of the whole domain
         if (gridView.comm().size() > 1)
             for (int i = 0; i < dim; ++i) {
-                bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
-                bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
+                bBoxMin_[i] = gridView.comm().min(bBoxMin_[i]);
+                bBoxMax_[i] = gridView.comm().max(bBoxMax_[i]);
             }
 
         // set a default name for the problem
@@ -689,15 +689,23 @@ public:
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the smallest values.
      */
+    const GlobalPosition &bBoxMin() const
+    { return bBoxMin_; }
+
+    DUNE_DEPRECATED_MSG("use bBoxMin() (capitalized second 'B') instead")
     const GlobalPosition &bboxMin() const
-    { return bboxMin_; }
+    { return bBoxMin(); }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the largest values.
      */
+    const GlobalPosition &bBoxMax() const
+    { return bBoxMax_; }
+
+    DUNE_DEPRECATED_MSG("use bBoxMax() (capitalized second 'B') instead")
     const GlobalPosition &bboxMax() const
-    { return bboxMax_; }
+    { return bBoxMax(); }
 
     /*!
      * \brief Returns the mapper for vertices to indices.
@@ -886,8 +894,8 @@ private:
     std::string simName_;
     const GridView gridView_;
 
-    GlobalPosition bboxMin_;
-    GlobalPosition bboxMax_;
+    GlobalPosition bBoxMin_;
+    GlobalPosition bBoxMax_;
 
     ElementMapper elementMapper_;
     VertexMapper vertexMapper_;
