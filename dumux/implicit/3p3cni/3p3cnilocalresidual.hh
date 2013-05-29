@@ -92,38 +92,21 @@ public:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute the energy storage
-        Scalar wdens = volVars.density(wPhaseIdx);
-        Scalar ndens = volVars.density(nPhaseIdx);
-        Scalar gdens = volVars.density(gPhaseIdx);
-        Scalar wInEnerg = volVars.internalEnergy(wPhaseIdx);
-        Scalar nInEnerg = volVars.internalEnergy(nPhaseIdx);
-        Scalar gInEnerg = volVars.internalEnergy(gPhaseIdx);
-        Scalar wsat = volVars.saturation(wPhaseIdx);
-        Scalar nsat = volVars.saturation(nPhaseIdx);
-        Scalar gsat = volVars.saturation(gPhaseIdx);
-        Scalar temp = volVars.temperature();
-        Scalar heatCap = volVars.heatCapacity();
-        Scalar poro = volVars.porosity();
-
-        storage[energyEqIdx] = temp*heatCap
-            + poro * (gdens*gInEnerg*gsat
-                      + wdens*wInEnerg*wsat
-                      + ndens*nInEnerg*nsat);
-        /*
-          volVars.porosity()*(volVars.density(wPhaseIdx) *
-          volVars.internalEnergy(wPhaseIdx) *
-          volVars.saturation(wPhaseIdx)
-          +
-          volVars.density(nPhaseIdx) *
-          volVars.internalEnergy(nPhaseIdx) *
-          volVars.saturation(nPhaseIdx)
-          +
-          volVars.density(gPhaseIdx) *
-          volVars.internalEnergy(gPhaseIdx) *
-          volVars.saturation(gPhaseIdx))
-          +
-          volVars.temperature()*volVars.heatCapacity();
-        */
+        storage[energyEqIdx] = volVars.porosity()
+            *(
+                volVars.density(wPhaseIdx)
+                *volVars.internalEnergy(wPhaseIdx)
+                *volVars.saturation(wPhaseIdx)
+                +
+                volVars.density(nPhaseIdx)
+                *volVars.internalEnergy(nPhaseIdx)
+                *volVars.saturation(nPhaseIdx)
+                +
+                volVars.density(gPhaseIdx)
+                *volVars.internalEnergy(gPhaseIdx)
+                *volVars.saturation(gPhaseIdx)
+            )
+            + volVars.temperature()*volVars.heatCapacity();
     }
 
     /*!
