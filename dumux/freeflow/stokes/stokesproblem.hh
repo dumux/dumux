@@ -72,6 +72,18 @@ public:
      */
     // \{
 
+
+    /*!
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
+     *
+     * This is not specific to the discretization. By default it just
+     * calls temperature().
+     *
+     * \param pos The position in global coordinates where the temperature should be specified.
+     */
+    Scalar temperatureAtPos(const GlobalPosition &pos) const
+    { return asImp_()->temperature(); }
+
     /*!
      * \brief Returns the temperature within the domain.
      *
