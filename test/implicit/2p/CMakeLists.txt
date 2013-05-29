@@ -1,5 +1,5 @@
 # build target for the simple twophase lens problem
-add_executable("test_box2p" test_box2p.cc)
+add_executable("test_box2p" EXCLUDE_FROM_ALL test_box2p.cc)
 add_test(test_box2p
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -11,7 +11,7 @@ add_test(test_box2p
   -TimeManager.TEnd 3000
   -TimeManager.DtInitial 250)
 
-add_executable("test_cc2p" test_cc2p.cc)
+add_executable("test_cc2p" EXCLUDE_FROM_ALL test_cc2p.cc)
 add_test(test_cc2p
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -32,6 +32,8 @@ set(ALLTESTS ${NORMALTESTS})
 # but just build them on demand
 add_directory_test_target(_test_target)
 add_dependencies(${_test_target} ${ALLTESTS})
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  PROPERTY TEST_INCLUDE_FILE ${CMAKE_CURRENT_BINARY_DIR}/BuildTests.cmake)
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})

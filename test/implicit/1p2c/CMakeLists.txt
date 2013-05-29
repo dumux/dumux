@@ -1,4 +1,4 @@
-add_executable("test_box1p2c" test_box1p2c.cc)
+add_executable("test_box1p2c" EXCLUDE_FROM_ALL test_box1p2c.cc)
 add_test(test_box1p2c
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -10,7 +10,7 @@ add_test(test_box1p2c
   -TimeManager.TEnd 100
   -TimeManager.DtInitial 1)
 
-add_executable("test_cc1p2c" test_cc1p2c.cc)
+add_executable("test_cc1p2c" EXCLUDE_FROM_ALL test_cc1p2c.cc)
 add_test(test_cc1p2c
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -31,6 +31,8 @@ set(ALLTESTS ${NORMALTESTS})
 # but just build them on demand
 add_directory_test_target(_test_target)
 add_dependencies(${_test_target} ${ALLTESTS})
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  PROPERTY TEST_INCLUDE_FILE ${CMAKE_CURRENT_BINARY_DIR}/BuildTests.cmake)
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})

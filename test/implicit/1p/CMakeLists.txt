@@ -1,5 +1,5 @@
 # build target for the onephase-onecomponent test problem
-add_executable("test_box1p" test_box1p.cc)
+add_executable("test_box1p" EXCLUDE_FROM_ALL test_box1p.cc)
 add_test(test_box1p
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -11,7 +11,7 @@ add_test(test_box1p
   -TimeManager.TEnd 1
   -TimeManager.DtInitial 1)
 
-add_executable("test_box1pwithamg" test_box1pwithamg.cc)
+add_executable("test_box1pwithamg" EXCLUDE_FROM_ALL test_box1pwithamg.cc)
 add_test(test_box1pwithamg
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -23,7 +23,7 @@ add_test(test_box1pwithamg
   -TimeManager.TEnd 1
   -TimeManager.DtInitial 1)
 
-add_executable("test_cc1p" test_cc1p.cc)
+add_executable("test_cc1p" EXCLUDE_FROM_ALL test_cc1p.cc)
 add_test(test_cc1p
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -35,7 +35,7 @@ add_test(test_cc1p
   -TimeManager.TEnd 1
   -TimeManager.DtInitial 1)
 
-add_executable("test_cc1pwithamg" test_cc1pwithamg.cc)
+add_executable("test_cc1pwithamg" EXCLUDE_FROM_ALL test_cc1pwithamg.cc)
 add_test(test_cc1pwithamg
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -58,6 +58,8 @@ set(ALLTESTS ${NORMALTESTS})
 # but just build them on demand
 add_directory_test_target(_test_target)
 add_dependencies(${_test_target} ${ALLTESTS})
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  PROPERTY TEST_INCLUDE_FILE ${CMAKE_CURRENT_BINARY_DIR}/BuildTests.cmake)
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} ${DUNE_LIBS})

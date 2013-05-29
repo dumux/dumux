@@ -1,6 +1,5 @@
 # add build targets
-add_executable("test_impes" test_impes.cc)
-target_link_libraries(test_impes ${DUNE_LIBS})
+add_executable("test_impes" EXCLUDE_FROM_ALL test_impes.cc)
 add_test(test_impes
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -9,8 +8,7 @@ add_test(test_impes
   ${CMAKE_CURRENT_BINARY_DIR}/test_impes
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impes.input)
 
-add_executable("test_impesadaptive" test_impesadaptive.cc)
-target_link_libraries(test_impesadaptive ${DUNE_LIBS})
+add_executable("test_impesadaptive" EXCLUDE_FROM_ALL test_impesadaptive.cc)
 add_dune_alugrid_flags(test_impesadaptive)
 add_test(test_impesadaptive
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
@@ -20,8 +18,7 @@ add_test(test_impesadaptive
   ${CMAKE_CURRENT_BINARY_DIR}/test_impesadaptive
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impesadaptive.input)
 
-add_executable("test_impeswithamg" test_impeswithamg.cc)
-target_link_libraries(test_impeswithamg ${DUNE_LIBS})
+add_executable("test_impeswithamg" EXCLUDE_FROM_ALL test_impeswithamg.cc)
 if(MPI_FOUND)
   add_test(test_impeswithamg
     ${CMAKE_SOURCE_DIR}/bin/runTest.sh
@@ -42,8 +39,7 @@ else(MPI_FOUND)
     -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_impeswithamg.dgf)
 endif(MPI_FOUND)
 
-add_executable("test_transport" test_transport.cc)
-target_link_libraries(test_transport ${DUNE_LIBS})
+add_executable("test_transport" EXCLUDE_FROM_ALL test_transport.cc)
 add_test(test_transport
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
@@ -53,8 +49,7 @@ add_test(test_transport
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_transport.input
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_transport.dgf)
 
-add_executable("test_mpfa2p" test_mpfa2p.cc)
-target_link_libraries(test_mpfa2p ${DUNE_LIBS})
+add_executable("test_mpfa2p" EXCLUDE_FROM_ALL test_mpfa2p.cc)
 add_dune_alugrid_flags(test_mpfa2p)
 add_dune_superlu_flags(test_mpfa2p)
 add_test(test_mpfao2p
@@ -87,12 +82,16 @@ set(NORMALTESTS
   test_impesadaptive
   test_impeswithamg
   test_transport
-  test_mpfao2p
-  test_mpfal2p
-  test_mpfal2padaptive)
+  test_mpfa2p)
 set(ALLTESTS ${NORMALTESTS})
 
 # We do not want want to build the tests during make all,
 # but just build them on demand
 add_directory_test_target(_test_target)
 add_dependencies(${_test_target} ${ALLTESTS})
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  PROPERTY TEST_INCLUDE_FILE ${CMAKE_CURRENT_BINARY_DIR}/BuildTests.cmake)
+
+foreach(_exe ${ALLTESTS})
+  target_link_libraries(${_exe} ${DUNE_LIBS})
+endforeach(_exe ${ALLTESTS})
