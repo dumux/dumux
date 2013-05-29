@@ -37,11 +37,11 @@ namespace Dumux
  */
 struct TwoPTwoCFormulation
 {
-    static const int pwsn = 0; //!< Pw and Sn as primary variables
+    static const int pwsn = 0; //!< pw and sn as primary variables
     DUNE_DEPRECATED_MSG("use pwsn (uncapitalized 'S') instead") 
     static const int pwSn = pwsn; //!< \deprecated
 
-    static const int pnsw = 1; //!< Pn and Sw as primary variables
+    static const int pnsw = 1; //!< pn and sw as primary variables
     DUNE_DEPRECATED_MSG("use pnsw (uncapitalized 'S') instead") 
     static const int pnSw = pnsw; //!< \deprecated
 };
@@ -94,7 +94,7 @@ public:
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitIndices
- * \brief The indices for the isothermal TwoPTwoC model in the pn-Sw
+ * \brief The indices for the isothermal TwoPTwoC model in the pn-sw
  *        formulation.
  *
  * \tparam PVOffset The first index in a primary variable vector.

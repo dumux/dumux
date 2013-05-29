@@ -103,21 +103,21 @@ public:
                     const SpatialParams &spatialParams = this->problem_().spatialParams();
                     const MaterialLawParams &mp = spatialParams.materialLawParams(*elemIt, fvGeometry, scvIdx);
                     Scalar pcMin = MaterialLaw::pc(mp, 1.0);
-                    Scalar pW = uLastIter[globalIdx][pwIdx];
-                    Scalar pN = std::max(this->problem_().referencePressure(*elemIt, fvGeometry, scvIdx),
-                                         pW + pcMin);
-                    Scalar pcOld = pN - pW;
+                    Scalar pw = uLastIter[globalIdx][pwIdx];
+                    Scalar pn = std::max(this->problem_().referencePressure(*elemIt, fvGeometry, scvIdx),
+                                         pw + pcMin);
+                    Scalar pcOld = pn - pw;
                     Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::sw(mp, pcOld));
 
                     // convert into minimum and maximum wetting phase
                     // pressures
-                    Scalar pwMin = pN - MaterialLaw::pc(mp, SwOld - 0.2);
-                    Scalar pwMax = pN - MaterialLaw::pc(mp, SwOld + 0.2);
+                    Scalar pwMin = pn - MaterialLaw::pc(mp, SwOld - 0.2);
+                    Scalar pwMax = pn - MaterialLaw::pc(mp, SwOld + 0.2);
 
                     // clamp the result
-                    pW = uCurrentIter[globalIdx][pwIdx];
-                    pW = std::max(pwMin, std::min(pW, pwMax));
-                    uCurrentIter[globalIdx][pwIdx] = pW;
+                    pw = uCurrentIter[globalIdx][pwIdx];
+                    pw = std::max(pwMin, std::min(pw, pwMax));
+                    uCurrentIter[globalIdx][pwIdx] = pw;
 
                 }
             }

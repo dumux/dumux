@@ -192,22 +192,22 @@ public:
         /////////////
         // set the saturations
         /////////////
-        Scalar Sn;
+        Scalar sn;
         if (phasePresence == nPhaseOnly)
-            Sn = 1.0;
+            sn = 1.0;
         else if (phasePresence == wPhaseOnly) {
-            Sn = 0.0;
+            sn = 0.0;
         }
         else if (phasePresence == bothPhases) {
             if (formulation == pwsn)
-                Sn = priVars[switchIdx];
+                sn = priVars[switchIdx];
             else if (formulation == pnsw)
-                Sn = 1.0 - priVars[switchIdx];
+                sn = 1.0 - priVars[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-        fluidState.setSaturation(wPhaseIdx, 1 - Sn);
-        fluidState.setSaturation(nPhaseIdx, Sn);
+        fluidState.setSaturation(wPhaseIdx, 1 - sn);
+        fluidState.setSaturation(nPhaseIdx, sn);
 
         /////////////
         // set the pressures of the fluid phases
@@ -216,15 +216,15 @@ public:
         // calculate capillary pressure
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-        Scalar pC = MaterialLaw::pc(materialParams, 1 - Sn);
+        Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
 
         if (formulation == pwsn) {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
-            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pC);
+            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
         }
         else if (formulation == pnsw) {
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
-            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pC);
+            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
         }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 

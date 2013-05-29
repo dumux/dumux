@@ -146,14 +146,14 @@ public:
 
          const FluidState &fsI = elemVolVars[i].fluidState();
          const FluidState &fsJ = elemVolVars[j].fluidState();
-         const Scalar Swi = fsI.saturation(wPhaseIdx);
-         const Scalar Swj = fsJ.saturation(wPhaseIdx);
+         const Scalar swi = fsI.saturation(wPhaseIdx);
+         const Scalar swj = fsJ.saturation(wPhaseIdx);
 
          typename FluidSystem::ParameterCache paramCacheI, paramCacheJ;
          paramCacheI.updateAll(fsI);
          paramCacheJ.updateAll(fsJ);
 
-         const Scalar Sw = std::max<Scalar>(0.0, 0.5*(Swi + Swj));
+         const Scalar sw = std::max<Scalar>(0.0, 0.5*(swi + swj));
 
          //        const Scalar lambdaDry = 0.583; // W / (K m) // works, orig
          //        const Scalar lambdaWet = 1.13; // W / (K m) // works, orig
@@ -172,15 +172,15 @@ public:
          // Stuttgart, Institute of Hydraulic Engineering, p. 57
 
          Scalar result;
-         if (Sw < 0.1) {
+         if (sw < 0.1) {
              // regularization
              Dumux::Spline<Scalar> sp(0, 0.1, // x1, x2
                                       0, sqrt(0.1), // y1, y2
                                       5*0.5/sqrt(0.1), 0.5/sqrt(0.1)); // m1, m2
-             result = lambdaDry + sp.eval(Sw)*(lambdaWet - lambdaDry);
+             result = lambdaDry + sp.eval(sw)*(lambdaWet - lambdaDry);
          }
          else
-             result = lambdaDry + std::sqrt(Sw)*(lambdaWet - lambdaDry);
+             result = lambdaDry + std::sqrt(sw)*(lambdaWet - lambdaDry);
 
          return result;
     }

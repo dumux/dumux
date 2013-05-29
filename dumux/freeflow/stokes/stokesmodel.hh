@@ -147,7 +147,7 @@ public:
 
         // create the required scalar fields
         unsigned numVertices = this->gridView_().size(dim);
-        ScalarField &pN = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &pn = *writer.allocateManagedBuffer(numVertices);
         ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
         ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
@@ -181,14 +181,14 @@ public:
                                i,
                                false);
 
-                pN[globalIdx] = volVars.pressure();
+                pn[globalIdx] = volVars.pressure();
                 delP[globalIdx] = volVars.pressure() - 1e5;
                 rho[globalIdx] = volVars.density();
                 mu[globalIdx] = volVars.dynamicViscosity();
                 velocity[globalIdx] = volVars.velocity();
             }
         }
-        writer.attachVertexData(pN, "P");
+        writer.attachVertexData(pn, "P");
         writer.attachVertexData(delP, "delP");
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");

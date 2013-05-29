@@ -241,7 +241,7 @@ public:
                    wouldSwitch = true;
                    // nonwetting phase disappears
                    std::cout << "Nonwetting phase disappears at vertex " << globalIdx
-                             << ", coordinates: " << globalPos << ", Sn: "
+                             << ", coordinates: " << globalPos << ", sn: "
                              << volVars.saturation(nPhaseIdx) << std::endl;
                    newPhasePresence = wPhaseOnly;
 
@@ -253,7 +253,7 @@ public:
                    wouldSwitch = true;
                    // wetting phase disappears
                    std::cout << "Wetting phase disappears at vertex " << globalIdx
-                             << ", coordinates: " << globalPos << ", Sw: "
+                             << ", coordinates: " << globalPos << ", sw: "
                              << volVars.saturation(wPhaseIdx) << std::endl;
                    newPhasePresence = nPhaseOnly;
 

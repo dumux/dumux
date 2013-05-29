@@ -121,11 +121,11 @@ public:
         unsigned numDofs = this->numDofs();
 
         // create the required scalar fields
-        ScalarField *pW = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pN = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pC = writer.allocateManagedBuffer(numDofs);
-        ScalarField *Sw = writer.allocateManagedBuffer(numDofs);
-        ScalarField *Sn = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pw = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pn = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pc = writer.allocateManagedBuffer(numDofs);
+        ScalarField *sw = writer.allocateManagedBuffer(numDofs);
+        ScalarField *sn = writer.allocateManagedBuffer(numDofs);
         ScalarField *rhoW = writer.allocateManagedBuffer(numDofs);
         ScalarField *rhoN = writer.allocateManagedBuffer(numDofs);
         ScalarField *mobW = writer.allocateManagedBuffer(numDofs);
@@ -169,11 +169,11 @@ public:
             {
                 int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
 
-                (*pW)[globalIdx] = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                (*pN)[globalIdx] = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                (*pC)[globalIdx] = elemVolVars[scvIdx].capillaryPressure();
-                (*Sw)[globalIdx] = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                (*Sn)[globalIdx] = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                (*pw)[globalIdx] = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                (*pn)[globalIdx] = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                (*pc)[globalIdx] = elemVolVars[scvIdx].capillaryPressure();
+                (*sw)[globalIdx] = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                (*sn)[globalIdx] = elemVolVars[scvIdx].saturation(nPhaseIdx);
                 (*rhoW)[globalIdx] = elemVolVars[scvIdx].density(wPhaseIdx);
                 (*rhoN)[globalIdx] = elemVolVars[scvIdx].density(nPhaseIdx);
                 (*mobW)[globalIdx] = elemVolVars[scvIdx].mobility(wPhaseIdx);
@@ -187,11 +187,11 @@ public:
             velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *elemIt, nPhaseIdx);
         }
 
-        writer.attachDofData(*Sn, "Sn", isBox);
-        writer.attachDofData(*Sw, "Sw", isBox);
-        writer.attachDofData(*pN, "pn", isBox);
-        writer.attachDofData(*pW, "pw", isBox);
-        writer.attachDofData(*pC, "pc", isBox);
+        writer.attachDofData(*sn, "sn", isBox);
+        writer.attachDofData(*sw, "sw", isBox);
+        writer.attachDofData(*pn, "pn", isBox);
+        writer.attachDofData(*pw, "pw", isBox);
+        writer.attachDofData(*pc, "pc", isBox);
         writer.attachDofData(*rhoW, "rhoW", isBox);
         writer.attachDofData(*rhoN, "rhoN", isBox);
         writer.attachDofData(*mobW, "mobW", isBox);

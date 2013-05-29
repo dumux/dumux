@@ -109,23 +109,23 @@ public:
 
         Scalar mD = 1e-12 * 1e-3; //miliDarcy
 
-        SwrF_    = 0.00;
-        SwrM_    = 0.00;
+        swrf_    = 0.00;
+        swrm_    = 0.00;
         SnrF_    = 0.00;
         SnrM_    = 0.00;
-        pdF_     = 1000; //2.5*1e4;
-        pdM_     = 2000; //2.5*1e4;
+        pdf_     = 1000; //2.5*1e4;
+        pdm_     = 2000; //2.5*1e4;
         lambdaF_ = 2.0;
         lambdaM_ = 2.0;
 
-        rockMatrixMaterialParams_.setSwr(SwrM_);
+        rockMatrixMaterialParams_.setSwr(swrm_);
         rockMatrixMaterialParams_.setSnr(SnrM_);
-        fractureMaterialParams_.setSwr(SwrF_);
+        fractureMaterialParams_.setSwr(swrf_);
         fractureMaterialParams_.setSnr(SnrF_);
 
-        rockMatrixMaterialParams_.setPe(pdM_);
+        rockMatrixMaterialParams_.setPe(pdm_);
         rockMatrixMaterialParams_.setLambda(lambdaM_);
-        fractureMaterialParams_.setPe(pdF_);
+        fractureMaterialParams_.setPe(pdf_);
         fractureMaterialParams_.setLambda(lambdaF_);
 
         KMatrix_   = 1 * mD; //m^2
@@ -194,7 +194,7 @@ public:
         return porosityFracture_;
     }
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \param element The current element
      * \param fvGeometry The current finite volume geometry of the element
@@ -209,7 +209,7 @@ public:
     }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \param element The current element
      * \param fvGeometry The current finite volume geometry of the element
@@ -291,14 +291,14 @@ public:
         return fractureWidth_;
     }
 
-    Scalar SwrF_;
-    Scalar SwrM_;
+    Scalar swrf_;
+    Scalar swrm_;
     Scalar SnrF_;
     Scalar SnrM_;
     Scalar lambdaF_;
     Scalar lambdaM_;
-    Scalar pdF_;
-    Scalar pdM_;
+    Scalar pdf_;
+    Scalar pdm_;
 
 private:
     Scalar KMatrix_;

@@ -130,24 +130,24 @@ public:
 
 
         if (int(formulation) == pwsn) {
-            Scalar Sn = priVars[saturationIdx];
-            fluidState.setSaturation(nPhaseIdx, Sn);
-            fluidState.setSaturation(wPhaseIdx, 1 - Sn);
+            Scalar sn = priVars[saturationIdx];
+            fluidState.setSaturation(nPhaseIdx, sn);
+            fluidState.setSaturation(wPhaseIdx, 1 - sn);
 
-            Scalar pW = priVars[pressureIdx];
-            fluidState.setPressure(wPhaseIdx, pW);
+            Scalar pw = priVars[pressureIdx];
+            fluidState.setPressure(wPhaseIdx, pw);
             fluidState.setPressure(nPhaseIdx,
-                                   pW + MaterialLaw::pc(materialParams, 1 - Sn));
+                                   pw + MaterialLaw::pc(materialParams, 1 - sn));
         }
         else if (int(formulation) == pnsw) {
-            Scalar Sw = priVars[saturationIdx];
-            fluidState.setSaturation(wPhaseIdx, Sw);
-            fluidState.setSaturation(nPhaseIdx, 1 - Sw);
+            Scalar sw = priVars[saturationIdx];
+            fluidState.setSaturation(wPhaseIdx, sw);
+            fluidState.setSaturation(nPhaseIdx, 1 - sw);
 
-            Scalar pN = priVars[pressureIdx];
-            fluidState.setPressure(nPhaseIdx, pN);
+            Scalar pn = priVars[pressureIdx];
+            fluidState.setPressure(nPhaseIdx, pn);
             fluidState.setPressure(wPhaseIdx,
-                                   pN - MaterialLaw::pc(materialParams, Sw));
+                                   pn - MaterialLaw::pc(materialParams, sw));
         }
 
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;

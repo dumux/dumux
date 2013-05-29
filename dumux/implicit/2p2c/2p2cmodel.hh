@@ -295,9 +295,9 @@ public:
         // create the required scalar fields
         ScalarField *sN    = writer.allocateManagedBuffer(numDofs);
         ScalarField *sW    = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pN    = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pW    = writer.allocateManagedBuffer(numDofs);
-        ScalarField *pC    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pn    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pw    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pc    = writer.allocateManagedBuffer(numDofs);
         ScalarField *rhoW  = writer.allocateManagedBuffer(numDofs);
         ScalarField *rhoN  = writer.allocateManagedBuffer(numDofs);
         ScalarField *mobW  = writer.allocateManagedBuffer(numDofs);
@@ -348,9 +348,9 @@ public:
 
                 (*sN)[globalIdx]    = elemVolVars[scvIdx].saturation(nPhaseIdx);
                 (*sW)[globalIdx]    = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                (*pN)[globalIdx]    = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                (*pW)[globalIdx]    = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                (*pC)[globalIdx]    = elemVolVars[scvIdx].capillaryPressure();
+                (*pn)[globalIdx]    = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                (*pw)[globalIdx]    = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                (*pc)[globalIdx]    = elemVolVars[scvIdx].capillaryPressure();
                 (*rhoW)[globalIdx]  = elemVolVars[scvIdx].fluidState().density(wPhaseIdx);
                 (*rhoN)[globalIdx]  = elemVolVars[scvIdx].fluidState().density(nPhaseIdx);
                 (*mobW)[globalIdx]  = elemVolVars[scvIdx].mobility(wPhaseIdx);
@@ -375,11 +375,11 @@ public:
 
         } // loop over elements
 
-        writer.attachDofData(*sN,     "Sn", isBox);
-        writer.attachDofData(*sW,     "Sw", isBox);
-        writer.attachDofData(*pN,     "pN", isBox);
-        writer.attachDofData(*pW,     "pW", isBox);
-        writer.attachDofData(*pC,     "pC", isBox);
+        writer.attachDofData(*sN,     "sn", isBox);
+        writer.attachDofData(*sW,     "sw", isBox);
+        writer.attachDofData(*pn,     "pn", isBox);
+        writer.attachDofData(*pw,     "pw", isBox);
+        writer.attachDofData(*pc,     "pc", isBox);
         writer.attachDofData(*rhoW,   "rhoW", isBox);
         writer.attachDofData(*rhoN,   "rhoN", isBox);
         writer.attachDofData(*mobW,   "mobW", isBox);
@@ -634,7 +634,7 @@ public:
                 wouldSwitch = true;
                 // nonwetting phase disappears
                 std::cout << "Nonwetting phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", Sn: "
+                          << ", coordinates: " << globalPos << ", sn: "
                           << volVars.saturation(nPhaseIdx) << std::endl;
                 newPhasePresence = wPhaseOnly;
 
@@ -646,7 +646,7 @@ public:
                 wouldSwitch = true;
                 // wetting phase disappears
                 std::cout << "Wetting phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", Sw: "
+                          << ", coordinates: " << globalPos << ", sw: "
                           << volVars.saturation(wPhaseIdx) << std::endl;
                 newPhasePresence = nPhaseOnly;
 

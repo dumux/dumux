@@ -224,11 +224,11 @@ public:
 //                       porosity(element, fvElemGeom, j)) / 2;
 //
 //        Scalar lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-//        Scalar ldry = pow(lGranite, (1-poro));
+//        Scalar lDry = pow(lGranite, (1-poro));
 //
 //        // the heat conductivity of the matrix. in general this is a
 //        // tensorial value, but we assume isotropic heat conductivity.
-//        Scalar heatCond = ldry + sqrt(Sl) * (ldry - lsat);
+//        Scalar heatCond = lDry + sqrt(Sl) * (lDry - lsat);
 //
 //        // the matrix heat flux is the negative temperature gradient
 //        // times the heat conductivity.
@@ -237,7 +237,7 @@ public:
 //    }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \param pos The global position of the sub-control volume.
      * \return the material parameters object

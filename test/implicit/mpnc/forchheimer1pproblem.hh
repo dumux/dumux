@@ -408,11 +408,11 @@ private:
         // calulate the capillary pressure
         const MaterialLawParams &matParams =
             this->spatialParams().materialLawParamsAtPos(globalPos);
-        PhaseVector pC;
-        MaterialLaw::capillaryPressures(pC, matParams, fs);
+        PhaseVector pc;
+        MaterialLaw::capillaryPressures(pc, matParams, fs);
         fs.setPressure(otherPhaseIdx,
                        fs.pressure(refPhaseIdx)
-                       + (pC[otherPhaseIdx] - pC[refPhaseIdx]));
+                       + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium

@@ -141,56 +141,56 @@ public:
         /* first the saturations */
         if (phasePresence == threePhases)
         {
-            Sw_ = priVars[switch1Idx];
-            Sn_ = priVars[switch2Idx];
-            Sg_ = 1. - Sw_ - Sn_;
+            sw_ = priVars[switch1Idx];
+            sn_ = priVars[switch2Idx];
+            sg_ = 1. - sw_ - sn_;
         }
         else if (phasePresence == wPhaseOnly)
         {
-            Sw_ = 1.;
-            Sn_ = 0.;
-            Sg_ = 0.;
+            sw_ = 1.;
+            sn_ = 0.;
+            sg_ = 0.;
         }
         else if (phasePresence == gnPhaseOnly)
         {
-            Sw_ = 0.;
-            Sn_ = priVars[switch2Idx];
-            Sg_ = 1. - Sn_;
+            sw_ = 0.;
+            sn_ = priVars[switch2Idx];
+            sg_ = 1. - sn_;
         }
         else if (phasePresence == wnPhaseOnly)
         {
-            Sn_ = priVars[switch2Idx];
-            Sw_ = 1. - Sn_;
-            Sg_ = 0.;
+            sn_ = priVars[switch2Idx];
+            sw_ = 1. - sn_;
+            sg_ = 0.;
         }
         else if (phasePresence == gPhaseOnly)
         {
-            Sw_ = 0.;
-            Sn_ = 0.;
-            Sg_ = 1.;
+            sw_ = 0.;
+            sn_ = 0.;
+            sg_ = 1.;
         }
         else if (phasePresence == wgPhaseOnly)
         {
-            Sw_ = priVars[switch1Idx];
-            Sn_ = 0.;
-            Sg_ = 1. - Sw_;
+            sw_ = priVars[switch1Idx];
+            sn_ = 0.;
+            sg_ = 1. - sw_;
         }
         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-        Valgrind::CheckDefined(Sg_);
+        Valgrind::CheckDefined(sg_);
 
-        fluidState_.setSaturation(wPhaseIdx, Sw_);
-        fluidState_.setSaturation(gPhaseIdx, Sg_);
-        fluidState_.setSaturation(nPhaseIdx, Sn_);
+        fluidState_.setSaturation(wPhaseIdx, sw_);
+        fluidState_.setSaturation(gPhaseIdx, sg_);
+        fluidState_.setSaturation(nPhaseIdx, sn_);
 
         /* now the pressures */
         pg_ = priVars[pressureIdx];
 
         // calculate capillary pressures
-        Scalar pcgw = MaterialLaw::pcgw(materialParams, Sw_);
-        Scalar pcnw = MaterialLaw::pcnw(materialParams, Sw_);
-        Scalar pcgn = MaterialLaw::pcgn(materialParams, Sw_ + Sn_);
+        Scalar pcgw = MaterialLaw::pcgw(materialParams, sw_);
+        Scalar pcnw = MaterialLaw::pcnw(materialParams, sw_);
+        Scalar pcgn = MaterialLaw::pcgn(materialParams, sw_ + sn_);
 
-        Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, Sn_);
+        Scalar pcAlpha = MaterialLaw::pcAlpha(materialParams, sn_);
         Scalar pcNW1 = 0.0; // TODO: this should be possible to assign in the problem file
 
         pn_ = pg_- pcAlpha * pcgn - (1.-pcAlpha)*(pcgw - pcNW1);
@@ -706,7 +706,7 @@ protected:
                        bool isOldSol)
     { }
 
-    Scalar Sw_, Sg_, Sn_, pg_, pw_, pn_;
+    Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
     Scalar moleFrac_[numPhases][numComponents];
     Scalar massFrac_[numPhases][numComponents];

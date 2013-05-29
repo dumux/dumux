@@ -170,7 +170,7 @@ public:
     }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \param pos The global position of the sub-control volume.
      * \return the material parameters object

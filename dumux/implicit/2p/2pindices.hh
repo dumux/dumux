@@ -34,15 +34,15 @@ namespace Dumux
 /*!
  * \ingroup TwoPBoxModel
  * \ingroup ImplicitIndices
- * \brief Specificy whether a pw-Sn or a pn-Sw formulation is used.
+ * \brief Specificy whether a pw-sn or a pn-sw formulation is used.
  */
 struct TwoPFormulation
 {
-    static const int pwsn = 0; //!< Pw and Sn as primary variables
+    static const int pwsn = 0; //!< pw and sn as primary variables
     DUNE_DEPRECATED_MSG("use pwsn (uncapitalized 'S') instead") 
     static const int pwSn = pwsn; //!< \deprecated
 
-    static const int pnsw = 1; //!< Pn and Sw as primary variables
+    static const int pnsw = 1; //!< pn and sw as primary variables
     DUNE_DEPRECATED_MSG("use pnsw (uncapitalized 'S') instead") 
     static const int pnSw = pnsw; //!< \deprecated
 };

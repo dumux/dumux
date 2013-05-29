@@ -137,37 +137,37 @@ public:
          /////////////
          // set the saturations
          /////////////
-         Scalar Sn;
+         Scalar sn;
          if (phasePresence == nPhaseOnly)
-             Sn = 1.0;
+             sn = 1.0;
          else if (phasePresence == wPhaseOnly) {
-             Sn = 0.0;
+             sn = 0.0;
          }
          else if (phasePresence == bothPhases) {
              if (formulation == pwsn)
-                 Sn = priVars[switchIdx];
+                 sn = priVars[switchIdx];
              else if (formulation == pnsw)
-                 Sn = 1.0 - priVars[switchIdx];
+                 sn = 1.0 - priVars[switchIdx];
              else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
          }
          else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-         ParentType::fluidState_.setSaturation(wPhaseIdx, 1 - Sn);
-         ParentType::fluidState_.setSaturation(nPhaseIdx, Sn);
+         ParentType::fluidState_.setSaturation(wPhaseIdx, 1 - sn);
+         ParentType::fluidState_.setSaturation(nPhaseIdx, sn);
 
          // capillary pressure parameters
           const MaterialLawParams &materialParams =
               problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
 
-          Scalar pC = MaterialLaw::pc(materialParams, 1 - Sn);
+          Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
 
           if (formulation == pwsn) {
               ParentType::fluidState_.setPressure(wPhaseIdx, priVars[pressureIdx]);
-              ParentType::fluidState_.setPressure(nPhaseIdx, priVars[pressureIdx] + pC);
+              ParentType::fluidState_.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
           }
           else if (formulation == pnsw) {
               ParentType::fluidState_.setPressure(nPhaseIdx, priVars[pressureIdx]);
-              ParentType::fluidState_.setPressure(wPhaseIdx, priVars[pressureIdx] - pC);
+              ParentType::fluidState_.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
           }
           else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
@@ -338,8 +338,8 @@ public:
 //          {
 //              std::cout<<"globalIdx = "<<globalIdx<<std::endl;
 //              std::cout<<"scvIdx = "<<globalIdx<<std::endl;
-//              std::cout<<"Sn = "<<ParentType::fluidState_.saturation(nPhaseIdx)<<std::endl;
-//              std::cout<<"Sw = "<<ParentType::fluidState_.saturation(wPhaseIdx)<<std::endl;
+//              std::cout<<"sn = "<<ParentType::fluidState_.saturation(nPhaseIdx)<<std::endl;
+//              std::cout<<"sw = "<<ParentType::fluidState_.saturation(wPhaseIdx)<<std::endl;
 //              std::cout<<"mobilityN = "<<ParentType::mobility(nPhaseIdx)<<std::endl;
 //              std::cout<<"xgH2O = "<<ParentType::fluidState_.moleFraction(nPhaseIdx, wCompIdx)<<std::endl;
 //              std::cout<<"xgCO2 = "<<ParentType::fluidState_.moleFraction(nPhaseIdx, nCompIdx)<<std::endl;

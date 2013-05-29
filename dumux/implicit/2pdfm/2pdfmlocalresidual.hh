@@ -121,17 +121,17 @@ public:
         const Element &elem = this->element_();
         bool isFracture = this->problem_().spatialParams().isVertexFracture(elem, scvIdx);
         /*
-         * Sn = w_F * SnF + w_M * SnM
-         * First simple case before determining the real w_F is to assume that it is 0
-         * and w_M = 1
+         * sn = wf * SnF + wm * SnM
+         * First simple case before determining the real wf is to assume that it is 0
+         * and wm = 1
          *
          */
         ///////////////////////////////////////////////////////////////////////
-        Scalar w_F, w_M; //volumetric fractions of fracture and matrix;
+        Scalar wf, wm; //volumetric fractions of fracture and matrix;
         Scalar fractureVolume = 0.0;
-        w_F = 0.0;
+        wf = 0.0;
         /*
-         * Calculate the fracture volume fraction w_F = 0.5 * Fwidth * 0.5 * Length
+         * Calculate the fracture volume fraction wf = 0.5 * Fwidth * 0.5 * Length
          */
         Dune::GeometryType gt = elem.geometry().type();
         const typename Dune::GenericReferenceElementContainer<DT,dim>::value_type&
@@ -160,8 +160,8 @@ public:
                 fractureVolume += 0.5 * fracture_length * fracture_width;
             }
         }
-        w_F = fractureVolume/vol;
-        w_M = 1-w_F;
+        wf = fractureVolume/vol;
+        wm = 1-wf;
         ///////////////////////////////////////////////////////////////////////
         Scalar storageFracture[numPhases];
         Scalar storageMatrix [numPhases];
@@ -171,10 +171,10 @@ public:
         storageMatrix[nPhaseIdx]    = 0.0;
         //        const GlobalPosition &globalPos = elem.geometry().corner(scvIdx);
 
-        Scalar dSM_dSF = vertDat.dsm_dsf();
+        Scalar dsm_dsf = vertDat.dsm_dsf();
         if (!this->problem_().useInterfaceCondition())
         {
-            dSM_dSF = 1.0;
+            dsm_dsf = 1.0;
         }
 
         if (isFracture)
@@ -183,12 +183,12 @@ public:
             {
                 storageFracture[phaseIdx] = vertDat.density(phaseIdx)
                                         * vertDat.porosityFracture()
-                                        * w_F
+                                        * wf
                                         * vertDat.saturationFracture(phaseIdx);
                 storageMatrix[phaseIdx] = vertDat.density(phaseIdx)
                                         * vertDat.porosity()
-                                        * w_M
-                                        * dSM_dSF
+                                        * wm
+                                        * dsm_dsf
                                         * vertDat.saturationMatrix(phaseIdx);
             }
         }

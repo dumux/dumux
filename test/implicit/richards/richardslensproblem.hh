@@ -294,10 +294,10 @@ public:
 private:
     void initial_(PrimaryVariables &values, const GlobalPosition &pos) const
     {
-        Scalar Sw = 0.0;
+        Scalar sw = 0.0;
         Scalar pc =
             MaterialLaw::pc(this->spatialParams().materialLawParams(pos),
-                            Sw);
+                            sw);
         values[pwIdx] = pnRef_ - pc;
     }
 

@@ -258,21 +258,21 @@ public:
                         const FVElementGeometry &fvGeometry,
                         int faceIdx) const
     {
-        static const Scalar ldry = 0.35;
-        static const Scalar lSw1 = 1.8;
-        static const Scalar lSn1 = 0.65;
+        static const Scalar lDry = 0.35;
+        static const Scalar lsw1 = 1.8;
+        static const Scalar lsn1 = 0.65;
 
         // arithmetic mean of the liquid saturation and the porosity
         const int i = fluxDat.face().i;
         const int j = fluxDat.face().j;
-        Scalar Sw = std::max(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
+        Scalar sw = std::max(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
                                    elemVolVars[j].saturation(wPhaseIdx)) / 2);
-        Scalar Sn = std::max(0.0, (elemVolVars[i].saturation(nPhaseIdx) +
+        Scalar sn = std::max(0.0, (elemVolVars[i].saturation(nPhaseIdx) +
                                    elemVolVars[j].saturation(nPhaseIdx)) / 2);
 
         // the heat conductivity of the matrix. in general this is a
         // tensorial value, but we assume isotropic heat conductivity.
-        Scalar heatCond = ldry + sqrt(Sw) * (lSw1-ldry) + sqrt(Sn) * (lSn1-ldry);
+        Scalar heatCond = lDry + sqrt(sw) * (lsw1-lDry) + sqrt(sn) * (lsn1-lDry);
 
         // the matrix heat flux is the negative temperature gradient
         // times the heat conductivity.

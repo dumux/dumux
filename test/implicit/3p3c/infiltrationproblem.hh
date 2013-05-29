@@ -240,24 +240,24 @@ public:
     {
         Scalar y = globalPos[1];
         Scalar x = globalPos[0];
-        Scalar Sw, Swr=0.12, Sgr=0.03;
+        Scalar sw, swr=0.12, sgr=0.03;
 
         if(y >(-1.E-3*x+5) )
         {
             Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
             if (pc < 0.0) pc = 0.0;
 
-            Sw = invertPCGW_(pc,
+            sw = invertPcgw_(pc,
                              this->spatialParams().materialLawParams());
-            if (Sw < Swr) Sw = Swr;
-            if (Sw > 1.-Sgr) Sw = 1.-Sgr;
+            if (sw < swr) sw = swr;
+            if (sw > 1.-sgr) sw = 1.-sgr;
 
             values[pressureIdx] = 1e5 ;
-            values[switch1Idx] = Sw;
+            values[switch1Idx] = sw;
             values[switch2Idx] = 1.e-6;
         }else {
             values[pressureIdx] = 1e5 + 9.81 * 1000.0 * ((-5E-4*x+5) - y);
-            values[switch1Idx] = 1.-Sgr;
+            values[switch1Idx] = 1.-sgr;
             values[switch2Idx] = 1.e-6;
         }
 
@@ -348,53 +348,53 @@ private:
     {
         Scalar y = globalPos[1];
         Scalar x = globalPos[0];
-        Scalar Sw, Swr=0.12, Sgr=0.03;
+        Scalar sw, swr=0.12, sgr=0.03;
 
         if(y >(-1.E-3*x+5) )
         {
             Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
             if (pc < 0.0) pc = 0.0;
 
-            Sw = invertPCGW_(pc,
+            sw = invertPcgw_(pc,
                              this->spatialParams().materialLawParams());
-            if (Sw < Swr) Sw = Swr;
-            if (Sw > 1.-Sgr) Sw = 1.-Sgr;
+            if (sw < swr) sw = swr;
+            if (sw > 1.-sgr) sw = 1.-sgr;
 
             values[pressureIdx] = 1e5 ;
-            values[switch1Idx] = Sw;
+            values[switch1Idx] = sw;
             values[switch2Idx] = 1.e-6;
         }else {
             values[pressureIdx] = 1e5 + 9.81 * 1000.0 * ((-5E-4*x+5) - y);
-            values[switch1Idx] = 1.-Sgr;
+            values[switch1Idx] = 1.-sgr;
             values[switch2Idx] = 1.e-6;
         }
     }
 
-    static Scalar invertPCGW_(Scalar pcIn, const MaterialLawParams &pcParams)
+    static Scalar invertPcgw_(Scalar pcIn, const MaterialLawParams &pcParams)
     {
         Scalar lower,upper;
         int k;
         int maxIt = 50;
         Scalar bisLimit = 1.;
-        Scalar Sw, pcGW;
+        Scalar sw, pcgw;
         lower=0.0; upper=1.0;
         for (k=1; k<=25; k++)
         {
-            Sw = 0.5*(upper+lower);
-            pcGW = MaterialLaw::pcgw(pcParams, Sw);
-            Scalar delta = pcGW-pcIn;
+            sw = 0.5*(upper+lower);
+            pcgw = MaterialLaw::pcgw(pcParams, sw);
+            Scalar delta = pcgw-pcIn;
             if (delta<0.) delta*=-1.;
             if (delta<bisLimit)
             {
-                return(Sw);
+                return(sw);
             }
             if (k==maxIt) {
-                return(Sw);
+                return(sw);
             }
-            if (pcGW>pcIn) lower=Sw;
-            else upper=Sw;
+            if (pcgw>pcIn) lower=sw;
+            else upper=sw;
         }
-        return(Sw);
+        return(sw);
     }
 
     Scalar temperature_;

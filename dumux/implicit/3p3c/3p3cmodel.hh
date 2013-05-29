@@ -379,9 +379,9 @@ public:
 
         }
 
-        writer.attachDofData(*saturation[wPhaseIdx], "Sw", isBox);
-        writer.attachDofData(*saturation[nPhaseIdx], "Sn", isBox);
-        writer.attachDofData(*saturation[gPhaseIdx], "Sg", isBox);
+        writer.attachDofData(*saturation[wPhaseIdx], "sw", isBox);
+        writer.attachDofData(*saturation[nPhaseIdx], "sn", isBox);
+        writer.attachDofData(*saturation[gPhaseIdx], "sg", isBox);
         writer.attachDofData(*pressure[wPhaseIdx], "pw", isBox);
         writer.attachDofData(*pressure[nPhaseIdx], "pn", isBox);
         writer.attachDofData(*pressure[gPhaseIdx], "pg", isBox);
@@ -590,7 +590,7 @@ protected:
                 wouldSwitch = true;
                 // gas phase disappears
                 std::cout << "Gas phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", Sg: "
+                          << ", coordinates: " << globalPos << ", sg: "
                           << volVars.saturation(gPhaseIdx) << std::endl;
                 newPhasePresence = wnPhaseOnly;
 
@@ -602,7 +602,7 @@ protected:
                 wouldSwitch = true;
                 // water phase disappears
                 std::cout << "Water phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", Sw: "
+                          << ", coordinates: " << globalPos << ", sw: "
                           << volVars.saturation(wPhaseIdx) << std::endl;
                 newPhasePresence = gnPhaseOnly;
 
@@ -614,7 +614,7 @@ protected:
                 wouldSwitch = true;
                 // NAPL phase disappears
                 std::cout << "NAPL phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", Sn: "
+                          << ", coordinates: " << globalPos << ", sn: "
                           << volVars.saturation(nPhaseIdx) << std::endl;
                 newPhasePresence = wgPhaseOnly;
 
@@ -714,7 +714,7 @@ protected:
                 wouldSwitch = true;
                 // NAPL phase disappears
                 std::cout << "NAPL phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", Sn: "
+                          << ", coordinates: " << globalPos << ", sn: "
                           << volVars.saturation(nPhaseIdx) << std::endl;
                 nonwettingFlag = 1;
             }
@@ -779,7 +779,7 @@ protected:
                 wouldSwitch = true;
                 // NAPL phase disappears
                 std::cout << "NAPL phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", Sn: "
+                          << ", coordinates: " << globalPos << ", sn: "
                           << volVars.saturation(nPhaseIdx) << std::endl;
                 nonwettingFlag = 1;
             }
@@ -942,7 +942,7 @@ protected:
                 wouldSwitch = true;
                 // gas phase disappears
                 std::cout << "Gas phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", Sg: "
+                          << ", coordinates: " << globalPos << ", sg: "
                           << volVars.saturation(gPhaseIdx) << std::endl;
                 gasFlag = 1;
             }
@@ -956,7 +956,7 @@ protected:
                 wouldSwitch = true;
                 // gas phase disappears
                 std::cout << "Water phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", Sw: "
+                          << ", coordinates: " << globalPos << ", sw: "
                           << volVars.saturation(wPhaseIdx) << std::endl;
                 wettingFlag = 1;
             }

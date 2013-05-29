@@ -84,7 +84,7 @@ SET_PROP(TwoPTwoC, NumPhases)
 
 SET_INT_PROP(TwoPTwoC, NumEq, 2); //!< set the number of equations to 2
 
-//! Set the default formulation to pw-Sn
+//! Set the default formulation to pw-sn
 SET_INT_PROP(TwoPTwoC,
              Formulation,
              TwoPTwoCFormulation::pwsn);

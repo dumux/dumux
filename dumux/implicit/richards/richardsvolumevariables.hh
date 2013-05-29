@@ -128,9 +128,9 @@ public:
         fluidState.setPressure(nPhaseIdx, std::max(pnRef, priVars[pwIdx] + minPc));
 
         // saturations
-        Scalar Sw = MaterialLaw::sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
-        fluidState.setSaturation(wPhaseIdx, Sw);
-        fluidState.setSaturation(nPhaseIdx, 1 - Sw);
+        Scalar sw = MaterialLaw::sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
+        fluidState.setSaturation(wPhaseIdx, sw);
+        fluidState.setSaturation(nPhaseIdx, 1 - sw);
 
         // density and viscosity
         typename FluidSystem::ParameterCache paramCache;

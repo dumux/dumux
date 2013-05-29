@@ -104,7 +104,7 @@ public:
 
         // create the required scalar fields
         unsigned numVertices = this->gridView_().size(dim);
-        ScalarField &pN = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &pn = *writer.allocateManagedBuffer(numVertices);
         ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
         ScalarField &Xw = *writer.allocateManagedBuffer(numVertices);
         ScalarField &T = *writer.allocateManagedBuffer(numVertices);
@@ -142,7 +142,7 @@ public:
                                vertexIdx,
                                false);
 
-                pN  [globalIdx] = volVars.pressure();
+                pn  [globalIdx] = volVars.pressure();
                 delP[globalIdx] = volVars.pressure() - 1e5;
                 Xw  [globalIdx] = volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
                 T   [globalIdx] = volVars.temperature();
@@ -153,7 +153,7 @@ public:
                 velocity[globalIdx] = volVars.velocity();
             }
         }
-        writer.attachVertexData(pN, "pg");
+        writer.attachVertexData(pn, "pg");
         writer.attachVertexData(delP, "delP");
 //        writer.attachVertexData(D, "Dwg");
         std::ostringstream outputNameX;

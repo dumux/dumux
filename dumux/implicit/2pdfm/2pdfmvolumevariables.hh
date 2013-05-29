@@ -144,11 +144,11 @@ public:
         satN_ = satNMatrix_;
         satW_ = satWMatrix_;
 
-        pCMatrix_ = MaterialLaw::pc(materialParamsMatrix, satWMatrix_);
-        pC_ = pCMatrix_;
+        pcMatrix_ = MaterialLaw::pc(materialParamsMatrix, satWMatrix_);
+        pc_ = pcMatrix_;
         //pressures
         pMatrix[wPhaseIdx] = priVars[pressureIdx];
-        pMatrix[nPhaseIdx] = pMatrix[wPhaseIdx] + pCMatrix_;
+        pMatrix[nPhaseIdx] = pMatrix[wPhaseIdx] + pcMatrix_;
         //Initialize pFract with the same values as the ones in the matrix
         pFract[wPhaseIdx] = pMatrix[wPhaseIdx];
         pFract[nPhaseIdx] = satNMatrix_;
@@ -169,9 +169,9 @@ public:
 
             satNFracture_ = priVars[saturationIdx];
             satWFracture_ = 1 - satNFracture_;
-            pCFracture_ = MaterialLaw::pc(materialParamsFracture, satWFracture_);
+            pcFracture_ = MaterialLaw::pc(materialParamsFracture, satWFracture_);
             pFract[wPhaseIdx] = priVars[pressureIdx];
-            pFract[nPhaseIdx] = pFract[wPhaseIdx] + pCFracture_;
+            pFract[nPhaseIdx] = pFract[wPhaseIdx] + pcFracture_;
             pEntryMatrix_ = MaterialLaw::pc(materialParamsMatrix, 1);
 
             //use interface condition - extended capillary pressure inteface condition
@@ -179,7 +179,7 @@ public:
             {
                 interfaceCondition(materialParamsMatrix);
             }
-            pC_ = pCFracture_;
+            pc_ = pcFracture_;
             satW_ = satWFracture_; //for plotting we are interested in the saturations of the fracture
             satN_ = satNFracture_;
             mobilityFracture_[wPhaseIdx] =
@@ -191,10 +191,10 @@ public:
                         / fluidStateFracture_.viscosity(nPhaseIdx);
 
             // derivative resulted from BrooksCorey pc_Sw formulation
-            dSM_dSF_ = (1 - problem.spatialParams().SwrM_) / (1 - problem.spatialParams().SwrF_)
-                    * pow((problem.spatialParams().pdM_/ problem.spatialParams().pdF_),problem.spatialParams().lambdaM_)
+            dsm_dsf_ = (1 - problem.spatialParams().swrm_) / (1 - problem.spatialParams().swrf_)
+                    * pow((problem.spatialParams().pdm_/ problem.spatialParams().pdf_),problem.spatialParams().lambdaM_)
                     * (problem.spatialParams().lambdaM_ / problem.spatialParams().lambdaF_)
-                    * pow((satWFracture_ - problem.spatialParams().SwrF_ ) / (1 - problem.spatialParams().SwrF_),
+                    * pow((satWFracture_ - problem.spatialParams().swrf_ ) / (1 - problem.spatialParams().swrf_),
                             (problem.spatialParams().lambdaM_ / problem.spatialParams().lambdaF_) - 1);
         }// end if (node)
         ///////////////////////////////////////////////////////////////////////////////
@@ -204,7 +204,7 @@ public:
                 there are no fracture are set unphysical*/
             satNFracture_ = -1;
             satWFracture_ = -1;
-            pCFracture_ = -1e100;
+            pcFracture_ = -1e100;
             pFract[wPhaseIdx] = -1e100;
             pFract[nPhaseIdx] = -1e100;
             pEntryMatrix_ = -1e100;
@@ -213,7 +213,7 @@ public:
         }
         ///////////////////////////////////////////////////////////////////////////////
         pressure[wPhaseIdx] = priVars[pressureIdx];
-        pressure[nPhaseIdx] = pressure[wPhaseIdx] + pC_;
+        pressure[nPhaseIdx] = pressure[wPhaseIdx] + pc_;
 
         porosityFracture_ = problem.spatialParams().porosityFracture(element,
                                                                   fvGeometry,
@@ -223,7 +223,7 @@ public:
     /*!
      * \brief Extended capillary pressure saturation interface condition
      *
-     * \param materialParamsMatrix the material law o calculate the Sw as inverse of capillary pressure function
+     * \param materialParamsMatrix the material law o calculate the sw as inverse of capillary pressure function
      *
      * This method is called by updateFracture
      */
@@ -233,7 +233,7 @@ public:
         * if the capillary pressure in the fracture is smaller than the entry pressure
         * in the matrix than in the matrix
         * */
-        if (pCFracture_ <= pEntryMatrix_)
+        if (pcFracture_ <= pEntryMatrix_)
         {
             satWMatrix_ = 1.0;
             satNMatrix_ = 1 - satWMatrix_;
@@ -244,7 +244,7 @@ public:
             /*
              * Inverse capillary pressure function SwM = pcM^(-1)(pcF(SwF))
              */
-            satWMatrix_ = MaterialLaw::sw(materialParamsMatrix, pCFracture_);
+            satWMatrix_ = MaterialLaw::sw(materialParamsMatrix, pcFracture_);
             satNMatrix_ = 1 - satWMatrix_;
         }
     }
@@ -347,7 +347,7 @@ public:
      * \brief Returns the derivative dsm/dsf
      */
     Scalar dsm_dsf() const
-    { return dSM_dSF_;}
+    { return dsm_dsf_;}
 
     DUNE_DEPRECATED_MSG("use dsm_dsf() (uncapitalized) instead")
     Scalar dSM_dSF() const
@@ -372,11 +372,11 @@ protected:
     Scalar satNFracture_;
     Scalar satNMatrix_;
 
-    Scalar pC_;
-    Scalar pCFracture_;
-    Scalar pCMatrix_;
+    Scalar pc_;
+    Scalar pcFracture_;
+    Scalar pcMatrix_;
     Scalar pEntryMatrix_;
-    Scalar dSM_dSF_;
+    Scalar dsm_dsf_;
 
     bool isNodeOnFracture_;
 
