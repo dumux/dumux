@@ -170,7 +170,7 @@ public:
         ScalarSolutionType *pressureN = writer.allocateManagedBuffer(size);
         ScalarSolutionType *totalConcentration1 = writer.allocateManagedBuffer (size);
         ScalarSolutionType *totalConcentration2 = writer.allocateManagedBuffer (size);
-        ScalarSolutionType *pC = writer.allocateManagedBuffer(size);
+        ScalarSolutionType *pc = writer.allocateManagedBuffer(size);
         ScalarSolutionType *saturationW = writer.allocateManagedBuffer(size);
         ScalarSolutionType *densityWetting = writer.allocateManagedBuffer(size);
         ScalarSolutionType *densityNonwetting = writer.allocateManagedBuffer(size);
@@ -194,7 +194,7 @@ public:
             // output standard secondary variables
             if(problem_.vtkOutputLevel()>=1)
             {
-                (*pC)[i] = cellData.capillaryPressure();
+                (*pc)[i] = cellData.capillaryPressure();
                 (*densityWetting)[i] = cellData.density(wPhaseIdx);
                 (*densityNonwetting)[i] = cellData.density(nPhaseIdx);
                 (*mobilityW)[i] = cellData.mobility(wPhaseIdx);
@@ -211,7 +211,7 @@ public:
         writer.attachCellData(*totalConcentration2, "C^n from cellData");
         if(problem_.vtkOutputLevel()>=1)
         {
-            writer.attachCellData(*pC, "capillary pressure");
+            writer.attachCellData(*pc, "capillary pressure");
             writer.attachCellData(*densityWetting, "wetting density");
             writer.attachCellData(*densityNonwetting, "nonwetting density");
             writer.attachCellData(*mobilityW, "mobility w_phase");

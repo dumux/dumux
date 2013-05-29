@@ -131,7 +131,7 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
     {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        pWIdx = Indices::pwIdx,
+        pwIdx = Indices::pwIdx,
         swIdx = Indices::swIdx,
         eqIdxPress = Indices::pressureEqIdx,
         eqIdxSat = Indices::satEqIdx
@@ -236,17 +236,17 @@ public:
                 Scalar pRef = referencePressureAtPos(globalPos);
                 Scalar temp = temperatureAtPos(globalPos);
 
-                values[pWIdx] = (2e5 + (this->bBoxMax()[dim-1] - globalPos[dim-1]) * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
+                values[pwIdx] = (2e5 + (this->bBoxMax()[dim-1] - globalPos[dim-1]) * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
             }
             else
             {
-                values[pWIdx] = 2e5;
+                values[pwIdx] = 2e5;
             }
             values[swIdx] = 0.8;
         }
         else
         {
-            values[pWIdx] = 2e5;
+            values[pwIdx] = 2e5;
             values[swIdx] = 0.2;
         }
     }
@@ -263,7 +263,7 @@ public:
 //! return initial solution -> only saturation values have to be given!
     void initial(PrimaryVariables &values, const Element& element) const
     {
-        values[pWIdx] = 0;
+        values[pwIdx] = 0;
         values[swIdx] = 0.2;
     }
 

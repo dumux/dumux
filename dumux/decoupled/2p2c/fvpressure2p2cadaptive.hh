@@ -105,9 +105,9 @@ template<class TypeTag> class FVPressure2P2CAdaptive
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw
+        pGlobal = Indices::pressureGlobal,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw
     };
     enum
     {

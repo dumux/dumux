@@ -77,8 +77,8 @@ class FVTransport2P2C
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw
     };
     enum
     {

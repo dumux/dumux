@@ -38,24 +38,24 @@ namespace Dumux
 struct DecoupledTwoPCommonIndices
 {
     // Formulations
-    static const int pwsn = 0; //!< Pw and Sn as primary variables
+    static const int pwsn = 0; //!< pw and sn as primary variables
     DUNE_DEPRECATED_MSG("use pwsn (uncapitalized 's') instead") 
     static const int pwSn = pwsn; //!< \deprecated
 
-    static const int pnsw = 1; //!< Pn and Sw as primary variables
+    static const int pnsw = 1; //!< pn and sw as primary variables
     DUNE_DEPRECATED_MSG("use pnsw (uncapitalized 's') instead") 
     static const int pnSw = pnsw; //!< \deprecated
 
-    static const int pwsw = 2; //!< Pw and Sw as primary variables
+    static const int pwsw = 2; //!< pw and sw as primary variables
     DUNE_DEPRECATED_MSG("use pwsw (uncapitalized 'S') instead") 
     static const int pwSw = pwsw; //!< \deprecated
 
-    static const int pnsn = 3; //!< Pn and Sn as primary variables
+    static const int pnsn = 3; //!< pn and sn as primary variables
     DUNE_DEPRECATED_MSG("use pnsn (uncapitalized 'S') instead") 
     static const int pnSn = pnsn; //!< \deprecated
 
-    static const int pGlobalSw = 4; //!< PGlobal and Sw as primary variables
-    static const int pGlobalSn = 5; //!< PGlobal and Sn as primary variables
+    static const int pGlobalSw = 4; //!< pGlobal and sw as primary variables
+    static const int pGlobalSn = 5; //!< pGlobal and sn as primary variables
 
     // Phase indices
     static const int wPhaseIdx = 0; //!< Index of the wetting phase in a phase vector

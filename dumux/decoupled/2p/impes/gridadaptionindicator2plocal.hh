@@ -60,8 +60,8 @@ private:
 
     enum
     {
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw
     };
     enum
     {
@@ -123,10 +123,10 @@ public:
             Scalar satI = 0.0;
             switch (saturationType_)
             {
-            case Sw:
+            case sw:
                 satI = problem_.variables().cellData(globalIdxI).saturation(wPhaseIdx);
             break;
-            case Sn:
+            case sn:
                 satI = problem_.variables().cellData(globalIdxI).saturation(nPhaseIdx);
                 break;
             }
@@ -196,10 +196,10 @@ public:
                         Scalar satJ = 0.;
                         switch (saturationType_)
                         {
-                        case Sw:
+                        case sw:
                             satJ = problem_.variables().cellData(globalIdxJ).saturation(wPhaseIdx);
                             break;
-                        case Sn:
+                        case sn:
                             satJ = problem_.variables().cellData(globalIdxJ).saturation(nPhaseIdx);
                             break;
                         }

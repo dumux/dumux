@@ -94,9 +94,9 @@ template<class TypeTag> class FVMPFAO2PFABoundVelocity2P: public FVMPFAO2PFABoun
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw,
+        pGlobal = Indices::pressureGlobal,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw,
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
         vt = Indices::velocityTotal
@@ -320,18 +320,18 @@ void FVMPFAO2PFABoundVelocity2P<TypeTag>::calculateVelocity()
             CellData& cellData4 = problem_.variables().cellData(globalIdx4);
 
             // get pressure values
-            Dune::FieldVector < Scalar, 2 * dim > pW(0);
-            Dune::FieldVector < Scalar, 2 * dim > pN(0);
+            Dune::FieldVector < Scalar, 2 * dim > pw(0);
+            Dune::FieldVector < Scalar, 2 * dim > pn(0);
 
-            pW[0] = cellData1.pressure(wPhaseIdx);
-            pW[1] = cellData2.pressure(wPhaseIdx);
-            pW[2] = cellData3.pressure(wPhaseIdx);
-            pW[3] = cellData4.pressure(wPhaseIdx);
+            pw[0] = cellData1.pressure(wPhaseIdx);
+            pw[1] = cellData2.pressure(wPhaseIdx);
+            pw[2] = cellData3.pressure(wPhaseIdx);
+            pw[3] = cellData4.pressure(wPhaseIdx);
 
-            pN[0] = cellData1.pressure(nPhaseIdx);
-            pN[1] = cellData2.pressure(nPhaseIdx);
-            pN[2] = cellData3.pressure(nPhaseIdx);
-            pN[3] = cellData4.pressure(nPhaseIdx);
+            pn[0] = cellData1.pressure(nPhaseIdx);
+            pn[1] = cellData2.pressure(nPhaseIdx);
+            pn[2] = cellData3.pressure(nPhaseIdx);
+            pn[3] = cellData4.pressure(nPhaseIdx);
 
             //get mobilities of the phases
             Dune::FieldVector < Scalar, numPhases > lambda1(cellData1.mobility(wPhaseIdx));
@@ -429,8 +429,8 @@ void FVMPFAO2PFABoundVelocity2P<TypeTag>::calculateVelocity()
             F += C.rightmultiply(B.leftmultiply(A));
             Dune::FieldMatrix < Scalar, 2 * dim, 2 * dim > T(F);
 
-            T.mv(pW, fluxW);
-            T.mv(pN, fluxNW);
+            T.mv(pw, fluxW);
+            T.mv(pn, fluxNW);
 
             Scalar potentialW12 = fluxW[0];
             Scalar potentialW14 = fluxW[3];
@@ -659,12 +659,12 @@ void FVMPFAO2PFABoundVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar satBound = interactionVolume.getDirichletValues(intVolFaceIdx)[saturationIdx];
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satWBound = satBound;
                                       break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satWBound = 1 - satBound;
                                     break;

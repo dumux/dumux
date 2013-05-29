@@ -82,8 +82,8 @@ template<class TypeTag> class FVMPFAOVelocity2P:public FVMPFAOPressure2P<TypeTag
     };
     enum
     {
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw,
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
         vt = Indices::velocityTotal,
@@ -846,12 +846,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -966,12 +966,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar satW = 0;
                             switch (saturationType_)
                             {
-                            case Sw:
+                            case sw:
                             {
                                 satW = satBound;
                                 break;
                             }
-                            case Sn:
+                            case sn:
                             {
                                 satW = 1 - satBound;
                                 break;
@@ -1102,12 +1102,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -1248,12 +1248,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -1498,12 +1498,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -1632,12 +1632,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         Scalar satW = 0;
                         switch (saturationType_)
                         {
-                        case Sw:
+                        case sw:
                         {
                             satW = satBound;
                             break;
                         }
-                        case Sn:
+                        case sn:
                         {
                             satW = 1 - satBound;
                             break;
@@ -1685,12 +1685,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -1885,12 +1885,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;

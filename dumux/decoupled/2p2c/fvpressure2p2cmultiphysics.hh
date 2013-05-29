@@ -85,9 +85,9 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw
+        pGlobal = Indices::pressureGlobal,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw
     };
     enum
     {
@@ -532,7 +532,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         Scalar rhoMean = 0.5 * (cellDataI.density(phaseIdx) + cellDataJ.density(phaseIdx));
         //Scalar density = 0;
 
-        // 1p => no pC => only 1 pressure, potential
+        // 1p => no pc => only 1 pressure, potential
         Scalar potential = (cellDataI.pressure(phaseIdx) - cellDataJ.pressure(phaseIdx)) / dist;
 
         potential += rhoMean * (unitDistVec * gravity_);
@@ -882,7 +882,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
     Scalar pc = 0;
     if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
-            ((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign Sw = 1 if wPhase present, else 0
+            ((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign sw = 1 if wPhase present, else 0
     if(pressureType == wPhaseIdx)
     {
         pressure[wPhaseIdx] = this->pressure(globalIdx);

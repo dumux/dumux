@@ -73,12 +73,12 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
+        pGlobal = Indices::pressureGlobal,
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
         vt = Indices::velocityTotal,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         eqIdxPress = Indices::pressureEqIdx,
@@ -346,7 +346,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
         switch (pressureType_)
         {
-        case pglobal:
+        case pGlobal:
         {
             Scalar pressJK = (cellDataJ.globalPressure() + cellDataK.globalPressure()) / 2;
 
@@ -435,7 +435,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
             velocityNW += gravityTermNW;
             break;
         }
-        case pglobal:
+        case pGlobal:
         {
             Scalar pressJK = (cellDataJ.globalPressure() + cellDataK.globalPressure()) / 2;
 

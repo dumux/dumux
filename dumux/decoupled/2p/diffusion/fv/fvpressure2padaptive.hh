@@ -67,9 +67,9 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw,
+        pGlobal = Indices::pressureGlobal,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         eqIdxPress = Indices::pressureEqIdx,
@@ -153,7 +153,7 @@ public:
             case pn:
                 this->pressure()[i] = cellData.pressure(nPhaseIdx);
                 break;
-            case pglobal:
+            case pGlobal:
             	this->pressure()[i] = cellData.globalPressure();
             	break;
             }
@@ -198,15 +198,15 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "Adaptive finite volume implementation only available in 2-d!");
         }
-        if (pressureType_ != pw && pressureType_ != pn && pressureType_ != pglobal)
+        if (pressureType_ != pw && pressureType_ != pn && pressureType_ != pGlobal)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
         }
-        if (pressureType_ == pglobal && compressibility_)
+        if (pressureType_ == pGlobal && compressibility_)
         {
             DUNE_THROW(Dune::NotImplemented, "Compressibility not supported for global pressure!");
         }
-        if (saturationType_ != Sw && saturationType_ != Sn)
+        if (saturationType_ != sw && saturationType_ != sn)
         {
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }
@@ -405,7 +405,7 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
 
             switch (pressureType_)
             {
-            case pglobal:
+            case pGlobal:
             {
                 Scalar pressJK = (cellDataJ.globalPressure() + cellDataK.globalPressure()) / 2;
 

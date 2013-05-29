@@ -85,9 +85,9 @@ template<class TypeTag> class MimeticPressure2P
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw
+        pGlobal = Indices::pressureGlobal,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw
     };
     enum
     {
@@ -290,11 +290,11 @@ public:
     problem_(problem),
     A_(problem.gridView())
     {
-        if (pressureType != pglobal)
+        if (pressureType != pGlobal)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
         }
-        if (saturationType != Sw)
+        if (saturationType != sw)
         {
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }

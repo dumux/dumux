@@ -98,12 +98,12 @@ class FVSaturation2P: public FVTransport<TypeTag>
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
+        pGlobal = Indices::pressureGlobal,
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
         vt = Indices::velocityTotal,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw
     };
     enum
     {
@@ -188,12 +188,12 @@ public:
         {
             switch (saturationType_)
             {
-            case Sw:
+            case sw:
             {
                 transportedQuantity[i] = problem_.variables().cellData(i).saturation(wPhaseIdx);
                 break;
             }
-            case Sn:
+            case sn:
             {
                 transportedQuantity[i] = problem_.variables().cellData(i).saturation(nPhaseIdx);
                 break;
@@ -215,7 +215,7 @@ public:
             CellData& cellData = problem_.variables().cellData(i);
             switch (saturationType_)
             {
-            case Sw:
+            case sw:
             {
                 Scalar sat = transportedQuantity[i];
 
@@ -223,7 +223,7 @@ public:
                     cellData.setSaturation(nPhaseIdx, 1 - sat);
                 break;
             }
-            case Sn:
+            case sn:
             {
                 Scalar sat = transportedQuantity[i];
 
@@ -295,7 +295,7 @@ public:
 
         switch (saturationType_)
         {
-        case Sw:
+        case sw:
         {
             Scalar sat = cellData.saturation(wPhaseIdx) + dt*update;
 
@@ -303,7 +303,7 @@ public:
                 cellData.setSaturation(nPhaseIdx, 1 - sat);
             break;
         }
-        case Sn:
+        case sn:
         {
             Scalar sat = cellData.saturation(nPhaseIdx) + dt*update;
 
@@ -341,7 +341,7 @@ public:
         {
             CellData& cellData = problem_.variables().cellData(i);
 
-            if (saturationType_ == Sw)
+            if (saturationType_ == sw)
             {
                 (*saturation)[i] = cellData.saturation(wPhaseIdx);
                 if (vtkOutputLevel_ > 0)
@@ -349,7 +349,7 @@ public:
                     (*saturationSecond)[i] = cellData.saturation(nPhaseIdx);
                 }
             }
-            else if (saturationType_ == Sn)
+            else if (saturationType_ == sn)
             {
                 (*saturation)[i] = cellData.saturation(nPhaseIdx);
                 if (vtkOutputLevel_ > 0)
@@ -359,7 +359,7 @@ public:
             }
         }
 
-        if (saturationType_ == Sw)
+        if (saturationType_ == sw)
         {
             writer.attachCellData(*saturation, "wetting saturation");
             if (vtkOutputLevel_ > 0)
@@ -367,7 +367,7 @@ public:
                 writer.attachCellData(*saturationSecond, "nonwetting saturation");
             }
         }
-        else if (saturationType_ == Sn)
+        else if (saturationType_ == sn)
         {
             writer.attachCellData(*saturation, "nonwetting saturation");
             if (vtkOutputLevel_ > 0)
@@ -394,10 +394,10 @@ public:
         Scalar sat = 0.0;
         switch (saturationType_)
         {
-        case Sw:
+        case sw:
             sat = problem_.variables().cellData(globalIdx).saturation(wPhaseIdx);
         break;
-        case Sn:
+        case sn:
             sat = problem_.variables().cellData(globalIdx).saturation(nPhaseIdx);
             break;
         }
@@ -419,11 +419,11 @@ public:
 
         switch (saturationType_)
         {
-        case Sw:
+        case sw:
             problem_.variables().cellData(globalIdx).setSaturation(wPhaseIdx, sat);
             problem_.variables().cellData(globalIdx).setSaturation(nPhaseIdx, 1-sat);
         break;
-        case Sn:
+        case sn:
             problem_.variables().cellData(globalIdx).setSaturation(nPhaseIdx, sat);
             problem_.variables().cellData(globalIdx).setSaturation(wPhaseIdx, 1-sat);
             break;
@@ -443,11 +443,11 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                     "Total velocity - global pressure - model cannot be used with compressible fluids!");
         }
-        if (saturationType_ != Sw && saturationType_ != Sn)
+        if (saturationType_ != sw && saturationType_ != sn)
         {
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }
-        if (pressureType_ != pw && pressureType_ != pn && pressureType_ != pglobal)
+        if (pressureType_ != pw && pressureType_ != pn && pressureType_ != pGlobal)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
         }
@@ -612,13 +612,13 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
 
         switch (saturationType_)
         {
-        case Sw:
+        case sw:
         {
             //vt*fw
             factorTotal *= lambdaW / (lambdaW + lambdaNW);
             break;
         }
-        case Sn:
+        case sn:
         {
             //vt*fn
             factorTotal *= lambdaNW / (lambdaW + lambdaNW);
@@ -660,10 +660,10 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
     default:
         switch (saturationType_)
         {
-        case Sw:
+        case sw:
             update -= factorW / (volume * porosity);//-:v>0, if flow leaves the cell
             break;
-        case Sn:
+        case sn:
             update -= factorNW / (volume * porosity); //-:v>0, if flow leaves the cell
             break;
         }
@@ -738,12 +738,12 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         Scalar satWBound = 0;
         switch (saturationType_)
         {
-        case Sw:
+        case sw:
         {
             satWBound = satBound;
             break;
         }
-        case Sn:
+        case sn:
         {
             satWBound = 1 - satBound;
             break;
@@ -823,13 +823,13 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
 
             switch (saturationType_)
             {
-            case Sw:
+            case sw:
             {
                 //vt*fw
                 factorTotal *= lambdaW / (lambdaW + lambdaNW);
                 break;
             }
-            case Sn:
+            case sn:
             {
                 //vt*fn
                 factorTotal *= lambdaNW / (lambdaW + lambdaNW);
@@ -926,14 +926,14 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         {
             switch (saturationType_)
             {
-            case Sw:
+            case sw:
             {
                 //vt*fw
                 factorTotal *= lambdaW / (lambdaW + lambdaNW);
                 this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
                 break;
             }
-            case Sn:
+            case sn:
             {
                 //vt*fn
                 factorTotal *= lambdaNW / (lambdaW + lambdaNW);
@@ -956,10 +956,10 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
     default:
         switch (saturationType_)
         {
-        case Sw:
+        case sw:
             update -= factorW / (volume * porosity); //-:v>0, if flow leaves the cell
             break;
-        case Sn:
+        case sn:
             update -= factorNW / (volume * porosity); //-:v>0, if flow leaves the cell
             break;
         }
@@ -1012,7 +1012,7 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
 
     switch (saturationType_)
     {
-    case Sw:
+    case sw:
     {
         if (sourceVec[wPhaseIdx] < 0 && cellDataI.saturation(wPhaseIdx) < threshold_)
             sourceVec[wPhaseIdx] = 0.0;
@@ -1020,7 +1020,7 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
         update += sourceVec[wPhaseIdx] / porosity;
         break;
     }
-    case Sn:
+    case sn:
     {
         if (sourceVec[nPhaseIdx] < 0 && cellDataI.saturation(nPhaseIdx) < threshold_)
             sourceVec[nPhaseIdx] = 0.0;
@@ -1085,13 +1085,13 @@ void FVSaturation2P<TypeTag>::initialize()
 
         switch (saturationType_)
         {
-        case Sw:
+        case sw:
         {
                 cellData.setSaturation(wPhaseIdx, initSol[saturationIdx]);
                 cellData.setSaturation(nPhaseIdx, 1 - initSol[saturationIdx]);
             break;
         }
-        case Sn:
+        case sn:
         {
                 cellData.setSaturation(wPhaseIdx,1 -initSol[saturationIdx]);
                 cellData.setSaturation(nPhaseIdx, initSol[saturationIdx]);

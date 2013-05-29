@@ -59,12 +59,12 @@ private:
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
+        pGlobal = Indices::pressureGlobal,
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
         vt = Indices::velocityTotal,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;

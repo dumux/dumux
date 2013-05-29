@@ -193,9 +193,9 @@ enum
     wPhaseIdx = Indices::wPhaseIdx,
     nPhaseIdx = Indices::nPhaseIdx,
 #if PROBLEM == 1
-    pNIdx = Indices::pnIdx,
+    pnIdx = Indices::pnIdx,
 #else
-    pWIdx = Indices::pwIdx,
+    pwIdx = Indices::pwIdx,
 #endif
     swIdx = Indices::swIdx,
     eqIdxPress = Indices::pressureEqIdx,
@@ -394,7 +394,7 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
     Scalar pRef = referencePressureAtPos(globalPos);
     Scalar temp = temperatureAtPos(globalPos);
 
-    values[pWIdx] = (1e5 - (this->bBoxMax()- globalPos) * this->gravity() * WettingPhase::density(temp, pRef));
+    values[pwIdx] = (1e5 - (this->bBoxMax()- globalPos) * this->gravity() * WettingPhase::density(temp, pRef));
     values[swIdx] = 1.0;
 
     if (isInlet(globalPos))
@@ -405,13 +405,13 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
     if (globalPos[0] < eps_)
     {
         values[swIdx] = 0.8;
-        values[pWIdx] = 1;
+        values[pwIdx] = 1;
     }
 #else
     if (globalPos[0] < eps_)
     {
         values[swIdx] = 1.0;
-        values[pNIdx] = 1e5;
+        values[pnIdx] = 1e5;
     }
 #endif
 }
@@ -438,13 +438,13 @@ void initialAtPos(PrimaryVariables &values,
         const GlobalPosition& globalPos) const
 {
 #if PROBLEM == 2
-    values[pWIdx] = 0;
+    values[pwIdx] = 0;
     values[swIdx] = 1.0;
 #elif PROBLEM == 0
-    values[pWIdx] = 0;
+    values[pwIdx] = 0;
     values[swIdx] = 0.2;
 #else
-    values[pNIdx] = 0;
+    values[pnIdx] = 0;
     values[swIdx] = 0.0;
 #endif
 }

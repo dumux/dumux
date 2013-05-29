@@ -87,8 +87,8 @@ class FVMPFAOPressure2P: public FVPressure<TypeTag>
     };
     enum
     {
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNw,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw,
         pGlobal = Indices::pressureGlobal
     };
     enum
@@ -232,14 +232,14 @@ public:
         if (vtkOutputLevel_ > 0)
         {
             // output  phase-dependent stuff
-            ScalarSolutionType *pC = writer.allocateManagedBuffer (problem_.gridView().size(0));
+            ScalarSolutionType *pc = writer.allocateManagedBuffer (problem_.gridView().size(0));
             int size = problem_.gridView().size(0);
             for (int i = 0; i < size; i++)
             {
                 CellData& cellData = problem_.variables().cellData(i);
-                (*pC)[i] = cellData.capillaryPressure();
+                (*pc)[i] = cellData.capillaryPressure();
             }
-            writer.attachCellData(*pC, "capillary pressure");
+            writer.attachCellData(*pc, "capillary pressure");
         }
         return;
     }
@@ -1141,12 +1141,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -1257,12 +1257,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar satW = 0;
                             switch (saturationType_)
                             {
-                            case Sw:
+                            case sw:
                             {
                                 satW = satBound;
                                 break;
                             }
-                            case Sn:
+                            case sn:
                             {
                                 satW = 1 - satBound;
                                 break;
@@ -1381,12 +1381,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -1512,12 +1512,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -1754,12 +1754,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -1885,12 +1885,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         Scalar satW = 0;
                         switch (saturationType_)
                         {
-                        case Sw:
+                        case sw:
                         {
                             satW = satBound;
                             break;
                         }
-                        case Sn:
+                        case sn:
                         {
                             satW = 1 - satBound;
                             break;
@@ -1938,12 +1938,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;
@@ -2122,12 +2122,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar satW = 0;
                                 switch (saturationType_)
                                 {
-                                case Sw:
+                                case sw:
                                 {
                                     satW = satBound;
                                     break;
                                 }
-                                case Sn:
+                                case sn:
                                 {
                                     satW = 1 - satBound;
                                     break;

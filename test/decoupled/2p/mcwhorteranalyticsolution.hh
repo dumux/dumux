@@ -148,7 +148,7 @@ private:
         problem_.initial(initVec, *dummyElement);
         sInit_ = initVec[saturationIdx];
         Scalar s0 =(1 - snr_ - swr_);
-//        std::cerr<<"\n Swr, Snr: "<< swr_ << snr_ << "\n";
+//        std::cerr<<"\n swr, snr: "<< swr_ << snr_ << "\n";
 //        std::cerr<<"\n sInit "<< sInit_<< "\n";
 
  //       h_= (s0 - sInit_)/intervalNum_;
