@@ -311,7 +311,7 @@ private:
     Scalar swr_;
     Scalar snr_;
     Scalar sgr_;
-    Scalar swrx_;     /* (Sw+Sn)_r */
+    Scalar swrx_;     /* (sw+sn)_r */
 
     Scalar KdNAPL_;
     Scalar rhoBulk_;

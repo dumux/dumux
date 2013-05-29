@@ -472,12 +472,12 @@ protected:
         // update the pressures using the material law (saturations
         // and first pressure are already set because it is implicitly
         // solved for.)
-        ComponentVector pC;
-        MaterialLaw::capillaryPressures(pC, matParams, fluidState);
+        ComponentVector pc;
+        MaterialLaw::capillaryPressures(pc, matParams, fluidState);
         for (int phaseIdx = 1; phaseIdx < numPhases; ++phaseIdx)
             fluidState.setPressure(phaseIdx,
                                    fluidState.pressure(0)
-                                   + (pC[phaseIdx] - pC[0]));
+                                   + (pc[phaseIdx] - pc[0]));
 
         // update the parameter cache
         paramCache.updateAll(fluidState, /*except=*/ParameterCache::Temperature);
@@ -569,12 +569,12 @@ protected:
 
             // update all fluid pressures using the capillary pressure
             // law
-            ComponentVector pC;
-            MaterialLaw::capillaryPressures(pC, matParams, fs);
+            ComponentVector pc;
+            MaterialLaw::capillaryPressures(pc, matParams, fs);
             for (int phaseIdx = 1; phaseIdx < numPhases; ++phaseIdx)
                 fs.setPressure(phaseIdx,
                                fs.pressure(0)
-                               + (pC[phaseIdx] - pC[0]));
+                               + (pc[phaseIdx] - pc[0]));
             paramCache.updateAllPressures(fs);
 
             // update all densities and fugacity coefficients

@@ -86,7 +86,7 @@ public:
      S_w = 1 - \frac{p_C - p_{C,entry}}{p_{C,max} - p_{C,entry}}
      \f]
      *
-     * \param pC Capillary pressure \f$\p_C\f$
+     * \param pc Capillary pressure \f$\p_C\f$
      * \return The effective saturaion of the wetting phase \f$\overline{S}_w\f$
      */
     template <class SatContainerT, class FluidState>

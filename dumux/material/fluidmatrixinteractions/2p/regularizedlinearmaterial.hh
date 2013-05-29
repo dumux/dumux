@@ -73,20 +73,20 @@ public:
      p_C = (1 - \overline{S}_w) (p_{C,max} - p_{C,entry}) + p_{C,entry}
      \f]
      *
-     * \param Swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$ conversion from absolute saturation happened in EffToAbsLaw.
+     * \param swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$ conversion from absolute saturation happened in EffToAbsLaw.
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar pc(const Params &params, Scalar Swe)
+    static Scalar pc(const Params &params, Scalar swe)
     {
-        return LinearMaterial::pc(params, Swe);
+        return LinearMaterial::pc(params, swe);
     }
 
     DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar Swe)
+    static Scalar pC(const Params &params, Scalar swe)
     {
-        return pc(params, Swe);
+        return pc(params, swe);
     }
 
     /*!
@@ -97,21 +97,21 @@ public:
      S_w = 1 - \frac{p_C - p_{C,entry}}{p_{C,max} - p_{C,entry}}
      \f]
      *
-     * \param pC        Capillary pressure \f$p_C\f$
+     * \param pc        Capillary pressure \f$p_C\f$
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return The effective saturation of the wetting phase \f$\overline{S}_w\f$
      */
-    static Scalar sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pc)
     {
-        return LinearMaterial::sw(params, pC);
+        return LinearMaterial::sw(params, pc);
     }
 
     DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar Sw(const Params &params, Scalar pc)
     {
-        return sw(params, pC);
+        return sw(params, pc);
     }
 
     /*!
@@ -123,40 +123,40 @@ public:
      \frac{\partial p_C}{\partial \overline{S}_w} =
      - (p_{C,max} - p_{C,min})
      \f]
-     * \param Swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$ conversion from absolute saturation happened in EffToAbsLaw.
+     * \param swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$ conversion from absolute saturation happened in EffToAbsLaw.
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
     */
-    static Scalar dpc_dsw(const Params &params, Scalar Swe)
+    static Scalar dpc_dsw(const Params &params, Scalar swe)
     {
-        return LinearMaterial::dpc_dsw(params, Swe);
+        return LinearMaterial::dpc_dsw(params, swe);
     }
 
     DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    static Scalar dpC_dSw(const Params &params, Scalar swe)
     {
-        return dpc_dsw(params, Swe);
+        return dpc_dsw(params, swe);
     }
 
     /*!
      * \brief Returns the partial derivative of the effective
      *        saturation to the capillary pressure.
      *
-     * \param pC        Capillary pressure \f$p_C\f$
+     * \param pc        Capillary pressure \f$p_C\f$
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pC)
+    static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
-        return LinearMaterial::dsw_dpc(params, pC);
+        return LinearMaterial::dsw_dpc(params, pc);
     }
 
     DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    static Scalar dSw_dpC(const Params &params, Scalar pc)
     {
-        return dsw_dpc(params, pC);
+        return dsw_dpc(params, pc);
     }
 
     /*!
@@ -165,11 +165,11 @@ public:
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
-     * \param Swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$ conversion from absolute saturation happened in EffToAbsLaw.
+     * \param swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$ conversion from absolute saturation happened in EffToAbsLaw.
      */
-    static Scalar krw(const Params &params, Scalar Swe)
+    static Scalar krw(const Params &params, Scalar swe)
     {
-        return relperm_(params, Swe);
+        return relperm_(params, swe);
     };
 
     /*!
@@ -178,12 +178,12 @@ public:
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
-     * \param Swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$ conversion from absolute saturation happened in EffToAbsLaw.
+     * \param swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$ conversion from absolute saturation happened in EffToAbsLaw.
      */
-    static Scalar krn(const Params &params, Scalar Swe)
+    static Scalar krn(const Params &params, Scalar swe)
     {
-        Scalar Sne = 1 - Swe;
-        return relperm_(params, Sne);
+        Scalar sne = 1 - swe;
+        return relperm_(params, sne);
     }
 
 private:

@@ -89,49 +89,49 @@ public:
      *
          \copydetails VanGenuchten::pc()
      */
-    static Scalar pc(const Params &params, Scalar Swe)
+    static Scalar pc(const Params &params, Scalar swe)
     {
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
-        const Scalar SwThLow = params.pcLowSw();
-        const Scalar SwThHigh = params.pcHighSw();
+        const Scalar swThLow = params.pcLowSw();
+        const Scalar swThHigh = params.pcHighSw();
 
         // make sure that the capillary pressure observes a derivative
         // != 0 for 'illegal' saturations. This is favourable for the
         // newton solver (if the derivative is calculated numerically)
         // in order to get the saturation moving to the right
         // direction if it temporarily is in an 'illegal' range.
-        if (Swe < SwThLow) {
-            return VanGenuchten::pc(params, SwThLow) + mLow_(params)*(Swe - SwThLow);
+        if (swe < swThLow) {
+            return VanGenuchten::pc(params, swThLow) + mLow_(params)*(swe - swThLow);
         }
-        else if (Swe > SwThHigh)
+        else if (swe > swThHigh)
         {
-            Scalar yTh = VanGenuchten::pc(params, SwThHigh);
-            Scalar m1 = (0.0 - yTh)/(1.0 - SwThHigh)*2;
+            Scalar yTh = VanGenuchten::pc(params, swThHigh);
+            Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
 
-            if (Swe < 1.0) {
-                // use spline between threshold Swe and 1.0
-                Scalar mTh = VanGenuchten::dpc_dsw(params, SwThHigh);
-                Spline<Scalar> sp(SwThHigh, 1.0, // x0, x1
+            if (swe < 1.0) {
+                // use spline between threshold swe and 1.0
+                Scalar mTh = VanGenuchten::dpc_dsw(params, swThHigh);
+                Spline<Scalar> sp(swThHigh, 1.0, // x0, x1
                                   yTh, 0, // y0, y1
                                   mTh, m1); // m0, m1
-                return sp.eval(Swe);
+                return sp.eval(swe);
             }
             else {
-                // straight line for Swe > 1.0
-                return m1*(Swe - 1.0) + 0.0;
+                // straight line for swe > 1.0
+                return m1*(swe - 1.0) + 0.0;
             }
         }
 
         // if the effective saturation is in an 'reasonable'
         // range, we use the real van genuchten law...
-        return VanGenuchten::pc(params, Swe);
+        return VanGenuchten::pc(params, swe);
     }
 
     DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar Swe)
+    static Scalar pC(const Params &params, Scalar swe)
     {
-        return pc(params, Swe);
+        return pc(params, swe);
     }
 
     /*!
@@ -148,53 +148,53 @@ public:
          \copydetails VanGenuchten::sw()
      *
      */
-    static Scalar sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pc)
     {
         // retrieve the low and the high threshold saturations for the
         // unregularized capillary pressure curve from the parameters
-        const Scalar SwThLow = params.pcLowSw();
-        const Scalar SwThHigh = params.pcHighSw();
+        const Scalar swThLow = params.pcLowSw();
+        const Scalar swThHigh = params.pcHighSw();
 
         // calculate the saturation which corrosponds to the
         // saturation in the non-regularized verision of van
         // Genuchten's law
-        Scalar Sw;
-        if (pC <= 0) {
-            // invert straight line for Swe > 1.0
-            Scalar yTh = VanGenuchten::pc(params, SwThHigh);
-            Scalar m1 = (0.0 - yTh)/(1.0 - SwThHigh)*2;
-            return pC/m1 + 1.0;
+        Scalar sw;
+        if (pc <= 0) {
+            // invert straight line for swe > 1.0
+            Scalar yTh = VanGenuchten::pc(params, swThHigh);
+            Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
+            return pc/m1 + 1.0;
         }
         else
-            Sw = VanGenuchten::sw(params, pC);
+            sw = VanGenuchten::sw(params, pc);
 
         // invert the regularization if necessary
-        if (Sw <= SwThLow) {
+        if (sw <= swThLow) {
             // invert the low saturation regularization of pc()
-            Scalar pC_SwLow = VanGenuchten::pc(params, SwThLow);
-            return (pC - pC_SwLow)/mLow_(params) + SwThLow;
+            Scalar pcswLow = VanGenuchten::pc(params, swThLow);
+            return (pc - pcswLow)/mLow_(params) + swThLow;
         }
-        else if (Sw > SwThHigh)
+        else if (sw > swThHigh)
         {
-            Scalar yTh = VanGenuchten::pc(params, SwThHigh);
-            Scalar m1 = (0.0 - yTh)/(1.0 - SwThHigh)*2;
+            Scalar yTh = VanGenuchten::pc(params, swThHigh);
+            Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
 
-            // invert spline between threshold Swe and 1.0
-            Scalar mTh = VanGenuchten::dpc_dsw(params, SwThHigh);
-            Spline<Scalar> sp(SwThHigh, 1.0, // x0, x1
+            // invert spline between threshold swe and 1.0
+            Scalar mTh = VanGenuchten::dpc_dsw(params, swThHigh);
+            Spline<Scalar> sp(swThHigh, 1.0, // x0, x1
                               yTh, 0, // m0, m1
                               mTh, m1); // m0, m1
-            return sp.intersectInterval(SwThHigh, 1.0,
-                                        0, 0, 0, pC);
+            return sp.intersectInterval(swThHigh, 1.0,
+                                        0, 0, 0, pc);
         }
 
-        return Sw;
+        return sw;
     }
 
     DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar Sw(const Params &params, Scalar pc)
     {
-        return sw(params, pC);
+        return sw(params, pc);
     }
 
     /*!
@@ -211,25 +211,25 @@ public:
       \copydetails VanGenuchten::dpc_dsw()
     *
     */
-    static Scalar dpc_dsw(const Params &params, Scalar Swe)
+    static Scalar dpc_dsw(const Params &params, Scalar swe)
     {
         // derivative of the regualarization
-        if (Swe < params.pcLowSw()) {
+        if (swe < params.pcLowSw()) {
             // the slope of the straight line used in pc()
             return mLow_(params);
         }
-        else if (Swe > params.pcHighSw()) {
+        else if (swe > params.pcHighSw()) {
             // the slope of the straight line used in pc()
             return mHigh_(params);
         }
 
-        return VanGenuchten::dpc_dsw(params, Swe);
+        return VanGenuchten::dpc_dsw(params, swe);
     }
 
     DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    static Scalar dpC_dSw(const Params &params, Scalar swe)
     {
-        return dpc_dsw(params, Swe);
+        return dpc_dsw(params, swe);
     }
 
     /*!
@@ -244,34 +244,34 @@ public:
      *        For not-regularized part:
         \copydetails VanGenuchten::dsw_dpc()
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pC)
+    static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
         // calculate the saturation which corrosponds to the
         // saturation in the non-regularized verision of van
         // Genuchten's law
-        Scalar Sw;
-        if (pC < 0)
-            Sw = 1.5; // make sure we regularize below
+        Scalar sw;
+        if (pc < 0)
+            sw = 1.5; // make sure we regularize below
         else
-            Sw = VanGenuchten::sw(params, pC);
+            sw = VanGenuchten::sw(params, pc);
 
         // derivative of the regularization
-        if (Sw < params.pcLowSw()) {
+        if (sw < params.pcLowSw()) {
             // same as in dpc_dsw() but inverted
             return 1/mLow_(params);
         }
-        if (Sw > params.pcHighSw()) {
+        if (sw > params.pcHighSw()) {
             // same as in dpc_dsw() but inverted
             return 1/mHigh_(params);
         }
 
-        return VanGenuchten::dsw_dpc(params, pC);
+        return VanGenuchten::dsw_dpc(params, pc);
     }
 
     DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    static Scalar dSw_dpC(const Params &params, Scalar pc)
     {
-        return dsw_dpc(params, pC);
+        return dsw_dpc(params, pc);
     }
 
     /*!
@@ -288,26 +288,26 @@ public:
      *  For not-regularized part:
         \copydetails VanGenuchten::krw()
      */
-    static Scalar krw(const Params &params, Scalar Swe)
+    static Scalar krw(const Params &params, Scalar swe)
     {
         // retrieve the high threshold saturation for the
         // unregularized relative permeability curve of the wetting
         // phase from the parameters
-        const Scalar SwThHigh = params.krwHighSw();
+        const Scalar swThHigh = params.krwHighSw();
 
-        if (Swe < 0)
+        if (swe < 0)
             return 0;
-        else if (Swe > 1)
+        else if (swe > 1)
             return 1;
-        else if (Swe > SwThHigh) {
+        else if (swe > swThHigh) {
             typedef Dumux::Spline<Scalar> Spline;
-            Spline sp(SwThHigh, 1.0, // x1, x2
-                      VanGenuchten::krw(params, SwThHigh), 1.0, // y1, y2
-                      VanGenuchten::dkrw_dsw(params, SwThHigh), 0); // m1, m2
-            return sp.eval(Swe);
+            Spline sp(swThHigh, 1.0, // x1, x2
+                      VanGenuchten::krw(params, swThHigh), 1.0, // y1, y2
+                      VanGenuchten::dkrw_dsw(params, swThHigh), 0); // m1, m2
+            return sp.eval(swe);
         }
 
-        return VanGenuchten::krw(params, Swe);
+        return VanGenuchten::krw(params, swe);
     };
 
     /*!
@@ -324,26 +324,26 @@ public:
          \copydetails VanGenuchten::krn()
      *
      */
-    static Scalar krn(const Params &params, Scalar Swe)
+    static Scalar krn(const Params &params, Scalar swe)
     {
         // retrieve the low threshold saturation for the unregularized
         // relative permeability curve of the non-wetting phase from
         // the parameters
-        const Scalar SwThLow = params.krnLowSw();
+        const Scalar swThLow = params.krnLowSw();
 
-        if (Swe <= 0)
+        if (swe <= 0)
             return 1;
-        else if (Swe >= 1)
+        else if (swe >= 1)
             return 0;
-        else if (Swe < SwThLow) {
+        else if (swe < swThLow) {
             typedef Dumux::Spline<Scalar> Spline;
-            Spline sp(0.0, SwThLow, // x1, x2
-                      1.0, VanGenuchten::krn(params, SwThLow), // y1, y2
-                      0.0, VanGenuchten::dkrn_dsw(params, SwThLow)); // m1, m2
-            return sp.eval(Swe);
+            Spline sp(0.0, swThLow, // x1, x2
+                      1.0, VanGenuchten::krn(params, swThLow), // y1, y2
+                      0.0, VanGenuchten::dkrn_dsw(params, swThLow)); // m1, m2
+            return sp.eval(swe);
         }
 
-        return VanGenuchten::krn(params, Swe);
+        return VanGenuchten::krn(params, swe);
     }
 
 private:
@@ -360,9 +360,9 @@ private:
      */
     static Scalar mLow_(const Params &params)
     {
-        const Scalar SwThLow = params.pcLowSw();
+        const Scalar swThLow = params.pcLowSw();
 
-        return VanGenuchten::dpc_dsw(params, SwThLow);
+        return VanGenuchten::dpc_dsw(params, swThLow);
     }
 
     /*!
@@ -375,10 +375,10 @@ private:
      */
     static Scalar mHigh_(const Params &params)
     {
-        const Scalar SwThHigh = params.pcHighSw();
+        const Scalar swThHigh = params.pcHighSw();
 
-        Scalar pC_SwHigh = VanGenuchten::pc(params, SwThHigh);
-        return (0 - pC_SwHigh)/(1.0 - SwThHigh);
+        Scalar pcswHigh = VanGenuchten::pc(params, swThHigh);
+        return (0 - pcswHigh)/(1.0 - swThHigh);
     }
 };
 

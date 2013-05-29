@@ -68,7 +68,7 @@ public:
     }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \return the material parameters object
      * \param element The element
@@ -79,7 +79,7 @@ public:
     }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \return the material parameters object
      * \param globalPos The position of the center of the element

@@ -62,7 +62,7 @@ public:
     /*!
      * \brief Returns the effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974).
      *
-     * \param Sw The saturation of the wetting phase
+     * \param sw The saturation of the wetting phase
      * \param lambdaW the thermal conductivity of the wetting phase
      * \param lambdaN the thermal conductivity of the non-wetting phase
      * \param lambdaSolid the thermal conductivity of the solid phase
@@ -76,13 +76,13 @@ public:
      * fluid conductivities and interpolated with the square root of the wetting saturation.
      * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis.
      */
-    static Scalar effectiveThermalConductivity(const Scalar Sw,
+    static Scalar effectiveThermalConductivity(const Scalar sw,
                                                const Scalar lambdaW,
                                                const Scalar lambdaN,
                                                const Scalar lambdaSolid,
                                                const Scalar porosity)
     {
-        const Scalar satW = std::max<Scalar>(0.0, Sw);
+        const Scalar satW = std::max<Scalar>(0.0, sw);
         // geometric means
         const Scalar lSat = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaW, porosity);
         const Scalar lDry = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaN, porosity);

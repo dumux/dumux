@@ -171,10 +171,10 @@ public:
         fluidState.setDensity(wPhaseIdx, FluidSystem::density(fluidState, wPhaseIdx));
         fluidState.setDensity(nPhaseIdx, FluidSystem::density(fluidState, nPhaseIdx));
 
-        Scalar Sw = fluidState.phaseMassFraction(wPhaseIdx) / fluidState.density(wPhaseIdx);
-        Sw /= (fluidState.phaseMassFraction(wPhaseIdx)/fluidState.density(wPhaseIdx)
+        Scalar sw = fluidState.phaseMassFraction(wPhaseIdx) / fluidState.density(wPhaseIdx);
+        sw /= (fluidState.phaseMassFraction(wPhaseIdx)/fluidState.density(wPhaseIdx)
                     + fluidState.phaseMassFraction(nPhaseIdx)/fluidState.density(nPhaseIdx));
-        fluidState.setSaturation(wPhaseIdx, Sw);
+        fluidState.setSaturation(wPhaseIdx, sw);
     };
 
     //! The simplest possible update routine for 1p2c "flash" calculations

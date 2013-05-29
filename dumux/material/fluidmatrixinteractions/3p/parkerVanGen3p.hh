@@ -55,115 +55,115 @@ public:
      * \brief The capillary pressure-saturation curve.
      *
      */
-    static Scalar pc(const Params &params, Scalar Sw)
+    static Scalar pc(const Params &params, Scalar sw)
     {
         DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pcgn, pcnw, and pcgw");
     }
 
     DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar Swe)
+    static Scalar pC(const Params &params, Scalar swe)
     {
-        return pc(params, Swe);
+        return pc(params, swe);
     }
 
-    static Scalar pcgw(const Params &params, Scalar Sw)
+    static Scalar pcgw(const Params &params, Scalar sw)
     {
     /*
-         Sw = wetting phase saturation, or,
+         sw = wetting phase saturation, or,
               sum of wetting phase saturations
          alpha : VanGenuchten-alpha
     this function is just copied from MUFTE/pml/constrel3p3cni.c
     that is why variable names do not yet fulfill Dumux rules, TODO Change */
 
-    Scalar r,Se,x,vg_m;
-    Scalar pc,pc_prime,Se_regu;
-    Scalar PC_VG_REG = 0.01;
+    Scalar r,se,x,vgm;
+    Scalar pc,pcPrime,seRegu;
+    Scalar pcvgReg = 0.01;
 
-    Se   = (Sw-params.swr())/(1.-params.sgr());
+    se   = (sw-params.swr())/(1.-params.sgr());
 
     /* Snr  = 0.0;   test version   */
 
     /* regularization */
-    if (Se<0.0) Se=0.0;
-    if (Se>1.0) Se=1.0;
-    vg_m = 1.-1./params.vgn();
+    if (se<0.0) se=0.0;
+    if (se>1.0) se=1.0;
+    vgm = 1.-1./params.vgn();
 
-        if (Se>PC_VG_REG && Se<1-PC_VG_REG)
+        if (se>pcvgReg && se<1-pcvgReg)
         {
-            r = std::pow(Se,-1/vg_m);
+            r = std::pow(se,-1/vgm);
             x = r-1;
-            vg_m = 1-vg_m;
-            x = std::pow(x,vg_m);
+            vgm = 1-vgm;
+            x = std::pow(x,vgm);
             r = x/params.vgAlpha();
             return(r);
         }
         else
         {
             /* value and derivative at regularization point */
-            if (Se<=PC_VG_REG) Se_regu = PC_VG_REG; else Se_regu = 1-PC_VG_REG;
-            pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn())/params.vgAlpha();
-            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgn();
+            if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
+            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
+            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)*(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgn();
 
             /* evaluate tangential */
-            r        = (Se-Se_regu)*pc_prime+pc;
+            r        = (se-seRegu)*pcPrime+pc;
             return(r/params.betaGw());
         }
     }
 
     DUNE_DEPRECATED_MSG("use pcgw() (uncapitalized 'cgw') instead")
-    static Scalar pCGW(const Params &params, Scalar Sw)
+    static Scalar pCGW(const Params &params, Scalar sw)
     {
-        return pcgw(params, Sw);
+        return pcgw(params, sw);
     }
 
-    static Scalar pcnw(const Params &params, Scalar Sw)
+    static Scalar pcnw(const Params &params, Scalar sw)
     {
     /*
-         Sw = wetting phase saturation, or,
+         sw = wetting phase saturation, or,
               sum of wetting phase saturations
          alpha : VanGenuchten-alpha
     this function is just copied from MUFTE/pml/constrel3p3cni.c
     that is why variable names do not yet fulfill Dumux rules, TODO Change */
 
-    Scalar r,Se,x,vg_m;
-    Scalar pc,pc_prime,Se_regu;
-    Scalar PC_VG_REG = 0.01;
+    Scalar r,se,x,vgm;
+    Scalar pc,pcPrime,seRegu;
+    Scalar pcvgReg = 0.01;
 
-    Se   = (Sw-params.swr())/(1.-params.snr());
+    se   = (sw-params.swr())/(1.-params.snr());
 
     /* Snr  = 0.0;   test version   */
 
     /* regularization */
-    if (Se<0.0) Se=0.0;
-    if (Se>1.0) Se=1.0;
-    vg_m = 1.-1./params.vgn();
+    if (se<0.0) se=0.0;
+    if (se>1.0) se=1.0;
+    vgm = 1.-1./params.vgn();
 
-        if (Se>PC_VG_REG && Se<1-PC_VG_REG)
+        if (se>pcvgReg && se<1-pcvgReg)
         {
-            r = std::pow(Se,-1/vg_m);
+            r = std::pow(se,-1/vgm);
             x = r-1;
-            vg_m = 1-vg_m;
-            x = std::pow(x,vg_m);
+            vgm = 1-vgm;
+            x = std::pow(x,vgm);
             r = x/params.vgAlpha();
             return(r);
         }
         else
         {
             /* value and derivative at regularization point */
-            if (Se<=PC_VG_REG) Se_regu = PC_VG_REG; else Se_regu = 1-PC_VG_REG;
-            pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn())/params.vgAlpha();
-            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgn();
+            if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
+            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
+            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)*(-1/vgm)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgn();
 
             /* evaluate tangential */
-            r        = (Se-Se_regu)*pc_prime+pc;
+            r        = (se-seRegu)*pcPrime+pc;
             return(r/params.betaNw());
         }
     }
 
     DUNE_DEPRECATED_MSG("use pcnw() (uncapitalized 'cnw') instead")
-    static Scalar pCNW(const Params &params, Scalar Sw)
+    static Scalar pCNW(const Params &params, Scalar sw)
     {
-        return pcnw(params, Sw);
+        return pcnw(params, sw);
     }
 
     static Scalar pcgn(const Params &params, Scalar St)
@@ -174,37 +174,37 @@ public:
     this function is just copied from MUFTE/pml/constrel3p3cni.c
     that is why variable names do not yet fulfill Dumux rules, TODO Change */
 
-    Scalar r,Se,x,vg_m;
-    Scalar pc,pc_prime,Se_regu;
-    Scalar PC_VG_REG = 0.01;
+    Scalar r,se,x,vgm;
+    Scalar pc,pcPrime,seRegu;
+    Scalar pcvgReg = 0.01;
 
-    Se   = (St-params.swrx())/(1.-params.swrx());
+    se   = (St-params.swrx())/(1.-params.swrx());
 
     /* Snr  = 0.0;   test version   */
 
     /* regularization */
-    if (Se<0.0) Se=0.0;
-    if (Se>1.0) Se=1.0;
-    vg_m = 1.-1./params.vgn();
+    if (se<0.0) se=0.0;
+    if (se>1.0) se=1.0;
+    vgm = 1.-1./params.vgn();
 
-        if (Se>PC_VG_REG && Se<1-PC_VG_REG)
+        if (se>pcvgReg && se<1-pcvgReg)
         {
-            r = std::pow(Se,-1/vg_m);
+            r = std::pow(se,-1/vgm);
             x = r-1;
-            vg_m = 1-vg_m;
-            x = std::pow(x,vg_m);
+            vgm = 1-vgm;
+            x = std::pow(x,vgm);
             r = x/params.vgAlpha();
             return(r);
         }
         else
         {
             /* value and derivative at regularization point */
-            if (Se<=PC_VG_REG) Se_regu = PC_VG_REG; else Se_regu = 1-PC_VG_REG;
-            pc       = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn())/params.vgAlpha();
-            pc_prime = std::pow(std::pow(Se_regu,-1/vg_m)-1,1/params.vgn()-1)*std::pow(Se_regu,-1/vg_m-1)*(-1/vg_m)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgn();
+            if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
+            pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
+            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)*(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgn();
 
             /* evaluate tangential */
-            r        = (Se-Se_regu)*pc_prime+pc;
+            r        = (se-seRegu)*pcPrime+pc;
             return(r/params.betaGn());
         }
     }
@@ -215,45 +215,45 @@ public:
         return pcgn(params, St);
     }
 
-    static Scalar pcAlpha(const Params &params, Scalar Sn)
+    static Scalar pcAlpha(const Params &params, Scalar sn)
     {
         /* continuous transition to zero */
-        Scalar alpha,Sne;
+        Scalar alpha,sne;
 
-        Sne=Sn;
+        sne=sn;
         /* regularization */
-        if (Sne<=0.001) Sne=0.0;
-        if (Sne>=1.0) Sne=1.0;
+        if (sne<=0.001) sne=0.0;
+        if (sne>=1.0) sne=1.0;
 
-        if (Sne>params.snr()) alpha = 1.0;
+        if (sne>params.snr()) alpha = 1.0;
         else
         {
-         if (params.snr()>=0.001) alpha = Sne/params.snr();
+         if (params.snr()>=0.001) alpha = sne/params.snr();
          else          alpha = 0.0;
         }
         return(alpha);
     }
 
     DUNE_DEPRECATED_MSG("use pcAlpha() (uncapitalized 'c') instead")
-    static Scalar pCAlpha(const Params &params, Scalar Sn)
+    static Scalar pCAlpha(const Params &params, Scalar sn)
     {
-        return pcAlpha(params, Sn);
+        return pcAlpha(params, sn);
     }
 
     /*!
      * \brief The saturation-capillary pressure curve.
      *
      */
-    static Scalar sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pc)
     {
-        DUNE_THROW(Dune::NotImplemented, "Sw(pc) for three phases not implemented! Do it yourself!");
+        DUNE_THROW(Dune::NotImplemented, "sw(pc) for three phases not implemented! Do it yourself!");
     }
 
 
     DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar Sw(const Params &params, Scalar pc)
     {
-        return sw(params, pC);
+        return sw(params, pc);
     }
 
     /*!
@@ -261,30 +261,30 @@ public:
      *        pressure to the effective saturation.
      *
     */
-    static Scalar dpc_dsw(const Params &params, Scalar Sw)
+    static Scalar dpc_dsw(const Params &params, Scalar sw)
     {
-        DUNE_THROW(Dune::NotImplemented, "dpC/dSw for three phases not implemented! Do it yourself!");
+        DUNE_THROW(Dune::NotImplemented, "dpc/dsw for three phases not implemented! Do it yourself!");
     }
 
     DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar Sw)
+    static Scalar dpC_dSw(const Params &params, Scalar sw)
     {
-        return dpc_dsw(params, Sw);
+        return dpc_dsw(params, sw);
     }
 
     /*!
      * \brief Returns the partial derivative of the effective
      *        saturation to the capillary pressure.
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pC)
+    static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
-        DUNE_THROW(Dune::NotImplemented, "dSw/dpC for three phases not implemented! Do it yourself!");
+        DUNE_THROW(Dune::NotImplemented, "dsw/dpc for three phases not implemented! Do it yourself!");
     }
 
     DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    static Scalar dSw_dpC(const Params &params, Scalar pc)
     {
-        return dsw_dpc(params, pC);
+        return dsw_dpc(params, pc);
     }
 
     /*!
@@ -296,23 +296,23 @@ public:
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
      *
-     * \param Sn saturation of the NAPL phase.
-     * \param Sg saturation of the gas phase.
+     * \param sn saturation of the NAPL phase.
+     * \param sg saturation of the gas phase.
      * \param saturation saturation of the water phase.
      * \param params Array of parameters.
      */
-    static Scalar krw(const Params &params,  Scalar saturation, Scalar Sn, Scalar Sg)
+    static Scalar krw(const Params &params,  Scalar saturation, Scalar sn, Scalar sg)
     {
 
         //transformation to effective saturation
-        Scalar Se = (saturation - params.swr()) / (1-params.swr());
+        Scalar se = (saturation - params.swr()) / (1-params.swr());
 
         /* regularization */
-        if(Se > 1.0) return 1.;
-        if(Se < 0.0) return 0.;
+        if(se > 1.0) return 1.;
+        if(se < 0.0) return 0.;
 
-        Scalar r = 1. - std::pow(1 - std::pow(Se, 1/params.vgm()), params.vgm());
-        return std::sqrt(Se)*r*r;
+        Scalar r = 1. - std::pow(1 - std::pow(se, 1/params.vgm()), params.vgm());
+        return std::sqrt(se)*r*r;
     };
 
     /*!
@@ -327,25 +327,25 @@ public:
      * Journal of Contaminant Hydrology 66 (2003), 261-285
      *
      *
-     * \param Sw saturation of the water phase.
-     * \param Sg saturation of the gas phase.
+     * \param sw saturation of the water phase.
+     * \param sg saturation of the gas phase.
      * \param saturation saturation of the NAPL phase.
      * \param params Array of parameters.
      */
-    static Scalar krn(const Params &params, Scalar Sw, Scalar saturation, Scalar Sg)
+    static Scalar krn(const Params &params, Scalar sw, Scalar saturation, Scalar sg)
     {
 
-        Scalar Swe = std::min((Sw - params.swr()) / (1 - params.swr()), 1.);
-        Scalar Ste = std::min((Sw +  saturation - params.swr()) / (1 - params.swr()), 1.);
+        Scalar swe = std::min((sw - params.swr()) / (1 - params.swr()), 1.);
+        Scalar ste = std::min((sw +  saturation - params.swr()) / (1 - params.swr()), 1.);
 
         // regularization
-        if(Swe <= 0.0) Swe = 0.;
-        if(Ste <= 0.0) Ste = 0.;
-        if(Ste - Swe <= 0.0) return 0.;
+        if(swe <= 0.0) swe = 0.;
+        if(ste <= 0.0) ste = 0.;
+        if(ste - swe <= 0.0) return 0.;
 
         Scalar krn_;
-        krn_ = std::pow(1 - std::pow(Swe, 1/params.vgm()), params.vgm());
-        krn_ -= std::pow(1 - std::pow(Ste, 1/params.vgm()), params.vgm());
+        krn_ = std::pow(1 - std::pow(swe, 1/params.vgm()), params.vgm());
+        krn_ -= std::pow(1 - std::pow(ste, 1/params.vgm()), params.vgm());
         krn_ *= krn_;
 
         if (params.krRegardsSnr())
@@ -355,7 +355,7 @@ public:
             krn_ *= std::sqrt(resIncluded );
         }
         else
-            krn_ *= std::sqrt(saturation / (1 - params.swr()));   // Hint: (Ste - Swe) = Sn / (1-Srw)
+            krn_ *= std::sqrt(saturation / (1 - params.swr()));   // Hint: (ste - swe) = sn / (1-Srw)
 
 
         return krn_;
@@ -371,21 +371,21 @@ public:
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
      *
-     * \param Sw saturation of the water phase.
-     * \param Sn saturation of the NAPL phase.
+     * \param sw saturation of the water phase.
+     * \param sn saturation of the NAPL phase.
      * \param saturation saturation of the gas phase.
      * \param params Array of parameters.
      */
-    static Scalar krg(const Params &params, Scalar Sw, Scalar Sn, Scalar saturation)
+    static Scalar krg(const Params &params, Scalar sw, Scalar sn, Scalar saturation)
     {
 
-        // Se = (Sw+Sn - Sgr)/(1-Sgr)
-        Scalar Se = std::min(((1-saturation) - params.sgr()) / (1 - params.sgr()), 1.);
+        // se = (sw+sn - Sgr)/(1-Sgr)
+        Scalar se = std::min(((1-saturation) - params.sgr()) / (1 - params.sgr()), 1.);
 
 
         /* regularization */
-        if(Se > 1.0) return 0.0;
-        if(Se < 0.0) return 1.0;
+        if(se > 1.0) return 0.0;
+        if(se < 0.0) return 1.0;
         Scalar scalFact = 1.;
         if (saturation<=0.1)
         {
@@ -393,31 +393,31 @@ public:
           if (scalFact < 0.) scalFact = 0.;
         }
 
-        Scalar result = scalFact * std::pow(1 - Se, 1.0/3.) * std::pow(1 - std::pow(Se, 1/params.vgm()), 2*params.vgm());
+        Scalar result = scalFact * std::pow(1 - se, 1.0/3.) * std::pow(1 - std::pow(se, 1/params.vgm()), 2*params.vgm());
 
         return result;
     };
 
     /*!
      * \brief The relative permeability for a phase.
-     * \param Sw saturation of the water phase.
-     * \param Sg saturation of the gas phase.
-     * \param Sn saturation of the NAPL phase.
+     * \param sw saturation of the water phase.
+     * \param sg saturation of the gas phase.
+     * \param sn saturation of the NAPL phase.
      * \param params Array of parameters.
      * \param phase indicator, The saturation of all phases.
      */
-    static Scalar kr(const Params &params, const int phase, const Scalar Sw, const Scalar Sn, const Scalar Sg)
+    static Scalar kr(const Params &params, const int phase, const Scalar sw, const Scalar sn, const Scalar sg)
     {
         switch (phase)
         {
         case 0:
-            return krw(params, Sw, Sn, Sg);
+            return krw(params, sw, sn, sg);
             break;
         case 1:
-            return krn(params, Sw, Sn, Sg);
+            return krn(params, sw, sn, sg);
             break;
         case 2:
-            return krg(params, Sw, Sn, Sg);
+            return krg(params, sw, sn, sg);
             break;
         }
         return 0;

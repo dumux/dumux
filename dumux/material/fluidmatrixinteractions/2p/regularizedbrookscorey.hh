@@ -80,9 +80,9 @@ public:
      *
      * \copydetails BrooksCorey::pc()
      */
-    static Scalar pc(const Params &params, Scalar Swe)
+    static Scalar pc(const Params &params, Scalar swe)
     {
-        const Scalar Sthres = params.thresholdSw();
+        const Scalar sThres = params.thresholdSw();
 
         // make sure that the capilary pressure observes a
         // derivative != 0 for 'illegal' saturations. This is
@@ -90,26 +90,26 @@ public:
         // derivative is calculated numerically) in order to get the
         // saturation moving to the right direction if it
         // temporarily is in an 'illegal' range.
-        if (Swe <= Sthres) {
-            Scalar m = BrooksCorey::dpc_dsw(params, Sthres);
-            Scalar pC_SweLow = BrooksCorey::pc(params, Sthres);
-            return pC_SweLow + m*(Swe - Sthres);
+        if (swe <= sThres) {
+            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
+            Scalar pcsweLow = BrooksCorey::pc(params, sThres);
+            return pcsweLow + m*(swe - sThres);
         }
-        else if (Swe > 1.0) {
+        else if (swe > 1.0) {
             Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
-            Scalar pC_SweHigh = BrooksCorey::pc(params, 1.0);
-            return pC_SweHigh + m*(Swe - 1.0);
+            Scalar pcsweHigh = BrooksCorey::pc(params, 1.0);
+            return pcsweHigh + m*(swe - 1.0);
         }
 
         // if the effective saturation is in an 'reasonable'
         // range, we use the real Brooks-Corey law...
-        return BrooksCorey::pc(params, Swe);
+        return BrooksCorey::pc(params, swe);
     }
 
     DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar Swe)
+    static Scalar pC(const Params &params, Scalar swe)
     {
-        return pc(params, Swe);
+        return pc(params, swe);
     }
 
     /*!
@@ -125,14 +125,14 @@ public:
      *
      * \copydetails BrooksCorey::sw()
      */
-    static Scalar sw(const Params &params, Scalar pC)
+    static Scalar sw(const Params &params, Scalar pc)
     {
-        const Scalar Sthres = params.thresholdSw();
+        const Scalar sThres = params.thresholdSw();
 
         // calculate the saturation which corrosponds to the
         // saturation in the non-regularized version of
         // the Brooks-Corey law
-        Scalar Swe = BrooksCorey::sw(params, pC);
+        Scalar swe = BrooksCorey::sw(params, pc);
 
         // make sure that the capilary pressure observes a
         // derivative != 0 for 'illegal' saturations. This is
@@ -140,25 +140,25 @@ public:
         // derivative calculated numerically) in order to get the
         // saturation moving to the right direction if it
         // temporarily is in an 'illegal' range.
-        if (Swe <= Sthres) {
+        if (swe <= sThres) {
             // invert the low saturation regularization of pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, Sthres);
-            Scalar pC_SweLow = BrooksCorey::pc(params, Sthres);
-            return Sthres + (pC - pC_SweLow)/m;
+            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
+            Scalar pcsweLow = BrooksCorey::pc(params, sThres);
+            return sThres + (pc - pcsweLow)/m;
         }
-        else if (Swe > 1.0) {
+        else if (swe > 1.0) {
             Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
-            Scalar pC_SweHigh = BrooksCorey::pc(params, 1.0);
-            return 1.0 + (pC - pC_SweHigh)/m;;
+            Scalar pcsweHigh = BrooksCorey::pc(params, 1.0);
+            return 1.0 + (pc - pcsweHigh)/m;;
         }
 
-        return BrooksCorey::sw(params, pC);
+        return BrooksCorey::sw(params, pc);
     }
 
     DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pC)
+    static Scalar Sw(const Params &params, Scalar pc)
     {
-        return sw(params, pC);
+        return sw(params, pc);
     }
 
     /*!
@@ -174,29 +174,29 @@ public:
      *
      * \copydetails BrooksCorey::dpc_dsw()
      */
-    static Scalar dpc_dsw(const Params &params, Scalar Swe)
+    static Scalar dpc_dsw(const Params &params, Scalar swe)
     {
-        const Scalar Sthres = params.thresholdSw();
+        const Scalar sThres = params.thresholdSw();
 
         // derivative of the regualarization
-        if (Swe <= Sthres) {
+        if (swe <= sThres) {
             // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, Sthres);
+            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
             return m;
         }
-        else if (Swe > 1.0) {
+        else if (swe > 1.0) {
             // calculate the slope of the straight line used in pc()
             Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
             return m;
         }
 
-        return BrooksCorey::dpc_dsw(params, Swe);
+        return BrooksCorey::dpc_dsw(params, swe);
     }
 
     DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar Swe)
+    static Scalar dpC_dSw(const Params &params, Scalar swe)
     {
-        return dpc_dsw(params, Swe);
+        return dpc_dsw(params, swe);
     }
 
     /*!
@@ -212,9 +212,9 @@ public:
      *
      * \copydetails BrooksCorey::dsw_dpc()
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pC)
+    static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
-        const Scalar Sthres = params.thresholdSw();
+        const Scalar sThres = params.thresholdSw();
 
         //instead of return value = inf, return a very large number
         if (params.pe() == 0.0)
@@ -225,30 +225,30 @@ public:
         // calculate the saturation which corresponds to the
         // saturation in the non-regularized version of the
         // Brooks-Corey law
-        Scalar Swe;
-        if (pC < 0)
-            Swe = 1.5; // make sure we regularize below
+        Scalar swe;
+        if (pc < 0)
+            swe = 1.5; // make sure we regularize below
         else
-            Swe = BrooksCorey::sw(params, pC);
+            swe = BrooksCorey::sw(params, pc);
 
         // derivative of the regularization
-        if (Swe <= Sthres) {
+        if (swe <= sThres) {
             // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, Sthres);
+            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
             return 1/m;
         }
-        else if (Swe > 1.0) {
+        else if (swe > 1.0) {
             // calculate the slope of the straight line used in pc()
             Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
             return 1/m;
         }
-        return 1.0/BrooksCorey::dpc_dsw(params, Swe);
+        return 1.0/BrooksCorey::dpc_dsw(params, swe);
     }
 
     DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pC)
+    static Scalar dSw_dpC(const Params &params, Scalar pc)
     {
-        return dsw_dpc(params, pC);
+        return dsw_dpc(params, pc);
     }
 
     /*!
@@ -265,14 +265,14 @@ public:
      *  For not-regularized part:
         \copydetails BrooksCorey::krw()
      */
-    static Scalar krw(const Params &params, Scalar Swe)
+    static Scalar krw(const Params &params, Scalar swe)
     {
-        if (Swe <= 0.0)
+        if (swe <= 0.0)
             return 0.0;
-        else if (Swe >= 1.0)
+        else if (swe >= 1.0)
             return 1.0;
 
-        return BrooksCorey::krw(params, Swe);
+        return BrooksCorey::krw(params, swe);
     };
 
     /*!
@@ -289,14 +289,14 @@ public:
          \copydetails BrooksCorey::krn()
      *
      */
-    static Scalar krn(const Params &params, Scalar Swe)
+    static Scalar krn(const Params &params, Scalar swe)
     {
-        if (Swe >= 1.0)
+        if (swe >= 1.0)
             return 0.0;
-        else if (Swe <= 0.0)
+        else if (swe <= 0.0)
             return 1.0;
 
-        return BrooksCorey::krn(params, Swe);
+        return BrooksCorey::krn(params, swe);
     }
 };
 }

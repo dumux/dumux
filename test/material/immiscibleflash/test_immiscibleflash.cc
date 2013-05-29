@@ -131,11 +131,11 @@ void completeReferenceFluidState(FluidState &fs,
     fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
 
     // calulate the capillary pressure
-    PhaseVector pC;
-    MaterialLaw::capillaryPressures(pC, matParams, fs);
+    PhaseVector pc;
+    MaterialLaw::capillaryPressures(pc, matParams, fs);
     fs.setPressure(otherPhaseIdx,
                    fs.pressure(refPhaseIdx)
-                   + (pC[otherPhaseIdx] - pC[refPhaseIdx]));
+                   + (pc[otherPhaseIdx] - pc[refPhaseIdx]));
 
     // set all phase densities
     typename FluidSystem::ParameterCache paramCache;
