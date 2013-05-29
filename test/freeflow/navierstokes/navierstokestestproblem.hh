@@ -231,7 +231,7 @@ namespace Dumux
        */
       void neumann(PrimaryVariables &values,
                    const Element &element,
-                   const FVElementGeometry &fvElemGeom,
+                   const FVElementGeometry &fvGeometry,
                    const Intersection &is,
                    const int scvIdx,
                    const int boundaryFaceIdx) const
@@ -271,7 +271,7 @@ namespace Dumux
        */
       void initial(PrimaryVariables &values,
                   const Element &element,
-                  const FVElementGeometry &fvElemGeom,
+                  const FVElementGeometry &fvGeometry,
                   const int scvIdx) const
       {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);

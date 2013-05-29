@@ -486,10 +486,10 @@ protected:
         greenElems_ = 0;
 
         // reassemble the elements...
-        ElementIterator elemIt = gridView_().template begin<0>();
-        ElementIterator elemEndIt = gridView_().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            const Element &elem = *elemIt;
+        ElementIterator eIt = gridView_().template begin<0>();
+        ElementIterator eEndIt = gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            const Element &elem = *eIt;
             if (elem.partitionType() == Dune::GhostEntity)
             {
                 asImp_().assembleGhostElement_(elem);

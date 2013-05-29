@@ -521,33 +521,33 @@ public:
         fractureEdgesIdx_.resize(nEdges);
         std::fill(isDuneFractureEdge_.begin(), isDuneFractureEdge_.end(), false);
 
-        ElementIterator eendit = gridView_.template end<0>();
-        for (ElementIterator it = gridView_.template begin<0>(); it != eendit; ++it)
+        ElementIterator eEndIt = gridView_.template end<0>();
+        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
-             Dune::GeometryType gt = it->geometry().type();
+             Dune::GeometryType gt = eIt->geometry().type();
              const typename Dune::GenericReferenceElementContainer<DT,dim>::value_type&
-                 refElem = Dune::GenericReferenceElements<DT,dim>::general(gt);
+                 refElement = Dune::GenericReferenceElements<DT,dim>::general(gt);
 
               // Loop over element faces
-              for (int i = 0; i < refElem.size(1); i++)
+              for (int i = 0; i < refElement.size(1); i++)
               {
-                  int indexFace = faceMapper_.map(*it, i, 1);
+                  int indexFace = faceMapper_.map(*eIt, i, 1);
                   /*
                   * it maps the local element vertices "localV1Idx" -> indexVertex1
                   * then it gets the coordinates of the nodes in the ART file and
                   * by comparing them with the ones in the DUNE grid maps them too.
                   */
-                  int localV1Idx = refElem.subEntity(i, 1, 0, dim);
-                  int localV2Idx = refElem.subEntity(i, 1, 1, dim);
-                  int indexVertex1 = vertexMapper_.map(*it, localV1Idx, dim);
-                  int indexVertex2 = vertexMapper_.map(*it, localV2Idx, dim);
+                  int localV1Idx = refElement.subEntity(i, 1, 0, dim);
+                  int localV2Idx = refElement.subEntity(i, 1, 1, dim);
+                  int indexVertex1 = vertexMapper_.map(*eIt, localV1Idx, dim);
+                  int indexVertex2 = vertexMapper_.map(*eIt, localV2Idx, dim);
                   Dune::FieldVector<DT, dim> nodeART_from;
                   Dune::FieldVector<DT, dim> nodeART_to;
                   Dune::FieldVector<DT, dim> nodeDune_from;
                   Dune::FieldVector<DT, dim> nodeDune_to;
 
-                  nodeDune_from = it->geometry().corner(localV1Idx);
-                  nodeDune_to = it->geometry().corner(localV2Idx);
+                  nodeDune_from = eIt->geometry().corner(localV1Idx);
+                  nodeDune_to = eIt->geometry().corner(localV2Idx);
 
                   for (int j=0; j < nEdges; j++)
                   {

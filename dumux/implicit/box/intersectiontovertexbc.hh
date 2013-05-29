@@ -61,10 +61,10 @@ public:
             vertexBC[vertIdx].setAllNeumann();
 
         ElementIterator eIt = problem.gridView().template begin<0>();
-        const ElementIterator elemEndIt = problem.gridView().template end<0>();
-        for (; eIt != elemEndIt; ++eIt) {
+        const ElementIterator eEndIt = problem.gridView().template end<0>();
+        for (; eIt != eEndIt; ++eIt) {
             Dune::GeometryType geoType = eIt->geometry().type();
-            const ReferenceElement &refElem = ReferenceElements::general(geoType);
+            const ReferenceElement &refElement = ReferenceElements::general(geoType);
 
             IntersectionIterator isIt = problem.gridView().ibegin(*eIt);
             IntersectionIterator isEndIt = problem.gridView().iend(*eIt);
@@ -79,10 +79,10 @@ public:
                     continue;
 
                 int faceIdx = isIt->indexInInside();
-                int numFaceVerts = refElem.size(faceIdx, 1, dim);
+                int numFaceVerts = refElement.size(faceIdx, 1, dim);
                 for (int faceVertIdx = 0; faceVertIdx < numFaceVerts; ++faceVertIdx)
                 {
-                    int elemVertIdx = refElem.subEntity(faceIdx, 1, faceVertIdx, dim);
+                    int elemVertIdx = refElement.subEntity(faceIdx, 1, faceVertIdx, dim);
                     int globalVertIdx = problem.vertexMapper().map(*eIt, elemVertIdx, dim);
 
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)

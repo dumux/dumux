@@ -82,18 +82,18 @@ public:
                             VType& velocity, PType& pressure)
     {
         // run over all level elements
-        Iterator eendit = this->gridView_.template end<0>();
-        for (Iterator it = this->gridView_.template begin<0>(); it!=eendit; ++it)
+        Iterator eEndIt = this->gridView_.template end<0>();
+        for (Iterator eIt = this->gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
         {
-            unsigned int numFaces = it->template count<1>();
+            unsigned int numFaces = eIt->template count<1>();
 
-            int elemId = elementMapper.map(*it);
+            int elemId = elementMapper.map(*eIt);
 
             // get local to global id map and pressure traces
             Dune::FieldVector<Scalar,2*dim> pressTrace(0);
             for (unsigned int k = 0; k < numFaces; k++)
             {
-                pressTrace[k] = u[this->faceMapper_.map(*it, k, 1)];
+                pressTrace[k] = u[this->faceMapper_.map(*eIt, k, 1)];
             }
 
             // The notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4.
@@ -106,7 +106,7 @@ public:
             Dune::FieldVector<Scalar,2*dim> F(0);
             Scalar dinv = 0;
             Scalar qmean = 0;
-            loc.assembleElementMatrices(*it, faceVol, W, c, Pi, dinv, F, qmean);
+            loc.assembleElementMatrices(*eIt, faceVol, W, c, Pi, dinv, F, qmean);
 
             pressure[elemId] = dinv*(qmean + (F*pressTrace));
 

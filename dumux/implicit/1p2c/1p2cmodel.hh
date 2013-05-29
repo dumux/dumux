@@ -135,25 +135,25 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator elemEndIt = this->gridView_().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt)
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
         {
-            int idx = this->problem_().model().elementMapper().map(*elemIt);
+            int idx = this->problem_().model().elementMapper().map(*eIt);
             rank[idx] = this->gridView_().comm().rank();
 
             FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), *elemIt);
+            fvGeometry.update(this->gridView_(), *eIt);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                false /* oldSol? */);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
+                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
                 pressure[globalIdx] = elemVolVars[scvIdx].pressure();
                 delp[globalIdx] = elemVolVars[scvIdx].pressure() - 1e5;
@@ -166,7 +166,7 @@ public:
             }
 
             // velocity output
-            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, *elemIt, phaseIdx);
+            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, *eIt, phaseIdx);
         }
 
         writer.attachDofData(pressure, "P", isBox);

@@ -465,7 +465,7 @@ class BoxFVElementGeometry
         }
     }
 
-    void getEdgeIndices(int numVertices, int face, int vert, int& leftEdge, int& rightEdge)
+    void getEdgeIndices(int numVertices, int face, int vertIdx, int& leftEdge, int& rightEdge)
     {
         static const int faceAndVertexToLeftEdgeTet[4][4] = {
             { 0, 0, 2, -1},
@@ -526,20 +526,20 @@ class BoxFVElementGeometry
 
         switch (numVertices) {
         case 4:
-            leftEdge = faceAndVertexToLeftEdgeTet[face][vert];
-            rightEdge = faceAndVertexToRightEdgeTet[face][vert];
+            leftEdge = faceAndVertexToLeftEdgeTet[face][vertIdx];
+            rightEdge = faceAndVertexToRightEdgeTet[face][vertIdx];
             break;
         case 5:
-            leftEdge = faceAndVertexToLeftEdgePyramid[face][vert];
-            rightEdge = faceAndVertexToRightEdgePyramid[face][vert];
+            leftEdge = faceAndVertexToLeftEdgePyramid[face][vertIdx];
+            rightEdge = faceAndVertexToRightEdgePyramid[face][vertIdx];
             break;
         case 6:
-            leftEdge = faceAndVertexToLeftEdgePrism[face][vert];
-            rightEdge = faceAndVertexToRightEdgePrism[face][vert];
+            leftEdge = faceAndVertexToLeftEdgePrism[face][vertIdx];
+            rightEdge = faceAndVertexToRightEdgePrism[face][vertIdx];
             break;
         case 8:
-            leftEdge = faceAndVertexToLeftEdgeHex[face][vert];
-            rightEdge = faceAndVertexToRightEdgeHex[face][vert];
+            leftEdge = faceAndVertexToLeftEdgeHex[face][vertIdx];
+            rightEdge = faceAndVertexToRightEdgeHex[face][vertIdx];
             break;
         default:
             DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
@@ -555,8 +555,8 @@ public:
 
     struct SubControlVolume //! FV intersected with element
     {
-        LocalPosition local; //!< local vert position
-        GlobalPosition global; //!< global vert position
+        LocalPosition local; //!< local position
+        GlobalPosition global; //!< global position
         LocalPosition localCenter; //!< local position of scv center
         Scalar volume; //!< volume of scv
         Dune::FieldVector<GlobalPosition, maxNC> grad; //! derivative of shape function associated with the sub control volume
@@ -758,11 +758,11 @@ public:
         } // end loop over edges / sub control volume faces
 
         // fill boundary face data:
-        IntersectionIterator endit = gridView.iend(element);
-        for (IntersectionIterator it = gridView.ibegin(element); it != endit; ++it)
-            if (it->boundary())
+        IntersectionIterator isEndIt = gridView.iend(element);
+        for (IntersectionIterator isIt = gridView.ibegin(element); isIt != isEndIt; ++isIt)
+            if (isIt->boundary())
             {
-                int face = it->indexInInside();
+                int face = isIt->indexInInside();
                 int numVerticesOfFace = referenceElement.size(face, 1, dim);
                 for (int vertInFace = 0; vertInFace < numVerticesOfFace; vertInFace++)
                 {
@@ -778,7 +778,7 @@ public:
                         boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
                             + referenceElement.position(face, 1);
                         boundaryFace[bfIdx].ipLocal *= 0.5;
-                        boundaryFace[bfIdx].area = 0.5*it->geometry().volume();
+                        boundaryFace[bfIdx].area = 0.5*isIt->geometry().volume();
                         break;
                     case 3:
                         int leftEdge;
@@ -801,7 +801,7 @@ public:
 
                     // ASSUME constant normal
                     Dune::FieldVector<CoordScalar, dim-1> localDimM1(0);
-                    boundaryFace[bfIdx].normal = it->unitOuterNormal(localDimM1);
+                    boundaryFace[bfIdx].normal = isIt->unitOuterNormal(localDimM1);
                     boundaryFace[bfIdx].normal *= boundaryFace[bfIdx].area;
 
                     typedef Dune::FieldVector< Scalar, 1 > ShapeValue;
@@ -947,8 +947,8 @@ public:
 
                 JacobianInverseTransposed jacInvT =
                     geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
-                for (int vert = 0; vert < numScv; vert++)
-                    jacInvT.mv(localJac[vert][0], subContVol[scvIdx].gradCenter[vert]);
+                for (int vertIdx = 0; vertIdx < numScv; vertIdx++)
+                    jacInvT.mv(localJac[vertIdx][0], subContVol[scvIdx].gradCenter[vertIdx]);
             }
         }
     }

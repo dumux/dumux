@@ -88,41 +88,41 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &vertDat = elemDat[scvIdx];
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute the energy storage
-        Scalar wdens = vertDat.density(wPhaseIdx);
-        Scalar ndens = vertDat.density(nPhaseIdx);
-        Scalar gdens = vertDat.density(gPhaseIdx);
-        Scalar wInEnerg = vertDat.internalEnergy(wPhaseIdx);
-        Scalar nInEnerg = vertDat.internalEnergy(nPhaseIdx);
-        Scalar gInEnerg = vertDat.internalEnergy(gPhaseIdx);
-        Scalar wsat = vertDat.saturation(wPhaseIdx);
-        Scalar nsat = vertDat.saturation(nPhaseIdx);
-        Scalar gsat = vertDat.saturation(gPhaseIdx);
-        Scalar temp = vertDat.temperature();
-        Scalar heatCap = vertDat.heatCapacity();
-        Scalar poro = vertDat.porosity();
+        Scalar wdens = volVars.density(wPhaseIdx);
+        Scalar ndens = volVars.density(nPhaseIdx);
+        Scalar gdens = volVars.density(gPhaseIdx);
+        Scalar wInEnerg = volVars.internalEnergy(wPhaseIdx);
+        Scalar nInEnerg = volVars.internalEnergy(nPhaseIdx);
+        Scalar gInEnerg = volVars.internalEnergy(gPhaseIdx);
+        Scalar wsat = volVars.saturation(wPhaseIdx);
+        Scalar nsat = volVars.saturation(nPhaseIdx);
+        Scalar gsat = volVars.saturation(gPhaseIdx);
+        Scalar temp = volVars.temperature();
+        Scalar heatCap = volVars.heatCapacity();
+        Scalar poro = volVars.porosity();
 
         storage[energyEqIdx] = temp*heatCap
             + poro * (gdens*gInEnerg*gsat
                       + wdens*wInEnerg*wsat
                       + ndens*nInEnerg*nsat);
         /*
-          vertDat.porosity()*(vertDat.density(wPhaseIdx) *
-          vertDat.internalEnergy(wPhaseIdx) *
-          vertDat.saturation(wPhaseIdx)
+          volVars.porosity()*(volVars.density(wPhaseIdx) *
+          volVars.internalEnergy(wPhaseIdx) *
+          volVars.saturation(wPhaseIdx)
           +
-          vertDat.density(nPhaseIdx) *
-          vertDat.internalEnergy(nPhaseIdx) *
-          vertDat.saturation(nPhaseIdx)
+          volVars.density(nPhaseIdx) *
+          volVars.internalEnergy(nPhaseIdx) *
+          volVars.saturation(nPhaseIdx)
           +
-          vertDat.density(gPhaseIdx) *
-          vertDat.internalEnergy(gPhaseIdx) *
-          vertDat.saturation(gPhaseIdx))
+          volVars.density(gPhaseIdx) *
+          volVars.internalEnergy(gPhaseIdx) *
+          volVars.saturation(gPhaseIdx))
           +
-          vertDat.temperature()*vertDat.heatCapacity();
+          volVars.temperature()*volVars.heatCapacity();
         */
     }
 
@@ -132,15 +132,15 @@ public:
      * the flux vector.
      *
      * \param flux The advective flux over the SCV (sub-control-volume) face for each component
-     * \param fluxData The flux variables at the current SCV face
+     * \param fluxVars The flux variables at the current SCV face
      *
      * This method is called by compute flux (base class)
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
-                              const FluxVariables &fluxData) const
+                              const FluxVariables &fluxVars) const
     {
         // advective mass flux
-        ParentType::computeAdvectiveFlux(flux, fluxData);
+        ParentType::computeAdvectiveFlux(flux, fluxVars);
 
         static const Scalar massUpwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
 
@@ -148,11 +148,11 @@ public:
         flux[energyEqIdx] = 0;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // vertex data of the upstream and the downstream vertices
-            const VolumeVariables &up = this->curVolVars_(fluxData.upstreamIdx(phaseIdx));
-            const VolumeVariables &dn = this->curVolVars_(fluxData.downstreamIdx(phaseIdx));
+            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
 
             flux[energyEqIdx] +=
-                fluxData.volumeFlux(phaseIdx) * (
+                fluxVars.volumeFlux(phaseIdx) * (
                                               massUpwindWeight * // upstream vertex
                                               (  up.density(phaseIdx) *
                                                  up.enthalpy(phaseIdx))
@@ -168,19 +168,19 @@ public:
      *        the face of a sub-control volume.
      *
      * \param flux The diffusive flux over the SCV (sub-control-volume) face for each conservation quantity (mass, energy)
-     * \param fluxData The flux variables at the current SCV face
+     * \param fluxVars The flux variables at the current SCV face
      *
      * This method is called by compute flux (base class)
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
-                              const FluxVariables &fluxData) const
+                              const FluxVariables &fluxVars) const
     {
         // diffusive mass flux
-        ParentType::computeDiffusiveFlux(flux, fluxData);
+        ParentType::computeDiffusiveFlux(flux, fluxVars);
 
         // diffusive heat flux
         flux[temperatureIdx] +=
-            fluxData.normalMatrixHeatFlux();
+            fluxVars.normalMatrixHeatFlux();
     }
 };
 

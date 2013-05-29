@@ -127,14 +127,14 @@ public:
      * \brief Returns the intrinsic permeability tensor [m^2] at a given location
      *
      * \param element An arbitrary DUNE Codim<0> entity of the grid view
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvElemGeom,
+                                 const FVElementGeometry &fvGeometry,
                                  int scvIdx) const
     {
-        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
         if (isInLens_(globalPos))
             return lensK_;
         return outerK_;
@@ -144,11 +144,11 @@ public:
      * \brief Returns the porosity [] at a given location
      *
      * \param element An arbitrary DUNE Codim<0> entity of the grid view
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
+                    const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     { return 0.4; }
 
@@ -156,14 +156,14 @@ public:
      * \brief Returns the parameters for the material law at a given location
      *
      * \param element An arbitrary DUNE Codim<0> entity of the grid view
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvElemGeom,
+                                                const FVElementGeometry &fvGeometry,
                                                 int scvIdx) const
     {
-        return materialLawParams(fvElemGeom.subContVol[scvIdx].global);
+        return materialLawParams(fvGeometry.subContVol[scvIdx].global);
     }
 
     /*!

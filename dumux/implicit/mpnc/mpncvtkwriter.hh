@@ -77,34 +77,34 @@ public:
         ElementVolumeVariables elemVolVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator elemIt = problem_.gridView().template begin<0>();
-        ElementIterator elemEndIt = problem_.gridView().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt)
+        ElementIterator eIt = problem_.gridView().template begin<0>();
+        ElementIterator eEndIt = problem_.gridView().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
         {
-            fvGeometry.update(problem_.gridView(), *elemIt);
-            elemBcTypes.update(problem_, *elemIt);
-            this->problem_.model().setHints(*elemIt, elemVolVars);
+            fvGeometry.update(problem_.gridView(), *eIt);
+            elemBcTypes.update(problem_, *eIt);
+            this->problem_.model().setHints(*eIt, elemVolVars);
             elemVolVars.update(problem_,
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                false);
-            this->problem_.model().updateCurHints(*elemIt, elemVolVars);
+            this->problem_.model().updateCurHints(*eIt, elemVolVars);
 
             // tell the sub-writers to do what ever they need to with
             // their internal buffers when a given element is seen.
-            commonWriter_.processElement(*elemIt,
+            commonWriter_.processElement(*eIt,
                                          fvGeometry,
                                          elemVolVars,
                                          elemBcTypes);
-            massWriter_.processElement(*elemIt,
+            massWriter_.processElement(*eIt,
                                        fvGeometry,
                                        elemVolVars,
                                        elemBcTypes);
-            energyWriter_.processElement(*elemIt,
+            energyWriter_.processElement(*eIt,
                                          fvGeometry,
                                          elemVolVars,
                                          elemBcTypes);
-            customWriter_.processElement(*elemIt,
+            customWriter_.processElement(*eIt,
                                          fvGeometry,
                                          elemVolVars,
                                          elemBcTypes);

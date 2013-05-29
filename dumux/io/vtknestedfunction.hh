@@ -67,21 +67,21 @@ public:
     { return numComp_; }
 
     virtual double evaluate(int mycomp,
-                            const Element &e,
+                            const Element &element,
                             const Dune::FieldVector< ctype, dim > &xi) const
     {
         int idx;
         if (codim_ == 0) {
             // cells. map element to the index
-            idx = mapper_.map(e);
+            idx = mapper_.map(element);
         }
         else if (codim_ == dim) {
             // find vertex which is closest to xi in local
             // coordinates. This code is based on Dune::P1VTKFunction
             double min=1e100;
             int imin=-1;
-            Dune::GeometryType gt = e.type();
-            int n = e.template count<dim>();
+            Dune::GeometryType gt = element.type();
+            int n = element.template count<dim>();
             for (int i=0; i < n; ++i)
             {
                 Dune::FieldVector<ctype,dim> local =
@@ -96,7 +96,7 @@ public:
             }
 
             // map vertex to an index
-            idx = mapper_.map(e, imin, codim_);
+            idx = mapper_.map(element, imin, codim_);
         }
         else
             DUNE_THROW(Dune::InvalidStateException,

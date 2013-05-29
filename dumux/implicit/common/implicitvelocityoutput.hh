@@ -79,11 +79,11 @@ public:
             cellNum_.assign(problem_.gridView().size(dofCodim), 0);
         }
 
-        ElementIterator elemIt = problem_.gridView().template begin<0>();
-        ElementIterator elemEndIt = problem_.gridView().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt)
+        ElementIterator eIt = problem_.gridView().template begin<0>();
+        ElementIterator eEndIt = problem_.gridView().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
         {
-            if (elemIt->geometry().type().isCube() == false)
+            if (eIt->geometry().type().isCube() == false)
             {
                 velocityOutput_ = false;
             }
@@ -91,12 +91,12 @@ public:
             if (velocityOutput_ && isBox)
             {
                 FVElementGeometry fvGeometry;
-                fvGeometry.update(problem_.gridView(), *elemIt);
+                fvGeometry.update(problem_.gridView(), *eIt);
 
                 // transform vertex velocities from local to global coordinates
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = problem_.vertexMapper().map(*elemIt, scvIdx, dofCodim);
+                    int globalIdx = problem_.vertexMapper().map(*eIt, scvIdx, dofCodim);
 
                     cellNum_[globalIdx] += 1;
                 }

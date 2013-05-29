@@ -237,7 +237,7 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param heatFlux The resulting heat flux vector
-     * \param fluxDat The flux variables
+     * \param fluxVars The flux variables
      * \param elemVolVars The volume variables
      * \param tempGrad The temperature gradient
      * \param element The current finite element
@@ -246,7 +246,7 @@ public:
      *                    the matrix heat flux should be calculated
      */
     void matrixHeatFlux(DimVector &heatFlux,
-                        const FluxVariables &fluxDat,
+                        const FluxVariables &fluxVars,
                         const ElementVolumeVariables &elemVolVars,
                         const DimVector &tempGrad,
                         const Element &element,
@@ -258,8 +258,8 @@ public:
         static const Scalar lsn1 = 0.65;
 
         // arithmetic mean of the liquid saturation and the porosity
-        const int i = fluxDat.face().i;
-        const int j = fluxDat.face().j;
+        const int i = fluxVars.face().i;
+        const int j = fluxVars.face().j;
         Scalar sw = std::max(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
                                    elemVolVars[j].saturation(wPhaseIdx)) / 2);
         Scalar sn = std::max(0.0, (elemVolVars[i].saturation(nPhaseIdx) +

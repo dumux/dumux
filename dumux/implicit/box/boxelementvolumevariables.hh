@@ -75,7 +75,7 @@ public:
             problem.model().curSol();
         const VertexMapper &vertexMapper = problem.vertexMapper();
         // we assert that the i-th shape function is
-        // associated to the i-th vert of the element.
+        // associated to the i-th vertex of the element.
         int numVertices = element.template count<dim>();
         this->resize(numVertices);
         for (int scvIdx = 0; scvIdx < numVertices; scvIdx++) {

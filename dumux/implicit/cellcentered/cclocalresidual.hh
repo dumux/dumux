@@ -78,8 +78,8 @@ protected:
     void evalBoundaryFluxes_()
     {
         IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
-        const IntersectionIterator &endIt = this->gridView_().iend(this->element_());
-        for (; isIt != endIt; ++isIt)
+        const IntersectionIterator &isEndIt = this->gridView_().iend(this->element_());
+        for (; isIt != isEndIt; ++isIt)
         {
             // handle only faces on the boundary
             if (!isIt->boundary())

@@ -104,16 +104,16 @@ public:
         ElementVolumeVariables elemVolVars;
 
         // Loop over elements
-        ElementIterator elemIt = this->problem_.gridView().template begin<0>();
-        ElementIterator endit = this->problem_.gridView().template end<0>();
-        for (; elemIt != endit; ++elemIt)
+        ElementIterator eIt = this->problem_.gridView().template begin<0>();
+        ElementIterator eEndIt = this->problem_.gridView().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
         {
-            if (elemIt->partitionType() != Dune::InteriorEntity)
+            if (eIt->partitionType() != Dune::InteriorEntity)
                 continue;
 
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemVolVars.update(this->problem_(), *elemIt, fvGeometry);
-            this->localResidual().evalFluxes(*elemIt, elemVolVars);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemVolVars.update(this->problem_(), *eIt, fvGeometry);
+            this->localResidual().evalFluxes(*eIt, elemVolVars);
 
             bool hasLeft = false;
             bool hasRight = false;
@@ -160,23 +160,23 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator endit = this->gridView_().template end<0>();
-        for (; elemIt != endit; ++elemIt)
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
         {
-            int idx = this->elementMapper().map(*elemIt);
+            int idx = this->elementMapper().map(*eIt);
             rank[idx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemBcTypes.update(this->problem_(), *eIt);
 
-            int numLocalVerts = elemIt->template count<dim>();
+            int numLocalVerts = eIt->template count<dim>();
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                int globalIdx = this->vertexMapper().map(*eIt, i, dim);
                 volVars.update(sol[globalIdx],
                                this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                i,
                                false);

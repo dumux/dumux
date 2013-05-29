@@ -194,12 +194,12 @@ public:
      *
      * \param element The DUNE Codim<0> entity which intersects with
      *                the finite volume in question
-     * \param fvElemGeom The finite volume geometry of the element
+     * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The sub control volume index inside the finite
      *               volume geometry
      */
     Scalar referencePressure(const Element &element,
-                             const FVElementGeometry &fvElemGeom,
+                             const FVElementGeometry &fvGeometry,
                              const int scvIdx) const
     { return pnRef_; };
 

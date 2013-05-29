@@ -156,12 +156,12 @@ public:
         int numElems = (*gridPtr_)->leafView().size(0);
         paramIdx_.resize(numElems);
 
-        ElementIterator elemIt = (*gridPtr_)->leafView().template begin<0>();
-        const ElementIterator elemEndIt = (*gridPtr_)->leafView().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt)
+        ElementIterator eIt = (*gridPtr_)->leafView().template begin<0>();
+        const ElementIterator eEndIt = (*gridPtr_)->leafView().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
         {
-            int elemIdx = (*gridPtr_)->leafView().indexSet().index(*elemIt);
-            int param = (*gridPtr_).parameters(*elemIt)[0];
+            int elemIdx = (*gridPtr_)->leafView().indexSet().index(*eIt);
+            int param = (*gridPtr_).parameters(*eIt)[0];
             paramIdx_[elemIdx] = param;
         }
 
@@ -172,11 +172,11 @@ public:
      *        potential gradient.
      *
      * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvElemGeom,
+                                       const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {
         int elemIdx = (*gridPtr_)->leafView().indexSet().index(element); //Get the global index of the element
@@ -193,12 +193,12 @@ public:
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
     Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
+                    const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
         int elemIdx = (*gridPtr_)->leafView().indexSet().index(element); //Get the global index of the element
@@ -216,11 +216,11 @@ public:
      * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
     * \param element The current finite element
-    * \param fvElemGeom The current finite volume geometry of the element
+    * \param fvGeometry The current finite volume geometry of the element
     * \param scvIdx The index of the sub-control volume
     */
     const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvElemGeom,
+                                                const FVElementGeometry &fvGeometry,
                                                 int scvIdx) const
     {
 
@@ -233,18 +233,18 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
     double heatCapacity(const Element &element,
-                        const FVElementGeometry &fvElemGeom,
+                        const FVElementGeometry &fvGeometry,
                         int scvIdx) const
     {
         return
             790 // specific heat capacity of granite [J / (kg K)]
             * 2700 // density of granite [kg/m^3]
-            * (1 - porosity(element, fvElemGeom, scvIdx));
+            * (1 - porosity(element, fvGeometry, scvIdx));
     }
 
     /*!

@@ -342,8 +342,8 @@ protected:
             // the current element
             const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
             IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
-            const IntersectionIterator &endIt = this->gridView_().iend(this->element_());
-            for (; isIt != endIt; ++isIt)
+            const IntersectionIterator &isEndIt = this->gridView_().iend(this->element_());
+            for (; isIt != isEndIt; ++isIt)
             {
                 // handle only intersections on the boundary
                 if (!isIt->boundary())

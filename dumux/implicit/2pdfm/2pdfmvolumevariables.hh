@@ -260,9 +260,9 @@ public:
         Scalar volSCVFracture;
         Dune::GeometryType gt = element.geometry().type();
         const typename Dune::GenericReferenceElementContainer<DT,dim>::value_type&
-            refElem = Dune::GenericReferenceElements<DT,dim>::general(gt);
+            refElement = Dune::GenericReferenceElements<DT,dim>::general(gt);
 
-        for (int faceIdx=0; faceIdx<refElem.size(1); faceIdx++)
+        for (int faceIdx=0; faceIdx<refElement.size(1); faceIdx++)
         {
             SCVFace face = fvGeometry.subContVolFace[faceIdx];
             int i=face.i;

@@ -200,28 +200,28 @@ public:
 //     * \param heatFlux    The result vector
 //     * \param tempGrad    The temperature gradient
 //     * \param element     The current finite element
-//     * \param fvElemGeom  The finite volume geometry of the current element
+//     * \param fvGeometry  The finite volume geometry of the current element
 //     * \param faceIdx     The local index of the sub-control volume face where
 //     *                    the matrix heat flux should be calculated
 //     */
 //    void matrixHeatFlux(Vector &heatFlux,
-//                        const FluxVariables &fluxDat,
+//                        const FluxVariables &fluxVars,
 //                        const ElementVolumeVariables &vDat,
 //                        const DimWorldVector &tempGrad,
 //                        const Element &element,
-//                        const FVElementGeometry &fvElemGeom,
+//                        const FVElementGeometry &fvGeometry,
 //                        int faceIdx) const
 //    {
 //        static const Scalar lWater = 0.6;   // [W / (m K ) ]
 //        static const Scalar lGranite = 2.8; // [W / (m K ) ]
 //
 //        // arithmetic mean of the liquid saturation and the porosity
-//        const int i = fluxDat.face().i;
-//        const int j = fluxDat.face().j;
+//        const int i = fluxVars.face().i;
+//        const int j = fluxVars.face().j;
 //        Scalar Sl = std::max(0.0, (vDat[i].saturation(wPhaseIdx) +
 //                                     vDat[j].saturation(wPhaseIdx)) / 2);
-//        Scalar poro = (porosity(element, fvElemGeom, i) +
-//                       porosity(element, fvElemGeom, j)) / 2;
+//        Scalar poro = (porosity(element, fvGeometry, i) +
+//                       porosity(element, fvGeometry, j)) / 2;
 //
 //        Scalar lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
 //        Scalar lDry = pow(lGranite, (1-poro));

@@ -117,9 +117,9 @@ public:
 
             Scalar volume = geometry.volume();
 
-            int eIdx = problem.variables().index(element);
+            int elemIdx = problem.variables().index(element);
 
-            Scalar approxPressure = problem.variables().cellData(eIdx).globalPressure();
+            Scalar approxPressure = problem.variables().cellData(elemIdx).globalPressure();
             Scalar exactPressure = problem.exact(global);
 
             numerator += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
@@ -167,7 +167,7 @@ public:
                 double exactFlux = KGrad*unitOuterNormal;
 
                 // get the approximate normalvelocity
-                double approximateFlux = problem.variables().cellData(eIdx).fluxData().velocityTotal(isIdx)*unitOuterNormal;
+                double approximateFlux = problem.variables().cellData(elemIdx).fluxData().velocityTotal(isIdx)*unitOuterNormal;
 
                 // calculate the difference in the normal velocity
                 double fluxDiff = exactFlux + approximateFlux;

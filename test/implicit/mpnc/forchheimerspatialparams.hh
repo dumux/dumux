@@ -191,19 +191,19 @@ public:
      *        (Nield, Bejan, Convection in porous media, 2006, p. 10)
      *
      * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      *
      */
     Scalar forchCoeff(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
+                    const FVElementGeometry &fvGeometry,
                     const unsigned int scvIdx) const
     {
         // If there are better measures / estimates / values available than this default number:
         // here is the place to implement it
         return ParentType::forchCoeff(element,
-                                      fvElemGeom,
+                                      fvGeometry,
                                       scvIdx);
     }
 

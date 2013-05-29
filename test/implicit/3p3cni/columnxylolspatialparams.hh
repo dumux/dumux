@@ -161,14 +161,14 @@ public:
      *        potential gradient.
      *
      * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvElemGeom,
+                                       const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
+        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(pos))
             return fineK_;
         return coarseK_;
@@ -242,7 +242,7 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param heatFlux The resulting heat flux vector
-     * \param fluxDat The flux variables
+     * \param fluxVars The flux variables
      * \param elemVolVars The volume variables
      * \param tempGrad The temperature gradient
      * \param element The current finite element
@@ -251,7 +251,7 @@ public:
      *                    the matrix heat flux should be calculated
      */
     void matrixHeatFlux(DimVector &heatFlux,
-                        const FluxVariables &fluxDat,
+                        const FluxVariables &fluxVars,
                         const ElementVolumeVariables &elemVolVars,
                         const DimVector &tempGrad,
                         const Element &element,
@@ -263,8 +263,8 @@ public:
         static const Scalar lsn1 = 0.65;
 
         // arithmetic mean of the liquid saturation and the porosity
-        const int i = fluxDat.face().i;
-        const int j = fluxDat.face().j;
+        const int i = fluxVars.face().i;
+        const int j = fluxVars.face().j;
         Scalar sw = std::max(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
                                    elemVolVars[j].saturation(wPhaseIdx)) / 2);
         Scalar sn = std::max(0.0, (elemVolVars[i].saturation(nPhaseIdx) +

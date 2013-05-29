@@ -91,20 +91,20 @@ public:
             // clamp saturation change to at most 20% per iteration
             FVElementGeometry fvGeometry;
             const GridView &gridView = this->problem_().gridView();
-            ElementIterator elemIt = gridView.template begin<0>();
-            const ElementIterator elemEndIt = gridView.template end<0>();
-            for (; elemIt != elemEndIt; ++elemIt) {
-                fvGeometry.update(gridView, *elemIt);
+            ElementIterator eIt = gridView.template begin<0>();
+            const ElementIterator eEndIt = gridView.template end<0>();
+            for (; eIt != eEndIt; ++eIt) {
+                fvGeometry.update(gridView, *eIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->model_().dofMapper().map(*elemIt, scvIdx, dofCodim);
+                    int globalIdx = this->model_().dofMapper().map(*eIt, scvIdx, dofCodim);
 
                     // calculate the old wetting phase saturation
                     const SpatialParams &spatialParams = this->problem_().spatialParams();
-                    const MaterialLawParams &mp = spatialParams.materialLawParams(*elemIt, fvGeometry, scvIdx);
+                    const MaterialLawParams &mp = spatialParams.materialLawParams(*eIt, fvGeometry, scvIdx);
                     Scalar pcMin = MaterialLaw::pc(mp, 1.0);
                     Scalar pw = uLastIter[globalIdx][pwIdx];
-                    Scalar pn = std::max(this->problem_().referencePressure(*elemIt, fvGeometry, scvIdx),
+                    Scalar pn = std::max(this->problem_().referencePressure(*eIt, fvGeometry, scvIdx),
                                          pw + pcMin);
                     Scalar pcOld = pn - pw;
                     Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::sw(mp, pcOld));

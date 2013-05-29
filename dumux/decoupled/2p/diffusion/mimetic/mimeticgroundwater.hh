@@ -216,17 +216,17 @@ public:
         typedef typename GridView::IntersectionIterator IntersectionIterator;
 
         int i = -1;
-        IntersectionIterator endit = gridView_.iend(element);
-        for (IntersectionIterator it = gridView_.ibegin(element); it!=endit; ++it)
+        IntersectionIterator isEndIt = gridView_.iend(element);
+        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt!=isEndIt; ++isIt)
         {
             // local number of facet
-            i = it->indexInInside();
+            i = isIt->indexInInside();
 
-            const Dune::FieldVector<Scalar,dim>& faceGlobal = it->geometry().center();
-            faceVol[i] = it->geometry().volume();
+            const Dune::FieldVector<Scalar,dim>& faceGlobal = isIt->geometry().center();
+            faceVol[i] = isIt->geometry().volume();
 
             // get normal vector
-            const Dune::FieldVector<Scalar,dim>& unitOuterNormal = it->centerUnitOuterNormal();
+            const Dune::FieldVector<Scalar,dim>& unitOuterNormal = isIt->centerUnitOuterNormal();
 
             N[i] = unitOuterNormal;
 

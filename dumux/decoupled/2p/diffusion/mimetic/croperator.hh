@@ -154,18 +154,18 @@ public:
             visited[i] = false;
 
         // LOOP 1 : Compute row sizes
-        Iterator eendit = gridView_.template end<0>();
-        for (Iterator it = gridView_.template begin<0>(); it != eendit; ++it)
+        Iterator eEndIt = gridView_.template end<0>();
+        for (Iterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
-            Dune::GeometryType gt = it->geometry().type();
+            Dune::GeometryType gt = eIt->geometry().type();
             const typename Dune::GenericReferenceElementContainer<Scalar,dim>::value_type&
                 refelem = Dune::GenericReferenceElements<Scalar,dim>::general(gt);
 
             // faces, c=1
             for (int i = 0; i < refelem.size(1); i++)
             {
-                int index = allMapper_.map(*it, i,1);
-                int alpha = faceMapper_.map(*it, i,1);
+                int index = allMapper_.map(*eIt, i,1);
+                int alpha = faceMapper_.map(*eIt, i,1);
                 //std::cout << "index = " << index << ", alpha = " << alpha << std::endl;
                 if (!visited[index])
                 {
@@ -188,9 +188,9 @@ public:
             visited[i] = false;
 
         // LOOP 2 : insert the nonzeros
-        for (Iterator it = gridView_.template begin<0>(); it!=eendit; ++it)
+        for (Iterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
         {
-            Dune::GeometryType gt = it->geometry().type();
+            Dune::GeometryType gt = eIt->geometry().type();
             const typename Dune::GenericReferenceElementContainer<Scalar,dim>::value_type&
                 refelem = Dune::GenericReferenceElements<Scalar,dim>::general(gt);
             //           std::cout << "ELEM " << GeometryName(gt) << std::endl;
@@ -198,8 +198,8 @@ public:
             // faces, c=1
             for (int i = 0; i < refelem.size(1); i++)
             {
-                int index = allMapper_.map(*it, i, 1);
-                int alpha = faceMapper_.map(*it, i, 1);
+                int index = allMapper_.map(*eIt, i, 1);
+                int alpha = faceMapper_.map(*eIt, i, 1);
                 if (!visited[index])
                 {
                     A_.addindex(alpha,alpha);
@@ -207,7 +207,7 @@ public:
                 }
                 for (int k = 0; k < refelem.size(1); k++)
                     if (k != i) {
-                        int beta = faceMapper_.map(*it, k, 1);
+                        int beta = faceMapper_.map(*eIt, k, 1);
                         A_.addindex(alpha, beta);
                         //std::cout << "alpha = " << alpha << ", added beta = " << beta << std::endl;
                     }
@@ -270,21 +270,21 @@ public:
         int local2Global[2*GridView::dimension];
 
         // run over all leaf elements
-        Iterator eendit = gridView_.template end<0>();
-        for (Iterator it = gridView_.template begin<0>(); it!=eendit; ++it)
+        Iterator eEndIt = gridView_.template end<0>();
+        for (Iterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
         {
-            unsigned int numFaces = it->template count<1>();
+            unsigned int numFaces = eIt->template count<1>();
 
             // get local to global id map
             for (unsigned int k = 0; k < numFaces; k++)
             {
-                int alpha = faceMapper_.map(*it, k, 1);
+                int alpha = faceMapper_.map(*eIt, k, 1);
                 local2Global[k] = alpha;
             }
 
             // build local stiffness matrix for CR elements
             // inludes rhs and boundary condition information
-            loc.assemble(*it, 1); // assemble local stiffness matrix
+            loc.assemble(*eIt, 1); // assemble local stiffness matrix
 
 
             // accumulate local matrix into global matrix for non-hanging nodes

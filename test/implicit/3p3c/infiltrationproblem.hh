@@ -328,11 +328,11 @@ public:
     /*!
      * \brief Return the initial phase state inside a control volume.
      *
-     * \param vert The vertex
+     * \param vertex The vertex
      * \param globalIdx The index of the global vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const Vertex &vert,
+    int initialPhasePresence(const Vertex &vertex,
                              int &globalIdx,
                              const GlobalPosition &globalPos) const
     {

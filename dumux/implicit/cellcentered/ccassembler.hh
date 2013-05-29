@@ -74,14 +74,14 @@ private:
         if (!this->enablePartialReassemble_())
             return;
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator elemEndIt = this->gridView_().template end<0>();
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
 
         // mark the red elements and update the tolerance of the
         // linearization which actually will get achieved
         this->nextReassembleAccuracy_ = 0;
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
+        for (; eIt != eEndIt; ++eIt) {
+            int elemIdx = this->elementMapper_().map(*eIt);
             if (this->delta_[elemIdx] > relTol)
             {
                 // mark element as red if discrepancy is larger than
@@ -97,17 +97,17 @@ private:
         }
 
         // mark the neighbors also red
-        elemIt = this->gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
+        eIt = this->gridView_().template begin<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            int elemIdx = this->elementMapper_().map(*eIt);
             if (this->elementColor_[elemIdx] == ParentType::Red) 
                 continue; // element is red already!
 
             if (this->delta_[elemIdx] > relTol)
             {
                 // also mark the neighbors 
-               IntersectionIterator endIsIt = this->gridView_().iend(*elemIt);
-               for (IntersectionIterator isIt = this->gridView_().ibegin(*elemIt); isIt != endIsIt; ++isIt)
+               IntersectionIterator endIsIt = this->gridView_().iend(*eIt);
+               for (IntersectionIterator isIt = this->gridView_().ibegin(*eIt); isIt != endIsIt; ++isIt)
                {
                    if (isIt->neighbor())
                    {
@@ -151,8 +151,8 @@ private:
 
             // loop over all neighbors
             IntersectionIterator isIt = this->gridView_().ibegin(elem);
-            const IntersectionIterator &endIt = this->gridView_().iend(elem);
-            for (; isIt != endIt; ++isIt)
+            const IntersectionIterator &isEndIt = this->gridView_().iend(elem);
+            for (; isIt != isEndIt; ++isIt)
             {
                 if (isIt->neighbor())
                 {
@@ -214,8 +214,8 @@ private:
         (*this->matrix_)[globalI][globalI] = this->model_().localJacobian().mat(0,0);
 
         IntersectionIterator isIt = this->gridView_().ibegin(elem);
-        const IntersectionIterator &endIt = this->gridView_().iend(elem);
-        for (int j = 0; isIt != endIt; ++isIt)
+        const IntersectionIterator &isEndIt = this->gridView_().iend(elem);
+        for (int j = 0; isIt != isEndIt; ++isIt)
         {
             if (isIt->neighbor())
             {

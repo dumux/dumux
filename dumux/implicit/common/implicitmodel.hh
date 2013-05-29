@@ -224,21 +224,21 @@ public:
     {
         residual = 0;
 
-        ElementIterator elemIt = gridView_().template begin<0>();
-        const ElementIterator elemEndIt = gridView_().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            localResidual().eval(*elemIt);
+        ElementIterator eIt = gridView_().template begin<0>();
+        const ElementIterator eEndIt = gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            localResidual().eval(*eIt);
 
             if (isBox)
             {
-                for (int i = 0; i < elemIt->template count<dim>(); ++i) {
-                    int globalI = vertexMapper().map(*elemIt, i, dim);
+                for (int i = 0; i < eIt->template count<dim>(); ++i) {
+                    int globalI = vertexMapper().map(*eIt, i, dim);
                     residual[globalI] += localResidual().residual(i);
                 }
             }
             else
             {
-                int globalI = elementMapper().map(*elemIt);
+                int globalI = elementMapper().map(*eIt);
                 residual[globalI] = localResidual().residual(0);
             }
         }
@@ -270,17 +270,17 @@ public:
     {
         storage = 0;
 
-        ElementIterator elemIt = gridView_().template begin<0>();
-        const ElementIterator elemEndIt = gridView_().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-    	   if(elemIt->partitionType() == Dune::InteriorEntity)
+        ElementIterator eIt = gridView_().template begin<0>();
+        const ElementIterator eEndIt = gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt) {
+    	   if(eIt->partitionType() == Dune::InteriorEntity)
 	   {
  
-           localResidual().evalStorage(*elemIt);
+           localResidual().evalStorage(*eIt);
 
             if (isBox)
             {
-                for (int i = 0; i < elemIt->template count<dim>(); ++i)
+                for (int i = 0; i < eIt->template count<dim>(); ++i)
                     storage += localResidual().storageTerm()[i];
             }
             else
@@ -766,12 +766,12 @@ public:
      *
      * \param element A DUNE Codim<0> entity which contains the control
      *             volume's associated vertex.
-     * \param vIdx The local vertex index inside element
+     * \param vertIdx The local vertex index inside element
      */
-    bool onBoundary(const Element &element, const int vIdx) const
+    bool onBoundary(const Element &element, const int vertIdx) const
     {
         if (isBox)
-            return onBoundary(vertexMapper().map(element, vIdx, dim));
+            return onBoundary(vertexMapper().map(element, vertIdx, dim));
         else
             DUNE_THROW(Dune::InvalidStateException,
                        "requested for cell-centered model");            

@@ -275,28 +275,28 @@ public:
          FVElementGeometry fvGeometry;
          VolumeVariables volVars;
 
-         ElementIterator elemIt = this->gridView().template begin<0>();
-         ElementIterator elemEndIt = this->gridView().template end<0>();
-         for (; elemIt != elemEndIt; ++elemIt)
+         ElementIterator eIt = this->gridView().template begin<0>();
+         ElementIterator eEndIt = this->gridView().template end<0>();
+         for (; eIt != eEndIt; ++eIt)
          {
-             int idx = this->elementMapper().map(*elemIt);
+             int idx = this->elementMapper().map(*eIt);
              (*rank)[idx] = this->gridView().comm().rank();
-             fvGeometry.update(this->gridView(), *elemIt);
+             fvGeometry.update(this->gridView(), *eIt);
 
 
              for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
              {
-                 int globalIdx = this->model().dofMapper().map(*elemIt, scvIdx, dofCodim);
+                 int globalIdx = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
                  volVars.update(this->model().curSol()[globalIdx],
                                 *this,
-                                *elemIt,
+                                *eIt,
                                 fvGeometry,
                                 scvIdx,
                                 false);
                  (*boxVolume)[globalIdx] += fvGeometry.subContVol[scvIdx].volume;
              }
-             (*Kxx)[idx] = this->spatialParams().intrinsicPermeability(*elemIt, fvGeometry, /*element data*/ 0);
-             (*cellPorosity)[idx] = this->spatialParams().porosity(*elemIt, fvGeometry, /*element data*/ 0);
+             (*Kxx)[idx] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, /*element data*/ 0);
+             (*cellPorosity)[idx] = this->spatialParams().porosity(*eIt, fvGeometry, /*element data*/ 0);
          }
 
          //pass the scalar fields to the vtkwriter
@@ -403,7 +403,7 @@ public:
      *
      * \param values The neumann values for the conservation equations
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
@@ -413,7 +413,7 @@ public:
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
@@ -452,11 +452,11 @@ public:
     /*!
      * \brief Return the initial phase state inside a control volume.
      *
-     * \param vert The vertex
+     * \param vertex The vertex
      * \param globalIdx The index of the global vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const Vertex &vert,
+    int initialPhasePresence(const Vertex &vertex,
                              int &globalIdx,
                              const GlobalPosition &globalPos) const
     { return Indices::wPhaseOnly; }

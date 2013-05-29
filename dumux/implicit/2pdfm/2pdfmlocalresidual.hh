@@ -115,9 +115,9 @@ public:
      */
     void computeStorageFracture(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
     {
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_()
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
                         : this->curVolVars_();
-        const VolumeVariables &vertDat = elemDat[scvIdx];
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
         const Element &elem = this->element_();
         bool isFracture = this->problem_().spatialParams().isVertexFracture(elem, scvIdx);
         /*
@@ -135,12 +135,12 @@ public:
          */
         Dune::GeometryType gt = elem.geometry().type();
         const typename Dune::GenericReferenceElementContainer<DT,dim>::value_type&
-            refElem = Dune::GenericReferenceElements<DT,dim>::general(gt);
+            refElement = Dune::GenericReferenceElements<DT,dim>::general(gt);
 
         Scalar vol; //subcontrol volume
         FVElementGeometry fvelem = this->fvGeometry_();
         vol = fvelem.subContVol[scvIdx].volume;
-        for (int faceIdx=0; faceIdx<refElem.size(1); faceIdx++)
+        for (int faceIdx=0; faceIdx<refElement.size(1); faceIdx++)
         {
             SCVFace face = fvelem.subContVolFace[faceIdx];
             int i=face.i;
@@ -171,7 +171,7 @@ public:
         storageMatrix[nPhaseIdx]    = 0.0;
         //        const GlobalPosition &globalPos = elem.geometry().corner(scvIdx);
 
-        Scalar dsm_dsf = vertDat.dsm_dsf();
+        Scalar dsm_dsf = volVars.dsm_dsf();
         if (!this->problem_().useInterfaceCondition())
         {
             dsm_dsf = 1.0;
@@ -181,15 +181,15 @@ public:
         {
             for (int phaseIdx = 0; phaseIdx<2; phaseIdx++)
             {
-                storageFracture[phaseIdx] = vertDat.density(phaseIdx)
-                                        * vertDat.porosityFracture()
+                storageFracture[phaseIdx] = volVars.density(phaseIdx)
+                                        * volVars.porosityFracture()
                                         * wf
-                                        * vertDat.saturationFracture(phaseIdx);
-                storageMatrix[phaseIdx] = vertDat.density(phaseIdx)
-                                        * vertDat.porosity()
+                                        * volVars.saturationFracture(phaseIdx);
+                storageMatrix[phaseIdx] = volVars.density(phaseIdx)
+                                        * volVars.porosity()
                                         * wm
                                         * dsm_dsf
-                                        * vertDat.saturationMatrix(phaseIdx);
+                                        * volVars.saturationMatrix(phaseIdx);
             }
         }
         else
@@ -197,9 +197,9 @@ public:
             for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++)
             {
                 storageFracture[phaseIdx] = 0.0;
-                storageMatrix[phaseIdx] = vertDat.density(phaseIdx)
-                                        * vertDat.porosity()
-                                        * vertDat.saturation(phaseIdx);
+                storageMatrix[phaseIdx] = volVars.density(phaseIdx)
+                                        * volVars.porosity()
+                                        * volVars.saturation(phaseIdx);
             }
 
         }
@@ -287,13 +287,13 @@ public:
      *        the face of a sub-control volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each phase
-     * \param fluxData The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current SCV
      *
      * It doesn't do anything in two-phase model but is used by the
      * non-isothermal two-phase models to calculate diffusive heat
      * fluxes
      */
-    void computeDiffusiveFluxFracture(PrimaryVariables &flux, const FluxVariables &fluxData) const
+    void computeDiffusiveFluxFracture(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         // diffusive fluxes
         flux += 0.0;

@@ -162,10 +162,10 @@ public:
     {
         phaseStorage = 0;
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        const ElementIterator elemEndIt = this->gridView_().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            this->localResidual().addPhaseStorage(phaseStorage, *elemIt, phaseIdx);
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        const ElementIterator eEndIt = this->gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            this->localResidual().addPhaseStorage(phaseStorage, *eIt, phaseIdx);
         }
 
         if (this->gridView_().comm().size() > 1)

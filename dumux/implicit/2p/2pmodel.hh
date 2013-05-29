@@ -149,25 +149,25 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator elemEndIt = this->gridView_().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt)
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
         {
-            int idx = this->elementMapper().map(*elemIt);
+            int idx = this->elementMapper().map(*eIt);
             (*rank)[idx] = this->gridView_().comm().rank();
 
             FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), *elemIt);
+            fvGeometry.update(this->gridView_(), *eIt);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                false /* oldSol? */);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
+                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
                 (*pw)[globalIdx] = elemVolVars[scvIdx].pressure(wPhaseIdx);
                 (*pn)[globalIdx] = elemVolVars[scvIdx].pressure(nPhaseIdx);
@@ -183,8 +183,8 @@ public:
             }
 
             // velocity output
-            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *elemIt, wPhaseIdx);
-            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *elemIt, nPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *eIt, wPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, nPhaseIdx);
         }
 
         writer.attachDofData(*sn, "sn", isBox);

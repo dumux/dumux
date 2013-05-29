@@ -120,14 +120,14 @@ public:
 
          FVElementGeometry fvGeometry;
          static VolumeVariables volVars;
-         ElementIterator elemIt = this->gridView_().template begin<0> ();
-         const ElementIterator &elemEndIt = this->gridView_().template end<0> ();
-         for (; elemIt != elemEndIt; ++elemIt)
+         ElementIterator eIt = this->gridView_().template begin<0> ();
+         const ElementIterator &eEndIt = this->gridView_().template end<0> ();
+         for (; eIt != eEndIt; ++eIt)
          {
-             fvGeometry.update(this->gridView_(), *elemIt);
+             fvGeometry.update(this->gridView_(), *eIt);
              for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
              {
-                 int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dofCodim);
+                 int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
                  if (ParentType::staticDat_[globalIdx].visited)
                      continue;
@@ -135,11 +135,11 @@ public:
                  ParentType::staticDat_[globalIdx].visited = true;
                  volVars.update(curGlobalSol[globalIdx],
                                 this->problem_(),
-                                *elemIt,
+                                *eIt,
                                 fvGeometry,
                                 scvIdx,
                                 false);
-                 const GlobalPosition &globalPos = elemIt->geometry().corner(scvIdx);
+                 const GlobalPosition &globalPos = eIt->geometry().corner(scvIdx);
                  if (primaryVarSwitch_(curGlobalSol,
                                        volVars,
                                        globalIdx,

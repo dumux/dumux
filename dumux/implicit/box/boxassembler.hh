@@ -80,8 +80,8 @@ private:
         if (!this->enablePartialReassemble_())
             return;
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator elemEndIt = this->gridView_().template end<0>();
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
 
         // mark the red vertices and update the tolerance of the
         // linearization which actually will get achieved
@@ -97,13 +97,13 @@ private:
         }
 
         // Mark all red elements
-        for (; elemIt != elemEndIt; ++elemIt) {
+        for (; eIt != eEndIt; ++eIt) {
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
-            int numVerts = elemIt->template count<dim>();
+            int numVerts = eIt->template count<dim>();
             for (int i=0; i < numVerts; ++i) {
-                int globalI = this->vertexMapper_().map(*elemIt, i, dim);
+                int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 if (this->vertexColor_[globalI] == ParentType::Red) {
                     isRed = true;
                     break;
@@ -112,7 +112,7 @@ private:
 
             // if yes, the element color is also red, else it is not
             // red, i.e. green for the mean time
-            int globalElemIdx = this->elementMapper_().map(*elemIt);
+            int globalElemIdx = this->elementMapper_().map(*eIt);
             if (isRed)
                 this->elementColor_[globalElemIdx] = ParentType::Red;
             else
@@ -120,16 +120,16 @@ private:
         }
 
         // Mark yellow vertices (as orange for the mean time)
-        elemIt = this->gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
+        eIt = this->gridView_().template begin<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            int elemIdx = this->elementMapper_().map(*eIt);
             if (this->elementColor_[elemIdx] != ParentType::Red)
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
-            int numVerts = elemIt->template count<dim>();
+            int numVerts = eIt->template count<dim>();
             for (int i = 0; i < numVerts; ++i) {
-                int globalI = this->vertexMapper_().map(*elemIt, i, dim);
+                int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is already red, don't recolor it to
                 // yellow!
                 if (this->vertexColor_[globalI] != ParentType::Red) {
@@ -149,9 +149,9 @@ private:
                                 Dune::ForwardCommunication);
 
         // Mark yellow elements
-        elemIt = this->gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
+        eIt = this->gridView_().template begin<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            int elemIdx = this->elementMapper_().map(*eIt);
             if (this->elementColor_[elemIdx] == ParentType::Red) {
                 continue; // element is red already!
             }
@@ -159,9 +159,9 @@ private:
             // check whether the element features a yellow
             // (resp. orange at this point) vertex
             bool isYellow = false;
-            int numVerts = elemIt->template count<dim>();
+            int numVerts = eIt->template count<dim>();
             for (int i = 0; i < numVerts; ++i) {
-                int globalI = this->vertexMapper_().map(*elemIt, i, dim);
+                int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 if (this->vertexColor_[globalI] == ParentType::Orange) {
                     isYellow = true;
                     break;
@@ -174,16 +174,16 @@ private:
 
         // Demote orange vertices to yellow ones if it has at least
         // one green element as a neighbor.
-        elemIt = this->gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
+        eIt = this->gridView_().template begin<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            int elemIdx = this->elementMapper_().map(*eIt);
             if (this->elementColor_[elemIdx] != ParentType::Green)
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
-            int numVerts = elemIt->template count<dim>();
+            int numVerts = eIt->template count<dim>();
             for (int i = 0; i < numVerts; ++i) {
-                int globalI = this->vertexMapper_().map(*elemIt, i, dim);
+                int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is orange, recolor it to yellow!
                 if (this->vertexColor_[globalI] == ParentType::Orange)
                     this->vertexColor_[globalI] = ParentType::Yellow;
@@ -362,14 +362,14 @@ private:
             }
 
             // set main diagonal entries for the vertex
-            int vIdx = this->vertexMapper_().map(*vp);
+            int vertIdx = this->vertexMapper_().map(*vp);
             typedef typename JacobianMatrix::block_type BlockType;
-            BlockType &J = (*this->matrix_)[vIdx][vIdx];
+            BlockType &J = (*this->matrix_)[vertIdx][vertIdx];
             for (int j = 0; j < BlockType::rows; ++j)
                 J[j][j] = 1.0;
 
             // set residual for the vertex
-            this->residual_[vIdx] = 0;
+            this->residual_[vertIdx] = 0;
         }
     }
 };

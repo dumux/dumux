@@ -160,13 +160,13 @@ public:
      *        the face of a sub-control volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each phase
-     * \param fluxData The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current SCV
      *
      * It doesn't do anything in two-phase model but is used by the
      * non-isothermal two-phase models to calculate diffusive heat
      * fluxes
      */
-    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxData) const
+    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         // diffusive fluxes
         flux += 0.0;

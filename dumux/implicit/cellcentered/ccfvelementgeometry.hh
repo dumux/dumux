@@ -70,8 +70,8 @@ class CCFVElementGeometry
 public:
     struct SubControlVolume //! FV intersected with element
     {
-        LocalPosition local; //!< local vert position
-        GlobalPosition global; //!< global vert position
+        LocalPosition local; //!< local position
+        GlobalPosition global; //!< global position
         Scalar volume; //!< volume of scv
         bool inner;
     };
@@ -146,14 +146,14 @@ public:
         bool onBoundary = false;
 
         // fill neighbor information and control volume face data:
-        IntersectionIterator endit = gridView.iend(element);
-        for (IntersectionIterator it = gridView.ibegin(element); it != endit; ++it)
+        IntersectionIterator isEndIt = gridView.iend(element);
+        for (IntersectionIterator isIt = gridView.ibegin(element); isIt != isEndIt; ++isIt)
         {
             // neighbor information and inner cvf data:
-            if (it->neighbor())
+            if (isIt->neighbor())
             {
                 numNeighbors++;
-                ElementPointer elementPointer(it->outside());
+                ElementPointer elementPointer(isIt->outside());
                 neighbors.push_back(elementPointer);
                 
                 int k = numNeighbors - 2;
@@ -161,11 +161,11 @@ public:
                 subContVolFace[k].i = 0;
                 subContVolFace[k].j = k+1;
                 
-                subContVolFace[k].ipGlobal = it->geometry().center();
+                subContVolFace[k].ipGlobal = isIt->geometry().center();
                 subContVolFace[k].ipLocal =  geometry.local(subContVolFace[k].ipGlobal);
-                subContVolFace[k].normal = it->centerUnitOuterNormal();
-                subContVolFace[k].normal *= it->geometry().volume();
-                subContVolFace[k].area = it->geometry().volume();
+                subContVolFace[k].normal = isIt->centerUnitOuterNormal();
+                subContVolFace[k].normal *= isIt->geometry().volume();
+                subContVolFace[k].area = isIt->geometry().volume();
 
                 GlobalPosition distVec = elementGlobal;
                 distVec -= neighbors[k+1]->geometry().center();
@@ -183,19 +183,19 @@ public:
                 subContVolFace[k].fapIndices[0] = subContVolFace[k].i;
                 subContVolFace[k].fapIndices[1] = subContVolFace[k].j;
                 
-                subContVolFace[k].faceIdx = it->indexInInside();
+                subContVolFace[k].faceIdx = isIt->indexInInside();
             }
 
             // boundary cvf data
-            if (it->boundary())
+            if (isIt->boundary())
             {
                 onBoundary = true;
-                int bfIdx = it->indexInInside();
-                boundaryFace[bfIdx].ipGlobal = it->geometry().center();
+                int bfIdx = isIt->indexInInside();
+                boundaryFace[bfIdx].ipGlobal = isIt->geometry().center();
                 boundaryFace[bfIdx].ipLocal =  geometry.local(boundaryFace[bfIdx].ipGlobal);
-                boundaryFace[bfIdx].normal = it->centerUnitOuterNormal();
-                boundaryFace[bfIdx].normal *= it->geometry().volume();
-                boundaryFace[bfIdx].area = it->geometry().volume();
+                boundaryFace[bfIdx].normal = isIt->centerUnitOuterNormal();
+                boundaryFace[bfIdx].normal *= isIt->geometry().volume();
+                boundaryFace[bfIdx].area = isIt->geometry().volume();
                 boundaryFace[bfIdx].i = 0;
                 boundaryFace[bfIdx].j = 0;
 

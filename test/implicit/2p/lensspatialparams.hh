@@ -137,15 +137,15 @@ public:
      * \brief Intrinsic permability
      *
      * \param element The current element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume.
      * \return Intrinsic permeability
      */
     Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvElemGeom,
+                                 const FVElementGeometry &fvGeometry,
                                  int scvIdx) const
     {
-        const GlobalPosition& globalPos = fvElemGeom.subContVol[scvIdx].global;
+        const GlobalPosition& globalPos = fvGeometry.subContVol[scvIdx].global;
         
         if (isInLens_(globalPos))
             return lensK_;
@@ -156,12 +156,12 @@ public:
      * \brief Porosity
      *
      * \param element The current element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume.
      * \return Porosity
      */
     Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
+                    const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     { return 0.4; }
 
@@ -169,15 +169,15 @@ public:
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
      * \param element The current element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume.
      * \return the material parameters object
      */
     const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvElemGeom,
+                                                const FVElementGeometry &fvGeometry,
                                                 int scvIdx) const
     {
-        const GlobalPosition& globalPos = fvElemGeom.subContVol[scvIdx].global;
+        const GlobalPosition& globalPos = fvGeometry.subContVol[scvIdx].global;
         
         if (isInLens_(globalPos))
             return lensMaterialParams_;

@@ -118,13 +118,13 @@ protected:
     // is protected, we are friends with our parent..
     friend class ThreePThreeCVolumeVariables<TypeTag>;
 
-    static Scalar temperature_(const PrimaryVariables &primaryVars,
+    static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem& problem,
                                const Element &element,
                                const FVElementGeometry &fvGeometry,
                                const int scvIdx)
     {
-        return primaryVars[temperatureIdx];
+        return priVars[temperatureIdx];
     }
 
     /*!
