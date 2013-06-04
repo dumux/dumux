@@ -23,7 +23,7 @@
 #ifndef DUMUX_IMPLICIT_MODEL_HH
 #define DUMUX_IMPLICIT_MODEL_HH
 
-#include <dune/grid/common/geometry.hh>
+#include <dune/geometry/type.hh>
 #include <dune/istl/bvector.hh>
 
 #include "implicitproperties.hh"
@@ -272,22 +272,22 @@ public:
 
         ElementIterator eIt = gridView_().template begin<0>();
         const ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-    	   if(eIt->partitionType() == Dune::InteriorEntity)
-	   {
- 
-           localResidual().evalStorage(*eIt);
+        for (; eIt != eEndIt; ++eIt)
+        {
+            if(eIt->partitionType() == Dune::InteriorEntity)
+            {
+                localResidual().evalStorage(*eIt);
 
-            if (isBox)
-            {
-                for (int i = 0; i < eIt->template count<dim>(); ++i)
-                    storage += localResidual().storageTerm()[i];
+                if (isBox)
+                {
+                    for (int i = 0; i < eIt->template count<dim>(); ++i)
+                        storage += localResidual().storageTerm()[i];
+                }
+                else
+                {
+                    storage += localResidual().storageTerm()[0];
+                }
             }
-            else
-            {
-                storage += localResidual().storageTerm()[0];
-            }
-	  }	
         }
 
         if (gridView_().comm().size() > 1)
@@ -1008,7 +1008,7 @@ private:
 
     bool enableHints_;
 };
-}
+} // end namespace Dumux
 
 #include "implicitpropertydefaults.hh"
 

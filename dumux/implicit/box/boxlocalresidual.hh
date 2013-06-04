@@ -23,8 +23,8 @@
 #ifndef DUMUX_BOX_LOCAL_RESIDUAL_HH
 #define DUMUX_BOX_LOCAL_RESIDUAL_HH
 
+#include <dune/geometry/type.hh>
 #include <dune/istl/matrix.hh>
-#include <dune/grid/common/geometry.hh>
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/implicit/common/implicitlocalresidual.hh>

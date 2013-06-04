@@ -24,7 +24,6 @@
 #define DUMUX_CC_LOCAL_RESIDUAL_HH
 
 #include <dune/istl/matrix.hh>
-#include <dune/grid/common/geometry.hh>
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/implicit/common/implicitlocalresidual.hh>
