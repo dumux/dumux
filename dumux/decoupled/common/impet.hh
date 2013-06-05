@@ -189,19 +189,7 @@ public:
 
     void updateTransport(const Scalar t, Scalar& dt, TransportSolutionType& updateVec)
     {
-        problem_.pressureModel().updateMaterialLaws();
-
-        //reset velocities
-        int size = problem_.gridView().size(0);
-        for (int i = 0; i < size; i++)
-        {
-            CellData& cellData = problem_.variables().cellData(i);
-            cellData.fluxData().resetVelocity();
-        }
-        if (!problem_.transportModel().velocity().calculateVelocityInTransport())
-        {
-            problem_.pressureModel().calculateVelocity();
-        }
+        problem_.pressureModel().updateVelocity();
 
         problem_.transportModel().update(t, dt, updateVec, true);
     }

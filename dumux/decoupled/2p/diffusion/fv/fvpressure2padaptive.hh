@@ -175,6 +175,13 @@ public:
     	velocity_.calculateVelocity();
     }
 
+    void updateVelocity()
+    {
+        ParentType::updateVelocity();
+
+        calculateVelocity();
+    }
+
     /*! \brief Adds pressure output to the output file
      *
      *  \copydetails FVPressure2P::addOutputVtkFields(MultiWriter&)

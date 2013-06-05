@@ -421,10 +421,18 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
     typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
-    DataHandle dataHandle(problem_.variables().elementMapper(), updateVec);
+    DataHandle dataHandle(problem_.elementMapper(), updateVec);
     problem_.gridView().template communicate<DataHandle>(dataHandle,
                                                          Dune::InteriorBorder_All_Interface,
                                                          Dune::ForwardCommunication);
+
+    typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
+
+    TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
+    problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
+                                                         Dune::InteriorBorder_All_Interface,
+                                                         Dune::ForwardCommunication);
+
     dt = problem_.gridView().comm().min(dt);
 #endif
 }
@@ -540,6 +548,20 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
             }
         }
     }
+
+#if HAVE_MPI
+    // communicate updated values
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
+    typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
+
+    TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
+    problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
+                                                         Dune::InteriorBorder_All_Interface,
+                                                         Dune::ForwardCommunication);
+
+    dt = problem_.gridView().comm().min(dt);
+#endif
 }
 
 template<class TypeTag>
@@ -550,6 +572,7 @@ void FVTransport<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
         Scalar realDt = problem_.timeManager().timeStepSize();
 
         Scalar subDt = realDt;
+
         updatedTargetDt_(subDt);
 
         Scalar accumulatedDtOld = accumulatedDt_;
@@ -578,9 +601,20 @@ void FVTransport<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
                         if (!asImp_().inPhysicalRange(newVal))
                         {
                             stopTimeStep = true;
+
                             break;
                         }
                     }
+
+#if HAVE_MPI
+                    int rank = 0;
+                    if (stopTimeStep)
+                        rank = problem_.gridView().comm().rank();
+
+                    rank = problem_.gridView().comm().max(rank);
+                    problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
+#endif
+
 
                     if (stopTimeStep && accumulatedDtOld > dtThreshold_)
                     {

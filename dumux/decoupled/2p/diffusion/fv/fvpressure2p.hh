@@ -268,6 +268,19 @@ public:
         return;
     }
 
+    void updateVelocity()
+    {
+        updateMaterialLaws();
+
+        //reset velocities
+        int size = problem_.gridView().size(0);
+        for (int i = 0; i < size; i++)
+        {
+            CellData& cellData = problem_.variables().cellData(i);
+            cellData.fluxData().resetVelocity();
+        }
+    }
+
     /*! \brief Globally stores the pressure solution
      *
      */
