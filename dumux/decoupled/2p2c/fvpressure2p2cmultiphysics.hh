@@ -415,7 +415,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         storageEntry[matrix] -= compress_term*volume;
         storageEntry[rhs] -= cellDataI.pressure(pressureType) * compress_term * volume;
 
-        if (isnan(compress_term) || isinf(compress_term))
+        if (std::isnan(compress_term) || std::isinf(compress_term))
             DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << globalIdxI);
 
         if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))

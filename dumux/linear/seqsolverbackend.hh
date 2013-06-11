@@ -566,7 +566,7 @@ public:
     {
         for (int j = 0; j < blockSize; j++)
         {
-            if (isnan(x[i][j]) || isinf(x[i][j]))
+            if (std::isnan(x[i][j]) || std::isinf(x[i][j]))
             {
                 result_.converged = false;
                 break;

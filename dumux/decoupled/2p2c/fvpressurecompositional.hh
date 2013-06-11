@@ -770,7 +770,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
         mass[compIdx] -= massIncrement[compIdx];
 
         //check routines if derivatives are meaningful
-        if (isnan(cellData.dv(compIdx)) || isinf(cellData.dv(compIdx)) )
+        if (std::isnan(cellData.dv(compIdx)) || std::isinf(cellData.dv(compIdx)) )
         {
             DUNE_THROW(Dune::MathError, "NAN/inf of dV_dm. If that happens in first timestep, try smaller firstDt!");
         }

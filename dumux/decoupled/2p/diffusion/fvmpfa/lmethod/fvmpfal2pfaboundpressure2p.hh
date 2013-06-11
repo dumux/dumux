@@ -1703,7 +1703,7 @@ void FVMPFAL2PFABoundPressure2P<TypeTag>::assemble()
                 pcFluxReal[2] *= fracFlow34;
                 pcFluxReal[3] *= fracFlow14;
 
-//                if (isnan(pcFluxReal.two_norm()))
+//                if (std::isnan(pcFluxReal.two_norm()))
 //                                std::cout<<"pcFlux = "<<pcFlux<<"\n";
 
                 switch (pressureType_)
@@ -2249,7 +2249,7 @@ bool FVMPFAL2PFABoundPressure2P<TypeTag>::calculateTransmissibility(
     if (sR <= sL)
     {
         transmissibility = TR1;
-//        if (isnan(transmissibility.frobenius_norm()))
+//        if (std::isnan(transmissibility.frobenius_norm()))
 //        {
 //                    std::cout<<"right transmissibility = "<<transmissibility<<"\n";
 //                std::cout<<"globalPos1 = "<<globalPos1<<"\n";
@@ -2280,7 +2280,7 @@ bool FVMPFAL2PFABoundPressure2P<TypeTag>::calculateTransmissibility(
     else
     {
         transmissibility = TL1;
-//        if (isnan(transmissibility.frobenius_norm()))
+//        if (std::isnan(transmissibility.frobenius_norm()))
 //        {
 //                    std::cout<<"left transmissibility = "<<transmissibility<<"\n";
 //                std::cout<<"globalPos1 = "<<globalPos1<<"\n";
