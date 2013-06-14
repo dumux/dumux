@@ -82,6 +82,8 @@ SET_BOOL_PROP(StokesTestProblem, ProblemEnableGravity, false);
  * outflow bcs, which are replaced in the localresidual by the sum
  * of the momentum balance equations in case of Dirichlet bcs for the momentum balance.
  * In the middle of the right boundary, one vertex receives Dirichlet bcs to set the pressure level.
+ * The flow velocity starts with 0 m/s. A flow field evolves with a maximum velocity, which is
+ * varied time-dependently using a sinus function and a period of 3000s.
  *
  * This problem uses the \ref BoxStokesModel.
  * To run the simulation execute the following line in shell:
@@ -101,9 +103,14 @@ class StokesTestProblem : public StokesProblem<TypeTag>
         dim = GridView::dimension,
 
         // copy some indices for convenience
-        massBalanceIdx = Indices::massBalanceIdx,
+        massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
         momentumYIdx = Indices::momentumYIdx //!< Index of the y-component of the momentum balance
+    };
+    enum { // indices of the primary variables
+        velocityXIdx = Indices::velocityXIdx, //!< Index of the x-velocity
+        velocityYIdx = Indices::velocityYIdx, //!< Index of the y-velocity
+        pressureIdx = Indices::pressureIdx //!< Index of the pressure
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -181,12 +188,16 @@ public:
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
         const GlobalPosition globalPos = vertex.geometry().center();
+        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+        const Scalar velocityVariation = 0.2;
 
         initial_(values, globalPos);
 
-        const Scalar v0 = 1.0;
+        // sinusoidal variation of the maximum velocity in time
+        const Scalar v0 = 1.0 + std::sin(2*M_PI*time/3000) * velocityVariation;
+
         // parabolic velocity profile
-        values[momentumXIdx] =  v0*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])
+        values[velocityXIdx] =  v0*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])
                                / (0.25*(this->bBoxMax()[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - this->bBoxMin()[1]));
     }
 
@@ -256,7 +267,7 @@ private:
                   const GlobalPosition &globalPos) const
     {
         values = 0.0;
-        values[massBalanceIdx] = 1e5;
+        values[pressureIdx] = 1e5;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
