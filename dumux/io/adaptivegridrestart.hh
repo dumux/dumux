@@ -106,14 +106,14 @@ public:
     template<class Problem>
     static void serializeGrid(Problem& problem)
     {
-    };
+    }
     /*!
      * \brief Restart the grid from the file.
      */
     template<class Problem>
     static void restartGrid(Problem& problem)
     {
-    };
+    }
 };
 
 /*!
@@ -132,7 +132,7 @@ public:
         std::string gridName = restartGridFileName_(problem);
         double time = problem.timeManager().time();
         problem.grid().template writeGrid<Dune::xdr> (gridName, time);
-    };
+    }
     /*!
      * \brief Restart the grid from the file.
      */
@@ -143,7 +143,7 @@ public:
         std::string gridName = restartGridFileName_(problem);
         double time = problem.timeManager().time();
         problem.grid().template readGrid<Dune::xdr> (gridName, time);
-    };
+    }
 
 private:
     //! \brief Return the restart file name.

@@ -122,7 +122,6 @@ void completeReferenceFluidState(FluidState &fs,
 {
     enum { numPhases = FluidSystem::numPhases };
 
-    typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
     typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
 
     int otherPhaseIdx = 1 - refPhaseIdx;

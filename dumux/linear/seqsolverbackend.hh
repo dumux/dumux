@@ -23,6 +23,7 @@
 #ifndef DUMUX_SOLVER_BACKEND_HH
 #define DUMUX_SOLVER_BACKEND_HH
 
+#include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
 
