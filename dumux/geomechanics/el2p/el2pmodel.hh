@@ -1,0 +1,722 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+
+/*!
+* \file
+*
+* \brief Adaption of the fully implicit scheme to the two-phase linear elasticity model.
+*/
+
+#ifndef DUMUX_ELASTIC2P_MODEL_HH
+#define DUMUX_ELASTIC2P_MODEL_HH
+
+#include "el2pproperties.hh"
+#include <dumux/common/eigenvalues.hh>
+#include <dune/pdelab/gridfunctionspace/interpolate.hh>
+
+namespace Dumux {
+/*!
+ * \ingroup ElTwoPBoxModel
+ * \brief Adaption of the fully implicit scheme to the two-phase linear elasticity model.
+ *
+ * This model implements a two-phase flow of compressible immiscible fluids \f$\alpha \in \{ w, n \}\f$.
+ * The deformation of the solid matrix is described with a quasi-stationary momentum balance equation.
+ * The influence of the pore fluid is accounted for through the effective stress concept (Biot 1941).
+ * The total stress acting on a rock is partially supported by the rock matrix and partially supported
+ * by the pore fluid. The effective stress represents the share of the total stress which is supported
+ * by the solid rock matrix and can be determined as a function of the strain according to Hooke's law.
+ *
+ * As an equation for the conservation of momentum within the fluid phases the standard multiphase Darcy's approach is used:
+ \f[
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
+ \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
+ \f]
+ *
+ * Gravity can be enabled or disabled via the property system.
+ * By inserting this into the continuity equation, one gets
+\f[
+ \frac{\partial \phi_{eff} \varrho_\alpha S_\alpha}{\partial t}
+ - \text{div} \left\{ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}
+ \mbox{\bf K_{eff}} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ - \phi_{eff} \varrho_\alpha S_\alpha \frac{\partial \mathbf{u}}{\partial t}
+ \right\} - q_\alpha = 0 \;,
+ \f]
+ *
+ *
+ * A quasi-stationary momentum balance equation is solved for the changes with respect to the initial conditions (Darcis 2012), note
+ * that this implementation assumes the soil mechanics sign convention (i.e. compressive stresses are negative):
+ \f[
+ \text{div}\left( \boldsymbol{\Delta \sigma'}- \Delta p_{eff} \boldsymbol{I} \right) + \Delta \varrho_b {\textbf g} = 0 \;,
+ \f]
+ * with the effective stress:
+ \f[
+  \boldsymbol{\sigma'} = 2\,G\,\boldsymbol{\epsilon} + \lambda \,\text{tr} (\boldsymbol{\epsilon}) \, \mathbf{I}.
+ \f]
+ *
+ * and the strain tensor \f$\boldsymbol{\epsilon}\f$ as a function of the solid displacement gradient \f$\textbf{grad} \mathbf{u}\f$:
+ \f[
+  \boldsymbol{\epsilon} = \frac{1}{2} \, (\textbf{grad} \mathbf{u} + \textbf{grad}^T \mathbf{u}).
+ \f]
+ *
+ * Here, the rock mechanics sign convention is switch off which means compressive stresses are < 0 and tensile stresses are > 0.
+ * The rock mechanics sign convention can be switched on for the vtk output via the property system.
+ *
+ * The effective porosity and the effective permeability are calculated as a function of the solid displacement:
+ \f[
+      \phi_{eff} = \frac{\phi_{init} + \text{div} \mathbf{u}}{1 + \text{div} \mathbf{u}}
+ \f]
+ \f[
+      K_{eff} = K_{init} \text{exp}\left( 22.2(\phi_{eff}/\phi_{init} -1 )\right)
+ \f]
+ * The mass balance equations are discretized using a vertex-centered finite volume (box)
+ * or cell-centered finite volume scheme as spatial and the implicit Euler method as time discretization.
+ * The momentum balance equations are discretized using a standard Galerkin Finite Element method as
+ * spatial discretization scheme.
+ *
+ *
+ * The primary variables are the wetting phase pressure \f$p_w\f$, the nonwetting phase saturation \f$S_n\f$ and the solid
+ * displacement vector \f$\mathbf{u}\f$ (changes in solid displacement with respect to initial conditions).
+ */
+
+namespace Properties {
+NEW_PROP_TAG(InitialDisplacement); //!< The initial displacement function
+NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
+}
+
+template<class TypeTag>
+class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    enum {
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
+        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = Indices::wPhaseIdx,
+        pressureIdx = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+    };
+
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum {
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
+    };
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::ctype CoordScalar;
+
+
+    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(DofMapper)) DofMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
+    typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
+
+public:
+
+    /*!
+     * \brief Write the current solution to a restart file.
+     *
+     * \param outStream The output stream of one vertex for the restart file
+     * \param entity The Entity
+     *
+     * Due to the mixed discretization schemes which are combined via pdelab for this model
+     * the solution vector has a different form than in the pure box models
+     * it sorts the primary variables in the following way:
+     * p_vertex0 S_vertex0 p_vertex1 S_vertex1 p_vertex2 ....p_vertexN S_vertexN
+     * ux_vertex0 uy_vertex0 uz_vertex0 ux_vertex1 uy_vertex1 uz_vertex1 ...
+     *
+     * Therefore, the serializeEntity function has to be modified.
+     */
+    template <class Entity>
+    void serializeEntity(std::ostream &outstream,
+                         const Entity &entity)
+    {
+        // vertex index
+        int dofIdx = this->dofMapper().map(entity);
+
+        // write phase state
+        if (!outstream.good()) {
+            DUNE_THROW(Dune::IOError,
+                       "Could not serialize vertex "
+                       << dofIdx);
+        }
+        int numScv = this->gridView().size(dim);
+        // get p and S entries for this vertex
+        for (int eqIdx = 0; eqIdx < numEq-dim; ++eqIdx) {
+            outstream << this->curSol()[dofIdx*(numEq-dim) + eqIdx][0]<<" ";
+        }
+        // get ux, uy, uz entries for this vertex
+        for (int j = 0; j< dim; ++j)
+            outstream << this->curSol()[numScv*(numEq-dim) + dofIdx*dim + j][0] <<" ";
+
+        int vertIdx = this->dofMapper().map(entity);
+        if (!outstream.good())
+            DUNE_THROW(Dune::IOError, "Could not serialize vertex " << vertIdx);
+    }
+
+    /*!
+     * \brief Reads the current solution for a vertex from a restart
+     *        file.
+     *
+     * \param inStream The input stream of one vertex from the restart file
+     * \param entity The Entity
+     *
+     * Due to the mixed discretization schemes which are combined via pdelab for this model
+     * the solution vector has a different form than in the pure box models
+     * it sorts the primary variables in the following way:
+     * p_vertex0 S_vertex0 p_vertex1 S_vertex1 p_vertex2 ....p_vertexN S_vertexN
+     * ux_vertex0 uy_vertex0 uz_vertex0 ux_vertex1 uy_vertex1 uz_vertex1 ...
+     *
+     * Therefore, the deserializeEntity function has to be modified.
+     */
+    template<class Entity>
+    void deserializeEntity(std::istream &instream, const Entity &entity)
+    {
+        int dofIdx = this->dofMapper().map(entity);
+
+        if (!instream.good()){
+                DUNE_THROW(Dune::IOError,
+                           "Could not deserialize vertex "
+                           << dofIdx);
+        }
+        int numScv = this->gridView().size(dim);
+        for (int eqIdx = 0; eqIdx < numEq-dim; ++eqIdx) {
+        // read p and S entries for this vertex
+        instream >> this->curSol()[dofIdx*(numEq-dim) + eqIdx][0];}
+        for (int j = 0; j< dim; ++j){
+            // read ux, uy, uz entries for this vertex
+            instream >> this->curSol()[numScv*(numEq-dim) + dofIdx*dim + j][0];}
+    }
+
+
+    /*!
+     * \brief \copybrief ImplicitModel::addOutputVtkFields
+     *
+     * Specialization for the ElOnePTwoCBoxModel, add one-phase two-component
+     * properties, solid displacement, stresses, effective properties and the
+     * process rank to the VTK writer.
+     */
+    template<class MultiWriter>
+    void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer) {
+        // check whether compressive stresses are defined to be positive
+        // (rockMechanicsSignConvention_ == true) or negative
+        rockMechanicsSignConvention_ =  GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, RockMechanicsSignConvention);
+
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
+
+        // create the required scalar and vector fields
+        unsigned numScv = this->gridView_().size(dim);
+        unsigned numElements = this->gridView_().size(0);
+
+        // create the required fields for vertex data
+        ScalarField &pw = *writer.allocateManagedBuffer(numScv);
+        ScalarField &pn = *writer.allocateManagedBuffer(numScv);
+        ScalarField &pc = *writer.allocateManagedBuffer(numScv);
+        ScalarField &sw = *writer.allocateManagedBuffer(numScv);
+        ScalarField &sn = *writer.allocateManagedBuffer(numScv);
+        VectorField &displacement = *writer.template allocateManagedBuffer<Scalar, dim>(numScv);
+        ScalarField &rhoW = *writer.allocateManagedBuffer(numScv);
+        ScalarField &rhoN = *writer.allocateManagedBuffer(numScv);
+        ScalarField &Te = *writer.allocateManagedBuffer(numScv);
+
+        // create the required fields for element data
+        // effective stresses
+        VectorField &deltaEffStressX = *writer.template allocateManagedBuffer<Scalar,
+                dim>(numElements);
+        VectorField &deltaEffStressY = *writer.template allocateManagedBuffer<Scalar,
+                dim>(numElements);
+        VectorField &deltaEffStressZ = *writer.template allocateManagedBuffer<Scalar,
+                dim>(numElements);
+        // total stresses
+        VectorField &totalStressX = *writer.template allocateManagedBuffer<
+                Scalar, dim>(numElements);
+        VectorField &totalStressY = *writer.template allocateManagedBuffer<
+                Scalar, dim>(numElements);
+        VectorField &totalStressZ = *writer.template allocateManagedBuffer<
+                Scalar, dim>(numElements);
+        // initial stresses
+        VectorField &initStressX = *writer.template allocateManagedBuffer<
+                Scalar, dim>(numElements);
+        VectorField &initStressY = *writer.template allocateManagedBuffer<
+                Scalar, dim>(numElements);
+        VectorField &initStressZ = *writer.template allocateManagedBuffer<
+                Scalar, dim>(numElements);
+        // principal stresses
+        ScalarField &principalStress1 = *writer.allocateManagedBuffer(
+                numElements);
+        ScalarField &principalStress2 = *writer.allocateManagedBuffer(
+                numElements);
+        ScalarField &principalStress3 = *writer.allocateManagedBuffer(
+                numElements);
+
+
+        ScalarField &effKx = *writer.allocateManagedBuffer(numElements);
+        ScalarField &effPorosity = *writer.allocateManagedBuffer(numElements);
+        ScalarField &effectivePressure = *writer.allocateManagedBuffer(numElements);
+        ScalarField &deltaEffPressure = *writer.allocateManagedBuffer(numElements);
+
+
+        ScalarField &Pcrtens = *writer.allocateManagedBuffer(numElements);
+        ScalarField &Pcrshe = *writer.allocateManagedBuffer(numElements);
+
+        // initialize cell stresses, cell-wise hydraulic parameters and cell pressure with zero
+
+
+        for(int elemIdx = 0; elemIdx < numElements; ++elemIdx){
+            deltaEffStressX[elemIdx] = Scalar(0.0);
+            if (dim >= 2)
+                deltaEffStressY[elemIdx] = Scalar(0.0);
+            if (dim >= 3)
+                deltaEffStressZ[elemIdx] = Scalar(0.0);
+
+            totalStressX[elemIdx] = Scalar(0.0);
+            if (dim >= 2)
+                totalStressY[elemIdx] = Scalar(0.0);
+            if (dim >= 3)
+                totalStressZ[elemIdx] = Scalar(0.0);
+
+            initStressX[elemIdx] = Scalar(0.0);
+            if (dim >= 2)
+                initStressY[elemIdx] = Scalar(0.0);
+            if (dim >= 3)
+                initStressZ[elemIdx] = Scalar(0.0);
+
+            principalStress1[elemIdx] = Scalar(0.0);
+            if (dim >= 2)
+                principalStress2[elemIdx] = Scalar(0.0);
+            if (dim >= 3)
+                principalStress3[elemIdx] = Scalar(0.0);
+
+            effPorosity[elemIdx] = Scalar(0.0);
+            effKx[elemIdx] = Scalar(0.0);
+            effectivePressure[elemIdx] = Scalar(0.0);
+            deltaEffPressure[elemIdx] = Scalar(0.0);
+
+            Pcrtens[elemIdx] = Scalar(0.0);
+            Pcrshe[elemIdx] = Scalar(0.0);
+        }
+
+        ScalarField &rank = *writer.allocateManagedBuffer(numElements);
+
+
+        FVElementGeometry fvGeometry;
+        ElementVolumeVariables elemVolVars;
+
+        // initialize start and end of element iterator
+        ElementIterator elemIt = this->gridView_().template begin<0>();
+        ElementIterator endit = this->gridView_().template end<0>();
+        // loop over all elements (cells)
+        for (; elemIt != endit; ++elemIt) {
+
+            // get FE function spaces to calculate gradients (gradient data of momentum balance
+            // equation is not stored in fluxvars since it is not evaluated at box integration point)
+            // copy the values of the sol vector to the localFunctionSpace values of the current element
+            LocalFunctionSpace localFunctionSpace(this->problem_().model().jacobianAssembler().gridFunctionSpace());
+            localFunctionSpace.bind(*elemIt);
+            std::vector<Scalar> values;
+            localFunctionSpace.vread(sol, values);
+
+            // pressure local function space (mass balance equations)
+            typedef typename LocalFunctionSpace::template Child<0>::Type PressSatLFS;
+            typedef typename PressSatLFS::template Child<0>::Type PressLFS;
+            // local function space for solid displacement
+            typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
+            const DisplacementLFS& displacementLFS =localFunctionSpace.template child<1>();
+            const unsigned int dispSize = displacementLFS.child(0).size();
+            typedef typename DisplacementLFS::template Child<0>::Type ScalarDispLFS;
+            // further types required for gradient calculations
+            typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::JacobianType JacobianType_V;
+            typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::RangeFieldType RF;
+            typedef typename PressLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::DomainFieldType DF;
+
+            unsigned int elemIdx = this->problem_().model().elementMapper().map(*elemIt);
+            rank[elemIdx] = this->gridView_().comm().rank();
+
+            fvGeometry.update(this->gridView_(), *elemIt);
+            elemVolVars.update(this->problem_(), *elemIt, fvGeometry, false);
+
+            // loop over all local vertices of the cell
+            int numScv = elemIt->template count<dim>();
+
+            for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
+            {
+                unsigned int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dim);
+
+
+                Te[globalIdx] = elemVolVars[scvIdx].temperature();
+                pw[globalIdx] = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                pn[globalIdx] = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                pc[globalIdx] = elemVolVars[scvIdx].capillaryPressure();
+                sw[globalIdx] = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                sn[globalIdx] = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                rhoW[globalIdx] = elemVolVars[scvIdx].density(wPhaseIdx);
+                rhoN[globalIdx] = elemVolVars[scvIdx].density(nPhaseIdx);
+                // the following lines are correct for rock mechanics sign convention
+                // but lead to a very counter-intuitive output therefore, they are commented.
+                // in case of rock mechanics sign convention solid displacement is
+                // defined to be negative if it points in positive coordinate direction
+//                if(rockMechanicsSignConvention_){
+//                    DimVector tmpDispl;
+//                    tmpDispl = Scalar(0);
+//                    tmpDispl -= elemVolVars[scvIdx].displacement();
+//                    displacement[globalIdx] = tmpDispl;
+//                    }
+//
+//                else
+                    displacement[globalIdx] = elemVolVars[scvIdx].displacement();
+
+                double Keff;
+                double exponent;
+                exponent = 22.2    * (elemVolVars[scvIdx].effPorosity
+                            / elemVolVars[scvIdx].porosity() - 1);
+                Keff =    this->problem_().spatialParams().intrinsicPermeability(    *elemIt, fvGeometry, scvIdx)[0][0];
+                Keff *= exp(exponent);
+                effKx[elemIdx] += Keff/ numScv;
+                effectivePressure[elemIdx] += (pn[globalIdx] * sn[globalIdx]
+                                            + pw[globalIdx] * sw[globalIdx])
+                                            / numScv;
+                effPorosity[elemIdx] +=elemVolVars[scvIdx].effPorosity / numScv;
+            };
+
+            const GlobalPosition& cellCenter = elemIt->geometry().center();
+            const GlobalPosition& cellCenterLocal = elemIt->geometry().local(cellCenter);
+
+            deltaEffPressure[elemIdx] = effectivePressure[elemIdx] + this->problem().pInit(cellCenter, cellCenterLocal, *elemIt);
+            // determin changes in effective stress from current solution
+            // evaluate gradient of displacement shape functions
+            std::vector<JacobianType_V> vRefShapeGradient(dispSize);
+            displacementLFS.child(0).finiteElement().localBasis().evaluateJacobian(cellCenterLocal, vRefShapeGradient);
+
+            // get jacobian to transform the gradient to physical element
+            const Dune::FieldMatrix<DF, dim, dim> jacInvT =    elemIt->geometry().jacobianInverseTransposed(cellCenterLocal);
+            std::vector < Dune::FieldVector<RF, dim> > vShapeGradient(dispSize);
+            for (size_t i = 0; i < dispSize; i++) {
+                vShapeGradient[i] = 0.0;
+                jacInvT.umv(vRefShapeGradient[i][0], vShapeGradient[i]);
+            }
+            // calculate gradient of current displacement
+            typedef Dune::FieldMatrix<RF, dim, dim> DimMatrix;
+            DimMatrix uGradient(0.0);
+            for (int coordDir = 0; coordDir < dim; ++coordDir) {
+                const ScalarDispLFS & scalarDispLFS = displacementLFS.child(coordDir);
+
+                for (size_t i = 0; i < scalarDispLFS.size(); i++)
+                    uGradient[coordDir].axpy(values[scalarDispLFS.localIndex(i)],vShapeGradient[i]);
+            }
+
+            const Dune::FieldVector<Scalar, 2> lameParams =    this->problem_().spatialParams().lameParams(*elemIt,fvGeometry, 0);
+            const Scalar lambda = lameParams[0];
+            const Scalar mu = lameParams[1];
+
+            // calculate strain tensor
+            Dune::FieldMatrix<RF, dim, dim> epsilon;
+            for (int i = 0; i < dim; ++i)
+                for (int j = 0; j < dim; ++j)
+                    epsilon[i][j] = 0.5 * (uGradient[i][j] + uGradient[j][i]);
+
+            RF traceEpsilon = 0;
+            for (int i = 0; i < dim; ++i)
+                traceEpsilon += epsilon[i][i];
+
+            // calculate effective stress tensor
+            Dune::FieldMatrix<RF, dim, dim> sigma(0.0);
+            for (int i = 0; i < dim; ++i) {
+                sigma[i][i] = lambda * traceEpsilon;
+                for (int j = 0; j < dim; ++j)
+                    sigma[i][j] += 2.0 * mu * epsilon[i][j];
+            }
+
+            // in case of rock mechanics sign convention compressive stresses
+            // are defined to be positive
+            if(rockMechanicsSignConvention_){
+                deltaEffStressX[elemIdx] -= sigma[0];
+                if (dim >= 2) {
+                    deltaEffStressY[elemIdx] -= sigma[1];
+                }
+                if (dim >= 3) {
+                    deltaEffStressZ[elemIdx] -= sigma[2];
+                }
+            }
+            else{
+                deltaEffStressX[elemIdx] = sigma[0];
+                if (dim >= 2) {
+                    deltaEffStressY[elemIdx] = sigma[1];
+                }
+                if (dim >= 3) {
+                    deltaEffStressZ[elemIdx] = sigma[2];
+                }
+            }
+
+            // retrieve prescribed initial stresses from problem file
+            DimVector tmpInitStress = this->problem_().initialStress(cellCenter, 0);
+            if(rockMechanicsSignConvention_){
+                initStressX[elemIdx][0] = tmpInitStress[0];
+                if (dim >= 2) {
+                    initStressY[elemIdx][1] = tmpInitStress[1];
+                    }
+                if (dim >= 3) {
+                    initStressZ[elemIdx][2] = tmpInitStress[2];
+                }
+            }
+            else{
+                initStressX[elemIdx][0] -= tmpInitStress[0];
+                if (dim >= 2) {
+                    initStressY[elemIdx][1] -= tmpInitStress[1];
+                    }
+                if (dim >= 3) {
+                    initStressZ[elemIdx][2] -= tmpInitStress[2];
+                }
+            }
+
+            // calculate total stresses
+            // in case of rock mechanics sign convention compressive stresses
+            // are defined to be positive and total stress is calculated by adding the pore pressure
+            if(rockMechanicsSignConvention_){
+                totalStressX[elemIdx][0] = initStressX[elemIdx][0] + deltaEffStressX[elemIdx][0]    + deltaEffPressure[elemIdx];
+                totalStressX[elemIdx][1] = initStressX[elemIdx][1] + deltaEffStressX[elemIdx][1];
+                totalStressX[elemIdx][2] = initStressX[elemIdx][2] + deltaEffStressX[elemIdx][2];
+                if (dim >= 2) {
+                    totalStressY[elemIdx][0] = initStressY[elemIdx][0] + deltaEffStressY[elemIdx][0];
+                    totalStressY[elemIdx][1] = initStressY[elemIdx][1] + deltaEffStressY[elemIdx][1]    + deltaEffPressure[elemIdx];
+                    totalStressY[elemIdx][2] = initStressY[elemIdx][2] + deltaEffStressY[elemIdx][2];
+                }
+                if (dim >= 3) {
+                    totalStressZ[elemIdx][0] = initStressZ[elemIdx][0] + deltaEffStressZ[elemIdx][0];
+                    totalStressZ[elemIdx][1] = initStressZ[elemIdx][1] + deltaEffStressZ[elemIdx][1];
+                    totalStressZ[elemIdx][2] = initStressZ[elemIdx][2] + deltaEffStressZ[elemIdx][2]    + deltaEffPressure[elemIdx];
+                }
+            }
+            else{
+                totalStressX[elemIdx][0] = initStressX[elemIdx][0] + deltaEffStressX[elemIdx][0]    - deltaEffPressure[elemIdx];
+                totalStressX[elemIdx][1] = initStressX[elemIdx][1] + deltaEffStressX[elemIdx][1];
+                totalStressX[elemIdx][2] = initStressX[elemIdx][2] + deltaEffStressX[elemIdx][2];
+                if (dim >= 2) {
+                    totalStressY[elemIdx][0] = initStressY[elemIdx][0] + deltaEffStressY[elemIdx][0];
+                    totalStressY[elemIdx][1] = initStressY[elemIdx][1] + deltaEffStressY[elemIdx][1]    - deltaEffPressure[elemIdx];
+                    totalStressY[elemIdx][2] = initStressY[elemIdx][2] + deltaEffStressY[elemIdx][2];
+                }
+                if (dim >= 3) {
+                    totalStressZ[elemIdx][0] = initStressZ[elemIdx][0] + deltaEffStressZ[elemIdx][0];
+                    totalStressZ[elemIdx][1] = initStressZ[elemIdx][1] + deltaEffStressZ[elemIdx][1];
+                    totalStressZ[elemIdx][2] = initStressZ[elemIdx][2] + deltaEffStressZ[elemIdx][2]    - deltaEffPressure[elemIdx];
+                }
+            }
+        }
+
+        // calculate principal stresses i.e. the eigenvalues of the total stress tensor
+        Scalar a1, a2, a3;
+        DimMatrix totalStress;
+        DimVector eigenValues;
+
+        for (unsigned int elemIdx = 0; elemIdx < numElements; elemIdx++)
+        {
+            eigenValues = Scalar(0);
+            totalStress = Scalar(0);
+
+            totalStress[0] = totalStressX[elemIdx];
+            if (dim >= 2)
+                totalStress[1] = totalStressY[elemIdx];
+            if (dim >= 3)
+                totalStress[2] = totalStressZ[elemIdx];
+
+            calculateEigenValues<dim>(eigenValues, totalStress);
+
+
+            for (int i = 0; i < dim; i++)
+                {
+                    if (isnan(eigenValues[i]))
+                        eigenValues[i] = 0.0;
+                }
+
+            // sort principal stresses: principalStress1 >= principalStress2 >= principalStress3
+            if (dim == 2) {
+                a1 = eigenValues[0];
+                a2 = eigenValues[1];
+
+                if (a1 >= a2) {
+                    principalStress1[elemIdx] = a1;
+                    principalStress2[elemIdx] = a2;
+                } else {
+                    principalStress1[elemIdx] = a2;
+                    principalStress2[elemIdx] = a1;
+                }
+            }
+
+            if (dim == 3) {
+                a1 = eigenValues[0];
+                a2 = eigenValues[1];
+                a3 = eigenValues[2];
+
+                if (a1 >= a2) {
+                    if (a1 >= a3) {
+                        principalStress1[elemIdx] = a1;
+                        if (a2 >= a3) {
+                            principalStress2[elemIdx] = a2;
+                            principalStress3[elemIdx] = a3;
+                        }
+                        else //a3 > a2
+                        {
+                            principalStress2[elemIdx] = a3;
+                            principalStress3[elemIdx] = a2;
+                        }
+                    }
+                    else // a3 > a1
+                    {
+                        principalStress1[elemIdx] = a3;
+                        principalStress2[elemIdx] = a1;
+                        principalStress3[elemIdx] = a2;
+                    }
+                } else // a2>a1
+                {
+                    if (a2 >= a3) {
+                        principalStress1[elemIdx] = a2;
+                        if (a1 >= a3) {
+                            principalStress2[elemIdx] = a1;
+                            principalStress3[elemIdx] = a3;
+                        }
+                        else //a3>a1
+                        {
+                            principalStress2[elemIdx] = a3;
+                            principalStress3[elemIdx] = a1;
+                        }
+                    }
+                    else //a3>a2
+                    {
+                        principalStress1[elemIdx] = a3;
+                        principalStress2[elemIdx] = a2;
+                        principalStress3[elemIdx] = a1;
+                    }
+                }
+            }
+            Scalar taum  = 0.0;
+            Scalar sigmam = 0.0;
+            Scalar Peff = effectivePressure[elemIdx];
+
+            Scalar theta = M_PI / 6;
+            Scalar S0 = 0.0;
+            taum = (principalStress1[elemIdx] - principalStress3[elemIdx]) / 2;
+            sigmam = (principalStress1[elemIdx] + principalStress3[elemIdx]) / 2;
+            Scalar Psc = -fabs(taum) / sin(theta) + S0 * cos(theta) / sin(theta)
+                    + sigmam;
+            // Pressure margins according to J. Rutqvist et al. / International Journal of Rock Mecahnics & Mining Sciences 45 (2008), 132-143
+            Pcrtens[elemIdx] = Peff - principalStress3[elemIdx];
+            Pcrshe[elemIdx] = Peff - Psc;
+
+        }
+
+        writer.attachVertexData(Te, "T");
+        writer.attachVertexData(pw, "pW");
+        writer.attachVertexData(pn, "pN");
+        writer.attachVertexData(pc, "pC");
+        writer.attachVertexData(sw, "SW");
+        writer.attachVertexData(sn, "SN");
+        writer.attachVertexData(rhoW, "rhoW");
+        writer.attachVertexData(rhoN, "rhoN");
+        writer.attachVertexData(displacement, "u", dim);
+
+        writer.attachCellData(deltaEffStressX, "effective stress changes X", dim);
+        if (dim >= 2)
+            writer.attachCellData(deltaEffStressY, "effective stress changes Y",    dim);
+        if (dim >= 3)
+            writer.attachCellData(deltaEffStressZ, "effective stress changes Z",    dim);
+
+        writer.attachCellData(principalStress1, "principal stress 1");
+        if (dim >= 2)
+            writer.attachCellData(principalStress2, "principal stress 2");
+        if (dim >= 3)
+            writer.attachCellData(principalStress3, "principal stress 3");
+
+        writer.attachCellData(totalStressX, "total stresses X", dim);
+        if (dim >= 2)
+            writer.attachCellData(totalStressY, "total stresses Y", dim);
+        if (dim >= 3)
+            writer.attachCellData(totalStressZ, "total stresses Z", dim);
+
+        writer.attachCellData(initStressX, "initial stresses X", dim);
+        if (dim >= 2)
+            writer.attachCellData(initStressY, "initial stresses Y", dim);
+        if (dim >= 3)
+            writer.attachCellData(initStressZ, "initial stresses Z", dim);
+
+        writer.attachCellData(deltaEffPressure, "delta pEff");
+         writer.attachCellData(effectivePressure, "effectivePressure");
+        writer.attachCellData(Pcrtens, "Pcr_tensile");
+        writer.attachCellData(Pcrshe, "Pcr_shear");
+        writer.attachCellData(effKx, "effective Kxx");
+        writer.attachCellData(effPorosity, "effective Porosity");
+
+
+    }
+
+    /*!
+     * \brief Applies the initial solution for all vertices of the grid.
+     */
+    void applyInitialSolution_() {
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(InitialPressSat)) InitialPressSat;
+        InitialPressSat initialPressSat(this->problem_().gridView());
+        std::cout << "el2pmodel calls: initialPressSat" << std::endl;
+        initialPressSat.setPressure(this->problem_().pInit());
+
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(InitialDisplacement)) InitialDisplacement;
+        InitialDisplacement initialDisplacement(this->problem_().gridView());
+
+        typedef Dune::PDELab::CompositeGridFunction<InitialPressSat,
+                InitialDisplacement> InitialSolution;
+        InitialSolution initialSolution(initialPressSat, initialDisplacement);
+
+        int numDOFs = this->jacobianAssembler().gridFunctionSpace().size();
+        this->curSol().resize(numDOFs);
+        this->prevSol().resize(numDOFs);
+        std::cout << "numDOFs = " << numDOFs << std::endl;
+
+        Dune::PDELab::interpolate(initialSolution,
+                this->jacobianAssembler().gridFunctionSpace(), this->curSol());
+        Dune::PDELab::interpolate(initialSolution,
+                this->jacobianAssembler().gridFunctionSpace(), this->prevSol());
+    }
+
+    const Problem& problem() const {
+        return this->problem_();
+    }
+
+private:
+    bool rockMechanicsSignConvention_;
+
+};
+}
+#include "el2ppropertydefaults.hh"
+#endif

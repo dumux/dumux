@@ -38,6 +38,10 @@ AC_CONFIG_FILES([dumux.pc
     dumux/freeflow/stokes/Makefile
     dumux/freeflow/stokes2c/Makefile
     dumux/freeflow/stokes2cni/Makefile
+    dumux/geomechanics/Makefile
+    dumux/geomechanics/elastic/Makefile
+    dumux/geomechanics/el1p2c/Makefile
+    dumux/geomechanics/el2p/Makefile
     dumux/implicit/Makefile 
     dumux/implicit/1p/Makefile 
     dumux/implicit/1p2c/Makefile 
@@ -105,6 +109,10 @@ AC_CONFIG_FILES([dumux.pc
     test/freeflow/stokes/Makefile
     test/freeflow/stokes2c/Makefile
     test/freeflow/stokes2cni/Makefile
+    test/geomechanics/Makefile
+    test/geomechanics/elastic/Makefile
+    test/geomechanics/el1p2c/Makefile
+    test/geomechanics/el2p/Makefile
     test/material/Makefile
     test/material/fluidsystems/Makefile
     test/material/immiscibleflash/Makefile

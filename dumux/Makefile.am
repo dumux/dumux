@@ -2,6 +2,7 @@ SUBDIRS = \
 	common \
 	decoupled \
 	freeflow \
+	geomechanics \
 	implicit \
 	io \
 	linear \

@@ -1,6 +1,7 @@
 SUBDIRS = common \
           decoupled \
           freeflow \
+          geomechanics \
           implicit \
           material \
           references
