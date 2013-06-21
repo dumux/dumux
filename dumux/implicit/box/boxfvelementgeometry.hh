@@ -663,6 +663,8 @@ public:
         // _BoxFVElemGeomHelper in order to benefit from more aggressive
         // compiler optimizations...
         BoxFVElemGeomHelper::fillSubContVolData(*this, numScv, edgeCoordinates, faceCoordinates);
+        delete[] edgeCoordinates;
+        delete[] faceCoordinates;
 
         // fill sub control volume face data:
         for (int k = 0; k < numScvf; k++) { // begin loop over edges / sub control volume faces
