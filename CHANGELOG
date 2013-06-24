@@ -6,22 +6,83 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
 
 * Deprecated CLASSES/FILES, to be removed after 2.4:
+  - OnePBoxModel, OnePTwoCBoxModel -> OnePModel, OnePTwoCModel
 
 * Deprecated PROPERTY NAMES, to be removed after 2.4: BEWARE: The compiler will
   not print any warning if a deprecated property name is used.
 
-* Deprecated CONSTANTS/ENUMS, to be removed after 2.4: BEWARE: The compiler will
-  not print any warning if a deprecated constant/enum is used.
+* Deprecated CONSTANTS/ENUMS, to be removed after 2.4: BEWARE: Older compilers 
+  will not print any warning if a deprecated constant/enum is used.
+  - saturation indices: S0Idx, SnIdx, SnOrXIdx, SOrX1Idx, SOrX2Idx, SwIdx, 
+    SwOrXIdx
+    -> s0Idx, snIdx, snOrXIdx, sOrX1Idx, sOrX2Idx, swIdx, swOrXIdx
 
-* Deprecated public MEMBER VARIABLES, to be removed after 2.4: BEWARE: The
-  compiler will not print any warning if a deprecated public member variable 
+  - two-phase formulations: pnSn, pnSw, pwSn, pwSw -> pnsn, pnsw, pwsn, pwsw
+
+  - DecoupledTwoPCommonIndices: pressureNW, saturationNW, velocityNW 
+    -> pressureNw, saturationNw, velocityNw
+
+  - DecoupledTwoPIndices: pressEqIdx -> pressureEqIdx
+
+  - MPNCIndices: NumPrimaryEnergyVars, NumPrimaryVars
+    -> numPrimaryEnergyVars, numPrimaryVars
+
+* Deprecated public MEMBER VARIABLES, to be removed after 2.4: BEWARE: Older
+  compilers will not print any warning if a deprecated public member variable 
   is used.
+  - ...FVElementGeometry: numEdges, numFaces, numFap, numVertices
+    -> numScvf, -, numFap of each subcontrolvolume face, numScv
+
+  - BoxFVElementGeometry: edgeCoord, faceCoord
 
 * Deprecated MACROS, to be removed after 2.4: BEWARE: The compiler will not
   print any warning if a deprecated macro is used.
   - DUMUX_ALWAYS_INLINE whether the according attribute is supported
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.4:
+  - all problems: bboxMin/Max() -> bBoxMin/Max()
+
+  - ImplicitProblem: boxSDNeumann(), boxSDSource()
+    -> solDependentNeumann(), solDependentSource()
+
+  - ImplicitPorousMediaProblem: boxGravity(), boxTemperature() 
+    -> gravityAtPos(), temperatureAtPos() (different signatures!)
+
+  - fluid-matrix-interactions: dkrn_dSw(), dkrw_dSw(), dpc_dSw(), pC(), 
+    dSw_dpC(), Sgr(), Snr(), SnToSne(), Sw(), Swr(), SwToSwe()
+    -> dkrn_dsw(), dkrw_dsw(), dpc_dsw(), pc(), dsw_dpc(), sgr(), snr(), 
+    snToSne(), sw(), swr(), swToSwe()
+
+  - LinearMaterial(Params): entryPC(), maxPC(), setEntryPC(), setMaxPC() 
+    -> entryPc(), maxPc(), setEntryPc(), setMaxPc()
+
+  - RegularizedVanGenuchten(Params): pCHighSw(), pCLowSw() 
+    -> pcHighSw(), pcLowSw()
+
+  - VanGenuchtenParams, ParkerVanGen3PParams: setVgM(), setVgN(), vgM(), vgN()
+    -> setVgm(), setVgn(), vgm(), vgn()
+
+  - ParkerVanGen3P(Params): betaGN(), betaGW(), betaNW(), pCAlpha(), pCGN(), 
+    pCGW(), pCNW(), setBeta..., setkrRegardsSnr(), Swrx()
+    -> betaGn(), betaGw(), betaNw(), pcAlpha(), pcgn(), pcgw(), pcnw(), 
+    setBeta..., setKrRegardsSnr(), swrx()
+
+  - MPLinearMaterialParams: Sreg() -> sReg()
+
+  - EvalCflFlux...: getCFLFluxFunction() -> getCflFluxFunction
+
+  - FVMPFAOInteractionVolume: getNTKNu_by_dF(), getNTKNu(), getNTKrKNu_by_dF(), 
+    getNTKrKNu()
+    -> getNtkNu_df(), getNtkNu(), getNtkrkNu_df(), getNtkrkNu()
+
+  - TwoPDFMVolumeVariables: dSM_dSF() -> dsm_dsf()
+
+  - Stokes...Variables: viscosity() -> dynamicViscosity()
+
+  - IAPWS water: ddgamma_ddpi, ddgamma_ddtau, ddgamma_dtaudpi, dgamma_dpi, 
+    dgamma_dtau, dp_dpi, dpi_dp, dtau_dt 
+    -> ddGamma_ddPi, ddGamma_ddTau, ddGamma_dTaudPi, dGamma_dPi, dGamma_dTau, 
+    dp_dPi, dPi_dp, dTau_dt
 
 * DELETED classes/files, property names, constants/enums, 
   member functions/variables, which have been deprecated in DuMuX 2.3:
