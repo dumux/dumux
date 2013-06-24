@@ -61,9 +61,7 @@ NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extra
 NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the soil)
 NEW_PROP_TAG(WettingPhase); //!< The wetting phase for two-phase models
 NEW_PROP_TAG(NonwettingPhase); //!< The non-wetting phase for two-phase models
-NEW_PROP_TAG(UpwindAlpha);   //!< DEPRECATED The default value of the upwind parameter
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight);   //!< The default value of the upwind parameter
-NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(FluidSystem); //!< The fluid systems including the information about the phases
 NEW_PROP_TAG(FluidState); //!< The phases state
