@@ -50,6 +50,11 @@ class ElTwoPElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(T
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+            typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+#else
+            typedef typename Element::Geometry::Jacobian JacobianInverseTransposed;
+#endif
     enum { dim = GridView::dimension };
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
@@ -224,7 +229,7 @@ public:
             displacementLFS.child(0).finiteElement().localBasis().evaluateJacobian(scvCenter, vRefShapeGradient);
 
             // transform gradient to element in global coordinates
-            const Dune::FieldMatrix<DF,dim,dim> jacInvT = element.geometry().jacobianInverseTransposed(scvCenter);
+            const JacobianInverseTransposed jacInvT = element.geometry().jacobianInverseTransposed(scvCenter);
             std::vector<Dune::FieldVector<RF,dim> > vShapeGradient(dispSize);
 
             // loop over element vertices

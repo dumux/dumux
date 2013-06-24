@@ -129,7 +129,11 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::ctype CoordScalar;
-
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+            typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+#else
+            typedef typename Element::Geometry::Jacobian JacobianInverseTransposed;
+#endif
 
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -422,7 +426,7 @@ public:
             displacementLFS.child(0).finiteElement().localBasis().evaluateJacobian(cellCenterLocal, vRefShapeGradient);
 
             // get jacobian to transform the gradient to physical element
-            const Dune::FieldMatrix<DF, dim, dim> jacInvT =    elemIt->geometry().jacobianInverseTransposed(cellCenterLocal);
+            const JacobianInverseTransposed jacInvT = elemIt->geometry().jacobianInverseTransposed(cellCenterLocal);
             std::vector < Dune::FieldVector<RF, dim> > vShapeGradient(dispSize);
             for (size_t i = 0; i < dispSize; i++) {
                 vShapeGradient[i] = 0.0;

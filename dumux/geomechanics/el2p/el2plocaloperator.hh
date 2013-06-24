@@ -62,6 +62,11 @@ class El2PLocalOperator
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+            typedef typename GridView::template Codim<0>::Entity::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+#else
+            typedef typename GridView::template Codim<0>::Entity::Geometry::Jacobian JacobianInverseTransposed;
+#endif
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename Dune::PDELab::IntersectionGeometry<Intersection>::ctype DT;
@@ -228,7 +233,7 @@ public:
 
 
              // get inverse transposed jacobian for quadrature point
-             const Dune::FieldMatrix<DF,dim,dim> jacobian = eg.geometry().jacobianInverseTransposed(it->position());
+             const JacobianInverseTransposed jacobian = eg.geometry().jacobianInverseTransposed(it->position());
 
              // calculate shape function gradients at the quadrature point in global coordinates. This is done
              // by multiplying the reference element shape functions with the inverse transposed jacobian
