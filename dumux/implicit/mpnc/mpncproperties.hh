@@ -113,6 +113,9 @@ NEW_PROP_TAG(EnableKinetic);
 //! Enable kinetic resolution of energy transfer processes?
 NEW_PROP_TAG(EnableKineticEnergy);
 
+//! Enable Maxwell Diffusion? (If false: use Fickian Diffusion) Maxwell incorporated the mutual influences of multiple diffusing components. However, Fick seems to be more robust.
+NEW_PROP_TAG(UseMaxwellDiffusion);
+
 //! Enable gravity?
 NEW_PROP_TAG(ProblemEnableGravity);
 

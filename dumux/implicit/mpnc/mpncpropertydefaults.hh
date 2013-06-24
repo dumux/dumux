@@ -144,6 +144,9 @@ SET_BOOL_PROP(MPNC, EnableKinetic, false);
 //! disable kinetic energy transfer by default
 SET_BOOL_PROP(MPNC, EnableKineticEnergy, false);
 
+//! disable Maxwell Diffusion by default: use Fick
+SET_BOOL_PROP(MPNC, UseMaxwellDiffusion, false);
+
 //! enable smooth upwinding by default
 SET_BOOL_PROP(MPNC, ImplicitEnableSmoothUpwinding, false);
 

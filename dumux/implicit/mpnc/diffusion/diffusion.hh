@@ -43,6 +43,8 @@ class MPNCDiffusion
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
+    enum { wCompIdx = FluidSystem::wCompIdx };
+    enum { nCompIdx = FluidSystem::nCompIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef Dune::FieldMatrix<Scalar, numComponents, numComponents> ComponentMatrix;
@@ -52,7 +54,7 @@ public:
     static void flux(ComponentVector &fluxes,
                      const unsigned int phaseIdx,
                      const FluxVariables &fluxVars,
-                     const Scalar molarDensity)
+                     const Scalar molarDensity )
     {
         if (phaseIdx == nPhaseIdx)
             gasFlux_(fluxes, fluxVars, molarDensity);
@@ -86,35 +88,48 @@ protected:
                          const FluxVariables &fluxVars,
                          const Scalar molarDensity)
     {
-        // Stefan-Maxwell equation
-        //
-        // See: R. Reid, et al.: "The Properties of Liquids and
-        // Gases", 4th edition, 1987, McGraw-Hill, p 596
+        // Alternative: use Fick Diffusion: no mutual influence of diffusion
+        if (GET_PROP_VALUE(TypeTag, UseMaxwellDiffusion) ){
+            // Stefan-Maxwell equation
+            //
+            // See: R. Reid, et al.: "The Properties of Liquids and
+            // Gases", 4th edition, 1987, McGraw-Hill, p 596
 
-        // TODO: tensorial diffusion coefficients
-        ComponentMatrix M(0);
+            // TODO: tensorial diffusion coefficients
+            ComponentMatrix M(0);
 
-        for (int compIIdx = 0; compIIdx < numComponents - 1; ++compIIdx) {
-            for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
-                Scalar Dij = fluxVars.porousDiffCoeffG(compIIdx, compJIdx);
-                if (Dij) {
-                    M[compIIdx][compJIdx] += fluxVars.moleFraction(nPhaseIdx, compIIdx) / Dij;
-                    M[compIIdx][compIIdx] -= fluxVars.moleFraction(nPhaseIdx, compJIdx) / Dij;
+            for (int compIIdx = 0; compIIdx < numComponents - 1; ++compIIdx) {
+                for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
+                    Scalar Dij = fluxVars.porousDiffCoeffG(compIIdx, compJIdx);
+                    if (Dij) {
+                        M[compIIdx][compJIdx] += fluxVars.moleFraction(nPhaseIdx, compIIdx) / Dij;
+                        M[compIIdx][compIIdx] -= fluxVars.moleFraction(nPhaseIdx, compJIdx) / Dij;
+                    }
                 }
             }
-        }
 
-        for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx) {
-            M[numComponents - 1][compIIdx] = 1.0;
-        }
+            for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx) {
+                M[numComponents - 1][compIIdx] = 1.0;
+            }
 
-        ComponentVector rightHandSide ; // see source cited above
-        for (int compIIdx = 0; compIIdx < numComponents - 1; ++compIIdx) {
-            rightHandSide[compIIdx] = molarDensity*(fluxVars.moleFractionGrad(nPhaseIdx, compIIdx)*fluxVars.face().normal);
-        }
-        rightHandSide[numComponents - 1] = 0.0;
+            ComponentVector rightHandSide ; // see source cited above
+            for (int compIIdx = 0; compIIdx < numComponents - 1; ++compIIdx) {
+                rightHandSide[compIIdx] = molarDensity*(fluxVars.moleFractionGrad(nPhaseIdx, compIIdx)*fluxVars.face().normal);
+            }
+            rightHandSide[numComponents - 1] = 0.0;
 
-        M.solve(fluxes, rightHandSide);
+            M.solve(fluxes, rightHandSide);
+        }
+        else{// Fick Diffusion
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+                // TODO: tensorial diffusion coefficients
+                const Scalar xGrad = fluxVars.moleFractionGrad(nPhaseIdx, compIdx)*fluxVars.face().normal;
+                fluxes[compIdx] =
+                    - xGrad *
+                    molarDensity
+                    * fluxVars.porousDiffCoeffG(compIdx, nCompIdx) ; // this is == 0 for nComp==comp, i.e. no diffusion of the main component of the phase
+                }
+        }
     }
 
     // return whether a concentration can be assumed to be a trace
