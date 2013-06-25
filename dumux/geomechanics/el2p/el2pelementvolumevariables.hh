@@ -83,7 +83,7 @@ public:
      * \param problem The problem which needs to be simulated.
      * \param element The DUNE Codim<0> entity for which the volume variables ought to be calculated
      * \param fvGeometry The finite volume geometry of the element
-     * \param oldSol Tells whether the model's previous or current solution should be used.
+     * \param isOldSol Tells whether the model's previous or current solution should be used.
      *
      * This class is required for the update of the effective porosity values at the
      * vertices since it is a function of the divergence of the solid displacement
@@ -92,11 +92,11 @@ public:
     void update(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
-                bool oldSol)
+                bool isOldSol)
     {
         // retrieve the current or the previous solution vector and write the values into globalSol
         const SolutionVector &globalSol =
-            oldSol?
+            isOldSol?
             problem.model().prevSol():
             problem.model().curSol();
 
@@ -144,13 +144,13 @@ public:
                               element,
                               fvGeometry,
                               scvIdx,
-                              oldSol);
+                              isOldSol);
 
             Valgrind::CheckDefined((*this)[scvIdx]);
         }
-        this->updateEffPorosity(problem, element, fvGeometry, oldSol);
+        this->updateEffPorosity(problem, element, fvGeometry, isOldSol);
 
-        if (oldSol)
+        if (isOldSol)
             prevValues_ = values;
         else
             dofValues_ = values;
@@ -162,6 +162,7 @@ public:
      * \param problem The problem which needs to be simulated.
      * \param element The DUNE Codim<0> entity for which the volume variables ought to be calculated
      * \param fvGeometry The finite volume geometry of the element
+     * \param isOldSol Specifies whether this is the previous solution or the current one
      *
      * This function is required for the update of the effective porosity values at the
      * vertices.
@@ -176,13 +177,13 @@ public:
     void updateEffPorosity(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
-                bool oldSol)
+                bool isOldSol)
     {
         int numScv = element.template count<dim>();
 
         // retrieve the current or the previous solution vector and write the values into globalSol
         const SolutionVector &globalSol =
-            oldSol?
+            isOldSol?
             problem.model().prevSol():
             problem.model().curSol();
 

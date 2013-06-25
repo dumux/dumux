@@ -311,9 +311,9 @@ namespace Dumux
             /*!
              * \brief Evaluates the total stress induced by effective stresses and fluid
              * pressure in the solid fluid mixture.
-                *         \param stress The stress over the sub-control-volume face for each component
-             *         \param fluxVars The flux variables at the current sub-control-volume face
-             *         \param faceIdx The index of the current sub-control-volume face
+             * \param stress The stress over the sub-control-volume face for each component
+             * \param vars The variables at the current sub-control-volume face
+             * \param faceIdx The index of the current sub-control-volume face
              */
             void computeStresses(PrimaryVariables &stress,
                     const FluxVariables &vars, const int faceIdx) const

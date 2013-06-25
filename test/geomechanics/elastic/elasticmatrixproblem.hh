@@ -88,7 +88,7 @@ SET_BOOL_PROP(ElasticMatrixProblem, ProblemEnableGravity, false);
  *                                       \f$ \boldsymbol{\sigma_{zz}} = -2\,\frac{\mu \nu}{E} + \frac{\lambda}{E}\f$.
  * The shear stresses are set to zero.
  *
- * This problem uses the \ref ElasticBoxModel model.
+ * This problem uses the \ref ElasticModel model.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_elastic -parameterFile ./test_elastic.input</tt>

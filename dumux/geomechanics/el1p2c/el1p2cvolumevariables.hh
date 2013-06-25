@@ -67,12 +67,12 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
+                const FVElementGeometry &fvGeometry,
                 int scvIdx,
                 bool isOldSol)
     {
 
-        ParentType::update(priVars,problem,element,elemGeom,scvIdx,isOldSol);
+        ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
         int globalIdx = problem.vertexMapper().map(element, scvIdx, dim);
 
         primaryVars_ = priVars;
@@ -82,7 +82,7 @@ public:
         prev1p2cVolVars.update(problem.model().prevSol()[globalIdx],
                                problem,
                                element,
-                               elemGeom,
+                               fvGeometry,
                                scvIdx,
                                true);
 
@@ -96,7 +96,7 @@ public:
         dU_ = displacement_ - prevDisplacement_;
 
         const Dune::FieldVector<Scalar, 2> &lameParams =
-                problem.spatialParams().lameParams(element, elemGeom, scvIdx);
+                problem.spatialParams().lameParams(element, fvGeometry, scvIdx);
 
         lambda_ = lameParams[0];
         mu_ = lameParams[1];

@@ -187,14 +187,14 @@ public:
     }
 
     /*!
-     * \brief Define if the model should apply two-point approximation instead of a box approximation for the
-     * fluxes
+     * \brief Define if the model should apply two-point approximation 
+     * instead of a box approximation for the fluxes
      *
      * \param element The finite element
      * \param vertexI first point for the two-point flux approximation
      * \param vertexJ second point for the two-point flux approximation
      */
-    bool useTwoPointGradient(const Element &elem,
+    bool useTwoPointGradient(const Element &element,
                              int vertexI,
                              int vertexJ) const
     {

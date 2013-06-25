@@ -135,8 +135,8 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      */
     const Scalar E(const Element &element,
-                                           const FVElementGeometry &fvGeometry,
-                                           int scvIdx) const
+                   const FVElementGeometry &fvGeometry,
+                   int scvIdx) const
     {
         return E_;
     }
@@ -149,8 +149,8 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      */
     const Scalar nu(const Element &element,
-                                           const FVElementGeometry &fvGeometry,
-                                           int scvIdx) const
+                    const FVElementGeometry &fvGeometry,
+                    int scvIdx) const
     {
         return nu_;
     }

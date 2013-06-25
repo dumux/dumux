@@ -68,11 +68,11 @@ namespace Dumux {
  \f[
  \beta \text{div} \textbf{grad} \frac{\partial p}{\partial t}
  \f]
- with \f$\beta$\f:
+ with \f$\beta\f$:
  \f[
  \beta = h^2 / 4(\lambda + 2 \mu)
  \f]
- * where \f$h$\f is the discretization length.
+ * where \f$h\f$ is the discretization length.
  *
  * The balance equations
  * with the stabilization term are given below:

@@ -77,11 +77,11 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
+                const FVElementGeometry &fvGeometry,
                 int scvIdx,
                 bool isOldSol)
     {
-        TwoPBase::update(priVars,problem,element,elemGeom,scvIdx,isOldSol);
+        TwoPBase::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
         primaryVars_ = priVars;
 
         for (int coordDir = 0; coordDir < dim; ++coordDir)
@@ -91,7 +91,7 @@ public:
                         + this->density(nPhaseIdx) * this->saturation(nPhaseIdx);
 
         const Dune::FieldVector<Scalar, 2> &lameParams =
-                problem.spatialParams().lameParams(element, elemGeom, scvIdx);
+                problem.spatialParams().lameParams(element, fvGeometry, scvIdx);
 
         lambda_ = lameParams[0];
         mu_ = lameParams[1];

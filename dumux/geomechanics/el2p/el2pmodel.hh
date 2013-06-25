@@ -165,14 +165,14 @@ public:
      * Therefore, the serializeEntity function has to be modified.
      */
     template <class Entity>
-    void serializeEntity(std::ostream &outstream,
+    void serializeEntity(std::ostream &outStream,
                          const Entity &entity)
     {
         // vertex index
         int dofIdx = this->dofMapper().map(entity);
 
         // write phase state
-        if (!outstream.good()) {
+        if (!outStream.good()) {
             DUNE_THROW(Dune::IOError,
                        "Could not serialize vertex "
                        << dofIdx);
@@ -180,14 +180,14 @@ public:
         int numScv = this->gridView().size(dim);
         // get p and S entries for this vertex
         for (int eqIdx = 0; eqIdx < numEq-dim; ++eqIdx) {
-            outstream << this->curSol()[dofIdx*(numEq-dim) + eqIdx][0]<<" ";
+            outStream << this->curSol()[dofIdx*(numEq-dim) + eqIdx][0]<<" ";
         }
         // get ux, uy, uz entries for this vertex
         for (int j = 0; j< dim; ++j)
-            outstream << this->curSol()[numScv*(numEq-dim) + dofIdx*dim + j][0] <<" ";
+            outStream << this->curSol()[numScv*(numEq-dim) + dofIdx*dim + j][0] <<" ";
 
         int vertIdx = this->dofMapper().map(entity);
-        if (!outstream.good())
+        if (!outStream.good())
             DUNE_THROW(Dune::IOError, "Could not serialize vertex " << vertIdx);
     }
 
@@ -207,11 +207,11 @@ public:
      * Therefore, the deserializeEntity function has to be modified.
      */
     template<class Entity>
-    void deserializeEntity(std::istream &instream, const Entity &entity)
+    void deserializeEntity(std::istream &inStream, const Entity &entity)
     {
         int dofIdx = this->dofMapper().map(entity);
 
-        if (!instream.good()){
+        if (!inStream.good()){
                 DUNE_THROW(Dune::IOError,
                            "Could not deserialize vertex "
                            << dofIdx);
@@ -219,10 +219,10 @@ public:
         int numScv = this->gridView().size(dim);
         for (int eqIdx = 0; eqIdx < numEq-dim; ++eqIdx) {
         // read p and S entries for this vertex
-        instream >> this->curSol()[dofIdx*(numEq-dim) + eqIdx][0];}
+        inStream >> this->curSol()[dofIdx*(numEq-dim) + eqIdx][0];}
         for (int j = 0; j< dim; ++j){
             // read ux, uy, uz entries for this vertex
-            instream >> this->curSol()[numScv*(numEq-dim) + dofIdx*dim + j][0];}
+            inStream >> this->curSol()[numScv*(numEq-dim) + dofIdx*dim + j][0];}
     }
 
 
