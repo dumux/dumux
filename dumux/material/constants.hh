@@ -58,6 +58,13 @@ class Constants
     static const Scalar c;
 
     /*!
+     * \brief Faraday constant [C/mol]
+     *
+     * Source: CODATA 2010
+     */
+    static const Scalar F;
+
+    /*!
      * \brief Newtonian constant of gravitation [m^3/(kg s^2)]
      */
     static const Scalar G;
@@ -87,6 +94,8 @@ template<class Scalar>
 const Scalar Constants<Scalar>::h = 6.62606896e-34;
 template<class Scalar>
 const Scalar Constants<Scalar>::hRed = Constants<Scalar>::h / (2 * M_PI);
+template<class Scalar>
+const Scalar Constants<Scalar>::F = 96485.3365;
 }
 
 #endif
