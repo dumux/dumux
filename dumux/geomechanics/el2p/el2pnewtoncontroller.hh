@@ -65,7 +65,6 @@ public:
     {
         // calculate the relative error as the maximum relative
         // deflection in any degree of freedom.
-        typedef typename SolutionVector::block_type FV;
         this->error_ = 0;
 
         for (int i = 0; i < int(uOld.size()); ++i) {

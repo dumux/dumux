@@ -213,7 +213,6 @@ public:
                         Traits::LocalBasisType::Traits::RangeType RT_V;
         typedef typename DisplacementScalarLFS::Traits::FiniteElementType::
                         Traits::LocalBasisType::Traits::JacobianType JacobianType_V;
-        typedef typename DisplacementScalarLFS::Traits::SizeType size_type;
         typedef typename PressLFS::Traits::FiniteElementType::
                         Traits::LocalBasisType::Traits::DomainFieldType DF;
         typedef typename PressLFS::Traits::FiniteElementType::
@@ -446,7 +445,6 @@ public:
 
             for(unsigned int coordDir=0; coordDir<dim; ++coordDir){
                 const DisplacementScalarLFS& uLFS = displacementLFS.child(coordDir);
-                typedef typename DisplacementScalarLFS::Traits::FiniteElementType FEType;
 
                 // loop over number of element vertices
                 for (size_t i = 0; i <  dispSize; i++)

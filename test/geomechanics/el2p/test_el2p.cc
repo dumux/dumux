@@ -30,12 +30,9 @@
 int main(int argc, char** argv) {
     try {
         typedef TTAG(El2P_TestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
         typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
-        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
         typedef Dune::GridPtr<Grid> GridPointer;
 
         // initialize MPI, finalize is done automatically on exit

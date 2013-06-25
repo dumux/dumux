@@ -354,9 +354,6 @@ public:
             std::vector<Scalar> values;
             localFunctionSpace.vread(sol, values);
 
-            // pressure local function space (mass balance equations)
-            typedef typename LocalFunctionSpace::template Child<0>::Type PressSatLFS;
-            typedef typename PressSatLFS::template Child<0>::Type PressLFS;
             // local function space for solid displacement
             typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
             const DisplacementLFS& displacementLFS =localFunctionSpace.template child<1>();
@@ -365,7 +362,6 @@ public:
             // further types required for gradient calculations
             typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::JacobianType JacobianType_V;
             typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::RangeFieldType RF;
-            typedef typename PressLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::DomainFieldType DF;
 
             unsigned int elemIdx = this->problem_().model().elementMapper().map(*elemIt);
             rank[elemIdx] = this->gridView_().comm().rank();

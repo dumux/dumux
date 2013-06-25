@@ -24,7 +24,7 @@
 #ifndef DUMUX_EIGENVALUES_HH
 #define DUMUX_EIGENVALUES_HH
 
-#include <math.h>
+#include <cmath>
 
 namespace Dumux
 {
@@ -134,7 +134,6 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix)
         return false;
     }
 }
-;
 
 }
 

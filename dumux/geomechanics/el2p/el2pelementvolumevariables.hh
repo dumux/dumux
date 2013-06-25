@@ -119,14 +119,6 @@ public:
         typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
         const DisplacementLFS& displacementLFS = localFunctionSpace.template getChild<1>();
         typedef typename DisplacementLFS::template Child<0>::Type ScalarDispLFS;
-        // further types required for gradient calculations
-        typedef typename ScalarDispLFS::Traits::FiniteElementType::
-                Traits::LocalBasisType::Traits::JacobianType JacobianType_V;
-        typedef typename ScalarDispLFS::Traits::FiniteElementType::
-                Traits::LocalBasisType::Traits::RangeFieldType RF;
-        typedef typename PressLFS::Traits::FiniteElementType::
-                Traits::LocalBasisType::Traits::DomainFieldType DF;
-        typedef Dune::FieldMatrix<RF, dim, dim> Tensor;
 
         int numScv = element.template count<dim>();
         this->resize(numScv);
@@ -210,10 +202,6 @@ public:
                 Traits::LocalBasisType::Traits::JacobianType JacobianType_V;
         typedef typename ScalarDispLFS::Traits::FiniteElementType::
                 Traits::LocalBasisType::Traits::RangeFieldType RF;
-        typedef typename LocalFunctionSpace::template Child<0>::Type PressSatLFS;
-        typedef typename PressSatLFS::template Child<0>::Type PressLFS;
-        typedef typename PressLFS::Traits::FiniteElementType::
-                Traits::LocalBasisType::Traits::DomainFieldType DF;
         typedef Dune::FieldMatrix<RF, dim, dim> Tensor;
 
         for (int scvIdx = 0; scvIdx < numScv; scvIdx++)
