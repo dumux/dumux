@@ -2,6 +2,39 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
+  - Three geomechanics models have been added, thanks to the previous PhD work
+    of Melanie Darcis. The models are located in dumux/geomechanics, a test for
+    each model is provided in test/geomechanics:
+    . elastic: linear elasticity equations that account only for the solid
+               mechanics.
+    . el1p2c:  poroelasticity equations for one solid and one fluid phase, where
+               the fluid phase is admitted to consist of two components.
+    . el2p:    poroelasticity equations for one solid phase and two immiscible
+               fluid phases.
+
+  - The handling of Dirichlet boundary conditions for the fully-implicit cell-
+    centered models has been improved. Now, the conditions are evaluated at the
+    centers of the corresponding boundary faces. In general, they are
+    incorporated into the local residual in a weak sense. Only for mixed
+    Dirichlet/Neumann conditions and for the MPNC model, they still are
+    incorporated in a strong sense.
+
+  - All fully-implicit porous-media models now provide the possibility to write
+    the velocities to the VTK output. This can be achieved by setting the
+    parameter "AddVelocity" of the group "Vtk" or the corresponding property 
+    "VtkAddVelocity." See test/implicit/1p2c for an example.
+
+  - Our naming rules have been refined and enforced for member functions and
+    variables. Many inconsistencies could be removed, especially the special
+    status of the capitalized "S" indicating saturation. See the deprecation
+    listings below or FS#180 for details.
+
+  - Misleading names in the fully-implicit models that still contained "b/Box"
+    have been replaced by more generic ones. See the deprecation listings below
+    or FS#194 for details.
+
+  - The ...FVElementGeometry classes have been cleaned up a bit. See the 
+    deprecation listings below or FS#192 for details.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
 
