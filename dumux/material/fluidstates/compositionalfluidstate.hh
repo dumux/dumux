@@ -224,7 +224,6 @@ public:
                 averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compIdx]*FluidSystem::molarMass(compIdx);
                 sumMoleFractions_[phaseIdx] += moleFraction_[phaseIdx][compIdx];
             }
-            averageMolarMass_[phaseIdx] = fs.averageMolarMass(phaseIdx);
             pressure_[phaseIdx] = fs.pressure(phaseIdx);
             saturation_[phaseIdx] = fs.saturation(phaseIdx);
             density_[phaseIdx] = fs.density(phaseIdx);
