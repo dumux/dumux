@@ -107,8 +107,8 @@ public:
      *
      * \param element The current finite element
      * \param fvGeometry The current finite volume geometry of the element
-     * \param scvfIdx The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param scvIdx The local index of the sub-control volume where
+     *                    the porosity needs to be defined
      */
 
     const Tensor intrinsicPermeability(const Element &element,

@@ -157,8 +157,8 @@ public:
      *
      * \param element The current finite element
      * \param fvGeometry The current finite volume geometry of the element
-     * \param scvfIdx The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param scvIdx The local index of the sub-control volume where
+     *                    the porosity needs to be defined
      *
      * During the initialization period the intrinsic permeability can be set to a larger
      * value in order to accelerate the calculation of the hydrostatic pressure distribution.
