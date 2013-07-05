@@ -80,6 +80,7 @@ NEW_PROP_TAG( ImpetErrorTermUpperBound ); //!< Lower bound where error is not co
 NEW_PROP_TAG( FluidSystem ); //!< The fluid system
 NEW_PROP_TAG( FluidState ); //!< The fluid state
 NEW_PROP_TAG( ImpetEnableVolumeIntegral ); //!< Enables volume integral in the pressure equation (volume balance formulation)
+NEW_PROP_TAG( RegulateBoundaryPermeability ); //!< A minimum permeability can be assigned via the runtime-Parameter SpatialParams.minBoundaryPermeability
 }}
 
 //DUMUX includes
@@ -155,8 +156,9 @@ SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, TwoPTwoCFluidState<TypeTag>);
 
 
 //! The spatial parameters to be employed. 
-//! Use BoxSpatialParams by default.
 SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
+//! Switch off permeability regularization at Dirichlet boundaries by default.
+SET_BOOL_PROP(DecoupledTwoPTwoC, RegulateBoundaryPermeability, false);
 
 SET_BOOL_PROP(DecoupledTwoPTwoC, ImpetEnableVolumeIntegral, true); //!< Regard volume integral in pressure equation
 
@@ -191,12 +193,15 @@ public:
     static const int wCompIdx = wPhaseIdx; //!< Component index equals phase index
     static const int nCompIdx = nPhaseIdx; //!< Component index equals phase index
 
-    // Ensure pressure fomrulation index coincides with FluidSystem
+    // Ensure pressure formulation index coincides with FluidSystem
     static const int pressureW = wPhaseIdx;
-    static const int pressureNw = nPhaseIdx;
+    static const int pressureN = nPhaseIdx;
 
-    DUNE_DEPRECATED_MSG("use pressureNw (uncapitalized 'w') instead") 
-    static const int pressureNW = pressureNw; //!< \deprecated
+    DUNE_DEPRECATED_MSG("use pressureN (avoid 'w') instead")
+    static const int pressureNw = pressureN;
+
+    DUNE_DEPRECATED_MSG("use pressureN (uncapitalized 'w', to be avoided) instead")
+    static const int pressureNW = pressureN; //!< \deprecated
 
     // Equation indices
     static const int pressureEqIdx = 0;

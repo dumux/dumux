@@ -148,6 +148,9 @@ public:
         return;
     }
 
+    //constitutive functions are initialized and stored in the variables object
+    void updateMaterialLaws(bool postTimeStep = false);
+
     //numerical volume derivatives wrt changes in mass, pressure
     void volumeDerivatives(const GlobalPosition&,const Element& ep);
 
@@ -325,6 +328,29 @@ public:
         *permPtr = perm_;
         initializationOutputWriter_.attachCellData(*poroPtr, "porosity");
         initializationOutputWriter_.attachCellData(*permPtr, "permeability");
+
+        if(problem_.vtkOutputLevel()>=3)
+        {
+            Dune::BlockVector<Dune::FieldVector<double,1> > *permPtrY = initializationOutputWriter_.allocateManagedBuffer (size_);
+            Dune::BlockVector<Dune::FieldVector<double,1> > *permPtrZ = initializationOutputWriter_.allocateManagedBuffer (size_);
+            Dune::BlockVector<Dune::FieldVector<double,1> > permY_(0.), permZ_(0.);
+            permY_.resize(size_); permZ_.resize(size_);
+            // iterate over all elements of domain
+            for (ElementIterator eIt = problem_.gridView().template begin<0> ();
+                    eIt != problem_.gridView().template end<0>(); ++eIt)
+            {
+                // get index
+                int globalIdx = problem_.variables().index(*eIt);
+                if(dim >=2)
+                    permY_[globalIdx] = problem_.spatialParams().intrinsicPermeability(*eIt)[1][1];
+                if(dim >=3)
+                    permZ_[globalIdx] = problem_.spatialParams().intrinsicPermeability(*eIt)[2][2];
+            }
+            *permPtrY = permY_;
+            *permPtrZ = permZ_;
+            initializationOutputWriter_.attachCellData(*permPtrY, "permeability Y");
+            initializationOutputWriter_.attachCellData(*permPtrZ, "permeability Z");
+        }
 #endif
 
         initializationOutputWriter_.endWrite();
@@ -347,10 +373,11 @@ public:
         ErrorTermLowerBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermLowerBound);
         ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
 
-        if (pressureType != pw && pressureType != pn)
+        if (pressureType == Indices::pressureGlobal)
         {
-            DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
+            DUNE_THROW(Dune::NotImplemented, "Global Pressure type not supported!");
         }
+        maxError_=0.;
     }
 protected:
     TransportSolutionType updateEstimate_; //! Update estimate for changes in volume for the pressure equation
@@ -359,12 +386,22 @@ protected:
     //! output for the initialization procedure
     Dumux::VtkMultiWriter<GridView> initializationOutputWriter_;
 
+    Scalar maxError_; //!< Maximum volume error of all cells
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
 
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
 private:
+    Problem& problem()
+    {
+        return problem_;
+    }
+    const Problem& problem() const
+    {
+        return problem_;
+    }
+
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     {   return *static_cast<Implementation *>(this);}
@@ -393,6 +430,9 @@ void FVPressureCompositional<TypeTag>::initialize(bool solveTwice)
     Dune::dinfo << "first saturation guess"<<std::endl; //=J: initialGuess()
         problem_.pressureModel().initialMaterialLaws(false);
             #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+                // this update produces fluxes on init pressures
+                Scalar dummy;
+                problem_.transportModel().update(0.,dummy, updateEstimate_, false);
                 initializationOutput();
             #endif
     Dune::dinfo << "first pressure guess"<<std::endl;
@@ -654,6 +694,35 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
     return;
 }
 
+//! updates secondary variables
+/*!
+ * A loop through all elements updates the secondary variables stored in the variableclass
+ * by using the updated primary variables.
+ * \param postTimeStep Flag indicating method is called from Problem::postTimeStep()
+ */
+template<class TypeTag>
+void FVPressureCompositional<TypeTag>::updateMaterialLaws(bool postTimeStep)
+{
+    Scalar maxError = 0.;
+    // iterate through leaf grid an evaluate c0 at cell center
+    ElementIterator eItEnd = problem().gridView().template end<0> ();
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    {
+        int globalIdx = problem().variables().index(*eIt);
+
+        CellData& cellData = problem().variables().cellData(globalIdx);
+
+        asImp_().updateMaterialLawsInElement(*eIt, postTimeStep);
+
+        maxError = std::max(maxError, fabs(cellData.volumeError()));
+    }
+    if (problem_.gridView().comm().size() > 1)
+        maxError_ = problem_.gridView().comm().max(maxError_);
+
+    maxError_ = maxError/problem().timeManager().timeStepSize();
+    return;
+}
+
 //! partial derivatives of the volumes w.r.t. changes in total concentration and pressure
 /*!
  * This method calculates the volume derivatives via a secant method, where the
@@ -674,7 +743,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     CellData& cellData = problem_.variables().cellData(globalIdx);
 
     // get cell temperature
-    Scalar temperature_ = problem_.temperatureAtPos(globalPos);
+    Scalar temperature_ = cellData.temperature(wPhaseIdx);
 
     // initialize an Fluid state and a flash solver
     FluidState updFluidState;
@@ -701,6 +770,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     Scalar volalt = mass.one_norm() * specificVolume;
 //    volalt = cellData.volumeError()+problem_.spatialParams().porosity(element);
         // = \sum_{\kappa} C^{\kappa} + \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
+    Scalar save = specificVolume;
 
     /**********************************
      * b) define increments
@@ -729,10 +799,9 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
     for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
         specificVolume += updFluidState.phaseMassFraction(phaseIdx) / updFluidState.density(phaseIdx);
+    Scalar dv_dp = ((mass.one_norm() * specificVolume) - volalt) /incp;
 
-    cellData.dv_dp() = ((mass.one_norm() * specificVolume) - volalt) /incp;
-
-    if (cellData.dv_dp()>0)
+    if (dv_dp>0)
     {
         // dV_dp > 0 is unphysical: Try inverse increment for secant
         Dune::dinfo << "dv_dp larger 0 at Idx " << globalIdx << " , try and invert secant"<< std::endl;
@@ -744,14 +813,28 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
         specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
         for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
             specificVolume += updFluidState.phaseMassFraction(phaseIdx) / updFluidState.density(phaseIdx);
-        cellData.dv_dp() = ((mass.one_norm() * specificVolume) - volalt) /incp;
+        dv_dp = ((mass.one_norm() * specificVolume) - volalt) /incp;
 
         // dV_dp > 0 is unphysical: Try inverse increment for secant
-        if (cellData.dv_dp()>0)
+        if (dv_dp>0)
         {
-            Dune::dinfo << "dv_dp still larger 0 after inverting secant"<< std::endl;
+            Dune::dwarn << "dv_dp still larger 0 after inverting secant at idx"<< globalIdx<< std::endl;
+            p_ += 2*incp;
+            flashSolver.concentrationFlash2p2c(updFluidState, Z1,
+                        p_, problem_.spatialParams().porosity(element), temperature_);
+            // neglect effects of phase split, only regard changes in phase densities
+            specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
+            for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
+                specificVolume += cellData.phaseMassFraction(phaseIdx) / updFluidState.density(phaseIdx);
+            dv_dp = ((mass.one_norm() * specificVolume) - volalt) /incp;
+            if (dv_dp>0)
+            {
+                std::cout << "dv_dp still larger 0 after both inverts at idx " << globalIdx << std::endl;
+                dv_dp = cellData.dv_dp();
+            }
         }
     }
+    cellData.dv_dp()=dv_dp;
 
     // numerical derivative of fluid volume with respect to mass of components
     for (int compIdx = 0; compIdx<numComponents; compIdx++)

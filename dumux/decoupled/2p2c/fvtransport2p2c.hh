@@ -85,7 +85,8 @@ class FVTransport2P2C
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
         contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx,
-        NumPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        NumPhases = GET_PROP_VALUE(TypeTag, NumPhases), 
+        NumComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -98,6 +99,7 @@ class FVTransport2P2C
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
     typedef Dune::FieldVector<Scalar, NumPhases> PhaseVector;
+    typedef Dune::FieldVector<Scalar, NumComponents> ComponentVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 protected:
     //! @copydoc FVPressure::EntryType
@@ -112,11 +114,11 @@ public:
     void updateTransportedQuantity(TransportSolutionType& updateVector);
 
     // Function which calculates the flux update
-    void getFlux(EntryType&, EntryType&,
+    void getFlux(ComponentVector&, EntryType&,
             const Intersection&, CellData&);
 
     // Function which calculates the boundary flux update
-    void getFluxOnBoundary(EntryType&, EntryType&,
+    void getFluxOnBoundary(ComponentVector&, EntryType&,
                             const Intersection&, const CellData&);
 
     void evalBoundary(GlobalPosition,const Intersection&,FluidState &, PhaseVector &);
@@ -166,8 +168,11 @@ public:
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int globalIdx = problem().variables().index(element);
+        CellData& cellData = problem().variables().cellData(globalIdx);
         instream >>  totalConcentration_[wCompIdx][globalIdx]
                  >> totalConcentration_[nCompIdx][globalIdx];
+        cellData.setMassConcentration(wCompIdx, totalConcentration_[wCompIdx][globalIdx]);
+        cellData.setMassConcentration(nCompIdx, totalConcentration_[nCompIdx][globalIdx]);
     }
 
     /*! \name Access functions for protected variables  */
@@ -180,9 +185,9 @@ public:
     void getTransportedQuantity(TransportSolutionType& transportedQuantity)
     {
         // resize update vector and set to zero
-        transportedQuantity.resize(GET_PROP_VALUE(TypeTag, NumComponents));
-        transportedQuantity[wCompIdx].resize(problem_.gridView().size(0));
-        transportedQuantity[nCompIdx].resize(problem_.gridView().size(0));
+        transportedQuantity.resize((GET_PROP_VALUE(TypeTag, NumEq) - 1));
+        for(int compIdx = 0; compIdx < (GET_PROP_VALUE(TypeTag, NumEq) - 1); compIdx++)
+            transportedQuantity[compIdx].resize(problem_.gridView().size(0));
 
         transportedQuantity = totalConcentration_;
     }
@@ -207,9 +212,12 @@ public:
      * \param problem a problem class object
      */
     FVTransport2P2C(Problem& problem) :
-        totalConcentration_(0.),problem_(problem), switchNormals(false)
+        totalConcentration_(0.),problem_(problem), switchNormals(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals))
     {
         restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,int, Impet, RestrictFluxInTransport);
+        regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
+        if(regulateBoundaryPermeability)
+            minimalBoundaryPermeability = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.MinBoundaryPermeability);
     }
 
     virtual ~FVTransport2P2C()
@@ -224,6 +232,8 @@ protected:
 
     static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     int restrictFluxInTransport_; //!< Restriction of flux on new pressure field if direction reverses from the pressure equation
+    bool regulateBoundaryPermeability; //! Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
+    Scalar minimalBoundaryPermeability; //! Minimal limit for the boundary permeability
     bool switchNormals;
 };
 
@@ -264,7 +274,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     // Cell which restricts time step size
     int restrictingCell = -1;
 
-    PhaseVector entries(0.), timestepFlux(0.);
+    ComponentVector entries(0.);
+    EntryType timestepFlux(0.);
     // compute update vector
     ElementIterator eItEnd = problem().gridView().template end<0> ();
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
@@ -317,7 +328,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         }
     } // end grid traversal
     
-#if HAVE_MPI        
+#if HAVE_MPI
     // communicate updated values
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
@@ -378,7 +389,7 @@ void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& 
  * \param cellDataI The cell data for cell \f$i\f$
  */
 template<class TypeTag>
-void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries,
+void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
                                         Dune::FieldVector<Scalar, 2>& timestepFlux,
                                         const Intersection& intersection,
                                         CellData& cellDataI)
@@ -469,20 +480,23 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     {
     case pw:
     {
-        potential[wPhaseIdx] = (K * unitOuterNormal) * (pressI - pressJ) / (dist);
-        potential[nPhaseIdx] = (K * unitOuterNormal) * (pressI - pressJ + pcI - pcJ) / (dist);
+        potential[wPhaseIdx] = (pressI - pressJ) / (dist);
+        potential[nPhaseIdx] = (pressI - pressJ + pcI - pcJ) / (dist);
         break;
     }
     case pn:
     {
-        potential[wPhaseIdx] = (K * unitOuterNormal) * (pressI - pressJ - pcI + pcJ) / (dist);
-        potential[nPhaseIdx] = (K * unitOuterNormal) * (pressI - pressJ) / (dist);
+        potential[wPhaseIdx] = (pressI - pressJ - pcI + pcJ) / (dist);
+        potential[nPhaseIdx] = (pressI - pressJ) / (dist);
         break;
     }
     }
     // add gravity term
-    potential[nPhaseIdx] +=  (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean;
-    potential[wPhaseIdx] +=  (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean;
+    potential[nPhaseIdx] +=  (gravity_ * unitDistVec) * densityNW_mean;
+    potential[wPhaseIdx] +=  (gravity_ * unitDistVec) * densityW_mean;
+
+    potential[wPhaseIdx] *= fabs(K * unitOuterNormal);
+    potential[nPhaseIdx] *= fabs(K * unitOuterNormal);
 
     // determine upwinding direction, perform upwinding if possible
     Dune::FieldVector<bool, NumPhases> doUpwinding(true);
@@ -612,6 +626,49 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
         + velocityJIn * cellDataJ.massFraction(nPhaseIdx, nCompIdx) * densityNWJ
         - velocityIJn * cellDataI.massFraction(nPhaseIdx, nCompIdx) * densityNWI;
 
+
+//    //add dispersion
+//    for (int phaseIdx = 0; phaseIdx < NumPhases; ++phaseIdx)
+//    {
+//
+//        //calculate porous media diffusion coefficient
+//        // for phases which exist in both finite volumes
+//        if (cellDataI.saturation(phaseIdx) <= 0 ||
+//                cellDataJ.saturation(phaseIdx) <= 0)
+//        {
+//            continue;
+//        }
+//
+//        // calculate tortuosity at the nodes i and j needed
+//        // for porous media diffusion coefficient
+//        Scalar poroI = problem().spatialParams().porosity(*elementPtrI);
+//        Scalar poroJ = problem().spatialParams().porosity(*neighborPtr);
+//        Scalar tauI =
+//            1.0/(poroI * poroI) *
+//            pow(poroI * cellDataI.saturation(phaseIdx), 7.0/3);
+//        Scalar tauJ =
+//            1.0/(poroJ * poroJ) *
+//            pow(poroJ * cellDataJ.saturation(phaseIdx), 7.0/3);
+//        // Diffusion coefficient in the porous medium
+//        // -> harmonic mean
+//        Scalar porousDiffCoeff
+//                = harmonicMean(poroI * cellDataI.saturation(phaseIdx) * tauI
+//                        * FluidSystem::binaryDiffusionCoefficient(cellDataI.fluidState(), phaseIdx, wCompIdx, nCompIdx),
+//                        poroJ * cellDataJ.saturation(phaseIdx) * tauJ
+//                        * FluidSystem::binaryDiffusionCoefficient(cellDataJ.fluidState(), phaseIdx, wCompIdx, nCompIdx));
+//        Scalar averagedMolarDensity = (cellDataI.density(phaseIdx) / cellDataI.fluidState().averageMolarMass(phaseIdx)
+//                +cellDataJ.density(phaseIdx) / cellDataJ.fluidState().averageMolarMass(phaseIdx))*0.5;
+//
+//        for (int compIdx = 0; compIdx < NumComponents; ++compIdx)
+//        {
+//
+//            Scalar gradx = (cellDataJ.moleFraction(phaseIdx, compIdx)-cellDataI.moleFraction(phaseIdx, compIdx) )/ dist;
+//            Scalar gradX = (cellDataJ.massFraction(phaseIdx, compIdx)-cellDataI.massFraction(phaseIdx, compIdx) )/ dist;
+//
+//            fluxEntries[compIdx] += gradx * averagedMolarDensity * porousDiffCoeff *  faceArea / volume;
+//        }
+//    }
+
     return;
 }
 //! Get flux on Boundary
@@ -628,7 +685,7 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
  * \param cellDataI The cell data for cell \f$i\f$
  */
 template<class TypeTag>
-void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& fluxEntries,
+void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
                                                     Dune::FieldVector<Scalar, 2>& timestepFlux,
                                                     const Intersection& intersection,
                                                     const CellData& cellDataI)
@@ -647,6 +704,13 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
     Scalar pressI = problem().pressureModel().pressure(globalIdxI);
     Scalar pcI = cellDataI.capillaryPressure();
     DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementPtrI));
+
+    if(regulateBoundaryPermeability)
+    {
+        int axis = intersection.indexInInside() / 2;
+        if(K_I[axis][axis] < minimalBoundaryPermeability)
+            K_I[axis][axis] = minimalBoundaryPermeability;
+    }
 
     Scalar SwmobI = std::max((cellDataI.saturation(wPhaseIdx)
                             - problem().spatialParams().materialLawParams(*elementPtrI).swr())
@@ -721,25 +785,24 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
         {
             case pw:
             {
-                potential[wPhaseIdx] = (K * unitOuterNormal) *
-                        (pressI - pressBound[wPhaseIdx]) / dist;
-                potential[nPhaseIdx] = (K * unitOuterNormal) *
-                        (pressI + pcI - pressBound[wPhaseIdx] - pcBound)
+                potential[wPhaseIdx] = (pressI - pressBound[wPhaseIdx]) / dist;
+                potential[nPhaseIdx] = (pressI + pcI - pressBound[wPhaseIdx] - pcBound)
                         / dist;
                 break;
             }
             case pn:
             {
-                potential[wPhaseIdx] = (K * unitOuterNormal) *
-                        (pressI - pcI - pressBound[nPhaseIdx] + pcBound)
+                potential[wPhaseIdx] = (pressI - pcI - pressBound[nPhaseIdx] + pcBound)
                         / dist;
-                potential[nPhaseIdx] = (K * unitOuterNormal) *
-                        (pressI - pressBound[nPhaseIdx]) / dist;
+                potential[nPhaseIdx] = (pressI - pressBound[nPhaseIdx]) / dist;
                 break;
             }
         }
-        potential[wPhaseIdx] += (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean;;
-        potential[nPhaseIdx] += (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean;;
+        potential[wPhaseIdx] += (gravity_ * unitDistVec) * densityW_mean;
+        potential[nPhaseIdx] += (gravity_ * unitDistVec) * densityNW_mean;
+
+        potential[wPhaseIdx] *= fabs(K * unitOuterNormal);
+        potential[nPhaseIdx] *= fabs(K * unitOuterNormal);
 
         // do upwinding for lambdas
         PhaseVector lambda(0.);

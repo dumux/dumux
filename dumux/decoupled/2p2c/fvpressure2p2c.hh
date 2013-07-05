@@ -91,10 +91,8 @@ template<class TypeTag> class FVPressure2P2C
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNw,
-        pGlobal = Indices::pressureGlobal,
-        sw = Indices::saturationW,
-        sn = Indices::saturationNw
+        pn = Indices::pressureN,
+        pglobal = Indices::pressureGlobal
     };
     enum
     {
@@ -154,8 +152,6 @@ public:
     void getFluxOnBoundary(EntryType&,
                             const Intersection&, const CellData&, const bool);
 
-    //constitutive functions are initialized and stored in the variables object
-    void updateMaterialLaws(bool postTimeStep = false);
     //updates secondary variables for one cell and stores in the variables object
     void updateMaterialLawsInElement(const Element& elementI, bool postTimeStep);
 
@@ -171,18 +167,19 @@ public:
         ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
 
         enableVolumeIntegral = GET_PARAM_FROM_GROUP(TypeTag,bool, Impet, EnableVolumeIntegral);
-
-        maxError_=0.;
-        if (pressureType != pw && pressureType != pn)
+        regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
+        if(regulateBoundaryPermeability)
         {
-            DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
+            minimalBoundaryPermeability = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.MinBoundaryPermeability);
+            Dune::dinfo << " Warning: Regulating Boundary Permeability requires correct subface indices on reference elements!" << std::endl;
         }
     }
 
 protected:
     Problem& problem_;
-    Scalar maxError_; //!< Maximum volume error of all cells
     bool enableVolumeIntegral; //!< Enables the volume integral of the pressure equation
+    bool regulateBoundaryPermeability; //! Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
+    Scalar minimalBoundaryPermeability; //! Minimal limit for the boundary permeability
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
@@ -232,7 +229,7 @@ void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntr
         const GlobalPosition& globalPos = elementI.geometry().center();
         // derivatives of the fluid volume with respect to concentration of components, or pressure
         if (!cellDataI.hasVolumeDerivatives())
-            this->volumeDerivatives(globalPos, elementI);
+            asImp_().volumeDerivatives(globalPos, elementI);
 
         source[contiWEqIdx] *= cellDataI.dv(wCompIdx);        // dV_[i][1] = dv_dC1 = dV/dm1
         source[contiNEqIdx] *= cellDataI.dv(nCompIdx);
@@ -302,22 +299,20 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     Scalar x_lo = ErrorTermLowerBound_;
     Scalar x_mi = ErrorTermUpperBound_;
     Scalar fac  = ErrorTermFactor_;
-    if (pressureType == pw)
-        fac = 0.1*ErrorTermFactor_;
     Scalar lofac = 0.;
-    Scalar hifac = 0.;
+    Scalar hifac = 1.-x_mi;
 
-    if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxError_))
+    if ((erri*timestep_ > 5e-5) && (erri > x_lo * this->maxError_))
     {
-        if (erri <= x_mi * maxError_)
+        if (erri <= x_mi * this->maxError_)
             storageEntry[rhs] +=
                     problem().variables().cellData(globalIdxI).errorCorrection() =
-                            fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/maxError_)
+                            fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/this->maxError_)
                                 * cellDataI.volumeError() * volume;
         else
             storageEntry[rhs] +=
                     problem().variables().cellData(globalIdxI).errorCorrection() =
-                            fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxError_)
+                            fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/this->maxError_)
                                 * cellDataI.volumeError() * volume;
     }
     else
@@ -359,6 +354,8 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     // cell volume & perimeter, assume linear map here
     Scalar volume = elementPtrI->geometry().volume();
     Scalar perimeter = cellDataI.perimeter();
+//#warning perimeter hack 2D!
+//    perimeter = intersection.geometry().volume()*2;
 
     const GlobalPosition& gravity_ = problem().gravity();
 
@@ -428,18 +425,18 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         Scalar lambda = (cellDataI.mobility(wPhaseIdx) + cellDataJ.mobility(wPhaseIdx)) * 0.5
                 + (cellDataI.mobility(nPhaseIdx) + cellDataJ.mobility(nPhaseIdx)) * 0.5;
 
-        entries[0] = fabs(lambda*faceArea*(permeability*unitOuterNormal)/(dist));
+        entries[0] = fabs(lambda*faceArea*fabs(permeability*unitOuterNormal)/(dist));
 
         Scalar factor = (fractionalWI + fractionalWJ) * (rhoMeanW) * 0.5
                     + (fractionalNWI + fractionalNWJ) * (rhoMeanNW) * 0.5;
-        entries[1] = factor * lambda * faceArea * (permeability * gravity_)
-                * (unitOuterNormal * unitDistVec);
+        entries[1] = factor * lambda * faceArea * fabs(unitOuterNormal*permeability)
+                * (gravity_ * unitDistVec);
     }
     else
     {
         // determine volume derivatives
         if (!cellDataJ.hasVolumeDerivatives())
-            this->volumeDerivatives(globalPosNeighbor, *neighborPtr);
+            asImp_().volumeDerivatives(globalPosNeighbor, *neighborPtr);
 
         Scalar dv_dC1 = (cellDataJ.dv(wPhaseIdx)
                     + cellDataI.dv(wPhaseIdx)) / 2; // dV/dm1= dv/dC^1
@@ -573,20 +570,22 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         }
 
         //calculate current matrix entry
-        entries[matrix] = faceArea * (lambdaW * dV_w + lambdaN * dV_n)* (unitOuterNormal * unitDistVec);
+        entries[matrix] = faceArea * (lambdaW * dV_w + lambdaN * dV_n)
+                * fabs((unitOuterNormal*permeability)/(dist));
         if(enableVolumeIntegral)
-            entries[matrix] -= volume * faceArea / perimeter * (lambdaW * gV_w + lambdaN * gV_n);     // = boundary integral - area integral
-        entries[matrix] *= fabs((permeability*unitDistVec)/(dist));
+            entries[matrix] -= volume * faceArea / perimeter * (lambdaW * gV_w + lambdaN * gV_n)
+                * ((unitDistVec*permeability)/(dist));     // = boundary integral - area integral
 
         //calculate right hand side
-        entries[rhs] = faceArea  * (unitOuterNormal * unitDistVec) * (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n);
+        entries[rhs] = faceArea   * (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n);
+        entries[rhs] *= fabs(unitOuterNormal * permeability);
         if(enableVolumeIntegral)
-            entries[rhs] -= volume * faceArea / perimeter * (densityW * lambdaW * gV_w + densityNW * lambdaN * gV_n);
-        entries[rhs] *= (permeability * gravity_);         // = multipaper eq(3.3) line 2+3
+            entries[rhs] -= volume * faceArea / perimeter * (densityW * lambdaW * gV_w + densityNW * lambdaN * gV_n)
+                            * (unitDistVec * permeability);
+        entries[rhs] *= (gravity_ * unitDistVec);
 
         // calculate capillary pressure gradient
-        Dune::FieldVector<Scalar, dim> pcGradient = unitDistVec;
-        pcGradient *= (cellDataI.capillaryPressure() - cellDataJ.capillaryPressure()) / dist;
+        Scalar pCGradient = (cellDataI.capillaryPressure() - cellDataJ.capillaryPressure()) / dist;
 
         // include capillary pressure fluxes
         switch (pressureType)
@@ -594,17 +593,17 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         case pw:
         {
             //add capillary pressure term to right hand side
-            entries[rhs] += lambdaN * dV_n * (permeability * pcGradient) * faceArea* (unitOuterNormal * unitDistVec);
+            entries[rhs] += lambdaN * dV_n * fabs(permeability * unitOuterNormal) * pCGradient * faceArea;
             if(enableVolumeIntegral)
-                entries[rhs]-= lambdaN * gV_n * (permeability * pcGradient) * volume * faceArea / perimeter;
+                entries[rhs]-= lambdaN * gV_n * (permeability * unitDistVec) * pCGradient * volume * faceArea / perimeter;
             break;
         }
         case pn:
         {
             //add capillary pressure term to right hand side
-            entries[rhs] -= lambdaW * dV_w * (permeability * pcGradient) * faceArea* (unitOuterNormal * unitDistVec);
+            entries[rhs] -= lambdaW * dV_w * fabs(permeability * unitOuterNormal) * pCGradient * faceArea;
             if(enableVolumeIntegral)
-                entries[rhs]+= lambdaW * gV_w * (permeability * pcGradient) * volume * faceArea / perimeter;
+                entries[rhs]+= lambdaW * gV_w * (permeability * unitDistVec) * pCGradient * volume * faceArea / perimeter;
             break;
         }
         }
@@ -668,6 +667,13 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
     {
         // get absolute permeability
         DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPtrI));
+
+        if(regulateBoundaryPermeability)
+        {
+            int axis = intersection.indexInInside() / 2;
+            if(permeabilityI[axis][axis] < minimalBoundaryPermeability)
+                permeabilityI[axis][axis] = minimalBoundaryPermeability;
+        }
         const GlobalPosition& gravity_ = problem().gravity();
 
         //permeability vector at boundary
@@ -691,12 +697,13 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
                     / (cellDataI.mobility(wPhaseIdx)+ cellDataI.mobility(nPhaseIdx));
 
             Scalar lambda = cellDataI.mobility(wPhaseIdx)+cellDataI.mobility(nPhaseIdx);
-            entries[matrix] += lambda * faceArea * (permeability * unitOuterNormal) / (dist);
+            entries[matrix] += lambda * faceArea * fabs(permeability * unitOuterNormal) / (dist);
             Scalar pressBC = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-            entries[rhs] += lambda * faceArea * pressBC * (permeability * unitOuterNormal) / (dist);
+            entries[rhs] += lambda * faceArea * pressBC * fabs(permeability * unitOuterNormal) / (dist);
             Scalar rightentry = (fractionalWI * cellDataI.density(wPhaseIdx)
                                  + fractionalNWI * cellDataI.density(nPhaseIdx))
-                                 * lambda * faceArea * (unitOuterNormal * unitDistVec) *(permeability*gravity_);
+                                 * lambda * faceArea * fabs(unitOuterNormal * permeability)
+                                 * ( unitDistVec * gravity_);
             entries[rhs] -= rightentry;
         }
         else    //not first
@@ -808,34 +815,28 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
             }
 
             //calculate current matrix entry
-            Scalar entry = (lambdaW * dV_w + lambdaNW * dV_n) * ((permeability * unitDistVec) / dist) * faceArea
-                    * (unitOuterNormal * unitDistVec);
+            Scalar entry = (lambdaW * dV_w + lambdaNW * dV_n)
+                    * (fabs(unitOuterNormal * permeability) / dist) * faceArea;
 
             //calculate right hand side
-            Scalar rightEntry = (lambdaW * densityW * dV_w + lambdaNW * densityNW * dV_n) * (permeability * gravity_)
-                    * faceArea ; // * (unitOuterNormal * unitDistVec) is done after pc gradient inclusion
+            Scalar rightEntry = (lambdaW * densityW * dV_w + lambdaNW * densityNW * dV_n)
+                    * fabs(unitOuterNormal * permeability) * (gravity_ * unitDistVec) * faceArea ;
 
             // include capillary pressure fluxes
+            // calculate capillary pressure gradient
+            Scalar pCGradient = (cellDataI.capillaryPressure() - pcBound) / dist;
             switch (pressureType)
             {
             case pw:
                 {
-                    // calculate capillary pressure gradient
-                    Dune::FieldVector<Scalar, dim> pcGradient = unitDistVec;
-                    pcGradient *= (cellDataI.capillaryPressure() - pcBound) / dist;
-
                     //add capillary pressure term to right hand side
-                    rightEntry += lambdaNW * dV_n * (permeability * pcGradient) * faceArea;
+                    rightEntry += lambdaNW * dV_n * pCGradient * fabs(unitOuterNormal * permeability) * faceArea;
                     break;
                 }
             case pn:
                 {
-                    // calculate capillary pressure gradient
-                    Dune::FieldVector<Scalar, dim> pcGradient = unitDistVec;
-                    pcGradient *= (cellDataI.capillaryPressure() - pcBound) / dist;
-
                     //add capillary pressure term to right hand side
-                    rightEntry -= lambdaW * dV_w * (permeability * pcGradient) * faceArea;
+                    rightEntry -= lambdaW * dV_w * pCGradient * fabs(unitOuterNormal * permeability) * faceArea;
                     break;
                 }
             }
@@ -844,7 +845,7 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
             // set diagonal entry and right hand side entry
             entries[matrix] += entry;
             entries[rhs] += entry * primaryVariablesOnBoundary[Indices::pressureEqIdx];
-            entries[rhs] -= rightEntry * (unitOuterNormal * unitDistVec);
+            entries[rhs] -= rightEntry;
         }    //end of if(first) ... else{...
     }   // end dirichlet
 
@@ -874,31 +875,6 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
     return;
 }
 
-//! updates secondary variables
-/*!
- * A loop through all elements updates the secondary variables stored in the variableclass
- * by using the updated primary variables.
- * \param postTimeStep Flag indicating method is called from Problem::postTimeStep()
- */
-template<class TypeTag>
-void FVPressure2P2C<TypeTag>::updateMaterialLaws(bool postTimeStep)
-{
-    Scalar maxError = 0.;
-    // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
-    {
-        int globalIdx = problem().variables().index(*eIt);
-
-        CellData& cellData = problem().variables().cellData(globalIdx);
-
-        problem().pressureModel().updateMaterialLawsInElement(*eIt, postTimeStep);
-
-        maxError = std::max(maxError, fabs(cellData.volumeError()));
-    }
-    maxError_ = maxError/problem().timeManager().timeStepSize();
-    return;
-}
 //! updates secondary variables of one cell
 /*! For each element, the secondary variables are updated according to the
  * primary variables. In case the method is called after the Transport,
@@ -932,7 +908,6 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
                     + cellData.massConcentration(nCompIdx));
 
     // make shure only physical quantities enter flash calculation
-    #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
     if(Z1<0. || Z1 > 1.)
     {
         Dune::dgrave << "Feed mass fraction unphysical: Z1 = " << Z1
@@ -958,7 +933,6 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
                 << cellData.totalConcentration(nCompIdx)<< std::endl;
             }
     }
-    #endif
 
     //determine phase pressures from primary pressure variable and pc of last TS
     PhaseVector pressure(0.);
@@ -966,16 +940,16 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     {
     case pw:
     {
-        pressure[wPhaseIdx] = this->pressure(globalIdx);
-        pressure[nPhaseIdx] = this->pressure(globalIdx)
+        pressure[wPhaseIdx] = asImp_().pressure(globalIdx);
+        pressure[nPhaseIdx] = asImp_().pressure(globalIdx)
                   + cellData.capillaryPressure();
         break;
     }
     case pn:
     {
-        pressure[wPhaseIdx] = this->pressure(globalIdx)
+        pressure[wPhaseIdx] = asImp_().pressure(globalIdx)
                  - cellData.capillaryPressure();
-        pressure[nPhaseIdx] = this->pressure(globalIdx);
+        pressure[nPhaseIdx] = asImp_().pressure(globalIdx);
         break;
     }
     }

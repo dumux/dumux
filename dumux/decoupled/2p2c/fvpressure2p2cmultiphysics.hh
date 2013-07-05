@@ -84,10 +84,8 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNw,
-        pGlobal = Indices::pressureGlobal,
-        sw = Indices::saturationW,
-        sn = Indices::saturationNw
+        pn = Indices::pressureN,
+        pGlobal = Indices::pressureGlobal
     };
     enum
     {
@@ -147,6 +145,39 @@ public:
         }
         nextSubdomain.resize(size);
         ParentType::initialize();
+    }
+
+    /*! \brief  Function for serialization of the pressure field.
+     *
+     *  Function needed for restart option. Writes the pressure of a grid element to a restart file.
+     *
+     *  \param outstream Stream into the restart file.
+     *  \param element Grid element
+     */
+    void serializeEntity(std::ostream &outstream, const Element &element)
+    {
+        ParentType::serializeEntity(outstream,element);
+        int globalIdx = problem().variables().index(element);
+        CellData& cellData = problem().variables().cellData(globalIdx);
+        outstream <<"  "<< cellData.subdomain();
+    }
+
+    /*! \brief  Function for deserialization of the pressure field.
+     *
+     *  Function needed for restart option. Reads the pressure of a grid element from a restart file.
+     *
+     *  \param instream Stream from the restart file.
+     *  \param element Grid element
+     */
+    void deserializeEntity(std::istream &instream, const Element &element)
+    {
+        ParentType::deserializeEntity(instream,element);
+
+        int globalIdx = problem().variables().index(element);
+        CellData& cellData = problem().variables().cellData(globalIdx);
+        int subdomainIdx;
+        instream >> subdomainIdx;
+        cellData.setSubdomainAndFluidStateType(subdomainIdx);
     }
 
 
@@ -283,7 +314,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 else
                 {
                     if (cellDataI.subdomain() != 2) //the current cell in the 1p domain
-                        get1pFluxOnBoundary(entries, *isIt, cellDataI);
+                        problem().pressureModel().get1pFluxOnBoundary(entries, *isIt, cellDataI);
                     else
                         problem().pressureModel().getFluxOnBoundary(entries, *isIt, cellDataI, first);
 
@@ -297,7 +328,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 
             /*****  storage term ***********/
             if (cellDataI.subdomain() != 2) //the current cell in the 1p domain
-                get1pStorage(entries, *eIt, cellDataI);
+                problem().pressureModel().get1pStorage(entries, *eIt, cellDataI);
             else
                 problem().pressureModel().getStorage(entries, *eIt, cellDataI, first);
 
@@ -387,7 +418,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         PseudoOnePTwoCFluidState<TypeTag> pseudoFluidState;
         CompositionalFlash<TypeTag> flashSolver;
         flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, p_, cellDataI.subdomain(),
-                problem().temperatureAtPos(elementI.geometry().center()));
+                cellDataI.temperature(wPhaseIdx));
 
         Scalar v_ = 1. / pseudoFluidState.density(presentPhaseIdx);
         cellDataI.dv_dp() = (sumC * ( v_ - (1. /cellDataI.density(presentPhaseIdx)))) /incp;
@@ -399,7 +430,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
 
             p_ -= 2*incp;
             flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, p_, cellDataI.subdomain(),
-                    problem().temperatureAtPos(elementI.geometry().center()));
+                    cellDataI.temperature(wPhaseIdx));
             v_ = 1. / pseudoFluidState.density(presentPhaseIdx);
             cellDataI.dv_dp() = (sumC * ( v_ - (1. /cellDataI.density(presentPhaseIdx)))) /incp;
             // dV_dp > 0 is unphysical: Try inverse increment for secant
@@ -469,7 +500,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
  * case where the wetting phase is only present):
    \f[
           A_{\gamma} \mathbf{n}_{\gamma}^T \mathbf{K}
-      \varrho_w \lambda_w \mathbf{d}_{ij} \left( \frac{p_{w,j}^t - p^{t}_{w,i}}{\Delta x} + \varrho_{w} \mathbf{g}^T \mathbf{d}_{ij} \right) .
+       \lambda_w \mathbf{d}_{ij} \left( \frac{p_{w,j}^t - p^{t}_{w,i}}{\Delta x} + \varrho_{w} \mathbf{g}^T \mathbf{d}_{ij} \right) .
    \f]
  *
  * \param entries The Matrix and RHS entries
@@ -561,9 +592,10 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
             //density = cellDataJ.density(phaseIdx);
         }
 
-        entries[0]  = lambda * faceArea * (permeability * unitOuterNormal) / (dist);
+        entries[0]  = lambda * faceArea * fabs(permeability * unitOuterNormal) / (dist);
         entries[1]  = rhoMean * lambda;
-        entries[1] *= faceArea * (permeability * gravity_) * (unitOuterNormal * unitDistVec);
+        entries[1] *= faceArea * fabs(permeability * unitOuterNormal) * (unitDistVec * gravity_);
+
         return;
 }
 
@@ -620,6 +652,12 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
                 {
                     // get absolute permeability
                     DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPointerI));
+                    if(this->regulateBoundaryPermeability)
+                    {
+                        int axis = intersection.indexInInside() / 2;
+                        if(permeabilityI[axis][axis] < this->minimalBoundaryPermeability)
+                            permeabilityI[axis][axis] = this->minimalBoundaryPermeability;
+                    }
                     // get mobilities and fractional flow factors
                     Scalar lambdaI = cellDataI.mobility(phaseIdx);
 
@@ -695,17 +733,16 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
 
                         //calculate current matrix entry
                         Scalar entry(0.), rightEntry(0.);
-                        entry = lambda * ((permeability * unitDistVec) / dist) * faceArea
-                                * (unitOuterNormal * unitDistVec);
+                        entry = lambda * (fabs(permeability * unitOuterNormal) / dist) * faceArea;
 
                         //calculate right hand side
-                        rightEntry = lambda * density * (permeability * gravity_)
+                        rightEntry = lambda * rhoMean * fabs(permeability * unitOuterNormal)
                                 * faceArea ;
 
                         // set diagonal entry and right hand side entry
                         entries[0] += entry;
                         entries[1] += entry * primaryVariablesOnBoundary[Indices::pressureEqIdx];
-                        entries[1] -= rightEntry * (unitOuterNormal * unitDistVec);
+                        entries[1] -= rightEntry * (gravity_ * unitDistVec);
                     }    //end of if(first) ... else{...
                 }   // end dirichlet
 
@@ -764,7 +801,12 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
 
             // check subdomain consistency
             timer_.start();
-            if (cellData.saturation(wPhaseIdx) != (1. || 0.)) // cell still 2p
+            // enshure we are not at source
+            // get sources from problem
+            PrimaryVariables source(NAN);
+            problem().source(source, *eIt);
+
+            if (cellData.saturation(wPhaseIdx) != (1. || 0.) or source.one_norm()!= 0.) // cell still 2p
             {
                 // mark this element
                 nextSubdomain[globalIdx] = 2;
