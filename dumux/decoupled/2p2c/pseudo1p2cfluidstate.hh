@@ -166,6 +166,30 @@ public:
     }
 
     /*!
+     * \brief Returns the enthalpy of a phase.
+     *
+     * \param phaseIdx the index of the phase
+     */
+    Scalar enthalpy(int phaseIdx) const
+    {
+        if(phaseIdx == presentPhaseIdx_)
+            return enthalpy_;
+        else
+            return 0.;
+    }
+
+    /*!
+     * \brief The specific internal energy of a fluid phase [J/kg]
+     */
+    Scalar internalEnergy(int phaseIdx) const
+    {
+        if(phaseIdx == presentPhaseIdx_)
+            return enthalpy_ - this->pressure(phaseIdx)/this->density(phaseIdx);
+        else
+            return 0.;
+    }
+
+    /*!
      * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
      *
      * Note that we assume thermodynamic equilibrium, so all fluids
@@ -267,6 +291,18 @@ public:
     {
         pressure_[phaseIdx] = value;
     };
+
+    /*!
+     * \brief Sets phase enthalpy
+     *
+     * \param phaseIdx the index of the phase
+     * @param value Value to be stored
+     */
+    void setEnthalpy(int phaseIdx, Scalar value)
+    {
+        assert(phaseIdx == presentPhaseIdx_);
+        enthalpy_ = value;
+    }
     //@}
 
 protected:
@@ -277,6 +313,7 @@ protected:
     Scalar pressure_[numPhases];
     Scalar density_;
     Scalar viscosity_;
+    Scalar enthalpy_;
     Scalar temperature_;
     int presentPhaseIdx_;
 };
