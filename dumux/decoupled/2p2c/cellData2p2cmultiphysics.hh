@@ -42,7 +42,7 @@ namespace Dumux
  * @tparam TypeTag The Type Tag
  */
 template<class TypeTag>
-class CellData2P2Cmultiphysics : public CellData2P2C<TypeTag>
+class CellData2P2CMultiPhysics : public CellData2P2C<TypeTag>
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -82,7 +82,7 @@ private:
 public:
 
     //! Constructor for a local storage object
-    CellData2P2Cmultiphysics() : CellData2P2C<TypeTag>(),
+    CellData2P2CMultiPhysics() : CellData2P2C<TypeTag>(),
         subdomain_(2), fluidStateType_(complex)
     {
     }
@@ -264,6 +264,14 @@ public:
         else
             return this->fluidState_->phaseMassFraction(phaseIdx);
     }
+
+    //! Returns a reference to the cells simple fluid state
+    const SimpleFluidState& simpleFluidState() const
+    {
+        assert(simpleFluidState_);
+        return *simpleFluidState_;
+    }
+
     //@}
 
     //! Set a simple fluidstate for a cell in the simple domain
@@ -315,5 +323,15 @@ public:
     { return fluidStateType_;}
 
 };
+
+template<class TypeTag>
+class CellData2P2Cmultiphysics : public CellData2P2CMultiPhysics<TypeTag>
+{
+public:
+    //! DEPRECATED!! Constructor for a local storage object
+    CellData2P2Cmultiphysics() : CellData2P2CMultiPhysics<TypeTag>()
+    {}
+};
+
 }
 #endif
