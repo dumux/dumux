@@ -102,18 +102,6 @@ public:
                 // to make an initial guess
                 ConstraintSolver::guessInitial(fs, paramCache, phaseIdx, fug);
             ConstraintSolver::solve(fs, paramCache, phaseIdx, fug);
-
-            /*
-              std::cout << "final composition: " << FluidSystem::phaseName(phaseIdx) << "="
-              << fs.moleFrac(phaseIdx, 0) << " "
-              << fs.moleFrac(phaseIdx, 1) << " "
-              << fs.moleFrac(phaseIdx, 2) << " "
-              << fs.moleFrac(phaseIdx, 3) << " "
-              << fs.moleFrac(phaseIdx, 4) << " "
-              << fs.moleFrac(phaseIdx, 5) << " "
-              << fs.moleFrac(phaseIdx, 6) << "\n";
-            */
-
         }
     }
 
