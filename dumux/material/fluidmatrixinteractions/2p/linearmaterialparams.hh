@@ -72,9 +72,9 @@ public:
     { entryPc_ = v; }
 
     DUNE_DEPRECATED_MSG("use setEntryPc() (uncapitalized 'c') instead")
-    Scalar setEntryPC(Scalar v)
+    void setEntryPC(Scalar v)
     {
-        return setEntryPc(v);
+        setEntryPc(v);
     }
 
     /*!
@@ -100,9 +100,9 @@ public:
     { maxPc_ = v; }
 
     DUNE_DEPRECATED_MSG("use setMaxPc() (uncapitalized 'c') instead")
-    Scalar setMaxPC(Scalar v)
+    void setMaxPC(Scalar v)
     {
-        return setMaxPc(v);
+        setMaxPc(v);
     }
 
 
