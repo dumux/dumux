@@ -125,7 +125,7 @@ public:
         assert(0 <= swe && swe <= 1);
 
         Scalar powSwe = pow(swe, -1/params.vgm());
-        return - 1/params.vgAlpha() * pow(powSwe - 1, 1/params.vgn() - 1)/params.vgn()
+        return - 1.0/params.vgAlpha() * pow(powSwe - 1, 1.0/params.vgn() - 1)/params.vgn()
             * powSwe/swe/params.vgm();
     }
 
@@ -172,7 +172,7 @@ public:
     {
         assert(0 <= swe && swe <= 1);
 
-        Scalar r = 1. - pow(1 - pow(swe, 1/params.vgm()), params.vgm());
+        Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.vgm()), params.vgm());
         return sqrt(swe)*r*r;
     };
 
@@ -190,9 +190,9 @@ public:
     {
         assert(0 <= swe && swe <= 1);
 
-        const Scalar x = 1 - std::pow(swe, 1.0/params.vgm());
+        const Scalar x = 1.0 - std::pow(swe, 1.0/params.vgm());
         const Scalar xToM = std::pow(x, params.vgm());
-        return (1 - xToM)/std::sqrt(swe) * ( (1 - xToM)/2 + 2*xToM*(1-x)/x );
+        return (1.0 - xToM)/std::sqrt(swe) * ( (1.0 - xToM)/2 + 2*xToM*(1.0-x)/x );
     };
 
     DUNE_DEPRECATED_MSG("use dkrw_dsw() (uncapitalized 's') instead")
@@ -218,7 +218,7 @@ public:
 
         return
             pow(1 - swe, 1.0/3) *
-            pow(1 - pow(swe, 1/params.vgm()), 2*params.vgm());
+            pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
     };
 
     /*!
@@ -238,8 +238,8 @@ public:
 
         const Scalar x = std::pow(swe, 1.0/params.vgm());
         return
-            -std::pow(1 - x, 2*params.vgm())
-            *std::pow(1 - swe, -2/3)
+            -std::pow(1.0 - x, 2*params.vgm())
+            *std::pow(1.0 - swe, -2.0/3)
             *(1.0/3 + 2*x/swe);
     }
 
