@@ -433,10 +433,20 @@ public:
         return converged;
     }
 
+    /*!
+     * \brief Check the plausibility of the current solution
+     *
+     *        This has to be done by the actual model, it knows
+     *        best, what (ranges of) variables to check.
+     *        This is primarily a hook
+     *        which the actual model can overload.
+     */
+    void checkPlausibility() const
+    { }
 
     /*!
      * \brief Called by the update() method before it tries to
-     *        apply the newton method. This is primary a hook
+     *        apply the newton method. This is primarily a hook
      *        which the actual model can overload.
      */
     void updateBegin()
@@ -445,7 +455,7 @@ public:
 
     /*!
      * \brief Called by the update() method if it was
-     *        successful. This is primary a hook which the actual
+     *        successful. This is primarily a hook which the actual
      *        model can overload.
      */
     void updateSuccessful()
@@ -453,7 +463,7 @@ public:
 
     /*!
      * \brief Called by the update() method if it was
-     *        unsuccessful. This is primary a hook which the actual
+     *        unsuccessful. This is primarily a hook which the actual
      *        model can overload.
      */
     void updateFailed()

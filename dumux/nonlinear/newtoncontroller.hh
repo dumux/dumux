@@ -499,8 +499,10 @@ public:
                 std::cout << ", absolute error = " << absoluteError_;
             std::cout << endIterMsg().str() << "\n";
         }
-
         endIterMsgStream_.str("");
+
+//         When the newton iterations is done: ask the model to check whether it makes sense.
+        model_().checkPlausibility() ;
     }
 
     /*!
