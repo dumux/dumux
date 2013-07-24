@@ -1,0 +1,121 @@
+/*****************************************************************************
+ *   Copyright (C) 2009-2011 by Philipp Nuske                                *
+ *   Institute for Modelling Hydraulic and Environmental Systems             *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \brief The indices for the thermal non-equilibrium part of the MpNc model.
+ */
+#ifndef DUMUX_MPNC_INDICES_ENERGY_KINETIC_HH
+#define DUMUX_MPNC_INDICES_ENERGY_KINETIC_HH
+
+namespace Dumux
+{
+
+/*!
+ * \brief The indices required for the energy equation.
+ */
+template <int PVOffset>
+struct MPNCEnergyIndices<PVOffset, /*enableEnergy=*/true, /*kineticEnergyTransfer=*/true>
+{
+public:
+    /*!
+     * \brief This module defines one new primary variable.
+     */
+    static const unsigned int numPrimaryVars = 3;
+
+    DUNE_DEPRECATED_MSG("use numPrimaryVars (uncapitalized 'n') instead")
+    static const unsigned int NumPrimaryVars = numPrimaryVars; //!< \deprecated
+
+    /*!
+     * \brief Index for the temperature of the wetting phase in a vector of primary
+     *        variables.
+     */
+    static const unsigned int temperature0Idx = PVOffset + 0;
+
+    /*!
+     * \brief Compatibility with non kinetic models
+     */
+    static const unsigned int temperatureIdx = temperature0Idx;
+    /*!
+     * \brief Equation index of the energy equation.
+     */
+    static const unsigned int energyEq0Idx = PVOffset + 0;
+    /*!
+     * \brief Compatibility with non kinetic models
+     */
+    static const unsigned int energyEqIdx = energyEq0Idx;
+};
+
+
+/*!
+ * \brief The indices required for the energy equation.
+ */
+template <int PVOffset, bool isNonIsothermal>
+struct MPNCEnergyIndices<PVOffset, isNonIsothermal, /*kineticEnergyTransfer=*/false >
+{
+public:
+    /*!
+     * \brief This module defines one new primary variable.
+     */
+    static const unsigned int NumPrimaryVars = 1;
+
+    /*!
+     * \brief Index for the temperature in a vector of primary
+     *        variables.
+     */
+    static const unsigned int temperatureIdx = PVOffset + 0;
+    /*!
+     * \brief Equation index of the energy equation.
+     */
+    static const unsigned int energyEqIdx = PVOffset + 0;
+};
+
+/*!
+ * \brief The indices for the energy equation.
+ *
+ * This is a dummy class for the isothermal case.
+ */
+template <int PVOffset>
+struct MPNCEnergyIndices<PVOffset, /*isNonIsothermal=*/false, /*kineticEnergyTransfer*/false>
+{
+public:
+    /*!
+     * \brief This module does not define any primary variables in the
+     *        isothermal case.
+     */
+    static const unsigned int NumPrimaryVars = 0;
+
+    /*!
+     * \brief Equation index of the temperature primary variable. This
+     *        is a dummy value which hopefully makes the simulation
+     *        crash if used.
+     */
+    static const unsigned int temperatureIdx = -1;
+
+    /*!
+     * \brief Equation index of the energy equation. This is a dummy
+     *        value which hopefully makes the simulation crash if used.
+     */
+    static const unsigned int energyEqIdx = -1;
+};
+
+
+
+}
+
+#endif
