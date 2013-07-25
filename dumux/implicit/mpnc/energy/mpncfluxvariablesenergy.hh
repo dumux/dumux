@@ -24,7 +24,6 @@
 #ifndef DUMUX_MPNC_ENERGY_FLUX_VARIABLES_HH
 #define DUMUX_MPNC_ENERGY_FLUX_VARIABLES_HH
 
-#include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 
 #include <dumux/implicit/mpnc/mpncproperties.hh>

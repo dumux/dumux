@@ -23,6 +23,8 @@
 #ifndef DUMUX_MPNC_INDICES_ENERGY_KINETIC_HH
 #define DUMUX_MPNC_INDICES_ENERGY_KINETIC_HH
 
+#include <dumux/implicit/mpnc/mpncindices.hh>
+
 namespace Dumux
 {
 

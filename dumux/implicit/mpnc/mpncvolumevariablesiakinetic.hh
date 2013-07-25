@@ -32,6 +32,8 @@
 #define DUMUX_MPNC_VOLUME_VARIABLES_IA_KINETIC_HH
 
 #include <dumux/common/dimensionlessnumbers.hh>
+#include "mpncvolumevariablesia.hh"
+#include "mpncpropertieskinetic.hh"
 
 namespace Dumux
 {

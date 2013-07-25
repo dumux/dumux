@@ -28,7 +28,9 @@
 #define DUMUX_MPNC_VTK_WRITER_MASS_KINETIC_HH
 
 #include <dumux/implicit/mpnc/mpncvtkwritermodule.hh>
+#include <dumux/implicit/mpnc/mpncpropertieskinetic.hh>
 #include <dumux/implicit/mpnc/mass/mpncvtkwritermass.hh>
+
 
 namespace Dumux
 {

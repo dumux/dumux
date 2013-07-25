@@ -29,6 +29,11 @@
 #ifndef DUMUX_MPNC_ENERGY_FLUX_VARIABLES_KINETIC_HH
 #define DUMUX_MPNC_ENERGY_FLUX_VARIABLES_KINETIC_HH
 
+#include <dune/common/fvector.hh>
+
+#include <dumux/common/spline.hh>
+#include <dumux/implicit/mpnc/mpncfluxvariables.hh>
+
 namespace Dumux
 {
 

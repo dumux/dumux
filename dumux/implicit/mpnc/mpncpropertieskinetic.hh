@@ -25,6 +25,8 @@
 #ifndef DUMUX_MPNC_PROPERTIES_KINETIC_HH
 #define DUMUX_MPNC_PROPERTIES_KINETIC_HH
 
+#include "mpncproperties.hh"
+
 namespace Dumux
 {
 namespace Properties

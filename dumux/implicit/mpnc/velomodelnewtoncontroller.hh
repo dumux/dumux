@@ -27,10 +27,11 @@
 #ifndef DUMUX_VELO_MODEL_NEWTON_CONTROLLER_HH
 #define DUMUX_VELO_MODEL_NEWTON_CONTROLLER_HH
 
-#include <dumux/implicit/mpnc/mpncproperties.hh>
+#include <algorithm>
 
 #include <dumux/nonlinear/newtoncontroller.hh>
-#include <algorithm>
+#include "mpncnewtoncontroller.hh"
+#include "mpncproperties.hh"
 
 namespace Dumux {
 /*!

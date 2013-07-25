@@ -25,6 +25,8 @@
 #ifndef DUMUX_MPNC_MASS_INDICES_KINETIC_HH
 #define DUMUX_MPNC_MASS_INDICES_KINETIC_HH
 
+#include <dumux/implicit/mpnc/mpncindices.hh>
+
 namespace Dumux
 {
 /*!

@@ -26,6 +26,9 @@
 #ifndef DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_KINETIC_HH
 #define DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_KINETIC_HH
 
+#include <dumux/implicit/mpnc/mpncvolumevariables.hh>
+#include "mpncvtkwriterenergykinetic.hh"
+
 namespace Dumux
 {
 /*!
