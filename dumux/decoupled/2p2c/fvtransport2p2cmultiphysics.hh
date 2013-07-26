@@ -93,6 +93,9 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
     //! Acess function for the current problem
     Problem& problem()
     {return this->problem_;};
+
+    typedef typename FVTransport2P2C<TypeTag>::LocalTimesteppingData LocalTimesteppingData;
+
 public:
     virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false);
 
@@ -129,6 +132,13 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
 {
     // initialize dt very large
     dt = 1E100;
+
+    int size = problem().gridView().size(0);
+    if (this->enableLocalTimeStepping())
+    {
+        if (this->timeStepData_.size() != size)
+            this->timeStepData_.resize(size);
+    }
     // store if we do update Estimate for flux functions
     this->impet_ = impet;
     this->averagedFaces_ = 0.;
@@ -162,6 +172,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
             for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
+                int indexInInside = isIt->indexInInside();
 
             	/****** interior face   *****************/
                 if (isIt->neighbor())
@@ -171,15 +182,37 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                 if (isIt->boundary())
                     this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
 
+                if (this->enableLocalTimeStepping())
+                {
+                    LocalTimesteppingData& localData = this->timeStepData_[globalIdxI];
+
+                    if (localData.faceTargetDt[indexInInside] < this->accumulatedDt_ + this->dtThreshold_)
+                    {
+                        localData.faceFluxes[indexInInside] = entries;
+                    }
+                }
+                else
+                {
                 // add to update vector
                 updateVec[wCompIdx][globalIdxI] += entries[wCompIdx];
                 updateVec[nCompIdx][globalIdxI] += entries[nCompIdx];
+                }
 
                 // for time step calculation
                 sumfactorin += timestepFlux[0];
                 sumfactorout += timestepFlux[1];
 
             }// end all intersections
+
+            if (this->enableLocalTimeStepping())
+            {
+                LocalTimesteppingData& localData = this->timeStepData_[globalIdxI];
+                for (int i=0; i < 2*dim; i++)
+                {
+                    updateVec[wCompIdx][globalIdxI] += localData.faceFluxes[i][wCompIdx];
+                    updateVec[nCompIdx][globalIdxI] += localData.faceFluxes[i][nCompIdx];
+                }
+            }
 
             /***********     Handle source term     ***************/
             PrimaryVariables q(NAN);
@@ -191,10 +224,23 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             sumfactorin = std::max(sumfactorin,sumfactorout)
                             / problem().spatialParams().porosity(*eIt);
 
-            if ( 1./sumfactorin < dt)
+            //calculate time step
+            if (this->enableLocalTimeStepping())
             {
-                dt = 1./sumfactorin;
-                restrictingCell= globalIdxI;
+                this->timeStepData_[globalIdxI].dt = 1./sumfactorin;
+                if ( 1./sumfactorin < dt)
+                {
+                    dt = 1./sumfactorin;
+                    restrictingCell= globalIdxI;
+                }
+            }
+            else
+            {
+                if ( 1./sumfactorin < dt)
+                {
+                    dt = 1./sumfactorin;
+                    restrictingCell= globalIdxI;
+                }
             }
         }
     } // end grid traversal

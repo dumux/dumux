@@ -24,6 +24,7 @@
 #include <dumux/material/constraintsolvers/compositionalflash.hh>
 #include <dumux/common/math.hh>
 #include <dumux/linear/vectorexchange.hh>
+#include <unordered_map>
 
 /**
  * @file
@@ -32,6 +33,13 @@
 
 namespace Dumux
 {
+namespace Properties
+{
+NEW_PROP_TAG( TimeManagerSubTimestepVerbosity );
+
+SET_INT_PROP(DecoupledModel, TimeManagerSubTimestepVerbosity, 0);
+}
+
 //! Compositional transport step in a Finite Volume discretization
 /*! \ingroup multiphase
  *  The finite volume model for the solution of the transport equation for compositional
@@ -55,6 +63,7 @@ class FVTransport2P2C
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename SpatialParams::MaterialLaw MaterialLaw;
@@ -101,17 +110,34 @@ class FVTransport2P2C
     typedef Dune::FieldVector<Scalar, NumPhases> PhaseVector;
     typedef Dune::FieldVector<Scalar, NumComponents> ComponentVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+
 protected:
     //! @copydoc FVPressure::EntryType
     typedef Dune::FieldVector<Scalar, 2> EntryType;
+
+    struct LocalTimesteppingData
+    {
+        Dune::FieldVector<EntryType, 2*dim> faceFluxes;
+        Dune::FieldVector<Scalar, 2*dim> faceTargetDt;
+        Scalar dt;
+        LocalTimesteppingData():faceFluxes(EntryType(0.0)), faceTargetDt(0.0), dt(0)
+        {}
+    };
+
     //! Acess function for the current problem
     Problem& problem()
     {return problem_;};
+
+    void innerUpdate(TransportSolutionType& updateVec);
 
 public:
     virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false);
 
     void updateTransportedQuantity(TransportSolutionType& updateVector);
+
+    void updateTransportedQuantity(TransportSolutionType& updateVector, Scalar dt);
+
+    void updateConcentrations(TransportSolutionType& updateVector, Scalar dt);
 
     // Function which calculates the flux update
     void getFlux(ComponentVector&, EntryType&,
@@ -191,6 +217,7 @@ public:
 
         transportedQuantity = totalConcentration_;
     }
+
     /*! \name Access functions for protected variables  */
     //@{
     //! Return the the total concentration stored in the transport vector
@@ -203,6 +230,35 @@ public:
     {
         return totalConcentration_[compIdx][globalIdx][0];
     }
+
+    void getSource(Scalar& update, const Element& element, CellData& cellDataI)
+    {}
+
+
+    //! Function to control the abort of the transport-sub-time-stepping depending on a physical parameter range
+    /*!
+     * @param entry Cell entries of the update vector
+     */
+    template<class DataEntry>
+    bool inPhysicalRange(DataEntry& entry)
+    {
+        int numComp = GET_PROP_VALUE(TypeTag, NumEq) - 1;
+        for(int compIdx = 0; compIdx < numComp; compIdx++)
+        {
+            if (entry[compIdx] < -1.0e-6)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    //! Function to check if local time stepping is activated
+    bool enableLocalTimeStepping()
+    {
+        return localTimeStepping_;
+    }
+
     //@}
     //! Constructs a FVTransport2P2C object
     /*!
@@ -212,12 +268,21 @@ public:
      * \param problem a problem class object
      */
     FVTransport2P2C(Problem& problem) :
-        totalConcentration_(0.),problem_(problem), switchNormals(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals))
+        totalConcentration_(0.),problem_(problem), switchNormals(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)), subCFLFactor_(1.0), accumulatedDt_(0), dtThreshold_(1e-6)
     {
         restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,int, Impet, RestrictFluxInTransport);
         regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
         if(regulateBoundaryPermeability)
             minimalBoundaryPermeability = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.MinBoundaryPermeability);
+
+        Scalar cFLFactor = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
+        subCFLFactor_ = std::min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
+        verbosity_ = GET_PARAM_FROM_GROUP(TypeTag, int, TimeManager, SubTimestepVerbosity);
+
+        localTimeStepping_ = subCFLFactor_/cFLFactor < 1.0 - dtThreshold_;
+
+        if (localTimeStepping_)
+            std::cout<<"max CFL-Number of "<<cFLFactor<<", max Sub-CFL-Number of "<<subCFLFactor_<<": Enable local time-stepping!\n";
     }
 
     virtual ~FVTransport2P2C()
@@ -235,6 +300,29 @@ protected:
     bool regulateBoundaryPermeability; //! Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
     Scalar minimalBoundaryPermeability; //! Minimal limit for the boundary permeability
     bool switchNormals;
+    Scalar accumulatedDt_; //! Current time-interval in sub-time-stepping routine
+    const Scalar dtThreshold_; //! Threshold for sub-time-stepping routine
+    std::vector<LocalTimesteppingData> timeStepData_; //! Stores data for sub-time-stepping
+private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
+    void updatedTargetDt_(Scalar &dt);
+
+    void resetTimeStepData_()
+    {
+        timeStepData_.clear();
+        accumulatedDt_ = 0;
+    }
+
+    bool localTimeStepping_;
+    Scalar subCFLFactor_;
+    int verbosity_;
 };
 
 //! \brief Calculate the update vector and determine timestep size
@@ -260,6 +348,13 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 {
     // initialize dt very large
     dt = 1E100;
+
+    int size = problem_.gridView().size(0);
+    if (localTimeStepping_)
+    {
+        if (this->timeStepData_.size() != size)
+            this->timeStepData_.resize(size);
+    }
     // store if we do update Estimate for flux functions
     impet_ = impet;
     averagedFaces_ = 0;
@@ -292,6 +387,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
+            int indexInInside = isIt->indexInInside();
 
             /****** interior face   *****************/
             if (isIt->neighbor())
@@ -301,15 +397,37 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
             if (isIt->boundary())
                 getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
 
+
+            if (localTimeStepping_)
+            {
+                LocalTimesteppingData& localData = timeStepData_[globalIdxI];
+                if (localData.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
+                {
+                    localData.faceFluxes[indexInInside] = entries;
+                }
+            }
+            else
+            {
             // add to update vector
-            updateVec[wCompIdx][globalIdxI] += entries[wCompIdx];
-            updateVec[nCompIdx][globalIdxI] += entries[nCompIdx];
+                updateVec[wCompIdx][globalIdxI] += entries[wCompIdx];
+                updateVec[nCompIdx][globalIdxI] += entries[nCompIdx];
+            }
 
             // for time step calculation
             sumfactorin += timestepFlux[0];
             sumfactorout += timestepFlux[1];
 
         }// end all intersections
+
+        if (localTimeStepping_)
+        {
+            LocalTimesteppingData& localData = timeStepData_[globalIdxI];
+            for (int i=0; i < 2*dim; i++)
+            {
+                updateVec[wCompIdx][globalIdxI] += localData.faceFluxes[i][wCompIdx];
+                updateVec[nCompIdx][globalIdxI] += localData.faceFluxes[i][nCompIdx];
+            }
+        }
 
         /***********     Handle source term     ***************/
         PrimaryVariables q(NAN);
@@ -321,10 +439,23 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         sumfactorin = std::max(sumfactorin,sumfactorout)
                         / problem().spatialParams().porosity(*eIt);
 
-        if ( 1./sumfactorin < dt)
+        //calculate time step
+        if (localTimeStepping_)
         {
-            dt = 1./sumfactorin;
-            restrictingCell= globalIdxI;
+            timeStepData_[globalIdxI].dt = 1./sumfactorin;
+            if ( 1./sumfactorin < dt)
+            {
+                dt = 1./sumfactorin;
+                restrictingCell= globalIdxI;
+            }
+        }
+        else
+        {
+            if ( 1./sumfactorin < dt)
+            {
+                dt = 1./sumfactorin;
+                restrictingCell= globalIdxI;
+            }
         }
     } // end grid traversal
     
@@ -340,6 +471,17 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
                                                             Dune::InteriorBorder_All_Interface, 
                                                             Dune::ForwardCommunication);
     }
+
+    if (localTimeStepping_)
+    {
+        typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
+
+        TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
+        problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
+                                                         Dune::InteriorBorder_All_Interface,
+                                                         Dune::ForwardCommunication);
+    }
+
     dt = problem_.gridView().comm().min(dt);
 #endif
     
@@ -360,7 +502,31 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& updateVector)
 {
-    Scalar dt = problem().timeManager().timeStepSize();
+    if (this->enableLocalTimeStepping())
+        this->innerUpdate(updateVector);
+    else
+        updateConcentrations(updateVector, problem().timeManager().timeStepSize());
+}
+
+/*  Updates the transported quantity once an update is calculated.
+ *  This method updates both, the internal transport solution vector and the entries in the cellData.
+ *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+ *
+ */
+template<class TypeTag>
+void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& updateVector, Scalar dt)
+{
+    updateConcentrations(updateVector, dt);
+}
+
+/*  Updates the concentrations once an update is calculated.
+ *  This method updates both, the internal transport solution vector and the entries in the cellData.
+ *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+ *
+ */
+template<class TypeTag>
+void FVTransport2P2C<TypeTag>::updateConcentrations(TransportSolutionType& updateVector, Scalar dt)
+{
     // loop thorugh all elements
     for (int i = 0; i< problem().gridView().size(0); i++)
     {
@@ -998,6 +1164,222 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     }
     else
         DUNE_THROW(Dune::NotImplemented, "Boundary Formulation neither Concentration nor Saturation??");
+}
+
+template<class TypeTag>
+void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
+{
+    dt = std::numeric_limits<Scalar>::max();
+
+    // update target time-step-sizes
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    {
+#if HAVE_MPI
+        if (eIt->partitionType() != Dune::InteriorEntity)
+        {
+            continue;
+        }
+#endif
+
+        // cell index
+        int globalIdxI = problem_.variables().index(*eIt);
+
+        LocalTimesteppingData& localDataI = timeStepData_[globalIdxI];
+
+
+        typedef std::unordered_map<int, Scalar > FaceDt;
+        FaceDt faceDt;
+
+        // run through all intersections with neighbors and boundary
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        {
+            int indexInInside = isIt->indexInInside();
+
+            if (isIt->neighbor())
+            {
+                ElementPointer neighbor = isIt->outside();
+                int globalIdxJ = problem_.variables().index(*neighbor);
+
+                int levelI = eIt->level();
+                int levelJ = neighbor->level();
+
+                if (globalIdxI < globalIdxJ && levelI <= levelJ)
+                {
+                    LocalTimesteppingData& localDataJ = timeStepData_[globalIdxJ];
+
+                    int indexInOutside = isIt->indexInOutside();
+
+                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_ || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
+                    {
+                        Scalar timeStep  = std::min(localDataI.dt, localDataJ.dt);
+
+                        if (levelI < levelJ)
+                        {
+                            typename FaceDt::iterator it = faceDt.find(indexInInside);
+                            if (it != faceDt.end())
+                            {
+                                it->second = std::min(it->second, timeStep);
+                            }
+                            else
+                            {
+                                faceDt.insert(std::make_pair(indexInInside, timeStep));
+                            }
+                        }
+                        else
+                        {
+                            localDataI.faceTargetDt[indexInInside] += subCFLFactor_ * timeStep;
+                            localDataJ.faceTargetDt[indexInOutside] += subCFLFactor_ * timeStep;
+                        }
+
+                        dt = std::min(dt, timeStep);
+                    }
+                }
+            }
+            else if (isIt->boundary())
+            {
+                if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
+                {
+                    localDataI.faceTargetDt[indexInInside] += subCFLFactor_ * localDataI.dt;
+                    dt = std::min(dt, subCFLFactor_ * localDataI.dt);
+                }
+            }
+        }
+        if (faceDt.size() > 0)
+        {
+            typename FaceDt::iterator it = faceDt.begin();
+            for (;it != faceDt.end();++it)
+            {
+                localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
+            }
+
+            IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+            {
+                if (isIt->neighbor())
+                {
+                    int indexInInside = isIt->indexInInside();
+
+                    it = faceDt.find(indexInInside);
+                    if (it != faceDt.end())
+                    {
+                        ElementPointer neighbor = isIt->outside();
+                        int globalIdxJ = problem_.variables().index(*neighbor);
+
+                        LocalTimesteppingData& localDataJ = timeStepData_[globalIdxJ];
+
+                        int indexInOutside = isIt->indexInOutside();
+
+                        localDataJ.faceTargetDt[indexInOutside] += subCFLFactor_ * it->second;
+                    }
+                }
+            }
+        }
+    }
+
+#if HAVE_MPI
+    // communicate updated values
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
+    typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
+
+    TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
+    problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
+                                                         Dune::InteriorBorder_All_Interface,
+                                                         Dune::ForwardCommunication);
+
+    dt = problem_.gridView().comm().min(dt);
+#endif
+}
+
+template<class TypeTag>
+void FVTransport2P2C<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
+{
+    if (localTimeStepping_)
+    {
+        Scalar realDt = problem_.timeManager().timeStepSize();
+
+        Scalar subDt = realDt;
+
+        updatedTargetDt_(subDt);
+
+        Scalar accumulatedDtOld = accumulatedDt_;
+        accumulatedDt_ += subDt;
+
+        Scalar t = problem_.timeManager().time();
+
+        if (accumulatedDt_ < realDt)
+        {
+            while(true)
+            {
+                Scalar dtCorrection = std::min(0.0, realDt - accumulatedDt_);
+                subDt += dtCorrection;
+
+                if (verbosity_ > 0)
+                    std::cout<<"    Sub-time-step size: "<<subDt<<"\n";
+
+                    bool stopTimeStep = false;
+                    int size = problem_.gridView().size(0);
+                    for (int i = 0; i < size; i++)
+                    {
+                        EntryType newVal(0);
+                        int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
+                        for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
+                        {
+                            newVal[eqNumber] = totalConcentration_[eqNumber][i];
+                            newVal[eqNumber] += updateVec[eqNumber][i] * subDt;
+                        }
+                        if (!asImp_().inPhysicalRange(newVal))
+                        {
+                            stopTimeStep = true;
+
+                            break;
+                        }
+                    }
+
+#if HAVE_MPI
+                    int rank = 0;
+                    if (stopTimeStep)
+                        rank = problem_.gridView().comm().rank();
+
+                    rank = problem_.gridView().comm().max(rank);
+                    problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
+#endif
+
+
+                    if (stopTimeStep && accumulatedDtOld > dtThreshold_)
+                    {
+                        problem_.timeManager().setTimeStepSize(accumulatedDtOld);
+                        break;
+                    }
+                    else
+                    {
+                        asImp_().updateTransportedQuantity(updateVec, subDt);
+                    }
+
+
+                if (accumulatedDt_ >= realDt)
+                {
+                    break;
+                }
+
+                problem_.pressureModel().updateMaterialLaws();
+                problem_.model().updateTransport(t, subDt, updateVec);
+
+                updatedTargetDt_(subDt);
+
+                accumulatedDtOld = accumulatedDt_;
+                accumulatedDt_ += subDt;
+            }
+        }
+        else
+        {
+            asImp_().updateTransportedQuantity(updateVec, realDt);
+        }
+
+        resetTimeStepData_();
+    }
 }
 
 }

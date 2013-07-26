@@ -3,6 +3,7 @@
 #############################################################
 [Impet]
 CFLFactor = 0.8
+#SubCFLFactor = 0.8# for sub-time-stepping of the transport
 ErrorTermLowerBound = 0.2
 ErrorTermUpperBound = 0.9
 ErrorTermFactor = 0.5

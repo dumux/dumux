@@ -426,12 +426,15 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
                                                          Dune::InteriorBorder_All_Interface,
                                                          Dune::ForwardCommunication);
 
+    if (localTimeStepping_)
+    {
     typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
 
     TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
     problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
                                                          Dune::InteriorBorder_All_Interface,
                                                          Dune::ForwardCommunication);
+    }
 
     dt = problem_.gridView().comm().min(dt);
 #endif

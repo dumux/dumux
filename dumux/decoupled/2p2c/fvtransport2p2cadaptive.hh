@@ -106,6 +106,8 @@ class FVTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
     Problem& problem()
     {return problem_;};
 
+    typedef typename FVTransport2P2C<TypeTag>::LocalTimesteppingData LocalTimesteppingData;
+
 public:
     virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes = false);
 
@@ -169,6 +171,13 @@ void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Transp
     updateVec[nCompIdx].resize(size_);
     updateVec[wCompIdx] = 0;
     updateVec[nCompIdx] = 0;
+
+    if (this->enableLocalTimeStepping())
+    {
+        if (this->timeStepData_.size() != size_)
+            this->timeStepData_.resize(size_);
+    }
+
     //also resize PV vector if necessary
     if(this->totalConcentration_.size() != size_)
     {
@@ -204,10 +213,24 @@ void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Transp
         double sumfactorin = 0;
         double sumfactorout = 0;
 
+        if (this->enableLocalTimeStepping())
+        {
+            LocalTimesteppingData& localData = this->timeStepData_[globalIdxI];
+            for (int i = 0; i < 2*dim; i++)
+            {
+                if (localData.faceTargetDt[i] < this->accumulatedDt_ + this->dtThreshold_)
+                {
+                    localData.faceFluxes[i] = 0.0;
+                }
+            }
+        }
+
         // run through all intersections with neighbors and boundary
         IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
+            int indexInInside = isIt->indexInInside();
+
             // handle interior face
             if (isIt->neighbor())
             {
@@ -223,15 +246,37 @@ void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Transp
                 this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
             }
 
+            if (this->enableLocalTimeStepping())
+            {
+                LocalTimesteppingData& localData = this->timeStepData_[globalIdxI];
+
+                if (localData.faceTargetDt[indexInInside] < this->accumulatedDt_ + this->dtThreshold_)
+                {
+                    localData.faceFluxes[indexInInside] += entries;
+                }
+            }
+            else
+            {
             // add to update vector
             updateVec[wCompIdx][globalIdxI] += entries[wCompIdx];
             updateVec[nCompIdx][globalIdxI] += entries[nCompIdx];
+            }
 
             // for time step calculation
             sumfactorin += timestepFlux[0];
             sumfactorout += timestepFlux[1];
 
         }// end all intersections
+
+        if (this->enableLocalTimeStepping())
+        {
+            LocalTimesteppingData& localData = this->timeStepData_[globalIdxI];
+            for (int i=0; i < 2*dim; i++)
+            {
+                updateVec[wCompIdx][globalIdxI] += localData.faceFluxes[i][wCompIdx];
+                updateVec[nCompIdx][globalIdxI] += localData.faceFluxes[i][nCompIdx];
+            }
+        }
 
         /***********     Handle source term     ***************/
         PrimaryVariables q(NAN);
@@ -243,10 +288,23 @@ void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Transp
         sumfactorin = std::max(sumfactorin,sumfactorout)
                         / problem().spatialParams().porosity(*eIt);
 
-        if ( 1./sumfactorin < dt)
+        //calculate time step
+        if (this->enableLocalTimeStepping())
         {
-            dt = 1./sumfactorin;
-            restrictingCell= globalIdxI;
+            this->timeStepData_[globalIdxI].dt = 1./sumfactorin;
+            if ( 1./sumfactorin < dt)
+            {
+                dt = 1./sumfactorin;
+                restrictingCell= globalIdxI;
+            }
+        }
+        else
+        {
+            if ( 1./sumfactorin < dt)
+            {
+                dt = 1./sumfactorin;
+                restrictingCell= globalIdxI;
+            }
         }
     } // end grid traversal
 

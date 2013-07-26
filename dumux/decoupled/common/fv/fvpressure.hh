@@ -237,9 +237,7 @@ public:
     }
 
     void updateVelocity()
-    {
-        DUNE_THROW(Dune::NotImplemented,"Velocity update not implemented in pressure model!");
-    }
+    {} //empty function for the case the velocity is calculated in the transport model
 
     /*! \brief  Function for serialization of the pressure field.
      *

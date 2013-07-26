@@ -21,6 +21,10 @@ UpperRightX = 10 # [m] length of the domain
 UpperRightY = 10 # [m] width of the domain
 UpperRightZ = 10 # [m] height of the domain
 
+[Impet]
+CFLFactor = 0.8 
+#SubCFLFactor = 0.8 # for sub-time-stepping of the transport
+
 ###############################################################
 # Simulation restart
 #

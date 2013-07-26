@@ -111,6 +111,7 @@ SET_INT_PROP(TestMultTwoPTwoCProblem,
              BoundaryMobility,
              GET_PROP_TYPE(TypeTag, Indices)::satDependent);
 SET_SCALAR_PROP(TestMultTwoPTwoCProblem, ImpetCFLFactor, 0.8);
+//SET_SCALAR_PROP(TestMultTwoPTwoCProblem, ImpetSubCFLFactor, 0.8);//can be defined to use sub-time-stepping for the transport
 }
 
 /*!
