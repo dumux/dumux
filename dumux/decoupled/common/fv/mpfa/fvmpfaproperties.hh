@@ -103,7 +103,9 @@ NEW_TYPE_TAG(MPFAProperties);
 
 NEW_PROP_TAG( GridTypeIndices );//!< The grid type indices to decide which grid is used
 NEW_PROP_TAG( GridImplementation ); //!< Gives kind of grid implementation in form of a GridType
-NEW_PROP_TAG( MPFAEnableComplexLStencil ); //!< Enable use of four different L-shapes instead of 2 (3-d)
+NEW_PROP_TAG( MPFAEnableSimpleLStencil ); //!< Enable use of the two simpler L-shapes (3-d)
+NEW_PROP_TAG( MPFAEnableComplexLStencil ); //!< Enable use of the two more complex L-shapes (3-d)
+NEW_PROP_TAG( MPFAEnableTPFA );//!< Enable use of TPFA (3-d)
 NEW_PROP_TAG( MPFATransmissibilityCriterionThreshold ); //!< Threshold for transmissibility choice
 NEW_PROP_TAG( MPFATransmissibilityCriterion ); //!< Choose transmissibility criterion
 }
@@ -128,7 +130,13 @@ public:
 SET_TYPE_PROP(MPFAProperties, GridTypeIndices, GridTypes);
 
 //! Allow use of all available L-shapes
+SET_BOOL_PROP(MPFAProperties, MPFAEnableSimpleLStencil, true);
+
+//! Allow use of all available L-shapes
 SET_BOOL_PROP(MPFAProperties, MPFAEnableComplexLStencil, true);
+
+//! Disable use of TPFA
+SET_BOOL_PROP(MPFAProperties, MPFAEnableTPFA, false);
 
 //! Allow use of all available L-shapes
 SET_SCALAR_PROP(MPFAProperties, MPFATransmissibilityCriterionThreshold, 1e-8);
