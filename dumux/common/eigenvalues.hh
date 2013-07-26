@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Defines a function to calculate eigenvalues of n x n matrices. For n > 2 a cyclic jacobi method is used.
- * This implementation is not efficient for larger matrices!
+ * \brief Defines a functions to calculate eigenvalues and eigenvectors of n x n matrices. For n > 2 a cyclic jacobi method is used.
+ * This implementation is not efficient for larg matrices!
  */
 #ifndef DUMUX_EIGENVALUES_HH
 #define DUMUX_EIGENVALUES_HH
@@ -57,6 +57,11 @@ double calcOffDiagonalNorm(Matrix& matrix)
     return std::sqrt(norm);
 }
 
+//! Function to calculate eigenvalues of n x n matrices
+/*
+ * \param eigVel Vector for storing the eigenvalues
+ * \param matrix n x n matrices for which eigenvalues have to be calculated
+ */
 template<int dim, class EVVectorType, class MatrixType>
 bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix)
 {
@@ -82,12 +87,12 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix)
     {
         int maxIter = 100;
         int iter = 0;
-        double matrixNorm = 0;
-        double offDiagonalNorm = 1;
+        double matrixNorm = matrix.frobenius_norm();
+        double offDiagonalNorm = calcOffDiagonalNorm<dim>(matrix);
         MatrixType rotationMatrix(0.0);
         MatrixType evMatrix(matrix);
 
-        while (iter < maxIter && offDiagonalNorm > 0.01 * matrixNorm)
+        while ((iter < maxIter && offDiagonalNorm > 0.01 * matrixNorm) || iter < 1)
         {
             for (int i = 0; i < dim - 1; i++)
             {
@@ -134,6 +139,74 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix)
         return false;
     }
 }
+;
+
+//! Function to calculate eigenvalues and eigenvectors of n x n matrices
+/*
+ * \param eigVel Vector for storing the eigenvalues
+ * \param eigVec n x n for storing the eigenvectors
+ * \param matrix n x n matrices for which eigenvalues have to be calculated
+ */
+template<int dim, class EVVectorType, class MatrixType>
+bool calculateEigenValues(EVVectorType &eigVel, MatrixType& eigVec, MatrixType& matrix)
+{
+        int maxIter = 100;
+        int iter = 0;
+        double matrixNorm = matrix.frobenius_norm();
+        double offDiagonalNorm = calcOffDiagonalNorm<dim>(matrix);
+        MatrixType rotationMatrix(0.0);
+        MatrixType evMatrix(matrix);
+        MatrixType evecMatrix(matrix);
+        identityMatrix<dim>(evecMatrix);
+
+        while ((iter < maxIter && offDiagonalNorm > 0.01 * matrixNorm) || iter < 1)
+        {
+            for (int i = 0; i < dim - 1; i++)
+            {
+                for (int j = i + 1; j < dim; j++)
+                {
+                    identityMatrix<dim>(rotationMatrix);
+
+                    double theta = (evMatrix[i][i] - evMatrix[j][j])
+                            / (2 * evMatrix[i][j]);
+                    double t = sign(theta)
+                            / (std::abs(theta) + std::sqrt(1 + theta * theta));
+                    double c = 1 / std::sqrt(1 + t * t);
+                    double s = c * t;
+
+                    rotationMatrix[i][i] = c;
+                    rotationMatrix[j][j] = c;
+                    rotationMatrix[i][j] = s;
+                    rotationMatrix[j][i] = -s;
+
+                    evMatrix.leftmultiply(rotationMatrix);
+
+                    rotationMatrix[i][j] = -s;
+                    rotationMatrix[j][i] = s;
+
+                    evMatrix.rightmultiply(rotationMatrix);
+                    evecMatrix.rightmultiply(rotationMatrix);
+                }
+            }
+            matrixNorm = evMatrix.frobenius_norm();
+            offDiagonalNorm = calcOffDiagonalNorm<dim>(evMatrix);
+            iter++;
+        }
+
+        for (int i = 0; i < dim; i++)
+        {
+            eigVel[i] = evMatrix[i][i];
+            if (std::isnan(eigVel[i]) || std::isinf(eigVel[i]))
+                return false;
+            for (int j = 0; j < dim; j++)
+            {
+                eigVec[i][j] = evecMatrix[j][i];
+            }
+        }
+
+        return true;
+}
+;
 
 }
 
