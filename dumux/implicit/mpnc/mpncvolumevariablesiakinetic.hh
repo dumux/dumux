@@ -405,41 +405,6 @@ public:
     }
 
     /*!
-     * \brief Check whether the calculated values are reasonable.
-     *
-     * \param fluidState Container for all the secondary variables concerning the fluids
-     * \param globalPos The position at which the check is conducted
-     */
-     bool physicalness(const FluidState & fluidState,
-                       const GlobalPosition & globalPos)
-    {
-        const Scalar eps = 1e-6 ;
-        const Scalar ia = interfacialArea(wPhaseIdx, nPhaseIdx);
-        if (not std::isfinite(ia)
-            or ia < 0.-eps )
-            return false; // unphysical value found: tell calling function, sth went wrong!
-        return true; // all the checks went through: tell calling function, nothing bad could be found.
-    }
-
-     /*!
-      * \brief Output for the case that the current state is not physical.
-      *        This is called if the physicalness funcitons returned false.
-      *
-      * \param fluidState Container for all the secondary variables concerning the fluids
-      * \param message A string returning the error message for this module
-      */
-    const void physicalnessError(const FluidState & fluidState,
-                                 std::stringstream & message)
-    {
-        message <<"IA: \n";
-
-                const Scalar ia = interfacialArea(wPhaseIdx, nPhaseIdx);
-                message << "\tia" <<FluidSystem::phaseName(wPhaseIdx)
-                                 <<FluidSystem::phaseName(nPhaseIdx)<<"="
-                        << ia << "\n" ;
-    }
-
-    /*!
      * \brief The specific interfacial area between two fluid phases [m^2 / m^3]
      */
     const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
