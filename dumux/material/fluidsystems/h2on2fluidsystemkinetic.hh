@@ -137,8 +137,8 @@ public:
      *
      *        \param fluidState A container with the current (physical) state of the fluid
      *        \param paramCache A container for iterative calculation of fluid composition
-     *        \param referencePhaseIdx The index of the phase who's composition is known.
-     *        \parma calcCompIdx The component who's composition in the other phase is to be
+     *        \param referencePhaseIdx The index of the phase for which composition is known.
+     *        \param calcCompIdx The component for which the composition in the other phase is to be
      *               calculated.
      */
     template <class FluidState>

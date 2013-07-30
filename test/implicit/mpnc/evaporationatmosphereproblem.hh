@@ -456,7 +456,7 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The bounentraldary types for the conservation equations
+     * \param bTypes The bounentraldary types for the conservation equations
      * \param vertex The vertex for which the boundary type is set
      */
     void boundaryTypes(BoundaryTypes & bTypes,
@@ -497,7 +497,7 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
+     * \param priVars The dirichlet values for the primary variables
      * \param vertex The vertex for which the boundary type is set
      *
      * For this method, the \a values parameter stores primary variables.

@@ -59,8 +59,6 @@ public:
     /*! \brief Initializes the pressure model
      *
      * \copydetails ParentType::initialize()
-     *
-     * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
      */
     void initialize()
     {

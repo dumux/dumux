@@ -1,8 +1,5 @@
 /*****************************************************************************
- *   Copyright (C) 2010 by Philipp Nuske                                      *
- *   Institute for Modelling Hydraulic and Environmental Systems             *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -11,18 +8,20 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *****************************************************************************/
-/*!
- * \file awnSurfacePolynomialEdgeZero2ndOrderParams.hh Specification of the material params
- *       for the interfacial area surface parameters
- */
 #ifndef AWN_SURFACE_POLYNOMIAL_EDGE_ZERO_2ND_ORDER_PARAMS_HH
 #define AWN_SURFACE_POLYNOMIAL_EDGE_ZERO_2ND_ORDER_PARAMS_HH
+
+/*!
+ * \file
+ * Specification of the material params for the interfacial area surface
+ * parameters
+ */
 
 namespace Dumux
 {
@@ -48,34 +47,34 @@ public:
     }
 
     /*!
-         * \brief Return the \f$a_{1}\f$ shape parameter of awn surface.
-         */
-        const Scalar a1() const
-        { return a1_; }
+     * \brief Return the \f$a_{1}\f$ shape parameter of awn surface.
+     */
+    const Scalar a1() const
+    { return a1_; }
 
-        /*!
-         * \brief Return the \f$a_{2}\f$ shape parameter of awn surface.
-         */
-        const Scalar a2() const
-        { return a2_; }
+    /*!
+     * \brief Return the \f$a_{2}\f$ shape parameter of awn surface.
+     */
+    const Scalar a2() const
+    { return a2_; }
 
-        /*!
-         * \brief Return the \f$a_{3}\f$ shape parameter of awn surface.
-         */
-        const Scalar a3() const
-        { return a3_; }
+    /*!
+     * \brief Return the \f$a_{3}\f$ shape parameter of awn surface.
+     */
+    const Scalar a3() const
+    { return a3_; }
 
-        /*!
-         * \brief Return the \f$a_{3}\f$ shape parameter of awn surface.
-         */
-        const Scalar Swr() const
-        { return Swr_; }
+    /*!
+     * \brief Return the \f$a_{3}\f$ shape parameter of awn surface.
+     */
+    const Scalar Swr() const
+    { return Swr_; }
 
-        /*!
-         * \brief Set the residual water saturation
-         */
-        void setSwr(const Scalar v)
-        { Swr_ = v; }
+    /*!
+     * \brief Set the residual water saturation
+     */
+    void setSwr(const Scalar v)
+    { Swr_ = v; }
 
     /*!
      * \brief Set the \f$a_{1}\f$ shape parameter.

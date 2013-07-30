@@ -410,7 +410,7 @@ public:
      * \param fluidState Container for all the secondary variables concerning the fluids
      * \param globalPos The position at which the check is conducted
      */
-     bool physicalness(const FluidState & fs,
+     bool physicalness(const FluidState & fluidState,
                        const GlobalPosition & globalPos)
     {
         const Scalar eps = 1e-6 ;
@@ -428,7 +428,7 @@ public:
       * \param fluidState Container for all the secondary variables concerning the fluids
       * \param message A string returning the error message for this module
       */
-    const void physicalnessError(const FluidState & fs,
+    const void physicalnessError(const FluidState & fluidState,
                                  std::stringstream & message)
     {
         message <<"IA: \n";

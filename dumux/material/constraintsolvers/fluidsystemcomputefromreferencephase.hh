@@ -102,7 +102,7 @@ public:
      * \param paramCache A container for iterative calculation of fluid composition
      * \param refPhaseIdx The index of the phase whose's composition is known.
      * \param setViscosity Should the viscosity be set in the fluidstate?
-     * \param setViscosity Should the enthalpy be set in the fluidstate?
+     * \param setEnthalpy Should the enthalpy be set in the fluidstate?
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState & fluidState,

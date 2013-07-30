@@ -29,7 +29,7 @@
 /*!
  * \brief Print a usage string for simulations.
  *
- * \param progname The name of the executable
+ * \param progName The name of the executable
  */
 void printUsage(const char *progName)
 {
@@ -317,11 +317,9 @@ int start_(int argc,
  *
  * \param argc  The number of command line arguments of the program
  * \param argv  The contents of the command line arguments of the program
- * \param usage Callback function for printing the usage message
  */
 template <class TypeTag>
-int start(int argc,
-          char **argv)
+int start(int argc, char **argv)
 {
     try {
         return start_<TypeTag>(argc, argv);

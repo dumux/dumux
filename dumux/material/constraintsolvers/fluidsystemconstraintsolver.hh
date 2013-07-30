@@ -120,7 +120,7 @@ public:
      * \param fluidState A container with the current (physical) state of the fluid
      * \param paramCache A container for iterative calculation of fluid composition
      * \param setViscosity Should the viscosity be set in the fluidstate?
-     * \param setViscosity Should the enthalpy be set in the fluidstate?
+     * \param setInternalEnergy Should the enthalpy be set in the fluidstate?
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState & fluidState,
