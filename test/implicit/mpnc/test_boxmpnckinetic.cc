@@ -340,33 +340,6 @@ int start(int argc, char **argv)
     }
 }
 
-//
-///*!
-// * \brief Print a usage string for simulations using
-// *        Dumux::startFromDGF() as their main() function.
-// *
-// * \param progname The name of the executable
-// */
-//void printUsage(const char *progname)
-//{
-//    std::cout << boost::format(
-//        "usage: %s [options]\n"
-//        "\n"
-//        "Options starting with a lowercase letter must be specified somewhere,\n"
-//        "options beginning with an uppercase letter do have fallback values.\n"
-//        "Some important options include:\n"
-//        "  -Help                         Print this usage message and quit\n"
-//        "  -tEnd time                    Time [s] of the simulation's end\n"
-//        "  -dtInitial time               Initial time step size [s]\n"
-//        "  -parameterFile parameter file A INI file with options\n"
-//        "  -Restart time                 Restart a previous run from a DRS file\n"
-//        "  -PrintParams (true|false)     Print the parameters used at the end of the simulation\n"
-//        "  -CellsX n                     Number of cells in x direction\n"
-//        "  -CellsY n                     Number of cells in y direction\n"
-//        "  -Newton.RelTolerance value    Tolerated relative error for the Newton solver\n"
-//        )%progname;
-//}
-
 int main(int argc, char** argv)
 {
     typedef TTAG(EvaporationAtmosphereProblem) ProblemTypeTag;
