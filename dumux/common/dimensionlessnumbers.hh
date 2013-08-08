@@ -113,8 +113,10 @@ static Scalar prandtlNumber(const Scalar dynamicViscosity,
  *          source for Nusselt number definition: http://en.wikipedia.org/wiki/Nusselt_number
  *          source for further empirical correlations for Nusselt Numbers: VDI-Gesellschaft, VDI-Waermeatlas, VDI-Verlag Duesseldorf, 2006
  *
+ * \param reynoldsNumber    Dimensionless number relating inertial and viscous forces [-].
  * \param prandtlNumber     Dimensionless number relating viscosity and thermal diffusivity (temperaturleitfaehigkeit) [-].
- * \param ReynoldsNumber    Dimensionless number relating inertial and viscous forces [-].
+ * \param porosity          The fraction of the porous medium which is void space.
+ *
  * \return                  The Nusselt number as calculated from the input parameters [-].
  */
 
