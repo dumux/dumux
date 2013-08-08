@@ -38,6 +38,7 @@
 
 #include <dune/common/parametertreeparser.hh>
 
+#include <dumux/implicit/mpnc/mpncmodelkinetic.hh>
 
 namespace Dumux
 {

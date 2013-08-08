@@ -67,7 +67,7 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
     enum { dim = GridView::dimension};
     enum { numEnergyEqs    = Indices::NumPrimaryEnergyVars};
 
-    typedef DimensionlessNumbers<TypeTag> DimLessNum;
+    typedef DimensionlessNumbers<Scalar> DimLessNum;
     typedef Dune::FieldVector<Scalar,dim> GlobalPosition;
 
 
@@ -333,7 +333,7 @@ class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*bool enableKineti
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef DimensionlessNumbers<TypeTag> DimLessNum;
+    typedef DimensionlessNumbers<Scalar> DimLessNum;
 
     typedef typename GET_PROP_TYPE(TypeTag, AwnSurface) AwnSurface;
     typedef typename AwnSurface::Params AwnSurfaceParams;

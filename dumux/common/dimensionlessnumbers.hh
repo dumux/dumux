@@ -38,10 +38,9 @@ namespace Dumux
  *        All the parameters for the calculation have to be handed over.
  *        Rendering this collection generic in the sense that it can be used by any model.
  */
-template <class  TypeTag>
+template <class Scalar>
 class DimensionlessNumbers
 {
-typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:
 /*!
