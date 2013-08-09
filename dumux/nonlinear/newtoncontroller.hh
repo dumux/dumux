@@ -52,9 +52,6 @@ NEW_PROP_TAG(NewtonMethod);
 //! Specifies the type of a solution
 NEW_PROP_TAG(SolutionVector);
 
-//! Specifies the type of a vector of primary variables at a degree of freedom
-NEW_PROP_TAG(PrimaryVariables);
-
 //! Specifies the type of a global Jacobian matrix
 NEW_PROP_TAG(JacobianMatrix);
 
@@ -152,7 +149,6 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     typedef NewtonConvergenceWriter<TypeTag> ConvergenceWriter;
 
@@ -342,7 +338,7 @@ public:
         error_ = 0;
 
         for (int i = 0; i < int(uLastIter.size()); ++i) {
-            PrimaryVariables uNewI = uLastIter[i];
+            typename SolutionVector::block_type uNewI = uLastIter[i];
             uNewI -= deltaU[i];
 
             Scalar dofError = model_().relativeErrorDof(i,
