@@ -32,8 +32,7 @@ namespace Dumux
 /*!\ingroup IMPES
  * @brief  Class defining a start indicator for grid adaption
  *
- *  Uses the defined grid adaptation indicator and further accounts for sources and boundaries.
- *  Only for grid initialization!
+ *Default implementation
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -85,12 +84,15 @@ public:
     void init()
     {};
 
-    /*! \brief Constructs a GridAdaptionIndicator instance
+    /*! \brief Returns true if the IMPET-Model needs to be initialized*/
+    bool initializeModel()
+    {
+        return false;
+    }
+
+    /*! \brief Constructs a GridAdaptionIndicator for initialization of an adaptive grid
      *
-     * This standard indicator is based on the saturation gradient. It checks the local gradient 
-     * compared to the maximum global gradient. The indicator is compared locally to a 
-     * refinement/coarsening threshold to decide whether a cell should be marked for refinement 
-     * or coarsening or should not be adapted.
+     * Default implementation
      *
      * \param problem The problem object
      * \param adaptionIndicator Indicator whether a be adapted
