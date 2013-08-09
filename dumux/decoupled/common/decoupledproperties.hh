@@ -54,11 +54,6 @@ NEW_PROP_TAG( SolutionTypes);
 NEW_PROP_TAG( PrimaryVariables);
 NEW_PROP_TAG( Indices);
 
-NEW_PROP_TAG( Grid); //!< The type of the DUNE grid
-NEW_PROP_TAG( GridView); //!< The type of the grid view
-
-NEW_PROP_TAG( Problem); //!< The type of the problem
-NEW_PROP_TAG( Model); //!< The type of the discretizations
 NEW_PROP_TAG( PressureModel ); //!< The type of the discretization of a pressure model
 NEW_PROP_TAG( TransportModel ); //!< The type of the discretization of a transport model
 NEW_PROP_TAG( Velocity ); //!< The type velocity reconstruction

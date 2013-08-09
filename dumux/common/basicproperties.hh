@@ -74,6 +74,18 @@ NEW_PROP_TAG(ModelParameterGroup);
 //! Property which provides a GridCreator (manages grids)
 NEW_PROP_TAG(GridCreator);
 
+//! The DUNE grid type
+NEW_PROP_TAG(Grid);
+
+//! The type of the grid view according to the grid type
+NEW_PROP_TAG(GridView);
+
+//! Property to specify the type of a problem which has to be solved
+NEW_PROP_TAG(Problem);
+
+//! Property defining the type of the model which is used to solve the problem
+NEW_PROP_TAG(Model);
+
 /*!
  * \brief Specify the maximum size of a time integration [s].
  *

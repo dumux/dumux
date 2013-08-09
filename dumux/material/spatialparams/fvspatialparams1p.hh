@@ -29,7 +29,7 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/math.hh>
 
-#include <dumux/decoupled/common/decoupledproperties.hh>
+#include <dumux/common/basicproperties.hh>
 
 #include <dune/common/fmatrix.hh>
 
