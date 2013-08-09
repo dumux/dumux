@@ -90,7 +90,7 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
     };
 
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:
     /*! \brief Constructs a FVVelocity2PAdaptive object
@@ -99,10 +99,6 @@ public:
     FVVelocity2PAdaptive(Problem& problem)
     : ParentType(problem), problem_(problem), gravity_(problem.gravity())
     {
-        if (dim != 2)
-        {
-            DUNE_THROW(Dune::NotImplemented, "Adaptive finite volume implementation only available in 2-d!");
-        }
         if (GET_PROP_VALUE(TypeTag, EnableCompressibility) && velocityType_ == vt)
         {
             DUNE_THROW(Dune::NotImplemented, "Total velocity - global pressure - model cannot be used with compressible fluids!");
@@ -148,7 +144,10 @@ public:
      */
     bool calculateVelocityInTransport()
     {
-        return false;
+        if (dim == 2)
+            return false;
+        else
+            return true;
     }
 
 private:
@@ -179,7 +178,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
     {
         ParentType::calculateVelocity(intersection, cellData);
     }
-    else if (elementJ->level() == elementI->level() + 1)
+    else if (elementJ->level() == elementI->level() + 1 && dim == 2)
     {
         CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(*elementJ));
 
@@ -189,13 +188,13 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
         // get mobilities and fractional flow factors
         Scalar lambdaWI = cellData.mobility(wPhaseIdx);
-        Scalar lambdaNWI = cellData.mobility(nPhaseIdx);
+        Scalar lambdaNwI = cellData.mobility(nPhaseIdx);
         Scalar fractionalWI = cellData.fracFlowFunc(wPhaseIdx);
-        Scalar fractionalNWI = cellData.fracFlowFunc(nPhaseIdx);
+        Scalar fractionalNwI = cellData.fracFlowFunc(nPhaseIdx);
         Scalar lambdaWJ = cellDataJ.mobility(wPhaseIdx);
-        Scalar lambdaNWJ = cellDataJ.mobility(nPhaseIdx);
+        Scalar lambdaNwJ = cellDataJ.mobility(nPhaseIdx);
         Scalar fractionalWJ = cellDataJ.fracFlowFunc(wPhaseIdx);
-        Scalar fractionalNWJ = cellDataJ.fracFlowFunc(nPhaseIdx);
+        Scalar fractionalNwJ = cellDataJ.fracFlowFunc(nPhaseIdx);
 
         // get capillary pressure
         Scalar pcI = cellData.capillaryPressure();
@@ -253,9 +252,9 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         Scalar lJ = distVec * unitOuterNormal;
         Scalar l = lI + lJ;
 
-        FieldMatrix permeabilityI(0);
-        FieldMatrix permeabilityJ(0);
-        FieldMatrix permeabilityK(0);
+        DimMatrix permeabilityI(0);
+        DimMatrix permeabilityJ(0);
+        DimMatrix permeabilityK(0);
 
         problem_.spatialParams().meanK(permeabilityI,
                 problem_.spatialParams().intrinsicPermeability(*elementI));
@@ -283,66 +282,66 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         ng = gravity_ * unitOuterNormal;
 
         Scalar fractionalWK = cellDataK.fracFlowFunc(wPhaseIdx);
-        Scalar fractionalNWK = cellDataK.fracFlowFunc(nPhaseIdx);
+        Scalar fractionalNwK = cellDataK.fracFlowFunc(nPhaseIdx);
 
         Scalar pcK = cellDataK.capillaryPressure();
         Scalar pcJK = (pcJ + pcK) / 2;
 
         // calculate potential gradients
         // reuse potentials from fvpressure2padaptive
-        Scalar potentialWIJ = cellData.fluxData().potential(wPhaseIdx, isIndexI);
-        Scalar potentialNWIJ = cellData.fluxData().potential(nPhaseIdx, isIndexI);
-        Scalar potentialWIK = potentialWIJ;
-        Scalar potentialNWIK = potentialNWIJ;
+        Scalar potentialDiffWIJ = cellData.fluxData().upwindPotential(wPhaseIdx, isIndexI);
+        Scalar potentialDiffNwIJ = cellData.fluxData().upwindPotential(nPhaseIdx, isIndexI);
+        Scalar potentialDiffWIK = potentialDiffWIJ;
+        Scalar potentialDiffNwIK = potentialDiffNwIJ;
         // preliminary potential. The "real" ones are found below
 
         // Comment: reversed weighting is plausible, too (swap lJ and lI)
         Scalar rhoMeanWIJ = density_[wPhaseIdx];
-        Scalar rhoMeanNWIJ = density_[nPhaseIdx];
+        Scalar rhoMeanNwIJ = density_[nPhaseIdx];
         Scalar rhoMeanWIK = density_[wPhaseIdx];
-        Scalar rhoMeanNWIK = density_[nPhaseIdx];
+        Scalar rhoMeanNwIK = density_[nPhaseIdx];
 
         if (compressibility_)
         {
             rhoMeanWIJ = (lJ * cellData.density(wPhaseIdx) + lI * cellDataJ.density(wPhaseIdx)) / l;
-            rhoMeanNWIJ = (lJ * cellData.density(nPhaseIdx) + lI * cellDataJ.density(nPhaseIdx)) / l;
+            rhoMeanNwIJ = (lJ * cellData.density(nPhaseIdx) + lI * cellDataJ.density(nPhaseIdx)) / l;
             rhoMeanWIK = (lJ * cellData.density(wPhaseIdx) + lI * cellDataK.density(wPhaseIdx)) / l;
-            rhoMeanNWIK = (lJ * cellData.density(nPhaseIdx) + lI * cellDataK.density(nPhaseIdx)) / l;
+            rhoMeanNwIK = (lJ * cellData.density(nPhaseIdx) + lI * cellDataK.density(nPhaseIdx)) / l;
         }
 
         Scalar fMeanWIJ = (lJ * fractionalWI + lI * fractionalWJ) / l;
-        Scalar fMeanNWIJ = (lJ * fractionalNWI + lI * fractionalNWJ) / l;
+        Scalar fMeanNwIJ = (lJ * fractionalNwI + lI * fractionalNwJ) / l;
         Scalar fMeanWIK = (lJ * fractionalWI + lI * fractionalWK) / l;
-        Scalar fMeanNWIK = (lJ * fractionalNWI + lI * fractionalNWK) / l;
+        Scalar fMeanNwIK = (lJ * fractionalNwI + lI * fractionalNwK) / l;
 
         Scalar densityWIJ = density_[wPhaseIdx];
-        Scalar densityNWIJ = density_[nPhaseIdx];
+        Scalar densityNwIJ = density_[nPhaseIdx];
         Scalar densityWIK = density_[wPhaseIdx];
-        Scalar densityNWIK = density_[nPhaseIdx];
+        Scalar densityNwIK = density_[nPhaseIdx];
 
         if (compressibility_)
         {
         // Upwinding for finding the upwinding direction
-            densityWIJ = (potentialWIJ > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
-            densityNWIJ = (potentialNWIJ > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
-            densityWIK = (potentialWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
-            densityNWIK = (potentialNWIK > 0.) ? cellData.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
+            densityWIJ = (potentialDiffWIJ > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
+            densityNwIJ = (potentialDiffNwIJ > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+            densityWIK = (potentialDiffWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
+            densityNwIK = (potentialDiffNwIK > 0.) ? cellData.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
 
-            densityWIJ = (potentialWIJ == 0.) ? rhoMeanWIJ : densityWIJ;
-            densityNWIJ = (potentialNWIJ == 0.) ? rhoMeanNWIJ : densityNWIJ;
-            densityWIK = (potentialWIK == 0.) ? rhoMeanWIK : densityWIK;
-            densityNWIK = (potentialNWIK == 0.) ? rhoMeanNWIK : densityNWIK;
+            densityWIJ = (potentialDiffWIJ == 0.) ? rhoMeanWIJ : densityWIJ;
+            densityNwIJ = (potentialDiffNwIJ == 0.) ? rhoMeanNwIJ : densityNwIJ;
+            densityWIK = (potentialDiffWIK == 0.) ? rhoMeanWIK : densityWIK;
+            densityNwIK = (potentialDiffNwIK == 0.) ? rhoMeanNwIK : densityNwIK;
         }
 
-        Scalar fractionalWIJ = (potentialWIJ > 0.) ? fractionalWI : fractionalWJ;
-        Scalar fractionalNWIJ = (potentialNWIJ > 0.) ? fractionalNWI : fractionalNWJ;
-        Scalar fractionalWIK = (potentialWIK > 0.) ? fractionalWI : fractionalWK;
-        Scalar fractionalNWIK = (potentialNWIK > 0.) ? fractionalNWI : fractionalNWK;
+        Scalar fractionalWIJ = (potentialDiffWIJ > 0.) ? fractionalWI : fractionalWJ;
+        Scalar fractionalNwIJ = (potentialDiffNwIJ > 0.) ? fractionalNwI : fractionalNwJ;
+        Scalar fractionalWIK = (potentialDiffWIK > 0.) ? fractionalWI : fractionalWK;
+        Scalar fractionalNwIK = (potentialDiffNwIK > 0.) ? fractionalNwI : fractionalNwK;
 
-        fractionalWIJ = (potentialWIJ == 0.) ? fMeanWIJ : fractionalWIJ;
-        fractionalNWIJ = (potentialNWIJ == 0.) ? fMeanNWIJ : fractionalNWIJ;
-        fractionalWIK = (potentialWIK == 0.) ? fMeanWIK : fractionalWIK;
-        fractionalNWIK = (potentialNWIK == 0.) ? fMeanNWIK : fractionalNWIK;
+        fractionalWIJ = (potentialDiffWIJ == 0.) ? fMeanWIJ : fractionalWIJ;
+        fractionalNwIJ = (potentialDiffNwIJ == 0.) ? fMeanNwIJ : fractionalNwIJ;
+        fractionalWIK = (potentialDiffWIK == 0.) ? fMeanWIK : fractionalWIK;
+        fractionalNwIK = (potentialDiffNwIK == 0.) ? fMeanNwIK : fractionalNwIK;
 
         switch (pressureType_)
         {
@@ -350,30 +349,30 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         {
             Scalar pressJK = (cellDataJ.globalPressure() + cellDataK.globalPressure()) / 2;
 
-            potentialWIJ = (cellData.globalPressure() - fMeanNWIJ * pcI - (pressJK - fMeanNWIJ * pcJK)) / l
+            potentialDiffWIJ = (cellData.globalPressure() - fMeanNwIJ * pcI - (pressJK - fMeanNwIJ * pcJK)) / l
                     + (densityWIJ - lJ / l * (kI + kK) / kI * (densityWIK - densityWIJ) / 2) * ng;
-            potentialNWIJ = (cellData.globalPressure() + fMeanWIJ * pcI - (pressJK + fMeanWIJ * pcJK)) / l
-                    + (densityNWIJ - lJ / l * (kI + kK) / kI * (densityNWIK - densityNWIJ) / 2) * ng;
-            potentialWIK = (cellData.globalPressure() - fMeanNWIK * pcI - (pressJK - fMeanNWIK * pcJK)) / l
+            potentialDiffNwIJ = (cellData.globalPressure() + fMeanWIJ * pcI - (pressJK + fMeanWIJ * pcJK)) / l
+                    + (densityNwIJ - lJ / l * (kI + kK) / kI * (densityNwIK - densityNwIJ) / 2) * ng;
+            potentialDiffWIK = (cellData.globalPressure() - fMeanNwIK * pcI - (pressJK - fMeanNwIK * pcJK)) / l
                     + (densityWIK - lJ / l * (kI + kK) / kI * (densityWIJ - densityWIK) / 2) * ng;
-            potentialNWIK = (cellData.globalPressure() + fMeanWIK * pcI - (pressJK + fMeanWIK * pcJK)) / l
-                    + (densityNWIK - lJ / l * (kI + kK) / kI * (densityNWIJ - densityNWIK) / 2) * ng;
+            potentialDiffNwIK = (cellData.globalPressure() + fMeanWIK * pcI - (pressJK + fMeanWIK * pcJK)) / l
+                    + (densityNwIK - lJ / l * (kI + kK) / kI * (densityNwIJ - densityNwIK) / 2) * ng;
             break;
         }
         default:
         {
-            potentialWIJ = (cellData.pressure(wPhaseIdx)
+            potentialDiffWIJ = (cellData.pressure(wPhaseIdx)
                     - 0.5 * (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx))) / l
                     + (densityWIJ - lJ / l * (kI + kK) / kI * (densityWIK - densityWIJ) / 2) * ng;
-            potentialNWIJ = (cellData.pressure(nPhaseIdx)
+            potentialDiffNwIJ = (cellData.pressure(nPhaseIdx)
                     - (0.5 * (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)))) / l
-                    + (densityNWIJ - lJ / l * (kI + kK) / kI * (densityNWIK - densityNWIJ) / 2) * ng;
-            potentialWIK = (cellData.pressure(wPhaseIdx)
+                    + (densityNwIJ - lJ / l * (kI + kK) / kI * (densityNwIK - densityNwIJ) / 2) * ng;
+            potentialDiffWIK = (cellData.pressure(wPhaseIdx)
                     - 0.5 * (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx))) / l
                     + (densityWIK - lJ / l * (kI + kK) / kI * (densityWIJ - densityWIK) / 2) * ng;
-            potentialNWIK = (cellData.pressure(nPhaseIdx)
+            potentialDiffNwIK = (cellData.pressure(nPhaseIdx)
                     - (0.5 * (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)))) / l
-                    + (densityNWIK - lJ / l * (kI + kK) / kI * (densityNWIJ - densityNWIK) / 2) * ng;
+                    + (densityNwIK - lJ / l * (kI + kK) / kI * (densityNwIJ - densityNwIK) / 2) * ng;
             break;
         }
         }
@@ -381,58 +380,58 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         //store potentials for further calculations (velocity, saturation, ...)
         // these quantities only have correct sign (needed for upwinding)
         // potentials are defined slightly different for adaptive scheme
-        cellData.fluxData().addPotential(wPhaseIdx, isIndexI, potentialWIJ);
-        cellData.fluxData().addPotential(nPhaseIdx, isIndexI, potentialNWIJ);
-        cellDataJ.fluxData().setPotential(wPhaseIdx, isIndexJ, -potentialWIJ);
-        cellDataJ.fluxData().setPotential(nPhaseIdx, isIndexJ, -potentialNWIJ);
+        cellData.fluxData().addUpwindPotential(wPhaseIdx, isIndexI, potentialDiffWIJ);
+        cellData.fluxData().addUpwindPotential(nPhaseIdx, isIndexI, potentialDiffNwIJ);
+        cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, isIndexJ, -potentialDiffWIJ);
+        cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, isIndexJ, -potentialDiffNwIJ);
 
         //do the upwinding of the mobility depending on the phase potentials
-        Scalar lambdaWIJ = (potentialWIJ > 0.) ? lambdaWI : lambdaWJ;
-        lambdaWIJ = (potentialWIJ == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaWIJ;
-        Scalar lambdaNWIJ = (potentialNWIJ > 0.) ? lambdaNWI : lambdaNWJ;
-        lambdaNWIJ = (potentialNWIJ == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNWIJ;
+        Scalar lambdaWIJ = (potentialDiffWIJ > 0.) ? lambdaWI : lambdaWJ;
+        lambdaWIJ = (potentialDiffWIJ == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaWIJ;
+        Scalar lambdaNwIJ = (potentialDiffNwIJ > 0.) ? lambdaNwI : lambdaNwJ;
+        lambdaNwIJ = (potentialDiffNwIJ == 0) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNwIJ;
 
         if (compressibility_)
         {
-            densityWIJ = (potentialWIJ > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
-            densityNWIJ = (potentialNWIJ > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
-            densityWIJ = (potentialWIJ == 0) ? rhoMeanWIJ : densityWIJ;
-            densityNWIJ = (potentialNWIJ == 0) ? rhoMeanNWIJ : densityNWIJ;
-            densityWIK = (potentialWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
-            densityNWIK = (potentialNWIK > 0.) ? cellData.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
-            densityWIK = (potentialWIK == 0) ? rhoMeanWIK : densityWIK;
-            densityNWIK = (potentialNWIK == 0) ? rhoMeanNWIK : densityNWIK;
+            densityWIJ = (potentialDiffWIJ > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
+            densityNwIJ = (potentialDiffNwIJ > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+            densityWIJ = (potentialDiffWIJ == 0) ? rhoMeanWIJ : densityWIJ;
+            densityNwIJ = (potentialDiffNwIJ == 0) ? rhoMeanNwIJ : densityNwIJ;
+            densityWIK = (potentialDiffWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
+            densityNwIK = (potentialDiffNwIK > 0.) ? cellData.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
+            densityWIK = (potentialDiffWIK == 0) ? rhoMeanWIK : densityWIK;
+            densityNwIK = (potentialDiffNwIK == 0) ? rhoMeanNwIK : densityNwIK;
         }
 
         //calculate velocities and the gravity term
         Dune::FieldVector < Scalar, dimWorld > velocityW(unitOuterNormal);
-        Dune::FieldVector < Scalar, dimWorld > velocityNW(unitOuterNormal);
+        Dune::FieldVector < Scalar, dimWorld > velocityNw(unitOuterNormal);
         Dune::FieldVector < Scalar, dimWorld > gravityTermW(unitOuterNormal);
-        Dune::FieldVector < Scalar, dimWorld > gravityTermNW(unitOuterNormal);
+        Dune::FieldVector < Scalar, dimWorld > gravityTermNw(unitOuterNormal);
 
         gravityTermW *= lambdaWIJ * kMean * ng;
         gravityTermW *= densityWIJ - (lJ / l) * (kI + kK) / kI * (densityWIK - densityWIJ) / 2;
-        gravityTermNW *= lambdaNWIJ * kMean * ng;
-        gravityTermNW *= densityNWIJ - (lJ / l) * (kI + kK) / kI * (densityNWIK - densityNWIJ) / 2;
+        gravityTermNw *= lambdaNwIJ * kMean * ng;
+        gravityTermNw *= densityNwIJ - (lJ / l) * (kI + kK) / kI * (densityNwIK - densityNwIJ) / 2;
 
         switch (pressureType_)
         {
         case pw:
         {
             velocityW *= lambdaWIJ * kMean * (cellData.pressure(wPhaseIdx) - (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
-            velocityNW *= lambdaNWIJ * kMean * (cellData.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
+            velocityNw *= lambdaNwIJ * kMean * (cellData.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
 
             velocityW += gravityTermW;
-            velocityNW += gravityTermNW;
+            velocityNw += gravityTermNw;
             break;
         }
         case pn:
         {
-            velocityNW *= lambdaNWIJ * kMean * (cellData.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
+            velocityNw *= lambdaNwIJ * kMean * (cellData.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
             velocityW *= lambdaWIJ * kMean * (cellData.pressure(wPhaseIdx) - (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
 
             velocityW += gravityTermW;
-            velocityNW += gravityTermNW;
+            velocityNw += gravityTermNw;
             break;
         }
         case pGlobal:
@@ -441,21 +440,198 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
             velocityW *= lambdaWIJ * kMean * (cellData.globalPressure() - pressJK) / l;
             velocityW += gravityTermW;
-            velocityW += gravityTermNW;
-            velocityNW = 0;
+            velocityW += gravityTermNw;
+            velocityNw = 0;
             break;
         }
         }
 
         cellDataJ.fluxData().setVelocity(wPhaseIdx, isIndexJ, velocityW);
-        cellDataJ.fluxData().setVelocity(nPhaseIdx, isIndexJ, velocityNW);
+        cellDataJ.fluxData().setVelocity(nPhaseIdx, isIndexJ, velocityNw);
         cellDataJ.fluxData().setVelocityMarker(isIndexJ);
 
         //times 0.5 because cell face with hanging node is called twice! Do not set marker because it should be called twice!
         velocityW *= faceArea/faceAreaSum;
-        velocityNW *= faceArea/faceAreaSum;
+        velocityNw *= faceArea/faceAreaSum;
         cellData.fluxData().addVelocity(wPhaseIdx, isIndexI, velocityW);
-        cellData.fluxData().addVelocity(nPhaseIdx, isIndexI, velocityNW);
+        cellData.fluxData().addVelocity(nPhaseIdx, isIndexI, velocityNw);
+    }
+    else if (elementI->level() != elementJ->level() && dim == 3)
+    {
+        ElementPointer elementI = intersection.inside();
+        ElementPointer elementJ = intersection.outside();
+
+        int globalIdxJ = problem_.variables().index(*elementJ);
+
+        CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
+
+        // get global coordinates of cell centers
+        const GlobalPosition& globalPosI = elementI->geometry().center();
+        const GlobalPosition& globalPosJ = elementJ->geometry().center();
+
+        // get mobilities and fractional flow factors
+        Scalar lambdaWI = cellData.mobility(wPhaseIdx);
+        Scalar lambdaNwI = cellData.mobility(nPhaseIdx);
+        Scalar fractionalWI = cellData.fracFlowFunc(wPhaseIdx);
+        Scalar fractionalNwI = cellData.fracFlowFunc(nPhaseIdx);
+        Scalar lambdaWJ = cellDataJ.mobility(wPhaseIdx);
+        Scalar lambdaNwJ = cellDataJ.mobility(nPhaseIdx);
+        Scalar fractionalWJ = cellDataJ.fracFlowFunc(wPhaseIdx);
+        Scalar fractionalNwJ = cellDataJ.fracFlowFunc(nPhaseIdx);
+
+        // get capillary pressure
+        Scalar pcI = cellData.capillaryPressure();
+        Scalar pcJ = cellDataJ.capillaryPressure();
+
+        //get face index
+        int isIndexI = intersection.indexInInside();
+        int isIndexJ = intersection.indexInOutside();
+
+        //get face normal
+        const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
+
+        // distance vector between barycenters
+        GlobalPosition distVec = globalPosJ - globalPosI;
+
+        // compute distance between cell centers
+        Scalar dist = distVec.two_norm();
+
+        // compute vectorized permeabilities
+        DimMatrix meanPermeability(0);
+
+        problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
+                problem_.spatialParams().intrinsicPermeability(*elementJ));
+
+        Dune::FieldVector<Scalar, dim> permeability(0);
+        meanPermeability.mv(unitOuterNormal, permeability);
+
+        //calculate potential gradients
+        Scalar potentialDiffW = cellData.potential(wPhaseIdx) - cellDataJ.potential(wPhaseIdx);
+        Scalar potentialDiffNw = cellData.potential(nPhaseIdx) - cellDataJ.potential(nPhaseIdx);
+
+        if (compressibility_)
+        {
+            density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
+            density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+
+            density_[wPhaseIdx] =
+                    (potentialDiffW == 0) ? 0.5 * (cellData.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx)) :
+                            density_[wPhaseIdx];
+            density_[nPhaseIdx] =
+                    (potentialDiffNw == 0) ? 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx)) :
+                            density_[nPhaseIdx];
+
+            potentialDiffW = (cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx));
+            potentialDiffNw = (cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx));
+
+
+            potentialDiffW += density_[wPhaseIdx] * (distVec * gravity_); //delta z/delta x in unitOuterNormal[z]
+            potentialDiffNw += density_[nPhaseIdx] * (distVec * gravity_);
+        }
+
+        //store potentials for further calculations (velocity, saturation, ...)
+        cellData.fluxData().setUpwindPotential(wPhaseIdx, isIndexI, potentialDiffW);
+        cellData.fluxData().setUpwindPotential(nPhaseIdx, isIndexI, potentialDiffNw);
+
+        cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, isIndexJ, -potentialDiffW);
+        cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, isIndexJ, -potentialDiffNw);
+
+        //do the upwinding of the mobility depending on the phase potentials
+        Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWJ;
+        lambdaW = (potentialDiffW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
+        Scalar lambdaNw = (potentialDiffNw > 0.) ? lambdaNwI : lambdaNwJ;
+        lambdaNw = (potentialDiffNw == 0) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNw;
+
+        if (compressibility_)
+        {
+            density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
+            density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+
+            density_[wPhaseIdx] =
+                    (potentialDiffW == 0) ? 0.5 * (cellData.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx)) :
+                            density_[wPhaseIdx];
+            density_[nPhaseIdx] =
+                    (potentialDiffNw == 0) ? 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx)) :
+                            density_[nPhaseIdx];
+        }
+
+        Scalar scalarPerm = permeability.two_norm();
+
+        //calculate the gravity term
+        Dune::FieldVector<Scalar, dimWorld> velocityW(unitOuterNormal);
+        Dune::FieldVector<Scalar, dimWorld> velocityNw(unitOuterNormal);
+
+        //calculate unit distVec
+        distVec /= dist;
+        Scalar areaScaling = (unitOuterNormal * distVec);
+        //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+        Scalar gravityTermW = (gravity_ * distVec) * density_[wPhaseIdx] * areaScaling;
+        Scalar gravityTermNw = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
+
+        //calculate velocity depending on the pressure used -> use pc = pn - pw
+        switch (pressureType_)
+        {
+        case pw:
+        {
+            velocityW *= lambdaW * scalarPerm
+                    * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermW);
+            velocityNw *= lambdaNw * scalarPerm
+                    * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermNw)
+                    + 0.5 * (lambdaNwI + lambdaNwJ) * scalarPerm * (pcI - pcJ) / dist;
+            break;
+        }
+        case pn:
+        {
+            velocityW *= lambdaW * scalarPerm
+                    * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermW)
+                    - 0.5 * (lambdaWI + lambdaWJ) * scalarPerm * (pcI - pcJ) / dist;
+            velocityNw *= lambdaNw * scalarPerm
+                    * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermNw);
+            break;
+        }
+        case pGlobal:
+        {
+            velocityW *= (lambdaW + lambdaNw) * scalarPerm * (cellData.globalPressure() - cellDataJ.globalPressure()) / dist
+                    + scalarPerm * (lambdaW * gravityTermW + lambdaNw * gravityTermNw);
+            velocityNw = 0;
+            break;
+        }
+        }
+
+        //store velocities
+        Scalar faceArea = intersection.geometry().volume();
+
+        if (elementI->level() < elementJ->level())
+        {
+            cellDataJ.fluxData().setVelocity(wPhaseIdx, isIndexJ, velocityW);
+            cellDataJ.fluxData().setVelocity(nPhaseIdx, isIndexJ, velocityNw);
+            cellDataJ.fluxData().setVelocityMarker(isIndexJ);
+
+            Scalar weightingFactor = faceArea / elementI->template subEntity<1>(isIndexI)->geometry().volume();
+
+            velocityW *= weightingFactor;
+            velocityNw *= weightingFactor;
+
+            cellData.fluxData().addVelocity(wPhaseIdx, isIndexI, velocityW);
+            cellData.fluxData().addVelocity(nPhaseIdx, isIndexI, velocityNw);
+            cellData.fluxData().setVelocityMarker(isIndexI);
+        }
+        else if (elementJ->level() < elementI->level())
+        {
+            cellData.fluxData().setVelocity(wPhaseIdx, isIndexI, velocityW);
+            cellData.fluxData().setVelocity(nPhaseIdx, isIndexI, velocityNw);
+            cellData.fluxData().setVelocityMarker(isIndexI);
+
+            Scalar weightingFactor = faceArea / elementJ->template subEntity<1>(isIndexJ)->geometry().volume();
+
+            velocityW *= weightingFactor;
+            velocityNw *= weightingFactor;
+
+            cellDataJ.fluxData().addVelocity(wPhaseIdx, isIndexJ, velocityW);
+            cellDataJ.fluxData().addVelocity(nPhaseIdx, isIndexJ, velocityNw);
+            cellDataJ.fluxData().setVelocityMarker(isIndexJ);
+        }
+
     }
 
     return;

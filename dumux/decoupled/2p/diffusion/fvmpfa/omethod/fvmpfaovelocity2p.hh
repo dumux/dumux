@@ -2096,8 +2096,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
         for (int i = 0; i < 2*dim; i++)
         {
-            cellData1.fluxData().setPotential(wPhaseIdx, i, cellData1.fluxData().velocityTotal(i) * unitOuterNormal[i]);
-            cellData1.fluxData().setPotential(nPhaseIdx, i, cellData1.fluxData().velocityTotal(i) * unitOuterNormal[i]);
+            cellData1.fluxData().setUpwindPotential(wPhaseIdx, i, cellData1.fluxData().velocityTotal(i) * unitOuterNormal[i]);
+            cellData1.fluxData().setUpwindPotential(nPhaseIdx, i, cellData1.fluxData().velocityTotal(i) * unitOuterNormal[i]);
         }
 
         // check if local mass conservative

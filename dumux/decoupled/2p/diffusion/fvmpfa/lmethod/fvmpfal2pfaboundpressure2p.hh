@@ -230,29 +230,42 @@ public:
     {
         int globalIdx = problem_.variables().index(element);
         CellData& cellData = problem_.variables().cellData(globalIdx);
-        const GlobalPosition& globalPos = element.geometry().center();
 
         switch (pressureType_)
         {
         case pw:
         {
             Scalar potW = this->pressure()[globalIdx];
-            Scalar potPc = cellData.capillaryPressure()
-                    + (problem_.bBoxMax() - globalPos) * gravity_ * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
-            cellData.setPressure(wPhaseIdx, potW);
-            cellData.setPressure(nPhaseIdx, potW + potPc);
+            Scalar gravityDiff = (problem_.bBoxMax() - element.geometry().center()) * gravity_;
+            Scalar potPc = cellData.capillaryPressure()
+                    + gravityDiff * (density_[nPhaseIdx] - density_[wPhaseIdx]);
+
+            cellData.setPotential(wPhaseIdx, potW);
+            cellData.setPotential(nPhaseIdx, potW + potPc);
+
+            Scalar pressW = potW - gravityDiff * density_[wPhaseIdx];
+
+            cellData.setPressure(wPhaseIdx, pressW);
+            cellData.setPressure(nPhaseIdx, pressW + cellData.capillaryPressure());
 
             break;
         }
         case pn:
         {
             Scalar potNW = this->pressure()[globalIdx];
-            Scalar potPc = cellData.capillaryPressure()
-                    + (problem_.bBoxMax() - globalPos) * gravity_ * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
-            cellData.setPressure(nPhaseIdx, potNW);
-            cellData.setPressure(wPhaseIdx, potNW - potPc);
+            Scalar gravityDiff = (problem_.bBoxMax() - element.geometry().center()) * gravity_;
+            Scalar potPc = cellData.capillaryPressure()
+                    + gravityDiff * (density_[nPhaseIdx] - density_[wPhaseIdx]);
+
+            cellData.setPotential(nPhaseIdx, potNW);
+            cellData.setPotential(wPhaseIdx, potNW - potPc);
+
+            Scalar pressNW = potNW - gravityDiff * density_[nPhaseIdx];
+
+            cellData.setPressure(wPhaseIdx, pressNW - cellData.capillaryPressure());
+            cellData.setPressure(nPhaseIdx, pressNW);
 
             break;
         }
@@ -304,7 +317,7 @@ public:
 
     /*! \brief Adds pressure output to the output file
      *
-     * Adds the pressure, the potential and the capillary pressure to the output.
+     * Adds the potential, the potential and the capillary pressure to the output.
      * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
      * if it is larger than zero also secondary variables are written.
      *
@@ -348,18 +361,16 @@ public:
 
                 if (pressureType_ == pw)
                 {
-                    (*pressure)[idx] = this->pressure()[idx][0]
-                    - density_[wPhaseIdx] * (gravity_ * (problem_.bBoxMax() - eIt->geometry().center()));
-                    (*potentialSecond)[idx] = cellData.pressure(nPhaseIdx);
-                    (*pressureSecond)[idx] = (*pressure)[idx] + cellData.capillaryPressure();
+                    (*pressure)[idx] = cellData.pressure(wPhaseIdx);
+                    (*potentialSecond)[idx] = cellData.potential(nPhaseIdx);
+                    (*pressureSecond)[idx] = cellData.pressure(nPhaseIdx);
                 }
 
                 if (pressureType_ == pn)
                 {
-                    (*pressure)[idx] = this->pressure()[idx][0]
-                    - density_[nPhaseIdx] * (gravity_ * (problem_.bBoxMax() - eIt->geometry().center()));
-                    (*potentialSecond)[idx] = cellData.pressure(wPhaseIdx);
-                    (*pressureSecond)[idx] = (*pressure)[idx] - cellData.capillaryPressure();
+                    (*pressure)[idx] = cellData.pressure(nPhaseIdx);
+                    (*potentialSecond)[idx] = cellData.potential(wPhaseIdx);
+                    (*pressureSecond)[idx] = cellData.pressure(wPhaseIdx);
                 }
             }
 
@@ -1858,28 +1869,28 @@ void FVMPFAL2PFABoundPressure2P<TypeTag>::assemble()
                             Scalar gdeltaZ = (problem_.bBoxMax()-globalPosFace) * gravity_;
 
                             //calculate potential gradients
-                            Scalar potentialW = 0;
-                            Scalar potentialNW = 0;
+                            Scalar potentialDiffW = 0;
+                            Scalar potentialDiffNW = 0;
                             switch (pressureType_)
                             {
                             case pw:
                             {
                                 potentialBound += density_[wPhaseIdx]*gdeltaZ;
-                                potentialW = (cellData.pressure(wPhaseIdx) - potentialBound) / dist;
-                                potentialNW = (cellData.pressure(nPhaseIdx) - potentialBound - pcBound) / dist;
+                                potentialDiffW = (cellData.potential(wPhaseIdx) - potentialBound) / dist;
+                                potentialDiffNW = (cellData.potential(nPhaseIdx) - potentialBound - pcBound) / dist;
                                 break;
                             }
                             case pn:
                             {
                                 potentialBound += density_[nPhaseIdx]*gdeltaZ;
-                                potentialW = (cellData.pressure(wPhaseIdx) - potentialBound + pcBound) / dist;
-                                potentialNW = (cellData.pressure(nPhaseIdx) - potentialBound) / dist;
+                                potentialDiffW = (cellData.potential(wPhaseIdx) - potentialBound + pcBound) / dist;
+                                potentialDiffNW = (cellData.potential(nPhaseIdx) - potentialBound) / dist;
                                 break;
                             }
                             }
 
-                            Scalar lambdaTotal = (potentialW >= 0.) ? lambda[wPhaseIdx] : lambdaBound[wPhaseIdx];
-                            lambdaTotal += (potentialNW >= 0.) ? lambda[nPhaseIdx] : lambdaBound[nPhaseIdx];
+                            Scalar lambdaTotal = (potentialDiffW >= 0.) ? lambda[wPhaseIdx] : lambdaBound[wPhaseIdx];
+                            lambdaTotal += (potentialDiffNW >= 0.) ? lambda[nPhaseIdx] : lambdaBound[nPhaseIdx];
 
                             DimVector permTimesNormal(0);
                             permeability.mv(unitDistVec, permTimesNormal);

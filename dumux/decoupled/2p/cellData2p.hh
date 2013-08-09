@@ -84,6 +84,7 @@ private:
 private:
     Scalar saturation_[numPhases];
     Scalar pressure_[numPhases];
+    Scalar potential_[numPhases];
     Scalar mobility_[numPhases];
     Scalar fracFlowFunc_[numPhases];
 
@@ -100,6 +101,7 @@ public:
         {
             saturation_[i] = 0.0;
             pressure_[i] = 0.0;
+            potential_[i] = 0.0;
             mobility_[i] = 0.0;
             fracFlowFunc_[i] = 0.0;
         }
@@ -184,6 +186,34 @@ public:
     void setGlobalPressure(Scalar press)
     {
         pressure_[wPhaseIdx] = press;
+    }
+
+    /*!\brief Returns the cell phase potential
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
+    Scalar potential(int phaseIdx)
+    {
+        return potential_[phaseIdx];
+    }
+
+    /*!\brief Returns the cell phase potential
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
+    Scalar potential(int phaseIdx) const
+    {
+        return potential_[phaseIdx];
+    }
+
+    /*!\brief Sets the cell phase potential
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param press Phase potential which is stored
+     */
+    void setPotential(int phaseIdx, Scalar pot)
+    {
+        potential_[phaseIdx] = pot;
     }
 
     /*!\brief Returns the cell phase saturation
@@ -375,6 +405,7 @@ private:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 private:
+    Scalar potential_[numPhases];
     Scalar mobility_[numPhases];
     Scalar fracFlowFunc_[numPhases];
     Scalar update_;
@@ -389,6 +420,7 @@ public:
         for (int i = 0; i < numPhases;i++)
         {
             mobility_[i] = 0.0;
+            potential_[i] = 0.0;
             fracFlowFunc_[i] = 0.0;
         }
         update_ = 0.0;
@@ -447,6 +479,34 @@ public:
     void setPressure(int phaseIdx, Scalar press)
     {
         fluidState_.setPressure(phaseIdx, press);
+    }
+
+    /*!\brief Returns the cell phase potential
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
+    Scalar potential(int phaseIdx)
+    {
+        return potential_[phaseIdx];
+    }
+
+    /*!\brief Returns the cell phase potential
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
+    Scalar potential(int phaseIdx) const
+    {
+        return potential_[phaseIdx];
+    }
+
+    /*!\brief Sets the cell phase potential
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param press Phase potential which is stored
+     */
+    void setPotential(int phaseIdx, Scalar press)
+    {
+        potential_[phaseIdx] = press;
     }
 
     //! \cond \private

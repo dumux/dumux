@@ -82,6 +82,8 @@ public:
         Scalar saturationNw;
         Scalar pressW;
         Scalar pressNw;
+        Scalar potW;
+        Scalar potNw;
         Scalar volCorr;
         int count;
         AdaptedValues()
@@ -90,10 +92,14 @@ public:
             saturationNw = 0.;
             pressW = 0.;
             pressNw = 0.;
+            potW = 0.;
+            potNw = 0.;
             count = 0;
             volCorr = 0;
         }
     };
+
+    typedef AdaptedValues LoadBalanceData;
 
     //! Constructs an adaptive CellData object
     CellData2PAdaptive()
@@ -113,6 +119,8 @@ public:
         adaptedValues.saturationNw = this->saturation(nPhaseIdx);
         adaptedValues.pressW = this->pressure(wPhaseIdx);
         adaptedValues.pressNw = this->pressure(nPhaseIdx);
+        adaptedValues.potW = this->potential(wPhaseIdx);
+        adaptedValues.potNw = this->potential(nPhaseIdx);
         adaptedValues.volCorr = this->volumeCorrection();
     }
     //! Stores sons entries into father element for averageing
@@ -133,6 +141,8 @@ public:
         adaptedValuesFather.saturationNw += adaptedValues.saturationNw / adaptedValues.count;
         adaptedValuesFather.pressW += adaptedValues.pressW / adaptedValues.count;
         adaptedValuesFather.pressNw += adaptedValues.pressNw / adaptedValues.count;
+        adaptedValuesFather.potW += adaptedValues.potW / adaptedValues.count;
+        adaptedValuesFather.potNw += adaptedValues.potNw / adaptedValues.count;
         adaptedValuesFather.volCorr += adaptedValues.volCorr / adaptedValues.count;
     }
     //! Set adapted values in CellData
@@ -150,6 +160,8 @@ public:
         this->setSaturation(nPhaseIdx, adaptedValues.saturationNw / adaptedValues.count);
         this->setPressure(wPhaseIdx, adaptedValues.pressW / adaptedValues.count);
         this->setPressure(nPhaseIdx, adaptedValues.pressNw / adaptedValues.count);
+        this->setPotential(wPhaseIdx, adaptedValues.potW / adaptedValues.count);
+        this->setPotential(nPhaseIdx, adaptedValues.potNw / adaptedValues.count);
         this->setUpdate(adaptedValues.volCorr / adaptedValues.count);
     }
 
@@ -173,6 +185,8 @@ public:
         adaptedValues.saturationNw = adaptedValuesFather.saturationNw / adaptedValuesFather.count;
         adaptedValues.pressW = adaptedValuesFather.pressW / adaptedValuesFather.count;
         adaptedValues.pressNw = adaptedValuesFather.pressNw / adaptedValuesFather.count;
+        adaptedValues.potW = adaptedValuesFather.potW / adaptedValuesFather.count;
+        adaptedValues.potNw = adaptedValuesFather.potNw / adaptedValuesFather.count;
         adaptedValues.volCorr = adaptedValuesFather.volCorr / adaptedValuesFather.count;
     }
 

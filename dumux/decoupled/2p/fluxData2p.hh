@@ -66,7 +66,7 @@ private:
     typedef Dune::FieldVector<DimVector, 2 * dim> VelocityVector;
 
     VelocityVector velocity_[numPhases];
-    Scalar potential_[2 * dim][numPhases];
+    Scalar upwindPotential_[2 * dim][numPhases];
     bool velocityMarker_[2 * dim];
 
 public:
@@ -80,7 +80,7 @@ public:
             {
                 velocity_[phase][face] = DimVector(0.0);
 
-                potential_[face][phase] = 0.0;
+                upwindPotential_[face][phase] = 0.0;
             }
             velocityMarker_[face] = false;
         }
@@ -140,7 +140,7 @@ public:
             for (int j = 0; j < numPhases; j++)
             {
                 velocity_[j][i] = 0.;
-                potential_[i][j] = 0.;
+                upwindPotential_[i][j] = 0.;
             }
             velocityMarker_[i] = false;
         }
@@ -201,7 +201,7 @@ public:
      */
     bool isUpwindCell(int phaseIdx, int indexInInside)
     {
-        return (potential_[indexInInside][phaseIdx] > 0.);
+        return (upwindPotential_[indexInInside][phaseIdx] > 0.);
     }
 
     /*! \brief Checks for upwind direction
@@ -212,49 +212,73 @@ public:
      */
     bool isUpwindCell(int phaseIdx, int indexInInside) const
     {
-        return (potential_[indexInInside][phaseIdx] > 0.);
+        return (upwindPotential_[indexInInside][phaseIdx] > 0.);
     }
 
-    /*! \brief Returns the phase potential at a cell-cell interface
+    /*! \brief Returns the phase upwind potential at a cell-cell interface
      *
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
      */
+    Scalar upwindPotential(int phaseIdx, int indexInInside)
+    {
+        return upwindPotential_[indexInInside][phaseIdx];
+    }
+
+    DUNE_DEPRECATED_MSG("use upwindPotential() instead");
     Scalar potential(int phaseIdx, int indexInInside)
     {
-        return potential_[indexInInside][phaseIdx];
+        return upwindPotential_[indexInInside][phaseIdx];
     }
 
-    /*! \brief Returns the phase potential at a cell-cell interface
+    /*! \brief Returns the phase upwind potential at a cell-cell interface
      *
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
      */
+    Scalar upwindPotential(int phaseIdx, int indexInInside) const
+    {
+        return upwindPotential_[indexInInside][phaseIdx];
+    }
+
+    DUNE_DEPRECATED_MSG("use upwindPotential() instead");
     Scalar potential(int phaseIdx, int indexInInside) const
     {
-        return potential_[indexInInside][phaseIdx];
+        return upwindPotential_[indexInInside][phaseIdx];
     }
 
-    /*! \brief Sets the phase potential at a cell-cell interface
+    /*! \brief Sets the phase upwind potential at a cell-cell interface
      *
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
-     * \param pot Phase potential which is stored
+     * \param pot Phase upwind potential which is stored
      */
+    void setUpwindPotential(int phaseIdx, int indexInInside, Scalar pot)
+    {
+        upwindPotential_[indexInInside][phaseIdx] = pot;
+    }
+
+    DUNE_DEPRECATED_MSG("use setUpwindPotential() instead");
     void setPotential(int phaseIdx, int indexInInside, Scalar pot)
     {
-        potential_[indexInInside][phaseIdx] = pot;
+        upwindPotential_[indexInInside][phaseIdx] = pot;
     }
 
-    /*! \brief Adds a phase potential to the one previously stored
+    /*! \brief Adds a phase upwind potential to the one previously stored
      *
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
-     * \param pot Phase potential which is added
+     * \param pot Phase upwind potential which is added
      */
+    void addUpwindPotential(int phaseIdx, int indexInInside, Scalar pot)
+    {
+        upwindPotential_[indexInInside][phaseIdx] += pot;
+    }
+
+    DUNE_DEPRECATED_MSG("use addUpwindPotential() instead");
     void addPotential(int phaseIdx, int indexInInside, Scalar pot)
     {
-        potential_[indexInInside][phaseIdx] += pot;
+        upwindPotential_[indexInInside][phaseIdx] += pot;
     }
 };
 }

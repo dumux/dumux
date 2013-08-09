@@ -387,8 +387,8 @@ void MimeticPressure2P<TypeTag>::storeVelocity()
             Dune::FieldVector<Scalar, dimWorld> velocity(isIt->centerUnitOuterNormal());
             velocity*= normalVelocity_[globalIdx][idxInInside];
             cellData.fluxData().setVelocity(wPhaseIdx, idxInInside, velocity);
-            cellData.fluxData().setPotential(wPhaseIdx, idxInInside, normalVelocity_[globalIdx][idxInInside]);
-            cellData.fluxData().setPotential(nPhaseIdx, idxInInside, normalVelocity_[globalIdx][idxInInside]);
+            cellData.fluxData().setUpwindPotential(wPhaseIdx, idxInInside, normalVelocity_[globalIdx][idxInInside]);
+            cellData.fluxData().setUpwindPotential(nPhaseIdx, idxInInside, normalVelocity_[globalIdx][idxInInside]);
         }
     }
 //    printvector(std::cout, problem_.variables().velocity(), "velocity", "row", 4, 1, 3);

@@ -21,7 +21,7 @@
 
 /**
  * @file
- * @brief  CFL-flux-function to evaluate a CFL-Condition after Coats 2003
+ * @brief  Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003
  */
 
 #include <dumux/decoupled/common/impetproperties.hh> 
@@ -30,7 +30,7 @@
 namespace Dumux
 {
 /*!\ingroup IMPES
- * @brief  CFL-flux-function to evaluate a CFL-Condition after Coats 2003
+ * @brief  Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003
  *
  * tparam TypeTag The problem TypeTag
  */
@@ -84,6 +84,7 @@ private:
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:
@@ -105,7 +106,7 @@ public:
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Element&,int)
      */
-    void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
+    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux,
                  const Element& element, int phaseIdx = -1)
     {
         addDefaultFlux(flux, phaseIdx);
@@ -115,64 +116,70 @@ public:
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
      */
-    void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
+    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux,
                  const Intersection& intersection, int phaseIdx = -1)
     {
         addDefaultFlux(flux, phaseIdx);
-        addCoatsFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, intersection, phaseIdx);
+        addCoatsFlux(lambdaW, lambdaNw, viscosityW, viscosityNw, flux, intersection, phaseIdx);
     }
 
-    /*! \brief Returns the CFL flux-function
+    /*! \brief Returns the Cfl flux-function
      *
      * \copydetails EvalCflFlux::getCflFluxFunction(const Element&)
      */
     Scalar getCflFluxFunction(const Element& element)
     {
-    	if (rejectForTimeStepping_)
-    		return 1e100;
 
-        Scalar cflFluxDefault = getCflFluxFunctionDefault();
+//        Scalar cflFluxDefault = getCflFluxFunctionDefault();
+//
+//    	return 0.99 / cflFluxDefault;
 
-        if (std::isnan(cflFluxFunctionCoats_) || std::isinf(cflFluxFunctionCoats_))
+    	 Scalar cflFluxDefault = getCflFluxFunctionDefault();
+
+        if (rejectForTimeStepping_)
+        	return 0.99 / cflFluxDefault;
+
+        //        std::cout<<"cflFluxFunctionCoats_ = "<<cflFluxFunctionCoats_<<", cflFluxDefault = "<<cflFluxDefault<<"\n";
+        if (std::isnan(cflFluxFunctionCoatsOut_) || std::isinf(cflFluxFunctionCoatsOut_)){cflFluxFunctionCoatsOut_ = 0.0;}
+        if (std::isnan(cflFluxFunctionCoatsIn_) || std::isinf(cflFluxFunctionCoatsIn_)){cflFluxFunctionCoatsIn_ = 0.0;}
+
+        Scalar cflFluxFunctionCoats = std::max(cflFluxFunctionCoatsIn_, cflFluxFunctionCoatsOut_);
+//                std::cout<<"cflFluxFunctionCoatsIn = "<<cflFluxFunctionCoatsIn_<<"cflFluxFunctionCoatsOut = "<<cflFluxFunctionCoatsOut_<<", cflFluxDefault = "<<cflFluxDefault<<"\n";
+        if (cflFluxFunctionCoats <= 0)
         {
             return 0.99 / cflFluxDefault;
         }
-        else if (cflFluxFunctionCoats_ <= 0)
-        {
-            return 0.99 / cflFluxDefault;
-        }
-        else if (cflFluxDefault > cflFluxFunctionCoats_)
+        else if (cflFluxDefault > cflFluxFunctionCoats)
         {
         	return 0.99 / cflFluxDefault;
         }
         else
         {
-            return 1.0 / cflFluxFunctionCoats_;
+            return 0.99 / cflFluxFunctionCoats;
         }
     }
 
-    DUNE_DEPRECATED_MSG("use getCflFluxFunction() (uncapitalized 'fl') instead")
-    Scalar getCFLFluxFunction(const Element& element)
-    { return getCflFluxFunction(element); }
-
-    /*! \brief  Returns the CFL time-step
+    /*! \brief  Returns the Cfl time-step
      *
      * \copydetails EvalCflFlux::getDt(const Element&)
      */
     Scalar getDt(const Element& element)
     {
-    	if (rejectForTimeStepping_)
-    		return 1e100;
+//        if (rejectForTimeStepping_)
+//            return 1e100;
 
         Scalar porosity = std::max(problem_.spatialParams().porosity(element), porosityThreshold_);
-
+        //        if (porosity > porosityThreshold_)
         return (getCflFluxFunction(element) * porosity * element.geometry().volume());
+        //        else
+        //            return 1e100;//(getCflFluxFunction(element) * element.geometry().volume());
     }
 
     //! \brief  Resets the Timestep-estimator
     void reset()
     {
-        cflFluxFunctionCoats_ = 0;
+        cflFluxFunctionCoatsIn_ = 0;
+        cflFluxFunctionCoatsOut_ = 0;
         rejectForTimeStepping_ = false;
         fluxWettingOut_ = 0;
         fluxNonwettingOut_ = 0;
@@ -185,7 +192,7 @@ public:
      * \param problem A problem type object
      */
     EvalCflFluxCoats(Problem& problem) :
-        problem_(problem), epsDerivative_(5e-3), threshold_(1e-12)
+        problem_(problem), epsDerivative_(5e-3), threshold_(1e-8)
     {
         reset();
         density_[wPhaseIdx] = 0.;
@@ -239,11 +246,12 @@ private:
 
     void addDefaultFlux(Scalar flux,int phaseIdx);
 
-    void addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
+    void addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux,
                       const Intersection& intersection, int phaseIdx);
 
     Problem& problem_;//problem data
-    Scalar cflFluxFunctionCoats_;
+    Scalar cflFluxFunctionCoatsIn_;
+    Scalar cflFluxFunctionCoatsOut_;
     Scalar fluxWettingOut_;
     Scalar fluxNonwettingOut_;
     Scalar fluxOut_;
@@ -313,13 +321,18 @@ void EvalCflFluxCoats<TypeTag>::addDefaultFlux(Scalar flux, int phaseIdx)
  * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
  */
 template<class TypeTag>
-void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
+void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux,
                                              const Intersection& intersection, int phaseIdx)
 {
-	if (rejectForTimeStepping_)
-		return;
+    if (rejectForTimeStepping_)
+        return;
+    else if (phaseIdx != wPhaseIdx)
+        return;
 
-    Scalar lambdaT = (lambdaW + lambdaNW);
+    Scalar lambdaT = (lambdaW + lambdaNw);
+
+    if (lambdaT <= threshold_)
+        return;
 
     ElementPointer element = intersection.inside();
 
@@ -331,20 +344,21 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNW, 
 
     CellData& cellDataI = problem_.variables().cellData(globalIdxI);
 
-    if (cellDataI.pressure(wPhaseIdx) < 0.0 || cellDataI.pressure(nPhaseIdx) < 0.0 )
+    if (cellDataI.potential(wPhaseIdx) < 0.0 || cellDataI.potential(nPhaseIdx) < 0.0)
     {
-    	rejectForTimeStepping_ = true;
-    	cflFluxFunctionCoats_ = 0;
-    	return;
+        rejectForTimeStepping_ = true;
+        cflFluxFunctionCoatsIn_ = 0;
+        cflFluxFunctionCoatsOut_ = 0;
+        return;
     }
 
     int indexInInside = intersection.indexInInside();
 
     Scalar satI = cellDataI.saturation(wPhaseIdx);
     Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
-    Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
+    Scalar lambdaNwI = cellDataI.mobility(nPhaseIdx);
 
-    Scalar dPcdSI = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(*element), satI);
+    Scalar dpc_dsI = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(*element), satI);
 
     const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
 
@@ -352,338 +366,312 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNW, 
     {
         ElementPointer neighbor = intersection.outside();
 
-        const GlobalPosition& globalPosNeighbor = neighbor->geometry().center();
-
-        // distance vector between barycenters
-        Dune::FieldVector < Scalar, dimWorld > distVec = globalPosNeighbor - globalPos;
-
-        // compute distance between cell centers
-        Scalar dist = distVec.two_norm();
-
         int globalIdxJ = problem_.variables().index(*neighbor);
 
         CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
 
-        if (cellDataJ.pressure(wPhaseIdx) < 0.0 || cellDataJ.pressure(nPhaseIdx) < 0.0 )
+        if (cellDataJ.potential(wPhaseIdx) < 0.0 || cellDataJ.potential(nPhaseIdx) < 0.0 )
         {
-        	rejectForTimeStepping_ = true;
-        	cflFluxFunctionCoats_ = 0;
-        	return;
+            rejectForTimeStepping_ = true;
+            cflFluxFunctionCoatsIn_ = 0;
+            cflFluxFunctionCoatsOut_ = 0;
+            return;
         }
-
-        //calculate potential gradients
+        
         if (element.level() != neighbor.level())
         {
             rejectForTimeStepping_ = true;
-            cflFluxFunctionCoats_ = 0;
+            cflFluxFunctionCoatsIn_ = 0;
+            cflFluxFunctionCoatsOut_ = 0;
             return;
         }
 
-        if (lambdaT <= 0.0)
-        {
-            return;
-        }
+        bool takeNeighbor = (element->level() < neighbor->level());
+        //get phase potentials
+        bool upwindWI =
+            (takeNeighbor) ? !cellDataJ.fluxData().isUpwindCell(wPhaseIdx, intersection.indexInOutside()) :
+            cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside);
+        bool upwindNwI =
+            (takeNeighbor) ? !cellDataJ.fluxData().isUpwindCell(nPhaseIdx, intersection.indexInOutside()) :
+            cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside);
 
-        Scalar satJ = cellDataJ.saturation(wPhaseIdx);
-        Scalar lambdaWJ = cellDataI.mobility(wPhaseIdx);
-        Scalar lambdaNWJ = cellDataI.mobility(nPhaseIdx);
+            const GlobalPosition& globalPosNeighbor = neighbor->geometry().center();
 
-        Scalar dPcdSJ = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(*neighbor), satJ);
+            // distance vector between barycenters
+            GlobalPosition distVec = globalPosNeighbor - globalPos;
 
-        // compute vectorized permeabilities
-        DimMatrix meanPermeability(0);
+            // compute distance between cell centers
+            Scalar dist = std::abs(distVec * unitOuterNormal);
 
-        problem_.spatialParams().meanK(meanPermeability,
-                                       problem_.spatialParams().intrinsicPermeability(*element),
-                                       problem_.spatialParams().intrinsicPermeability(*neighbor));
+            Scalar satJ = cellDataJ.saturation(wPhaseIdx);
+            Scalar lambdaWJ = cellDataI.mobility(wPhaseIdx);
+            Scalar lambdaNwJ = cellDataI.mobility(nPhaseIdx);
 
-        Dune::FieldVector < Scalar, dim > permeability(0);
-        meanPermeability.mv(unitOuterNormal, permeability);
+            Scalar dpc_dsJ = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(*neighbor), satJ);
 
-        Scalar transmissibility = (unitOuterNormal * permeability) * intersection.geometry().volume() / dist;
+            // compute vectorized permeabilities
+            DimVector permeability(0);
+            DimMatrix perm(0);
+            problem_.spatialParams().meanK(perm, problem_.spatialParams().intrinsicPermeability(*element));
+            perm.mv(unitOuterNormal, permeability);
 
-        Scalar satUpw = 0;
-        if (cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside))
-        {
-            satUpw = std::max(satI, 0.0);
-        }
-        else
-        {
-            satUpw = std::max(satJ, 0.0);
-        }
+            Scalar perm1 = permeability * unitOuterNormal;
 
-        Scalar dS = epsDerivative_;
+            permeability = 0;
+            problem_.spatialParams().meanK(perm, problem_.spatialParams().intrinsicPermeability(*neighbor));
+            perm.mv(unitOuterNormal, permeability);
 
-        Scalar satPlus = satUpw + epsDerivative_;
-        Scalar satMinus = satUpw;
-        if (satMinus - epsDerivative_ > 0.0)
-        {
-            satMinus -= epsDerivative_;
-            dS += epsDerivative_;
-        }
+            Scalar perm2 = permeability * unitOuterNormal;
 
-        Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighbor), std::abs(satPlus)) / viscosityW;
-        dLambdaWdS -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighbor), std::abs(satMinus)) / viscosityW;
-        dLambdaWdS /= (dS);
+            Scalar meanPermeability = 2*perm1*perm2/(perm1 + perm2);
 
-        if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside))
-        {
-            satUpw = std::max(1 - satI, 0.0);
-        }
-        else
-        {
-            satUpw = std::max(1 - satJ, 0.0);
-        }
+            Scalar transmissibility =  meanPermeability * intersection.geometry().volume() / dist;
 
-        dS = epsDerivative_;
-
-        satPlus = satUpw + epsDerivative_;
-        satMinus = satUpw;
-        if (satMinus - epsDerivative_ > 0.0)
-        {
-            satMinus -= epsDerivative_;
-            dS += epsDerivative_;
-        }
-
-        Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighbor), satPlus) / viscosityNW;
-        dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighbor), satMinus) / viscosityNW;
-        dLambdaNWdS /= (dS);
-
-        Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWJ);
-        Scalar lambdaNWCap = 0.5 * (lambdaNWI + lambdaNWJ);
-
-        if (phaseIdx == wPhaseIdx)
-        {
-            Scalar pressDiff = cellDataI.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx);
-            cflFluxFunctionCoats_+= transmissibility * lambdaNW * dLambdaWdS * std::abs(pressDiff) / lambdaT;
-
-            cflFluxFunctionCoats_ -= transmissibility * lambdaWCap * lambdaNWCap * (dPcdSI + dPcdSJ) / lambdaT;
-        }
-        else if (phaseIdx == nPhaseIdx)
-        {
-            Scalar pressDiff = cellDataI.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx);
-            cflFluxFunctionCoats_ -= transmissibility * lambdaW * dLambdaNWdS * std::abs(pressDiff) / lambdaT;
-        }
-        else
-        {
-            if (flux != 0)
+            Scalar satUpw = 0;
+            if (upwindWI)
             {
-                switch (saturationType_)
-                {
-                case sw:
-                    {
-                        cflFluxFunctionCoats_ += dLambdaWdS / (dLambdaWdS + dLambdaNWdS) * std::abs(flux);
-                        break;
-                    }
-                case sn:
-                    {
-                        cflFluxFunctionCoats_ +=  dLambdaNWdS / (dLambdaWdS + dLambdaNWdS) * std::abs(flux);
-                        break;
-                    }
-                }
+                satUpw = std::max(satI, 0.0);
             }
-        }
+            else
+            {
+                satUpw = std::max(satJ, 0.0);
+            }
+
+            Scalar ds = epsDerivative_;
+
+            Scalar satPlus = satUpw + epsDerivative_;
+            Scalar satMinus = satUpw;
+            if (satMinus - epsDerivative_ > 0.0)
+            {
+                satMinus -= epsDerivative_;
+                ds += epsDerivative_;
+            }
+
+            Scalar dLambdaWDs = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighbor), std::abs(satPlus)) / viscosityW;
+            dLambdaWDs -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighbor), std::abs(satMinus)) / viscosityW;
+            dLambdaWDs /= (ds);
+
+            if (upwindNwI)
+            {
+                satUpw = std::max(1 - satI, 0.0);
+            }
+            else
+            {
+                satUpw = std::max(1 - satJ, 0.0);
+            }
+
+            ds = epsDerivative_;
+
+            satPlus = satUpw + epsDerivative_;
+            satMinus = satUpw;
+            if (satMinus - epsDerivative_ > 0.0)
+            {
+                satMinus -= epsDerivative_;
+                ds += epsDerivative_;
+            }
+
+            Scalar dLambdaNwDs = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighbor), satPlus) / viscosityNw;
+            dLambdaNwDs -= MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighbor), satMinus) / viscosityNw;
+            dLambdaNwDs /= (ds);
+
+            Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWJ);
+            Scalar lambdaNwCap = 0.5 * (lambdaNwI + lambdaNwJ);
+
+            Scalar potentialDiff = cellDataI.potential(wPhaseIdx) - cellDataJ.potential(wPhaseIdx);
+            Scalar cflFlux = transmissibility * lambdaNw * dLambdaWDs * std::abs(potentialDiff) / lambdaT;
+
+            potentialDiff = cellDataI.potential(nPhaseIdx) - cellDataJ.potential(nPhaseIdx);
+            cflFlux -= transmissibility * lambdaW * dLambdaNwDs * std::abs(potentialDiff) / lambdaT;
+
+            cflFlux -= transmissibility * lambdaWCap * lambdaNwCap * (dpc_dsI + dpc_dsJ) / lambdaT;
+
+            if ((upwindWI && lambdaW > threshold_)|| (upwindNwI && lambdaW < threshold_))
+            {
+                cflFluxFunctionCoatsOut_ += cflFlux;
+            }
+            else
+            {
+            	cflFluxFunctionCoatsIn_ += cflFlux;
+            }
     }
     else
     {
-        if (lambdaT <= 0.0)
-        {
-            return;
-        }
+            // center of face in global coordinates
+            GlobalPosition globalPosFace = intersection.geometry().center();
 
-        // center of face in global coordinates
-        GlobalPosition globalPosFace = intersection.geometry().center();
+            //get boundary type
+            BoundaryTypes bcType;
+            problem_.boundaryTypes(bcType, intersection);
 
-        //get boundary type
-        BoundaryTypes bcType;
-        problem_.boundaryTypes(bcType, intersection);
+            // distance vector between barycenters
+            Dune::FieldVector < Scalar, dimWorld > distVec = globalPosFace - globalPos;
 
-        // distance vector between barycenters
-        Dune::FieldVector < Scalar, dimWorld > distVec = globalPosFace - globalPos;
+            // compute distance between cell centers
+            Scalar dist = distVec.two_norm();
 
-        // compute distance between cell centers
-        Scalar dist = distVec.two_norm();
+            //permeability vector at boundary
+            // compute vectorized permeabilities
 
-        //permeability vector at boundary
-        // compute vectorized permeabilities
-        DimMatrix meanPermeability(0);
+            Dune::FieldVector<Scalar, dim> permeability(0);
+            DimMatrix perm(0);
+            problem_.spatialParams().meanK(perm, problem_.spatialParams().intrinsicPermeability(*element));
+            perm.mv(unitOuterNormal, permeability);
 
-        problem_.spatialParams().meanK(meanPermeability,
-                                       problem_.spatialParams().intrinsicPermeability(*element));
+            Scalar transmissibility = (unitOuterNormal * permeability) * intersection.geometry().volume() / dist;
 
-        Dune::FieldVector<Scalar, dim> permeability(0);
-        meanPermeability.mv(unitOuterNormal, permeability);
-
-        Scalar transmissibility = (unitOuterNormal * permeability) * intersection.geometry().volume() / dist;
-
-        Scalar satWBound =  cellDataI.saturation(wPhaseIdx);
-        if (bcType.isDirichlet(eqIdxSat))
-        {
-            PrimaryVariables bcValues;
-            problem_.dirichlet(bcValues, intersection);
-            switch (saturationType_)
+            Scalar satWBound =  cellDataI.saturation(wPhaseIdx);
+            if (bcType.isDirichlet(eqIdxSat))
             {
-            case sw:
-                {
-                    satWBound = bcValues[eqIdxSat];
-                    break;
-                }
-            case sn:
-                {
-                    satWBound = 1 - bcValues[eqIdxSat];
-                    break;
-                }
-            default:
-                {
-                    DUNE_THROW(Dune::RangeError, "saturation type not implemented");
-                    break;
-                }
-            }
-
-        }
-
-        Scalar potWBound =  cellDataI.pressure(wPhaseIdx);
-        Scalar potNWBound =  cellDataI.pressure(nPhaseIdx);
-        Scalar gdeltaZ = (problem_.bBoxMax()-globalPosFace) * problem_.gravity();
-        if (bcType.isDirichlet(eqIdxPress))
-        {
-            PrimaryVariables bcValues;
-            problem_.dirichlet(bcValues, intersection);
-            switch (pressureType_)
-            {
-            case pw:
-                {
-                    potWBound = bcValues[eqIdxPress] + density_[wPhaseIdx] * gdeltaZ;
-                    potNWBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[nPhaseIdx] * gdeltaZ;
-                    break;
-                }
-            case pn:
-                {
-                    potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[wPhaseIdx] * gdeltaZ;
-                    potNWBound = bcValues[eqIdxPress] + density_[nPhaseIdx] * gdeltaZ;
-                    break;
-                }
-            default:
-                {
-                    DUNE_THROW(Dune::RangeError, "pressure type not implemented");
-                    break;
-                }
-            }
-        }
-        else if (bcType.isNeumann(eqIdxPress))
-        {
-            PrimaryVariables bcValues;
-            problem_.neumann(bcValues, intersection);
-
-            if (lambdaW != 0 && bcValues[wPhaseIdx] != 0)
-            {
-                potWBound += bcValues[wPhaseIdx] / (transmissibility * lambdaW);
-            }
-            if (lambdaNW != 0 && bcValues[nPhaseIdx] != 0)
-            {
-                potNWBound += bcValues[nPhaseIdx] / (transmissibility * lambdaNW);
-            }
-        }
-
-        Scalar dPcdSBound = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(*element), satWBound);
-
-        Scalar lambdaWBound = 0;
-        Scalar lambdaNWBound = 0;
-
-        Scalar temperature = problem_.temperature(*element);
-        Scalar referencePressure = problem_.referencePressure(*element);
-        FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, referencePressure);
-        fluidState.setPressure(nPhaseIdx, referencePressure);
-        fluidState.setTemperature(temperature);
-
-        Scalar viscosityWBound = FluidSystem::viscosity(fluidState, wPhaseIdx);
-        Scalar viscosityNWBound =
-            FluidSystem::viscosity(fluidState, nPhaseIdx);
-        lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satWBound) / viscosityWBound;
-        lambdaNWBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satWBound) / viscosityNWBound;
-
-        Scalar satUpw = 0;
-        if (cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside))
-        {
-            satUpw = std::max(satI, 0.0);
-        }
-        else
-        {
-            satUpw = std::max(satWBound, 0.0);
-        }
-
-        Scalar dS = epsDerivative_;
-
-        Scalar satPlus = satUpw + epsDerivative_;
-        Scalar satMinus = satUpw;
-        if (satMinus - epsDerivative_ > 0.0)
-        {
-            satMinus -= epsDerivative_;
-            dS += epsDerivative_;
-        }
-
-        Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satPlus) / viscosityW;
-        dLambdaWdS -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satMinus) / viscosityW;
-        dLambdaWdS /= (dS);
-
-        if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside))
-        {
-            satUpw = std::max(1 - satI, 0.0);
-        }
-        else
-        {
-            satUpw = std::max(1 - satWBound, 0.0);
-        }
-
-        dS = epsDerivative_;
-
-        satPlus = satUpw + epsDerivative_;
-        satMinus = satUpw;
-        if (satMinus - epsDerivative_ > 0.0)
-        {
-            satMinus -= epsDerivative_;
-            dS += epsDerivative_;
-        }
-
-        Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satPlus) / viscosityNW;
-        dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satMinus) / viscosityNW;
-        dLambdaNWdS /= (dS);
-
-        Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWBound);
-        Scalar lambdaNWCap = 0.5 * (lambdaNWI + lambdaNWBound);
-
-        if (phaseIdx == wPhaseIdx)
-        {
-            Scalar potDiff = cellDataI.pressure(wPhaseIdx) - potWBound;
-            cflFluxFunctionCoats_ += transmissibility * lambdaNW * dLambdaWdS * std::abs(potDiff) / lambdaT;
-
-            cflFluxFunctionCoats_ -= transmissibility * lambdaWCap * lambdaNWCap * (dPcdSI + dPcdSBound) / lambdaT;
-        }
-        else if (phaseIdx == nPhaseIdx)
-        {
-            Scalar potDiff = cellDataI.pressure(nPhaseIdx) - potNWBound;
-            cflFluxFunctionCoats_ -= transmissibility * lambdaW * dLambdaNWdS * std::abs(potDiff) / lambdaT;
-        }
-        else
-        {
-            if (flux != 0)
-            {
+                PrimaryVariables bcValues;
+                problem_.dirichlet(bcValues, intersection);
                 switch (saturationType_)
                 {
                 case sw:
                     {
-                        cflFluxFunctionCoats_ += dLambdaWdS / (dLambdaWdS + dLambdaNWdS) * std::abs(flux);
+                        satWBound = bcValues[eqIdxSat];
                         break;
                     }
                 case sn:
                     {
-                        cflFluxFunctionCoats_ +=  dLambdaNWdS / (dLambdaWdS + dLambdaNWdS) * std::abs(flux);
+                        satWBound = 1 - bcValues[eqIdxSat];
+                        break;
+                    }
+                default:
+                    {
+                        DUNE_THROW(Dune::RangeError, "saturation type not implemented");
+                        break;
+                    }
+                }
+
+            }
+
+            Scalar potWBound =  cellDataI.potential(wPhaseIdx);
+            Scalar potNwBound =  cellDataI.potential(nPhaseIdx);
+            Scalar gdeltaZ = (problem_.bBoxMax()-globalPosFace) * problem_.gravity();
+            if (bcType.isDirichlet(eqIdxPress))
+            {
+                PrimaryVariables bcValues;
+                problem_.dirichlet(bcValues, intersection);
+                switch (pressureType_)
+                {
+                case pw:
+                    {
+                        potWBound = bcValues[eqIdxPress] + density_[wPhaseIdx] * gdeltaZ;
+                        potNwBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[nPhaseIdx] * gdeltaZ;
+                        break;
+                    }
+                case pn:
+                    {
+                        potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[wPhaseIdx] * gdeltaZ;
+                        potNwBound = bcValues[eqIdxPress] + density_[nPhaseIdx] * gdeltaZ;
+                        break;
+                    }
+                default:
+                    {
+                        DUNE_THROW(Dune::RangeError, "pressure type not implemented");
                         break;
                     }
                 }
             }
-        }
+            else if (bcType.isNeumann(eqIdxPress))
+            {
+                PrimaryVariables bcValues;
+                problem_.neumann(bcValues, intersection);
+
+                if (lambdaW != 0 && bcValues[wPhaseIdx] != 0)
+                {
+                    potWBound += bcValues[wPhaseIdx] / (transmissibility * lambdaW);
+                }
+                if (lambdaNw != 0 && bcValues[nPhaseIdx] != 0)
+                {
+                    potNwBound += bcValues[nPhaseIdx] / (transmissibility * lambdaNw);
+                }
+            }
+
+            Scalar dpc_dsBound = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(*element), satWBound);
+
+            Scalar lambdaWBound = 0;
+            Scalar lambdaNwBound = 0;
+
+            Scalar temperature = problem_.temperature(*element);
+            Scalar referencePressure = problem_.referencePressure(*element);
+            FluidState fluidState;
+            fluidState.setPressure(wPhaseIdx, referencePressure);
+            fluidState.setPressure(nPhaseIdx, referencePressure);
+            fluidState.setTemperature(temperature);
+
+            Scalar viscosityWBound = FluidSystem::viscosity(fluidState, wPhaseIdx);
+            Scalar viscosityNwBound =
+                FluidSystem::viscosity(fluidState, nPhaseIdx);
+            lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satWBound) / viscosityWBound;
+            lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satWBound) / viscosityNwBound;
+
+            Scalar satUpw = 0;
+            if (cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside))
+            {
+                satUpw = std::max(satI, 0.0);
+            }
+            else
+            {
+                satUpw = std::max(satWBound, 0.0);
+            }
+
+            Scalar ds = epsDerivative_;
+
+            Scalar satPlus = satUpw + epsDerivative_;
+            Scalar satMinus = satUpw;
+            if (satMinus - epsDerivative_ > 0.0)
+            {
+                satMinus -= epsDerivative_;
+                ds += epsDerivative_;
+            }
+
+            Scalar dLambdaWDs = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satPlus) / viscosityW;
+            dLambdaWDs -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satMinus) / viscosityW;
+            dLambdaWDs /= (ds);
+
+            if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside))
+            {
+                satUpw = std::max(1 - satI, 0.0);
+            }
+            else
+            {
+                satUpw = std::max(1 - satWBound, 0.0);
+            }
+
+            ds = epsDerivative_;
+
+            satPlus = satUpw + epsDerivative_;
+            satMinus = satUpw;
+            if (satMinus - epsDerivative_ > 0.0)
+            {
+                satMinus -= epsDerivative_;
+                ds += epsDerivative_;
+            }
+
+            Scalar dLambdaNwDs = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satPlus) / viscosityNw;
+            dLambdaNwDs -= MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satMinus) / viscosityNw;
+            dLambdaNwDs /= (ds);
+
+            Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWBound);
+            Scalar lambdaNwCap = 0.5 * (lambdaNwI + lambdaNwBound);
+
+            Scalar potDiff = cellDataI.potential(wPhaseIdx) - potWBound;
+            Scalar cflFlux = transmissibility * lambdaNw * dLambdaWDs * std::abs(potDiff) / lambdaT;
+
+            cflFlux -= transmissibility * lambdaWCap * lambdaNwCap * (dpc_dsI + dpc_dsBound) / lambdaT;
+
+            potDiff = cellDataI.potential(nPhaseIdx) - potNwBound;
+            cflFlux -= transmissibility * lambdaW * dLambdaNwDs * std::abs(potDiff) / lambdaT;
+
+            if ((cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside) && lambdaW > threshold_) || (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside) && lambdaW < threshold_))
+            {
+                cflFluxFunctionCoatsOut_ += cflFlux;
+            }
+            else
+            {
+            	cflFluxFunctionCoatsIn_ += cflFlux;
+            }
     }
 }
 

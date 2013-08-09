@@ -333,18 +333,18 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
             CellData& cellData4 = problem_.variables().cellData(globalIdx4);
 
             // get pressure values
-            Dune::FieldVector < Scalar, 2 * dim > pw(0);
-            Dune::FieldVector < Scalar, 2 * dim > pn(0);
+            Dune::FieldVector < Scalar, 2 * dim > potW(0);
+            Dune::FieldVector < Scalar, 2 * dim > potNW(0);
 
-            pw[0] = cellData1.pressure(wPhaseIdx);
-            pw[1] = cellData2.pressure(wPhaseIdx);
-            pw[2] = cellData3.pressure(wPhaseIdx);
-            pw[3] = cellData4.pressure(wPhaseIdx);
+            potW[0] = cellData1.potential(wPhaseIdx);
+            potW[1] = cellData2.potential(wPhaseIdx);
+            potW[2] = cellData3.potential(wPhaseIdx);
+            potW[3] = cellData4.potential(wPhaseIdx);
 
-            pn[0] = cellData1.pressure(nPhaseIdx);
-            pn[1] = cellData2.pressure(nPhaseIdx);
-            pn[2] = cellData3.pressure(nPhaseIdx);
-            pn[3] = cellData4.pressure(nPhaseIdx);
+            potNW[0] = cellData1.potential(nPhaseIdx);
+            potNW[1] = cellData2.potential(nPhaseIdx);
+            potNW[2] = cellData3.potential(nPhaseIdx);
+            potNW[3] = cellData4.potential(nPhaseIdx);
 
             //get mobilities of the phases
             Dune::FieldVector<Scalar, numPhases> lambda1(cellData1.mobility(wPhaseIdx));
@@ -385,15 +385,15 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
             lambda[3][0] = lambdaTotal4;
             lambda[3][1] = lambdaTotal4;
 
-            Scalar potentialW12 = 0;
-            Scalar potentialW14 = 0;
-            Scalar potentialW32 = 0;
-            Scalar potentialW34 = 0;
+            Scalar potentialDiffW12 = 0;
+            Scalar potentialDiffW14 = 0;
+            Scalar potentialDiffW32 = 0;
+            Scalar potentialDiffW34 = 0;
 
-            Scalar potentialNW12 = 0;
-            Scalar potentialNW14 = 0;
-            Scalar potentialNW32 = 0;
-            Scalar potentialNW34 = 0;
+            Scalar potentialDiffNW12 = 0;
+            Scalar potentialDiffNW14 = 0;
+            Scalar potentialDiffNW32 = 0;
+            Scalar potentialDiffNW34 = 0;
 
             //flux vector
             Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
@@ -407,211 +407,211 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
 
             if (rightTriangle)
             {
-                u[0] = pw[1];
-                u[1] = pw[2];
-                u[2] = pw[0];
+                u[0] = potW[1];
+                u[1] = potW[2];
+                u[2] = potW[0];
 
                 T.mv(u, Tu);
 
                 fluxW[0] = Tu[1];
-                potentialW12 = Tu[1];
+                potentialDiffW12 = Tu[1];
 
-                u[0] = pn[1];
-                u[1] = pn[2];
-                u[2] = pn[0];
+                u[0] = potNW[1];
+                u[1] = potNW[2];
+                u[2] = potNW[0];
 
                 T.mv(u, Tu);
 
                 fluxNW[0] = Tu[1];
-                potentialNW12 = Tu[1];
+                potentialDiffNW12 = Tu[1];
             }
             else
             {
-                u[0] = pw[0];
-                u[1] = pw[3];
-                u[2] = pw[1];
+                u[0] = potW[0];
+                u[1] = potW[3];
+                u[2] = potW[1];
 
                 T.mv(u, Tu);
 
                 fluxW[0] = Tu[1];
-                potentialW12 = Tu[1];
+                potentialDiffW12 = Tu[1];
 
-                u[0] = pn[0];
-                u[1] = pn[3];
-                u[2] = pn[1];
+                u[0] = potNW[0];
+                u[1] = potNW[3];
+                u[2] = potNW[1];
 
                 T.mv(u, Tu);
 
                 fluxNW[0] = Tu[1];
-                potentialNW12 = Tu[1];
+                potentialDiffNW12 = Tu[1];
             }
 
             rightTriangle = this->calculateTransmissibility(T, interactionVolume, lambda, 1, 2, 3, 0);
 
             if (rightTriangle)
             {
-                u[0] = pw[2];
-                u[1] = pw[3];
-                u[2] = pw[1];
+                u[0] = potW[2];
+                u[1] = potW[3];
+                u[2] = potW[1];
 
                 T.mv(u, Tu);
 
                 fluxW[1] = Tu[1];
-                potentialW32 = -Tu[1];
+                potentialDiffW32 = -Tu[1];
 
-                u[0] = pn[2];
-                u[1] = pn[3];
-                u[2] = pn[1];
+                u[0] = potNW[2];
+                u[1] = potNW[3];
+                u[2] = potNW[1];
 
                 T.mv(u, Tu);
 
                 fluxNW[1] = Tu[1];
-                potentialNW32 = -Tu[1];
+                potentialDiffNW32 = -Tu[1];
             }
             else
             {
-                u[0] = pw[1];
-                u[1] = pw[0];
-                u[2] = pw[2];
+                u[0] = potW[1];
+                u[1] = potW[0];
+                u[2] = potW[2];
 
                 T.mv(u, Tu);
 
                 fluxW[1] = Tu[1];
-                potentialW32 = -Tu[1];
+                potentialDiffW32 = -Tu[1];
 
-                u[0] = pn[1];
-                u[1] = pn[0];
-                u[2] = pn[2];
+                u[0] = potNW[1];
+                u[1] = potNW[0];
+                u[2] = potNW[2];
 
                 T.mv(u, Tu);
 
                 fluxNW[1] = Tu[1];
-                potentialNW32 = -Tu[1];
+                potentialDiffNW32 = -Tu[1];
             }
 
             rightTriangle = this->calculateTransmissibility(T, interactionVolume, lambda, 2, 3, 0, 1);
 
             if (rightTriangle)
             {
-                u[0] = pw[3];
-                u[1] = pw[0];
-                u[2] = pw[2];
+                u[0] = potW[3];
+                u[1] = potW[0];
+                u[2] = potW[2];
 
                 T.mv(u, Tu);
 
                 fluxW[2] = Tu[1];
-                potentialW34 = Tu[1];
+                potentialDiffW34 = Tu[1];
 
-                u[0] = pn[3];
-                u[1] = pn[0];
-                u[2] = pn[2];
+                u[0] = potNW[3];
+                u[1] = potNW[0];
+                u[2] = potNW[2];
 
                 T.mv(u, Tu);
 
                 fluxNW[2] = Tu[1];
-                potentialNW34 = Tu[1];
+                potentialDiffNW34 = Tu[1];
             }
             else
             {
-                u[0] = pw[2];
-                u[1] = pw[1];
-                u[2] = pw[3];
+                u[0] = potW[2];
+                u[1] = potW[1];
+                u[2] = potW[3];
 
                 T.mv(u, Tu);
 
                 fluxW[2] = Tu[1];
-                potentialW34 = Tu[1];
+                potentialDiffW34 = Tu[1];
 
-                u[0] = pn[2];
-                u[1] = pn[1];
-                u[2] = pn[3];
+                u[0] = potNW[2];
+                u[1] = potNW[1];
+                u[2] = potNW[3];
 
                 T.mv(u, Tu);
 
                 fluxNW[2] = Tu[1];
-                potentialNW34 = Tu[1];
+                potentialDiffNW34 = Tu[1];
             }
 
             rightTriangle = this->calculateTransmissibility(T, interactionVolume, lambda, 3, 0, 1, 2);
 
             if (rightTriangle)
             {
-                u[0] = pw[0];
-                u[1] = pw[1];
-                u[2] = pw[3];
+                u[0] = potW[0];
+                u[1] = potW[1];
+                u[2] = potW[3];
 
                 T.mv(u, Tu);
 
                 fluxW[3] = Tu[1];
-                potentialW14 = -Tu[1];
+                potentialDiffW14 = -Tu[1];
 
-                u[0] = pn[0];
-                u[1] = pn[1];
-                u[2] = pn[3];
+                u[0] = potNW[0];
+                u[1] = potNW[1];
+                u[2] = potNW[3];
 
                 T.mv(u, Tu);
 
                 fluxNW[3] = Tu[1];
-                potentialNW14 = -Tu[1];
+                potentialDiffNW14 = -Tu[1];
             }
             else
             {
-                u[0] = pw[3];
-                u[1] = pw[2];
-                u[2] = pw[0];
+                u[0] = potW[3];
+                u[1] = potW[2];
+                u[2] = potW[0];
 
                 T.mv(u, Tu);
 
                 fluxW[3] = Tu[1];
-                potentialW14 = -Tu[1];
+                potentialDiffW14 = -Tu[1];
 
-                u[0] = pn[3];
-                u[1] = pn[2];
-                u[2] = pn[0];
+                u[0] = potNW[3];
+                u[1] = potNW[2];
+                u[2] = potNW[0];
 
                 T.mv(u, Tu);
 
                 fluxNW[3] = Tu[1];
-                potentialNW14 = -Tu[1];
+                potentialDiffNW14 = -Tu[1];
             }
 
             //store potentials for further calculations (saturation, ...)
-            cellData1.fluxData().addPotential(wPhaseIdx, interactionVolume.getIndexOnElement(0, 0), potentialW12);
-            cellData1.fluxData().addPotential(nPhaseIdx, interactionVolume.getIndexOnElement(0, 0), potentialNW12);
-            cellData1.fluxData().addPotential(wPhaseIdx, interactionVolume.getIndexOnElement(0, 1), potentialW14);
-            cellData1.fluxData().addPotential(nPhaseIdx, interactionVolume.getIndexOnElement(0, 1), potentialNW14);
-            cellData2.fluxData().addPotential(wPhaseIdx, interactionVolume.getIndexOnElement(1, 0), -potentialW32);
-            cellData2.fluxData().addPotential(nPhaseIdx, interactionVolume.getIndexOnElement(1, 0), -potentialNW32);
-            cellData2.fluxData().addPotential(wPhaseIdx, interactionVolume.getIndexOnElement(1, 1), -potentialW12);
-            cellData2.fluxData().addPotential(nPhaseIdx, interactionVolume.getIndexOnElement(1, 1), -potentialNW12);
-            cellData3.fluxData().addPotential(wPhaseIdx, interactionVolume.getIndexOnElement(2, 0), potentialW34);
-            cellData3.fluxData().addPotential(nPhaseIdx, interactionVolume.getIndexOnElement(2, 0), potentialNW34);
-            cellData3.fluxData().addPotential(wPhaseIdx, interactionVolume.getIndexOnElement(2, 1), potentialW32);
-            cellData3.fluxData().addPotential(nPhaseIdx, interactionVolume.getIndexOnElement(2, 1), potentialNW32);
-            cellData4.fluxData().addPotential(wPhaseIdx, interactionVolume.getIndexOnElement(3, 0), -potentialW14);
-            cellData4.fluxData().addPotential(nPhaseIdx, interactionVolume.getIndexOnElement(3, 0), -potentialNW14);
-            cellData4.fluxData().addPotential(wPhaseIdx, interactionVolume.getIndexOnElement(3, 1), -potentialW34);
-            cellData4.fluxData().addPotential(nPhaseIdx, interactionVolume.getIndexOnElement(3, 1), -potentialNW34);
+            cellData1.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(0, 0), potentialDiffW12);
+            cellData1.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(0, 0), potentialDiffNW12);
+            cellData1.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(0, 1), potentialDiffW14);
+            cellData1.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(0, 1), potentialDiffNW14);
+            cellData2.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(1, 0), -potentialDiffW32);
+            cellData2.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(1, 0), -potentialDiffNW32);
+            cellData2.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(1, 1), -potentialDiffW12);
+            cellData2.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(1, 1), -potentialDiffNW12);
+            cellData3.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(2, 0), potentialDiffW34);
+            cellData3.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(2, 0), potentialDiffNW34);
+            cellData3.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(2, 1), potentialDiffW32);
+            cellData3.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(2, 1), potentialDiffNW32);
+            cellData4.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(3, 0), -potentialDiffW14);
+            cellData4.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(3, 0), -potentialDiffNW14);
+            cellData4.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(3, 1), -potentialDiffW34);
+            cellData4.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(3, 1), -potentialDiffNW34);
 
             //compute mobilities of face 1
             Dune::FieldVector<Scalar, numPhases> lambda12Upw(0.0);
-            lambda12Upw[wPhaseIdx] = (potentialW12 >= 0) ? lambda1[wPhaseIdx] : lambda2[wPhaseIdx];
-            lambda12Upw[nPhaseIdx] = (potentialNW12 >= 0) ? lambda1[nPhaseIdx] : lambda2[nPhaseIdx];
+            lambda12Upw[wPhaseIdx] = (potentialDiffW12 >= 0) ? lambda1[wPhaseIdx] : lambda2[wPhaseIdx];
+            lambda12Upw[nPhaseIdx] = (potentialDiffNW12 >= 0) ? lambda1[nPhaseIdx] : lambda2[nPhaseIdx];
 
             //compute mobilities of face 4
             Dune::FieldVector<Scalar, numPhases> lambda14Upw(0.0);
-            lambda14Upw[wPhaseIdx] = (potentialW14 >= 0) ? lambda1[wPhaseIdx] : lambda4[wPhaseIdx];
-            lambda14Upw[nPhaseIdx] = (potentialNW14 >= 0) ? lambda1[nPhaseIdx] : lambda4[nPhaseIdx];
+            lambda14Upw[wPhaseIdx] = (potentialDiffW14 >= 0) ? lambda1[wPhaseIdx] : lambda4[wPhaseIdx];
+            lambda14Upw[nPhaseIdx] = (potentialDiffNW14 >= 0) ? lambda1[nPhaseIdx] : lambda4[nPhaseIdx];
 
             //compute mobilities of face 2
             Dune::FieldVector<Scalar, numPhases> lambda32Upw(0.0);
-            lambda32Upw[wPhaseIdx] = (potentialW32 >= 0) ? lambda3[wPhaseIdx] : lambda2[wPhaseIdx];
-            lambda32Upw[nPhaseIdx] = (potentialNW32 >= 0) ? lambda3[nPhaseIdx] : lambda2[nPhaseIdx];
+            lambda32Upw[wPhaseIdx] = (potentialDiffW32 >= 0) ? lambda3[wPhaseIdx] : lambda2[wPhaseIdx];
+            lambda32Upw[nPhaseIdx] = (potentialDiffNW32 >= 0) ? lambda3[nPhaseIdx] : lambda2[nPhaseIdx];
 
             //compute mobilities of face 3
             Dune::FieldVector<Scalar, numPhases> lambda34Upw(0.0);
-            lambda34Upw[wPhaseIdx] = (potentialW34 >= 0) ? lambda3[wPhaseIdx] : lambda4[wPhaseIdx];
-            lambda34Upw[nPhaseIdx] = (potentialNW34 >= 0) ? lambda3[nPhaseIdx] : lambda4[nPhaseIdx];
+            lambda34Upw[wPhaseIdx] = (potentialDiffW34 >= 0) ? lambda3[wPhaseIdx] : lambda4[wPhaseIdx];
+            lambda34Upw[nPhaseIdx] = (potentialDiffNW34 >= 0) ? lambda3[nPhaseIdx] : lambda4[nPhaseIdx];
 
             for (int i = 0; i < numPhases; i++)
             {
@@ -759,9 +759,6 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
                 Dune::FieldVector<Scalar, numPhases> lambda(cellData.mobility(wPhaseIdx));
                 lambda[nPhaseIdx] = cellData.mobility(nPhaseIdx);
 
-                Scalar pressW = cellData.pressure(wPhaseIdx);
-                Scalar pressNW = cellData.pressure(nPhaseIdx);
-
                 for (int faceIdx = 0; faceIdx < dim; faceIdx++)
                 {
                     int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
@@ -843,12 +840,12 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
                             }
 
 
-                            Scalar potentialW = (pressW - potentialBoundW) / dist;
-                            Scalar  potentialNW = (pressNW - potentialBoundNW) / dist;
+                            Scalar potentialDiffW = (cellData.potential(wPhaseIdx) - potentialBoundW) / dist;
+                            Scalar  potentialDiffNW = (cellData.potential(nPhaseIdx) - potentialBoundNW) / dist;
 
                             //store potentials for further calculations (saturation, ...)
-                            cellData.fluxData().addPotential(wPhaseIdx, boundaryFaceIdx, potentialW);
-                            cellData.fluxData().addPotential(nPhaseIdx, boundaryFaceIdx, potentialNW);
+                            cellData.fluxData().addUpwindPotential(wPhaseIdx, boundaryFaceIdx, potentialDiffW);
+                            cellData.fluxData().addUpwindPotential(nPhaseIdx, boundaryFaceIdx, potentialDiffNW);
 
                             //calculated phase velocities from advective velocities -> capillary pressure velocity already added in pressure part!
                             DimVector velocityW(0);
@@ -856,15 +853,15 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
 
                             // calculate capillary pressure gradient
                             DimVector pressGradient = unitDistVec;
-                            pressGradient *= (pressW - potentialBoundW) / dist;
+                            pressGradient *= (cellData.potential(wPhaseIdx) - potentialBoundW) / dist;
                             permeability.mv(pressGradient, velocityW);
 
                             pressGradient = unitDistVec;
-                            pressGradient *= (pressNW - potentialBoundNW) / dist;
+                            pressGradient *= (cellData.potential(nPhaseIdx) - potentialBoundNW) / dist;
                             permeability.mv(pressGradient, velocityNW);
 
-                            velocityW *= (potentialW >= 0.) ? lambda[wPhaseIdx] : lambdaBound[wPhaseIdx];
-                            velocityNW *= (potentialNW >= 0.) ? lambda[nPhaseIdx] : lambdaBound[nPhaseIdx];
+                            velocityW *= (potentialDiffW >= 0.) ? lambda[wPhaseIdx] : lambdaBound[wPhaseIdx];
+                            velocityNW *= (potentialDiffNW >= 0.) ? lambda[nPhaseIdx] : lambdaBound[nPhaseIdx];
 
                             //velocity is calculated from two vertices of one intersection!
                             velocityW *= 0.5;
@@ -908,8 +905,8 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
                                     / (2 * interactionVolume.getFaceArea(elemIdx, faceIdx));
 
                             //store potentials for further calculations (saturation, ...)
-                            cellData.fluxData().addPotential(wPhaseIdx, boundaryFaceIdx, boundValues[wPhaseIdx]);
-                            cellData.fluxData().addPotential(nPhaseIdx, boundaryFaceIdx, boundValues[nPhaseIdx]);
+                            cellData.fluxData().addUpwindPotential(wPhaseIdx, boundaryFaceIdx, boundValues[wPhaseIdx]);
+                            cellData.fluxData().addUpwindPotential(nPhaseIdx, boundaryFaceIdx, boundValues[nPhaseIdx]);
 
                             //store velocities
                             velocityW += cellData.fluxData().velocity(wPhaseIdx, boundaryFaceIdx);
