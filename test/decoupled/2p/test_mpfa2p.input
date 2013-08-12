@@ -13,7 +13,7 @@ DtInitial = 5e5# [s]
 SubTimestepVerbosity = 0
 
 [Grid]
-#File = grids/test_mpfa2p.dgf#grid for buckley-leverett or mcwhorter problem
+File = grids/test_mpfa2p.dgf#grid for buckley-leverett or mcwhorter problem
 
 #For 2d-lense-problem
 NumberOfCellsX = 10# [-] level 0 resolution in x-direction
@@ -21,6 +21,8 @@ NumberOfCellsY = 10# [-] level 0 resolution in y-direction
 
 UpperRightX = 20# [m] dimension of the grid
 UpperRightY = 10# [m] dimension of the grid # 2D
+
+#RefinementFactor = 1 
 
 ############################################################
 # Optional arguments

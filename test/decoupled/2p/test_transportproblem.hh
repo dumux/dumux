@@ -177,8 +177,8 @@ public:
 
                 Scalar pot = vel * unitOuterNormal;
 
-                cellData.fluxData().setPotential(wPhaseIdx, indexInInside, pot);
-                cellData.fluxData().setPotential(nPhaseIdx, indexInInside, pot);
+                cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, pot);
+                cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, pot);
             }
         }
     }
