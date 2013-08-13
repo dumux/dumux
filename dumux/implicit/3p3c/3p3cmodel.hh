@@ -379,9 +379,9 @@ public:
 
         }
 
-        writer.attachDofData(*saturation[wPhaseIdx], "sw", isBox);
-        writer.attachDofData(*saturation[nPhaseIdx], "sn", isBox);
-        writer.attachDofData(*saturation[gPhaseIdx], "sg", isBox);
+        writer.attachDofData(*saturation[wPhaseIdx], "Sw", isBox);
+        writer.attachDofData(*saturation[nPhaseIdx], "Sn", isBox);
+        writer.attachDofData(*saturation[gPhaseIdx], "Sg", isBox);
         writer.attachDofData(*pressure[wPhaseIdx], "pw", isBox);
         writer.attachDofData(*pressure[nPhaseIdx], "pn", isBox);
         writer.attachDofData(*pressure[gPhaseIdx], "pg", isBox);

@@ -375,8 +375,8 @@ public:
 
         } // loop over elements
 
-        writer.attachDofData(*sN,     "sn", isBox);
-        writer.attachDofData(*sW,     "sw", isBox);
+        writer.attachDofData(*sN,     "Sn", isBox);
+        writer.attachDofData(*sW,     "Sw", isBox);
         writer.attachDofData(*pn,     "pn", isBox);
         writer.attachDofData(*pw,     "pw", isBox);
         writer.attachDofData(*pc,     "pc", isBox);
