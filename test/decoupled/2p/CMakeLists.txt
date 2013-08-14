@@ -4,7 +4,7 @@ add_test(test_impes
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/test_impes-reference.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test_impes-00013.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_impes-00009.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_impes
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impes.input)
 
@@ -64,7 +64,7 @@ add_test(test_mpfal2p
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/test_mpfal2p-reference.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test_mpfal2p-00007.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p-00007.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input
   -ModelType MPFAL)

@@ -296,9 +296,9 @@ void addOutputVtkFields()
  */
 const char *name() const
 {
-    if (ParameterTree::tree().hasKey("Problem.OutputfileName"))
+    if (ParameterTree::tree().hasKey("Problem.OutputFileName"))
     {
-        std::string fileName(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputfileName));
+        std::string fileName(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputFileName));
         return fileName.c_str();
     }
     else
