@@ -57,6 +57,8 @@ class MPNCVolumeVariablesMass
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { fug0Idx = Indices::fug0Idx };
+    enum { dimWorld = GridView::dimensionworld};
+    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
 
     typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
 
@@ -64,6 +66,15 @@ public:
     /*!
      * \brief Update composition of all phases in the mutable
      *        parameters from the primary variables.
+     *
+     *        \param fluidState Container for all the secondary variables concerning the fluids
+     *        \param paramCache Container for cache parameters
+     *        \param priVars The primary Variables
+     *        \param *hint the volume variables
+     *        \param problem The problem
+     *        \param element The finite element
+     *        \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     *        \param scvIdx The index of the sub-control volume
      */
     void update(FluidState &fs,
                 ParameterCache &paramCache,
@@ -103,6 +114,46 @@ public:
                 ConstraintSolver::guessInitial(fs, paramCache, phaseIdx, fug);
             ConstraintSolver::solve(fs, paramCache, phaseIdx, fug);
         }
+    }
+
+    /*!
+     * \brief Check whether the calculated values are reasonable.
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param globalPos The position at which the check is conducted
+     */
+     bool physicalness(const FluidState & fs,
+                         const GlobalPosition & globalPos)
+    {
+        const Scalar eps = 1e-6 ;
+        for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
+            for (int compIdx=0; compIdx< numComponents; ++ compIdx){
+                const Scalar xTest = fs.moleFraction(phaseIdx, compIdx);
+                if (not std::isfinite(xTest)
+                     or xTest < 0.-eps
+                     or xTest > 1.+eps )
+                    return false; // unphysical value found: tell calling function, sth went wrong!
+                }
+        }
+        return true; // all the checks went through: tell calling function, nothing bad could be found.
+    }
+
+     /*!
+      * \brief Output for the case that the current state is not physical.
+      *        This is called if the physicalness funcitons returned false.
+      *
+      * \param fluidState Container for all the secondary variables concerning the fluids
+      * \param message A string returning the error message for this module
+      */
+    const void physicalnessError(const FluidState & fs,
+                                 std::stringstream & message)
+    {
+        message <<"Mass: \n";
+        for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
+            for (int compIdx=0; compIdx< numComponents; ++ compIdx)
+                message << "\tx" <<"_"<<FluidSystem::phaseName(phaseIdx)
+                        <<"^"<<FluidSystem::componentName(compIdx)<<"="
+                        << fs.moleFraction(phaseIdx, compIdx) <<"\n";
     }
 
     /*!
