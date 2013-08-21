@@ -57,10 +57,22 @@ class MPNCFluxVariablesEnergy
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
+    /*!
+     * \brief The constructor
+     */
     MPNCFluxVariablesEnergy()
     {
     }
-
+    /*!
+     * \brief update
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param face The SCV (sub-control-volume) face
+     * \param fluxVars The flux variables
+     * \param elemVolVars The volume variables of the current element
+     */
     void update(const Problem & problem,
                 const Element & element,
                 const FVElementGeometry & fvGeometry,
@@ -96,9 +108,21 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTr
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
+    /*!
+     * \brief The constructor
+     */
     MPNCFluxVariablesEnergy()
     {}
-
+    /*!
+     * \brief update
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param face The SCV (sub-control-volume) face
+     * \param fluxVars The flux variables
+     * \param elemVolVars The volume variables of the current element
+     */
     void update(const Problem & problem,
                 const Element & element,
                 const FVElementGeometry & fvGeometry,
@@ -132,7 +156,15 @@ public:
                                    elemVolVars) ;
 
     }
-
+    /*!
+     * \brief The lumped / average conductivity of solid plus phases \f$[W/mK]\f$.
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param face The SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     */
     Scalar lumpedLambdaPm(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry & fvGeometry,
