@@ -1,8 +1,6 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 /*****************************************************************************
- *   Copyright (C) 2011 by Philipp Nuske                                     *
- *   Institute for Modelling Hydraulic and Environmental Systems             *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -11,7 +9,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -75,6 +73,13 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
 public:
     /*!
      * \brief Update the temperature of the sub-control volume.
+     *
+     * \param The primary variables
+     * \param element The finit Element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param scvIdx The index of the sub-control volume
+     * \param problem The problem
+     * \param temperatureIdx The temperature Index
      */
     Scalar getTemperature(const PrimaryVariables & priVars,
                           const Element & element,
@@ -89,6 +94,14 @@ public:
 
     /*!
      * \brief Update the temperature of the sub-control volume.
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache Container for cache parameters
+     * \param priVars The primary Variables
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param scvIdx The index of the sub-control volume
+     * \param problem The problem
      */
     void updateTemperatures(FluidState & fluidState,
                             ParameterCache & paramCache,
@@ -113,6 +126,13 @@ public:
     /*!
      * \brief Update the enthalpy and the internal energy for a given
      *        control volume.
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache Container for cache parameters
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param scvIdx The index of the sub-control volume
+     * \param problem The problem
      */
     void update(FluidState & fluidState,
                 ParameterCache & paramCache,
@@ -158,6 +178,7 @@ public:
     /*!
      * \brief Returns the temperature in fluid / solid phase(s)
      *        the sub-control volume.
+     * \param phaseIdx The local index of the phases
      */
     Scalar temperature(const unsigned int phaseIdx) const
     { return temperature_[phaseIdx]; }
@@ -179,6 +200,8 @@ public:
     /*!
      * \brief Returns the conductivity of the given fluid [kg / m^3] in
      *        the sub-control volume.
+     *
+     *   \param phaseIdx The local index of the phases
      */
     Scalar thermalConductivity(const unsigned int phaseIdx) const
     {
