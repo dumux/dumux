@@ -65,6 +65,10 @@ public:
      * \brief Evaluate the amount moles within a sub-control volume in
      *        a phase.
      *
+     *    \param storage The mass of the component within the sub-control volume
+     *    \param volVars The volume variables
+     *    \param phaseIdx phaseIdx The index of the fluid phase
+     *
      * The result should be averaged over the volume.
      */
     static void computePhaseStorage(ComponentVector &storage,
@@ -86,6 +90,10 @@ public:
      * \brief Evaluates the advective flux of all conservation
      *        quantities over a face of a subcontrol volume via a
      *        fluid phase.
+     *
+     *        \param flux The flux over the SCV (sub-control-volume) face for each component
+     *        \param fluxVars The flux Variables
+     *        \param phaseIdx phaseIdx The index of the fluid phase
      */
     static void computeAdvectivePhaseFlux(ComponentVector &flux,
                                           const FluxVariables &fluxVars,
@@ -189,6 +197,10 @@ public:
      * \brief Evaluates the advective flux of all conservation
      *        quantities over a face of a subcontrol volume via a
      *        fluid phase.
+     *
+     *        \param flux The flux over the SCV (sub-control-volume) face for each component
+     *        \param fluxVars The flux Variables
+     *        \param phaseIdx phaseIdx The index of the fluid phase
      */
     static void computeDiffusivePhaseFlux(ComponentVector &flux,
                                           const FluxVariables &fluxVars,
@@ -253,6 +265,9 @@ class MPNCLocalResidualMass
 public:
     /*!
      * \brief Calculate the storage for all mass balance equations
+     *
+     *    \param storage The mass of the component within the sub-control volume
+     *    \param volVars The volume variables
      */
     static void computeStorage(PrimaryVariables &storage,
                                const VolumeVariables &volVars)
@@ -268,6 +283,10 @@ public:
     /*!
      * \brief Calculate the storage for all mass balance equations
      *        within a single fluid phase
+     *
+     *    \param storage The mass of the component within the sub-control volume
+     *    \param volVars The volume variables
+     *    \param phaseIdx phaseIdx The index of the fluid phase
      */
     static void addPhaseStorage(PrimaryVariables &storage,
                                 const VolumeVariables &volVars,
@@ -286,6 +305,10 @@ public:
 
     /*!
      * \brief Calculate the storage for all mass balance equations
+     *
+     *        \param flux The flux over the SCV (sub-control-volume) face for each component
+     *        \param fluxVars The flux Variables
+     *        \param elemVolVars The volume variables of the current element
      */
     static void computeFlux(PrimaryVariables &flux,
                             const FluxVariables &fluxVars,
@@ -338,6 +361,9 @@ public:
     /*!
      * \brief Calculate the source terms for all mass balance
      *        equations
+     *
+     *         \param source The source/sink in the sub-control volume for each component
+     *         \param volVars the volume variables
      */
     static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars)
