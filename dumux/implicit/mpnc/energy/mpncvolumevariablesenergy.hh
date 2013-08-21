@@ -59,10 +59,21 @@ class MPNCVolumeVariablesEnergy
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename FluidSystem::ParameterCache ParameterCache;
+    enum {dimWorld=GridView::dimensionworld};
+    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+
 
 public:
     /*!
      * \brief Update the temperature of the sub-control volume.
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache Container for cache parameters
+     * \param priVars The primary Variables
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param scvIdx The index of the sub-control volume
+     * \param problem The problem
      */
     void updateTemperatures(FluidState &fs,
                             ParameterCache &paramCache,
@@ -80,6 +91,12 @@ public:
     /*!
      * \brief Update the enthalpy and the internal energy for a given
      *        control volume.
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache Container for cache parameters
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param scvIdx The index of the sub-control volume
+     * \param problem The problem
      *
      * Since we are isothermal, we don't need to do anything!
      */
@@ -99,6 +116,34 @@ public:
     void checkDefined() const
     {
     }
+
+    /*!
+     * \brief Check the set variables as to whether they are in physically possible ranges.
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param globalPos The position at which the check is conducted
+     *
+     * Since we are isothermal, we don't need to do anything!
+     */
+     bool physicalness(const FluidState & fluidState,
+                         const GlobalPosition & globalPos)
+    {
+        return true; // all the checks went through: tell calling function, nothing bad could be found.
+    }
+
+    /*!
+     * \brief Output for the case that the current state is not physical.
+     *        This calls the output functions of the modules and throws and exception:
+     *        i.e. a smaller timestep is tried.
+     *
+     *        Since we are isothermal, we don't need to do anything!
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param message A string returning the error message for this module
+     */
+    const void physicalnessError(const FluidState & fs,
+                                 std::stringstream & message)
+    { }
 };
 
 /*!
@@ -126,9 +171,20 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
     typedef typename GET_PROP_TYPE(TypeTag, FluidState)  FluidState;
     typedef typename FluidSystem::ParameterCache ParameterCache;
 
+    enum { dimWorld = GridView::dimensionworld};
+    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
+
 public:
     /*!
      * \brief Update the temperature of the sub-control volume.
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache Container for cache parameters
+     * \param sol The primary Vaiables
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param scvIdx The index of the sub-control volume
+     * \param problem The problem
      */
     void updateTemperatures(FluidState &fs,
                             ParameterCache &paramCache,
@@ -146,6 +202,12 @@ public:
     /*!
      * \brief Update the enthalpy and the internal energy for a given
      *        control volume.
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache Container for cache parameters
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param scvIdx The index of the sub-control volume
+     * \param problem The problem
      */
     void update(FluidState &fs,
                 ParameterCache &paramCache,
@@ -194,7 +256,39 @@ public:
     {
         Valgrind::CheckDefined(heatCapacity_);
         Valgrind::CheckDefined(soilDensity_);
-    };
+    }
+
+    /*!
+     * \brief Check whether the calculated values are reasonable.
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param globalPos The position at which the check is conducted
+     */
+    bool physicalness(const FluidState & fs,
+                        const GlobalPosition & globalPos)
+    {
+        const Scalar eps = 1e-6 ;
+        const Scalar temperatureTest = fs.temperature(/*dummy=*/0);
+        if (not std::isfinite(temperatureTest)
+             or temperatureTest < 0.-eps )
+            return false; // unphysical value found: tell calling function, sth went wrong!
+        return true; // all the checks went through: tell calling function, nothing bad could be found.
+    }
+
+    /*!
+     * \brief Output for the case that the current state is not physical.
+     *        This is called if the physicalness funcitons returned false.
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param message A string returning the error message for this module
+     */
+    const void physicalnessError(const FluidState & fs,
+                                 std::stringstream & message)
+    {
+        message <<"Energy: \n";
+        for(int energyEqIdx=0; energyEqIdx<numEnergyEqs; energyEqIdx++)
+            message << "\tT" <<"_"<<FluidSystem::phaseName(energyEqIdx)<<"="<< fs.temperature(energyEqIdx) <<"\n";
+    }
 
 protected:
     Scalar heatCapacity_;
