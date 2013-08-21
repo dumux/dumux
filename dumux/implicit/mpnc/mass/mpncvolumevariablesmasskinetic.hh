@@ -82,6 +82,15 @@ public:
     /*!
      * \brief Update composition of all phases in the mutable
      *        parameters from the primary variables.
+     *
+     *        \param fluidState Container for all the secondary variables concerning the fluids
+     *        \param paramCache Container for cache parameters
+     *        \param priVars The primary Variables
+     *        \param *hint the volume variables
+     *        \param problem The problem
+     *        \param element The finite element
+     *        \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     *        \param scvIdx The index of the sub-control volume
      */
     void update(FluidState & actualFluiState,
                 ParameterCache & paramCache,
@@ -143,6 +152,9 @@ public:
 
     /*!
      * \brief The mole fraction we would have in the case of chemical equilibrium
+     *
+     *     \param phaseIdx The index of the fluid phase
+     *     \param compIdx The local index of the component
      */
     const Scalar xEquil(const unsigned int phaseIdx, const unsigned int compIdx) const
     {
