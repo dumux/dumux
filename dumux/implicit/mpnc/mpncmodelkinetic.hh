@@ -1,9 +1,6 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 /*****************************************************************************
- *   Copyright (C) 2010-2011 by Philipp Nuske                                *
- *   Copyright (C) 2011 by Andreas Lauser                                    *
- *   Institute for Modelling Hydraulic and Environmental Systems             *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -12,7 +9,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -92,7 +89,10 @@ class MPNCModelKinetic : public MPNCModel<TypeTag>
     typedef std::array<DimVectorField, numPhases>       PhaseDimVectorField;
 
 public:
-
+    /*!
+     * \brief Initialize the fluid system's static parameters
+     * \param problem The Problem
+     */
     void init(Problem &problem)
     {
         ParentType::init(problem);
@@ -300,6 +300,9 @@ public:
 
     /*!
      * \brief Access to the averaged (magnitude of) velocity for each vertex.
+     *
+     * \param globalIdx The global index of the degree of freedom
+     *
      */
     const Scalar volumeDarcyMagVelocity(const unsigned int phaseIdx,
                                         const unsigned int globalIdx) const
@@ -307,6 +310,8 @@ public:
 
     /*!
      * \brief Access to the averaged velocity for each vertex.
+     *
+     * \param globalIdx The global index of the degree of freedom
      */
     const DimVector volumeDarcyVelocity(const unsigned int phaseIdx,
                                         const unsigned int globalIdx) const
