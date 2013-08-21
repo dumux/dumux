@@ -49,10 +49,19 @@ class MPNCVolumeVariablesDiffusion
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
 
 public:
-
+    /*!
+     * \brief The constructor
+     */
     MPNCVolumeVariablesDiffusion()
     {}
-
+    /*!
+     * \brief update
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param paramCache Container for cache parameters
+     * \param volVars The volume variables
+     * \param problem  The problem
+     */
     void update(FluidState &fluidState,
                 ParameterCache &paramCache,
                 const VolumeVariables &volVars,
@@ -91,7 +100,9 @@ public:
         Valgrind::CheckDefined(diffCoeffG_);
     }
 
-
+    /*!
+     * \brief The binary diffusion coefficient for each fluid phase.
+     */
     Scalar diffCoeff(const unsigned int phaseIdx,
                      const unsigned int compIIdx,
                      const unsigned int compJIdx) const
@@ -140,18 +151,35 @@ class MPNCVolumeVariablesDiffusion<TypeTag, false>
     typedef typename FluidSystem::ParameterCache ParameterCache;
 
 public:
+    /*!
+     * \brief The constructor
+     */
     MPNCVolumeVariablesDiffusion()
     {}
-
+    /*!
+     * \brief update
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param paramCache Container for cache parameters
+     * \param volVars The volume variables
+     * \param problem  The problem
+     */
     void update(FluidState &fluidState,
                 ParameterCache &paramCache,
                 const VolumeVariables &volVars,
                 const Problem &problem)
     { }
-
+    /*!
+     * \brief The binary diffusion coefficient for each component in the fluid phase.
+     * \param compIdx The local index of the components
+     */
     Scalar diffCoeffL(const unsigned int compIdx) const
     { return 0; }
-
+    /*!
+     * \brief The binary diffusion coefficient for each component in the gas phase.
+     * \param compIIdx The local index of the first component in the phase
+     * \param compIJdx The local index of the second component in the phase
+     */
     Scalar diffCoeffG(const unsigned int compIIdx, const unsigned int compJIdx) const
     { return 0; }
 
