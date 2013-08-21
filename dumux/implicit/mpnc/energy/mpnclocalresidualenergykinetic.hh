@@ -1,8 +1,6 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 /*****************************************************************************
- *   Copyright (C) 2011 by Philipp Nuske                                     *
- *   Institute for Modelling Hydraulic and Environmental Systems             *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -11,7 +9,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -62,7 +60,16 @@ class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyTra
     typedef typename Dune::FieldMatrix<Scalar, numPhases, numComponents>    PhaseComponentMatrix;
 
 public:
-
+    /*!
+     * \brief Evaluate the amount all conservation quantities
+     *        (e.g. phase mass) within a sub-control volume.
+     *
+     * The result should be averaged over the volume (e.g. phase mass
+     * inside a sub-control volume divided by the volume)
+     *
+     *  \param storage The mass of the component within the sub-control volume
+     *  \param volVars the Volume Variables
+     */
     static void computeStorage(PrimaryVariables & storage,
                                   const VolumeVariables & volVars)
     {
@@ -85,6 +92,13 @@ public:
      * -> Further evidence for this explanation: in a simple setting (constant parameters, few cells) the temperature peak can be correctly predicted a priori.
      * -> -> For those situations with a distinct displacement process the same quantity has to be stored and transported
      * This is equivalent to neglecting volume changing work.
+     *
+     * \brief Calculate the storage for all mass balance equations
+     *        within a single fluid phase
+     *
+     *  \param storage The mass of the component within the sub-control volume
+     *  \param volVars the Volume Variables
+     *  \param phaseIdx The local index of the phases
      */
     static void addPhaseStorage(PrimaryVariables & storage,
                                 const VolumeVariables & volVars,
@@ -116,7 +130,15 @@ public:
         #endif
 
     }
-
+    /*!
+     * \brief Evaluates the total flux of all conservation quantities
+     *        over a face of a sub-control volume.
+     *
+     * \param flux The flux over the SCV (sub-control-volume) face for each component
+     * \param fluxVars The flux Variables
+     * \param volVars The volume variables
+     * \param molarPhaseComponentValuesMassTransport[numPhases]
+     */
     static void computeFlux(PrimaryVariables & flux,
                             const FluxVariables & fluxVars,
                             const ElementVolumeVariables & elemVolVars,
@@ -146,7 +168,13 @@ public:
             #endif
         }
     }
-
+    /*!
+          * \brief the advective Flux of the enthalpy
+          *        \param flux The flux over the SCV (sub-control-volume) face for each component
+          *        \param fluxVars The flux Variables
+          *        \param elemVolVars The volume variables of the current element
+          *        \param phaseIdx The local index of the phases
+          */
     static void computePhaseEnthalpyFlux(PrimaryVariables & flux,
                                          const FluxVariables & fluxVars,
                                          const ElementVolumeVariables & elemVolVars,
@@ -177,7 +205,14 @@ public:
 
         flux[energyEq0Idx + phaseIdx] += enthalpy * massFlux  ;
     }
-
+    /*!
+        * \brief The heat conduction in the phase
+        *
+        *        \param flux The flux over the SCV (sub-control-volume) face for each component
+        *        \param fluxVars The flux Variables
+        *        \param elemVolVars The volume variables of the current element
+        *        \param phaseIdx The local index of the phases
+        */
     static void computeHeatConduction(PrimaryVariables & flux,
                                       const FluxVariables & fluxVars,
                                       const ElementVolumeVariables & elemVolVars,
@@ -219,7 +254,13 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                                "wrong index");
     }
-
+    /*!
+       * \brief Calculate the source term of the equation
+       *
+       * \param source The source/sink in the sub-control volume for each component
+       * \param volVars The volume variables
+       * \param componentIntoPhaseMassTransfer[numPhases]
+       */
 
     static void computeSource(PrimaryVariables & source,
                               const VolumeVariables & volVars,
