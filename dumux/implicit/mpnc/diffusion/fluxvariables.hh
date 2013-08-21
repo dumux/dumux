@@ -56,9 +56,20 @@ class MPNCFluxVariablesDiffusion
     typedef Dune::FieldVector<Scalar, dim>  DimVector;
 
 public:
+    /*!
+     * \brief The constructor
+     */
     MPNCFluxVariablesDiffusion()
     {}
-
+    /*!
+     * \brief update
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param face The SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     */
     void update(const Problem & problem,
                 const Element & element,
                 const FVElementGeometry & fvGeometry,
@@ -158,20 +169,31 @@ public:
             }
         }
     }
-
+    /*!
+     * \brief The binary diffusion coefficient for each component in the fluid phase.
+     * \param compIdx The local index of the components
+     */
     Scalar porousDiffCoeffL(const unsigned int compIdx) const
     {
         // TODO: tensorial diffusion coefficients
         return porousDiffCoeffL_[compIdx];
     }
-
+    /*!
+     * \brief The binary diffusion coefficient for each component in the gas phase.
+     * \param compIIdx The local index of the first component in the phase
+     * \param compIJdx The local index of the second component in the phase
+     */
     Scalar porousDiffCoeffG(const unsigned int compIIdx,
                             const unsigned int compJIdx) const
     {
         // TODO: tensorial diffusion coefficients
         return porousDiffCoeffG_[compIIdx][compJIdx];
     }
-
+    /*!
+     * \brief The mole fraction and concentration gradient for all phases and components
+     * \param phaseIdx The local index of the phases
+     * \param compIdx The local index of the component
+     */
     Scalar moleFraction(const unsigned int phaseIdx,
                         const unsigned int compIdx) const
     { return moleFraction_[phaseIdx][compIdx]; }
@@ -208,9 +230,20 @@ class MPNCFluxVariablesDiffusion<TypeTag, false>
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
+    /*!
+     * \brief The constructor
+     */
     MPNCFluxVariablesDiffusion()
     {}
-
+    /*!
+     * \brief update
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param face The SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     */
     void update(const Problem & problem,
                 const Element & element,
                 const FVElementGeometry & fvGeometry,
