@@ -50,6 +50,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/implicit/2p2cni/Makefile 
     dumux/implicit/2pni/Makefile
     dumux/implicit/2pdfm/Makefile 
+    dumux/implicit/3p/Makefile 
     dumux/implicit/3p3c/Makefile 
     dumux/implicit/3p3cni/Makefile 
     dumux/implicit/box/Makefile 
@@ -90,6 +91,7 @@ AC_CONFIG_FILES([dumux.pc
     test/implicit/2p2c/Makefile
     test/implicit/2p2cni/Makefile
     test/implicit/2pdfm/Makefile
+    test/implicit/3p/Makefile
     test/implicit/3p3c/Makefile
     test/implicit/3p3cni/Makefile
     test/implicit/co2/Makefile
