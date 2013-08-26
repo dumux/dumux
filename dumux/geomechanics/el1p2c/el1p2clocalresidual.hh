@@ -146,15 +146,15 @@ namespace Dumux
             void computeFlux(PrimaryVariables &flux, int faceIdx, const bool onBoundary=false) const
             {
                 flux = 0;
-                FluxVariables vars(this->problem_(),
+                FluxVariables fluxVars(this->problem_(),
                                 this->element_(),
                                 this->fvGeometry_(),
                                 faceIdx,
                                 this->curVolVars_());
 
-                this->computeAdvectiveFlux(flux, vars);
-                this->computeDiffusiveFlux(flux, vars);
-                this->computeStresses(flux,vars,faceIdx);
+                this->computeAdvectiveFlux(flux, fluxVars);
+                this->computeDiffusiveFlux(flux, fluxVars);
+                this->computeStresses(flux, fluxVars, faceIdx);
             }
 
             /*!
@@ -312,11 +312,11 @@ namespace Dumux
              * \brief Evaluates the total stress induced by effective stresses and fluid
              * pressure in the solid fluid mixture.
              * \param stress The stress over the sub-control-volume face for each component
-             * \param vars The variables at the current sub-control-volume face
+             * \param fluxVars The variables at the current sub-control-volume face
              * \param faceIdx The index of the current sub-control-volume face
              */
             void computeStresses(PrimaryVariables &stress,
-                    const FluxVariables &vars, const int faceIdx) const
+                    const FluxVariables &fluxVars, const int faceIdx) const
             {
                 DimMatrix pressure(0.0), sigma(0.0);
                 // the normal vector corresponding to the current sub-control-volume face
@@ -326,9 +326,9 @@ namespace Dumux
                 for (int i = 0; i < dim; ++i)
                     pressure[i][i] += 1.0;
 
-                pressure *= vars.pressure();
+                pressure *= fluxVars.pressure();
                 // effective stresses
-                sigma = vars.sigma();
+                sigma = fluxVars.sigma();
                 // calculate total stresses by subtracting the pressure
                 sigma -= pressure;
 

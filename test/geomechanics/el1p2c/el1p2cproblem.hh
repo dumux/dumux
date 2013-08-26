@@ -208,8 +208,8 @@ class El1P2CProblem: public ImplicitPorousMediaProblem<TypeTag>
      */
     void neumann(PrimaryVariables &values,
                     const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    const Intersection &is,
+                    const FVElementGeometry &fvGeometry,
+                    const Intersection &intersection,
                     int scvIdx,
                     int boundaryFaceIdx) const
     {
@@ -232,7 +232,7 @@ class El1P2CProblem: public ImplicitPorousMediaProblem<TypeTag>
      */
     void source(PrimaryVariables &values,
                     const Element &element,
-                    const FVElementGeometry &fvElemGeom,
+                    const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
         const GlobalPosition &globalPos
@@ -256,7 +256,7 @@ class El1P2CProblem: public ImplicitPorousMediaProblem<TypeTag>
      */
     void initial(PrimaryVariables &values,
                     const Element &element,
-                    const FVElementGeometry &fvElemGeom,
+                    const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
         values = 0.0;

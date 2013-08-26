@@ -166,13 +166,13 @@ public:
             {
                 stress = 0.0;
                 //prepare the flux calculations (set up and prepare geometry, FE gradients)
-                FluxVariables vars(this->problem_(),
+                FluxVariables fluxVars(this->problem_(),
                               *elemIt,
                               fvGeometry,
                               faceIdx,
                               elemVolVars);
 
-                stress = vars.sigma();
+                stress = fluxVars.sigma();
                 stress /= fvGeometry.numScvf;
 
                 // Add up stresses for each cell.

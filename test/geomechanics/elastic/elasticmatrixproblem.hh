@@ -201,18 +201,18 @@ public:
      */
     void neumann(PrimaryVariables &values,
             const Element &element,
-            const FVElementGeometry &fvElemGeom,
-            const Intersection &is,
+            const FVElementGeometry &fvGeometry,
+            const Intersection &intersection,
             int scvIdx,
             int boundaryFaceIdx) const
     {
         values = 0.0;
         // get Lame parameters
 
-        Scalar lambda = this->spatialParams().lameParams(element, fvElemGeom, scvIdx)[0];
-        Scalar mu = this->spatialParams().lameParams(element, fvElemGeom, scvIdx)[1];
-        Scalar E = this->spatialParams().E(element, fvElemGeom, scvIdx);
-        Scalar nu = this->spatialParams().nu(element, fvElemGeom, scvIdx);
+        Scalar lambda = this->spatialParams().lameParams(element, fvGeometry, scvIdx)[0];
+        Scalar mu = this->spatialParams().lameParams(element, fvGeometry, scvIdx)[1];
+        Scalar E = this->spatialParams().E(element, fvGeometry, scvIdx);
+        Scalar nu = this->spatialParams().nu(element, fvGeometry, scvIdx);
 
         // calculate values of sigma in normal direction
         Dune::FieldMatrix<Scalar, dim, dim> sigma(0);
