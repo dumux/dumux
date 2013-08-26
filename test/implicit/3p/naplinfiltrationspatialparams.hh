@@ -116,22 +116,22 @@ public:
         coarseK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, permeability);
 
         // porosities
-        Porosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, porosity);
+        porosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, porosity);
 
         // residual saturations
-        MaterialParams_.setSwr(0.12);
-        MaterialParams_.setSwrx(0.12);
-        MaterialParams_.setSnr(0.07);
-        MaterialParams_.setSgr(0.03);
+        materialParams_.setSwr(0.12);
+        materialParams_.setSwrx(0.12);
+        materialParams_.setSnr(0.07);
+        materialParams_.setSgr(0.03);
 
         // parameters for the 3phase van Genuchten law
-        MaterialParams_.setVgAlpha(GET_RUNTIME_PARAM(TypeTag, Scalar, vanGenuchtenAlpha));
-        MaterialParams_.setVgN(GET_RUNTIME_PARAM(TypeTag, Scalar, vanGenuchtenN));
-        MaterialParams_.setkrRegardsSnr(false);
+        materialParams_.setVgAlpha(GET_RUNTIME_PARAM(TypeTag, Scalar, vanGenuchtenAlpha));
+        materialParams_.setVgn(GET_RUNTIME_PARAM(TypeTag, Scalar, vanGenuchtenN));
+        materialParams_.setKrRegardsSnr(false);
 
         // parameters for adsorption
-        MaterialParams_.setKdNAPL(0.);
-        MaterialParams_.setRhoBulk(1500.);
+        materialParams_.setKdNAPL(0.);
+        materialParams_.setRhoBulk(1500.);
     }
 
     ~InfiltrationSpatialParams()
@@ -178,12 +178,7 @@ public:
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     {
-        //const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        // if (isFineMaterial_(pos))
-        //     return finePorosity_;
-        // else
-        //     return coarsePorosity_;
-        return Porosity_;
+        return porosity_;
     }
 
 
@@ -198,12 +193,7 @@ public:
                                                const FVElementGeometry &fvElemGeom,
                                                int scvIdx) const
     {
-        //const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        //if (isFineMaterial_(pos))
-        //return fineMaterialParams_;
-        //else
-        //return coarseMaterialParams_;
-        return MaterialParams_;
+        return materialParams_;
     }
 
     /*!
@@ -273,7 +263,7 @@ public:
 
     const MaterialLawParams& materialLawParams() const
     {
-        return MaterialParams_;
+        return materialParams_;
     }
 private:
     bool isFineMaterial_(const GlobalPosition &pos) const
@@ -285,9 +275,9 @@ private:
     Scalar fineK_;
     Scalar coarseK_;
 
-    Scalar Porosity_;
+    Scalar porosity_;
 
-    MaterialLawParams MaterialParams_;
+    MaterialLawParams materialParams_;
 };
 
 }

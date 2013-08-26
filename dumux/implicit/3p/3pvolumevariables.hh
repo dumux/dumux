@@ -108,8 +108,6 @@ public:
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
-        int globalIdx = problem.model().dofMapper().map(element, scvIdx, dofCodim);
-
         Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);
         fluidState_.setTemperature(temp);
 

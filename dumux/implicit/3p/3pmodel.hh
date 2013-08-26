@@ -101,58 +101,6 @@ class ThreePModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 
 public:
     /*!
-     * \brief Initialize the static data with the initial solution.
-     *
-     * \param problem The problem to be solved
-     */
-    void init(Problem &problem)
-    {
-        ParentType::init(problem);
-
-        if (isBox)
-        {
-            VertexIterator vIt = this->gridView_().template begin<dim> ();
-            const VertexIterator &vEndIt = this->gridView_().template end<dim> ();
-            for (; vIt != vEndIt; ++vIt)
-            {
-                int globalIdx = this->dofMapper().map(*vIt);
-                const GlobalPosition &globalPos = vIt->geometry().corner(0);
-            }
-        }
-        else
-        {
-            ElementIterator eIt = this->gridView_().template begin<0> ();
-            const ElementIterator &eEndIt = this->gridView_().template end<0> ();
-            for (; eIt != eEndIt; ++eIt)
-            {
-                int globalIdx = this->dofMapper().map(*eIt);
-                const GlobalPosition &globalPos = eIt->geometry().center();
-            }
-        }
-    }
-
-    /*!
-     * \brief Called by the update() method if applying the newton
-     *         method was unsuccessful.
-     */
-    void updateFailed()
-    {
-        ParentType::updateFailed();
-    };
-
-    /*!
-     * \brief Called by the problem if a time integration was
-     *        successful, post processing of the solution is done and the
-     *        result has been written to disk.
-     *
-     * This should prepare the model for the next time integration.
-     */
-    void advanceTimeLevel()
-    {
-        ParentType::advanceTimeLevel();
-    }
-
-    /*!
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer.
