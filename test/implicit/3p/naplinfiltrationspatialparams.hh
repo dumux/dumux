@@ -137,17 +137,6 @@ public:
     ~InfiltrationSpatialParams()
     {}
 
-
-    /*!
-     * \brief Update the spatial parameters with the flow solution
-     *        after a timestep.
-     *
-     * \param globalSolution The global solution vector
-     */
-    void update(const SolutionVector &globalSolution)
-    {
-    };
-
     /*!
      * \brief Apply the intrinsic permeability tensor to a pressure
      *        potential gradient.
@@ -194,71 +183,6 @@ public:
                                                int scvIdx) const
     {
         return materialParams_;
-    }
-
-    /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
-     */
-    double heatCapacity(const Element &element,
-                        const FVElementGeometry &fvElemGeom,
-                        int scvIdx) const
-    {
-        return
-            850. // specific heat capacity [J / (kg K)]
-            * 2650. // density of sand [kg/m^3]
-            * (1 - porosity(element, fvElemGeom, scvIdx));
-    }
-
-    /*!
-     * \brief Calculate the heat flux \f$[W/m^2]\f$ through the
-     *        rock matrix based on the temperature gradient \f$[K / m]\f$
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param heatFlux The resulting heat flux vector
-     * \param fluxDat The flux variables
-     * \param vDat The volume variables
-     * \param tempGrad The temperature gradient
-     * \param element The current finite element
-     * \param fvElemGeom The finite volume geometry of the current element
-     * \param scvfIdx The local index of the sub-control volume face where
-     *                    the matrix heat flux should be calculated
-     */
-    void matrixHeatFlux(Vector &heatFlux,
-                        const FluxVariables &fluxDat,
-                        const ElementVolumeVariables &vDat,
-                        const Vector &tempGrad,
-                        const Element &element,
-                        const FVElementGeometry &fvElemGeom,
-                        int scvfIdx) const
-    {
-        static const Scalar ldry = 0.35;
-        static const Scalar lSw1 = 1.8;
-        static const Scalar lSn1 = 0.65;
-
-        // arithmetic mean of the liquid saturation and the porosity
-        const int i = fvElemGeom.subContVolFace[scvfIdx].i;
-        const int j = fvElemGeom.subContVolFace[scvfIdx].j;
-        Scalar Sw = std::max(0.0, (vDat[i].saturation(wPhaseIdx) +
-                                   vDat[j].saturation(wPhaseIdx)) / 2);
-        Scalar Sn = std::max(0.0, (vDat[i].saturation(nPhaseIdx) +
-                                   vDat[j].saturation(nPhaseIdx)) / 2);
-
-        // the heat conductivity of the matrix. in general this is a
-        // tensorial value, but we assume isotropic heat conductivity.
-        Scalar heatCond = ldry + sqrt(Sw) * (lSw1-ldry) + sqrt(Sn) * (lSn1-ldry);
-
-        // the matrix heat flux is the negative temperature gradient
-        // times the heat conductivity.
-        heatFlux = tempGrad;
-        heatFlux *= -heatCond;
     }
 
     const MaterialLawParams& materialLawParams() const
