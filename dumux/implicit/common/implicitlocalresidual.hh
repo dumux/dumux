@@ -110,13 +110,6 @@ public:
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
 
-        // this is pretty much a HACK because the internal state of
-        // the problem is not supposed to be changed during the
-        // evaluation of the residual. (Reasons: It is a violation of
-        // abstraction, makes everything more prone to errors and is
-        // not thread save.) The real solution are context objects!
-        problem_().updateCouplingParams(element);
-
         asImp_().eval(element, fvGeometry_(), volVarsPrev, volVarsCur, bcTypes);
     }
 

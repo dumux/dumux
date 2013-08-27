@@ -510,6 +510,7 @@ public:
      * \param element The DUNE Codim<0> entity for which the coupling
      *                parameters should be computed.
      */
+    DUNE_DEPRECATED
     void updateCouplingParams(const Element &element) const
     {}
 

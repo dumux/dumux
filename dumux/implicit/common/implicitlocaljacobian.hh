@@ -150,13 +150,6 @@ public:
 
         bcTypes_.update(problem_(), element_(), fvElemGeom_);
 
-        // this is pretty much a HACK because the internal state of
-        // the problem is not supposed to be changed during the
-        // evaluation of the residual. (Reasons: It is a violation of
-        // abstraction, makes everything more prone to errors and is
-        // not thread save.) The real solution are context objects!
-        problem_().updateCouplingParams(element_());
-
         // set the hints for the volume variables
         model_().setHints(element, prevVolVars_, curVolVars_);
 
