@@ -164,7 +164,7 @@ public:
         bool printReassembleStatistics = enablePartialReassemble_() && !reuseMatrix_;
         int succeeded;
         try {
-            assemble_();
+            asImp_().assemble_();
             succeeded = 1;
             if (gridView_().comm().size() > 1)
                 succeeded = gridView_().comm().min(succeeded);
