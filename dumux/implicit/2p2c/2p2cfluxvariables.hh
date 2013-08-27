@@ -51,6 +51,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -72,7 +73,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-public:
+ public:
     /*!
      * \brief The constructor
      *
@@ -89,7 +90,7 @@ public:
                           const int faceIdx,
                           const ElementVolumeVariables &elemVolVars,
                           const bool onBoundary = false)
-    : BaseFluxVariables(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+        : BaseFluxVariables(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             density_[phaseIdx] = Scalar(0);
@@ -100,7 +101,7 @@ public:
         calculateValues_(problem, element, elemVolVars);
     }
 
-protected:
+ protected:
     void calculateValues_(const Problem &problem,
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
@@ -111,7 +112,7 @@ protected:
              idx < this->face().numFap;
              idx++) // loop over adjacent vertices
         {
-            // index for the element volume variables 
+            // index for the element volume variables
             int volVarsIdx = this->face().fapIndices[idx];
 
             for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
@@ -140,7 +141,7 @@ protected:
             // FE gradient at vertex idx
             const DimVector &feGrad = this->face().grad[idx];
 
-            // index for the element volume variables 
+            // index for the element volume variables
             int volVarsIdx = this->face().fapIndices[idx];
 
             // the mole fraction gradient of the wetting phase
@@ -177,36 +178,37 @@ protected:
         const VolumeVariables &volVarsI = elemVolVars[this->face().i];
         const VolumeVariables &volVarsJ = elemVolVars[this->face().j];
 
+        // the effective diffusion coefficients at vertex i and j
+        Scalar diffCoeffI;
+        Scalar diffCoeffJ;
+
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // make sure to only calculate diffusion coefficients
             // for phases which exist in both finite volumes
-            if (volVarsI.saturation(phaseIdx) <= 0 ||
-                volVarsJ.saturation(phaseIdx) <= 0)
+            if (volVarsI.saturation(phaseIdx) <= 0 || volVarsJ.saturation(phaseIdx) <= 0)
             {
                 porousDiffCoeff_[phaseIdx] = 0.0;
                 continue;
             }
 
-            // calculate tortuosity at the nodes i and j needed
-            // for porous media diffusion coefficient
-            Scalar tauI =
-                1.0/(volVarsI.porosity() * volVarsI.porosity()) *
-                pow(volVarsI.porosity() * volVarsI.saturation(phaseIdx), 7.0/3);
-            Scalar tauJ =
-                1.0/(volVarsJ.porosity() * volVarsJ.porosity()) *
-                pow(volVarsJ.porosity() * volVarsJ.saturation(phaseIdx), 7.0/3);
-            // Diffusion coefficient in the porous medium
+            diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                                         volVarsI.saturation(phaseIdx),
+                                                                         volVarsI.diffCoeff(phaseIdx));
+
+            diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                         volVarsJ.saturation(phaseIdx),
+                                                                         volVarsJ.diffCoeff(phaseIdx));
 
             // -> harmonic mean
-            porousDiffCoeff_[phaseIdx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * volVarsI.diffCoeff(phaseIdx),
-                                                      volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * volVarsJ.diffCoeff(phaseIdx));
+            porousDiffCoeff_[phaseIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
         }
     }
 
-public:
+ public:
     /*!
-     * \brief The binary diffusion coefficient for each fluid phase.
+     * \brief The effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *           for each fluid phase in the porous medium.
      */
     Scalar porousDiffCoeff(int phaseIdx) const
     { return porousDiffCoeff_[phaseIdx]; };
@@ -229,7 +231,7 @@ public:
     const DimVector &moleFractionGrad(int phaseIdx) const
     { return moleFractionGrad_[phaseIdx]; };
 
-protected:
+ protected:
     // mole fraction gradients
     DimVector moleFractionGrad_[numPhases];
 

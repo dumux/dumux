@@ -36,6 +36,7 @@
 #include "2p2clocalresidual.hh"
 #include "2p2cnewtoncontroller.hh"
 
+#include <dumux/material/fluidmatrixinteractions/2p/diffusivitymillingtonquirk.hh>
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 
@@ -132,16 +133,24 @@ SET_SCALAR_PROP(TwoPTwoC, ImplicitMassUpwindWeight, 1.0);
 SET_SCALAR_PROP(TwoPTwoC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p2c model
-SET_PROP(TwoPTwoC, Indices) 
+SET_PROP(TwoPTwoC, Indices)
 { private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
  public:
     typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
 };
 
-//! The spatial parameters to be employed. 
+//! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(TwoPTwoC, SpatialParams, ImplicitSpatialParams<TypeTag>);
+
+//! The model after Millington (1961) is used for the effective diffusivity
+SET_PROP(TwoPTwoC, EffectiveDiffusivityModel)
+{ private :
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ public:
+    typedef DiffusivityMillingtonQuirk<Scalar> type;
+};
 
 // disable velocity output by default
 SET_BOOL_PROP(TwoPTwoC, VtkAddVelocity, false);
