@@ -84,7 +84,7 @@ template<class TypeTag> class FVPressureCompositional
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNw
+        pn = Indices::pressureN
     };
     enum
     {
@@ -770,7 +770,6 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     Scalar volalt = mass.one_norm() * specificVolume;
 //    volalt = cellData.volumeError()+problem_.spatialParams().porosity(element);
         // = \sum_{\kappa} C^{\kappa} + \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
-    Scalar save = specificVolume;
 
     /**********************************
      * b) define increments

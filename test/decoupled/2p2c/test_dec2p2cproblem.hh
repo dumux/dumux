@@ -81,7 +81,7 @@ SET_PROP(TestDecTwoPTwoCProblem, PressureModel)
 };
 
 SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
 // Select fluid system
 SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)

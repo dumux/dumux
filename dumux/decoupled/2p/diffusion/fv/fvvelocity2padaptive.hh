@@ -472,12 +472,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         // get mobilities and fractional flow factors
         Scalar lambdaWI = cellData.mobility(wPhaseIdx);
         Scalar lambdaNwI = cellData.mobility(nPhaseIdx);
-        Scalar fractionalWI = cellData.fracFlowFunc(wPhaseIdx);
-        Scalar fractionalNwI = cellData.fracFlowFunc(nPhaseIdx);
         Scalar lambdaWJ = cellDataJ.mobility(wPhaseIdx);
         Scalar lambdaNwJ = cellDataJ.mobility(nPhaseIdx);
-        Scalar fractionalWJ = cellDataJ.fracFlowFunc(wPhaseIdx);
-        Scalar fractionalNwJ = cellDataJ.fracFlowFunc(nPhaseIdx);
 
         // get capillary pressure
         Scalar pcI = cellData.capillaryPressure();

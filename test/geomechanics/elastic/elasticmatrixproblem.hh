@@ -224,7 +224,7 @@ public:
 
         // determine normal vector of current face
         Dune::FieldVector<Scalar, dim-1> localDimM1(0);
-        Dune::FieldVector<Scalar,dim> normal = is.unitOuterNormal(localDimM1);
+        Dune::FieldVector<Scalar,dim> normal = intersection.unitOuterNormal(localDimM1);
 
         // use stress in normal direction as boundary condition
         sigma.mv(normal, values);

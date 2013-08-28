@@ -124,7 +124,7 @@ public:
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoPTwoC,
         PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         SaturationFormulation,

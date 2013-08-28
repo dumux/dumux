@@ -96,7 +96,7 @@ SET_INT_PROP(Adaptive2p2c,
         GET_PROP_TYPE(TypeTag, Indices)::permDependent);
 SET_BOOL_PROP(Adaptive2p2c, EnableCapillarity, true);
 SET_INT_PROP(Adaptive2p2c, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
 }
 
