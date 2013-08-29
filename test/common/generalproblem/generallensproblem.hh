@@ -193,25 +193,14 @@ class GeneralLensProblem : public GET_PROP_TYPE(TypeTag, ProblemBaseClass)
     typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
-
         // primary variable indices
-        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx,
         pwIdx = Indices::pwIdx,
         snIdx = Indices::snIdx,
 
-        // equation indices
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiNEqIdx = Indices::contiNEqIdx,
-
         // phase indices
-        wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
 
-
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 

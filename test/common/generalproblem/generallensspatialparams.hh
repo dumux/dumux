@@ -80,10 +80,7 @@ class GeneralLensSpatialParams : public GET_PROP_TYPE(TypeTag, SpatialParamsBase
 
     enum {
         dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
-
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
+        dimWorld=GridView::dimensionworld
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
