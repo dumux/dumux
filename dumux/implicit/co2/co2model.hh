@@ -47,18 +47,11 @@ namespace Dumux
 template<class TypeTag>
 class CO2Model: public TwoPTwoCModel<TypeTag>
 {
-
-
     typedef TwoPTwoCModel<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, BaseModel) BaseType;
 
-     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
      typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
      typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
      typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
      typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
      enum {
          numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
@@ -85,15 +78,11 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
      };
 
      typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-     typedef typename GridView::ctype CoordScalar;
-     typedef typename GridView::template Codim<0>::Entity Element;
      typedef typename GridView::template Codim<0>::Iterator ElementIterator;
      enum {
          dim = GridView::dimension,
          dimWorld = GridView::dimensionworld
      };
-     typedef typename GridView::template Codim<dim>::Entity Vertex;
-     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
      typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;

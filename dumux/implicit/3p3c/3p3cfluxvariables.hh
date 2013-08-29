@@ -64,11 +64,8 @@ class ThreePThreeCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariable
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef Dune::FieldVector<Scalar, dim> 	DimVector;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {

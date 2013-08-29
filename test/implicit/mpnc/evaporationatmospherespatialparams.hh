@@ -120,14 +120,10 @@ class EvaporationAtmosphereSpatialParams : public ImplicitSpatialParams<TypeTag>
     enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy)};
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar,dimWorld> DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
 public:

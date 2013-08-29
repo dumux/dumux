@@ -47,14 +47,10 @@ class OnePTwoCOutflowSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
-
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-
 
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 

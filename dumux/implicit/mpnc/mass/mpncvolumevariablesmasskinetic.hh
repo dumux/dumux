@@ -67,7 +67,6 @@ class MPNCVolumeVariablesMass<TypeTag, /*bool enableKinetic=*/true>
 
 
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    typedef Dune::FieldVector<Scalar,dim> GlobalPosition;
 
     //     here,  we need a constraint solver, which gives me the composition of a phase, if the other one is given
     typedef FluidSystemComputeFromReferencePhase<Scalar, FluidSystem> ConstraintReferencePhaseSolver;

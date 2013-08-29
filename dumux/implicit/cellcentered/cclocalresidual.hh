@@ -45,7 +45,6 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
 {
     typedef ImplicitLocalResidual<TypeTag> ParentType;
     friend class ImplicitLocalResidual<TypeTag>;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum {
@@ -54,7 +53,6 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;

@@ -61,7 +61,6 @@ protected:
     enum { dimWorld = GridView::dimensionworld };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
 public:
     /*!

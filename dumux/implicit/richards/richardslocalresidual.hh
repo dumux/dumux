@@ -50,7 +50,6 @@ class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     enum { dim = GridView::dimension};
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
     /*!

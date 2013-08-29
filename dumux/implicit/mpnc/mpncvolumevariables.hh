@@ -66,7 +66,6 @@ class MPNCVolumeVariables
 
 
     enum {dimWorld=GridView::dimensionworld};
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
 

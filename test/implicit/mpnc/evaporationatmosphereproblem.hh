@@ -204,13 +204,12 @@ template <class TypeTag>
 class EvaporationAtmosphereProblem
     : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef EvaporationAtmosphereProblem<TypeTag> ThisType;
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     /*!
      * \brief The fluid state which is used by the volume variables to
@@ -254,14 +253,8 @@ class EvaporationAtmosphereProblem
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
 
-    typedef Dune::FieldVector<typename GridView::Grid::ctype, dim> DimVector;
     typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
 
     typedef std::vector<Dune::FieldVector<Scalar, 1> >  ScalarBuffer;

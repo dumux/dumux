@@ -95,7 +95,6 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
@@ -122,14 +121,11 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::ctype CoordScalar;
-    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

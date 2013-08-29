@@ -49,7 +49,6 @@ class ImplicitAssembler
     enum{ dim = GridView::dimension };
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;

@@ -90,7 +90,6 @@ class ImplicitForchheimerFluxVariables
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
     typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
     /*!

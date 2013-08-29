@@ -157,7 +157,6 @@ class ObstacleProblem
     enum {p0Idx = Indices::p0Idx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;

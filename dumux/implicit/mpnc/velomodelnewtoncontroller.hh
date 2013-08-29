@@ -44,7 +44,6 @@ namespace Dumux {
 template <class TypeTag>
 class VeloModelNewtonController : public MPNCNewtonController<TypeTag>
 {
-    typedef VeloModelNewtonController<TypeTag> ThisType;
     typedef MPNCNewtonController<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;

@@ -48,7 +48,6 @@ class OnePLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum { dim = GridView::dimension };
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     //index of the mass balance equation

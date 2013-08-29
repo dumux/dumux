@@ -80,7 +80,6 @@ class TwoPDFMSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
 
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout> FaceMapper;
@@ -89,8 +88,6 @@ class TwoPDFMSpatialParams : public ImplicitSpatialParams<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
-
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

@@ -36,9 +36,7 @@ namespace Dumux
 template <class TypeTag>
 class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyTransfer=*/true>
 {
-    typedef MPNCVolumeVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -56,9 +54,6 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
     enum { sPhaseIdx = FluidSystem::sPhaseIdx };
     enum { numEnergyEqs     = Indices::NumPrimaryEnergyVars};
     enum { dim = GridView::dimension};
-
-    typedef Dune::FieldVector<Scalar,dim> GlobalPosition;
-
 
     /*!
      * \brief The fluid state which is used by the volume variables to

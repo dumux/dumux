@@ -61,8 +61,6 @@ class MPNCLocalResidualMass<TypeTag, /*enableKinetic=*/true>
     typedef CompositionFromMassTransfer<Scalar, FluidSystem> NonEquilConstraintSolver;
 #endif
 
-    typedef typename FluidSystem::ParameterCache ParameterCache;
-
     enum { numPhases =  GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { conti0EqIdx = Indices::conti0EqIdx };

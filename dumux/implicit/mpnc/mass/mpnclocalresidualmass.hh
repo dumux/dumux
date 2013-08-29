@@ -55,7 +55,6 @@ protected:
     enum { enableEnergy     = GET_PROP_VALUE(TypeTag, EnableEnergy) };
     enum { enableKineticEnergy     = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) };
 
-    typedef typename Dune::FieldVector<Scalar, dim> DimVector;
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
     typedef MPNCDiffusion<TypeTag, enableDiffusion> Diffusion;
     typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
@@ -141,10 +140,6 @@ public:
 
                 const Scalar x      = std::abs(kGradPNormal);
                 const Scalar sign   = (kGradPNormal > 0)?-1:1;
-
-                // the direction from upstream to downstream
-                //GlobalPosition delta = this->curElement_().geometry().corner(upIdx);
-                //delta -= this->curElement_().geometry().corner(dnIdx);
 
                 // approximate the mean viscosity at the face
                 const Scalar meanVisc = (up.fluidState().viscosity(phaseIdx) +

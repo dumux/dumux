@@ -33,7 +33,6 @@ class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyTra
 {
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -55,7 +54,6 @@ class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyTra
     enum { wCompIdx         = FluidSystem::wCompIdx};
     enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
 
-    typedef Dune::FieldVector<Scalar, dim>                                  DimVector;
     typedef typename Dune::FieldVector<Scalar, numComponents>               ComponentVector;
     typedef typename Dune::FieldMatrix<Scalar, numPhases, numComponents>    PhaseComponentMatrix;
 
