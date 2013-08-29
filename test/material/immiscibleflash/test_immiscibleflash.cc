@@ -157,9 +157,6 @@ int main()
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
 
-    enum { H2OIdx = FluidSystem::H2OIdx };
-    enum { N2Idx = FluidSystem::N2Idx };
-
     typedef Dumux::RegularizedBrooksCorey<Scalar> EffMaterialLaw;
     typedef Dumux::EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
     typedef Dumux::TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> MaterialLaw;
