@@ -14,7 +14,6 @@ public:
     enum {dim = Grid::dimension};
     typedef typename Grid::ctype Scalar;
     typedef typename Grid::LeafGridView GridView;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
 

@@ -41,7 +41,6 @@ class PlotOverLine2D
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)               Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem)              Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView)             GridView;
-    typedef typename GridView::template Codim<0>::Entity          Element;
     typedef typename GridView::template Codim<0>::Iterator        ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry)    FVElementGeometry;
