@@ -89,9 +89,6 @@ class GeneralLensSpatialParams : public GET_PROP_TYPE(TypeTag, SpatialParamsBase
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-
-
 public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;

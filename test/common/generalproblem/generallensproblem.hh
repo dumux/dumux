@@ -184,13 +184,11 @@ SET_SCALAR_PROP(DecoupledGeneralLensProblem, ImpetCFLFactor, 0.95);
 template <class TypeTag >
 class GeneralLensProblem : public GET_PROP_TYPE(TypeTag, ProblemBaseClass)
 {
-    typedef GeneralLensProblem<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, ProblemBaseClass) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
     typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
@@ -223,12 +221,7 @@ class GeneralLensProblem : public GET_PROP_TYPE(TypeTag, ProblemBaseClass)
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
