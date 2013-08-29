@@ -73,10 +73,8 @@ class ElasticModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:

@@ -79,7 +79,6 @@ class El2PSpatialParams : public ImplicitSpatialParams<TypeTag>
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> Vector;
     typedef Dune::FieldMatrix<Scalar,dim,dim> Tensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;

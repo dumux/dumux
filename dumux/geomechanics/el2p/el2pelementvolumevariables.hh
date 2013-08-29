@@ -40,12 +40,10 @@ template<class TypeTag>
 class ElTwoPElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) >
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef std::vector<VolumeVariables> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -57,7 +55,6 @@ class ElTwoPElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(T
 #endif
     enum { dim = GridView::dimension };
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
 
     typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;

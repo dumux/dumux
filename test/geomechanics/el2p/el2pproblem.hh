@@ -164,7 +164,6 @@ SET_BOOL_PROP(El2P_TestProblem, VtkRockMechanicsSignConvention, true);
 template<class TypeTag = TTAG(El2P_TestProblem)>
 class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef El2P_TestProblem<TypeTag> ThisType;
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
@@ -212,7 +211,6 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename Grid::ctype CoordScalar;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::BlockVector<GlobalPosition> InitialStressField;
 

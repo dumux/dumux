@@ -41,9 +41,6 @@ class ElOnePTwoCElementVolumeVariables : public BoxElementVolumeVariables<TypeTa
     typedef BoxElementVolumeVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;

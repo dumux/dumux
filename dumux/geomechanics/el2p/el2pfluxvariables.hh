@@ -62,7 +62,6 @@ NEW_PROP_TAG(SpatialParams);
 
             typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
             typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-            typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
             typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
             typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;

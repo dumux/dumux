@@ -97,7 +97,6 @@ SET_BOOL_PROP(ElasticMatrixProblem, ProblemEnableGravity, false);
 template <class TypeTag>
 class ElasticMatrixProblem: public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef ElasticMatrixProblem<TypeTag> ThisType;
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

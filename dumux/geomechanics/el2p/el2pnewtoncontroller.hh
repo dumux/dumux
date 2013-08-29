@@ -40,7 +40,6 @@ class ElTwoPNewtonController : public NewtonController<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
 
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;

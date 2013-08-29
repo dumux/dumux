@@ -74,7 +74,6 @@ class El2PLocalOperator
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
     enum{dim = GridView::dimension};
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;

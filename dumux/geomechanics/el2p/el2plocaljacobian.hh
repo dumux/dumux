@@ -42,11 +42,9 @@ class ElTwoPLocalJacobian : public ImplicitLocalJacobian<TypeTag>
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     enum {
         dim = GridView::dimension,
     };
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;

@@ -76,8 +76,6 @@ namespace Dumux
             typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
             typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-        typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
         public:
         /*
          * \brief The constructor

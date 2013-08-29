@@ -131,7 +131,6 @@ template<class TypeTag>
 class ElOnePTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
@@ -144,9 +143,7 @@ class ElOnePTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 

@@ -49,7 +49,6 @@ protected:
 
     enum { dim = GridView::dimension };
     typedef Dune::FieldVector<Scalar, dim> DimVector;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;

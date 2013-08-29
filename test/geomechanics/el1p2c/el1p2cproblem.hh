@@ -102,7 +102,6 @@ namespace Dumux
 template<class TypeTag = TTAG( El1P2CProblem)>
 class El1P2CProblem: public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef El1P2CProblem<TypeTag> ThisType;
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
@@ -142,7 +141,6 @@ class El1P2CProblem: public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     public:

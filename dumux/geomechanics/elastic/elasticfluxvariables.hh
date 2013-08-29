@@ -61,9 +61,7 @@ class ElasticFluxVariablesBase
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::ctype CoordScalar;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 

@@ -54,8 +54,6 @@ class El2PAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
 #if HAVE_DUNE_PDELAB
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureFEM)) PressureFEM;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureGridFunctionSpace)) PressureGFS;
@@ -75,18 +73,12 @@ class El2PAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
     enum{dim = GridView::dimension};
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-
-    typedef SolutionVector Vector;
 
     enum {
         enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(ImplicitEnablePartialReassemble)),

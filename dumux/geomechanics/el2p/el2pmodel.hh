@@ -103,8 +103,6 @@ template<class TypeTag>
 class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -124,11 +122,8 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::ctype CoordScalar;
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
             typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
 #else
@@ -140,11 +135,7 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(DofMapper)) DofMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
     typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
 

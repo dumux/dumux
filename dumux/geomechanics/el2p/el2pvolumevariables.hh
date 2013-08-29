@@ -62,7 +62,6 @@ class ElTwoPVolumeVariables: public TwoPVolumeVariables<TypeTag> {
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
