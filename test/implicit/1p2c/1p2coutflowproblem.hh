@@ -130,8 +130,7 @@ class OnePTwoCOutflowProblem : public ImplicitPorousMediaProblem<TypeTag>
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
     enum {
@@ -140,8 +139,7 @@ class OnePTwoCOutflowProblem : public ImplicitPorousMediaProblem<TypeTag>
         massOrMoleFracIdx = Indices::massOrMoleFracIdx
     };
     enum {
-        // indices of the equations
-        conti0EqIdx = Indices::conti0EqIdx,
+        // index of the transport equation
         transportEqIdx = Indices::transportEqIdx
     };
 

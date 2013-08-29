@@ -70,13 +70,8 @@ class ThreePModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 
     enum {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
 
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-
-        pressureIdx = Indices::pressureIdx,
-        swIdx = Indices::swIdx,
-        snIdx = Indices::snIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,

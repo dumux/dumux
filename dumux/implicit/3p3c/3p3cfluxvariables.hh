@@ -58,7 +58,6 @@ class ThreePThreeCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariable
 
     enum {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };

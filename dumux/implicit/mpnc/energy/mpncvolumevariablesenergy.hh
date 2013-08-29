@@ -162,7 +162,6 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
-    enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { temperatureIdx   = Indices::temperatureIdx };
     enum { numEnergyEqs     = Indices::numPrimaryEnergyVars};
     enum { temperature0Idx = Indices::temperatureIdx };

@@ -85,8 +85,7 @@ class TwoPDFMSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout> FaceMapper;
 
     enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dim = GridView::dimension
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;

@@ -48,9 +48,6 @@ class CCElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeT
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    enum { dim = GridView::dimension };
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-
 public:
     /*!
      * \brief The constructor.

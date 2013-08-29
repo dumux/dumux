@@ -65,7 +65,6 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
     enum { nCompIdx = FluidSystem::nCompIdx } ;
     enum { wCompIdx = FluidSystem::wCompIdx } ;
     enum { dim = GridView::dimension};
-    enum { numEnergyEqs    = Indices::NumPrimaryEnergyVars};
 
     typedef DimensionlessNumbers<Scalar> DimLessNum;
     typedef Dune::FieldVector<Scalar,dim> GlobalPosition;

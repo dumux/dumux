@@ -71,8 +71,6 @@ class MPNCLocalResidualMass<TypeTag, /*enableKinetic=*/true>
     enum { sPhaseIdx = FluidSystem::sPhaseIdx} ;
     enum { enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) };
     enum { enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy) };
-    enum { energyEqIdx = Indices::energyEqIdx };
-    enum { numEnergyEqs = Indices::NumPrimaryEnergyVars};
 
     typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;

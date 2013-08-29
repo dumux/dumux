@@ -85,7 +85,6 @@ class ForchheimerSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename Grid::ctype CoordScalar;
 
-    enum {dim=GridView::dimension};
     enum {dimWorld=GridView::dimensionworld};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
 

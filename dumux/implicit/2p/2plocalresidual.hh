@@ -58,7 +58,6 @@ protected:
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dimWorld = GridView::dimensionworld };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 

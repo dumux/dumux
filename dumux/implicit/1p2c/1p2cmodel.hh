@@ -78,8 +78,7 @@ class OnePTwoCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dim = GridView::dimension
     };
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 

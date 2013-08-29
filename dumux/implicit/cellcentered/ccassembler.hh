@@ -41,7 +41,6 @@ class CCAssembler : public ImplicitAssembler<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    enum{ dim = GridView::dimension };
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:

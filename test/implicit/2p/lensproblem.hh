@@ -182,8 +182,7 @@ class LensProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
         nPhaseIdx = Indices::nPhaseIdx,
 
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 

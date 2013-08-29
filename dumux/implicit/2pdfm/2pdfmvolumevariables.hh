@@ -54,8 +54,6 @@ class TwoPDFMVolumeVariables : public TwoPVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        pwsn = Indices::pwsn,
-        pnsw = Indices::pnsw,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         wPhaseIdx = Indices::wPhaseIdx,

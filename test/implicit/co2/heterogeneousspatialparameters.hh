@@ -78,10 +78,7 @@ class HeterogeneousSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
-
-        lPhaseIdx = FluidSystem::lPhaseIdx
+        dim=GridView::dimension
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

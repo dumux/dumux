@@ -109,7 +109,6 @@ class ThreePThreeCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-        pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
 

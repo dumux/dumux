@@ -143,8 +143,7 @@ class ObstacleProblem
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    // Grid and world dimension
-    enum {dim = GridView::dimension};
+    // world dimension
     enum {dimWorld = GridView::dimensionworld};
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};

@@ -45,7 +45,6 @@ class CCElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTag
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
-    enum { dim = GridView::dimension };
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 

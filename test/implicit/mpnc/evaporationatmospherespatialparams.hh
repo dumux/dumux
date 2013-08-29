@@ -114,8 +114,6 @@ class EvaporationAtmosphereSpatialParams : public ImplicitSpatialParams<TypeTag>
     enum {dim=GridView::dimension };
     enum {dimWorld=GridView::dimensionworld};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {sPhaseIdx = FluidSystem::sPhaseIdx};
     enum { enableKineticEnergy  = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
     enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy)};

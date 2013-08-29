@@ -160,10 +160,8 @@ class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticenergyTra
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    enum { dim = GridView::dimension };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-    enum { conti0EqIdx = Indices::conti0EqIdx };
     enum { energyEqIdx = Indices::energyEqIdx };
 
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;

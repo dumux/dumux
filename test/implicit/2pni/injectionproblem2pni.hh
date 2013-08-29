@@ -170,8 +170,7 @@ class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx,
 #endif
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 

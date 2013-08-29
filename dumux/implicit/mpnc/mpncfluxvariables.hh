@@ -61,7 +61,6 @@ class MPNCFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
 
     enum {dim= GridView::dimension};
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};

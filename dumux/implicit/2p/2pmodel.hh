@@ -79,15 +79,13 @@ class TwoPModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum {
         nPhaseIdx = Indices::nPhaseIdx,
         wPhaseIdx = Indices::wPhaseIdx,
-        pressureIdx = Indices::pressureIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dim = GridView::dimension
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

@@ -136,15 +136,11 @@ class TwoPDFMTestProblem : public ImplicitPorousMediaProblem<TypeTag>
         pwIdx = Indices::pwIdx,
         snIdx = Indices::snIdx,
 
-        // equation indices
-        contiNEqIdx = Indices::contiNEqIdx,
-
         // phase indices
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 

@@ -48,8 +48,7 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
-        dim = GridView::dimension
+        numEq = GET_PROP_VALUE(TypeTag, NumEq)
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;

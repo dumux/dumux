@@ -43,7 +43,6 @@ class MPNCDiffusion
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
-    enum { wCompIdx = FluidSystem::wCompIdx };
     enum { nCompIdx = FluidSystem::nCompIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;

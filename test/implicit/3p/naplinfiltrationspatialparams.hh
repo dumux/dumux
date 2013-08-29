@@ -75,15 +75,10 @@ class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
     enum {
-        dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
-    };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 

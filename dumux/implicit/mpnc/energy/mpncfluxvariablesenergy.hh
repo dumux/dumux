@@ -97,11 +97,9 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTr
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    enum{dim = GridView::dimension};
     enum{dimWorld = GridView::dimensionworld};
     enum{nPhaseIdx = FluidSystem::nPhaseIdx};
     enum{wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum{numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
 
     typedef Dune::FieldVector<CoordScalar, dimWorld>  DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

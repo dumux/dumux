@@ -54,13 +54,11 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
      typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
      typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
      enum {
-         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
      };
 
      typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
      enum {
-         pressureIdx = Indices::pressureIdx,
          switchIdx = Indices::switchIdx,
 
          wPhaseIdx = Indices::wPhaseIdx,

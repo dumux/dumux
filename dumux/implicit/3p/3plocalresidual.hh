@@ -50,13 +50,7 @@ protected:
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
 
-        conti0EqIdx = Indices::conti0EqIdx,//!< Index of the mass conservation equation for the water component
-        conti1EqIdx = Indices::conti1EqIdx,//!< Index of the mass conservation equation for the contaminant component
-        conti2EqIdx = Indices::conti2EqIdx,//!< Index of the mass conservation equation for the gas component
-
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
+        conti0EqIdx = Indices::conti0EqIdx //!< Index of the mass conservation equation for the water component
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;

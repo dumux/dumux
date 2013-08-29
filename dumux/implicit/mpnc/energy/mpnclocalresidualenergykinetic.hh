@@ -41,11 +41,8 @@ class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyTra
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    enum { dim              = GridView::dimension };
-    enum { dimWorld         = GridView::dimensionworld };
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
-    enum { conti0EqIdx      = Indices::conti0EqIdx };
     enum { energyEq0Idx     = Indices::energyEq0Idx };
     enum { numEnergyEqs     = Indices::NumPrimaryEnergyVars};
     enum { wPhaseIdx        = FluidSystem::wPhaseIdx};

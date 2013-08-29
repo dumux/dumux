@@ -47,7 +47,6 @@ class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dim = GridView::dimension};
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 

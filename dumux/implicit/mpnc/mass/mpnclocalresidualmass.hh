@@ -48,7 +48,6 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
 
-    enum { dim = GridView::dimension };
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { enableDiffusion  = GET_PROP_VALUE(TypeTag, EnableDiffusion) };

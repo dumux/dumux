@@ -80,9 +80,7 @@ class InjectionSpatialParams : public ImplicitSpatialParams<TypeTag>
 
     enum {
         dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
-
-        wPhaseIdx = FluidSystem::wPhaseIdx
+        dimWorld=GridView::dimensionworld
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;

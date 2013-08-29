@@ -58,13 +58,6 @@ class MPNCVolumeVariablesMass<TypeTag, /*bool enableKinetic=*/true>
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { moleFrac00Idx = Indices::moleFrac00Idx };
-    enum { wPhaseIdx = FluidSystem::wPhaseIdx };
-    enum { nPhaseIdx = FluidSystem::nPhaseIdx };
-    enum { wCompIdx = FluidSystem::wCompIdx};
-    enum { nCompIdx = FluidSystem::nCompIdx};
-    enum { dim = GridView::dimension};
-    enum { numEnergyEqs     = Indices::NumPrimaryEnergyVars};
-
 
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
 

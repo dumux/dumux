@@ -52,7 +52,6 @@ class TwoPDFMFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum {
-        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };

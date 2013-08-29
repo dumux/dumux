@@ -103,7 +103,6 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,

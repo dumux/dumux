@@ -65,10 +65,6 @@ class MPNCVolumeVariables
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 
-    enum {dimWorld=GridView::dimensionworld};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-
     // formulations
     enum {
         pressureFormulation = GET_PROP_VALUE(TypeTag, PressureFormulation),

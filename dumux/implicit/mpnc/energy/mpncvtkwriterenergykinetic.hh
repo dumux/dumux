@@ -58,7 +58,6 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* enableKineticEne
 
     enum { dim = GridView::dimension };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { numEnergyEqs = Indices::NumPrimaryEnergyVars};
     enum { velocityAveragingInModel = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel) };
 

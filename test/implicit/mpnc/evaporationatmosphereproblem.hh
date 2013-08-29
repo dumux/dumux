@@ -226,12 +226,10 @@ class EvaporationAtmosphereProblem
     enum { S0Idx = Indices::S0Idx};
     enum { p0Idx = Indices::p0Idx};
     enum { conti00EqIdx    = Indices::conti0EqIdx };
-    enum { temperature0Idx = Indices::temperatureIdx};
     enum { energyEq0Idx    = Indices::energyEqIdx};
     enum { numEnergyEqs    = Indices::NumPrimaryEnergyVars};
     enum { wPhaseIdx       = FluidSystem::wPhaseIdx};
     enum { nPhaseIdx       = FluidSystem::nPhaseIdx};
-    enum { sPhaseIdx       = FluidSystem::sPhaseIdx};
     enum { wCompIdx        = FluidSystem::H2OIdx};
     enum { nCompIdx        = FluidSystem::N2Idx};
     enum {  enableKinetic       = GET_PROP_VALUE(TypeTag, EnableKinetic)};
