@@ -81,11 +81,7 @@ NEW_PROP_TAG(SpatialParams);
             typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
             typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-            enum
-            {
-                numFluidPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-                numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))
-            };
+            enum {numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
 
         public:
         /*
