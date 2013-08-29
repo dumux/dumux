@@ -51,7 +51,6 @@ class H2ON2Kinetic :
     public FluidSystems::H2ON2<Scalar, useComplexRelations>
 {
 private:
-    typedef H2ON2Kinetic<Scalar, useComplexRelations> ThisType;
     typedef FluidSystems::H2ON2<Scalar, useComplexRelations> ParentType;
 
     // convenience typedefs
