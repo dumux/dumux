@@ -57,8 +57,6 @@ class TwoPNILocalResidual : public TwoPLocalResidual<TypeTag>
         nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:

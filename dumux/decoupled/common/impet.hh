@@ -47,7 +47,6 @@ namespace Dumux
  */
 template<class TypeTag> class IMPET
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 

@@ -46,8 +46,6 @@ class OnePLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     //index of the mass balance equation
     enum {

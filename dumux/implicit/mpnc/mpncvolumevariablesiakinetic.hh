@@ -54,7 +54,6 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };

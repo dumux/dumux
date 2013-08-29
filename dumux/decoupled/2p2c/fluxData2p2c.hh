@@ -49,8 +49,6 @@ private:
         dim = GridView::dimension
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
-
     enum
     {
         numEquations = GET_PROP_VALUE(TypeTag, PTAG(NumEq))

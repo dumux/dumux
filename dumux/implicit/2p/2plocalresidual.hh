@@ -57,8 +57,6 @@ protected:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:

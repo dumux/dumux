@@ -78,8 +78,6 @@ class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
         dimWorld=GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

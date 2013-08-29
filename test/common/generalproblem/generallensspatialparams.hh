@@ -76,8 +76,6 @@ class GeneralLensSpatialParams : public GET_PROP_TYPE(TypeTag, SpatialParamsBase
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
