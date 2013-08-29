@@ -76,8 +76,7 @@ class Ex2TutorialSpatialParamsCoupled: public ImplicitSpatialParams<TypeTag> /*@
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum
     {
-        dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
+        dim = Grid::dimension
     };
 
     // Get object types for function arguments

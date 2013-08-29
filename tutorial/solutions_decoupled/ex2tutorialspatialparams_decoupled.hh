@@ -70,7 +70,7 @@ class Ex2TutorialSpatialParamsDecoupled: public FVSpatialParams<TypeTag>
     typedef typename Grid::ctype CoordScalar;
 
     enum
-        {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
+        {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;

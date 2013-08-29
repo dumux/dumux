@@ -112,7 +112,7 @@ class Ex2TutorialProblemDecoupled: public IMPESProblem2P<TypeTag> /*@\label{tuto
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+        dimWorld = GridView::dimensionworld
     };
 
     enum
