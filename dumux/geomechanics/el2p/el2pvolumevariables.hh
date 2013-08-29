@@ -63,12 +63,6 @@ class ElTwoPVolumeVariables: public TwoPVolumeVariables<TypeTag> {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
-    enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-    };
-
-
-
 public:
     /*!
      * \copydoc ImplicitVolumeVariables::update

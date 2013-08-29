@@ -54,7 +54,6 @@ class ElTwoPElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(T
             typedef typename Element::Geometry::Jacobian JacobianInverseTransposed;
 #endif
     enum { dim = GridView::dimension };
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
 
     typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;

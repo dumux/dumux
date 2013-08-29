@@ -48,9 +48,6 @@ class ElasticVolumeVariablesBase : public ImplicitVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    enum {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
-    };
     enum{
         dim = GridView::dimension,
     };

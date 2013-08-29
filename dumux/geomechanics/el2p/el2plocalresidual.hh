@@ -52,7 +52,6 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         numFluidPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
     enum {

@@ -57,22 +57,6 @@ protected:
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    enum {
-            numEq = GET_PROP_VALUE(TypeTag, NumEq),
-    };
-    // indices of the primary variables
-    enum {
-            uxIdx = Indices::uxIdx,
-            uyIdx = Indices::uyIdx,
-            uzIdx = Indices::uzIdx,
-    };
-    // indices of the equations
-    enum {
-            momentumXEqIdx = Indices::momentumXEqIdx,
-            momentumYEqIdx = Indices::momentumYEqIdx,
-            momentumZEqIdx = Indices::momentumZEqIdx,
-    };
-
 public:
     /*!
      * \brief Evaluate the amount of all conservation quantities

@@ -85,9 +85,7 @@ NEW_PROP_TAG(SpatialParams);
             enum
             {
                 numFluidPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-                numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-                wPhase = Indices::wPhaseIdx,
-                nPhase = Indices::nPhaseIdx,
+                numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))
             };
 
         public:

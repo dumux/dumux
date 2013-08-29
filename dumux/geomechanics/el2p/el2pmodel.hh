@@ -112,8 +112,6 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
         nPhaseIdx = Indices::nPhaseIdx,
         wPhaseIdx = Indices::wPhaseIdx,
-        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 

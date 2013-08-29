@@ -83,8 +83,6 @@ class El2PAssembler
     enum {
         enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(ImplicitEnablePartialReassemble)),
         enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(ImplicitEnableJacobianRecycling)),
-
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))
     };
 
     // copying the jacobian assembler is not a good idea

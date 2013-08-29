@@ -172,8 +172,6 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-
         // Grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
@@ -182,18 +180,12 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
     enum {
         // indices of the primary variables
             pressureIdx = Indices::pwIdx,
-            saturationIdx = Indices::snIdx,
-            uxIdx = Indices::uxIdx,
-            uyIdx = Indices::uyIdx,
-            uzIdx = Indices::uzIdx
+            saturationIdx = Indices::snIdx
     };
     enum {
         // indices of the equations+
             contiWEqIdx = Indices::contiWEqIdx,
-            contiNEqIdx = Indices::contiNEqIdx,
-            momentumXEqIdx = Indices::momentumXEqIdx,
-            momentumYEqIdx = Indices::momentumYEqIdx,
-            momentumZEqIdx = Indices::momentumZEqIdx
+            contiNEqIdx = Indices::contiNEqIdx
     };
 
 

@@ -109,8 +109,6 @@ class El1P2CProblem: public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum
     {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
-
         // Grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
@@ -118,17 +116,7 @@ class El1P2CProblem: public ImplicitPorousMediaProblem<TypeTag>
 
     enum {
         // balance equation indices
-        conti0EqIdx = Indices::conti0EqIdx,
-        transportEqIdx = Indices::transportEqIdx,
-        momentumXEqIdx = Indices::momentumXEqIdx,
-        momentumYEqIdx = Indices::momentumYEqIdx,
-        momentumZEqIdx = Indices::momentumZEqIdx,
-
-        // primary variable indices
-        pressureIdx= Indices::pressureIdx,
-        massFracIdx = Indices::massOrMoleFracIdx,
-        uXIdx = Indices::uxIdx,
-        uYIdx = Indices::uyIdx,
+        transportEqIdx = Indices::transportEqIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;

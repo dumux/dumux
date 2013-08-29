@@ -58,17 +58,10 @@ namespace Dumux
         typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
         enum {
-            numEq = GET_PROP_VALUE(TypeTag, NumEq),
-
             //phase index
             phaseIdx = Indices::phaseIdx,
             transportCompIdx = Indices::transportCompIdx
             };
-        // indices of the primary variables
-        enum {
-            pressuerIdx = Indices::pressureIdx,
-            massOrMoleFracIdx = Indices::massOrMoleFracIdx
-        };
         // indices of the equations
         enum {
             conti0EqIdx = Indices::conti0EqIdx,

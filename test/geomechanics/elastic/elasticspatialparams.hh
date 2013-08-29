@@ -58,7 +58,6 @@ class ElSpatialParams
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename Grid::ctype CoordScalar;
     enum {
-        dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
     };
 
