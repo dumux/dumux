@@ -60,8 +60,6 @@ template <class Scalar, class FluidSystem>
 class FluidSystemConstraintSolver
 {
     static constexpr int numPhases = FluidSystem::numPhases;
-    static constexpr int numComponents = FluidSystem::numComponents;
-
 
 public:
     /*!
