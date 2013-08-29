@@ -83,20 +83,13 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     };
     enum
     {
-        pw = Indices::pressureW,
-        pn = Indices::pressureN,
-        pGlobal = Indices::pressureGlobal
+        pw = Indices::pressureW
     };
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
         contiWEqIdx = Indices::contiWEqIdx, contiNEqIdx = Indices::contiNEqIdx
-    };
-    enum
-    {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
     // typedefs to abbreviate several dune classes...

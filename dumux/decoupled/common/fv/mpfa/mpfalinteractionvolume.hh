@@ -42,7 +42,7 @@ private:
 
     enum
         {
-            dim = GridView::dimension, dimWorld = GridView::dimensionworld
+            dim = GridView::dimension
         };
 
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;

@@ -56,11 +56,6 @@ private:
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
-    enum
-    {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
-
 public:
 
     //! For initialization

@@ -70,9 +70,6 @@ private:
         {
             pw = Indices::pressureW,
             pn = Indices::pressureNw,
-            pGlobal = Indices::pressureGlobal,
-            vw = Indices::velocityW,
-            vn = Indices::velocityNw,
             vt = Indices::velocityTotal,
             sw = Indices::saturationW,
             sn = Indices::saturationNw

@@ -49,18 +49,13 @@ private:
     typedef FluxData2P2C<TypeTag> FluxData;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-    enum
-    {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
-        contiWEqIdx = Indices::contiWEqIdx, contiNEqIdx = Indices::contiNEqIdx
+        contiWEqIdx = Indices::contiWEqIdx
     };
     enum
     {

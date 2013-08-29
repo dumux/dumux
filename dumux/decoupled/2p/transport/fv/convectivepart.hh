@@ -42,7 +42,7 @@ private:
       typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
       typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    enum{dim = GridView::dimension, dimWorld = GridView::dimensionworld};
+    enum{dimWorld = GridView::dimensionworld};
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
 

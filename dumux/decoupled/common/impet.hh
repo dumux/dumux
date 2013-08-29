@@ -54,11 +54,6 @@ template<class TypeTag> class IMPET
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
 
-    enum
-        {
-            dim = GridView::dimension, dimWorld = GridView::dimensionworld
-        };
-
     enum IterationType
         {
             noIter,

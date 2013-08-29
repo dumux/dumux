@@ -71,9 +71,7 @@ class FVTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureN,
-        sw = Indices::saturationW,
-        sn = Indices::saturationNw
+        pn = Indices::pressureN
     };
     enum
     {

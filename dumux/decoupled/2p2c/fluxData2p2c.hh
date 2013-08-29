@@ -46,15 +46,10 @@ private:
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+        dim = GridView::dimension
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
-
-    enum
-    {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
-    };
 
     enum
     {

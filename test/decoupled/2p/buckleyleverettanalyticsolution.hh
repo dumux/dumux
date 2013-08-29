@@ -79,13 +79,12 @@ template<class TypeTag> class BuckleyLeverettAnalytic
 
     enum
     {
-        dim = GridView::dimension, dimworld = GridView::dimensionworld
+        dimworld = GridView::dimensionworld
     };
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        satEqIdx = Indices::satEqIdx,
+        nPhaseIdx = Indices::nPhaseIdx
     };
 
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;

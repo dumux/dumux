@@ -50,11 +50,6 @@ template<class TypeTag, class Velocity> class FVVelocity
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
-    enum
-    {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
-
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;

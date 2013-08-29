@@ -49,10 +49,6 @@ template<class TypeTag> class FVPressure
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    enum
-    {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
 
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::Traits::template Codim<0>::Entity Element;

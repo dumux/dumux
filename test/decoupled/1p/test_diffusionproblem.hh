@@ -189,10 +189,8 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
         pGlobalIdx = Indices::pGlobalIdx,
-        swIdx = Indices::swIdx,
-        pressEqIdx = Indices::pressureEqIdx
+        swIdx = Indices::swIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

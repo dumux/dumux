@@ -47,27 +47,14 @@ class CellData2P2CMultiPhysics : public CellData2P2C<TypeTag>
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-//    typedef FluxData2P2C<TypeTag> FluxData;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef PseudoOnePTwoCFluidState<TypeTag> SimpleFluidState;
-
-    enum
-    {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
-        contiWEqIdx = Indices::contiWEqIdx, contiNEqIdx = Indices::contiNEqIdx
-    };
-    enum
-    {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
     };
     enum
     {

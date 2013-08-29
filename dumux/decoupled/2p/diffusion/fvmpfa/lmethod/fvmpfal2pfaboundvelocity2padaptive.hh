@@ -93,12 +93,8 @@ template<class TypeTag> class FVMPFAL2PFABoundVelocity2PAdaptive: public FVMPFAL
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pGlobal = Indices::pressureGlobal,
         sw = Indices::saturationW,
-        sn = Indices::saturationNw,
-        vw = Indices::velocityW,
-        vn = Indices::velocityNw,
-        vt = Indices::velocityTotal
+        sn = Indices::saturationNw
     };
     enum
     {

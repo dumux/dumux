@@ -45,7 +45,7 @@ private:
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+        dim = GridView::dimension
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;

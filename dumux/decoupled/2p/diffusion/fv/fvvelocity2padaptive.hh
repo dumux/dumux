@@ -69,13 +69,7 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
         pGlobal = Indices::pressureGlobal,
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
-        vt = Indices::velocityTotal,
-        sw = Indices::saturationW,
-        sn = Indices::saturationNw,
-        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx,
-        eqIdxPress = Indices::pressureEqIdx,
-        eqIdxSat = Indices::satEqIdx
+        vt = Indices::velocityTotal
     };
     enum
     {

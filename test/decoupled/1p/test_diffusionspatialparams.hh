@@ -71,7 +71,7 @@ class TestDiffusionSpatialParams: public FVSpatialParams<TypeTag>
     typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolution;
     ///@endcond
     enum
-        {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
+        {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 

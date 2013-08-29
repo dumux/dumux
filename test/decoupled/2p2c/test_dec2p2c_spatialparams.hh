@@ -68,7 +68,7 @@ class Test2P2CSpatialParams : public FVSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)   Scalar;
 
     enum
-        {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
+        {dim=Grid::dimension};
     typedef    typename Grid::Traits::template Codim<0>::Entity Element;
 
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;

@@ -50,20 +50,11 @@ private:
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
-    enum
-    {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
-    };
-    enum
-    {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
 public:

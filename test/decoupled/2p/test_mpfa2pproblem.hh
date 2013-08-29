@@ -187,7 +187,6 @@ enum
 
 enum
 {
-    wPhaseIdx = Indices::wPhaseIdx,
     nPhaseIdx = Indices::nPhaseIdx,
 #if PROBLEM == 1
     pnIdx = Indices::pnIdx,

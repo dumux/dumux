@@ -93,12 +93,8 @@ class FVMPFAL2PFABoundPressure2PAdaptive: public FVPressure<TypeTag>
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pGlobal = Indices::pressureGlobal,
         sw = Indices::saturationW,
-        sn = Indices::saturationNw,
-        vw = Indices::velocityW,
-        vn = Indices::velocityNw,
-        vt = Indices::velocityTotal
+        sn = Indices::saturationNw
     };
     enum
     {

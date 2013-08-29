@@ -63,14 +63,7 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
-    enum
-    {
-        pw = Indices::pressureW,
-        pn = Indices::pressureNw,
-        sw = Indices::saturationW,
-        sn = Indices::saturationNw
+        dim = GridView::dimension
     };
     enum
     {

@@ -48,23 +48,12 @@ private:
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
-    enum
-    {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
     };
 
     enum
     {
-        pw = Indices::pressureW,
-        pn = Indices::pressureNw,
-        pGlobal = Indices::pressureGlobal,
-        vw = Indices::velocityW,
-        vn = Indices::velocityNw,
-        vt = Indices::velocityTotal,
-        sw = Indices::saturationW,
-        sn = Indices::saturationNw
+        vt = Indices::velocityTotal
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;

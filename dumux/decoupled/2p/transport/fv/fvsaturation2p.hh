@@ -109,9 +109,7 @@ class FVSaturation2P: public FVTransport<TypeTag>
     {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-        pressEqIdx = Indices::pressureEqIdx,
         satEqIdx = Indices::satEqIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };

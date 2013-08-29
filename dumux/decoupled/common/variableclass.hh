@@ -54,8 +54,6 @@ private:
     enum
     {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-        numEq = GET_PROP_VALUE(TypeTag, NumEq)
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;

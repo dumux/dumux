@@ -63,7 +63,7 @@ private:
     typedef typename GridView::Intersection Intersection;
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+        dim = GridView::dimension
     };
     enum    //!< for first and second half edge (2D) or subvolume face (3D)
     {

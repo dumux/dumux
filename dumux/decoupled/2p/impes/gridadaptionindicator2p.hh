@@ -52,19 +52,13 @@ private:
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
-
-    enum
-    {
         sw = Indices::saturationW,
         sn = Indices::saturationNw
     };
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        nPhaseIdx = Indices::nPhaseIdx
     };
 
 public:

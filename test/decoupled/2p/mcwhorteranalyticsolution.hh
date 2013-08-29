@@ -59,16 +59,13 @@ class McWhorterAnalytic
 
     enum
     {
-        dimworld = GridView::dimensionworld //dim = GridView::dimension,
+        dimworld = GridView::dimensionworld
     };
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-//        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx//,
-//        pressEqIdx = Indices::pressEqIdx,
-//        satEqIdx = Indices::satEqIdx
+        saturationIdx = Indices::saturationIdx
     };
 
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;

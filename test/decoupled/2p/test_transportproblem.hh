@@ -123,13 +123,12 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+        dimWorld = GridView::dimensionworld
     };
 
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        satEqIdx = Indices::satEqIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

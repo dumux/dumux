@@ -45,7 +45,7 @@ private:
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+        dim = GridView::dimension
     };
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;

@@ -127,7 +127,6 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
 
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
         pwIdx = Indices::pwIdx,
         swIdx = Indices::swIdx,

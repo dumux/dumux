@@ -177,7 +177,7 @@ enum
 
 enum
 {
-    wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+    nPhaseIdx = Indices::nPhaseIdx,
     pwIdx = Indices::pwIdx,
     swIdx = Indices::swIdx,
     eqIdxPress = Indices::pressureEqIdx,

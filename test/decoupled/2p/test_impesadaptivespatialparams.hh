@@ -70,7 +70,7 @@ class TestIMPESAdaptiveSpatialParams: public FVSpatialParams<TypeTag>
     typedef typename Grid::ctype CoordScalar;
 
     enum
-        {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+        {dimWorld=Grid::dimensionworld};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
