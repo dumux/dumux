@@ -96,8 +96,7 @@ class Stokes2cniTestProblem : public StokesProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    enum { // Number of equations and grid dimension
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
+    enum { // grid dimension
         dim = GridView::dimension
     };
     enum { // copy some indices for convenience
@@ -106,7 +105,6 @@ class Stokes2cniTestProblem : public StokesProblem<TypeTag>
         momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
         momentumZIdx = Indices::momentumZIdx, //!< Index of the z-component of the momentum balance
         transportEqIdx = Indices::transportEqIdx, //!< Index of the transport equation
-        energyEqIdx =    Indices::energyEqIdx     //!< Index of the energy equation
     };
     enum { // indices for primary variables
         velocityXIdx = Indices::velocityXIdx,
