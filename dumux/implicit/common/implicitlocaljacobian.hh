@@ -459,7 +459,8 @@ protected:
             // to calculate f(x + \epsilon) and we can recycle the
             // (already calculated) residual f(x)
             partialDeriv = residual_;
-            storageDeriv = storageTerm_[col];
+            if (isBox || col == 0)
+                storageDeriv = storageTerm_[col];
         }
 
 
