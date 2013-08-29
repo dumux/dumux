@@ -123,11 +123,8 @@ public:
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
-        // material law parameters
-        typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-        const typename MaterialLaw::Params &materialParams =
+        const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-
 
         if (int(formulation) == pwsn) {
             Scalar sn = priVars[saturationIdx];
