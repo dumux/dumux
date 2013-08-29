@@ -40,9 +40,6 @@ namespace Dumux
 template <class TypeTag, int PVOffset = 0>
 struct Stokes2cCommonIndices : public StokesCommonIndices<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
-public:
     // Phase index
     static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx); //!< Index of the employed phase in case of a two-phase fluidsystem (set by default to nPhase)
 
