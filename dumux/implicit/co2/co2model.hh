@@ -53,9 +53,6 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
      typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
      typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
      typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-     enum {
-         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
-     };
 
      typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
      enum {
@@ -83,7 +80,6 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
      };
 
      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
      typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
      enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
      enum { dofCodim = isBox ? dim : 0 };

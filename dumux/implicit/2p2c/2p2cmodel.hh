@@ -128,7 +128,6 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };

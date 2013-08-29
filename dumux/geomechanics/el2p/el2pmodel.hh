@@ -111,8 +111,7 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     enum {
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
         nPhaseIdx = Indices::nPhaseIdx,
-        wPhaseIdx = Indices::wPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        wPhaseIdx = Indices::wPhaseIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -128,7 +127,6 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
             typedef typename Element::Geometry::Jacobian JacobianInverseTransposed;
 #endif
 
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;

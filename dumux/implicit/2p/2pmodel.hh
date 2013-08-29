@@ -78,8 +78,7 @@ class TwoPModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         nPhaseIdx = Indices::nPhaseIdx,
-        wPhaseIdx = Indices::wPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        wPhaseIdx = Indices::wPhaseIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -89,7 +88,6 @@ class TwoPModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
