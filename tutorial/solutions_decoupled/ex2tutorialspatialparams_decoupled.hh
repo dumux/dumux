@@ -71,10 +71,8 @@ class Ex2TutorialSpatialParamsDecoupled: public FVSpatialParams<TypeTag>
 
     enum
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
