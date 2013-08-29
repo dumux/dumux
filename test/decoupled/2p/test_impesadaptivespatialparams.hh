@@ -74,7 +74,6 @@ class TestIMPESAdaptiveSpatialParams: public FVSpatialParams<TypeTag>
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;

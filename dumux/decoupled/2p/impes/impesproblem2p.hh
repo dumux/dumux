@@ -52,7 +52,6 @@ class IMPESProblem2P : public IMPETProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
 

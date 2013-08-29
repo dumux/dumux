@@ -43,7 +43,6 @@ template<typename TypeTag>
 class McWhorterAnalytic
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-//    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
@@ -73,7 +72,6 @@ class McWhorterAnalytic
     };
 
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FieldVector<Scalar, dimworld> GlobalPosition;

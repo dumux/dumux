@@ -69,7 +69,6 @@ private:
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;

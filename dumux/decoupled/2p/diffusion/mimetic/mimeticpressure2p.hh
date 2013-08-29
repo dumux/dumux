@@ -98,10 +98,7 @@ template<class TypeTag> class MimeticPressure2P
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, LocalStiffness) LocalStiffness;
     typedef Dune::BlockVector< Dune::FieldVector<Scalar, 1> > TraceType;

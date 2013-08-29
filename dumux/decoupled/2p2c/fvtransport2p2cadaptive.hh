@@ -57,14 +57,7 @@ class FVTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
@@ -89,12 +82,9 @@ class FVTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
         contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;

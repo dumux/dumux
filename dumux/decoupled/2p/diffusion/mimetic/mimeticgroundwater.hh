@@ -82,11 +82,9 @@ class MimeticGroundwaterEquationLocalStiffness: public LocalStiffness<TypeTag, 1
         satEqIdx = Indices::satEqIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
-    typedef typename GridView::Grid Grid;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 

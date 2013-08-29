@@ -119,7 +119,6 @@ class FVMPFAO2PFABoundPressure2P: public FVPressure<TypeTag>
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 

@@ -67,8 +67,6 @@ private:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
 public:
     /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
      *

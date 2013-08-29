@@ -43,20 +43,13 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
      typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
 
-     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-     typedef typename SpatialParams::MaterialLaw MaterialLaw;
-
      typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
      typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
      typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
-typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;

@@ -47,19 +47,12 @@ namespace Dumux
  */
 template<class TypeTag> class IMPET
 {
-    typedef IMPET<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP(TypeTag, ParameterTree) Parameters;
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     enum
         {
@@ -72,8 +65,6 @@ template<class TypeTag> class IMPET
             iterToNumIter,
             iterToConverged,
         };
-
-    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
 public:
     typedef typename SolutionTypes::ScalarSolution SolutionType;

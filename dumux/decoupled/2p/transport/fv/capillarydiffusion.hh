@@ -72,7 +72,6 @@ private:
         pressEqIdx = Indices::pressureEqIdx
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dim> DimVector;

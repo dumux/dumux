@@ -73,20 +73,16 @@ template<class TypeTag> class FVMPFAL2PFABoundVelocity2P: public FVMPFAL2PFABoun
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
     typedef typename ParentType::InteractionVolume InteractionVolume;
 

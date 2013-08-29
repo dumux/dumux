@@ -58,10 +58,7 @@ private:
     typedef typename CellData::AdaptedValues AdaptedValues;
 
     typedef typename GridView::Grid Grid;
-    typedef typename Grid::LevelGridView LevelGridView;
     typedef typename Grid::LocalIdSet::IdType IdType;
-    typedef typename LevelGridView::template Codim<0>::Iterator LevelIterator;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
     enum

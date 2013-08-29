@@ -51,7 +51,6 @@ class DiffusionProblem2P: public OneModelProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;

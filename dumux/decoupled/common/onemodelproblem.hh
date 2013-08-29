@@ -59,7 +59,6 @@ private:
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::VertexMapper VertexMapper;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef typename SolutionTypes::ScalarSolution Solution;
 
     enum
     {

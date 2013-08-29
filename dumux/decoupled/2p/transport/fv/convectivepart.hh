@@ -43,7 +43,6 @@ private:
       typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     enum{dim = GridView::dimension, dimWorld = GridView::dimensionworld};
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
 

@@ -60,8 +60,6 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
     typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -87,9 +85,7 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;

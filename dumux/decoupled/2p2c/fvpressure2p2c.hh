@@ -67,11 +67,9 @@ template<class TypeTag> class FVPressure2P2C
 {
     //the model implementation
     typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
-    typedef FVPressure<TypeTag> BaseType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -114,8 +112,6 @@ template<class TypeTag> class FVPressure2P2C
 
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPtr;
     typedef typename GridView::Intersection Intersection;
 
@@ -127,7 +123,6 @@ template<class TypeTag> class FVPressure2P2C
 
     // the typenames used for the stiffness matrix and solution vector
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) RHSVector;
 
 protected:
     //! @copydoc FVPressure::EntryType

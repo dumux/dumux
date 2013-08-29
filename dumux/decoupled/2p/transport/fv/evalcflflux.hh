@@ -61,8 +61,6 @@ private:
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
 public:
 
     //! For initialization

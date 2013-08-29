@@ -65,7 +65,6 @@ struct CheckMaterialLaw<Scalar, EffToAbsLaw< LinearMaterial<Scalar> > >
 template<class TypeTag> class BuckleyLeverettAnalytic
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
@@ -77,7 +76,6 @@ template<class TypeTag> class BuckleyLeverettAnalytic
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     enum
     {
@@ -91,7 +89,6 @@ template<class TypeTag> class BuckleyLeverettAnalytic
     };
 
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FieldVector<Scalar, dimworld> GlobalPosition;

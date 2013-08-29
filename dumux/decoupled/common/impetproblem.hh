@@ -65,8 +65,6 @@ private:
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
     enum
         {
             dim = GridView::dimension,

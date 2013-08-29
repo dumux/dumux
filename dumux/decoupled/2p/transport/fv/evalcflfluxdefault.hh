@@ -67,10 +67,7 @@ private:
         sn = Indices::saturationNw
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Intersection Intersection;
 
 public:

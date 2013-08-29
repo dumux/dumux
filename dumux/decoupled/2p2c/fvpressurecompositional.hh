@@ -68,7 +68,6 @@ template<class TypeTag> class FVPressureCompositional
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
@@ -101,16 +100,12 @@ template<class TypeTag> class FVPressureCompositional
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-//    typedef typename GridView::Grid Grid;
-//    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     // convenience shortcuts for Vectors/Matrices
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
     typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
     typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
 public:
     //the variables object is initialized, non-compositional before and compositional after first pressure calculation

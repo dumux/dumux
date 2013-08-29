@@ -140,7 +140,6 @@ typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
 // boundary typedefs
 typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;

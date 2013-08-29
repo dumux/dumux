@@ -107,8 +107,6 @@ class CROperatorAssembler
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,CRLayout> EM;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,AllLayout> AM;
 
-//    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
-
     enum
     {
         pressEqIdx = 0

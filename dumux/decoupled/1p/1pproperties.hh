@@ -58,7 +58,6 @@ NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(DecoupledModel));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG( SpatialParameters ); //!< The type of the spatial parameters object
 NEW_PROP_TAG( SpatialParams ); //!< The type of the spatial parameters object
 NEW_PROP_TAG( ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( Fluid ); //!< The fluid for one-phase models

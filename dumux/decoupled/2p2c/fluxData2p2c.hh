@@ -42,10 +42,7 @@ template<class TypeTag>
 class FluxData2P2C
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
     enum
     {

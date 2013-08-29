@@ -51,7 +51,6 @@ class FVVelocity1P
 
      typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
      typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
 
      typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;

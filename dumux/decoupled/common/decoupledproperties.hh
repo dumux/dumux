@@ -123,7 +123,6 @@ SET_PROP(DecoupledModel, SolutionTypes)
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Grid Grid;
-    typedef typename Grid::ctype CoordScalar;
     typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
     enum

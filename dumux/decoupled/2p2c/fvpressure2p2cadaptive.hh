@@ -79,22 +79,13 @@ template<class TypeTag> class FVPressure2P2CAdaptive
 {
     //the model implementation
     typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
-    typedef FVPressure2P2C<TypeTag> ParentType;
     typedef FVPressure<TypeTag> BaseType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     enum
@@ -121,9 +112,7 @@ template<class TypeTag> class FVPressure2P2CAdaptive
     };
 
     // typedefs to abbreviate several dune classes...
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
@@ -133,11 +122,9 @@ template<class TypeTag> class FVPressure2P2CAdaptive
     typedef Dune::FieldVector<Scalar,dim+1> TransmissivityMatrix;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
     typedef Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)> PhaseVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     // the typenames used for the stiffness matrix and solution vector
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) RHSVector;
 
 protected:
     Problem& problem()
