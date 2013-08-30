@@ -198,7 +198,6 @@ public:
                    "a porosityAtPos() method.");
     }
 
-protected:
     // PRELIMINARY FUNCTION! DEPRECATED WHEN CREATED
     double tortuosity(const Element &element,
                     const FVElementGeometry &fvGeometry,
