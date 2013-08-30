@@ -90,6 +90,13 @@ public:
 
         porosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
         tortuosity_ = problem.spatialParams().tortuosity(element, fvGeometry, scvIdx);
+        if (tortuosity_ > 0)
+        {
+        	std::cerr << "ERROR: You are still using the tortuosity method in your spatialParams, which is not used anymore.\n"
+        			  << "Please remove it, the calculation is done within the effective diffusivity model.\n";
+        	exit(1);
+        }
+
         dispersivity_ = problem.spatialParams().dispersivity(element, fvGeometry, scvIdx);
 
         // Second instance of a parameter cache.
@@ -105,7 +112,6 @@ public:
                                                              transportCompIdx);
 
         Valgrind::CheckDefined(porosity_);
-        Valgrind::CheckDefined(tortuosity_);
         Valgrind::CheckDefined(dispersivity_);
         Valgrind::CheckDefined(diffCoeff_);
 
@@ -210,8 +216,9 @@ public:
     { return diffCoeff_; }
 
     /*!
-     * \brief Return the tortuosity  \f$\mathrm{[-]}\f$ of the streamlines of the fluid.
+     * \brief DEPRECATED: Not used anymore!
      */
+	DUNE_DEPRECATED_MSG("tortuosity is now calculated with the effective diffusivity model")
     Scalar tortuosity() const
     { return tortuosity_; }
 
@@ -279,6 +286,6 @@ private:
     { return *static_cast<const Implementation*>(this); }
 };
 
-}// end namepace
+}// end namespace
 
 #endif

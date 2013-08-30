@@ -38,6 +38,7 @@
 #include "1p2cindices.hh"
 
 #include <dumux/material/spatialparams/implicitspatialparams1p.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/diffusivitymillingtonquirk.hh>
 
 namespace Dumux
 {
@@ -78,6 +79,14 @@ SET_TYPE_PROP(OnePTwoC, Indices, Dumux::OnePTwoCIndices<TypeTag, 0>);
 //! The spatial parameters to be employed. 
 //! Use ImplicitSpatialParamsOneP by default.
 SET_TYPE_PROP(OnePTwoC, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
+
+//! The model after Millington (1961) is used for the effective diffusivity
+SET_PROP(OnePTwoC, EffectiveDiffusivityModel)
+{ private :
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ public:
+    typedef DiffusivityMillingtonQuirk<Scalar> type;
+};
 
 //! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
 SET_INT_PROP(OnePTwoC, PhaseIdx, 0);

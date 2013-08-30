@@ -61,7 +61,6 @@ public:
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
-        tortuosity_ = 0.28;
     }
 
     ~OnePTwoCOutflowSpatialParams()
@@ -107,20 +106,6 @@ public:
     }
 
     /*!
-     * \brief Define the tortuosity \f$\mathrm{[-]}\f$.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     */
-    double tortuosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
-    {
-            return tortuosity_;
-    }
-
-    /*!
      * \brief Define the dispersivity.
      *
      * \param element The finite element
@@ -144,7 +129,6 @@ public:
 private:
     Scalar permeability_;
     Scalar porosity_;
-    Scalar tortuosity_;
 };
 
 }

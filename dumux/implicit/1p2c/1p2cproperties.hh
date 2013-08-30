@@ -57,6 +57,7 @@ NEW_PROP_TAG(PhaseIdx); //!< A phase index in to allow that a two-phase fluidsys
 NEW_PROP_TAG(NumComponents);   //!< Number of fluid components in the system
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
+NEW_PROP_TAG(EffectiveDiffusivityModel); //!< The employed model for the computation of the effective diffusivity
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 NEW_PROP_TAG(ImplicitMassUpwindWeight);   //!< The default value of the upwind weight
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation

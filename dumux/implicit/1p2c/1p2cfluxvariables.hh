@@ -53,6 +53,7 @@ class OnePTwoCFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -435,12 +436,16 @@ protected:
         const VolumeVariables &volVarsI = elemVolVars[face().i];
         const VolumeVariables &volVarsJ = elemVolVars[face().j];
 
-        // Diffusion coefficient in the porous medium
-        porousDiffCoeff_
-            = harmonicMean(volVarsI.porosity() * volVarsI.tortuosity() * volVarsI.diffCoeff(),
-               volVarsJ.porosity() * volVarsJ.tortuosity() * volVarsJ.diffCoeff());
-//            = 1./2*(volVarsI.porosity() * volVarsI.tortuosity() * volVarsI.diffCoeff() +
-//                    volVarsJ.porosity() * volVarsJ.tortuosity() * volVarsJ.diffCoeff());
+        const Scalar diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+        															 /*sat=*/1.0,
+                                                                     volVarsI.diffCoeff());
+
+        const Scalar diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                     /*sat=*/1.0,
+                                                                     volVarsJ.diffCoeff());
+
+        // -> harmonic mean
+        porousDiffCoeff_ = harmonicMean(diffCoeffI, diffCoeffJ);
     }
 
     /*!
