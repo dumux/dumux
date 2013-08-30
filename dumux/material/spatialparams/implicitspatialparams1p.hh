@@ -197,6 +197,15 @@ public:
         }
     }
 
+protected:
+    // PRELIMINARY FUNCTION! DEPRECATED WHEN CREATED
+    double tortuosity(const Element &element,
+                    const FVElementGeometry &fvGeometry,
+                    const int scvIdx) const
+    {
+            return -1;
+    }
+
 private:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
