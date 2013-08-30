@@ -726,7 +726,7 @@ public:
 
                 // gradients using a two-point flux approximation
                 subContVolFace[k].numFap = 2;
-                for (int idx = 0; idx < subContVolFace[k].numFap; idx++)
+                for (unsigned int idx = 0; idx < subContVolFace[k].numFap; idx++)
                 {
                     subContVolFace[k].grad[idx] = distVec;
                     subContVolFace[k].shapeValue[idx] = 0.5;

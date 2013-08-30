@@ -277,7 +277,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         asImp_().updateMaterialLaws();
     }
 
-    int size = problem_.gridView().size(0);
+    unsigned int size = problem_.gridView().size(0);
     if (localTimeStepping_)
     {
         if (timeStepData_.size() != size)

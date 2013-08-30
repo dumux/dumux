@@ -223,7 +223,7 @@ public:
         return upwindPotential_[indexInInside][phaseIdx];
     }
 
-    DUNE_DEPRECATED_MSG("use upwindPotential() instead");
+    DUNE_DEPRECATED_MSG("use upwindPotential() instead")
     Scalar potential(int phaseIdx, int indexInInside)
     {
         return upwindPotential_[indexInInside][phaseIdx];
@@ -239,7 +239,7 @@ public:
         return upwindPotential_[indexInInside][phaseIdx];
     }
 
-    DUNE_DEPRECATED_MSG("use upwindPotential() instead");
+    DUNE_DEPRECATED_MSG("use upwindPotential() instead")
     Scalar potential(int phaseIdx, int indexInInside) const
     {
         return upwindPotential_[indexInInside][phaseIdx];
@@ -256,7 +256,7 @@ public:
         upwindPotential_[indexInInside][phaseIdx] = pot;
     }
 
-    DUNE_DEPRECATED_MSG("use setUpwindPotential() instead");
+    DUNE_DEPRECATED_MSG("use setUpwindPotential() instead")
     void setPotential(int phaseIdx, int indexInInside, Scalar pot)
     {
         upwindPotential_[indexInInside][phaseIdx] = pot;
@@ -273,7 +273,7 @@ public:
         upwindPotential_[indexInInside][phaseIdx] += pot;
     }
 
-    DUNE_DEPRECATED_MSG("use addUpwindPotential() instead");
+    DUNE_DEPRECATED_MSG("use addUpwindPotential() instead")
     void addPotential(int phaseIdx, int indexInInside, Scalar pot)
     {
         upwindPotential_[indexInInside][phaseIdx] += pot;

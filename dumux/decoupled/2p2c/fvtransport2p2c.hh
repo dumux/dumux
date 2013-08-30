@@ -265,7 +265,7 @@ public:
      * \param problem a problem class object
      */
     FVTransport2P2C(Problem& problem) :
-        totalConcentration_(0.), problem_(problem), switchNormals(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)), subCFLFactor_(1.0), accumulatedDt_(0), dtThreshold_(1e-6)
+        totalConcentration_(0.), problem_(problem), switchNormals(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)), accumulatedDt_(0), dtThreshold_(1e-6), subCFLFactor_(1.0)
     {
         restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,int, Impet, RestrictFluxInTransport);
         regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
