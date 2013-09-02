@@ -259,7 +259,7 @@ public:
      * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
-     * \param is The intersection between element and boundary
+     * \param intersection The intersection between element and boundary
      * \param scvIdx The local subcontrolvolume index
      * \param boundaryFaceIdx The index of the boundary face
      * \param elemVolVars All volume variables for the element
@@ -270,7 +270,7 @@ public:
     void solDependentNeumann(PrimaryVariables &values,
                       const Element &element,
                       const FVElementGeometry &fvGeometry,
-                      const Intersection &is,
+                      const Intersection &intersection,
                       const int scvIdx,
                       const int boundaryFaceIdx,
                       const ElementVolumeVariables &elemVolVars) const
@@ -279,7 +279,7 @@ public:
         asImp_().neumann(values,
                          element,
                          fvGeometry,
-                         is,
+                         intersection,
                          scvIdx,
                          boundaryFaceIdx);
     }
@@ -289,7 +289,7 @@ public:
     void boxSDNeumann(PrimaryVariables &values,
                       const Element &element,
                       const FVElementGeometry &fvGeometry,
-                      const Intersection &is,
+                      const Intersection &intersection,
                       const int scvIdx,
                       const int boundaryFaceIdx,
                       const ElementVolumeVariables &elemVolVars) const
@@ -297,7 +297,7 @@ public:
         asImp_().solDependentNeumann(values,
                                      element,
                                      fvGeometry,
-                                     is,
+                                     intersection,
                                      scvIdx,
                                      boundaryFaceIdx, 
                                      elemVolVars);
@@ -310,7 +310,7 @@ public:
      * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
-     * \param is The intersection between element and boundary
+     * \param intersection The intersection between element and boundary
      * \param scvIdx The local subcontrolvolume index
      * \param boundaryFaceIdx The index of the boundary face
      *
@@ -320,7 +320,7 @@ public:
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
-                 const Intersection &is,
+                 const Intersection &intersection,
                  const int scvIdx,
                  const int boundaryFaceIdx) const
     {

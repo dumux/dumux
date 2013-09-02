@@ -85,7 +85,7 @@ public:
      * \brief Modify the internal buffers according to the volume
      *        variables seen on an element
      */
-    void processElement(const Element &elem,
+    void processElement(const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const ElementVolumeVariables &elemCurVolVars,
                         const ElementBoundaryTypes &elemBcTypes)

@@ -94,15 +94,15 @@ public:
      * \brief Modify the internal buffers according to the volume
      *        variables seen on an element
      */
-    void processElement(const Element &elem,
+    void processElement(const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        int numLocalVertices = elem.geometry().corners();
+        int numLocalVertices = element.geometry().corners();
         for (int localVertexIdx = 0; localVertexIdx< numLocalVertices; ++localVertexIdx) {
-            const unsigned int globalIdx = this->problem_.vertexMapper().map(elem, localVertexIdx, dim);
-            const VolumeVariables &volVars = elemVolVars[localVertexIdx];
+            const unsigned int globalIdx = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
+            const VolumeVariables &volVars = elementVolVars[localVertexIdx];
 
             for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 for (unsigned  int compIdx = 0; compIdx < numComponents; ++ compIdx) {

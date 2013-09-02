@@ -116,10 +116,10 @@ public:
      *
      * \param prob The problem which we want to simulate.
      */
-    void init(Problem &prob)
+    void init(Problem &problem)
     {
-        problemPtr_ = &prob;
-        localResidual_.init(prob);
+        problemPtr_ = &problem;
+        localResidual_.init(problem);
 
         // assume quadrilinears as elements with most vertices
         if (isBox)

@@ -137,19 +137,19 @@ private:
         ElementIterator eIt = this->gridView_().template begin<0>();
         const ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
-            const Element &elem = *eIt;
+            const Element &element = *eIt;
             
-            int globalI = this->elementMapper_().map(elem);
+            int globalI = this->elementMapper_().map(element);
             neighbors[globalI].insert(globalI);
 
             // if the element is ghost,
             // all dofs just contain main-diagonal entries
-            //if (elem.partitionType() == Dune::GhostEntity)
+            //if (element.partitionType() == Dune::GhostEntity)
             //    continue;
 
             // loop over all neighbors
-            IntersectionIterator isIt = this->gridView_().ibegin(elem);
-            const IntersectionIterator &isEndIt = this->gridView_().iend(elem);
+            IntersectionIterator isIt = this->gridView_().ibegin(element);
+            const IntersectionIterator &isEndIt = this->gridView_().iend(element);
             for (; isIt != isEndIt; ++isIt)
             {
                 if (isIt->neighbor())
@@ -179,21 +179,21 @@ private:
     }
     
     // assemble a non-ghost element
-    void assembleElement_(const Element &elem)
+    void assembleElement_(const Element &element)
     {
         if (this->enablePartialReassemble_()) {
-            int globalElemIdx = this->model_().elementMapper().map(elem);
+            int globalElemIdx = this->model_().elementMapper().map(element);
             if (this->elementColor_[globalElemIdx] == ParentType::Green) {
                 ++this->greenElems_;
 
-                assembleGreenElement_(elem);
+                assembleGreenElement_(element);
                 return;
             }
         }
 
-        this->model_().localJacobian().assemble(elem);
+        this->model_().localJacobian().assemble(element);
 
-        int globalI = this->elementMapper_().map(elem);
+        int globalI = this->elementMapper_().map(element);
 
         // update the right hand side
         this->residual_[globalI] = this->model_().localJacobian().residual(0);
@@ -211,8 +211,8 @@ private:
         // update the diagonal entry 
         (*this->matrix_)[globalI][globalI] = this->model_().localJacobian().mat(0,0);
 
-        IntersectionIterator isIt = this->gridView_().ibegin(elem);
-        const IntersectionIterator &isEndIt = this->gridView_().iend(elem);
+        IntersectionIterator isIt = this->gridView_().ibegin(element);
+        const IntersectionIterator &isEndIt = this->gridView_().iend(element);
         for (int j = 0; isIt != isEndIt; ++isIt)
         {
             if (isIt->neighbor())
@@ -225,11 +225,11 @@ private:
 
     // "assemble" a green element. green elements only get the
     // residual updated, but the jacobian is left alone...
-    void assembleGreenElement_(const Element &elem)
+    void assembleGreenElement_(const Element &element)
     {
-        this->model_().localResidual().eval(elem);
+        this->model_().localResidual().eval(element);
 
-        int globalI = this->elementMapper_().map(elem);
+        int globalI = this->elementMapper_().map(element);
 
         // update the right hand side
         this->residual_[globalI] += this->model_().localResidual().residual(0);
@@ -238,9 +238,9 @@ private:
     }
 
     // "assemble" a ghost element
-    void assembleGhostElement_(const Element &elem)
+    void assembleGhostElement_(const Element &element)
     {
-        int globalI = this->elementMapper_().map(elem);
+        int globalI = this->elementMapper_().map(element);
 
         // update the right hand side
         this->residual_[globalI] = 0.0;

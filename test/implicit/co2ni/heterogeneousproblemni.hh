@@ -369,12 +369,12 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param values The boundary types for the conservation equations
-     * \param is specifies the intersection at which boundary
+     * \param intersection specifies the intersection at which boundary
      *           condition is to set
      */
-    void boundaryTypes(BoundaryTypes &values, const Intersection &is) const
+    void boundaryTypes(BoundaryTypes &values, const Intersection &intersection) const
     {
-        int boundaryId = is.boundaryId();
+        int boundaryId = intersection.boundaryId();
         if (boundaryId < 1 || boundaryId > 4)
         {
             std::cout<<"invalid boundaryId: "<<boundaryId<<std::endl;
@@ -407,7 +407,7 @@ public:
      * \param values The neumann values for the conservation equations
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param is The intersection between element and boundary
+     * \param intersection The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
      *
@@ -417,11 +417,11 @@ public:
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
-                 const Intersection &is,
+                 const Intersection &intersection,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
-        int boundaryId = is.boundaryId();
+        int boundaryId = intersection.boundaryId();
 
         values = 0;
         if (boundaryId == injectionBottom_)

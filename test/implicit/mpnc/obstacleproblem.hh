@@ -284,7 +284,7 @@ public:
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
-                 const Intersection &is,
+                 const Intersection &intersection,
                  const unsigned int scvIdx,
                  const unsigned int boundaryFaceIdx) const
     { values = 0.; }

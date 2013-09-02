@@ -567,10 +567,10 @@ private:
         ElementIterator eIt = gridView_().template begin<0>();
         const ElementIterator eEndIt = gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
-            const Element &elem = *eIt;
+            const Element &element = *eIt;
 
             // loop over all element vertices
-            int n = elem.template count<dim>();
+            int n = element.template count<dim>();
             for (int i = 0; i < n - 1; ++i) {
                 int globalI = vertexMapper_().map(*eIt, i, dim);
                 for (int j = i + 1; j < n; ++j) {

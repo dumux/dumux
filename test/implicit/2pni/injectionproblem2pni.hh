@@ -305,7 +305,7 @@ public:
      * \param values The neumann values for the conservation equations
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param is The intersection between element and boundary
+     * \param intersection The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
      *
@@ -315,7 +315,7 @@ public:
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
-                 const Intersection &is,
+                 const Intersection &intersection,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
@@ -325,7 +325,7 @@ public:
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);
         else 
-            globalPos = is.geometry().center();
+            globalPos = intersection.geometry().center();
         
         if (globalPos[1] < 15 && globalPos[1] > 7) {
             // inject air. negative values mean injection

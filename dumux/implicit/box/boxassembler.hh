@@ -229,13 +229,13 @@ private:
         ElementIterator eIt = this->gridView_().template begin<0>();
         const ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
-            const Element &elem = *eIt;
-            int numVerticesLocal = elem.template count<dim>();
+            const Element &element = *eIt;
+            int numVerticesLocal = element.template count<dim>();
 
             // if the element is not in the interior or the process
             // border, all dofs just contain main-diagonal entries
-            if (elem.partitionType() != Dune::InteriorEntity &&
-                elem.partitionType() != Dune::BorderEntity)
+            if (element.partitionType() != Dune::InteriorEntity &&
+                element.partitionType() != Dune::BorderEntity)
             {
                 for (int i = 0; i < numVerticesLocal; ++i) {
                     int globalI = this->vertexMapper_().map(*eIt, i, dim);
@@ -283,23 +283,23 @@ private:
     }
 
     // assemble a non-ghost element
-    void assembleElement_(const Element &elem)
+    void assembleElement_(const Element &element)
     {
         if (this->enablePartialReassemble_()) {
-            int globalElemIdx = this->model_().elementMapper().map(elem);
+            int globalElemIdx = this->model_().elementMapper().map(element);
             if (this->elementColor_[globalElemIdx] == ParentType::Green) {
                 ++this->greenElems_;
 
-                assembleGreenElement_(elem);
+                assembleGreenElement_(element);
                 return;
             }
         }
 
-        this->model_().localJacobian().assemble(elem);
+        this->model_().localJacobian().assemble(element);
 
-        int numVerticesLocal = elem.template count<dim>();
+        int numVerticesLocal = element.template count<dim>();
         for (int i=0; i < numVerticesLocal; ++ i) {
-            int globI = this->vertexMapper_().map(elem, i, dim);
+            int globI = this->vertexMapper_().map(element, i, dim);
 
             // update the right hand side
             this->residual_[globI] += this->model_().localJacobian().residual(i);
@@ -322,7 +322,7 @@ private:
 
                 // update the jacobian matrix
                 for (int j = 0; j < numVerticesLocal; ++ j) {
-                    int globJ = this->vertexMapper_().map(elem, j, dim);
+                    int globJ = this->vertexMapper_().map(element, j, dim);
                     (*this->matrix_)[globI][globJ] +=
                         this->model_().localJacobian().mat(i,j);
                 }
@@ -332,13 +332,13 @@ private:
 
     // "assemble" a green element. green elements only get the
     // residual updated, but the jacobian is left alone...
-    void assembleGreenElement_(const Element &elem)
+    void assembleGreenElement_(const Element &element)
     {
-        this->model_().localResidual().eval(elem);
+        this->model_().localResidual().eval(element);
 
-        int numVerticesLocal = elem.template count<dim>();
+        int numVerticesLocal = element.template count<dim>();
         for (int i = 0; i < numVerticesLocal; ++ i) {
-            int globI = this->vertexMapper_().map(elem, i, dim);
+            int globI = this->vertexMapper_().map(element, i, dim);
 
             // update the right hand side
             this->residual_[globI] += this->model_().localResidual().residual(i);
@@ -348,11 +348,11 @@ private:
     }
 
     // "assemble" a ghost element
-    void assembleGhostElement_(const Element &elem)
+    void assembleGhostElement_(const Element &element)
     {
-        int numVerticesLocal = elem.template count<dim>();
+        int numVerticesLocal = element.template count<dim>();
         for (int i=0; i < numVerticesLocal; ++i) {
-            const VertexPointer vp = elem.template subEntity<dim>(i);
+            const VertexPointer vp = element.template subEntity<dim>(i);
 
             if (vp->partitionType() == Dune::InteriorEntity ||
                 vp->partitionType() == Dune::BorderEntity)

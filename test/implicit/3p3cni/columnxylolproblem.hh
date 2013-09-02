@@ -239,7 +239,7 @@ public:
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvGeomtry,
-                 const Intersection &is,
+                 const Intersection &intersection,
                  const int scvIdx,
                  int boundaryFaceIdx) const
     {
@@ -249,7 +249,7 @@ public:
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);
         else 
-            globalPos = is.geometry().center();
+            globalPos = intersection.geometry().center();
         
         // negative values for injection
         if (globalPos[1] > 1.2 - eps_)

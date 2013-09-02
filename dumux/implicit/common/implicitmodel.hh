@@ -789,13 +789,13 @@ public:
      * \brief Returns true if the control volume touches
      *        the grid's boundary.
      *
-     * \param elem A DUNE Codim<0> entity coinciding with the control
+     * \param element A DUNE Codim<0> entity coinciding with the control
      *             volume.
      */
-    bool onBoundary(const Element &elem) const
+    bool onBoundary(const Element &element) const
     {
         if (!isBox)
-            return onBoundary(elementMapper().map(elem));
+            return onBoundary(elementMapper().map(element));
         else
             DUNE_THROW(Dune::InvalidStateException,
                        "requested for box model");

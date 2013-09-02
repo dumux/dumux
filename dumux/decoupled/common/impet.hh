@@ -195,10 +195,10 @@ public:
 
     //! Constructs an IMPET object
     /**
-     * \param prob Problem
+     * \param problem Problem
      */
-    IMPET(Problem& prob) :
-        problem_(prob)
+    IMPET(Problem& problem) :
+        problem_(problem)
     {
         cFLFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
         iterFlag_ = GET_PARAM_FROM_GROUP(TypeTag, int, Impet, IterationFlag);
