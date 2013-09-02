@@ -45,11 +45,24 @@ add_test(test_forchheimer2p
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_forchheimer2p.input
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/obstacle_24x16.dgf)
 
+add_executable("test_boxmpnckinetic" EXCLUDE_FROM_ALL test_boxmpnckinetic.cc)
+add_test(test_boxmpnckinetic
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/evaporationatmosphere-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/evaporationatmosphere-00002.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_boxmpnckinetic
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_boxmpnckinetic.input
+  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/interfacedomain.dgf
+  -TimeManager.TEnd 1e-2
+  -TimeManager.DtInitial 1e-2)
+
 set(NORMALTESTS
   test_boxmpnc
   test_ccmpnc
   test_forchheimer1p
-  test_forchheimer2p)
+  test_forchheimer2p
+  test_boxmpnckinetic)
 set(ALLTESTS ${NORMALTESTS})
 
 # We do not want want to build the tests during make all,

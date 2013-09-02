@@ -125,7 +125,7 @@ heatIntoSolid = 0  #
 #Define constants: tabulation etc
 #############################################################
 [Constants]
-outputName =  test
+outputName =  evaporationatmosphere
   
 
 nRestart		= 100  	 	# after so many timesteps a restart file should be written
