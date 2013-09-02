@@ -39,7 +39,6 @@ namespace Dumux
 namespace Properties
 {
 NEW_PROP_TAG(SpatialParams);
-NEW_PROP_TAG(FVElementGeometry);
 }
 
 
