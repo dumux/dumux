@@ -59,6 +59,7 @@ namespace Dumux
             typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
             typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
             typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+            typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
 
             typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
             typedef typename GridView::template Codim<0>::Entity Element;
@@ -257,9 +258,17 @@ namespace Dumux
                 const VolumeVariables &volVarsI = elemVolVars[face().i];
                 const VolumeVariables &volVarsJ = elemVolVars[face().j];
 
-                // Effective diffusion coefficient in the porous medium
-                diffCoeffPM_ = effPorosity_ * harmonicMean(volVarsI.tortuosity() * volVarsI.diffCoeff(),
-                                                            volVarsJ.tortuosity() * volVarsJ.diffCoeff());
+                const Scalar diffCoeffI =
+                    EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                                    /*sat=*/1.0,
+                                                                    volVarsI.diffCoeff());
+
+                const Scalar diffCoeffJ =
+                    EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                    /*sat=*/1.0,
+                                                                    volVarsJ.diffCoeff());
+
+                diffCoeffPM_ = harmonicMean(diffCoeffI, diffCoeffJ);
             }
 
             /*!

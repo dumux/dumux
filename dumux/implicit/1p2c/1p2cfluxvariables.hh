@@ -437,7 +437,7 @@ protected:
         const VolumeVariables &volVarsJ = elemVolVars[face().j];
 
         const Scalar diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
-        															 /*sat=*/1.0,
+                                                                     /*sat=*/1.0,
                                                                      volVarsI.diffCoeff());
 
         const Scalar diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),

@@ -41,6 +41,7 @@
 #include "el1p2celementvolumevariables.hh"
 #include "el1p2cvolumevariables.hh"
 #include "el1p2cindices.hh"
+#include <dumux/material/fluidmatrixinteractions/2p/diffusivitymillingtonquirk.hh>
 
 
 namespace Dumux
@@ -101,6 +102,14 @@ SET_BOOL_PROP(BoxElasticOnePTwoC, ProblemEnableGravity, true);
 
 // enable gravity by default
 SET_BOOL_PROP(BoxElasticOnePTwoC, ImplicitWithStabilization, true);
+
+//! The model after Millington (1961) is used for the effective diffusivity
+SET_PROP(BoxElasticOnePTwoC, EffectiveDiffusivityModel)
+{ private :
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ public:
+    typedef DiffusivityMillingtonQuirk<Scalar> type;
+};
 
 // write the stress and displacement output according to rock mechanics sign convention (compressive stresses > 0)
 SET_BOOL_PROP(BoxElasticOnePTwoC, VtkRockMechanicsSignConvention, false);
