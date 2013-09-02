@@ -50,7 +50,7 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
     enum { sPhaseIdx = FluidSystem::sPhaseIdx };
-    enum { numEnergyEqs     = Indices::NumPrimaryEnergyVars};
+    enum { numEnergyEqs     = Indices::numPrimaryEnergyVars};
 
     /*!
      * \brief The fluid state which is used by the volume variables to

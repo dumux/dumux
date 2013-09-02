@@ -45,7 +45,7 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyTra
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum {dim = GridView::dimension};
-    enum {numEnergyEqs             = Indices::NumPrimaryEnergyVars};
+    enum {numEnergyEqs             = Indices::numPrimaryEnergyVars};
 
     typedef Dune::FieldVector<CoordScalar, dim>  DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

@@ -121,7 +121,7 @@ class TutorialProblemDecoupled: public IMPESProblem2P<TypeTag> /*@\label{tutoria
         nPhaseIdx = Indices::nPhaseIdx,
         pwIdx = Indices::pwIdx,
         swIdx = Indices::swIdx,
-        pressEqIdx = Indices::pressEqIdx,
+        pressEqIdx = Indices::pressureEqIdx,
         satEqIdx = Indices::satEqIdx
     };
 

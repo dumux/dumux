@@ -223,11 +223,11 @@ class EvaporationAtmosphereProblem
     enum { dimWorld = GridView::dimensionworld};
     enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum { numComponents   = GET_PROP_VALUE(TypeTag, NumComponents)};
-    enum { S0Idx = Indices::S0Idx};
+    enum { S0Idx = Indices::s0Idx};
     enum { p0Idx = Indices::p0Idx};
     enum { conti00EqIdx    = Indices::conti0EqIdx };
     enum { energyEq0Idx    = Indices::energyEqIdx};
-    enum { numEnergyEqs    = Indices::NumPrimaryEnergyVars};
+    enum { numEnergyEqs    = Indices::numPrimaryEnergyVars};
     enum { wPhaseIdx       = FluidSystem::wPhaseIdx};
     enum { nPhaseIdx       = FluidSystem::nPhaseIdx};
     enum { wCompIdx        = FluidSystem::H2OIdx};

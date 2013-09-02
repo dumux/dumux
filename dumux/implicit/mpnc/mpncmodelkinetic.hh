@@ -70,7 +70,7 @@ class MPNCModelKinetic : public MPNCModel<TypeTag>
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq)};
-    enum { numEnergyEqs = Indices::NumPrimaryEnergyVars};
+    enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
     enum { dimWorld = GridView::dimensionworld};
     enum { dim = GridView::dimension};
 

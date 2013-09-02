@@ -92,15 +92,12 @@ public:
         const unsigned int numGlobalVerts = problem.gridView().size(dim);
 
         // check whether a vertex was already visited by true / false vector
-        bool isVisited[numGlobalVerts] ;
-
-        // loop all vertices of the main: initialize
-        for (int idx=0; idx < numGlobalVerts; idx++)
-            isVisited[idx] = false ;
+        std::vector<bool> isVisited(numGlobalVerts);
+        std::fill(isVisited.begin(), isVisited.end(), false);
 
         // Looping over all elements of the domain
         ElementIterator eEndIt = problem.gridView().template end<0>();
-        for (ElementIterator eIt = problem.gridView().template begin<0>() ; eIt not_eq eEndIt; ++eIt)
+        for (ElementIterator eIt = problem.gridView().template begin<0>() ; eIt != eEndIt; ++eIt)
         {
             // updating the volume variables
             fvGeometry.update(problem.gridView(), *eIt);
@@ -109,8 +106,8 @@ public:
             // number of scv
             const unsigned int numScv = fvGeometry.numScv;
 
-            for (int scvIdx=0; scvIdx < numScv; ++scvIdx) {
-
+            for (int scvIdx=0; scvIdx < numScv; ++scvIdx)
+            {
                 // find some global identification
                 const unsigned int globalIdx = problem.vertexMapper().map(*eIt, scvIdx, dim);
 
@@ -189,7 +186,7 @@ public:
                 }
             }
         }
-    return ;
+        return ;
     }
 
     /*!
@@ -199,13 +196,10 @@ public:
                          const GlobalPosition & pointOne,
                          const GlobalPosition & pointTwo) const
     {
-        if (    pointOne[0] - globalPosCurrent[0] <= 1e-5
+        return (    pointOne[0] - globalPosCurrent[0] <= 1e-5
             and pointOne[1] - globalPosCurrent[1] <= 1e-5
             and globalPosCurrent[0] - pointTwo[0] <= 1e-5
-            and globalPosCurrent[1] - pointTwo[1] <= 1e-5 )
-            return true;
-
-        return false;
+            and globalPosCurrent[1] - pointTwo[1] <= 1e-5 );
     }
 };
 
