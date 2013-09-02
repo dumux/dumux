@@ -6,9 +6,7 @@ add_test(test_box3p
   ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pbox-00009.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_box3p
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_box3p.input
-  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/infiltration3p.dgf
-  -TimeManager.TEnd 8.64e5
-  -TimeManager.DtInitial 8.64e4)
+  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/infiltration3p.dgf)
 
 add_executable("test_cc3p" EXCLUDE_FROM_ALL test_cc3p.cc)
 add_test(test_cc3p
@@ -18,9 +16,7 @@ add_test(test_cc3p
   ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pcc-00009.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_cc3p
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_cc3p.input
-  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/infiltration3p.dgf
-  -TimeManager.TEnd 8.64e5
-  -TimeManager.DtInitial 8.64e4)
+  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/infiltration3p.dgf)
 
 
 set(NORMALTESTS
