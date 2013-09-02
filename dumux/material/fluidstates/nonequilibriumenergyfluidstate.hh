@@ -31,12 +31,19 @@
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/material/fluidstates/nonequilibriumfluidstate.hh>
+#include <dumux/common/propertysystem.hh>
 
 #include <cmath>
 #include <algorithm>
 
 namespace Dumux
 {
+namespace Properties
+{
+NEW_PROP_TAG(Scalar);
+NEW_PROP_TAG(FluidSystem);
+}
+
 /*!
  * \brief Represents all relevant thermodynamic quantities of a
  *        multi-phase, multi-component fluid system
