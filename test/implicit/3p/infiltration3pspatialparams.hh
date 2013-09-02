@@ -26,8 +26,8 @@
  *
  * \brief Definition of the spatial parameters for the kuevette problem.
  */
-#ifndef DUMUX_NAPLINFILTRATION_SPATIAL_PARAMS_HH
-#define DUMUX_NAPLINFILTRATION_SPATIAL_PARAMS_HH
+#ifndef DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
+#define DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 
 #include <dumux/implicit/3p3c/3p3cindices.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
@@ -39,18 +39,18 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class InfiltrationSpatialParams;
+class InfiltrationThreePSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(InfiltrationSpatialParams);
+NEW_TYPE_TAG(InfiltrationThreePSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InfiltrationSpatialParams, SpatialParams, Dumux::InfiltrationSpatialParams<TypeTag>);
+SET_TYPE_PROP(InfiltrationThreePSpatialParams, SpatialParams, Dumux::InfiltrationThreePSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(InfiltrationSpatialParams, MaterialLaw)
+SET_PROP(InfiltrationThreePSpatialParams, MaterialLaw)
 {
  private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -66,7 +66,7 @@ SET_PROP(InfiltrationSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for the infiltration problem
  */
 template<class TypeTag>
-class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
+class InfiltrationThreePSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     typedef ImplicitSpatialParams<TypeTag> ParentType;
 
@@ -94,7 +94,7 @@ public:
      *
      * \param gv The grid view
      */
-    InfiltrationSpatialParams(const GridView &gv)
+    InfiltrationThreePSpatialParams(const GridView &gv)
         : ParentType(gv)
     {
         // intrinsic permeabilities
@@ -120,7 +120,7 @@ public:
         materialParams_.setRhoBulk(1500.);
     }
 
-    ~InfiltrationSpatialParams()
+    ~InfiltrationThreePSpatialParams()
     {}
 
     /*!

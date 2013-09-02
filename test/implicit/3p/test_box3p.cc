@@ -29,7 +29,7 @@
  * \brief application, using the 3p3c or 3p box model
  */
 #include "config.h"
-#include "naplinfiltrationproblem3p.hh"
+#include "infiltration3pproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -60,7 +60,7 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(InfiltrationProblem) ProblemTypeTag;
+    typedef TTAG(InfiltrationThreePBoxProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 
