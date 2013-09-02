@@ -467,7 +467,7 @@ private:
 
 }
 #else
-DUNE_THROW(Dune::NotImplemented, "no Pardiso library available, reconfigure with correct --with-pardiso options");
+#warning "no Pardiso library available, reconfigure with correct --with-pardiso options"
 #endif // HAVE_PARDISO
 
 #endif // PARDISO_BACKEND

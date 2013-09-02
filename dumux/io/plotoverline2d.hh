@@ -24,6 +24,7 @@ namespace Properties
     NEW_PROP_TAG(Problem);
     NEW_PROP_TAG(GridView);
     NEW_PROP_TAG(DofMapper);
+    NEW_PROP_TAG(FluidSystem);
     NEW_PROP_TAG(ElementSolutionVector);
     NEW_PROP_TAG(SolutionVector);
     NEW_PROP_TAG(FVElementGeometry);
