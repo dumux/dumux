@@ -23,11 +23,11 @@
 #ifndef DUMUX_STOKES2CNITESTPROBLEM_HH
 #define DUMUX_STOKES2CNITESTPROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#endif
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+
+#if HAVE_PARDISO
+#include <dumux/linear/pardisobackend.hh>
+#endif
 
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/freeflow/stokes2cni/stokes2cnimodel.hh>
@@ -52,17 +52,21 @@ SET_TYPE_PROP(Stokes2cniTestProblem, Grid, Dune::SGrid<2,2>);
 SET_TYPE_PROP(Stokes2cniTestProblem, Problem, Stokes2cniTestProblem<TypeTag>);
 
 //! Select the fluid system
-SET_PROP(BoxStokes2cni, FluidSystem)
+SET_PROP(Stokes2cniTestProblem, FluidSystem)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dumux::FluidSystems::H2OAir<Scalar> type;
 };
 
 //! Scalar is set to type long double for higher accuracy
-//SET_TYPE_PROP(BoxStokes, Scalar, long double);
+//SET_TYPE_PROP(Stokes2cniTestProblem, Scalar, long double);
+
+#if HAVE_PARDISO
+SET_TYPE_PROP(Stokes2cniTestProblem, LinearSolver, PardisoBackend<TypeTag>);
+#endif
 
 //! a stabilization factor. Set to zero for no stabilization
-SET_SCALAR_PROP(BoxStokes2cni, StokesStabilizationAlpha, -1.0);
+SET_SCALAR_PROP(Stokes2cniTestProblem, StokesStabilizationAlpha, -1.0);
 
 // Enable gravity
 SET_BOOL_PROP(Stokes2cniTestProblem, ProblemEnableGravity, true);
