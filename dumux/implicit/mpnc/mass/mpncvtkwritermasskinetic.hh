@@ -102,7 +102,7 @@ public:
         int numLocalVertices = element.geometry().corners();
         for (int localVertexIdx = 0; localVertexIdx< numLocalVertices; ++localVertexIdx) {
             const unsigned int globalIdx = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
-            const VolumeVariables &volVars = elementVolVars[localVertexIdx];
+            const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
             for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 for (unsigned  int compIdx = 0; compIdx < numComponents; ++ compIdx) {
