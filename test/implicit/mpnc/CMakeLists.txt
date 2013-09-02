@@ -56,6 +56,7 @@ add_test(test_boxmpnckinetic
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/interfacedomain.dgf
   -TimeManager.TEnd 1e-2
   -TimeManager.DtInitial 1e-2)
+add_dune_alugrid_flags(test_boxmpnckinetic)
 
 set(NORMALTESTS
   test_boxmpnc
