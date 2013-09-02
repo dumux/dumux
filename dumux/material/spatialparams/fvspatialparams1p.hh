@@ -38,7 +38,8 @@ namespace Dumux
 // forward declation of property tags
 namespace Properties
 {
-NEW_PROP_TAG( SpatialParams);
+NEW_PROP_TAG(SpatialParams);
+NEW_PROP_TAG(FVElementGeometry);
 }
 
 
@@ -199,9 +200,7 @@ public:
     }
 
     // PRELIMINARY FUNCTION! DEPRECATED WHEN CREATED
-    double tortuosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
+    double tortuosity(const Element &element) const
     {
             return -1;
     }
