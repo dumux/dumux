@@ -2,7 +2,7 @@ add_executable("test_box3p" EXCLUDE_FROM_ALL test_box3p.cc)
 add_test(test_box3p
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
-  ${CMAKE_SOURCE_DIR}/test/references/infiltrationbox-reference.vtu
+  ${CMAKE_SOURCE_DIR}/test/references/infiltration3pbox-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pbox-00009.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_box3p
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_box3p.input
@@ -12,7 +12,7 @@ add_executable("test_cc3p" EXCLUDE_FROM_ALL test_cc3p.cc)
 add_test(test_cc3p
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
-  ${CMAKE_SOURCE_DIR}/test/references/infiltrationcc-reference.vtu
+  ${CMAKE_SOURCE_DIR}/test/references/infiltration3pcc-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pcc-00009.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_cc3p
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_cc3p.input
