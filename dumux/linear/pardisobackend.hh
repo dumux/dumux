@@ -157,7 +157,6 @@ public:
             delete a_;
             delete ia_;
             delete ja_;
-            delete pt_;
         }
     }
 
