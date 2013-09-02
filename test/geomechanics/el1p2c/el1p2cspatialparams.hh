@@ -214,20 +214,6 @@ public:
         return Dune::FieldVector<Scalar,dim>(0);
     }
 
-    /*!
-     * \brief Define the tortuosity \f$[-]\f$.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     */
-    double tortuosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
-    {
-        return 1;
-    }
-
 private:
     Dune::FieldMatrix<Scalar,dim,dim> K_;
     Scalar layerBottom_;

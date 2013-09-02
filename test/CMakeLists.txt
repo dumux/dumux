@@ -1,5 +1,6 @@
 add_subdirectory("common")
 add_subdirectory("decoupled")
 add_subdirectory("freeflow")
+add_subdirectory("geomechanics")
 add_subdirectory("implicit")
 add_subdirectory("material")

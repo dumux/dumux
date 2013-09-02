@@ -13,7 +13,7 @@ DtInitial = 10 # [s]
 TEnd = 1e4 # [s]
 
 [Grid]
-File = grids/el1p2c.dgf 
+File = grids/test_el1p2c.dgf 
 
 ###############################################################
 # Simulation restart

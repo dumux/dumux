@@ -24,10 +24,6 @@
 #ifndef DUMUX_ELASTICMATRIXPROBLEM_HH
 #define DUMUX_ELASTICMATRIXPROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#endif
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/geomechanics/elastic/elasticmodel.hh>
@@ -48,12 +44,7 @@ NEW_TYPE_TAG(ElasticMatrixProblem, INHERITS_FROM(BoxElastic,ElSpatialParams));
 // Set the grid type
 SET_PROP(ElasticMatrixProblem, Grid)
 {
-#if HAVE_UG
-    typedef Dune::UGGrid<3> type;
-#else
-    typedef Dune::SGrid<3, 3> type;
-    //typedef Dune::YaspGrid<3> type;
-#endif
+    typedef Dune::YaspGrid<3> type;
 };
 
 // Set the problem property
