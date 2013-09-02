@@ -20,5 +20,5 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   PROPERTY TEST_INCLUDE_FILE ${CMAKE_CURRENT_BINARY_DIR}/BuildTests.cmake)
 
 foreach(_exe ${ALLTESTS})
-  target_link_libraries(${_exe} ${DUNE_LIBS})
+  target_link_libraries(${_exe} ${DUNE_LIBS}  ${MPI_LIBRARIES})
 endforeach(_exe ${ALLTESTS})
