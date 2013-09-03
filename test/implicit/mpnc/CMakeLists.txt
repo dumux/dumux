@@ -57,6 +57,7 @@ add_test(test_boxmpnckinetic
   -TimeManager.TEnd 1e-2
   -TimeManager.DtInitial 1e-2)
 add_dune_alugrid_flags(test_boxmpnckinetic)
+add_dune_ug_flags(test_boxmpnckinetic)
 
 set(NORMALTESTS
   test_boxmpnc
@@ -74,5 +75,5 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   PROPERTY TEST_INCLUDE_FILE ${CMAKE_CURRENT_BINARY_DIR}/BuildTests.cmake)
 
 foreach(_exe ${ALLTESTS})
-  target_link_libraries(${_exe} ${DUNE_LIBS})
+  target_link_libraries(${_exe} ${DUNE_LIBS} ${MPI_LIBRARIES})
 endforeach(_exe ${ALLTESTS})
