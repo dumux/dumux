@@ -32,7 +32,7 @@
 #else
 #include <dune/common/mpihelper.hh>
 #endif
-#include <dune/grid/common/gridinfo.hh>
+#include <dune/grid/utility/structuredgridfactory.hh>
 
 #include "test_diffusionproblem.hh"
 #include "resultevaluation.hh"
@@ -74,11 +74,15 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        Dune::FieldVector<int,dim> N(1);
-        GlobalPosition L(0.0);
-        GlobalPosition H(1.0);
-        Grid grid(N,L,H);
-        grid.globalRefine(numRefine);
+        Dune::array<unsigned int, dim> cellRes;
+        cellRes.fill(1);
+        GlobalPosition lowerLeft(0.0);
+        GlobalPosition upperRight(1.0);
+        static Dune::shared_ptr<Grid> grid 
+            = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft,
+                                                                upperRight,
+                                                                cellRes);
+        grid->globalRefine(numRefine);
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
@@ -87,7 +91,7 @@ int main(int argc, char** argv)
         bool consecutiveNumbering = true;
 
         typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), Problem) FVProblem;
-        FVProblem fvProblem(grid.leafView(), delta);
+        FVProblem fvProblem(grid->leafView(), delta);
         fvProblem.setName("fvdiffusion");
         timer.reset();
         fvProblem.init();
@@ -95,27 +99,27 @@ int main(int argc, char** argv)
         double fvTime = timer.elapsed();
         fvProblem.writeOutput();
         Dumux::ResultEvaluation fvResult;
-        fvResult.evaluate(grid.leafView(), fvProblem, consecutiveNumbering);
+        fvResult.evaluate(grid->leafView(), fvProblem, consecutiveNumbering);
 
         typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), Problem) MPFAOProblem;
-        MPFAOProblem mpfaProblem(grid.leafView(), delta);
+        MPFAOProblem mpfaProblem(grid->leafView(), delta);
         mpfaProblem.setName("fvmpfaodiffusion");
         timer.reset();
         mpfaProblem.init();
         double mpfaTime = timer.elapsed();
         mpfaProblem.writeOutput();
         Dumux::ResultEvaluation mpfaResult;
-        mpfaResult.evaluate(grid.leafView(), mpfaProblem, consecutiveNumbering);
+        mpfaResult.evaluate(grid->leafView(), mpfaProblem, consecutiveNumbering);
 
         typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), Problem) MimeticProblem;
-        MimeticProblem mimeticProblem(grid.leafView(), delta);
+        MimeticProblem mimeticProblem(grid->leafView(), delta);
         mimeticProblem.setName("mimeticdiffusion");
         timer.reset();
         mimeticProblem.init();
         double mimeticTime = timer.elapsed();
         mimeticProblem.writeOutput();
         Dumux::ResultEvaluation mimeticResult;
-        mimeticResult.evaluate(grid.leafView(), mimeticProblem, consecutiveNumbering);
+        mimeticResult.evaluate(grid->leafView(), mimeticProblem, consecutiveNumbering);
 
         std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
         std::cout.precision(2);
