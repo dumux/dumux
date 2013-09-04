@@ -156,14 +156,13 @@ public:
 
         ParentType::update();
 
-        calculateVelocity();
+            calculateVelocity();
 
         return;
     }
 
     void calculateVelocity()
     {
-        if (dim == 2)
             velocity_.calculateVelocity();
     }
 
@@ -171,7 +170,7 @@ public:
     {
         ParentType::updateVelocity();
 
-        calculateVelocity();
+            calculateVelocity();
     }
 
     /*! \brief Adds pressure output to the output file
@@ -183,7 +182,8 @@ public:
     void addOutputVtkFields(MultiWriter &writer)
     {
         ParentType::addOutputVtkFields(writer);
-        velocity_.addOutputVtkFields(writer);
+
+            velocity_.addOutputVtkFields(writer);
     }
 
     //! Constructs a FVPressure2PAdaptive object
@@ -243,6 +243,12 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
     if (elementI->level() == elementJ->level() || dim == 3)
     {
         ParentType::getFlux(entry, intersection, cellData, first);
+
+        //add the entry only once in case the VisitFacesOnlyOnce option is enabled!!!
+        if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && elementI->level() < elementJ->level())
+        {
+            entry = 0.;
+        }
     }
     // hanging node situation: neighbor has higher level
     else if (elementJ->level() == elementI->level() + 1)

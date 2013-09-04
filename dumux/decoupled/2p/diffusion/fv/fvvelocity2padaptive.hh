@@ -131,10 +131,7 @@ public:
      */
     bool calculateVelocityInTransport()
     {
-        if (dim == 2)
             return false;
-        else
-            return true;
     }
 
 private:
@@ -443,7 +440,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         cellData.fluxData().addVelocity(wPhaseIdx, isIndexI, velocityW);
         cellData.fluxData().addVelocity(nPhaseIdx, isIndexI, velocityNw);
     }
-    else if (elementI->level() != elementJ->level() && dim == 3)
+    else if (elementI->level() > elementJ->level() && dim == 3)
     {
         ElementPointer elementI = intersection.inside();
         ElementPointer elementJ = intersection.outside();
@@ -584,23 +581,6 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         //store velocities
         Scalar faceArea = intersection.geometry().volume();
 
-        if (elementI->level() < elementJ->level())
-        {
-            cellDataJ.fluxData().setVelocity(wPhaseIdx, isIndexJ, velocityW);
-            cellDataJ.fluxData().setVelocity(nPhaseIdx, isIndexJ, velocityNw);
-            cellDataJ.fluxData().setVelocityMarker(isIndexJ);
-
-            Scalar weightingFactor = faceArea / elementI->template subEntity<1>(isIndexI)->geometry().volume();
-
-            velocityW *= weightingFactor;
-            velocityNw *= weightingFactor;
-
-            cellData.fluxData().addVelocity(wPhaseIdx, isIndexI, velocityW);
-            cellData.fluxData().addVelocity(nPhaseIdx, isIndexI, velocityNw);
-            cellData.fluxData().setVelocityMarker(isIndexI);
-        }
-        else if (elementJ->level() < elementI->level())
-        {
             cellData.fluxData().setVelocity(wPhaseIdx, isIndexI, velocityW);
             cellData.fluxData().setVelocity(nPhaseIdx, isIndexI, velocityNw);
             cellData.fluxData().setVelocityMarker(isIndexI);
@@ -613,8 +593,6 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
             cellDataJ.fluxData().addVelocity(wPhaseIdx, isIndexJ, velocityW);
             cellDataJ.fluxData().addVelocity(nPhaseIdx, isIndexJ, velocityNw);
             cellDataJ.fluxData().setVelocityMarker(isIndexJ);
-        }
-
     }
 
     return;
