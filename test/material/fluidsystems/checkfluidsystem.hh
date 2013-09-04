@@ -124,7 +124,11 @@ public:
 
     Scalar pressure(int phaseIdx) const
     {
-        assert(allowPressure_);
+        if (!allowPressure_)
+        {
+            DUNE_THROW(Dune::InvalidStateException, 
+                       "pressure called but not allowed\n\n");
+        }
         assert(restrictPhaseIdx_ < 0 || restrictPhaseIdx_ == phaseIdx);
         return BaseFluidState::pressure(phaseIdx);
     }
@@ -235,8 +239,7 @@ std::string checkFluidState(const BaseFluidState &fs)
 
     std::string collectedExceptions;
     // make sure the fluid state provides all mandatory methods
-    Scalar
-    DUNE_UNUSED val;
+    Scalar DUNE_UNUSED val;
 
     try
     {
@@ -445,8 +448,7 @@ void checkFluidSystem()
 
     // some value to make sure the return values of the fluid system
     // are convertible to scalars
-    Scalar
-    DUNE_UNUSED val;
+    Scalar DUNE_UNUSED val;
 
     // actually check the fluid system API
     FluidSystem::init();
@@ -459,8 +461,9 @@ void checkFluidSystem()
         try
         {
             val = FluidSystem::density(fs, paramCache, phaseIdx);
-        } catch (...)
+        } catch (Dune::Exception e)
         {
+            std::cout << "\ndensity calculation throws exception:\n" << e.what();
         };
 
         fs.allowPressure(true);
