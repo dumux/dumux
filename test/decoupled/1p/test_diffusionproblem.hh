@@ -59,7 +59,8 @@ NEW_TYPE_TAG(FVVelocity2PTestProblem, INHERITS_FROM(FVPressureTwoP, TestDiffusio
 SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
 // Set the grid type
 SET_PROP(FVVelocity2PTestProblem, Grid)
-{//    typedef Dune::YaspGrid<2> type;
+{
+//     typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
 
@@ -96,7 +97,8 @@ SET_INT_PROP(FVMPFAOVelocity2PTestProblem, LinearSolverPreconditionerIterations,
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
 // Set the grid type
 SET_PROP(FVMPFAOVelocity2PTestProblem, Grid)
-{//    typedef Dune::YaspGrid<2> type;
+{
+//     typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
 
@@ -130,7 +132,7 @@ SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem
 // Set the grid type
 SET_PROP(MimeticPressure2PTestProblem, Grid)
 {
-//        typedef Dune::YaspGrid<2> type;
+//     typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
 

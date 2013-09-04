@@ -71,23 +71,12 @@ namespace Dumux
 template<class Scalar, class GridView>
 class CROperatorAssembler
 {
-    // mapper: one data element per vertex
     template<int dim>
-    struct CRLayout
+    struct FaceLayout
     {
         bool contains (Dune::GeometryType gt)
         {
             return gt.dim() == dim-1;
-        }
-    };
-
-    // mapper: one data element in every entity
-    template<int dim>
-    struct AllLayout
-    {
-        bool contains (Dune::GeometryType gt)
-        {
-            return true;
         }
     };
 
@@ -104,77 +93,63 @@ class CROperatorAssembler
     typedef typename MatrixType::ColIterator coliterator;
     typedef Dune::array<BoundaryConditions::Flags,1> BCBlockType;     // componentwise boundary conditions
     typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,CRLayout> EM;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,AllLayout> AM;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,FaceLayout> FaceMapper;
 
     enum
     {
         pressEqIdx = 0
     };
 
-    // return number of rows/columns
-    int size () const
-    {
-        return faceMapper_.size();
-    }
-
     //! a function to approximately compute the number of nonzeros
-    int nnz (const IS& is)
+    int nnz()
     {
-        return (4*dim - 1)*is.size(1);
+        return (4*dim - 1)*size_;
     }
 
 public:
     typedef MatrixType RepresentationType;
 
     CROperatorAssembler (const GridView& gridview)
-    : gridView_(gridview), is_(gridView_.indexSet()), faceMapper_(gridView_), allMapper_(gridView_),
-      A_(size(), size(), nnz(is_), RepresentationType::random)
+    : gridView_(gridview), faceMapper_(gridView_), size_(faceMapper_.size()),
+      A_(size_, size_, nnz(), RepresentationType::random)
     {}
 
     //!Initialize the global matrix of the system of equations to solve
     void initializeMatrix()
     {
         faceMapper_.update();
-        allMapper_.update();
 
-        A_.setSize(size(), size(),  nnz(is_));
+        size_ = faceMapper_.size();
+        A_.setSize(size_, size_,  nnz());
 
-        assert(nnz(is_) != 0);
+        assert(nnz() != 0);
 
         // set size of all rows to zero
-        for (unsigned int i = 0; i < is_.size(dim); i++)
+        for (unsigned int i = 0; i < size_; i++)
             A_.setrowsize(i,0);
 
         // build needs a flag for all entities of all codims
-        std::vector<bool> visited(allMapper_.size());
-        for (int i = 0; i < allMapper_.size(); i++)
-            visited[i] = false;
+        std::vector<bool> visited(size_, false);
 
         // LOOP 1 : Compute row sizes
         Iterator eEndIt = gridView_.template end<0>();
         for (Iterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
-            Dune::GeometryType gt = eIt->geometry().type();
-            const typename Dune::GenericReferenceElementContainer<Scalar,dim>::value_type&
-                refelem = Dune::GenericReferenceElements<Scalar,dim>::general(gt);
+            int numFaces = eIt->template count<1>();
 
-            // faces, c=1
-            for (int i = 0; i < refelem.size(1); i++)
+            for (int i = 0; i < numFaces; i++)
             {
-                int index = allMapper_.map(*eIt, i,1);
-                int alpha = faceMapper_.map(*eIt, i,1);
-                //std::cout << "index = " << index << ", alpha = " << alpha << std::endl;
+                int index = faceMapper_.map(*eIt, i,1);
+
                 if (!visited[index])
                 {
-                    A_.incrementrowsize(alpha);
+                    A_.incrementrowsize(index);
                     visited[index] = true;
-                    // std::cout << "increment row " << alpha << std::endl;
+                    // std::cout << "increment row " << index << std::endl;
                 }
-                for (int k = 0; k < refelem.size(1)-1; k++) {
-                    A_.incrementrowsize(alpha);
-                    // std::cout << "increment row " << alpha << std::endl;
-                }
+                A_.incrementrowsize(index, numFaces - 1);
+                // std::cout << "increment row " << index 
+                // << " by " << numFaces - 1 << std::endl;
             }
         }
 
@@ -182,32 +157,26 @@ public:
         A_.endrowsizes();
 
         // clear the flags for the next round, actually that is not necessary because addindex takes care of this
-        for (int i = 0; i < allMapper_.size(); i++)
-            visited[i] = false;
+        visited.assign(size_, false);
 
         // LOOP 2 : insert the nonzeros
         for (Iterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
         {
-            Dune::GeometryType gt = eIt->geometry().type();
-            const typename Dune::GenericReferenceElementContainer<Scalar,dim>::value_type&
-                refelem = Dune::GenericReferenceElements<Scalar,dim>::general(gt);
-            //           std::cout << "ELEM " << GeometryName(gt) << std::endl;
+            int numFaces = eIt->template count<1>();
 
-            // faces, c=1
-            for (int i = 0; i < refelem.size(1); i++)
+            for (int i = 0; i < numFaces; i++)
             {
-                int index = allMapper_.map(*eIt, i, 1);
-                int alpha = faceMapper_.map(*eIt, i, 1);
-                if (!visited[index])
+                int indexI = faceMapper_.map(*eIt, i, 1);
+                if (!visited[indexI])
                 {
-                    A_.addindex(alpha,alpha);
-                    visited[index] = true;
+                    A_.addindex(indexI,indexI);
+                    visited[indexI] = true;
                 }
-                for (int k = 0; k < refelem.size(1); k++)
+                for (int k = 0; k < numFaces; k++)
                     if (k != i) {
-                        int beta = faceMapper_.map(*eIt, k, 1);
-                        A_.addindex(alpha, beta);
-                        //std::cout << "alpha = " << alpha << ", added beta = " << beta << std::endl;
+                        int indexJ = faceMapper_.map(*eIt, k, 1);
+                        A_.addindex(indexI, indexJ);
+                        //std::cout << "indexI = " << indexI << ", added indexJ = " << indexJ << std::endl;
                     }
             }
         }
@@ -341,10 +310,9 @@ public:
     }
 
 protected:
-    const GridView& gridView_;
-    const IS& is_;
-    EM faceMapper_;
-    AM allMapper_;
+    const GridView gridView_;
+    FaceMapper faceMapper_;
+    unsigned int size_;
     RepresentationType A_;
 };
 

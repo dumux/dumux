@@ -160,7 +160,7 @@ private:
         perm[1][1] = (globalPos[0]*globalPos[0] + delta_*globalPos[1]*globalPos[1])/rt;
     }
 
-    const GridView& gridView_;
+    const GridView gridView_;
     const IndexSet& indexSet_;
     MaterialLawParams materialLawParams_;
     std::vector<FieldMatrix> permeability_;

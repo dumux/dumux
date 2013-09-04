@@ -426,7 +426,7 @@ private:
 
 private:
     Problem& problem_;
-    const GridView& gridView_;
+    const GridView gridView_;
 
     Scalar density_[numPhases];
 };
