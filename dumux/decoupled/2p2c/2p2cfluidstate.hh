@@ -57,6 +57,7 @@ public:
 
     enum {  numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
             numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
 
 public:
     /*!
@@ -153,7 +154,7 @@ public:
      * Note that we assume thermodynamic equilibrium, so all fluids
      * and the rock matrix exhibit the same temperature.
      */
-    Scalar temperature(int phaseIdx) const
+    Scalar temperature(int phaseIdx = 0) const
     { return temperature_; };
 
     /*!
@@ -293,18 +294,19 @@ public:
     //@}
     TwoPTwoCFluidState()
     { Valgrind::SetUndefined(*this); }
-private:
+
+protected:
 //    Scalar massConcentration_[numComponents];
     Scalar phasePressure_[numPhases];
     Scalar temperature_;
 
     Scalar sw_;
-    Scalar nu_[numPhases]; //phase mass fraction
+    PhaseVector nu_; //phase mass fraction
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
     Scalar massFraction_[numPhases][numComponents];
     Scalar moleFraction_[numPhases][numComponents];
-    Scalar equilRatio_[numPhases][numComponents];
+    Dune::FieldMatrix<Scalar, numPhases, numComponents> equilRatio_;
     Scalar averageMolarMass_[numPhases];
 };
 
