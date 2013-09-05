@@ -5,7 +5,7 @@ add_test(test_dec1p
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/test_1p-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_1p-00001.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test_1p
+  ${CMAKE_CURRENT_BINARY_DIR}/test_dec1p
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_1p.input)
 
 add_executable("test_diffusion" EXCLUDE_FROM_ALL test_diffusion.cc)
