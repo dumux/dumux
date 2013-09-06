@@ -34,7 +34,7 @@
 #include <dumux/material/components/unit.hh>
 
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/omethod/fvmpfaopressurepropertiessimple2p.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/omethod/fvmpfaopressureproperties2p.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressureproperties2p.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproblem2p.hh>
 #include <dumux/decoupled/common/fv/fvvelocity.hh>
@@ -60,12 +60,9 @@ SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<Type
 // Set the grid type
 SET_PROP(FVVelocity2PTestProblem, Grid)
 {
-//     typedef Dune::YaspGrid<2> type;
+    //    typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
-
-SET_INT_PROP(FVVelocity2PTestProblem, Formulation,
-        DecoupledTwoPCommonIndices::pGlobalSw);
 
 // Set the wetting phase
 SET_PROP(FVVelocity2PTestProblem, WettingPhase)
@@ -90,7 +87,7 @@ SET_BOOL_PROP(FVVelocity2PTestProblem, ProblemEnableGravity, false);
 
 
 // set the types for the MPFA-O FV method
-NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FVMPFAOPressurePropertiesTwoP, TestDiffusionSpatialParams));
+NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FVMPFAOPressureTwoP, TestDiffusionSpatialParams));
 //SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::SSORBiCGSTABBackend<TypeTag>);
 SET_INT_PROP(FVMPFAOVelocity2PTestProblem, LinearSolverPreconditionerIterations, 2);
@@ -98,12 +95,9 @@ SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem
 // Set the grid type
 SET_PROP(FVMPFAOVelocity2PTestProblem, Grid)
 {
-//     typedef Dune::YaspGrid<2> type;
+    //    typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
-
-SET_INT_PROP(FVMPFAOVelocity2PTestProblem, Formulation,
-        DecoupledTwoPCommonIndices::pGlobalSw);
 
 // Set the wetting phase
 SET_PROP(FVMPFAOVelocity2PTestProblem, WettingPhase)
@@ -129,15 +123,13 @@ SET_BOOL_PROP(FVMPFAOVelocity2PTestProblem, ProblemEnableGravity, false);
 // set the types for the mimetic FD method
 NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(MimeticPressureTwoP, TestDiffusionSpatialParams));
 SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
+
 // Set the grid type
 SET_PROP(MimeticPressure2PTestProblem, Grid)
 {
-//     typedef Dune::YaspGrid<2> type;
+//        typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
-
-SET_INT_PROP(MimeticPressure2PTestProblem, Formulation,
-        DecoupledTwoPCommonIndices::pGlobalSw);
 
 // Set the wetting phase
 SET_PROP(MimeticPressure2PTestProblem, WettingPhase)
@@ -191,7 +183,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
-        pGlobalIdx = Indices::pGlobalIdx,
+        pwIdx = Indices::pwIdx,
         swIdx = Indices::swIdx
     };
 
@@ -299,7 +291,7 @@ public:
     //! set dirichlet condition  (saturation [-])
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-            values[pGlobalIdx] = exact(globalPos);
+            values[pwIdx] = exact(globalPos);
             values[swIdx] = 1.0;
     }
 
