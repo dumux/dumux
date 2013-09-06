@@ -12,6 +12,16 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
     . el2p:    poroelasticity equations for one solid phase and two immiscible
                fluid phases.
 
+  - The MPNC model now allows to drop the assumptions of local thermal and/or
+    chemical equilibrium. Dropping the local chemical equilibrium assumption
+    leads to mole fractions in different phases that are not determined via
+    equilibrium relations. If the local thermal equilibrium assumption is
+    dropped, phases (fluids and solid) are locally allowed to have different
+    temperatures. See test/implicit/mpnc/test_boxmpnckinetic for an example.
+
+  - A fully-implicit three-phase immiscible model has been added. The headers
+    are contained in dumux/implicit/3p, tests are provided in test/implicit/3p.
+
   - The handling of Dirichlet boundary conditions for the fully-implicit cell-
     centered models has been improved. Now, the conditions are evaluated at the
     centers of the corresponding boundary faces. In general, they are
@@ -40,6 +50,15 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
 
 * Deprecated CLASSES/FILES, to be removed after 2.4:
   - OnePBoxModel, OnePTwoCBoxModel -> OnePModel, OnePTwoCModel
+
+  - Headers containing capitalized letters are replaced by their non-capitalized
+    analogs. 
+    In dumux/decoupled: 1p/cellData1p.hh, 1p/fluxData1p.hh, 
+    2p/cellData2padaptive.hh, 2p/fluxData2p.hh, 2p/cellData2p.hh,
+    2p2c/cellData2p2c.hh, 2p2c/cellData2p2cadaptive.hh, 2p2c/fluxData2p2c.hh,
+    2p2c/cellData2p2cmultiphysics.hh.
+    In dumux/material/fluidmatrixinteractions/3p: parkerVanGen3p.hh,
+    parkerVanGen3pparams.hh.
 
 * Deprecated PROPERTY NAMES, to be removed after 2.4: BEWARE: The compiler will
   not print any warning if a deprecated property name is used.
