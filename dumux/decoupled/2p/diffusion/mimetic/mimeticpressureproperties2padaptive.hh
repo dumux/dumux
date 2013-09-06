@@ -31,8 +31,8 @@
  * \brief Defines the properties required for (immiscible) twophase sequential models.
  */
 
-#ifndef DUMUX_MIMETICPROPERTIES2P_DECOUPLED_HH
-#define DUMUX_MIMETICPROPERTIES2P_DECOUPLED_HH
+#ifndef DUMUX_MIMETICPROPERTIES2PADAPTIVE_DECOUPLED_HH
+#define DUMUX_MIMETICPROPERTIES2PADAPTIVE_DECOUPLED_HH
 
 //Dumux-includes
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
@@ -55,7 +55,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(MimeticPressureTwoP, INHERITS_FROM(PressureTwoP, Mimetic))
+NEW_TYPE_TAG(MimeticPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, Mimetic))
 ;
 
 //////////////////////////////////////////////////////////////////
@@ -64,15 +64,15 @@ NEW_TYPE_TAG(MimeticPressureTwoP, INHERITS_FROM(PressureTwoP, Mimetic))
 }
 }
 
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimetic2p.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2padaptive.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimetic2padaptive.hh>
 
 namespace Dumux
 {
 namespace Properties
 {
-SET_TYPE_PROP(MimeticPressureTwoP, PressureModel, MimeticPressure2P<TypeTag>);
-SET_TYPE_PROP(MimeticPressureTwoP, LocalStiffness, MimeticTwoPLocalStiffness<TypeTag>);
+SET_TYPE_PROP(MimeticPressureTwoPAdaptive, PressureModel, MimeticPressure2PAdaptive<TypeTag>);
+SET_TYPE_PROP(MimeticPressureTwoPAdaptive, LocalStiffness, MimeticTwoPLocalStiffnessAdaptive<TypeTag>);
 }
 }
 

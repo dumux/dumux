@@ -16,8 +16,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_CROPERATOR_HH
-#define DUMUX_CROPERATOR_HH
+#ifndef DUMUX_CROPERATOR2P_HH
+#define DUMUX_CROPERATOR2P_HH
 
 #include<iostream>
 #include<vector>
@@ -25,6 +25,7 @@
 #include<map>
 #include<cassert>
 
+#include<dune/common/timer.hh>
 #include<dune/common/fvector.hh>
 #include<dune/common/fmatrix.hh>
 #include<dune/common/exceptions.hh>
@@ -46,7 +47,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup MimeticPressure2p
+ * \ingroup Mimetic2p
  */
 /**
  * @brief defines a class for Crozieux-Raviart piecewise linear finite element functions
@@ -68,8 +69,8 @@ namespace Dumux
  * \tparam Scalar The field type used in the elements of the global stiffness matrix
  * \tparam GridView The grid view of the simulation grid
  */
-template<class Scalar, class GridView>
-class CROperatorAssembler
+template<class TypeTag>
+class CROperatorAssemblerTwoP
 {
     template<int dim>
     struct FaceLayout
@@ -79,13 +80,11 @@ class CROperatorAssembler
             return gt.dim() == dim-1;
         }
     };
-
-    typedef typename GridView::Grid Grid;
-    enum {dim=Grid::dimension};
-    typedef typename Grid::template Codim<0>::Entity Entity;
-    typedef typename GridView::template Codim<0>::Iterator Iterator;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum {dim=GridView::dimension};
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IndexSet IS;
-    typedef typename Grid::template Codim<0>::EntityPointer EEntityPointer;
     typedef Dune::FieldMatrix<Scalar,1,1> BlockType;
     typedef Dune::BCRSMatrix<BlockType> MatrixType;
     typedef typename MatrixType::block_type MBlockType;
@@ -95,9 +94,10 @@ class CROperatorAssembler
     typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,FaceLayout> FaceMapper;
 
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum
     {
-        pressEqIdx = 0
+        pressEqIdx = Indices::pressEqIdx,
     };
 
     //! a function to approximately compute the number of nonzeros
@@ -109,13 +109,12 @@ class CROperatorAssembler
 public:
     typedef MatrixType RepresentationType;
 
-    CROperatorAssembler (const GridView& gridview)
+    CROperatorAssemblerTwoP (const GridView& gridview)
     : gridView_(gridview), faceMapper_(gridView_), size_(faceMapper_.size()),
       A_(size_, size_, nnz(), RepresentationType::random)
     {}
 
-    //!Initialize the global matrix of the system of equations to solve
-    void initializeMatrix()
+    void initialize()
     {
         faceMapper_.update();
 
@@ -132,8 +131,8 @@ public:
         std::vector<bool> visited(size_, false);
 
         // LOOP 1 : Compute row sizes
-        Iterator eEndIt = gridView_.template end<0>();
-        for (Iterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
+        ElementIterator eEndIt = gridView_.template end<0>();
+        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
             int numFaces = eIt->template count<1>();
 
@@ -160,7 +159,7 @@ public:
         visited.assign(size_, false);
 
         // LOOP 2 : insert the nonzeros
-        for (Iterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
+        for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
         {
             int numFaces = eIt->template count<1>();
 
@@ -197,6 +196,16 @@ public:
         return A_;
     }
 
+    const FaceMapper& faceMapper()
+    {
+        return faceMapper_;
+    }
+
+    const FaceMapper& faceMapper() const
+    {
+        return faceMapper_;
+    }
+
     /*! @brief Assemble global stiffness matrix
 
       This method takes an object that can compute local stiffness matrices and
@@ -223,7 +232,7 @@ public:
 
         // check size
         if (u.N()!=A_.M() || f.N()!=A_.N())
-            DUNE_THROW(Dune::MathError,"CROperatorAssembler::assemble(): size mismatch");
+            DUNE_THROW(Dune::MathError,"CROperatorAssemblerTwoP::assemble(): size mismatch");
         // clear global stiffness matrix and right hand side
         A_ = 0;
         f = 0;
@@ -234,11 +243,11 @@ public:
                 essential[i][0] = BoundaryConditions::neumann;
 
         // local to global id mapping (do not ask vertex mapper repeatedly
-        int local2Global[2*GridView::dimension];
+        Dune::FieldVector<int, 2*dim> local2Global(0);
 
         // run over all leaf elements
-        Iterator eEndIt = gridView_.template end<0>();
-        for (Iterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
+        ElementIterator eEndIt = gridView_.template end<0>();
+        for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
         {
             unsigned int numFaces = eIt->template count<1>();
 
@@ -273,6 +282,19 @@ public:
                 else
                     f[local2Global[i]][0] += loc.rhs(i)[0];
             }
+        }
+        // run over all leaf elements
+        for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
+        {
+            unsigned int numFaces = eIt->template count<1>();
+
+            // get local to global id map
+            for (int k = 0; k < numFaces; k++)
+            {
+                int alpha = faceMapper_.map(*eIt, k, 1);
+                local2Global[k] = alpha;
+            }
+            loc.completeRHS(*eIt, local2Global, f);
         }
 
         // put in essential boundary conditions

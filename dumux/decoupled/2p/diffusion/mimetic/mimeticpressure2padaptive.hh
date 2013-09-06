@@ -23,17 +23,16 @@
  *
  * \brief Model for the pressure equation discretized by mimetic FD.
  */
-#ifndef DUMUX_MIMETICPRESSURE2P_HH
-#define DUMUX_MIMETICPRESSURE2P_HH
+#ifndef DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
+#define DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
 
 // dumux environment
 #include "dumux/decoupled/common/mimetic/mimeticproperties.hh"
-#include "dumux/decoupled/2p/diffusion/mimetic/mimeticoperator2p.hh"
-#include "dumux/decoupled/2p/diffusion/mimetic/mimetic2p.hh"
+#include "dumux/decoupled/2p/diffusion/mimetic/mimeticoperator2padaptive.hh"
+#include "dumux/decoupled/2p/diffusion/mimetic/mimetic2padaptive.hh"
 
 namespace Dumux
 {
-
 
 /*! \ingroup Mimetic2p
  *
@@ -55,7 +54,7 @@ namespace Dumux
  *
  *\tparam TypeTag The Type Tag
  */
-template<class TypeTag> class MimeticPressure2P
+template<class TypeTag> class MimeticPressure2PAdaptive
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -77,9 +76,9 @@ template<class TypeTag> class MimeticPressure2P
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNW,
-        pGlobal = Indices::pressureGlobal,
-        sw = Indices::saturationW,
-        sn = Indices::saturationNW,
+        pglobal = Indices::pressureGlobal,
+        Sw = Indices::saturationW,
+        Sn = Indices::saturationNW,
         vw = Indices::velocityW,
         vn = Indices::velocityNW,
         pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation), //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
@@ -87,7 +86,8 @@ template<class TypeTag> class MimeticPressure2P
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
@@ -98,18 +98,17 @@ template<class TypeTag> class MimeticPressure2P
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, LocalStiffness) LocalStiffness;
     typedef Dune::BlockVector< Dune::FieldVector<Scalar, 1> > TraceType;
-    typedef MimeticOperatorAssemblerTwoP<TypeTag> OperatorAssembler;
+    typedef MimeticOperatorAssemblerTwoPAdaptive<TypeTag> OperatorAssembler;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
-
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
     typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
@@ -128,10 +127,10 @@ template<class TypeTag> class MimeticPressure2P
             Scalar sat = 0;
             switch (saturationType)
             {
-            case sw:
+            case Sw:
                 sat = problem_.variables().cellData(i).saturation(wPhaseIdx);
                 break;
-            case sn:
+            case Sn:
                 sat = problem_.variables().cellData(i).saturation(nPhaseIdx);
                 break;
             }
@@ -155,7 +154,7 @@ template<class TypeTag> class MimeticPressure2P
 
     void postprocess()
     {
-        A_.calculatePressure(lstiff_, pressTrace_, problem_);
+            A_.calculatePressure(lstiff_, pressTrace_, problem_);
 
         return;
     }
@@ -179,20 +178,25 @@ public:
         viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
 
         updateMaterialLaws();
-        A_.initialize();
-        pressTrace_.resize(problem_.gridView().size(1));
-        f_.resize(problem_.gridView().size(1));
+        adapt();
         lstiff_.initialize();
         lstiff_.reset();
-
-        pressTrace_ = 0.0;
-        f_ = 0;
 
         assemble(true);
         solve();
         postprocess();
 
         return;
+    }
+
+    void adapt()
+    {
+        A_.adapt();
+        pressTrace_.resize(A_.intersectionMapper().size());
+        f_.resize(A_.intersectionMapper().size());
+        pressTrace_ = 0.0;
+        f_ = 0;
+        lstiff_.adapt();
     }
 
     void updateVelocity()
@@ -203,14 +207,21 @@ public:
 
     void update()
     {
-        lstiff_.reset();
+        if (problem_.gridAdapt().wasAdapted())
+        {
+            adapt();
+        }
 
+        lstiff_.reset();
         assemble(false);
+
         solve();
+
         postprocess();
 
         return;
     }
+
 
     //! \brief Write data files
      /*  \param name file name */
@@ -355,7 +366,7 @@ public:
         int numFaces = element.template count<1>();
         for (int i=0; i < numFaces; i++)
         {
-            int globalIdx = A_.faceMapper().map(element, i, 1);
+            int globalIdx = A_.intersectionMapper().map(element, i);
             outstream << pressTrace_[globalIdx][0];
         }
     }
@@ -365,25 +376,25 @@ public:
         int numFaces = element.template count<1>();
         for (int i=0; i < numFaces; i++)
         {
-            int globalIdx = A_.faceMapper().map(element, i, 1);
+            int globalIdx = A_.intersectionMapper().map(element, i);
             instream >> pressTrace_[globalIdx][0];
         }
     }
     //@}
 
-    //! Constructs a MimeticPressure2P object
+    //! Constructs a MimeticPressure2PAdaptive object
     /**
      * \param problem The Dumux problem
      */
-    MimeticPressure2P(Problem& problem) :
+    MimeticPressure2PAdaptive(Problem& problem) :
     problem_(problem),
-    A_(problem.gridView()), lstiff_(problem_, false, problem_.gridView())
+    A_(problem.gridView()), lstiff_(problem_, false, problem_.gridView(), A_.intersectionMapper())
     {
         if (pressureType != pw && pressureType != pn)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
         }
-        if (saturationType != sw && saturationType != sn)
+        if (saturationType != Sw && saturationType != Sn)
         {
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }
@@ -415,54 +426,56 @@ private:
 
 //solves the system of equations to get the spatial distribution of the pressure
 template<class TypeTag>
-void MimeticPressure2P<TypeTag>::solve()
+void MimeticPressure2PAdaptive<TypeTag>::solve()
 {
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
 
     int verboseLevelSolver = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
 
     if (verboseLevelSolver)
-    std::cout << "MimeticPressure2P: solve for pressure" << std::endl;
-
-//        printmatrix(std::cout, *A_, "global stiffness matrix", "row", 11, 3);
-//        printvector(std::cout, f_, "right hand side", "row", 10, 1, 3);
+    std::cout << "MimeticPressure2PAdaptive: solve for pressure" << std::endl;
 
     Solver solver(problem_);
     solver.solve(*A_, pressTrace_, f_);
 
+//                                    printmatrix(std::cout, *A_, "global stiffness matrix", "row", 11, 3);
+//                                    printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
+//                printvector(std::cout, pressTrace_, "pressure", "row", 200, 1, 3);
     return;
 }
 
 //constitutive functions are updated once if new saturations are calculated and stored in the variables object
 template<class TypeTag>
-void MimeticPressure2P<TypeTag>::updateMaterialLaws()
+void MimeticPressure2PAdaptive<TypeTag>::updateMaterialLaws()
 {
-        // iterate through leaf grid an evaluate c0 at cell center
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
-        {
-            int globalIdx = problem_.variables().index(*eIt);
+    // iterate through leaf grid an evaluate c0 at cell center
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    {
+        int globalIdx = problem_.variables().index(*eIt);
 
-            CellData& cellData = problem_.variables().cellData(globalIdx);
+        CellData& cellData = problem_.variables().cellData(globalIdx);
 
-            Scalar satW = cellData.saturation(wPhaseIdx);
+        Scalar satW = cellData.saturation(wPhaseIdx);
 
-            // initialize mobilities
-            Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW)
-                    / viscosity_[wPhaseIdx];
-            Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW)
-                    / viscosity_[nPhaseIdx];
+        // initialize mobilities
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW)
+                / viscosity_[wPhaseIdx];
+        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW)
+                / viscosity_[nPhaseIdx];
 
-            // initialize mobilities
-            cellData.setMobility(wPhaseIdx, mobilityW);
-            cellData.setMobility(nPhaseIdx, mobilityNW);
+        // initialize mobilities
+        cellData.setMobility(wPhaseIdx, mobilityW);
+        cellData.setMobility(nPhaseIdx, mobilityNW);
 
-            //initialize fractional flow functions
-            cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNW));
-            cellData.setFracFlowFunc(nPhaseIdx, mobilityNW / (mobilityW + mobilityNW));
-        }
-        return;
+        //initialize fractional flow functions
+        cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNW));
+        cellData.setFracFlowFunc(nPhaseIdx, mobilityNW / (mobilityW + mobilityNW));
+    }
+    return;
 }
+
+
 
 }
 #endif
