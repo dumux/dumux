@@ -24,8 +24,7 @@ add_test(test_multiphysics2p2c
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/test_multiphysics2p2c-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_multiphysics2p2c-00021.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test_multiphysics2p2c
-  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_multiphysics2p2c.input)
+  ${CMAKE_CURRENT_BINARY_DIR}/test_multiphysics2p2c)
 
 set(NORMALTESTS
   test_adaptive2p2c
