@@ -85,7 +85,7 @@ NEW_PROP_TAG( RegulateBoundaryPermeability ); //!< A minimum permeability can be
 
 //DUMUX includes
 #include <dumux/decoupled/2p/2pindices.hh>
-#include <dumux/decoupled/2p2c/cellData2p2c.hh>
+#include <dumux/decoupled/2p2c/celldata2p2c.hh>
 #include <dumux/decoupled/2p2c/2p2cfluidstate.hh>
 
 namespace Dumux {

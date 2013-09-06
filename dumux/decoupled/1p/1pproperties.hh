@@ -68,7 +68,7 @@ NEW_PROP_TAG( CellData ); //!< The cell data storage class
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/decoupled/common/variableclass.hh>
-#include <dumux/decoupled/1p/cellData1p.hh>
+#include <dumux/decoupled/1p/celldata1p.hh>
 #include <dumux/decoupled/1p/1pindices.hh>
 
 namespace Dumux

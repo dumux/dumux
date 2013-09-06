@@ -34,7 +34,7 @@
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p2c/fvpressure2p2cmultiphysics.hh>
 #include <dumux/decoupled/2p2c/fvtransport2p2cmultiphysics.hh>
-#include <dumux/decoupled/2p2c/cellData2p2cmultiphysics.hh>
+#include <dumux/decoupled/2p2c/celldata2p2cmultiphysics.hh>
 // fluid properties
 //#include <dumux/material/fluidsystems/brine_co2_system.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>

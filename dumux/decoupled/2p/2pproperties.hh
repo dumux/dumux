@@ -81,7 +81,7 @@ NEW_PROP_TAG( ImpetErrorTermUpperBound );//!< Upper threshold used for the error
 }
 
 #include <dumux/decoupled/common/variableclass.hh>
-#include <dumux/decoupled/2p/cellData2p.hh>
+#include <dumux/decoupled/2p/celldata2p.hh>
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
 #include <dumux/material/fluidstates/isothermalimmisciblefluidstate.hh>
 
