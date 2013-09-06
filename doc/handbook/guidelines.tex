@@ -20,10 +20,14 @@ been written by oneself.
 \begin{itemize}
 \item Comments: they are helpful! Please document freely what each part of your code does. 
 \item all comments / documentation is in English
-\item Variables: Names for variables should only consist of letters and digits. The first
-letter should be a lower case one. If your variable names consists of several words, then 
-the first letter of each new word should be capital. As we decided on the only exception 
-are the begin and end methods.
+\item \textbf{Naming Conventions:} Names for variables/functions\ldots \; should only consist of letters and digits. The first
+letter should be lower case. If your variable names consists of several words, then 
+the first letter of each new word should be capital. \\
+If and only if a single letter that represents an abbreviation or index is followed by a single letter (abbreviation or index), CamelCase is {\bf not} used. An inner-word underscore is only permitted if it symbolizes a fraction line. Afterwards, we continue with lower case, i.e. the common rules apply to both enumerator and denominator. Examples: \\
+\texttt{pw} vs. \texttt{pressureW} $\rightarrow$ because ``pressure'' is a word.\\
+\texttt{srnw} vs. \texttt{sReg} $\rightarrow$ because ``reg'' is not an abbreviation of a single letter. ``n'' abbreviates ``non'', ``w'' is ``wetting'', so not CamelCase.\\
+\texttt{pcgw} vs \texttt{dTauDPi} $\rightarrow$ Both ``Tau'' and ``Pi'' are words, plus longer than a letter.\\
+The only exception: chemical formulas are written in their chemically correct way $\rightarrow$ \texttt{CaCO3}
 \item Variables should be named as self-explaining as possible: especially abbreviations 
 should be avoided (saturation in stead of S)
 \item Method parameters which are not self-explanatory should always

@@ -414,6 +414,10 @@ provides the following constraint solvers:
   \end{eqnarray*}
   where $p_{c\beta\alpha}$ is the capillary pressure between the
   fluid phases $\beta$ and $\alpha$.
+\item[CompositionalFlash:] A compositional 2p2c flash solver for the 
+sequential models in \Dumux. Input is temperature, phase pressures
+and feed mass fraction, the solver computes the compositional variables and
+saturations.
 \item[NcpFlash:] This is a so-called flash solver. A flash solver
   takes the total mass of all components per volume unit and the phase
   temperatures as input and calculates all phase pressures,
