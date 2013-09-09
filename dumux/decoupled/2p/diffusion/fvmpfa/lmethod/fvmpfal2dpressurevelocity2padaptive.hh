@@ -18,7 +18,7 @@
 #ifndef DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 #define DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 
-#include "fvmpfal2dpressurevelocity2padaptive.hh"
+#include "fvmpfal2dpressure2padaptive.hh"
 
 /**
  * @file
@@ -50,7 +50,7 @@ namespace Dumux
  *
  * \tparam TypeTag The problem Type Tag
  */
-template<class TypeTag> class FvMpfaL2dPressureVelocity2PAdaptive: public FvMpfaL2dPressure2pAdaptive<TypeTag>
+template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfaL2dPressure2pAdaptive<TypeTag>
 {
     typedef FvMpfaL2dPressure2pAdaptive<TypeTag> ParentType;
 
@@ -129,11 +129,11 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2PAdaptive: public FvMpfa
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
-    //! Constructs a FVMPFAO2PFABoundVelocity2P object
+    //! Constructs a FVMPFAO2pFABoundVelocity2p object
     /*!
      * \param problem A problem class object
      */
-    FvMpfaL2dPressureVelocity2PAdaptive(Problem& problem) :
+    FvMpfaL2dPressureVelocity2pAdaptive(Problem& problem) :
             ParentType(problem), problem_(problem), gravity_(problem.gravity())
     {
         density_[wPhaseIdx] = 0.;
@@ -305,7 +305,7 @@ private:
  *
  */
 template<class TypeTag>
-void FvMpfaL2dPressureVelocity2PAdaptive<TypeTag>::calculateVelocity()
+void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
 {
 //        std::cout<<"velocityW = \n";
 //        for  (int i = 0; i<problem_.gridView().size(0);i++)

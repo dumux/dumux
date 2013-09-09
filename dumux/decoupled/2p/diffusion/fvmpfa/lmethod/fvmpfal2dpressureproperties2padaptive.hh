@@ -24,8 +24,8 @@
  *
  * \brief Properties for the adaptive MPFA-L method.
  */
-#ifndef DUMUX_FVMPFALPROPERTIES2P_ADAPTIVE_HH
-#define DUMUX_FVMPFALPROPERTIES2P_ADAPTIVE_HH
+#ifndef DUMUX_FVMPFAL2DPROPERTIES2P_ADAPTIVE_HH
+#define DUMUX_FVMPFAL2DPROPERTIES2P_ADAPTIVE_HH
 
 // dumux environment
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
@@ -45,7 +45,7 @@ namespace Dumux
 {
 namespace Properties
 {
-SET_TYPE_PROP(FvMpfaL2dPressureTwoPAdaptive, PressureModel, Dumux::FvMpfaL2dPressureVelocity2PAdaptive<TypeTag>);
+SET_TYPE_PROP(FvMpfaL2dPressureTwoPAdaptive, PressureModel, Dumux::FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>);
 }
 }// end of Dune namespace
 #endif

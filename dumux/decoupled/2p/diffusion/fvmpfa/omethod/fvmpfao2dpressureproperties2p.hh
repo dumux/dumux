@@ -39,14 +39,14 @@ NEW_TYPE_TAG(FvMpfaO2dPressureTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties))
 }
 }
 
-#include "fvmpfao2pfaboundvelocity2p.hh"
+#include "fvmpfao2dpressurevelocity2p.hh"
 #include <dumux/decoupled/common/fv/mpfa/fvmpfavelocityintransport.hh>
 
 namespace Dumux
 {
 namespace Properties
 {
-SET_TYPE_PROP(FvMpfaO2dPressureTwoP, PressureModel, Dumux::FvMpfaO2dPressureVelocity2P<TypeTag>);
+SET_TYPE_PROP(FvMpfaO2dPressureTwoP, PressureModel, Dumux::FvMpfaO2dPressureVelocity2p<TypeTag>);
 //! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
 SET_TYPE_PROP( FvMpfaO2dPressureTwoP, Velocity, Dumux::FvMpfaVelocityInTransport<TypeTag> );
 }

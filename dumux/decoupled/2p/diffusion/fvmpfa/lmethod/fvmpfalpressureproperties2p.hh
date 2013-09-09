@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-#ifndef DUMUX_FVMPFAL2DPROPERTIES2P_HH
-#define DUMUX_FVMPFAL2DPROPERTIES2P_HH
+#ifndef DUMUX_FVMPFALPROPERTIES2P_HH
+#define DUMUX_FVMPFALPROPERTIES2P_HH
 
 
 #warning This file is deprecated. Use fvmpfal2dpressureproperties2p.hh instead.
@@ -31,3 +31,4 @@ namespace Properties
 NEW_TYPE_TAG(FVMPFALPressureTwoP, INHERITS_FROM(FvMpfaL2dPressureTwoP));
 }
 }
+#endif

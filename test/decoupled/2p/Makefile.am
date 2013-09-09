@@ -2,7 +2,8 @@ check_PROGRAMS = test_impes \
                  test_impesadaptive \
                  test_impeswithamg \
                  test_transport \
-                 test_mpfa2p
+                 test_mpfa2p \
+                 test_3d2p
 
 noinst_HEADERS = *.hh
 EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
@@ -17,5 +18,7 @@ test_impeswithamg_CXXFLAGS = -DUSE_AMGBACKEND
 test_transport_SOURCES = test_transport.cc
 
 test_mpfa2p_SOURCES = test_mpfa2p.cc
+
+test_3d2p_SOURCES = test_3d2p.cc
 
 include $(top_srcdir)/am/global-rules

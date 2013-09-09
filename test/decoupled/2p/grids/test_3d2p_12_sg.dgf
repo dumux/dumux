@@ -1,0 +1,11 @@
+DGF
+Interval
+0 0 0   % first corner 
+30 6 3 % second corner
+30 6 3  % cells in x,y and z direction
+# 
+
+BOUNDARYDOMAIN
+default 1    % all boundaries have id 1
+#BOUNDARYDOMAIN
+# unitcube.dgf 

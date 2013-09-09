@@ -37,3 +37,4 @@ namespace Properties
 NEW_TYPE_TAG(FVMPFAOPressureTwoP, INHERITS_FROM(FvMpfaO2dPressureTwoP));
 }
 }
+#endif

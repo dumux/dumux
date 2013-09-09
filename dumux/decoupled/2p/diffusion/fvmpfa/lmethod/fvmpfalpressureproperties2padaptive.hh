@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-#ifndef DUMUX_FVMPFAL2DPROPERTIES2P_ADAPTIVE_HH
-#define DUMUX_FVMPFAL2DPROPERTIES2P_ADAPTIVE_HH
+#ifndef DUMUX_FVMPFALPROPERTIES2P_ADAPTIVE_HH
+#define DUMUX_FVMPFALPROPERTIES2P_ADAPTIVE_HH
 
 
 #warning This file is deprecated. Use fvmpfal2dpressureproperties2padaptive.hh instead.
@@ -31,4 +31,5 @@ namespace Properties
 NEW_TYPE_TAG(FVMPFALPressureTwoPAdaptive, INHERITS_FROM(FvMpfaL2dPressureTwoPAdaptive));
 }
 }
+#endif
 

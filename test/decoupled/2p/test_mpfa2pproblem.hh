@@ -36,9 +36,9 @@
 
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2padaptive.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/omethod/fvmpfaopressureproperties2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfalpressureproperties2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfalpressureproperties2padaptive.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/omethod/fvmpfao2dpressureproperties2p.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2dpressureproperties2p.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2dpressureproperties2padaptive.hh>
 #include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 
@@ -131,9 +131,9 @@ SET_TYPE_PROP(MPFATwoPTestProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag>)
 
 NEW_TYPE_TAG(FVTwoPTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
 NEW_TYPE_TAG(FVAdaptiveTwoPTestProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestProblem));
-NEW_TYPE_TAG(MPFAOTwoPTestProblem, INHERITS_FROM(FVMPFAOPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
-NEW_TYPE_TAG(MPFALTwoPTestProblem, INHERITS_FROM(FVMPFALPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
-NEW_TYPE_TAG(MPFALAdaptiveTwoPTestProblem, INHERITS_FROM(FVMPFALPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestProblem));
+NEW_TYPE_TAG(MPFAOTwoPTestProblem, INHERITS_FROM(FvMpfaO2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
+NEW_TYPE_TAG(MPFALTwoPTestProblem, INHERITS_FROM(FvMpfaL2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
+NEW_TYPE_TAG(MPFALAdaptiveTwoPTestProblem, INHERITS_FROM(FvMpfaL2dPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestProblem));
 
 }
 

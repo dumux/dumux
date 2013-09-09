@@ -45,7 +45,7 @@ namespace Dumux
 {
 namespace Properties
 {
-SET_TYPE_PROP(FvMpfaL2dPressureTwoP, PressureModel, Dumux::FvMpfaL2dPressureVelocity2P<TypeTag>);
+SET_TYPE_PROP(FvMpfaL2dPressureTwoP, PressureModel, Dumux::FvMpfaL2dPressureVelocity2p<TypeTag>);
 }
 }// end of Dune namespace
 #endif

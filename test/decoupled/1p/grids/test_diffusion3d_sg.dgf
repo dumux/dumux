@@ -1,0 +1,10 @@
+DGF
+Interval
+0 0 0   % first corner 
+1 1 1 % second corner
+16 16 16% cells in x and y direction
+# 
+
+Boundarydomain
+default 1
+#

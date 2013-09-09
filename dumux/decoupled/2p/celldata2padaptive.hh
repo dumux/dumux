@@ -19,7 +19,7 @@
 #ifndef DUMUX_ELEMENTDATA2P_ADAPTIVE_HH
 #define DUMUX_ELEMENTDATA2P_ADAPTIVE_HH
 
-#include "cellData2p.hh"
+#include "celldata2p.hh"
 
 /**
  * @file

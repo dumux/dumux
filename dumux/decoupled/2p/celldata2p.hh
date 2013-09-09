@@ -20,7 +20,7 @@
 #define DUMUX_ELEMENTDATA2P_HH
 
 #include "2pproperties.hh"
-#include "fluxData2p.hh"
+#include "fluxdata2p.hh"
 
 /**
  * @file

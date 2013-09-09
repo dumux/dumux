@@ -1,10 +1,12 @@
 # tests where program to build and program to run are equal
-check_PROGRAMS = test_diffusion test_1p
+check_PROGRAMS = test_diffusion test_diffusion3d test_1p
 
 noinst_HEADERS = *.hh
 EXTRA_DIST=*.input CMakeLists.txt
 
 test_diffusion_SOURCES = test_diffusion.cc
+
+test_diffusion3d_SOURCES = test_diffusion3d.cc
 
 test_1p_SOURCES = test_1p.cc
 
