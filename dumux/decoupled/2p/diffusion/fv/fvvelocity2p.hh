@@ -76,6 +76,13 @@ class FVVelocity2P
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
+    typedef typename Element::Geometry Geometry;
+    #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        typedef typename Geometry::JacobianTransposed JacobianTransposed;
+    #else
+        typedef typename Geometry::Jacobian JacobianTransposed;
+    #endif
+
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -214,7 +221,7 @@ public:
                 ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
-                const typename Element::Geometry::JacobianTransposed jacobianT =
+                const JacobianTransposed jacobianT =
                     eIt->geometry().jacobianTransposed(localPos);
 
                 // calculate the element velocity by the Piola transformation

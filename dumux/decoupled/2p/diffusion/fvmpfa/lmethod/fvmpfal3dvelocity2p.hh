@@ -49,6 +49,13 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
+    typedef typename Element::Geometry Geometry;
+    #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        typedef typename Geometry::JacobianTransposed JacobianTransposed;
+    #else
+        typedef typename Geometry::Jacobian JacobianTransposed;
+    #endif
+
     typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
@@ -172,7 +179,7 @@ public:
                 const DimVector& localPos = ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
-                const DimMatrix& jacobianT = eIt->geometry().jacobianTransposed(localPos);
+                const JacobianTransposed jacobianT = eIt->geometry().jacobianTransposed(localPos);
 
                 // calculate the element velocity by the Piola transformation
                 DimVector elementVelocity(0);

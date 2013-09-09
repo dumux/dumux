@@ -21,6 +21,8 @@
 #ifndef DUMUX_FVMPFAL3DINTERACTIONVOLUME_HH
 #define DUMUX_FVMPFAL3DINTERACTIONVOLUME_HH
 
+#include "fvmpfaproperties.hh"
+
 /**
  * @file
  * @brief  Class including the information of an interaction volume of a MPFA 3D method that does not change with time

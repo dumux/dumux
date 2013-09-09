@@ -97,7 +97,13 @@ template<class TypeTag> class MimeticPressure2PAdaptive
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    typedef typename Element::Geometry Geometry;
+    #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        typedef typename Geometry::JacobianTransposed JacobianTransposed;
+    #else
+        typedef typename Geometry::Jacobian JacobianTransposed;
+    #endif
+
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, LocalStiffness) LocalStiffness;
@@ -303,7 +309,7 @@ public:
                 const DimVector& localPos = ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
-                const DimMatrix& jacobianT = eIt->geometry().jacobianTransposed(localPos);
+                const JacobianTransposed jacobianT = eIt->geometry().jacobianTransposed(localPos);
 
                 // calculate the element velocity by the Piola transformation
                 DimVector elementVelocity(0);
