@@ -19,8 +19,8 @@
 #ifndef DUMUX_ELEMENTDATA2P2C_ADAPTIVE_HH
 #define DUMUX_ELEMENTDATA2P2C_ADAPTIVE_HH
 
-#include <dumux/decoupled/2p2c/cellData2p2c.hh>
-#include <dumux/decoupled/2p2c/cellData2p2cmultiphysics.hh>
+#include <dumux/decoupled/2p2c/celldata2p2c.hh>
+#include <dumux/decoupled/2p2c/celldata2p2cmultiphysics.hh>
 /**
  * @file
  * @brief  Class including the variables and data of discretized data of the constitutive relations for one element

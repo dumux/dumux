@@ -1,9 +1,7 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2011-2012 by Yufei Cao                                    *
- *   Copyright (C) 2011-2012 by Markus Wolff                                 *
- *   Institute for Modelling Hydraulic and Environmental Systems             *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@mathematik.uni-stuttgart.de                   *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -12,7 +10,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -22,6 +20,7 @@
 #define DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_HH
 
 // dumux environment
+#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 #include <dumux/decoupled/common/fv/fvpressure.hh>
 #include "fvmpfal3dinteractionvolumecontainer.hh"
 #include "fvmpfal3dtransmissibilitycalculator.hh"
@@ -31,7 +30,6 @@
  * @brief  Finite Volume-MPFAL implementation of a two-phase pressure equation
  * @brief  Remark1: only for 3-D hexahedron grid.
  * @brief  Remark3: number of grid cells in each direction > 1
- * @author Markus Wolff
  */
 
 namespace Dumux

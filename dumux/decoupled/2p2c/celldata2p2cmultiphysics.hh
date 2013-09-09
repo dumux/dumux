@@ -20,7 +20,7 @@
 #define DUMUX_ELEMENTDATA2P2C_MULTYPHYSICS_HH
 
 #include "2p2cproperties.hh"
-#include "cellData2p2c.hh"
+#include "celldata2p2c.hh"
 #include <dumux/decoupled/2p2c/pseudo1p2cfluidstate.hh>
 
 /**

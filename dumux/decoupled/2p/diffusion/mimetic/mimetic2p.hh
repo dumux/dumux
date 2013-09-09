@@ -38,7 +38,9 @@
 #include<dune/geometry/type.hh>
 #include<dune/geometry/quadraturerules.hh>
 
+#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 #include<dumux/common/boundaryconditions.hh>
+#include "localstiffness.hh"
 
 #include <dune/common/dynvector.hh>
 
@@ -340,9 +342,9 @@ public:
     }
 
 private:
-    void assembleV(const Element& element, int k);
+    void assembleV(const Element& element, int k = 1);
 
-    void assembleBC(const Element& element, int k);
+    void assembleBC(const Element& element, int k = 1);
 
     Scalar evaluateErrorTerm(CellData& cellData)
     {
@@ -392,7 +394,7 @@ private:
 };
 
 template<class TypeTag>
-void MimeticTwoPLocalStiffness<TypeTag>::assembleV(const Element& element, int k = 1)
+void MimeticTwoPLocalStiffness<TypeTag>::assembleV(const Element& element, int)
 {
     unsigned int numFaces = element.template count<1>();
     this->setcurrentsize(numFaces);
@@ -705,7 +707,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
 }
 
 template<class TypeTag>
-void MimeticTwoPLocalStiffness<TypeTag>::assembleBC(const Element& element, int k = 1)
+void MimeticTwoPLocalStiffness<TypeTag>::assembleBC(const Element& element, int k)
 {
     // evaluate boundary conditions via intersection iterator
     typedef typename GridView::IntersectionIterator IntersectionIterator;
@@ -721,8 +723,6 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleBC(const Element& element, int 
 
             if (this->bctype[faceIndex].isNeumann(pressEqIdx))
             {
-                int globalIdx = problem_.variables().index(element);
-
                 problem_.neumann(boundValues, *isIt);
                 Scalar J = (boundValues[wPhaseIdx]/density_[wPhaseIdx] + boundValues[nPhaseIdx]/density_[nPhaseIdx]);
                 this->b[faceIndex] -= J * isIt->geometry().volume();

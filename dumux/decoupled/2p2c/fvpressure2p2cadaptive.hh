@@ -28,7 +28,7 @@
 // dumux environment
 // include 2p mpfa pressure model
 #include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2pfaboundpressure2padaptive.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2dpressure2padaptive.hh>
 
 #include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
 #include <dumux/common/math.hh>
@@ -206,7 +206,7 @@ protected:
     bool enableMPFA; //!< Enables mpfa method to calculate the fluxes near hanging nodes
     bool enableSecondHalfEdge; //!< If possible, 2 interaction volumes are used for the mpfa method near hanging nodes
     //! The 2p Mpfa pressure module, that is only used for the calulation of transmissibility of the second interaction volumes
-    Dune::shared_ptr<FVMPFAL2PFABoundPressure2PAdaptive<TypeTag> > pressureModelAdaptive2p_;
+    Dune::shared_ptr<FvMpfaL2dPressure2pAdaptive<TypeTag> > pressureModelAdaptive2p_;
 };
 
 
@@ -1183,7 +1183,7 @@ int FVPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersection
 
 
     if(!pressureModelAdaptive2p_)
-        pressureModelAdaptive2p_= Dune::make_shared<FVMPFAL2PFABoundPressure2PAdaptive<TypeTag> >(problem()) ;
+        pressureModelAdaptive2p_= Dune::make_shared<FvMpfaL2dPressure2pAdaptive<TypeTag> >(problem()) ;
     // create Interaction Volume object
     Dumux::FVMPFALInteractionVolume<TypeTag> interactionVolume;
 

@@ -1,35 +1,16 @@
-/*****************************************************************************
- *   Copyright (C) 2011-2012 by Yufei Cao                                    *
- *   Copyright (C) 2011-2012 by Markus Wolff                                 *
- *   Institute for Modelling Hydraulic and Environmental Systems             *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@mathematik.uni-stuttgart.de                   *
- *                                                                           *
- *   This program is free software: you can redistribute it and/or modify    *
- *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 2 of the License, or       *
- *   (at your option) any later version.                                     *
- *                                                                           *
- *   This program is distributed in the hope that it will be useful,         *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- *   GNU General Public License for more details.                            *
- *                                                                           *
- *   You should have received a copy of the GNU General Public License       *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
- *****************************************************************************/
+
 #ifndef DUMUX_FVMPFAL2PVELOCITY2P_HH
 #define DUMUX_FVMPFAL2PVELOCITY2P_HH
 
 
 #include <dune/grid/common/gridenums.hh>
-#include <dumux/decoupled/common/decoupledproperties.hh>
+#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
+#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
 #include "fvmpfal3dtransmissibilitycalculator.hh"
 
 /**
  * @file
  * @brief  Base class for defining an instance of a numerical diffusion model
- * @author Markus Wolff
  */
 
 namespace Dumux

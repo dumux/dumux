@@ -27,6 +27,8 @@
 #define DUMUX_MIMETICOPERATOR2PADAPTIVE_HH
 
 #include"croperator2padaptive.hh"
+#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
+#include "dumux/decoupled/common/mimetic/mimeticproperties.hh"
 
 namespace Dumux
 {

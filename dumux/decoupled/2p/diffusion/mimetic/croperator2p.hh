@@ -36,8 +36,9 @@
 #include<dune/istl/operators.hh>
 #include<dune/istl/bcrsmatrix.hh>
 
+#include <dumux/decoupled/common/pressureproperties.hh>
 #include<dumux/common/boundaryconditions.hh>
-#include<dumux/decoupled/2p/diffusion/mimetic/localstiffness.hh>
+#include "localstiffness.hh"
 
 /**
  * @file

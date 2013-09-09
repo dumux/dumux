@@ -21,3 +21,4 @@
 #define DUMUX_MPFAOVELOCITY2P_HH
 
 #warning This file is deprecated. Use fvmpfao2dpressurevelocity2p.hh instead.
+#endif
