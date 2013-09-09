@@ -1,9 +1,7 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2011 by Markus Wolff                                      *
- *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
- *   Institute for Modelling Hydraulic and Environmental Systems             *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -12,19 +10,21 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
+#ifndef DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
+#define DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
+
 /*!
  * \file
  *
  * \brief Model for the pressure equation discretized by mimetic FD.
  */
-#ifndef DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
-#define DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
 
 // dumux environment
 #include "dumux/decoupled/common/mimetic/mimeticproperties.hh"

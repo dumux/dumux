@@ -1,4 +1,5 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
@@ -15,6 +16,7 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
 #ifndef DUMUX_CROPERATOR2PADAPTIVE_HH
 #define DUMUX_CROPERATOR2PADAPTIVE_HH
 

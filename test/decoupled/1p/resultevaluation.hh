@@ -16,14 +16,16 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
 *****************************************************************************/
+
+#ifndef DUMUX_BENCHMARKRESULT_HH
+#define DUMUX_BENCHMARKRESULT_HH
+
 /*!
  * \file
  *
  * \ingroup IMPETtests
  * \brief Calculate errors for the diffusion test problem.
  */
-#ifndef DUMUX_BENCHMARKRESULT_HH
-#define DUMUX_BENCHMARKRESULT_HH
 
 #include <dumux/decoupled/common/onemodelproblem.hh>
 

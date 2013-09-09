@@ -16,6 +16,7 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
 #ifndef DUMUX_LOCAL_STIFFNESS_HH
 #define DUMUX_LOCAL_STIFFNESS_HH
 
