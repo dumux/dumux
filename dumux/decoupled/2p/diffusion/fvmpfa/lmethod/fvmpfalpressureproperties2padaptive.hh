@@ -17,35 +17,18 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-/*!
- * \ingroup MPFA
- * \ingroup Properties
- * \file
- *
- * \brief Properties for the adaptive MPFA-L method.
- */
-#ifndef DUMUX_FVMPFALPROPERTIES2P_ADAPTIVE_HH
-#define DUMUX_FVMPFALPROPERTIES2P_ADAPTIVE_HH
+#ifndef DUMUX_FVMPFAL2DPROPERTIES2P_ADAPTIVE_HH
+#define DUMUX_FVMPFAL2DPROPERTIES2P_ADAPTIVE_HH
 
-// dumux environment
-#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
-#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
+
+#warning This file is deprecated. Use fvmpfal2dpressureproperties2padaptive.hh instead.
+#include "fvmpfal2dpressureproperties2padaptive.hh"
 
 namespace Dumux
 {
 namespace Properties
 {
-NEW_TYPE_TAG(FVMPFALPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, MPFAProperties));
+NEW_TYPE_TAG(FVMPFALPressureTwoPAdaptive, INHERITS_FROM(FvMpfaL2dPressureTwoPAdaptive));
 }
 }
 
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2pfaboundvelocity2padaptive.hh>
-
-namespace Dumux
-{
-namespace Properties
-{
-SET_TYPE_PROP(FVMPFALPressureTwoPAdaptive, PressureModel, Dumux::FVMPFAL2PFABoundVelocity2PAdaptive<TypeTag>);
-}
-}// end of Dune namespace
-#endif

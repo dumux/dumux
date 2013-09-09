@@ -17,35 +17,17 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-/*!
- * \ingroup MPFA
- * \ingroup Properties
- * \file
- *
- * \brief Properties for the MPFA-O method.
- */
-#ifndef DUMUX_FVMPFALPROPERTIES2P_HH
-#define DUMUX_FVMPFALPROPERTIES2P_HH
+#ifndef DUMUX_FVMPFAL2DPROPERTIES2P_HH
+#define DUMUX_FVMPFAL2DPROPERTIES2P_HH
 
-// dumux environment
-#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
-#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
+
+#warning This file is deprecated. Use fvmpfal2dpressureproperties2p.hh instead.
+#include "fvmpfal2dpressureproperties2p.hh"
 
 namespace Dumux
 {
 namespace Properties
 {
-NEW_TYPE_TAG(FVMPFALPressureTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties));
+NEW_TYPE_TAG(FVMPFALPressureTwoP, INHERITS_FROM(FvMpfaL2dPressureTwoP));
 }
 }
-
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2pfaboundvelocity2p.hh>
-
-namespace Dumux
-{
-namespace Properties
-{
-SET_TYPE_PROP(FVMPFALPressureTwoP, PressureModel, Dumux::FVMPFAL2PFABoundVelocity2P<TypeTag>);
-}
-}// end of Dune namespace
-#endif

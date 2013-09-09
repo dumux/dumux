@@ -1,3 +1,5 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
@@ -14,23 +16,36 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_FVMPFAL2OFABOUNDPRESSURE2P_HH
-#define DUMUX_FVMPFAL2OFABOUNDPRESSURE2P_HH
 
-#warning This file is deprecated. Use fvmpfal2dpressure2p.hh instead.
-#include "fvmpfal2dpressure2p.hh"
+/*!
+ * \ingroup MPFA
+ * \ingroup Properties
+ * \file
+ *
+ * \brief Properties for the adaptive MPFA-L method.
+ */
+#ifndef DUMUX_FVMPFALPROPERTIES2P_ADAPTIVE_HH
+#define DUMUX_FVMPFALPROPERTIES2P_ADAPTIVE_HH
+
+// dumux environment
+#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
+#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
 
 namespace Dumux
 {
-template<class TypeTag>
-class FVMPFAL2PFABoundPressure2P: public FvMpfaL2dPressure2p<TypeTag>
+namespace Properties
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-
-    DUNE_DEPRECATED_MSG("use FvMpfaL2dPressure2p(problem) instead")
-    FVMPFAL2PFABoundPressure2P(Problem& problem):
-        FvMpfaL2dPressure2p<TypeTag>(problem)
-        {}
-};
+NEW_TYPE_TAG(FvMpfaL2dPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP, MPFAProperties));
 }
+}
+
+#include "fvmpfal2dpressurevelocity2padaptive.hh"
+
+namespace Dumux
+{
+namespace Properties
+{
+SET_TYPE_PROP(FvMpfaL2dPressureTwoPAdaptive, PressureModel, Dumux::FvMpfaL2dPressureVelocity2PAdaptive<TypeTag>);
+}
+}// end of Dune namespace
 #endif

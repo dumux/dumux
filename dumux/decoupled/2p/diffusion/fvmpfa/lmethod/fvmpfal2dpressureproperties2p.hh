@@ -18,14 +18,14 @@
  *****************************************************************************/
 
 /*!
- * \ingroup FVPressure2p
- * \ingroup IMPETProperties
+ * \ingroup MPFA
+ * \ingroup Properties
  * \file
  *
- * \brief Properties for two-phase finite volume model with MPFA-O method.
+ * \brief Properties for the MPFA-L method.
  */
-#ifndef DUMUX_FVMPFAOPROPERTIES2P_HH
-#define DUMUX_FVMPFAOPROPERTIES2P_HH
+#ifndef DUMUX_FVMPFAL2DPROPERTIES2P_HH
+#define DUMUX_FVMPFAL2DPROPERTIES2P_HH
 
 // dumux environment
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
@@ -35,19 +35,17 @@ namespace Dumux
 {
 namespace Properties
 {
-//! The type tag for two-phase problems using a finite volume model with MPFA O-method.
-NEW_TYPE_TAG(FVMPFAOPressurePropertiesTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties));
+NEW_TYPE_TAG(FvMpfaL2dPressureTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties));
 }
 }
 
-#include <dumux/decoupled/2p/diffusion/fvmpfa/omethod/fvmpfaovelocity2p.hh>
+#include "fvmpfal2dpressurevelocity2p.hh"
 
 namespace Dumux
 {
 namespace Properties
 {
-//! Set finite volume implementation of the two-phase pressure equation with MPFA O-method as default pressure model
-SET_TYPE_PROP(FVMPFAOPressurePropertiesTwoP, PressureModel, Dumux::FVMPFAOVelocity2P<TypeTag>);
+SET_TYPE_PROP(FvMpfaL2dPressureTwoP, PressureModel, Dumux::FvMpfaL2dPressureVelocity2P<TypeTag>);
 }
 }// end of Dune namespace
 #endif
