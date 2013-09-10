@@ -599,6 +599,13 @@ public:
         return *gridAdapt_;
     }
 
+    /*!
+     * \brief Capability to introduce problem-specific routines at the
+     * beginning of the grid adaptation
+     *
+     * Function is called at the beginning of the standard grid
+     * modification routine, GridAdapt::adaptGrid() .
+     */
     void preAdapt()
     {
         if (!adaptiveGrid)
@@ -606,11 +613,21 @@ public:
                          << "adaptivity is disabled in property system \n;" << adaptiveGrid;
     }
 
+    /*!
+     * \brief Capability to introduce problem-specific routines after grid adaptation
+     *
+     * Function is called at the end of the standard grid
+     * modification routine, GridAdapt::adaptGrid() , to allow
+     * for problem-specific output etc.
+     */
     void postAdapt()
     {
         if (!adaptiveGrid)
             Dune::dgrave << "adaptivity functionality was called despite "
                          << "adaptivity is disabled in property system \n;" << adaptiveGrid;
+        // write out new grid
+        //        Dune::VTKWriter<LeafGridView> vtkwriter(problem_.gridView());
+        //        vtkwriter.write("latestgrid",Dune::VTK::appendedraw);
     }
 
     /*!

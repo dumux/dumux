@@ -76,6 +76,13 @@ public:
                          << " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
     }
 
+    /*!
+     * @brief Initalization method of the h-adaptive module
+     *
+     * Prepares the grid for simulation after the initialization of the
+     * problem. The applied indicator is selectable via the property
+     * AdaptionInitializationIndicator
+     */
     void init()
     {
         adaptionIndicator_.init();
@@ -106,10 +113,11 @@ public:
     /*!
      * @brief Standard method to adapt the grid
      *
-     * This method is called in preTimeStep() of the problem if
-     * adaptive grids are used in the simulation.
-     *
-     * It uses a standard procedure for adaptivity:
+     * This method is called from IMPETProblem::preTimeStep() if
+     * adaptive grids are used in the simulation. It uses the standard
+     * indicator (selected by the property AdaptionIndicator) and forwards to
+     * with it to the ultimate method adaptGrid(indicator), which
+     * uses a standard procedure for adaptivity:
      * 1) Determine the refinement indicator
      * 2) Mark the elements
      * 3) Store primary variables in a map
@@ -121,6 +129,22 @@ public:
         adaptGrid(adaptionIndicator_) ;
     }
 
+    /*!
+     * @brief Method to adapt the grid with individual indicator vector
+     *
+     * @param indicator The refinement indicator that is applied
+     *
+     * This method is called by an user-defined preTimeStep() of
+     * the applied problem and takes a given vector with indicator
+     * values.
+     *
+     * It uses a standard procedure for adaptivity:
+     * 1) Determine the refinement indicator
+     * 2) Mark the elements
+     * 3) Store primary variables in a map
+     * 4) Adapt the grid, adapt variables sizes, update mappers
+     * 5) Reconstruct primary variables, regain secondary variables
+     */
     template<class Indicator>
     void adaptGrid(Indicator& indicator)
     {
@@ -170,9 +194,9 @@ public:
         // delete markers in grid
         problem_.grid().postAdapt();
 
-        // write out new grid
-//        Dune::VTKWriter<LeafGridView> vtkwriter(problem_.gridView());
-//        vtkwriter.write("latestgrid",Dune::VTK::appendedraw);
+        // call method in problem for potential output etc.
+        problem_.grid().postAdapt();
+
         return;
     }
 
@@ -253,6 +277,9 @@ public:
         }
     }
 
+    /*!
+     * @brief Returns true if grid cells have been marked for adaptation
+     */
     bool wasAdapted()
     {
         return (marked_ != 0 || coarsened_ != 0);
@@ -274,8 +301,10 @@ public:
     }
 
     /*!
-     * Gets maximum refinement level
+     * @brief Returns maximum refinement level
      *
+     * The value is the assign maximum possible level,
+     * not the actual maximum level of the grid.
      * @return levelMax_ maximum level for refinement
      */
     const int getMaxLevel() const
@@ -283,8 +312,10 @@ public:
         return levelMax_;
     }
     /*!
-     * Gets minimum refinement level
+     * @brief Returns minimum refinement level
      *
+     * The value is the assign minimum possible level,
+     * not the actual minimum level of the grid.
      * @return levelMin_ minimum level for coarsening
      */
     const int getMinLevel() const
