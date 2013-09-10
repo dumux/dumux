@@ -102,6 +102,13 @@ public:
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
+     *
+     * 		\param priVars The primary Variables
+     * 		\param problem The Problem
+     * 		\param element The finite element
+     * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * 		\param scvIdx The index of the sub-control volume
+     * 		\param isOldSol
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -260,6 +267,8 @@ public:
     /*!
      * \brief Returns the effective mobility of a given phase within
      *        the control volume.
+     *
+     *        \param phaseIdx The local index of the phases
      */
     Scalar mobility(const unsigned int phaseIdx) const
     {
@@ -276,6 +285,8 @@ public:
     /*!
      * \brief Returns the relative permeability of a given phase within
      *        the control volume.
+     *
+     *       \param phaseIdx The local index of the phases
      */
     Scalar relativePermeability(const unsigned int phaseIdx) const
     { return relativePermeability_[phaseIdx]; }
@@ -289,6 +300,8 @@ public:
     /*!
      * \brief Returns true iff the fluid state is in the active set
      *        for a phase,
+     *
+     *        \param phaseIdx The local index of the phases
      */
     bool isPhaseActive(const unsigned int phaseIdx) const
     {
@@ -300,6 +313,8 @@ public:
 
     /*!
      * \brief Returns the value of the NCP-function for a phase.
+     *
+     * 		\param phaseIdx The local index of the phases
      */
     Scalar phaseNcp(const unsigned int phaseIdx) const
     {
@@ -313,6 +328,9 @@ public:
     /*!
      * \brief Returns the value of the inequality where a phase is
      *        present.
+     *
+     *        \param phaseIdx The local index of the phases
+     *        \param fluisState Container for all the secondary variables concerning the fluids
      */
     Scalar phasePresentIneq(const FluidState &fluidState,
                             const unsigned int phaseIdx) const
@@ -321,6 +339,9 @@ public:
     /*!
      * \brief Returns the value of the inequality where a phase is not
      *        present.
+     *
+     *        \param phaseIdx The local index of the phases
+     *        \param fluisState Container for all the secondary variables concerning the fluids
      */
     Scalar phaseNotPresentIneq(const FluidState &fluidState,
                                const unsigned int phaseIdx) const

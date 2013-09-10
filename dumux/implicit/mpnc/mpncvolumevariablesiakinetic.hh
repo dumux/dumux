@@ -82,6 +82,16 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     *
+     * 		\param volVars The volume variables
+     * 		\param fluisState Container for all the secondary variables concerning the fluids
+     * 		\param paramCache Container for cache parameters
+     * 		\param priVars The primary Variables
+     * 		\param problem The problem
+     * 		\param element The finite element
+     * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * 		\param scvIdx The index of the sub-control volumete element
+     *
      */
     void update(const VolumeVariables & volVars,
                 const FluidState & fluidState,
@@ -241,6 +251,9 @@ public:
      *
      * This is _only_ required by the kinetic mass/energy modules
      *
+     * 		\param phaseIIdx The local index of the first phase
+     * 		\param phaseJIdx The local index of the second phase
+     *
      */
     const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
     {
@@ -348,6 +361,15 @@ class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*bool enableKineti
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     *
+     *      \param volVars The volume variables
+     * 		\param fluisState Container for all the secondary variables concerning the fluids
+     * 		\param paramCache Container for cache parameters
+     * 		\param priVars The primary Variables
+     * 		\param problem The problem
+     * 		\param element The finite element
+     * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * 		\param scvIdx The index of the sub-control volumete element
      */
     void update(const VolumeVariables & volVars,
                 const FluidState & fluidState,
@@ -404,6 +426,9 @@ public:
 
     /*!
      * \brief The specific interfacial area between two fluid phases [m^2 / m^3]
+     *
+     *      \param phaseIIdx The local index of the first phase
+     * 		\param phaseJIdx The local index of the second phase
      */
     const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
     {

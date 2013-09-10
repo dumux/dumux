@@ -84,6 +84,11 @@ public:
     /*!
      * \brief Modify the internal buffers according to the volume
      *        variables seen on an element
+     *
+     *        \param element The finite element
+     *        \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     *        \param elemVolVars The volume variables of the current element
+     *        \param elemBcTypes
      */
     void processElement(const Element &element,
                         const FVElementGeometry &fvGeometry,
@@ -170,6 +175,11 @@ public:
     /*!
      * \brief Modify the internal buffers according to the volume
      *        variables seen on an element
+     *
+     *        \param element The finite element
+     *        \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     *        \param elemVolVars The volume variables of the current element
+     *        \param elemBcTypes
      */
     void processElement(const Element &element,
                         const FVElementGeometry &fvGeometry,

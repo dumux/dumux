@@ -79,6 +79,11 @@ public:
      *
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
+     *
+     *  \param storage The mass of the component within the sub-control volume
+     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     *  \param scvIdx The SCV (sub-control-volume) index
+     *
      */
     void computeStorage(PrimaryVariables &storage,
                         const unsigned int scvIdx,
@@ -105,6 +110,10 @@ public:
      * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within all sub-control volumes of an
      *        element.
+     *
+     *        \param phaseStorage The mass of the component within the phase
+     *        \param element The finite element
+     *        \param phaseIdx The index of the fluid phase
      */
     void addPhaseStorage(PrimaryVariables &phaseStorage,
                          const Element &element,
@@ -148,6 +157,9 @@ public:
 
     /*!
      * \brief Calculate the source term of the equation
+     *
+     *   \param scvIdx The SCV (sub-control-volume) index
+     *   \param source The source/sink in the sub-control volume for each component
      */
     void computeSource(PrimaryVariables &source,
                        const unsigned int scvIdx)
@@ -209,12 +221,20 @@ public:
     /*!
      * \brief Compute the local residual, i.e. the deviation of the
      *        equations from zero.
+     *
+     *        \param element The finite element
      */
     void eval(const Element &element)
     { ParentType::eval(element); }
 
     /*!
      * \brief Evaluate the local residual.
+     *
+     * 		\param element The finite element
+     * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * 		\param prevVolVars The volume variables of the previous timestep
+     * 		\param curVolVars The volume variables of the current timestep
+     * 		\param bcType
      */
     void eval(const Element &element,
               const FVElementGeometry &fvGeometry,
@@ -252,6 +272,9 @@ public:
      * 
      * Sets the Dirichlet conditions in a strong sense, in contrast to 
      * the general handling in CCLocalResidual.
+     *
+     * 		\param isIt
+     * 		\param bcTypes
      */
     void evalDirichletSegment_(const IntersectionIterator &isIt, 
                                const BoundaryTypes &bcTypes)

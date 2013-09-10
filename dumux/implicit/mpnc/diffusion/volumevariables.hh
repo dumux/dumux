@@ -102,6 +102,9 @@ public:
 
     /*!
      * \brief The binary diffusion coefficient for each fluid phase.
+     * \param phaseIdx The local index of the phases
+     * \param compIIdx The local index of the first component in the phase
+     * \param compJIdx The local index of the second component in the phase
      */
     Scalar diffCoeff(const unsigned int phaseIdx,
                      const unsigned int compIIdx,

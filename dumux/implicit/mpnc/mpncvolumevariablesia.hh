@@ -63,6 +63,16 @@ class MPNCVolumeVariablesIA
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     *
+     * 		\param volVars The volume variables
+     * 		\param fluisState Container for all the secondary variables concerning the fluids
+     * 		\param paramCache Container for cache parameters
+     * 		\param priVars The primary Variables
+     * 		\param problem The problem
+     * 		\param element The finite element
+     * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * 		\param scvIdx The index of the sub-control volumete element
+     *
      */
     void update(const VolumeVariables & volVars,
                 const FluidState &fluidState,
