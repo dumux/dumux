@@ -238,8 +238,6 @@ public:
                             (velocityNw[intersectionIdx] >= 0.) ? cellData.mobility(nPhaseIdx) :
                                     cellDataNeighbor.mobility(nPhaseIdx);
 
-                    int idxInOutside = isIt->indexInOutside();
-
                     if (velocityW[intersectionIdx] >= 0.)
                     {
                         FieldVector velocity(isIt->centerUnitOuterNormal());
