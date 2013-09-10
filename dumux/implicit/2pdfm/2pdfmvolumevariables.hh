@@ -66,6 +66,15 @@ class TwoPDFMVolumeVariables : public TwoPVolumeVariables<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) GridType;
     typedef typename GridType::ctype DT;
+
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<DT, dim> ReferenceElements;
+    typedef typename Dune::ReferenceElement<DT, dim> ReferenceElement;
+#else
+    typedef typename Dune::GenericReferenceElements<DT, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<DT, dim> ReferenceElement;
+#endif
+
     enum {
             dim = GridView::dimension,
             dimWorld = GridView::dimensionworld
@@ -255,8 +264,7 @@ public:
     {
         Scalar volSCVFracture;
         Dune::GeometryType gt = element.geometry().type();
-        const typename Dune::GenericReferenceElementContainer<DT,dim>::value_type&
-            refElement = Dune::GenericReferenceElements<DT,dim>::general(gt);
+        const ReferenceElement &refElement = ReferenceElements::general(gt);
 
         for (int faceIdx=0; faceIdx<refElement.size(1); faceIdx++)
         {
