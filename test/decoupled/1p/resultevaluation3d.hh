@@ -93,6 +93,11 @@ public:
     {
         typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename Entity::Geometry Geometry;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+#else
+        typedef typename Geometry::Jacobian JacobianInverseTransposed;
+#endif
         typedef typename Grid::LevelGridView GV;
         typedef typename GV::IndexSet IS;
         typedef typename GV::template Codim<0>::Iterator Iterator;
@@ -313,8 +318,8 @@ public:
             }
 
             // get the transposed Jacobian of the element mapping
-            const Dune::FieldMatrix<ct,dim,dim>& jacobianInv = geometry.jacobianInverseTransposed(local);
-            Dune::FieldMatrix<ct,dim,dim> jacobianT(jacobianInv);
+            const JacobianInverseTransposed& jacobianInv = geometry.jacobianInverseTransposed(local);
+            JacobianInverseTransposed jacobianT(jacobianInv);
             jacobianT.invert();
 
             // calculate the element velocity by the Piola transformation
@@ -357,7 +362,7 @@ public:
             char fname[128];
             sprintf(fname,"%d","exactSol-numRefine", grid.maxLevel());
             vtkwriter.addCellData(exactSol,"exact pressure solution~");
-            vtkwriter.write(fname,Dune::VTKOptions::ascii);
+            vtkwriter.write(fname,Dune::VTK::ascii);
         }
  
         return;
@@ -434,7 +439,12 @@ public:
         typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
-		typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > SolVector;
+        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > SolVector;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+#else
+        typedef typename Geometry::Jacobian JacobianInverseTransposed;
+#endif
 
         ElementMapper elementMapper(gridView);
         SolVector exactSol(gridView.size(0));
@@ -635,10 +645,9 @@ public:
             }
 
             // get the transposed Jacobian of the element mapping
-            const Dune::FieldMatrix<Scalar,dim,dim>& jacobianInv = geometry.jacobianInverseTransposed(local);
-            Dune::FieldMatrix<Scalar,dim,dim> jacobianT(jacobianInv);
+            const JacobianInverseTransposed& jacobianInv = geometry.jacobianInverseTransposed(local);
+            JacobianInverseTransposed jacobianT(jacobianInv);
             jacobianT.invert();
-            //Dune::FieldMatrix<Scalar,dim,dim> jacobianT(0);
 
             // calculate the element velocity by the Piola transformation
             Dune::FieldVector<Scalar,dim> elementVelocity(0);
@@ -701,7 +710,7 @@ public:
             char fname[128];
             sprintf(fname, "exactSol-numRefine%d", gridView.grid().maxLevel());
             vtkwriter.addCellData(exactSol,"exact pressure solution~");
-            vtkwriter.write(fname,Dune::VTKOptions::ascii);
+            vtkwriter.write(fname,Dune::VTK::ascii);
         }
 
         return;

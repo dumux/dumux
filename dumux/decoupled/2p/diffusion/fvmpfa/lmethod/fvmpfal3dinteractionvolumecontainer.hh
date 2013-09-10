@@ -100,7 +100,7 @@ private:
 protected:
     void storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap);
     void storeIntersectionInfo(const Element& element, std::vector < std::vector<int> >& elemVertMap);
-    void storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex, bool sameLevel);
+    void storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex, bool sameLevel = true);
     void storeBoundaryInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex);
 private:
     void storeInteractionVolumeInfo();
@@ -1199,7 +1199,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
 }
 
 template<class TypeTag>
-void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex, bool sameLevel = true)
+void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex, bool sameLevel)
 {
     const DimVector& centerPos = vertex.geometry().center();
 

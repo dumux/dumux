@@ -134,12 +134,9 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix)
 
         return true;
     }
-    else
-    {
-        return false;
-    }
+
+    return false;
 }
-;
 
 //! Function to calculate eigenvalues and eigenvectors of n x n matrices
 /*
@@ -206,7 +203,7 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& eigVec, MatrixType& 
 
         return true;
 }
-;
+
 
 }
 

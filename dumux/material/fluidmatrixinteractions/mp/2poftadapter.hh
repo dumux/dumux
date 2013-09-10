@@ -74,7 +74,7 @@ public:
     {
         kr[wPhaseIdx] = TwoPLaw::krw(params, fluidState.saturation(wPhaseIdx));
         kr[nPhaseIdx] = TwoPLaw::krn(params, fluidState.saturation(wPhaseIdx));
-    };
+    }
 };
 }
 

@@ -27,7 +27,9 @@
 
 #include <dumux/implicit/mpnc/mpnclocalresidual.hh>
 
-namespace Dumux {
+namespace Dumux
+{
+
 template <class TypeTag>
 class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyTransfer=*/true>
 {
@@ -381,6 +383,6 @@ public:
     }// end source
 };
 
-};
+} // end namespace Dumux
 
 #endif // DUMUX_MPNC_LOCAL_RESIDUAL_ENERGY_KINETIC_HH

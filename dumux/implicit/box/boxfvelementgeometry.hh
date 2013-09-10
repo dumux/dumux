@@ -334,7 +334,7 @@ class BoxFVElementGeometry
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
 #else
-    typedef typename Geometry::Jacobian JacobianInverseTransposed;    
+    typedef typename Geometry::Jacobian JacobianInverseTransposed;
 #endif
 
     typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
