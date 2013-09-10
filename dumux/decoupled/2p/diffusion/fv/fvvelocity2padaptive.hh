@@ -579,20 +579,18 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         }
 
         //store velocities
-        Scalar faceArea = intersection.geometry().volume();
+        cellData.fluxData().setVelocity(wPhaseIdx, isIndexI, velocityW);
+        cellData.fluxData().setVelocity(nPhaseIdx, isIndexI, velocityNw);
+        cellData.fluxData().setVelocityMarker(isIndexI);
 
-            cellData.fluxData().setVelocity(wPhaseIdx, isIndexI, velocityW);
-            cellData.fluxData().setVelocity(nPhaseIdx, isIndexI, velocityNw);
-            cellData.fluxData().setVelocityMarker(isIndexI);
+        Scalar weightingFactor = std::pow(0.5, (dim - 1)*(elementI->level() - elementJ->level()));
 
-            Scalar weightingFactor = faceArea / elementJ->template subEntity<1>(isIndexJ)->geometry().volume();
+        velocityW *= weightingFactor;
+        velocityNw *= weightingFactor;
 
-            velocityW *= weightingFactor;
-            velocityNw *= weightingFactor;
-
-            cellDataJ.fluxData().addVelocity(wPhaseIdx, isIndexJ, velocityW);
-            cellDataJ.fluxData().addVelocity(nPhaseIdx, isIndexJ, velocityNw);
-            cellDataJ.fluxData().setVelocityMarker(isIndexJ);
+        cellDataJ.fluxData().addVelocity(wPhaseIdx, isIndexJ, velocityW);
+        cellDataJ.fluxData().addVelocity(nPhaseIdx, isIndexJ, velocityNw);
+        cellDataJ.fluxData().setVelocityMarker(isIndexJ);
     }
 
     return;
