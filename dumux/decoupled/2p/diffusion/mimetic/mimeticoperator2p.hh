@@ -230,8 +230,6 @@ public:
                             (velocityNw[idxInInside] >= 0.) ? cellData.mobility(nPhaseIdx) :
                                     cellDataNeighbor.mobility(nPhaseIdx);
 
-                    int idxInOutside = isIt->indexInOutside();
-
                     if (velocityW[idxInInside] >= 0.)
                     {
                         FieldVector velocity(isIt->centerUnitOuterNormal());

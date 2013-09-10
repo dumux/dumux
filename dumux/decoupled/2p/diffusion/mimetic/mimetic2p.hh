@@ -248,7 +248,6 @@ public:
     Scalar constructPressure(const Element& element, Dune::FieldVector<Scalar,2*dim>& pressTrace)
     {
         int globalIdx = problem_.variables().index(element);
-        unsigned int numFaces = element.template count<1>();
         Scalar volume = element.geometry().volume();
 
         PrimaryVariables sourceVec(0.0);

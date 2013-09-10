@@ -515,9 +515,6 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
         // get global coordinate of cell centers
         const GlobalPosition& globalPos = elementPointer->geometry().center();
 
-        // cell index
-        int globalIdx = problem_.variables().index(*elementPointer);
-
         //permeability vector at boundary
         DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(*elementPointer));
 

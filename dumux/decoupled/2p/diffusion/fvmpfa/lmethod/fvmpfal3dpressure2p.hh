@@ -492,8 +492,6 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
 
-        int levelI = eIt->level();
-
         std::set<int> neighborIndices;
 
         int numCorners = eIt->geometry().corners();
@@ -532,8 +530,6 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
-
-        int levelI = eIt->level();
 
         // add diagonal index
         this->A_.addindex(globalIdxI, globalIdxI);
