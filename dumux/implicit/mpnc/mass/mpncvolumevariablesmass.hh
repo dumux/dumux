@@ -67,7 +67,7 @@ public:
      * \brief Update composition of all phases in the mutable
      *        parameters from the primary variables.
      *
-     *        \param fluidState Container for all the secondary variables concerning the fluids
+     *        \param fs Container for all the secondary variables concerning the fluids
      *        \param paramCache Container for cache parameters
      *        \param priVars The primary Variables
      *        \param *hint the volume variables
@@ -119,7 +119,7 @@ public:
     /*!
      * \brief Check whether the calculated values are reasonable.
      *
-     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param fs Container for all the secondary variables concerning the fluids
      * \param globalPos The position at which the check is conducted
      */
      bool physicalness(const FluidState & fs,
@@ -142,7 +142,7 @@ public:
       * \brief Output for the case that the current state is not physical.
       *        This is called if the physicalness funcitons returned false.
       *
-      * \param fluidState Container for all the secondary variables concerning the fluids
+      * \param fs Container for all the secondary variables concerning the fluids
       * \param message A string returning the error message for this module
       */
     const void physicalnessError(const FluidState & fs,

@@ -56,6 +56,9 @@ class MPNCVolumeVariablesIA
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename FluidSystem::ParameterCache ParameterCache;
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    enum {dimWorld=GridView::dimensionworld};
+    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 public:
     /*!
@@ -78,6 +81,34 @@ public:
      */
     void checkDefined() const
     { }
+
+    /*!
+     * \brief Check the set variables as to whether they are in physically possible ranges.
+     *
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param globalPos The position at which the check is conducted
+     *
+     * Since we are in equilibrium, we don't need to do anything!
+     */
+     bool physicalness(const FluidState & fluidState,
+                         const GlobalPosition & globalPos)
+    {
+        return true; // all the checks went through: tell calling function, nothing bad could be found.
+    }
+
+     /*!
+      * \brief Output for the case that the current state is not physical.
+      *        This calls the output functions of the modules and throws and exception:
+      *        i.e. a smaller timestep is tried.
+      *
+      * Since we are in equilibrium, we don't need to do anything!
+      *
+      * \param fs Container for all the secondary variables concerning the fluids
+      * \param message A string returning the error message for this module
+      */
+     const void physicalnessError(const FluidState & fs,
+                                  std::stringstream & message)
+     { }
 };
 
 } // namespace Dumux

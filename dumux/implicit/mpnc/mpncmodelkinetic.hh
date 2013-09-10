@@ -296,6 +296,7 @@ public:
     /*!
      * \brief Access to the averaged (magnitude of) velocity for each vertex.
      *
+     * \param phaseIdx The index of the fluid phase
      * \param globalIdx The global index of the degree of freedom
      *
      */
@@ -306,6 +307,7 @@ public:
     /*!
      * \brief Access to the averaged velocity for each vertex.
      *
+     * \param phaseIdx The index of the fluid phase
      * \param globalIdx The global index of the degree of freedom
      */
     const DimVector volumeDarcyVelocity(const unsigned int phaseIdx,

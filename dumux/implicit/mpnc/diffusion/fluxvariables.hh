@@ -181,7 +181,7 @@ public:
     /*!
      * \brief The binary diffusion coefficient for each component in the gas phase.
      * \param compIIdx The local index of the first component in the phase
-     * \param compIJdx The local index of the second component in the phase
+     * \param compJIdx The local index of the second component in the phase
      */
     Scalar porousDiffCoeffG(const unsigned int compIIdx,
                             const unsigned int compJIdx) const

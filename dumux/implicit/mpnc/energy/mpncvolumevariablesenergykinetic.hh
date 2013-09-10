@@ -66,8 +66,8 @@ public:
     /*!
      * \brief Update the temperature of the sub-control volume.
      *
-     * \param The primary variables
-     * \param element The finit Element
+     * \param priVars The primary variables
+     * \param element The finite Element
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param scvIdx The index of the sub-control volume
      * \param problem The problem

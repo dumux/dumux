@@ -67,7 +67,7 @@ public:
     /*!
      * \brief Update the temperature of the sub-control volume.
      *
-     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param fs Container for all the secondary variables concerning the fluids
      * \param paramCache Container for cache parameters
      * \param priVars The primary Variables
      * \param element The finite element
@@ -91,7 +91,7 @@ public:
     /*!
      * \brief Update the enthalpy and the internal energy for a given
      *        control volume.
-     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param fs Container for all the secondary variables concerning the fluids
      * \param paramCache Container for cache parameters
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
@@ -138,7 +138,7 @@ public:
      *
      *        Since we are isothermal, we don't need to do anything!
      *
-     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param fs Container for all the secondary variables concerning the fluids
      * \param message A string returning the error message for this module
      */
     const void physicalnessError(const FluidState & fs,
@@ -177,7 +177,7 @@ public:
     /*!
      * \brief Update the temperature of the sub-control volume.
      *
-     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param fs Container for all the secondary variables concerning the fluids
      * \param paramCache Container for cache parameters
      * \param sol The primary Vaiables
      * \param element The finite element
@@ -201,7 +201,7 @@ public:
     /*!
      * \brief Update the enthalpy and the internal energy for a given
      *        control volume.
-     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param fs Container for all the secondary variables concerning the fluids
      * \param paramCache Container for cache parameters
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
@@ -260,7 +260,7 @@ public:
     /*!
      * \brief Check whether the calculated values are reasonable.
      *
-     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param fs Container for all the secondary variables concerning the fluids
      * \param globalPos The position at which the check is conducted
      */
     bool physicalness(const FluidState & fs,
@@ -278,7 +278,7 @@ public:
      * \brief Output for the case that the current state is not physical.
      *        This is called if the physicalness funcitons returned false.
      *
-     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param fs Container for all the secondary variables concerning the fluids
      * \param message A string returning the error message for this module
      */
     const void physicalnessError(const FluidState & fs,

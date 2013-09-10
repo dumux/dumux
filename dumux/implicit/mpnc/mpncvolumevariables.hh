@@ -247,6 +247,7 @@ public:
                                   scvIdx);
         IAVolumeVariables::checkDefined();
         checkDefined();
+
     }
 
     /*!

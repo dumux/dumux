@@ -75,7 +75,7 @@ public:
      * \brief Update composition of all phases in the mutable
      *        parameters from the primary variables.
      *
-     *        \param fluidState Container for all the secondary variables concerning the fluids
+     *        \param actualFluidState Container for all the secondary variables concerning the fluids
      *        \param paramCache Container for cache parameters
      *        \param priVars The primary Variables
      *        \param *hint the volume variables
@@ -84,7 +84,7 @@ public:
      *        \param fvGeometry The finite-volume geometry in the fully implicit scheme
      *        \param scvIdx The index of the sub-control volume
      */
-    void update(FluidState & actualFluiState,
+    void update(FluidState & actualFluidState,
                 ParameterCache & paramCache,
                 const PrimaryVariables & priVars,
                 const VolumeVariables * hint,
@@ -97,7 +97,7 @@ public:
         for(int smallLoopPhaseIdx=0; smallLoopPhaseIdx<numPhases; ++smallLoopPhaseIdx){
                 // set the component mole fractions
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    actualFluiState.setMoleFraction(smallLoopPhaseIdx,
+                    actualFluidState.setMoleFraction(smallLoopPhaseIdx,
                            compIdx,
                            priVars[moleFrac00Idx +
                                    smallLoopPhaseIdx*numComponents +
@@ -109,17 +109,17 @@ public:
 //             THIS IS ONLY FOR silencing Valgrind but is not used in this model
             for(int smallLoopPhaseIdx=0; smallLoopPhaseIdx<numPhases; ++smallLoopPhaseIdx)
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    const Scalar phi = FluidSystem::fugacityCoefficient(actualFluiState,
+                    const Scalar phi = FluidSystem::fugacityCoefficient(actualFluidState,
                                                                         paramCache,
                                                                         smallLoopPhaseIdx,
                                                                         compIdx);
-                    actualFluiState.setFugacityCoefficient(smallLoopPhaseIdx,
+                    actualFluidState.setFugacityCoefficient(smallLoopPhaseIdx,
                                                       compIdx,
                                                       phi);
             }
 
             FluidState equilFluidState; // the fluidState *on the interface* i.e. chemical equilibrium
-            equilFluidState.assign(actualFluiState) ;
+            equilFluidState.assign(actualFluidState) ;
             ConstraintSolver::solve(equilFluidState,
                                     paramCache,
                                     /*setViscosity=*/false,
@@ -134,8 +134,8 @@ public:
 
             // compute densities of all phases
             for(int smallLoopPhaseIdx=0; smallLoopPhaseIdx<numPhases; ++smallLoopPhaseIdx){
-                const Scalar rho = FluidSystem::density(actualFluiState, paramCache, smallLoopPhaseIdx);
-                actualFluiState.setDensity(smallLoopPhaseIdx, rho);
+                const Scalar rho = FluidSystem::density(actualFluidState, paramCache, smallLoopPhaseIdx);
+                actualFluidState.setDensity(smallLoopPhaseIdx, rho);
             }
 
             // let Valgrind check whether everything is properly defined.
