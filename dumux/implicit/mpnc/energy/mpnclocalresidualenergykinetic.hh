@@ -132,8 +132,8 @@ public:
      *
      * \param flux The flux over the SCV (sub-control-volume) face for each component
      * \param fluxVars The flux Variables
-     * \param volVars The volume variables
-     * \param molarPhaseComponentValuesMassTransport[numPhases]
+     * \param elemVolVars The volume variables of the current element
+     * \param molarPhaseComponentValuesMassTransport
      */
     static void computeFlux(PrimaryVariables & flux,
                             const FluxVariables & fluxVars,
@@ -170,6 +170,7 @@ public:
           *        \param fluxVars The flux Variables
           *        \param elemVolVars The volume variables of the current element
           *        \param phaseIdx The local index of the phases
+          *        \param molarComponentValuesMassTransport
           */
     static void computePhaseEnthalpyFlux(PrimaryVariables & flux,
                                          const FluxVariables & fluxVars,
@@ -255,7 +256,7 @@ public:
        *
        * \param source The source/sink in the sub-control volume for each component
        * \param volVars The volume variables
-       * \param componentIntoPhaseMassTransfer[numPhases]
+       * \param componentIntoPhaseMassTransfer
        */
 
     static void computeSource(PrimaryVariables & source,
