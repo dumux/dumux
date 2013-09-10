@@ -17,9 +17,18 @@ add_test(test_diffusion
   ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion
   3)
 
+add_executable("test_diffusion3d" EXCLUDE_FROM_ALL test_diffusion3d.cc)
+add_test(test_diffusion3d
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_mimetic-00001.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d)
+
 set(NORMALTESTS
   test_dec1p
-  test_diffusion)
+  test_diffusion
+  test_diffusion3d)
 set(ALLTESTS ${NORMALTESTS})
 
 # We do not want want to build the tests during make all,
