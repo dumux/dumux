@@ -251,6 +251,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
 
         TransmissibilityType transCaseThree(0);
 
+        int DUNE_UNUSED transTypeCaseThree = transmissibilityCaseThree(transCaseThree, interactionVolume, lambda, idx1, idx2, idx4, idx5);
         transTypeTemp = transmissibilityCaseFour(transTemp, interactionVolume, lambda, idx1, idx2, idx3, idx6);
 
         transTypeTemp = chooseTransmissibility(transCaseThree, transTemp, 3, 4);
@@ -269,6 +270,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
     {
         TransmissibilityType transTemp(0);
 
+        int DUNE_UNUSED transTypeTemp = transmissibilityCaseOne(transTemp, interactionVolume, lambda, idx1, idx2, idx3, idx5);
         int transType = transmissibilityCaseTwo(transmissibility, interactionVolume, lambda, idx1, idx2, idx4, idx6);
 
         transType = chooseTransmissibility(transTemp, transmissibility, 1, 2);
@@ -282,6 +284,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
     {
         TransmissibilityType transTemp(0);
 
+        int DUNE_UNUSED transTypeTemp = transmissibilityCaseThree(transTemp, interactionVolume, lambda, idx1, idx2, idx4, idx5);
         int transType = transmissibilityCaseFour(transmissibility, interactionVolume, lambda, idx1, idx2, idx3, idx6);
 
         transType = chooseTransmissibility(transTemp, transmissibility, 3, 4);
