@@ -384,11 +384,20 @@ public:
             int faceIdx = isIt->indexInInside();
             // get dimension of face
             const int dimIs = Dune::PDELab::IntersectionGeometry<Intersection>::Entity::Geometry::dimension;
+
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+            // get reference element for intersection geometry (reference element for face if dim = 3)
+            const Dune::ReferenceElement<DT,dimIs>& refelem = Dune::ReferenceElements<DT,dimIs>::general(gt);
+            // get reference element for edges of intersection geometry (reference element for edge if dim = 3), needed for Dirichlet BC
+            const Dune::ReferenceElement<DT,dimIs-1> &face_refelem
+            = Dune::ReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());
+#else
             // get reference element for intersection geometry (reference element for face if dim = 3)
             const Dune::GenericReferenceElement<DT,dimIs>& refelem = Dune::GenericReferenceElements<DT,dimIs>::general(gt);
             // get reference element for edges of intersection geometry (reference element for edge if dim = 3), needed for Dirichlet BC
             const Dune::GenericReferenceElement<DT,dimIs-1> &face_refelem
             = Dune::GenericReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());
+#endif
 
             // Treat Neumann boundary conditions
             // loop over quadrature points and integrate normal stress changes (traction changes)

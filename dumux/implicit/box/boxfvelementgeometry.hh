@@ -333,8 +333,12 @@ class BoxFVElementGeometry
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+    typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
+    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
 #else
     typedef typename Geometry::Jacobian JacobianInverseTransposed;
+    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 #endif
 
     typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
@@ -607,8 +611,7 @@ public:
         const Geometry& geometry = element.geometry();
         Dune::GeometryType gt = geometry.type();
 
-        const typename Dune::GenericReferenceElementContainer<CoordScalar,dim>::value_type&
-            referenceElement = Dune::GenericReferenceElements<CoordScalar,dim>::general(gt);
+        const ReferenceElement &referenceElement = ReferenceElements::general(gt);
 
         const LocalFiniteElement
             &localFiniteElement = feCache_.get(gt);

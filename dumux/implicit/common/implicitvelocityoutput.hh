@@ -60,6 +60,12 @@ class ImplicitVelocityOutput
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
+#else
+    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
+#endif
+
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
@@ -124,7 +130,6 @@ public:
             // calculate vertex velocities
             GlobalPosition tmpVelocity(0.0);
 
-            typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
             const Dune::FieldVector<Scalar, dim>& localPos =
                 ReferenceElements::general(element.geometry().type()).position(0, 0);
 

@@ -68,6 +68,14 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<DT, dim> ReferenceElements;
+    typedef typename Dune::ReferenceElement<DT, dim> ReferenceElement;
+#else
+    typedef typename Dune::GenericReferenceElements<DT, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<DT, dim> ReferenceElement;
+#endif
+
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
@@ -130,8 +138,7 @@ public:
          * Calculate the fracture volume fraction wf = 0.5 * Fwidth * 0.5 * Length
          */
         Dune::GeometryType gt = elem.geometry().type();
-        const typename Dune::GenericReferenceElementContainer<DT,dim>::value_type&
-            refElement = Dune::GenericReferenceElements<DT,dim>::general(gt);
+        const ReferenceElement &refElement = ReferenceElements::general(gt);
 
         Scalar vol; //subcontrol volume
         FVElementGeometry fvelem = this->fvGeometry_();

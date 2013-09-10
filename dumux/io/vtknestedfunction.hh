@@ -42,6 +42,11 @@ class VtkNestedFunction : public Dune::VTKFunction<GridView>
     enum { dim = GridView::dimension };
     typedef typename GridView::ctype ctype;
     typedef typename GridView::template Codim<0>::Entity Element;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<ctype, dim> ReferenceElements;
+#else
+    typedef typename Dune::GenericReferenceElements<ctype, dim> ReferenceElements;
+#endif
 
 public:
     VtkNestedFunction(std::string name,
@@ -85,8 +90,7 @@ public:
             for (int i=0; i < n; ++i)
             {
                 Dune::FieldVector<ctype,dim> local =
-                    Dune::GenericReferenceElements<ctype,dim>::general(gt)
-                    .position(i,dim);
+                    ReferenceElements::general(gt).position(i,dim);
                 local -= xi;
                 if (local.infinity_norm()<min)
                 {
