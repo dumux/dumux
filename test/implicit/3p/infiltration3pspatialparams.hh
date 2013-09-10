@@ -31,8 +31,8 @@
 
 #include <dumux/implicit/3p3c/3p3cindices.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3p.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3pparams.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/parkervangen3p.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/parkervangen3pparams.hh>
 
 namespace Dumux
 {
