@@ -65,7 +65,7 @@ public:
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      *
      * 		\param volVars The volume variables
-     * 		\param fluisState Container for all the secondary variables concerning the fluids
+     * 		\param fluidState Container for all the secondary variables concerning the fluids
      * 		\param paramCache Container for cache parameters
      * 		\param priVars The primary Variables
      * 		\param problem The problem

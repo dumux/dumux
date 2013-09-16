@@ -157,7 +157,7 @@ public:
      * \brief Compute the total storage inside one phase of all
      *        conservation quantities.
      *
-     *        \param phaseStorage
+     *        \param phaseStorage The conserved quantity within the phase in the whole domain
      *        \param phaseIdx The local index of the phases
      */
     void globalPhaseStorage(PrimaryVariables &phaseStorage, const unsigned int phaseIdx)

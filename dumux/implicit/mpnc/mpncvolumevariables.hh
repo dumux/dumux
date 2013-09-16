@@ -108,7 +108,7 @@ public:
      * 		\param element The finite element
      * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
      * 		\param scvIdx The index of the sub-control volume
-     * 		\param isOldSol
+     * 		\param isOldSol Specifies whether this is the previous solution or the current one
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -330,7 +330,7 @@ public:
      *        present.
      *
      *        \param phaseIdx The local index of the phases
-     *        \param fluisState Container for all the secondary variables concerning the fluids
+     *        \param fluidState Container for all the secondary variables concerning the fluids
      */
     Scalar phasePresentIneq(const FluidState &fluidState,
                             const unsigned int phaseIdx) const
@@ -341,7 +341,7 @@ public:
      *        present.
      *
      *        \param phaseIdx The local index of the phases
-     *        \param fluisState Container for all the secondary variables concerning the fluids
+     *        \param fluidState Container for all the secondary variables concerning the fluids
      */
     Scalar phaseNotPresentIneq(const FluidState &fluidState,
                                const unsigned int phaseIdx) const

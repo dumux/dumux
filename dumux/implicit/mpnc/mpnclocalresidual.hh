@@ -111,7 +111,7 @@ public:
      *        (e.g. phase mass) within all sub-control volumes of an
      *        element.
      *
-     *        \param phaseStorage The mass of the component within the phase
+     *        \param phaseStorage The conserved quantity within the phase in the whole domain
      *        \param element The finite element
      *        \param phaseIdx The index of the fluid phase
      */
@@ -234,7 +234,7 @@ public:
      * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
      * 		\param prevVolVars The volume variables of the previous timestep
      * 		\param curVolVars The volume variables of the current timestep
-     * 		\param bcType
+     *      \param bcType The types of the boundary conditions for all vertices of the element
      */
     void eval(const Element &element,
               const FVElementGeometry &fvGeometry,

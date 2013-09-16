@@ -86,36 +86,6 @@ public:
     {
         // do nothing, we're isothermal!
     }
-    /*!
-        * \brief the advective Flux of the enthalpy
-        *
-        *  \param enthalpyFlux advective Flux of the enthalpy
-        *  \param phaseIdx The local index of the phases
-        *  \param compMolFlux
-        *  \param volVars the Volume Variables
-        *  \param fluxVars the flux Variables
-        */
-    static void phaseEnthalpyFlux(PrimaryVariables &enthalpyFlux,
-                                  const unsigned int phaseIdx,
-                                  const PrimaryVariables &compMolFlux,
-                                  const ElementVolumeVariables &volVars,
-                                  const FluxVariables &fluxVars)
-    {
-        // do nothing, we're isothermal!
-    }
-    /*!
-        * \brief The heat conduction in the phase
-        *
-        *  \param heatConduction
-        *  \param volVars the Volume Variables
-        *  \param fluxVars the flux Variables
-        */
-    static void heatConduction(PrimaryVariables &heatConduction,
-                               const ElementVolumeVariables &volVars,
-                               const FluxVariables &fluxVars)
-    {
-        // do nothing, we're isothermal!
-    }
 
     /*!
      * \brief Evaluates the total flux of all conservation quantities
@@ -124,7 +94,7 @@ public:
      * \param flux The flux over the SCV (sub-control-volume) face for each component
      * \param fluxVars The flux variables
      * \param volVars The volume variables
-     * \param molarPhaseComponentValuesMassTransport
+     * \param molarPhaseComponentValuesMassTransport The component-wise flux within a phase. Needed for energy transport.
      */
     static void computeFlux(PrimaryVariables & flux,
                                 const FluxVariables & fluxVars,
@@ -137,8 +107,9 @@ public:
      * \brief Calculate the source term of the equation
      *
      * \param source The source/sink in the sub-control volume for each component
-     * \param componentIntoPhaseMassTransfer
      * \param volVars The volume variables
+     * \param componentIntoPhaseMassTransfer The component-wise transfer from one phase. Needed for energy transfer.
+     *
      */
     static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars,
@@ -223,7 +194,7 @@ public:
       * \param flux The flux over the SCV (sub-control-volume) face for each component
       * \param fluxVars The flux Variables
       * \param elemVolVars The volume variables of the current element
-      * \param molarPhaseComponentValuesMassTransport
+      * \param molarPhaseComponentValuesMassTransport The component-wise flux within a phase. Needed for energy transport.
       */
     static void computeFlux(PrimaryVariables & flux,
                             const FluxVariables & fluxVars,
@@ -246,12 +217,12 @@ public:
                              elemVolVars);
     }
     /*!
-        * \brief the advective Flux of the enthalpy
+        * \brief The advective Flux of the enthalpy
         *        \param flux The flux over the SCV (sub-control-volume) face for each component
         *        \param fluxVars The flux Variables
         *        \param elemVolVars The volume variables of the current element
         *        \param phaseIdx The local index of the phases
-        *        \param molarComponentValuesMassTransport
+        *        \param molarComponentValuesMassTransport The component-wise flux in the current phase. Needed for energy transport.
         */
     static void computePhaseEnthalpyFlux(PrimaryVariables & flux,
                                          const FluxVariables & fluxVars,
@@ -280,7 +251,6 @@ public:
         *        \param flux The flux over the SCV (sub-control-volume) face for each component
         *        \param fluxVars The flux Variables
         *        \param elemVolVars The volume variables of the current element
-        *
         */
     static void computeHeatConduction(PrimaryVariables & flux,
                                     const FluxVariables & fluxVars,
@@ -298,9 +268,8 @@ public:
      *
      * \param source The source/sink in the sub-control volume for each component
      * \param volVars The volume variables
-     * \param componentIntoPhaseMassTransfer
+     * \param componentIntoPhaseMassTransfer The component-wise transfer from one phase. Needed for energy transfer.
      */
-
     static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars,
                               const ComponentVector componentIntoPhaseMassTransfer[numPhases])
@@ -308,10 +277,6 @@ public:
         source[energyEqIdx] = 0.0;
     }
 };
-
-
-
-
 
 }
 

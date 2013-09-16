@@ -33,6 +33,7 @@
 namespace Dumux {
 /*!
  * \brief Calculates the diffusive flux in the fully coupled MpNc model.
+ *        Called from the mass module.
  */
 template <class TypeTag, bool enableDiffusion>
 class MPNCDiffusion
@@ -50,11 +51,22 @@ class MPNCDiffusion
     typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
 
 public:
+
+    /*!
+     * \brief Calls the function for the diffusion in the gas and liquid phases, respectively.
+     *
+     *        In the gas phase, the mutual influence of mole fractions can be considered.
+     *
+     * \param fluxes The Diffusive flux over the sub-control-volume face for each component
+     * \param phaseIdx The index of the phase we are calculating the diffusive flux for
+     * \param fluxVars The flux variables at the current sub control volume face
+     * \param molarDensity The (molar) density of the phase
+     */
     static void flux(ComponentVector &fluxes,
                      const unsigned int phaseIdx,
                      const FluxVariables &fluxVars,
                      const Scalar molarDensity )
-    {
+    { // TODO: nPhase does not need to be gas phase.
         if (phaseIdx == nPhaseIdx)
             gasFlux_(fluxes, fluxVars, molarDensity);
         else if (phaseIdx == wPhaseIdx){
@@ -69,6 +81,14 @@ public:
     }
 
 protected:
+
+    /*!
+     * \brief Calculates the diffusive flux in the liquid phase: only Fick diffusion (no mutual influence) is considered.
+     *
+     * \param fluxes The Diffusive flux over the sub-control-volume face for each component
+     * \param fluxVars The flux variables at the current sub control volume face
+     * \param molarDensity The (molar) density of the phase
+     */
     static void liquidFlux_(ComponentVector &fluxes,
                             const FluxVariables &fluxVars,
                             const Scalar molarDensity)
@@ -83,6 +103,15 @@ protected:
         }
     }
 
+    /*!
+     * \brief Calculates the diffusive flux in the gas phase:
+     *        The property UseMaxwellDiffusion selects whether Maxwell or Fick diffusion is applied.
+     *        Has to be the same for a 2-component system. However, Maxwells does not work always.
+     *
+     * \param fluxes The Diffusive flux over the sub-control-volume face for each component
+     * \param fluxVars The flux variables at the current sub control volume face
+     * \param molarDensity The (molar) density of the phase
+     */
     static void gasFlux_(ComponentVector &fluxes,
                          const FluxVariables &fluxVars,
                          const Scalar molarDensity)

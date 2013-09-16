@@ -70,7 +70,7 @@ public:
      *        \param fs Container for all the secondary variables concerning the fluids
      *        \param paramCache Container for cache parameters
      *        \param priVars The primary Variables
-     *        \param *hint the volume variables
+     *        \param *hint the volume variables, usable for initial guess of composition
      *        \param problem The problem
      *        \param element The finite element
      *        \param fvGeometry The finite-volume geometry in the fully implicit scheme

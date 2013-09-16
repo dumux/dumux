@@ -88,7 +88,7 @@ public:
      *        \param element The finite element
      *        \param fvGeometry The finite-volume geometry in the fully implicit scheme
      *        \param elemVolVars The volume variables of the current element
-     *        \param elemBcTypes
+     *        \param elemBcTypes The types of the boundary conditions for all vertices of the element
      */
     void processElement(const Element &element,
                         const FVElementGeometry &fvGeometry,
@@ -179,7 +179,7 @@ public:
      *        \param element The finite element
      *        \param fvGeometry The finite-volume geometry in the fully implicit scheme
      *        \param elemVolVars The volume variables of the current element
-     *        \param elemBcTypes
+     *        \param elemBcTypes The types of the boundary conditions for all vertices of the element
      */
     void processElement(const Element &element,
                         const FVElementGeometry &fvGeometry,

@@ -219,7 +219,7 @@ public:
                 // energy check
                 for(unsigned int energyEqIdx=0; energyEqIdx<numEnergyEqs; energyEqIdx++){
                     const Scalar eps = 1e-6 ;
-                    const Scalar temperatureTest = fluidState.temperature(energyEqIdx);
+                    const Scalar temperatureTest = elemVolVars[scvIdx].temperature(energyEqIdx);
                     if (not std::isfinite(temperatureTest) or temperatureTest < 0.-eps ){
                         message <<"\nUnphysical Value in Energy: \n";
                         message << "\tT" <<"_"<<FluidSystem::phaseName(energyEqIdx)<<"="<< temperatureTest <<"\n";
@@ -254,6 +254,10 @@ public:
                             message << "\tia" <<FluidSystem::phaseName(phaseIdxI)
                                              <<FluidSystem::phaseName(phaseIdxII)<<"="
                                     << ia << "\n" ;
+                            message << "\t S[0]=" << fluidState.saturation(0);
+                            message << "\t S[1]=" << fluidState.saturation(1);
+                            message << "\t p[0]=" << fluidState.pressure(0);
+                            message << "\t p[1]=" << fluidState.pressure(1);
                         }
                     }
                 }
