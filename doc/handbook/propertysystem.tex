@@ -239,13 +239,37 @@ diagram for the car types above might look like outlined in Figure
 \ref{fig:car-hierarchy}.
 
 \begin{figure}[t]
-  \centering 
+  \centering
   \subfloat[]{
-    \includegraphics[width=.6\textwidth]{EPS/car-hierarchy.eps}
+    \begin{tikzpicture}
+      [cars/.style={rectangle,draw=black,rounded corners,minimum width=2.5cm,node distance=0.5cm}]
+      % place nodes
+      \node[cars] (compact) {Compact car};
+      \node[cars] (sedan) [below=of compact] {Sedan};
+      \node[cars] (truck) [right=of compact] {Truck};
+      \node[cars] (pickup) [below right= of sedan] {Pickup};
+      \node[cars] (tank) [right=of truck] {Tank};
+      \node[cars] (hummer) [below right= of pickup] {Hummer};
+      % add edges
+      \draw [-latex',thick] (compact) -- (sedan);
+      \draw [-latex',thick] (sedan) -- (pickup);
+      \draw [-latex',thick] (truck) -- (pickup);
+      \draw [-latex',thick] (tank) -- (hummer);
+      \draw [-latex',thick] (pickup) -- (hummer);
+    \end{tikzpicture}
     \label{fig:car-hierarchy}
   }
+  \hspace*{0.5cm}
   \subfloat[]{
-    \includegraphics[width=.35\linewidth, keepaspectratio]{EPS/car-propertynames.eps}
+    \begin{tikzpicture}
+      [propertyBox/.style={rectangle,draw=black,minimum width=4.5cm,node distance=0.1cm}]
+      \node[propertyBox] (gasUsage) {GasUsage};
+      \node[propertyBox] (speed) [below=of gasUsage] {TopSpeed};
+      \node[propertyBox] (seats) [below=of speed] {NumSeats};
+      \node[propertyBox] (automatic) [below=of seats] {AutomaticTransmission};
+      \node[propertyBox] (calibre) [below=of automatic] {CannonCalibre};
+      \node[propertyBox] (payload) [below=of calibre] {Payload};
+    \end{tikzpicture}
     \label{fig:car-propertynames}
   }
   \caption{\textbf{(a)}~A possible property inheritance graph for
