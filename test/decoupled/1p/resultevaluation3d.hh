@@ -436,7 +436,6 @@ public:
         typedef typename Grid::template Codim<0>::Entity Element;
         typedef typename Element::Geometry Geometry;
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-        typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > SolVector;
@@ -727,7 +726,6 @@ public:
         typedef typename Grid::template Codim<0>::Entity Element;
         typedef typename Element::Geometry Geometry;
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-        typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
 

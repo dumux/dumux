@@ -94,7 +94,7 @@ class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
             nPhaseIdx = Indices::nPhaseIdx,
             pressureIdx = Indices::pressureIdx,
             saturationIdx = Indices::saturationIdx,
-            pressEqIdx = Indices::pressEqIdx,
+            pressureEqIdx = Indices::pressureEqIdx,
             satEqIdx = Indices::satEqIdx,
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };
@@ -2253,7 +2253,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
 
             if (interactionVolume.isBoundaryFace(intVolFaceIdx))
             {
-                if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressEqIdx))
+                if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressureEqIdx))
                 {
                     const GlobalPosition& globalPosFace = interactionVolume.getFacePosition(elemIdx, faceIdx);
 
@@ -2392,7 +2392,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
                         }
                     }
                 }
-                else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressEqIdx))
+                else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx))
                 {
                     Scalar J = interactionVolume.getNeumannValues(intVolFaceIdx)[wPhaseIdx]
                         / density_[wPhaseIdx];
@@ -2401,8 +2401,8 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
                 }
                 else
                 {
-                    std::cout << "interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressEqIdx)"
-                              << interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressEqIdx) << "\n";
+                    std::cout << "interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx)"
+                              << interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx) << "\n";
                     DUNE_THROW(Dune::NotImplemented,
                                "No valid boundary condition type defined for pressure equation!");
                 }

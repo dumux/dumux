@@ -135,8 +135,8 @@ class TestDiffusion3DProblem: public DiffusionProblem2P<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
         pWIdx = Indices::pressureIdx,
-        SwIdx = Indices::SwIdx,
-        pressEqIdx = Indices::pressEqIdx,
+        swIdx = Indices::swIdx,
+        pressureEqIdx = Indices::pressureEqIdx,
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -243,7 +243,7 @@ public:
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
             values[pWIdx] = exact(globalPos);
-            values[SwIdx] = 1.0;
+            values[swIdx] = 1.0;
     }
 
     //! set neumann condition for phases (flux, [kg/(m^2 s)])

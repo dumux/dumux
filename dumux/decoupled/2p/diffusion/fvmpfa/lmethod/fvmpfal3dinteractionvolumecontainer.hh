@@ -79,7 +79,7 @@ class FvMpfaL3dInteractionVolumeContainer
 
     enum
         {
-            pressEqIdx = Indices::pressEqIdx,
+            pressureEqIdx = Indices::pressureEqIdx,
         };
 
     enum
@@ -743,7 +743,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 0);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -761,7 +761,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 3);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -779,7 +779,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 8);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -800,7 +800,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 1);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -818,7 +818,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 0);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -836,7 +836,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 9);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -857,7 +857,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 3);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -875,7 +875,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 2);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -893,7 +893,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 11);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -914,7 +914,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 2);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -932,7 +932,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 1);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -950,7 +950,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 10);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -971,7 +971,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 8);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -989,7 +989,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 4);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1007,7 +1007,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 7);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1028,7 +1028,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 9);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1046,7 +1046,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 5);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1064,7 +1064,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 4);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1085,7 +1085,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 11);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1103,7 +1103,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 7);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1121,7 +1121,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 6);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1142,7 +1142,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 10);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1160,7 +1160,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 6);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;
@@ -1178,7 +1178,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 5);
-                            if (bcType.isNeumann(pressEqIdx))
+                            if (bcType.isNeumann(pressureEqIdx))
                             {
                                 problem_.neumann(boundValues, *isIt);
                                 boundValues *= faceVol/4.0;

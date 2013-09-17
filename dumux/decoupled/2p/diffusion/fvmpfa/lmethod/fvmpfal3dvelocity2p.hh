@@ -98,7 +98,7 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
             nPhaseIdx = Indices::nPhaseIdx,
             pressureIdx = Indices::pressureIdx,
             saturationIdx = Indices::saturationIdx,
-            pressEqIdx = Indices::pressEqIdx,
+            pressureEqIdx = Indices::pressureEqIdx,
             satEqIdx = Indices::satEqIdx,
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };
@@ -1880,7 +1880,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
 
             if (interactionVolume.isBoundaryFace(intVolFaceIdx))
             {
-                if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressEqIdx))
+                if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressureEqIdx))
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
 
@@ -1980,7 +1980,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                     cellData.fluxData().addVelocity(nPhaseIdx, boundaryFaceIdx, velocityNw);
                     cellData.fluxData().setVelocityMarker(boundaryFaceIdx);
                 }
-                else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressEqIdx))
+                else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx))
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
 
@@ -2010,8 +2010,8 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 }
                 else
                 {
-                    std::cout << "interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressEqIdx)"
-                              << interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressEqIdx) << "\n";
+                    std::cout << "interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx)"
+                              << interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx) << "\n";
                     DUNE_THROW(Dune::NotImplemented,
                                "No valid boundary condition type defined for pressure equation!");
                 }

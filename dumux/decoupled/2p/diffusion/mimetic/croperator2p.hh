@@ -98,7 +98,7 @@ class CROperatorAssemblerTwoP
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum
     {
-        pressEqIdx = Indices::pressEqIdx,
+        pressureEqIdx = Indices::pressureEqIdx,
     };
 
     //! a function to approximately compute the number of nonzeros
@@ -275,7 +275,7 @@ public:
                 }
 
                 // essential boundary condition and rhs
-                if (loc.bc(i).isDirichlet(pressEqIdx))
+                if (loc.bc(i).isDirichlet(pressureEqIdx))
                 {
                     essential[local2Global[i]][0] = BoundaryConditions::dirichlet;
                     f[local2Global[i]][0] = loc.rhs(i)[0];

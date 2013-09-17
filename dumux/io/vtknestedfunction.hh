@@ -27,6 +27,7 @@
 #include <string>
 
 #include <dune/common/fvector.hh>
+#include <dune/common/version.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 

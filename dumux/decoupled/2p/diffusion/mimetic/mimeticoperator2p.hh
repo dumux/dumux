@@ -81,7 +81,7 @@ class MimeticOperatorAssemblerTwoP: public CROperatorAssemblerTwoP<TypeTag>
         nPhaseIdx = Indices::nPhaseIdx,
         saturationIdx = Indices::saturationIdx,
         satEqIdx = Indices::satEqIdx,
-        pressEqIdx = Indices::pressEqIdx
+        pressureEqIdx = Indices::pressureEqIdx
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> FieldVector;

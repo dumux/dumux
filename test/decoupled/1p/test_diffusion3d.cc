@@ -28,7 +28,12 @@
 #include <boost/format.hpp>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/version.hh>
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+#include <dune/common/parallel/mpihelper.hh>
+#else
 #include <dune/common/mpihelper.hh>
+#endif
 
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/common/parametertreeparser.hh>
@@ -49,7 +54,6 @@ int main(int argc, char** argv)
 {
     try {
         typedef TTAG(DiffusionTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
         typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
 

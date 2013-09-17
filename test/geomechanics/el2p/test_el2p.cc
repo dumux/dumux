@@ -23,6 +23,11 @@
  */
 #include "config.h"
 
+#if HAVE_DUNE_PDELAB
+
+// Check if DUNE-PDELab has been patched for our needs.
+#ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
+
 #include "el2pproblem.hh"
 #include <dune/common/precision.hh>
 #include <dumux/common/start.hh>
@@ -99,3 +104,31 @@ int main(int argc, char** argv) {
         std::cerr << "Unknown exception thrown!" << std::endl;
     }
 }
+
+#else // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
+
+#warning You need to have  a patched dune-pdelab to run this test, see ../../../patches/README for details.
+
+#include <iostream>
+
+int main()
+{
+    std::cerr << "You need to have a patched dune-pdelab to run this test, "
+                 "see ../../../patches/README for details." << std::endl;;
+    return 77;
+}
+
+#endif // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
+
+#else // HAVE_DUNE_PDELAB
+
+#warning You need to have dune-pdelab installed and patched to run this test.
+
+#include <iostream>
+
+int main()
+{
+    std::cerr << "You need to have dune-pdelab installed and patched to run this test.\n";
+    return 77;
+}
+#endif // HAVE_DUNE_PDELAB

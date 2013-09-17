@@ -95,7 +95,7 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
             nPhaseIdx = Indices::nPhaseIdx,
             pressureIdx = Indices::pressureIdx,
             saturationIdx = Indices::saturationIdx,
-            pressEqIdx = Indices::pressEqIdx,
+            pressureEqIdx = Indices::pressureEqIdx,
             satEqIdx = Indices::satEqIdx,
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };
@@ -528,7 +528,7 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
 
             if (interactionVolume.isBoundaryFace(intVolFaceIdx))
             {
-                if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressEqIdx))
+                if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressureEqIdx))
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
 
@@ -638,7 +638,7 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                         cellData.fluxData().setVelocity(nPhaseIdx, boundaryFaceIdx, velocityNW);
                         cellData.fluxData().setVelocityMarker(boundaryFaceIdx);
                 }
-                else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressEqIdx))
+                else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx))
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
 

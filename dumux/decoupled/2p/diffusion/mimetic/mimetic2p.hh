@@ -77,7 +77,7 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
         nPhaseIdx = Indices::nPhaseIdx,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-        pressEqIdx = Indices::pressEqIdx,
+        pressureEqIdx = Indices::pressureEqIdx,
         satEqIdx = Indices::satEqIdx,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
@@ -240,7 +240,7 @@ public:
 
         for (int i = 0; i < numFaces; i++)
         {
-            if (!this->bc(i).isDirichlet(pressEqIdx))
+            if (!this->bc(i).isDirichlet(pressureEqIdx))
                 f[local2Global[i]][0] += (dInv * F[i] * rhs_[globalIdx]);
         }
     }
@@ -648,7 +648,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
             BoundaryTypes bctype;
             problem_.boundaryTypes(bctype, *isIt);
 
-            if (bctype.isDirichlet(pressEqIdx))
+            if (bctype.isDirichlet(pressureEqIdx))
             {
                 if (flux > 0. || !bctype.isDirichlet(satEqIdx))
                 {
@@ -720,13 +720,13 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleBC(const Element& element, int 
             problem_.boundaryTypes(this->bctype[faceIndex], *isIt);
             PrimaryVariables boundValues(0.0);
 
-            if (this->bctype[faceIndex].isNeumann(pressEqIdx))
+            if (this->bctype[faceIndex].isNeumann(pressureEqIdx))
             {
                 problem_.neumann(boundValues, *isIt);
                 Scalar J = (boundValues[wPhaseIdx]/density_[wPhaseIdx] + boundValues[nPhaseIdx]/density_[nPhaseIdx]);
                 this->b[faceIndex] -= J * isIt->geometry().volume();
             }
-            else if (this->bctype[faceIndex].isDirichlet(pressEqIdx))
+            else if (this->bctype[faceIndex].isDirichlet(pressureEqIdx))
             {
                 problem_.dirichlet(boundValues, *isIt);
                 if (pressureType == pw)
