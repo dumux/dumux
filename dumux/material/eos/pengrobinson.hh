@@ -73,7 +73,9 @@ public:
         criticalPressure_.resize(aMin, aMax, na, bMin, bMax, nb);
         criticalMolarVolume_.resize(aMin, aMax, na, bMin, bMax, nb);
 
-        Scalar VmCrit, pCrit, TCrit;
+        Scalar VmCrit = 18e-6;
+        Scalar pCrit = 1e7;
+        Scalar TCrit = 273;
         for (int i = 0; i < na; ++i) {
             Scalar a = criticalTemperature_.iToX(i);
             for (int j = 0; j < nb; ++j) {
