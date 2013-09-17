@@ -19,9 +19,9 @@
 #ifndef DUMUX_VARIABLECLASS_ADAPTIVE_HH
 #define DUMUX_VARIABLECLASS_ADAPTIVE_HH
 
-
-#include "variableclass.hh"
+#include <dune/common/version.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
+#include "variableclass.hh"
 
 /**
  * @file
@@ -56,10 +56,11 @@ private:
     typedef typename Grid::LevelGridView LevelGridView;
     typedef typename LevelGridView::template Codim<0>::Iterator LevelIterator;
     typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
+    typedef Dune::PersistentContainer<Grid, AdaptedValues> PersistentContainer;
 
 private:
     const Grid& grid_;
-    Dune::PersistentContainer<Grid, AdaptedValues> adaptationMap_;
+    PersistentContainer adaptationMap_;
 
 public:
     //! Constructs an adaptive VariableClass object
@@ -87,7 +88,12 @@ public:
      */
     void storePrimVars(const Problem& problem)
     {
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        adaptationMap_.resize();
+#else
         adaptationMap_.reserve();
+#endif
+
         // loop over all levels of the grid
         for (int level = grid_.maxLevel(); level >= 0; level--)
         {
@@ -138,7 +144,11 @@ public:
      */
     void reconstructPrimVars(const Problem& problem)
     {
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        adaptationMap_.resize();
+#else
         adaptationMap_.reserve();
+#endif
 
         for (int level = 0; level <= grid_.maxLevel(); level++)
         {
@@ -188,7 +198,13 @@ public:
 
         }
         // reset entries in restrictionmap
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        adaptationMap_.resize( typename PersistentContainer::Value() );
+        adaptationMap_.shrinkToFit();
+        adaptationMap_.fill( typename PersistentContainer::Value() );
+#else
         adaptationMap_.clear();
+#endif
     }
 
 };
