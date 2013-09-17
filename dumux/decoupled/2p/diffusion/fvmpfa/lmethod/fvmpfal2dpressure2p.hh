@@ -66,8 +66,13 @@ class FvMpfaL2dPressure2p: public FVPressure<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
-    typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+#else
+    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename SpatialParams::MaterialLaw MaterialLaw;
@@ -890,7 +895,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
             // get the intersection node /bar^{x_3} between 'isIt12' and 'isIt14', denoted as 'corner1234'
             // initialization of corner1234
 
-            const ReferenceElement& referenceElement = ReferenceElementContainer::general(eIt->geometry().type());
+            const ReferenceElement& referenceElement = ReferenceElements::general(eIt->geometry().type());
 
             GlobalPosition corner1234(0);
 
@@ -1808,7 +1813,7 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
 
-                            const ReferenceElement& referenceElement = ReferenceElementContainer::general(
+                            const ReferenceElement& referenceElement = ReferenceElements::general(
                                     elementPointer->geometry().type());
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);

@@ -60,7 +60,11 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+#else
+    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+#endif
 
     enum
     {

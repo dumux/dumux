@@ -68,8 +68,13 @@ class FvMpfaL2dPressure2pAdaptive: public FVPressure<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
-    typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+#else
+    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename SpatialParams::MaterialLaw MaterialLaw;
@@ -902,7 +907,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
         // get index
         int globalIdx1 = problem_.variables().index(*eIt);
 
-        const ReferenceElement& referenceElement = ReferenceElementContainer::general(eIt->geometry().type());
+        const ReferenceElement& referenceElement = ReferenceElements::general(eIt->geometry().type());
 
         IntersectionIterator isIt12Begin = problem_.gridView().ibegin(*eIt);
         IntersectionIterator isIt12End = problem_.gridView().iend(*eIt);
@@ -2624,7 +2629,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
 
-                            const ReferenceElement& referenceElement = ReferenceElementContainer::general(
+                            const ReferenceElement& referenceElement = ReferenceElements::general(
                                     elementPointer->geometry().type());
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);

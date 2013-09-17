@@ -98,7 +98,11 @@ private:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+#else
+    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+#endif
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
@@ -334,7 +338,7 @@ public:
                     refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
 
                 const DimVector& localPos =
-                    ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
+                    ReferenceElements::general(eIt->geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
                 const DimMatrix& jacobianT = eIt->geometry().jacobianTransposed(localPos);

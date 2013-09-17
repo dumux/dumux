@@ -88,7 +88,11 @@ class FVVelocity2P
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+#else
+    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+#endif
 
     enum
     {
@@ -218,7 +222,7 @@ public:
                 refVelocity[i] = 0.5 * (fluxW[2*i + 1] - fluxW[2*i]);
 
                 const Dune::FieldVector<Scalar, dim> localPos =
-                ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
+                ReferenceElements::general(eIt->geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
                 const JacobianTransposed jacobianT =
@@ -290,8 +294,8 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
 
     // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = elementI->geometry().center();
-    const GlobalPosition& globalPosJ = elementJ->geometry().center();
+    const GlobalPosition& globalPosI = (*elementI).geometry().center();
+    const GlobalPosition& globalPosJ = (*elementJ).geometry().center();
 
     // get mobilities and fractional flow factors
     Scalar lambdaWI = cellData.mobility(wPhaseIdx);
@@ -458,7 +462,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         problem_.dirichlet(boundValues, intersection);
 
         // get global coordinates of cell centers
-        const GlobalPosition& globalPosI = element->geometry().center();
+        const GlobalPosition& globalPosI = (*element).geometry().center();
 
         // center of face in global coordinates
         const GlobalPosition& globalPosJ = intersection.geometry().center();

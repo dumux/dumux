@@ -53,8 +53,13 @@ class FvMpfaL3dInteractionVolumeContainer
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
-    typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+#else
+    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -252,7 +257,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
 
     const ElementGeometry& geometry = element.geometry();
 
-    const ReferenceElement& referenceElement = ReferenceElementContainer::general(geometry.type());
+    const ReferenceElement& referenceElement = ReferenceElements::general(geometry.type());
 
     int levelI = element.level();
 
@@ -1213,7 +1218,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
         const ElementGeometry& geometry1 = elementPointer1->geometry();
         const ElementGeometry& geometry8 = elementPointer8->geometry();
 
-        const ReferenceElement& referenceElement = ReferenceElementContainer::general(geometry1.type());
+        const ReferenceElement& referenceElement = ReferenceElements::general(geometry1.type());
 
         DimVector edgeCoord(geometry1.global(referenceElement.position(9, dim - 1)));
         interactionVolume.setEdgePosition(edgeCoord, 2);

@@ -140,7 +140,11 @@ public:
             for (int i = 0; i < dim; i++)
                 refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
 
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+#else
             typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+#endif
             const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElements::general(eIt->geometry().type()).position(0,
                     0);
 

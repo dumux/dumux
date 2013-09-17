@@ -43,8 +43,13 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
-    typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+#else
+    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename SpatialParams::MaterialLaw MaterialLaw;
@@ -177,7 +182,7 @@ public:
                 refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
                 refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
 
-                const DimVector& localPos = ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
+                const DimVector& localPos = ReferenceElements::general(eIt->geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
                 const JacobianTransposed jacobianT = eIt->geometry().jacobianTransposed(localPos);
@@ -532,7 +537,7 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
 
-                    const ReferenceElement& referenceElement = ReferenceElementContainer::general(
+                    const ReferenceElement& referenceElement = ReferenceElements::general(
                             elementPointer->geometry().type());
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
@@ -642,7 +647,7 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
 
-                    const ReferenceElement& referenceElement = ReferenceElementContainer::general(
+                    const ReferenceElement& referenceElement = ReferenceElements::general(
                             elementPointer->geometry().type());
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
