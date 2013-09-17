@@ -114,7 +114,7 @@ public:
      * At this point we can assume that everything has been allocated,
      * although some objects may not yet be completely initialized.
      *
-     * \param prob The problem which we want to simulate.
+     * \param problem The problem which we want to simulate.
      */
     void init(Problem &problem)
     {

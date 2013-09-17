@@ -36,7 +36,7 @@ namespace Dumux
 /*!
  * \ingroup BoxStokesModel
  * \ingroup ImplicitVolumeVariables
- * \brief Contains the quantities which are are constant within a
+ * \brief Contains the quantities which are constant within a
  *        finite volume in the Stokes box model.
  */
 template <class TypeTag>

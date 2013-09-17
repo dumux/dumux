@@ -39,10 +39,10 @@ namespace Dumux
  * \ingroup ImplicitFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate the mass and momentum fluxes over the face of a
- *        sub-control volume for the Stokes box model.
+ *        sub-control volume for the Stokes model.
  *
  * This means pressure gradients, phase densities, viscosities, etc.
- * at the integration point of the sub-control-volume face
+ * at the integration point of the sub-control-volume face.
  */
 template <class TypeTag>
 class StokesFluxVariables

@@ -35,10 +35,10 @@ namespace Dumux
 {
 //! \ingroup diffusion
 /*! Finite Volume-MPFAL-Implementation of the equation
- * \f$ - \text{div}\, \mathbf_{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$, or
- * \f$ - \text{div}\, \mathbf_{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
+ * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$, or
+ * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
  * \f$\Phi = g\f$ on \f$\Gamma_1\f$, and
- * \f$-\text{div}\, \mathbf_{v}_t \cdot \mathbf{n} = J\f$
+ * \f$-\text{div}\, \mathbf{v}_t \cdot \mathbf{n} = J\f$
  * on \f$\Gamma_2\f$. Here,
  * \f$Phi_\alpha \f$ denotes the potential of phase \f$\alpha\f$, \f$K\f$ the intrinsic permeability,
  * \f$\lambda_t\f$ the total mobility, \f$this->f_\alpha\f$ the phase fractional flow function.

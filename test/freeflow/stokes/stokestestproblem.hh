@@ -87,7 +87,7 @@ SET_BOOL_PROP(StokesTestProblem, ProblemEnableGravity, false);
  *
  * This problem uses the \ref BoxStokesModel.
  * To run the simulation execute the following line in shell:
- * <tt>./test_stokes -parameterFile ./test_stokes.input</tt>
+ * <tt>./test_stokes</tt>
  */
 template <class TypeTag>
 class StokesTestProblem : public StokesProblem<TypeTag>

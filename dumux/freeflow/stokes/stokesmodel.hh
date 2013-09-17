@@ -38,7 +38,7 @@ namespace Dumux
  * \ingroup BoxStokesModel
  * \brief Adaption of the box scheme to the Stokes model.
  *
- * This model implements laminar Stokes flow of a single fluid, solving a momentum balance:
+ * This model implements laminar Stokes flow of a single fluid, solving the momentum balance equation
  * \f[
 \frac{\partial \left(\varrho_g {\boldsymbol{v}}_g\right)}{\partial t}
 + \boldsymbol{\nabla} \boldsymbol{\cdot} \left(p_g {\bf {I}}
@@ -47,16 +47,17 @@ namespace Dumux
 - \varrho_g {\bf g} = 0,
  * \f]
  *
- * and the mass balance equation:
+ * and the mass balance equation
  * \f[
-\frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
+\frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0.
  * \f]
  *
  * By setting the property <code>EnableNavierStokes</code> to <code>true</code> the Navier-Stokes
- * equation can be solved. In this case an additional term is added to the momentum balance:
+ * equation can be solved. In this case an additional term
  *  \f[
 \varrho_g \left(\boldsymbol{v}_g \boldsymbol{\cdot} \boldsymbol{\nabla} \right) \boldsymbol{v}_g 
  * \f]
+ * is added to the momentum balance equation.
  * 
  * This is discretized by a fully-coupled vertex-centered finite volume
  * (box) scheme in space and by the implicit Euler method in time.
