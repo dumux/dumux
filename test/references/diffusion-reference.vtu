@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="64" NumberOfPoints="81">
-      <CellData Scalars="global pressure">
-        <DataArray type="Float32" Name="global pressure" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="wetting potential">
+        <DataArray type="Float32" Name="wetting potential" NumberOfComponents="1" format="ascii">
           0.097758 0.12059 0.173 0.197325 0.192325 0.165091 0.106329 0.0401586 0.12059 0.318883 0.47833 0.550023
           0.551477 0.462448 0.309603 0.108657 0.173 0.47833 0.69324 0.819422 0.817403 0.691356 0.465378 0.160518
           0.197325 0.550023 0.819422 0.961479 0.959541 0.81798 0.548266 0.188515 0.192325 0.551477 0.817403 0.959541
