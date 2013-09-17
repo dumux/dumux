@@ -93,11 +93,6 @@ public:
     {
         typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename Entity::Geometry Geometry;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
-        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
-#else
-        typedef typename Geometry::Jacobian JacobianInverseTransposed;
-#endif
         typedef typename Grid::LevelGridView GV;
         typedef typename GV::IndexSet IS;
         typedef typename GV::template Codim<0>::Iterator Iterator;
@@ -108,6 +103,13 @@ public:
 
         enum{dim = Grid::dimension};
 
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+        typedef typename Dune::ReferenceElements<ct, dim> ReferenceElements;
+#else
+        typedef typename Geometry::Jacobian JacobianInverseTransposed;
+        typedef typename Dune::GenericReferenceElements<ct, dim> ReferenceElements;
+#endif
         const GV& gridview(grid.levelView(grid.maxLevel()));
         const IS& indexset(gridview.indexSet());
         EM elementmapper(gridview);
@@ -186,7 +188,7 @@ public:
 
             // cell center in reference element
             const Dune::FieldVector<ct,dim>&
-                local = Dune::GenericReferenceElements<ct,dim>::general(gt).position(0,0);
+                local = ReferenceElements::general(gt).position(0,0);
 
             // get global coordinate of cell center
             Dune::FieldVector<ct,dim> global = geometry.global(local);
@@ -441,8 +443,10 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > SolVector;
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+        typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
 #else
         typedef typename Geometry::Jacobian JacobianInverseTransposed;
+        typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
 #endif
 
         ElementMapper elementMapper(gridView);
@@ -493,7 +497,7 @@ public:
 
             Dune::GeometryType geomType = geometry.type();
 
-            const Dune::FieldVector<Scalar,dim>& local = Dune::GenericReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
+            const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
             Dune::FieldVector<Scalar,dim> global = geometry.global(local);
 
             Scalar volume = geometry.volume();
@@ -728,6 +732,15 @@ public:
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+        typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+        typedef typename Dune::ReferenceElements<Scalar, dim-1> ReferenceFaces;
+#else
+        typedef typename Geometry::Jacobian JacobianInverseTransposed;
+        typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+        typedef typename Dune::GenericReferenceElements<Scalar, dim-1> ReferenceFaces;
+#endif
 
         ElementMapper elementMapper(gridView);
 
@@ -751,11 +764,11 @@ public:
 
             Dune::GeometryType geomType = geometry.type();
 
-            const Dune::FieldVector<Scalar,dim>& local = Dune::GenericReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
+            const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
             Dune::FieldVector<Scalar,dim> global = geometry.global(local);
 
             Scalar volume = geometry.integrationElement(local)
-                    *Dune::GenericReferenceElements<Scalar,dim>::general(geomType).volume();
+                    *ReferenceElements::general(geomType).volume();
 
             int eIdx = elementMapper.map(element);
 
@@ -790,7 +803,7 @@ public:
                 i++;
 
                 // center in face's reference element
-                const Dune::FieldVector<Scalar,dim-1>& faceLocalNm1 = Dune::GenericReferenceElements<Scalar,dim-1>::general(gtf).position(0,0);
+                const Dune::FieldVector<Scalar,dim-1>& faceLocalNm1 = ReferenceFaces::general(gtf).position(0,0);
 
                 // center of face in global coordinates
                 Dune::FieldVector<Scalar,dim> faceGlobal = is->geometry().global(faceLocalNm1);

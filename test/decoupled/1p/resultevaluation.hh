@@ -114,7 +114,12 @@ public:
 
             Dune::GeometryType geomType = geometry.type();
 
-            const Dune::FieldVector<Scalar,dim>& local = Dune::GenericReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+            typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+#else
+            typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+#endif
+            const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
             Dune::FieldVector<Scalar,dim> global = geometry.global(local);
 
             Scalar volume = geometry.volume();
