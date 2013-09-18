@@ -38,16 +38,32 @@
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/common/parametertreeparser.hh>
 
+#include <dumux/common/start.hh>
+
 #include "test_diffusionproblem3d.hh"
 #include "resultevaluation3d.hh"
 
-////////////////////////
-// the main function
-////////////////////////
-void usage(const char *progname)
+/*!
+ * \brief Provides an interface for customizing error messages associated with
+ *        reading in parameters.
+ *
+ * \param progName  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
+ */
+void usage(const char *progName, const std::string &errorMsg)
 {
-    std::cout << boost::format("usage: %s input-file-name\n") % progname;
-    exit(1);
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " [options]\n";
+                    errorMessageOut += errorMsg;
+                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
+                                        "\t-Grid.File                      Name of the file containing the grid \n";
+
+        std::cout << errorMessageOut
+                  << "\n";
+    }
 }
 
 int main(int argc, char** argv)
@@ -60,19 +76,31 @@ int main(int argc, char** argv)
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
-        ////////////////////////////////////////////////////////////
-        // parse the command line arguments
-        ////////////////////////////////////////////////////////////
-        if (argc > 2)
-            usage(argv[0]);
+        // fill the parameter tree with the options from the command line
+        std::string s = Dumux::readOptions_(argc, argv, ParameterTree::tree());
+        if (!s.empty()) {
+            usage(argv[0], s);
+            return 1;
+        }
 
-        //read inputfile name
-        std::string inputFileName("test_diffusion3d.input");
-        if (argc == 2)
-            inputFileName = argv[1];
+        // obtain the name of the parameter file
+        std::string parameterFileName;
+        if (ParameterTree::tree().hasKey("ParameterFile"))
+        {
+            // set the name to the one provided by the user
+            parameterFileName = GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile);
+        }
+        else // otherwise we read from the command line
+        {
+            // set the name to the default ./<programname>.input
+            parameterFileName = argv[0];
+            parameterFileName += ".input";
+        }
 
-        Dune::ParameterTreeParser::readINITree(inputFileName, ParameterTree::tree());
-//
+        Dune::ParameterTreeParser::readINITree(parameterFileName,
+                                               ParameterTree::tree(),
+                                               /*overwrite=*/false);
+
         int numRefine = 0;
         if (ParameterTree::tree().hasKey("Grid.RefinementRatio"))
         numRefine = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, RefinementRatio);
@@ -103,7 +131,7 @@ int main(int argc, char** argv)
         FVTypeTag;
         typedef GET_PROP_TYPE(FVTypeTag, Problem) FVProblem;
         typedef typename GET_PROP(FVTypeTag, ParameterTree) FVParameterTree;
-        Dune::ParameterTreeParser::readINITree(inputFileName, FVParameterTree::tree());
+        Dune::ParameterTreeParser::readINITree(parameterFileName, FVParameterTree::tree());
         FVProblem *fvProblem = new FVProblem(grid->leafView());
         std::string fvOutput("test_diffusion3d_fv");
         fvOutput += outputName;
@@ -128,7 +156,7 @@ int main(int argc, char** argv)
         MPFALTypeTag;
         typedef GET_PROP_TYPE(MPFALTypeTag, Problem) MPFALProblem;
         typedef typename GET_PROP(MPFALTypeTag, ParameterTree) MPFALParameterTree;
-        Dune::ParameterTreeParser::readINITree(inputFileName, MPFALParameterTree::tree());
+        Dune::ParameterTreeParser::readINITree(parameterFileName, MPFALParameterTree::tree());
         MPFALProblem *mpfaProblem = new MPFALProblem(grid->leafView());
         std::string fvmpfaOutput("test_diffusion3d_fvmpfal");
         fvmpfaOutput += outputName;
@@ -152,7 +180,7 @@ int main(int argc, char** argv)
         MimeticTypeTag;
         typedef GET_PROP_TYPE(MimeticTypeTag, Problem) MimeticProblem;
         typedef typename GET_PROP(MimeticTypeTag, ParameterTree) MimeticParameterTree;
-        Dune::ParameterTreeParser::readINITree(inputFileName, MimeticParameterTree::tree());
+        Dune::ParameterTreeParser::readINITree(parameterFileName, MimeticParameterTree::tree());
         MimeticProblem *mimeticProblem = new MimeticProblem(grid->leafView());
         std::string mimeticOutput("test_diffusion3d_mimetic");
         mimeticOutput += outputName;

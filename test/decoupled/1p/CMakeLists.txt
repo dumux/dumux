@@ -24,7 +24,8 @@ add_test(test_diffusion3d
   ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_mimetic-00001.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d
-  ${CMAKE_CURRENT_SOURCE_DIR}/test_diffusion3d.input)
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_diffusion3d.input
+  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_diffusion3d_ug1.dgf)
 
 set(NORMALTESTS
   test_dec1p
