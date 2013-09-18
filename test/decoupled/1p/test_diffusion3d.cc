@@ -25,7 +25,8 @@
  */
 #include "config.h"
 #include <iostream>
-#include <boost/format.hpp>
+
+#if HAVE_ALUGRID | HAVE_UGGRID
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/version.hh>
@@ -230,3 +231,13 @@ int main(int argc, char** argv)
 
     return 3;
 }
+#else
+
+#warning You need to have ALUGrid or UG installed to run this test
+
+int main()
+{
+    std::cerr << "You need to have ALUGrid or UG installed to run this test\n";
+    return 77;
+}
+#endif // HAVE_ALUGRID | HAVE_UGGRID

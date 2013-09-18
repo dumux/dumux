@@ -18,6 +18,8 @@ add_test(test_diffusion
   3)
 
 add_executable("test_diffusion3d" EXCLUDE_FROM_ALL test_diffusion3d.cc)
+add_dune_alugrid_flags(test_diffusion3d)
+add_dune_ug_flags(test_diffusion3d)
 add_test(test_diffusion3d
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py

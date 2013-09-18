@@ -171,6 +171,8 @@ int main(int argc, char** argv)
         std::cout<<"Default to finite volume MPFA l-method model\n";
         return startReturn;
     }
+
+    return 0;
 }
 
 #else

@@ -65,7 +65,8 @@ NEW_TYPE_TAG(ThreeDTwoPTestProblem, INHERITS_FROM(Test3d2pSpatialParams));
 // Set the grid type
 SET_PROP(ThreeDTwoPTestProblem, Grid)
 {
-    typedef Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming> type;
+    typedef Dune::UGGrid<3> type;
+//     typedef Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming> type;
 };
 
 // Set the problem property
