@@ -107,6 +107,11 @@ public:
                  const Element& element, int phaseIdx = -1)
     {
         addDefaultFlux(flux, phaseIdx);
+
+        //only use the default flux at sources!
+        rejectForTimeStepping_ = true;
+        cflFluxFunctionCoatsIn_ = 0;
+        cflFluxFunctionCoatsOut_ = 0;
     }
 
     /*! \brief adds a flux to the cfl-criterion evaluation
@@ -126,22 +131,16 @@ public:
      */
     Scalar getCflFluxFunction(const Element& element)
     {
-
-//        Scalar cflFluxDefault = getCflFluxFunctionDefault();
-//
-//    	return 0.99 / cflFluxDefault;
-
     	 Scalar cflFluxDefault = getCflFluxFunctionDefault();
 
         if (rejectForTimeStepping_)
         	return 0.99 / cflFluxDefault;
 
-        //        std::cout<<"cflFluxFunctionCoats_ = "<<cflFluxFunctionCoats_<<", cflFluxDefault = "<<cflFluxDefault<<"\n";
         if (std::isnan(cflFluxFunctionCoatsOut_) || std::isinf(cflFluxFunctionCoatsOut_)){cflFluxFunctionCoatsOut_ = 0.0;}
         if (std::isnan(cflFluxFunctionCoatsIn_) || std::isinf(cflFluxFunctionCoatsIn_)){cflFluxFunctionCoatsIn_ = 0.0;}
 
         Scalar cflFluxFunctionCoats = std::max(cflFluxFunctionCoatsIn_, cflFluxFunctionCoatsOut_);
-//                std::cout<<"cflFluxFunctionCoatsIn = "<<cflFluxFunctionCoatsIn_<<"cflFluxFunctionCoatsOut = "<<cflFluxFunctionCoatsOut_<<", cflFluxDefault = "<<cflFluxDefault<<"\n";
+
         if (cflFluxFunctionCoats <= 0)
         {
             return 0.99 / cflFluxDefault;
@@ -162,14 +161,8 @@ public:
      */
     Scalar getDt(const Element& element)
     {
-//        if (rejectForTimeStepping_)
-//            return 1e100;
-
         Scalar porosity = std::max(problem_.spatialParams().porosity(element), porosityThreshold_);
-        //        if (porosity > porosityThreshold_)
         return (getCflFluxFunction(element) * porosity * element.geometry().volume());
-        //        else
-        //            return 1e100;//(getCflFluxFunction(element) * element.geometry().volume());
     }
 
     //! \brief  Resets the Timestep-estimator
@@ -570,19 +563,39 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw, 
                     }
                 }
             }
-            else if (bcType.isNeumann(eqIdxPress))
+            else if (bcType.isNeumann(eqIdxPress) && bcType.isDirichlet(eqIdxSat))
             {
                 PrimaryVariables bcValues;
                 problem_.neumann(bcValues, intersection);
 
+                bool hasPotWBound = false;
                 if (lambdaW != 0 && bcValues[wPhaseIdx] != 0)
                 {
                     potWBound += bcValues[wPhaseIdx] / (transmissibility * lambdaW);
+                    hasPotWBound = true;
                 }
+                bool hasPotNwBound = false;
                 if (lambdaNw != 0 && bcValues[nPhaseIdx] != 0)
                 {
                     potNwBound += bcValues[nPhaseIdx] / (transmissibility * lambdaNw);
+                    hasPotNwBound = true;
                 }
+
+                if (hasPotWBound && !hasPotNwBound)
+                {
+                    potNwBound = potWBound + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
+                }
+                else if (!hasPotWBound && hasPotNwBound)
+                {
+                    potWBound = potNwBound - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
+                }
+            }
+            else
+            {
+                rejectForTimeStepping_ = true;
+                cflFluxFunctionCoatsIn_ = 0;
+                cflFluxFunctionCoatsOut_ = 0;
+                return;
             }
 
             Scalar dpc_dsBound = MaterialLaw::dpc_dsw(problem_.spatialParams().materialLawParams(*element), satWBound);
