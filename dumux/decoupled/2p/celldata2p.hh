@@ -209,7 +209,7 @@ public:
     /*!\brief Sets the cell phase potential
      *
      * \param phaseIdx Index of a fluid phase
-     * \param press Phase potential which is stored
+     * \param pot Phase potential which is stored
      */
     void setPotential(int phaseIdx, Scalar pot)
     {
@@ -502,11 +502,11 @@ public:
     /*!\brief Sets the cell phase potential
      *
      * \param phaseIdx Index of a fluid phase
-     * \param press Phase potential which is stored
+     * \param pot Phase potential which is stored
      */
-    void setPotential(int phaseIdx, Scalar press)
+    void setPotential(int phaseIdx, Scalar pot)
     {
-        potential_[phaseIdx] = press;
+        potential_[phaseIdx] = pot;
     }
 
     //! \cond \private

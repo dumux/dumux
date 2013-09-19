@@ -61,9 +61,10 @@ double calcOffDiagonalNorm(Matrix& matrix)
 /*
  * \param eigVel Vector for storing the eigenvalues
  * \param matrix n x n matrices for which eigenvalues have to be calculated
+ * \param relativeTolerance tolerance for the relative convergence criterion (default: 0.01)
  */
 template<int dim, class EVVectorType, class MatrixType>
-bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix)
+bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix, double relativeTolerance = 0.01)
 {
     if (dim == 2)
     {
@@ -92,7 +93,7 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix)
         MatrixType rotationMatrix(0.0);
         MatrixType evMatrix(matrix);
 
-        while ((iter < maxIter && offDiagonalNorm > 0.01 * matrixNorm) || iter < 1)
+        while (iter < maxIter && offDiagonalNorm > relativeTolerance * matrixNorm)
         {
             for (int i = 0; i < dim - 1; i++)
             {
@@ -143,9 +144,10 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& matrix)
  * \param eigVel Vector for storing the eigenvalues
  * \param eigVec n x n for storing the eigenvectors
  * \param matrix n x n matrices for which eigenvalues have to be calculated
+ * \param relativeTolerance tolerance for the relative convergence criterion (default: 0.01)
  */
 template<int dim, class EVVectorType, class MatrixType>
-bool calculateEigenValues(EVVectorType &eigVel, MatrixType& eigVec, MatrixType& matrix)
+bool calculateEigenValues(EVVectorType &eigVel, MatrixType& eigVec, MatrixType& matrix, double relativeTolerance = 0.01)
 {
         int maxIter = 100;
         int iter = 0;
@@ -156,7 +158,7 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& eigVec, MatrixType& 
         MatrixType evecMatrix(matrix);
         identityMatrix<dim>(evecMatrix);
 
-        while ((iter < maxIter && offDiagonalNorm > 0.01 * matrixNorm) || iter < 1)
+        while (iter < maxIter && offDiagonalNorm > relativeTolerance * matrixNorm)
         {
             for (int i = 0; i < dim - 1; i++)
             {
