@@ -66,10 +66,10 @@ public:
                      const unsigned int phaseIdx,
                      const FluxVariables &fluxVars,
                      const Scalar molarDensity )
-    { // TODO: nPhase does not need to be gas phase.
-        if (phaseIdx == nPhaseIdx)
+    {
+        if ( not FluidSystem::isLiquid(phaseIdx) )
             gasFlux_(fluxes, fluxVars, molarDensity);
-        else if (phaseIdx == wPhaseIdx){
+        else if ( FluidSystem::isLiquid(phaseIdx) ){
             #if MACROSCALE_DIFFUSION_ONLY_GAS
                     return ; // in the case that only the diffusion in the gas phase is considered, the liquidFlux should not be called
             #endif
