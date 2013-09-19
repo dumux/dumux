@@ -307,9 +307,6 @@ int start_(int argc,
            char **argv,
            void (*usage)(const char *, const std::string &))
 {
-    // output dumux start message
-    dumuxMessage_(true);
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     // Set by default (dumux/common/basicproperties.hh) to DgfGridCreator (dumux/io/dgfgridcreator.hh)
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
@@ -319,6 +316,10 @@ int start_(int argc,
     // initialize MPI, finalize is done automatically on exit
     const Dune::MPIHelper &mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
+    // print dumux start message
+    if (mpiHelper.rank() == 0)
+        dumuxMessage_(true);
+
     ////////////////////////////////////////////////////////////
     // parse the command line arguments
     ////////////////////////////////////////////////////////////
@@ -326,7 +327,9 @@ int start_(int argc,
     // check whether the user did not specify any parameter. in this
     // case print the usage message
     if (argc == 1) {
-        std::cout << "\nNo parameter file given. \n"
+        if (mpiHelper.size() > 0)
+            std::cout << "Rank " << mpiHelper.rank() << ": ";
+        std::cout << "No parameter file given. "
                   << "Defaulting to '"
                   << argv[0]
                   << ".input' for input file.\n";
@@ -336,7 +339,9 @@ int start_(int argc,
         defaultName += ".input";
         parameterFile.open(defaultName.c_str());
         if (not parameterFile.is_open()){
-            std::cout << "\n\t -> Could not open file '"
+            if (mpiHelper.size() > 0)
+                std::cout << "Rank " << mpiHelper.rank() << ": ";
+            std::cout << " -> Could not open file '"
                       << defaultName
                       << "'. <- \n\n\n\n";
             usage(argv[0], usageTextBlock());
@@ -347,11 +352,15 @@ int start_(int argc,
 
 
     // check whether the user wanted to see the help message
-    for (int i = 1; i < argc; ++i) {
-        if (std::string("--help") == argv[i] || std::string("-h") == argv[i])
+    if (mpiHelper.rank() == 0)
+    {
+        for (int i = 1; i < argc; ++i)
         {
-            usage(argv[0], usageTextBlock());
-            return 0;
+            if (std::string("--help") == argv[i] || std::string("-h") == argv[i])
+            {
+                usage(argv[0], usageTextBlock());
+                return 0;
+            }
         }
     }
 
@@ -463,8 +472,9 @@ int start_(int argc,
     Problem problem(timeManager, GridCreator::grid().leafView());
     timeManager.init(problem, restartTime, dt, tEnd, restart);
     timeManager.run();
-    // output dumux end message
-    dumuxMessage_(false);
+    // print dumux end message
+    if (mpiHelper.rank() == 0)
+        dumuxMessage_(false);
 
     if (printParams && mpiHelper.rank() == 0) {
         Dumux::Parameters::print<TypeTag>();
