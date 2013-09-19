@@ -116,34 +116,6 @@ public:
     void checkDefined() const
     {
     }
-
-    /*!
-     * \brief Check the set variables as to whether they are in physically possible ranges.
-     *
-     * \param fluidState Container for all the secondary variables concerning the fluids
-     * \param globalPos The position at which the check is conducted
-     *
-     * Since we are isothermal, we don't need to do anything!
-     */
-     bool physicalness(const FluidState & fluidState,
-                         const GlobalPosition & globalPos)
-    {
-        return true; // all the checks went through: tell calling function, nothing bad could be found.
-    }
-
-    /*!
-     * \brief Output for the case that the current state is not physical.
-     *        This calls the output functions of the modules and throws and exception:
-     *        i.e. a smaller timestep is tried.
-     *
-     *        Since we are isothermal, we don't need to do anything!
-     *
-     * \param fs Container for all the secondary variables concerning the fluids
-     * \param message A string returning the error message for this module
-     */
-    const void physicalnessError(const FluidState & fs,
-                                 std::stringstream & message)
-    { }
 };
 
 /*!
@@ -255,38 +227,6 @@ public:
     {
         Valgrind::CheckDefined(heatCapacity_);
         Valgrind::CheckDefined(soilDensity_);
-    }
-
-    /*!
-     * \brief Check whether the calculated values are reasonable.
-     *
-     * \param fs Container for all the secondary variables concerning the fluids
-     * \param globalPos The position at which the check is conducted
-     */
-    bool physicalness(const FluidState & fs,
-                        const GlobalPosition & globalPos)
-    {
-        const Scalar eps = 1e-6 ;
-        const Scalar temperatureTest = fs.temperature(/*dummy=*/0);
-        if (not std::isfinite(temperatureTest)
-             or temperatureTest < 0.-eps )
-            return false; // unphysical value found: tell calling function, sth went wrong!
-        return true; // all the checks went through: tell calling function, nothing bad could be found.
-    }
-
-    /*!
-     * \brief Output for the case that the current state is not physical.
-     *        This is called if the physicalness funcitons returned false.
-     *
-     * \param fs Container for all the secondary variables concerning the fluids
-     * \param message A string returning the error message for this module
-     */
-    const void physicalnessError(const FluidState & fs,
-                                 std::stringstream & message)
-    {
-        message <<"Energy: \n";
-        for(int energyEqIdx=0; energyEqIdx<numEnergyEqs; energyEqIdx++)
-            message << "\tT" <<"_"<<FluidSystem::phaseName(energyEqIdx)<<"="<< fs.temperature(energyEqIdx) <<"\n";
     }
 
 protected:

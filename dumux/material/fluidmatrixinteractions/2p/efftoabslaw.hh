@@ -207,7 +207,7 @@ public:
      */
     static Scalar swToSwe(const Params &params, Scalar sw)
     {
-        return (sw - params.swr())/(1 - params.swr() - params.snr());
+        return (sw - params.swr())/(1. - params.swr() - params.snr());
     }
 
     DUNE_DEPRECATED_MSG("use swToSwe() (uncapitalized 's') instead")
@@ -227,7 +227,7 @@ public:
      */
     static Scalar snToSne(const Params &params, Scalar sn)
     {
-        return (sn - params.snr())/(1 - params.swr() - params.snr());
+        return (sn - params.snr())/(1. - params.swr() - params.snr());
     }
 
     DUNE_DEPRECATED_MSG("use snToSne() (uncapitalized 's') instead")
@@ -236,7 +236,7 @@ public:
         return snToSne(params, sn);
     }
 
-private:
+//private:
     /*!
      * \brief Convert an effective wetting saturation to an absolute one.
      *
@@ -248,7 +248,7 @@ private:
      */
     static Scalar sweToSw_(const Params &params, Scalar swe)
     {
-        return swe*(1 - params.swr() - params.snr()) + params.swr();
+        return swe*(1. - params.swr() - params.snr()) + params.swr();
     }
 
     /*!
@@ -260,7 +260,7 @@ private:
      * \return          Derivative of the effective saturation w.r.t. the absolute saturation.
      */
     static Scalar dswe_dsw_(const Params &params)
-    { return 1.0/(1 - params.swr() - params.snr()); }
+    { return 1.0/(1. - params.swr() - params.snr()); }
 
     /*!
      * \brief           Derivative of the absolute saturation w.r.t. the effective saturation.
@@ -271,7 +271,7 @@ private:
      * \return          Derivative of the absolute saturation w.r.t. the effective saturation.
      */
     static Scalar dsw_dswe_(const Params &params)
-    { return 1 - params.swr() - params.snr(); }
+    { return 1. - params.swr() - params.snr(); }
 };
 }
 

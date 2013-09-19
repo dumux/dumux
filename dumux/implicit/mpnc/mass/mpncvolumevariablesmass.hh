@@ -117,46 +117,6 @@ public:
     }
 
     /*!
-     * \brief Check whether the calculated values are reasonable.
-     *
-     * \param fs Container for all the secondary variables concerning the fluids
-     * \param globalPos The position at which the check is conducted
-     */
-     bool physicalness(const FluidState & fs,
-                         const GlobalPosition & globalPos)
-    {
-        const Scalar eps = 1e-6 ;
-        for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
-            for (int compIdx=0; compIdx< numComponents; ++ compIdx){
-                const Scalar xTest = fs.moleFraction(phaseIdx, compIdx);
-                if (not std::isfinite(xTest)
-                     or xTest < 0.-eps
-                     or xTest > 1.+eps )
-                    return false; // unphysical value found: tell calling function, sth went wrong!
-                }
-        }
-        return true; // all the checks went through: tell calling function, nothing bad could be found.
-    }
-
-     /*!
-      * \brief Output for the case that the current state is not physical.
-      *        This is called if the physicalness funcitons returned false.
-      *
-      * \param fs Container for all the secondary variables concerning the fluids
-      * \param message A string returning the error message for this module
-      */
-    const void physicalnessError(const FluidState & fs,
-                                 std::stringstream & message)
-    {
-        message <<"Mass: \n";
-        for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
-            for (int compIdx=0; compIdx< numComponents; ++ compIdx)
-                message << "\tx" <<"_"<<FluidSystem::phaseName(phaseIdx)
-                        <<"^"<<FluidSystem::componentName(compIdx)<<"="
-                        << fs.moleFraction(phaseIdx, compIdx) <<"\n";
-    }
-
-    /*!
      * \brief If running in valgrind this makes sure that all
      *        quantities in the volume variables are defined.
      */

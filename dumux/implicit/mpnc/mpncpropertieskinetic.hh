@@ -62,6 +62,12 @@ NEW_PROP_TAG(EnableKineticEnergy);
 //! average the velocity in the model
 NEW_PROP_TAG(VelocityAveragingInModel);
 
+//! which nusselt correlation to use
+NEW_PROP_TAG(NusseltFormulation);
+
+//! which sherwood correlation to use
+NEW_PROP_TAG(SherwoodFormulation);
+
 }
 }
 

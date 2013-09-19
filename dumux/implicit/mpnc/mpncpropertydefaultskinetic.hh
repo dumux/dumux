@@ -45,7 +45,6 @@
 #include "energy/mpncvolumevariablesenergykinetic.hh"
 #include "energy/mpncvtkwriterenergykinetic.hh"
 
-
 namespace Dumux
 {
 namespace Properties
@@ -57,47 +56,8 @@ namespace Properties
 SET_TYPE_PROP(BoxMPNCKinetic, Model, MPNCModelKinetic<TypeTag>);
 
 /*!
- * \brief Set the property for the awn surface by retrieving it from
- *        the spatial parameters.
- */
-SET_PROP(BoxMPNCKinetic, AwnSurface)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
-public:
-    typedef typename SpatialParams::AwnSurface type;
-};
-
-/*!
- * \brief Set the property for the awn surface by retrieving it from
- *        the spatial parameters.
- */
-SET_PROP(BoxMPNCKinetic, AnsSurface)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
-public:
-    typedef typename SpatialParams::AnsSurface type;
-};
-
-/*!
- * \brief Set the property for the awn surface by retrieving it from
- *        the spatial parameters.
- */
-SET_PROP(BoxMPNCKinetic, AwsSurface)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
-public:
-    typedef typename SpatialParams::AwsSurface type;
-};
-
-/*!
  * \brief Set the property for the awn surface parameters by extracting
- *        it from awn surface??.
+ *        it from awn surface.
  */
 SET_PROP(BoxMPNCKinetic, AwnSurfaceParams)
 {
@@ -109,8 +69,8 @@ public:
 };
 
 /*!
- * \brief Set the property for the awn surface parameters by extracting
- *        it from awn surface??.
+ * \brief Set the property for the aws surface parameters by extracting
+ *        it from aws surface.
  */
 SET_PROP(BoxMPNCKinetic, AwsSurfaceParams)
 {
@@ -122,8 +82,8 @@ public:
 };
 
 /*!
- * \brief Set the property for the awn surface parameters by extracting
- *        it from awn surface??.
+ * \brief Set the property for the ans surface parameters by extracting
+ *        it from the surface.
  */
 SET_PROP(BoxMPNCKinetic, AnsSurfaceParams)
 {
@@ -135,7 +95,30 @@ public:
 };
 
 SET_BOOL_PROP(BoxMPNCKinetic, VelocityAveragingInModel, true);
-}
-}
+
+/*!
+ * \brief Set the default formulation for the nusselt correlation
+ *        Other possible parametrizations can be found in the dimensionlessnumbers
+ */
+SET_PROP(BoxMPNCKinetic, NusseltFormulation ){
+    private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef  DimensionlessNumbers<Scalar> DimLessNum;
+    public:
+    static constexpr int value = DimLessNum::NusseltFormulation::WakaoKaguei;};
+
+/*!
+ * \brief Set the default formulation for the sherwood correlation
+ *        Other possible parametrizations can be found in the dimensionlessnumbers
+ */
+SET_PROP(BoxMPNCKinetic, SherwoodFormulation ){
+    private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef  DimensionlessNumbers<Scalar> DimLessNum;
+    public:
+    static constexpr int value = DimLessNum::SherwoodFormulation::WakaoKaguei;};
+
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

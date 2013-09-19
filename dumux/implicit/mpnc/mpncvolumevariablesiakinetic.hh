@@ -54,7 +54,10 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
@@ -64,8 +67,12 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
     enum { nCompIdx = FluidSystem::nCompIdx } ;
     enum { wCompIdx = FluidSystem::wCompIdx } ;
     enum { dim = GridView::dimension};
+    enum { numEnergyEqs = Indices::NumPrimaryEnergyVars};
+    enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
+    enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
 
-    typedef DimensionlessNumbers<Scalar> DimLessNum;
+    typedef DimensionlessNumbers<Scalar> DimLessNum ;
+
     typedef Dune::FieldVector<Scalar,dim> GlobalPosition;
 
 
@@ -82,16 +89,6 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
-     *
-     * 		\param volVars The volume variables
-     * 		\param fluisState Container for all the secondary variables concerning the fluids
-     * 		\param paramCache Container for cache parameters
-     * 		\param priVars The primary Variables
-     * 		\param problem The problem
-     * 		\param element The finite element
-     * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * 		\param scvIdx The index of the sub-control volumete element
-     *
      */
     void update(const VolumeVariables & volVars,
                 const FluidState & fluidState,
@@ -102,14 +99,17 @@ public:
                 const FVElementGeometry & fvGeometry,
                 const unsigned int scvIdx)
     {
+        // obtain (standard) material parameters (needed for the residual saturations)
+        const MaterialLawParams & materialParams  = problem.spatialParams().materialLawParams(element,fvGeometry,scvIdx) ;
+
         //obtain parameters for interfacial area constitutive relations
-        AwnSurfaceParams aWettingNonWettingSurfaceParams    = problem.spatialParams().aWettingNonWettingSurfaceParams(element,fvGeometry,scvIdx) ;
-        AnsSurfaceParams aNonWettingSolidSurfaceParams      = problem.spatialParams().aNonWettingSolidSurfaceParams(element,fvGeometry,scvIdx) ;
+        const AwnSurfaceParams & aWettingNonWettingSurfaceParams    = problem.spatialParams().aWettingNonWettingSurfaceParams(element,fvGeometry,scvIdx) ;
+        const AnsSurfaceParams & aNonWettingSolidSurfaceParams      = problem.spatialParams().aNonWettingSolidSurfaceParams(element,fvGeometry,scvIdx) ;
 
         Valgrind::CheckDefined(aWettingNonWettingSurfaceParams);
         Valgrind::CheckDefined(aNonWettingSolidSurfaceParams);
 
-        const Scalar pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx);
+        const Scalar pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx) ;
         const Scalar Sw = fluidState.saturation(wPhaseIdx)  ;
         Valgrind::CheckDefined(Sw);
         Valgrind::CheckDefined(pc);
@@ -134,25 +134,31 @@ public:
         else
 #endif
 
-        awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, Sw, pc ); // 10.; //
+
+
+if (AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc ) < 0)
+{
+    Scalar dummy = 0 ;
+}
+        awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc ); // 10.; //
 
         interfacialArea_[wPhaseIdx][nPhaseIdx] = awn ; //10. ;//
         interfacialArea_[nPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][nPhaseIdx];
         interfacialArea_[wPhaseIdx][wPhaseIdx] = 0. ;
 
-        Scalar ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, Sw, pc ); // 10.; //
+        Scalar ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams,Sw, pc ); // 10.; //
 //        if (ans <0 )
 //            ans = 0 ;
 
 // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter.
 // That value is obtained by regularization of the pc(Sw) function.
 #if USE_PCMAX
-        const Scalar pcMax = problem.spatialParams().pcMax(element,
+       const Scalar pcMax = problem.spatialParams().pcMax(element,
                                                             fvGeometry,
                                                             scvIdx);
         // I know the solid surface from the pore network. But it is more consistent to use the fit value.
         // solidSurface_   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.specificSolidsurface);
-        solidSurface_   = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, /*Sw=*/0., pcMax );
+        solidSurface_   = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax );
         Valgrind::CheckDefined(solidSurface_);
 
 //        if (ans > solidSurface_){
@@ -181,9 +187,9 @@ public:
         interfacialArea_[sPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0. ;
 #else
-        AwsSurfaceParams aWettingSolidSurfaceParams         = problem.spatialParams().aWettingSolidSurfaceParams();
+        const AwsSurfaceParams & aWettingSolidSurfaceParams         = problem.spatialParams().aWettingSolidSurfaceParams();
         Valgrind::CheckDefined(aWettingSolidSurfaceParams);
-        const Scalar aws = AwsSurface::interfacialArea(aWettingSolidSurfaceParams, Sw, pc ); // 10.; //
+        const Scalar aws = AwsSurface::interfacialArea(aWettingSolidSurfaceParams,materialParams, Sw, pc ); // 10.; //
         interfacialArea_[wPhaseIdx][sPhaseIdx] = aws ;
         interfacialArea_[sPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0. ;
@@ -235,14 +241,16 @@ public:
 
             nusseltNumber_[phaseIdx]    = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
                                                                           prandtlNumber_[phaseIdx],
-                                                                          porosity);
+                                                                          porosity,
+                                                                          nusseltFormulation);
 
             schmidtNumber_[phaseIdx]    = DimLessNum::schmidtNumber(dynamicViscosity,
                                                                     density,
                                                                     diffCoeff);
 
             sherwoodNumber_[phaseIdx]   = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
-                                                                      schmidtNumber_[phaseIdx]);
+                                                                      schmidtNumber_[phaseIdx],
+                                                                      sherwoodFormulation);
         }
     }
 
@@ -250,9 +258,6 @@ public:
      * \brief The specific interfacial area between two fluid phases [m^2 / m^3]
      *
      * This is _only_ required by the kinetic mass/energy modules
-     *
-     * 		\param phaseIIdx The local index of the first phase
-     * 		\param phaseJIdx The local index of the second phase
      *
      */
     const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
@@ -356,20 +361,14 @@ class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*bool enableKineti
     enum { nCompIdx  = FluidSystem::nCompIdx };
     enum { dim       = GridView::dimension};
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
+    enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
     typedef Dune::FieldVector<Scalar,dim> GlobalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+
 
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
-     *
-     *      \param volVars The volume variables
-     * 		\param fluisState Container for all the secondary variables concerning the fluids
-     * 		\param paramCache Container for cache parameters
-     * 		\param priVars The primary Variables
-     * 		\param problem The problem
-     * 		\param element The finite element
-     * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * 		\param scvIdx The index of the sub-control volumete element
      */
     void update(const VolumeVariables & volVars,
                 const FluidState & fluidState,
@@ -381,14 +380,17 @@ public:
                 const unsigned int scvIdx)
     {
         //obtain parameters for awnsurface
-        AwnSurfaceParams awnSurfaceParams = problem.spatialParams().aWettingNonWettingSurfaceParams(element,fvGeometry,scvIdx) ;
+        const AwnSurfaceParams & awnSurfaceParams = problem.spatialParams().aWettingNonWettingSurfaceParams(element,fvGeometry,scvIdx) ;
+
+        // obtain (standard) material parameters (needed for the residual saturations)
+        const MaterialLawParams & materialParams  = problem.spatialParams().materialLawParams(element,fvGeometry,scvIdx) ;
 
         Valgrind::CheckDefined(awnSurfaceParams);
         const Scalar Sw = fluidState.saturation(wPhaseIdx) ;
         const Scalar pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx);
 
         // so far there is only a model for kinetic mass transfer between fluid phases
-        interfacialArea_ = AwnSurface::interfacialArea(awnSurfaceParams, Sw, pc );
+        interfacialArea_ = AwnSurface::interfacialArea(awnSurfaceParams, materialParams, Sw, pc );
 
         Valgrind::CheckDefined(interfacialArea_);
 
@@ -420,15 +422,13 @@ public:
                                                                     diffCoeff);
 
             sherwoodNumber_[phaseIdx]   = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
-                                                                      schmidtNumber_[phaseIdx]);
+                                                                      schmidtNumber_[phaseIdx],
+                                                                      sherwoodFormulation);
         }
     }
 
     /*!
      * \brief The specific interfacial area between two fluid phases [m^2 / m^3]
-     *
-     *      \param phaseIIdx The local index of the first phase
-     * 		\param phaseJIdx The local index of the second phase
      */
     const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
     {

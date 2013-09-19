@@ -96,6 +96,17 @@ static Scalar prandtlNumber(const Scalar dynamicViscosity,
 }
 
 /*!
+ * \brief A container for possible values of the property for selecting which nusselt parametrization to choose.
+ *        The actual value is set vie the property NusseltFormulation
+ */
+struct NusseltFormulation
+{
+    static const int dittusBoelter = 0;
+    static const int WakaoKaguei = 1;
+    static const int VDI = 2;
+};
+
+/*!
  * \brief   Calculate the Nusselt Number [-] (Nu).
  *
  *          The Nusselt Number is a measure for the relation of convective- to conductive heat exchange.
@@ -116,41 +127,51 @@ static Scalar prandtlNumber(const Scalar dynamicViscosity,
  * \param reynoldsNumber    Dimensionless number relating inertial and viscous forces [-].
  * \param prandtlNumber     Dimensionless number relating viscosity and thermal diffusivity (temperaturleitfaehigkeit) [-].
  * \param porosity          The fraction of the porous medium which is void space.
- *
+ * \param formulation       Switch for deciding which parametrization of the Nusselt number is to be used. Set via the property NusseltFormulation.
  * \return                  The Nusselt number as calculated from the input parameters [-].
  */
-
 static Scalar nusseltNumberForced(const Scalar reynoldsNumber,
                                   const Scalar prandtlNumber,
-                                  const Scalar porosity)
+                                  const Scalar porosity,
+                                  const int formulation )
 {
-   /* example: very common and simple case: flow straight circular pipe, only convection (no boiling), 10000<Re<120000, 0.7<Pr<120, far from pipe entrance, smooth surface of pipe ...
-    Dittus, F.W and Boelter, L.M.K, Heat Transfer in Automobile Radiators of the Tubular Type, Publications in Engineering, Vol. 2, pages 443-461, 1930
-    */
-//       return 0.023 * pow(reynoldsNumber, 0.8) * pow(prandtlNumber,0.33);
+    if (formulation == NusseltFormulation::dittusBoelter){
+       /* example: very common and simple case: flow straight circular pipe, only convection (no boiling), 10000<Re<120000, 0.7<Pr<120, far from pipe entrance, smooth surface of pipe ...
+        Dittus, F.W and Boelter, L.M.K, Heat Transfer in Automobile Radiators of the Tubular Type, Publications in Engineering, Vol. 2, pages 443-461, 1930
+        */
+           return 0.023 * pow(reynoldsNumber, 0.8) * pow(prandtlNumber,0.33);
+    }
 
-    /* example: flow through porous medium *single phase*, fit to many different data
-     * Wakao and Kaguei, Heat and mass Transfer in Packed Beds, Gordon and Breach Science Publishers, page 293
-     */
-    return 2. + 1.1 * pow(prandtlNumber,(1./3.)) * pow(reynoldsNumber, 0.6);
+    else if (formulation == NusseltFormulation::WakaoKaguei){
+        /* example: flow through porous medium *single phase*, fit to many different data
+         * Wakao and Kaguei, Heat and mass Transfer in Packed Beds, Gordon and Breach Science Publishers, page 293
+         */
+        return 2. + 1.1 * pow(prandtlNumber,(1./3.)) * pow(reynoldsNumber, 0.6);
+    }
 
-   /* example: VDI Waermeatlas 10. Auflage 2006, flow in packed beds, page Gj1, see also other sources and limitations therein.
-    * valid for 0.1<Re<10000, 0.6<Pr/Sc<10000, packed beds of perfect spheres.
-    *
-    */
-//    Scalar numerator    = 0.037 * pow(reynoldsNumber,0.8) * prandtlNumber ;
-//    Scalar reToMin01    = pow(reynoldsNumber,-0.1);
-//    Scalar prTo23       = pow(prandtlNumber, (2./3. ) ) ; // MIND THE pts! :-( otherwise the integer exponent version is chosen
-//    Scalar denominator  = 1+ 2.443 * reToMin01 * (prTo23 -1.) ;
-//
-//    Scalar nusseltTurbular       = numerator / denominator;
-//    Scalar nusseltLaminar        = 0.664 * sqrt(reynoldsNumber) * pow(prandtlNumber, (1./3.) );
-//    Scalar nusseltSingleSphere   = 2 + sqrt( pow(nusseltLaminar,2.) + pow(nusseltTurbular,2.));
-//
-//    Scalar funckyFactor           = 1 + 1.5 * (1.-porosity); // for spheres of same size
-//    Scalar nusseltNumber          = funckyFactor * nusseltSingleSphere  ;
-//
-//    return nusseltNumber;
+    else if (formulation == NusseltFormulation::VDI){
+       /* example: VDI Waermeatlas 10. Auflage 2006, flow in packed beds, page Gj1, see also other sources and limitations therein.
+        * valid for 0.1<Re<10000, 0.6<Pr/Sc<10000, packed beds of perfect spheres.
+        *
+        */
+        Scalar numerator    = 0.037 * pow(reynoldsNumber,0.8) * prandtlNumber ;
+        Scalar reToMin01    = pow(reynoldsNumber,-0.1);
+        Scalar prTo23       = pow(prandtlNumber, (2./3. ) ) ; // MIND THE pts! :-( otherwise the integer exponent version is chosen
+        Scalar denominator  = 1+ 2.443 * reToMin01 * (prTo23 -1.) ;
+
+        Scalar nusseltTurbular       = numerator / denominator;
+        Scalar nusseltLaminar        = 0.664 * sqrt(reynoldsNumber) * pow(prandtlNumber, (1./3.) );
+        Scalar nusseltSingleSphere   = 2 + sqrt( pow(nusseltLaminar,2.) + pow(nusseltTurbular,2.));
+
+        Scalar funckyFactor           = 1 + 1.5 * (1.-porosity); // for spheres of same size
+        Scalar nusseltNumber          = funckyFactor * nusseltSingleSphere  ;
+
+        return nusseltNumber;
+    }
+
+    else {
+        DUNE_THROW(Dune::NotImplemented, "wrong index");
+    }
 }
 
 
@@ -181,6 +202,15 @@ static Scalar schmidtNumber(const Scalar dynamicViscosity,
 }
 
 /*!
+ * \brief A container for possible values of the property for selecting which sherwood parametrization to choose.
+ *        The actual value is set vie the property SherwoodFormulation
+ */
+struct SherwoodFormulation
+{
+    static const int WakaoKaguei = 0;
+};
+
+/*!
  * \brief   Calculate the Sherwood Number [-] (Sh).
  *
  *          The Sherwood Number is a measure for the relation of convective- to diffusive mass exchange.
@@ -204,17 +234,24 @@ static Scalar schmidtNumber(const Scalar dynamicViscosity,
  *
  * \param schmidtNumber     Dimensionless number relating viscosity and mass diffusivity [-].
  * \param reynoldsNumber    Dimensionless number relating inertial and viscous forces [-].
+ * \param formulation       Switch for deciding which parametrization of the Sherwood number is to be used. Set via the property SherwoodFormulation.
  * \return                  The Nusselt number as calculated from the input parameters [-].
  */
 
 static Scalar sherwoodNumber(const Scalar reynoldsNumber,
-                             const Scalar schmidtNumber)
+                             const Scalar schmidtNumber,
+                             const int formulation)
 {
-    /* example: flow through porous medium *single phase*
-     * Wakao and Kaguei, Heat and mass Transfer in Packed Beds, Gordon and Breach Science Publishers, page 156
-     */
-    return 2. + 1.1 * pow(schmidtNumber,(1./3.)) * pow(reynoldsNumber, 0.6);
-}
+    if (formulation == SherwoodFormulation::WakaoKaguei){
+        /* example: flow through porous medium *single phase*
+         * Wakao and Kaguei, Heat and mass Transfer in Packed Beds, Gordon and Breach Science Publishers, page 156
+         */
+        return 2. + 1.1 * pow(schmidtNumber,(1./3.)) * pow(reynoldsNumber, 0.6);
+    }
+
+    else {
+        DUNE_THROW(Dune::NotImplemented, "wrong index");
+    }}
 
 
 /*!
