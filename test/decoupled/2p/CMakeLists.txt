@@ -20,6 +20,8 @@ add_test(test_impesadaptive
 
 add_executable("test_impeswithamg" EXCLUDE_FROM_ALL test_impeswithamg.cc)
 if(MPI_FOUND)
+  add_dune_superlu_flags(test_impeswithamg)
+  add_dune_mpi_flags(test_impeswithamg)
   add_test(test_impeswithamg
     ${CMAKE_SOURCE_DIR}/bin/runTest.sh
     ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py

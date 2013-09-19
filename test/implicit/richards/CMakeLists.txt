@@ -4,6 +4,7 @@ add_dune_ug_flags(test_boxrichards)
 if(MPI_CXX_FOUND)
     # tell UG that the model is parallelized
   add_definitions(-DModelP)
+  add_dune_mpi_flags(test_boxrichards)
   add_test(test_boxrichards
     ${CMAKE_SOURCE_DIR}/bin/runTest.sh
     ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
