@@ -74,7 +74,10 @@ public:
     /*!
      * \brief This module defines one new primary variable.
      */
-    static const unsigned int NumPrimaryVars = 1;
+    static const unsigned int numPrimaryVars = 1;
+
+    DUNE_DEPRECATED_MSG("use numPrimaryVars (uncapitalized 'n') instead")
+    static const unsigned int NumPrimaryVars = numPrimaryVars; //!< \deprecated
 
     /*!
      * \brief Index for the temperature in a vector of primary
@@ -100,7 +103,10 @@ public:
      * \brief This module does not define any primary variables in the
      *        isothermal case.
      */
-    static const unsigned int NumPrimaryVars = 0;
+    static const unsigned int numPrimaryVars = 0;
+
+    DUNE_DEPRECATED_MSG("use numPrimaryVars (uncapitalized 'n') instead")
+    static const unsigned int NumPrimaryVars = numPrimaryVars; //!< \deprecated
 
     /*!
      * \brief Equation index of the temperature primary variable. This
