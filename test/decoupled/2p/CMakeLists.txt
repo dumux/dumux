@@ -28,7 +28,7 @@ if(MPI_FOUND)
     ${CMAKE_SOURCE_DIR}/test/references/test_impes-reference-parallel.vtu
     ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-test_impeswithamg-00013.vtu
     "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_impeswithamg"
-    -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impesadaptive.input
+    -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impeswithamg.input
     -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_impeswithamg.dgf)
 else(MPI_FOUND)
   add_test(test_impeswithamg
@@ -37,7 +37,7 @@ else(MPI_FOUND)
     ${CMAKE_SOURCE_DIR}/test/references/test_impes-reference.vtu
     ${CMAKE_CURRENT_BINARY_DIR}/test_impeswithamg-00013.vtu
     ${CMAKE_CURRENT_BINARY_DIR}/test_impeswithamg
-    -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impesadaptive.input
+    -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impeswithamg.input
     -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_impeswithamg.dgf)
 endif(MPI_FOUND)
 
