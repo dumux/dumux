@@ -1,9 +1,6 @@
 # build target for the Richards test problem
 add_executable("test_boxrichards" EXCLUDE_FROM_ALL test_boxrichards.cc)
-add_dune_ug_flags(test_boxrichards)
 if(MPI_CXX_FOUND)
-    # tell UG that the model is parallelized
-  add_definitions(-DModelP)
   add_dune_mpi_flags(test_boxrichards)
   add_test(test_boxrichards
     ${CMAKE_SOURCE_DIR}/bin/runTest.sh
@@ -29,7 +26,6 @@ else()
 endif(MPI_CXX_FOUND)
 
 add_executable("test_ccrichards" EXCLUDE_FROM_ALL test_ccrichards.cc)
-add_dune_ug_flags(test_ccrichards)
 add_test(test_ccrichards
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
