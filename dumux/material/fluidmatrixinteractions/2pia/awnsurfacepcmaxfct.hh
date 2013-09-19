@@ -32,7 +32,8 @@ namespace Dumux
  * because Sw=0 cannnot be reached on different ways. We only need to define pcmax ...
  *
  */
-template <class ParamsT>
+
+template <class ScalarT, class ParamsT =AwnSurfacePcMaxFctParams<ScalarT> >
 class AwnSurfacePcMaxFct
 {
 public:

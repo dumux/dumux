@@ -30,6 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/mp/2poftadapter.hh>
 
 // material laws for interfacial area
+#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
 #include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
 #include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomialedgezero2ndorder.hh>
 #include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpfct.hh>
@@ -99,7 +100,42 @@ private:
 //        typedef TwoPOfTAdapter<wPhaseIdx, TwoPMaterialLaw> type; // adapter for incorporating temperature effects on pc-S
         typedef TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> type;
 };
-}
+
+
+
+// Set the interfacial area relation: wetting -- non-wetting
+SET_PROP(EvaporationAtmosphereSpatialParams, AwnSurface)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef AwnSurfacePcMaxFct<Scalar>     EffectiveIALaw;
+    //    typedef AwnSurfacePolynomial2ndOrder<Scalar>      EffectiveIALaw;
+public:
+    typedef EffToAbsLawIA<EffectiveIALaw, MaterialLawParams> type;
+};
+
+
+// Set the interfacial area relation: wetting -- solid
+SET_PROP(EvaporationAtmosphereSpatialParams, AwsSurface)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef AwnSurfacePolynomial2ndOrder<Scalar>  EffectiveIALaw;
+public:
+    typedef EffToAbsLawIA<EffectiveIALaw, MaterialLawParams> type;
+};
+
+// Set the interfacial area relation: non-wetting -- solid
+SET_PROP(EvaporationAtmosphereSpatialParams, AnsSurface)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef AwnSurfaceExpSwPcTo3<Scalar>      EffectiveIALaw;
+public:
+    typedef EffToAbsLawIA<EffectiveIALaw, MaterialLawParams> type;
+};
+
+} // end namespace properties
 
 /* \brief Definition of the soil properties for the poor man's coupling / evaporation atmosphere with kinetic model
  */
@@ -114,29 +150,36 @@ class EvaporationAtmosphereSpatialParams : public ImplicitSpatialParams<TypeTag>
     enum {dim=GridView::dimension };
     enum {dimWorld=GridView::dimensionworld};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
+    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
+    enum {sPhaseIdx = FluidSystem::sPhaseIdx};
     enum { enableKineticEnergy  = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
     enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy)};
 
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+
+    typedef Dune::FieldVector<Scalar,dimWorld> DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    typedef AwnSurfacePolynomial2ndOrderParams<Scalar>                  AwsSurfaceParams;
-    typedef AwnSurfacePolynomial2ndOrder<AwsSurfaceParams>              AwsSurface;
+    typedef typename GET_PROP_TYPE(TypeTag, AwnSurface) AwnSurface;
+    typedef typename AwnSurface::Params AwnSurfaceParams;
 
-    typedef AwnSurfacePcMaxFctParams<Scalar>         AwnSurfaceParams;
-    typedef AwnSurfacePcMaxFct<AwnSurfaceParams>     AwnSurface;
+    typedef typename GET_PROP_TYPE(TypeTag, AwsSurface) AwsSurface;
+    typedef typename AwsSurface::Params AwsSurfaceParams;
 
-    typedef AwnSurfaceExpSwPcTo3Params<Scalar>      AnsSurfaceParams;
-    typedef AwnSurfaceExpSwPcTo3<AnsSurfaceParams>  AnsSurface;
+    typedef typename GET_PROP_TYPE(TypeTag, AnsSurface) AnsSurface;
+    typedef typename AnsSurface::Params AnsSurfaceParams;
 
 
     EvaporationAtmosphereSpatialParams(const GridView &gv)
@@ -250,7 +293,6 @@ public:
             aNonWettingSolidSurfaceParams_.setA2(aNonWettingSolidA2_);
             aNonWettingSolidSurfaceParams_.setA3(aNonWettingSolidA3_);
 
-
             // dummys for free flow: no interface where there is only one phase
             aWettingNonWettingSurfaceParamsFreeFlow_.setA1(0.);
             aWettingNonWettingSurfaceParamsFreeFlow_.setA2(0.);
@@ -303,6 +345,9 @@ public:
                           const unsigned int scvIdx) const
     {
         const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
+//        const  LocalPosition & localPos =  fvGeometry.subContVol[scvIdx].localCenter ;
+//        const  GlobalPosition & globalPos =  element.geometry().global(localPos) ;
+
         if (inFF_(globalPos) )
             return porosityFF_ ;
         else if (inPM_(globalPos))
@@ -397,7 +442,7 @@ public:
     const Scalar pcMax(const Element & element,
                        const FVElementGeometry & fvGeometry,
                        const unsigned int scvIdx) const
-    { return pcMax_ ; }
+    { return aWettingNonWettingSurfaceParams_.pcMax() ; }
 
     /*!\brief Return the characteristic length for the mass transfer.
      *
@@ -552,7 +597,7 @@ private:
     AwnSurfaceParams    aWettingNonWettingSurfaceParamsFreeFlow_;
     AnsSurfaceParams    aNonWettingSolidSurfaceParamsFreeFlow_ ;
 
-    Scalar 				pcMax_ ;
+    Scalar pcMax_ ;
 
     // Porous Medium Domain
     Scalar intrinsicPermeabilityPM_ ;

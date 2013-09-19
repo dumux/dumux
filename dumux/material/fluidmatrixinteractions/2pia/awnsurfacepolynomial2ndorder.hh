@@ -41,7 +41,7 @@ namespace Dumux
  * \brief Implementation of the polynomial of second order relating
  *             specific interfacial  area to wetting phase saturation and capillary pressure as suggested by Joakar-Niasar(2007).
  */
-template <class ParamsT>
+template <class ScalarT, class ParamsT = AwnSurfacePolynomial2ndOrderParams<ScalarT> >
 class AwnSurfacePolynomial2ndOrder
 {
 public:
@@ -59,7 +59,7 @@ public:
      * \param  Sw Effective saturation of the wetting phase
      * \param  pc Capillary pressure
      */
-    static Scalar interfacialArea(const Params &params, const Scalar Sw, const Scalar pc)
+    static Scalar interfacialArea(const Params & params, const Scalar Sw, const Scalar pc)
     {
         const Scalar a00 = params.a00();
         const Scalar a10 = params.a10();

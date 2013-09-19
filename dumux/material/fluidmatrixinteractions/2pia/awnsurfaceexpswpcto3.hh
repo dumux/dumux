@@ -42,7 +42,7 @@ namespace Dumux
  * \brief Implementation of a exponential function relating
  *             specific interfacial  area to wetting phase saturation and capillary pressure.
  */
-template <class ParamsT>
+template <class ScalarT, class ParamsT =AwnSurfaceExpSwPcTo3Params<ScalarT> >
 class AwnSurfaceExpSwPcTo3
 {
 public:
