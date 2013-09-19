@@ -77,9 +77,11 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
+
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
     enum
         {

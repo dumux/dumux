@@ -68,7 +68,8 @@ class MimeticOperatorAssemblerTwoP: public CROperatorAssemblerTwoP<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 

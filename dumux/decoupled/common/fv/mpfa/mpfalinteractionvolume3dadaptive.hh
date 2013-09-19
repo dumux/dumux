@@ -198,7 +198,8 @@ private:
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldVector<DimVector, dim> FieldVectorVector;

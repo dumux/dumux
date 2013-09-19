@@ -845,7 +845,6 @@ void FvMpfaL2dPressureVelocity2p<TypeTag>::calculateVelocity()
                             }
                             }
 
-
                             Scalar potentialDiffW = (cellData.potential(wPhaseIdx) - potentialBoundW) / dist;
                             Scalar  potentialDiffNW = (cellData.potential(nPhaseIdx) - potentialBoundNW) / dist;
 

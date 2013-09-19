@@ -109,7 +109,8 @@ template<class TypeTag> class MimeticPressure2P
     typedef MimeticOperatorAssemblerTwoP<TypeTag> OperatorAssembler;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;

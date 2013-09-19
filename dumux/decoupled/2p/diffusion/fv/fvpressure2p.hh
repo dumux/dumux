@@ -298,8 +298,7 @@ public:
      *
      * Calculates secondary pressure variables and stores pressures.
      *
-     * \param globalIdx Global cell index
-     * \param cellData A CellData object
+     * \param element Grid element
      */
     void storePressureSolution(const Element& element)
     {
