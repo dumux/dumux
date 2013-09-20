@@ -106,9 +106,7 @@ public:
         if (phaseIdx not_eq sPhaseIdx) {
             storage[energyEq0Idx + phaseIdx] +=
                     fs.density(phaseIdx) *
-//                    fs.internalEnergy(phaseIdx) *
-#warning balancing enthalpy (no volume change work)
-                    fs.enthalpy(phaseIdx) *
+                    fs.internalEnergy(phaseIdx) *
                     fs.saturation(phaseIdx) *
                     volVars.porosity();
         }
