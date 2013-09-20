@@ -64,6 +64,8 @@ namespace Dumux
  * All equations are discretized using a vertex-centered finite volume (box)
  * or cell-centered finite volume scheme as spatial
  * and the implicit Euler method as time discretization.
+ * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
+ * problem file. Make sure that the according units are used in the problem setup. useMoles is set to true by default.
  *
  * The primary variables are the pressure \f$p\f$ and the mole or mass fraction of dissolved component \f$x\f$.
  */

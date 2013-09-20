@@ -79,7 +79,7 @@ SET_TYPE_PROP(OnePTwoCOutflowProblem,
               Dumux::OnePTwoCOutflowSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCOutflowProblem, UseMoles, false);
+SET_BOOL_PROP(OnePTwoCOutflowProblem, UseMoles, true);
 
 // Enable velocity output
 SET_BOOL_PROP(OnePTwoCOutflowProblem, VtkAddVelocity, true);
@@ -108,6 +108,9 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
  * and leaves the domain at the right boundary
  * where an outflow boundary condition is applied.
  * 
+ * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
+ * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
+ *
  * This problem uses the \ref OnePTwoCBoxModel model.
  *
  * To run the simulation execute the following line in shell:
@@ -161,6 +164,16 @@ public:
                                              std::string, 
                                              Problem, 
                                              Name);
+
+        //stateing in the console whether mole or mass fractions are used
+        if(!useMoles)
+        {
+        	std::cout<<"problem uses mass-fractions"<<std::endl;
+        }
+        else
+        {
+        	std::cout<<"problem uses mole-fractions"<<std::endl;
+        }
     }
 
     /*!
@@ -242,6 +255,8 @@ public:
      * For this method, the \a priVars parameter stores the mass flux
      * in normal direction of each component. Negative values mean
      * influx.
+     *
+     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
     void neumann(PrimaryVariables &priVars,
                  const Element &element,
@@ -268,6 +283,8 @@ public:
      * of a component is generated or annihilate per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
+     *
+     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
      */
     void sourceAtPos(PrimaryVariables &priVars,
                      const GlobalPosition &globalPos) const

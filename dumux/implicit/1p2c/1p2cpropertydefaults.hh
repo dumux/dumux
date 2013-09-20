@@ -53,7 +53,7 @@ SET_INT_PROP(OnePTwoC, NumEq, 2); //!< set the number of equations to 2
 SET_INT_PROP(OnePTwoC, NumPhases, 1); //!< The number of phases in the 1p2c model is 1
 SET_INT_PROP(OnePTwoC, NumComponents, 2); //!< The number of components in the 1p2c model is 2
 SET_SCALAR_PROP(OnePTwoC, Scaling, 1); //!< Scaling of the model is set to 1 by default
-SET_BOOL_PROP(OnePTwoC, UseMoles, false); //!< Define that mass fractions are used in the balance equations
+SET_BOOL_PROP(OnePTwoC, UseMoles, true); //!< Define that mole fractions are used in the balance equations
 
 //! Use the 1p2c local residual function for the 1p2c model
 SET_TYPE_PROP(OnePTwoC, LocalResidual, OnePTwoCLocalResidual<TypeTag>);

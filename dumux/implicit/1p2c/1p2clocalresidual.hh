@@ -105,7 +105,7 @@ public:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         storage = 0;
-        if(!useMoles)
+        if(!useMoles) //mass-fraction formulation
         {
             // storage term of continuity equation - massfractions
             storage[conti0EqIdx] +=
@@ -114,7 +114,7 @@ public:
             storage[transportEqIdx] +=
                 volVars.fluidState().density(phaseIdx) * volVars.fluidState().massFraction(phaseIdx, transportCompIdx) * volVars.porosity();
         }
-        else
+        else //mole-fraction formulation
         {
             // storage term of continuity equation- molefractions
             //careful: molarDensity changes with moleFrac!
@@ -170,7 +170,7 @@ public:
         const VolumeVariables &dn =
             this->curVolVars_(fluxVars.downstreamIdx());
 
-        if(!useMoles)
+        if(!useMoles) //mass-fraction formulation
         {
             // total mass flux - massfraction
             //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
@@ -187,7 +187,7 @@ public:
                  +
                  (1 - upwindWeight_)*dn.fluidState().density(phaseIdx)*dn.fluidState().massFraction(phaseIdx, transportCompIdx)/dn.viscosity());
         }
-        else
+        else //mole-fraction formulation
         {
             // total mass flux - molefraction
             //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
@@ -219,7 +219,7 @@ public:
         Scalar tmp(0);
 
         // diffusive flux of second component
-        if(!useMoles)
+        if(!useMoles) //mass-fraction formulation
         {
             // diffusive flux of the second component - massfraction
             tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
@@ -234,7 +234,7 @@ public:
             // convert it to a mass flux and add it
             flux[transportEqIdx] += tmp * FluidSystem::molarMass(transportCompIdx);
         }
-        else
+        else //mole-fraction formulation
         {
             // diffusive flux of the second component - molefraction
             tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
