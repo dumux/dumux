@@ -88,6 +88,8 @@ SET_BOOL_PROP(HeterogeneousNIProblem, ProblemEnableGravity, true);
 
 SET_BOOL_PROP(HeterogeneousNIProblem, ImplicitEnableJacobianRecycling, false);
 SET_BOOL_PROP(HeterogeneousNIProblem, VtkAddVelocity, false);
+
+SET_BOOL_PROP(HeterogeneousNIProblem, UseMoles, false);
 }
 
 
@@ -108,6 +110,9 @@ SET_BOOL_PROP(HeterogeneousNIProblem, VtkAddVelocity, false);
  * between different parts of the boundary.
  * These boundary ids can be imported into the problem where the boundary conditions can then be assigned accordingly.
  *
+ * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
+ * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is false.
+ *
  * To run the simulation execute the following line in shell (works with the box and cell centered spatial discretization method):
  * <tt>./test_ccco2ni </tt> or <tt>./test_boxco2ni </tt>
  */
@@ -122,6 +127,8 @@ class HeterogeneousNIProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     enum {
         // Grid and world dimension
@@ -232,6 +239,16 @@ public:
                           /*pmin=*/pressureLow_,
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
+
+        //stateing in the console whether mole or mass fractions are used
+        if(!useMoles)
+        {
+        	std::cout<<"problem uses mass-fractions"<<std::endl;
+        }
+        else
+        {
+        	std::cout<<"problem uses mole-fractions"<<std::endl;
+        }
     }
 
     /*!
@@ -340,6 +357,12 @@ public:
      *
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
+     *
+     * Depending on whether useMoles is set on true or false, the flux has to be given either in
+     * kg/(m^3*s) or mole/(m^3*s) in the input file!!
+     *
+     * Note that the energy balance is always calculated in terms of specific enthalpies [J/kg]
+     * and that the Neumann fluxes have to be specified accordingly.
      */
     void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
@@ -413,6 +436,11 @@ public:
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
+     *
+     * Depending on whether useMoles is set on true or false, the flux has to be given either in
+     * kg/(m^2*s) or mole/(m^2*s) in the input file!!
+     * Note that the energy balance is always calculated in terms of specific enthalpies [J/kg]
+     * and that the Neumann fluxes have to be specified accordingly.
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -426,10 +454,10 @@ public:
         values = 0;
         if (boundaryId == injectionBottom_)
         {
-            values[contiCO2EqIdx] = -injectionRate_; // kg/(s*m^2)
+            values[contiCO2EqIdx] = -injectionRate_; ///FluidSystem::molarMass(CO2Idx); // kg/(s*m^2) or mole/(m^2*s) !!
 #if !ISOTHERMAL
-            values[energyEqIdx] = -injectionRate_*CO2::gasEnthalpy(
-                                    injectionTemperature_, injectionPressure_); // W/(m^2)
+            values[energyEqIdx] = -injectionRate_/*kg/(m^2 s)*/*CO2::gasEnthalpy(
+                                    injectionTemperature_, injectionPressure_)/*J/kg*/; // W/(m^2)
 #endif
         }
     }

@@ -27,9 +27,9 @@ TemperatureHigh = 330.15 # [Pa]     high end for tabularization of fluid propert
 
 ####################################################################
 [Problem]
-Name = heterogeneousboxni # [-]            toe name of the output files
+Name = heterogeneousboxni # [-]            the name of the output files
 DepthBOR = 1200 # [m]             depth below ground surface 
-InjectionRate = 1e-4 # [kg/sq/s]
+InjectionRate = 1e-4 # always given as [kg/(m^2/s)]
 InjectionPressure = 16e6 #[Pa]
 InjectionTemperature = 305 # [K]
 ####################################################################
