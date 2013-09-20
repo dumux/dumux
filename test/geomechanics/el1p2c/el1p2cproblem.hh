@@ -82,8 +82,9 @@ namespace Dumux
     SET_BOOL_PROP(El1P2CProblem, ImplicitWithStabilization, true);
 
     // Apply superlu as linear solver
+#if HAVE_SUPERLU
     SET_TYPE_PROP(El1P2CProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
-
+#endif
 }
 
 /*!

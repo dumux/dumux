@@ -122,7 +122,12 @@ public:
 
 
 // use the SuperLU linear solver by default
+#if HAVE_SUPERLU
 SET_TYPE_PROP(BoxElasticTwoP, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
+#else
+#warning no SuperLU detected, defaulting to ILU0BiCGSTAB. For many problems, the el2p model requires a direct solver.
+SET_TYPE_PROP(BoxElasticTwoP, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+#endif
 
 // set the grid operator
 SET_PROP(BoxElasticTwoP, GridOperator)
