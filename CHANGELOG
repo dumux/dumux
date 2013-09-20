@@ -2,6 +2,12 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
+  - All two-component models (1p2c, 2p2c, 2p2cni, co2, co2ni) can now be used 
+    with either mole or mass fractions. The property useMoles has to be set in 
+    the problem file and the boundary conditions have to be choosen accordingly.
+    . 1p2c, 2p2c, 2p2cni now use MOLE fractions by default.
+    . co2, co2ni still use MASS fractions by default.
+
   - Three geomechanics models have been added, thanks to the previous PhD work
     of Melanie Darcis. The models are located in dumux/geomechanics, a test for
     each model is provided in test/geomechanics:
