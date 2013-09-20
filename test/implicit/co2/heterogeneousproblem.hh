@@ -101,6 +101,8 @@ SET_BOOL_PROP(HeterogeneousProblem, ProblemEnableGravity, true);
 
 SET_BOOL_PROP(HeterogeneousProblem, ImplicitEnableJacobianRecycling, false);
 SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
+
+SET_BOOL_PROP(HeterogeneousProblem, UseMoles, false);
 }
 
 
@@ -121,6 +123,9 @@ SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
  * between different parts of the boundary.
  * These boundary ids can be imported into the problem where the boundary conditions can then be assigned accordingly.
  * 
+ * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
+ * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is false.
+ *
  * This problem uses the \ref OnePTwoCBoxModel model.
  * 
  * To run the simulation execute the following line in shell (works with the box and cell centered spatial discretization method):
@@ -150,6 +155,8 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
         lPhaseIdx = Indices::wPhaseIdx,
         gPhaseIdx = Indices::nPhaseIdx,
 
+        wCompIdx = FluidSystem::wCompIdx,
+        nCompIdx = FluidSystem::nCompIdx,
 
         BrineIdx = FluidSystem::BrineIdx,
         CO2Idx = FluidSystem::CO2Idx,
@@ -175,6 +182,7 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dumux::CO2<Scalar, CO2Table> CO2;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     /*!
@@ -236,6 +244,16 @@ public:
                           /*pmin=*/pressureLow_,
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
+
+        //stateing in the console whether mole or mass fractions are used
+        if(!useMoles)
+        {
+        	std::cout<<"problem uses mass-fractions"<<std::endl;
+        }
+        else
+        {
+        	std::cout<<"problem uses mole-fractions"<<std::endl;
+        }
     }
 
     /*!
@@ -335,6 +353,9 @@ public:
      *
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
+     *
+     * Depending on whether useMoles is set on true or false, the flux has to be given either in
+     * kg/(m^3*s) or mole/(m^3*s) in the input file!!
      */
     void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
@@ -410,6 +431,9 @@ public:
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
+     *
+     * Depending on whether useMoles is set on true or false, the flux has to be given either in
+     * kg/(m^2*s) or mole/(m^2*s) in the input file!!
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -423,7 +447,7 @@ public:
         values = 0;
         if (boundaryId == injectionBottom_)
         {
-            values[contiCO2EqIdx] = -injectionRate_; // kg/(s*m^2)
+            values[contiCO2EqIdx] = -injectionRate_; ///FluidSystem::molarMass(nCompIdx); // kg/(s*m^2) or mole/(m^2*s) !!
         }
     }
 
@@ -478,11 +502,16 @@ private:
         Scalar meanM =
             FluidSystem::molarMass(BrineIdx)*moleFracLiquidBrine +
             FluidSystem::molarMass(CO2Idx)*moleFracLiquidCO2;
-
-        Scalar massFracLiquidCO2 = moleFracLiquidCO2*FluidSystem::molarMass(CO2Idx)/meanM;
-
+        if(!useMoles) //mass-fraction formulation
+        {
+        	Scalar massFracLiquidCO2 = moleFracLiquidCO2*FluidSystem::molarMass(CO2Idx)/meanM;
+        	values[Indices::switchIdx] = massFracLiquidCO2;
+        }
+        else //mole-fraction formulation
+        {
+        	values[Indices::switchIdx] = moleFracLiquidCO2;
+        }
         values[Indices::pressureIdx] = pl;
-        values[Indices::switchIdx] = massFracLiquidCO2;
     }
 
     Scalar temperature_(const GlobalPosition globalPos) const

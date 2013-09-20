@@ -41,6 +41,8 @@ namespace Dumux
  *   The CO2VolumeVariables do not use a constraint solver for calculating the mole fractions as is the
  *   case in the 2p2c model. Instead mole fractions are calculated in the FluidSystem with a given
  *   temperature, pressurem and salinity.
+ *   The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
+ * 	 problem file. Make sure that the according units are used in the problem setup. useMoles is set to false by default.
  *
  */
 
@@ -81,6 +83,7 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
 
      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
      typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
      enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
      enum { dofCodim = isBox ? dim : 0 };
 
@@ -228,8 +231,16 @@ public:
                              << volVars.saturation(nPhaseIdx) << std::endl;
                    newPhasePresence = wPhaseOnly;
 
-                   globalSol[globalIdx][switchIdx]
-                       = volVars.fluidState().massFraction(wPhaseIdx, nCompIdx);
+                   if(!useMoles) //mass-fraction formulation
+                   {
+					   globalSol[globalIdx][switchIdx]
+						   = volVars.fluidState().massFraction(wPhaseIdx, nCompIdx);
+                   }
+                   else //mole-fraction formulation
+                   {
+					   globalSol[globalIdx][switchIdx]
+					       = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                   }
                }
                else if (volVars.saturation(wPhaseIdx) <= Smin)
                {
@@ -240,8 +251,16 @@ public:
                              << volVars.saturation(wPhaseIdx) << std::endl;
                    newPhasePresence = nPhaseOnly;
 
-                   globalSol[globalIdx][switchIdx]
-                       = volVars.fluidState().massFraction(nPhaseIdx, wCompIdx);
+                   if(!useMoles) //mass-fraction formulation
+                   {
+					   globalSol[globalIdx][switchIdx]
+						   = volVars.fluidState().massFraction(nPhaseIdx, wCompIdx);
+                   }
+                   else //mole-fraction formulation
+                   {
+						globalSol[globalIdx][switchIdx]
+						= volVars.fluidState().moleFraction(nPhaseIdx, wCompIdx);
+                   }
                }
            }
 
