@@ -464,9 +464,6 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
             pressNwBound = pressBound;
         }
 
-        //get temperature at current position
-        Scalar temperature = problem_.temperature(*element);
-
         Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satW)
                 / viscosity_[wPhaseIdx];
         Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satW)
@@ -476,9 +473,8 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
         Scalar potentialDiffNw = cellData.fluxData().upwindPotential(nPhaseIdx, isIndex);
 
         //calculate potential gradient
-
-            potentialDiffW = (cellData.pressure(wPhaseIdx) - pressWBound);
-            potentialDiffNw = (cellData.pressure(nPhaseIdx) - pressNwBound);
+        potentialDiffW = (cellData.pressure(wPhaseIdx) - pressWBound);
+        potentialDiffNw = (cellData.pressure(nPhaseIdx) - pressNwBound);
 
         potentialDiffW += density_[wPhaseIdx] * (distVec * problem_.gravity());
         potentialDiffNw += density_[nPhaseIdx] * (distVec * problem_.gravity());
