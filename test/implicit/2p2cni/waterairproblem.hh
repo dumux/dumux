@@ -72,6 +72,9 @@ SET_INT_PROP(WaterAirProblem, ImplicitNumericDifferenceMethod, +1);
 
 // Write newton convergence
 SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
+
+// Define whether mole(true) or mass (false) fractions are used
+SET_BOOL_PROP(WaterAirProblem, UseMoles, true);
 }
 
 
@@ -100,6 +103,9 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
  * At the dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
  * a geothermal temperature gradient of 0.03 K/m are applied.
  *
+ * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
+ * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
+ *
  * This problem uses the \ref TwoPTwoCNIModel model.
  *
  * To run the simulation execute the following line in shell:
@@ -114,6 +120,7 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GridView::Grid Grid;
 
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -121,6 +128,10 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
 
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
+
+        wCompIdx = FluidSystem::wCompIdx,
+        nCompIdx = FluidSystem::nCompIdx,
+
 #if !ISOTHERMAL
         temperatureIdx = Indices::temperatureIdx,
         energyEqIdx = Indices::energyEqIdx,
@@ -135,6 +146,7 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
 
         conti0EqIdx = Indices::conti0EqIdx,
         contiNEqIdx = conti0EqIdx + Indices::nCompIdx
+
     };
 
 
@@ -147,12 +159,14 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     
+    //! property that defines whether mole or mass fractions are used
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
 public:
     /*!
      * \brief The constructor
@@ -169,6 +183,16 @@ public:
         FluidSystem::init();
         
         name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+
+        //stating in the console whether mole or mass fractions are used
+        if(!useMoles)
+        {
+        	std::cout<<"problem uses mass-fractions"<<std::endl;
+        }
+        else
+        {
+        	std::cout<<"problem uses mole-fractions"<<std::endl;
+        }
     }
 
     /*!
@@ -205,6 +229,8 @@ public:
      *
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
+     *
+     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
      */
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
@@ -266,6 +292,8 @@ public:
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
+     *
+     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -286,7 +314,7 @@ public:
         if (globalPos[0] > 15 && globalPos[0] < 25 &&
             globalPos[1] < eps_)
         {
-            values[contiNEqIdx] = -1e-3;
+            values[contiNEqIdx] = -1e-3/FluidSystem::molarMass(nCompIdx); //(kg/(m^2*s) or mole/(m^2*s) )
         }
     }
 
