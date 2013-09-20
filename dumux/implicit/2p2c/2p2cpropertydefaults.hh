@@ -23,7 +23,7 @@
  * \file
  *
  * \brief Defines default values for most properties required by the
- *        2p2c fully implicit model.
+ *        two-phase two-component fully implicit model.
  */
 #ifndef DUMUX_2P2C_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P2C_PROPERTY_DEFAULTS_HH
@@ -51,7 +51,7 @@ namespace Properties {
 /*!
  * \brief Set the property for the number of components.
  *
- * We just forward the number from the fluid system and use an static
+ * We just forward the number from the fluid system and use a static
  * assert to make sure it is 2.
  */
 SET_PROP(TwoPTwoC, NumComponents)
@@ -69,7 +69,7 @@ SET_PROP(TwoPTwoC, NumComponents)
 /*!
  * \brief Set the property for the number of fluid phases.
  *
- * We just forward the number from the fluid system and use an static
+ * We just forward the number from the fluid system and use a static
  * assert to make sure it is 2.
  */
 SET_PROP(TwoPTwoC, NumPhases)
@@ -106,12 +106,12 @@ SET_PROP(TwoPTwoC, MaterialLawParams)
     typedef typename MaterialLaw::Params type;
 };
 
-//! Use the 2p2c local jacobian operator for the 2p2c model
+//! Use the 2p2c local Jacobian operator for the 2p2c model
 SET_TYPE_PROP(TwoPTwoC,
               LocalResidual,
               TwoPTwoCLocalResidual<TypeTag>);
 
-//! Use the 2p2c specific newton controller for the 2p2c model
+//! Use the 2p2c specific Newton controller for the 2p2c model
 SET_TYPE_PROP(TwoPTwoC, NewtonController, TwoPTwoCNewtonController<TypeTag>);
 
 //! the Model property
@@ -161,7 +161,7 @@ SET_BOOL_PROP(TwoPTwoC, ProblemEnableGravity, true);
 SET_BOOL_PROP(TwoPTwoC, UseMoles, true); //!< Define that mole fractions are used in the balance equations per default
 
 
-//! default value for the forchheimer coefficient
+//! default value for the Forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation

@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the two-phase, two-component model.
+ *        finite volume in the two-phase two-component model.
  */
 #ifndef DUMUX_2P2C_VOLUME_VARIABLES_HH
 #define DUMUX_2P2C_VOLUME_VARIABLES_HH
@@ -45,8 +45,8 @@ namespace Dumux
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitVolumeVariables
- * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-phase, two-component model.
+ * \brief Contains the quantities which are constant within a
+ *        finite volume in the two-phase two-component model.
  */
 template <class TypeTag>
 class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
@@ -279,7 +279,7 @@ public:
                 fluidState.setMoleFraction(nPhaseIdx, nCompIdx, moleFractionN[nCompIdx]);
         	}
             // calculate the composition of the remaining phases (as
-            // well as the densities of all phases). this is the job
+            // well as the densities of all phases). This is the job
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
@@ -320,7 +320,7 @@ public:
                 fluidState.setMoleFraction(wPhaseIdx, nCompIdx, moleFractionW[nCompIdx]);
         	}
             // calculate the composition of the remaining phases (as
-            // well as the densities of all phases). this is the job
+            // well as the densities of all phases). This is the job
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
@@ -337,7 +337,7 @@ public:
     }
 
     /*!
-     * \brief Returns the phase state for the control-volume.
+     * \brief Returns the phase state for the control volume.
      */
     const FluidState &fluidState() const
     { return fluidState_; }

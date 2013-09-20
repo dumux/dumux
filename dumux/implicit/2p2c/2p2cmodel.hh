@@ -46,9 +46,9 @@ namespace Dumux
  * By inserting this into the equations for the conservation of the
  * components, one gets one transport equation for each component
  * \f{eqnarray*}
- && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa S_\alpha )}
+ && \phi \frac{\partial (\sum_\alpha \varrho_\alpha \frac{M^\kappa}{M_\alpha} x_\alpha^\kappa S_\alpha )}
  {\partial t}
- - \sum_\alpha  \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
+ - \sum_\alpha  \text{div} \left\{ \varrho_\alpha \frac{M^\kappa}{M_\alpha} x_\alpha^\kappa
  \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
  (\textbf{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
  \nonumber \\ \nonumber \\
@@ -64,7 +64,7 @@ namespace Dumux
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
- * advantage of the fact that \f$S_w + S_n = 1\f$ and \f$X^\kappa_w + X^\kappa_n = 1\f$, the number of
+ * advantage of the fact that \f$S_w + S_n = 1\f$ and \f$x^\kappa_w + x^\kappa_n = 1\f$, the number of
  * unknowns can be reduced to two.
  * The used primary variables are, like in the two-phase model, either \f$p_w\f$ and \f$S_n\f$
  * or \f$p_n\f$ and \f$S_w\f$. The formulation which ought to be used can be
@@ -80,10 +80,10 @@ namespace Dumux
  * <ul>
  *  <li> Both phases are present: The saturation is used (either \f$S_n\f$ or \f$S_w\f$, dependent on the chosen <tt>Formulation</tt>),
  *      as long as \f$ 0 < S_\alpha < 1\f$</li>.
- *  <li> Only wetting phase is present: The mass fraction of, e.g., air in the wetting phase \f$X^a_w\f$ is used,
- *      as long as the maximum mass/mole fraction is not exceeded \f$(X^a_w<X^a_{w,max})\f$</li>
- *  <li> Only non-wetting phase is present: The mass fraction of, e.g., water in the non-wetting phase, \f$X^w_n\f$, is used,
- *      as long as the maximum mass/mole fraction is not exceeded \f$(X^w_n<X^w_{n,max})\f$</li>
+ *  <li> Only wetting phase is present: The mole fraction of, e.g., air in the wetting phase \f$x^a_w\f$ is used,
+ *      as long as the maximum mole fraction is not exceeded \f$(x^a_w<x^a_{w,max})\f$</li>
+ *  <li> Only non-wetting phase is present: The mole fraction of, e.g., water in the non-wetting phase, \f$x^w_n\f$, is used,
+ *      as long as the maximum mole fraction is not exceeded \f$(x^w_n<x^w_{n,max})\f$</li>
  * </ul>
  */
 
@@ -224,7 +224,7 @@ public:
     }
 
     /*!
-     * \brief Called by the update() method if applying the newton
+     * \brief Called by the update() method if applying the Newton
      *         method was unsuccessful.
      */
     void updateFailed()
@@ -567,7 +567,7 @@ public:
     }
 
     /*!
-     * \brief Set whether there was a primary variable switch after in
+     * \brief Set whether there was a primary variable switch after
      *        the last timestep.
      */
     void setSwitched_(bool yesno)
@@ -599,7 +599,7 @@ public:
             if (staticDat_[globalIdx].wasSwitched)
                 xwMax *= 1.02;
 
-            // if the sum of the mole fractions would be larger than
+            // if the sum of the mole fractions is larger than
             // 100%, wetting phase appears
             if (xww + xwn > xwMax)
             {
@@ -627,7 +627,7 @@ public:
             if (staticDat_[globalIdx].wasSwitched)
                 xgMax *= 1.02;
 
-            // if the sum of the mole fractions would be larger than
+            // if the sum of the mole fractions is larger than
             // 100%, nonwetting phase appears
             if (xnw + xnn > xgMax)
             {

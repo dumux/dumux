@@ -36,7 +36,7 @@ namespace Dumux
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase two-component fully implicit model.
  *
- * This class is used to fill the gaps in BoxLocalResidual for the 2P-2C flow.
+ * This class is used to fill the gaps in BoxLocalResidual for the two-phase two-component flow.
  */
 template<class TypeTag>
 class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
@@ -117,14 +117,14 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     }
 
     /*!
-     * \brief Evaluate the amount all conservation quantities
+     * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub-control volume divided by the volume)
      *
      *  \param storage The mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param scvIdx The sub-control-volume index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
@@ -133,7 +133,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
-        // using the implicit euler method.
+        // using the implicit Euler method.
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
             : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
@@ -151,7 +151,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 						* volVars.saturation(phaseIdx)
 						* volVars.fluidState().massFraction(phaseIdx, compIdx);
 				}
-				// this is only processed, if one component mass balance equation
+				// this is only processed if one component mass balance equation
 				// is replaced by the total mass balance equation
 				if (replaceCompEqIdx < numComponents)
 					storage[replaceCompEqIdx] +=
@@ -171,7 +171,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 						* volVars.saturation(phaseIdx)
 						* volVars.fluidState().moleFraction(phaseIdx, compIdx);
 				 }
-				 // this is only processed, if one component mass balance equation
+				 // this is only processed if one component mass balance equation
 				 // is replaced by the total mass balance equation
 				 if (replaceCompEqIdx < numComponents)
 					 storage[replaceCompEqIdx] +=
@@ -186,9 +186,9 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * \brief Evaluates the total flux of all conservation quantities
      *        over a face of a sub-control volume.
      *
-     * \param flux The flux over the SCV (sub-control-volume) face for each component
-     * \param faceIdx The index of the SCV face
-     * \param onBoundary Evaluate flux at inner SCV face or on a boundary face
+     * \param flux The flux over the sub-control-volume face for each component
+     * \param faceIdx The index of the sub-control-volume face
+     * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
      */
     void computeFlux(PrimaryVariables &flux, const int faceIdx, bool onBoundary=false) const
     {
@@ -211,7 +211,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *        a face of a sub-control volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV face
+     * \param fluxVars The flux variables at the current sub-control-volume face
      */
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
@@ -223,7 +223,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     	{
 			for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
 			{
-				// data attached to upstream and the downstream vertices
+				// data attached to upstream and downstream vertices
 				// of the current phase
 				const VolumeVariables &up =
 					this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
@@ -257,7 +257,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 					Valgrind::CheckDefined(dn.fluidState().massFraction(phaseIdx, compIdx));
 				}
 				// flux of the total mass balance;
-				// this is only processed, if one component mass balance equation
+				// this is only processed if one component mass balance equation
 				// is replaced by a total mass balance equation
 				if (replaceCompEqIdx < numComponents)
 				{
@@ -319,7 +319,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                     Valgrind::CheckDefined(dn.fluidState().moleFraction(phaseIdx, compIdx));
                 }
                 // flux of the total mass balance;
-                // this is only processed, if one component mass balance equation
+                // this is only processed if one component mass balance equation
                 // is replaced by a total mass balance equation
                 if (replaceCompEqIdx < numComponents)
                 {
@@ -350,7 +350,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *        a face of a sub-control volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current sub control volume face
+     * \param fluxVars The flux variables at the current sub-control-volume face
      */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
 
@@ -410,7 +410,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *
      * \param source The source/sink in the sub-control volume for each component
      * \param scvIdx The index of the sub-control volume
-     * \be careful what you use! (mole or mass Fraction!) Think of the units!
+     * \be careful what you use! (mole or mass fraction!) Think of the units!
      */
     void computeSource(PrimaryVariables& source, const int scvIdx)
     {

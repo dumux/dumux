@@ -20,7 +20,7 @@
  * \file
  * \brief   This file contains the data which is required to calculate
  *          all fluxes of components over a face of a finite volume for
- *          the two-phase, two-component model.
+ *          the two-phase two-component model.
  */
 #ifndef DUMUX_2P2C_FLUX_VARIABLES_HH
 #define DUMUX_2P2C_FLUX_VARIABLES_HH
@@ -38,7 +38,7 @@ namespace Dumux
  * \ingroup ImplicitFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate all fluxes of components over a face of a finite
- *        volume for the two-phase, two-component model.
+ *        volume for the two-phase two-component model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the integration point, etc.
@@ -77,9 +77,9 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
      * \param problem The problem
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param faceIdx The local index of the sub-control-volume face
      * \param elemVolVars The volume variables of the current element
-     * \param onBoundary Distinguishes if we are on a SCV face or on a boundary face
+     * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
      */
     TwoPTwoCFluxVariables(const Problem &problem,
                           const Element &element,

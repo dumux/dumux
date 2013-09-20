@@ -21,7 +21,7 @@
  * \brief A 2p2c specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
- * which allows the newton method to abort quicker if the solution is
+ * which allows the Newton method to abort quicker if the solution is
  * way out of bounds.
  */
 #ifndef DUMUX_2P2C_NEWTON_CONTROLLER_HH
@@ -36,10 +36,10 @@ namespace Dumux {
 /*!
  * \ingroup Newton
  * \ingroup TwoPTwoCModel
- * \brief A 2p2c specific controller for the newton solver.
+ * \brief A 2p2c specific controller for the Newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
- * which allows the newton method to abort quicker if the solution is
+ * which allows the Newton method to abort quicker if the solution is
  * way out of bounds.
  */
 template <class TypeTag>
@@ -56,7 +56,7 @@ public:
 
     /*!
      * \brief
-     * Suggest a new time step size based either on the number of newton
+     * Suggest a new time step size based either on the number of Newton
      * iterations required or on the variable switch
      *
      * \param uCurrentIter The current global solution vector

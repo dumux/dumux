@@ -49,7 +49,7 @@ struct TwoPTwoCFormulation
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitIndices
- * \brief The indices for the isothermal TwoPTwoC model.
+ * \brief The indices for the isothermal 2p2c model.
  *
  * \tparam formulation The formulation, either pwsn or pnsw.
  * \tparam PVOffset The first index in a primary variable vector.
@@ -77,10 +77,10 @@ public:
 
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int switchIdx = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
+    static const int switchIdx = PVOffset + 1; //!< Index of either the saturation or the mass fraction of the non-wetting/wetting phase
 
     static const int pwIdx = pressureIdx; //!< Index for wetting phase pressure in a solution vector
-    static const int snOrXIdx = switchIdx; //!< Index of the either the saturation of the non-wetting phase or the mass fraction secondary component in the only phase
+    static const int snOrXIdx = switchIdx; //!< Index of either the saturation of the non-wetting phase or the mass fraction secondary component in the only phase
 
     DUNE_DEPRECATED_MSG("use snOrXIdx (uncapitalized 's') instead") 
     static const int SnOrXIdx = snOrXIdx; //!< \deprecated
@@ -94,7 +94,7 @@ public:
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitIndices
- * \brief The indices for the isothermal TwoPTwoC model in the pn-sw
+ * \brief The indices for the isothermal 2p2c model in the pn-sw
  *        formulation.
  *
  * \tparam PVOffset The first index in a primary variable vector.
@@ -120,10 +120,10 @@ public:
 
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int switchIdx = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
+    static const int switchIdx = PVOffset + 1; //!< Index of either the saturation or the mass fraction of the non-wetting/wetting phase
 
     static const int pnIdx = pressureIdx; //!< Index for non-wetting phase pressure in a solution vector
-    static const int swOrXIdx = switchIdx; //!< Index of the either the saturation of the liquid phase or the mass fraction of the secondary component in the only phase
+    static const int swOrXIdx = switchIdx; //!< Index of either the saturation of the liquid phase or the mass fraction of the secondary component in the only phase
 
     DUNE_DEPRECATED_MSG("use swOrXIdx (uncapitalized 's') instead") 
     static const int SwOrXIdx = swOrXIdx; //!< \deprecated
