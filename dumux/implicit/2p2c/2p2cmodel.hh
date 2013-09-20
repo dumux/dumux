@@ -73,14 +73,17 @@ namespace Dumux
  * default, the model uses \f$p_w\f$ and \f$S_n\f$.
  * Moreover, the second primary variable depends on the phase state, since a
  * primary variable switch is included. The phase state is stored for all nodes
- * of the system. Following cases can be distinguished:
+ * of the system.
+ * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
+ * problem file. Make sure that the according units are used in the problem setup. useMoles is set to true by default.
+ * Following cases can be distinguished:
  * <ul>
  *  <li> Both phases are present: The saturation is used (either \f$S_n\f$ or \f$S_w\f$, dependent on the chosen <tt>Formulation</tt>),
  *      as long as \f$ 0 < S_\alpha < 1\f$</li>.
  *  <li> Only wetting phase is present: The mass fraction of, e.g., air in the wetting phase \f$X^a_w\f$ is used,
- *      as long as the maximum mass fraction is not exceeded \f$(X^a_w<X^a_{w,max})\f$</li>
+ *      as long as the maximum mass/mole fraction is not exceeded \f$(X^a_w<X^a_{w,max})\f$</li>
  *  <li> Only non-wetting phase is present: The mass fraction of, e.g., water in the non-wetting phase, \f$X^w_n\f$, is used,
- *      as long as the maximum mass fraction is not exceeded \f$(X^w_n<X^w_{n,max})\f$</li>
+ *      as long as the maximum mass/mole fraction is not exceeded \f$(X^w_n<X^w_{n,max})\f$</li>
  * </ul>
  */
 
@@ -129,6 +132,7 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -301,6 +305,10 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 massFrac[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
+        ScalarField *moleFrac[numPhases][numComponents];
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                        moleFrac[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
         ScalarField *temperature = writer.allocateManagedBuffer(numDofs);
         ScalarField *poro = writer.allocateManagedBuffer(numDofs);
         VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numDofs);
@@ -357,6 +365,14 @@ public:
 
                         Valgrind::CheckDefined((*massFrac[phaseIdx][compIdx])[globalIdx][0]);
                     }
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    {
+                        (*moleFrac[phaseIdx][compIdx])[globalIdx]
+                            = elemVolVars[scvIdx].fluidState().moleFraction(phaseIdx, compIdx);
+
+                        Valgrind::CheckDefined((*moleFrac[phaseIdx][compIdx])[globalIdx][0]);
+                    }
                 (*poro)[globalIdx]  = elemVolVars[scvIdx].porosity();
                 (*temperature)[globalIdx] = elemVolVars[scvIdx].temperature();
                 (*phasePresence)[globalIdx]
@@ -385,6 +401,15 @@ public:
                 std::ostringstream oss;
                 oss << "X_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
                 writer.attachDofData(*massFrac[phaseIdx][compIdx], oss.str(), isBox);
+            }
+        }
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                std::ostringstream oss;
+                oss << "x_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
+                writer.attachDofData(*moleFrac[phaseIdx][compIdx], oss.str(), isBox);
             }
         }
         writer.attachDofData(*poro, "porosity", isBox);
@@ -632,8 +657,16 @@ public:
                           << volVars.saturation(nPhaseIdx) << std::endl;
                 newPhasePresence = wPhaseOnly;
 
-                globalSol[globalIdx][switchIdx]
-                    = volVars.fluidState().massFraction(wPhaseIdx, nCompIdx);
+                if(!useMoles) //mass-fraction formulation
+                {
+					globalSol[globalIdx][switchIdx]
+						= volVars.fluidState().massFraction(wPhaseIdx, nCompIdx);
+                }
+                else //mole-fraction formulation
+                {
+					globalSol[globalIdx][switchIdx]
+					= volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+                }
             }
             else if (volVars.saturation(wPhaseIdx) <= Smin)
             {
@@ -644,8 +677,16 @@ public:
                           << volVars.saturation(wPhaseIdx) << std::endl;
                 newPhasePresence = nPhaseOnly;
 
-                globalSol[globalIdx][switchIdx]
-                    = volVars.fluidState().massFraction(nPhaseIdx, wCompIdx);
+              	if(!useMoles) //mass-fraction formulation
+              	{
+					globalSol[globalIdx][switchIdx]
+						= volVars.fluidState().massFraction(nPhaseIdx, wCompIdx);
+              	}
+              	else //mole-fraction formulation
+              	{
+					globalSol[globalIdx][switchIdx]
+					= volVars.fluidState().moleFraction(nPhaseIdx, wCompIdx);
+              	}
             }
         }
 

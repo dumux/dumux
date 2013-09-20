@@ -158,6 +158,9 @@ SET_BOOL_PROP(TwoPTwoC, VtkAddVelocity, false);
 // enable gravity by default
 SET_BOOL_PROP(TwoPTwoC, ProblemEnableGravity, true);
 
+SET_BOOL_PROP(TwoPTwoC, UseMoles, true); //!< Define that mole fractions are used in the balance equations per default
+
+
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the

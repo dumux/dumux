@@ -68,6 +68,9 @@ SET_PROP(InjectionProblem, FluidSystem)
 // Enable gravity
 SET_BOOL_PROP(InjectionProblem, ProblemEnableGravity, true);
 
+// Define whether mole(true) or mass (false) fractions are used
+SET_BOOL_PROP(InjectionProblem, UseMoles, true);
+
 SET_BOOL_PROP(InjectionProblem, ImplicitEnableJacobianRecycling, true);
 SET_BOOL_PROP(InjectionProblem, VtkAddVelocity, false);
 }
@@ -86,6 +89,9 @@ SET_BOOL_PROP(InjectionProblem, VtkAddVelocity, false);
  * (\f$ 5m<y<15m\f$) and migrates upwards due to buoyancy. It accumulates and
  * partially enters the lower permeable aquitard.
  * 
+ * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
+ * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
+ *
  * This problem uses the \ref TwoPTwoCModel.
  *
  * To run the simulation execute the following line in shell:
@@ -136,6 +142,9 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
+    //! property that defines whether mole or mass fractions are used
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     /*!
@@ -190,6 +199,16 @@ public:
                           /*pmin=*/pressureLow_,
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
+
+        //stateing in the console whether mole or mass fractions are used
+        if(!useMoles)
+        {
+        	std::cout<<"problem uses mass-fractions"<<std::endl;
+        }
+        else
+        {
+        	std::cout<<"problem uses mole-fractions"<<std::endl;
+        }
     }
 
     /*!
@@ -287,6 +306,8 @@ public:
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
+     *
+     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -304,7 +325,7 @@ public:
             globalPos = intersection.geometry().center();
 
         if (globalPos[1] < 15 && globalPos[1] > 7) {
-            values[contiN2EqIdx] = -1e-3; // kg/(s*m^2)
+            values[contiN2EqIdx] = -1e-3/FluidSystem::molarMass(nCompIdx); //mole/(m^2*s)   //-1e-3; // kg/(s*m^2)
         }
     }
 
@@ -357,11 +378,16 @@ private:
         Scalar meanM =
             FluidSystem::molarMass(wCompIdx)*moleFracLiquidH2O +
             FluidSystem::molarMass(nCompIdx)*moleFracLiquidN2;
-
-        Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
-
+        if(!useMoles) //mass fraction formulation
+        {
+        	Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
+        	values[Indices::switchIdx] = massFracLiquidN2;
+        }
+        else //mole-fraction formulation
+        {
+        	values[Indices::switchIdx] = moleFracLiquidN2;
+        }
         values[Indices::pressureIdx] = pl;
-        values[Indices::switchIdx] = massFracLiquidN2;
     }
 
     Scalar temperature_;
@@ -375,8 +401,6 @@ private:
 
     Scalar pressureLow_, pressureHigh_;
     Scalar temperatureLow_, temperatureHigh_;
-
-
 
 
 };
