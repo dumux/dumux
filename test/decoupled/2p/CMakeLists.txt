@@ -26,10 +26,11 @@ if(MPI_FOUND)
     ${CMAKE_SOURCE_DIR}/bin/runTest.sh
     ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
     ${CMAKE_SOURCE_DIR}/test/references/test_impes-reference-parallel.vtu
-    ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-test_impeswithamg-00013.vtu
+    ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-test_impeswithamg-00094.vtu
     "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_impeswithamg"
     -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_impeswithamg.input
-    -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_impeswithamg.dgf)
+    -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_impeswithamg.dgf
+    -TimeManager.TEnd 7e7)
 else(MPI_FOUND)
   add_test(test_impeswithamg
     ${CMAKE_SOURCE_DIR}/bin/runTest.sh
