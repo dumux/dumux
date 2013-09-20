@@ -127,8 +127,6 @@ SET_TYPE_PROP(MPFATwoPTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<
 SET_SCALAR_PROP(MPFATwoPTestProblem, ImpetCFLFactor, 1.0);
 SET_TYPE_PROP(MPFATwoPTestProblem, AdaptionIndicator, Dumux::GridAdaptionIndicator2PLocal<TypeTag>);
 
-SET_TYPE_PROP(MPFATwoPTestProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag>);
-
 NEW_TYPE_TAG(FVTwoPTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
 NEW_TYPE_TAG(FVAdaptiveTwoPTestProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestProblem));
 NEW_TYPE_TAG(MPFAOTwoPTestProblem, INHERITS_FROM(FvMpfaO2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
