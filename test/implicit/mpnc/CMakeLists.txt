@@ -50,6 +50,6 @@ add_dumux_test(test_boxmpnckinetic test_boxmpnckinetic test_boxmpnckinetic.cc
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/interfacedomain.dgf
   -TimeManager.TEnd 1e-2
   -TimeManager.DtInitial 1e-2)
+target_link_libraries(test_boxmpnckinetic ${DUNE_LIBS}  ${MPI_LIBRARIES})
 add_dune_alugrid_flags(test_boxmpnckinetic)
 add_dune_ug_flags(test_boxmpnckinetic)
-add_dune_mpi_flags(test_boxmpnckinetic)
