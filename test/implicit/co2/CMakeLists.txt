@@ -1,8 +1,5 @@
 # build target for the CO2 test problem
-add_executable("test_boxco2" EXCLUDE_FROM_ALL test_boxco2.cc)
-target_link_libraries(test_boxco2 ${DUNE_LIBS})
-add_dune_alugrid_flags(test_boxco2)
-add_test(test_boxco2
+add_dumux_test(test_boxco2 test_boxco2 test_boxco2.cc
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/co2box-reference.vtu
@@ -10,10 +7,9 @@ add_test(test_boxco2
   ${CMAKE_CURRENT_BINARY_DIR}/test_boxco2
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_boxco2.input
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/heterogeneousSmall.dgf)
+add_dune_alugrid_flags(test_boxco2)
 
-add_executable("test_ccco2" EXCLUDE_FROM_ALL test_ccco2.cc)
-add_dune_alugrid_flags(test_ccco2)
-add_test(test_ccco2
+add_dumux_test(test_ccco2 test_ccco2 test_ccco2.cc
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/co2cc-reference.vtu
@@ -21,8 +17,9 @@ add_test(test_ccco2
   ${CMAKE_CURRENT_BINARY_DIR}/test_ccco2
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_ccco2.input
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/heterogeneousSmall.dgf)
+add_dune_alugrid_flags(test_ccco2)
 
-add_test(test_restartco2
+add_dumux_test(test_restartco2 test_ccco2 test_ccco2.cc
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/co2box-reference.vtu
@@ -32,15 +29,3 @@ add_test(test_restartco2
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/heterogeneousSmall.dgf
   -Restart 42008.6
   -TimeManager.DtInitial 23452.1)
-
-set(TESTS
-  test_boxco2
-  test_ccco2
-  test_restart)
-
-# We do not want want to build the tests during make all,
-# but just build them on demand
-add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${TESTS})
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  PROPERTY TEST_INCLUDE_FILE ${CMAKE_CURRENT_BINARY_DIR}/BuildTests.cmake)
