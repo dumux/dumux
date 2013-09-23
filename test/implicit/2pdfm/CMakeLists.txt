@@ -6,5 +6,5 @@ add_dumux_test(test_2pdfm test_2pdfm test_2pdfm.cc
   ${CMAKE_CURRENT_BINARY_DIR}/test_2pdfm
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2pdfm.input
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/2pdfmartmesh.net)
+target_link_libraries(test_2pdfm ${DUNE_LIBS}  ${MPI_LIBRARIES})
 add_dune_ug_flags(test_2pdfm)
-add_dune_mpi_flags(test_2pdfm)
