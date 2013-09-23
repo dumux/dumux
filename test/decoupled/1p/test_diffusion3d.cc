@@ -72,7 +72,7 @@ int main(int argc, char** argv)
     try {
         typedef TTAG(DiffusionTestProblem) TypeTag;
         typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
-        typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
+        typedef GET_PROP(TypeTag, ParameterTree) ParameterTree;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
         typedef TTAG (FVTestProblem)
         FVTypeTag;
         typedef GET_PROP_TYPE(FVTypeTag, Problem) FVProblem;
-        typedef typename GET_PROP(FVTypeTag, ParameterTree) FVParameterTree;
+        typedef GET_PROP(FVTypeTag, ParameterTree) FVParameterTree;
         Dune::ParameterTreeParser::readINITree(parameterFileName, FVParameterTree::tree());
         FVProblem *fvProblem = new FVProblem(grid->leafView());
         std::string fvOutput("test_diffusion3d_fv");
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
         typedef TTAG (FVMPFAL3DTestProblem)
         MPFALTypeTag;
         typedef GET_PROP_TYPE(MPFALTypeTag, Problem) MPFALProblem;
-        typedef typename GET_PROP(MPFALTypeTag, ParameterTree) MPFALParameterTree;
+        typedef GET_PROP(MPFALTypeTag, ParameterTree) MPFALParameterTree;
         Dune::ParameterTreeParser::readINITree(parameterFileName, MPFALParameterTree::tree());
         MPFALProblem *mpfaProblem = new MPFALProblem(grid->leafView());
         std::string fvmpfaOutput("test_diffusion3d_fvmpfal");
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
         typedef TTAG (MimeticTestProblem)
         MimeticTypeTag;
         typedef GET_PROP_TYPE(MimeticTypeTag, Problem) MimeticProblem;
-        typedef typename GET_PROP(MimeticTypeTag, ParameterTree) MimeticParameterTree;
+        typedef GET_PROP(MimeticTypeTag, ParameterTree) MimeticParameterTree;
         Dune::ParameterTreeParser::readINITree(parameterFileName, MimeticParameterTree::tree());
         MimeticProblem *mimeticProblem = new MimeticProblem(grid->leafView());
         std::string mimeticOutput("test_diffusion3d_mimetic");
