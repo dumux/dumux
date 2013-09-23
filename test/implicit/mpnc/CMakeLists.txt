@@ -52,3 +52,4 @@ add_dumux_test(test_boxmpnckinetic test_boxmpnckinetic test_boxmpnckinetic.cc
   -TimeManager.DtInitial 1e-2)
 add_dune_alugrid_flags(test_boxmpnckinetic)
 add_dune_ug_flags(test_boxmpnckinetic)
+add_dune_mpi_flags(test_boxmpnckinetic)
