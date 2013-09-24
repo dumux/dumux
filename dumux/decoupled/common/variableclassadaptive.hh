@@ -155,6 +155,10 @@ public:
             LevelGridView levelView = grid_.levelView(level);
             for (LevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
             {
+                // only treat non-ghosts, ghost data is communicated afterwards
+                if (eIt->partitionType() == Dune::GhostEntity)
+                    continue;
+
                 if (!eIt->isNew())
                 {
                     //entry is in map, write in leaf
@@ -204,6 +208,17 @@ public:
         adaptationMap_.fill( typename PersistentContainer::Value() );
 #else
         adaptationMap_.clear();
+#endif
+
+#if HAVE_MPI
+        // communicate ghost data
+        typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+        typedef typename SolutionTypes::ElementMapper ElementMapper;
+        typedef VectorExchange<ElementMapper, std::vector<CellData> > DataHandle;
+        DataHandle dataHandle(problem.elementMapper(), this->cellDataGlobal());
+        problem.gridView().template communicate<DataHandle>(dataHandle,
+                                                            Dune::InteriorBorder_All_Interface,
+                                                            Dune::ForwardCommunication);
 #endif
     }
 

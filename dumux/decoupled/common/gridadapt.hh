@@ -45,17 +45,16 @@ class GridAdapt
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)   Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem)  Problem;
-
-
-    //*******************************
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid                         Grid;
-    typedef typename Grid::LeafGridView                     LeafGridView;
-    typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
-    typedef typename GridView::IntersectionIterator         LeafIntersectionIterator;
-    typedef typename Grid::template Codim<0>::Entity         Element;
-    typedef typename Grid::template Codim<0>::EntityPointer         ElementPointer;
 
+    typedef typename GridView::Grid Grid;
+    typedef typename Grid::LeafGridView LeafGridView;
+    typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
+    typedef typename GridView::IntersectionIterator LeafIntersectionIterator;
+    typedef typename Grid::template Codim<0>::Entity Element;
+    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator) AdaptionInitializationIndicator;
 
@@ -103,7 +102,8 @@ public:
                 break;
             }
 
-            if (adaptionInitIndicator.initializeModel())
+            int shouldInitialize = adaptionInitIndicator.initializeModel();
+            if (problem_.grid().comm().max(shouldInitialize))
                 problem_.model().initialize();
 
             iter++;
@@ -164,8 +164,9 @@ public:
         markElements(indicator);
 
         // abort if nothing in grid is marked
-        if (problem_.grid().comm().sum(marked_) == 0 
-            && problem_.grid().comm().sum(coarsened_) == 0)
+        int sumMarked = problem_.grid().comm().sum(marked_);
+        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
+        if (sumMarked == 0 && sumCoarsened == 0)
             return;
         else
             Dune::dinfo << marked_ << " cells have been marked_ to be refined, "
@@ -196,7 +197,7 @@ public:
         problem_.grid().postAdapt();
 
         // call method in problem for potential output etc.
-        problem_.grid().postAdapt();
+        problem_.postAdapt();
 
         return;
     }
@@ -291,8 +292,10 @@ public:
      */
     bool wasAdapted()
     {
-        return (problem_.grid().comm().sum(marked_) != 0 
-                || problem_.grid().comm().sum(coarsened_) != 0);
+        int sumMarked = problem_.grid().comm().sum(marked_);
+        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
+
+        return (sumMarked != 0 || sumCoarsened != 0);
     }
 
     /*!

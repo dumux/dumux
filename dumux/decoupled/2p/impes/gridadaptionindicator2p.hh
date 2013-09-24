@@ -21,6 +21,7 @@
 
 #include <dumux/decoupled/common/impetproperties.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/linear/vectorexchange.hh>
 
 /**
  * @file
@@ -47,6 +48,7 @@ private:
 
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -140,6 +142,19 @@ public:
 
         refineBound_ = refinetol_*globaldelta;
         coarsenBound_ = coarsentol_*globaldelta;
+
+#if HAVE_MPI
+    // communicate updated values
+    typedef VectorExchange<ElementMapper, ScalarSolutionType> DataHandle;
+    DataHandle dataHandle(problem_.elementMapper(), indicatorVector_);
+    problem_.gridView().template communicate<DataHandle>(dataHandle,
+                                                         Dune::InteriorBorder_All_Interface,
+                                                         Dune::ForwardCommunication);
+
+    refineBound_ = problem_.gridView().comm().max(refineBound_);
+    coarsenBound_ = problem_.gridView().comm().max(coarsenBound_);
+
+#endif
     }
 
     /*! \brief Indicator function for marking of grid cells for refinement
