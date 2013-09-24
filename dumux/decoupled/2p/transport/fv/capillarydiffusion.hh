@@ -106,12 +106,12 @@ public:
         //get lambda_bar = lambda_n*f_w
         Scalar mobBar = 0;
         Scalar mobilityWI = 0;
-        Scalar mobilityNWI = 0;
+        Scalar mobilityNwI = 0;
 
         if (preComput_)
         {
             mobilityWI = CellDataI.mobility(wPhaseIdx);
-            mobilityNWI = CellDataI.mobility(nPhaseIdx);
+            mobilityNwI = CellDataI.mobility(nPhaseIdx);
         }
         else
         {
@@ -121,8 +121,8 @@ public:
             fluidState.setTemperature(temperature);
             mobilityWI = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satI);
             mobilityWI /= FluidSystem::viscosity(fluidState, wPhaseIdx);
-            mobilityNWI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satI);
-            mobilityNWI /= FluidSystem::viscosity(fluidState, nPhaseIdx);
+            mobilityNwI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satI);
+            mobilityNwI /= FluidSystem::viscosity(fluidState, nPhaseIdx);
         }
 
         DimMatrix meanPermeability(0);
@@ -154,12 +154,12 @@ public:
 
 
             Scalar mobilityWJ = 0;
-            Scalar mobilityNWJ = 0;
+            Scalar mobilityNwJ = 0;
             //get lambda_bar = lambda_n*f_w
             if(preComput_)
             {
                 mobilityWJ = cellDataJ.mobility(wPhaseIdx);
-                mobilityNWJ = cellDataJ.mobility(nPhaseIdx);
+                mobilityNwJ = cellDataJ.mobility(nPhaseIdx);
             }
             else
             {
@@ -170,12 +170,12 @@ public:
 
                 mobilityWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
                 mobilityWJ /= FluidSystem::viscosity(fluidState, wPhaseIdx);
-                mobilityNWJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
-                mobilityNWJ /= FluidSystem::viscosity(fluidState, nPhaseIdx);
+                mobilityNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
+                mobilityNwJ /= FluidSystem::viscosity(fluidState, nPhaseIdx);
             }
             Scalar mobilityWMean = 0.5*(mobilityWI + mobilityWJ);
-            Scalar mobilityNWMean = 0.5*(mobilityNWI + mobilityNWJ);
-            mobBar = mobilityWMean*mobilityNWMean/(mobilityWMean+mobilityNWMean);
+            Scalar mobilityNwMean = 0.5*(mobilityNwI + mobilityNwJ);
+            mobBar = mobilityWMean*mobilityNwMean/(mobilityWMean+mobilityNwMean);
          }//end intersection with neighbor
         else
         {
@@ -196,7 +196,7 @@ public:
                     problem_.spatialParams().intrinsicPermeability(*element));
 
             Scalar mobilityWJ = 0;
-            Scalar mobilityNWJ = 0;
+            Scalar mobilityNwJ = 0;
 
             //calculate lambda_n*f_w at the boundary
             FluidState fluidState;
@@ -205,13 +205,13 @@ public:
             fluidState.setTemperature(temperature);
             mobilityWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satJ);
             mobilityWJ /= FluidSystem::viscosity(fluidState, wPhaseIdx);
-            mobilityNWJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satJ);
-            mobilityNWJ /= FluidSystem::viscosity(fluidState, nPhaseIdx);
+            mobilityNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satJ);
+            mobilityNwJ /= FluidSystem::viscosity(fluidState, nPhaseIdx);
 
             Scalar mobWMean = 0.5 * (mobilityWI + mobilityWJ);
-            Scalar mobNWMean = 0.5 * (mobilityNWI + mobilityNWJ);
+            Scalar mobNwMean = 0.5 * (mobilityNwI + mobilityNwJ);
 
-            mobBar = mobWMean * mobNWMean / (mobWMean + mobNWMean);
+            mobBar = mobWMean * mobNwMean / (mobWMean + mobNwMean);
         }
 
         // set result to K*grad(pc)

@@ -524,8 +524,8 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
 
     //get velocity*normalvector*facearea/(volume*porosity)
     Scalar factorW = (cellDataI.fluxData().velocity(wPhaseIdx, isIndex) * unitOuterNormal) * faceArea;
-    Scalar factorNW = (cellDataI.fluxData().velocity(nPhaseIdx, isIndex) * unitOuterNormal) * faceArea;
-    Scalar factorTotal = factorW + factorNW;
+    Scalar factorNw = (cellDataI.fluxData().velocity(nPhaseIdx, isIndex) * unitOuterNormal) * faceArea;
+    Scalar factorTotal = factorW + factorNw;
 
     // distance vector between barycenters
     GlobalPosition distVec = globalPosJ - globalPosI;
@@ -537,12 +537,12 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
     bool upwindWI =
             (takeNeighbor) ? !cellDataJ.fluxData().isUpwindCell(wPhaseIdx, intersection.indexInOutside()) :
                     cellDataI.fluxData().isUpwindCell(wPhaseIdx, isIndex);
-    bool upwindNWI =
+    bool upwindNwI =
             (takeNeighbor) ? !cellDataJ.fluxData().isUpwindCell(nPhaseIdx, intersection.indexInOutside()) :
                     cellDataI.fluxData().isUpwindCell(nPhaseIdx, isIndex);
 
     Scalar lambdaW = 0;
-    Scalar lambdaNW = 0;
+    Scalar lambdaNw = 0;
 
     //upwinding of lambda dependend on the phase potential gradients
     if (upwindWI)
@@ -562,20 +562,20 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
         } //divide by density because lambda is saved as lambda*density
     }
 
-    if (upwindNWI)
+    if (upwindNwI)
     {
-        lambdaNW = cellDataI.mobility(nPhaseIdx);
+        lambdaNw = cellDataI.mobility(nPhaseIdx);
         if (compressibility_)
         {
-            lambdaNW /= cellDataI.density(nPhaseIdx);
+            lambdaNw /= cellDataI.density(nPhaseIdx);
         } //divide by density because lambda is saved as lambda*density
     }
     else
     {
-        lambdaNW = cellDataJ.mobility(nPhaseIdx);
+        lambdaNw = cellDataJ.mobility(nPhaseIdx);
         if (compressibility_)
         {
-            lambdaNW /= cellDataJ.density(nPhaseIdx);
+            lambdaNw /= cellDataJ.density(nPhaseIdx);
         } //divide by density because lambda is saved as lambda*density
     }
 
@@ -584,7 +584,7 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
     case vt:
     {
         //add cflFlux for time-stepping
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
 
         //determine phase saturations from primary saturation variable
         Scalar satWI = cellDataI.saturation(wPhaseIdx);
@@ -611,13 +611,13 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
         case sw:
         {
             //vt*fw
-            factorTotal *= lambdaW / (lambdaW + lambdaNW);
+            factorTotal *= lambdaW / (lambdaW + lambdaNw);
             break;
         }
         case sn:
         {
             //vt*fn
-            factorTotal *= lambdaNW / (lambdaW + lambdaNW);
+            factorTotal *= lambdaNw / (lambdaW + lambdaNw);
             capillaryFlux *= -1;
             gravityFlux *= -1;
             break;
@@ -627,8 +627,8 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
         factorTotal += gravityFlux;
 
         //add cflFlux for time-stepping
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * capillaryFlux, intersection);
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * gravityFlux, intersection);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * capillaryFlux, intersection);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * gravityFlux, intersection);
 
         break;
     }
@@ -637,12 +637,12 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
         if (compressibility_)
         {
             factorW /= cellDataI.density(wPhaseIdx);
-            factorNW /= cellDataI.density(nPhaseIdx);
+            factorNw /= cellDataI.density(nPhaseIdx);
         }
 
         //add cflFlux for time-stepping
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNW, intersection, nPhaseIdx);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
 
         break;
     }
@@ -660,7 +660,7 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
             update -= factorW / (volume * porosity);//-:v>0, if flow leaves the cell
             break;
         case sn:
-            update -= factorNW / (volume * porosity); //-:v>0, if flow leaves the cell
+            update -= factorNw / (volume * porosity); //-:v>0, if flow leaves the cell
             break;
         }
         break;
@@ -709,8 +709,8 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
 
     //get velocity*normalvector*facearea/(volume*porosity)
     Scalar factorW = (cellDataI.fluxData().velocity(wPhaseIdx, isIndex) * unitOuterNormal) * faceArea;
-    Scalar factorNW = (cellDataI.fluxData().velocity(nPhaseIdx, isIndex) * unitOuterNormal) * faceArea;
-    Scalar factorTotal = factorW + factorNW;
+    Scalar factorNw = (cellDataI.fluxData().velocity(nPhaseIdx, isIndex) * unitOuterNormal) * faceArea;
+    Scalar factorTotal = factorW + factorNw;
 
     // distance vector between barycenters
     GlobalPosition distVec = globalPosJ - globalPosI;
@@ -749,7 +749,7 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*elementI), satWBound);
 
         Scalar lambdaW = 0;
-        Scalar lambdaNW = 0;
+        Scalar lambdaNw = 0;
 
         //upwinding of lambda dependend on the phase potential gradients
         if (cellDataI.fluxData().isUpwindCell(wPhaseIdx, isIndex))
@@ -776,22 +776,22 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
 
         if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, isIndex))
         {
-            lambdaNW = cellDataI.mobility(nPhaseIdx);
+            lambdaNw = cellDataI.mobility(nPhaseIdx);
             if (compressibility_)
             {
-                lambdaNW /= cellDataI.density(nPhaseIdx);
+                lambdaNw /= cellDataI.density(nPhaseIdx);
             } //divide by density because lambda is saved as lambda*density
         }
         else
         {
             if (compressibility_)
             {
-                lambdaNW = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*elementI), satWBound)
+                lambdaNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*elementI), satWBound)
                         / FluidSystem::viscosity(cellDataI.fluidState(), nPhaseIdx);
             }
             else
             {
-                lambdaNW = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*elementI), satWBound)
+                lambdaNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*elementI), satWBound)
                         / viscosity_[nPhaseIdx];
             }
         }
@@ -800,7 +800,7 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         {
         case vt:
         {
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
 
             Scalar pcI = cellDataI.capillaryPressure();
 
@@ -822,16 +822,16 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
             case sw:
             {
                 //vt*fw
-                factorTotal *= lambdaW / (lambdaW + lambdaNW);
+                factorTotal *= lambdaW / (lambdaW + lambdaNw);
                 break;
             }
             case sn:
             {
                 //vt*fn
-                factorTotal *= lambdaNW / (lambdaW + lambdaNW);
+                factorTotal *= lambdaNw / (lambdaW + lambdaNw);
                 capillaryFlux *= -1; //add cflFlux for time-stepping
-                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNW, intersection, nPhaseIdx);
+                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
                 gravityFlux *= -1;
                 break;
             }
@@ -841,8 +841,8 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
             factorTotal += gravityFlux;
 
             //add cflFlux for time-stepping
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * capillaryFlux, intersection);
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * gravityFlux, intersection);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * capillaryFlux, intersection);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * gravityFlux, intersection);
 
             break;
         }
@@ -851,12 +851,12 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
             if (compressibility_)
             {
                 factorW /= cellDataI.density(wPhaseIdx);
-                factorNW /= cellDataI.density(nPhaseIdx);
+                factorNw /= cellDataI.density(nPhaseIdx);
             }
 
             //add cflFlux for time-stepping
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNW, intersection, nPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
 
             break;
         }
@@ -867,26 +867,26 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
     {
         problem_.neumann(boundValues, intersection);
         factorW = boundValues[wPhaseIdx];
-        factorNW = boundValues[nPhaseIdx];
+        factorNw = boundValues[nPhaseIdx];
         factorW *= faceArea;
-        factorNW *= faceArea;
+        factorNw *= faceArea;
 
         //get mobilities
-        Scalar lambdaW, lambdaNW;
+        Scalar lambdaW, lambdaNw;
 
         lambdaW = cellDataI.mobility(wPhaseIdx);
-        lambdaNW = cellDataI.mobility(nPhaseIdx);
+        lambdaNw = cellDataI.mobility(nPhaseIdx);
         if (compressibility_)
         {
             lambdaW /= cellDataI.density(wPhaseIdx);
-            lambdaNW /= cellDataI.density(nPhaseIdx);
+            lambdaNw /= cellDataI.density(nPhaseIdx);
             factorW /= cellDataI.density(wPhaseIdx);
-            factorNW /= cellDataI.density(nPhaseIdx);
+            factorNw /= cellDataI.density(nPhaseIdx);
         }
         else
         {
             factorW /= density_[wPhaseIdx];
-            factorNW /= density_[nPhaseIdx];
+            factorNw /= density_[nPhaseIdx];
         }
 
         switch (velocityType_)
@@ -894,13 +894,13 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         case vt:
         {
             //add cflFlux for time-stepping
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW + factorNW, intersection);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW + factorNw, intersection);
             break;
         }
         default:
         {
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNW, intersection, nPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
 
             break;
         }
@@ -911,11 +911,11 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
     {
         //get mobilities
         Scalar lambdaW = cellDataI.mobility(wPhaseIdx);
-        Scalar lambdaNW = cellDataI.mobility(nPhaseIdx);
+        Scalar lambdaNw = cellDataI.mobility(nPhaseIdx);
         if (compressibility_)
         {
             lambdaW /= cellDataI.density(wPhaseIdx);
-            lambdaNW /= cellDataI.density(nPhaseIdx);
+            lambdaNw /= cellDataI.density(nPhaseIdx);
         }
 
         if (velocityType_ == vt)
@@ -925,23 +925,23 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
             case sw:
             {
                 //vt*fw
-                factorTotal *= lambdaW / (lambdaW + lambdaNW);
-                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
+                factorTotal *= lambdaW / (lambdaW + lambdaNw);
+                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
                 break;
             }
             case sn:
             {
                 //vt*fn
-                factorTotal *= lambdaNW / (lambdaW + lambdaNW);
-                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
+                factorTotal *= lambdaNw / (lambdaW + lambdaNw);
+                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
                 break;
             }
             }
         }
         else
         {
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNW, intersection, nPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
         }
     }
     switch (velocityType_)
@@ -956,7 +956,7 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
             update -= factorW / (volume * porosity); //-:v>0, if flow leaves the cell
             break;
         case sn:
-            update -= factorNW / (volume * porosity); //-:v>0, if flow leaves the cell
+            update -= factorNw / (volume * porosity); //-:v>0, if flow leaves the cell
             break;
         }
         break;
@@ -999,11 +999,11 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
 
     //get mobilities
     Scalar lambdaW = cellDataI.mobility(wPhaseIdx);
-    Scalar lambdaNW = cellDataI.mobility(nPhaseIdx);
+    Scalar lambdaNw = cellDataI.mobility(nPhaseIdx);
     if (compressibility_)
     {
         lambdaW /= cellDataI.density(wPhaseIdx);
-        lambdaNW /= cellDataI.density(nPhaseIdx);
+        lambdaNw /= cellDataI.density(nPhaseIdx);
     }
 
     switch (saturationType_)
@@ -1031,16 +1031,16 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
     case vt:
     {
         //add cflFlux for time-stepping
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx],
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx],
                 (sourceVec[wPhaseIdx] + sourceVec[nPhaseIdx]) * -1 * volume, element);
         break;
     }
     default:
     {
         //add cflFlux for time-stepping
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], sourceVec[wPhaseIdx] * -1 * volume, element,
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], sourceVec[wPhaseIdx] * -1 * volume, element,
                 wPhaseIdx);
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], sourceVec[nPhaseIdx] * -1 * volume, element,
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], sourceVec[nPhaseIdx] * -1 * volume, element,
                 nPhaseIdx);
         break;
     }
@@ -1123,26 +1123,26 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws()
 
         //determine phase saturations from primary saturation variable
         Scalar satW = cellData.saturation(wPhaseIdx);
-        Scalar satNW = cellData.saturation(nPhaseIdx);
+        Scalar satNw = cellData.saturation(nPhaseIdx);
 
         Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt), satW);
 
         cellData.setSaturation(wPhaseIdx, satW);
-        cellData.setSaturation(nPhaseIdx, satNW);
+        cellData.setSaturation(nPhaseIdx, satNw);
 
         cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
         Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
-        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
+        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
 
         // initialize mobilities
         cellData.setMobility(wPhaseIdx, mobilityW);
-        cellData.setMobility(nPhaseIdx, mobilityNW);
+        cellData.setMobility(nPhaseIdx, mobilityNw);
 
         //initialize fractional flow functions
-        cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNW));
-        cellData.setFracFlowFunc(nPhaseIdx, mobilityNW / (mobilityW + mobilityNW));
+        cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNw));
+        cellData.setFracFlowFunc(nPhaseIdx, mobilityNw / (mobilityW + mobilityNw));
     }
     return;
 }

@@ -64,27 +64,27 @@ public:
     /*! \brief adds a flux to the cfl-criterion evaluation
      *
      *  \param lambdaW        wetting phase mobility
-     *  \param lambdaNW       non-wetting phase mobility
+     *  \param lambdaNw       non-wetting phase mobility
      *  \param viscosityW     wetting phase viscosity
-     *  \param viscosityNW    non-wetting phase viscosity
+     *  \param viscosityNw    non-wetting phase viscosity
      *  \param flux           flux to add
      *  \param intersection   intersection corresponding to the flux
      *  \param phaseIdx       index of the phase (wetting, non-wetting)
      */
-    void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, const Intersection& intersection, int phaseIdx)
+    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, const Intersection& intersection, int phaseIdx)
     {}
 
     /*! \brief adds a flux to the cfl-criterion evaluation
      *
      *  \param lambdaW        wetting phase mobility
-     *  \param lambdaNW       non-wetting phase mobility
+     *  \param lambdaNw       non-wetting phase mobility
      *  \param viscosityW     wetting phase viscosity
-     *  \param viscosityNW    non-wetting phase viscosity
+     *  \param viscosityNw    non-wetting phase viscosity
      *  \param flux           flux to add
      *  \param element        element corresponding to the flux
      *  \param phaseIdx       index of the phase (wetting, non-wetting)
      */
-    void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, const Element& element, int phaseIdx)
+    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, const Element& element, int phaseIdx)
     {}
 
     /*! \brief Returns the CFL flux-function

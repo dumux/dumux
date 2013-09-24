@@ -88,7 +88,7 @@ private:
     enum
     {
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNw,
         eqIdxSat = Indices::satEqIdx
     };
     enum

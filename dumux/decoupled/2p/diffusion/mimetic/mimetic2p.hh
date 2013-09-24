@@ -84,12 +84,12 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNW,
+        pn = Indices::pressureNw,
         pglobal = Indices::pressureGlobal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNw,
         vw = Indices::velocityW,
-        vn = Indices::velocityNW,
+        vn = Indices::velocityNw,
         pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation), //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
         saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation) //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
     };

@@ -96,30 +96,30 @@ public:
 
         //get lambda_bar = lambda_n*f_w
         Scalar lambdaWI = 0;
-        Scalar lambdaNWI = 0;
+        Scalar lambdaNwI = 0;
         Scalar lambdaWJ = 0;
-        Scalar lambdaNWJ = 0;
+        Scalar lambdaNwJ = 0;
 
         if (preComput_)
         {
             lambdaWI=cellDataI.mobility(wPhaseIdx);
-            lambdaNWI=cellDataI.mobility(nPhaseIdx);
+            lambdaNwI=cellDataI.mobility(nPhaseIdx);
         }
         else
         {
             lambdaWI = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satI);
             lambdaWI /= viscosity_[wPhaseIdx];
-            lambdaNWI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satI);
-            lambdaNWI /= viscosity_[nPhaseIdx];
+            lambdaNwI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satI);
+            lambdaNwI /= viscosity_[nPhaseIdx];
         }
 
-        Scalar potentialW = cellDataI.fluxData().potential(wPhaseIdx, indexInInside);
-        Scalar potentialNW = cellDataI.fluxData().potential(nPhaseIdx, indexInInside);
+        Scalar potentialDiffW = cellDataI.fluxData().upwindPotential(wPhaseIdx, indexInInside);
+        Scalar potentialDiffNw = cellDataI.fluxData().upwindPotential(nPhaseIdx, indexInInside);
 
         DimMatrix meanPermeability(0);
         GlobalPosition distVec(0);
         Scalar lambdaW =  0;
-        Scalar lambdaNW = 0;
+        Scalar lambdaNw = 0;
 
         if (intersection.neighbor())
         {
@@ -140,20 +140,20 @@ public:
             if (preComput_)
             {
                 lambdaWJ=cellDataJ.mobility(wPhaseIdx);
-                lambdaNWJ=cellDataJ.mobility(nPhaseIdx);
+                lambdaNwJ=cellDataJ.mobility(nPhaseIdx);
             }
             else
             {
                 lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
                 lambdaWJ /= viscosity_[wPhaseIdx];
-                lambdaNWJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
-                lambdaNWJ /= viscosity_[nPhaseIdx];
+                lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
+                lambdaNwJ /= viscosity_[nPhaseIdx];
             }
 
-            lambdaW = (potentialW >= 0) ? lambdaWI : lambdaWJ;
-            lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
-            lambdaNW = (potentialNW >= 0) ? lambdaNWI : lambdaNWJ;
-            lambdaNW = (potentialNW == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNW;
+            lambdaW = (potentialDiffW >= 0) ? lambdaWI : lambdaWJ;
+            lambdaW = (potentialDiffW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
+            lambdaNw = (potentialDiffNw >= 0) ? lambdaNwI : lambdaNwJ;
+            lambdaNw = (potentialDiffNw == 0) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNw;
         }
         else
         {
@@ -166,12 +166,12 @@ public:
             //calculate lambda_n*f_w at the boundary
             lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satJ);
             lambdaWJ /= viscosity_[wPhaseIdx];
-            lambdaNWJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satJ);
-            lambdaNWJ /= viscosity_[nPhaseIdx];
+            lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satJ);
+            lambdaNwJ /= viscosity_[nPhaseIdx];
 
             //If potential is zero always take value from the boundary!
-            lambdaW = (potentialW > 0) ? lambdaWI : lambdaWJ;
-            lambdaNW = (potentialNW > 0) ? lambdaNWI : lambdaNWJ;
+            lambdaW = (potentialDiffW > 0) ? lambdaWI : lambdaWJ;
+            lambdaNw = (potentialDiffNw > 0) ? lambdaNwI : lambdaNwJ;
         }
 
         // set result to K*grad(pc)
@@ -191,7 +191,7 @@ public:
         flux = unitOuterNormal;
 
         // set result to f_w*lambda_n*K*grad(pc)
-        flux *= lambdaW*lambdaNW/(lambdaW+lambdaNW) * scalarPerm * (density_[wPhaseIdx] - density_[nPhaseIdx]) * scalarGravity * areaScaling;
+        flux *= lambdaW*lambdaNw/(lambdaW+lambdaNw) * scalarPerm * (density_[wPhaseIdx] - density_[nPhaseIdx]) * scalarGravity * areaScaling;
     }
     /*! \brief Constructs a GravityPart object
      *

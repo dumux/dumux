@@ -65,18 +65,18 @@ public:
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Element&,int)
      */
-    void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, const Element& element, int phaseIdx = -1)
+    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, const Element& element, int phaseIdx = -1)
     {
-        addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, phaseIdx);
+        addFlux(lambdaW, lambdaNw, viscosityW, viscosityNw, flux, phaseIdx);
     }
 
     /*! \brief adds a flux to the cfl-criterion evaluation
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
      */
-    void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, const Intersection& intersection, int phaseIdx = -1)
+    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, const Intersection& intersection, int phaseIdx = -1)
     {
-        addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, phaseIdx);
+        addFlux(lambdaW, lambdaNw, viscosityW, viscosityNw, flux, phaseIdx);
     }
 
     /*! \brief Returns the CFL flux-function
@@ -122,10 +122,10 @@ public:
 
 private:
 
-    void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, int phaseIdx = -1)
+    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, int phaseIdx = -1)
     {
-        Scalar krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
-        Scalar viscosityRatio = 1 - fabs(0.5 - viscosityNW / (viscosityW + viscosityNW));//1 - fabs(viscosityWI-viscosityNWI)/(viscosityWI+viscosityNWI);
+        Scalar krSum = lambdaW * viscosityW + lambdaNw * viscosityNw;
+        Scalar viscosityRatio = 1 - fabs(0.5 - viscosityNw / (viscosityW + viscosityNw));//1 - fabs(viscosityWI-viscosityNwI)/(viscosityWI+viscosityNwI);
 
         switch (phaseIdx)
          {
@@ -223,25 +223,25 @@ template<class TypeTag>
 typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCflFluxFunction(const Element& element)
 {
     Scalar residualSatW = problem_.spatialParams().materialLawParams(element).swr();
-    Scalar residualSatNW = problem_.spatialParams().materialLawParams(element).snr();
+    Scalar residualSatNw = problem_.spatialParams().materialLawParams(element).snr();
 
     // compute dt restriction
-    Scalar volumeCorrectionFactor = 1 - residualSatW - residualSatNW;
+    Scalar volumeCorrectionFactor = 1 - residualSatW - residualSatNw;
     Scalar volumeCorrectionFactorOutW = 0;
-    Scalar volumeCorrectionFactorOutNW = 0;
+    Scalar volumeCorrectionFactorOutNw = 0;
 
         Scalar satW = problem_.variables().cellData(problem_.variables().index(element)).saturation(wPhaseIdx);
         volumeCorrectionFactorOutW = std::max((satW - residualSatW), 1e-2);
-        volumeCorrectionFactorOutNW = std::max((1 - satW - residualSatNW), 1e-2);
+        volumeCorrectionFactorOutNw = std::max((1 - satW - residualSatNw), 1e-2);
 
     //make sure correction is in the right range. If not: force dt to be not min-dt!
     if (volumeCorrectionFactorOutW <= 0)
     {
         volumeCorrectionFactorOutW = 1e100;
     }
-    if (volumeCorrectionFactorOutNW <= 0)
+    if (volumeCorrectionFactorOutNw <= 0)
     {
-        volumeCorrectionFactorOutNW = 1e100;
+        volumeCorrectionFactorOutNw = 1e100;
     }
 
     //correct volume
@@ -254,7 +254,7 @@ typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCfl
     }
     else
     {
-        cFLFluxOut = std::min(volumeCorrectionFactorOutW / getCFLFluxOut(wPhaseIdx), volumeCorrectionFactorOutNW / getCFLFluxOut(nPhaseIdx));
+        cFLFluxOut = std::min(volumeCorrectionFactorOutW / getCFLFluxOut(wPhaseIdx), volumeCorrectionFactorOutNw / getCFLFluxOut(nPhaseIdx));
     }
 
     //determine timestep

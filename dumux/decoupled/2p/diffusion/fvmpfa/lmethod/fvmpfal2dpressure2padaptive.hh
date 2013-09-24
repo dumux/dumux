@@ -264,19 +264,19 @@ public:
         }
         case pn:
         {
-            Scalar potNW = this->pressure()[globalIdx];
+            Scalar potNw = this->pressure()[globalIdx];
 
             Scalar gravityDiff = (problem_.bBoxMax() - element.geometry().center()) * gravity_;
             Scalar potPc = cellData.capillaryPressure()
                     + gravityDiff * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
-            cellData.setPotential(nPhaseIdx, potNW);
-            cellData.setPotential(wPhaseIdx, potNW - potPc);
+            cellData.setPotential(nPhaseIdx, potNw);
+            cellData.setPotential(wPhaseIdx, potNw - potPc);
 
-            Scalar pressNW = potNW - gravityDiff * density_[nPhaseIdx];
+            Scalar pressNw = potNw - gravityDiff * density_[nPhaseIdx];
 
-            cellData.setPressure(wPhaseIdx, pressNW - cellData.capillaryPressure());
-            cellData.setPressure(nPhaseIdx, pressNW);
+            cellData.setPressure(wPhaseIdx, pressNw - cellData.capillaryPressure());
+            cellData.setPressure(nPhaseIdx, pressNw);
 
             break;
         }
@@ -2686,27 +2686,27 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
 
                             //calculate potential gradients
                             Scalar potentialDiffW = 0;
-                            Scalar potentialDiffNW = 0;
+                            Scalar potentialDiffNw = 0;
                             switch (pressureType_)
                             {
                             case pw:
                             {
                                 potentialBound += density_[wPhaseIdx]*gdeltaZ;
                                 potentialDiffW = (cellData.potential(wPhaseIdx) - potentialBound) / dist;
-                                potentialDiffNW = (cellData.potential(nPhaseIdx) - potentialBound - pcBound) / dist;
+                                potentialDiffNw = (cellData.potential(nPhaseIdx) - potentialBound - pcBound) / dist;
                                 break;
                             }
                             case pn:
                             {
                                 potentialBound += density_[nPhaseIdx]*gdeltaZ;
                                 potentialDiffW = (cellData.potential(wPhaseIdx) - potentialBound + pcBound) / dist;
-                                potentialDiffNW = (cellData.potential(nPhaseIdx) - potentialBound) / dist;
+                                potentialDiffNw = (cellData.potential(nPhaseIdx) - potentialBound) / dist;
                                 break;
                             }
                             }
 
                             Scalar lambdaTotal = (potentialDiffW >= 0.) ? lambda[wPhaseIdx] : lambdaBound[wPhaseIdx];
-                            lambdaTotal += (potentialDiffNW >= 0.) ? lambda[nPhaseIdx] : lambdaBound[nPhaseIdx];
+                            lambdaTotal += (potentialDiffNw >= 0.) ? lambda[nPhaseIdx] : lambdaBound[nPhaseIdx];
 
                             DimVector permTimesNormal(0);
                             permeability.mv(unitDistVec, permTimesNormal);
@@ -3392,16 +3392,16 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::updateMaterialLaws()
         // initialize mobilities
         Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW)
                 / viscosity_[wPhaseIdx];
-        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW)
+        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW)
                 / viscosity_[nPhaseIdx];
 
         // initialize mobilities
         cellData.setMobility(wPhaseIdx, mobilityW);
-        cellData.setMobility(nPhaseIdx, mobilityNW);
+        cellData.setMobility(nPhaseIdx, mobilityNw);
 
         //initialize fractional flow functions
-        cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNW));
-        cellData.setFracFlowFunc(nPhaseIdx, mobilityNW / (mobilityW + mobilityNW));
+        cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNw));
+        cellData.setFracFlowFunc(nPhaseIdx, mobilityNw / (mobilityW + mobilityNw));
     }
     return;
 }
