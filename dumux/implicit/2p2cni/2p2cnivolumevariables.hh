@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the non-isothermal two-phase, two-component
+ *        finite volume in the non-isothermal two-phase two-component
  *        model.
  */
 #ifndef DUMUX_2P2CNI_VOLUME_VARIABLES_HH
@@ -35,7 +35,7 @@ namespace Dumux
  * \ingroup TwoPTwoCNIModel
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the non-isothermal two-phase, two-component
+ *        finite volume in the non-isothermal two-phase two-component
  *        model.
  */
 template <class TypeTag>
@@ -121,7 +121,7 @@ protected:
      * \param problem The problem
      * \param element The element
      * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The local index of the SCV (sub-control volume)
+     * \param scvIdx The local index of the sub-control volume
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void updateEnergy_(const PrimaryVariables &sol,

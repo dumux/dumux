@@ -39,7 +39,7 @@ namespace Dumux
  * \ingroup ImplicitFluxVariables
  * \brief This template class contains data which is required to
  *        calculate the heat fluxes over a face of a finite
- *        volume for the non-isothermal two-phase, two-component model.
+ *        volume for the non-isothermal two-phase two-component model.
  *        The mass fluxes are computed in the parent class.
  *
  * This means temperature gradients and the normal matrix
@@ -74,9 +74,9 @@ public:
      * \param problem The problem
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param faceIdx The local index of the sub-control-volume face
      * \param elemVolVars The volume variables of the current element
-     * \param onBoundary Distinguishes if we are on a SCV face or on a boundary face
+     * \param onBoundary Distinguishes if we are on a sub-control-volume face or on a boundary face
      */
     TwoPTwoCNIFluxVariables(const Problem &problem,
                             const Element &element,

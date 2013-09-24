@@ -70,14 +70,14 @@ public:
     };
 
     /*!
-     * \brief Evaluate the amount all conservation quantities
+     * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
      *  \param storage The storage of the conservation quantity (mass or energy) within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param scvIdx The sub-control-volume index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
@@ -110,11 +110,11 @@ public:
 
     /*!
      * \brief Evaluates the advective mass flux and the heat flux
-     * over a face of a subcontrol volume and writes the result in
+     * over a face of a sub-control volume and writes the result in
      * the flux vector.
      *
-     * \param flux The advective flux over the SCV (sub-control-volume) face for each component
-     * \param fluxVars The flux variables at the current SCV face
+     * \param flux The advective flux over the sub-control-volume face for each component
+     * \param fluxVars The flux variables at the current sub-control-volume face
      *
      * This method is called by compute flux (base class)
      */
@@ -146,8 +146,8 @@ public:
      * \brief Adds the diffusive heat flux to the flux vector over
      *        the face of a sub-control volume.
      *
-     * \param flux The diffusive flux over the SCV (sub-control-volume) face for each conservation quantity (mass, energy)
-     * \param fluxVars The flux variables at the current SCV face
+     * \param flux The diffusive flux over the sub-control-volume face for each conservation quantity (mass, energy)
+     * \param fluxVars The flux variables at the current sub-control-volume face
      *
      * This method is called by compute flux (base class)
      */

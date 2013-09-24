@@ -33,7 +33,7 @@ namespace Dumux
 /*!
  * \ingroup TwoPTwoCNIModel
  * \ingroup ImplicitIndices
- * \brief Indices for the non-isothermal 2-phase 2-component model
+ * \brief Indices for the non-isothermal two-phase two-component model
  *
  * \tparam formulation The formulation, either pwsn or pnsw.
  * \tparam PVOffset The first index in a primary variable vector.

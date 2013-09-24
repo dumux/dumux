@@ -22,7 +22,7 @@
  * \ingroup TwoPTwoCNIModel
  * \file
  *
- * \brief Defines the properties required for the non-isothermal two-phase,
+ * \brief Defines the properties required for the non-isothermal two-phase
  * two-component fully implicit model.
  */
 #ifndef DUMUX_2P2CNI_PROPERTIES_HH
