@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for h-adaptive sequential models.
  */
-#ifndef DUMUX_GIRDADAPT_HH
-#define DUMUX_GIRDADAPT_HH
+#ifndef DUMUX_GRIDADAPT_HH
+#define DUMUX_GRIDADAPT_HH
 
 #include "decoupledproperties.hh"
 #include "gridadaptproperties.hh"
@@ -469,4 +469,4 @@ public:
 };
 
 }
-#endif /* DUMUX_GIRDADAPT_HH */
+#endif /* DUMUX_GRIDADAPT_HH */
