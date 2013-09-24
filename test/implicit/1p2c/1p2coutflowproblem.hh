@@ -152,6 +152,9 @@ class OnePTwoCOutflowProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+    //! property that defines whether mole or mass fractions are used
+        static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
 public:
     OnePTwoCOutflowProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
