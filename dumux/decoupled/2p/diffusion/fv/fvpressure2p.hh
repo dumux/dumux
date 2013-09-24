@@ -1031,17 +1031,6 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()
 {
-    //for parallel use
-//    printvector(std::cout, (problem_.variables().pressure()), "pressure", "row", 200, 1, 3);
-//    problem_.variables().communicatePressure();
-//    printvector(std::cout, (problem_.variables().pressure()), "pressureComm", "row", 200, 1, 3);
-
-//    printvector(std::cout, (problem_.variables().saturation()), "sat", "row", 200, 1, 3);
-//    problem_.variables().communicateTransportedQuantity();
-//    printvector(std::cout, (problem_.variables().saturation()), "satComm", "row", 200, 1, 3);
-
-
-    // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
