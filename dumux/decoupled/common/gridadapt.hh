@@ -164,7 +164,8 @@ public:
         markElements(indicator);
 
         // abort if nothing in grid is marked
-        if (marked_==0 && coarsened_ == 0)
+        if (problem_.grid().comm().sum(marked_) == 0 
+            && problem_.grid().comm().sum(coarsened_) == 0)
             return;
         else
             Dune::dinfo << marked_ << " cells have been marked_ to be refined, "
@@ -182,10 +183,10 @@ public:
 
         //        forceRefineRatio(1);
 
-        // update mapper to new cell idice
+        // update mapper to new cell indices
         problem_.variables().elementMapper().update();
 
-        // adapt size of vectors (
+        // adapt size of vectors
         problem_.variables().adaptVariableSize(problem_.variables().elementMapper().size());
 
         /****  5) (Re-)construct primary variables to new grid **/
@@ -214,7 +215,11 @@ public:
         for (LeafIterator eIt = problem_.gridView().template begin<0>();
              eIt!=problem_.gridView().template end<0>(); ++eIt)
         {
-            // Verfeinern?
+            // only mark non-ghost elements
+            if (eIt->partitionType() == Dune::GhostEntity)
+                continue;
+
+            // refine?
             if (indicator.refine(*eIt) && eIt->level() < levelMax_)
             {
                 problem_.grid().mark( 1,  *eIt);
@@ -241,6 +246,10 @@ public:
         for (LeafIterator eIt = problem_.gridView().template begin<0>();
              eIt!=problem_.gridView().template end<0>(); ++eIt)
         {
+            // only mark non-ghost elements
+            if (eIt->partitionType() == Dune::GhostEntity)
+                continue;
+
             if (indicator.coarsen(*eIt) && eIt->level() > levelMin_)
             {
                 int idx = idSet.id(*(eIt->father()));
@@ -282,7 +291,8 @@ public:
      */
     bool wasAdapted()
     {
-        return (marked_ != 0 || coarsened_ != 0);
+        return (problem_.grid().comm().sum(marked_) != 0 
+                || problem_.grid().comm().sum(coarsened_) != 0);
     }
 
     /*!
@@ -356,6 +366,11 @@ private:
                 continue;
 
             ElementPointer outside = is->outside();
+
+            // only mark non-ghost elements
+            if (outside->partitionType() == Dune::GhostEntity)
+                continue;
+
             if ((outside.level()<levelMax_)
                 && (outside.level()<entity.level()))
             {
@@ -392,6 +407,10 @@ private:
             for (LeafIterator eIt = leafView.template begin<0>();
                  eIt!=leafView.template end<0>(); ++eIt)
             {
+                // only mark non-ghost elements
+                if (eIt->partitionType() == Dune::GhostEntity)
+                    continue;
+
                 // run through all neighbor-cells (intersections)
                 LeafIntersectionIterator isItend = leafView.iend(*eIt);
                 for (LeafIntersectionIterator isIt = leafView.ibegin(*eIt); isIt!= isItend; ++isIt)
