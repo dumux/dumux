@@ -479,8 +479,6 @@ public:
         res.deserializeSectionEnd();
     }
 
-    int timeStepIdx()
-    { return timeStepIdx_; }
     /*
      * @}
      */
