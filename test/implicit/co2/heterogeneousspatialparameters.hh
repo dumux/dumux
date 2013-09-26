@@ -150,9 +150,9 @@ public:
         const ElementIterator eEndIt = (*gridPtr_)->leafView().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            int elemIdx = (*gridPtr_)->leafView().indexSet().index(*eIt);
+            int eIdx = (*gridPtr_)->leafView().indexSet().index(*eIt);
             int param = (*gridPtr_).parameters(*eIt)[0];
-            paramIdx_[elemIdx] = param;
+            paramIdx_[eIdx] = param;
         }
 
     }
@@ -169,11 +169,11 @@ public:
                                        const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {
-        int elemIdx = (*gridPtr_)->leafView().indexSet().index(element); //Get the global index of the element
+        int eIdx = (*gridPtr_)->leafView().indexSet().index(element); //Get the global index of the element
 
-        if (paramIdx_[elemIdx] == barrierTop_)
+        if (paramIdx_[eIdx] == barrierTop_)
             return barrierTopK_;
-        else if (paramIdx_[elemIdx] == barrierMiddle_)
+        else if (paramIdx_[eIdx] == barrierMiddle_)
             return barrierMiddleK_;
         else
             return reservoirK_;
@@ -191,11 +191,11 @@ public:
                     const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
-        int elemIdx = (*gridPtr_)->leafView().indexSet().index(element); //Get the global index of the element
+        int eIdx = (*gridPtr_)->leafView().indexSet().index(element); //Get the global index of the element
 
-        if (paramIdx_[elemIdx] == barrierTop_)
+        if (paramIdx_[eIdx] == barrierTop_)
             return barrierTopPorosity_;
-        else if (paramIdx_[elemIdx] == barrierMiddle_)
+        else if (paramIdx_[eIdx] == barrierMiddle_)
             return barrierMiddlePorosity_;
         else
             return reservoirPorosity_;

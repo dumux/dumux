@@ -197,9 +197,9 @@ public:
                 Dune::FieldVector<Scalar, 2*dim> scvVelocities(0.0);
 
                 int innerFaceIdx = 0;
-                IntersectionIterator endIsIt = problem_.gridView().iend(element);
+                IntersectionIterator isEndIt = problem_.gridView().iend(element);
                 for (IntersectionIterator isIt = problem_.gridView().ibegin(element); 
-                     isIt != endIsIt; ++isIt)
+                     isIt != isEndIt; ++isIt)
                 {
                     int faceIdx = isIt->indexInInside();
 

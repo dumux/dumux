@@ -122,8 +122,8 @@ private:
         // Mark yellow vertices (as orange for the mean time)
         eIt = this->gridView_().template begin<0>();
         for (; eIt != eEndIt; ++eIt) {
-            int elemIdx = this->elementMapper_().map(*eIt);
-            if (this->elementColor_[elemIdx] != ParentType::Red)
+            int eIdx = this->elementMapper_().map(*eIt);
+            if (this->elementColor_[eIdx] != ParentType::Red)
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
@@ -151,8 +151,8 @@ private:
         // Mark yellow elements
         eIt = this->gridView_().template begin<0>();
         for (; eIt != eEndIt; ++eIt) {
-            int elemIdx = this->elementMapper_().map(*eIt);
-            if (this->elementColor_[elemIdx] == ParentType::Red) {
+            int eIdx = this->elementMapper_().map(*eIt);
+            if (this->elementColor_[eIdx] == ParentType::Red) {
                 continue; // element is red already!
             }
 
@@ -169,15 +169,15 @@ private:
             }
 
             if (isYellow)
-                this->elementColor_[elemIdx] = ParentType::Yellow;
+                this->elementColor_[eIdx] = ParentType::Yellow;
         }
 
         // Demote orange vertices to yellow ones if it has at least
         // one green element as a neighbor.
         eIt = this->gridView_().template begin<0>();
         for (; eIt != eEndIt; ++eIt) {
-            int elemIdx = this->elementMapper_().map(*eIt);
-            if (this->elementColor_[elemIdx] != ParentType::Green)
+            int eIdx = this->elementMapper_().map(*eIt);
+            if (this->elementColor_[eIdx] != ParentType::Green)
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
@@ -362,14 +362,14 @@ private:
             }
 
             // set main diagonal entries for the vertex
-            int vertIdx = this->vertexMapper_().map(*vp);
+            int vIdx = this->vertexMapper_().map(*vp);
             typedef typename JacobianMatrix::block_type BlockType;
-            BlockType &J = (*this->matrix_)[vertIdx][vertIdx];
+            BlockType &J = (*this->matrix_)[vIdx][vIdx];
             for (int j = 0; j < BlockType::rows; ++j)
                 J[j][j] = 1.0;
 
             // set residual for the vertex
-            this->residual_[vertIdx] = 0;
+            this->residual_[vIdx] = 0;
         }
     }
 };

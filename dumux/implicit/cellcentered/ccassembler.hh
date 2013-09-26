@@ -79,29 +79,29 @@ private:
         // linearization which actually will get achieved
         this->nextReassembleAccuracy_ = 0;
         for (; eIt != eEndIt; ++eIt) {
-            int elemIdx = this->elementMapper_().map(*eIt);
-            if (this->delta_[elemIdx] > relTol)
+            int eIdx = this->elementMapper_().map(*eIt);
+            if (this->delta_[eIdx] > relTol)
             {
                 // mark element as red if discrepancy is larger than
                 // the relative tolerance
-                this->elementColor_[elemIdx] = ParentType::Red;
+                this->elementColor_[eIdx] = ParentType::Red;
             }
             else
             {
-                this->elementColor_[elemIdx] = ParentType::Green;
+                this->elementColor_[eIdx] = ParentType::Green;
                 this->nextReassembleAccuracy_ =
-                    std::max(this->nextReassembleAccuracy_, this->delta_[elemIdx]);
+                    std::max(this->nextReassembleAccuracy_, this->delta_[eIdx]);
             }
         }
 
         // mark the neighbors also red
         eIt = this->gridView_().template begin<0>();
         for (; eIt != eEndIt; ++eIt) {
-            int elemIdx = this->elementMapper_().map(*eIt);
-            if (this->elementColor_[elemIdx] == ParentType::Red) 
+            int eIdx = this->elementMapper_().map(*eIt);
+            if (this->elementColor_[eIdx] == ParentType::Red) 
                 continue; // element is red already!
 
-            if (this->delta_[elemIdx] > relTol)
+            if (this->delta_[eIdx] > relTol)
             {
                 // also mark the neighbors 
                IntersectionIterator endIsIt = this->gridView_().iend(*eIt);

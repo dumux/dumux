@@ -114,8 +114,8 @@ public:
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            int idx = this->elementMapper().map(*eIt);
-            rank[idx] = this->gridView_().comm().rank();
+            int eIdx = this->elementMapper().map(*eIt);
+            rank[eIdx] = this->gridView_().comm().rank();
 
             fvGeometry.update(this->gridView_(), *eIt);
             elemBcTypes.update(this->problem_(), *eIt, fvGeometry);

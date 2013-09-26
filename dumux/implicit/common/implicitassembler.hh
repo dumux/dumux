@@ -326,14 +326,14 @@ public:
      * \brief Returns the reassemble color of a vertex
      *
      * \param element An element which contains the vertex
-     * \param vertIdx The local index of the vertex in the element.
+     * \param vIdx The local index of the vertex in the element.
      */
-    int vertexColor(const Element &element, const int vertIdx) const
+    int vertexColor(const Element &element, const int vIdx) const
     {
         if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
 
-        int globalIdx = vertexMapper_().map(element, vertIdx, dim);
+        int globalIdx = vertexMapper_().map(element, vIdx, dim);
         return vertexColor_[globalIdx];
     }
 

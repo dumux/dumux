@@ -173,9 +173,9 @@ public:
         for (int j = 0; j< dim; ++j)
             outStream << this->curSol()[numScv*(numEq-dim) + dofIdx*dim + j][0] <<" ";
 
-        int vertIdx = this->dofMapper().map(entity);
+        int vIdx = this->dofMapper().map(entity);
         if (!outStream.good())
-            DUNE_THROW(Dune::IOError, "Could not serialize vertex " << vertIdx);
+            DUNE_THROW(Dune::IOError, "Could not serialize vertex " << vIdx);
     }
 
     /*!
@@ -287,38 +287,38 @@ public:
         // initialize cell stresses, cell-wise hydraulic parameters and cell pressure with zero
 
 
-        for(int elemIdx = 0; elemIdx < numElements; ++elemIdx){
-            deltaEffStressX[elemIdx] = Scalar(0.0);
+        for(int eIdx = 0; eIdx < numElements; ++eIdx){
+            deltaEffStressX[eIdx] = Scalar(0.0);
             if (dim >= 2)
-                deltaEffStressY[elemIdx] = Scalar(0.0);
+                deltaEffStressY[eIdx] = Scalar(0.0);
             if (dim >= 3)
-                deltaEffStressZ[elemIdx] = Scalar(0.0);
+                deltaEffStressZ[eIdx] = Scalar(0.0);
 
-            totalStressX[elemIdx] = Scalar(0.0);
+            totalStressX[eIdx] = Scalar(0.0);
             if (dim >= 2)
-                totalStressY[elemIdx] = Scalar(0.0);
+                totalStressY[eIdx] = Scalar(0.0);
             if (dim >= 3)
-                totalStressZ[elemIdx] = Scalar(0.0);
+                totalStressZ[eIdx] = Scalar(0.0);
 
-            initStressX[elemIdx] = Scalar(0.0);
+            initStressX[eIdx] = Scalar(0.0);
             if (dim >= 2)
-                initStressY[elemIdx] = Scalar(0.0);
+                initStressY[eIdx] = Scalar(0.0);
             if (dim >= 3)
-                initStressZ[elemIdx] = Scalar(0.0);
+                initStressZ[eIdx] = Scalar(0.0);
 
-            principalStress1[elemIdx] = Scalar(0.0);
+            principalStress1[eIdx] = Scalar(0.0);
             if (dim >= 2)
-                principalStress2[elemIdx] = Scalar(0.0);
+                principalStress2[eIdx] = Scalar(0.0);
             if (dim >= 3)
-                principalStress3[elemIdx] = Scalar(0.0);
+                principalStress3[eIdx] = Scalar(0.0);
 
-            effPorosity[elemIdx] = Scalar(0.0);
-            effKx[elemIdx] = Scalar(0.0);
-            effectivePressure[elemIdx] = Scalar(0.0);
-            deltaEffPressure[elemIdx] = Scalar(0.0);
+            effPorosity[eIdx] = Scalar(0.0);
+            effKx[eIdx] = Scalar(0.0);
+            effectivePressure[eIdx] = Scalar(0.0);
+            deltaEffPressure[eIdx] = Scalar(0.0);
 
-            Pcrtens[elemIdx] = Scalar(0.0);
-            Pcrshe[elemIdx] = Scalar(0.0);
+            Pcrtens[eIdx] = Scalar(0.0);
+            Pcrshe[eIdx] = Scalar(0.0);
         }
 
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
@@ -328,16 +328,16 @@ public:
         ElementVolumeVariables elemVolVars;
 
         // initialize start and end of element iterator
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator endit = this->gridView_().template end<0>();
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndit = this->gridView_().template end<0>();
         // loop over all elements (cells)
-        for (; elemIt != endit; ++elemIt) {
+        for (; eIt != eEndit; ++eIt) {
 
             // get FE function spaces to calculate gradients (gradient data of momentum balance
             // equation is not stored in fluxvars since it is not evaluated at box integration point)
             // copy the values of the sol vector to the localFunctionSpace values of the current element
             LocalFunctionSpace localFunctionSpace(this->problem_().model().jacobianAssembler().gridFunctionSpace());
-            localFunctionSpace.bind(*elemIt);
+            localFunctionSpace.bind(*eIt);
             std::vector<Scalar> values;
             localFunctionSpace.vread(sol, values);
 
@@ -350,18 +350,18 @@ public:
             typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::JacobianType JacobianType_V;
             typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::RangeFieldType RF;
 
-            unsigned int elemIdx = this->problem_().model().elementMapper().map(*elemIt);
-            rank[elemIdx] = this->gridView_().comm().rank();
+            unsigned int eIdx = this->problem_().model().elementMapper().map(*eIt);
+            rank[eIdx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemVolVars.update(this->problem_(), *elemIt, fvGeometry, false);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemVolVars.update(this->problem_(), *eIt, fvGeometry, false);
 
             // loop over all local vertices of the cell
-            int numScv = elemIt->template count<dim>();
+            int numScv = eIt->template count<dim>();
 
             for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
             {
-                unsigned int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dim);
+                unsigned int globalIdx = this->dofMapper().map(*eIt, scvIdx, dim);
 
 
                 Te[globalIdx] = elemVolVars[scvIdx].temperature();
@@ -390,26 +390,26 @@ public:
                 double exponent;
                 exponent = 22.2    * (elemVolVars[scvIdx].effPorosity
                             / elemVolVars[scvIdx].porosity() - 1);
-                Keff =    this->problem_().spatialParams().intrinsicPermeability(    *elemIt, fvGeometry, scvIdx)[0][0];
+                Keff =    this->problem_().spatialParams().intrinsicPermeability(    *eIt, fvGeometry, scvIdx)[0][0];
                 Keff *= exp(exponent);
-                effKx[elemIdx] += Keff/ numScv;
-                effectivePressure[elemIdx] += (pn[globalIdx] * sn[globalIdx]
+                effKx[eIdx] += Keff/ numScv;
+                effectivePressure[eIdx] += (pn[globalIdx] * sn[globalIdx]
                                             + pw[globalIdx] * sw[globalIdx])
                                             / numScv;
-                effPorosity[elemIdx] +=elemVolVars[scvIdx].effPorosity / numScv;
+                effPorosity[eIdx] +=elemVolVars[scvIdx].effPorosity / numScv;
             };
 
-            const GlobalPosition& cellCenter = elemIt->geometry().center();
-            const GlobalPosition& cellCenterLocal = elemIt->geometry().local(cellCenter);
+            const GlobalPosition& cellCenter = eIt->geometry().center();
+            const GlobalPosition& cellCenterLocal = eIt->geometry().local(cellCenter);
 
-            deltaEffPressure[elemIdx] = effectivePressure[elemIdx] + this->problem().pInit(cellCenter, cellCenterLocal, *elemIt);
+            deltaEffPressure[eIdx] = effectivePressure[eIdx] + this->problem().pInit(cellCenter, cellCenterLocal, *eIt);
             // determin changes in effective stress from current solution
             // evaluate gradient of displacement shape functions
             std::vector<JacobianType_V> vRefShapeGradient(dispSize);
             displacementLFS.child(0).finiteElement().localBasis().evaluateJacobian(cellCenterLocal, vRefShapeGradient);
 
             // get jacobian to transform the gradient to physical element
-            const JacobianInverseTransposed jacInvT = elemIt->geometry().jacobianInverseTransposed(cellCenterLocal);
+            const JacobianInverseTransposed jacInvT = eIt->geometry().jacobianInverseTransposed(cellCenterLocal);
             std::vector < Dune::FieldVector<RF, dim> > vShapeGradient(dispSize);
             for (size_t i = 0; i < dispSize; i++) {
                 vShapeGradient[i] = 0.0;
@@ -425,7 +425,7 @@ public:
                     uGradient[coordDir].axpy(values[scalarDispLFS.localIndex(i)],vShapeGradient[i]);
             }
 
-            const Dune::FieldVector<Scalar, 2> lameParams =    this->problem_().spatialParams().lameParams(*elemIt,fvGeometry, 0);
+            const Dune::FieldVector<Scalar, 2> lameParams =    this->problem_().spatialParams().lameParams(*eIt,fvGeometry, 0);
             const Scalar lambda = lameParams[0];
             const Scalar mu = lameParams[1];
 
@@ -450,42 +450,42 @@ public:
             // in case of rock mechanics sign convention compressive stresses
             // are defined to be positive
             if(rockMechanicsSignConvention_){
-                deltaEffStressX[elemIdx] -= sigma[0];
+                deltaEffStressX[eIdx] -= sigma[0];
                 if (dim >= 2) {
-                    deltaEffStressY[elemIdx] -= sigma[1];
+                    deltaEffStressY[eIdx] -= sigma[1];
                 }
                 if (dim >= 3) {
-                    deltaEffStressZ[elemIdx] -= sigma[2];
+                    deltaEffStressZ[eIdx] -= sigma[2];
                 }
             }
             else{
-                deltaEffStressX[elemIdx] = sigma[0];
+                deltaEffStressX[eIdx] = sigma[0];
                 if (dim >= 2) {
-                    deltaEffStressY[elemIdx] = sigma[1];
+                    deltaEffStressY[eIdx] = sigma[1];
                 }
                 if (dim >= 3) {
-                    deltaEffStressZ[elemIdx] = sigma[2];
+                    deltaEffStressZ[eIdx] = sigma[2];
                 }
             }
 
             // retrieve prescribed initial stresses from problem file
             DimVector tmpInitStress = this->problem_().initialStress(cellCenter, 0);
             if(rockMechanicsSignConvention_){
-                initStressX[elemIdx][0] = tmpInitStress[0];
+                initStressX[eIdx][0] = tmpInitStress[0];
                 if (dim >= 2) {
-                    initStressY[elemIdx][1] = tmpInitStress[1];
+                    initStressY[eIdx][1] = tmpInitStress[1];
                     }
                 if (dim >= 3) {
-                    initStressZ[elemIdx][2] = tmpInitStress[2];
+                    initStressZ[eIdx][2] = tmpInitStress[2];
                 }
             }
             else{
-                initStressX[elemIdx][0] -= tmpInitStress[0];
+                initStressX[eIdx][0] -= tmpInitStress[0];
                 if (dim >= 2) {
-                    initStressY[elemIdx][1] -= tmpInitStress[1];
+                    initStressY[eIdx][1] -= tmpInitStress[1];
                     }
                 if (dim >= 3) {
-                    initStressZ[elemIdx][2] -= tmpInitStress[2];
+                    initStressZ[eIdx][2] -= tmpInitStress[2];
                 }
             }
 
@@ -493,33 +493,33 @@ public:
             // in case of rock mechanics sign convention compressive stresses
             // are defined to be positive and total stress is calculated by adding the pore pressure
             if(rockMechanicsSignConvention_){
-                totalStressX[elemIdx][0] = initStressX[elemIdx][0] + deltaEffStressX[elemIdx][0]    + deltaEffPressure[elemIdx];
-                totalStressX[elemIdx][1] = initStressX[elemIdx][1] + deltaEffStressX[elemIdx][1];
-                totalStressX[elemIdx][2] = initStressX[elemIdx][2] + deltaEffStressX[elemIdx][2];
+                totalStressX[eIdx][0] = initStressX[eIdx][0] + deltaEffStressX[eIdx][0]    + deltaEffPressure[eIdx];
+                totalStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
+                totalStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
                 if (dim >= 2) {
-                    totalStressY[elemIdx][0] = initStressY[elemIdx][0] + deltaEffStressY[elemIdx][0];
-                    totalStressY[elemIdx][1] = initStressY[elemIdx][1] + deltaEffStressY[elemIdx][1]    + deltaEffPressure[elemIdx];
-                    totalStressY[elemIdx][2] = initStressY[elemIdx][2] + deltaEffStressY[elemIdx][2];
+                    totalStressY[eIdx][0] = initStressY[eIdx][0] + deltaEffStressY[eIdx][0];
+                    totalStressY[eIdx][1] = initStressY[eIdx][1] + deltaEffStressY[eIdx][1]    + deltaEffPressure[eIdx];
+                    totalStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
                 }
                 if (dim >= 3) {
-                    totalStressZ[elemIdx][0] = initStressZ[elemIdx][0] + deltaEffStressZ[elemIdx][0];
-                    totalStressZ[elemIdx][1] = initStressZ[elemIdx][1] + deltaEffStressZ[elemIdx][1];
-                    totalStressZ[elemIdx][2] = initStressZ[elemIdx][2] + deltaEffStressZ[elemIdx][2]    + deltaEffPressure[elemIdx];
+                    totalStressZ[eIdx][0] = initStressZ[eIdx][0] + deltaEffStressZ[eIdx][0];
+                    totalStressZ[eIdx][1] = initStressZ[eIdx][1] + deltaEffStressZ[eIdx][1];
+                    totalStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    + deltaEffPressure[eIdx];
                 }
             }
             else{
-                totalStressX[elemIdx][0] = initStressX[elemIdx][0] + deltaEffStressX[elemIdx][0]    - deltaEffPressure[elemIdx];
-                totalStressX[elemIdx][1] = initStressX[elemIdx][1] + deltaEffStressX[elemIdx][1];
-                totalStressX[elemIdx][2] = initStressX[elemIdx][2] + deltaEffStressX[elemIdx][2];
+                totalStressX[eIdx][0] = initStressX[eIdx][0] + deltaEffStressX[eIdx][0]    - deltaEffPressure[eIdx];
+                totalStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
+                totalStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
                 if (dim >= 2) {
-                    totalStressY[elemIdx][0] = initStressY[elemIdx][0] + deltaEffStressY[elemIdx][0];
-                    totalStressY[elemIdx][1] = initStressY[elemIdx][1] + deltaEffStressY[elemIdx][1]    - deltaEffPressure[elemIdx];
-                    totalStressY[elemIdx][2] = initStressY[elemIdx][2] + deltaEffStressY[elemIdx][2];
+                    totalStressY[eIdx][0] = initStressY[eIdx][0] + deltaEffStressY[eIdx][0];
+                    totalStressY[eIdx][1] = initStressY[eIdx][1] + deltaEffStressY[eIdx][1]    - deltaEffPressure[eIdx];
+                    totalStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
                 }
                 if (dim >= 3) {
-                    totalStressZ[elemIdx][0] = initStressZ[elemIdx][0] + deltaEffStressZ[elemIdx][0];
-                    totalStressZ[elemIdx][1] = initStressZ[elemIdx][1] + deltaEffStressZ[elemIdx][1];
-                    totalStressZ[elemIdx][2] = initStressZ[elemIdx][2] + deltaEffStressZ[elemIdx][2]    - deltaEffPressure[elemIdx];
+                    totalStressZ[eIdx][0] = initStressZ[eIdx][0] + deltaEffStressZ[eIdx][0];
+                    totalStressZ[eIdx][1] = initStressZ[eIdx][1] + deltaEffStressZ[eIdx][1];
+                    totalStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    - deltaEffPressure[eIdx];
                 }
             }
         }
@@ -529,16 +529,16 @@ public:
         DimMatrix totalStress;
         DimVector eigenValues;
 
-        for (unsigned int elemIdx = 0; elemIdx < numElements; elemIdx++)
+        for (unsigned int eIdx = 0; eIdx < numElements; eIdx++)
         {
             eigenValues = Scalar(0);
             totalStress = Scalar(0);
 
-            totalStress[0] = totalStressX[elemIdx];
+            totalStress[0] = totalStressX[eIdx];
             if (dim >= 2)
-                totalStress[1] = totalStressY[elemIdx];
+                totalStress[1] = totalStressY[eIdx];
             if (dim >= 3)
-                totalStress[2] = totalStressZ[elemIdx];
+                totalStress[2] = totalStressZ[eIdx];
 
             calculateEigenValues<dim>(eigenValues, totalStress);
 
@@ -555,11 +555,11 @@ public:
                 a2 = eigenValues[1];
 
                 if (a1 >= a2) {
-                    principalStress1[elemIdx] = a1;
-                    principalStress2[elemIdx] = a2;
+                    principalStress1[eIdx] = a1;
+                    principalStress2[eIdx] = a2;
                 } else {
-                    principalStress1[elemIdx] = a2;
-                    principalStress2[elemIdx] = a1;
+                    principalStress1[eIdx] = a2;
+                    principalStress2[eIdx] = a1;
                 }
             }
 
@@ -570,58 +570,58 @@ public:
 
                 if (a1 >= a2) {
                     if (a1 >= a3) {
-                        principalStress1[elemIdx] = a1;
+                        principalStress1[eIdx] = a1;
                         if (a2 >= a3) {
-                            principalStress2[elemIdx] = a2;
-                            principalStress3[elemIdx] = a3;
+                            principalStress2[eIdx] = a2;
+                            principalStress3[eIdx] = a3;
                         }
                         else //a3 > a2
                         {
-                            principalStress2[elemIdx] = a3;
-                            principalStress3[elemIdx] = a2;
+                            principalStress2[eIdx] = a3;
+                            principalStress3[eIdx] = a2;
                         }
                     }
                     else // a3 > a1
                     {
-                        principalStress1[elemIdx] = a3;
-                        principalStress2[elemIdx] = a1;
-                        principalStress3[elemIdx] = a2;
+                        principalStress1[eIdx] = a3;
+                        principalStress2[eIdx] = a1;
+                        principalStress3[eIdx] = a2;
                     }
                 } else // a2>a1
                 {
                     if (a2 >= a3) {
-                        principalStress1[elemIdx] = a2;
+                        principalStress1[eIdx] = a2;
                         if (a1 >= a3) {
-                            principalStress2[elemIdx] = a1;
-                            principalStress3[elemIdx] = a3;
+                            principalStress2[eIdx] = a1;
+                            principalStress3[eIdx] = a3;
                         }
                         else //a3>a1
                         {
-                            principalStress2[elemIdx] = a3;
-                            principalStress3[elemIdx] = a1;
+                            principalStress2[eIdx] = a3;
+                            principalStress3[eIdx] = a1;
                         }
                     }
                     else //a3>a2
                     {
-                        principalStress1[elemIdx] = a3;
-                        principalStress2[elemIdx] = a2;
-                        principalStress3[elemIdx] = a1;
+                        principalStress1[eIdx] = a3;
+                        principalStress2[eIdx] = a2;
+                        principalStress3[eIdx] = a1;
                     }
                 }
             }
             Scalar taum  = 0.0;
             Scalar sigmam = 0.0;
-            Scalar Peff = effectivePressure[elemIdx];
+            Scalar Peff = effectivePressure[eIdx];
 
             Scalar theta = M_PI / 6;
             Scalar S0 = 0.0;
-            taum = (principalStress1[elemIdx] - principalStress3[elemIdx]) / 2;
-            sigmam = (principalStress1[elemIdx] + principalStress3[elemIdx]) / 2;
+            taum = (principalStress1[eIdx] - principalStress3[eIdx]) / 2;
+            sigmam = (principalStress1[eIdx] + principalStress3[eIdx]) / 2;
             Scalar Psc = -fabs(taum) / sin(theta) + S0 * cos(theta) / sin(theta)
                     + sigmam;
             // Pressure margins according to J. Rutqvist et al. / International Journal of Rock Mecahnics & Mining Sciences 45 (2008), 132-143
-            Pcrtens[elemIdx] = Peff - principalStress3[elemIdx];
-            Pcrshe[elemIdx] = Peff - Psc;
+            Pcrtens[eIdx] = Peff - principalStress3[eIdx];
+            Pcrshe[eIdx] = Peff - Psc;
 
         }
 

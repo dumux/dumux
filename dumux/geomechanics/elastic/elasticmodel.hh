@@ -120,23 +120,23 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator endit = this->gridView_().template end<0>();
-        for (; elemIt != endit; ++elemIt)
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
         {
-            int idx = this->problem_().model().elementMapper().map(*elemIt);
-            rank[idx] = this->gridView_().comm().rank();
+            int eIdx = this->problem_().model().elementMapper().map(*eIt);
+            rank[eIdx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->dofMapper().map(*elemIt, scvIdx, dim);
+                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dim);
 
                 volVars.update(sol[globalIdx],
                                this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                scvIdx,
                                false);
@@ -154,7 +154,7 @@ public:
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                            *elemIt,
+                            *eIt,
                             fvGeometry,
                             false /* isOldSol? */);
 
@@ -164,7 +164,7 @@ public:
                 stress = 0.0;
                 //prepare the flux calculations (set up and prepare geometry, FE gradients)
                 FluxVariables fluxVars(this->problem_(),
-                              *elemIt,
+                              *eIt,
                               fvGeometry,
                               faceIdx,
                               elemVolVars);
@@ -174,14 +174,14 @@ public:
 
                 // Add up stresses for each cell.
                 // Beware the sign convention applied here: compressive stresses are negative
-                sigmax[idx] += stress[0];
+                sigmax[eIdx] += stress[0];
                 if (dim >= 2)
                 {
-                    sigmay[idx] += stress[1];
+                    sigmay[eIdx] += stress[1];
                 }
                 if (dim == 3)
                 {
-                    sigmaz[idx] += stress[2];
+                    sigmaz[eIdx] += stress[2];
                 }
             }
         }

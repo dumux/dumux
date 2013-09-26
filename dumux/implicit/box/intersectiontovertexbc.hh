@@ -62,8 +62,8 @@ public:
     : problem_(problem)
     {
 	vertexBC.resize(problem.vertexMapper().size());
-        for (int vertIdx = 0; vertIdx < vertexBC.size(); vertIdx++)
-            vertexBC[vertIdx].setAllNeumann();
+        for (int vIdx = 0; vIdx < vertexBC.size(); vIdx++)
+            vertexBC[vIdx].setAllNeumann();
 
         ElementIterator eIt = problem.gridView().template begin<0>();
         const ElementIterator eEndIt = problem.gridView().template end<0>();
@@ -102,8 +102,8 @@ public:
     {
         values.setAllNeumann();
 
-	int vertIdx = problem_.vertexMapper().map(vertex);
-	const BoundaryTypes& bcTypes = vertexBC[vertIdx];
+	int vIdx = problem_.vertexMapper().map(vertex);
+	const BoundaryTypes& bcTypes = vertexBC[vIdx];
 
         for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
             if (bcTypes.isDirichlet(eqIdx))

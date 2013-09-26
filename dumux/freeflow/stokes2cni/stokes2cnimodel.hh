@@ -125,21 +125,21 @@ public:
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            int idx = this->elementMapper().map(*eIt);
-            rank[idx] = this->gridView_().comm().rank();
+            int eIdx = this->elementMapper().map(*eIt);
+            rank[eIdx] = this->gridView_().comm().rank();
 
             fvGeometry.update(this->gridView_(), *eIt);
             elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             int numLocalVerts = eIt->template count<dim>();
-            for (int vertIdx = 0; vertIdx < numLocalVerts; ++vertIdx)
+            for (int vIdx = 0; vIdx < numLocalVerts; ++vIdx)
             {
-                int globalIdx = this->vertexMapper().map(*eIt, vertIdx, dim);
+                int globalIdx = this->vertexMapper().map(*eIt, vIdx, dim);
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *eIt,
                                fvGeometry,
-                               vertIdx,
+                               vIdx,
                                false);
 
                 pn  [globalIdx] = volVars.pressure();

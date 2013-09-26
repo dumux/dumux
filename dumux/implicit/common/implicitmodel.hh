@@ -780,10 +780,10 @@ public:
      *             volume's associated vertex.
      * \param vertIdx The local vertex index inside element
      */
-    bool onBoundary(const Element &element, const int vertIdx) const
+    bool onBoundary(const Element &element, const int vIdx) const
     {
         if (isBox)
-            return onBoundary(vertexMapper().map(element, vertIdx, dim));
+            return onBoundary(vertexMapper().map(element, vIdx, dim));
         else
             DUNE_THROW(Dune::InvalidStateException,
                        "requested for cell-centered model");            

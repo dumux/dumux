@@ -369,8 +369,8 @@ public:
         // include boundary conditions
         // iterate over element intersections of codim dim-1
         IntersectionIterator isIt = model_.problem().gridView().ibegin(eg.entity());
-        const IntersectionIterator &endIt = model_.problem().gridView().iend(eg.entity());
-        for (; isIt != endIt; ++isIt)
+        const IntersectionIterator &isEndIt = model_.problem().gridView().iend(eg.entity());
+        for (; isIt != isEndIt; ++isIt)
         {
             // handle only faces on the boundary
             if (!isIt->boundary())

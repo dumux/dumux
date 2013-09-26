@@ -349,8 +349,8 @@ public:
         if (!enablePartialReassemble)
             return;
 
-        ElementIterator elemIt = gridView_().template begin<0>();
-        ElementIterator elemEndIt = gridView_().template end<0>();
+        ElementIterator eIt = gridView_().template begin<0>();
+        ElementIterator eEndIt = gridView_().template end<0>();
 
         // mark the red vertices and update the tolerance of the
         // linearization which actually will get achieved
@@ -367,13 +367,13 @@ public:
         };
 
         // Mark all red elements
-        for (; elemIt != elemEndIt; ++elemIt) {
+        for (; eIt != eEndIt; ++eIt) {
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
-            int numVerts = elemIt->template count<dim>();
+            int numVerts = eIt->template count<dim>();
             for (int i=0; i < numVerts; ++i) {
-                int globalI = vertexMapper_().map(*elemIt, i, dim);
+                int globalI = vertexMapper_().map(*eIt, i, dim);
                 if (vertexColor_[globalI] == Red) {
                     isRed = true;
                     break;
@@ -382,7 +382,7 @@ public:
 
             // if yes, the element color is also red, else it is not
             // red, i.e. green for the mean time
-            int globalElemIdx = elementMapper_().map(*elemIt);
+            int globalElemIdx = elementMapper_().map(*eIt);
             if (isRed)
                 elementColor_[globalElemIdx] = Red;
             else
@@ -390,16 +390,16 @@ public:
         }
 
         // Mark yellow vertices (as orange for the mean time)
-        elemIt = gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
-            if (elementColor_[elemIdx] != Red)
+        eIt = gridView_().template begin<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            int eIdx = this->elementMapper_().map(*eIt);
+            if (elementColor_[eIdx] != Red)
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
-            int numVerts = elemIt->template count<dim>();
+            int numVerts = eIt->template count<dim>();
             for (int i=0; i < numVerts; ++i) {
-                int globalI = vertexMapper_().map(*elemIt, i, dim);
+                int globalI = vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is already red, don't recolor it to
                 // yellow!
                 if (vertexColor_[globalI] != Red)
@@ -408,19 +408,19 @@ public:
         }
 
         // Mark yellow elements
-        elemIt = gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
-            if (elementColor_[elemIdx] == Red) {
+        eIt = gridView_().template begin<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            int eIdx = this->elementMapper_().map(*eIt);
+            if (elementColor_[eIdx] == Red) {
                 continue; // element is red already!
             }
 
             // check whether the element features a yellow
             // (resp. orange at this point) vertex
             bool isYellow = false;
-            int numVerts = elemIt->template count<dim>();
+            int numVerts = eIt->template count<dim>();
             for (int i=0; i < numVerts; ++i) {
-                int globalI = vertexMapper_().map(*elemIt, i, dim);
+                int globalI = vertexMapper_().map(*eIt, i, dim);
                 if (vertexColor_[globalI] == Orange) {
                     isYellow = true;
                     break;
@@ -428,21 +428,21 @@ public:
             };
 
             if (isYellow)
-                elementColor_[elemIdx] = Yellow;
+                elementColor_[eIdx] = Yellow;
         }
 
         // Demote orange vertices to yellow ones if it has at least
         // one green element as a neighbor.
-        elemIt = gridView_().template begin<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            int elemIdx = this->elementMapper_().map(*elemIt);
-            if (elementColor_[elemIdx] != Green)
+        eIt = gridView_().template begin<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            int eIdx = this->elementMapper_().map(*eIt);
+            if (elementColor_[eIdx] != Green)
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
-            int numVerts = elemIt->template count<dim>();
+            int numVerts = eIt->template count<dim>();
             for (int i=0; i < numVerts; ++i) {
-                int globalI = vertexMapper_().map(*elemIt, i, dim);
+                int globalI = vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is orange, recolor it to yellow!
                 if (vertexColor_[globalI] == Orange)
                     vertexColor_[globalI] = Yellow;
@@ -469,14 +469,14 @@ public:
      * \brief Returns the reassemble color of a vertex
      *
      * \param element An element which contains the vertex
-     * \param vertIdx The local index of the vertex in the element.
+     * \param vIdx The local index of the vertex in the element.
      */
-    int vertexColor(const Element &element, int vertIdx) const
+    int vertexColor(const Element &element, int vIdx) const
     {
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!
 
-        int globalIdx = vertexMapper_().map(element, vertIdx, dim);
+        int globalIdx = vertexMapper_().map(element, vIdx, dim);
         return vertexColor_[globalIdx];
     }
 

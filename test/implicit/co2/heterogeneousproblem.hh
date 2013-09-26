@@ -297,8 +297,8 @@ public:
          ElementIterator eEndIt = this->gridView().template end<0>();
          for (; eIt != eEndIt; ++eIt)
          {
-             int idx = this->elementMapper().map(*eIt);
-             (*rank)[idx] = this->gridView().comm().rank();
+             int eIdx = this->elementMapper().map(*eIt);
+             (*rank)[eIdx] = this->gridView().comm().rank();
              fvGeometry.update(this->gridView(), *eIt);
 
 
@@ -313,8 +313,8 @@ public:
                                 false);
                  (*boxVolume)[globalIdx] += fvGeometry.subContVol[scvIdx].volume;
              }
-             (*Kxx)[idx] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, /*element data*/ 0);
-             (*cellPorosity)[idx] = this->spatialParams().porosity(*eIt, fvGeometry, /*element data*/ 0);
+             (*Kxx)[eIdx] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, /*element data*/ 0);
+             (*cellPorosity)[eIdx] = this->spatialParams().porosity(*eIt, fvGeometry, /*element data*/ 0);
          }
 
          //pass the scalar fields to the vtkwriter
