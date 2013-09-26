@@ -1,0 +1,96 @@
+\documentclass[12pt,%
+                             a4paper,%
+                             pagesize,%
+                             twoside,%
+                             cleardoublepage=plain,%
+                             BCOR=12mm,%
+                             headinclude=true,%
+                             footinclude=false,%
+                             DIV = 13]%
+{scrartcl}
+\usepackage{setspace}
+\onehalfspacing
+\KOMAoptions{DIV=last}
+
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{ fixltx2e}
+\usepackage{microtype}
+\usepackage{ellipsis}
+
+\usepackage{lmodern}
+
+\usepackage{scrpage2}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{subfig}
+\usepackage{tikz}
+\usetikzlibrary{calc,shapes,arrows,decorations.pathmorphing,positioning,fit,petri,backgrounds}
+
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Titelseite
+%%%%%%%%%%%%%%%%%%%%
+\begin{spacing}{1}
+\title{MPFA-3d-Guide}
+\author{}
+\date{\today}
+\maketitle
+\end{spacing}
+
+%%%%%%%%%%%%%%%%%%%
+\section{MPFA-Guide}
+\begin{figure}
+\centering
+\input{Tikz/Interaction-Volume.tex}
+\caption{Interaction volume.}
+\end{figure}
+
+\begin{figure}
+\centering
+\input{Tikz/SubVolumeFaceIdxInInside.tex}
+\caption{SubVolumeFaceIdxInInside.}
+\end{figure}
+
+\begin{figure}
+\centering
+\input{Tikz/SubVolumeFace.tex}
+\caption{SubVolumeFace.}
+\end{figure}
+
+\begin{figure}
+\centering
+\input{Tikz/SubVolumeEdgeIdxInInside.tex}
+\caption{SubVolumeEdgeIdxInInside.}
+\end{figure}
+
+\begin{figure}
+\centering
+\input{Tikz/case1.tex}
+\caption{case1.}
+\end{figure}
+
+\begin{figure}
+\centering
+\input{Tikz/case2.tex}
+\caption{case2.}
+\end{figure}
+
+\begin{figure}
+\centering
+\input{Tikz/case3.tex}
+\caption{case3.}
+\end{figure}
+
+\begin{figure}
+\centering
+\input{Tikz/case4.tex}
+\caption{case4.}
+\end{figure}
+
+\end{document}
