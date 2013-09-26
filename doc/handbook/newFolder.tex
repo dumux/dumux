@@ -50,7 +50,29 @@ All occurrences of \verb+test_2p+ need to be replaced by the name of the new pro
 \textbf{Fifth}: Recreate the build system by running dunecontrol as described in Section \ref{install}.
 
 \paragraph{Committing a new folder to the Subversion repository}
-For those who work with Subversion (svn) and want to commit a newly setup folder to the repository, additional guidelines apply:
+For those who work with Subversion (svn) and want to commit a newly setup folder to the repository some basics are
+given in this paragraph. For further reading please check out the Subversion User Manual found at \cite{APACHE-SUBVERSION-HP}
+where you will also find a "High Speed Turorial" in the appendix. \\
+The four most important commands are \texttt{svn checkout}, \texttt{svn update},  \texttt{svn add} 
+and \texttt{svn commit}. The first one (\texttt{svn checkout}) you probably already know from the \Dumux installation.
+It will create a copy of the trunk version from the svn server on your local system. Use \texttt{svn update} to get the
+latest changes in the repository (commits from other users). In order to add a new folder to the repository the following
+steps have to be taken:
+
+\begin{enumerate}[1)]
+ \item \texttt{svn update}: The first step is to update your \Dumux. You should execute this command in your
+dumux-stable or dumux-devel folder.
+ \item \texttt{svn add --depth=empty YOURFOLDER}: This command adds the folder without its content.
+ \item In your folder: use \texttt{svn add YOURFILES} to add your files. Generally, you should only add
+your header files (.hh), your source files (.cc), your input file (.input) and if required your grid file (.dgf).
+\item Use \texttt{svn commit} from the directory level containing your folder. This uploads all your changes to the
+svn server. You will be asked to briefly explain the content of your commit in an editor.
+\end{enumerate}
+
+The above shows you the necessary steps if you use the command line. There are also other tools providing a graphical 
+user interface for using svn like kdesvn or eclipse. The necessary steps for adding and committing stay the same.
+In the following some additional guidelines are shown which are not necessary but are good practice.
+Especially if you plan on committing to the stable part of \Dumux you must follow these steps.
 
 \begin{enumerate}[1)]
  \item use svn attributes to ignore files which are automatically created by a dunecontrol run
