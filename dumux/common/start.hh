@@ -218,7 +218,7 @@ void dumuxMessage_(bool start)
     {
         std::srand(std::time(0));
         // roll the dice to decide which start message will be displayed:
-        dice_ = std::rand() % 7;
+        dice_ = std::rand() % 9; // has to be n+1
     }
 
 
@@ -281,6 +281,36 @@ void dumuxMessage_(bool start)
                 std::cout << "Forty-two. I checked it very thoroughly, and that quite definitely is the answer. I think "
                  << "the problem, to be quite honest with you, is that you\'ve never actually known what the question is."
                  << "  - Douglas Adams, HGttG \n";
+        break;
+        case 8:
+          if(start)
+            {
+                std::cout << "\n";
+                std::cout << "                ##                  @@@@          @   @         @ @\n";
+                std::cout << "             ###   #                @   @         @@ @@          @ \n";
+                std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @\n";
+                std::cout << "         ##          #              @   @  @   @  @   @  @   @     \n";
+                std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.4\n";
+                std::cout << "       #               #                                           \n";
+                std::cout << "      #                 #                                          \n";
+                std::cout << "     #                   ##        %%%                             \n";
+                std::cout << "    #                      ###    %   %  %%     %%                 \n";
+                std::cout << "####                          #%%%     %%  %%%%%  %%%%%%%%%%%%%%%%%\n";
+            }
+            else
+            {
+                std::cout << "\n";
+                std::cout << "                ##                  @@@@          @   @         @ @\n";
+                std::cout << "             ###   #                @   @         @@ @@          @ \n";
+                std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @\n";
+                std::cout << "         ##          #              @   @  @   @  @   @  @   @     \n";
+                std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.4\n";
+                std::cout << "       #               #                                           \n";
+                std::cout << "      #                 #                                          \n";
+                std::cout << "     #                   ##        %%%                             \n";
+                std::cout << "    #                      ###    %   %  %%     %%                 \n";
+                std::cout << "####                          #%%%     %%  %%%%%  %%%%%%%%%%%%%%%%%\n";
+            }
         break;
         //TODO: If you add a case, you have to increase the modulus at the beginning of the function!
 
