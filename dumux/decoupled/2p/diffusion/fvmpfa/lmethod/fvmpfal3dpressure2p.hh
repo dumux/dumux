@@ -34,7 +34,7 @@
 
 namespace Dumux
 {
-//! \ingroup diffusion
+//! \ingroup FVPressure2p
 /*! Finite Volume-MPFAL-Implementation of the equation
  * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$, or
  * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
@@ -43,8 +43,13 @@ namespace Dumux
  * on \f$\Gamma_2\f$. Here,
  * \f$Phi_\alpha \f$ denotes the potential of phase \f$\alpha\f$, \f$K\f$ the intrinsic permeability,
  * \f$\lambda_t\f$ the total mobility, \f$this->f_\alpha\f$ the phase fractional flow function.
+ *
  * More details on the equations can be found in
- * H. Hoteit, A. Firoozabadi. Numerical modeling of thwo-phase flow in heterogeneous permeable media with different capillarity pressures. Adv Water Res (31), 2008
+ * M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+ * approximation L-method in 3D: numerical convergence and application to two-phase
+ * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+ * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ *
  */
 template<class TypeTag>
 class FvMpfaL3dPressure2p: public FVPressure<TypeTag>

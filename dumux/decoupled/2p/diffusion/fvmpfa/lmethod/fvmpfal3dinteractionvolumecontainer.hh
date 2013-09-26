@@ -37,7 +37,7 @@ bool sort_compare(const std::vector<int>& entryI, const std::vector<int>& entryJ
     return (entryI[1] < entryJ[1]);
 }
 
-//! \ingroup diffusion
+//! \ingroup FVPressure2p
 /*! Interactionvolume container for 3-d MPFA L-method
  */
 template<class TypeTag>

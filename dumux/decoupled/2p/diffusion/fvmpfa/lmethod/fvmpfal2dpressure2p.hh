@@ -43,12 +43,9 @@ namespace Dumux
  *  Here, \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
  * \f$ \lambda_t \f$ the total mobility, \f$ f_\alpha \f$ the phase fractional flow function.
  *
- * More details on the equations can be found in H. Hoteit, A. Firoozabadi.
- * Numerical modeling of thwo-phase flow in heterogeneous permeable media with different capillarity pressures. Adv Water Res (31), 2008
+ * More details on the equations can be found...
  *
- *  Remark1: only for 2-D quadrilateral grid
- *
- *  Remark2: implemented for UGGrid, ALUGrid, or SGrid/YaspGrid
+ *  Remark: only for 3-d hexahedral grids
  *
  *\tparam TypeTag The problem Type Tag
  */

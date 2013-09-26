@@ -29,7 +29,7 @@
 
 namespace Dumux
 {
-//! \ingroup diffusion
+//! \ingroup FVPressure2p
 /*! Provides methods for transmissibility calculation.
  */
 template<class TypeTag>

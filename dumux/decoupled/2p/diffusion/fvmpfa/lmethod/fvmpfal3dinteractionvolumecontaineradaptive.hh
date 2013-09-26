@@ -33,7 +33,7 @@
 namespace Dumux
 {
 
-//! \ingroup diffusion
+//! \ingroup FVPressure2p
 /*! Interactionvolume container for 3-d MPFA L-method
  */
 template<class TypeTag>
