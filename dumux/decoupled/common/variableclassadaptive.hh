@@ -21,6 +21,7 @@
 
 #include <dune/common/version.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
+#include <dumux/linear/vectorexchange.hh>
 #include "variableclass.hh"
 
 /**
