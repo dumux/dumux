@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Components
- * \brief A simple implementation of a DNAPL.
+ * \brief A simple implementation of a DNAPL (TCE).
  */
 #ifndef DUMUX_DNAPL_HH
 #define DUMUX_DNAPL_HH
@@ -32,7 +32,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- * \brief A much simple component for an exemplary dense NAPL (TCE).
+ * \brief A simple implementation of TCE as exemplary component for a dense NAPL.
  *
  * \tparam Scalar The type used for scalar values
  */
@@ -42,7 +42,7 @@ class DNAPL : public Component<Scalar, DNAPL<Scalar> >
 
 public:
     /*!
-     * \brief A human readable name for the TCE.
+     * \brief A human readable name for the dense NAPL TCE.
      */
     static const char *name()
     { return "DNAPL_TCE"; }
@@ -99,13 +99,13 @@ public:
     };
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
+     * \brief Returns true if the gas phase is assumed to be compressible
      */
     static bool gasIsCompressible()
     { return true; }
 
     /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
+     * \brief Returns true if the liquid phase is assumed to be compressible
      */
     static bool liquidIsCompressible()
     { return false; }
@@ -124,7 +124,7 @@ public:
     };
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
+     * \brief Returns true if the gas phase is assumed to be ideal
      */
     static bool gasIsIdeal()
     { return true; }
@@ -148,10 +148,10 @@ public:
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
-        return 5.7e-4;//[Pa s]
+        return 5.7e-4;// [Pa s]
     };
 };
 
-} // end namepace
+} // end namespace
 
 #endif
