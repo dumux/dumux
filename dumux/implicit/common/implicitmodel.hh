@@ -105,11 +105,11 @@ public:
 
         updateBoundaryIndices_();
 
-        int nDofs = asImp_().numDofs();
-        uCur_.resize(nDofs);
-        uPrev_.resize(nDofs);
+        int numDofs = asImp_().numDofs();
+        uCur_.resize(numDofs);
+        uPrev_.resize(numDofs);
         if (isBox)
-            boxVolume_.resize(nDofs);
+            boxVolume_.resize(numDofs);
 
         localJacobian_.init(problem_());
         jacAsm_ = Dune::make_shared<JacobianAssembler>();

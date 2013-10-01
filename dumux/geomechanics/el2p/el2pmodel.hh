@@ -685,10 +685,10 @@ public:
                 InitialDisplacement> InitialSolution;
         InitialSolution initialSolution(initialPressSat, initialDisplacement);
 
-        int numDOFs = this->jacobianAssembler().gridFunctionSpace().size();
-        this->curSol().resize(numDOFs);
-        this->prevSol().resize(numDOFs);
-        std::cout << "numDOFs = " << numDOFs << std::endl;
+        int numDofs = this->jacobianAssembler().gridFunctionSpace().size();
+        this->curSol().resize(numDofs);
+        this->prevSol().resize(numDofs);
+        std::cout << "numDofs = " << numDofs << std::endl;
 
         Dune::PDELab::interpolate(initialSolution,
                 this->jacobianAssembler().gridFunctionSpace(), this->curSol());

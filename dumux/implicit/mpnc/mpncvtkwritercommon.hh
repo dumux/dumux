@@ -97,9 +97,9 @@ public:
             this->resizeScalarBuffer_(boundaryTypes_, isBox);
 
         if (velocityOutput_.enableOutput()) {
-            Scalar nDofs = this->problem_.model().numDofs();
+            Scalar numDofs = this->problem_.model().numDofs();
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                velocity_[phaseIdx].resize(nDofs);
+                velocity_[phaseIdx].resize(numDofs);
                 velocity_[phaseIdx] = 0;
             }
         }
