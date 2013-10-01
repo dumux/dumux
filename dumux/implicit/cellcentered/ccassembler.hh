@@ -125,15 +125,15 @@ private:
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()
     {
-        int nElems = this->gridView_().size(0);
+        int numElements = this->gridView_().size(0);
 
         // allocate raw matrix
-        this->matrix_ = Dune::make_shared<JacobianMatrix>(nElems, nElems, JacobianMatrix::random);
+        this->matrix_ = Dune::make_shared<JacobianMatrix>(numElements, numElements, JacobianMatrix::random);
 
         // find out the global indices of the neighboring elements of
         // each element
         typedef std::set<int> NeighborSet;
-        std::vector<NeighborSet> neighbors(nElems);
+        std::vector<NeighborSet> neighbors(numElements);
         ElementIterator eIt = this->gridView_().template begin<0>();
         const ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
@@ -161,14 +161,14 @@ private:
         }
 
         // allocate space for the rows of the matrix
-        for (int i = 0; i < nElems; ++i) {
+        for (int i = 0; i < numElements; ++i) {
             this->matrix_->setrowsize(i, neighbors[i].size());
         }
         this->matrix_->endrowsizes();
 
         // fill the rows with indices. each element talks to all of its
         // neighbors and itself.
-        for (int i = 0; i < nElems; ++i) {
+        for (int i = 0; i < numElements; ++i) {
             typename NeighborSet::iterator nIt = neighbors[i].begin();
             typename NeighborSet::iterator nEndIt = neighbors[i].end();
             for (; nIt != nEndIt; ++nIt) {

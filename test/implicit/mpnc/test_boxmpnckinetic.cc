@@ -229,7 +229,7 @@ int start_(int argc,
 
     std::string dgfFileName;
     Scalar dt, tEnd;
-    Dune::FieldVector<int, dim> nElements;
+    Dune::FieldVector<int, dim> numElements;
     Scalar interfacePos, gradingFactor;
     int gridRefinement;
     bool useInterfaceMeshCreator;
@@ -239,9 +239,9 @@ int start_(int argc,
         dgfFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
         dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
         tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd);
-        nElements[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsX);
-        if (dim>1) nElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
-        if (dim==3) nElements[2] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsZ);
+        numElements[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsX);
+        if (dim>1) numElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
+        if (dim==3) numElements[2] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsZ);
         interfacePos = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
         gradingFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Grading);
         gridRefinement = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Refinement);
@@ -261,7 +261,7 @@ int start_(int argc,
     if (useInterfaceMeshCreator)
     {
         Dumux::InterfaceMeshCreator<Grid> interfaceMeshCreator;
-        gridPtr = interfaceMeshCreator.create(dgfFileName, nElements, interfacePos, gradingFactor);
+        gridPtr = interfaceMeshCreator.create(dgfFileName, numElements, interfacePos, gradingFactor);
     }
     else
         gridPtr = GridPointer(dgfFileName);

@@ -143,8 +143,8 @@ public:
     void setParams(GridPointer *gridPtr)
     {
         gridPtr_ = gridPtr;
-        int numElems = (*gridPtr_)->leafView().size(0);
-        paramIdx_.resize(numElems);
+        int numElements = (*gridPtr_)->leafView().size(0);
+        paramIdx_.resize(numElements);
 
         ElementIterator eIt = (*gridPtr_)->leafView().template begin<0>();
         const ElementIterator eEndIt = (*gridPtr_)->leafView().template end<0>();

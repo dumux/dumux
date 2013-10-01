@@ -215,16 +215,16 @@ public:
         reuseMatrix_ = false;
 
         int numVerts = gridView_().size(dim);
-        int numElems = gridView_().size(0);
+        int numElements = gridView_().size(0);
         residual_.resize(matrix_->N());
 
-        totalElems_ = gridView_().comm().sum(numElems);
+        totalElems_ = gridView_().comm().sum(numElements);
 
         // initialize data needed for partial reassembly
         if (enablePartialReassemble) {
             vertexColor_.resize(numVerts);
             vertexDelta_.resize(numVerts);
-            elementColor_.resize(numElems);
+            elementColor_.resize(numElements);
         }
         reassembleAll();
     }

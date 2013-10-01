@@ -124,7 +124,7 @@ public:
         reuseMatrix_ = false;
 
         int numVerts = gridView_().size(dim);
-        int numElems = gridView_().size(0);
+        int numElements = gridView_().size(0);
         int numDofs = problem.model().numDofs();
 
         residual_.resize(numDofs);
@@ -138,14 +138,14 @@ public:
         }
 
         if (gridView_().comm().size() > 1)
-            totalElems_ = gridView_().comm().sum(numElems);
+            totalElems_ = gridView_().comm().sum(numElements);
         else
-            totalElems_ = numElems;
+            totalElems_ = numElements;
 
         // initialize data needed for partial reassembly
         if (enablePartialReassemble_()) {
             delta_.resize(numDofs);
-            elementColor_.resize(numElems);
+            elementColor_.resize(numElements);
             if (isBox)
                 vertexColor_.resize(numVerts);
         }

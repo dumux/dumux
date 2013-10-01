@@ -17,7 +17,7 @@ public:
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
 
-    static Grid* create(const std::string& dgfName, const Dune::FieldVector<int, dim>& nElements,
+    static Grid* create(const std::string& dgfName, const Dune::FieldVector<int, dim>& numElements,
                         const Scalar interfaceY, const Scalar gradingFactor, const bool refineTop = false)
     {
 	typedef Dune::SGrid<dim,dim> HelperGrid;
@@ -41,8 +41,8 @@ public:
 std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal << std::endl;
         Dune::GridFactory<Grid> factory;
 
-        int nX = nElements[0];
-        int nY = nElements[1];
+        int nX = numElements[0];
+        int nY = numElements[1];
 
         std::vector<std::vector<Scalar> > localPositions(dim);
         for (int comp = 0; comp < dim; comp++)
@@ -55,33 +55,33 @@ std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal <<
             if (lengthLeft < 1e-10)
             {
                 nLeft = 0;
-                nRight = nElements[comp];
+                nRight = numElements[comp];
 
                 if (gradingFactors[comp] > 1.0)
                     hLeft = hRight = (1.0 - gradingFactors[comp])/(1.0 - pow(gradingFactors[comp], nRight));
                 else
-                    hLeft = hRight = 1.0/nElements[comp];
+                    hLeft = hRight = 1.0/numElements[comp];
             }
             else if (lengthLeft > 1.0 - 1e-10)
             {
-                nLeft = nElements[comp];
+                nLeft = numElements[comp];
                 nRight = 0;
 
                 if (gradingFactors[comp] > 1.0)
                     hLeft = hRight = (1.0 - gradingFactors[comp])/(1.0 - pow(gradingFactors[comp], nLeft));
                 else
-                    hLeft = hRight = 1.0/nElements[comp];
+                    hLeft = hRight = 1.0/numElements[comp];
             }
             else if (comp == dim - 1 && refineTop)
             {
                 lengthLeft = refinePointLocal[comp];
                 lengthRight = (1 - refinePointLocal[comp])/2;
 
-                nLeft = nRight = nElements[comp]/3;
+                nLeft = nRight = numElements[comp]/3;
 
-                if (nElements[comp]%3 == 1)
+                if (numElements[comp]%3 == 1)
                     nLeft += 1;
-                else if (nElements[comp]%3 == 2)
+                else if (numElements[comp]%3 == 2)
                     nRight += 1;
 
                 hLeft = lengthLeft*(1.0 - gradingFactors[comp])/(1.0 - pow(gradingFactors[comp], nLeft));
@@ -89,11 +89,11 @@ std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal <<
             }
             else if (lengthLeft > 0.5)
             {
-                Scalar nLeftDouble = std::ceil(-log((1.0 + sqrt(1.0 + 4.0*pow(gradingFactors[comp], nElements[comp])*lengthRight/lengthLeft))
-                            /(2.0*pow(gradingFactors[comp], nElements[comp])))/log(gradingFactors[comp]));
-                nLeft = std::min((int)std::ceil(nLeftDouble), nElements[comp]);
+                Scalar nLeftDouble = std::ceil(-log((1.0 + sqrt(1.0 + 4.0*pow(gradingFactors[comp], numElements[comp])*lengthRight/lengthLeft))
+                            /(2.0*pow(gradingFactors[comp], numElements[comp])))/log(gradingFactors[comp]));
+                nLeft = std::min((int)std::ceil(nLeftDouble), numElements[comp]);
 
-                nRight = nElements[comp] - nLeft;
+                nRight = numElements[comp] - nLeft;
 
                 if (gradingFactors[comp] > 1.0)
                 {
@@ -101,15 +101,15 @@ std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal <<
                     hRight = lengthRight*(1.0 - gradingFactors[comp])/(1.0 - pow(gradingFactors[comp], nRight));
                 }
                 else
-                    hLeft = hRight = 1.0/nElements[comp];
+                    hLeft = hRight = 1.0/numElements[comp];
             }
             else
             {
-                Scalar nRightDouble = -log((1.0 + sqrt(1.0 + 4.0*pow(gradingFactors[comp], nElements[comp])*lengthLeft/lengthRight))
-                            /(2.0*pow(gradingFactors[comp], nElements[comp])))/log(gradingFactors[comp]);
-                nRight = std::min((int)std::ceil(nRightDouble), nElements[comp]);
+                Scalar nRightDouble = -log((1.0 + sqrt(1.0 + 4.0*pow(gradingFactors[comp], numElements[comp])*lengthLeft/lengthRight))
+                            /(2.0*pow(gradingFactors[comp], numElements[comp])))/log(gradingFactors[comp]);
+                nRight = std::min((int)std::ceil(nRightDouble), numElements[comp]);
 
-                nLeft = nElements[comp] - nRight;
+                nLeft = numElements[comp] - nRight;
 
                 if (gradingFactors[comp] > 1.0)
                 {
@@ -117,11 +117,11 @@ std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal <<
                     hRight = lengthRight*(1.0 - gradingFactors[comp])/(1.0 - pow(gradingFactors[comp], nRight));
                 }
                 else
-                    hLeft = hRight = 1.0/nElements[comp];
+                    hLeft = hRight = 1.0/numElements[comp];
             }
 std::cout << "lengthLeft = " << lengthLeft << ", lengthRight = " << lengthRight << ", hLeft = " << hLeft << ", hRight = " << hRight << ", nLeft = " << nLeft << ", nRight = " << nRight << std::endl;
 
-            int nVertices = nElements[comp] + 1;
+            int nVertices = numElements[comp] + 1;
             localPositions[comp].resize(nVertices);
 
             localPositions[comp][0] = 0.0;
