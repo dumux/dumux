@@ -72,15 +72,15 @@ public:
     //! Constructs a FluxData2P object
     FluxData2P()
     {
-        for (int face = 0;  face < 2*dim; face++)
+        for (int faceIdx = 0;  faceIdx < 2*dim; faceIdx++)
         {
             for (int phase = 0; phase < numPhases; phase++)
             {
-                velocity_[phase][face] = DimVector(0.0);
+                velocity_[phase][faceIdx] = DimVector(0.0);
 
-                upwindPotential_[face][phase] = 0.0;
+                upwindPotential_[faceIdx][phase] = 0.0;
             }
-            velocityMarker_[face] = false;
+            velocityMarker_[faceIdx] = false;
         }
     }
 

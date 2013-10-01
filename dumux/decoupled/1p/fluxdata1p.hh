@@ -60,11 +60,11 @@ public:
     //! Constructs a FluxData1P object
     FluxData1P()
     {
-        for (int face = 0;  face < 2*dim; face++)
+        for (int faceIdx = 0;  faceIdx < 2*dim; faceIdx++)
         {
-            velocity_[face] = DimVector(0.0);
-            potential_[face] = 0.0;
-            velocityMarker_[face] = false;
+            velocity_[faceIdx] = DimVector(0.0);
+            potential_[faceIdx] = 0.0;
+            velocityMarker_[faceIdx] = false;
         }
     }
 

@@ -469,7 +469,7 @@ class BoxFVElementGeometry
         }
     }
 
-    void getEdgeIndices(int numVertices, int face, int vertIdx, int& leftEdge, int& rightEdge)
+    void getEdgeIndices(int numVertices, int faceIdx, int vertIdx, int& leftEdge, int& rightEdge)
     {
         static const int faceAndVertexToLeftEdgeTet[4][4] = {
             { 0, 0, 2, -1},
@@ -530,20 +530,20 @@ class BoxFVElementGeometry
 
         switch (numVertices) {
         case 4:
-            leftEdge = faceAndVertexToLeftEdgeTet[face][vertIdx];
-            rightEdge = faceAndVertexToRightEdgeTet[face][vertIdx];
+            leftEdge = faceAndVertexToLeftEdgeTet[faceIdx][vertIdx];
+            rightEdge = faceAndVertexToRightEdgeTet[faceIdx][vertIdx];
             break;
         case 5:
-            leftEdge = faceAndVertexToLeftEdgePyramid[face][vertIdx];
-            rightEdge = faceAndVertexToRightEdgePyramid[face][vertIdx];
+            leftEdge = faceAndVertexToLeftEdgePyramid[faceIdx][vertIdx];
+            rightEdge = faceAndVertexToRightEdgePyramid[faceIdx][vertIdx];
             break;
         case 6:
-            leftEdge = faceAndVertexToLeftEdgePrism[face][vertIdx];
-            rightEdge = faceAndVertexToRightEdgePrism[face][vertIdx];
+            leftEdge = faceAndVertexToLeftEdgePrism[faceIdx][vertIdx];
+            rightEdge = faceAndVertexToRightEdgePrism[faceIdx][vertIdx];
             break;
         case 8:
-            leftEdge = faceAndVertexToLeftEdgeHex[face][vertIdx];
-            rightEdge = faceAndVertexToRightEdgeHex[face][vertIdx];
+            leftEdge = faceAndVertexToLeftEdgeHex[faceIdx][vertIdx];
+            rightEdge = faceAndVertexToRightEdgeHex[faceIdx][vertIdx];
             break;
         default:
             DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
@@ -552,9 +552,9 @@ class BoxFVElementGeometry
     }
 
 public:
-    int boundaryFaceIndex(const int face, const int vertInFace) const
+    int boundaryFaceIndex(const int faceIdx, const int vertInFace) const
     {
-        return (face*maxCOS + vertInFace);
+        return (faceIdx*maxCOS + vertInFace);
     }
 
     struct SubControlVolume //! FV intersected with element
@@ -654,10 +654,10 @@ public:
         // faces:
         int elementFaces = (dim<3)?0:referenceElement.size(1);
         GlobalPosition *faceCoordinates = new GlobalPosition[elementFaces];
-        for (int face = 0; face < elementFaces; face++) {
-            faceCoordinates[face] = geometry.global(referenceElement.position(face, 1));
+        for (int faceIdx = 0; faceIdx < elementFaces; faceIdx++) {
+            faceCoordinates[faceIdx] = geometry.global(referenceElement.position(faceIdx, 1));
             // compatibility initialization of deprecated member
-            faceCoord[face] = faceCoordinates[face];
+            faceCoord[faceIdx] = faceCoordinates[faceIdx];
         }
 
         // fill sub control volume data use specialization for this
@@ -767,12 +767,12 @@ public:
         for (IntersectionIterator isIt = gridView.ibegin(element); isIt != isEndIt; ++isIt)
             if (isIt->boundary())
             {
-                int face = isIt->indexInInside();
-                int numVerticesOfFace = referenceElement.size(face, 1, dim);
+                int faceIdx = isIt->indexInInside();
+                int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 for (int vertInFace = 0; vertInFace < numVerticesOfFace; vertInFace++)
                 {
-                    int vertInElement = referenceElement.subEntity(face, 1, vertInFace, dim);
-                    int bfIdx = boundaryFaceIndex(face, vertInFace);
+                    int vertInElement = referenceElement.subEntity(faceIdx, 1, vertInFace, dim);
+                    int bfIdx = boundaryFaceIndex(faceIdx, vertInFace);
                     subContVol[vertInElement].inner = false;
                     switch ((short) dim) {
                     case 1:
@@ -781,21 +781,21 @@ public:
                         break;
                     case 2:
                         boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
-                            + referenceElement.position(face, 1);
+                            + referenceElement.position(faceIdx, 1);
                         boundaryFace[bfIdx].ipLocal *= 0.5;
                         boundaryFace[bfIdx].area = 0.5*isIt->geometry().volume();
                         break;
                     case 3:
                         int leftEdge;
                         int rightEdge;
-                        getEdgeIndices(numScv, face, vertInElement, leftEdge, rightEdge);
+                        getEdgeIndices(numScv, faceIdx, vertInElement, leftEdge, rightEdge);
                         boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
-                            + referenceElement.position(face, 1)
+                            + referenceElement.position(faceIdx, 1)
                             + referenceElement.position(leftEdge, dim-1)
                             + referenceElement.position(rightEdge, dim-1);
                         boundaryFace[bfIdx].ipLocal *= 0.25;
                         boundaryFace[bfIdx].area = quadrilateralArea3D(subContVol[vertInElement].global,
-                                                                       edgeCoord[rightEdge], faceCoord[face], edgeCoord[leftEdge]);
+                                                                       edgeCoord[rightEdge], faceCoord[faceIdx], edgeCoord[leftEdge]);
                         break;
                     default:
                         DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry for dim = " << dim);
