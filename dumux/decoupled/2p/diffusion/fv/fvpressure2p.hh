@@ -287,8 +287,8 @@ public:
     void storePressureSolution()
     {
         // iterate through leaf grid
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = problem_.gridView().template end<0>();
+        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
         {
             storePressureSolution(*eIt);
         }
@@ -1031,8 +1031,8 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()
 {
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         int globalIdx = problem_.variables().index(*eIt);
 

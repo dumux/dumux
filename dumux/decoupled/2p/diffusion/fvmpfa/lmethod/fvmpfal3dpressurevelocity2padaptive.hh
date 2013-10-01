@@ -104,8 +104,8 @@ template<class TypeTag>
 void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
 {
     // run through all vertices
-    VertexIterator vItEnd = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
+    VertexIterator vEndIt = problem_.gridView().template end<dim>();
+    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
         int globalVertIdx = problem_.variables().index(*vIt);
 

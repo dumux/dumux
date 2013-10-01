@@ -234,8 +234,8 @@ template<class TypeTag>
 void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocity()
 {
     // run through all elements
-    VertexIterator vItEnd = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
+    VertexIterator vEndIt = problem_.gridView().template end<dim>();
+    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
         int globalVertIdx = problem_.variables().index(*vIt);
 

@@ -237,8 +237,8 @@ public:
         ScalarSolution *exactPressure = this->resultWriter().allocateManagedBuffer(this->gridView().size(0));
 
         ElementIterator eIt = this->gridView().template begin<0>();
-        ElementIterator eItEnd = this->gridView().template end<0>();
-        for(;eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = this->gridView().template end<0>();
+        for(;eIt != eEndIt; ++eIt)
         {
             (*exactPressure)[this->elementMapper().map(*eIt)][0] = exact(eIt->geometry().center());
         }

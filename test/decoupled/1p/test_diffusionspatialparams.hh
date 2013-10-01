@@ -106,8 +106,8 @@ public:
         permeability_.resize(gridView_.size(0));
 
         ElementIterator eIt = gridView_.template begin<0>();
-        ElementIterator eItEnd = gridView_.template end<0>();
-        for(;eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = gridView_.template end<0>();
+        for(;eIt != eEndIt; ++eIt)
         {
             perm(permeability_[indexSet_.index(*eIt)], eIt->geometry().center());
         }
@@ -122,8 +122,8 @@ public:
         ScalarSolution *permYY = writer.allocateManagedBuffer(gridView_.size(0));
 
         ElementIterator eIt = gridView_.template begin<0>();
-        ElementIterator eItEnd = gridView_.template end<0>();
-        for(;eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = gridView_.template end<0>();
+        for(;eIt != eEndIt; ++eIt)
         {
             int globalIdx = indexSet_.index(*eIt);
             (*permXX)[globalIdx][0] = permeability_[globalIdx][0][0];

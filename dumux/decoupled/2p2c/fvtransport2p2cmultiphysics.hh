@@ -142,8 +142,8 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
 
     PhaseVector entries(0.), timestepFlux(0.);
     // compute update vector
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem().gridView().template end<0> ();
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         // get cell infos
         int globalIdxI = problem().variables().index(*eIt);
@@ -156,8 +156,8 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             double sumfactorout = 0;
 
             // run through all intersections with neighbors and boundary
-            IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 int indexInInside = isIt->indexInInside();
 

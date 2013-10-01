@@ -236,8 +236,8 @@ public:
             *(writer.template allocateManagedBuffer<Scalar, dim>(problem_.gridView().size(0)));
 
             // compute update vector
-            ElementIterator eItEnd = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+            ElementIterator eEndIt = problem_.gridView().template end<0>();
+            for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
             {
                 // cell index
                 int globalIdx = problem_.variables().index(*eIt);
@@ -247,8 +247,8 @@ public:
                 Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
                 Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
                 // run through all intersections with neighbors and boundary
-                IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+                IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
                 {
                     int isIndex = isIt->indexInInside();
 
@@ -340,8 +340,8 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
 //            std::cout<<"\n";
 //        }
     // run through all elements
-    VertexIterator vItEnd = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
+    VertexIterator vEndIt = problem_.gridView().template end<dim>();
+    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
         int globalVertIdx = problem_.variables().index(*vIt);
 

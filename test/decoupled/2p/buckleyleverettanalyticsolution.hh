@@ -197,8 +197,8 @@ private:
         Scalar globalVolume = 0;
         Scalar errorNorm = 0.0;
 
-        ElementIterator eItEnd = problem_.gridView().template end<0> ();
-        for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = problem_.gridView().template end<0> ();
+        for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eEndIt; ++eIt)
         {
             // get entity
             ElementPointer element = *eIt;
@@ -241,8 +241,8 @@ private:
     	Scalar xMax =  frontParams_[0].second * time;
 
         // iterate over vertices and get analytic saturation solution
-        ElementIterator eItEnd = problem_.gridView().template end<0> ();
-        for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = problem_.gridView().template end<0> ();
+        for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eEndIt; ++eIt)
         {
             // get global coordinate of cell center
             GlobalPosition globalPos = eIt->geometry().center();

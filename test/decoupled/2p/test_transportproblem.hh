@@ -150,8 +150,8 @@ public:
         vel[0] = 1e-5;
 
         // compute update vector
-        ElementIterator eItEnd = this->gridView().template end<0> ();
-        for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = this->gridView().template end<0> ();
+        for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eEndIt; ++eIt)
         {
             // cell index
             int globalIdx = this->elementMapper().map(*eIt);
@@ -159,8 +159,8 @@ public:
             CellData& cellData = this->variables().cellData(globalIdx);
 
             // run through all intersections with neighbors and boundary
-            IntersectionIterator isItEnd = this->gridView().iend(*eIt);
-            for (IntersectionIterator isIt = this->gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = this->gridView().iend(*eIt);
+            for (IntersectionIterator isIt = this->gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 // local number of facet
                 int indexInInside = isIt->indexInInside();

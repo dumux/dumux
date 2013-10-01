@@ -226,8 +226,8 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
     this->f_.resize(gridSize_);
 
     // determine matrix row sizes
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem().gridView().template end<0> ();
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem().variables().index(*eIt);
@@ -244,8 +244,8 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
 
         int numberOfIntersections = 0;
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = problem().gridView().template iend(*eIt);
+        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isEndIt; ++isIt)
         {
             cellDataI.perimeter()
                     += isIt->geometry().volume();
@@ -272,7 +272,7 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                     {
                         bool increaseRowSize = true;
                         //check if additional cell is ordinary neighbor of eIt
-                        for (IntersectionIterator isIt2 = problem().gridView().template ibegin(*eIt); isIt2 != isItEnd; ++isIt2)
+                        for (IntersectionIterator isIt2 = problem().gridView().template ibegin(*eIt); isIt2 != isEndIt; ++isIt2)
                         {
                             if(!isIt2->neighbor())
                                 continue;
@@ -300,7 +300,7 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
     this->A_.endrowsizes();
 
     // determine position of matrix entries
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem().variables().index(*eIt);
@@ -309,8 +309,8 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
         this->A_.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = problem().gridView().template iend(*eIt);
+        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isEndIt; ++isIt)
             if (isIt->neighbor())
             {
                 // access neighbor
@@ -367,8 +367,8 @@ void FVPressure2P2CAdaptive<TypeTag>::assemble(bool first)
     this->A_ = 0;
     this->f_ = 0;
 
-    ElementIterator eItEnd = problem().gridView().template end<0>();
-    for (ElementIterator eIt = problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem().gridView().template end<0>();
+    for (ElementIterator eIt = problem().gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // get the global index of the cell
         int globalIdxI = problem().variables().index(*eIt);
@@ -387,8 +387,8 @@ void FVPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-            for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = problem().gridView().template iend(*eIt);
+            for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 /************* handle interior face *****************/
                 if (isIt->neighbor())

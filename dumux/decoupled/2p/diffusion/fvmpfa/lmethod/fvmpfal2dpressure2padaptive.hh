@@ -226,8 +226,8 @@ public:
     void storePressureSolution()
     {
         // iterate through leaf grid an evaluate c0 at cell center
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = problem_.gridView().template end<0>();
+        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
         {
             storePressureSolution(*eIt);
         }
@@ -389,8 +389,8 @@ public:
             ScalarSolutionType *pc = writer.allocateManagedBuffer(size);
 
             ElementIterator eItBegin = problem_.gridView().template begin<0>();
-            ElementIterator eItEnd = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
+            ElementIterator eEndIt = problem_.gridView().template end<0>();
+            for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
             {
                 int idx = problem_.variables().index(*eIt);
                 CellData& cellData = problem_.variables().cellData(idx);
@@ -568,8 +568,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
 {
     // determine matrix row sizes
     ElementIterator eItBegin = problem_.gridView().template begin<0>();
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -579,8 +579,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
 
         // run through all intersections with neighbors
         IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = isItBegin; isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = isItBegin; isIt != isEndIt; ++isIt)
         {
             if (isIt->neighbor())
             {
@@ -598,13 +598,13 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                 // for SGrid
                 case GridTypeIndices::sGrid:
                 {
-                    if (nextIsIt == isItEnd)
+                    if (nextIsIt == isEndIt)
                         nextIsIt = isItBegin;
                     else
                     {
                         nextIsIt = ++tempisIt;
 
-                        if (nextIsIt == isItEnd)
+                        if (nextIsIt == isEndIt)
                         {
                             nextIsIt = ++tempisItBegin;
                         }
@@ -615,7 +615,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     // for YaspGrid
                 case GridTypeIndices::yaspGrid:
                 {
-                    if (nextIsIt == isItEnd)
+                    if (nextIsIt == isEndIt)
                     {
                         nextIsIt = isItBegin;
                     }
@@ -623,7 +623,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     {
                         nextIsIt = ++tempisIt;
 
-                        if (nextIsIt == isItEnd)
+                        if (nextIsIt == isEndIt)
                         {
                             nextIsIt = ++tempisItBegin;
                         }
@@ -634,7 +634,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     // for ALUGrid
                 case GridTypeIndices::aluGrid:
                 {
-                    if (nextIsIt == isItEnd)
+                    if (nextIsIt == isEndIt)
                         nextIsIt = isItBegin;
 
                     break;
@@ -642,7 +642,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     // for UGGrid
                 case GridTypeIndices::ugGrid:
                 {
-                    if (nextIsIt == isItEnd)
+                    if (nextIsIt == isEndIt)
                         nextIsIt = isItBegin;
 
                     break;
@@ -713,7 +713,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
     // indicate that size of all rows is defined
     this->A_.endrowsizes();
     // determine position of matrix entries
-    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -723,8 +723,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
 
         // run through all intersections with neighbors
         IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = isItBegin; isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = isItBegin; isIt != isEndIt; ++isIt)
         {
             if (isIt->neighbor())
             {
@@ -754,7 +754,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                 // for SGrid
                 case GridTypeIndices::sGrid:
                 {
-                    if (nextIsIt == isItEnd)
+                    if (nextIsIt == isEndIt)
                     {
                         nextIsIt = isItBegin;
                     }
@@ -762,7 +762,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     {
                         nextIsIt = ++tempisIt;
 
-                        if (nextIsIt == isItEnd)
+                        if (nextIsIt == isEndIt)
                         {
                             nextIsIt = ++tempisItBegin;
                         }
@@ -773,7 +773,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     // for YaspGrid
                 case GridTypeIndices::yaspGrid:
                 {
-                    if (nextIsIt == isItEnd)
+                    if (nextIsIt == isEndIt)
                     {
                         nextIsIt = isItBegin;
                     }
@@ -781,7 +781,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     {
                         nextIsIt = ++tempisIt;
 
-                        if (nextIsIt == isItEnd)
+                        if (nextIsIt == isEndIt)
                         {
                             nextIsIt = ++tempisItBegin;
                         }
@@ -792,7 +792,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     // for ALUGrid
                 case GridTypeIndices::aluGrid:
                 {
-                    if (nextIsIt == isItEnd)
+                    if (nextIsIt == isEndIt)
                         nextIsIt = isItBegin;
 
                     break;
@@ -800,7 +800,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     // for UGGrid
                 case GridTypeIndices::ugGrid:
                 {
-                    if (nextIsIt == isItEnd)
+                    if (nextIsIt == isEndIt)
                         nextIsIt = isItBegin;
 
                     break;
@@ -901,8 +901,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
     BoundaryTypes bcType;
 
     // run through all elements
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // get index
         int globalIdx1 = problem_.variables().index(*eIt);
@@ -1843,8 +1843,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 template<class TypeTag>
 void FvMpfaL2dPressure2pAdaptive<TypeTag>::printInteractionVolumes()
 {
-    VertexIterator vItEnd = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
+    VertexIterator vEndIt = problem_.gridView().template end<dim>();
+    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
         int globalVertIdx = problem_.variables().index(*vIt);
 
@@ -1898,8 +1898,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    VertexIterator vItEnd = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
+    VertexIterator vEndIt = problem_.gridView().template end<dim>();
+    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
         int globalVertIdx = problem_.variables().index(*vIt);
 
@@ -2806,8 +2806,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
     if (problem_.gridView().comm().size() > 1)
     {
         // set ghost and overlap element entries
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = problem_.gridView().template end<0>();
+        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
         {
             if (eIt->partitionType() == Dune::InteriorEntity)
                 continue;
@@ -3376,8 +3376,8 @@ template<class TypeTag>
 void FvMpfaL2dPressure2pAdaptive<TypeTag>::updateMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         int globalIdx = problem_.variables().index(*eIt);
 

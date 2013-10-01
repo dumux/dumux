@@ -423,8 +423,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
             ElementPointer& element1 = interactionVolume.getSubVolumeElement(0);
 
             IntersectionIterator isIt = problem_.gridView().ibegin(*element1);
-            IntersectionIterator isItEnd = problem_.gridView().iend(*element1);
-            for (; isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = problem_.gridView().iend(*element1);
+            for (; isIt != isEndIt; ++isIt)
             {
                 int idxInInside = isIt->indexInInside();
 
@@ -785,8 +785,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 interactionVolume.setFaceArea(faceArea, 11);
 
                 IntersectionIterator isIt = problem_.gridView().ibegin(*element);
-                IntersectionIterator isItEnd = problem_.gridView().iend(*element);
-                for (; isIt != isItEnd; ++isIt)
+                IntersectionIterator isEndIt = problem_.gridView().iend(*element);
+                for (; isIt != isEndIt; ++isIt)
                 {
                     if (isIt->indexInInside() == interactionVolume.getIndexOnElement(0, 2))
                     {
@@ -952,8 +952,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                     interactionVolume.setFacePosition(element7->geometry().center(), 6);
 
                     IntersectionIterator isIt = problem_.gridView().ibegin(*element5);
-                    IntersectionIterator isItEnd = problem_.gridView().iend(*element5);
-                    for (; isIt != isItEnd; ++isIt)
+                    IntersectionIterator isEndIt = problem_.gridView().iend(*element5);
+                    for (; isIt != isEndIt; ++isIt)
                     {
                         if (isIt->neighbor())
                         {
@@ -1004,8 +1004,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                     interactionVolume.setFacePosition(globalPosFace, 6);
 
                     IntersectionIterator isIt = problem_.gridView().ibegin(*element5);
-                    IntersectionIterator isItEnd = problem_.gridView().iend(*element5);
-                    for (; isIt != isItEnd; ++isIt)
+                    IntersectionIterator isEndIt = problem_.gridView().iend(*element5);
+                    for (; isIt != isEndIt; ++isIt)
                     {
                         if (isIt->neighbor())
                         {
@@ -1277,8 +1277,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 bool hasFaceOne = false;
                 bool hasFaceTwo = false;
                 IntersectionIterator isIt = problem_.gridView().ibegin(*element1);
-                IntersectionIterator isItEnd = problem_.gridView().iend(*element1);
-                for (; isIt != isItEnd; ++isIt)
+                IntersectionIterator isEndIt = problem_.gridView().iend(*element1);
+                for (; isIt != isEndIt; ++isIt)
                 {
                     if (isIt->indexInInside() == interactionVolume.getIndexOnElement(0, 1))
                     {
@@ -1415,8 +1415,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
             ElementPointer& element3 = interactionVolume.getSubVolumeElement(2);
 
             IntersectionIterator isIt = problem_.gridView().ibegin(*element3);
-            IntersectionIterator isItEnd = problem_.gridView().iend(*element3);
-            for (; isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = problem_.gridView().iend(*element3);
+            for (; isIt != isEndIt; ++isIt)
             {
                 if (isIt->indexInInside() == interactionVolume.getIndexOnElement(2, 2))
                 {
@@ -1526,8 +1526,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
 {
     std::vector < std::vector<int> > elemVertMap(problem_.gridView().size(dim), std::vector<int>(8, -1));
 
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         ElementPointer ePtr = *eIt;
         this->storeSubVolumeElements(*ePtr, elemVertMap);
@@ -1539,7 +1539,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
 
     // run through all elements
 
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // get common geometry information for the following computation
 
@@ -1548,8 +1548,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
     }
 
     // run through all vertices
-    VertexIterator vItEnd = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
+    VertexIterator vEndIt = problem_.gridView().template end<dim>();
+    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
         int globalVertIdx = problem_.variables().index(*vIt);
 

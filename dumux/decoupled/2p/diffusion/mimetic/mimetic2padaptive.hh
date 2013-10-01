@@ -294,8 +294,8 @@ public:
         Dune::FieldVector<Scalar, 2*dim> faceVolumeReal(0.0);
 
         int idx = 0;
-        IntersectionIterator isItEnd = gridView_.iend(element);
-        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = gridView_.iend(element);
+        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
         {
             faceVol[idx] = isIt->geometry().volume();
             int indexInInside = isIt->indexInInside();
@@ -326,8 +326,8 @@ public:
         Dune::DynamicMatrix<Scalar> Pi(numFaces, numFaces);
 
         int idx = 0;
-        IntersectionIterator isItEnd = gridView_.iend(element);
-        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = gridView_.iend(element);
+        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
         {
             Scalar faceVol = isIt->geometry().volume();
 
@@ -494,8 +494,8 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
     Scalar pcPot = (problem_.bBoxMax() - element.geometry().center()) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
     int idx = 0;
-    IntersectionIterator isItEnd = gridView_.iend(element);
-    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isItEnd; ++isIt)
+    IntersectionIterator isEndIt = gridView_.iend(element);
+    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
     {
         // local number of facet
 
@@ -635,7 +635,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
 
     //accumulate fluxes due to capillary potential (pc + gravity!)
     idx = 0;
-    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isItEnd; ++isIt)
+    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
     {
             Scalar fracFlow = 0;
 

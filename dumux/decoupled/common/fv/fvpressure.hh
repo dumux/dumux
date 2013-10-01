@@ -121,8 +121,8 @@ protected:
     //!Initialization of the pressure solution vector: Initialization with meaningful values may result in better convergence of the linear solver!
     void initializePressure()
     {
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = problem_.gridView().template end<0>();
+        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
         {
             PrimaryVariables initValues;
             problem_.initial(initValues, *eIt);
@@ -335,8 +335,8 @@ template<class TypeTag>
 void FVPressure<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -345,8 +345,8 @@ void FVPressure<TypeTag>::initializeMatrixRowSize()
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
         {
             if (isIt->neighbor())
                 rowSize++;
@@ -362,8 +362,8 @@ template<class TypeTag>
 void FVPressure<TypeTag>::initializeMatrixIndices()
 {
     // determine position of matrix entries
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -372,8 +372,8 @@ void FVPressure<TypeTag>::initializeMatrixIndices()
         A_.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
             if (isIt->neighbor())
             {
                 // access neighbor
@@ -404,8 +404,8 @@ void FVPressure<TypeTag>::assemble(bool first)
     A_ = 0;
     f_ = 0;
 
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // get the global index of the cell
         int globalIdxI = problem_.variables().index(*eIt);
@@ -424,8 +424,8 @@ void FVPressure<TypeTag>::assemble(bool first)
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 /************* handle interior face *****************/
                 if (isIt->neighbor())

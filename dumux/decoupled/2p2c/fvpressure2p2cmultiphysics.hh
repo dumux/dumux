@@ -256,8 +256,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
     this->A_ = 0;
     this->f_ = 0;
 
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem().gridView().template end<0> ();
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         // get the global index of the cell
         int globalIdxI = problem().variables().index(*eIt);
@@ -280,8 +280,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 /************* handle interior face *****************/
                 if (isIt->neighbor())
@@ -781,8 +781,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
         nextSubdomain = -1;  // reduce complexity after first TS
 
     // Loop A) through leaf grid
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem().gridView().template end<0> ();
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         // get global coordinate of cell center
         int globalIdx = problem().variables().index(*eIt);
@@ -805,8 +805,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
                 nextSubdomain[globalIdx] = 2;
 
                 // mark neighbors
-                IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt!=isItEnd; ++isIt)
+                IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
+                for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt!=isEndIt; ++isIt)
                 {
                     if (isIt->neighbor())
                     {
@@ -843,7 +843,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
 
     // Loop B) thorugh leaf grid
     // investigate cells that were "simple" in current TS
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         int globalIdx = problem().variables().index(*eIt);
         CellData& cellData = problem().variables().cellData(globalIdx);

@@ -80,10 +80,10 @@ public:
         Scalar globalMax = -1e100;
         Scalar globalMin = 1e100;
 
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
+        ElementIterator eEndIt = problem_.gridView().template end<0>();
         // 1) calculate Indicator -> min, maxvalues
         // Schleife über alle Leaf-Elemente
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd;
+        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt;
                 ++eIt)
         {
             // Bestimme maximale und minimale Sättigung

@@ -517,9 +517,9 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
 //    problem_.variables().communicatethis->pressure();
 
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
     ElementIterator eIt = problem_.gridView().template begin<0>();
-    for (; eIt != eItEnd; ++eIt)
+    for (; eIt != eEndIt; ++eIt)
     {
         // get global coordinate of cell center
         GlobalPosition globalPos = eIt->geometry().center();
@@ -670,8 +670,8 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         if(!compositional)
         {
             // run through all intersections with neighbors
-            IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 cellData.perimeter()
                         += isIt->geometry().volume();
@@ -700,8 +700,8 @@ void FVPressureCompositional<TypeTag>::updateMaterialLaws(bool postTimeStep)
 {
     Scalar maxError = 0.;
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem().gridView().template end<0> ();
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         int globalIdx = problem().variables().index(*eIt);
 

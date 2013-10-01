@@ -264,8 +264,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
 
     // run through all intersections
     IntersectionIterator isIt = problem_.gridView().ibegin(element);
-    IntersectionIterator isItEnd = problem_.gridView().iend(element);
-    for (; isIt != isItEnd; ++isIt)
+    IntersectionIterator isEndIt = problem_.gridView().iend(element);
+    for (; isIt != isEndIt; ++isIt)
     {
         int indexInInside = isIt->indexInInside();
 
@@ -1889,8 +1889,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
 {
     std::vector < std::vector<int> > elemVertMap(problem_.gridView().size(dim), std::vector<int>(8, -1));
 
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         ElementPointer ePtr = *eIt;
         storeSubVolumeElements(*ePtr, elemVertMap);
@@ -1902,7 +1902,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
 
     // run through all elements
 
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // get common geometry information for the following computation
 
@@ -1911,8 +1911,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
     }
 
     // run through all vertices
-    VertexIterator vItEnd = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
+    VertexIterator vEndIt = problem_.gridView().template end<dim>();
+    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
         int globalVertIdx = problem_.variables().index(*vIt);
 

@@ -267,8 +267,8 @@ public:
         int globalIdx = problem_.variables().index(element);
 
         Dune::FieldVector<Scalar, 2 * dim> faceVol(0);
-        IntersectionIterator isItEnd = gridView_.iend(element);
-        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = gridView_.iend(element);
+        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
         {
             faceVol[isIt->indexInInside()] = isIt->geometry().volume();
         }
@@ -284,8 +284,8 @@ public:
         int globalIdx = problem_.variables().index(element);
 
         Dune::FieldVector<Scalar, 2 * dim> faceVol(0);
-        IntersectionIterator isItEnd = gridView_.iend(element);
-        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = gridView_.iend(element);
+        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
         {
             faceVol[isIt->indexInInside()] = isIt->geometry().volume();
         }
@@ -300,8 +300,8 @@ public:
         Dune::FieldVector<Scalar, 2 * dim> c(0);
         Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim> Pi(0);
 
-        IntersectionIterator isItEnd = gridView_.iend(element);
-        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = gridView_.iend(element);
+        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
         {
             // local number of facet
             int idx = isIt->indexInInside();
@@ -471,8 +471,8 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
     Scalar gravPot = (problem_.bBoxMax() - centerGlobal) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
     int i = -1;
-    IntersectionIterator isItEnd = gridView_.iend(element);
-    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isItEnd; ++isIt)
+    IntersectionIterator isEndIt = gridView_.iend(element);
+    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
     {
         // local number of facet
         i = isIt->indexInInside();
@@ -607,7 +607,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
     //      std::cout << "Pi = \dim" << Pi << "c = " << c << ", F = " << F << std::endl;
 
     //accumulate fluxes due to capillary potential (pc + gravity!)
-    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isItEnd; ++isIt)
+    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
     {
         int idx = isIt->indexInInside();
 

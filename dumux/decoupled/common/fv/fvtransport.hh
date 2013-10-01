@@ -291,8 +291,8 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
     updateVec = 0.0;
 
     // compute update vector
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
 #if HAVE_MPI
         if (eIt->partitionType() != Dune::InteriorEntity)
@@ -322,8 +322,8 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         }
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
         {
             GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
             if (switchNormals_)
@@ -446,8 +446,8 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
     dt = std::numeric_limits<Scalar>::max();
 
     // update target time-step-sizes
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
 #if HAVE_MPI
         if (eIt->partitionType() != Dune::InteriorEntity)
@@ -466,8 +466,8 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
         FaceDt faceDt;
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
         {
             int indexInInside = isIt->indexInInside();
 
@@ -528,8 +528,8 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
                 localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
             }
 
-            IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 if (isIt->neighbor())
                 {

@@ -247,8 +247,8 @@ public:
 
 
             ElementIterator eItBegin = problem_.gridView().template begin<0>();
-            ElementIterator eItEnd = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
+            ElementIterator eEndIt = problem_.gridView().template end<0>();
+            for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
             {
                 int globalIdx = problem_.variables().index(*eIt);
                 CellData& cellData = problem_.variables().cellData(globalIdx);
@@ -284,8 +284,8 @@ public:
                 Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
 
                 // run through all intersections with neighbors and boundary
-                IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+                IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
+                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
                 {
                     int isIndex = isIt->indexInInside();
 
@@ -449,8 +449,8 @@ template<class TypeTag>
 void MimeticPressure2P<TypeTag>::updateMaterialLaws()
 {
         // iterate through leaf grid an evaluate c0 at cell center
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = problem_.gridView().template end<0>();
+        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
         {
             int globalIdx = problem_.variables().index(*eIt);
 

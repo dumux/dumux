@@ -252,9 +252,9 @@ template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
     // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -339,9 +339,9 @@ template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
     // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -391,8 +391,8 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    VertexIterator vItEnd = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
+    VertexIterator vEndIt = problem_.gridView().template end<dim>();
+    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
 #if HAVE_MPI
         if (vIt->partitionType() != Dune::InteriorEntity && vIt->partitionType() != Dune::BorderEntity)

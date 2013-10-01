@@ -104,7 +104,7 @@ public:
 
         // run over all level elements
         ElementIterator eIt = this->gridView_.template begin<0>();
-        ElementIterator eItEnd = this->gridView_.template end<0>();
+        ElementIterator eEndIt = this->gridView_.template end<0>();
 
         FluidState fluidState;
         fluidState.setPressure(wPhaseIdx, problem.referencePressure(*eIt));
@@ -122,7 +122,7 @@ public:
             problem.variables().cellData(i).fluxData().resetVelocity();
         }
 
-        for (; eIt != eItEnd; ++eIt)
+        for (; eIt != eEndIt; ++eIt)
         {
             int globalIdx = problem.variables().index(*eIt);
 
@@ -131,8 +131,8 @@ public:
 
             // get local to global id map and pressure traces
             IntersectionIterator isIt = problem.gridView().template ibegin(*eIt);
-            const IntersectionIterator &isItEnd = problem.gridView().template iend(*eIt);
-            for (; isIt != isItEnd; ++isIt)
+            const IntersectionIterator &isEndIt = problem.gridView().template iend(*eIt);
+            for (; isIt != isEndIt; ++isIt)
             {
                 int indexInInside = isIt->indexInInside();
 
@@ -208,7 +208,7 @@ public:
             }
 
             isIt = problem.gridView().template ibegin(*eIt);
-            for (; isIt != isItEnd; ++isIt)
+            for (; isIt != isEndIt; ++isIt)
             {
                 int idxInInside = isIt->indexInInside();
 

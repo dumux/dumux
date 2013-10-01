@@ -1069,8 +1069,8 @@ void FVSaturation2P<TypeTag>::initialize()
     }
 
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         PrimaryVariables initSol(0.0);
         problem_.initial(initSol, *eIt);
@@ -1114,8 +1114,8 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws()
 {
     ElementIterator eItBegin = problem_.gridView().template begin<0>();
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
     {
         int globalIdx = problem_.variables().index(*eIt);
 

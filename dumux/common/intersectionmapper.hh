@@ -62,8 +62,8 @@ public:
 
         int faceIdx = 0;
 
-        IntersectionIterator isItEnd = gridView_.iend(*eIt);
-        for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isEndIt = gridView_.iend(*eIt);
+        for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
         {
             int idxInInside = isIt->indexInInside();
 
@@ -149,15 +149,15 @@ public:
         intersectionMapLocal_.clear();
         intersectionMapLocal_.resize(elementMapper_.size());
 
-        ElementIterator eItEnd = gridView_.template end<0>();
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = gridView_.template end<0>();
+        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
             int globalIdx = map(*eIt);
 
             int faceIdx = 0;
             // run through all intersections with neighbors
-            IntersectionIterator isItEnd = gridView_.iend(*eIt);
-            for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = gridView_.iend(*eIt);
+            for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 int indexInInside = isIt->indexInInside();
                 intersectionMapLocal_[globalIdx][faceIdx] = indexInInside;
@@ -167,14 +167,14 @@ public:
         }
 
         int globalIntersectionIdx = 0;
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eItEnd; ++eIt)
+        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
             int globalIdx = map(*eIt);
 
             int faceIdx = 0;
             // run through all intersections with neighbors
-            IntersectionIterator isItEnd = gridView_.iend(*eIt);
-            for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isEndIt = gridView_.iend(*eIt);
+            for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 if (isIt->neighbor())
                 {

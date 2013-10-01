@@ -191,8 +191,8 @@ public:
     void storePressureSolution()
     {
         // iterate through leaf grid an evaluate c0 at cell center
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        ElementIterator eEndIt = problem_.gridView().template end<0>();
+        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
         {
             storePressureSolution(*eIt);
         }
@@ -363,8 +363,8 @@ public:
             ScalarSolutionType *pc = writer.allocateManagedBuffer(size);
 
             ElementIterator eItBegin = problem_.gridView().template begin<0>();
-            ElementIterator eItEnd = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
+            ElementIterator eEndIt = problem_.gridView().template end<0>();
+            for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
             {
                 int idx = problem_.variables().index(*eIt);
                 CellData& cellData = problem_.variables().cellData(idx);
@@ -497,9 +497,9 @@ template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
     // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -536,9 +536,9 @@ template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
     // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -577,8 +577,8 @@ void FvMpfaL3dPressure2p<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    VertexIterator vItEnd = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
+    VertexIterator vEndIt = problem_.gridView().template end<dim>();
+    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
         int globalVertIdx = problem_.variables().index(*vIt);
 
@@ -2428,8 +2428,8 @@ template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::updateMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eEndIt = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         int globalIdx = problem_.variables().index(*eIt);
 
