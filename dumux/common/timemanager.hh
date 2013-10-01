@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Simplify the handling of time dependent problems
+ * \brief Manages the handling of time dependent problems
  */
 #ifndef DUMUX_TIME_MANAGER_HH
 #define DUMUX_TIME_MANAGER_HH
@@ -45,19 +45,23 @@ NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
 
 /*!
  * \ingroup SimControl
- * \brief Simplify the handling of time dependent problems.
+ * \brief Manages the handling of time dependent problems.
  *
- * This class manages a sequence of "episodes" which determine the
- * boundary conditions of a problem. This approach is handy if the
- * problem is not static, i.e. that boundary conditions change
- * over time.
+ * This class facilitates the time management of the simulation.
+ * It doesn't manage any user data, but keeps track of what the
+ * current time, time step size and "episode" of the
+ * simulation is. It triggers the initialization of the problem and
+ * is responsible for the time control of a simulation run.
  *
- * This class is a low level way to simplify time management for the
- * simulation. It doesn't manage any user data, but only keeps track
- * about what the current "episode" of the simulation is. An episode
- * is a span of simulated time at which the problem behaves in a
- * specific way. It is characerized by the (simulation) time it
- * starts, its length and a consecutive index starting at 0.
+ * The time manager allows to specify a sequence of "episodes" which
+ * determine the boundary conditions of a problem. This approach
+ * is handy if the problem is not static, i.e. the boundary
+ * conditions change over time.
+ *
+ * An episode is a span of simulated time in which
+ * the problem behaves in a specific way. It is characterized by
+ * the (simulation) time it starts, its length and a consecutive
+ * index starting at 0.
  */
 template <class TypeTag>
 class TimeManager
@@ -198,7 +202,7 @@ public:
     /*!
      * \brief Returns the suggested time step length \f$\mathrm{[s]}\f$ so that we
      *        don't miss the beginning of the next episode or cross
-     *        the end of the simlation.
+     *        the end of the simulation.
      */
     Scalar timeStepSize() const
     { return timeStepSize_; }
@@ -361,7 +365,7 @@ public:
     /*!
      * \brief Runs the simulation using a given problem class.
      *
-     * This method makes sure that time steps sizes are aligned to
+     * This method makes sure that time step sizes are aligned to
      * episode boundaries, amongst other stuff.
      */
     void run()
@@ -421,8 +425,8 @@ public:
             }
             else
             {
-                // notify the problem that the timestep is done and ask it
-                // for a suggestion for the next timestep size
+                // notify the problem that the time step is done and ask it
+                // for a suggestion for the next time step size
                 // set the time step size for the next step
                 previousTimeStepSize_ = timeStepSize();
                 setTimeStepSize(problem_->nextTimeStepSize(dt));
