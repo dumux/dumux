@@ -100,10 +100,10 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gv The grid view
+     * \param gridView The grid view
      */
-    InfiltrationSpatialParams(const GridView &gv)
-        : ParentType(gv)
+    InfiltrationSpatialParams(const GridView &gridView)
+        : ParentType(gridView)
     {
         // intrinsic permeabilities
         fineK_ = 1.e-11;

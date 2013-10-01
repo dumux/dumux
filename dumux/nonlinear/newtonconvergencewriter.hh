@@ -58,11 +58,11 @@ public:
         iteration_ = 0;
     }
 
-    void beginIteration(const GridView &gv)
+    void beginIteration(const GridView &gridView)
     {
         ++ iteration_;
         if (!vtkMultiWriter_)
-            vtkMultiWriter_ = Dune::make_shared<VtkMultiWriter>(gv, "convergence");
+            vtkMultiWriter_ = Dune::make_shared<VtkMultiWriter>(gridView, "convergence");
         vtkMultiWriter_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
     }
 

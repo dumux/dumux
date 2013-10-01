@@ -73,8 +73,8 @@ class El1P2CSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 
 public:
 
-    El1P2CSpatialParams(const GridView &gv)
-    : ParentType(gv)
+    El1P2CSpatialParams(const GridView &gridView)
+    : ParentType(gridView)
     {
         // intrinsic permeabilities [m^2]
         K_ = Scalar(0.0);

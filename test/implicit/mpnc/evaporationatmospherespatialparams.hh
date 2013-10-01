@@ -182,8 +182,8 @@ public:
     typedef typename AnsSurface::Params AnsSurfaceParams;
 
 
-    EvaporationAtmosphereSpatialParams(const GridView &gv)
-        : ParentType(gv)
+    EvaporationAtmosphereSpatialParams(const GridView &gridView)
+        : ParentType(gridView)
     {
     }
 

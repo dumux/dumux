@@ -67,7 +67,7 @@ class FVSpatialParamsOneP
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
 public:
-    FVSpatialParamsOneP(const GridView &gv)
+    FVSpatialParamsOneP(const GridView &gridView)
     {
     }
 

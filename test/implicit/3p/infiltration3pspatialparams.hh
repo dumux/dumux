@@ -92,10 +92,10 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gv The grid view
+     * \param gridView The grid view
      */
-    InfiltrationThreePSpatialParams(const GridView &gv)
-        : ParentType(gv)
+    InfiltrationThreePSpatialParams(const GridView &gridView)
+        : ParentType(gridView)
     {
         // intrinsic permeabilities
         fineK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, permeability);

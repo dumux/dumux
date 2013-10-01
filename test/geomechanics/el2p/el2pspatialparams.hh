@@ -90,8 +90,8 @@ public:
     typedef typename MaterialLaw::Params MaterialLawParams;
 
 
-    El2PSpatialParams(const GridView &gv)
-    : ParentType(gv)
+    El2PSpatialParams(const GridView &gridView)
+    : ParentType(gridView)
     {
         // episode index
         episode_ = 0;

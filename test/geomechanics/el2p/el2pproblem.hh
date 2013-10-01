@@ -727,9 +727,9 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gv The grid view
+     * \param gridView The grid view
      */
-    InitialDisplacement(const GridView & gv) : BaseT(gv) {}
+    InitialDisplacement(const GridView & gridView) : BaseT(gridView) {}
 
     /*!
      * \brief Evaluate initial conditions for the momentum balance equation.
@@ -794,12 +794,12 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gv The grid view
+     * \param gridView The grid view
      */
-    InitialPressSat(const GridView & gv) : BaseT(gv) , gridView_(gv), vertexMapper_(gv)
+    InitialPressSat(const GridView & gridView) : BaseT(gridView) , gridView_(gridView), vertexMapper_(gridView)
     {
         // resize the pressure field vector with the number of vertices
-        pInit_.resize(gv.size(GridView::dimension));
+        pInit_.resize(gridView.size(GridView::dimension));
         // fill the pressure field vector with zeros
         std::fill(pInit_.begin(), pInit_.end(), 0.0);
     }

@@ -57,11 +57,11 @@ class VertexBorderListFromGrid : public Dune::CommDataHandleIF<VertexBorderListF
     typedef std::list<BorderIndex> BorderList;
 
 public:
-    VertexBorderListFromGrid(const GridView &gv,
+    VertexBorderListFromGrid(const GridView &gridView,
                              const VertexMapper &map)
-        : gv_(gv), map_(map)
+        : gridView_(gridView), map_(map)
     {
-        gv.communicate(*this,
+        gridView.communicate(*this,
                        Dune::InteriorBorder_InteriorBorder_Interface,
                        Dune::ForwardCommunication);
     };
@@ -80,7 +80,7 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        buff.write(gv_.comm().rank());
+        buff.write(gridView_.comm().rank());
         buff.write(map_.map(e));
     }
 
@@ -110,7 +110,7 @@ public:
     { return borderList_; }
 
 private:
-    const GridView gv_;
+    const GridView gridView_;
     const VertexMapper &map_;
     BorderList borderList_;
 };
