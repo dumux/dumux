@@ -210,7 +210,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * \brief Evaluates the advective mass flux of all components over
      *        a face of a sub-control volume.
      *
-     * \param flux The advective flux over the sub-control-volume face for each component
+     * \param flux The flux over the sub-control-volume face for each component
      * \param fluxVars The flux variables at the current sub-control-volume face
      */
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
@@ -349,7 +349,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * \brief Adds the diffusive mass flux of all components over
      *        a face of a sub-control volume.
      *
-     * \param flux The diffusive flux over the sub-control-volume face for each component
+     * \param flux The flux over the sub-control-volume face for each component
      * \param fluxVars The flux variables at the current sub-control-volume face
      */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
@@ -410,7 +410,9 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *
      * \param source The source/sink in the sub-control volume for each component
      * \param scvIdx The index of the sub-control volume
-     * \be careful what you use! (mole or mass fraction!) Think of the units!
+     *
+     * Be careful what you use, mole or mass fraction! Think of the units!
+     * If a total mass balance is used, the sum of both components has to be specified as source.
      */
     void computeSource(PrimaryVariables& source, const int scvIdx)
     {

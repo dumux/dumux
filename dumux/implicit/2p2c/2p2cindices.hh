@@ -76,7 +76,7 @@ public:
     static const int bothPhases = 2; //!< Both phases are present
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on the formulation) in a solution vector
     static const int switchIdx = PVOffset + 1; //!< Index of either the saturation or the mass fraction of the non-wetting/wetting phase
 
     static const int pwIdx = pressureIdx; //!< Index for wetting phase pressure in a solution vector
@@ -87,8 +87,8 @@ public:
 
     // equation indices
     static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
-    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< Index of the mass conservation equation for the liquid's primary component
-    static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the gas' primary component
+    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< Index of the mass conservation equation for the primary component of the wetting phase
+    static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the primary component of the non-wetting phase
 };
 
 /*!
@@ -119,7 +119,7 @@ public:
     static const int bothPhases = 3; //!< Both phases are present
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on the formulation) in a solution vector
     static const int switchIdx = PVOffset + 1; //!< Index of either the saturation or the mass fraction of the non-wetting/wetting phase
 
     static const int pnIdx = pressureIdx; //!< Index for non-wetting phase pressure in a solution vector
@@ -130,8 +130,8 @@ public:
 
     // Equation indices
     static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
-    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< Index of the mass conservation equation for the liquid's primary component
-    static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the gas' primary component
+    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< Index of the mass conservation equation for the primary component of the wetting phase
+    static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the primary component of the non-wetting phase
 };
 
 // \}
