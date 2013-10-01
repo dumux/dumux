@@ -317,9 +317,9 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     Dune::FieldVector<CellData, 4> cellDataTemp;
 
-    for (int vertIdx = 0; vertIdx < numVertices; vertIdx++)
+    for (int vIdx = 0; vIdx < numVertices; vIdx++)
     {
-        int localVertIdx = referenceElement.subEntity(indexInInside, dim - 1, vertIdx, dim);
+        int localVertIdx = referenceElement.subEntity(indexInInside, dim - 1, vIdx, dim);
 
         int globalVertIdx = problem_.variables().index(
                 *((*elementPtrI).template subEntity < dim > (localVertIdx)));

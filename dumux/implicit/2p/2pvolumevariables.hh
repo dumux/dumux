@@ -255,7 +255,7 @@ protected:
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &fvGeometry,
-                       int vertIdx,
+                       int vIdx,
                        bool isOldSol)
     { }
 

@@ -68,18 +68,18 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        int vertIdx = mapper_.map(e);
-        buff.write(container_[vertIdx]);
+        int vIdx = mapper_.map(e);
+        buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        int vertIdx = mapper_.map(e);
+        int vIdx = mapper_.map(e);
 
         FieldType tmp;
         buff.read(tmp);
-        container_[vertIdx] += tmp;
+        container_[vIdx] += tmp;
     }
 
 private:
@@ -126,18 +126,18 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        int vertIdx = mapper_.map(e);
-        buff.write(container_[vertIdx]);
+        int vIdx = mapper_.map(e);
+        buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        int vertIdx = mapper_.map(e);
+        int vIdx = mapper_.map(e);
 
         FieldType tmp;
         buff.read(tmp);
-        container_[vertIdx] = std::max(container_[vertIdx], tmp);
+        container_[vIdx] = std::max(container_[vIdx], tmp);
     }
 
 private:
@@ -185,18 +185,18 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        int vertIdx = mapper_.map(e);
-        buff.write(container_[vertIdx]);
+        int vIdx = mapper_.map(e);
+        buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        int vertIdx = mapper_.map(e);
+        int vIdx = mapper_.map(e);
 
         FieldType tmp;
         buff.read(tmp);
-        container_[vertIdx] = std::min(container_[vertIdx], tmp);
+        container_[vIdx] = std::min(container_[vIdx], tmp);
     }
 
 private:

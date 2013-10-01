@@ -469,7 +469,7 @@ class BoxFVElementGeometry
         }
     }
 
-    void getEdgeIndices(int numVertices, int faceIdx, int vertIdx, int& leftEdge, int& rightEdge)
+    void getEdgeIndices(int numVertices, int faceIdx, int vIdx, int& leftEdge, int& rightEdge)
     {
         static const int faceAndVertexToLeftEdgeTet[4][4] = {
             { 0, 0, 2, -1},
@@ -530,20 +530,20 @@ class BoxFVElementGeometry
 
         switch (numVertices) {
         case 4:
-            leftEdge = faceAndVertexToLeftEdgeTet[faceIdx][vertIdx];
-            rightEdge = faceAndVertexToRightEdgeTet[faceIdx][vertIdx];
+            leftEdge = faceAndVertexToLeftEdgeTet[faceIdx][vIdx];
+            rightEdge = faceAndVertexToRightEdgeTet[faceIdx][vIdx];
             break;
         case 5:
-            leftEdge = faceAndVertexToLeftEdgePyramid[faceIdx][vertIdx];
-            rightEdge = faceAndVertexToRightEdgePyramid[faceIdx][vertIdx];
+            leftEdge = faceAndVertexToLeftEdgePyramid[faceIdx][vIdx];
+            rightEdge = faceAndVertexToRightEdgePyramid[faceIdx][vIdx];
             break;
         case 6:
-            leftEdge = faceAndVertexToLeftEdgePrism[faceIdx][vertIdx];
-            rightEdge = faceAndVertexToRightEdgePrism[faceIdx][vertIdx];
+            leftEdge = faceAndVertexToLeftEdgePrism[faceIdx][vIdx];
+            rightEdge = faceAndVertexToRightEdgePrism[faceIdx][vIdx];
             break;
         case 8:
-            leftEdge = faceAndVertexToLeftEdgeHex[faceIdx][vertIdx];
-            rightEdge = faceAndVertexToRightEdgeHex[faceIdx][vertIdx];
+            leftEdge = faceAndVertexToLeftEdgeHex[faceIdx][vIdx];
+            rightEdge = faceAndVertexToRightEdgeHex[faceIdx][vIdx];
             break;
         default:
             DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
@@ -952,8 +952,8 @@ public:
 
                 JacobianInverseTransposed jacInvT =
                     geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
-                for (int vertIdx = 0; vertIdx < numScv; vertIdx++)
-                    jacInvT.mv(localJac[vertIdx][0], subContVol[scvIdx].gradCenter[vertIdx]);
+                for (int vIdx = 0; vIdx < numScv; vIdx++)
+                    jacInvT.mv(localJac[vIdx][0], subContVol[scvIdx].gradCenter[vIdx]);
             }
         }
     }

@@ -284,9 +284,9 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
                     {
                         if (neighbor->level() == levelI + 2)
                         {
-                            for (int vertIdx = 0; vertIdx < numCorners; vertIdx++)
+                            for (int vIdx = 0; vIdx < numCorners; vIdx++)
                             {
-                                int globalVertIdxJ = problem_.variables().vertexMapper().map(*neighbor, vertIdx, dim);
+                                int globalVertIdxJ = problem_.variables().vertexMapper().map(*neighbor, vIdx, dim);
 
                                 if (globalVertIdxJ != globalVertIdx)
                                 {
