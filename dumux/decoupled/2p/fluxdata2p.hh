@@ -74,11 +74,11 @@ public:
     {
         for (int faceIdx = 0;  faceIdx < 2*dim; faceIdx++)
         {
-            for (int phase = 0; phase < numPhases; phase++)
+            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
             {
-                velocity_[phase][faceIdx] = DimVector(0.0);
+                velocity_[phaseIdx][faceIdx] = DimVector(0.0);
 
-                upwindPotential_[faceIdx][phase] = 0.0;
+                upwindPotential_[faceIdx][phaseIdx] = 0.0;
             }
             velocityMarker_[faceIdx] = false;
         }

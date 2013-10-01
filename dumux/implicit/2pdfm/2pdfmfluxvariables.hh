@@ -86,9 +86,9 @@ public:
     {
         faceSCV_ = &this->face();
 
-        for (int phase = 0; phase < numPhases; ++phase)
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            potentialGradFracture_[phase] = 0.0;
+            potentialGradFracture_[phaseIdx] = 0.0;
         }
 
         calculateGradientsInFractures_(problem, element, elemVolVars, faceIdx);
@@ -130,26 +130,26 @@ public:
 
         // temporary vector for the Darcy velocity
         Scalar vDarcyFracture = 0;
-        for (int phase=0; phase < numPhases; phase++)
+        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
         {
-            vDarcyFracture = - (KFracture * potentialGradFracture_[phase]);
+            vDarcyFracture = - (KFracture * potentialGradFracture_[phaseIdx]);
 
             Valgrind::CheckDefined(KFracture);
             Valgrind::CheckDefined(fractureWidth_);
-            vDarcyFracture_[phase] = (vDarcyFracture * fractureWidth_);
-            Valgrind::CheckDefined(vDarcyFracture_[phase]);
+            vDarcyFracture_[phaseIdx] = (vDarcyFracture * fractureWidth_);
+            Valgrind::CheckDefined(vDarcyFracture_[phaseIdx]);
         }
 
         // set the upstream and downstream vertices
-        for (int phase = 0; phase < numPhases; ++phase)
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            upstreamFractureIdx[phase] = faceSCV_->i;
-            downstreamFractureIdx[phase] = faceSCV_->j;
+            upstreamFractureIdx[phaseIdx] = faceSCV_->i;
+            downstreamFractureIdx[phaseIdx] = faceSCV_->j;
 
-            if (vDarcyFracture_[phase] < 0)
+            if (vDarcyFracture_[phaseIdx] < 0)
             {
-                std::swap(upstreamFractureIdx[phase],
-                          downstreamFractureIdx[phase]);
+                std::swap(upstreamFractureIdx[phaseIdx],
+                          downstreamFractureIdx[phaseIdx]);
             }
         }
     }
@@ -199,8 +199,8 @@ private:
             int i = this->face().i;
             int j = this->face().j;
 
-            // compute sum of pressure gradients for each phaseGlobalPosition
-            for (int phase = 0; phase < numPhases; phase++)
+            // compute sum of pressure gradients for each phase
+            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
             {
                 const GlobalPosition localIdx_i = element.geometry().corner(i);
                 const GlobalPosition localIdx_j = element.geometry().corner(j);
@@ -211,13 +211,13 @@ private:
                 {
                     GlobalPosition diff_ij = localIdx_j;
                     diff_ij -= localIdx_i;
-                    potentialGradFracture_[phase] =
-                        (elemVolVars[j].pressure(phase) - elemVolVars[i].pressure(phase))
+                    potentialGradFracture_[phaseIdx] =
+                        (elemVolVars[j].pressure(phaseIdx) - elemVolVars[i].pressure(phaseIdx))
                         / diff_ij.two_norm();
                 }
                 else
                 {
-                    potentialGradFracture_[phase] = 0;
+                    potentialGradFracture_[phaseIdx] = 0;
                 }
             }
         }

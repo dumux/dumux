@@ -406,9 +406,9 @@ public:
      * \param params Array of parameters.
      * \param phase indicator, The saturation of all phases.
      */
-    static Scalar kr(const Params &params, const int phase, const Scalar sw, const Scalar sn, const Scalar sg)
+    static Scalar kr(const Params &params, const int phaseIdx, const Scalar sw, const Scalar sn, const Scalar sg)
     {
-        switch (phase)
+        switch (phaseIdx)
         {
         case 0:
             return krw(params, sw, sn, sg);
