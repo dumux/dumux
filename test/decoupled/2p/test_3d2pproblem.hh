@@ -300,8 +300,8 @@ void source(PrimaryVariables &values,const Element& element) const
     values = 0;
 
 #if PROBLEM == 2 //Nine-Spot
-    int numVerts = element.geometry().corners();
-    for(int i = 0; i < numVerts; i++)
+    int numVertices = element.geometry().corners();
+    for(int i = 0; i < numVertices; i++)
     {
         GlobalPosition globalPos(element.template subEntity<dim>(i)->geometry().center());
 
@@ -347,8 +347,8 @@ void boundaryTypes(BoundaryTypes &bcTypes, const Intersection& intersection) con
 {
 #if PROBLEM == 2 //Nine-Spot
     ElementPointer element = intersection.inside();
-    int numVerts = element->geometry().corners();
-    for(int i = 0; i < numVerts; i++)
+    int numVertices = element->geometry().corners();
+    for(int i = 0; i < numVertices; i++)
     {
         GlobalPosition globalPos(element->template subEntity<dim>(i)->geometry().center());
 

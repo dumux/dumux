@@ -101,14 +101,14 @@ public:
      */
     void initVelocityStuff(){
         // belongs to velocity averaging
-        int nVerts = this->gridView().size(dim);
+        int numVertices = this->gridView().size(dim);
 
         // allocation and bringing to size
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-            volumeDarcyVelocity_[phaseIdx].resize(nVerts);
-            volumeDarcyMagVelocity_[phaseIdx].resize(nVerts);
+            volumeDarcyVelocity_[phaseIdx].resize(numVertices);
+            volumeDarcyMagVelocity_[phaseIdx].resize(numVertices);
             std::fill(volumeDarcyMagVelocity_[phaseIdx].begin(), volumeDarcyMagVelocity_[phaseIdx].end(), 0.0);
-            boxSurface_.resize(nVerts);
+            boxSurface_.resize(numVertices);
             std::fill(boxSurface_.begin(), boxSurface_.end(), 0.0);
             volumeDarcyVelocity_[phaseIdx] = 0;
         }
@@ -125,7 +125,7 @@ public:
      */
     void calcVelocityAverage()
     {
-        Scalar nVerts = this->gridView().size(dim);
+        Scalar numVertices = this->gridView().size(dim);
 
         // reset
         for (int phaseIdx =0; phaseIdx<numPhases; ++phaseIdx){
@@ -185,7 +185,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // first, divide the velocity field by the
             // respective finite volume's surface area
-            for (int I = 0; I < nVerts; ++I){
+            for (int I = 0; I < numVertices; ++I){
              volumeDarcyVelocity_[phaseIdx][I]      /= boxSurface_[I];
              volumeDarcyMagVelocity_[phaseIdx][I]   = volumeDarcyVelocity_[phaseIdx][I].two_norm() ;
             }// end all vertices

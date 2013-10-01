@@ -80,14 +80,14 @@ public:
     void update(const Problem &problem,
                 const Element &element)
     {
-        int numVerts = element.template count<dim>();
-        this->resize(numVerts);
+        int numVertices = element.template count<dim>();
+        this->resize(numVertices);
 
         hasDirichlet_ = false;
         hasNeumann_ = false;
         hasOutflow_ = false;
 
-        for (int i = 0; i < numVerts; ++i) {
+        for (int i = 0; i < numVertices; ++i) {
             (*this)[i].reset();
 
             if (problem.model().onBoundary(element, i)) {

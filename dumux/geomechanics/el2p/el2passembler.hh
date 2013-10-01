@@ -214,7 +214,7 @@ public:
         *matrix_ = 0;
         reuseMatrix_ = false;
 
-        int numVerts = gridView_().size(dim);
+        int numVertices = gridView_().size(dim);
         int numElements = gridView_().size(0);
         residual_.resize(matrix_->N());
 
@@ -222,8 +222,8 @@ public:
 
         // initialize data needed for partial reassembly
         if (enablePartialReassemble) {
-            vertexColor_.resize(numVerts);
-            vertexDelta_.resize(numVerts);
+            vertexColor_.resize(numVertices);
+            vertexDelta_.resize(numVertices);
             elementColor_.resize(numElements);
         }
         reassembleAll();
@@ -371,8 +371,8 @@ public:
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
-            int numVerts = eIt->template count<dim>();
-            for (int i=0; i < numVerts; ++i) {
+            int numVertices = eIt->template count<dim>();
+            for (int i=0; i < numVertices; ++i) {
                 int globalI = vertexMapper_().map(*eIt, i, dim);
                 if (vertexColor_[globalI] == Red) {
                     isRed = true;
@@ -397,8 +397,8 @@ public:
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
-            int numVerts = eIt->template count<dim>();
-            for (int i=0; i < numVerts; ++i) {
+            int numVertices = eIt->template count<dim>();
+            for (int i=0; i < numVertices; ++i) {
                 int globalI = vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is already red, don't recolor it to
                 // yellow!
@@ -418,8 +418,8 @@ public:
             // check whether the element features a yellow
             // (resp. orange at this point) vertex
             bool isYellow = false;
-            int numVerts = eIt->template count<dim>();
-            for (int i=0; i < numVerts; ++i) {
+            int numVertices = eIt->template count<dim>();
+            for (int i=0; i < numVertices; ++i) {
                 int globalI = vertexMapper_().map(*eIt, i, dim);
                 if (vertexColor_[globalI] == Orange) {
                     isYellow = true;
@@ -440,8 +440,8 @@ public:
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
-            int numVerts = eIt->template count<dim>();
-            for (int i=0; i < numVerts; ++i) {
+            int numVertices = eIt->template count<dim>();
+            for (int i=0; i < numVertices; ++i) {
                 int globalI = vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is orange, recolor it to yellow!
                 if (vertexColor_[globalI] == Orange)
@@ -555,15 +555,15 @@ private:
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()
     {
-        int nVerts = gridView_().size(dim);
+        int numVertices = gridView_().size(dim);
 
         // allocate raw matrix
-        matrix_ = new JacobianMatrix(nVerts, nVerts, JacobianMatrix::random);
+        matrix_ = new JacobianMatrix(numVertices, numVertices, JacobianMatrix::random);
 
         // find out the global indices of the neighboring vertices of
         // each vertex
         typedef std::set<int> NeighborSet;
-        std::vector<NeighborSet> neighbors(nVerts);
+        std::vector<NeighborSet> neighbors(numVertices);
         ElementIterator eIt = gridView_().template begin<0>();
         const ElementIterator eEndIt = gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
@@ -584,11 +584,11 @@ private:
         };
 
         // make vertices neighbors to themselfs
-        for (int i = 0; i < nVerts; ++i)
+        for (int i = 0; i < numVertices; ++i)
             neighbors[i].insert(i);
 
         // allocate space for the rows of the matrix
-        for (int i = 0; i < nVerts; ++i) {
+        for (int i = 0; i < numVertices; ++i) {
             matrix_->setrowsize(i, neighbors[i].size());
         }
         matrix_->endrowsizes();
@@ -596,7 +596,7 @@ private:
         // fill the rows with indices. each vertex talks to all of its
         // neighbors. (it also talks to itself since vertices are
         // sometimes quite egocentric.)
-        for (int i = 0; i < nVerts; ++i) {
+        for (int i = 0; i < numVertices; ++i) {
             typename NeighborSet::iterator nIt = neighbors[i].begin();
             typename NeighborSet::iterator nEndIt = neighbors[i].end();
             for (; nIt != nEndIt; ++nIt) {

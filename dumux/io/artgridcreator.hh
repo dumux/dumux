@@ -511,10 +511,10 @@ public:
     void map()
     {
         //call the new_read art
-        int nVertices = GridCreator::vertexNumber();
+        int numVertices = GridCreator::vertexNumber();
         int nEdges = GridCreator::edgeNumber();
         //The vertexes which are located on fractures
-        isDuneFractureVertex_.resize(nVertices);
+        isDuneFractureVertex_.resize(numVertices);
         std::fill(isDuneFractureVertex_.begin(), isDuneFractureVertex_.end(), false);
 
         //The edge which are fractures

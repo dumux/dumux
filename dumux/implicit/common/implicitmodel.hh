@@ -119,10 +119,10 @@ public:
 
         // resize the hint vectors
         if (isBox && enableHints_) {
-            int nVerts = gridView_().size(dim);
-            curHints_.resize(nVerts);
-            prevHints_.resize(nVerts);
-            hintsUsable_.resize(nVerts);
+            int numVertices = gridView_().size(dim);
+            curHints_.resize(numVertices);
+            prevHints_.resize(numVertices);
+            hintsUsable_.resize(numVertices);
             std::fill(hintsUsable_.begin(),
                       hintsUsable_.end(),
                       false);

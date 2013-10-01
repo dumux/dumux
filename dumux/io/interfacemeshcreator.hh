@@ -121,8 +121,8 @@ std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal <<
             }
 std::cout << "lengthLeft = " << lengthLeft << ", lengthRight = " << lengthRight << ", hLeft = " << hLeft << ", hRight = " << hRight << ", nLeft = " << nLeft << ", nRight = " << nRight << std::endl;
 
-            int nVertices = numElements[comp] + 1;
-            localPositions[comp].resize(nVertices);
+            int numVertices = numElements[comp] + 1;
+            localPositions[comp].resize(numVertices);
 
             localPositions[comp][0] = 0.0;
             for (int i = 0; i < nLeft; i++)
@@ -144,10 +144,10 @@ std::cout << "lengthLeft = " << lengthLeft << ", lengthRight = " << lengthRight 
                     localPositions[comp][nLeft+nRight+i+1] = localPositions[comp][nLeft+nRight+i] + hI;
                 }
 
-            if (localPositions[comp][nVertices-1] != 1.0)
+            if (localPositions[comp][numVertices-1] != 1.0)
             {
-                for (int i = 0; i < nVertices; i++)
-                    localPositions[comp][i] /= localPositions[comp][nVertices-1];
+                for (int i = 0; i < numVertices; i++)
+                    localPositions[comp][i] /= localPositions[comp][numVertices-1];
             }
         }
 

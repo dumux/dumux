@@ -123,7 +123,7 @@ public:
         *matrix_ = 0;
         reuseMatrix_ = false;
 
-        int numVerts = gridView_().size(dim);
+        int numVertices = gridView_().size(dim);
         int numElements = gridView_().size(0);
         int numDofs = problem.model().numDofs();
 
@@ -147,7 +147,7 @@ public:
             delta_.resize(numDofs);
             elementColor_.resize(numElements);
             if (isBox)
-                vertexColor_.resize(numVerts);
+                vertexColor_.resize(numVertices);
         }
         reassembleAll();
     }

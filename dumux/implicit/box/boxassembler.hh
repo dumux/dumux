@@ -101,8 +101,8 @@ private:
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
-            int numVerts = eIt->template count<dim>();
-            for (int i=0; i < numVerts; ++i) {
+            int numVertices = eIt->template count<dim>();
+            for (int i=0; i < numVertices; ++i) {
                 int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 if (this->vertexColor_[globalI] == ParentType::Red) {
                     isRed = true;
@@ -127,8 +127,8 @@ private:
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
-            int numVerts = eIt->template count<dim>();
-            for (int i = 0; i < numVerts; ++i) {
+            int numVertices = eIt->template count<dim>();
+            for (int i = 0; i < numVertices; ++i) {
                 int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is already red, don't recolor it to
                 // yellow!
@@ -159,8 +159,8 @@ private:
             // check whether the element features a yellow
             // (resp. orange at this point) vertex
             bool isYellow = false;
-            int numVerts = eIt->template count<dim>();
-            for (int i = 0; i < numVerts; ++i) {
+            int numVertices = eIt->template count<dim>();
+            for (int i = 0; i < numVertices; ++i) {
                 int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 if (this->vertexColor_[globalI] == ParentType::Orange) {
                     isYellow = true;
@@ -181,8 +181,8 @@ private:
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
-            int numVerts = eIt->template count<dim>();
-            for (int i = 0; i < numVerts; ++i) {
+            int numVertices = eIt->template count<dim>();
+            for (int i = 0; i < numVertices; ++i) {
                 int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is orange, recolor it to yellow!
                 if (this->vertexColor_[globalI] == ParentType::Orange)

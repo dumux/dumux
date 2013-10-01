@@ -107,9 +107,9 @@ public:
 
 
         if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/) {
-            Scalar nVerts = this->problem_.gridView().size(dim);
+            Scalar numVertices = this->problem_.gridView().size(dim);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                velocity_[phaseIdx].resize(nVerts);
+                velocity_[phaseIdx].resize(numVertices);
                 velocity_[phaseIdx] = 0;
             }
         }
@@ -160,9 +160,9 @@ public:
             ans_[globalIdx]          = volVars.interfacialArea(nPhaseIdx, sPhaseIdx);
 
             if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/){
-                int nVerts = this->problem_.gridView().size(dim); // numVertices for vertexCentereed, numVolumes for volume centered
+                int numVertices = this->problem_.gridView().size(dim); // numVertices for vertexCentereed, numVolumes for volume centered
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    for (int I = 0; I < nVerts; ++I)
+                    for (int I = 0; I < numVertices; ++I)
                         velocity_[phaseIdx][I] = this->problem_.model().volumeDarcyVelocity(phaseIdx, I);
             }
         }
