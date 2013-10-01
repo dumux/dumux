@@ -263,11 +263,11 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 
         std::set<int> neighborIndices;
 
-        int numCorners = eIt->geometry().corners();
+        int numVertices = eIt->geometry().corners();
 
-        for (int cornerNum = 0; cornerNum < numCorners; cornerNum++)
+        for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int globalVertIdx = problem_.variables().vertexMapper().map(*eIt, cornerNum, dim);
+            int globalVertIdx = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
 
             InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(globalVertIdx);
 
@@ -284,7 +284,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
                     {
                         if (neighbor->level() == levelI + 2)
                         {
-                            for (int vIdx = 0; vIdx < numCorners; vIdx++)
+                            for (int vIdx = 0; vIdx < numVertices; vIdx++)
                             {
                                 int globalVertIdxJ = problem_.variables().vertexMapper().map(*neighbor, vIdx, dim);
 
@@ -351,11 +351,11 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
         // add diagonal index
         this->A_.addindex(globalIdxI, globalIdxI);
 
-        int numCorners = eIt->geometry().corners();
+        int numVertices = eIt->geometry().corners();
 
-        for (int cornerNum = 0; cornerNum < numCorners; cornerNum++)
+        for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int globalVertIdx = problem_.variables().vertexMapper().map(*eIt, cornerNum, dim);
+            int globalVertIdx = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
 
             InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(globalVertIdx);
             for (int subVolumeIdx = 0; subVolumeIdx < InteractionVolume::subVolumeTotalNum; subVolumeIdx++)
