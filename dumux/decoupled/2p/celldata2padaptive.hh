@@ -22,8 +22,8 @@
 #include "celldata2p.hh"
 
 /**
- * @file
- * @brief  Class including the data of a grid cell needed if an adaptive grid is used.
+ * \file
+ * \brief  Class including the data of a grid cell needed if an adaptive grid is used.
  */
 
 namespace Dumux
@@ -97,8 +97,8 @@ public:
      * Stores values to be adapted from the current CellData objects into
      * the adaptation container in order to be mapped on a new grid.
      *
-     * @param adaptedValues Container for model-specific values to be adapted
-     * @param element The element to be stored
+     * \param adaptedValues Container for model-specific values to be adapted
+     * \param element The element to be stored
      */
     void storeAdaptionValues(AdaptedValues& adaptedValues, const Element& element)
     {
@@ -116,9 +116,9 @@ public:
      * upwards, so sons are stored first, then cells on the next leaf (=fathers)
      * can be averaged.
      *
-     * @param adaptedValues Container for model-specific values to be adapted
-     * @param adaptedValuesFather Values to be adapted of father cell
-     * @param fatherElement The element of the father
+     * \param adaptedValues Container for model-specific values to be adapted
+     * \param adaptedValuesFather Values to be adapted of father cell
+     * \param fatherElement The element of the father
      */
     static void storeAdaptionValues(AdaptedValues& adaptedValues,
                                     AdaptedValues& adaptedValuesFather,
@@ -138,8 +138,8 @@ public:
      * this setting a newly mapped solution to the storage container of the
      * decoupled models.
      *
-     * @param adaptedValues Container for model-specific values to be adapted
-     * @param element The element where things are stored.
+     * \param adaptedValues Container for model-specific values to be adapted
+     * \param element The element where things are stored.
      */
     void setAdaptionValues(AdaptedValues& adaptedValues, const Element& element)
     {
@@ -154,14 +154,14 @@ public:
 
     //! Reconstructs sons entries from data of father cell
     /**
-     * Reconstructs an new solution from a father cell into for a newly
+     * Reconstructs a new solution from a father cell into a newly
      * generated son cell. New cell is stored into the global
      * adaptationMap.
      *
-     * @param adaptionMap Global map storing all values to be adapted
-     * @param father Entity Pointer to the father cell
-     * @param son Entity Pointer to the newly created son cell
-     * @param problem The problem
+     * \param adaptionMap Global map storing all values to be adapted
+     * \param father Entity Pointer to the father cell
+     * \param son Entity Pointer to the newly created son cell
+     * \param problem The problem
      */
     static void reconstructAdaptionValues(Dune::PersistentContainer<Grid, AdaptedValues>& adaptionMap,
             const Element& father, const Element& son, const Problem& problem)
