@@ -20,7 +20,7 @@
 /*!
  * \file
  *
- * \brief Defines the indices required for the two-phase box model.
+ * \brief Defines the indices required for the two-phase decoupled model.
  */
 #ifndef DUMUX_DECOUPLED_2P_INDICES_HH
 #define DUMUX_DECOUPLED_2P_INDICES_HH
@@ -97,7 +97,7 @@ template <int formulation = DecoupledTwoPCommonIndices::pwsn, int PVOffset = 0>
 struct DecoupledTwoPIndices : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
@@ -136,7 +136,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsw, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
@@ -169,7 +169,6 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsw, PVOffset>
  * \brief The indices for the \f$p_w-S_w\f$ formulation of the
  *        isothermal two-phase model.
  *
- * \tparam formulation Index of the formulation
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
@@ -177,7 +176,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pwsw, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
@@ -249,14 +248,13 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsn, PVOffset>
  * \brief The indices for the \f$p_{global}-S_w\f$ formulation of the
  *        isothermal two-phase model.
  *
- * \tparam formulation Index of the formulation
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
 struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSw, PVOffset> : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
@@ -293,7 +291,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSn, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
