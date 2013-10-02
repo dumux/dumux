@@ -25,8 +25,8 @@
 #include <dumux/decoupled/common/fv/fvvelocity.hh>
 
 /**
- * @file
- * @brief  Finite Volume discretization of a two-phase flow pressure equation.
+ * \file
+ * \brief  Finite Volume discretization of a two-phase flow pressure equation.
  */
 
 namespace Dumux
@@ -37,6 +37,7 @@ namespace Dumux
  *
  * Details see FVPressure2P
  *
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
 {
@@ -91,7 +92,10 @@ public:
     // Function which calculates the flux entry
     void getFlux(EntryType&, const Intersection&, const CellData&, const bool);
 
-    //!Initialize
+    /*! \brief Initializes the adaptive pressure model
+     *
+     * \copydetails FVPressure2P::initialize()
+     */
     void initialize()
     {
         ParentType::initialize();
@@ -127,50 +131,56 @@ public:
         // update RHS vector, matrix
         if (problem_.gridAdapt().wasAdapted())
         {
-        this->A_.setSize(gridSize, gridSize); //
-        this->f_.resize(gridSize);
-        this->pressure().resize(gridSize);
+			this->A_.setSize(gridSize, gridSize); //
+			this->f_.resize(gridSize);
+			this->pressure().resize(gridSize);
 
 
-        for (int i = 0; i < gridSize; i++)
-        {
-            CellData& cellData = problem_.variables().cellData(i);
+			for (int i = 0; i < gridSize; i++)
+			{
+				CellData& cellData = problem_.variables().cellData(i);
 
-            switch (pressureType_)
-            {
-            case pw:
-                this->pressure()[i] = cellData.pressure(wPhaseIdx);
-                break;
-            case pn:
-                this->pressure()[i] = cellData.pressure(nPhaseIdx);
-                break;
-            case pGlobal:
-            	this->pressure()[i] = cellData.globalPressure();
-            	break;
-            }
+				switch (pressureType_)
+				{
+				case pw:
+					this->pressure()[i] = cellData.pressure(wPhaseIdx);
+					break;
+				case pn:
+					this->pressure()[i] = cellData.pressure(nPhaseIdx);
+					break;
+				case pGlobal:
+					this->pressure()[i] = cellData.globalPressure();
+					break;
+				}
+			}
+
+			ParentType::initializeMatrix();
         }
-
-        ParentType::initializeMatrix();
-    }
 
 
         ParentType::update();
 
-            calculateVelocity();
+        calculateVelocity();
 
         return;
     }
 
+    /*! \brief Velocity calculation
+     *
+     */
     void calculateVelocity()
     {
-            velocity_.calculateVelocity();
+    	velocity_.calculateVelocity();
     }
 
+    /*! \brief Velocity update
+     *
+     */
     void updateVelocity()
     {
         ParentType::updateVelocity();
 
-            calculateVelocity();
+        calculateVelocity();
     }
 
     /*! \brief Adds pressure output to the output file
