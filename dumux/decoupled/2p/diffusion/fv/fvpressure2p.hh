@@ -24,8 +24,8 @@
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 
 /**
- * @file
- * @brief  Finite Volume discretization of a two-phase flow pressure equation.
+ * \file
+ * \brief  Finite Volume discretization of a two-phase flow pressure equation.
  */
 
 namespace Dumux
@@ -268,6 +268,11 @@ public:
         return;
     }
 
+    /*! \brief Velocity update
+     *
+     *	Reset the velocities in the cellData
+     *
+     */
     void updateVelocity()
     {
         updateMaterialLaws();
@@ -781,7 +786,7 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
  *
  * \copydetails FVPressure::getFluxOnBoundary(EntryType&,const Intersection&,const CellData&,const bool)
  *
- * Dirichlet boundary condition is a pressure depending on the formulation (\f$p_w\f$ (default), \f$p_n\f$, \f$p_{global}\f$),
+ * Dirichlet boundary condition for pressure depends on the formulation (\f$p_w\f$ (default), \f$p_n\f$, \f$p_{global}\f$),
  * Neumann boundary condition are the phase mass fluxes (\f$q_w\f$ and \f$q_n\f$, [\f$\text{kg}/(\text{m}^2 \text{s}\f$])
  */
 template<class TypeTag>
