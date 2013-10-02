@@ -23,8 +23,8 @@
 #include "fluxdata2p.hh"
 
 /**
- * @file
- * @brief  Class including data of one grid cell
+ * \file
+ * \brief  Class including data of one grid cell
  */
 
 namespace Dumux
@@ -630,7 +630,7 @@ public:
     }
 
     //! \cond \private
-    //in the compressible model capillary pressure is not stored eplicitely, however the function is needed to avoid compiler errors
+    //in the compressible model capillary pressure is not stored explicitly, however the function is needed to avoid compiler errors
     void setCapillaryPressure(Scalar pc)
     {
         DUNE_THROW(Dune::NotImplemented,"no capillary pressure stored for compressible models!");
