@@ -101,7 +101,7 @@ SET_INT_PROP(DecoupledTwoP, NumPhases, 2);//!< The number of phases in the 2p mo
 //! Set number of components to 1 for immiscible two-phase models
 SET_INT_PROP(DecoupledTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
 
-//! Set \f$p_w\f$-\f$S_n\f$ formulation as default two-phase formulation
+//! Set \f$p_w\f$-\f$S_w\f$ formulation as default two-phase formulation
 SET_INT_PROP(DecoupledTwoP,
     Formulation,
     DecoupledTwoPCommonIndices::pwsw);
@@ -149,8 +149,7 @@ public:
     typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
 };
 
-//! The spatial parameters to be employed. 
-//! Use BoxSpatialParams by default.
+//! The spatial parameters to be employed. Use FVSpatialParams by default.
 SET_TYPE_PROP(DecoupledTwoP, SpatialParams, FVSpatialParams<TypeTag>);
 
 /*!
