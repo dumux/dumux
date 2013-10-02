@@ -26,8 +26,8 @@
 #include <dumux/decoupled/common/fv/fvvelocity.hh>
 
 /**
- * @file
- * @brief  Two Phase Finite Volume Model
+ * \file
+ * \brief  Two Phase Finite Volume Model
  */
 
 namespace Dumux
@@ -37,7 +37,7 @@ namespace Dumux
 //! \brief Two Phase Finite Volume Model
 /*!
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  *
  */
 template<class TypeTag> class FVPressureVelocity2P: public FVPressure2P<TypeTag>
