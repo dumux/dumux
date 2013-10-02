@@ -24,7 +24,7 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for finite volume pressure models in a twophase sequential model.
+ * \brief Defines the properties required for finite volume pressure models in a two-phase sequential model.
  */
 
 #ifndef DUMUX_FVPRESSUREPORPERTIES2P_ADAPTIVE_DECOUPLED_HH
