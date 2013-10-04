@@ -23,8 +23,8 @@
 #include <dumux/decoupled/2p/2pproperties.hh>
 
 /**
- * @file
- * @brief  Class defining a standard, saturation dependent indicator for grid adaption
+ * \file
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaption
  */
 namespace Dumux
 {
@@ -52,7 +52,7 @@ SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenPercentileSat, 0.2);
 }
 
 /*!\ingroup IMPES
- * @brief  Class defining a standard, saturation dependent indicator for grid adaption
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaption
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -512,6 +512,12 @@ public:
         }
     }
 
+    /*! \brief Check if pressure data is in some physical range
+     *
+     * Returns true if the cell pressure is in some range
+     *
+     *  \param element A grid element
+     */
     bool checkPhysicalRange_(const CellData& cellData)
     {
         for (int j = 0; j < 2; j++)
@@ -522,6 +528,11 @@ public:
         return true;
     }
 
+    /*! \brief Set a lower and upper pressure constraint
+     *
+     *  \param lowerPressureBound lower pressure value
+     *  \param upperPressureBound upper pressure value
+     */
     void setPressureBounds(Scalar lowerPressureBound, Scalar upperPressureBound)
     {
         lowerPressureBound_ = lowerPressureBound;
@@ -564,17 +575,25 @@ public:
             indicatorVectorFlux_.resize(size, -1e100);
     };
 
+    /*! \brief Function for changing the indicatorVector values for refinement
+     *
+     *  \param idx Index of cell which will be refined
+     */
     void setIndicatorToRefine(int idx)
     {
         indicatorVector_[idx] = refineBound_+1;
     }
 
+    /*! \brief Function for changing the indicatorVector values for coarsening
+     *
+     *  \param idx Index of cell which will be coarsen
+     */
     void setIndicatorToCoarse(int idx)
     {
         indicatorVector_[idx] = coarsenBound_ - 1;
     }
 
-    /*! @brief Constructs a GridAdaptionIndicator instance
+    /*! \brief Constructs a GridAdaptionIndicator instance
      *
      *  This standard indicator is based on the saturation gradient. It checks the local gradient compared to the maximum global gradient.
      *  The indicator is compared locally to a refinement/coarsening threshold to decide whether a cell should be marked for refinement or coarsening or should not be adapted.
