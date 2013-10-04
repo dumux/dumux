@@ -23,8 +23,8 @@
 #include "dumux/decoupled/common/fv/fvtransport.hh"
 
 /**
- * @file
- * @brief  Finite Volume discretization of a saturation transport equation
+ * \file
+ * \brief  Finite Volume discretization of a saturation transport equation
  */
 
 namespace Dumux
@@ -231,6 +231,12 @@ public:
         }
     }
 
+    /*! \brief Check if saturation is in physical range.
+     *
+     * \tparam DataEntry Data class
+     * \param entry Entry which is checked
+     *
+     */
     template<class DataEntry>
     bool inPhysicalRange(DataEntry& entry)
     {
@@ -249,6 +255,12 @@ public:
     		updateSaturationSolution(updateVec);
     }
 
+    /*! \brief Updates the primary transport variable.
+     *
+     * \param updateVec Vector containing the global update
+     * \param dt time step for update
+     *
+     */
     void updateTransportedQuantity(TransportSolutionType& updateVec, Scalar dt)
     {
         updateSaturationSolution(updateVec, dt);
@@ -268,6 +280,11 @@ public:
         }
     }
 
+    /*! \brief Globally updates the saturation solution
+     *
+     * \param updateVec Vector containing the global update.
+     * \param dt time step for update
+     */
     void updateSaturationSolution(TransportSolutionType& updateVec, Scalar dt)
     {
         int size = problem_.gridView().size(0);
