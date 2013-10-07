@@ -48,7 +48,7 @@ NEW_PROP_TAG(ProblemEnableGravity);
  * \brief Evaluates the normal component of the Forchheimer velocity
  *        on a (sub)control volume face.
  *
- *        The commonly used Darcy relation looses it's validity for \f$ Re < 1\f$.
+ *        The commonly used Darcy relation looses it's validity for \f$ Re > 1\f$.
  *        If one encounters flow velocities in porous media above this Reynolds number,
  *        the Forchheimer relation can be used. Like the Darcy relation, it relates
  *        the gradient in potential to velocity.
@@ -350,7 +350,7 @@ protected:
       *
       * \param K the tensor that is to be checked.
       *
-      * \return True iff all off-diagonals are zero.
+      * \return True if all off-diagonals are zero.
       *
      */
      const bool isDiagonal_(const Tensor & K) const
