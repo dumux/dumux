@@ -25,8 +25,8 @@
 #include <dumux/decoupled/1p/1pproperties.hh>
 
 /**
- * @file
- * @brief  Single Phase Finite Volume Model
+ * \file
+ * \brief  Single Phase Finite Volume Model
  */
 
 namespace Dumux
@@ -47,7 +47,7 @@ namespace Dumux
  * At the boundary, \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v \cdot \boldsymbol n = q_N\f$
  * on \f$ \Gamma_{Neumann} \f$.
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  *
  */
 template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>

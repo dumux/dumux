@@ -40,7 +40,7 @@ SET_TYPE_PROP(PressureOneP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel
  *
  * \brief  Base class for all single phase diffusion problem
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class DiffusionProblem1P: public OneModelProblem<TypeTag>

@@ -23,8 +23,8 @@
 #include "fluxdata1p.hh"
 
 /**
- * @file
- * @brief  Class including data of one grid cell
+ * \file
+ * \brief  Class including data of one grid cell
  */
 
 namespace Dumux

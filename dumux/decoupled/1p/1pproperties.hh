@@ -83,9 +83,9 @@ namespace Properties
 SET_INT_PROP(DecoupledOneP, NumEq, 1);
 
 //! Set number of phases to 1 for one-phase models
-SET_INT_PROP(DecoupledOneP, NumPhases, 1)
-;
-//!< Each phase consists of 1 pure component
+SET_INT_PROP(DecoupledOneP, NumPhases, 1);
+
+//! Each phase consists of 1 pure component
 SET_INT_PROP(DecoupledOneP, NumComponents, 1);
 
 //! Chose the set of indices for the one-phase formulation
@@ -97,11 +97,10 @@ SET_TYPE_PROP(DecoupledOneP, Variables, VariableClass<TypeTag>);
 //! Set standart CellData of immiscible one-phase models as default
 SET_TYPE_PROP(DecoupledOneP, CellData, CellData1P<TypeTag>);
 
-//! The spatial parameters to be employed. 
-//! Use BoxSpatialParams by default.
+//! The spatial parameters to be employed. Use BoxSpatialParams by default.
 SET_TYPE_PROP(DecoupledOneP, SpatialParams, FVSpatialParamsOneP<TypeTag>);
 
-// enable gravity by default
+//! Enable gravity by default
 SET_BOOL_PROP(DecoupledOneP, ProblemEnableGravity, true);
 }
 }
