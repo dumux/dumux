@@ -37,9 +37,9 @@ class IntersectionMapper
     template<int dim>
     struct ElementLayout
     {
-        bool contains (Dune::GeometryType gt)
+        bool contains (Dune::GeometryType geomType)
         {
-            return gt.dim() == dim;
+            return geomType.dim() == dim;
         }
     };
 

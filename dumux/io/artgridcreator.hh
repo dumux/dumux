@@ -481,9 +481,9 @@ public:
     template<int dim>
     struct FaceLayout
     {
-        bool contains (Dune::GeometryType gt)
+        bool contains (Dune::GeometryType geomType)
         {
-            return gt.dim() == dim-1;
+            return geomType.dim() == dim-1;
         }
     };
     typedef typename GridView::ctype DT;
@@ -525,14 +525,14 @@ public:
         ElementIterator eEndIt = gridView_.template end<0>();
         for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
-             Dune::GeometryType gt = eIt->geometry().type();
+             Dune::GeometryType geomType = eIt->geometry().type();
 
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
              const typename Dune::ReferenceElementContainer<DT,dim>::value_type&
-                 refElement = Dune::ReferenceElements<DT,dim>::general(gt);
+                 refElement = Dune::ReferenceElements<DT,dim>::general(geomType);
 #else
              const typename Dune::GenericReferenceElementContainer<DT,dim>::value_type&
-                 refElement = Dune::GenericReferenceElements<DT,dim>::general(gt);
+                 refElement = Dune::GenericReferenceElements<DT,dim>::general(geomType);
 #endif
 
               // Loop over element faces
@@ -596,8 +596,8 @@ public:
         for (VertexIterator vIt=gridView_.template begin<dim>(); 
              vIt != gridView_.template end<dim>(); ++vIt)
         {
-            Dune::GeometryType gt = vIt->type();
-            std::cout << "visiting " << gt
+            Dune::GeometryType geomType = vIt->type();
+            std::cout << "visiting " << geomType
                       << " at " << vIt->geometry().corner(0)
                       << "\t" << isDuneFractureVertex_[i]
                       << std::endl;

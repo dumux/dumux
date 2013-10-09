@@ -609,12 +609,12 @@ public:
     void update(const GridView& gridView, const Element& element)
     {
         const Geometry& geometry = element.geometry();
-        Dune::GeometryType gt = geometry.type();
+        Dune::GeometryType geomType = geometry.type();
 
-        const ReferenceElement &referenceElement = ReferenceElements::general(gt);
+        const ReferenceElement &referenceElement = ReferenceElements::general(geomType);
 
         const LocalFiniteElement
-            &localFiniteElement = feCache_.get(gt);
+            &localFiniteElement = feCache_.get(geomType);
 
         elementVolume = geometry.volume();
         elementLocal = referenceElement.position(0,0);

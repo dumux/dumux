@@ -68,8 +68,8 @@ public:
         ElementIterator eIt = problem.gridView().template begin<0>();
         const ElementIterator eEndIt = problem.gridView().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
-            Dune::GeometryType geoType = eIt->geometry().type();
-            const ReferenceElement &refElement = ReferenceElements::general(geoType);
+            Dune::GeometryType geomType = eIt->geometry().type();
+            const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
             IntersectionIterator isIt = problem.gridView().ibegin(*eIt);
             IntersectionIterator isEndIt = problem.gridView().iend(*eIt);

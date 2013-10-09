@@ -945,8 +945,8 @@ protected:
         ElementIterator eIt = gridView_().template begin<0>();
         ElementIterator eEndIt = gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
-            Dune::GeometryType geoType = eIt->geometry().type();
-            const ReferenceElement &refElement = ReferenceElements::general(geoType);
+            Dune::GeometryType geomType = eIt->geometry().type();
+            const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
             IntersectionIterator isIt = gridView_().ibegin(*eIt);
             IntersectionIterator isEndIt = gridView_().iend(*eIt);

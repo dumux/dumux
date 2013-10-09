@@ -86,12 +86,12 @@ public:
             // coordinates. This code is based on Dune::P1VTKFunction
             double min=1e100;
             int imin=-1;
-            Dune::GeometryType gt = element.type();
+            Dune::GeometryType geomType = element.type();
             int n = element.template count<dim>();
             for (int i=0; i < n; ++i)
             {
                 Dune::FieldVector<ctype,dim> local =
-                    ReferenceElements::general(gt).position(i,dim);
+                    ReferenceElements::general(geomType).position(i,dim);
                 local -= xi;
                 if (local.infinity_norm()<min)
                 {

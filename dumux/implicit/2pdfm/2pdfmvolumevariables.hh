@@ -263,8 +263,8 @@ public:
                                         int scvIdx)
     {
         Scalar volSCVFracture;
-        Dune::GeometryType gt = element.geometry().type();
-        const ReferenceElement &refElement = ReferenceElements::general(gt);
+        Dune::GeometryType geomType = element.geometry().type();
+        const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
         for (int faceIdx=0; faceIdx<refElement.size(1); faceIdx++)
         {

@@ -174,10 +174,10 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param values The boundary types for the conservation equations
-     * \param pos The position of the finite volume in global coordinates
+     * \param globalPos The position of the finite volume in global coordinates
      */
     void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &pos) const
+                            const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -231,14 +231,14 @@ public:
      *        control volume.
      *
      * \param values The dirichlet values for the primary variables
-     * \param pos The position of the center of the finite volume
+     * \param globalPos The position of the center of the finite volume
      *            for which the dirichlet condition ought to be
      *            set in global coordinates
      *
      * For this method, the \a values parameter stores primary variables.
      */
     void dirichletAtPos(PrimaryVariables &values,
-                        const GlobalPosition &pos) const
+                        const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -333,13 +333,13 @@ public:
      *        boundary segment.
      *
      * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
-     * \param pos The position of the boundary face's integration point in global coordinates
+     * \param globalPos The position of the boundary face's integration point in global coordinates
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
     void neumannAtPos(PrimaryVariables &values,
-                      const GlobalPosition &pos) const
+                      const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Neumann conditions)
@@ -415,7 +415,7 @@ public:
      *        sub-control-volume.
      *
      * \param values The source and sink values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
-     * \param pos The position of the center of the finite volume
+     * \param globalPos The position of the center of the finite volume
      *            for which the source term ought to be
      *            specified in global coordinates
      *
@@ -424,7 +424,7 @@ public:
      * that mass is created, negative ones mean that it vanishes.
      */
     void sourceAtPos(PrimaryVariables &values,
-                     const GlobalPosition &pos) const
+                     const GlobalPosition &globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
@@ -455,14 +455,14 @@ public:
      * \brief Evaluate the initial value for a control volume.
      *
      * \param values The dirichlet values for the primary variables
-     * \param pos The position of the center of the finite volume
+     * \param globalPos The position of the center of the finite volume
      *            for which the initial values ought to be
      *            set (in global coordinates)
      *
      * For this method, the \a values parameter stores primary variables.
      */
     void initialAtPos(PrimaryVariables &values,
-                      const GlobalPosition &pos) const
+                      const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -497,7 +497,7 @@ public:
      * thought as pipes with a cross section of 1 m^2 and 2D problems
      * are assumed to extend 1 m to the back.
      */
-    Scalar extrusionFactorAtPos(const GlobalPosition &pos) const
+    Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
     { return 1.0; }
 
     /*!

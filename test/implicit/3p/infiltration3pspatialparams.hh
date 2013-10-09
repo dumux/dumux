@@ -135,8 +135,8 @@ public:
                                        const FVElementGeometry &fvElemGeom,
                                        int scvIdx) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
     }
@@ -176,10 +176,10 @@ public:
         return materialParams_;
     }
 private:
-    bool isFineMaterial_(const GlobalPosition &pos) const
+    bool isFineMaterial_(const GlobalPosition &globalPos) const
     { return
-            70. <= pos[0] && pos[0] <= 85. &&
-            7.0 <= pos[1] && pos[1] <= 7.50;
+            70. <= globalPos[0] && globalPos[0] <= 85. &&
+            7.0 <= globalPos[1] && globalPos[1] <= 7.50;
     };
 
     Scalar fineK_;

@@ -166,8 +166,8 @@ public:
                                        const FVElementGeometry &fvGeometry,
                                        const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
     }
@@ -184,8 +184,8 @@ public:
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return finePorosity_;
         else
             return coarsePorosity_;
@@ -203,8 +203,8 @@ public:
                                                const FVElementGeometry &fvGeometry,
                                                const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
             return coarseMaterialParams_;
@@ -276,11 +276,11 @@ public:
     }
 
 private:
-    bool isFineMaterial_(const GlobalPosition &pos) const
+    bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
-        if (0.13 <= pos[0] && 1.20 >= pos[0] && 0.32 <= pos[1] && pos[1] <= 0.57)
+        if (0.13 <= globalPos[0] && 1.20 >= globalPos[0] && 0.32 <= globalPos[1] && globalPos[1] <= 0.57)
             return true;
-        else if (0.15 >= pos[1] && 1.20 <= pos[0])
+        else if (0.15 >= globalPos[1] && 1.20 <= globalPos[0])
             return true;
         else return false;
     };

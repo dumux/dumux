@@ -218,8 +218,8 @@ public:
                         Traits::LocalBasisType::Traits::RangeType RT_P;
 
         // select quadrature rule for the element geometry type and with the order=qorder
-        Dune::GeometryType gt = eg.geometry().type();
-        const Dune::QuadratureRule<DF,dim>& rule = Dune::QuadratureRules<DF,dim>::rule(gt,qorder);
+        Dune::GeometryType geomType = eg.geometry().type();
+        const Dune::QuadratureRule<DF,dim>& rule = Dune::QuadratureRules<DF,dim>::rule(geomType,qorder);
 
         // loop over quadrature points
         for (typename Dune::QuadratureRule<DF,dim>::const_iterator it=rule.begin(); it!=rule.end(); ++it)
@@ -387,13 +387,13 @@ public:
 
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
             // get reference element for intersection geometry (reference element for face if dim = 3)
-            const Dune::ReferenceElement<DT,dimIs>& refelem = Dune::ReferenceElements<DT,dimIs>::general(gt);
+            const Dune::ReferenceElement<DT,dimIs>& refelem = Dune::ReferenceElements<DT,dimIs>::general(geomType);
             // get reference element for edges of intersection geometry (reference element for edge if dim = 3), needed for Dirichlet BC
             const Dune::ReferenceElement<DT,dimIs-1> &face_refelem
             = Dune::ReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());
 #else
             // get reference element for intersection geometry (reference element for face if dim = 3)
-            const Dune::GenericReferenceElement<DT,dimIs>& refelem = Dune::GenericReferenceElements<DT,dimIs>::general(gt);
+            const Dune::GenericReferenceElement<DT,dimIs>& refelem = Dune::GenericReferenceElements<DT,dimIs>::general(geomType);
             // get reference element for edges of intersection geometry (reference element for edge if dim = 3), needed for Dirichlet BC
             const Dune::GenericReferenceElement<DT,dimIs-1> &face_refelem
             = Dune::GenericReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());

@@ -780,9 +780,9 @@ public:
     template<int dim>
     struct VertexLayout
     {
-        bool contains(Dune::GeometryType gt) const
+        bool contains(Dune::GeometryType geomType) const
         {
-           return gt.dim() == 0;
+           return geomType.dim() == 0;
         }
     };
     typedef typename Dune::MultipleCodimMultipleGeomTypeMapper<GridView,

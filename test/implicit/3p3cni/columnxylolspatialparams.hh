@@ -167,8 +167,8 @@ public:
                                        const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
     }
@@ -185,8 +185,8 @@ public:
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return finePorosity_;
         else
             return coarsePorosity_;
@@ -204,8 +204,8 @@ public:
                                                const FVElementGeometry &fvGeometry,
                                                const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
             return coarseMaterialParams_;
@@ -225,8 +225,8 @@ public:
                         const FVElementGeometry &fvGeometry,
                         const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineHeatCap_ * 2650 // density of sand [kg/m^3]
                 * (1 - porosity(element, fvGeometry, scvIdx));
         else
@@ -280,9 +280,9 @@ public:
     }
 
 private:
-    bool isFineMaterial_(const GlobalPosition &pos) const
+    bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
-        if (0.90 <= pos[1])
+        if (0.90 <= globalPos[1])
             return true;
         else return false;
     };

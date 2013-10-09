@@ -79,9 +79,9 @@ public:
      * This is not specific to the discretization. By default it just
      * calls temperature().
      *
-     * \param pos The position in global coordinates where the temperature should be specified.
+     * \param globalPos The position in global coordinates where the temperature should be specified.
      */
-    Scalar temperatureAtPos(const GlobalPosition &pos) const
+    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     { return asImp_()->temperature(); }
 
     /*!

@@ -70,9 +70,9 @@ class TwoPDFMSpatialParams : public ImplicitSpatialParams<TypeTag>
     template<int dim>
     struct FaceLayout
     {
-        bool contains (Dune::GeometryType gt)
+        bool contains (Dune::GeometryType geomType)
         {
-            return gt.dim() == dim - 1;
+            return geomType.dim() == dim - 1;
         }
     };
 

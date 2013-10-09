@@ -283,20 +283,20 @@ public:
      * variables.
      *
      * \param values Storage for all primary variables of the initial condition
-     * \param pos The position for which the boundary type is set
+     * \param globalPos The position for which the boundary type is set
      */
     void initialAtPos(PrimaryVariables &values,
-                 const GlobalPosition &pos) const
-    { initial_(values, pos); };
+                 const GlobalPosition &globalPos) const
+    { initial_(values, globalPos); };
 
     // \}
 
 private:
-    void initial_(PrimaryVariables &values, const GlobalPosition &pos) const
+    void initial_(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         Scalar sw = 0.0;
         Scalar pc =
-            MaterialLaw::pc(this->spatialParams().materialLawParams(pos),
+            MaterialLaw::pc(this->spatialParams().materialLawParams(globalPos),
                             sw);
         values[pwIdx] = pnRef_ - pc;
     }

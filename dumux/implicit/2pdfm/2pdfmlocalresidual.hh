@@ -137,8 +137,8 @@ public:
         /*
          * Calculate the fracture volume fraction wf = 0.5 * Fwidth * 0.5 * Length
          */
-        Dune::GeometryType gt = elem.geometry().type();
-        const ReferenceElement &refElement = ReferenceElements::general(gt);
+        Dune::GeometryType geomType = elem.geometry().type();
+        const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
         Scalar vol; //subcontrol volume
         FVElementGeometry fvelem = this->fvGeometry_();
