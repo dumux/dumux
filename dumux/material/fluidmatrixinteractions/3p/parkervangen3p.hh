@@ -404,7 +404,7 @@ public:
      * \param sg saturation of the gas phase.
      * \param sn saturation of the NAPL phase.
      * \param params Array of parameters.
-     * \param phase indicator, The saturation of all phases.
+     * \param phaseIdx indicator, The saturation of all phases.
      */
     static Scalar kr(const Params &params, const int phaseIdx, const Scalar sw, const Scalar sn, const Scalar sg)
     {

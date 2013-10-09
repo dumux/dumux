@@ -778,7 +778,7 @@ public:
      *
      * \param element A DUNE Codim<0> entity which contains the control
      *             volume's associated vertex.
-     * \param vertIdx The local vertex index inside element
+     * \param vIdx The local vertex index inside element
      */
     bool onBoundary(const Element &element, const int vIdx) const
     {

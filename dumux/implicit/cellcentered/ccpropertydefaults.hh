@@ -22,7 +22,7 @@
  * \ingroup CCModel
  * \file
  *
- * \brief Default properties for box models
+ * \brief Default properties for cell centered models
  */
 #ifndef DUMUX_CC_PROPERTY_DEFAULTS_HH
 #define DUMUX_CC_PROPERTY_DEFAULTS_HH
