@@ -29,6 +29,8 @@
 #ifndef DIMENSIONLESS_NUMBERS_HH
 #define DIMENSIONLESS_NUMBERS_HH
 
+#include <dune/common/exceptions.hh>
+
 namespace Dumux
 {
 /*
