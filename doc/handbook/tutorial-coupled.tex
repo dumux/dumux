@@ -265,7 +265,7 @@ the \textit{relative permeability}, the \textit{porosity}, the
 parameters are defined using a so-called \textit{spatial parameters}
 class.
 
-If the box discretization is to used, the spatial parameters class
+If the box discretization is used, the spatial parameters class
 should be derived from the base class
 \texttt{Dumux::BoxSpatialParams<TypeTag>}. Listing
 \ref{tutorial-coupled:spatialparametersfile} shows the file \\
@@ -371,8 +371,8 @@ For the visualization of the results using paraview please refer to section \ref
   edge lengths of $\text{x} = \unit[400]{m}$ and $\text{y} = \unit[500]{m}$ and with
   discretization lengths of $\Delta \text{x} = \unit[20]{m}$ and $\Delta
   \text{y} = \unit[20]{m}$. For this you have to edit the parameter file (\texttt{tutorialproblem\_coupled.input}) 
-  and run the programme again.\\
-  Note, that you do not have to recompile the programme if you make changes to the parameter file.
+  and run the program again.\\
+  Note, that you do not have to recompile the program if you make changes to the parameter file.
 
   
   Change the boundary conditions in the file
@@ -389,8 +389,8 @@ For the visualization of the results using paraview please refer to section \ref
   simplex grids, like \texttt{ALUGrid}. If this is not the case please skip this exercise.
   Change the types of elements used for discretizing the domain. In line \ref{tutorial-coupled:set-gridcreator} of the problem 
   file  the type of gridcreator is chosen. By choosing a different grid creator you can discretize the domain with different elements. 
-  Hint: You can find gridcreators in \texttt{dumux/common/}, change for example from \texttt{cubegridcreator.hh} to \texttt{simplexgridcreator.hh}. 
-  Besides having to change the grid creator it is also necessary to change the ALUGrid type in line \ref{tutorial-coupled:set-grid} from \texttt{Dune::cube} 
+  Hint: You can find gridcreators in \texttt{dumux/io/}, change for example from \texttt{cubegridcreator.hh} to \texttt{simplexgridcreator.hh}. 
+  Besides having to change the grid creator it is also necessary to change the ALUGrid type in line \ref{tutorial-coupled:set-grid-ALU} from \texttt{Dune::cube} 
   to \texttt{Dune::simplex}.
   The shape of the employed elements can be visualized in paraview by choosing \texttt{Surface with Edges}. 
 
@@ -423,11 +423,11 @@ However, this is a rather complicated fluid system which
 considers mixtures of components and also uses tabulated components that need to be initialized -- i.e. the tables need to be filled with values. 
 The initialization of the fluid system is normally done in the constructor of the problem by calling \texttt{GET\_PROP\_TYPE(TypeTag, FluidSystem)::init();}. 
 Remember that the constructor function always has the same name as the respective class, i.e. \texttt{TutorialProblemCoupled(..)}.\\
-As water flow replacing a gas is much faster, test your simulation only until $2000$ seconds and start with a time step of $1$ second.\\
+As water flow replacing a gas is much faster, test your simulation only until $2000$ seconds and start with a time-step of $1$ second.\\
 Please reverse the changes made in this part of the exercise, as we will continue to use immiscible phases from here on and hence do not need a complex fluid system.
 
 \item \textbf{Changing Constitutive Relations} \\
-  Use an unregularized linear law with an entry pressure of $p_e = 0.0\;\text{Pa}$ and maximal capillary pressure of e.g. $p_{c_{max}} = 2000.0\;\text{Pa}$ instead of using a
+  Use an unregularized linear law with an entry pressure of $p_e = \unit[0.0]{Pa}$ and maximal capillary pressure of e.g. $p_{c_{max}} = \unit[2000.0]{Pa}$ instead of using a
  regularized Brooks-Corey law for the
   relative permeability and for the capillary pressure saturation relationship. To do that you have
   to change the material law property (line \ref{tutorial-coupled:eff2abs}) in \texttt{tutorialspatialparams\_coupled.hh}. Leave the type definition of \texttt{Scalar} and remove
@@ -444,7 +444,7 @@ Call the \texttt{set}-functions from the constructor of the \texttt{tutorialspat
   Set up a model domain with the soil properties given in Figure
   \ref{tutorial-coupled:exercise1_d}. Adjust the boundary conditions
   so that water is again flowing from the left to the right of the
-\begin{figure}[bt]
+\begin{figure}[ht]
 \centering
 \begin{tikzpicture}[>=latex]
   % basic sketch
@@ -464,7 +464,7 @@ Call the \texttt{set}-functions from the constructor of the \texttt{tutorialspat
 \end{tikzpicture} 
 \caption{Exercise 1g: Set-up of a model domain with a heterogeneity. Grid spacing: $\Delta x = \unit[20]{m}$ $\Delta y = \unit[20]{m}$.}\label{tutorial-coupled:exercise1_d}
 \end{figure}
-domain. You can use the fluids of exercise 1b).\\
+domain. You can use the fluids of exercise 1b.\\
 \textbf{Hint:} The current position of the control volume can be obtained using \texttt{element\allowbreak.geometry()\allowbreak.corner(scvIdx)}, which
 returns a vector of the global coordinates of the current position.\\
 When does the front cross the material border? In paraview, the
@@ -483,7 +483,7 @@ The new files should contain the definition of new classes with names
 that relate to the file name, such as
 \texttt{Ex2TutorialProblemCoupled}. Make sure that you also adjust the
 guardian macros in lines \ref{tutorial-coupled:guardian1} and
-\ref{tutorial-coupled:guardian1}
+\ref{tutorial-coupled:guardian2}
 in the header files (e.g. change
 \mbox{\texttt{DUMUX\_TUTORIALPROBLEM\_COUPLED\_HH}} to\\
 \mbox{\texttt{DUMUX\_EX2\_TUTORIALPROBLEM\_COUPLED\_HH}}). Include the new problem file in \texttt{tutorial\_coupled.cc}. 
@@ -502,11 +502,11 @@ After this, change the run-time parameters so that they match the
 domain described by figure \ref{tutorial-coupled:ex2_Domain}. Adapt
 the problem class so that the boundary conditions are consistent with
 figure \ref{tutorial-coupled:ex2_BC}. Initially, the domain is fully
-saturated with water and the pressure is $p_w = 5 \times
-10^5\;\text{Pa}$.  Oil infiltrates from the left side. Create a grid
+saturated with water and the pressure is $p_w = \unit[5 \times
+10^5]{Pa}$. Oil infiltrates from the left side. Create a grid
 with $20$ cells in $x$-direction and $10$ cells in $y$-direction. The
-simulation time should be set to $10^6\;\text{s}$ with an
-initial time step size of $100\;\text{s}$. Then, you can compile the program.
+simulation time should be set to $\unit[10^6]{s}$ with an
+initial time-step size of $\unit[100]{s}$. Then, you can compile the program.
 
 
 \begin{figure}[ht]
@@ -567,7 +567,7 @@ initial time step size of $100\;\text{s}$. Then, you can compile the program.
 \end{figure}
 
 \begin{itemize}
- \item Increase the simulation time to e.g. $4\times 10^7 \;\text{s}$. Investigate the saturation: Is the value range reasonable?
+ \item Increase the simulation time to e.g. $\unit[4\times 10^7]{s}$. Investigate the saturation: Is the value range reasonable?
  \item What happens if you increase the resolution of the grid?
 \end{itemize}
 
@@ -596,8 +596,88 @@ Create a new file for the benzene component called \texttt{benzene.hh}
 and implement a new component. (You may get a hint by looking at
 existing components in the directory \verb+/dumux/material/components+). \\
 Use benzene as a new fluid and run the model of Exercise 2 with water
-and benzene. Benzene has a density of $889.51 \, \text{kg} /
-\text{m}^3$ and a viscosity of $0.00112 \, \text{Pa} \; \text{s}$.
+and benzene. Benzene has a density of $889.51\,\text{kg} /
+\text{m}^3$ and a viscosity of $0.00112\,\text{Pa} \, \text{s}$.
+
+
+\subsubsection{Exercise 5: Time Dependent Boundary Conditions}
+
+In this exercise we want to investigate the influence of time dependent boundary conditions. For this, redo the steps of exercise 2 and create a new problem and spatial parameters file. 
+
+After this, change the run-time parameters so that they match the
+domain described by figure \ref{tutorial-coupled:ex5_Domain}. Adapt
+the problem class so that the boundary conditions are consistent with
+figure \ref{tutorial-coupled:ex5_BC}. Here you can see the time dependence of the nonwetting saturation, where water infiltrates only during $\unit[10^5]{s}$ and $\unit[4 \cdot 10^5]{s}$. To implement these time dependencies you need the actual time $t_{n+1}=t_n + \Delta t$ and the endtime of the simulation. For this you can use the methods \texttt{this->timeManager().time()}, \texttt{this->timeManager().timeStepSize()} and \texttt{this->timeManager().endtime()}. 
+
+Initially, the domain is fully saturated with oil and the pressure is $p_w = 2 \times
+10^5\,\text{Pa}$.  Water infiltrates from the left side. Create a grid
+with $100$ cells in $x$-direction and $10$ cells in $y$-direction. The
+simulation time should be set to $5 \cdot 10^5\,\text{s}$ with an
+initial time-step size of $10\,\text{s}$. To avoid too big time-step sizes you should set the parameter \texttt{MaxTimeStepSize} for the group \texttt{TimeManager} (in your input file) to $\unit[1000]{s}$.  Then, you can compile the program.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.7,>=latex]
+  % basic sketch
+  \fill [pattern=north west lines] (0,0) rectangle ++(10,-0.25);
+  \fill [pattern=north west lines] (0,5) rectangle ++(10,0.25);
+  \draw (0,0) rectangle ++(10,5);
+  \foreach \y in {0.5,1.5,...,4.5}
+    \draw [->](10.2,\y) -- ++(0.8,0);
+  % arrows
+  \draw[|<->|] (-0.2,0) -- ++(0,5);
+  \node [anchor=east] at (-0.2,1.5){$\unit[50]{m}$};
+  \draw[|<->|] (0,5.35) -- ++(10,0);
+  \node [anchor=south] at (2.5,5.2){$\unit[100]{m}$};  
+  % labels
+  \node [anchor=south] at (5,5.25){no flow};
+  \node [anchor=north] at (5,-0.25){no flow};
+  \node [anchor=west] at(11,2){$q_n = \unitfrac[1 \cdot 10^{-3}]{kg}{m^2 s}$};
+  \node [anchor=west] at(11,3){$q_w = 0$};
+  \node [anchor=west] at(-4,2){$S_n(t)$};
+  \node [anchor=west] at(-4,3){$p_w = \unit[2 \cdot 10^5]{Pa}$};
+  \node [anchor=south west] at (2.5,3.4){$\mathbf{K} = \unit[10^{-7}]{m^2}$};
+  \node [anchor=south west] at (2.5,2.6){$\phi = 0.2$};
+  \node [anchor=south west] at (2.5,1.8){\textsc{Brooks-Corey Law}};
+  \node [anchor=south west] at (2.5,1.0){$\lambda = 2, \; p_e = \unit[500]{Pa}$};
+\end{tikzpicture}
+\caption{Set-up of the model domain and the soil parameters}\label{tutorial-coupled:ex5_Domain}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.9,>=latex]
+    % Draw axes
+    \draw [<->,thick] (0,6) node (yaxis) [above] {$S_n$}
+        |- (11,0) node (xaxis) [right] {time\,[s]};
+    \draw plot[smooth,samples=100,domain=0:1] (6*\x + 2 ,{5*sin((\x+1)*pi r)+5});
+	\draw [-] (0,5) -- (2,5);
+	\draw [-] (8,5) -- (10,5);
+    \draw [dashed] (2,5) -- (2,0);
+    \draw [dashed] (8,5) -- (8,0);
+    \draw [dashed] (10,5) -- (10,0);
+    
+    % axes labeling
+    \draw [-] (-0.1,5) -- (0.1,5);
+    \node [anchor=west] at(-0.5,5){$1$};
+    \draw [-] (-0.1,0) -- (0.1,0);
+    \node [anchor=west] at(-0.5,0){$0$};
+    \draw [-] (2,0.1) -- (2,-0.1);
+    \node [anchor=west] at(1.5,-0.4){$1\cdot10^{5}$};
+    \draw [-] (8,0.1) -- (8,-0.1);
+    \node [anchor=west] at(7.5,-0.4){$4\cdot10^{5}$};
+    \draw [-] (10,0.1) -- (10,-0.1);    
+    \node [anchor=west] at(9.5,-0.4){$5\cdot10^{5}$}; 
+    
+    \node [anchor=base] at (5,3){$1-\sin(\pi\frac{\text{time}-10^5}{3\cdot 10^5 })$};
+\end{tikzpicture}
+\caption{Time Dependent Boundary Conditions}\label{tutorial-coupled:ex5_BC}
+\end{figure}
+
+\begin{itemize}
+ \item Open paraview and plot the values of $S_n$ at time $\unit[5 \cdot 10^5]{s}$ over the $x$-axis.\\ (\texttt{Filter->Data Analysis->Plot Over Line}) 
+ \item What happens without any time-step restriction?
+\end{itemize}
 
 \clearpage \newpage
 %%% Local Variables: 

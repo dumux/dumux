@@ -141,7 +141,7 @@ for the problem of interest are specified in line
 Now we arrive at some model parameters of the applied two-phase decoupled 
 model. First, in line  \ref{tutorial-decoupled:cflflux} a flux function for the evaluation of the cfl-criterion is defined. This is optional as there exists also a default flux function. The choice depends on the problem which has to be solved. For cases which are not advection dominated the one chosen here is more reasonable.
 Line \ref{tutorial-decoupled:cflfactor} assigns the CFL-factor to be used in the
-simulation run, which scales the time step size (kind of security factor). The last property in line \ref{tutorial-decoupled:gravity} 
+simulation run, which scales the time-step size (kind of security factor). The last property in line \ref{tutorial-decoupled:gravity} 
 is optional and tells the model not to use gravity.
 
 After all necessary information is written into the property system and 
@@ -153,12 +153,12 @@ As its property, the problem class itself is also derived from a parent,
 which is not needed in this tutorial.
 
 Beside the definition of the boundary and initial conditions (discussed in 
-subsection \ref{tutorial-coupled:problem} from 4$^th$ paragraph on page \pageref{tutorial-coupled:boundaryStart}), the problem class also contains
+subsection \ref{tutorial-coupled:problem} from 4$^{th}$ paragraph on page \pageref{tutorial-coupled:boundaryStart}), the problem class also contains
 general information about the current simulation. First, the name used by
 the \texttt{VTK-writer} to generate output is defined in the method of line
 \ref{tutorial-decoupled:name}, and line \ref{tutorial-decoupled:restart} indicates
 whether restart files are written. As decoupled schemes usually feature small 
-timesteps, it can be usefull to set an output interval larger than 1. The respective function is called in line \ref{tutorial-decoupled:outputinterval}, which gets the output interval as argument.
+time-steps, it can be usefull to set an output interval larger than 1. The respective function is called in line \ref{tutorial-decoupled:outputinterval}, which gets the output interval as argument.
 
 The following methods all have in common that they may be dependent on space.
 Hence, they all have either an \texttt{element} or an \texttt{intersection} as their
@@ -181,7 +181,7 @@ Listing \ref{tutorial-decoupled:spatialparamsfile} shows the file
 \end{lst}
 As this file only slightly differs from the coupled version, consult 
 chapter \ref{tutorial-coupled:description-spatialParameters} for explanations.
-However, as a standard Finite-Volume--scheme is used, in contrast to the box-method
+However, as a standard Finite Volume scheme is used, in contrast to the box-method
 in the coupled case, the argument list here is the same as for the problem 
 functions: Either an \texttt{element}, or only the global position if the function is called \texttt{...AtPos(...)}.
 
@@ -198,7 +198,7 @@ For Exercise 1 you only have to make some small changes in the tutorial files.
 \item \textbf{Altering output}
 
 To get an impression what the results should look like you can first run the original version of the decoupled tutorial model by typing  \texttt{./tutorial\_decoupled}. The runtime parameters which are set can be found in the input file (listing~\ref{tutorial-decoupled:parameter-file}). If the input file has the same name than the main file (e.g. \texttt{tutorial\_decoupled.cc} and \texttt{tutorial\_decoupled.input}), it is automatically chosen. If the name differs the program has to be started typing \texttt{./tutorial\_decoupled -parameterFile <filename>.input}. For more options you can also type \texttt{./tutorial\_decoupled -h}. For the visualisation with paraview please refer to \ref{quick-start-guide}.\\
-As you can see, the simulation creates many output files. To reduce these in order to perform longer simulations, change the method responsible for output (line \ref{tutorial-decoupled:outputinterval} in the file \texttt{tutorialproblem\_decoupled}) as to write an output only every 20 timesteps. Compile the main file by typing \texttt{make tutorial\_decoupled} and run the model. Now, run the simulation for 5e5 seconds.
+As you can see, the simulation creates many output files. To reduce these in order to perform longer simulations, change the method responsible for output (line \ref{tutorial-decoupled:outputinterval} in the file \texttt{tutorialproblem\_decoupled}) as to write an output only every 20 time-steps. Compile the main file by typing \texttt{make tutorial\_decoupled} and run the model. Now, run the simulation for 5e5 seconds.
 
 \item \textbf{Changing the Model Domain and the Boundary Conditions} \\
 Change the size of the model domain so that you get a rectangle
@@ -209,17 +209,17 @@ Change the boundary conditions in the file \texttt{tutorialproblem\_decoupled.hh
 Now you can change the fluids. Use DNAPL instead of Oil and Brine instead of Water. To do that you have to select different components via the property system in the problem file:
 \begin{enumerate}
  \item Brine: The class \texttt{Dumux::Brine} acts as an adapter to the fluid system that alters a pure water class by adding some salt. Hence, the class \texttt{Dumux::Brine} uses a pure water class, such as \texttt{Dumux::H2O}, as a second template argument after the data type \texttt{<Scalar>} as a template argument (be sure to use the complete water class with its own template parameter).
- \item DNAPL: A standard set of chemical substances, such as Water and Brine, is already included (via a list of \texttt{\#include ..} commandos) and hence easily accessible by default. This is not the case for the class \texttt{Dumux::SimpleDNAPL}, however, which is located in the folder \texttt{dumux/material/components/}. Try to include the file as well as select the component via the property system.
+ \item DNAPL: A standard set of chemical substances, such as Water and Brine, is already included (via a list of \texttt{\#include ..} commandos) and hence easily accessible by default. This is not the case for the class \texttt{Dumux::DNAPL}, however, which is located in the folder \texttt{dumux/material/components/}. Try to include the file as well as select the component via the property system.
 \end{enumerate}
 If you want to take a closer look at how the fluid classes are defined and which substances are already available please browse through the files in the directory
 \texttt{/dumux/material/components}.
 
 \item \textbf{Use the \Dumux fluid system}\label{dec-ex1-fluidsystem} \\
-\Dumux usually organizes fluid mixtures via a \texttt{fluidsystem}, see also chapter \ref{sec:fluidframework}. In order to include a fluidsystem you first have to comment the lines \ref{tutorial-coupled:2p-system-start} to \ref{tutorial-coupled:2p-system-end} in the problem file. If you use eclipse, this can easily be done by pressing \textit{str + shift + 7} -- the same as to cancel the comment later on.\\
+\Dumux usually organizes fluid mixtures via a \texttt{fluidsystem}, see also chapter \ref{sec:fluidframework}. In order to include a fluidsystem you first have to comment the lines \ref{tutorial-decoupled:2p-system-start} to \ref{tutorial-decoupled:2p-system-end} in the problem file. If you use eclipse, this can easily be done by pressing \textit{str + shift + 7} -- the same as to cancel the comment later on.\\
 Now include the file \texttt{fluidsystems/h2oairsystem.hh} in the material folder, and set a property \texttt{FluidSystem} with the appropriate type, \texttt{Dumux::H2OAirFluidSystem<TypeTag>}. However, this rather complicated fluidsystem uses tabularized fluid data, which need to be initialized (i.e. the tables need to be filled with values) in the constructor body of the current problem by adding \texttt{GET\_PROP\_TYPE(TypeTag, FluidSystem)::init();}. Remember that the constructor function always has the same name as the respective class, i.e. \texttt{TutorialProblemDecoupled(..)}.\\
 To avoid the initialization, use the simpler version of water \texttt{Dumux::SimpleH2O} or a non-tabulated version \texttt{Dumux::H2O}. This can be done by setting the property \texttt{Components} type \texttt{H2O},
 as is done in all the test problems of the decoupled 2p2c model.\\
-The density of the gas is magnitudes smaller than that of oil, so please decrease the injection rate to $q_n = -3 \times 10^{-4}$ $\left[\frac{\textnormal{kg}}{\textnormal{m}^2 \textnormal{s}}\right]$. Also reduce the simulation duration to 2e4 seconds.\\
+The density of the gas is magnitudes smaller than that of oil, so please decrease the outfow rate to $q_n = 3 \times 10^{-4}$ $\left[\frac{\textnormal{kg}}{\textnormal{m}^2 \textnormal{s}}\right]$. Also reduce the simulation duration to 2e4 seconds.\\
 Please reverse the changes of this example, as we still use bulk phases and hence do not need such an extensive fluid system.
  
 \item \textbf{Heterogeneities}  \\
@@ -245,7 +245,7 @@ Set up a model domain with the soil properties given in figure \ref{tutorial-deo
 \caption{Exercise 1d: Set-up of a model domain a heterogeneity. $\Delta x = \Delta y = \unit[20]{m}$.}
 \label{tutorial-deoucpled:exercise1_d}
 \end{figure}
-When does the front cross the material border? In paraview, the option \textit{View} $\rightarrow$ \textit{Animation View} is nice to get a rough feeling of the timestep sizes.
+When does the front cross the material border? In paraview, the option \textit{View} $\rightarrow$ \textit{Animation View} is nice to get a rough feeling of the time-step sizes.
 \end{enumerate}
 
 \subsubsection{Exercise 2}
@@ -271,10 +271,10 @@ After this, change the domain size (parameter input file) to match the domain de
 by figure \ref{tutorial-decoupled:ex2_Domain}. Adapt the problem class
 so that the boundary conditions are consistent with figure
 \ref{tutorial-decoupled:ex2_BC}. Initially, the domain is fully saturated
-with water and the pressure is $p_w = 2 \times 10^5 \text{Pa}$ . Oil
+with water and the pressure is $p_w = 2 \times 10^5 \, \text{Pa}$ . Oil
 infiltrates from the left side. Create a grid with $20$ cells in
 $x$-direction and $10$ cells in $y$-direction. The simulation time
-should be set to $2e4 \text{s}$.
+should be set to $\unit[1e6]{s}$.
 
 Now include your new problem file in the main file and replace the
 \texttt{TutorialProblemDecoupled} type tag by the one you've created and
@@ -305,13 +305,13 @@ compile the program.
   \node [anchor=south west] at (11,5.4){$\mathbf{K} = \unit[10^{-7}]{m^2}$};
   \node [anchor=south west] at (11,4.6){$\phi = 0.2$};
   \node [anchor=south west] at (11,3.8){\textsc{Brooks-Corey Law}};
-  \node [anchor=south west] at (11,3.0){$\lambda = 1.8, p_b = \unit[1000]{Pa}$};
+  \node [anchor=south west] at (11,3.0){$\lambda = 1.8, p_e = \unit[1000]{Pa}$};
   \draw [->] (11,4) -- (9.5,2.5);
   \draw [dashed] (11,-1) rectangle ++(7,3.5);
   \node [anchor=south west] at (11,1.4){$\mathbf{K} = \unit[10^{-9}]{m^2}$};
   \node [anchor=south west] at (11,0.6){$\phi = 0.15$};
   \node [anchor=south west] at (11,-0.2){\textsc{Brooks-Corey Law}};
-  \node [anchor=south west] at (11,-1.0){$\lambda = 2, p_b = \unit[500]{Pa}$};
+  \node [anchor=south west] at (11,-1.0){$\lambda = 2, p_e = \unit[1500]{Pa}$};
   \draw [->] (11,1.5) -- (7,2.5);
 \end{tikzpicture}
 \caption{Set-up of the model domain and the soil parameters}\label{tutorial-decoupled:ex2_Domain}
@@ -331,7 +331,7 @@ compile the program.
   \node [anchor=south] at (5,5.25){no flow};
   \node [anchor=north] at (5,-0.25){no flow};
   \node [anchor=west] at(11,2){$q_n = 0$};
-  \node [anchor=west] at(11,3){$q_w = \unitfrac[3 \cdot 10^{-4}]{kg}{m^2 s}$};
+  \node [anchor=west] at(11,3){$q_w = \unitfrac[2 \cdot 10^{-4}]{kg}{m^2 s}$};
   \node [anchor=west] at(-4,2){$S_w = 0$};
   \node [anchor=west] at(-4,3){$p_w = \unit[2 \cdot 10^5]{Pa}$};
 \end{tikzpicture}
@@ -339,7 +339,7 @@ compile the program.
 \end{figure}
 
 \begin{itemize}
- \item What happens if you increase the resolution of the grid? Hint: Paraview can visualize the timesteps via the ``Animation View'' (to be enabled unter the button \textit{View}).
+ \item What happens if you increase the resolution of the grid? Hint: Paraview can visualize the time-steps via the ``Animation View'' (to be enabled unter the button \textit{View}).
  \item Set the CFL-factor to 1 and investigate the saturation: Is the value range reasonable?
  \item Further increase the CFL-factor to 2 and investigate the saturation.
 \end{itemize}
@@ -356,10 +356,85 @@ systems in the directory \verb+/dumux/material/fluidsystems+.)
 
 Use benzene as a new fluid and run the model of Exercise 2 with water
 and benzene. Benzene has a density of $889.51 \, \text{kg} / \text{m}^3$
-and a viscosity of $0.00112 \, \text{Pa} \; \text{s}$. 
+and a viscosity of $0.00112 \, \text{Pa} \, \text{s}$. 
 
+\subsubsection{Exercise 5: Time Dependent Boundary Conditions}
 
-\subsubsection{Exercise 5}
+In this exercise we want to investigate the influence of time dependent boundary conditions. For this, redo the steps of exercise 2 and create a new problem and spatial parameters file. 
+
+After this, change the run-time parameters so that they match the
+domain described by figure \ref{tutorial-decoupled:ex5_Domain}. Adapt
+the problem class so that the boundary conditions are consistent with
+figure \ref{tutorial-decoupled:ex5_BC}. Here you can see the time dependence of the wetting saturation, where water infiltrates only during $10^5\,\text{s}$ and $4 \cdot 10^5\,\text{s}$. To implement these time dependencies you need the actual time $t_{n+1}=t_n + \Delta t$ and the endtime of the simulation. For this you can use the methods \texttt{this->timeManager().time()}, \texttt{this->timeManager().timeStepSize()} and \texttt{this->timeManager().endtime()}. 
+
+Initially, the domain is fully saturated with oil and the pressure is $p_w = 2 \times
+10^5\,\text{Pa}$.  Water infiltrates from the left side. Create a grid
+with $100$ cells in $x$-direction and $10$ cells in $y$-direction. The
+simulation time should be set to $5 \cdot 10^5\,\text{s}$ with an
+initial time-step size of $10\,\text{s}$. To avoid too big time-step sizes you should set the parameter \texttt{MaxTimeStepSize} for the group \texttt{TimeManager} (in your input file) to $\unit[100]{s}$. You should only create output files every $100^{th}$ time-step (see exercise 1a). Then, you can compile the program.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.7,>=latex]
+  % basic sketch
+  \fill [pattern=north west lines] (0,0) rectangle ++(10,-0.25);
+  \fill [pattern=north west lines] (0,5) rectangle ++(10,0.25);
+  \draw (0,0) rectangle ++(10,5);
+  \foreach \y in {0.5,1.5,...,4.5}
+    \draw [->](10.2,\y) -- ++(0.8,0);
+  % arrows
+  \draw[|<->|] (-0.2,0) -- ++(0,5);
+  \node [anchor=east] at (-0.2,1.5){$\unit[50]{m}$};
+  \draw[|<->|] (0,5.35) -- ++(10,0);
+  \node [anchor=south] at (2.5,5.2){$\unit[100]{m}$};  
+  % labels
+  \node [anchor=south] at (5,5.25){no flow};
+  \node [anchor=north] at (5,-0.25){no flow};
+  \node [anchor=west] at(11,2){$q_n = \unitfrac[1 \cdot 10^{-3}]{kg}{m^2 s}$};
+  \node [anchor=west] at(11,3){$q_w = 0$};
+  \node [anchor=west] at(-4,2){$S_w(t)$};
+  \node [anchor=west] at(-4,3){$p_w = \unit[2 \cdot 10^5]{Pa}$};
+  \node [anchor=south west] at (2.5,3.4){$\mathbf{K} = \unit[10^{-7}]{m^2}$};
+  \node [anchor=south west] at (2.5,2.6){$\phi = 0.2$};
+  \node [anchor=south west] at (2.5,1.8){\textsc{Brooks-Corey Law}};
+  \node [anchor=south west] at (2.5,1.0){$\lambda = 2, \; p_e = \unit[500]{Pa}$};
+\end{tikzpicture}
+\caption{Set-up of the model domain and the soil parameters}\label{tutorial-decoupled:ex5_Domain}
+\end{figure}
+
+%  \draw (0,0) sin (5,5) cos (10,0);
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.9,>=latex]
+    % Draw axes
+    \draw [<->,thick] (0,6) node (yaxis) [above] {$S_w$}
+        |- (11,0) node (xaxis) [right] {time\,[s]};
+    \draw plot[smooth,samples=100,domain=0:1] (6*\x + 2 ,{5*sin((\x)*pi r)});
+	\draw [dashed] (0,5) -- (5,5);
+    
+    % axes labeling
+    \draw [-] (-0.1,5) -- (0.1,5);
+    \node [anchor=west] at(-0.5,5){$1$};
+    \draw [-] (-0.1,0) -- (0.1,0);
+    \node [anchor=west] at(-0.5,0){$0$};
+    \draw [-] (2,0.1) -- (2,-0.1);
+    \node [anchor=west] at(1.5,-0.4){$1\cdot10^{5}$};
+    \draw [-] (8,0.1) -- (8,-0.1);
+    \node [anchor=west] at(7.5,-0.4){$4\cdot10^{5}$};
+    \draw [-] (10,0.1) -- (10,-0.1);    
+    \node [anchor=west] at(9.5,-0.4){$5\cdot10^{5}$}; 
+    
+    \node [anchor=base] at (5,2){$\sin(\pi\frac{\text{time}-10^5}{3\cdot 10^5 })$};
+\end{tikzpicture}
+\caption{Time Dependent Boundary Conditions}\label{tutorial-decoupled:ex5_BC}
+\end{figure}
+
+\begin{itemize}
+ \item Open paraview and plot the values of $S_w$ at time $\unit[5 \cdot 10^5]{s}$ over the $x-$axis.\\ (\texttt{Filter->Data Analysis->Plot Over Line}) 
+ \item What happens without any time-step restriction?
+\end{itemize}
+
+\subsubsection{Exercise 6}
 If both the coupled and the decoupled tutorial are completed, one should have noticed that the function arguments in the problem function differ slighty, as the numerical models differ. However, both are functions that depend on space, so both models can also work with functions based ond \mbox{\texttt{...AtPos(GlobalPosition \& globalPos)}}, no matter if we model coupled or decoupled. Try to formulate a spatial parameters file that works with both problems, the coupled and the decoupled. Therein, only use functions at the position.
 
 %%% Local Variables: 
