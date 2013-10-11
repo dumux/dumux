@@ -40,6 +40,9 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
     parameter "AddVelocity" of the group "Vtk" or the corresponding property 
     "VtkAddVelocity." See test/implicit/1p2c for an example.
 
+  - The CMake build system support uses the experimental mechanisms from DUNE.
+    Recent versions of Dune 2.3-svn or newer are required to use CMake.
+
   - Our naming rules have been refined and enforced for member functions and
     variables. Many inconsistencies could be removed, especially the special
     status of the capitalized "S" indicating saturation. See the deprecation
@@ -52,7 +55,10 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
   - The ...FVElementGeometry classes have been cleaned up a bit. See the 
     deprecation listings below or FS#192 for details.
 
+  - Added compiler support for Clang 3.2, Clang 3.3, and GCC 4.8.
+
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+  - none
 
 * Deprecated CLASSES/FILES, to be removed after 2.4:
   - OnePBoxModel, OnePTwoCBoxModel -> OnePModel, OnePTwoCModel
@@ -307,7 +313,7 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     the indexing of phases and components, and the preference of the 
     partial name "params" over "parameters." For details, see also the 
     deprecations listed below.
-    
+
   - Added compiler support for GCC 4.7 and Clang 3.1.
 
 * IMMEDIATE INTERFACE CHANGES not allowing a deprecation period:
