@@ -1,14 +1,12 @@
-### Eclipse Workspace Patch 1.0
-#P dumux-stable
-Index: tutorial/tutorialproblem_decoupled.hh
-===================================================================
---- tutorial/tutorialproblem_decoupled.hh	(revision 8322)
-+++ tutorial/tutorialproblem_decoupled.hh	(working copy)
-@@ -144,7 +144,7 @@
+--- orig_tutorialproblem_decoupled.hh	2013-09-30 15:23:52.407775870 +0200
++++ tutorialproblem_decoupled.hh	2013-09-30 15:22:31.163304757 +0200
+@@ -134,8 +134,8 @@
+     TutorialProblemDecoupled(TimeManager &timeManager, const GridView &gridView)
          : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
      {
-         //write only every 10th time step to output file
--        this->setOutputInterval(1);/*@\label{tutorial-decoupled:outputinterval}@*/
+-        //write only every 10th time step to output file
+-        this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
++        //write only every 20th time step to output file
 +        this->setOutputInterval(20);/*@\label{tutorial-decoupled:outputinterval}@*/
      }
  

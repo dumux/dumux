@@ -1,6 +1,6 @@
---- orig_tutorialspatialparams_coupled.hh	2012-09-24 11:02:12.440395726 +0200
-+++ ex1g_tutorialspatialparams_coupled.hh	2012-09-24 11:30:02.627501752 +0200
-@@ -83,6 +83,7 @@
+--- orig_tutorialspatialparams_coupled.hh	2013-09-30 11:19:36.000000000 +0200
++++ tutorialspatialparams_coupled.hh	2013-09-30 14:18:55.570594033 +0200
+@@ -82,6 +82,7 @@
      // Get object types for function arguments
      typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
      typedef typename Grid::Traits::template Codim<0>::Entity Element;
@@ -8,66 +8,73 @@
  
  public:
      // get material law from property system
-@@ -104,7 +105,13 @@
+@@ -103,7 +104,16 @@
      const Dune::FieldMatrix<Scalar, dim, dim> &intrinsicPermeability(const Element &element, /*@\label{tutorial-coupled:permeability}@*/
                                                      const FVElementGeometry &fvGeometry,
                                                      const int scvIdx) const
 -    { return K_; }
 +    {
-+        GlobalPosition globalPos = element.geometry().corner(scvIdx);
-+        if (globalPos[0] < 300)
-+            return KLeft_;
-+        else
-+            return KRight_;
++    	GlobalPosition globalPos = element.geometry().corner(scvIdx);
++
++    	if(globalPos[0] < 300){
++    		return KLeft_;
++    	}else{
++    		return KRight_;
++    	}
++
 +    }
  
      /*! Defines the porosity \f$[-]\f$ of the porous medium depending
       * on the position in the domain
-@@ -120,7 +127,13 @@
+@@ -119,7 +129,17 @@
      Scalar porosity(const Element &element,                    /*@\label{tutorial-coupled:porosity}@*/
                      const FVElementGeometry &fvGeometry,
                      const int scvIdx) const
 -    { return 0.2; }
 +    {
-+        GlobalPosition globalPos = element.geometry().corner(scvIdx);
-+        if (globalPos[0] < 300)
-+            return poroLeft_;
-+        else
-+            return poroRight_;
++
++    	GlobalPosition globalPos = element.geometry().corner(scvIdx);
++
++    	if(globalPos[0] < 300){
++    		return poroLeft_;
++    	}else{
++    		return poroRight_;
++    	}
++
 +    }
  
      /*! Returns the parameter object for the material law (i.e. Brooks-Corey)
       *  depending on the position in the domain
-@@ -143,12 +156,17 @@
+@@ -142,12 +162,17 @@
      // constructor
      TutorialSpatialParamsCoupled(const GridView& gridView) :
-         BoxSpatialParams<TypeTag>(gridView),
+         ImplicitSpatialParams<TypeTag>(gridView),
 -        K_(0)
 +        KLeft_(0), KRight_(0)
      {
          //set main diagonal entries of the permeability tensor to a value
          //setting to one value means: isotropic, homogeneous
-         for (int i = 0; i < dim; i++)
+-        for (int i = 0; i < dim; i++)
 -            K_[i][i] = 1e-7;
++        for (int i = 0; i < dim; i++){
 +            KLeft_[i][i] = 1e-8;
-+        for (int i = 0; i < dim; i++)
-+            KRight_[i][i] = 1e-8;
++            KRight_[i][i] = 1e-9;
++        }
 +
-+        poroLeft_ = 0.3;
-+        poroRight_ = 0.15;
++        poroLeft_ = 0.15;
++        poroRight_ = 0.3;
  
          //set residual saturations
          materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
-@@ -160,7 +178,11 @@
+@@ -159,7 +184,10 @@
      }
  
  private:
 -    Dune::FieldMatrix<Scalar, dim, dim> K_;
-+    Dune::FieldMatrix<Scalar, dim, dim> KLeft_;
-+    Dune::FieldMatrix<Scalar, dim, dim> KRight_;
++    Dune::FieldMatrix<Scalar,dim,dim> KLeft_;
++    Dune::FieldMatrix<Scalar,dim,dim> KRight_;
 +    Scalar poroLeft_;
 +    Scalar poroRight_;
-+    Scalar eps_;
      // Object that holds the values/parameters of the selected material law.
      MaterialLawParams materialParams_;                 /*@\label{tutorial-coupled:matParamsObject}@*/
  };

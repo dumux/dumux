@@ -173,7 +173,6 @@ public:
         Scalar right = this->bBoxMax()[0];
         // extraction of oil on the right boundary for approx. 1.e6 seconds
         if (globalPos[0] > right - eps_) {
-            // oil outflux of 30 g/(m * s) on the right boundary.
             values[Indices::contiWEqIdx] = 2e-4;
             values[Indices::contiNEqIdx] = 0;
         } else {

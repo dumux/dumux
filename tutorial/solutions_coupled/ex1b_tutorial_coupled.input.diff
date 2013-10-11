@@ -1,15 +1,16 @@
---- orig_tutorial_coupled.input	2012-09-24 08:57:57.039673539 +0200
-+++ tutorial_coupled.input	2012-09-24 08:59:13.544815168 +0200
+--- orig_tutorial_coupled.input	2013-09-30 10:26:43.000000000 +0200
++++ tutorial_coupled.input	2013-09-30 10:27:42.657685301 +0200
 @@ -13,10 +13,10 @@
  DtInitial = 10 # initial time step size [s]
  
  [Grid]
--UpperRightX = 100 # x-coordinate of the upper-right corner of the grid [m]
--UpperRightY = 50 # y-coordinate of the upper-right corner of the grid [m]
+-UpperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
+-UpperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
+-NumberOfCellsX = 100 # x-resolution of the grid
+-NumberOfCellsY = 1 # y-resolution of the grid
 +UpperRightX = 400 # x-coordinate of the upper-right corner of the grid [m]
 +UpperRightY = 500 # y-coordinate of the upper-right corner of the grid [m]
- NumberOfCellsX = 20 # x-resolution of the grid
--NumberOfCellsY = 10 # y-resolution of the grid
++NumberOfCellsX = 20 # x-resolution of the grid
 +NumberOfCellsY = 25 # y-resolution of the grid
  
  ###############################################################

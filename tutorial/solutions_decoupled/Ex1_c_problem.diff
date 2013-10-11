@@ -1,20 +1,16 @@
-### Eclipse Workspace Patch 1.0
-#P dumux-stable
-Index: tutorial/tutorialproblem_decoupled.hh
-===================================================================
---- tutorial/tutorialproblem_decoupled.hh	(revision 8322)
-+++ tutorial/tutorialproblem_decoupled.hh	(working copy)
-@@ -47,7 +47,8 @@
+--- ex1b_tutorialproblem_decoupled.hh	2013-09-30 15:27:31.000000000 +0200
++++ tutorialproblem_decoupled.hh	2013-09-30 15:36:26.961561965 +0200
+@@ -41,7 +41,8 @@
  
  // the components that are used
  #include <dumux/material/components/h2o.hh>
--#include <dumux/material/components/oil.hh>
+-#include <dumux/material/components/lnapl.hh>
++#include <dumux/material/components/dnapl.hh>
 +#include <dumux/material/components/brine.hh>
-+#include <dumux/material/components/simplednapl.hh>
  
  namespace Dumux
  {
-@@ -81,7 +82,7 @@
+@@ -75,7 +76,7 @@
  private:
      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
  public:
@@ -23,39 +19,12 @@ Index: tutorial/tutorialproblem_decoupled.hh
  };
  
  // Set the non-wetting phase
-@@ -90,7 +91,7 @@
+@@ -84,7 +85,7 @@
  private:
      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
  public:
--    typedef Dumux::LiquidPhase<Scalar, Dumux::Oil<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
-+    typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleDNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
+-    typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
++    typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
  }; /*@\label{tutorial-decoupled:2p-system-end}@*/
  
  SET_TYPE_PROP(TutorialProblemDecoupled, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-decoupled:cflflux}@*/
-@@ -144,7 +145,7 @@
-         : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
-     {
-         //write only every 10th time step to output file
--        this->setOutputInterval(1);/*@\label{tutorial-decoupled:outputinterval}@*/
-+        this->setOutputInterval(20);/*@\label{tutorial-decoupled:outputinterval}@*/
-     }
- 
-     //! The problem name.
-@@ -223,7 +224,7 @@
-      */
-     void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:bctype}@*/
-     {
--            if (globalPos[0] < this->bboxMin()[0] + eps_)
-+            if (globalPos[1] < this->bboxMin()[1] + eps_)
-             {
-                 bcTypes.setDirichlet(pressEqIdx);
-                 bcTypes.setDirichlet(satEqIdx);
-@@ -265,7 +266,7 @@
-     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:neumann}@*/
-     {
-         values = 0;
--        if (globalPos[0] > this->bboxMax()[0] - eps_)
-+        if (globalPos[1] > this->bboxMax()[1] - eps_)
-         {
-             values[nPhaseIdx] = 3e-2;
-         }

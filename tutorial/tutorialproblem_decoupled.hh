@@ -31,7 +31,6 @@
 // dumux 2p-decoupled environment
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
 #include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
-#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh> /*@\label{tutorial-decoupled:parent-problem}@*/
 
 // assign parameters dependent on space (e.g. spatial parameters)

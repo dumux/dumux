@@ -21,8 +21,8 @@
  *
  * \brief spatial parameters for the sequential tutorial
  */
-#ifndef DUMUX_EX2TUTORIAL_SPATIAL_PARAMS_DECOUPLED_HH
-#define DUMUX_EX2TUTORIAL_SPATIAL_PARAMS_DECOUPLED_HH
+#ifndef DUMUX_TUTORIAL_EX5_SPATIAL_PARAMS_DECOUPLED_HH
+#define DUMUX_TUTORIAL_EX%_SPATIAL_PARAMS_DECOUPLED_HH
 
 
 #include <dumux/material/spatialparams/fvspatialparams.hh>
@@ -35,19 +35,19 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class Ex2TutorialSpatialParamsDecoupled;
+class Ex5TutorialSpatialParamsDecoupled;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(Ex2TutorialSpatialParamsDecoupled);
+NEW_TYPE_TAG(Ex5TutorialSpatialParamsDecoupled);
 
 // Set the spatial parameters
-SET_TYPE_PROP(Ex2TutorialSpatialParamsDecoupled, SpatialParams,
-        Dumux::Ex2TutorialSpatialParamsDecoupled<TypeTag>); /*@\label{tutorial-decoupled:set-spatialparameters}@*/
+SET_TYPE_PROP(Ex5TutorialSpatialParamsDecoupled, SpatialParams,
+        Dumux::Ex5TutorialSpatialParamsDecoupled<TypeTag>); /*@\label{tutorial-decoupled:set-spatialparameters}@*/
 
 // Set the material law
-SET_PROP(Ex2TutorialSpatialParamsDecoupled, MaterialLaw)
+SET_PROP(Ex5TutorialSpatialParamsDecoupled, MaterialLaw)
 {
 private:
     // material law typedefs
@@ -61,7 +61,7 @@ public:
 //! Definition of the spatial parameters for the decoupled tutorial
 
 template<class TypeTag>
-class Ex2TutorialSpatialParamsDecoupled: public FVSpatialParams<TypeTag>
+class Ex5TutorialSpatialParamsDecoupled: public FVSpatialParams<TypeTag>
 {
     typedef FVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -71,6 +71,7 @@ class Ex2TutorialSpatialParamsDecoupled: public FVSpatialParams<TypeTag>
 
     enum
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
@@ -79,87 +80,69 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    /**
-     * \brief Intrinsic permeability tensor K \f$[m^2]\f$ depending
-     *        on the position in the domain
+    //! Intrinsic permeability tensor K \f$[m^2]\f$ depending
+    /*! on the position in the domain
      *
-     *  \param globalPos The global position in the domain.
+     *  \param element The finite volume element
      *
      *  Alternatively, the function intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) could be
      *  defined, where globalPos is the vector including the global coordinates of the finite volume.
      */
-    const FieldMatrix& intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
+    const FieldMatrix& intrinsicPermeability (const Element& element) const
     {
-    	if(((globalPos[0]>25)and(globalPos[0]<75))and((globalPos[1]>15)and(globalPos[1]<35)))
-            return KLense_;
-    	else
-    		return K_;
+            return K_;
     }
 
-    /** 
-     * \brief Define the porosity \f$[-]\f$ of the porous medium depending
-     *        on the position in the domain
+    //! Define the porosity \f$[-]\f$ of the porous medium depending
+    /*! on the position in the domain
      *
-     *  \param globalPos The global position in the domain.
+     *  \param element The finite volume element
      *
      *  Alternatively, the function porosityAtPos(const GlobalPosition& globalPos) could be
      *  defined, where globalPos is the vector including the global coordinates of the finite volume.
      */
-    double porosityAtPos(const GlobalPosition& globalPos) const
+    double porosity(const Element& element) const
     {
-    	if(((globalPos[0]>25)and(globalPos[0]<75))and((globalPos[1]>15)and(globalPos[1]<35)))
-    	return 0.15;
-    	else
         return 0.2;
     }
 
-    /*! \brief Return the parameter object for the material law (i.e. Brooks-Corey)
-     *         depending on the position in the domain
+    /*! Return the parameter object for the material law (i.e. Brooks-Corey)
+     *  depending on the position in the domain
      *
-     *  \param globalPos The global position in the domain.
+     *  \param element The finite volume element
      *
      *  Alternatively, the function materialLawParamsAtPos(const GlobalPosition& globalPos)
      *  could be defined, where globalPos is the vector including the global coordinates of
      *  the finite volume.
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    const MaterialLawParams& materialLawParams(const Element &element) const
     {
-    	if(((globalPos[0]>25)and(globalPos[0]<75))and((globalPos[1]>15)and(globalPos[1]<35)))
-    	return materialParamsLense_;
-    	else
-    	return materialParams_;
+            return materialLawParams_;
     }
 
     //! Constructor
-    Ex2TutorialSpatialParamsDecoupled(const GridView& gridView)
-    : ParentType(gridView), K_(0), KLense_(0)
+    Ex5TutorialSpatialParamsDecoupled(const GridView& gridView)
+    : ParentType(gridView), K_(0)
     {
         for (int i = 0; i < dim; i++)
                 K_[i][i] = 1e-7;
-        for (int i = 0; i < dim; i++) 
-        	    KLense_[i][i] = 1e-9;
 
+        // residual saturations
+        materialLawParams_.setSwr(0);
+        materialLawParams_.setSnr(0);
 
-    	//set residual saturations
-            materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
-            materialParams_.setSnr(0.0);
-    	    materialParamsLense_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
-            materialParamsLense_.setSnr(0.0);
+        // parameters for the Brooks-Corey Law
+        // entry pressures
+        materialLawParams_.setPe(500.0);
 
-            //parameters of Brooks & Corey Law
-    	    materialParams_.setPe(1000.0);
-            materialParams_.setLambda(1.8);
-    	    materialParamsLense_.setPe(1500.0);
-            materialParamsLense_.setLambda(2.0);
+        // Brooks-Corey shape parameters
+        materialLawParams_.setLambda(2);
     }
 
 private:
+    MaterialLawParams materialLawParams_;
     FieldMatrix K_;
-    FieldMatrix KLense_;
-
-    MaterialLawParams materialParams_;                 /*@\label{tutorial-coupled:matParamsObject}@*/
-    MaterialLawParams materialParamsLense_;
-   };
+};
 
 } // end namespace
 #endif

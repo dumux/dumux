@@ -21,8 +21,8 @@
  *
  * \brief problem for the sequential tutorial
  */
-#ifndef DUMUX_EX2TUTORIALPROBLEM_DECOUPLED_HH // guardian macro /*@\label{tutorial-decoupled:guardian1}@*/
-#define DUMUX_EX2TUTORIALPROBLEM_DECOUPLED_HH // guardian macro /*@\label{tutorial-decoupled:guardian2}@*/
+#ifndef DUMUX_EX5_TUTORIALPROBLEM_DECOUPLED_HH // guardian macro /*@\label{tutorial-decoupled:guardian1}@*/
+#define DUMUX_EX5_TUTORIALPROBLEM_DECOUPLED_HH // guardian macro /*@\label{tutorial-decoupled:guardian2}@*/
 
 // the grid includes
 #include <dune/grid/yaspgrid.hh>
@@ -34,7 +34,7 @@
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh> /*@\label{tutorial-decoupled:parent-problem}@*/
 
 // assign parameters dependent on space (e.g. spatial parameters)
-#include "ex2tutorialspatialparams_decoupled.hh" /*@\label{tutorial-decoupled:spatialparameters}@*/
+#include "ex5_tutorialspatialparams_decoupled.hh" /*@\label{tutorial-decoupled:spatialparameters}@*/
 
 // include cfl-criterion after coats: more suitable if the problem is not advection dominated
 #include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
@@ -42,12 +42,13 @@
 // the components that are used
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/lnapl.hh>
+#include <math.h>
 
 namespace Dumux
 {
 
 template<class TypeTag>
-class Ex2TutorialProblemDecoupled;
+class Ex5TutorialProblemDecoupled;
 
 //////////
 // Specify the properties for the lens problem
@@ -55,22 +56,22 @@ class Ex2TutorialProblemDecoupled;
 namespace Properties
 {
 // create a new type tag for the problem
-NEW_TYPE_TAG(Ex2TutorialProblemDecoupled, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, Ex2TutorialSpatialParamsDecoupled)); /*@\label{tutorial-decoupled:create-type-tag}@*/
+NEW_TYPE_TAG(Ex5TutorialProblemDecoupled, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, Ex5TutorialSpatialParamsDecoupled)); /*@\label{tutorial-decoupled:create-type-tag}@*/
 
 // Set the problem property
-SET_PROP(Ex2TutorialProblemDecoupled, Problem) /*@\label{tutorial-decoupled:set-problem}@*/
+SET_PROP(Ex5TutorialProblemDecoupled, Problem) /*@\label{tutorial-decoupled:set-problem}@*/
 {
-    typedef Dumux::Ex2TutorialProblemDecoupled<TypeTag> type;
+    typedef Dumux::Ex5TutorialProblemDecoupled<TypeTag> type;
 };
 
 // Set the grid type
-SET_TYPE_PROP(Ex2TutorialProblemDecoupled, Grid, Dune::YaspGrid<2>); /*@\label{tutorial-decoupled:set-grid-type}@*/
+SET_TYPE_PROP(Ex5TutorialProblemDecoupled, Grid, Dune::YaspGrid<2>); /*@\label{tutorial-decoupled:set-grid-type}@*/
 
 //Set the grid creator
-SET_TYPE_PROP(Ex2TutorialProblemDecoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-decoupled:set-gridcreator}@*/
+SET_TYPE_PROP(Ex5TutorialProblemDecoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-decoupled:set-gridcreator}@*/
 
 // Set the wetting phase
-SET_PROP(Ex2TutorialProblemDecoupled, WettingPhase) /*@\label{tutorial-decoupled:2p-system-start}@*/
+SET_PROP(Ex5TutorialProblemDecoupled, WettingPhase) /*@\label{tutorial-decoupled:2p-system-start}@*/
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -79,7 +80,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(Ex2TutorialProblemDecoupled, NonwettingPhase)
+SET_PROP(Ex5TutorialProblemDecoupled, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -87,18 +88,18 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
 }; /*@\label{tutorial-decoupled:2p-system-end}@*/
 
-SET_TYPE_PROP(Ex2TutorialProblemDecoupled, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-decoupled:cflflux}@*/
-SET_SCALAR_PROP(Ex2TutorialProblemDecoupled, ImpetCFLFactor, 0.95); /*@\label{tutorial-decoupled:cflfactor}@*/
+SET_TYPE_PROP(Ex5TutorialProblemDecoupled, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-decoupled:cflflux}@*/
+SET_SCALAR_PROP(Ex5TutorialProblemDecoupled, ImpetCFLFactor, 0.95); /*@\label{tutorial-decoupled:cflfactor}@*/
 
 // Disable gravity
-SET_BOOL_PROP(Ex2TutorialProblemDecoupled, ProblemEnableGravity, false); /*@\label{tutorial-decoupled:gravity}@*/
+SET_BOOL_PROP(Ex5TutorialProblemDecoupled, ProblemEnableGravity, false); /*@\label{tutorial-decoupled:gravity}@*/
 } /*@\label{tutorial-decoupled:propertysystem-end}@*/
 
 /*! \ingroup DecoupledProblems
  * @brief Problem class for the decoupled tutorial
 */
 template<class TypeTag>
-class Ex2TutorialProblemDecoupled: public IMPESProblem2P<TypeTag> /*@\label{tutorial-decoupled:def-problem}@*/
+class Ex5TutorialProblemDecoupled: public IMPESProblem2P<TypeTag> /*@\label{tutorial-decoupled:def-problem}@*/
 {
     typedef IMPESProblem2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -131,11 +132,11 @@ class Ex2TutorialProblemDecoupled: public IMPESProblem2P<TypeTag> /*@\label{tuto
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    Ex2TutorialProblemDecoupled(TimeManager &timeManager, const GridView &gridView)
+    Ex5TutorialProblemDecoupled(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
     {
-        //write only every 10th time step to output file
-        this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
+        //write only every 100th time step to output file
+        this->setOutputInterval(100);/*@\label{tutorial-decoupled:outputinterval}@*/
     }
 
     //! The problem name.
@@ -143,7 +144,7 @@ public:
     */
     const char *name() const    /*@\label{tutorial-decoupled:name}@*/
     {
-        return "tutorial_decoupled";
+        return "ex5_tutorial_decoupled";
     }
 
     //!  Returns true if a restart file should be written.
@@ -216,12 +217,16 @@ public:
     {
             if (globalPos[0] < this->bBoxMin()[0] + eps_)
             {
-               bcTypes.setAllDirichlet(); // alternative if the same BC is used for both types of equations
+                bcTypes.setDirichlet(pressEqIdx);
+                bcTypes.setDirichlet(satEqIdx);
+//                bcTypes.setAllDirichlet(); // alternative if the same BC is used for both types of equations
             }
             // all other boundaries
             else
             {
-               bcTypes.setAllNeumann(); // alternative if the same BC is used for both types of equations
+                bcTypes.setNeumann(pressEqIdx);
+                bcTypes.setNeumann(satEqIdx);
+//                bcTypes.setAllNeumann(); // alternative if the same BC is used for both types of equations
             }
     }
     //! Value for dirichlet boundary condition at position globalPos.
@@ -236,8 +241,17 @@ public:
      */
     void dirichlet(PrimaryVariables &values, const Intersection& intersection) const /*@\label{tutorial-decoupled:dirichlet}@*/
     {
-        values[pwIdx] = 2e5;
-        values[swIdx] = 0.0;
+		values[pwIdx] = 2e5;
+		values[swIdx] = 0.0;
+
+    	const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+    	const Scalar time_end = this->timeManager().endTime();
+    	Scalar injection_begin = time_end/5.0;
+    	Scalar injection_end = 4.0/5.0*time_end;
+
+    	if(injection_begin < time && time < injection_end){
+			values[swIdx] = sin(M_PI*(time-injection_begin)/(injection_end-injection_begin));
+    	}
     }
     //! Value for neumann boundary condition \f$ [\frac{kg}{m^3 \cdot s}] \f$ at position globalPos.
     /*! In case of a neumann boundary condition, the flux of matter
@@ -254,7 +268,7 @@ public:
         values = 0;
         if (globalPos[0] > this->bBoxMax()[0] - eps_)
         {
-            values[wPhaseIdx] = 2e-4;
+            values[nPhaseIdx] = 1e-3;
         }
     }
     //! Initial condition at position globalPos.
@@ -269,7 +283,7 @@ public:
     void initial(PrimaryVariables &values,
             const Element &element) const /*@\label{tutorial-decoupled:initial}@*/
     {
-        values[swIdx] = 1.0;
+        values = 0;
     }
 
 private:
