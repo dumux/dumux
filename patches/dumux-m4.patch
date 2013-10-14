@@ -1,8 +1,8 @@
 Index: m4/dumux.m4
 ===================================================================
---- m4/dumux.m4	(revision 10629)
+--- m4/dumux.m4	(revision 11648)
 +++ m4/dumux.m4	(working copy)
-@@ -179,9 +179,9 @@
+@@ -171,9 +171,9 @@
  
  # DUMUX_CHECK_MODULES(NAME, HEADER, SYMBOL)
  #
@@ -15,7 +15,7 @@ Index: m4/dumux.m4
  #
  # Generic check for dune modules.  This macro should not be used directly, but
  # in the modules m4/{module}.m4 in the {MODULE}_CHECK_MODULE macro.  The
-@@ -292,15 +292,11 @@
+@@ -284,15 +284,11 @@
        AC_MSG_ERROR([pkg-config is required for using installed modules])
      ])
      AS_IF(AC_RUN_LOG([$PKG_CONFIG --exists --print-errors "$1"]),[
@@ -34,7 +34,7 @@ Index: m4/dumux.m4
        HAVE_[]_DUNE_MODULE=1
        AC_MSG_RESULT([global installation in $_DUNE_MODULE[]_ROOT])
      ],[
-@@ -314,6 +310,7 @@
+@@ -306,6 +302,7 @@
      AS_IF([test -d "$with_[]_dune_module"],[
        # expand tilde / other stuff
        _DUNE_MODULE[]_ROOT=`cd $with_[]_dune_module && pwd`
@@ -42,7 +42,7 @@ Index: m4/dumux.m4
  
        # expand search path (otherwise empty CPPFLAGS)
        AS_IF([test -d "$_DUNE_MODULE[]_ROOT/include/dune"],[
-@@ -321,21 +318,18 @@
+@@ -313,21 +310,18 @@
          _dune_cm_CPPFLAGS="-I$_DUNE_MODULE[]_ROOT/include"
          _DUNE_MODULE[]_BUILDDIR=_DUNE_MODULE[]_ROOT
          _DUNE_MODULE[]_VERSION="`PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$_DUNE_MODULE[]_ROOT/lib/pkgconfig $PKG_CONFIG --modversion _dune_name`" 2>/dev/null
@@ -69,7 +69,7 @@ Index: m4/dumux.m4
        # set expanded module path
        with_[]_dune_module="$_DUNE_MODULE[]_ROOT"
        HAVE_[]_DUNE_MODULE=1
-@@ -347,7 +341,7 @@
+@@ -339,7 +333,7 @@
      ])
    ])
  
@@ -78,7 +78,7 @@ Index: m4/dumux.m4
    ##  
    ## check for an arbitrary header
    ##
-@@ -359,50 +353,54 @@
+@@ -351,50 +345,54 @@
      AC_CHECK_HEADER([[]_dune_header],
        [HAVE_[]_DUNE_MODULE=1; DUNE_[]_HEADER_PREFIX=""],
        [HAVE_[]_DUNE_MODULE=0])
@@ -156,7 +156,7 @@ Index: m4/dumux.m4
        ])
  
        # reset variables
-@@ -418,9 +416,9 @@
+@@ -410,9 +408,9 @@
          [$_dune_cm_CPPFLAGS], [$_dune_cm_LDFLAGS], [$_dune_cm_LIBS])
  
      # set variables for our modules
@@ -169,7 +169,7 @@ Index: m4/dumux.m4
      AC_SUBST(_DUNE_MODULE[]_ROOT, "$_DUNE_MODULE[]_ROOT")
      ifelse(m4_defn([_dune_symbol]),,
        [],
-@@ -433,8 +431,14 @@
+@@ -425,8 +423,14 @@
      # set DUNE_* variables
      # This should actually be unneccesary, but I'm keeping it in here for now
      # for backward compatibility

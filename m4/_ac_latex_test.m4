@@ -8,7 +8,7 @@ dnl @version 2005-01-21
 dnl @license GPLWithACException
 
 AC_DEFUN([_AC_LATEX_TEST],[
-AC_REQUIRE([AC_PROG_LATEX])
+AC_REQUIRE([AC_PROG_PDFLATEX])
 rm -rf .tmps_latex
 mkdir .tmps_latex
 cd .tmps_latex
