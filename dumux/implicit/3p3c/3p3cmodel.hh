@@ -41,7 +41,7 @@ namespace Dumux
  * \f$\kappa \in \{ water, air, contaminant \}\f$. The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum:
  * \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
  \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
  * \f]
  *
@@ -51,7 +51,7 @@ namespace Dumux
  && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa
  S_\alpha )}{\partial t}
  - \sum\limits_\alpha \text{div} \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
- \varrho_\alpha x_\alpha^\kappa \mbox{\bf K}
+ \varrho_\alpha x_\alpha^\kappa \mathbf{K}
  (\textbf{grad}\, p_\alpha - \varrho_\alpha \mbox{\bf g}) \right\}
  \nonumber \\
  \nonumber \\

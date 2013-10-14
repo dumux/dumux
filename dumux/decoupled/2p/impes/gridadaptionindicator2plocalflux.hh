@@ -516,7 +516,7 @@ public:
      *
      * Returns true if the cell pressure is in some range
      *
-     *  \param element A grid element
+     *  \param cellData A grid element
      */
     bool checkPhysicalRange_(const CellData& cellData)
     {

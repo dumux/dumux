@@ -39,7 +39,7 @@ namespace Dumux
  * \f$\kappa \in \{ w, a \}\f$. The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum:
  * \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
  \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
  * \f]
  *
@@ -49,7 +49,7 @@ namespace Dumux
  && \phi \frac{\partial (\sum_\alpha \varrho_\alpha \frac{M^\kappa}{M_\alpha} x_\alpha^\kappa S_\alpha )}
  {\partial t}
  - \sum_\alpha  \text{div} \left\{ \varrho_\alpha \frac{M^\kappa}{M_\alpha} x_\alpha^\kappa
- \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
+ \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
  (\textbf{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
  \nonumber \\ \nonumber \\
  &-& \sum_\alpha \text{div} \left\{ D_{\alpha,\text{pm}}^\kappa \varrho_{\alpha} \frac{M^\kappa}{M_\alpha}

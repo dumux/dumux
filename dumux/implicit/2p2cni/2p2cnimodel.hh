@@ -39,7 +39,7 @@ namespace Dumux {
  * \f{eqnarray*}
  && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa S_\alpha )}{\partial t}
  - \sum_\alpha \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
- \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
+ \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
  (\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g}) \right\}\\
  &-& \sum_\alpha \text{div} \left\{ D_{\alpha,\text{pm}}^\kappa \varrho_{\alpha} \frac{M^\kappa}{M_\alpha}
  \textbf{grad} x^\kappa_{\alpha} \right\}

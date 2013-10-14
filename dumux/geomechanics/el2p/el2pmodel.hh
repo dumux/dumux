@@ -53,7 +53,7 @@ namespace Dumux {
 \f[
  \frac{\partial \phi_{eff} \varrho_\alpha S_\alpha}{\partial t}
  - \text{div} \left\{ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}
- \mbox{\bf K_{eff}} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ \mathbf{K}_\text{eff} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
  - \phi_{eff} \varrho_\alpha S_\alpha \frac{\partial \mathbf{u}}{\partial t}
  \right\} - q_\alpha = 0 \;,
  \f]
