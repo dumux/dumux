@@ -39,13 +39,11 @@ AC_DEFUN([DUMUX_CHECKS],
 AC_DEFUN([DUMUX_CHECKS_PRIVATE],
 [
   if test "$enable_documentation" == "yes"; then
-    AC_PROG_LATEX
+    AC_PROG_PDFLATEX
     AC_PROG_BIBTEX
-    AC_PROG_DVIPDF
 
-    if test "$latex" != "no" && \
-     test "$bibtex" != "no" && \
-     test "$dvipdf" != "no"; then
+    if test "$pdflatex" != "no" && \
+     test "$bibtex" != "no"; then
 
      AC_LATEX_CLASS(scrreprt,have_latex_class_scrreprt)
 
@@ -82,17 +80,11 @@ AC_DEFUN([DUMUX_CHECKS_PRIVATE],
   if test "$enable_documentation" != "yes"; then
      build_handbook="no"
      summary_message="Configure parameter --enable-documentation not specified"
-  elif test "$CONVERT" == "no" || test "$CONVERT" == "" ; then
-    build_handbook="no"
-    summary_message="Command 'convert' not found"
-  elif test "$latex" == "no" || test "$latex" == ""; then
-    summary_message="Command 'latex' not found"
+  elif test "$pdflatex" == "no" || test "$pdflatex" == ""; then
+    summary_message="Command 'pdflatex' not found"
     build_handbook="no"
   elif test "$bibtex" == "no" || test "$bibtex" == ""; then
     summary_message="Command 'bibtex' not found"
-    build_handbook="no"
-  elif test "$dvipdf" == "no" || test "$dvipdf" == "" ; then
-    summary_message="Command 'dvipdf' not found"
     build_handbook="no"
   elif test "$have_latex_class_scrreprt" != "yes"; then
     summary_message="Latex class 'scrreprt' not available"
@@ -165,7 +157,7 @@ AC_DEFUN([DUMUX_CHECKS_PRIVATE],
     build_handbook="no"
   fi
 
-  AC_SUBST([LATEX],[$latex])
+  AC_SUBST([PDFLATEX],[$pdflatex])
   AC_SUBST([BIBTEX],[$bibtex])
   AC_SUBST([DVIPDF],[$dvipdf])
 
