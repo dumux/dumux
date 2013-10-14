@@ -1,10 +1,6 @@
-# $id: $
-
 if BUILD_HANDBOOK
-
-#EPS_FILES = EPS/tutorial-problemconfiguration.eps 
-TEXSOURCE = *.tex ./EPS/*.eps
-MAINDOCS = dumux-handbook.dvi dumux-handbook.pdf dumux-handbook.ps
+TEXSOURCE = *.tex
+MAINDOCS = dumux-handbook.pdf
 
 DOCS = $(HTDOCS) $(MAINDOCS)
 
@@ -17,22 +13,13 @@ handbook_DATA = dumux-handbook.pdf
 
 CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.ps
 CLEANFILES += *.4ct *.4tc *.css *.idv *.idx *.lg *.tid *.tmp *.tms *.xref
-CLEANFILES += dumux-handbook*.png 
 CLEANFILES += $(DOCS)
-CLEANFILES += $(EPS_FILES)
 
-%.eps: $(srcdir)/%.jpg
-	$CONVERT $< $@
-dumux-handbook.tex: $(EPS_FILES)
-
-dumux-handbook.pdf: $(TEXSOURCE)
-	@LATEX@ dumux-handbook.tex <&-
+doc: $(TEXSOURCE)
+	@PDFLATEX@ dumux-handbook.tex <&-
 	@BIBTEX@ dumux-handbook <&-
-	@LATEX@ dumux-handbook.tex <&-
-	@LATEX@ dumux-handbook.tex <&-
-	@DVIPDF@ dumux-handbook <&-
-
-doc: dumux-handbook.pdf
+	@PDFLATEX@ dumux-handbook.tex <&-
+	@PDFLATEX@ dumux-handbook.tex <&-
 
 #dist-hook:
 #	sed $(srcdir)/Makefile.dist.am -e 's/Makefile\.dist/Makefile/g' > $(distdir)/Makefile.am
@@ -44,6 +31,10 @@ else
 doc:
 	echo -n ""
 endif
+
+dumux-handbook.pdf:
+	$(MAKE) $(AM_MAKEFLAGS) doc
+
 EXTRA_DIST= dumux-handbook.pdf
+
 include $(top_srcdir)/am/global-rules
-include $(top_srcdir)/am/latex
