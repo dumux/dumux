@@ -19,7 +19,7 @@
 
 /*!
  * \file
- * \brief Defines the indices used by the 3p3cni model
+ * \brief Defines the indices used by the non-isothermal three-phase three-component model
  */
 #ifndef DUMUX_3P3CNI_INDICES_HH
 #define DUMUX_3P3CNI_INDICES_HH
@@ -31,7 +31,7 @@ namespace Dumux
 /*!
  * \ingroup ThreePThreeCNIModel
  * \ingroup ImplicitIndices
- * \brief Enumerations for the non-isothermal 3-phase 3-component model
+ * \brief Enumerations for the non-isothermal three-phase three-component model
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */

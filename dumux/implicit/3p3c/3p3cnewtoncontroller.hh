@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A 3p3c specific controller for the newton solver.
+ * \brief A three-phase three-component specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -33,8 +33,9 @@
 
 namespace Dumux {
 /*!
+ * \ingroup Newton
  * \ingroup ThreePThreeCModel
- * \brief A 3p3c specific controller for the newton solver.
+ * \brief A three-phase three-component specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is

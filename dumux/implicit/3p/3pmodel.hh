@@ -54,8 +54,8 @@ namespace Dumux
  * capillary pressures between the fluid phases, which are functions of
  * the saturation, e.g. according to the approach of Parker et al.
  *
- * The used primary variables are gas phase pressure, water saturation and
- * NAPL saturation.
+ * The used primary variables are gas phase pressure \f$p_g\f$,
+ * water saturation \f$S_w\f$ and NAPL saturation \f$S_n\f$.
  */
 template<class TypeTag>
 class ThreePModel: public GET_PROP_TYPE(TypeTag, BaseModel)

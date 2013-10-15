@@ -42,8 +42,9 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePModel
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-phase, two-component model.
+ *        finite volume in three-phase model.
  */
 template <class TypeTag>
 class ThreePVolumeVariables : public ImplicitVolumeVariables<TypeTag>

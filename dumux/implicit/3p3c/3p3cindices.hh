@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Defines the indices required for the 3p3c model.
+ * \brief Defines the indices required for the three-phase three-component
+ *        fully implicit model.
  */
 #ifndef DUMUX_3P3C_INDICES_HH
 #define DUMUX_3P3C_INDICES_HH
@@ -31,9 +32,9 @@ namespace Dumux
 /*!
  * \ingroup ThreePThreeCModel
  * \ingroup ImplicitIndices
- * \brief The indices for the isothermal 3p3c model.
+ * \brief The indices for the isothermal three-phase three-component model.
  *
- * \tparam formulation The formulation, only pgSwSn
+ * \tparam formulation The formulation, only pgSwSn is available.
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>

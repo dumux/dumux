@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the two-phase, two-component model.
+ *        finite volume in the three-phase three-component model.
  */
 #ifndef DUMUX_3P3C_VOLUME_VARIABLES_HH
 #define DUMUX_3P3C_VOLUME_VARIABLES_HH
@@ -44,8 +44,9 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePThreeCModel
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-phase, two-component model.
+ *        finite volume in the three-phase three-component model.
  */
 template <class TypeTag>
 class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
@@ -226,9 +227,9 @@ public:
                                                      paramCache,
                                                      /*setViscosity=*/true,
                                                      /*setInternalEnergy=*/false);
-            } 
+            }
             // ... or calculated explicitly this way ...
-            else {    
+            else {
                 Scalar partPressH2O = FluidSystem::fugacityCoefficient(fluidState_, 
                                                                       wPhaseIdx, 
                                                                       wCompIdx) * pw_;
@@ -255,7 +256,7 @@ public:
                 Scalar xnn = 1.-2.e-10;
                 Scalar xna = 1.e-10;
                 Scalar xnw = 1.e-10;
-                 
+
                 fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
                 fluidState_.setMoleFraction(wPhaseIdx, gCompIdx, xwg);
                 fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwn);
@@ -435,7 +436,7 @@ public:
                                 * pn_);
                 Scalar xna = 1.e-10;
                 Scalar xnw = 1.e-10;
-                 
+
                 fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
                 fluidState_.setMoleFraction(wPhaseIdx, gCompIdx, xwg);
                 fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwn);
@@ -477,7 +478,7 @@ public:
                                                  /*setInternalEnergy=*/false);
             }
             // ... or calculated explicitly this way ...
-            else {    
+            else {
                 // actually, it's nothing else than Henry coefficient
                 Scalar xwn = xgn * pg_
                              / (FluidSystem::fugacityCoefficient(fluidState_,
@@ -497,7 +498,7 @@ public:
                                 * pn_);;
                 Scalar xna = 1.e-10;
                 Scalar xnw = 1.e-10;
-                 
+
                 fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
                 fluidState_.setMoleFraction(wPhaseIdx, gCompIdx, xwg);
                 fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwn);
@@ -591,7 +592,7 @@ public:
     }
 
     /*!
-     * \brief Returns the phase state for the control-volume.
+     * \brief Returns the phase state for the control volume.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
@@ -672,13 +673,13 @@ public:
     { return permeability_; }
 
     /*!
-     * \brief Returns the diffusivity coefficient matrix
+     * \brief Returns the diffusivity coefficient matrix.
      */
     Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficient() const
     { return diffusionCoefficient_; }
 
     /*!
-     * \brief Returns the adsorption information
+     * \brief Returns the adsorption information.
      */
     Scalar bulkDensTimesAdsorpCoeff() const
     { return bulkDensTimesAdsorpCoeff_; }

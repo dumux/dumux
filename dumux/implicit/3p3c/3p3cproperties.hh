@@ -17,12 +17,15 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup ImplicitProperties
  * \ingroup ThreePThreeCModel
  */
 /*!
  * \file
  *
- * \brief Defines the properties required for the 3p3c fully implicit model.
+ * \brief Defines the properties required for the three-phase three-component
+ *        fully implicit model.
  */
 #ifndef DUMUX_3P3C_PROPERTIES_HH
 #define DUMUX_3P3C_PROPERTIES_HH

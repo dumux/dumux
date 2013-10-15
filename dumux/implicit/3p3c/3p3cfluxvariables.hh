@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief   This file contains the data which is required to calculate
- *          all fluxes of components over a face of a finite volume for
- *          the three-phase, three-component model.
+ * \brief This file contains the data which is required to calculate
+ *        all fluxes of components over a face of a finite volume for
+ *        the three-phase three-component model.
  */
 #ifndef DUMUX_3P3C_FLUX_VARIABLES_HH
 #define DUMUX_3P3C_FLUX_VARIABLES_HH
@@ -38,7 +38,7 @@ namespace Dumux
  * \ingroup ImplicitFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate all fluxes of components over a face of a finite
- *        volume for the three-phase, three-component model.
+ *        volume for the three-phase three-component model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the integration point, etc.
@@ -78,7 +78,7 @@ class ThreePThreeCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariable
     };
 
 public:
-    /*
+    /*!
      * \brief The constructor
      *
      * \param problem The problem
@@ -86,8 +86,7 @@ public:
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     * are calculated for interior SCV faces or boundary faces, default=false
+     * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
      */
     ThreePThreeCFluxVariables(const Problem &problem,
                               const Element &element,
@@ -274,37 +273,75 @@ private:
 public:
     /*!
      * \brief The diffusivity matrix
+     *
+     * \tparam Scalar Field type
+     * \tparam numPhases The number of phases of the problem
+     * \tparam numComponents The number of components of the problem
      */
     Dune::FieldMatrix<Scalar, numPhases, numComponents> porousDiffCoeff() const
     { return porousDiffCoeff_; };
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
     /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar molarDensity(int phaseIdx) const
     { return molarDensity_[phaseIdx]; }
 
+    /*!
+     * \brief The mass fraction gradient of the water in a phase.
+     *
+     * \param phaseIdx The phase index
+     */
     const DimVector &massFractionCompWGrad(int phaseIdx) const
     {return massFractionCompWGrad_[phaseIdx];}
 
+    /*!
+     * \brief The mass fraction gradient of the contaminant in a phase.
+     *
+     * \param phaseIdx The phase index
+     */
     const DimVector &massFractionCompNGrad(int phaseIdx) const
     { return massFractionCompNGrad_[phaseIdx]; };
 
+    /*!
+     * \brief The mass fraction gradient of gas in a phase.
+     *
+     * \param phaseIdx The phase index
+     */
     const DimVector &massFractionCompGGrad(int phaseIdx) const
     { return massFractionCompGGrad_[phaseIdx]; };
 
+    /*!
+     * \brief The mole fraction gradient of the water in a phase.
+     *
+     * \param phaseIdx The phase index
+     */
     const DimVector &moleFractionCompWGrad(int phaseIdx) const
     { return moleFractionCompWGrad_[phaseIdx]; };
 
+    /*!
+     * \brief The mole fraction gradient of the contaminant in a phase.
+     *
+     * \param phaseIdx The phase index
+     */
     const DimVector &moleFractionCompNGrad(int phaseIdx) const
     { return moleFractionCompNGrad_[phaseIdx]; };
 
+    /*!
+     * \brief The mole fraction gradient of gas in a phase.
+     *
+     * \param phaseIdx The phase index
+     */
     const DimVector &moleFractionCompGGrad(int phaseIdx) const
     { return moleFractionCompGGrad_[phaseIdx]; };
 

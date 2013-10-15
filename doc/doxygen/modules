@@ -161,6 +161,12 @@
          */
         /*!
          * \ingroup ImplicitModels
+         * \defgroup ThreePModel Three-phase
+         *
+         * \copydetails Dumux::ThreePModel
+         */
+        /*!
+         * \ingroup ImplicitModels
          * \defgroup ThreePThreeCModel Three-phase, three-component
          *
          * \copydetails Dumux::ThreePThreeCModel

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Defines the indices required for the 3p model.
+ * \brief Defines the indices required for the two-phase model.
  */
 #ifndef DUMUX_3P_INDICES_HH
 #define DUMUX_3P_INDICES_HH
@@ -31,9 +31,9 @@ namespace Dumux
 /*!
  * \ingroup ThreePModel
  * \ingroup ImplicitIndices
- * \brief The indices for the isothermal 3p model.
+ * \brief The common indices for the isothermal three-phase model.
  *
- * \tparam formulation The formulation, only pgSwSn
+ * \tparam formulation The formulation, only pgSwSn is available.
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>

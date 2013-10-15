@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the non-isothermal three-phase, three-component
+ *        finite volume in the non-isothermal three-phase three-component
  *        model.
  */
 #ifndef DUMUX_3P3CNI_VOLUME_VARIABLES_HH
@@ -34,8 +34,9 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePThreeCNIModel
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the non-isothermal three-phase, three-component
+ *        finite volume in the non-isothermal three-phase three-component
  *        model.
  */
 template <class TypeTag>

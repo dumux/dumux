@@ -23,7 +23,7 @@
  * \file
  *
  * \brief Defines default values for most properties required by the
- *        3p fully implicit model.
+ *        three-phase fully implicit model.
  */
 #ifndef DUMUX_3P_PROPERTY_DEFAULTS_HH
 #define DUMUX_3P_PROPERTY_DEFAULTS_HH

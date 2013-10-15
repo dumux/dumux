@@ -19,7 +19,8 @@
 /*!
  * \file
  *
- * \brief Adaption of the fully implicit scheme to the three-phase three-component flow model.
+ * \brief Adaption of the fully implicit scheme to the three-phase three-component
+ *        flow model.
  *
  * The model is designed for simulating three fluid phases with water, gas, and
  * a liquid contaminant (NAPL - non-aqueous phase liquid)
@@ -34,7 +35,8 @@ namespace Dumux
 {
 /*!
  * \ingroup ThreePThreeCModel
- * \brief Adaption of the fully implicit scheme to the three-phase three-component flow model.
+ * \brief Adaption of the fully implicit scheme to the three-phase three-component
+ *        flow model.
  *
  * This model implements three-phase three-component flow of three fluid phases
  * \f$\alpha \in \{ water, gas, NAPL \}\f$ each composed of up to three components
@@ -73,7 +75,7 @@ namespace Dumux
  * capillary pressures between the fluid phases, which are functions of
  * the saturation, e.g. according to the approach of Parker et al.
  *
- * The used primary variables are dependent on the locally present fluid phases
+ * The used primary variables are dependent on the locally present fluid phases.
  * An adaptive primary variable switch is included. The phase state is stored for all nodes
  * of the system. The following cases can be distinguished:
  * <ul>
@@ -221,7 +223,7 @@ public:
 
     /*!
      * \brief Called by the update() method if applying the newton
-     *         method was unsuccessful.
+     *        method was unsuccessful.
      */
     void updateFailed()
     {

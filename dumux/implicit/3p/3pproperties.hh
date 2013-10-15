@@ -22,7 +22,7 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for the 3p fully implicit model.
+ * \brief Defines the properties required for the three-phase fully implicit model.
  */
 #ifndef DUMUX_3P_PROPERTIES_HH
 #define DUMUX_3P_PROPERTIES_HH

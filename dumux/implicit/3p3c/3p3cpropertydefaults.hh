@@ -17,13 +17,13 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup ImplicitProperties
  * \ingroup ThreePThreeCModel
- */
-/*!
  * \file
  *
  * \brief Defines default values for most properties required by the
- *        3p3c fully implicit model.
+ *        three-phase three-component fully implicit model.
  */
 #ifndef DUMUX_3P3C_PROPERTY_DEFAULTS_HH
 #define DUMUX_3P3C_PROPERTY_DEFAULTS_HH
@@ -53,7 +53,7 @@ namespace Properties {
  * \brief Set the property for the number of components.
  *
  * We just forward the number from the fluid system and use an static
- * assert to make sure it is 2.
+ * assert to make sure it is 3.
  */
 SET_PROP(ThreePThreeC, NumComponents)
 {
@@ -71,7 +71,7 @@ SET_PROP(ThreePThreeC, NumComponents)
  * \brief Set the property for the number of fluid phases.
  *
  * We just forward the number from the fluid system and use an static
- * assert to make sure it is 2.
+ * assert to make sure it is 3.
  */
 SET_PROP(ThreePThreeC, NumPhases)
 {

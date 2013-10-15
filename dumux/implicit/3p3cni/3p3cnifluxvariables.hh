@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        all fluxes (mass of components and energy) over a face of a finite volume.
+ * \brief This file contains data which is required to calculate
+ *        the heat fluxes over a face of a finite volume.
  *
- * This means pressure, concentration and temperature gradients, phase
- * densities at the integration point, etc.
+ * This means temperature gradients and the normal matrix
+ * heat flux.
  */
 #ifndef DUMUX_3P3CNI_FLUX_VARIABLES_HH
 #define DUMUX_3P3CNI_FLUX_VARIABLES_HH
@@ -36,12 +36,13 @@ namespace Dumux
 /*!
  * \ingroup ThreePThreeCNIModel
  * \ingroup ImplicitFluxVariables
- * \brief This template class contains the data which is required to
- *        calculate all fluxes (mass of components and energy) over a face of a finite
- *        volume for the non-isothermal three-phase, three-component model.
+ * \brief This template class contains data which is required to
+ *        calculate the heat fluxes over a face of a finite
+ *        volume for the non-isothermal three-phase three-component model.
+ *        The mass fluxes are computed in the parent class.
  *
- * This means pressure and concentration gradients, phase densities at
- * the integration point, etc.
+ * This means temperature gradients and the normal matrix
+ * heat flux.
  */
 template <class TypeTag>
 class ThreePThreeCNIFluxVariables : public ThreePThreeCFluxVariables<TypeTag>
@@ -65,7 +66,7 @@ class ThreePThreeCNIFluxVariables : public ThreePThreeCFluxVariables<TypeTag>
     typedef Dune::FieldVector<CoordScalar, dim> DimVector;
 
 public:
-    /*
+    /*!
      * \brief The constructor
      *
      * \param problem The problem
@@ -73,8 +74,7 @@ public:
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     * are calculated for interior SCV faces or boundary faces, default=false
+     * \param onBoundary Distinguishes if we are on a sub-control-volume face or on a boundary face
      */
     ThreePThreeCNIFluxVariables(const Problem &problem,
                                 const Element &element,

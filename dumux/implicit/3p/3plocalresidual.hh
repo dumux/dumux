@@ -35,7 +35,7 @@ namespace Dumux
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the three-phase fully implicit model.
  *
- * This class is used to fill the gaps in BoxLocalResidual for the 3P flow.
+ * This class is used to fill the gaps in BoxLocalResidual for three-phase flow.
  */
 template<class TypeTag>
 class ThreePLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
@@ -59,14 +59,14 @@ protected:
 
 public:
     /*!
-     * \brief Evaluate the amount all conservation quantities
+     * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass
-     * inside a sub control volume divided by the volume)
+     * inside a sub-control volume divided by the volume).
      *
      *  \param storage The mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param scvIdx The SCV (sub-control volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
@@ -117,7 +117,7 @@ public:
 
     /*!
      * \brief Evaluates the advective mass flux of all components over
-     *        a face of a subcontrol volume.
+     *        a face of a sub-control volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
      * \param fluxVars The flux variables at the current SCV

@@ -17,13 +17,13 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup ImplicitProperties
  * \ingroup ThreePThreeCNIModel
- */
-/*!
  * \file
  *
- * \brief Defines the properties required for the non-isothermal three-phase,
- * three-component fully implicit model.
+ * \brief Defines the properties required for the non-isothermal three-phase
+ *        three-component fully implicit model.
  */
 #ifndef DUMUX_3P3CNI_PROPERTIES_HH
 #define DUMUX_3P3CNI_PROPERTIES_HH

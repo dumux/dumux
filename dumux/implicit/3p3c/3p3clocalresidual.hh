@@ -70,7 +70,7 @@ protected:
 
 public:
     /*!
-     * \brief Evaluate the amount all conservation quantities
+     * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass
