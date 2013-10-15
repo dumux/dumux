@@ -2,6 +2,11 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
+  - The co2 and co2ni tests now require that the 
+    DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS flag is set. This flag is needed for
+    the current trunk version of DUNE (2.3) in order to be able to use the 
+    function boundaryId(). An error is thrown during compilation if the flag
+    is not set. For reference see the commented part in optim.opts and debug.opts.
   - All two-component models (1p2c, 2p2c, 2p2cni, co2, co2ni) can now be used 
     with either mole or mass fractions. The property useMoles has to be set in 
     the problem file and the boundary conditions have to be choosen accordingly.
