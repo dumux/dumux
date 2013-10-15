@@ -1,4 +1,18 @@
-SUBDIRS = 1p 1p2c 2p 2p2c 2p2cni 2pni 2pdfm 3p3c 3p3cni mpnc richards co2 co2ni
+SUBDIRS = \
+  1p \
+  1p2c \
+  2p \
+  2p2c \
+  2p2cni \
+  2pni \
+  2pdfm \
+  3p \
+  3p3c \
+  3p3cni \
+  co2 \
+  co2ni \
+  mpnc \
+  richards
 
 EXTRA_DIST = CMakeLists.txt
 

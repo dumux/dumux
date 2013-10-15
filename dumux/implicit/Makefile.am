@@ -5,6 +5,7 @@ SUBDIRS = 1p \
           2p2cni \
           2pni \
           2pdfm \
+          3p \
           3p3c \
           3p3cni \
           box \

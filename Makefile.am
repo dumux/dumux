@@ -1,12 +1,20 @@
 # to the tarball, add all files required to make dunecontrol work
 # nicely, the files for the CMake build system, some README files and
 # a set of default .opts files for dunecontrol.
-EXTRA_DIST = dune.module \
-             cmake/modules/*.cmake \
-             bin/runTest.sh bin/fuzzycomparevtu.py \
-             CMakeLists.txt config.h.cmake \
-             CHANGELOG COPYING INSTALL.cmake README \
-             debug.opts optim.opts 
+EXTRA_DIST = \
+  bin/fuzzycomparevtu.py \
+  bin/runTest.sh  \
+  cmake/modules/CMakeLists.txt \
+  cmake/modules/*.cmake \
+  cmake/pkg/dumux-config.cmake.in \
+  CMakeLists.txt \
+  config.h.cmake \
+  dumux-config.cmake.in \
+  dumux-version.cmake.in \
+  INSTALL.cmake \
+  dune.module \
+  CHANGELOG COPYING README \
+  debug.opts optim.opts 
 
 SUBDIRS = doc dumux m4 patches test tutorial
 
