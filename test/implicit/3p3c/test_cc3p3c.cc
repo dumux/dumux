@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 3p3c CC model
+ * \brief Test for the three-phase three-component CC model
  */
 #include "config.h"
 #include "infiltrationproblem.hh"

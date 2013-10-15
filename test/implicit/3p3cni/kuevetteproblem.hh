@@ -86,7 +86,7 @@ SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
 
 
 /*!
- * \ingroup ThreePThreeCNIBoxModel
+ * \ingroup ThreePThreeCNIModel
  * \ingroup ImplicitTestProblems
  * \brief Non-isothermal gas injection problem where a gas (e.g. steam/air)
  *        is injected into a unsaturated porous medium with a residually
@@ -161,10 +161,10 @@ class KuevetteProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    
+
 public:
     /*!
-     * \brief The constructor
+     * \brief The constructor.
      *
      * \param timeManager The time manager
      * \param gridView The grid view
@@ -173,7 +173,7 @@ public:
         : ParentType(timeManager, gridView), eps_(1e-6)
     {
         FluidSystem::init();
-        
+
         name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
     }
 
@@ -189,7 +189,13 @@ public:
      */
     const std::string name() const
     { return name_; }
-    
+
+    /*!
+     * \brief Returns the source term at specific position in the domain.
+     *
+     * \param values The source values for the primary variables
+     * \param globalPos The position of the center of the finite volume
+     */
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
@@ -257,13 +263,13 @@ public:
                  int boundaryFaceIdx) const
     {
         values = 0;
-        
+
         GlobalPosition globalPos;
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);
         else 
             globalPos = intersection.geometry().center();
-        
+
         // negative values for injection
         if (globalPos[0] < eps_)
         {

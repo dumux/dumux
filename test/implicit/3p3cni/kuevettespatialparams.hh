@@ -58,7 +58,7 @@ SET_PROP(KuevetteSpatialParams, MaterialLaw)
 
 /*!
  * \ingroup ThreePThreeCNIModel
- *
+ * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the kuevette problem
  */
 template<class TypeTag>

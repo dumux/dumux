@@ -1,12 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2011      by Holger Class                                 *
- *   Copyright (C) 2008-2010 by Andreas Lauser                               *
- *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
- *   Institute for Modelling Hydraulic and Environmental Systems             *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -15,7 +10,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -24,7 +19,8 @@
 /*!
  * \file
  *
- * \brief Definition of the spatial parameters for the kuevette problem.
+ * \brief Definition of the spatial parameters for the kuevette problem, which
+ *        uses the three-phase fully implicit model.
  */
 #ifndef DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 #define DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
@@ -61,7 +57,8 @@ SET_PROP(InfiltrationThreePSpatialParams, MaterialLaw)
 }
 
 /*!
- * \ingroup ThreePThreeCModel
+ * \ingroup ImplicitTestProblems
+ * \ingroup ThreePModel
  *
  * \brief Definition of the spatial parameters for the infiltration problem
  */
@@ -124,12 +121,12 @@ public:
     {}
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Intrinsic permability
      *
-     * \param element The current finite element
+     * \param element The current element
      * \param fvElemGeom The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
+     * \return Intrinsic permeability
      */
     const Scalar intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvElemGeom,
@@ -142,12 +139,12 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
+     * \brief Porosity
      *
-     * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param element The current element
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvIdx The index of the sub-control volume
+     * \return Porosity
      */
     double porosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
@@ -158,11 +155,12 @@ public:
 
 
     /*!
-     * \brief return the parameter object for the material law which depends on the position
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
-     * \param element The current finite element
+     * \param element The current element
      * \param fvElemGeom The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
+     * \return the material parameters object
      */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                const FVElementGeometry &fvElemGeom,

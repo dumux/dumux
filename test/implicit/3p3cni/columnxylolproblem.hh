@@ -81,7 +81,7 @@ SET_SCALAR_PROP(ColumnProblem, TimeManagerMaxTimeStepSize, 4.);
 
 
 /*!
- * \ingroup ThreePThreeCNIBoxModel
+ * \ingroup ThreePThreeCNIModel
  * \ingroup ImplicitTestProblems
  * \brief Non-isothermal injection problem where a water is injected into a 
  *        sand column with a NAPL contamination.

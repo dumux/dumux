@@ -72,7 +72,7 @@ SET_INT_PROP(InfiltrationProblem, ImplicitNumericDifferenceMethod, 0);
 }
 
 /*!
- * \ingroup ThreePThreeCBoxModel
+ * \ingroup ThreePThreeCModel
  * \ingroup ImplicitTestProblems
  * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
  *        the unsaturated and the saturated groundwater zone.
@@ -196,6 +196,12 @@ public:
         return temperature_;
     }
 
+    /*!
+     * \brief Returns the source term at specific position in the domain.
+     *
+     * \param values The source values for the primary variables
+     * \param globalPos The position
+     */
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
@@ -288,7 +294,7 @@ public:
                  const int boundaryFaceIdx) const
     {
         values = 0;
-        
+
         GlobalPosition globalPos;
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 3p3cni CC model
+ * \brief Test for the non-isothermal three-phase three-component CC model.
  */
 #include "config.h"
 //#include "kuevetteproblem.hh"

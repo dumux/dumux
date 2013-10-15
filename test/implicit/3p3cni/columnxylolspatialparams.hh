@@ -56,7 +56,7 @@ SET_PROP(ColumnSpatialParams, MaterialLaw)
 
 /*!
  * \ingroup ThreePThreeCNIModel
- *
+ * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the column problem
  */
 template<class TypeTag>

@@ -1,11 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *          See the file COPYING for full copying permissions.               *
- *
- *   Institute for Modelling Hydraulic and Environmental Systems             *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -14,7 +10,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -77,8 +73,8 @@ SET_INT_PROP(InfiltrationThreePProblem, ImplicitNumericDifferenceMethod, 1);
 }
 
 /*!
- * \ingroup ThreePBoxModel
- * \ingroup BoxTestProblems
+ * \ingroup ThreePModel
+ * \ingroup ImplicitTestProblems
  * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
  *        the unsaturated and the saturated groundwater zone.
  *
@@ -187,7 +183,12 @@ public:
         return temperature_;
     }
 
-
+    /*!
+     * \brief Returns the source term at specific position in the domain.
+     *
+     * \param values The source values for the primary variables
+     * \param globalPos The position
+     */
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {

@@ -19,7 +19,9 @@
 /*!
  * \file
  *
- * \brief Definition of the spatial parameters for the kuevette problem.
+ * \brief Definition of the spatial parameters for the kuevette problem
+ *        which uses the isothermal two-phase two component
+ *        fully implicit model.
  */
 #ifndef DUMUX_INFILTRATION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INFILTRATION_SPATIAL_PARAMETERS_HH
@@ -57,7 +59,7 @@ SET_PROP(InfiltrationSpatialParams, MaterialLaw)
 
 /*!
  * \ingroup ThreePThreeCModel
- *
+ * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the infiltration problem
  */
 template<class TypeTag>

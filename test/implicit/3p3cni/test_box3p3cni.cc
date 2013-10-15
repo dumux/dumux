@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 3p3cni box model
+ * \brief Test for the non-isothermal three-phase three-component box model.
  */
 #include "config.h"
 //#include "kuevetteproblem.hh"
