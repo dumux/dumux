@@ -32,3 +32,7 @@ CONFIGURE_FLAGS=" \
   --disable-parallel \
   --disable-mpiruntest"
 
+# for CO2 and CO2ni tests
+# --enable-experimental-grid-extensions \
+# --with-alugrid=PATH_TO_ALUGrid \
+# need to be set in the configure flags
