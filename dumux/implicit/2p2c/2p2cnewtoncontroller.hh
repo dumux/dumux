@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A 2p2c specific controller for the newton solver.
+ * \brief A two-phase two-component specific controller for the Newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the Newton method to abort quicker if the solution is
@@ -36,7 +36,7 @@ namespace Dumux {
 /*!
  * \ingroup Newton
  * \ingroup TwoPTwoCModel
- * \brief A 2p2c specific controller for the Newton solver.
+ * \brief A two-phase two-component specific controller for the Newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the Newton method to abort quicker if the solution is
@@ -55,9 +55,8 @@ public:
     {}
 
     /*!
-     * \brief
-     * Suggest a new time step size based either on the number of Newton
-     * iterations required or on the variable switch
+     * \brief Suggest a new time step size based either on the number of Newton
+     *        iterations required or on the variable switch
      *
      * \param uCurrentIter The current global solution vector
      * \param uLastIter The previous global solution vector
@@ -93,9 +92,8 @@ public:
     }
 
     /*!
-     * \brief
-     * Returns true if the current solution can be considered to
-     * be accurate enough
+     * \brief Returns true if the current solution can be considered to
+     *        be accurate enough
      */
     bool newtonConverged()
     {

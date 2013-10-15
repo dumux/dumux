@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief   This file contains the data which is required to calculate
- *          all fluxes of components over a face of a finite volume for
- *          the two-phase two-component model.
+ * \brief This file contains the data which is required to calculate
+ *        all fluxes of components over a face of a finite volume for
+ *        the two-phase two-component model.
  */
 #ifndef DUMUX_2P2C_FLUX_VARIABLES_HH
 #define DUMUX_2P2C_FLUX_VARIABLES_HH
@@ -205,25 +205,33 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
  public:
     /*!
      * \brief The effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-     *           for each fluid phase in the porous medium.
+     *        for each fluid phase in the porous medium.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar porousDiffCoeff(int phaseIdx) const
     { return porousDiffCoeff_[phaseIdx]; };
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
     /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar molarDensity(int phaseIdx) const
     { return molarDensity_[phaseIdx]; }
 
     /*!
      * \brief The mole fraction gradient of the dissolved component in a phase.
+     *
+     * \param phaseIdx The phase index
      */
     const DimVector &moleFractionGrad(int phaseIdx) const
     { return moleFractionGrad_[phaseIdx]; };

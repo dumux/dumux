@@ -250,6 +250,12 @@ public:
     Scalar temperature() const
     { return temperature_; };
 
+    /*!
+     * \brief Returns the source term at specific position in the domain.
+     *
+     * \param values The source values for the primary variables
+     * \param globalPos The position
+     */
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &globalPos) const
     {
@@ -317,7 +323,7 @@ public:
                  int boundaryFaceIdx) const
     {
         values = 0;
-        
+
         GlobalPosition globalPos;
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);

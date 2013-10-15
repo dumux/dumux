@@ -72,7 +72,7 @@ public:
     };
 
     /*!
-     * \brief Evaluate the amount all conservation quantities
+     * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a finite sub-control volume.
      *
      *  \param storage The phase mass within the sub-control volume

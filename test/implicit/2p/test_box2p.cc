@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the two-phase box model
+ * \brief Test for the two-phase box model
  */
 #include "config.h"
 #include "lensproblem.hh"

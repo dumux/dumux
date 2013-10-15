@@ -19,7 +19,8 @@
 
 /*!
  * \file
- * \brief Defines the indices required for the 2p2c fully implicit model.
+ * \brief Defines the indices required for the two-phase two-component
+ *        fully implicit model.
  */
 #ifndef DUMUX_2P2C_INDICES_HH
 #define DUMUX_2P2C_INDICES_HH
@@ -33,7 +34,7 @@ namespace Dumux
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitIndices
- * \brief Enumerates the formulations which the 2p2c model accepts.
+ * \brief Enumerates the formulations which the two-phase two-component model accepts.
  */
 struct TwoPTwoCFormulation
 {
@@ -49,7 +50,7 @@ struct TwoPTwoCFormulation
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitIndices
- * \brief The indices for the isothermal 2p2c model.
+ * \brief The indices for the isothermal two-phase two-component model.
  *
  * \tparam formulation The formulation, either pwsn or pnsw.
  * \tparam PVOffset The first index in a primary variable vector.
@@ -94,7 +95,7 @@ public:
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitIndices
- * \brief The indices for the isothermal 2p2c model in the pn-sw
+ * \brief The indices for the isothermal two-phase two-component model in the pn-sw
  *        formulation.
  *
  * \tparam PVOffset The first index in a primary variable vector.

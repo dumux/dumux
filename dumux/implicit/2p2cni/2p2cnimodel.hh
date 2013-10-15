@@ -19,7 +19,8 @@
 /*!
  * \file
  *
- * \brief Adaption of the fully implicit scheme to the non-isothermal two-phase two-component flow model.
+ * \brief Adaption of the fully implicit scheme to the non-isothermal
+ *        two-phase two-component flow model.
  */
 #ifndef DUMUX_NEW_2P2CNI_MODEL_HH
 #define DUMUX_NEW_2P2CNI_MODEL_HH
@@ -29,7 +30,8 @@
 namespace Dumux {
 /*!
  * \ingroup TwoPTwoCNIModel
- * \brief Adaption of the fully implicit scheme to the non-isothermal two-phase two-component flow model.
+ * \brief Adaption of the fully implicit scheme to the non-isothermal
+ *        two-phase two-component flow model.
  *
  * This model implements a non-isothermal two-phase flow of two compressible and partly miscible fluids
  * \f$\alpha \in \{ w, n \}\f$. Thus each component \f$\kappa \in \{ w, a \}\f$ can be present in

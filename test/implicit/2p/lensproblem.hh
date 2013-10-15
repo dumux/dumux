@@ -206,7 +206,7 @@ public:
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
-        
+
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, 
                                              std::string, 
                                              Problem, 
@@ -251,7 +251,12 @@ public:
     Scalar temperature() const
     { return temperature_; };
 
-
+    /*!
+     * \brief Returns the source term at specific position in the domain.
+     *
+     * \param values The source values for the primary variables
+     * \param globalPos The position
+     */
     void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
     {
@@ -299,15 +304,15 @@ public:
         fluidState.setTemperature(temperature_);
         fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
-        
+
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
-        
+
         Scalar height = this->bBoxMax()[1] - this->bBoxMin()[1];
         Scalar depth = this->bBoxMax()[1] - globalPos[1];
         Scalar alpha = 1 + 1.5/height;
         Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
         Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
-        
+
         // hydrostatic pressure scaled by alpha
         values[pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
         values[snIdx] = 0.0;
@@ -355,11 +360,11 @@ public:
         fluidState.setTemperature(temperature_);
         fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
-        
+
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
         Scalar depth = this->bBoxMax()[1] - globalPos[1];
-        
+
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
         values[snIdx] = 0.0;

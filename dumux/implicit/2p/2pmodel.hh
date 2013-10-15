@@ -18,10 +18,10 @@
  *****************************************************************************/
 
 /*!
-* \file
-*
-* \brief Adaption of the fully implicit scheme to the two-phase flow model.
-*/
+ * \file
+ *
+ * \brief Adaption of the fully implicit scheme to the two-phase flow model.
+ */
 
 #ifndef DUMUX_TWOP_MODEL_HH
 #define DUMUX_TWOP_MODEL_HH

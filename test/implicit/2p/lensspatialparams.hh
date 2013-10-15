@@ -20,7 +20,7 @@
  * \file
  *
  * \brief The spatial parameters for the LensProblem which uses the
- *        twophase box model
+ *        two-phase fully implicit model
  */
 #ifndef DUMUX_LENS_SPATIAL_PARAMS_HH
 #define DUMUX_LENS_SPATIAL_PARAMS_HH
@@ -90,6 +90,11 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     */
     LensSpatialParams(const GridView& gridView)
     : ParentType(gridView)
     {
@@ -138,7 +143,7 @@ public:
      *
      * \param element The current element
      * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume.
+     * \param scvIdx The index of the sub-control volume
      * \return Intrinsic permeability
      */
     Scalar intrinsicPermeability(const Element &element,
@@ -146,18 +151,18 @@ public:
                                  int scvIdx) const
     {
         const GlobalPosition& globalPos = fvGeometry.subContVol[scvIdx].global;
-        
+
         if (isInLens_(globalPos))
             return lensK_;
         return outerK_;
     }
-    
+
     /*!
      * \brief Porosity
      *
      * \param element The current element
      * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume.
+     * \param scvIdx The index of the sub-control volume
      * \return Porosity
      */
     Scalar porosity(const Element &element,
@@ -170,7 +175,7 @@ public:
      *
      * \param element The current element
      * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume.
+     * \param scvIdx The index of the sub-control volume
      * \return the material parameters object
      */
     const MaterialLawParams& materialLawParams(const Element &element,
@@ -178,7 +183,7 @@ public:
                                                 int scvIdx) const
     {
         const GlobalPosition& globalPos = fvGeometry.subContVol[scvIdx].global;
-        
+
         if (isInLens_(globalPos))
             return lensMaterialParams_;
         return outerMaterialParams_;

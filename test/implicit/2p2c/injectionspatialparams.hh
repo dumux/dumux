@@ -19,8 +19,9 @@
 /*!
  * \file
  *
- * \brief Definition of the spatial parameters for the injection
- *        problem which uses the isothermal 2p2c box model
+ * \brief Definition of the spatial parameters for the injection problem
+ *        which uses the isothermal two-phase two component
+ *        fully implicit model.
  */
 
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMS_HH
@@ -66,7 +67,8 @@ SET_PROP(InjectionSpatialParams, MaterialLaw)
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the injection
- *        problem which uses the isothermal 2p2c box model
+ *        problem which uses the isothermal two-phase two-component
+ *        fully implicit model
  */
 template<class TypeTag>
 class InjectionSpatialParams : public ImplicitSpatialParams<TypeTag>

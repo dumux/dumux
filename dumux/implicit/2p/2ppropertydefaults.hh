@@ -23,7 +23,7 @@
  * \file
  *
  * \brief Defines default values for the properties required by the
- *        twophase fully implicit model.
+ *        two-phase fully implicit model.
  */
 #ifndef DUMUX_2P_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P_PROPERTY_DEFAULTS_HH

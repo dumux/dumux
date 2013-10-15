@@ -19,7 +19,7 @@
 
 /*!
  * \file
- * \brief Defines the indices used by the 2p2cni model
+ * \brief Defines the indices used by the non-isothermal two-phase two-component model
  */
 #ifndef DUMUX_2P2CNI_INDICES_HH
 #define DUMUX_2P2CNI_INDICES_HH
@@ -28,8 +28,6 @@
 
 namespace Dumux
 {
-// \{
-
 /*!
  * \ingroup TwoPTwoCNIModel
  * \ingroup ImplicitIndices

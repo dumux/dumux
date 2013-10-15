@@ -110,13 +110,13 @@ public:
 
     /*!
      * \brief Evaluates the advective mass flux and the heat flux
-     * over a face of a sub-control volume and writes the result in
-     * the flux vector.
+     *        over a face of a sub-control volume and writes the result into
+     *        the flux vector.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
      * \param fluxVars The flux variables at the current sub-control-volume face
      *
-     * This method is called by compute flux (base class)
+     * This method is called by compute flux (base class).
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
@@ -149,7 +149,7 @@ public:
      * \param flux The diffusive flux over the sub-control-volume face for each conservation quantity (mass, energy)
      * \param fluxVars The flux variables at the current sub-control-volume face
      *
-     * This method is called by compute flux (base class)
+     * This method is called by compute flux (base class).
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const

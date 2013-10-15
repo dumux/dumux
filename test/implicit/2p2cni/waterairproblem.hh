@@ -163,13 +163,13 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    
+
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     /*!
-     * \brief The constructor
+     * \brief The constructor.
      *
      * \param timeManager The time manager
      * \param gridView The grid view
@@ -181,7 +181,7 @@ public:
         eps_ = 1e-6;
 
         FluidSystem::init();
-        
+
         name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
 
         //stating in the console whether mole or mass fractions are used
@@ -225,10 +225,10 @@ public:
 #endif
 
     /*!
-     * \brief Return the sources within the domain.
+     * \brief Returns the source term at specific position in the domain.
      *
-     * \param values Stores the source values, acts as return value
-     * \param globalPos The global position
+     * \param values The source values for the primary variables
+     * \param globalPos The position
      *
      * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
      */
@@ -303,13 +303,13 @@ public:
                  const int boundaryFaceIdx) const
     {
         values = 0;
-        
+
         GlobalPosition globalPos;
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);
         else 
             globalPos = intersection.geometry().center();
-        
+
         // negative values for injection
         if (globalPos[0] > 15 && globalPos[0] < 25 &&
             globalPos[1] < eps_)

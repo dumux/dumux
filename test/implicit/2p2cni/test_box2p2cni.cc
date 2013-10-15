@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 2p2cni box model
+ * \brief Test for the non-isothermal two-phase two-component box model.
  */
 #include "config.h"
 #include "waterairproblem.hh"

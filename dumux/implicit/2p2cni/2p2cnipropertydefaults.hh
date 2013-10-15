@@ -22,8 +22,8 @@
  * \ingroup TwoPTwoCNIModel
  * \file
  *
- * \brief Defines default values for most properties required by the 2p2cni
- *        fully implicit model.
+ * \brief Defines default values for most properties required by the
+ *        non-isothermal two-phase two-component fully implicit model.
  */
 #ifndef DUMUX_2P2CNI_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P2CNI_PROPERTY_DEFAULTS_HH

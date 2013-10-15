@@ -24,7 +24,7 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for the twophase fully implicit model.
+ * \brief Defines the properties required for the two-phase fully implicit model.
  */
 
 #ifndef DUMUX_2P_PROPERTIES_HH

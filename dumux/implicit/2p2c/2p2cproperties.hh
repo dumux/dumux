@@ -24,7 +24,8 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for the 2p2c fully implicit model.
+ * \brief Defines the properties required for the two-phase two-component
+ *        fully implicit model.
  */
 #ifndef DUMUX_2P2C_PROPERTIES_HH
 #define DUMUX_2P2C_PROPERTIES_HH

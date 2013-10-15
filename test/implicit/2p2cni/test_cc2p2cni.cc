@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 2p2cni CC model
+ * \brief Test for the non-isothermal two-phase two-component CC model.
  */
 #include "config.h"
 #include "waterairproblem.hh"
