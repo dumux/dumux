@@ -230,8 +230,8 @@ public:
         constraints_ = Dune::make_shared<Constraints>();
         scalarGridFunctionSpace_ = Dune::make_shared<ScalarGridFunctionSpace>(problem.gridView(), *fem_, *constraints_);
         gridFunctionSpace_ = Dune::make_shared<GridFunctionSpace>(*scalarGridFunctionSpace_);
-        int maxIt = GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations);
-        int verbosity = GET_PROP_VALUE(TypeTag, LinearSolverVerbosity);
+        int maxIt = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+        int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
         imp_ = Dune::make_shared<PDELabBackend>(*gridFunctionSpace_, maxIt, verbosity);
     }
 
@@ -245,7 +245,7 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        static const double residReduction = GET_PROP_VALUE(TypeTag, LinearSolverResidualReduction);
+        static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
         imp_->apply(A, x, b, residReduction);
 
         result_.converged  = imp_->result().converged;
@@ -305,11 +305,11 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        int maxIt = GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations);
-        int verbosity = GET_PROP_VALUE(TypeTag, LinearSolverVerbosity);
+        int maxIt = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+        int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
         imp_ = Dune::make_shared<PDELabBackend>(maxIt, verbosity);
 
-        static const double residReduction = GET_PROP_VALUE(TypeTag, LinearSolverResidualReduction);
+        static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
         imp_->apply(A, x, b, residReduction);
 
         result_.converged  = imp_->result().converged;
@@ -372,11 +372,11 @@ public:
     {
         scaleLinearSystem(A, b);
 
-        int maxIt = GET_PROP_VALUE(TypeTag, LinearSolverMaxIterations);
-        int verbosity = GET_PROP_VALUE(TypeTag, LinearSolverVerbosity);
+        int maxIt = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+        int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
         imp_ = Dune::make_shared<PDELabBackend>(maxIt, verbosity);
         
-        static const double residReduction = GET_PROP_VALUE(TypeTag, LinearSolverResidualReduction);
+        static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
         imp_->apply(A, x, b, residReduction);
 
         result_.converged  = imp_->result().converged;
