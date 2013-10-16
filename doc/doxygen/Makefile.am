@@ -4,7 +4,7 @@ CURDIR=doc/doxygen
 
 # add some more stuff to install and tarball
 DOCFILES = $(PAGES)
-EXTRA_DIST = $(PAGES) mainpage modules images/*.png
+EXTRA_DIST = $(PAGES) mainpage modules images/*.png extradoc/parameterlist extradoc/parameters.html
 
 include $(top_srcdir)/am/doxygen
 include $(top_srcdir)/am/global-rules
