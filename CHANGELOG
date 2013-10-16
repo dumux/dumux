@@ -22,6 +22,10 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
                the fluid phase is admitted to consist of two components.
     . el2p:    poroelasticity equations for one solid phase and two immiscible
                fluid phases.
+               
+  - A three-dimensional implementation of the MPFA L-method is added and made
+    available for the decoupled 2p models. It also allows for simulation on
+    an adaptive grid.
 
   - The MPNC model now allows to drop the assumptions of local thermal and/or
     chemical equilibrium. Dropping the local chemical equilibrium assumption
@@ -39,6 +43,10 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
     incorporated into the local residual in a weak sense. Only for mixed
     Dirichlet/Neumann conditions and for the MPNC model, they still are
     incorporated in a strong sense.
+    
+  - The sequential models can use a sub-timestepping in the transport scheme, if
+    the property "SubCFLFactor" is chosen smaller than "CFLFactor", which in
+    that case specifies the CFL factor used in the pressure equation.
 
   - All fully-implicit porous-media models now provide the possibility to write
     the velocities to the VTK output. This can be achieved by setting the
