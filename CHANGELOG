@@ -1,18 +1,21 @@
 Differences Between DuMuX 2.3 and DuMuX 2.4
 ===================================================
 
-* IMPROVEMENTS and ENHANCEMENTS:
-  - The co2 and co2ni tests now require that the 
-    DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS flag is set. This flag is needed for
-    the current trunk version of DUNE (2.3) in order to be able to use the 
-    function boundaryId(). An error is thrown during compilation if the flag
-    is not set. For reference see the commented part in optim.opts and debug.opts.
+* IMPORTANT NOTES:
+  - If the current trunk version of DUNE (2.3) is used, the co2 and co2ni tests
+    require that the DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS flag is set. This
+    flag is needed in order to be able to use the function boundaryId(). An
+    error is thrown during compilation if the flag is not set. For reference see
+    the commented part in optim.opts and debug.opts.
+
   - All two-component models (1p2c, 2p2c, 2p2cni, co2, co2ni) can now be used 
     with either mole or mass fractions. The property useMoles has to be set in 
     the problem file and the boundary conditions have to be choosen accordingly.
-    . 1p2c, 2p2c, 2p2cni now use MOLE fractions by default.
-    . co2, co2ni still use MASS fractions by default.
+    . 1p2c, 2p2c, 2p2cni use MOLE fractions by default.
+    . co2, co2ni use MASS fractions by default.
+    . For completeness: 3p3c, 3p3cni and mpnc use MOLE fractions only.
 
+* IMPROVEMENTS and ENHANCEMENTS:
   - Three geomechanics models have been added, thanks to the previous PhD work
     of Melanie Darcis. The models are located in dumux/geomechanics, a test for
     each model is provided in test/geomechanics:
@@ -22,7 +25,7 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
                the fluid phase is admitted to consist of two components.
     . el2p:    poroelasticity equations for one solid phase and two immiscible
                fluid phases.
-               
+
   - A three-dimensional implementation of the MPFA L-method is added and made
     available for the decoupled 2p models. It also allows for simulation on
     an adaptive grid.
@@ -43,7 +46,7 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
     incorporated into the local residual in a weak sense. Only for mixed
     Dirichlet/Neumann conditions and for the MPNC model, they still are
     incorporated in a strong sense.
-    
+
   - The sequential models can use a sub-timestepping in the transport scheme, if
     the property "SubCFLFactor" is chosen smaller than "CFLFactor", which in
     that case specifies the CFL factor used in the pressure equation.
@@ -70,9 +73,6 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
 
   - Added compiler support for Clang 3.2, Clang 3.3, and GCC 4.8.
 
-* IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
-  - none
-
 * Deprecated CLASSES/FILES, to be removed after 2.4:
   - OnePBoxModel, OnePTwoCBoxModel -> OnePModel, OnePTwoCModel
 
@@ -84,9 +84,6 @@ Differences Between DuMuX 2.3 and DuMuX 2.4
     2p2c/cellData2p2cmultiphysics.hh.
     In dumux/material/fluidmatrixinteractions/3p: parkerVanGen3p.hh,
     parkerVanGen3pparams.hh.
-
-* Deprecated PROPERTY NAMES, to be removed after 2.4: BEWARE: The compiler will
-  not print any warning if a deprecated property name is used.
 
 * Deprecated CONSTANTS/ENUMS, to be removed after 2.4: BEWARE: Older compilers 
   will not print any warning if a deprecated constant/enum is used.
