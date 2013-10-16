@@ -85,7 +85,6 @@ public:
     /*!
      * \brief Give the enthalpy of a *component* in a phase.
      */
-#warning gas enthalpy in liquid system
     template <class FluidState>
     static Scalar componentEnthalpy(FluidState &fluidState,
                                     const int phaseIdx,
