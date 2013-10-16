@@ -201,6 +201,24 @@
          *
          * \copydetails Dumux::Stokes2cniModel
          */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup ElasticBoxModel Linear elastic 
+         *
+         * \copydetails Dumux::ElasticModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup ElOnePTwoCBoxModel One-phase two component linear elastic 
+         *
+         * \copydetails Dumux::ElOnePTwoCModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup ElTwoPBoxModel Two-phase immiscible linear elastic 
+         *
+         * \copydetails Dumux::ElTwoPModel
+         */
     /*!
      * \ingroup ImplicitModel
      * \defgroup ImplicitBaseProblems Base Problems

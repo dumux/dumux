@@ -31,6 +31,12 @@
 #include <dune/pdelab/gridfunctionspace/interpolate.hh>
 
 namespace Dumux {
+
+namespace Properties {
+NEW_PROP_TAG(InitialDisplacement); //!< The initial displacement function
+NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
+}
+
 /*!
  * \ingroup ElTwoPBoxModel
  * \brief Adaption of the fully implicit scheme to the two-phase linear elasticity model.
@@ -93,12 +99,6 @@ namespace Dumux {
  * The primary variables are the wetting phase pressure \f$p_w\f$, the nonwetting phase saturation \f$S_n\f$ and the solid
  * displacement vector \f$\mathbf{u}\f$ (changes in solid displacement with respect to initial conditions).
  */
-
-namespace Properties {
-NEW_PROP_TAG(InitialDisplacement); //!< The initial displacement function
-NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
-}
-
 template<class TypeTag>
 class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
