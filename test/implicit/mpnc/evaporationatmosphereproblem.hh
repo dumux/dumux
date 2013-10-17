@@ -88,7 +88,7 @@ SET_PROP(EvaporationAtmosphereProblem, Grid)
 #elif HAVE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 #else
-#error  "Evaporation Atmosphere not built, needs either UG or ALU for the log mesh." << std::endl;
+    Dune::YaspGrid<2> type;
 #endif
 };
 

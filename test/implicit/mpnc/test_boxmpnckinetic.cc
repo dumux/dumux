@@ -341,6 +341,12 @@ int start(int argc, char **argv)
 
 int main(int argc, char** argv)
 {
+#if !HAVE_UG || !HAVE_ALUGRID
+    std::cout<<"Evaporation Atmosphere not built, needs either UG or ALU for the log mesh." << std::endl;
+    return 77;
+#else
     typedef TTAG(EvaporationAtmosphereProblem) ProblemTypeTag;
     return start<ProblemTypeTag>(argc, argv);//, usage);
+#endif
+
 }
