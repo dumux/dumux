@@ -79,7 +79,7 @@ public:
         const std::string artFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
 
         std::cout << "Opening " << artFileName << std::endl;
-        std::ifstream inFile(artFileName);
+        std::ifstream inFile(artFileName.c_str());
 
         std::string jump;
         while (inFile >> jump)
