@@ -78,10 +78,10 @@ class MPNCModelKinetic : public MPNCModel<TypeTag>
 
 
     typedef std::vector<Dune::FieldVector<Scalar, 1> >  ScalarVector;
-    typedef std::array<ScalarVector, numPhases>         PhaseVector;
+    typedef Dune::array<ScalarVector, numPhases>         PhaseVector;
     typedef Dune::FieldVector<Scalar, dim>              DimVector;
     typedef Dune::BlockVector<DimVector>                DimVectorField;
-    typedef std::array<DimVectorField, numPhases>       PhaseDimVectorField;
+    typedef Dune::array<DimVectorField, numPhases>       PhaseDimVectorField;
 
 public:
     /*!

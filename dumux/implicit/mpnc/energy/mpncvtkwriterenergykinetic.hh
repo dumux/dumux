@@ -72,11 +72,11 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* enableKineticEne
     typedef typename ParentType::ScalarVector ScalarVector;
     typedef typename ParentType::PhaseVector PhaseVector;
     typedef typename ParentType::ComponentVector ComponentVector;
-    typedef std::array<ScalarVector, numEnergyEqs> EnergyEqVector;
+    typedef Dune::array<ScalarVector, numEnergyEqs> EnergyEqVector;
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::BlockVector<DimVector> DimField;
-    typedef std::array<DimField, numPhases> PhaseDimField;
+    typedef Dune::array<DimField, numPhases> PhaseDimField;
 
 
 public:
