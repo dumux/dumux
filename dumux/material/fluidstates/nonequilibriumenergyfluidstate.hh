@@ -51,8 +51,8 @@ NEW_PROP_TAG(FluidSystem);
  */
 template <class TypeTag>
 class NonEquilibriumEnergyFluidState :
-    public NonEquilibriumFluidState<class GET_PROP_TYPE(TypeTag, Scalar),
-                                    class GET_PROP_TYPE(TypeTag, FluidSystem)>
+    public NonEquilibriumFluidState<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                    typename GET_PROP_TYPE(TypeTag, FluidSystem)>
     {
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;

@@ -54,12 +54,12 @@ NEW_PROP_TAG(NumComponents);
  */
 template <class TypeTag>
 class NonEquilibriumMassFluidState :
-    public NonEquilibriumFluidState<class GET_PROP_TYPE(TypeTag, Scalar),
-                                    class GET_PROP_TYPE(TypeTag, FluidSystem)>
+    public NonEquilibriumFluidState<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                    typename GET_PROP_TYPE(TypeTag, FluidSystem)>
     {
     public:
-        typedef NonEquilibriumFluidState<class GET_PROP_TYPE(TypeTag, Scalar),
-                                          class GET_PROP_TYPE(TypeTag, FluidSystem)> ParentType;
+        typedef NonEquilibriumFluidState<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                         typename GET_PROP_TYPE(TypeTag, FluidSystem)> ParentType;
 
         typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
