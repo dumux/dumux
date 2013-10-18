@@ -18,6 +18,9 @@
 #define AWN_SURFACE_PCMAX_FCT_HH
 
 #include "awnsurfacepcmaxfctparams.hh"
+#include <dune/common/exceptions.hh>
+
+
 
 namespace Dumux
 {
