@@ -197,12 +197,6 @@ public:
     static const int pressureW = wPhaseIdx;
     static const int pressureN = nPhaseIdx;
 
-    DUNE_DEPRECATED_MSG("use pressureN (avoid 'w') instead")
-    static const int pressureNw = pressureN;
-
-    DUNE_DEPRECATED_MSG("use pressureN (uncapitalized 'w', to be avoided) instead")
-    static const int pressureNW = pressureN; //!< \deprecated
-
     // Equation indices
     static const int pressureEqIdx = 0;
     static const int transportEqOffset = pressureEqIdx + 1; //!< Offset to access transport (mass conservation -) equations
