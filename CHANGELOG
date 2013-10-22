@@ -1,3 +1,34 @@
+Differences Between DuMuX 2.4 and DuMuX 2.5
+===================================================
+
+* IMPORTANT NOTES:
+
+* IMPROVEMENTS and ENHANCEMENTS:
+
+* IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+
+* Deprecated CLASSES/FILES, to be removed after 2.5:
+
+* Deprecated PROPERTY NAMES, to be removed after 2.5: BEWARE: The compiler will
+  not print any warning if a deprecated property name is used.
+
+* Deprecated CONSTANTS/ENUMS, to be removed after 2.5: BEWARE: Older compilers 
+  will not print any warning if a deprecated constant/enum is used.
+
+* Deprecated public MEMBER VARIABLES, to be removed after 2.5: BEWARE: Older
+  compilers will not print any warning if a deprecated public member variable 
+  is used.
+
+* Deprecated MEMBER FUNCTIONS, to be removed after 2.5:
+
+* Deprecated MACROS, to be removed after 2.5: BEWARE: The compiler will not
+  print any warning if a deprecated macro is used.
+
+* DELETED classes/files, property names, constants/enums, 
+  member functions, which have been deprecated in DuMuX 2.4:
+  Everything listed as deprecated below has been removed.
+
+
 Differences Between DuMuX 2.3 and DuMuX 2.4
 ===================================================
 
