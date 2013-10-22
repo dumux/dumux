@@ -193,14 +193,6 @@ public:
      * \brief Return the dynamic viscosity \f$ \mathrm{[Pa\cdot s]} \f$ at the integration
      *        point.
      */
-    DUNE_DEPRECATED_MSG("function StokesFluxVariables::viscosity() is deprecated, use StokesFluxVariables::dynamicViscosity() instead.")
-    Scalar viscosity() const
-    { return dynamicViscosity(); }
-
-    /*!
-     * \brief Return the dynamic viscosity \f$ \mathrm{[Pa\cdot s]} \f$ at the integration
-     *        point.
-     */
     Scalar dynamicViscosity() const
     { return dynamicViscosity_; }
 

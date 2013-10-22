@@ -161,14 +161,6 @@ public:
      * \brief Returns the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ of the fluid in
      *        the sub-control volume.
      */
-    DUNE_DEPRECATED_MSG("function StokesVolumeVariables::viscosity() is deprecated, use StokesVolumeVariables::dynamicViscosity() instead.")
-    Scalar viscosity() const
-    { return dynamicViscosity(); }
-
-    /*!
-     * \brief Returns the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ of the fluid in
-     *        the sub-control volume.
-     */
     Scalar dynamicViscosity() const
     { return fluidState_.viscosity(phaseIdx); }
 
