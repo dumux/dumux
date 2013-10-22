@@ -85,10 +85,6 @@ public:
      */
     Scalar getCflFluxFunction(const Element& element);
 
-    DUNE_DEPRECATED_MSG("use getCflFluxFunction() (uncapitalized 'fl') instead")
-    Scalar getCFLFluxFunction(const Element& element)
-    { return getCflFluxFunction(element); }
-
     /*! \brief  Returns the CFL time-step
      *
      * \copydetails EvalCflFlux::getDt(const Element&)

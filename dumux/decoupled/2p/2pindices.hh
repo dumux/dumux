@@ -39,20 +39,9 @@ struct DecoupledTwoPCommonIndices
 {
     // Formulations
     static const int pwsn = 0; //!< pw and sn as primary variables
-    DUNE_DEPRECATED_MSG("use pwsn (uncapitalized 's') instead") 
-    static const int pwSn = pwsn; //!< \deprecated
-
     static const int pnsw = 1; //!< pn and sw as primary variables
-    DUNE_DEPRECATED_MSG("use pnsw (uncapitalized 's') instead") 
-    static const int pnSw = pnsw; //!< \deprecated
-
     static const int pwsw = 2; //!< pw and sw as primary variables
-    DUNE_DEPRECATED_MSG("use pwsw (uncapitalized 'S') instead") 
-    static const int pwSw = pwsw; //!< \deprecated
-
     static const int pnsn = 3; //!< pn and sn as primary variables
-    DUNE_DEPRECATED_MSG("use pnsn (uncapitalized 'S') instead") 
-    static const int pnSn = pnsn; //!< \deprecated
 
     static const int pGlobalSw = 4; //!< pGlobal and sw as primary variables
     static const int pGlobalSn = 5; //!< pGlobal and sn as primary variables
@@ -66,24 +55,15 @@ struct DecoupledTwoPCommonIndices
     static const int saturationW = 0; //!< Indicates wetting phase saturation
     static const int saturationNw = 1; //!<  Indicates non-wetting phase saturation
 
-    DUNE_DEPRECATED_MSG("use saturationNw (uncapitalized 'w') instead") 
-    static const int saturationNW = saturationNw; //!< \deprecated
-
     //pressure flags
     static const int pressureW = 0; //!< Indicates wetting phase pressure
     static const int pressureNw = 1; //!<  Indicates non-wetting phase pressure
     static const int pressureGlobal = 2; //!<  Indicates global-pressure
 
-    DUNE_DEPRECATED_MSG("use pressureNw (uncapitalized 'w') instead") 
-    static const int pressureNW = pressureNw; //!< \deprecated
-
     //velocity flags
     static const int velocityW = 0; //!< Indicates wetting phase velocity
     static const int velocityNw = 1; //!<  Indicates non-wetting phase velocity
     static const int velocityTotal = 2; //!<  Indicates total velocity
-
-    DUNE_DEPRECATED_MSG("use velocityNw (uncapitalized 'w') instead") 
-    static const int velocityNW = velocityNw; //!< \deprecated
 };
 
 /*!
@@ -101,11 +81,8 @@ struct DecoupledTwoPIndices : public DecoupledTwoPCommonIndices
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
-    static const int pwIdx = PVOffset + 0; //!< Pressure index of the wetting phase
-    static const int snIdx = PVOffset + 1; //!< \deprecated Saturation index of the nonwetting phase
-
-    DUNE_DEPRECATED_MSG("use snIdx (uncapitalized 's') instead") 
-    static const int SnIdx = snIdx; //!< \deprecated Saturation index of the nonwetting phase
+    static const int pwIdx = PVOffset + 0; //!< index of the wetting phase pressure
+    static const int snIdx = PVOffset + 1; //!< index of the nonwetting phase saturation
 
     //! \cond \private
     //Set the types of the single models depending on the formulation
@@ -118,8 +95,6 @@ struct DecoupledTwoPIndices : public DecoupledTwoPCommonIndices
     // indices of the equations
     static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
     static const int pressureEqIdx = contiWEqIdx; //!< Index of the pressure equation (total mass balance)
-    DUNE_DEPRECATED_MSG("use pressureEqIdx instead") 
-    static const int pressEqIdx = pressureEqIdx; //!< \deprecated
     static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
     static const int satEqIdx = contiNEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
     static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
@@ -140,11 +115,8 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsw, PVOffset>
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
-    static const int pnIdx = PVOffset + 0; //!< Pressure index of the non-wetting phase
-    static const int swIdx = PVOffset + 1; //!< Saturation index of the wetting phase
-
-    DUNE_DEPRECATED_MSG("use swIdx (uncapitalized 's') instead") 
-    static const int SwIdx = swIdx; //!< \deprecated Saturation index of the wetting phase
+    static const int pnIdx = PVOffset + 0; //!< index of the non-wetting phase pressure
+    static const int swIdx = PVOffset + 1; //!< index of the wetting phase saturation
 
     //! \cond \private
     //Set the types of the single models depending on the formulation
@@ -157,8 +129,6 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsw, PVOffset>
     // indices of the equations
     static const int contiNEqIdx = PVOffset + 0; //!< Index of the continuity equation of the non-wetting phase
     static const int pressureEqIdx = contiNEqIdx; //!< Index of the pressure equation (total mass balance)
-    DUNE_DEPRECATED_MSG("use pressureEqIdx instead") 
-    static const int pressEqIdx = pressureEqIdx; //!< \deprecated
     static const int contiWEqIdx = PVOffset + 1; //!< Index of the continuity equation of the wetting phase
     static const int satEqIdx = contiWEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
     static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
@@ -183,9 +153,6 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pwsw, PVOffset>
     static const int pwIdx = PVOffset + 0; //!< Pressure index of the wetting phase
     static const int swIdx = PVOffset + 1; //!< Saturation index of the wetting phase
 
-    DUNE_DEPRECATED_MSG("use swIdx (uncapitalized 's') instead") 
-    static const int SwIdx = swIdx; //!< \deprecated Saturation index of the wetting phase
-
     //! \cond \private
     //Set the types of the single models depending on the formulation
     static const int pressureType = pressureW;
@@ -197,8 +164,6 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pwsw, PVOffset>
     // indices of the equations
     static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
     static const int pressureEqIdx = contiWEqIdx; //!< Index of the pressure equation (total mass balance)
-    DUNE_DEPRECATED_MSG("use pressureEqIdx instead") 
-    static const int pressEqIdx = pressureEqIdx; //!< \deprecated
     static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
     static const int satEqIdx = contiNEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
     static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
@@ -219,11 +184,8 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsn, PVOffset>
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
-    static const int pnIdx = PVOffset + 0; //!< Pressure index of the non-wetting phase
-    static const int snIdx = PVOffset + 1; //!< \deprecated Saturation index of the nonwetting phase
-
-    DUNE_DEPRECATED_MSG("use snIdx (uncapitalized 's') instead") 
-    static const int SnIdx = snIdx; //!< \deprecated Saturation index of the nonwetting phase
+    static const int pnIdx = PVOffset + 0; //!< index of the nonwetting phase pressure
+    static const int snIdx = PVOffset + 1; //!< index of the nonwetting phase saturation
 
     //! \cond \private
     //Set the types of the single models depending on the formulation
@@ -236,8 +198,6 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnsn, PVOffset>
     // indices of the equations
     static const int contiNEqIdx = PVOffset + 0; //!< Index of the continuity equation of the non-wetting phase
     static const int pressureEqIdx = contiNEqIdx; //!< Index of the pressure equation (total mass balance)
-    DUNE_DEPRECATED_MSG("use pressureEqIdx instead") 
-    static const int pressEqIdx = pressureEqIdx; //!< \deprecated
     static const int contiWEqIdx = PVOffset + 1; //!< Index of the continuity equation of the wetting phase
     static const int satEqIdx = contiWEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
     static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
@@ -258,11 +218,8 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSw, PVOffset> : p
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
-    static const int pGlobalIdx = PVOffset + 0; //!< Global pressure index
-    static const int swIdx = PVOffset + 1; //!< Saturation index of the wetting phase
-
-    DUNE_DEPRECATED_MSG("use swIdx (uncapitalized 's') instead") 
-    static const int SwIdx = swIdx; //!< \deprecated Saturation index of the wetting phase
+    static const int pGlobalIdx = PVOffset + 0; //!< index of the global pressure
+    static const int swIdx = PVOffset + 1; //!< index of the wetting phase saturation
 
     //! \cond \private
     //Set the types of the single models depending on the formulation
@@ -274,8 +231,6 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSw, PVOffset> : p
 
     // indices of the equations
     static const int pressureEqIdx = PVOffset + 0; //!< Index of the pressure equation (total mass balance)
-    DUNE_DEPRECATED_MSG("use pressureEqIdx instead") 
-    static const int pressEqIdx = pressureEqIdx; //!< \deprecated
     static const int satEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
     static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
@@ -295,11 +250,8 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSn, PVOffset>
     static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
-    static const int pGlobalIdx = PVOffset + 0; //!< Global pressure index
-    static const int snIdx = PVOffset + 1; //!< \deprecated Saturation index of the nonwetting phase
-
-    DUNE_DEPRECATED_MSG("use snIdx (uncapitalized 's') instead") 
-    static const int SnIdx = snIdx; //!< \deprecated Saturation index of the nonwetting phase
+    static const int pGlobalIdx = PVOffset + 0; //!< index of the global pressure
+    static const int snIdx = PVOffset + 1; //!< index of the nonwetting phase saturation
 
     //! \cond \private
     //Set the types of the single models depending on the formulation
@@ -311,8 +263,6 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSn, PVOffset>
 
     // indices of the equations
     static const int pressureEqIdx = PVOffset + 0; //!< Index of the pressure equation (total mass balance)
-    DUNE_DEPRECATED_MSG("use pressureEqIdx instead") 
-    static const int pressEqIdx = pressureEqIdx; //!< \deprecated
     static const int satEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
     static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
