@@ -72,11 +72,6 @@ public:
     static const int sOrX1Idx = switch1Idx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
     static const int sOrX2Idx = switch2Idx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
 
-    DUNE_DEPRECATED_MSG("use sOrX1Idx (uncapitalized 's') instead") 
-    static const int SOrX1Idx = sOrX1Idx; //!< \deprecated
-    DUNE_DEPRECATED_MSG("use sOrX2Idx (uncapitalized 's') instead") 
-    static const int SOrX2Idx = sOrX2Idx; //!< \deprecated
-
     // equation indices
     static const int conti0EqIdx = PVOffset    + wCompIdx; //!< Index of the mass conservation equation for the water component
     static const int conti1EqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the contaminant component
