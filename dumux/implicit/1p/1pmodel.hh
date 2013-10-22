@@ -141,15 +141,6 @@ public:
         writer.attachCellData(*rank, "process rank");
     }
 };
-
-template<class TypeTag >
-class OnePBoxModel : public OnePModel<TypeTag>
-{
-public:
-    DUNE_DEPRECATED_MSG("use the class OnePModel instead")
-    OnePBoxModel(){}
-};
-
 }
 
 #include "1ppropertydefaults.hh"
