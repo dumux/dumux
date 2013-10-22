@@ -216,13 +216,6 @@ public:
     { return diffCoeff_; }
 
     /*!
-     * \brief DEPRECATED: Not used anymore!
-     */
-	DUNE_DEPRECATED_MSG("tortuosity is now calculated with the effective diffusivity model")
-    Scalar tortuosity() const
-    { return tortuosity_; }
-
-    /*!
      * \brief Returns the dispersivity of the fluid's streamlines.
      */
     const DimVector &dispersivity() const

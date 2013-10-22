@@ -187,15 +187,6 @@ public:
         writer.attachCellData(rank, "process rank");
     }
 };
-
-template<class TypeTag >
-class OnePTwoCBoxModel : public OnePTwoCModel<TypeTag>
-{
-public:
-    DUNE_DEPRECATED_MSG("use the class OnePTwoCModel instead")
-    OnePTwoCBoxModel(){}
-};
-
 }
 
 #include "1p2cpropertydefaults.hh"
