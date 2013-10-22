@@ -71,12 +71,6 @@ public:
         return pow(pow(swe, -1.0/params.vgm()) - 1, 1.0/params.vgn())/params.vgAlpha();
     }
 
-    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar swe)
-    {
-        return pc(params, swe);
-    }
-
     /*!
      * \brief The saturation-capillary pressure curve according to van Genuchten.
      *
@@ -96,12 +90,6 @@ public:
         assert(pc >= 0);
 
         return pow(pow(params.vgAlpha()*pc, params.vgn()) + 1, -params.vgm());
-    }
-
-    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pc)
-    {
-        return sw(params, pc);
     }
 
     /*!
@@ -129,12 +117,6 @@ public:
             * powSwe/swe/params.vgm();
     }
 
-    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar swe)
-    {
-        return dpc_dsw(params, swe);
-    }
-
     /*!
      * \brief The partial derivative of the effective
      *        saturation to the capillary pressure according to van Genuchten.
@@ -151,12 +133,6 @@ public:
         Scalar powAlphaPc = pow(params.vgAlpha()*pc, params.vgn());
         return -pow(powAlphaPc + 1, -params.vgm()-1)*
             params.vgm()*powAlphaPc/pc*params.vgn();
-    }
-
-    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pc)
-    {
-        return dsw_dpc(params, pc);
     }
 
     /*!
@@ -194,13 +170,6 @@ public:
         const Scalar xToM = std::pow(x, params.vgm());
         return (1.0 - xToM)/std::sqrt(swe) * ( (1.0 - xToM)/2 + 2*xToM*(1.0-x)/x );
     };
-
-    DUNE_DEPRECATED_MSG("use dkrw_dsw() (uncapitalized 's') instead")
-    static Scalar dkrw_dSw(const Params &params, Scalar swe)
-    {
-        return dkrw_dsw(params, swe);
-    }
-
 
     /*!
      * \brief The relative permeability for the non-wetting phase
@@ -241,12 +210,6 @@ public:
             -std::pow(1.0 - x, 2*params.vgm())
             *std::pow(1.0 - swe, -2.0/3)
             *(1.0/3 + 2*x/swe);
-    }
-
-    DUNE_DEPRECATED_MSG("use dkrn_dsw() (uncapitalized 's') instead")
-    static Scalar dkrn_dSw(const Params &params, Scalar swe)
-    {
-        return dkrn_dsw(params, swe);
     }
 
 };

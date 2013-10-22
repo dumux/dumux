@@ -128,12 +128,6 @@ public:
         return VanGenuchten::pc(params, swe);
     }
 
-    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar swe)
-    {
-        return pc(params, swe);
-    }
-
     /*!
      * \brief   A regularized van Genuchten saturation-capillary pressure curve.
      *
@@ -191,12 +185,6 @@ public:
         return sw;
     }
 
-    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pc)
-    {
-        return sw(params, pc);
-    }
-
     /*!
     * \brief A regularized version of the partial derivative
     *        of the \f$p_c(\overline S_w)\f$ w.r.t. effective saturation
@@ -224,12 +212,6 @@ public:
         }
 
         return VanGenuchten::dpc_dsw(params, swe);
-    }
-
-    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar swe)
-    {
-        return dpc_dsw(params, swe);
     }
 
     /*!
@@ -266,12 +248,6 @@ public:
         }
 
         return VanGenuchten::dsw_dpc(params, pc);
-    }
-
-    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pc)
-    {
-        return dsw_dpc(params, pc);
     }
 
     /*!

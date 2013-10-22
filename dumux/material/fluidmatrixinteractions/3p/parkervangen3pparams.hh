@@ -81,10 +81,6 @@ public:
     Scalar vgm() const
     { return vgm_; }
 
-    DUNE_DEPRECATED_MSG("use vgm() (uncapitalized 'm') instead")
-    Scalar vgM() const
-    { return vgm(); }
-
     /*!
      * \brief Set the \f$m\f$ shape parameter of van Genuchten's
      *        curve.
@@ -94,20 +90,12 @@ public:
     void setVgm(Scalar m)
     { vgm_ = m; vgn_ = 1/(1 - vgm_); }
 
-    DUNE_DEPRECATED_MSG("use setVgm() (uncapitalized 'm') instead")
-    void setVgM(Scalar m)
-    { setVgm(m); }
-
     /*!
      * \brief Return the \f$n\f$ shape parameter of van Genuchten's
      *        curve.
      */
     Scalar vgn() const
     { return vgn_; }
-
-    DUNE_DEPRECATED_MSG("use vgn() (uncapitalized 'n') instead")
-    Scalar vgN() const
-    { return vgn(); }
 
     /*!
      * \brief Set the \f$n\f$ shape parameter of van Genuchten's
@@ -117,10 +105,6 @@ public:
      */
     void setVgn(Scalar n)
     { vgn_ = n; vgm_ = 1 - 1/vgn_; }
-
-    DUNE_DEPRECATED_MSG("use setVgn() (uncapitalized 'n') instead")
-    void setVgN(Scalar n)
-    { setVgn(n); }
 
     /*!
      * \brief Return the residual saturation.
@@ -159,10 +143,6 @@ public:
     Scalar swr() const
     { return swr_; }
 
-    DUNE_DEPRECATED_MSG("use swr() (uncapitalized 's') instead")
-    Scalar Swr() const
-    { return swr(); }
-
     /*!
      * \brief Set the residual wetting saturation.
      */
@@ -174,10 +154,6 @@ public:
      */
     Scalar snr() const
     { return snr_; }
-
-    DUNE_DEPRECATED_MSG("use snr() (uncapitalized 's') instead")
-    Scalar Snr() const
-    { return snr(); }
 
     /*!
      * \brief Set the residual non-wetting saturation.
@@ -191,10 +167,6 @@ public:
     Scalar sgr() const
     { return sgr_; }
 
-    DUNE_DEPRECATED_MSG("use sgr() (uncapitalized 's') instead")
-    Scalar Sgr() const
-    { return sgr(); }
-
     /*!
      * \brief Set the residual gas saturation.
      */
@@ -203,10 +175,6 @@ public:
 
     Scalar swrx() const
     { return swrx_; }
-
-    DUNE_DEPRECATED_MSG("use swrx() (uncapitalized 's') instead")
-    Scalar Swrx() const
-    { return swrx(); }
 
     /*!
      * \brief Set the residual gas saturation.
@@ -220,23 +188,11 @@ public:
     void setBetaNw(Scalar input)
     { betaNw_ = input; }
 
-    DUNE_DEPRECATED_MSG("use setBetaNw() (uncapitalized 'w') instead")
-    void setBetaNW(Scalar input)
-    { setBetaNw(input); }
-
     void setBetaGn(Scalar input)
     { betaGn_ = input; }
 
-    DUNE_DEPRECATED_MSG("use setBetaGn() (uncapitalized 'n') instead")
-    void setBetaGN(Scalar input)
-    { setBetaGn(input); }
-
     void setBetaGw(Scalar input)
     { betaGw_ = input; }
-
-    DUNE_DEPRECATED_MSG("use setBetaGw() (uncapitalized 'w') instead")
-    void setBetaGW(Scalar input)
-    { setBetaGw(input); }
 
     /*!
      * \brief Return the values for the beta scaling parameters of capillary pressure between the phases
@@ -244,33 +200,17 @@ public:
     Scalar betaNw() const
     { return betaNw_; }
 
-    DUNE_DEPRECATED_MSG("use betaNw() (uncapitalized 'w') instead")
-    Scalar betaNW() const
-    { return betaNw(); }
-
     Scalar betaGn() const
     { return betaGn_; }
 
-    DUNE_DEPRECATED_MSG("use betaGn() (uncapitalized 'n') instead")
-    Scalar betaGN() const
-    { return betaGn(); }
-
     Scalar betaGw() const
     { return betaGw_; }
-
-    DUNE_DEPRECATED_MSG("use betaGw() (uncapitalized 'w') instead")
-    Scalar betaGW() const
-    { return betaGw(); }
 
     /*!
      * \brief defines if residual n-phase saturation should be regarded in its relative permeability.
      */
     void setKrRegardsSnr(bool input)
     { krRegardsSnr_ = input; }
-
-    DUNE_DEPRECATED_MSG("use setKrRegardsSnr() (capitalized 'K') instead")
-    void setkrRegardsSnr(bool input) 
-    { setKrRegardsSnr(input); }
 
     /*!
      * \brief Calls if residual n-phase saturation should be regarded in its relative permeability.

@@ -60,12 +60,6 @@ public:
         DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pcgn, pcnw, and pcgw");
     }
 
-    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar swe)
-    {
-        return pc(params, swe);
-    }
-
     static Scalar pcgw(const Params &params, Scalar sw)
     {
     /*
@@ -108,12 +102,6 @@ public:
             r        = (se-seRegu)*pcPrime+pc;
             return(r/params.betaGw());
         }
-    }
-
-    DUNE_DEPRECATED_MSG("use pcgw() (uncapitalized 'cgw') instead")
-    static Scalar pCGW(const Params &params, Scalar sw)
-    {
-        return pcgw(params, sw);
     }
 
     static Scalar pcnw(const Params &params, Scalar sw)
@@ -160,12 +148,6 @@ public:
         }
     }
 
-    DUNE_DEPRECATED_MSG("use pcnw() (uncapitalized 'cnw') instead")
-    static Scalar pCNW(const Params &params, Scalar sw)
-    {
-        return pcnw(params, sw);
-    }
-
     static Scalar pcgn(const Params &params, Scalar St)
     {
     /*
@@ -209,12 +191,6 @@ public:
         }
     }
 
-    DUNE_DEPRECATED_MSG("use pcgn() (uncapitalized 'cgn') instead")
-    static Scalar pCGN(const Params &params, Scalar St)
-    {
-        return pcgn(params, St);
-    }
-
     static Scalar pcAlpha(const Params &params, Scalar sn)
     {
         /* continuous transition to zero */
@@ -234,12 +210,6 @@ public:
         return(alpha);
     }
 
-    DUNE_DEPRECATED_MSG("use pcAlpha() (uncapitalized 'c') instead")
-    static Scalar pCAlpha(const Params &params, Scalar sn)
-    {
-        return pcAlpha(params, sn);
-    }
-
     /*!
      * \brief The saturation-capillary pressure curve.
      *
@@ -247,13 +217,6 @@ public:
     static Scalar sw(const Params &params, Scalar pc)
     {
         DUNE_THROW(Dune::NotImplemented, "sw(pc) for three phases not implemented! Do it yourself!");
-    }
-
-
-    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pc)
-    {
-        return sw(params, pc);
     }
 
     /*!
@@ -266,12 +229,6 @@ public:
         DUNE_THROW(Dune::NotImplemented, "dpc/dsw for three phases not implemented! Do it yourself!");
     }
 
-    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar sw)
-    {
-        return dpc_dsw(params, sw);
-    }
-
     /*!
      * \brief Returns the partial derivative of the effective
      *        saturation to the capillary pressure.
@@ -279,12 +236,6 @@ public:
     static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
         DUNE_THROW(Dune::NotImplemented, "dsw/dpc for three phases not implemented! Do it yourself!");
-    }
-
-    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pc)
-    {
-        return dsw_dpc(params, pc);
     }
 
     /*!

@@ -74,12 +74,6 @@ public:
         return params.pe()*pow(swe, -1.0/params.lambda());
     }
 
-    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar swe)
-    {
-        return pc(params, swe);
-    }
-
     /*!
      * \brief The saturation-capillary pressure curve according to Brooks & Corey.
      *
@@ -100,12 +94,6 @@ public:
 
         Scalar tmp = pow(pc/params.pe(), -params.lambda());
         return std::min(std::max(tmp, Scalar(0.0)), Scalar(1.0));
-    }
-
-    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pc)
-    {
-        return sw(params, pc);
     }
 
     /*!
@@ -131,12 +119,6 @@ public:
         return - params.pe()/params.lambda() * pow(swe, -1/params.lambda() - 1);
     }
 
-    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar swe)
-    {
-        return dpc_dsw(params, swe);
-    }
-
     /*!
      * \brief The partial derivative of the effective
      *        saturation w.r.t. the capillary pressure according to Brooks & Corey.
@@ -152,12 +134,6 @@ public:
         assert(pc >= 0);
 
         return -params.lambda()/params.pe() * pow(pc/params.pe(), - params.lambda() - 1);
-    }
-
-    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pc)
-    {
-        return dsw_dpc(params, pc);
     }
 
     /*!
@@ -195,12 +171,6 @@ public:
 
         return (2.0/params.lambda() + 3)*pow(swe, 2.0/params.lambda() + 2);
     };
-
-    DUNE_DEPRECATED_MSG("use dkrw_dsw() (uncapitalized 's') instead")
-    static Scalar dkrw_dSw(const Params &params, Scalar swe)
-    {
-        return dkrw_dsw(params, swe);
-    }
 
     /*!
      * \brief The relative permeability for the non-wetting phase of
@@ -246,12 +216,6 @@ public:
                     swe*(1.0/params.lambda() + 1.0/2)
                     )
                 );
-    }
-
-    DUNE_DEPRECATED_MSG("use dkrn_dsw() (uncapitalized 's') instead")
-    static Scalar dkrn_dSw(const Params &params, Scalar swe)
-    {
-        return dkrn_dsw(params, swe);
     }
 
 };

@@ -70,12 +70,6 @@ public:
         return (1 - swe)*(params.maxPc() - params.entryPc()) + params.entryPc();
     }
 
-    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar swe)
-    {
-        return pc(params, swe);
-    }
-
     /*!
      * \brief The saturation-capillary pressure curve.
      *
@@ -93,12 +87,6 @@ public:
     static Scalar sw(const Params &params, Scalar pc)
     {
         return 1 - (pc - params.entryPc())/(params.maxPc() - params.entryPc());
-    }
-
-    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pc)
-    {
-        return sw(params, pc);
     }
 
     /*!
@@ -121,12 +109,6 @@ public:
         return - (params.maxPc() - params.entryPc());
     }
 
-    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar swe)
-    {
-        return dpc_dsw(params, swe);
-    }
-
     /*!
      * \brief Returns the partial derivative of the effective
      *        saturation to the capillary pressure.
@@ -140,12 +122,6 @@ public:
     static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
         return - 1/(params.maxPc() - params.entryPc());
-    }
-
-    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pc)
-    {
-        return dsw_dpc(params, pc);
     }
 
     /*!

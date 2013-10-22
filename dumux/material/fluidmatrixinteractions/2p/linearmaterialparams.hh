@@ -57,12 +57,6 @@ public:
     Scalar entryPc() const
     { return entryPc_; }
 
-    DUNE_DEPRECATED_MSG("use entryPc() (uncapitalized 'c') instead")
-    Scalar entryPC()
-    {
-        return entryPc();
-    }
-
     /*!
      * \brief Set the entry pressure for the linear material law.
      *
@@ -70,12 +64,6 @@ public:
      */
     void setEntryPc(Scalar v)
     { entryPc_ = v; }
-
-    DUNE_DEPRECATED_MSG("use setEntryPc() (uncapitalized 'c') instead")
-    void setEntryPC(Scalar v)
-    {
-        setEntryPc(v);
-    }
 
     /*!
      * \brief Return the maximum capillary pressure for the linear material law.
@@ -85,12 +73,6 @@ public:
     Scalar maxPc() const
     { return maxPc_; }
 
-    DUNE_DEPRECATED_MSG("use maxPc() (uncapitalized 'c') instead")
-    Scalar maxPC()
-    {
-        return maxPc();
-    }
-
     /*!
      * \brief Set the maximum capillary pressure for the linear material law.
      *
@@ -98,13 +80,6 @@ public:
      */
     void setMaxPc(Scalar v)
     { maxPc_ = v; }
-
-    DUNE_DEPRECATED_MSG("use setMaxPc() (uncapitalized 'c') instead")
-    void setMaxPC(Scalar v)
-    {
-        setMaxPc(v);
-    }
-
 
 private:
     Scalar entryPc_;

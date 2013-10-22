@@ -73,10 +73,6 @@ public:
     Scalar vgm() const
     { return vgm_; }
 
-    DUNE_DEPRECATED_MSG("use vgm() (uncapitalized 'm') instead")
-    Scalar vgM() const
-    { return vgm(); }
-
     /*!
      * \brief Set the \f$m\f$ shape parameter [-] of van Genuchten's
      *        curve.
@@ -86,20 +82,12 @@ public:
     void setVgm(Scalar m)
     { vgm_ = m; vgn_ = 1/(1 - vgm_); }
 
-    DUNE_DEPRECATED_MSG("use setVgm() (uncapitalized 'm') instead")
-    void setVgM(Scalar m)
-    { setVgm(m); }
-
     /*!
      * \brief Return the \f$n\f$ shape parameter [-] of van Genuchten's
      *        curve.
      */
     Scalar vgn() const
     { return vgn_; }
-
-    DUNE_DEPRECATED_MSG("use vgn() (uncapitalized 'n') instead")
-    Scalar vgN() const
-    { return vgn(); }
 
     /*!
      * \brief Set the \f$n\f$ shape parameter [-] of van Genuchten's
@@ -109,10 +97,6 @@ public:
      */
     void setVgn(Scalar n)
     { vgn_ = n; vgm_ = 1 - 1/vgn_; }
-
-    DUNE_DEPRECATED_MSG("use setVgn() (uncapitalized 'n') instead")
-    void setVgN(Scalar n)
-    { setVgn(n); }
 
 private:
     Scalar vgAlpha_;

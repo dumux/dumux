@@ -52,10 +52,6 @@ public:
     Scalar swr() const
     { return swr_; }
 
-    DUNE_DEPRECATED_MSG("use swr() (uncapitalized 's') instead")
-    Scalar Swr() const
-    { return swr(); }
-
     /*!
      * \brief Set the residual wetting saturation.
      */
@@ -67,10 +63,6 @@ public:
      */
     Scalar snr() const
     { return snr_; }
-
-    DUNE_DEPRECATED_MSG("use snr() (uncapitalized 's') instead")
-    Scalar Snr() const
-    { return snr(); }
 
     /*!
      * \brief Set the residual non-wetting saturation.

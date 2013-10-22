@@ -74,12 +74,6 @@ public:
                                             * COMMENT ABOVE! */
     }
 
-    DUNE_DEPRECATED_MSG("use pcLowSw() (uncapitalized 'c') instead")
-    Scalar pCLowSw()
-    {
-        return pcLowSw();
-    }
-
     /*!
      * \brief Threshold saturation above which the capillary pressure
      *        is regularized.
@@ -99,12 +93,6 @@ public:
         // template parameter for the RegularizedVanGenuchten law!
         return /* PLEASE DO _NOT_ */ 99e-2; /* CHANGE THIS VALUE. READ
                                              * COMMENT ABOVE! */
-    }
-
-    DUNE_DEPRECATED_MSG("use pcHighSw() (uncapitalized 'c') instead")
-    Scalar pCHighSw()
-    {
-        return pcHighSw();
     }
 
     /*!

@@ -83,12 +83,6 @@ public:
         return EffLaw::pc(params, swToSwe(params, sw));
     }
 
-    DUNE_DEPRECATED_MSG("use pc() (uncapitalized 'c') instead")
-    static Scalar pC(const Params &params, Scalar sw)
-    {
-        return pc(params, sw);
-    }
-
     /*!
      * \brief The saturation-capillary pressure curve.
      *
@@ -103,12 +97,6 @@ public:
     static Scalar sw(const Params &params, Scalar pc)
     {
         return sweToSw_(params, EffLaw::sw(params, pc));
-    }
-
-    DUNE_DEPRECATED_MSG("use sw() (uncapitalized 's') instead")
-    static Scalar Sw(const Params &params, Scalar pc)
-    {
-        return sw(params, pc);
     }
 
     /*!
@@ -131,12 +119,6 @@ public:
         return EffLaw::dpc_dsw(params, swToSwe(params, sw) )*dswe_dsw_(params);
     }
 
-    DUNE_DEPRECATED_MSG("use dpc_dsw() (uncapitalized 'c', 's') instead")
-    static Scalar dpC_dSw(const Params &params, Scalar sw)
-    {
-        return dpc_dsw(params, sw);
-    }
-
     /*!
      * \brief Returns the partial derivative of the absolute
      *        saturation w.r.t. the capillary pressure.
@@ -157,12 +139,6 @@ public:
     static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
         return EffLaw::dsw_dpc(params, pc)*dsw_dswe_(params);
-    }
-
-    DUNE_DEPRECATED_MSG("use dsw_dpc() (uncapitalized 's', 'c') instead")
-    static Scalar dSw_dpC(const Params &params, Scalar pc)
-    {
-        return dsw_dpc(params, pc);
     }
 
     /*!
@@ -210,12 +186,6 @@ public:
         return (sw - params.swr())/(1. - params.swr() - params.snr());
     }
 
-    DUNE_DEPRECATED_MSG("use swToSwe() (uncapitalized 's') instead")
-    static Scalar SwToSwe(const Params &params, Scalar sw)
-    {
-        return swToSwe(params, sw);
-    }
-
     /*!
      * \brief Convert an absolute non-wetting saturation to an effective one.
      *
@@ -228,12 +198,6 @@ public:
     static Scalar snToSne(const Params &params, Scalar sn)
     {
         return (sn - params.snr())/(1. - params.swr() - params.snr());
-    }
-
-    DUNE_DEPRECATED_MSG("use snToSne() (uncapitalized 's') instead")
-    static Scalar SnToSne(const Params &params, Scalar sn)
-    {
-        return snToSne(params, sn);
     }
 
 //private:
