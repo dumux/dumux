@@ -39,12 +39,7 @@ namespace Dumux
 struct TwoPTwoCFormulation
 {
     static const int pwsn = 0; //!< pw and sn as primary variables
-    DUNE_DEPRECATED_MSG("use pwsn (uncapitalized 'S') instead") 
-    static const int pwSn = pwsn; //!< \deprecated
-
     static const int pnsw = 1; //!< pn and sw as primary variables
-    DUNE_DEPRECATED_MSG("use pnsw (uncapitalized 'S') instead") 
-    static const int pnSw = pnsw; //!< \deprecated
 };
 
 /*!
@@ -82,9 +77,6 @@ public:
 
     static const int pwIdx = pressureIdx; //!< Index for wetting phase pressure in a solution vector
     static const int snOrXIdx = switchIdx; //!< Index of either the saturation of the non-wetting phase or the mass fraction secondary component in the only phase
-
-    DUNE_DEPRECATED_MSG("use snOrXIdx (uncapitalized 's') instead") 
-    static const int SnOrXIdx = snOrXIdx; //!< \deprecated
 
     // equation indices
     static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
@@ -125,9 +117,6 @@ public:
 
     static const int pnIdx = pressureIdx; //!< Index for non-wetting phase pressure in a solution vector
     static const int swOrXIdx = switchIdx; //!< Index of either the saturation of the liquid phase or the mass fraction of the secondary component in the only phase
-
-    DUNE_DEPRECATED_MSG("use swOrXIdx (uncapitalized 's') instead") 
-    static const int SwOrXIdx = swOrXIdx; //!< \deprecated
 
     // Equation indices
     static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
