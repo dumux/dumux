@@ -649,20 +649,12 @@ public:
     const GlobalPosition &bBoxMin() const
     { return bBoxMin_; }
 
-    DUNE_DEPRECATED_MSG("use bBoxMin() (capitalized second 'B') instead")
-    const GlobalPosition &bboxMin() const
-    { return bBoxMin(); }
-
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the largest values.
      */
     const GlobalPosition &bBoxMax() const
     { return bBoxMax_; }
-
-    DUNE_DEPRECATED_MSG("use bBoxMax() (capitalized second 'B') instead")
-    const GlobalPosition &bboxMax() const
-    { return bBoxMax(); }
 
     //! \name Access functions
     //@{

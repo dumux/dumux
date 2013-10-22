@@ -375,12 +375,6 @@ public:
         return normal_[subVolumeIdx][subVolumeFaceIdxInInsideN] * permTimesNu_[subVolumeIdx][subVolumeFaceIdxInInsideNu];
     }
 
-    DUNE_DEPRECATED_MSG("use getNtkNu() instead")
-    Scalar getNTKNu(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
-    {
-        return getNtkNu(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu);
-    }
-
     //! Get \f$ \boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu\f$  for the transmissiblity calculation
     /*!
      * \param relPerm relative permeability value (\f$ \boldsymbol n^\text{T} k_{r\alpha} \f$)
@@ -399,12 +393,6 @@ public:
         return normal_[subVolumeIdx][subVolumeFaceIdxInInsideN] * krKNu;
     }
 
-    DUNE_DEPRECATED_MSG("use getNtkrkNu() instead")
-    Scalar getNTKrKNu(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
-    {
-        return getNtkrkNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu);
-    }
-
     //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \right) \f$  for the transmissiblity calculation
     /*!
      *  \param subVolumeIdx The local element index in the interaction volume
@@ -416,12 +404,6 @@ public:
     Scalar getNtkNu_df(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
         return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkNu(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
-    }
-
-    DUNE_DEPRECATED_MSG("use getNtkNu_df() instead")
-    Scalar getNTKNu_by_dF(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
-    {
-        return getNtkNu_df(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu);
     }
 
     //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \right) \f$  for the transmissiblity calculation
@@ -436,12 +418,6 @@ public:
     Scalar getNtkrkNu_df(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
         return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkrkNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
-    }
-
-    DUNE_DEPRECATED_MSG("use getNtkrkNu_df() instead")
-    Scalar getNTKrKNu_by_dF(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
-    {
-        return getNtkrkNu_df(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu);
     }
 
 private:
