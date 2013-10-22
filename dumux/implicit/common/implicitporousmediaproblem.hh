@@ -89,28 +89,6 @@ public:
     // \{
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ within a control volume.
-     *
-     * This is the discretization specific interface for the fully-implicit
-     * method. By default it just calls temperature(pos).
-     *
-     * \param element The DUNE Codim<0> enitiy which intersects with
-     *                the finite volume.
-     * \param fvGeometry The finite volume geometry of the element.
-     * \param scvIdx The local index of the sub control volume inside the element
-     */
-    DUNE_DEPRECATED_MSG("use temperatureAtPos instead")
-    Scalar boxTemperature(const Element &element,
-                          const FVElementGeometry fvGeometry,
-                          const int scvIdx) const
-    {
-        if (isBox)
-            return asImp_().temperatureAtPos(fvGeometry.subContVol[scvIdx].global); 
-        else
-            return asImp_().temperatureAtPos(fvGeometry.neighbors[scvIdx]->geometry().center());
-    }
-    
-    /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
      *
      * This is not specific to the discretization. By default it just
@@ -130,23 +108,6 @@ public:
      */
     Scalar temperature() const
     { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); };
-
-    /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
-     * This is the discretization specific interface for the fully-implicit method. 
-     * By default it just calls gravityAtPos().
-     */
-    DUNE_DEPRECATED_MSG("use gravityAtPos instead")
-    const DimVector &boxGravity(const Element &element,
-                                const FVElementGeometry &fvGeometry,
-                                const int scvIdx) const
-    {
-        if (isBox)
-            return asImp_().gravityAtPos(fvGeometry.subContVol[scvIdx].global); 
-        else
-            return asImp_().gravityAtPos(fvGeometry.neighbors[scvIdx]->geometry().center());
-    }
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.

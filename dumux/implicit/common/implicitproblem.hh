@@ -284,25 +284,6 @@ public:
                          boundaryFaceIdx);
     }
 
-    //! compatibility definition
-    DUNE_DEPRECATED_MSG("use solDependentNeumann instead")
-    void boxSDNeumann(PrimaryVariables &values,
-                      const Element &element,
-                      const FVElementGeometry &fvGeometry,
-                      const Intersection &intersection,
-                      const int scvIdx,
-                      const int boundaryFaceIdx,
-                      const ElementVolumeVariables &elemVolVars) const
-    {
-        asImp_().solDependentNeumann(values,
-                                     element,
-                                     fvGeometry,
-                                     intersection,
-                                     scvIdx,
-                                     boundaryFaceIdx, 
-                                     elemVolVars);
-    }
-
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
@@ -375,17 +356,6 @@ public:
     {
         // forward to solution independent, fully-implicit specific interface
         asImp_().source(values, element, fvGeometry, scvIdx);
-    }
-
-    //! compatibility definition
-    DUNE_DEPRECATED_MSG("use solDependentSource instead")
-    void boxSDSource(PrimaryVariables &values,
-                     const Element &element,
-                     const FVElementGeometry &fvGeometry,
-                     const int scvIdx,
-                     const ElementVolumeVariables &elemVolVars) const
-    {
-        asImp_().solDependentSource(values, element, fvGeometry, scvIdx, elemVolVars);
     }
 
     /*!
@@ -499,20 +469,6 @@ public:
      */
     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
     { return 1.0; }
-
-    /*!
-     * \brief If model coupling is used, this updates the parameters
-     *        required to calculate the coupling fluxes between the
-     *        sub-models.
-     *
-     * By default it does nothing
-     *
-     * \param element The DUNE Codim<0> entity for which the coupling
-     *                parameters should be computed.
-     */
-    DUNE_DEPRECATED
-    void updateCouplingParams(const Element &element) const
-    {}
 
     /*!
      * \name Simulation steering
@@ -693,20 +649,12 @@ public:
     const GlobalPosition &bBoxMin() const
     { return bBoxMin_; }
 
-    DUNE_DEPRECATED_MSG("use bBoxMin() (capitalized second 'B') instead")
-    const GlobalPosition &bboxMin() const
-    { return bBoxMin(); }
-
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the largest values.
      */
     const GlobalPosition &bBoxMax() const
     { return bBoxMax_; }
-
-    DUNE_DEPRECATED_MSG("use bBoxMax() (capitalized second 'B') instead")
-    const GlobalPosition &bboxMax() const
-    { return bBoxMax(); }
 
     /*!
      * \brief Returns the mapper for vertices to indices.
