@@ -23,8 +23,6 @@
  */
 #ifndef DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -590,15 +588,9 @@ public:
     SubControlVolume subContVol[maxNC]; //!< data of the sub control volumes
     SubControlVolumeFace subContVolFace[maxNE]; //!< data of the sub control volume faces
     BoundaryFace boundaryFace[maxBF]; //!< data of the boundary faces
-    GlobalPosition edgeCoord[maxNE] DUNE_DEPRECATED; //!< \deprecated global coordinates of the edge centers
-    GlobalPosition faceCoord[maxNF] DUNE_DEPRECATED; //!< \deprecated global coordinates of the face centers
-    int numVertices DUNE_DEPRECATED_MSG("use numScv instead"); //!< \deprecated number of verts
-    int numEdges DUNE_DEPRECATED_MSG("use numScvf instead"); //!< \deprecated number of edges
-    int numFaces DUNE_DEPRECATED; //!< \deprecated number of faces (0 in < 3D)
     int numScv; //!< number of subcontrol volumes
     int numScvf; //!< number of inner-domain subcontrolvolume faces 
     int numNeighbors; //!< needed for compatibility with cc models
-    int numFap DUNE_DEPRECATED_MSG("use numFap of the SCVFace instead"); //!< \deprecated number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
     
     const LocalFiniteElementCache feCache_;
@@ -624,18 +616,6 @@ public:
         numScvf = referenceElement.size(dim-1);
         numNeighbors = 0;
 
-        // compatibility initializations of deprecated members
-        numVertices = numScv;
-        numEdges = numScvf;
-        numFaces = (dim<3)?0:referenceElement.size(1);
-
-        bool useTwoPointFlux
-            = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseTwoPointFlux);
-        if (useTwoPointFlux)
-            numFap = 2;
-        else
-            numFap = numScv;
-
         // subcontrol volumes:
         for (int scvIdx = 0; scvIdx < numScv; scvIdx++) {
             subContVol[scvIdx].local = referenceElement.position(scvIdx, dim);
@@ -647,8 +627,6 @@ public:
         GlobalPosition *edgeCoordinates = new GlobalPosition[numScvf];
         for (int edge = 0; edge < numScvf; edge++) {
             edgeCoordinates[edge] = geometry.global(referenceElement.position(edge, dim-1));
-            // compatibility initialization of deprecated member
-            edgeCoord[edge] = edgeCoordinates[edge];
         }
 
         // faces:
@@ -656,8 +634,6 @@ public:
         GlobalPosition *faceCoordinates = new GlobalPosition[elementFaces];
         for (int faceIdx = 0; faceIdx < elementFaces; faceIdx++) {
             faceCoordinates[faceIdx] = geometry.global(referenceElement.position(faceIdx, 1));
-            // compatibility initialization of deprecated member
-            faceCoord[faceIdx] = faceCoordinates[faceIdx];
         }
 
         // fill sub control volume data use specialization for this
@@ -694,7 +670,7 @@ public:
                 ipLocal = referenceElement.position(k, dim-1) + elementLocal;
                 ipLocal *= 0.5;
                 subContVolFace[k].ipLocal = ipLocal;
-                diffVec = elementGlobal - edgeCoord[k];
+                diffVec = elementGlobal - edgeCoordinates[k];
                 subContVolFace[k].normal[0] = diffVec[1];
                 subContVolFace[k].normal[1] = -diffVec[0];
 
@@ -715,11 +691,14 @@ public:
                 ipLocal *= 0.25;
                 subContVolFace[k].ipLocal = ipLocal;
                 normalOfQuadrilateral3D(subContVolFace[k].normal,
-                                        edgeCoord[k], faceCoord[rightFace],
-                                        elementGlobal, faceCoord[leftFace]);
+                                        edgeCoordinates[k], faceCoordinates[rightFace],
+                                        elementGlobal, faceCoordinates[leftFace]);
             }
 
             subContVolFace[k].area = subContVolFace[k].normal.two_norm();
+
+            bool useTwoPointFlux
+                = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseTwoPointFlux);
 
             if (useTwoPointFlux)
             {
@@ -795,7 +774,7 @@ public:
                             + referenceElement.position(rightEdge, dim-1);
                         boundaryFace[bfIdx].ipLocal *= 0.25;
                         boundaryFace[bfIdx].area = quadrilateralArea3D(subContVol[vertInElement].global,
-                                                                       edgeCoord[rightEdge], faceCoord[faceIdx], edgeCoord[leftEdge]);
+                                                                       edgeCoordinates[rightEdge], faceCoordinates[faceIdx], edgeCoordinates[leftEdge]);
                         break;
                     default:
                         DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry for dim = " << dim);
@@ -960,6 +939,5 @@ public:
 };
 }
 
-#pragma GCC diagnostic pop
 #endif
 
