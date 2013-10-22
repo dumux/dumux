@@ -353,12 +353,6 @@ public:
     Scalar dsm_dsf() const
     { return dsm_dsf_;}
 
-    DUNE_DEPRECATED_MSG("use dsm_dsf() (uncapitalized) instead")
-    Scalar dSM_dSF() const
-    {
-        return dsm_dsf();
-    }
-
 protected:
     FluidState fluidState_;
     FluidState fluidStateFracture_;
