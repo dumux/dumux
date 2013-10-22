@@ -44,9 +44,6 @@ public:
      */
     static const unsigned int numPrimaryVars = numPhases*numComponents;
 
-    DUNE_DEPRECATED_MSG("use numPrimaryVars (uncapitalized 'n') instead")
-    static const unsigned int NumPrimaryVars = numPrimaryVars; //!< \deprecated
-
     /*!
      * \brief Index for the mole fraction of the first component in
      *        the first phase in a vector of primary variables.

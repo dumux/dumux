@@ -79,17 +79,11 @@ public:
         EnergyIndices::numPrimaryVars +
         numPhases;
 
-    DUNE_DEPRECATED_MSG("use numPrimaryVars (uncapitalized 'n') instead") 
-    static const unsigned int NumPrimaryVars = numPrimaryVars; //!< \deprecated
-
     /*!
      * \brief The number of primary variables / equations of the energy module.
      */
     static const unsigned int numPrimaryEnergyVars =
         EnergyIndices::numPrimaryVars ;
-
-    DUNE_DEPRECATED_MSG("use numPrimaryEnergyVars (uncapitalized 'n') instead") 
-    static const unsigned int NumPrimaryEnergyVars = numPrimaryEnergyVars; //!< \deprecated
 
     /*!
      * \brief Index of the saturation of the first phase in a vector
@@ -101,9 +95,6 @@ public:
     static const unsigned int s0Idx =
         MassIndices::numPrimaryVars +
         EnergyIndices::numPrimaryVars;
-
-    DUNE_DEPRECATED_MSG("use s0Idx (uncapitalized 's') instead") 
-    static const int S0Idx = s0Idx; //!< \deprecated index of the saturation of the first phase
 
     /*!
      * \brief Index of the first phase' pressure in a vector of
