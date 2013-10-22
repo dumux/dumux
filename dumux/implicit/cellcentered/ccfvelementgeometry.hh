@@ -23,8 +23,6 @@
  */
 #ifndef DUMUX_CC_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_CC_FV_ELEMENTGEOMETRY_HH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -98,13 +96,9 @@ public:
     SubControlVolume subContVol[1]; //!< data of the sub control volumes
     SubControlVolumeFace subContVolFace[maxNE]; //!< data of the sub control volume faces
     BoundaryFace boundaryFace[maxBF]; //!< data of the boundary faces
-    int numVertices DUNE_DEPRECATED; //!< \deprecated number of verts
-    int numEdges DUNE_DEPRECATED; //!< \deprecated number of edges
-    int numFaces DUNE_DEPRECATED; //!< \deprecated number of faces (0 in < 3D)
     int numScv; //!< number of subcontrol volumes
     int numScvf; //!< number of inner-domain subcontrolvolume faces 
     int numNeighbors; //!< number of neighboring elements including the element itself
-    int numFap DUNE_DEPRECATED_MSG("use numFap of the SCVFace instead"); //!< \deprecated number of flux approximation points
     std::vector<ElementPointer> neighbors; //!< stores pointers for the neighboring elements
     
     void updateInner(const Element& element)
@@ -117,13 +111,7 @@ public:
 
         numScv = 1;
         numScvf = 0;
-        numFap = 2;
 
-        // compatibility initializations of deprecated members
-        numVertices = element.template count<dim>();
-        numEdges = element.template count<dim-1>();
-        numFaces = (dim<3)? 0 : element.template count<1>();
-        
         subContVol[0].local = elementLocal;
         subContVol[0].global = elementGlobal;
         subContVol[0].inner = true;
@@ -236,6 +224,5 @@ public:
 
 }
 
-#pragma GCC diagnostic pop
 #endif
 
