@@ -142,7 +142,7 @@ public:
             exit(1);
         }
 
-        this->spatialParams().setDelta(delta_);
+        this->spatialParams().initialize(delta_);
     }
 
     /*!
