@@ -127,7 +127,7 @@ public:
 
         try
         {
-            if (ParameterTree::tree().hasKey("delta"))
+            if (ParameterTree::tree().hasKey("Problem.Delta"))
                 delta_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Delta);
             int numRefine;
             numRefine = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumRefine);
