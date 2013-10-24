@@ -38,7 +38,7 @@
 #include "1p2cindices.hh"
 
 #include <dumux/material/spatialparams/implicitspatialparams1p.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/diffusivitymillingtonquirk.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
 namespace Dumux
 {

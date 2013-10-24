@@ -36,7 +36,7 @@
 #include "2p2clocalresidual.hh"
 #include "2p2cnewtoncontroller.hh"
 
-#include <dumux/material/fluidmatrixinteractions/2p/diffusivitymillingtonquirk.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 
