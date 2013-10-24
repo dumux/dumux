@@ -55,6 +55,7 @@ class ThreePThreeCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariable
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
 
     enum {
         dim = GridView::dimension,
@@ -108,7 +109,7 @@ public:
         }
 
         calculateGradients_(problem, element, elemVolVars);
-        calculateporousDiffCoeff_(problem, element, elemVolVars);
+        calculatePorousDiffCoeff_(problem, element, elemVolVars);
     };
 
 private:
@@ -221,7 +222,7 @@ private:
         return sp.eval(sat);
     }
 
-    void calculateporousDiffCoeff_(const Problem &problem,
+    void calculatePorousDiffCoeff_(const Problem &problem,
                                const Element &element,
                                const ElementVolumeVariables &elemVolVars)
     {
@@ -231,6 +232,10 @@ private:
 
         Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficientMatrix_i = volVarsI.diffusionCoefficient();
         Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficientMatrix_j = volVarsJ.diffusionCoefficient();
+
+        // the effective diffusion coefficients at vertex i and j
+        Scalar diffCoeffI;
+        Scalar diffCoeffJ;
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -248,25 +253,38 @@ private:
                 continue;
             }
 
-            // calculate tortuosity at the nodes i and j needed
-            // for porous media diffusion coefficient
-
-            Scalar tauI =
-                1.0/(volVarsI.porosity() * volVarsI.porosity()) *
-                pow(volVarsI.porosity() * volVarsI.saturation(phaseIdx), 7.0/3);
-            Scalar tauJ =
-                1.0/(volVarsJ.porosity() * volVarsJ.porosity()) *
-                pow(volVarsJ.porosity() * volVarsJ.saturation(phaseIdx), 7.0/3);
             // Diffusion coefficient in the porous medium
+            diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                                         volVarsI.saturation(phaseIdx),
+                                                                         diffusionCoefficientMatrix_i[phaseIdx][wCompIdx]);
+            diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                         volVarsJ.saturation(phaseIdx),
+                                                                         diffusionCoefficientMatrix_j[phaseIdx][wCompIdx]);
 
             // -> harmonic mean
-            porousDiffCoeff_[phaseIdx][wCompIdx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientMatrix_i[phaseIdx][wCompIdx],
-                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientMatrix_j[phaseIdx][wCompIdx]);
-            porousDiffCoeff_[phaseIdx][nCompIdx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientMatrix_i[phaseIdx][nCompIdx],
-                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientMatrix_j[phaseIdx][nCompIdx]);
-            porousDiffCoeff_[phaseIdx][gCompIdx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientMatrix_i[phaseIdx][gCompIdx],
-                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientMatrix_j[phaseIdx][gCompIdx]);
+            porousDiffCoeff_[phaseIdx][wCompIdx] = harmonicMean(diffCoeffI, diffCoeffJ);            
 
+            // Diffusion coefficient in the porous medium
+            diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                                         volVarsI.saturation(phaseIdx),
+                                                                         diffusionCoefficientMatrix_i[phaseIdx][nCompIdx]);
+            diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                         volVarsJ.saturation(phaseIdx),
+                                                                         diffusionCoefficientMatrix_j[phaseIdx][nCompIdx]);
+
+            // -> harmonic mean
+            porousDiffCoeff_[phaseIdx][nCompIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
+
+            // Diffusion coefficient in the porous medium
+            diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),
+                                                                         volVarsI.saturation(phaseIdx),
+                                                                         diffusionCoefficientMatrix_i[phaseIdx][gCompIdx]);
+            diffCoeffJ = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsJ.porosity(),
+                                                                         volVarsJ.saturation(phaseIdx),
+                                                                         diffusionCoefficientMatrix_j[phaseIdx][gCompIdx]);
+
+            // -> harmonic mean
+            porousDiffCoeff_[phaseIdx][gCompIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
         }
     }
 
