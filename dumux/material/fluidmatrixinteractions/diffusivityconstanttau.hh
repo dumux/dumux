@@ -24,6 +24,7 @@
 #ifndef DIFFUSIVITY_CONSTANT_TAU_HH
 #define DIFFUSIVITY_CONSTANT_TAU_HH
 
+#include <dumux/common/parameters.hh>
 #include <algorithm>
 
 namespace Dumux
