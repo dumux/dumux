@@ -65,7 +65,7 @@ class NonEquilibriumMassFluidState :
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-        enum {numEnergyEqs    = Indices::NumPrimaryEnergyVars};
+        enum {numEnergyEqs    = Indices::numPrimaryEnergyVars};
         enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
         enum { numComponents   = GET_PROP_VALUE(TypeTag, NumComponents)};
 
