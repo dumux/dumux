@@ -39,26 +39,23 @@ class TestOnePSpatialParams: public FVSpatialParamsOneP<TypeTag>
     typedef FVSpatialParamsOneP<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GridView::IndexSet IndexSet;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
 
     enum
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
 
-    const FieldMatrix& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
+    const FieldMatrix& intrinsicPermeability (const Element& element) const
     {
-        double rt = globalPos[0]*globalPos[0]+globalPos[1]*globalPos[1];
-        permeability_[0][0] = (delta_*globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1])/rt;
-        permeability_[0][1] = permeability_[1][0] = -(1.0 - delta_)*globalPos[0]*globalPos[1]/rt;
-        permeability_[1][1] = (globalPos[0]*globalPos[0] + delta_*globalPos[1]*globalPos[1])/rt;
-
-        return permeability_;
+        return permeability_[indexSet_.index(element)];
     }
 
     double porosity(const Element& element) const
@@ -66,17 +63,37 @@ public:
         return 0.2;
     }
 
-    void setDelta(const double delta)
+    void initialize(const double delta)
     {
         delta_ = delta;
+        permeability_.resize(gridView_.size(0));
+
+        ElementIterator eIt = gridView_.template begin<0>();
+        ElementIterator eEndIt = gridView_.template end<0>();
+        for(;eIt != eEndIt; ++eIt)
+        {
+            setPermeability_(permeability_[indexSet_.index(*eIt)], eIt->geometry().center());
+        }
+
     }
 
     TestOnePSpatialParams(const GridView& gridView)
-    : ParentType(gridView), permeability_(0)
+    : ParentType(gridView), gridView_(gridView), indexSet_(gridView.indexSet())
     { }
 
 private:
-    mutable FieldMatrix permeability_;
+    void setPermeability_(FieldMatrix& perm, const GlobalPosition& globalPos) const
+    {
+        double rt = globalPos[0]*globalPos[0]+globalPos[1]*globalPos[1];
+        perm[0][0] = (delta_*globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1])/rt;
+        perm[0][1] = -(1.0 - delta_)*globalPos[0]*globalPos[1]/rt;
+        perm[1][0] = perm[0][1];
+        perm[1][1] = (globalPos[0]*globalPos[0] + delta_*globalPos[1]*globalPos[1])/rt;
+    }
+
+    const GridView gridView_;
+    const IndexSet& indexSet_;
+    std::vector<FieldMatrix> permeability_;
     double delta_;
 };
 
