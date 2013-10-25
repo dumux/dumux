@@ -80,9 +80,6 @@ public:
 
     const FieldMatrix& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
     {
-        permeability_[0][0] = permeability_[1][1] = permeability_[2][2] = 1.0;
-        permeability_[0][1] = permeability_[1][0] = permeability_[1][2] = permeability_[2][1] = 0.5;
-
         return permeability_;
     }
 
@@ -108,11 +105,15 @@ public:
         // parameters for the linear entry pressure function
         materialLawParams_.setEntryPc(0);
         materialLawParams_.setMaxPc(0);
+
+        // permeability values
+        permeability_[0][0] = permeability_[1][1] = permeability_[2][2] = 1.0;
+        permeability_[0][1] = permeability_[1][0] = permeability_[1][2] = permeability_[2][1] = 0.5;
     }
 
 private:
     MaterialLawParams materialLawParams_;
-    mutable FieldMatrix permeability_;
+    FieldMatrix permeability_;
 };
 
 } // end namespace
