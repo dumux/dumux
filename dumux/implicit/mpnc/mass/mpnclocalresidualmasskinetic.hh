@@ -17,6 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \file
  * \brief The local residual for the kinetic mass transfer module of
  *        the compositional multi-phase model.
  */

@@ -17,6 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \file
  * \brief The indices for the kinetic mass transfer module of the
  *        compositional multi-phase model.
  */

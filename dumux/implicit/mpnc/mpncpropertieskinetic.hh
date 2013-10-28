@@ -17,6 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \file
  * \brief This file declares and defines the properties required by
  *        the kinetic modules the M-phase N-component model.
  */

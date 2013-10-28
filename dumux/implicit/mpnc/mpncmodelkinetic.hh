@@ -16,6 +16,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \file
  * \brief This file adds kinetic mass and energy transfer modules to
  *        the M-phase N-component model.
  */

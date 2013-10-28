@@ -25,14 +25,15 @@
 #ifndef DUMUX_ELASTIC2P_INDICES_HH
 #define DUMUX_ELASTIC2P_INDICES_HH
 
-
 #include <dumux/geomechanics/elastic/elasticindices.hh>
 #include <dumux/implicit/2p/2pindices.hh>
-
 
 namespace Dumux
 {
 // \{
+
+namespace Properties
+{
 
 /*!
  * \ingroup ElTwoPBoxModel
@@ -41,12 +42,10 @@ namespace Dumux
  *
  * This class inherits from the TwoPIndices and from the ElasticIndices
  */
-namespace Properties
-{
+
 // PVOffset is set to 0 for the TwoPIndices and to 2 for the ElasticIndices since
 // the first two primary variables are the primary variables of the two-phase
 // model followed by the primary variables of the elastic model
-
 template <class TypeTag,
 int formulation = 0,
 int PVOffset =  2>
@@ -57,4 +56,3 @@ class ElTwoPIndices : public ElasticIndices<PVOffset>, public TwoPIndices<TypeTa
 }
 
 #endif
-

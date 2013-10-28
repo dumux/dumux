@@ -17,6 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \file
  * \brief The indices for the thermal non-equilibrium part of the MpNc model.
  */
 #ifndef DUMUX_MPNC_INDICES_ENERGY_KINETIC_HH
