@@ -48,28 +48,33 @@ NEW_PROP_TAG(ProblemEnableGravity);
  * \brief Evaluates the normal component of the Forchheimer velocity
  *        on a (sub)control volume face.
  *
- *        The commonly used Darcy relation looses it's validity for \f$ Re > 1\f$.
- *        If one encounters flow velocities in porous media above this Reynolds number,
- *        the Forchheimer relation can be used. Like the Darcy relation, it relates
- *        the gradient in potential to velocity.
- *        However, this relation is not linear (as in the Darcy case) any more.
+ * The commonly used Darcy relation looses it's validity for \f$ Re > 1\f$.
+ * If one encounters flow velocities in porous media above this Reynolds number,
+ * the Forchheimer relation can be used. Like the Darcy relation, it relates
+ * the gradient in potential to velocity.
+ * However, this relation is not linear (as in the Darcy case) any more.
  *
- *        Therefore, a Newton scheme is implemented in this class in order to calculate a
- *        velocity from the current set of variables. This velocity can subsequently be used
- *        e.g. by the localresidual.
+ * Therefore, a Newton scheme is implemented in this class in order to calculate a
+ * velocity from the current set of variables. This velocity can subsequently be used
+ * e.g. by the localresidual.
  *
- *        For Reynolds numbers above \f$ 500\f$ the (Standard) forchheimer relation also
- *        looses it's validity.
+ * For Reynolds numbers above \f$ 500\f$ the (Standard) forchheimer relation also
+ * looses it's validity.
  *
- *        The Forchheimer equation looks as follows:
- *         \f[ \nabla \left({p_\alpha + \rho_\alpha g z} \right)=  - \frac{\mu_\alpha}{k_{r \alpha} K} \underline{v_\alpha} - \frac{c_F}{\eta_{\alpha r} \sqrt{K}} \rho_\alpha |\underline{v_\alpha}| \underline{v_\alpha} \f]
+ * The Forchheimer equation looks as follows:
+ * \f[ \nabla \left({p_\alpha + \rho_\alpha g z} \right)
+ *     =  - \frac{\mu_\alpha}{k_{r \alpha} K} \underline{v_\alpha}
+ *        - \frac{c_F}{\eta_{\alpha r} \sqrt{K}} \rho_\alpha
+ *          |\underline{v_\alpha}| \underline{v_\alpha}
+ * \f]
  *
- *        For the formulation that is actually used in this class, see the documentation of the function calculating the residual.
+ * For the formulation that is actually used in this class, see the documentation of the
+ * function calculating the residual.
  *
- *        - This algorithm does not find a solution if the fluid is incompressible and the
- *          initial pressure distribution is uniform.
- *        - This algorithm assumes the relative passabilities to have the same functional
- *          form as the relative permeabilities.
+ * - This algorithm does not find a solution if the fluid is incompressible and the
+ *   initial pressure distribution is uniform.
+ * - This algorithm assumes the relative passabilities to have the same functional
+ *   form as the relative permeabilities.
  */
 template <class TypeTag>
 class ImplicitForchheimerFluxVariables
@@ -109,7 +114,8 @@ public:
                  const unsigned int faceIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        :   ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+        :   ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, 
+                                                faceIdx, elemVolVars, onBoundary)
     {
         calculateNormalVelocity_(problem, element, elemVolVars);
     }
@@ -174,7 +180,7 @@ protected:
             DimVector velocity = this-> velocity(phaseIdx);
 
             DimVector deltaV;           // the change in velocity between Newton iterations
-            DimVector residual(10e10);  // the residual (function value that is to be minimized ) of the equation that is to be fulfilled
+            DimVector residual(10e10);  // the residual (function value that is to be minimized)
             DimVector tmp;              // temporary variable for numerical differentiation
             Tensor    gradF;            // slope of equation that is to be solved
 
@@ -182,7 +188,8 @@ protected:
             for (int k = 0; residual.two_norm() > 1e-12 ; ++k) {
 
                 if (k >= 30)
-                    DUNE_THROW(NumericalProblem, "could not determine forchheimer velocity within "<< k <<" iterations");
+                    DUNE_THROW(NumericalProblem, "could not determine forchheimer velocity within "
+                                                 << k << " iterations");
 
                 // calculate current value of Forchheimer equation
                 forchheimerResidual_(residual,
@@ -207,25 +214,36 @@ protected:
                 velocity -= deltaV;
             }
 
-            this->velocity_[phaseIdx]     =  velocity ;                  // store the converged velocity solution
-            this->volumeFlux_[phaseIdx]   =  velocity * this->face().normal; // velocity dot normal times cross sectional area is volume flux
+            this->velocity_[phaseIdx]     =  velocity ; // store the converged velocity solution
+            // velocity dot normal times cross sectional area is volume flux:
+            this->volumeFlux_[phaseIdx]   =  velocity * this->face().normal;
         }// end loop over all phases
     }
 
     /*! \brief Function for calculation of Forchheimer relation.
      *
-     *  The relative passability \f$ \eta_r\f$ is the "Forchheimer-equivalent" to the relative permeability \f$ k_r\f$.
-     *  We use the same function as for \f$ k_r \f$ (VG, BC, linear) other authors use a simple power law e.g.: \f$\eta_{rw} = S_w^3\f$
+     * The relative passability \f$ \eta_r\f$ is the "Forchheimer-equivalent" to the relative
+     * permeability \f$ k_r\f$.
+     * We use the same function as for \f$ k_r \f$ (VG, BC, linear) other authors use a simple
+     * power law e.g.: \f$\eta_{rw} = S_w^3\f$
      *
-     *  Some rearrangements have been made to the original Forchheimer relation:
+     * Some rearrangements have been made to the original Forchheimer relation:
      *
-     * \f[  \underline{v_\alpha} + c_F \sqrt{K} \frac{\rho_\alpha}{\mu_\alpha } |\underline{v_\alpha}| \underline{v_\alpha} + \frac{k_{r \alpha}}{\mu_\alpha} K \nabla \left(p_\alpha + \rho_\alpha g z \right)=  0 \f]
+     * \f[ \underline{v_\alpha} + c_F \sqrt{K} \frac{\rho_\alpha}{\mu_\alpha }
+     *     |\underline{v_\alpha}| \underline{v_\alpha}
+     *     + \frac{k_{r \alpha}}{\mu_\alpha} K \nabla \left(p_\alpha
+     *     + \rho_\alpha g z \right)=  0
+     * \f]
      *
      * This already includes the assumption \f$ k_r(S_w) = \eta_r(S_w)\f$:
      * - \f$\eta_{rw} = S_w^x\f$ looks very similar to e.g. Van Genuchten relative permeabilities
-     * - Fichot, et al. (2006), Nuclear Engineering and Design, state that several authors claim that \f$ k_r(S_w), \eta_r(S_w)\f$ can be chosen equal
-     * - It leads to the equation not degenerating for the case of \f$S_w=1\f$, because I do not need to multiply with two different functions, and therefore there are terms not being zero.
-     * - If this assumption is not to be made: Some regularization needs to be introduced ensuring that not all terms become zero for \f$S_w=1\f$.
+     * - Fichot, et al. (2006), Nuclear Engineering and Design, state that several authors claim
+     *   that \f$ k_r(S_w), \eta_r(S_w)\f$ can be chosen equal
+     * - It leads to the equation not degenerating for the case of \f$S_w=1\f$, because I do not
+     *   need to multiply with two different functions, and therefore there are terms not being
+     *   zero.
+     * - If this assumption is not to be made: Some regularization needs to be introduced ensuring
+     *   that not all terms become zero for \f$S_w=1\f$.
      *
      *  As long as the correct velocity is not found yet, the above equation is not fulfilled, but
      *  the left hand side yields some residual. This function calculates the left hand side of the
@@ -233,7 +251,7 @@ protected:
      *
      * \param residual The current function value for the given velocity
      * \param forchCoeff The Forchheimer coefficient
-     * \param sqrtK A diagonal matrix whose entries are square roots of the permeability matrix entries
+     * \param sqrtK A diagonal matrix whose entries are square roots of the permeabilities
      * \param K The permeability matrix
      * \param velocity The current velocity approximation.
      * \param elemVolVars The volume variables of the current element
@@ -253,14 +271,15 @@ protected:
          const VolumeVariables downVolVars  = elemVolVars[this->downstreamIdx(phaseIdx)];
 
          // Obtaining the physical quantities
-         const Scalar mobility = this->mobilityUpwindWeight_ * upVolVars.mobility(phaseIdx)
-                 + (1.-this->mobilityUpwindWeight_)*  downVolVars.mobility(phaseIdx) ;
+         Scalar alpha = this->mobilityUpwindWeight_;
+         const Scalar mobility = alpha * upVolVars.mobility(phaseIdx)
+                 + (1. - alpha)*  downVolVars.mobility(phaseIdx) ;
 
-         const Scalar viscosity = this->mobilityUpwindWeight_ * upVolVars.fluidState().viscosity(phaseIdx)
-                 + (1.-this->mobilityUpwindWeight_)*  downVolVars.fluidState().viscosity(phaseIdx) ;
+         const Scalar viscosity = alpha * upVolVars.fluidState().viscosity(phaseIdx)
+                 + (1. - alpha)*  downVolVars.fluidState().viscosity(phaseIdx) ;
 
-         const Scalar density = this->mobilityUpwindWeight_ * upVolVars.fluidState().density(phaseIdx)
-                 + (1.-this->mobilityUpwindWeight_) * downVolVars.fluidState().density(phaseIdx) ;
+         const Scalar density = alpha * upVolVars.fluidState().density(phaseIdx)
+                 + (1. - alpha) * downVolVars.fluidState().density(phaseIdx) ;
 
          // residual  = v
          residual = velocity;
@@ -273,11 +292,13 @@ protected:
      }
 
 
-     /*! \brief Function for calculation of the gradient of Forchheimer relation with respect to velocity.
+     /*! \brief Function for calculation of the gradient of Forchheimer relation with respect
+      * to velocity.
       *
-      *  This function already exploits that \f$ \sqrt{K}\f$ is a diagonal matrix. Therefore, we only have
-      *  to deal with the main entries.
-      *  The gradient of the Forchheimer relations looks as follows (mind that \f$ \sqrt{K}\f$ is a tensor):
+      * This function already exploits that \f$ \sqrt{K}\f$ is a diagonal matrix. Therefore,
+      * we only have to deal with the main entries.
+      * The gradient of the Forchheimer relations looks as follows (mind that \f$ \sqrt{K}\f$ 
+      * is a tensor):
       *
       * \f[  f\left(\underline{v_\alpha}\right) =
       * \left(
@@ -302,7 +323,7 @@ protected:
       *
       * \param derivative The gradient of the forchheimer equation
       * \param forchCoeff Forchheimer coefficient
-      * \param sqrtK A diagonal matrix whose entries are square roots of the permeability matrix entries.
+      * \param sqrtK A diagonal matrix whose entries are square roots of the permeabilities.
       * \param velocity The current velocity approximation.
       * \param elemVolVars The volume variables of the current element
       * \param phaseIdx The index of the currently considered phase
@@ -318,26 +339,31 @@ protected:
          const VolumeVariables downVolVars  = elemVolVars[this->downstreamIdx(phaseIdx)];
 
          // Obtaining the physical quantities
-         const Scalar viscosity = this->mobilityUpwindWeight_ * upVolVars.fluidState().viscosity(phaseIdx)
-                 + (1.-this->mobilityUpwindWeight_)*  downVolVars.fluidState().viscosity(phaseIdx) ;
+         Scalar alpha = this->mobilityUpwindWeight_;
+         const Scalar viscosity = alpha * upVolVars.fluidState().viscosity(phaseIdx)
+                 + (1. - alpha)*  downVolVars.fluidState().viscosity(phaseIdx) ;
 
-         const Scalar density = this->mobilityUpwindWeight_ * upVolVars.fluidState().density(phaseIdx)
-                 + (1.-this->mobilityUpwindWeight_) * downVolVars.fluidState().density(phaseIdx) ;
+         const Scalar density = alpha * upVolVars.fluidState().density(phaseIdx)
+                 + (1. - alpha) * downVolVars.fluidState().density(phaseIdx) ;
 
          // Initialize because for low velocities, we add and do not set the entries.
          derivative = 0.;
 
          const Scalar absV = velocity.two_norm() ;
-         // This part of the derivative is only calculated if the velocity is sufficiently small: do not divide by zero!
-         // This should not be very bad because the derivative is only intended to give an approximation of the gradient of the
+         // This part of the derivative is only calculated if the velocity is sufficiently small:
+         // do not divide by zero!
+         // This should not be very bad because the derivative is only intended to give an
+         // approximation of the gradient of the
          // function that goes into the Newton scheme.
-         // This is important in the case of a one-phase region in two-phase flow. The non-existing phase has a velocity of zero (kr=0).
+         // This is important in the case of a one-phase region in two-phase flow. The non-existing
+         // phase has a velocity of zero (kr=0).
          // f = sqrtK * vTimesV (this is  a matrix)
          // f *= forchCoeff density / |velocity| / viscosity (multiply all entries with scalars)
          if(absV > 1e-20)
              for (int i=0; i<dim; i++)
                  for (int k=0; k<dim; k++)
-                     derivative[i][k]= sqrtK[i][i] * velocity[i] * velocity[k] * forchCoeff * density /  absV  / viscosity;
+                     derivative[i][k]= sqrtK[i][i] * velocity[i] * velocity[k] * forchCoeff 
+                                       * density /  absV  / viscosity;
 
          // add on the main diagonal:
          // 1 + sqrtK_i forchCoeff density |v| / viscosity
