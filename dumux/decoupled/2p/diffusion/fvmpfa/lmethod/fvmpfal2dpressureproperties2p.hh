@@ -40,12 +40,15 @@ NEW_TYPE_TAG(FvMpfaL2dPressureTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties))
 }
 
 #include "fvmpfal2dpressurevelocity2p.hh"
+#include <dumux/decoupled/common/fv/mpfa/fvmpfavelocityintransport.hh>
 
 namespace Dumux
 {
 namespace Properties
 {
 SET_TYPE_PROP(FvMpfaL2dPressureTwoP, PressureModel, Dumux::FvMpfaL2dPressureVelocity2p<TypeTag>);
+//! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
+SET_TYPE_PROP( FvMpfaL2dPressureTwoP, Velocity, Dumux::FvMpfaVelocityInTransport<TypeTag> );
 }
 }// end of Dune namespace
 #endif

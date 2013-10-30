@@ -140,8 +140,11 @@ public:
         vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
-    void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator);
-    void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator);
+    void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume,
+            CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
+            CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8,
+            InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator);
+    void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx);
 
     void initialize(bool solveTwice = true)
     {
@@ -250,7 +253,10 @@ private:
 // end of template
 
 template<class TypeTag>
-void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator)
+void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume,
+        CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
+        CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8,
+        InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator)
 {
     ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
     ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
@@ -270,16 +276,6 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     int globalIdx6 = problem_.variables().index(*elementPointer6);
     int globalIdx7 = problem_.variables().index(*elementPointer7);
     int globalIdx8 = problem_.variables().index(*elementPointer8);
-
-    //get the cell Data
-    CellData & cellData1 = problem_.variables().cellData(globalIdx1);
-    CellData & cellData2 = problem_.variables().cellData(globalIdx2);
-    CellData & cellData3 = problem_.variables().cellData(globalIdx3);
-    CellData & cellData4 = problem_.variables().cellData(globalIdx4);
-    CellData & cellData5 = problem_.variables().cellData(globalIdx5);
-    CellData & cellData6 = problem_.variables().cellData(globalIdx6);
-    CellData & cellData7 = problem_.variables().cellData(globalIdx7);
-    CellData & cellData8 = problem_.variables().cellData(globalIdx8);
 
     // pressures flux calculation
     Dune::FieldVector<Scalar, 8> potW(0);
@@ -1837,39 +1833,12 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
 }
 
 template<class TypeTag>
-void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator)
+void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx)
 {
-    for (int elemIdx = 0; elemIdx < 8; elemIdx++)
-    {
-        if (!interactionVolume.hasSubVolumeElement(elemIdx))
-        {
-            continue;
-        }
-        bool isOutside = false;
-        for (int faceIdx = 0; faceIdx < dim; faceIdx++)
-        {
-            int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
-            if (interactionVolume.isOutsideFace(intVolFaceIdx))
-            {
-                isOutside = true;
-                break;
-            }
-        }
-        if (isOutside)
-        {
-            continue;
-        }
-
         ElementPointer& elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
 
         // get global coordinate of cell centers
         const GlobalPosition& globalPos = elementPointer->geometry().center();
-
-        // cell index
-        int globalIdx = problem_.variables().index(*elementPointer);
-
-        //get the cell Data
-        CellData & cellData = problem_.variables().cellData(globalIdx);
 
         // permeability vector at boundary
         DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(*elementPointer));
@@ -2023,7 +1992,6 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                                "No valid boundary condition type defined for pressure equation!");
                 }
             }
-        }
     }
 }
 

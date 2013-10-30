@@ -27,8 +27,7 @@
 
 // dumux environment
 // include 2p mpfa pressure model
-#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2dpressure2padaptive.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2dtransmissibilitycalculator.hh>
 
 #include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
 #include <dumux/common/math.hh>
@@ -122,6 +121,7 @@ template<class TypeTag> class FVPressure2P2CAdaptive
     // the typenames used for the stiffness matrix and solution vector
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
 
+    typedef Dumux::FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 protected:
     Problem& problem()
     {
@@ -166,7 +166,7 @@ public:
      * \param problem a problem class object
      */
     FVPressure2P2CAdaptive(Problem& problem) : FVPressure2P2C<TypeTag>(problem),
-            problem_(problem)
+            problem_(problem), transmissibilityCalculator_(problem)
     {
         enableVolumeIntegral = GET_PARAM_FROM_GROUP(TypeTag,bool, Impet, EnableVolumeIntegral);
         enableMPFA= GET_PARAM_FROM_GROUP(TypeTag,bool, GridAdapt, EnableMultiPointFluxApproximation);
@@ -206,7 +206,7 @@ protected:
     bool enableMPFA; //!< Enables mpfa method to calculate the fluxes near hanging nodes
     bool enableSecondHalfEdge; //!< If possible, 2 interaction volumes are used for the mpfa method near hanging nodes
     //! The 2p Mpfa pressure module, that is only used for the calulation of transmissibility of the second interaction volumes
-    Dune::shared_ptr<FvMpfaL2dPressure2pAdaptive<TypeTag> > pressureModelAdaptive2p_;
+    TransmissibilityCalculator transmissibilityCalculator_;
 };
 
 
@@ -1181,9 +1181,6 @@ int FVPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersection
     }
     /**** end find 4 faces **/
 
-
-    if(!pressureModelAdaptive2p_)
-        pressureModelAdaptive2p_= Dune::make_shared<FvMpfaL2dPressure2pAdaptive<TypeTag> >(problem()) ;
     // create Interaction Volume object
     Dumux::FVMPFALInteractionVolume<TypeTag> interactionVolume;
 
@@ -1275,12 +1272,12 @@ int FVPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersection
     std::vector<Dune::FieldVector<Scalar, dim> > lambda(4, unity);
 
     Dune::FieldMatrix<Scalar,dim,2*dim-dim+1> T;
-    int triangleType = pressureModelAdaptive2p_->calculateTransmissibility(
+    int triangleType = transmissibilityCalculator_.calculateTransmissibility(
             T, interactionVolume, lambda,
             0, 1, 2, 3);
 
     // 3.decide which triangle (which transmissibility coefficients) to use
-    if (triangleType == pressureModelAdaptive2p_->rightTriangle)
+    if (triangleType == TransmissibilityCalculator::rightTriangle)
     {
         additionalIntersectionIt = isIt23;
         // Translate flux from 2p mpfa-l local indexing to
@@ -1290,7 +1287,7 @@ int FVPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersection
         additionalT[1] = -T[1][1];
         additionalT[2] = -T[1][0];
     }
-    else if (triangleType == pressureModelAdaptive2p_->leftTriangle)
+    else if (triangleType == TransmissibilityCalculator::leftTriangle)
     {
         additionalIntersectionIt = isIt14;
         // Translate flux from 2p mpfa-l local indexing to

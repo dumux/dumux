@@ -16,23 +16,24 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_FVMPFAO2DVELOCITY2P_HH
-#define DUMUX_FVMPFAO2DVELOCITY2P_HH
+#ifndef DUMUX_FVMPFAL2DVELOCITY2P_HH
+#define DUMUX_FVMPFAL2DVELOCITY2P_HH
 
 
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 #include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
-#include <dumux/decoupled/common/fv/mpfa/mpfaointeractionvolume.hh>
+#include <dumux/decoupled/common/fv/mpfa/mpfalinteractionvolume.hh>
+#include "fvmpfal2dtransmissibilitycalculator.hh"
 
 /**
  * @file
- * @brief  Velocity calculation using a 2-d MPFA O-method
+ * @brief  Velocity calculation using a 2-d MPFA L-method
  */
 
 namespace Dumux
 {
-template<class TypeTag> class FvMpfaO2dVelocity2P
+template<class TypeTag> class FvMpfaL2dVelocity2p
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum
@@ -81,7 +82,8 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
 
     typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
-    typedef typename Dumux::FVMPFAOInteractionVolume<TypeTag> InteractionVolume;
+    typedef typename Dumux::FVMPFALInteractionVolume<TypeTag> InteractionVolume;
+    typedef Dumux::FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
     typedef std::vector<Dune::FieldVector<bool, 2 * dim> > InnerBoundaryVolumeFaces;
 
     enum
@@ -112,8 +114,8 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
-    FvMpfaO2dVelocity2P(Problem& problem) :
-        problem_(problem), gravity_(problem.gravity())
+    FvMpfaL2dVelocity2p(Problem& problem) :
+        problem_(problem), transmissibilityCalculator_(problem), gravity_(problem.gravity())
     {
         density_[wPhaseIdx] = 0.;
         density_[nPhaseIdx] = 0.;
@@ -216,6 +218,9 @@ public:
 
 private:
     Problem& problem_;
+protected:
+    TransmissibilityCalculator transmissibilityCalculator_;
+
     const GlobalPosition& gravity_; //!< vector including the gravity constant
 
     Scalar density_[numPhases];
@@ -231,12 +236,17 @@ private:
 // end of template
 
 template<class TypeTag>
-void FvMpfaO2dVelocity2P<TypeTag>::calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1, CellData& cellData2, CellData& cellData3, CellData& cellData4, InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces)
+void FvMpfaL2dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1, CellData& cellData2, CellData& cellData3, CellData& cellData4, InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces)
 {
     ElementPointer & elementPointer1 = interactionVolume.getSubVolumeElement(0);
     ElementPointer & elementPointer2 = interactionVolume.getSubVolumeElement(1);
     ElementPointer & elementPointer3 = interactionVolume.getSubVolumeElement(2);
     ElementPointer & elementPointer4 = interactionVolume.getSubVolumeElement(3);
+
+    int level1 = elementPointer1->level();
+    int level2 = elementPointer2->level();
+    int level3 = elementPointer3->level();
+    int level4 = elementPointer4->level();
 
     // cell index
     int globalIdx1 = problem_.variables().index(*elementPointer1);
@@ -286,104 +296,225 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     //compute total mobility of cell 1
     Scalar lambdaTotal4 = lambda4[wPhaseIdx] + lambda4[nPhaseIdx];
 
-    Scalar gn12nu14 = interactionVolume.getNtkrkNu_df(lambdaTotal1, 0, 0, 1);
-    Scalar gn12nu12 = interactionVolume.getNtkrkNu_df(lambdaTotal1, 0, 0, 0);
-    Scalar gn14nu14 = interactionVolume.getNtkrkNu_df(lambdaTotal1, 0, 1, 1);
-    Scalar gn14nu12 = interactionVolume.getNtkrkNu_df(lambdaTotal1, 0, 1, 0);
-    Scalar gn12nu23 = interactionVolume.getNtkrkNu_df(lambdaTotal2, 1, 1, 0);
-    Scalar gn12nu21 = interactionVolume.getNtkrkNu_df(lambdaTotal2, 1, 1, 1);
-    Scalar gn23nu23 = interactionVolume.getNtkrkNu_df(lambdaTotal2, 1, 0, 0);
-    Scalar gn23nu21 = interactionVolume.getNtkrkNu_df(lambdaTotal2, 1, 0, 1);
-    Scalar gn43nu32 = interactionVolume.getNtkrkNu_df(lambdaTotal3, 2, 0, 1);
-    Scalar gn43nu34 = interactionVolume.getNtkrkNu_df(lambdaTotal3, 2, 0, 0);
-    Scalar gn23nu32 = interactionVolume.getNtkrkNu_df(lambdaTotal3, 2, 1, 1);
-    Scalar gn23nu34 = interactionVolume.getNtkrkNu_df(lambdaTotal3, 2, 1, 0);
-    Scalar gn43nu41 = interactionVolume.getNtkrkNu_df(lambdaTotal4, 3, 1, 0);
-    Scalar gn43nu43 = interactionVolume.getNtkrkNu_df(lambdaTotal4, 3, 1, 1);
-    Scalar gn14nu41 = interactionVolume.getNtkrkNu_df(lambdaTotal4, 3, 0, 0);
-    Scalar gn14nu43 = interactionVolume.getNtkrkNu_df(lambdaTotal4, 3, 0, 1);
 
-    // compute transmissibility matrix T = CA^{-1}B+F
-    Dune::FieldMatrix < Scalar, 2 * dim, 2 * dim > C(0), F(0), A(0), B(0);
+    std::vector < DimVector > lambda(2 * dim);
 
-    // evaluate matrix C, F, A, B
-    C[0][0] = -gn12nu12;
-    C[0][3] = -gn12nu14;
-    C[1][0] = gn23nu21;
-    C[1][1] = -gn23nu23;
-    C[2][1] = gn43nu32;
-    C[2][2] = gn43nu34;
-    C[3][2] = -gn14nu43;
-    C[3][3] = gn14nu41;
+    lambda[0][0] = lambdaTotal1;
+    lambda[0][1] = lambdaTotal1;
+    lambda[1][0] = lambdaTotal2;
+    lambda[1][1] = lambdaTotal2;
+    lambda[2][0] = lambdaTotal3;
+    lambda[2][1] = lambdaTotal3;
+    lambda[3][0] = lambdaTotal4;
+    lambda[3][1] = lambdaTotal4;
 
-    F[0][0] = gn12nu12 + gn12nu14;
-    F[1][1] = -gn23nu21 + gn23nu23;
-    F[2][2] = -gn43nu34 - gn43nu32;
-    F[3][3] = gn14nu43 - gn14nu41;
+    Scalar potentialDiffW12 = 0;
+    Scalar potentialDiffW14 = 0;
+    Scalar potentialDiffW32 = 0;
+    Scalar potentialDiffW34 = 0;
 
-    A[0][0] = gn12nu12 + gn12nu21;
-    A[0][1] = -gn12nu23;
-    A[0][3] = gn12nu14;
-    A[1][0] = -gn23nu21;
-    A[1][1] = gn23nu23 + gn23nu32;
-    A[1][2] = gn23nu34;
-    A[2][1] = -gn43nu32;
-    A[2][2] = -gn43nu34 - gn43nu43;
-    A[2][3] = gn43nu41;
-    A[3][0] = -gn14nu12;
-    A[3][2] = gn14nu43;
-    A[3][3] = -gn14nu41 - gn14nu14;
-
-    //                        std::cout << A << "\n";
-
-    B[0][0] = gn12nu12 + gn12nu14;
-    B[0][1] = gn12nu21 - gn12nu23;
-    B[1][1] = -gn23nu21 + gn23nu23;
-    B[1][2] = gn23nu34 + gn23nu32;
-    B[2][2] = -gn43nu34 - gn43nu32;
-    B[2][3] = -gn43nu43 + gn43nu41;
-    B[3][0] = -gn14nu12 - gn14nu14;
-    B[3][3] = gn14nu43 - gn14nu41;
+    Scalar potentialDiffNw12 = 0;
+    Scalar potentialDiffNw14 = 0;
+    Scalar potentialDiffNw32 = 0;
+    Scalar potentialDiffNw34 = 0;
 
     //flux vector
     Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
     Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
 
-    // compute T
-    A.invert();
-    F += C.rightmultiply(B.leftmultiply(A));
-    Dune::FieldMatrix < Scalar, 2 * dim, 2 * dim > T(F);
+    Dune::FieldMatrix < Scalar, dim, 2 * dim - dim + 1 > T(0);
+    DimVector Tu(0);
+    Dune::FieldVector<Scalar, 2 * dim - dim + 1> u(0);
 
-    T.mv(potW, fluxW);
-    T.mv(potNw, fluxNw);
+    int lType = transmissibilityCalculator_.calculateTransmissibility(T, interactionVolume, lambda, 0, 1, 2, 3);
 
-    Scalar potentialDiffW12 = fluxW[0];
-    Scalar potentialDiffW14 = fluxW[3];
-    Scalar potentialDiffW32 = -fluxW[1];
-    Scalar potentialDiffW34 = -fluxW[2];
+    if (lType == TransmissibilityCalculator::rightTriangle)
+    {
+        u[0] = potW[1];
+        u[1] = potW[2];
+        u[2] = potW[0];
 
-    Scalar potentialDiffNw12 = fluxNw[0];
-    Scalar potentialDiffNw14 = fluxNw[3];
-    Scalar potentialDiffNw32 = -fluxNw[1];
-    Scalar potentialDiffNw34 = -fluxNw[2];
+        T.mv(u, Tu);
+
+        fluxW[0] = Tu[1];
+        potentialDiffW12 = Tu[1];
+
+        u[0] = potNw[1];
+        u[1] = potNw[2];
+        u[2] = potNw[0];
+
+        T.mv(u, Tu);
+
+        fluxNw[0] = Tu[1];
+        potentialDiffNw12 = Tu[1];
+    }
+    else
+    {
+        u[0] = potW[0];
+        u[1] = potW[3];
+        u[2] = potW[1];
+
+        T.mv(u, Tu);
+
+        fluxW[0] = Tu[1];
+        potentialDiffW12 = Tu[1];
+
+        u[0] = potNw[0];
+        u[1] = potNw[3];
+        u[2] = potNw[1];
+
+        T.mv(u, Tu);
+
+        fluxNw[0] = Tu[1];
+        potentialDiffNw12 = Tu[1];
+    }
+
+    lType = transmissibilityCalculator_.calculateTransmissibility(T, interactionVolume, lambda, 1, 2, 3, 0);
+
+    if (lType == TransmissibilityCalculator::rightTriangle)
+    {
+        u[0] = potW[2];
+        u[1] = potW[3];
+        u[2] = potW[1];
+
+        T.mv(u, Tu);
+
+        fluxW[1] = Tu[1];
+        potentialDiffW32 = -Tu[1];
+
+        u[0] = potNw[2];
+        u[1] = potNw[3];
+        u[2] = potNw[1];
+
+        T.mv(u, Tu);
+
+        fluxNw[1] = Tu[1];
+        potentialDiffNw32 = -Tu[1];
+    }
+    else
+    {
+        u[0] = potW[1];
+        u[1] = potW[0];
+        u[2] = potW[2];
+
+        T.mv(u, Tu);
+
+        fluxW[1] = Tu[1];
+        potentialDiffW32 = -Tu[1];
+
+        u[0] = potNw[1];
+        u[1] = potNw[0];
+        u[2] = potNw[2];
+
+        T.mv(u, Tu);
+
+        fluxNw[1] = Tu[1];
+        potentialDiffNw32 = -Tu[1];
+    }
+
+    lType = transmissibilityCalculator_.calculateTransmissibility(T, interactionVolume, lambda, 2, 3, 0, 1);
+
+    if (lType == TransmissibilityCalculator::rightTriangle)
+    {
+        u[0] = potW[3];
+        u[1] = potW[0];
+        u[2] = potW[2];
+
+        T.mv(u, Tu);
+
+        fluxW[2] = Tu[1];
+        potentialDiffW34 = Tu[1];
+
+        u[0] = potNw[3];
+        u[1] = potNw[0];
+        u[2] = potNw[2];
+
+        T.mv(u, Tu);
+
+        fluxNw[2] = Tu[1];
+        potentialDiffNw34 = Tu[1];
+    }
+    else
+    {
+        u[0] = potW[2];
+        u[1] = potW[1];
+        u[2] = potW[3];
+
+        T.mv(u, Tu);
+
+        fluxW[2] = Tu[1];
+        potentialDiffW34 = Tu[1];
+
+        u[0] = potNw[2];
+        u[1] = potNw[1];
+        u[2] = potNw[3];
+
+        T.mv(u, Tu);
+
+        fluxNw[2] = Tu[1];
+        potentialDiffNw34 = Tu[1];
+    }
+
+    lType = transmissibilityCalculator_.calculateTransmissibility(T, interactionVolume, lambda, 3, 0, 1, 2);
+
+    if (lType == TransmissibilityCalculator::rightTriangle)
+    {
+        u[0] = potW[0];
+        u[1] = potW[1];
+        u[2] = potW[3];
+
+        T.mv(u, Tu);
+
+        fluxW[3] = Tu[1];
+        potentialDiffW14 = -Tu[1];
+
+        u[0] = potNw[0];
+        u[1] = potNw[1];
+        u[2] = potNw[3];
+
+        T.mv(u, Tu);
+
+        fluxNw[3] = Tu[1];
+        potentialDiffNw14 = -Tu[1];
+    }
+    else
+    {
+        u[0] = potW[3];
+        u[1] = potW[2];
+        u[2] = potW[0];
+
+        T.mv(u, Tu);
+
+        fluxW[3] = Tu[1];
+        potentialDiffW14 = -Tu[1];
+
+        u[0] = potNw[3];
+        u[1] = potNw[2];
+        u[2] = potNw[0];
+
+        T.mv(u, Tu);
+
+        fluxNw[3] = Tu[1];
+        potentialDiffNw14 = -Tu[1];
+    }
 
     //store potentials for further calculations (saturation, ...)
-    cellData1.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(0, 0), fluxW[0]);
-    cellData1.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(0, 0), fluxNw[0]);
-    cellData1.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(0, 1), fluxW[3]);
-    cellData1.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(0, 1), fluxNw[3]);
-    cellData2.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(1, 0), fluxW[1]);
-    cellData2.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(1, 0), fluxNw[1]);
-    cellData2.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(1, 1), -fluxW[0]);
-    cellData2.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(1, 1), -fluxNw[0]);
-    cellData3.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(2, 0), -fluxW[2]);
-    cellData3.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(2, 0), -fluxNw[2]);
-    cellData3.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(2, 1), -fluxW[1]);
-    cellData3.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(2, 1), -fluxNw[1]);
-    cellData4.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(3, 0), -fluxW[3]);
-    cellData4.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(3, 0), -fluxNw[3]);
-    cellData4.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(3, 1), fluxW[2]);
-    cellData4.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(3, 1), fluxNw[2]);
+    cellData1.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(0, 0), potentialDiffW12);
+    cellData1.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(0, 0), potentialDiffNw12);
+    cellData1.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(0, 1), potentialDiffW14);
+    cellData1.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(0, 1), potentialDiffNw14);
+    cellData2.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(1, 0), -potentialDiffW32);
+    cellData2.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(1, 0), -potentialDiffNw32);
+    cellData2.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(1, 1), -potentialDiffW12);
+    cellData2.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(1, 1), -potentialDiffNw12);
+    cellData3.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(2, 0), potentialDiffW34);
+    cellData3.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(2, 0), potentialDiffNw34);
+    cellData3.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(2, 1), potentialDiffW32);
+    cellData3.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(2, 1), potentialDiffNw32);
+    cellData4.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(3, 0), -potentialDiffW14);
+    cellData4.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(3, 0), -potentialDiffNw14);
+    cellData4.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(3, 1), -potentialDiffW34);
+    cellData4.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(3, 1), -potentialDiffNw34);
 
     //compute mobilities of face 1
     Dune::FieldVector < Scalar, numPhases > lambda12Upw(0.0);
@@ -409,13 +540,13 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     {
         // evaluate parts of velocity
         DimVector vel12 = interactionVolume.getNormal(0, 0);
-        DimVector vel14 = interactionVolume.getNormal(0, 1);
+        DimVector vel14 = interactionVolume.getNormal(3, 0);
         DimVector vel23 = interactionVolume.getNormal(1, 0);
-        DimVector vel21 = interactionVolume.getNormal(1, 1);
+        DimVector vel21 = interactionVolume.getNormal(0, 0);
         DimVector vel34 = interactionVolume.getNormal(2, 0);
-        DimVector vel32 = interactionVolume.getNormal(2, 1);
+        DimVector vel32 = interactionVolume.getNormal(1, 0);
         DimVector vel41 = interactionVolume.getNormal(3, 0);
-        DimVector vel43 = interactionVolume.getNormal(3, 1);
+        DimVector vel43 = interactionVolume.getNormal(2, 0);
 
         Dune::FieldVector < Scalar, 2 * dim > flux(0);
         switch (i)
@@ -440,6 +571,39 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         vel32 *= flux[1] / (2 * interactionVolume.getFaceArea(2, 1));
         vel41 *= flux[3] / (2 * interactionVolume.getFaceArea(3, 0));
         vel43 *= flux[2] / (2 * interactionVolume.getFaceArea(3, 1));
+
+        if (level1 < level2)
+        {
+            vel12 *= 0.5;
+        }
+        else if (level2 < level1)
+        {
+            vel21 *= 0.5;
+        }
+        if (level2 < level3)
+        {
+            vel23 *= 0.5;
+        }
+        else if (level3 < level2)
+        {
+            vel32 *= 0.5;
+        }
+        if (level3 < level4)
+        {
+            vel34 *= 0.5;
+        }
+        else if (level4 < level3)
+        {
+            vel43 *= 0.5;
+        }
+        if (level4 < level1)
+        {
+            vel41 *= 0.5;
+        }
+        else if (level1 < level4)
+        {
+            vel14 *= 0.5;
+        }
 
         Scalar lambdaT12 = lambda12Upw[wPhaseIdx] + lambda12Upw[nPhaseIdx];
         Scalar lambdaT14 = lambda14Upw[wPhaseIdx] + lambda14Upw[nPhaseIdx];
@@ -514,7 +678,7 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
 }
 
 template<class TypeTag>
-void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx)
+void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx)
 {
         ElementPointer & elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
 

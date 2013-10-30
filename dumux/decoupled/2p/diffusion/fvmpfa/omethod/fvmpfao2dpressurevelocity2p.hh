@@ -103,8 +103,8 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
             sn = Indices::saturationNw,
             pressureIdx = Indices::pressureIdx,
             saturationIdx = Indices::saturationIdx,
-            eqIdxPress = Indices::pressureEqIdx,
-            eqIdxSat = Indices::satEqIdx,
+            pressEqIdx = Indices::pressureEqIdx,
+            satEqIdx = Indices::satEqIdx,
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };
 
@@ -138,13 +138,7 @@ public:
     {
         this->updateMaterialLaws();
 
-        //reset velocities
-        int size = problem_.gridView().size(0);
-        for (int i = 0; i < size; i++)
-        {
-            CellData& cellData = problem_.variables().cellData(i);
-            cellData.fluxData().resetVelocity();
-        }
+        this->storePressureSolution();
 
         if (!calculateVelocityInTransport())
             calculateVelocity();
@@ -388,7 +382,7 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
     problem_.boundaryTypes(bcType, intersection);
     PrimaryVariables boundValues(0.0);
 
-    if (bcType.isDirichlet(eqIdxPress))
+    if (bcType.isDirichlet(pressEqIdx))
     {
         problem_.dirichlet(boundValues, intersection);
 
@@ -423,7 +417,7 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
         //determine saturation at the boundary -> if no saturation is known directly at the boundary use the cell saturation
         Scalar satW = 0;
         Scalar satNw = 0;
-        if (bcType.isDirichlet(eqIdxSat))
+        if (bcType.isDirichlet(satEqIdx))
         {
             switch (saturationType_)
             {
@@ -529,7 +523,7 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
 
     } //end dirichlet boundary
 
-    else if (bcType.isNeumann(eqIdxPress))
+    else if (bcType.isNeumann(pressEqIdx))
     {
         problem_.neumann(boundValues, intersection);
 

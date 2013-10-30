@@ -76,7 +76,7 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
 
     enum
         {
-            pressEqIdx = Indices::pressEqIdx,
+            pressEqIdx = Indices::pressureEqIdx,
         };
 
     typedef IndexTranslatorAdaptive IndexTranslator;

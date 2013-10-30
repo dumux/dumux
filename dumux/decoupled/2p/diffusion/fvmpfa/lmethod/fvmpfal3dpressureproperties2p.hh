@@ -39,6 +39,7 @@ NEW_TYPE_TAG(FvMpfaL3dPressureTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties))
 }
 
 #include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal3dpressurevelocity2p.hh>
+#include <dumux/decoupled/common/fv/mpfa/fvmpfavelocityintransport.hh>
 
 namespace Dumux
 {
@@ -47,6 +48,7 @@ namespace Properties
 SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolume, Dumux::FvMpfaL3dInteractionVolume<TypeTag>);
 SET_TYPE_PROP(FvMpfaL3dPressureTwoP, MPFAInteractionVolumeContainer, Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>);
 SET_TYPE_PROP(FvMpfaL3dPressureTwoP, PressureModel, Dumux::FvMpfaL3dPressureVelocity2p<TypeTag>);
+SET_TYPE_PROP( FvMpfaL3dPressureTwoP, Velocity, Dumux::FvMpfaVelocityInTransport<TypeTag> );
 }
 }// end of Dune namespace
 #endif

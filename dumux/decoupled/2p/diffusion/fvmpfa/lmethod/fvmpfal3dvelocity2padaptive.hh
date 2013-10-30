@@ -100,7 +100,7 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
             nPhaseIdx = Indices::nPhaseIdx,
             pressureIdx = Indices::pressureIdx,
             saturationIdx = Indices::saturationIdx,
-            pressEqIdx = Indices::pressEqIdx,
+            pressEqIdx = Indices::pressureEqIdx,
             satEqIdx = Indices::satEqIdx,
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };
@@ -143,7 +143,9 @@ public:
         viscosity_[nPhaseIdx] = 0.;
     }
 
-    void calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume);
+    void calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume,
+            CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
+            CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8);
 
 
     void initialize()
@@ -181,7 +183,9 @@ private:
 
 // only for 3-D general hexahedron
 template<class TypeTag>
-void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume)
+void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume,
+        CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
+        CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8)
 {
     ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
     ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
@@ -201,16 +205,6 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
     int globalIdx6 = problem_.variables().index(*elementPointer6);
     int globalIdx7 = problem_.variables().index(*elementPointer7);
     int globalIdx8 = problem_.variables().index(*elementPointer8);
-
-    //get the cell Data
-    CellData & cellData1 = problem_.variables().cellData(globalIdx1);
-    CellData & cellData2 = problem_.variables().cellData(globalIdx2);
-    CellData & cellData3 = problem_.variables().cellData(globalIdx3);
-    CellData & cellData4 = problem_.variables().cellData(globalIdx4);
-    CellData & cellData5 = problem_.variables().cellData(globalIdx5);
-    CellData & cellData6 = problem_.variables().cellData(globalIdx6);
-    CellData & cellData7 = problem_.variables().cellData(globalIdx7);
-    CellData & cellData8 = problem_.variables().cellData(globalIdx8);
 
     // pressures flux calculation
     Dune::FieldVector<Scalar, 8> potW(0);

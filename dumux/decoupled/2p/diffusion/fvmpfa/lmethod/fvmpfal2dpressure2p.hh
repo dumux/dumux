@@ -22,6 +22,7 @@
 #include <dumux/decoupled/common/fv/mpfa/mpfalinteractionvolume.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 #include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
+#include "fvmpfal2dtransmissibilitycalculator.hh"
 
 /**
  * @file
@@ -136,6 +137,7 @@ public:
      *
      */
     typedef Dumux::FVMPFALInteractionVolume<TypeTag> InteractionVolume;
+    typedef Dumux::FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 private:
 
     typedef std::vector<InteractionVolume> GlobalInteractionVolumeVector;
@@ -396,7 +398,7 @@ public:
      * \param problem A problem class object
      */
     FvMpfaL2dPressure2p(Problem& problem) :
-            ParentType(problem), problem_(problem), R_(0),
+            ParentType(problem), problem_(problem), transmissibilityCalculator_(problem),
                     gravity_(problem.gravity()),
                     maxError_(0.), timeStep_(1.)
     {
@@ -417,13 +419,6 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Dimension not supported!");
         }
 
-        // evaluate matrix R
-        if (dim == 2)
-        {
-            R_[0][1] = 1;
-            R_[1][0] = -1;
-        }
-
         ErrorTermFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermFactor);
         ErrorTermLowerBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermLowerBound);
         ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
@@ -438,16 +433,9 @@ public:
 
 private:
     Problem& problem_;
-    DimMatrix R_;
+    TransmissibilityCalculator transmissibilityCalculator_;
 
 protected:
-
-    // Calculates tranmissibility matrix
-    bool calculateTransmissibility(
-            Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
-            InteractionVolume& interactionVolume,
-            std::vector<DimVector >& lambda,
-            int idx1, int idx2, int idx3, int idx4);
 
     GlobalInteractionVolumeVector interactionVolumes_;//!< Global Vector of interaction volumes
     InnerBoundaryVolumeFaces innerBoundaryVolumeFaces_; //!< Vector marking faces which intersect the boundary
@@ -1472,9 +1460,9 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
             Dune::FieldVector<Scalar, 2 * dim - dim + 1> u(0);
             Dune::FieldMatrix<Scalar,dim,2*dim-dim+1> T(0);
 
-            bool rightTriangle = calculateTransmissibility(T, interactionVolume, lambda, 0, 1, 2, 3);
+            int lType = transmissibilityCalculator_.calculateTransmissibility(T, interactionVolume, lambda, 0, 1, 2, 3);
 
-            if (rightTriangle)
+            if (lType == TransmissibilityCalculator::rightTriangle)
             {
                 if (innerBoundaryVolumeFaces_[globalIdx1][interactionVolume.getIndexOnElement(0, 0)])
                 {
@@ -1521,9 +1509,9 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                 pcPotential12 = Tu[1];
             }
 
-            rightTriangle = calculateTransmissibility(T, interactionVolume, lambda, 1, 2, 3, 0);
+            lType = transmissibilityCalculator_.calculateTransmissibility(T, interactionVolume, lambda, 1, 2, 3, 0);
 
-            if (rightTriangle)
+            if (lType == TransmissibilityCalculator::rightTriangle)
             {
                 if (innerBoundaryVolumeFaces_[globalIdx2][interactionVolume.getIndexOnElement(1, 0)])
                 {
@@ -1570,9 +1558,9 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                 pcPotential32 = -Tu[1];
             }
 
-            rightTriangle = calculateTransmissibility(T, interactionVolume, lambda, 2, 3, 0, 1);
+            lType = transmissibilityCalculator_.calculateTransmissibility(T, interactionVolume, lambda, 2, 3, 0, 1);
 
-            if (rightTriangle)
+            if (lType == TransmissibilityCalculator::rightTriangle)
             {
                 if (innerBoundaryVolumeFaces_[globalIdx3][interactionVolume.getIndexOnElement(2, 0)])
                 {
@@ -1619,9 +1607,9 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                 pcPotential34 = Tu[1];
             }
 
-            rightTriangle = calculateTransmissibility(T, interactionVolume, lambda, 3, 0, 1, 2);
+            lType = transmissibilityCalculator_.calculateTransmissibility(T, interactionVolume, lambda, 3, 0, 1, 2);
 
-            if (rightTriangle)
+            if (lType == TransmissibilityCalculator::rightTriangle)
             {
                 if (innerBoundaryVolumeFaces_[globalIdx4][interactionVolume.getIndexOnElement(3, 0)])
                 {
@@ -2004,318 +1992,6 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
     }
     
     return;
-}
-
-/*! \brief Calculates tranmissibility matrix
- *
- * Calculates tranmissibility matrix of an L-shape for a certain flux face.
- * Automatically selects one of the two possible L-shape (left, or right).
- *
- * \param transmissibility Matrix for the resulting transmissibility
- * \param interactionVolume The interaction volume object (includes geometric information)
- * \param lambda Mobilities of cells 1-4
- * \param idx1 Index of cell 1 of the L-stencil
- * \param idx2 Index of cell 2 of the L-stencil
- * \param idx3 Index of cell 3 of the L-stencil
- * \param idx4 Index of cell 4 of the L-stencil
- */
-template<class TypeTag>
-bool FvMpfaL2dPressure2p<TypeTag>::calculateTransmissibility(
-        Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
-        InteractionVolume& interactionVolume,
-        std::vector<DimVector >& lambda,
-        int idx1, int idx2, int idx3, int idx4)
-{
-    ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(idx1);
-    ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(idx2);
-    ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(idx3);
-    ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(idx4);
-
-    // get global coordinate of cell centers
-    const GlobalPosition& globalPos1 = elementPointer1->geometry().center();
-    const GlobalPosition& globalPos2 = elementPointer2->geometry().center();
-    const GlobalPosition& globalPos3 = elementPointer3->geometry().center();
-    const GlobalPosition& globalPos4 = elementPointer4->geometry().center();
-
-    const GlobalPosition& globalPosCenter = interactionVolume.getCenterPosition();
-
-    const DimMatrix& K1 = problem_.spatialParams().intrinsicPermeability(*elementPointer1);
-    const DimMatrix& K2 = problem_.spatialParams().intrinsicPermeability(*elementPointer2);
-    const DimMatrix& K3 = problem_.spatialParams().intrinsicPermeability(*elementPointer3);
-    const DimMatrix& K4 = problem_.spatialParams().intrinsicPermeability(*elementPointer4);
-
-    const GlobalPosition& globalPosFace12 = interactionVolume.getFacePosition(idx1,0);
-    const GlobalPosition& globalPosFace23 = interactionVolume.getFacePosition(idx2,0);
-
-    // compute normal vectors nu1-nu7 in triangle R for first half edge
-    DimVector nu1R1(0);
-    R_.mv(globalPosFace12-globalPos2 ,nu1R1);
-
-    DimVector nu2R1(0);
-    R_.mv(globalPos2-globalPosFace23, nu2R1);
-
-    DimVector nu3R1(0);
-    R_.mv(globalPosFace23-globalPos3, nu3R1);
-
-    DimVector nu4R1(0);
-    R_.mv(globalPos3-globalPosCenter, nu4R1);
-
-    DimVector nu5R1(0);
-    R_.mv(globalPosCenter-globalPos1, nu5R1);
-
-    DimVector nu6R1(0);
-    R_.mv(globalPos1-globalPosFace12, nu6R1);
-
-    DimVector nu7R1(0);
-    R_.mv(globalPosCenter-globalPos2, nu7R1);
-
-    // compute T, i.e., the area of quadrilateral made by normal vectors 'nu'
-    DimVector Rnu2R1(0);
-    R_.mv(nu2R1, Rnu2R1);
-    Scalar T1R1 = nu1R1 * Rnu2R1;
-
-    DimVector Rnu4R1(0);
-    R_.mv(nu4R1, Rnu4R1);
-    Scalar T2R1 = nu3R1 * Rnu4R1;
-
-    DimVector Rnu6R1(0);
-    R_.mv(nu6R1, Rnu6R1);
-    Scalar T3R1 = nu5R1 * Rnu6R1;
-
-    // compute components needed for flux calculation, denoted as 'omega' and 'chi'
-    DimVector K2nu1R1(0);
-    K2.mv(nu1R1, K2nu1R1);
-    DimVector K2nu2R1(0);
-    K2.mv(nu2R1, K2nu2R1);
-    DimVector K4nu3R1(0);
-    K3.mv(nu3R1, K4nu3R1);
-    DimVector K4nu4R1(0);
-    K3.mv(nu4R1, K4nu4R1);
-    DimVector K1nu5R1(0);
-    K1.mv(nu5R1, K1nu5R1);
-    DimVector K1nu6R1(0);
-    K1.mv(nu6R1, K1nu6R1);
-
-    DimVector Rnu1R1(0);
-    R_.mv(nu1R1, Rnu1R1);
-
-    DimVector &outerNormaln1R1 =  interactionVolume.getNormal(idx2, 0);
-    DimVector &outerNormaln2 =  interactionVolume.getNormal(idx1, 0);
-
-//    std::cout<<"outerNormaln1R1 = "<<outerNormaln1R1<<"\n";
-//    std::cout<<"outerNormaln2 = "<<outerNormaln2<<"\n";
-
-    Scalar omega111R1 = lambda[idx2][0] * (outerNormaln1R1 * K2nu1R1) * interactionVolume.getFaceArea(idx2, 0)/T1R1;
-    Scalar omega112R1 = lambda[idx2][0] * (outerNormaln1R1 * K2nu2R1) * interactionVolume.getFaceArea(idx2, 0)/T1R1;
-    Scalar omega211R1 = lambda[idx2][1] * (outerNormaln2 * K2nu1R1) * interactionVolume.getFaceArea(idx2, 1)/T1R1;
-    Scalar omega212R1 = lambda[idx2][1] * (outerNormaln2 * K2nu2R1) * interactionVolume.getFaceArea(idx2, 1)/T1R1;
-    Scalar omega123R1 = lambda[idx3][1] * (outerNormaln1R1 * K4nu3R1) * interactionVolume.getFaceArea(idx3, 1)/T2R1;
-    Scalar omega124R1 = lambda[idx3][1] * (outerNormaln1R1 * K4nu4R1) * interactionVolume.getFaceArea(idx3, 1)/T2R1;
-    Scalar omega235R1 = lambda[idx1][0] * (outerNormaln2 * K1nu5R1) * interactionVolume.getFaceArea(idx1, 0)/T3R1;
-    Scalar omega236R1 = lambda[idx1][0] * (outerNormaln2 * K1nu6R1) * interactionVolume.getFaceArea(idx1, 0)/T3R1;
-    Scalar chi711R1 = (nu7R1 * Rnu1R1)/T1R1;
-    Scalar chi712R1 = (nu7R1 * Rnu2R1)/T1R1;
-
-    // compute transmissibility matrix TR1 = CA^{-1}B+D
-    DimMatrix C(0), A(0);
-    Dune::FieldMatrix<Scalar,dim,2*dim-dim+1> D(0), B(0);
-
-    // evaluate matrix C, D, A, B
-    C[0][0] = -omega111R1;
-    C[0][1] = -omega112R1;
-    C[1][0] = -omega211R1;
-    C[1][1] = -omega212R1;
-
-    D[0][0] = omega111R1 + omega112R1;
-    D[1][0] = omega211R1 + omega212R1;
-
-    A[0][0] = omega111R1 - omega124R1 - omega123R1*chi711R1;
-    A[0][1] = omega112R1 - omega123R1*chi712R1;
-    A[1][0] = omega211R1 - omega236R1*chi711R1;
-    A[1][1] = omega212R1 - omega235R1 - omega236R1*chi712R1;
-
-    B[0][0] = omega111R1 + omega112R1 + omega123R1*(1.0 - chi711R1 - chi712R1);
-    B[0][1] = -omega123R1 - omega124R1;
-    B[1][0] = omega211R1 + omega212R1 + omega236R1*(1.0 - chi711R1 - chi712R1);
-    B[1][2] = -omega235R1 - omega236R1;
-
-//    std::cout<<"AR = "<<A<<"\n";
-
-    // compute TR1
-    A.invert();
-    D += B.leftmultiply(C.rightmultiply(A));
-    Dune::FieldMatrix<Scalar,dim,2*dim-dim+1> TR1(D);
-
-
-    // 2.use triangle L to compute the transmissibility of half edge
-    const GlobalPosition& globalPosFace14 = interactionVolume.getFacePosition(idx1,1);
-
-//    std::cout<<"globalPosFace14 = "<<globalPosFace14<<"\n";
-
-    // compute normal vectors nu1-nu7 in triangle L for first half edge
-    DimVector nu1L1(0);
-    R_.mv(globalPosFace12-globalPos1 ,nu1L1);
-
-    DimVector nu2L1(0);
-    R_.mv(globalPos1-globalPosFace14, nu2L1);
-
-    DimVector nu3L1(0);
-    R_.mv(globalPosFace14-globalPos4, nu3L1);
-
-    DimVector nu4L1(0);
-    R_.mv(globalPos4-globalPosCenter, nu4L1);
-
-    DimVector nu5L1(0);
-    R_.mv(globalPosCenter-globalPos2, nu5L1);
-
-    DimVector nu6L1(0);
-    R_.mv(globalPos2-globalPosFace12, nu6L1);
-
-    DimVector nu7L1(0);
-    R_.mv(globalPosCenter-globalPos1, nu7L1);
-
-    // compute T, i.e., the area of quadrilateral made by normal vectors 'nu'
-    DimVector Rnu2L1(0);
-    R_.mv(nu2L1, Rnu2L1);
-    Scalar T1L1 = nu1L1 * Rnu2L1;
-
-    DimVector Rnu4L1(0);
-    R_.mv(nu4L1, Rnu4L1);
-    Scalar T2L1 = nu3L1 * Rnu4L1;
-
-    DimVector Rnu6L1(0);
-    R_.mv(nu6L1, Rnu6L1);
-    Scalar T3L1 = nu5L1 * Rnu6L1;
-
-    // compute components needed for flux calculation, denoted as 'omega' and 'chi'
-    DimVector K1nu1L1(0);
-    K1.mv(nu1L1, K1nu1L1);
-    DimVector K1nu2L1(0);
-    K1.mv(nu2L1, K1nu2L1);
-    DimVector K3nu3L1(0);
-    K4.mv(nu3L1, K3nu3L1);
-    DimVector K3nu4L1(0);
-    K4.mv(nu4L1, K3nu4L1);
-    DimVector K2nu5L1(0);
-    K2.mv(nu5L1, K2nu5L1);
-    DimVector K2nu6L1(0);
-    K2.mv(nu6L1, K2nu6L1);
-
-    DimVector Rnu1L1(0);
-    R_.mv(nu1L1, Rnu1L1);
-
-    DimVector &outerNormaln1L1 =  interactionVolume.getNormal(idx1, 1);
-//    std::cout<<"outerNormaln1L1 = "<<outerNormaln1L1<<"\n";
-
-    Scalar omega111L1 = lambda[idx1][1] * (outerNormaln1L1 * K1nu1L1)* interactionVolume.getFaceArea(idx1, 1)/T1L1;
-    Scalar omega112L1 = lambda[idx1][1] * (outerNormaln1L1 * K1nu2L1)* interactionVolume.getFaceArea(idx1, 1)/T1L1;
-    Scalar omega211L1 = lambda[idx1][0] * (outerNormaln2 * K1nu1L1)* interactionVolume.getFaceArea(idx1, 0)/T1L1;
-    Scalar omega212L1 = lambda[idx1][0] * (outerNormaln2 * K1nu2L1)* interactionVolume.getFaceArea(idx1, 0)/T1L1;
-    Scalar omega123L1 = lambda[idx4][0] * (outerNormaln1L1 * K3nu3L1)* interactionVolume.getFaceArea(idx4, 0)/T2L1;
-    Scalar omega124L1 = lambda[idx4][0] * (outerNormaln1L1 * K3nu4L1)* interactionVolume.getFaceArea(idx4, 0)/T2L1;
-    Scalar omega235L1 = lambda[idx2][1] * (outerNormaln2 * K2nu5L1)* interactionVolume.getFaceArea(idx2, 1)/T3L1;
-    Scalar omega236L1 = lambda[idx2][1] * (outerNormaln2 * K2nu6L1)* interactionVolume.getFaceArea(idx2, 1)/T3L1;
-    Scalar chi711L1 = (nu7L1 * Rnu1L1)/T1L1;
-    Scalar chi712L1 = (nu7L1 * Rnu2L1)/T1L1;
-
-    // compute transmissibility matrix TL1 = CA^{-1}B+D
-    C = 0;
-    A = 0;
-    D = 0;
-    B = 0;
-
-    // evaluate matrix C, D, A, B
-    C[0][0] = -omega111L1;
-    C[0][1] = -omega112L1;
-    C[1][0] = -omega211L1;
-    C[1][1] = -omega212L1;
-
-    D[0][0] = omega111L1 + omega112L1;
-    D[1][0] = omega211L1 + omega212L1;
-
-    A[0][0] = omega111L1 - omega124L1 - omega123L1*chi711L1;
-    A[0][1] = omega112L1 - omega123L1*chi712L1;
-    A[1][0] = omega211L1 - omega236L1*chi711L1;
-    A[1][1] = omega212L1 - omega235L1 - omega236L1*chi712L1;
-
-    B[0][0] = omega111L1 + omega112L1 + omega123L1*(1.0 - chi711L1 - chi712L1);
-    B[0][1] = -omega123L1 - omega124L1;
-    B[1][0] = omega211L1 + omega212L1 + omega236L1*(1.0 - chi711L1 - chi712L1);
-    B[1][2] = -omega235L1 - omega236L1;
-
-//    std::cout<<"AL = "<<A<<"\n";
-
-    // compute TL1
-    A.invert();
-    D += B.leftmultiply(C.rightmultiply(A));
-    Dune::FieldMatrix<Scalar,dim,2*dim-dim+1> TL1(D);
-
-    Scalar sR = std::abs(TR1[1][2] - TR1[1][0]);
-    Scalar sL = std::abs(TL1[1][0] - TL1[1][2]);
-
-    // 3.decide which triangle (which transmissibility coefficients) to use
-    if (sR <= sL)
-    {
-        transmissibility = TR1;
-//        if (std::isnan(transmissibility.frobenius_norm()))
-//        {
-//                    std::cout<<"right transmissibility = "<<transmissibility<<"\n";
-//                std::cout<<"globalPos1 = "<<globalPos1<<"\n";
-//                std::cout<<"globalPos2 = "<<globalPos2<<"\n";
-//                std::cout<<"globalPos3 = "<<globalPos3<<"\n";
-//                std::cout<<"globalPos4 = "<<globalPos4<<"\n";
-//                std::cout<<"globalPosCenter = "<<globalPosCenter<<"\n";
-//                std::cout<<"outerNormaln1L1 = "<<outerNormaln1L1<<"\n";
-//                std::cout<<"globalPosFace14 = "<<globalPosFace14<<"\n";
-//                std::cout<<"outerNormaln1R1 = "<<outerNormaln1R1<<"\n";
-//                std::cout<<"outerNormaln2 = "<<outerNormaln2<<"\n";
-//                std::cout<<"globalPosFace12 = "<<globalPosFace12<<"\n";
-//                std::cout<<"globalPosFace23 = "<<globalPosFace23<<"\n";
-//                std::cout<<"perm1 = "<<K1<<"\n";
-//                std::cout<<"perm2 = "<<K2<<"\n";
-//                std::cout<<"perm3 = "<<K3<<"\n";
-//                std::cout<<"perm4 = "<<K4<<"\n";
-//                std::cout<<"lambda = ";
-//                for (int i = 0; i < lambda.size(); i++)
-//                {
-//                    std::cout<<lambda[i]<<" ";
-//                }
-//                std::cout<<"\n";
-//        }
-//        std::cout<<"transmissibility = "<<transmissibility<<"\n";
-        return true;
-    }
-    else
-    {
-        transmissibility = TL1;
-//        if (std::isnan(transmissibility.frobenius_norm()))
-//        {
-//                    std::cout<<"left transmissibility = "<<transmissibility<<"\n";
-//                std::cout<<"globalPos1 = "<<globalPos1<<"\n";
-//                std::cout<<"globalPos2 = "<<globalPos2<<"\n";
-//                std::cout<<"globalPos3 = "<<globalPos3<<"\n";
-//                std::cout<<"globalPos4 = "<<globalPos4<<"\n";
-//                std::cout<<"globalPosCenter = "<<globalPosCenter<<"\n";
-//                std::cout<<"outerNormaln1L1 = "<<outerNormaln1L1<<"\n";
-//                std::cout<<"globalPosFace14 = "<<globalPosFace14<<"\n";
-//                std::cout<<"outerNormaln1R1 = "<<outerNormaln1R1<<"\n";
-//                std::cout<<"outerNormaln2 = "<<outerNormaln2<<"\n";
-//                std::cout<<"globalPosFace12 = "<<globalPosFace12<<"\n";
-//                std::cout<<"globalPosFace23 = "<<globalPosFace23<<"\n";
-//                std::cout<<"perm1 = "<<K1<<"\n";
-//                std::cout<<"perm2 = "<<K2<<"\n";
-//                std::cout<<"perm3 = "<<K3<<"\n";
-//                std::cout<<"perm4 = "<<K4<<"\n";
-//                std::cout<<"lambda = ";
-//                for (int i = 0; i < lambda.size(); i++)
-//                {
-//                    std::cout<<lambda[i]<<" ";
-//                }
-//                std::cout<<"\n";
-//        }
-//        std::cout<<"left transmissibility = "<<transmissibility<<"\n";
-        return false;
-    }
 }
 
 /*! \brief Updates constitutive relations and stores them in the variable class
