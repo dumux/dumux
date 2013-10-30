@@ -254,7 +254,7 @@ const Scalar Common<Scalar>::tripleTemperature = 273.16;
 template <class Scalar>
 const Scalar Common<Scalar>::triplePressure = 611.657;
 
-} // end namepace IAPWS
-} // end namepace Dune
+} // end namespace IAPWS
+} // end namespace Dune
 
 #endif

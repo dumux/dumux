@@ -318,6 +318,6 @@ protected:
     int presentPhaseIdx_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

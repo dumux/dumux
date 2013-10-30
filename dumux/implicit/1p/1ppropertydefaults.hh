@@ -105,8 +105,8 @@ SET_BOOL_PROP(OneP, ProblemEnableGravity, true);
 SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
 
 // \}
-} // end namepace Properties
+} // end namespace Properties
 
-} // end namepace Dumux
+} // end namespace Dumux
 
 #endif

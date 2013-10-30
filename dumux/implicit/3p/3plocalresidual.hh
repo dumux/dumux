@@ -196,6 +196,6 @@ protected:
     }
 };
 
-} // end namepace
+} // end namespace
 
 #endif

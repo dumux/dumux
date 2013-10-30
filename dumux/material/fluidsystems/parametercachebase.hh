@@ -137,6 +137,6 @@ private:
     { return *static_cast<Implementation*>(this); }
 };
 
-} // end namepace
+} // end namespace
 
 #endif

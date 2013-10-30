@@ -310,6 +310,6 @@ protected:
     Scalar averageMolarMass_[numPhases];
 };
 
-} // end namepace
+} // end namespace
 
 #endif

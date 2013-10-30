@@ -234,6 +234,6 @@ protected:
     Scalar soilDensity_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

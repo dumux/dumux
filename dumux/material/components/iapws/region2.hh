@@ -419,7 +419,7 @@ private:
 
 };
 
-} // end namepace IAPWS
-} // end namepace Dune
+} // end namespace IAPWS
+} // end namespace Dune
 
 #endif

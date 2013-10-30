@@ -531,6 +531,6 @@ protected:
     Scalar mobilityUpwindWeight_; //!< Upwind weight for mobility. Set to one for full upstream weighting
 };
 
-} // end namepace
+} // end namespace
 
 #endif

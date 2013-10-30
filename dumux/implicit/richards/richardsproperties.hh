@@ -69,6 +69,6 @@ NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written 
 // \}
 }
 
-} // end namepace
+} // end namespace
 
 #endif

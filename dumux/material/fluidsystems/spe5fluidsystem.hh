@@ -520,7 +520,7 @@ private:
     };
 };
 
-} // end namepace
-} // end namepace
+} // end namespace
+} // end namespace
 
 #endif

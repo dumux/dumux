@@ -167,6 +167,6 @@ SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
 // \}
 }
 
-} // end namepace
+} // end namespace
 
 #endif

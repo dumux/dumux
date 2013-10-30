@@ -442,6 +442,6 @@ private:
     { return *static_cast<const Implementation*>(this); }
 };
 
-} // end namepace
+} // end namespace
 
 #endif

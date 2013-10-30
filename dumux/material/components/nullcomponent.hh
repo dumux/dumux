@@ -44,6 +44,6 @@ class NullComponent : public Component<Scalar, NullComponent<Scalar> >
 {
 };
 
-} // end namepace
+} // end namespace
 
 #endif

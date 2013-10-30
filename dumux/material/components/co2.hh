@@ -329,6 +329,6 @@ const Scalar CO2<Scalar, CO2Tables>::R = Constants<Scalar>::R;
 template <class Scalar, class CO2Tables>
 bool CO2<Scalar, CO2Tables>::warningThrown = false;
 
-} // end namepace
+} // end namespace
 
 #endif

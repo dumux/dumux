@@ -385,6 +385,6 @@ public:
     }
 };
 
-} // end namepace
+} // end namespace
 
 #endif

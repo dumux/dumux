@@ -208,6 +208,6 @@ protected:
     Dune::array<Scalar, numPhases> pressure_;
 };
 
-} // end namepace Dumux
+} // end namespace Dumux
 
 #endif

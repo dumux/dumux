@@ -224,6 +224,6 @@ private:
     }
 };
 
-} // end namepace
+} // end namespace
 
 #endif // DUMUX_BOXMODELS_2PDFM_FLUX_VARIABLES_HH

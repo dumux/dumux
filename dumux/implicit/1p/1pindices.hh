@@ -39,6 +39,6 @@ struct OnePIndices
 };
 
 // \}
-} // end namepace
+} // end namespace
 
 #endif

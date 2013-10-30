@@ -123,6 +123,6 @@ private:
     Scalar normalMatrixHeatFlux_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

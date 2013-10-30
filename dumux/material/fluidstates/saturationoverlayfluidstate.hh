@@ -207,6 +207,6 @@ protected:
     Dune::array<Scalar, numPhases> saturation_;
 };
 
-} // end namepace Dumux
+} // end namespace Dumux
 
 #endif

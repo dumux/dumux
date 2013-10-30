@@ -496,6 +496,6 @@ Tabulated2DFunction<Scalar> PengRobinson<Scalar>::criticalPressure_;
 template <class Scalar>
 Tabulated2DFunction<Scalar> PengRobinson<Scalar>::criticalMolarVolume_;
 
-} // end namepace
+} // end namespace
 
 #endif

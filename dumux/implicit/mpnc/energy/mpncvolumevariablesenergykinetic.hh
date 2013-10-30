@@ -230,6 +230,6 @@ protected:
     Scalar fluidThermalConductivity_[numPhases];
 };
 
-} // end namepace
+} // end namespace
 
 #endif

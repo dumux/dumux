@@ -713,7 +713,7 @@ private:
         return (h_ls);
     };
 };
-} // end namepace FluidSystems
+} // end namespace FluidSystems
 
 
 #ifdef DUMUX_PROPERTIES_HH
@@ -794,6 +794,6 @@ public:
     }
 };
 #endif
-} // end namepace Dumux
+} // end namespace Dumux
 
 #endif

@@ -71,5 +71,5 @@ namespace Dumux
       return characteristicLength / (renoldsNumber * characteristicDensity);
     }
   };
-} // end namepace
+} // end namespace
 #endif // DUMUX_TEST_FREEFLOW_NAVIERSTOKES_N2CONSTVISCOSITY_HH

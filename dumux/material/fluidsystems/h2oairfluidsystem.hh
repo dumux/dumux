@@ -808,6 +808,6 @@ class H2OAirFluidSystem
 {};
 #endif
 
-} // end namepace
+} // end namespace
 
 #endif

@@ -746,7 +746,7 @@ public:
     }
 };
 
-} // end namepace FluidSystems
+} // end namespace FluidSystems
 
 #ifdef DUMUX_PROPERTIES_HH
 /*!
@@ -762,6 +762,6 @@ class H2ON2FluidSystem
 {};
 #endif
 
-} // end namepace
+} // end namespace
 
 #endif

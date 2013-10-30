@@ -423,7 +423,7 @@ public:
     }
 };
 
-} // end namepace FluidSystems
+} // end namespace FluidSystems
 
 #ifdef DUMUX_PROPERTIES_HH
 // forward defintions of the property tags
@@ -447,6 +447,6 @@ class TwoPImmiscibleFluidSystem
 {};
 #endif
 
-} // end namepace
+} // end namespace
 
 #endif

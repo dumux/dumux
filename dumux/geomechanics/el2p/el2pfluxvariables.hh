@@ -255,6 +255,6 @@ NEW_PROP_TAG(SpatialParams);
             DimMatrix K_;
     };
 
-} // end namepace
+} // end namespace
 
 #endif

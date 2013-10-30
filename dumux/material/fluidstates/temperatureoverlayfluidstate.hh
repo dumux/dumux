@@ -209,6 +209,6 @@ protected:
     Scalar temperature_;
 };
 
-} // end namepace Dumux
+} // end namespace Dumux
 
 #endif

@@ -91,6 +91,6 @@ protected:
     Scalar b_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

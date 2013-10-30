@@ -246,6 +246,6 @@ private:
     Scalar aCache_[numComponents][numComponents];
 };
 
-} // end namepace
+} // end namespace
 
 #endif

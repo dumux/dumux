@@ -379,6 +379,6 @@ protected:
     Dune::FieldMatrix<Scalar, numPhases, numComponents> porousDiffCoeff_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

@@ -380,6 +380,6 @@ protected:
     FluidState fluidState_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

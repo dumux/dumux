@@ -233,6 +233,6 @@ private:
     Scalar temperatureGradientNormal_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

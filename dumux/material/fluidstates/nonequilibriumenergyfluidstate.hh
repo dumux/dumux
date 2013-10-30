@@ -121,6 +121,6 @@ public:
 
 };
 
-} // end namepace Dumux
+} // end namespace Dumux
 
 #endif

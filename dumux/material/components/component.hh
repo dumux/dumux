@@ -221,6 +221,6 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::liquidHeatCapacity()"); }
 };
 
-} // end namepace
+} // end namespace
 
 #endif

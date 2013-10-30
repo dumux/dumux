@@ -596,6 +596,6 @@ private:
 
 };
 }
-} // end namepace
+} // end namespace
 
 #endif

@@ -61,6 +61,6 @@ struct RichardsIndices
 };
 // \}
 
-} // end namepace
+} // end namespace
 
 #endif

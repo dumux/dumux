@@ -127,6 +127,6 @@ protected:
     Scalar heatCapacity_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

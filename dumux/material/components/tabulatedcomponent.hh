@@ -928,6 +928,6 @@ template <class Scalar, class RawComponent, bool useVaporPressure>
 unsigned TabulatedComponent<Scalar, RawComponent, useVaporPressure>::nDensity_;
 
 
-} // end namepace
+} // end namespace
 
 #endif

@@ -403,7 +403,7 @@ public:
 
 };
 
-} // end namepace
+} // end namespace
 
 #ifdef DUMUX_PROPERTIES_HH
 namespace Properties
@@ -424,6 +424,6 @@ class OnePFluidSystem
                             typename GET_PROP_TYPE(TypeTag, Fluid)>
 {};
 #endif
-} // end namepace
+} // end namespace
 
 #endif

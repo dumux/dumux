@@ -156,6 +156,6 @@ const Scalar PengRobinsonMixture<Scalar, StaticParameters>::u = 2.0;
 template<class Scalar, class StaticParameters>
 const Scalar PengRobinsonMixture<Scalar, StaticParameters>::w = -1.0;
 
-} // end namepace Dumux
+} // end namespace Dumux
 
 #endif

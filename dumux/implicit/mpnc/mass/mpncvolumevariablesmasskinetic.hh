@@ -167,6 +167,6 @@ private:
     Scalar xEquil_[numPhases][numComponents];
 };
 
-} // end namepace
+} // end namespace
 
 #endif

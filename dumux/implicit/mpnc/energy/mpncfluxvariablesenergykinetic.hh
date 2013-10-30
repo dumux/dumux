@@ -115,6 +115,6 @@ private:
     DimVector temperatureGradient_[numEnergyEqs];
 };
 
-} // end namepace
+} // end namespace
 
 #endif

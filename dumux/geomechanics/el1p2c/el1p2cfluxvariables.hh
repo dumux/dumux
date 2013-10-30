@@ -316,6 +316,6 @@ namespace Dumux
             Scalar diffCoeffPM_;
     };
 
-} // end namepace
+} // end namespace
 
 #endif

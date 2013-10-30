@@ -183,6 +183,6 @@ protected:
     Scalar extrusionFactor_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

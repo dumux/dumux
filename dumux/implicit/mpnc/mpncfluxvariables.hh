@@ -164,6 +164,6 @@ private:
     FluxVariablesEnergy     fluxVarsEnergy_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif
