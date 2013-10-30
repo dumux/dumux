@@ -100,7 +100,7 @@ class CROperatorAssemblerTwoPAdaptive
 
     enum
     {
-        pressEqIdx = Indices::pressEqIdx,
+        pressEqIdx = Indices::pressureEqIdx,
     };
 
     // return number of rows/columns

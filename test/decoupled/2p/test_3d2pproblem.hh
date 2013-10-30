@@ -171,8 +171,8 @@ enum
 #else
     pWIdx = Indices::pwIdx,
 #endif
-    SwIdx = Indices::SwIdx,
-    pressEqIdx = Indices::pressEqIdx,
+    SwIdx = Indices::swIdx,
+    pressEqIdx = Indices::pressureEqIdx,
     satEqIdx = Indices::satEqIdx
 };
 
