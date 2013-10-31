@@ -127,12 +127,10 @@ void FvMpfaL2dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
 {
     ElementPointer & elementPointer1 = interactionVolume.getSubVolumeElement(0);
     ElementPointer & elementPointer2 = interactionVolume.getSubVolumeElement(1);
-    ElementPointer & elementPointer4 = interactionVolume.getSubVolumeElement(3);
 
     // cell index
     int globalIdx1 = problem_.variables().index(*elementPointer1);
     int globalIdx2 = problem_.variables().index(*elementPointer2);
-    int globalIdx4 = problem_.variables().index(*elementPointer4);
 
     // get pressure values
     Dune::FieldVector < Scalar, 2 * dim > potW(0);
