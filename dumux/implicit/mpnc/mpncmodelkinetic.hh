@@ -213,7 +213,7 @@ public:
             // number of scv
             const unsigned int numScv = fvGeometry.numScv; // box: numSCV, cc:1
 
-            for (int scvIdx = 0; scvIdx < numScv; ++scvIdx) {
+            for (unsigned int scvIdx = 0; scvIdx < numScv; ++scvIdx) {
 
                 const FluidState & fluidState = elemVolVars[scvIdx].fluidState();
 

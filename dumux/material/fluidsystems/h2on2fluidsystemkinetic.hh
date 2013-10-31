@@ -291,8 +291,9 @@ public:
         x[wPhaseIdx][nCompIdx]  = x[nPhaseIdx][nCompIdx] * pn / henry;
         x[wPhaseIdx][wCompIdx]  = x[nPhaseIdx][wCompIdx] * pn / satVapPressure;
 
-        for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
-            for(int compIdx=0; compIdx<numComponents; compIdx++){
+        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+            for (unsigned int compIdx = 0; compIdx < numComponents; compIdx++)
+            {
                 Valgrind::CheckDefined(x[phaseIdx][compIdx]);
                 fluidState.setMoleFraction(phaseIdx, compIdx, x[phaseIdx][compIdx]) ;
             }

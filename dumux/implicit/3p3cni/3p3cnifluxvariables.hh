@@ -88,7 +88,7 @@ public:
         // gradients
         DimVector temperatureGrad(0);
         DimVector tmp(0.0);
-        for (int idx = 0; idx < this->face().numFap; idx++)
+        for (unsigned int idx = 0; idx < this->face().numFap; idx++)
         {
             tmp = this->face().grad[idx];
 

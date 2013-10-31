@@ -82,7 +82,7 @@ public:
         for(int energyEqIdx=0; energyEqIdx<numEnergyEqs; energyEqIdx++)
             temperatureGradient_[energyEqIdx] = 0.;
 
-        for (int idx = 0;
+        for (unsigned int idx = 0;
                 idx < face.numFap;
                 idx++){
             // FE gradient at vertex idx

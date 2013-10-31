@@ -153,7 +153,7 @@ void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Transp
     this->averagedFaces_ = 0;
 
     // resize update vector and set to zero
-    int size_ = problem_.gridView().size(0);
+    unsigned int size_ = problem_.gridView().size(0);
     updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
     updateVec[wCompIdx].resize(size_);
     updateVec[nCompIdx].resize(size_);

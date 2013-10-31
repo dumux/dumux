@@ -118,8 +118,8 @@ private:
                              const ElementVolumeVariables &elemVolVars)
     {
         // calculate gradients
-    	DimVector tmp(0.0);
-        for (int idx = 0;
+        DimVector tmp(0.0);
+        for (unsigned int idx = 0;
              idx < this->face().numFap;
              idx++) // loop over adjacent vertices
         {

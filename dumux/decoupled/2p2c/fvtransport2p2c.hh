@@ -346,7 +346,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     // initialize dt very large
     dt = 1E100;
 
-    int size = problem_.gridView().size(0);
+    unsigned int size = problem_.gridView().size(0);
     if (localTimeStepping_)
     {
         if (this->timeStepData_.size() != size)

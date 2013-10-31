@@ -120,7 +120,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     // initialize dt very large
     dt = 1E100;
 
-    int size = problem().gridView().size(0);
+    unsigned int size = problem().gridView().size(0);
     if (this->enableLocalTimeStepping())
     {
         if (this->timeStepData_.size() != size)

@@ -111,7 +111,7 @@ public:
     static void chop(SolutionVector &uCurrentIter,
                      const SolutionVector &uLastIter)
     {
-        for (int i = 0; i < uLastIter.size(); ++i) {
+        for (unsigned int i = 0; i < uLastIter.size(); ++i) {
             for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
                 saturationChop_(uCurrentIter[i][s0Idx + phaseIdx],
                                 uLastIter[i][s0Idx + phaseIdx]);

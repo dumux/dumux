@@ -89,7 +89,7 @@ public:
 
 
         DimVector tmp ;
-        for (int idx = 0;
+        for (unsigned int idx = 0;
              idx < face.numFap;
              idx++) // loop over adjacent vertices
         {

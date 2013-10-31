@@ -105,7 +105,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
     {
         // calculate densities at the integration points of the face
         DimVector tmp(0.0);
-        for (int idx = 0;
+        for (unsigned int idx = 0;
              idx < this->face().numFap;
              idx++) // loop over adjacent vertices
         {
@@ -131,7 +131,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
     {
         // calculate gradients
         DimVector tmp(0.0);
-        for (int idx = 0;
+        for (unsigned int idx = 0;
              idx < this->face().numFap;
              idx++) // loop over adjacent vertices
         {

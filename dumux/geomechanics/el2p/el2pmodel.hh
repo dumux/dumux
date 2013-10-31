@@ -287,7 +287,7 @@ public:
         // initialize cell stresses, cell-wise hydraulic parameters and cell pressure with zero
 
 
-        for(int eIdx = 0; eIdx < numElements; ++eIdx){
+        for (unsigned int eIdx = 0; eIdx < numElements; ++eIdx) {
             deltaEffStressX[eIdx] = Scalar(0.0);
             if (dim >= 2)
                 deltaEffStressY[eIdx] = Scalar(0.0);

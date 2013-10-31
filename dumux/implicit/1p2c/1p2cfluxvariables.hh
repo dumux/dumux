@@ -284,7 +284,7 @@ protected:
         if (!problem.spatialParams().useTwoPointGradient(element, face().i, face().j)) {
             // use finite-element gradients
             tmp = 0.0;
-            for (int idx = 0;
+            for (unsigned int idx = 0;
                     idx < face().numFap;
                     idx++) // loop over adjacent vertices
             {

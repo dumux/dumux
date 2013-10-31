@@ -41,7 +41,7 @@
 #include "el1p2celementvolumevariables.hh"
 #include "el1p2cvolumevariables.hh"
 #include "el1p2cindices.hh"
-#include <dumux/material/fluidmatrixinteractions/2p/diffusivitymillingtonquirk.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
 
 namespace Dumux

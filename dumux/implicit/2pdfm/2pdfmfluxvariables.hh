@@ -194,7 +194,7 @@ private:
                                         int faceIdx)
     {
         // calculate gradients, loop over adjacent vertices
-        for (int idx = 0; idx < this->face().numFap; idx++)
+        for (unsigned int idx = 0; idx < this->face().numFap; idx++)
         {
             int i = this->face().i;
             int j = this->face().j;

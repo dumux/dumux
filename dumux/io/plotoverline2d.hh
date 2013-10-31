@@ -106,7 +106,7 @@ public:
             // number of scv
             const unsigned int numScv = fvGeometry.numScv;
 
-            for (int scvIdx=0; scvIdx < numScv; ++scvIdx)
+            for (unsigned int scvIdx=0; scvIdx < numScv; ++scvIdx)
             {
                 // find some global identification
                 const unsigned int globalIdx = problem.vertexMapper().map(*eIt, scvIdx, dim);

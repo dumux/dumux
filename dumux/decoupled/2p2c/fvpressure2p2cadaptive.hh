@@ -280,7 +280,7 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                                 increaseRowSize = false;
                         }
                         //also check if additional cell was already used for another interaction triangle
-                        for(int i =0; i<foundAdditionals.size(); i++)
+                        for (unsigned int i = 0; i < foundAdditionals.size(); i++)
                             if(foundAdditionals[i] == problem().variables().index(*additionalIsIt->outside()))
                                     increaseRowSize = false;
 
