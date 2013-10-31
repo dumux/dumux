@@ -290,7 +290,7 @@ public:
             unsigned int numFaces = eIt->template count<1>();
 
             // get local to global id map
-            for (int k = 0; k < numFaces; k++)
+            for (unsigned int k = 0; k < numFaces; k++)
             {
                 int alpha = faceMapper_.map(*eIt, k, 1);
                 local2Global[k] = alpha;

@@ -894,7 +894,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
         std::cout<<"perm3 = "<<K3<<"\n";
         std::cout<<"perm5 = "<<K5<<"\n";
         std::cout<<"lambda = ";
-        for (int i = 0; i < lambda.size(); i++)
+        for (unsigned int i = 0; i < lambda.size(); i++)
         {
             std::cout<<lambda[i]<<" ";
         }
@@ -905,6 +905,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
 
     return 1;
 }
+
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
                                                                           Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
@@ -1270,7 +1271,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
         std::cout<<"perm4 = "<<K4<<"\n";
         std::cout<<"perm6 = "<<K6<<"\n";
         std::cout<<"lambda = ";
-        for (int i = 0; i < lambda.size(); i++)
+        for (unsigned int i = 0; i < lambda.size(); i++)
         {
             std::cout<<lambda[i]<<" ";
         }
@@ -1648,7 +1649,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseThree(
         std::cout<<"perm4 = "<<K4<<"\n";
         std::cout<<"perm5 = "<<K5<<"\n";
         std::cout<<"lambda = ";
-        for (int i = 0; i < lambda.size(); i++)
+        for (unsigned int i = 0; i < lambda.size(); i++)
         {
             std::cout<<lambda[i]<<" ";
         }
@@ -1656,7 +1657,6 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseThree(
         std::cout<<"\n";
         DUNE_THROW(Dune::MathError,"T is nan");
     }
-
 
     return 3;
 }
@@ -2033,7 +2033,7 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseFour(
         std::cout<<"perm3 = "<<K3<<"\n";
         std::cout<<"perm6 = "<<K6<<"\n";
         std::cout<<"lambda = ";
-        for (int i = 0; i < lambda.size(); i++)
+        for (unsigned int i = 0; i < lambda.size(); i++)
         {
             std::cout<<lambda[i]<<" ";
         }

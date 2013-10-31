@@ -103,7 +103,7 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
             nPhaseIdx = Indices::nPhaseIdx,
             pressureIdx = Indices::pressureIdx,
             saturationIdx = Indices::saturationIdx,
-            pressEqIdx = Indices::pressureEqIdx,
+            pressureEqIdx = Indices::pressureEqIdx,
             satEqIdx = Indices::satEqIdx,
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };

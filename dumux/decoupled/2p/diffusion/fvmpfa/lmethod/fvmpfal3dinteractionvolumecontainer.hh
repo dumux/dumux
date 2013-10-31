@@ -1896,7 +1896,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
         storeSubVolumeElements(*ePtr, elemVertMap);
     }
 
-    for  (int i = 0; i < interactionVolumes_.size(); i++)
+    for (unsigned int i = 0; i < interactionVolumes_.size(); i++)
         if (interactionVolumes_[i].getElementNumber() == 0)
             interactionVolumes_[i].printInteractionVolumeInfo();
 

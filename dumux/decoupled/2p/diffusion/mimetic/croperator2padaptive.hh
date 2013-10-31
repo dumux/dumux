@@ -100,7 +100,7 @@ class CROperatorAssemblerTwoPAdaptive
 
     enum
     {
-        pressEqIdx = Indices::pressureEqIdx,
+        pressureEqIdx = Indices::pressureEqIdx,
     };
 
     // return number of rows/columns
@@ -188,7 +188,7 @@ template<class TypeTag>
 void CROperatorAssemblerTwoPAdaptive<TypeTag>::updateMatrix()
 {
     // set size of all rows to zero
-    for (unsigned int i = 0; i < size(); i++)
+    for (int i = 0; i < size(); i++)
         A_.setrowsize(i, 0);
 
     // build needs a flag for all entities of all codims
@@ -278,24 +278,24 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
         unsigned int numFaces = intersectionMapper_.size(globalIdx);
         local2Global.resize(numFaces);
 
-        for (int i = 0; i < numFaces; i++)
+        for (unsigned int i = 0; i < numFaces; i++)
         {
                 int idx = intersectionMapper_.map(*eIt, i);
                 local2Global[i] = idx;
         }
 
         // accumulate local matrix into global matrix for non-hanging nodes
-        for (int i=0; i<numFaces; i++) // loop over rows, i.e. test functions
+        for (unsigned int i=0; i<numFaces; i++) // loop over rows, i.e. test functions
         {
             // accumulate matrix
-            for (int j=0; j<numFaces; j++)
+            for (unsigned int j=0; j<numFaces; j++)
             {
                 // the standard entry
                 A_[local2Global[i]][local2Global[j]] += loc.mat(i,j);
             }
 
             // essential boundary condition and rhs
-            if (loc.bc(i).isDirichlet(pressEqIdx))
+            if (loc.bc(i).isDirichlet(pressureEqIdx))
             {
                 essential[local2Global[i]][0] = BoundaryConditions::dirichlet;
                 f[local2Global[i]][0] = loc.rhs(i)[0];
@@ -313,7 +313,7 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
         unsigned int numFaces = intersectionMapper_.size(globalIdx);
         local2Global.resize(numFaces);
 
-        for (int i = 0; i < numFaces; i++)
+        for (unsigned int i = 0; i < numFaces; i++)
         {
                 int idx = intersectionMapper_.map(*eIt, i);
                 local2Global[i] = idx;

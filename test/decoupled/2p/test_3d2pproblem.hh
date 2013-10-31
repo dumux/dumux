@@ -171,8 +171,8 @@ enum
 #else
     pWIdx = Indices::pwIdx,
 #endif
-    SwIdx = Indices::swIdx,
-    pressEqIdx = Indices::pressureEqIdx,
+    swIdx = Indices::swIdx,
+    pressureEqIdx = Indices::pressureEqIdx,
     satEqIdx = Indices::satEqIdx
 };
 
@@ -332,7 +332,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
         }
         else if (globalPos[0] > this->bBoxMax()[0] - eps_)
         {
-            bcTypes.setNeumann(pressEqIdx);
+            bcTypes.setNeumann(pressureEqIdx);
             bcTypes.setOutflow(satEqIdx);
         }
         // all other boundaries
@@ -374,19 +374,19 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
     values = 0;
 
 #if PROBLEM == 2 //Nine-Spot
-            values[SwIdx] = 0.8;
+            values[swIdx] = 0.8;
             values[pWIdx] = 1;
 #elif PROBLEM == 0
     if (globalPos[0] < eps_)
     {
-        values[SwIdx] = 0.8;
+        values[swIdx] = 0.8;
         typedef typename  GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
         values[pWIdx] = 1;
     }
 #elif PROBLEM == 1
     if (globalPos[0] < eps_)
     {
-        values[SwIdx] = 1.0;
+        values[swIdx] = 1.0;
         values[pNIdx] = 1e5;
     }
 #endif
@@ -409,10 +409,10 @@ void initialAtPos(PrimaryVariables &values,
 {
 #if PROBLEM == 1
     values[pNIdx] = 0;
-    values[SwIdx] = 0.0;
+    values[swIdx] = 0.0;
 #else
     values[pWIdx] = 0;
-    values[SwIdx] = 0.2;
+    values[swIdx] = 0.2;
 #endif
 }
 

@@ -312,7 +312,7 @@ public:
 
     bool isInnerVolume()
     {
-        for (int i = 0; i < faceType_.size(); i++)
+        for (unsigned int i = 0; i < faceType_.size(); i++)
         {
             if (isOutsideFace(i) || isBoundaryFace(i))
                 return false;

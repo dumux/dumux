@@ -76,7 +76,7 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
 
     enum
         {
-            pressEqIdx = Indices::pressureEqIdx,
+            pressureEqIdx = Indices::pressureEqIdx,
         };
 
     typedef IndexTranslatorAdaptive IndexTranslator;
@@ -1533,7 +1533,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
         this->storeSubVolumeElements(*ePtr, elemVertMap);
     }
 
-    for  (int i = 0; i < this->interactionVolumes_.size(); i++)
+    for (unsigned int i = 0; i < this->interactionVolumes_.size(); i++)
         if (this->interactionVolumes_[i].getElementNumber() == 0)
             this->interactionVolumes_[i].printInteractionVolumeInfo();
 

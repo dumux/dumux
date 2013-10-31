@@ -179,7 +179,7 @@ protected:
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
             gradPotential_[phaseIdx]= 0.0 ;
-            for (int idx = 0;
+            for (unsigned int idx = 0;
                  idx < face().numFap;
                  idx++) // loop over adjacent vertices
             {
