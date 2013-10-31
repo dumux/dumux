@@ -345,9 +345,9 @@ void FvMpfaL2dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         Scalar lambdaT12 = lambda12Upw[wPhaseIdx] + lambda12Upw[nPhaseIdx];
         Scalar lambdaT14 = lambda14Upw[wPhaseIdx] + lambda14Upw[nPhaseIdx];
         Scalar lambdaT24 = lambda24Upw[wPhaseIdx] + lambda24Upw[nPhaseIdx];
-        Scalar fracFlow12 = (lambdaT12 > this->threshold_) ? lambda12Upw[i] / (lambdaT12) : 0.0;
-        Scalar fracFlow14 = (lambdaT14 > this->threshold_) ? lambda14Upw[i] / (lambdaT14) : 0.0;
-        Scalar fracFlow24 = (lambdaT24 > this->threshold_) ? lambda24Upw[i] / (lambdaT24) : 0.0;
+        Scalar fracFlow12 = (lambdaT12 > ParentType::threshold_) ? lambda12Upw[i] / (lambdaT12) : 0.0;
+        Scalar fracFlow14 = (lambdaT14 > ParentType::threshold_) ? lambda14Upw[i] / (lambdaT14) : 0.0;
+        Scalar fracFlow24 = (lambdaT24 > ParentType::threshold_) ? lambda24Upw[i] / (lambdaT24) : 0.0;
 
         vel12 *= fracFlow12;
         vel14 *= fracFlow14;
