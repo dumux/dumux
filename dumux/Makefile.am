@@ -7,6 +7,7 @@ SUBDIRS = \
 	io \
 	linear \
 	material \
+	multidomain \
 	nonlinear \
 	parallel
 

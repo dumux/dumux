@@ -79,6 +79,8 @@ AC_CONFIG_FILES([dumux.pc
     dumux/material/fluidsystems/Makefile 
     dumux/material/constraintsolvers/Makefile 
     dumux/material/eos/Makefile 
+    dumux/multidomain/Makefile 
+    dumux/multidomain/common/Makefile 
     dumux/nonlinear/Makefile
     dumux/parallel/Makefile 
     m4/Makefile
