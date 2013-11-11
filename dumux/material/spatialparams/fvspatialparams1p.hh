@@ -59,6 +59,7 @@ class FVSpatialParamsOneP
 
     enum
     {
+        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 

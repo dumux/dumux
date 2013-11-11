@@ -100,7 +100,7 @@ class TutorialProblemCoupled : public ImplicitPorousMediaProblem<TypeTag> /*@\la
 
     // Grid dimension
     enum { dim = GridView::dimension,
-           dimWorld = Grid::dimensionworld
+           dimWorld = GridView::dimensionworld
     };
 
     // Types from DUNE-Grid
