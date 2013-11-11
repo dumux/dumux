@@ -64,7 +64,7 @@ class FVSpatialParamsOneP
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:
     FVSpatialParamsOneP(const GridView &gridView)
@@ -92,7 +92,7 @@ public:
      * \param K1 intrinsic permeability of the first element
      * \param K2 intrinsic permeability of the second element
      */
-    void meanK(Tensor &result, Scalar K1, Scalar K2) const
+    void meanK(DimMatrix &result, Scalar K1, Scalar K2) const
     {
         const Scalar K = Dumux::harmonicMean(K1, K2);
         for (int i = 0; i < dimWorld; ++i)
@@ -109,7 +109,7 @@ public:
      * \param K1 intrinsic permeability of the first element
      * \param K2 intrinsic permeability of the second element
      */
-    void meanK(Tensor &result, const Tensor &K1, const Tensor &K2) const
+    void meanK(DimMatrix &result, const DimMatrix &K1, const DimMatrix &K2) const
     {
         // entry-wise harmonic mean at the main diagonal and arithmetic mean at the off-diagonal
         for (int i = 0; i < dimWorld; ++i)
@@ -130,7 +130,7 @@ public:
      * \param result intrinsic permeability
      * \param K intrinsic permeability of the element
      */
-    void meanK(Tensor &result, Scalar K) const
+    void meanK(DimMatrix &result, Scalar K) const
     {
         for (int i = 0; i < dimWorld; ++i)
         {
@@ -145,7 +145,7 @@ public:
      * \param result intrinsic permeability
      * \param K intrinsic permeability of the element
      */
-    void meanK(Tensor &result, const Tensor &K) const
+    void meanK(DimMatrix &result, const DimMatrix &K) const
     {
         result = K;
     }
@@ -156,7 +156,7 @@ public:
      * \return intrinsic (absolute) permeability
      * \param element The element
      */
-    const Tensor& intrinsicPermeability (const Element& element) const
+    const DimMatrix& intrinsicPermeability (const Element& element) const
     {
         return asImp_().intrinsicPermeabilityAtPos(element.geometry().center());
     }
@@ -167,7 +167,7 @@ public:
      * \return intrinsic (absolute) permeability
      * \param globalPos The position of the center of the element
      */
-    const Tensor& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
+    const DimMatrix& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "

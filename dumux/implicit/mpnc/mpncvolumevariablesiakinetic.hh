@@ -71,7 +71,7 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
 
     typedef DimensionlessNumbers<Scalar> DimLessNum ;
 
-    typedef Dune::FieldVector<Scalar,dim> GlobalPosition;
+    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 
     typedef typename GET_PROP_TYPE(TypeTag, AwnSurface) AwnSurface;
@@ -360,7 +360,7 @@ class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*bool enableKineti
     enum { dim       = GridView::dimension};
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
-    typedef Dune::FieldVector<Scalar,dim> GlobalPosition;
+    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
 
 

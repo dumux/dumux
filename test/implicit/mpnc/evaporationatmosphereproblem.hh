@@ -256,8 +256,8 @@ class EvaporationAtmosphereProblem
 
     typedef std::vector<Dune::FieldVector<Scalar, 1> >  ScalarBuffer;
     typedef Dune::array<ScalarBuffer, numPhases>         PhaseBuffer;
-    typedef Dune::FieldVector<Scalar, dim>              VelocityVector;
-    typedef Dune::BlockVector<VelocityVector>           VelocityField;
+    typedef Dune::FieldVector<Scalar, dim>              DimVector;
+    typedef Dune::BlockVector<DimVector>           VelocityField;
     typedef Dune::array<VelocityField, numPhases>        PhaseVelocityField;
 
 public:

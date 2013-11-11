@@ -60,12 +60,14 @@ class ImplicitDarcyFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
+    enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
-    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
@@ -238,7 +240,7 @@ protected:
     {
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
-        Tensor K;
+        DimMatrix K;
         if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
         {
             spatialParams.meanK(K,

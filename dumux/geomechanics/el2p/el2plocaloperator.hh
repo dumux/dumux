@@ -73,7 +73,8 @@ class El2PLocalOperator
 
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
     enum{dim = GridView::dimension};
-    typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
@@ -387,15 +388,15 @@ public:
 
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
             // get reference element for intersection geometry (reference element for face if dim = 3)
-            const Dune::ReferenceElement<DT,dimIs>& refelem = Dune::ReferenceElements<DT,dimIs>::general(geomType);
+            const Dune::ReferenceElement<DT,dimIs>& refElement = Dune::ReferenceElements<DT,dimIs>::general(geomType);
             // get reference element for edges of intersection geometry (reference element for edge if dim = 3), needed for Dirichlet BC
-            const Dune::ReferenceElement<DT,dimIs-1> &face_refelem
+            const Dune::ReferenceElement<DT,dimIs-1> &face_refElement
             = Dune::ReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());
 #else
             // get reference element for intersection geometry (reference element for face if dim = 3)
-            const Dune::GenericReferenceElement<DT,dimIs>& refelem = Dune::GenericReferenceElements<DT,dimIs>::general(geomType);
+            const Dune::GenericReferenceElement<DT,dimIs>& refElement = Dune::GenericReferenceElements<DT,dimIs>::general(geomType);
             // get reference element for edges of intersection geometry (reference element for edge if dim = 3), needed for Dirichlet BC
-            const Dune::GenericReferenceElement<DT,dimIs-1> &face_refelem
+            const Dune::GenericReferenceElement<DT,dimIs-1> &face_refElement
             = Dune::GenericReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());
 #endif
 
@@ -404,7 +405,7 @@ public:
             for (typename Dune::QuadratureRule<DF,dim-1>::const_iterator it=rule.begin(); it!=rule.end(); ++it)
             {
                 // position of quadrature point in local coordinates of element
-                GlobalPosition local = isIt->geometryInInside().global(it->position());
+                DimVector local = isIt->geometryInInside().global(it->position());
 
                 GlobalPosition globalPos = eg.geometry().global(local);
 
@@ -463,14 +464,14 @@ public:
                     if (codim==0) continue;
 
                     // iterate over number of degrees of freedom with the given codim which are attached to the current intersection face
-                    for (int j = 0; j <  refelem.size(faceIdx,1,codim); j++)
+                    for (int j = 0; j <  refElement.size(faceIdx,1,codim); j++)
                     {   // check if degree of freedom is located on a vertex of the current intersection (boundary face)
                         if (displacementLFS.child(0).finiteElement().localCoefficients().localKey(i).subEntity() ==
-                                        refelem.subEntity(faceIdx,1,j,codim))
+                                        refElement.subEntity(faceIdx,1,j,codim))
                         {
                             // get local coordinate for this degree of freedom
-//                             this doesn't work: GlobalPosition local = isIt->geometryInInside().global(face_refelem.position(j,codim-1));
-                            GlobalPosition local = refelem.template mapping<1>(faceIdx).global(face_refelem.position(j, codim-1));
+//                             this doesn't work: DimVector local = isIt->geometryInInside().global(face_refElement.position(j,codim-1));
+                            DimVector local = refElement.template mapping<1>(faceIdx).global(face_refElement.position(j, codim-1));
 
                             GlobalPosition globalPos = eg.geometry().global(local);
 

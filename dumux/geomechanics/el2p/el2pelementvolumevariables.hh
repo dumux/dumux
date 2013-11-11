@@ -58,7 +58,7 @@ class ElTwoPElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(T
 
     typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
 
-    typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
         enum {

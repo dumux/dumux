@@ -164,7 +164,7 @@ class EvaporationAtmosphereSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
 
-    typedef Dune::FieldVector<Scalar,dimWorld> DimVector;
+    typedef Dune::FieldVector<Scalar,dim> DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
 public:

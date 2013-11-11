@@ -99,13 +99,15 @@ class TutorialProblemCoupled : public ImplicitPorousMediaProblem<TypeTag> /*@\la
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     // Grid dimension
-    enum { dim = GridView::dimension };
+    enum { dim = GridView::dimension,
+           dimWorld = Grid::dimensionworld
+    };
 
     // Types from DUNE-Grid
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     // Dumux specific types
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;

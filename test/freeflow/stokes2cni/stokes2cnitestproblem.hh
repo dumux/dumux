@@ -101,7 +101,8 @@ class Stokes2cniTestProblem : public StokesProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     enum { // grid dimension
-        dim = GridView::dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
     enum { // copy some indices for convenience
         massBalanceIdx = Indices::massBalanceIdx,
@@ -127,7 +128,7 @@ class Stokes2cniTestProblem : public StokesProblem<TypeTag>
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<CoordScalar, dim> GlobalPosition;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
 public:
     Stokes2cniTestProblem(TimeManager &timeManager, const GridView &gridView)

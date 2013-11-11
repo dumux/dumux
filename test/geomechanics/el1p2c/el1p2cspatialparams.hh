@@ -66,7 +66,7 @@ class El1P2CSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> Tensor;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -110,7 +110,7 @@ public:
      *                    the porosity needs to be defined
      */
 
-    const Tensor intrinsicPermeability(const Element &element,
+    const DimMatrix intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {

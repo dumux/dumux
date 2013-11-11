@@ -57,12 +57,13 @@ class ImplicitSpatialParamsOneP
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
 
     enum { dimWorld = GridView::dimensionworld };
+    enum { dim = GridView::dimension};
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
 public:
@@ -78,7 +79,7 @@ public:
      * \param K1 intrinsic permeability of the first node
      * \param K2 intrinsic permeability of the second node
      */
-    void meanK(Tensor &result,
+    void meanK(DimMatrix &result,
                Scalar K1,
                Scalar K2) const
     {
@@ -96,9 +97,9 @@ public:
      * \param K1 intrinsic permeability of the first node
      * \param K2 intrinsic permeability of the second node
      */
-    void meanK(Tensor &result,
-               const Tensor &K1,
-               const Tensor &K2) const
+    void meanK(DimMatrix &result,
+               const DimMatrix &K1,
+               const DimMatrix &K2) const
     {
         // entry-wise harmonic mean. this is almost certainly wrong if
         // you have off-main diagonal entries in your permeabilities!
@@ -115,7 +116,7 @@ public:
      * \param scvIdx The index of the sub-control volume.
      * \return the intrinsic permeability
      */
-    const Tensor& intrinsicPermeability (const Element &element,
+    const DimMatrix& intrinsicPermeability (const Element &element,
             const FVElementGeometry &fvGeometry,
             int scvIdx) const
     {
@@ -128,7 +129,7 @@ public:
      * \return intrinsic (absolute) permeability
      * \param globalPos The position of the center of the element
      */
-    const Tensor& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
+    const DimMatrix& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "

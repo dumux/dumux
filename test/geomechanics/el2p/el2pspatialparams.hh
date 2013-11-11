@@ -79,7 +79,7 @@ class El2PSpatialParams : public ImplicitSpatialParams<TypeTag>
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> Tensor;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -162,7 +162,7 @@ public:
      * During the initialization period the intrinsic permeability can be set to a larger
      * value in order to accelerate the calculation of the hydrostatic pressure distribution.
      */
-    const Tensor intrinsicPermeability(const Element &element,
+    const DimMatrix intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {

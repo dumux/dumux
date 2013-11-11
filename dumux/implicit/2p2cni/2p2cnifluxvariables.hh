@@ -59,7 +59,8 @@ class TwoPTwoCNIFluxVariables : public TwoPTwoCFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum { dimWorld = GridView::dimensionworld };
-    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
+    enum { dim = GridView::dimension };
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {

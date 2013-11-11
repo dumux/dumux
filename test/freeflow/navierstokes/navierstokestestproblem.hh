@@ -115,7 +115,8 @@ namespace Dumux
     {
       // Number of equations and grid dimension
       dim = GridView::dimension,
-
+      dimWorld = GridView::dimensionworld,
+      
       // copy some indices for convenience
       massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance
       momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
@@ -133,7 +134,7 @@ namespace Dumux
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<CoordScalar, dim> GlobalPosition;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
   public:
       NavierStokesTestProblem(TimeManager &timeManager, const GridView &gridView)

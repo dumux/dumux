@@ -69,7 +69,8 @@ class ColumnSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
     enum {
-        dimWorld=GridView::dimensionworld
+        dimWorld=GridView::dimensionworld,
+        dim=GridView::dimension
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -79,7 +80,7 @@ class ColumnSpatialParams : public ImplicitSpatialParams<TypeTag>
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> DimVector;
+    typedef Dune::FieldVector<CoordScalar,dim> DimVector;
 
 
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;

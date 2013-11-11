@@ -66,7 +66,7 @@ protected:
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<DT, dim> ReferenceElements;
@@ -76,7 +76,6 @@ protected:
     typedef typename Dune::GenericReferenceElement<DT, dim> ReferenceElement;
 #endif
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     /*!
@@ -254,7 +253,6 @@ public:
         ////////
         // advective fluxes of all components in all phases
         ////////
-        Vector tmpVec;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // calculate the flux in direction of the

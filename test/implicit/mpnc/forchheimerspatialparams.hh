@@ -89,7 +89,7 @@ class ForchheimerSpatialParams : public ImplicitSpatialParams<TypeTag>
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> DimWorldVector;
+    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -174,7 +174,7 @@ public:
      * \param pos The global position of the sub-control volume.
      * \return the material parameters object
      */
-    const MaterialLawParams& materialLawParamsAtPos(const DimWorldVector &pos) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &pos) const
     {
         return materialParams_;
     }

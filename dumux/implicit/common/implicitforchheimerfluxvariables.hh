@@ -92,8 +92,9 @@ class ImplicitForchheimerFluxVariables
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
-    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
@@ -134,7 +135,7 @@ protected:
     {
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
-        Tensor K;
+        DimMatrix K;
         if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
         {
             spatialParams.meanK(K,
@@ -168,7 +169,7 @@ protected:
         // Make sure the permeability matrix does not have off-diagonal entries
         assert( isDiagonal_(K) );
 
-        Tensor sqrtK(0.0);
+        DimMatrix sqrtK(0.0);
         for (int i = 0; i < dim; ++i)
             sqrtK[i][i] = std::sqrt(K[i][i]);
 
@@ -260,8 +261,8 @@ protected:
      */
      void forchheimerResidual_(DimVector & residual,
          const Scalar forchCoeff,
-         const Tensor & sqrtK,
-         const Tensor & K,
+         const DimMatrix & sqrtK,
+         const DimMatrix & K,
          const DimVector & velocity,
          const ElementVolumeVariables & elemVolVars,
          const DimVector & gradPotential ,
@@ -330,7 +331,7 @@ protected:
       */
      void forchheimerDerivative_(Tensor & derivative,
              const Scalar forchCoeff,
-             const Tensor & sqrtK,
+             const DimMatrix & sqrtK,
              const DimVector & velocity,
              const ElementVolumeVariables & elemVolVars,
              const unsigned int phaseIdx) const
@@ -379,7 +380,7 @@ protected:
       * \return True if all off-diagonals are zero.
       *
      */
-     const bool isDiagonal_(const Tensor & K) const
+     const bool isDiagonal_(const DimMatrix & K) const
      {
          for (int i = 0; i < dim; i++) {
              for (int k = 0; k < dim; k++) {

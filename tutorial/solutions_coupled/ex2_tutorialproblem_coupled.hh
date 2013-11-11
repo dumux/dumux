@@ -96,7 +96,7 @@ class Ex2TutorialProblemCoupled : public ImplicitPorousMediaProblem<TypeTag> /*@
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     // Dumux specific types
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;

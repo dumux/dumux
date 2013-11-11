@@ -72,6 +72,7 @@ class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
     enum {
+	dim = GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
@@ -82,7 +83,7 @@ class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> Vector;
+    typedef Dune::FieldVector<CoordScalar,dim> DimVector;
 
 
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
@@ -237,10 +238,10 @@ public:
      * \param scvfIdx The local index of the sub-control volume face where
      *                    the matrix heat flux should be calculated
      */
-    void matrixHeatFlux(Vector &heatFlux,
+    void matrixHeatFlux(DimVector &heatFlux,
                         const FluxVariables &fluxVars,
                         const ElementVolumeVariables &elemVolVars,
-                        const Vector &tempGrad,
+                        const DimVector &tempGrad,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
                         int scvfIdx) const

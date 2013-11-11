@@ -76,13 +76,14 @@ class Ex2TutorialSpatialParamsCoupled: public ImplicitSpatialParams<TypeTag> /*@
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum
     {
-        dim = Grid::dimension
+        dim = Grid::dimension,
+	dimWorld = Grid::dimensionworld
     };
 
     // Get object types for function arguments
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     // get material law from property system
