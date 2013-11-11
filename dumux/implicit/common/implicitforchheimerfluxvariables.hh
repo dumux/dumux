@@ -178,11 +178,11 @@ protected:
         {
             // initial guess of velocity: Darcy relation
             // first taken from base class, later overwritten in base class
-            DimVector velocity = this-> velocity(phaseIdx);
+            GlobalPosition velocity = this-> velocity(phaseIdx);
 
-            DimVector deltaV;           // the change in velocity between Newton iterations
-            DimVector residual(10e10);  // the residual (function value that is to be minimized)
-            DimVector tmp;              // temporary variable for numerical differentiation
+            GlobalPosition deltaV;           // the change in velocity between Newton iterations
+            GlobalPosition residual(10e10);  // the residual (function value that is to be minimized)
+            GlobalPosition tmp;              // temporary variable for numerical differentiation
             Tensor    gradF;            // slope of equation that is to be solved
 
             // search by means of the Newton method for a root of Forchheimer equation
@@ -259,13 +259,13 @@ protected:
      * \param gradPotential The gradient in potential
      * \param phaseIdx The index of the currently considered phase
      */
-     void forchheimerResidual_(DimVector & residual,
+     void forchheimerResidual_(GlobalPosition & residual,
          const Scalar forchCoeff,
          const DimMatrix & sqrtK,
          const DimMatrix & K,
-         const DimVector & velocity,
+         const GlobalPosition & velocity,
          const ElementVolumeVariables & elemVolVars,
-         const DimVector & gradPotential ,
+         const GlobalPosition & gradPotential ,
          const unsigned int phaseIdx) const
      {
          const VolumeVariables upVolVars    = elemVolVars[this->upstreamIdx(phaseIdx)];
@@ -332,7 +332,7 @@ protected:
      void forchheimerDerivative_(Tensor & derivative,
              const Scalar forchCoeff,
              const DimMatrix & sqrtK,
-             const DimVector & velocity,
+             const GlobalPosition & velocity,
              const ElementVolumeVariables & elemVolVars,
              const unsigned int phaseIdx) const
      {
