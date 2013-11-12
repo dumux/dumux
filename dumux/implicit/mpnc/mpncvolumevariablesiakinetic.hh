@@ -359,6 +359,7 @@ class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*bool enableKineti
     enum { wCompIdx  = FluidSystem::wCompIdx };
     enum { nCompIdx  = FluidSystem::nCompIdx };
     enum { dim       = GridView::dimension};
+    enum { dimWorld  = GridView::dimensionworld};
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
