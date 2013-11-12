@@ -65,6 +65,7 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
     enum { nCompIdx = FluidSystem::nCompIdx } ;
     enum { wCompIdx = FluidSystem::wCompIdx } ;
     enum { dim = GridView::dimension};
+    enum { dimWorld = GridView::dimensionworld};
     enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
     enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
     enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
