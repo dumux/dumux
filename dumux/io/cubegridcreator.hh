@@ -25,16 +25,9 @@
 #ifndef DUMUX_CUBE_GRID_CREATOR_HH
 #define DUMUX_CUBE_GRID_CREATOR_HH
 
-#include <dune/grid/io/file/dgfparser.hh>
-
-#include <dumux/common/propertysystem.hh>
-#include <dumux/common/parameters.hh>
-
+#include <dune/grid/utility/structuredgridfactory.hh>
 
 #include <dumux/common/basicproperties.hh>
-#include <dune/grid/utility/structuredgridfactory.hh>
-//#include <dumux/../util/structuredgridfactorysg.hh> //under discussion!
-
 
 namespace Dumux
 {
@@ -96,7 +89,7 @@ public:
     static Grid &grid()
     {
         return *cubeGrid_;
-    };
+    }
 
     /*!
      * \brief Distributes the grid on all processes of a parallel
@@ -105,7 +98,7 @@ public:
     static void loadBalance()
     {
         cubeGrid_->loadBalance();
-    };
+    }
 
 protected:
     static GridPointer cubeGrid_;

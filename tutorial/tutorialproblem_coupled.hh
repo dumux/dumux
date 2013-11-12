@@ -33,9 +33,11 @@
 // The DUNE grid used
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid.hh>
+#elif HAVE_UG
+#include <dune/grid/uggrid.hh>
 #else
 #include <dune/grid/yaspgrid.hh>
-#endif // HAVE_ALUGRID
+#endif // HAVE_ALUGRID, HAVE_UG
 
 // Spatially dependent parameters
 #include "tutorialspatialparams_coupled.hh"
@@ -61,9 +63,11 @@ SET_PROP(TutorialProblemCoupled, Problem) /*@\label{tutorial-coupled:set-problem
 // Set grid and the grid creator to be used
 #if HAVE_ALUGRID /*@\label{tutorial-coupled:set-grid}@*/
 SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid-ALU}@*/
+#elif HAVE_UG
+SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::UGGrid<2>);
 #else
 SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::YaspGrid<2>);
-#warning If you want to use adaptivity, install and use ALUGrid.
+std::cout << "If you want to use simpleces instead of cubes, install and use ALUGrid or UGGrid." <<< std::endl;
 #endif // HAVE_ALUGRID
 SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
 

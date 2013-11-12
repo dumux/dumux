@@ -212,7 +212,7 @@ Methods for box models which make statements about boundary segments of the grid
   is located.
 \item[fvGeometry:] The finite-volume geometry induced on the
   finite element by the box scheme.
-\item[is:] The \texttt{Intersection} of the boundary segment as given by the grid.
+\item[intersection:] The \texttt{Intersection} of the boundary segment as given by the grid.
 \item[scvIdx:] The index of the sub-control volume in
   \texttt{fvGeometry} which is assigned to the boundary segment.
 \item[boundaryFaceIdx:] The index of the boundary face in
@@ -230,11 +230,11 @@ example a \texttt{temperature()} method which returns the temperature
 in \textsc{Kelvin} of the fluids and the rock matrix in the
 domain. This temperature is then used by the model to calculate fluid
 properties which possibly depend on it, e.g. density. The
-\texttt{bboxMax()} (``\textbf{max}imum coordinated of the grid's
-\textbf{b}ounding \textbf{b}ox'') method is used here to
+\texttt{bBoxMax()} (``\textit{max}imum coordinated of the grid's
+\textit{b}ounding \textit{box}'') method is used here to
 determine the extend of the physical domain. It returns a vector with the
 maximum values of each global coordinate of the grid. This method
-and the analogous \texttt{bboxMin()} method are provided by the base
+and the analogous \texttt{bBoxMin()} method are provided by the base
 class \texttt{Dumux::BoxProblem<TypeTag>}.
 
 \subsection{Defining Fluid Properties}\label{tutorial-coupled:description-fluid-class}
@@ -311,7 +311,7 @@ to be called with three arguments:
   parameter describes the considered element by means of a \Dune
   entity. Elements provide information about their geometry and
   position and can be mapped to a global index.
-\item[\texttt{fvElementGeomtry}:] It holds information about the finite-volume
+\item[\texttt{fvGeometry}:] It holds information about the finite-volume
   geometry of the element induced by the box method.
 \item[\texttt{scvIdx}:] This is the index of the sub-control volume of the
   element which is considered. It is equivalent to the local index
@@ -363,7 +363,7 @@ to make only some small changes in the tutorial files.
   To get an impression what the results should look like you can first run the original version of 
 the coupled tutorial model by typing  \texttt{./tutorial\_coupled}. 
 Note, that the time-step size is automatically adapted during the simulation. 
-For the visualization of the results using paraview please refer to section \ref{quick-start-guide}.
+For the visualization of the results using ParaView please refer to section \ref{quick-start-guide}.
 
 
 \item \textbf{Changing the Model Domain and the Boundary Conditions} \\
@@ -386,13 +386,13 @@ For the visualization of the results using paraview please refer to section \ref
 
   \item \textbf{Changing  the Shape of the Discrete Elements} \\
   In order to complete this exercise you need an external grid manager capable of handling 
-  simplex grids, like \texttt{ALUGrid}. If this is not the case please skip this exercise.
+  simplex grids, like \texttt{ALUGrid} or \texttt{UGGrid}. If this is not the case, please skip this exercise.
   Change the types of elements used for discretizing the domain. In line \ref{tutorial-coupled:set-gridcreator} of the problem 
   file  the type of gridcreator is chosen. By choosing a different grid creator you can discretize the domain with different elements. 
   Hint: You can find gridcreators in \texttt{dumux/io/}, change for example from \texttt{cubegridcreator.hh} to \texttt{simplexgridcreator.hh}. 
-  Besides having to change the grid creator it is also necessary to change the ALUGrid type in line \ref{tutorial-coupled:set-grid-ALU} from \texttt{Dune::cube} 
+  For ALUGrid you have to change the ALUGrid type in line \ref{tutorial-coupled:set-grid-ALU} from \texttt{Dune::cube} 
   to \texttt{Dune::simplex}.
-  The shape of the employed elements can be visualized in paraview by choosing \texttt{Surface with Edges}. 
+  The shape of the employed elements can be visualized in ParaView by choosing \texttt{Surface with Edges}.
 
 \item \textbf{Changing Fluids} \\
 Now you can change the fluids. Use DNAPL instead of Oil and Brine instead of Water. To do that, you have to select different components via the property system in the problem file:
@@ -467,7 +467,7 @@ Call the \texttt{set}-functions from the constructor of the \texttt{tutorialspat
 domain. You can use the fluids of exercise 1b.\\
 \textbf{Hint:} The current position of the control volume can be obtained using \texttt{element\allowbreak.geometry()\allowbreak.corner(scvIdx)}, which
 returns a vector of the global coordinates of the current position.\\
-When does the front cross the material border? In paraview, the
+When does the front cross the material border? In ParaView, the
 animation view (\textit{View} $\rightarrow$ \textit{Animation
   View}) is a convenient way to get a rough feeling of the time-step
 sizes.
@@ -596,8 +596,8 @@ Create a new file for the benzene component called \texttt{benzene.hh}
 and implement a new component. (You may get a hint by looking at
 existing components in the directory \verb+/dumux/material/components+). \\
 Use benzene as a new fluid and run the model of Exercise 2 with water
-and benzene. Benzene has a density of $889.51\,\text{kg} /
-\text{m}^3$ and a viscosity of $0.00112\,\text{Pa} \, \text{s}$.
+and benzene. Benzene has a density of $\unitfrac[889.51]{kg}{m^3}$ and
+a viscosity of $\unit[0.00112]{Pa \, s}$.
 
 
 \subsubsection{Exercise 5: Time Dependent Boundary Conditions}
@@ -612,8 +612,9 @@ figure \ref{tutorial-coupled:ex5_BC}. Here you can see the time dependence of th
 Initially, the domain is fully saturated with oil and the pressure is $p_w = 2 \times
 10^5\,\text{Pa}$.  Water infiltrates from the left side. Create a grid
 with $100$ cells in $x$-direction and $10$ cells in $y$-direction. The
-simulation time should be set to $5 \cdot 10^5\,\text{s}$ with an
-initial time-step size of $10\,\text{s}$. To avoid too big time-step sizes you should set the parameter \texttt{MaxTimeStepSize} for the group \texttt{TimeManager} (in your input file) to $\unit[1000]{s}$.  Then, you can compile the program.
+simulation time should be set to $\unit[5 \cdot 10^5]{s}$ with an
+initial time-step size of $\unit[10]{s}$. To avoid too big time-step sizes
+you should set the parameter \texttt{MaxTimeStepSize} for the group \texttt{TimeManager} (in your input file) to $\unit[1000]{s}$.  Then, you can compile the program.
 
 \begin{figure}[ht]
 \centering
@@ -669,13 +670,13 @@ initial time-step size of $10\,\text{s}$. To avoid too big time-step sizes you s
     \draw [-] (10,0.1) -- (10,-0.1);    
     \node [anchor=west] at(9.5,-0.4){$5\cdot10^{5}$}; 
     
-    \node [anchor=base] at (5,3){$1-\sin(\pi\frac{\text{time}-10^5}{3\cdot 10^5 })$};
+    \node [anchor=base] at (5,3){$1-\sin\left(\pi\frac{\text{time}-10^5}{3\cdot 10^5 }\right)$};
 \end{tikzpicture}
 \caption{Time Dependent Boundary Conditions}\label{tutorial-coupled:ex5_BC}
 \end{figure}
 
 \begin{itemize}
- \item Open paraview and plot the values of $S_n$ at time $\unit[5 \cdot 10^5]{s}$ over the $x$-axis.\\ (\texttt{Filter->Data Analysis->Plot Over Line}) 
+ \item Open ParaView and plot the values of $S_n$ at time $\unit[5 \cdot 10^5]{s}$ over the $x$-axis.\\ (\texttt{Filter->Data Analysis->Plot Over Line}) 
  \item What happens without any time-step restriction?
 \end{itemize}
 
