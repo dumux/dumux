@@ -229,11 +229,11 @@ public:
                     }
                 }
 
-                Dune::FieldVector < CoordScalar, dim > refVelocity(0);
+                Dune::FieldVector < Scalar, dim > refVelocity(0);
                 for (int i = 0; i < dim; i++)
                     refVelocity[i] = 0.5 * (scvVelocities[2*i + 1] - scvVelocities[2*i]);
 
-                Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
+                Dune::FieldVector<Scalar, dim> scvVelocity(0);
                 jacobianT2.mtv(refVelocity, scvVelocity);
 
                 scvVelocity /= element.geometry().integrationElement(localPos);
