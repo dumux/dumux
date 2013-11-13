@@ -73,6 +73,7 @@ class El2PLocalOperator
 
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
     enum{dim = GridView::dimension};
+    enum{dimWorld = GridView::dimensionworld};
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
