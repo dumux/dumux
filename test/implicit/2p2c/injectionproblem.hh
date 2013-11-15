@@ -82,12 +82,13 @@ SET_BOOL_PROP(InjectionProblem, VtkAddVelocity, false);
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  *
  * The domain is sized 60m times 40m and consists of two layers, a moderately
- * permeable spatial parameters (\f$ K=10e-12\f$) for \f$ y>22m\f$ and one with a lower permeablility (\f$ K=10e-13\f$)
+ * permeable one (\f$ K=10e-12\f$) for \f$ y<22m\f$ and one with a lower permeablility (\f$ K=10e-13\f$)
  * in the rest of the domain.
  *
- * Air enters a water-filled aquifer, which is situated 2700m below sea level, at the right boundary
- * (\f$ 5m<y<15m\f$) and migrates upwards due to buoyancy. It accumulates and
- * partially enters the lower permeable aquitard.
+ * A mixture of Nitrogen and Water vapor, which is composed according to the prevailing conditions (temperature, pressure)
+ * enters a water-filled aquifer. This is realized with a solution-dependent Neumann boundary condition at the right boundary
+ * (\f$ 5m<y<15m\f$). The aquifer is situated 2700m below sea level. The injected fluid phase migrates upwards due to buoyancy.
+ * It accumulates and partially enters the lower permeable aquitard.
  * 
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
@@ -123,12 +124,13 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
         wCompIdx = FluidSystem::wCompIdx,
         nCompIdx = FluidSystem::nCompIdx,
 
-        conti0EqIdx = Indices::conti0EqIdx,
-        contiN2EqIdx = conti0EqIdx + nCompIdx
+        contiH2OEqIdx = Indices::contiWEqIdx,
+        contiN2EqIdx = Indices::contiNEqIdx
     };
 
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
@@ -301,38 +303,45 @@ public:
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     *        boundary segment in dependency on the current solution.
      *
-     * \param values The neumann values for the conservation equations
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry
      * \param intersection The intersection between element and boundary
-     * \param scvIdx The local vertex index
+     * \param scvIdx The local subcontrol volume index
      * \param boundaryFaceIdx The index of the boundary face
+     * \param elemVolVars All volume variables for the element
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
-     *
-     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+     void solDependentNeumann(PrimaryVariables &values,
+                      const Element &element,
+                      const FVElementGeometry &fvGeometry,
+                      const Intersection &intersection,
+                      const int scvIdx,
+                      const int boundaryFaceIdx,
+                      const ElementVolumeVariables &elemVolVars) const
     {
-        values = 0;
+         values = 0;
 
-        GlobalPosition globalPos;
-        if (isBox)
-            globalPos = element.geometry().corner(scvIdx);
-        else 
-            globalPos = intersection.geometry().center();
+         GlobalPosition globalPos;
+         if (isBox)
+             globalPos = element.geometry().corner(scvIdx);
+         else
+             globalPos = intersection.geometry().center();
 
-        if (globalPos[1] < 15 && globalPos[1] > 7) {
-            values[contiN2EqIdx] = -1e-3/FluidSystem::molarMass(nCompIdx); //mole/(m^2*s)   //-1e-3; // kg/(s*m^2)
-        }
+         Scalar injectedPhaseMass = 1e-3;
+         Scalar moleFracW = elemVolVars[scvIdx].moleFraction(nPhaseIdx, wCompIdx);
+         if (globalPos[1] < 15 && globalPos[1] > 7) {
+             values[contiN2EqIdx] = -(1-moleFracW)*injectedPhaseMass/FluidSystem::molarMass(nCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
+             values[contiH2OEqIdx] = -moleFracW*injectedPhaseMass/FluidSystem::molarMass(wCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
+         }
     }
 
     // \}
