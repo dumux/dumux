@@ -20,9 +20,6 @@ AC_DEFUN([DUMUX_CHECKS],
   # math and enable it if requested.
   DUMUX_CHECK_QUAD
 
-  # Check whether the compiler supports __attribute__((always_inline))
-  DUMUX_CHECK_ALWAYS_INLINE
-
   # check whether the constexpr keyword is present
   AC_REQUIRE([CONSTEXPR_CHECK])
   # define constexpr as const if it is not available. this is quite a HACK!

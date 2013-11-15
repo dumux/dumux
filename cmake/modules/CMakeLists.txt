@@ -1,5 +1,4 @@
 set(modules
-  CheckAlwaysInline.cmake
   CheckConstexpr.cmake
   CheckPatchedPDELab.cmake
   DumuxMacros.cmake
