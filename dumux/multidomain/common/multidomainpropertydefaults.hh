@@ -19,10 +19,9 @@
 #ifndef DUMUX_COUPLED_PROPERTY_DEFAULTS_HH
 #define DUMUX_COUPLED_PROPERTY_DEFAULTS_HH
 
-#include "coupledcommon.hh"
-#include "couplednewtoncontroller.hh"
-
-#include "coupledproperties.hh"
+#include "splitandmerge.hh"
+#include "multidomainnewtoncontroller.hh"
+#include "multidomainproperties.hh"
 
 namespace Dumux
 {

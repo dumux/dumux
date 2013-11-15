@@ -24,7 +24,6 @@
 #define DUMUX_COUPLED_NEWTON_CONTROLLER_HH
 
 #include <dumux/common/exceptions.hh>
-
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/boxlinearsolver.hh>
 
@@ -41,7 +40,7 @@
 
 #include <dune/pdelab/backend/istlsolverbackend.hh>
 
-#include "couplednewtonconvergencewriter.hh"
+#include "multidomainconvergencewriter.hh"
 
 /*!
  * \file

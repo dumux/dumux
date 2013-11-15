@@ -27,8 +27,8 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dune/grid/multidomaingrid.hh>
 
-#include "coupledcommon.hh"
-#include "couplednewtoncontroller.hh"
+#include "splitandmerge.hh"
+#include "multidomainnewtoncontroller.hh"
 
 /*!
  * \file

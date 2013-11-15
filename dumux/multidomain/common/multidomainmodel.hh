@@ -19,10 +19,10 @@
 #ifndef DUMUX_COUPLED_MODEL_HH
 #define DUMUX_COUPLED_MODEL_HH
 
-#include "coupledproperties.hh"
-#include "coupledpropertydefaults.hh"
-#include "coupledproblem.hh"
-#include "couplednewtoncontroller.hh"
+#include "multidomainproperties.hh"
+#include "multidomainpropertydefaults.hh"
+#include "multidomainproblem.hh"
+#include "multidomainnewtoncontroller.hh"
 //#include "coupledjacobianassembler.hh"
 
 namespace Dumux

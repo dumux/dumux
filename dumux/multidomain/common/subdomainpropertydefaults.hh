@@ -1,3 +1,5 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
@@ -18,10 +20,10 @@
 #define DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
 
 #include <dune/grid/multidomaingrid.hh>
-#include <dumux/implicit/pdelab/pdelabadapter.hh>
+//#include <dumux/implicit/pdelab/pdelabadapter.hh>
 #include <dumux/implicit/common/boxcouplinglocalresidual.hh>
-#include <dumux/modelcoupling/common/multidomainboxlocaloperator.hh>
-#include "coupledproperties.hh"
+#include "multidomainlocaloperator.hh"
+#include "multidomainproperties.hh"
 
 /*!
  * \file

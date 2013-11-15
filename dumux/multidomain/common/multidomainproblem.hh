@@ -23,8 +23,8 @@
 #ifndef DUMUX_COUPLED_PROBLEM_HH
 #define DUMUX_COUPLED_PROBLEM_HH
 
-#include "coupledmodel.hh"
-#include "couplednewtoncontroller.hh"
+#include "multidomainmodel.hh"
+#include "multidomainnewtoncontroller.hh"
 
 namespace Dumux
 {

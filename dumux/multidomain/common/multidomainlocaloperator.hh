@@ -16,8 +16,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_MULTIDOMAIN_BOX_LOCAL_OPERATOR_HH
-#define DUMUX_MULTIDOMAIN_BOX_LOCAL_OPERATOR_HH
+#ifndef DUMUX_MULTIDOMAIN_LOCAL_OPERATOR_HH
+#define DUMUX_MULTIDOMAIN_LOCAL_OPERATOR_HH
 
 #include<dune/pdelab/localoperator/pattern.hh>
 #include<dune/pdelab/localoperator/flags.hh>
@@ -29,13 +29,13 @@ namespace Dumux {
 namespace PDELab {
 
 template<class TypeTag>
-class MultiDomainBoxLocalOperator
+class MultiDomainLocalOperator
 :
 public Dune::PDELab::FullVolumePattern,
 public Dune::PDELab::LocalOperatorDefaultFlags
 {
 	// copying the local operator for PDELab is not a good idea
-	MultiDomainBoxLocalOperator(const MultiDomainBoxLocalOperator &);
+	MultiDomainLocalOperator(const MultiDomainLocalOperator &);
 
 	typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
 	typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -50,7 +50,7 @@ public:
 	// residual assembly flags
 	enum { doAlphaVolume = true };
 
-	MultiDomainBoxLocalOperator(Model &model)
+	MultiDomainLocalOperator(Model &model)
 	: model_(model)
 	{}
 
