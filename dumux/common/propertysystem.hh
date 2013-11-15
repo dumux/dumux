@@ -39,20 +39,18 @@
 #ifndef DUMUX_PROPERTIES_HH
 #define DUMUX_PROPERTIES_HH
 
-// For is_base_of
-#include <tr1/type_traits>
-
-// Integral Constant Expressions
-
-#include <dune/common/classname.hh>
-
+#include <cstring>
+#include <iostream>
+#include <list>
 #include <map>
 #include <set>
-#include <list>
-#include <string>
-#include <iostream>
 #include <sstream>
-#include <cstring>
+#include <string>
+// For is_base_of
+#include <type_traits>
+
+// Integral Constant Expressions
+#include <dune/common/classname.hh>
 
 namespace Dumux
 {
@@ -633,8 +631,8 @@ TypeTagRegistry::ChildrenListMap TypeTagRegistry::keys_;
 
 #endif // !defined NO_PROPERTY_INTROSPECTION
 
-using std::tr1::is_void;
-using std::tr1::is_base_of;
+using std::is_void;
+using std::is_base_of;
 
 // logical AND, OR and NOT operations to be used for template meta programming
 template <bool b1, bool b2, bool b3 = true, bool b4 = true, bool b5 = true, bool b6 = true, bool b7 = true>
@@ -740,7 +738,7 @@ public:
 template <class PropertyTag>
 struct propertyExplicitlyUnsetOnTree<void, PropertyTag>
 {
-    const static bool value = std::tr1::true_type::value;
+    const static bool value = std::true_type::value;
 };
 
 //! \internal
@@ -781,7 +779,7 @@ template <class RealTypeTag, class PropertyTag>
 class propertyDefinedOnTree<RealTypeTag, void, PropertyTag>
 {
 public:
-    static const bool value = std::tr1::false_type::value;
+    static const bool value = std::false_type::value;
 };
 
 //! \internal
@@ -825,7 +823,7 @@ public:
 template <class RealTypeTag, class PropertyTag>
 struct defaultPropertyDefinedOnTree<RealTypeTag,void, PropertyTag>
 {
-    static const bool value = std::tr1::false_type::value;
+    static const bool value = std::false_type::value;
 };
 
 //! \internal

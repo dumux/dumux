@@ -27,15 +27,15 @@
 #ifndef DUMUX_PARAMETERS_HH
 #define DUMUX_PARAMETERS_HH
 
-#include <dumux/common/propertysystem.hh>
-#include <dumux/common/exceptions.hh>
+#include <iostream>
+#include <list>
+#include <sstream>
+#include <unordered_map>
 
 #include <dune/common/parametertree.hh>
 
-#include <iostream>
-#include <sstream>
-#include <list>
-#include <tr1/unordered_map>
+#include <dumux/common/propertysystem.hh>
+#include <dumux/common/exceptions.hh>
 
 /*!
  * \ingroup Parameter
@@ -294,7 +294,7 @@ private:
                        const char *groupName,
                        const char *paramName)
     {
-        typedef std::tr1::unordered_map<std::string, Blubb> StaticData;
+        typedef std::unordered_map<std::string, Blubb> StaticData;
         static StaticData staticData;
 
         typename StaticData::iterator it = staticData.find(paramName);
@@ -461,7 +461,7 @@ private:
         canonicalName.append(paramName);
 
         // cache parameters using a hash_map (Dune::Parameter tree is slow!)
-        typedef std::tr1::unordered_map<std::string, ParamType> ParamCache;
+        typedef std::unordered_map<std::string, ParamType> ParamCache;
         static ParamCache paramCache;
         typename ParamCache::iterator it = paramCache.find(canonicalName);
         if (it != paramCache.end())
