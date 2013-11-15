@@ -85,13 +85,13 @@ Especially if you plan on committing to the stable part of \Dumux you must follo
 \textbf{First}: The command \verb+svn status+ marks all files which are not under version control with a question mark. Because dunecontrol creates a lot of files automatically this output becomes crowded and one might overlook ``real'' files which have to be added (they also will not be shown by a \verb+svn status -q+).
 For the stable part of \Dumux there is the rule to ignore and only to ignore the folder {\em .deps}, executables \texttt{test\_*}, and the files {\em Makefile} and {\em Makefile.in}.
 
-How to set the svn attributes:
+How to set the SVN attributes:
 \begin{itemize}
  \item{\em eclipse}: right click on the file/folder $\rightarrow$ ``team'' $\rightarrow$ ``add to svn:ignore\dots''
  \item{\em kdesvn}: right click on the file/folder $\rightarrow$ ``ignore/unignore current item''
- \item{\em svn on shell}: \verb+svn propset svn:ignore FILETOIGNORE .+
+ \item{\em SVN on shell}: \verb+svn propedit svn:ignore .+
 \end{itemize}
-Commit the changes for example in the command line with \verb+svn commit -m+ to the repository. It is also possible to use wildcards, e.\,g., if you want to ignore all vtu-files in your application folder in dumux-devel set \verb+FILETOIGNORE+ to \verb+'*.vtu'+. Remember that such an ignore is only allowed in dumux-devel and not in the stable dumux.
+Commit the changes for example in the command line with \verb+svn commit -m+ to the repository. It is also possible to use wildcards, e.\,g., if you want to ignore all vtu-files in your application folder in dumux-devel add \verb+'*.vtu'+ to the SVN ignore properties. Remember that such an ignore is only allowed in dumux-devel and not in the stable dumux.
 
 \textbf{Second}: It is good practice that every header includes everything it uses by itself and does not rely on the includes from headers that are included by themselves. This can be tested with \texttt{make headercheck} and should be done before committing to stable dumux. To test a specific header, use \texttt{make} \texttt{headercheck} \texttt{HEADER=} and add the header's path.
 
