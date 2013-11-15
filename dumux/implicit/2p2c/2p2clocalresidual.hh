@@ -149,7 +149,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 					unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
 					storage[eqIdx] += volVars.density(phaseIdx)
 						* volVars.saturation(phaseIdx)
-						* volVars.fluidState().massFraction(phaseIdx, compIdx);
+						* volVars.massFraction(phaseIdx, compIdx);
 				}
 				// this is only processed if one component mass balance equation
 				// is replaced by the total mass balance equation
@@ -169,7 +169,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 					unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
 					storage[eqIdx] += volVars.molarDensity(phaseIdx)
 						* volVars.saturation(phaseIdx)
-						* volVars.fluidState().moleFraction(phaseIdx, compIdx);
+						* volVars.moleFraction(phaseIdx, compIdx);
 				 }
 				 // this is only processed if one component mass balance equation
 				 // is replaced by the total mass balance equation
@@ -241,20 +241,20 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 							fluxVars.volumeFlux(phaseIdx)
 							* massUpwindWeight_
 							* up.density(phaseIdx)
-							* up.fluidState().massFraction(phaseIdx, compIdx);
+							* up.massFraction(phaseIdx, compIdx);
 					if (massUpwindWeight_ < 1.0)
 						// downstream vertex
 						flux[eqIdx] +=
 							fluxVars.volumeFlux(phaseIdx)
 							* (1 - massUpwindWeight_)
 							* dn.density(phaseIdx)
-							* dn.fluidState().massFraction(phaseIdx, compIdx);
+							* dn.massFraction(phaseIdx, compIdx);
 
 					Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
 					Valgrind::CheckDefined(up.density(phaseIdx));
-					Valgrind::CheckDefined(up.fluidState().massFraction(phaseIdx, compIdx));
+					Valgrind::CheckDefined(up.massFraction(phaseIdx, compIdx));
 					Valgrind::CheckDefined(dn.density(phaseIdx));
-					Valgrind::CheckDefined(dn.fluidState().massFraction(phaseIdx, compIdx));
+					Valgrind::CheckDefined(dn.massFraction(phaseIdx, compIdx));
 				}
 				// flux of the total mass balance;
 				// this is only processed if one component mass balance equation
@@ -303,20 +303,20 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                             fluxVars.volumeFlux(phaseIdx)
                             * massUpwindWeight_
                             * up.molarDensity(phaseIdx)
-                            * up.fluidState().moleFraction(phaseIdx, compIdx);
+                            * up.moleFraction(phaseIdx, compIdx);
                     if (massUpwindWeight_ < 1.0)
                         // downstream vertex
                         flux[eqIdx] +=
                             fluxVars.volumeFlux(phaseIdx)
                             * (1 - massUpwindWeight_)
                             * dn.molarDensity(phaseIdx)
-                            * dn.fluidState().moleFraction(phaseIdx, compIdx);
+                            * dn.moleFraction(phaseIdx, compIdx);
 
                     Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
                     Valgrind::CheckDefined(up.molarDensity(phaseIdx));
-                    Valgrind::CheckDefined(up.fluidState().moleFraction(phaseIdx, compIdx));
+                    Valgrind::CheckDefined(up.moleFraction(phaseIdx, compIdx));
                     Valgrind::CheckDefined(dn.molarDensity(phaseIdx));
-                    Valgrind::CheckDefined(dn.fluidState().moleFraction(phaseIdx, compIdx));
+                    Valgrind::CheckDefined(dn.moleFraction(phaseIdx, compIdx));
                 }
                 // flux of the total mass balance;
                 // this is only processed if one component mass balance equation
@@ -441,7 +441,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 					int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
 					storage[eqIdx] += volVars.density(phaseIdx)
 						* volVars.saturation(phaseIdx)
-						* volVars.fluidState().massFraction(phaseIdx, compIdx);
+						* volVars.massFraction(phaseIdx, compIdx);
 				}
 
 				storage *= volVars.porosity();
@@ -463,7 +463,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 					int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
 					storage[eqIdx] += volVars.molarDensity(phaseIdx)
 						* volVars.saturation(phaseIdx)
-						* volVars.fluidState().moleFraction(phaseIdx, compIdx);
+						* volVars.moleFraction(phaseIdx, compIdx);
 				}
 
 				storage *= volVars.porosity();

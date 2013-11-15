@@ -343,13 +343,33 @@ public:
     { return fluidState_; }
 
     /*!
-     * \brief Returns the effective saturation of a given phase within
+     * \brief Returns the saturation of a given phase within
      *        the control volume.
      *
      * \param phaseIdx The phase index
      */
     Scalar saturation(const int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
+
+    /*!
+     * \brief Returns the mass fraction of a given component in a
+     * 		  given phase within the control volume.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar massFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.massFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Returns the mass fraction of a given component in a
+     * 		  given phase within the control volume.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar moleFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.moleFraction(phaseIdx, compIdx); }
 
     /*!
      * \brief Returns the mass density of a given phase within the
@@ -425,7 +445,7 @@ public:
     /*!
      * \brief Returns the binary diffusion coefficients for a phase
      */
-    Scalar diffCoeff(int phaseIdx) const
+    Scalar diffCoeff(const int phaseIdx) const
     { return diffCoeff_[phaseIdx]; }
 
 

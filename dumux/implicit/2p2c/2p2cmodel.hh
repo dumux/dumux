@@ -353,15 +353,15 @@ public:
                 (*pn)[globalIdx]    = elemVolVars[scvIdx].pressure(nPhaseIdx);
                 (*pw)[globalIdx]    = elemVolVars[scvIdx].pressure(wPhaseIdx);
                 (*pc)[globalIdx]    = elemVolVars[scvIdx].capillaryPressure();
-                (*rhoW)[globalIdx]  = elemVolVars[scvIdx].fluidState().density(wPhaseIdx);
-                (*rhoN)[globalIdx]  = elemVolVars[scvIdx].fluidState().density(nPhaseIdx);
+                (*rhoW)[globalIdx]  = elemVolVars[scvIdx].density(wPhaseIdx);
+                (*rhoN)[globalIdx]  = elemVolVars[scvIdx].density(nPhaseIdx);
                 (*mobW)[globalIdx]  = elemVolVars[scvIdx].mobility(wPhaseIdx);
                 (*mobN)[globalIdx]  = elemVolVars[scvIdx].mobility(nPhaseIdx);
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
                         (*massFrac[phaseIdx][compIdx])[globalIdx]
-                            = elemVolVars[scvIdx].fluidState().massFraction(phaseIdx, compIdx);
+                            = elemVolVars[scvIdx].massFraction(phaseIdx, compIdx);
 
                         Valgrind::CheckDefined((*massFrac[phaseIdx][compIdx])[globalIdx][0]);
                     }
@@ -369,7 +369,7 @@ public:
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
                         (*moleFrac[phaseIdx][compIdx])[globalIdx]
-                            = elemVolVars[scvIdx].fluidState().moleFraction(phaseIdx, compIdx);
+                            = elemVolVars[scvIdx].moleFraction(phaseIdx, compIdx);
 
                         Valgrind::CheckDefined((*moleFrac[phaseIdx][compIdx])[globalIdx][0]);
                     }
@@ -554,7 +554,7 @@ public:
     }
 
     /*!
-     * \brief Set the old phase of all verts state to the current one.
+     * \brief Set the phase presence of all vertices state to the current one.
      */
     void updateOldPhasePresence_()
     {
@@ -575,10 +575,13 @@ public:
         switchFlag_ = yesno;
     }
 
-    //  perform variable switch at a vertex; Returns true if a
-    //  variable switch was performed.
+    /*!
+     * \brief Perform variable switch at a vertex; Returns true if a
+    //  	  variable switch was performed.
+     */
     bool primaryVarSwitch_(SolutionVector &globalSol,
-                           const VolumeVariables &volVars, int globalIdx,
+                           const VolumeVariables &volVars,
+                           int globalIdx,
                            const GlobalPosition &globalPos)
     {
         // evaluate primary variable switch
@@ -590,8 +593,8 @@ public:
         if (phasePresence == nPhaseOnly)
         {
             // calculate mole fraction in the hypothetic wetting phase
-            Scalar xww = volVars.fluidState().moleFraction(wPhaseIdx, wCompIdx);
-            Scalar xwn = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+            Scalar xww = volVars.moleFraction(wPhaseIdx, wCompIdx);
+            Scalar xwn = volVars.moleFraction(wPhaseIdx, nCompIdx);
 
             Scalar xwMax = 1.0;
             if (xww + xwn > xwMax)
@@ -618,8 +621,8 @@ public:
         {
             // calculate fractions of the partial pressures in the
             // hypothetic nonwetting phase
-            Scalar xnw = volVars.fluidState().moleFraction(nPhaseIdx, wCompIdx);
-            Scalar xnn = volVars.fluidState().moleFraction(nPhaseIdx, nCompIdx);
+            Scalar xnw = volVars.moleFraction(nPhaseIdx, wCompIdx);
+            Scalar xnn = volVars.moleFraction(nPhaseIdx, nCompIdx);
 
             Scalar xgMax = 1.0;
             if (xnw + xnn > xgMax)
@@ -660,12 +663,12 @@ public:
                 if(!useMoles) //mass-fraction formulation
                 {
 					globalSol[globalIdx][switchIdx]
-						= volVars.fluidState().massFraction(wPhaseIdx, nCompIdx);
+						= volVars.massFraction(wPhaseIdx, nCompIdx);
                 }
                 else //mole-fraction formulation
                 {
 					globalSol[globalIdx][switchIdx]
-					= volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+					= volVars.moleFraction(wPhaseIdx, nCompIdx);
                 }
             }
             else if (volVars.saturation(wPhaseIdx) <= Smin)
@@ -680,12 +683,12 @@ public:
               	if(!useMoles) //mass-fraction formulation
               	{
 					globalSol[globalIdx][switchIdx]
-						= volVars.fluidState().massFraction(nPhaseIdx, wCompIdx);
+						= volVars.massFraction(nPhaseIdx, wCompIdx);
               	}
               	else //mole-fraction formulation
               	{
 					globalSol[globalIdx][switchIdx]
-					= volVars.fluidState().moleFraction(nPhaseIdx, wCompIdx);
+					= volVars.moleFraction(nPhaseIdx, wCompIdx);
               	}
             }
         }
