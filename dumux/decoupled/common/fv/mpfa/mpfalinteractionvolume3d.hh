@@ -360,11 +360,6 @@ public:
         return faceArea_[IndexTranslator::getFaceIndexFromSubVolume(subVolumeIdx, subVolumeFaceIdxInInside)];
     }
 
-    Scalar& getFaceArea(int faceIdx)
-    {
-        return faceArea_[faceIdx];
-    }
-
     DimVector& getFacePosition(int faceIdx)
     {
         return facePos_[faceIdx];
