@@ -287,36 +287,43 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
         if (interactionVolume.isInnerVolume())
         {
         // cell index
+        int localMpfaElemIdxI = 0;
+        int localMpfaElemIdxJ = 0;
+
         int globalIdx[8];
         for (int i = 0; i < 8; i++)
         {
-            globalIdx[i] = problem_.variables().index(*(interactionVolume.getSubVolumeElement(i)));
+            ElementPointer elem = *(interactionVolume.getSubVolumeElement(i));
+
+            if (elem == elementPtrI)
+                localMpfaElemIdxI = i;
+            else if (elem == elementPtrJ)
+                localMpfaElemIdxJ = i;
+
+            globalIdx[i] = problem_.variables().index(*elem);
             cellDataTemp[i] = problem_.variables().cellData(globalIdx[i]);
         }
+
+        int mpfaFaceIdx = IndexTranslator::getFaceIndexFromElements(localMpfaElemIdxI, localMpfaElemIdxJ);
+
+        //        std::cout<<"mpfaFaceIdx = "<<mpfaFaceIdx<<"\n";
 
         velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume,
                 cellDataTemp[0], cellDataTemp[1], cellDataTemp[2], cellDataTemp[3],
                 cellDataTemp[4], cellDataTemp[5], cellDataTemp[6], cellDataTemp[7],
-                this->interactionVolumes_, this->transmissibilityCalculator_);
+                this->interactionVolumes_, this->transmissibilityCalculator_, mpfaFaceIdx);
 
-        for (int i = 0; i < 8; i++)
-        {
-            if (globalIdx[i] == globalIdxI)
-            {
-                 cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInInside));
-                 cellData.fluxData().setVelocity(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInInside));
-                 cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInInside));
-                 cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInInside));
-            }
-            else if (globalIdx[i] == globalIdxJ)
-            {
-                cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInOutside));
-                cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInOutside));
-                cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
-                cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
-            }
+
+        cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdxI].fluxData().velocity(wPhaseIdx, indexInInside));
+        cellData.fluxData().setVelocity(nPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdxI].fluxData().velocity(nPhaseIdx, indexInInside));
+        cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdxI].fluxData().upwindPotential(wPhaseIdx, indexInInside));
+        cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdxI].fluxData().upwindPotential(nPhaseIdx, indexInInside));
+
+        cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdxJ].fluxData().velocity(wPhaseIdx, indexInOutside));
+        cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdxJ].fluxData().velocity(nPhaseIdx, indexInOutside));
+        cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdxJ].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
+        cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdxJ].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
         }
-    }
     }
     cellData.fluxData().setVelocityMarker(indexInInside);
     cellDataJ.fluxData().setVelocityMarker(indexInOutside);

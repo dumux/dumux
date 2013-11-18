@@ -37,9 +37,9 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum
-        {
-            dim = GridView::dimension, dimWorld = GridView::dimensionworld
-        };
+    {
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -75,11 +75,11 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename Element::Geometry Geometry;
-    #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
-        typedef typename Geometry::JacobianTransposed JacobianTransposed;
-    #else
-        typedef typename Geometry::Jacobian JacobianTransposed;
-    #endif
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+    typedef typename Geometry::JacobianTransposed JacobianTransposed;
+#else
+    typedef typename Geometry::Jacobian JacobianTransposed;
+#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
@@ -89,39 +89,39 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
     typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
 
     enum
-        {
-            pw = Indices::pressureW,
-            pn = Indices::pressureNw,
-            pglobal = Indices::pressureGlobal,
-            sw = Indices::saturationW,
-            sn = Indices::saturationNw,
-            vw = Indices::velocityW,
-            vn = Indices::velocityNw,
-            vt = Indices::velocityTotal
-        };
+    {
+        pw = Indices::pressureW,
+        pn = Indices::pressureNw,
+        pglobal = Indices::pressureGlobal,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw,
+        vw = Indices::velocityW,
+        vn = Indices::velocityNw,
+        vt = Indices::velocityTotal
+    };
     enum
-        {
-            wPhaseIdx = Indices::wPhaseIdx,
-            nPhaseIdx = Indices::nPhaseIdx,
-            pressureIdx = Indices::pressureIdx,
-            saturationIdx = Indices::saturationIdx,
-            pressureEqIdx = Indices::pressureEqIdx,
-            satEqIdx = Indices::satEqIdx,
-            numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
-        };
+    {
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        pressureIdx = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
+        pressureEqIdx = Indices::pressureEqIdx,
+        satEqIdx = Indices::satEqIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+    };
     enum
-        {
-            globalCorner = 2,
-            globalEdge = 3,
-            neumannNeumann = 0,
-            dirichletDirichlet = 1,
-            dirichletNeumann = 2,
-            neumannDirichlet = 3
-        };
+    {
+        globalCorner = 2,
+        globalEdge = 3,
+        neumannNeumann = 0,
+        dirichletDirichlet = 1,
+        dirichletNeumann = 2,
+        neumannDirichlet = 3
+    };
     enum
-        {
-            innerEdgeFace = 2, innerSideFace = 1
-        };
+    {
+        innerEdgeFace = 2, innerSideFace = 1
+    };
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -131,19 +131,19 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
 public:
     FvMpfaL3dVelocity2p(Problem& problem) :
         problem_(problem), gravity_(problem.gravity())
-    {
+{
         density_[wPhaseIdx] = 0.;
         density_[nPhaseIdx] = 0.;
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
 
         vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
-    }
+}
 
     void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume,
             CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
             CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8,
-            InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator);
+            InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator, int faceIdx = -1);
     void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx);
 
     void initialize(bool solveTwice = true)
@@ -171,9 +171,9 @@ public:
         if (vtkOutputLevel_ > 0)
         {
             Dune::BlockVector < DimVector > &velocityWetting = *(writer.template allocateManagedBuffer<Scalar, dim>(
-                                                                                                                    problem_.gridView().size(0)));
+                    problem_.gridView().size(0)));
             Dune::BlockVector < DimVector > &velocityNonwetting = *(writer.template allocateManagedBuffer<Scalar, dim>(
-                                                                                                                       problem_.gridView().size(0)));
+                    problem_.gridView().size(0)));
 
             // compute update vector
             ElementIterator eEndIt = problem_.gridView().template end<0>();
@@ -194,9 +194,9 @@ public:
                     int isIndex = isIt->indexInInside();
 
                     fluxW[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
+                                * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
                     fluxNw[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
+                                * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
                 }
 
                 DimVector refVelocity(0);
@@ -256,8 +256,8 @@ template<class TypeTag>
 void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume,
         CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
         CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8,
-        InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator)
-{
+        InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator, int faceIdx)
+        {
     ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
     ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
     ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(2);
@@ -415,1120 +415,1156 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     Dune::FieldVector<Scalar, 2 * dim - dim + 1> u(0);
     TransmissibilityType T(0);
 
-    // calculate the flux through the subvolumeface 1 (subVolumeFaceIdx = 0)
-    int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 0, 1, 2, 3,
-                                                               4, 5);
-
-    if (caseL == 1)
+    if (faceIdx < 0 || faceIdx == 0)
     {
-        u[0] = potW[0];
-        u[1] = potW[1];
-        u[2] = potW[2];
-        u[3] = potW[4];
+        // calculate the flux through the subvolumeface 1 (subVolumeFaceIdx = 0)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 0, 1, 2, 3,
+                4, 5);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[0];
+            u[1] = potW[1];
+            u[2] = potW[2];
+            u[3] = potW[4];
 
-        fluxW[0] = Tu[0];
-        potentialDiffW0 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[0];
-        u[1] = potNw[1];
-        u[2] = potNw[2];
-        u[3] = potNw[4];
+            fluxW[0] = Tu[0];
+            potentialDiffW0 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[0];
+            u[1] = potNw[1];
+            u[2] = potNw[2];
+            u[3] = potNw[4];
 
-        fluxNw[0] = Tu[0];
-        potentialDiffNw0 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[0];
-        u[1] = potW[1];
-        u[2] = potW[3];
-        u[3] = potW[5];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[0] = Tu[0];
+            potentialDiffNw0 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[0];
+            u[1] = potW[1];
+            u[2] = potW[3];
+            u[3] = potW[5];
 
-        fluxW[0] = Tu[0];
-        potentialDiffW0 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[0];
-        u[1] = potNw[1];
-        u[2] = potNw[3];
-        u[3] = potNw[5];
+            fluxW[0] = Tu[0];
+            potentialDiffW0 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[0];
+            u[1] = potNw[1];
+            u[2] = potNw[3];
+            u[3] = potNw[5];
 
-        fluxNw[0] = Tu[0];
-        potentialDiffNw0 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[0];
-        u[1] = potW[1];
-        u[2] = potW[3];
-        u[3] = potW[4];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[0] = Tu[0];
+            potentialDiffNw0 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[0];
+            u[1] = potW[1];
+            u[2] = potW[3];
+            u[3] = potW[4];
 
-        fluxW[0] = Tu[0];
-        potentialDiffW0 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[0];
-        u[1] = potNw[1];
-        u[2] = potNw[3];
-        u[3] = potNw[4];
+            fluxW[0] = Tu[0];
+            potentialDiffW0 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[0];
+            u[1] = potNw[1];
+            u[2] = potNw[3];
+            u[3] = potNw[4];
 
-        fluxNw[0] = Tu[0];
-        potentialDiffNw0 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[0];
-        u[1] = potW[1];
-        u[2] = potW[2];
-        u[3] = potW[5];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[0] = Tu[0];
+            potentialDiffNw0 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[0];
+            u[1] = potW[1];
+            u[2] = potW[2];
+            u[3] = potW[5];
 
-        fluxW[0] = Tu[0];
-        potentialDiffW0 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[0];
-        u[1] = potNw[1];
-        u[2] = potNw[2];
-        u[3] = potNw[5];
+            fluxW[0] = Tu[0];
+            potentialDiffW0 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[0];
+            u[1] = potNw[1];
+            u[2] = potNw[2];
+            u[3] = potNw[5];
 
-        fluxNw[0] = Tu[0];
-        potentialDiffNw0 = Tu[0];
-    }
+            T.mv(u, Tu);
 
-    // calculate the flux through the subvolumeface 2 (subVolumeFaceIdx = 1)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 1, 3, 0, 2, 5,
-                                                           7);
-
-    if (caseL == 1)
-    {
-        u[0] = potW[1];
-        u[1] = potW[3];
-        u[2] = potW[0];
-        u[3] = potW[5];
-
-        T.mv(u, Tu);
-
-        fluxW[1] = Tu[0];
-        potentialDiffW1 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[3];
-        u[2] = potNw[0];
-        u[3] = potNw[5];
-
-        T.mv(u, Tu);
-
-        fluxNw[1] = Tu[0];
-        potentialDiffNw1 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[1];
-        u[1] = potW[3];
-        u[2] = potW[2];
-        u[3] = potW[7];
-
-        T.mv(u, Tu);
-
-        fluxW[1] = Tu[0];
-        potentialDiffW1 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[3];
-        u[2] = potNw[2];
-        u[3] = potNw[7];
-
-        T.mv(u, Tu);
-
-        fluxNw[1] = Tu[0];
-        potentialDiffNw1 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[1];
-        u[1] = potW[3];
-        u[2] = potW[2];
-        u[3] = potW[5];
-
-        T.mv(u, Tu);
-
-        fluxW[1] = Tu[0];
-        potentialDiffW1 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[3];
-        u[2] = potNw[2];
-        u[3] = potNw[5];
-
-        T.mv(u, Tu);
-
-        fluxNw[1] = Tu[0];
-        potentialDiffNw1 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[1];
-        u[1] = potW[3];
-        u[2] = potW[0];
-        u[3] = potW[7];
-
-        T.mv(u, Tu);
-
-        fluxW[1] = Tu[0];
-        potentialDiffW1 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[3];
-        u[2] = potNw[0];
-        u[3] = potNw[7];
-
-        T.mv(u, Tu);
-
-        fluxNw[1] = Tu[0];
-        potentialDiffNw1 = Tu[0];
+            fluxNw[0] = Tu[0];
+            potentialDiffNw0 = Tu[0];
+        }
     }
 
-    // calculate the flux through the subvolumeface 3 (subVolumeFaceIdx = 2)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 3, 2, 1, 0, 7,
-                                                           6);
-
-    if (caseL == 1)
+    if (faceIdx < 0 || faceIdx == 1)
     {
-        u[0] = potW[3];
-        u[1] = potW[2];
-        u[2] = potW[1];
-        u[3] = potW[7];
+        // calculate the flux through the subvolumeface 2 (subVolumeFaceIdx = 1)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 1, 3, 0, 2, 5,
+                7);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[1];
+            u[1] = potW[3];
+            u[2] = potW[0];
+            u[3] = potW[5];
 
-        fluxW[2] = Tu[0];
-        potentialDiffW2 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[3];
-        u[1] = potNw[2];
-        u[2] = potNw[1];
-        u[3] = potNw[7];
+            fluxW[1] = Tu[0];
+            potentialDiffW1 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[1];
+            u[1] = potNw[3];
+            u[2] = potNw[0];
+            u[3] = potNw[5];
 
-        fluxNw[2] = Tu[0];
-        potentialDiffNw2 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[3];
-        u[1] = potW[2];
-        u[2] = potW[0];
-        u[3] = potW[6];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[1] = Tu[0];
+            potentialDiffNw1 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[1];
+            u[1] = potW[3];
+            u[2] = potW[2];
+            u[3] = potW[7];
 
-        fluxW[2] = Tu[0];
-        potentialDiffW2 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[3];
-        u[1] = potNw[2];
-        u[2] = potNw[0];
-        u[3] = potNw[6];
+            fluxW[1] = Tu[0];
+            potentialDiffW1 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[1];
+            u[1] = potNw[3];
+            u[2] = potNw[2];
+            u[3] = potNw[7];
 
-        fluxNw[2] = Tu[0];
-        potentialDiffNw2 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[3];
-        u[1] = potW[2];
-        u[2] = potW[0];
-        u[3] = potW[7];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[1] = Tu[0];
+            potentialDiffNw1 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[1];
+            u[1] = potW[3];
+            u[2] = potW[2];
+            u[3] = potW[5];
 
-        fluxW[2] = Tu[0];
-        potentialDiffW2 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[3];
-        u[1] = potNw[2];
-        u[2] = potNw[0];
-        u[3] = potNw[7];
+            fluxW[1] = Tu[0];
+            potentialDiffW1 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[1];
+            u[1] = potNw[3];
+            u[2] = potNw[2];
+            u[3] = potNw[5];
 
-        fluxNw[2] = Tu[0];
-        potentialDiffNw2 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[3];
-        u[1] = potW[2];
-        u[2] = potW[1];
-        u[3] = potW[6];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[1] = Tu[0];
+            potentialDiffNw1 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[1];
+            u[1] = potW[3];
+            u[2] = potW[0];
+            u[3] = potW[7];
 
-        fluxW[2] = Tu[0];
-        potentialDiffW2 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[3];
-        u[1] = potNw[2];
-        u[2] = potNw[1];
-        u[3] = potNw[6];
+            fluxW[1] = Tu[0];
+            potentialDiffW1 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[1];
+            u[1] = potNw[3];
+            u[2] = potNw[0];
+            u[3] = potNw[7];
 
-        fluxNw[2] = Tu[0];
-        potentialDiffNw2 = Tu[0];
-    }
+            T.mv(u, Tu);
 
-    // calculate the flux through the subvolumeface 4 (subVolumeFaceIdx = 3)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 2, 0, 3, 1, 6,
-                                                           4);
-
-    if (caseL == 1)
-    {
-        u[0] = potW[2];
-        u[1] = potW[0];
-        u[2] = potW[3];
-        u[3] = potW[6];
-
-        T.mv(u, Tu);
-
-        fluxW[3] = Tu[0];
-        potentialDiffW3 = Tu[0];
-
-        u[0] = potNw[2];
-        u[1] = potNw[0];
-        u[2] = potNw[3];
-        u[3] = potNw[6];
-
-        T.mv(u, Tu);
-
-        fluxNw[3] = Tu[0];
-        potentialDiffNw3 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[2];
-        u[1] = potW[0];
-        u[2] = potW[1];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[3] = Tu[0];
-        potentialDiffW3 = Tu[0];
-
-        u[0] = potNw[2];
-        u[1] = potNw[0];
-        u[2] = potNw[1];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[3] = Tu[0];
-        potentialDiffNw3 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[2];
-        u[1] = potW[0];
-        u[2] = potW[1];
-        u[3] = potW[6];
-
-        T.mv(u, Tu);
-
-        fluxW[3] = Tu[0];
-        potentialDiffW3 = Tu[0];
-
-        u[0] = potNw[2];
-        u[1] = potNw[0];
-        u[2] = potNw[1];
-        u[3] = potNw[6];
-
-        T.mv(u, Tu);
-
-        fluxNw[3] = Tu[0];
-        potentialDiffNw3 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[2];
-        u[1] = potW[0];
-        u[2] = potW[3];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[3] = Tu[0];
-        potentialDiffW3 = Tu[0];
-
-        u[0] = potNw[2];
-        u[1] = potNw[0];
-        u[2] = potNw[3];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[3] = Tu[0];
-        potentialDiffNw3 = Tu[0];
+            fluxNw[1] = Tu[0];
+            potentialDiffNw1 = Tu[0];
+        }
     }
 
-    // calculate the flux through the subvolumeface 5 (subVolumeFaceIdx = 4)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 5, 4, 7, 6, 1,
-                                                           0);
-
-    if (caseL == 1)
+    if (faceIdx < 0 || faceIdx == 2)
     {
-        u[0] = potW[5];
-        u[1] = potW[4];
-        u[2] = potW[7];
-        u[3] = potW[1];
+        // calculate the flux through the subvolumeface 3 (subVolumeFaceIdx = 2)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 3, 2, 1, 0, 7,
+                6);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[3];
+            u[1] = potW[2];
+            u[2] = potW[1];
+            u[3] = potW[7];
 
-        fluxW[4] = Tu[0];
-        potentialDiffW4 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[5];
-        u[1] = potNw[4];
-        u[2] = potNw[7];
-        u[3] = potNw[1];
+            fluxW[2] = Tu[0];
+            potentialDiffW2 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[3];
+            u[1] = potNw[2];
+            u[2] = potNw[1];
+            u[3] = potNw[7];
 
-        fluxNw[4] = Tu[0];
-        potentialDiffNw4 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[5];
-        u[1] = potW[4];
-        u[2] = potW[6];
-        u[3] = potW[0];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[2] = Tu[0];
+            potentialDiffNw2 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[3];
+            u[1] = potW[2];
+            u[2] = potW[0];
+            u[3] = potW[6];
 
-        fluxW[4] = Tu[0];
-        potentialDiffW4 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[5];
-        u[1] = potNw[4];
-        u[2] = potNw[6];
-        u[3] = potNw[0];
+            fluxW[2] = Tu[0];
+            potentialDiffW2 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[3];
+            u[1] = potNw[2];
+            u[2] = potNw[0];
+            u[3] = potNw[6];
 
-        fluxNw[4] = Tu[0];
-        potentialDiffNw4 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[5];
-        u[1] = potW[4];
-        u[2] = potW[6];
-        u[3] = potW[1];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[2] = Tu[0];
+            potentialDiffNw2 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[3];
+            u[1] = potW[2];
+            u[2] = potW[0];
+            u[3] = potW[7];
 
-        fluxW[4] = Tu[0];
-        potentialDiffW4 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[5];
-        u[1] = potNw[4];
-        u[2] = potNw[6];
-        u[3] = potNw[1];
+            fluxW[2] = Tu[0];
+            potentialDiffW2 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[3];
+            u[1] = potNw[2];
+            u[2] = potNw[0];
+            u[3] = potNw[7];
 
-        fluxNw[4] = Tu[0];
-        potentialDiffNw4 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[5];
-        u[1] = potW[4];
-        u[2] = potW[7];
-        u[3] = potW[0];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[2] = Tu[0];
+            potentialDiffNw2 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[3];
+            u[1] = potW[2];
+            u[2] = potW[1];
+            u[3] = potW[6];
 
-        fluxW[4] = Tu[0];
-        potentialDiffW4 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[5];
-        u[1] = potNw[4];
-        u[2] = potNw[7];
-        u[3] = potNw[0];
+            fluxW[2] = Tu[0];
+            potentialDiffW2 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[3];
+            u[1] = potNw[2];
+            u[2] = potNw[1];
+            u[3] = potNw[6];
 
-        fluxNw[4] = Tu[0];
-        potentialDiffNw4 = Tu[0];
-    }
+            T.mv(u, Tu);
 
-    // calculate the flux through the subvolumeface 6 (subVolumeFaceIdx = 5)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 7, 5, 6, 4, 3,
-                                                           1);
-
-    if (caseL == 1)
-    {
-        u[0] = potW[7];
-        u[1] = potW[5];
-        u[2] = potW[6];
-        u[3] = potW[3];
-
-        T.mv(u, Tu);
-
-        fluxW[5] = Tu[0];
-        potentialDiffW5 = Tu[0];
-
-        u[0] = potNw[7];
-        u[1] = potNw[5];
-        u[2] = potNw[6];
-        u[3] = potNw[3];
-
-        T.mv(u, Tu);
-
-        fluxNw[5] = Tu[0];
-        potentialDiffNw5 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[7];
-        u[1] = potW[5];
-        u[2] = potW[4];
-        u[3] = potW[1];
-
-        T.mv(u, Tu);
-
-        fluxW[5] = Tu[0];
-        potentialDiffW5 = Tu[0];
-
-        u[0] = potNw[7];
-        u[1] = potNw[5];
-        u[2] = potNw[4];
-        u[3] = potNw[1];
-
-        T.mv(u, Tu);
-
-        fluxNw[5] = Tu[0];
-        potentialDiffNw5 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[7];
-        u[1] = potW[5];
-        u[2] = potW[4];
-        u[3] = potW[3];
-
-        T.mv(u, Tu);
-
-        fluxW[5] = Tu[0];
-        potentialDiffW5 = Tu[0];
-
-        u[0] = potNw[7];
-        u[1] = potNw[5];
-        u[2] = potNw[4];
-        u[3] = potNw[3];
-
-        T.mv(u, Tu);
-
-        fluxNw[5] = Tu[0];
-        potentialDiffNw5 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[7];
-        u[1] = potW[5];
-        u[2] = potW[6];
-        u[3] = potW[1];
-
-        T.mv(u, Tu);
-
-        fluxW[5] = Tu[0];
-        potentialDiffW5 = Tu[0];
-
-        u[0] = potNw[7];
-        u[1] = potNw[5];
-        u[2] = potNw[6];
-        u[3] = potNw[1];
-
-        T.mv(u, Tu);
-
-        fluxNw[5] = Tu[0];
-        potentialDiffNw5 = Tu[0];
+            fluxNw[2] = Tu[0];
+            potentialDiffNw2 = Tu[0];
+        }
     }
 
-    // calculate the flux through the subvolumeface 7 (subVolumeFaceIdx = 6)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 6, 7, 4, 5, 2,
-                                                           3);
-
-    if (caseL == 1)
+    if (faceIdx < 0 || faceIdx == 3)
     {
-        u[0] = potW[6];
-        u[1] = potW[7];
-        u[2] = potW[4];
-        u[3] = potW[2];
+        // calculate the flux through the subvolumeface 4 (subVolumeFaceIdx = 3)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 2, 0, 3, 1, 6,
+                4);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[2];
+            u[1] = potW[0];
+            u[2] = potW[3];
+            u[3] = potW[6];
 
-        fluxW[6] = Tu[0];
-        potentialDiffW6 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[6];
-        u[1] = potNw[7];
-        u[2] = potNw[4];
-        u[3] = potNw[2];
+            fluxW[3] = Tu[0];
+            potentialDiffW3 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[2];
+            u[1] = potNw[0];
+            u[2] = potNw[3];
+            u[3] = potNw[6];
 
-        fluxNw[6] = Tu[0];
-        potentialDiffNw6 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[6];
-        u[1] = potW[7];
-        u[2] = potW[5];
-        u[3] = potW[3];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[3] = Tu[0];
+            potentialDiffNw3 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[2];
+            u[1] = potW[0];
+            u[2] = potW[1];
+            u[3] = potW[4];
 
-        fluxW[6] = Tu[0];
-        potentialDiffW6 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[6];
-        u[1] = potNw[7];
-        u[2] = potNw[5];
-        u[3] = potNw[3];
+            fluxW[3] = Tu[0];
+            potentialDiffW3 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[2];
+            u[1] = potNw[0];
+            u[2] = potNw[1];
+            u[3] = potNw[4];
 
-        fluxNw[6] = Tu[0];
-        potentialDiffNw6 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[6];
-        u[1] = potW[7];
-        u[2] = potW[5];
-        u[3] = potW[2];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[3] = Tu[0];
+            potentialDiffNw3 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[2];
+            u[1] = potW[0];
+            u[2] = potW[1];
+            u[3] = potW[6];
 
-        fluxW[6] = Tu[0];
-        potentialDiffW6 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[6];
-        u[1] = potNw[7];
-        u[2] = potNw[5];
-        u[3] = potNw[2];
+            fluxW[3] = Tu[0];
+            potentialDiffW3 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[2];
+            u[1] = potNw[0];
+            u[2] = potNw[1];
+            u[3] = potNw[6];
 
-        fluxNw[6] = Tu[0];
-        potentialDiffNw6 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[6];
-        u[1] = potW[7];
-        u[2] = potW[4];
-        u[3] = potW[3];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[3] = Tu[0];
+            potentialDiffNw3 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[2];
+            u[1] = potW[0];
+            u[2] = potW[3];
+            u[3] = potW[4];
 
-        fluxW[6] = Tu[0];
-        potentialDiffW6 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[6];
-        u[1] = potNw[7];
-        u[2] = potNw[4];
-        u[3] = potNw[3];
+            fluxW[3] = Tu[0];
+            potentialDiffW3 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[2];
+            u[1] = potNw[0];
+            u[2] = potNw[3];
+            u[3] = potNw[4];
 
-        fluxNw[6] = Tu[0];
-        potentialDiffNw6 = Tu[0];
-    }
+            T.mv(u, Tu);
 
-    // calculate the flux through the subvolumeface 8 (subVolumeFaceIdx = 7)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 4, 6, 5, 7, 0,
-                                                           2);
-
-    if (caseL == 1)
-    {
-        u[0] = potW[4];
-        u[1] = potW[6];
-        u[2] = potW[5];
-        u[3] = potW[0];
-
-        T.mv(u, Tu);
-
-        fluxW[7] = Tu[0];
-        potentialDiffW7 = Tu[0];
-
-        u[0] = potNw[4];
-        u[1] = potNw[6];
-        u[2] = potNw[5];
-        u[3] = potNw[0];
-
-        T.mv(u, Tu);
-
-        fluxNw[7] = Tu[0];
-        potentialDiffNw7 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[4];
-        u[1] = potW[6];
-        u[2] = potW[7];
-        u[3] = potW[2];
-
-        T.mv(u, Tu);
-
-        fluxW[7] = Tu[0];
-        potentialDiffW7 = Tu[0];
-
-        u[0] = potNw[4];
-        u[1] = potNw[6];
-        u[2] = potNw[7];
-        u[3] = potNw[2];
-
-        T.mv(u, Tu);
-
-        fluxNw[7] = Tu[0];
-        potentialDiffNw7 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[4];
-        u[1] = potW[6];
-        u[2] = potW[7];
-        u[3] = potW[0];
-
-        T.mv(u, Tu);
-
-        fluxW[7] = Tu[0];
-        potentialDiffW7 = Tu[0];
-
-        u[0] = potNw[4];
-        u[1] = potNw[6];
-        u[2] = potNw[7];
-        u[3] = potNw[0];
-
-        T.mv(u, Tu);
-
-        fluxNw[7] = Tu[0];
-        potentialDiffNw7 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[4];
-        u[1] = potW[6];
-        u[2] = potW[5];
-        u[3] = potW[2];
-
-        T.mv(u, Tu);
-
-        fluxW[7] = Tu[0];
-        potentialDiffW7 = Tu[0];
-
-        u[0] = potNw[4];
-        u[1] = potNw[6];
-        u[2] = potNw[5];
-        u[3] = potNw[2];
-
-        T.mv(u, Tu);
-
-        fluxNw[7] = Tu[0];
-        potentialDiffNw7 = Tu[0];
+            fluxNw[3] = Tu[0];
+            potentialDiffNw3 = Tu[0];
+        }
     }
 
-    // calculate the flux through the subvolumeface 9 (subVolumeFaceIdx = 8)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 4, 0, 6, 2, 5,
-                                                           1);
-
-    if (caseL == 1)
+    if (faceIdx < 0 || faceIdx == 4)
     {
-        u[0] = potW[4];
-        u[1] = potW[0];
-        u[2] = potW[6];
-        u[3] = potW[5];
+        // calculate the flux through the subvolumeface 5 (subVolumeFaceIdx = 4)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 5, 4, 7, 6, 1,
+                0);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[5];
+            u[1] = potW[4];
+            u[2] = potW[7];
+            u[3] = potW[1];
 
-        fluxW[8] = Tu[0];
-        potentialDiffW8 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[4];
-        u[1] = potNw[0];
-        u[2] = potNw[6];
-        u[3] = potNw[5];
+            fluxW[4] = Tu[0];
+            potentialDiffW4 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[5];
+            u[1] = potNw[4];
+            u[2] = potNw[7];
+            u[3] = potNw[1];
 
-        fluxNw[8] = Tu[0];
-        potentialDiffNw8 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[4];
-        u[1] = potW[0];
-        u[2] = potW[2];
-        u[3] = potW[1];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[4] = Tu[0];
+            potentialDiffNw4 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[5];
+            u[1] = potW[4];
+            u[2] = potW[6];
+            u[3] = potW[0];
 
-        fluxW[8] = Tu[0];
-        potentialDiffW8 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[4];
-        u[1] = potNw[0];
-        u[2] = potNw[2];
-        u[3] = potNw[1];
+            fluxW[4] = Tu[0];
+            potentialDiffW4 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[5];
+            u[1] = potNw[4];
+            u[2] = potNw[6];
+            u[3] = potNw[0];
 
-        fluxNw[8] = Tu[0];
-        potentialDiffNw8 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[4];
-        u[1] = potW[0];
-        u[2] = potW[2];
-        u[3] = potW[5];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[4] = Tu[0];
+            potentialDiffNw4 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[5];
+            u[1] = potW[4];
+            u[2] = potW[6];
+            u[3] = potW[1];
 
-        fluxW[8] = Tu[0];
-        potentialDiffW8 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[4];
-        u[1] = potNw[0];
-        u[2] = potNw[2];
-        u[3] = potNw[5];
+            fluxW[4] = Tu[0];
+            potentialDiffW4 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[5];
+            u[1] = potNw[4];
+            u[2] = potNw[6];
+            u[3] = potNw[1];
 
-        fluxNw[8] = Tu[0];
-        potentialDiffNw8 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[4];
-        u[1] = potW[0];
-        u[2] = potW[6];
-        u[3] = potW[1];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[4] = Tu[0];
+            potentialDiffNw4 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[5];
+            u[1] = potW[4];
+            u[2] = potW[7];
+            u[3] = potW[0];
 
-        fluxW[8] = Tu[0];
-        potentialDiffW8 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[4];
-        u[1] = potNw[0];
-        u[2] = potNw[6];
-        u[3] = potNw[1];
+            fluxW[4] = Tu[0];
+            potentialDiffW4 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[5];
+            u[1] = potNw[4];
+            u[2] = potNw[7];
+            u[3] = potNw[0];
 
-        fluxNw[8] = Tu[0];
-        potentialDiffNw8 = Tu[0];
-    }
+            T.mv(u, Tu);
 
-    // calculate the flux through the subvolumeface 10 (subVolumeFaceIdx = 9)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 1, 5, 3, 7, 0,
-                                                           4);
-
-    if (caseL == 1)
-    {
-        u[0] = potW[1];
-        u[1] = potW[5];
-        u[2] = potW[3];
-        u[3] = potW[0];
-
-        T.mv(u, Tu);
-
-        fluxW[9] = Tu[0];
-        potentialDiffW9 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[5];
-        u[2] = potNw[3];
-        u[3] = potNw[0];
-
-        T.mv(u, Tu);
-
-        fluxNw[9] = Tu[0];
-        potentialDiffNw9 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[1];
-        u[1] = potW[5];
-        u[2] = potW[7];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[9] = Tu[0];
-        potentialDiffW9 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[5];
-        u[2] = potNw[7];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[9] = Tu[0];
-        potentialDiffNw9 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[1];
-        u[1] = potW[5];
-        u[2] = potW[7];
-        u[3] = potW[0];
-
-        T.mv(u, Tu);
-
-        fluxW[9] = Tu[0];
-        potentialDiffW9 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[5];
-        u[2] = potNw[7];
-        u[3] = potNw[0];
-
-        T.mv(u, Tu);
-
-        fluxNw[9] = Tu[0];
-        potentialDiffNw9 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[1];
-        u[1] = potW[5];
-        u[2] = potW[3];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[9] = Tu[0];
-        potentialDiffW9 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[5];
-        u[2] = potNw[3];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[9] = Tu[0];
-        potentialDiffNw9 = Tu[0];
+            fluxNw[4] = Tu[0];
+            potentialDiffNw4 = Tu[0];
+        }
     }
 
-    // calculate the flux through the subvolumeface 11 (subVolumeFaceIdx = 10)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6,
-                                                           2);
-
-    if (caseL == 1)
+    if (faceIdx < 0 || faceIdx == 5)
     {
-        u[0] = potW[7];
-        u[1] = potW[3];
-        u[2] = potW[5];
-        u[3] = potW[6];
+        // calculate the flux through the subvolumeface 6 (subVolumeFaceIdx = 5)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 7, 5, 6, 4, 3,
+                1);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[7];
+            u[1] = potW[5];
+            u[2] = potW[6];
+            u[3] = potW[3];
 
-        fluxW[10] = Tu[0];
-        potentialDiffW10 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[7];
-        u[1] = potNw[3];
-        u[2] = potNw[5];
-        u[3] = potNw[6];
+            fluxW[5] = Tu[0];
+            potentialDiffW5 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[7];
+            u[1] = potNw[5];
+            u[2] = potNw[6];
+            u[3] = potNw[3];
 
-        fluxNw[10] = Tu[0];
-        potentialDiffNw10 = Tu[0];
+            T.mv(u, Tu);
+
+            fluxNw[5] = Tu[0];
+            potentialDiffNw5 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[7];
+            u[1] = potW[5];
+            u[2] = potW[4];
+            u[3] = potW[1];
+
+            T.mv(u, Tu);
+
+            fluxW[5] = Tu[0];
+            potentialDiffW5 = Tu[0];
+
+            u[0] = potNw[7];
+            u[1] = potNw[5];
+            u[2] = potNw[4];
+            u[3] = potNw[1];
+
+            T.mv(u, Tu);
+
+            fluxNw[5] = Tu[0];
+            potentialDiffNw5 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[7];
+            u[1] = potW[5];
+            u[2] = potW[4];
+            u[3] = potW[3];
+
+            T.mv(u, Tu);
+
+            fluxW[5] = Tu[0];
+            potentialDiffW5 = Tu[0];
+
+            u[0] = potNw[7];
+            u[1] = potNw[5];
+            u[2] = potNw[4];
+            u[3] = potNw[3];
+
+            T.mv(u, Tu);
+
+            fluxNw[5] = Tu[0];
+            potentialDiffNw5 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[7];
+            u[1] = potW[5];
+            u[2] = potW[6];
+            u[3] = potW[1];
+
+            T.mv(u, Tu);
+
+            fluxW[5] = Tu[0];
+            potentialDiffW5 = Tu[0];
+
+            u[0] = potNw[7];
+            u[1] = potNw[5];
+            u[2] = potNw[6];
+            u[3] = potNw[1];
+
+            T.mv(u, Tu);
+
+            fluxNw[5] = Tu[0];
+            potentialDiffNw5 = Tu[0];
+        }
     }
-    else if (caseL == 2)
+
+    if (faceIdx < 0 || faceIdx == 6)
     {
-        u[0] = potW[7];
-        u[1] = potW[3];
-        u[2] = potW[1];
-        u[3] = potW[2];
+        // calculate the flux through the subvolumeface 7 (subVolumeFaceIdx = 6)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 6, 7, 4, 5, 2,
+                3);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[6];
+            u[1] = potW[7];
+            u[2] = potW[4];
+            u[3] = potW[2];
 
-        fluxW[10] = Tu[0];
-        potentialDiffW10 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[7];
-        u[1] = potNw[3];
-        u[2] = potNw[1];
-        u[3] = potNw[2];
+            fluxW[6] = Tu[0];
+            potentialDiffW6 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[6];
+            u[1] = potNw[7];
+            u[2] = potNw[4];
+            u[3] = potNw[2];
 
-        fluxNw[10] = Tu[0];
-        potentialDiffNw10 = Tu[0];
+            T.mv(u, Tu);
+
+            fluxNw[6] = Tu[0];
+            potentialDiffNw6 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[6];
+            u[1] = potW[7];
+            u[2] = potW[5];
+            u[3] = potW[3];
+
+            T.mv(u, Tu);
+
+            fluxW[6] = Tu[0];
+            potentialDiffW6 = Tu[0];
+
+            u[0] = potNw[6];
+            u[1] = potNw[7];
+            u[2] = potNw[5];
+            u[3] = potNw[3];
+
+            T.mv(u, Tu);
+
+            fluxNw[6] = Tu[0];
+            potentialDiffNw6 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[6];
+            u[1] = potW[7];
+            u[2] = potW[5];
+            u[3] = potW[2];
+
+            T.mv(u, Tu);
+
+            fluxW[6] = Tu[0];
+            potentialDiffW6 = Tu[0];
+
+            u[0] = potNw[6];
+            u[1] = potNw[7];
+            u[2] = potNw[5];
+            u[3] = potNw[2];
+
+            T.mv(u, Tu);
+
+            fluxNw[6] = Tu[0];
+            potentialDiffNw6 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[6];
+            u[1] = potW[7];
+            u[2] = potW[4];
+            u[3] = potW[3];
+
+            T.mv(u, Tu);
+
+            fluxW[6] = Tu[0];
+            potentialDiffW6 = Tu[0];
+
+            u[0] = potNw[6];
+            u[1] = potNw[7];
+            u[2] = potNw[4];
+            u[3] = potNw[3];
+
+            T.mv(u, Tu);
+
+            fluxNw[6] = Tu[0];
+            potentialDiffNw6 = Tu[0];
+        }
     }
-    else if (caseL == 3)
+
+    if (faceIdx < 0 || faceIdx == 7)
     {
-        u[0] = potW[7];
-        u[1] = potW[3];
-        u[2] = potW[1];
-        u[3] = potW[6];
+        // calculate the flux through the subvolumeface 8 (subVolumeFaceIdx = 7)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 4, 6, 5, 7, 0,
+                2);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[4];
+            u[1] = potW[6];
+            u[2] = potW[5];
+            u[3] = potW[0];
 
-        fluxW[10] = Tu[0];
-        potentialDiffW10 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[7];
-        u[1] = potNw[3];
-        u[2] = potNw[1];
-        u[3] = potNw[6];
+            fluxW[7] = Tu[0];
+            potentialDiffW7 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[4];
+            u[1] = potNw[6];
+            u[2] = potNw[5];
+            u[3] = potNw[0];
 
-        fluxNw[10] = Tu[0];
-        potentialDiffNw10 = Tu[0];
+            T.mv(u, Tu);
+
+            fluxNw[7] = Tu[0];
+            potentialDiffNw7 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[4];
+            u[1] = potW[6];
+            u[2] = potW[7];
+            u[3] = potW[2];
+
+            T.mv(u, Tu);
+
+            fluxW[7] = Tu[0];
+            potentialDiffW7 = Tu[0];
+
+            u[0] = potNw[4];
+            u[1] = potNw[6];
+            u[2] = potNw[7];
+            u[3] = potNw[2];
+
+            T.mv(u, Tu);
+
+            fluxNw[7] = Tu[0];
+            potentialDiffNw7 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[4];
+            u[1] = potW[6];
+            u[2] = potW[7];
+            u[3] = potW[0];
+
+            T.mv(u, Tu);
+
+            fluxW[7] = Tu[0];
+            potentialDiffW7 = Tu[0];
+
+            u[0] = potNw[4];
+            u[1] = potNw[6];
+            u[2] = potNw[7];
+            u[3] = potNw[0];
+
+            T.mv(u, Tu);
+
+            fluxNw[7] = Tu[0];
+            potentialDiffNw7 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[4];
+            u[1] = potW[6];
+            u[2] = potW[5];
+            u[3] = potW[2];
+
+            T.mv(u, Tu);
+
+            fluxW[7] = Tu[0];
+            potentialDiffW7 = Tu[0];
+
+            u[0] = potNw[4];
+            u[1] = potNw[6];
+            u[2] = potNw[5];
+            u[3] = potNw[2];
+
+            T.mv(u, Tu);
+
+            fluxNw[7] = Tu[0];
+            potentialDiffNw7 = Tu[0];
+        }
     }
-    else
+
+    if (faceIdx < 0 || faceIdx == 8)
     {
-        u[0] = potW[7];
-        u[1] = potW[3];
-        u[2] = potW[5];
-        u[3] = potW[2];
+        // calculate the flux through the subvolumeface 9 (subVolumeFaceIdx = 8)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 4, 0, 6, 2, 5,
+                1);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[4];
+            u[1] = potW[0];
+            u[2] = potW[6];
+            u[3] = potW[5];
 
-        fluxW[10] = Tu[0];
-        potentialDiffW10 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[7];
-        u[1] = potNw[3];
-        u[2] = potNw[5];
-        u[3] = potNw[2];
+            fluxW[8] = Tu[0];
+            potentialDiffW8 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[4];
+            u[1] = potNw[0];
+            u[2] = potNw[6];
+            u[3] = potNw[5];
 
-        fluxNw[10] = Tu[0];
-        potentialDiffNw10 = Tu[0];
+            T.mv(u, Tu);
+
+            fluxNw[8] = Tu[0];
+            potentialDiffNw8 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[4];
+            u[1] = potW[0];
+            u[2] = potW[2];
+            u[3] = potW[1];
+
+            T.mv(u, Tu);
+
+            fluxW[8] = Tu[0];
+            potentialDiffW8 = Tu[0];
+
+            u[0] = potNw[4];
+            u[1] = potNw[0];
+            u[2] = potNw[2];
+            u[3] = potNw[1];
+
+            T.mv(u, Tu);
+
+            fluxNw[8] = Tu[0];
+            potentialDiffNw8 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[4];
+            u[1] = potW[0];
+            u[2] = potW[2];
+            u[3] = potW[5];
+
+            T.mv(u, Tu);
+
+            fluxW[8] = Tu[0];
+            potentialDiffW8 = Tu[0];
+
+            u[0] = potNw[4];
+            u[1] = potNw[0];
+            u[2] = potNw[2];
+            u[3] = potNw[5];
+
+            T.mv(u, Tu);
+
+            fluxNw[8] = Tu[0];
+            potentialDiffNw8 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[4];
+            u[1] = potW[0];
+            u[2] = potW[6];
+            u[3] = potW[1];
+
+            T.mv(u, Tu);
+
+            fluxW[8] = Tu[0];
+            potentialDiffW8 = Tu[0];
+
+            u[0] = potNw[4];
+            u[1] = potNw[0];
+            u[2] = potNw[6];
+            u[3] = potNw[1];
+
+            T.mv(u, Tu);
+
+            fluxNw[8] = Tu[0];
+            potentialDiffNw8 = Tu[0];
+        }
     }
 
-    // calculate the flux through the subvolumeface 12 (subVolumeFaceIdx = 11)
-    caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3,
-                                                           7);
-
-    if (caseL == 1)
+    if (faceIdx < 0 || faceIdx == 9)
     {
-        u[0] = potW[2];
-        u[1] = potW[6];
-        u[2] = potW[0];
-        u[3] = potW[3];
+        // calculate the flux through the subvolumeface 10 (subVolumeFaceIdx = 9)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 1, 5, 3, 7, 0,
+                4);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[1];
+            u[1] = potW[5];
+            u[2] = potW[3];
+            u[3] = potW[0];
 
-        fluxW[11] = Tu[0];
-        potentialDiffW11 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[2];
-        u[1] = potNw[6];
-        u[2] = potNw[0];
-        u[3] = potNw[3];
+            fluxW[9] = Tu[0];
+            potentialDiffW9 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[1];
+            u[1] = potNw[5];
+            u[2] = potNw[3];
+            u[3] = potNw[0];
 
-        fluxNw[11] = Tu[0];
-        potentialDiffNw11 = Tu[0];
+            T.mv(u, Tu);
+
+            fluxNw[9] = Tu[0];
+            potentialDiffNw9 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[1];
+            u[1] = potW[5];
+            u[2] = potW[7];
+            u[3] = potW[4];
+
+            T.mv(u, Tu);
+
+            fluxW[9] = Tu[0];
+            potentialDiffW9 = Tu[0];
+
+            u[0] = potNw[1];
+            u[1] = potNw[5];
+            u[2] = potNw[7];
+            u[3] = potNw[4];
+
+            T.mv(u, Tu);
+
+            fluxNw[9] = Tu[0];
+            potentialDiffNw9 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[1];
+            u[1] = potW[5];
+            u[2] = potW[7];
+            u[3] = potW[0];
+
+            T.mv(u, Tu);
+
+            fluxW[9] = Tu[0];
+            potentialDiffW9 = Tu[0];
+
+            u[0] = potNw[1];
+            u[1] = potNw[5];
+            u[2] = potNw[7];
+            u[3] = potNw[0];
+
+            T.mv(u, Tu);
+
+            fluxNw[9] = Tu[0];
+            potentialDiffNw9 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[1];
+            u[1] = potW[5];
+            u[2] = potW[3];
+            u[3] = potW[4];
+
+            T.mv(u, Tu);
+
+            fluxW[9] = Tu[0];
+            potentialDiffW9 = Tu[0];
+
+            u[0] = potNw[1];
+            u[1] = potNw[5];
+            u[2] = potNw[3];
+            u[3] = potNw[4];
+
+            T.mv(u, Tu);
+
+            fluxNw[9] = Tu[0];
+            potentialDiffNw9 = Tu[0];
+        }
     }
-    else if (caseL == 2)
+
+    if (faceIdx < 0 || faceIdx == 10)
     {
-        u[0] = potW[2];
-        u[1] = potW[6];
-        u[2] = potW[4];
-        u[3] = potW[7];
+        // calculate the flux through the subvolumeface 11 (subVolumeFaceIdx = 10)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6,
+                2);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[7];
+            u[1] = potW[3];
+            u[2] = potW[5];
+            u[3] = potW[6];
 
-        fluxW[11] = Tu[0];
-        potentialDiffW11 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[2];
-        u[1] = potNw[6];
-        u[2] = potNw[4];
-        u[3] = potNw[7];
+            fluxW[10] = Tu[0];
+            potentialDiffW10 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[7];
+            u[1] = potNw[3];
+            u[2] = potNw[5];
+            u[3] = potNw[6];
 
-        fluxNw[11] = Tu[0];
-        potentialDiffNw11 = Tu[0];
+            T.mv(u, Tu);
+
+            fluxNw[10] = Tu[0];
+            potentialDiffNw10 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[7];
+            u[1] = potW[3];
+            u[2] = potW[1];
+            u[3] = potW[2];
+
+            T.mv(u, Tu);
+
+            fluxW[10] = Tu[0];
+            potentialDiffW10 = Tu[0];
+
+            u[0] = potNw[7];
+            u[1] = potNw[3];
+            u[2] = potNw[1];
+            u[3] = potNw[2];
+
+            T.mv(u, Tu);
+
+            fluxNw[10] = Tu[0];
+            potentialDiffNw10 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[7];
+            u[1] = potW[3];
+            u[2] = potW[1];
+            u[3] = potW[6];
+
+            T.mv(u, Tu);
+
+            fluxW[10] = Tu[0];
+            potentialDiffW10 = Tu[0];
+
+            u[0] = potNw[7];
+            u[1] = potNw[3];
+            u[2] = potNw[1];
+            u[3] = potNw[6];
+
+            T.mv(u, Tu);
+
+            fluxNw[10] = Tu[0];
+            potentialDiffNw10 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[7];
+            u[1] = potW[3];
+            u[2] = potW[5];
+            u[3] = potW[2];
+
+            T.mv(u, Tu);
+
+            fluxW[10] = Tu[0];
+            potentialDiffW10 = Tu[0];
+
+            u[0] = potNw[7];
+            u[1] = potNw[3];
+            u[2] = potNw[5];
+            u[3] = potNw[2];
+
+            T.mv(u, Tu);
+
+            fluxNw[10] = Tu[0];
+            potentialDiffNw10 = Tu[0];
+        }
     }
-    else if (caseL == 3)
+
+    if (faceIdx < 0 || faceIdx == 11)
     {
-        u[0] = potW[2];
-        u[1] = potW[6];
-        u[2] = potW[4];
-        u[3] = potW[3];
+        // calculate the flux through the subvolumeface 12 (subVolumeFaceIdx = 11)
+        int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3,
+                7);
 
-        T.mv(u, Tu);
+        if (caseL == 1)
+        {
+            u[0] = potW[2];
+            u[1] = potW[6];
+            u[2] = potW[0];
+            u[3] = potW[3];
 
-        fluxW[11] = Tu[0];
-        potentialDiffW11 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[2];
-        u[1] = potNw[6];
-        u[2] = potNw[4];
-        u[3] = potNw[3];
+            fluxW[11] = Tu[0];
+            potentialDiffW11 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[2];
+            u[1] = potNw[6];
+            u[2] = potNw[0];
+            u[3] = potNw[3];
 
-        fluxNw[11] = Tu[0];
-        potentialDiffNw11 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[2];
-        u[1] = potW[6];
-        u[2] = potW[0];
-        u[3] = potW[7];
+            T.mv(u, Tu);
 
-        T.mv(u, Tu);
+            fluxNw[11] = Tu[0];
+            potentialDiffNw11 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[2];
+            u[1] = potW[6];
+            u[2] = potW[4];
+            u[3] = potW[7];
 
-        fluxW[11] = Tu[0];
-        potentialDiffW11 = Tu[0];
+            T.mv(u, Tu);
 
-        u[0] = potNw[2];
-        u[1] = potNw[6];
-        u[2] = potNw[0];
-        u[3] = potNw[7];
+            fluxW[11] = Tu[0];
+            potentialDiffW11 = Tu[0];
 
-        T.mv(u, Tu);
+            u[0] = potNw[2];
+            u[1] = potNw[6];
+            u[2] = potNw[4];
+            u[3] = potNw[7];
 
-        fluxNw[11] = Tu[0];
-        potentialDiffNw11 = Tu[0];
+            T.mv(u, Tu);
+
+            fluxNw[11] = Tu[0];
+            potentialDiffNw11 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[2];
+            u[1] = potW[6];
+            u[2] = potW[4];
+            u[3] = potW[3];
+
+            T.mv(u, Tu);
+
+            fluxW[11] = Tu[0];
+            potentialDiffW11 = Tu[0];
+
+            u[0] = potNw[2];
+            u[1] = potNw[6];
+            u[2] = potNw[4];
+            u[3] = potNw[3];
+
+            T.mv(u, Tu);
+
+            fluxNw[11] = Tu[0];
+            potentialDiffNw11 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[2];
+            u[1] = potW[6];
+            u[2] = potW[0];
+            u[3] = potW[7];
+
+            T.mv(u, Tu);
+
+            fluxW[11] = Tu[0];
+            potentialDiffW11 = Tu[0];
+
+            u[0] = potNw[2];
+            u[1] = potNw[6];
+            u[2] = potNw[0];
+            u[3] = potNw[7];
+
+            T.mv(u, Tu);
+
+            fluxNw[11] = Tu[0];
+            potentialDiffNw11 = Tu[0];
+        }
     }
 
     //store potentials for further calculations (saturation, ...)
@@ -1692,15 +1728,15 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         switch (i)
         {
         case wPhaseIdx:
-            {
-                flux = fluxW;
-                break;
-            }
+        {
+            flux = fluxW;
+            break;
+        }
         case nPhaseIdx:
-            {
-                flux = fluxNw;
-                break;
-            }
+        {
+            flux = fluxNw;
+            break;
+        }
         }
 
         vel12 *= flux[0] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx1, 0, 0));
@@ -1830,168 +1866,168 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     cellData8.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(7, 0));
     cellData8.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(7, 1));
     cellData8.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(7, 2));
-}
+        }
 
 template<class TypeTag>
 void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx)
 {
-        ElementPointer& elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
+    ElementPointer& elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
 
-        // get global coordinate of cell centers
-        const GlobalPosition& globalPos = elementPointer->geometry().center();
+    // get global coordinate of cell centers
+    const GlobalPosition& globalPos = elementPointer->geometry().center();
 
-        // permeability vector at boundary
-        DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(*elementPointer));
+    // permeability vector at boundary
+    DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(*elementPointer));
 
-        //get mobilities of the phases
-        Dune::FieldVector<Scalar, numPhases> lambda(cellData.mobility(wPhaseIdx));
-        lambda[nPhaseIdx] = cellData.mobility(nPhaseIdx);
+    //get mobilities of the phases
+    Dune::FieldVector<Scalar, numPhases> lambda(cellData.mobility(wPhaseIdx));
+    lambda[nPhaseIdx] = cellData.mobility(nPhaseIdx);
 
-        Scalar potW = cellData.potential(wPhaseIdx);
-        Scalar potNw = cellData.potential(nPhaseIdx);
+    Scalar potW = cellData.potential(wPhaseIdx);
+    Scalar potNw = cellData.potential(nPhaseIdx);
 
-        for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+    for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+    {
+        int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
+
+        if (interactionVolume.isBoundaryFace(intVolFaceIdx))
         {
-            int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
-
-            if (interactionVolume.isBoundaryFace(intVolFaceIdx))
+            if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressureEqIdx))
             {
-                if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressureEqIdx))
+                int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
+
+                const GlobalPosition& globalPosFace = interactionVolume.getFacePosition(elemIdx, faceIdx);
+
+                DimVector distVec(globalPosFace - globalPos);
+                Scalar dist = distVec.two_norm();
+                DimVector& normal = interactionVolume.getNormal(elemIdx, faceIdx);
+
+                // get pc and lambda at the boundary
+                Scalar satWBound = cellData.saturation(wPhaseIdx);
+                //check boundary sat at face 1
+                if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(satEqIdx))
                 {
-                    int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
-
-                    const GlobalPosition& globalPosFace = interactionVolume.getFacePosition(elemIdx, faceIdx);
-
-                    DimVector distVec(globalPosFace - globalPos);
-                    Scalar dist = distVec.two_norm();
-                    DimVector& normal = interactionVolume.getNormal(elemIdx, faceIdx);
-
-                    // get pc and lambda at the boundary
-                    Scalar satWBound = cellData.saturation(wPhaseIdx);
-                    //check boundary sat at face 1
-                    if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(satEqIdx))
+                    Scalar satBound = interactionVolume.getDirichletValues(intVolFaceIdx)[saturationIdx];
+                    switch (saturationType_)
                     {
-                        Scalar satBound = interactionVolume.getDirichletValues(intVolFaceIdx)[saturationIdx];
-                        switch (saturationType_)
-                        {
-                        case sw:
-                            {
-                                satWBound = satBound;
-                                break;
-                            }
-                        case sn:
-                            {
-                                satWBound = 1 - satBound;
-                                break;
-                            }
-                        }
-
+                    case sw:
+                    {
+                        satWBound = satBound;
+                        break;
+                    }
+                    case sn:
+                    {
+                        satWBound = 1 - satBound;
+                        break;
+                    }
                     }
 
-                    Scalar pcBound = MaterialLaw::pc(
-                                                     problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
+                }
 
-                    Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_
+                Scalar pcBound = MaterialLaw::pc(
+                        problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
+
+                Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_
                         * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
-                    pcBound += gravityDiffBound;
+                pcBound += gravityDiffBound;
 
-                    Dune::FieldVector<Scalar, numPhases> lambdaBound(
-                                                                     MaterialLaw::krw(problem_.spatialParams().materialLawParams(*elementPointer),
-                                                                                      satWBound));
-                    lambdaBound[nPhaseIdx] = MaterialLaw::krn(
-                                                              problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
-                    lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
-                    lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
+                Dune::FieldVector<Scalar, numPhases> lambdaBound(
+                        MaterialLaw::krw(problem_.spatialParams().materialLawParams(*elementPointer),
+                                satWBound));
+                lambdaBound[nPhaseIdx] = MaterialLaw::krn(
+                        problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
+                lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
+                lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 
-                    Scalar gdeltaZ = (problem_.bBoxMax()-globalPosFace) * gravity_;
-                    Scalar potentialBoundW = interactionVolume.getDirichletValues(intVolFaceIdx)[pressureIdx] + density_[wPhaseIdx]*gdeltaZ;
-                    Scalar potentialBoundNw = potentialBoundW;
+                Scalar gdeltaZ = (problem_.bBoxMax()-globalPosFace) * gravity_;
+                Scalar potentialBoundW = interactionVolume.getDirichletValues(intVolFaceIdx)[pressureIdx] + density_[wPhaseIdx]*gdeltaZ;
+                Scalar potentialBoundNw = potentialBoundW;
 
+                //calculate potential gradients
+                switch (pressureType_)
+                {
+                case pw:
+                {
+                    potentialBoundNw += pcBound;
+                    break;
+                }
+                case pn:
+                {
                     //calculate potential gradients
-                    switch (pressureType_)
-                    {
-                    case pw:
-                        {
-                            potentialBoundNw += pcBound;
-                            break;
-                        }
-                    case pn:
-                        {
-                            //calculate potential gradients
-                            potentialBoundW -= pcBound;
-                            break;
-                        }
-                    }
-
-                    Scalar potentialDiffW = (potW - potentialBoundW) / dist;
-                    Scalar potentialDiffNw = (potNw - potentialBoundNw) / dist;
-
-                    //store potentials for further calculations (saturation, ...)
-                    cellData.fluxData().addUpwindPotential(wPhaseIdx, boundaryFaceIdx, potentialDiffW);
-                    cellData.fluxData().addUpwindPotential(nPhaseIdx, boundaryFaceIdx, potentialDiffNw);
-
-                    //calculated phase velocities from advective velocities -> capillary pressure velocity already added in pressure part!
-                    DimVector velocityW(0);
-                    DimVector velocityNw(0);
-
-                    // calculate capillary pressure gradient
-                    DimVector potentialGradient = normal;
-                    potentialGradient *= (potW - potentialBoundW) / dist;
-                    permeability.mv(potentialGradient, velocityW);
-
-                    potentialGradient = normal;
-                    potentialGradient *= (potNw - potentialBoundNw) / dist;
-                    permeability.mv(potentialGradient, velocityNw);
-
-                    velocityW *= (potentialDiffW >= 0.) ? lambda[wPhaseIdx] : lambdaBound[wPhaseIdx];
-                    velocityNw *= (potentialDiffNw >= 0.) ? lambda[nPhaseIdx] : lambdaBound[nPhaseIdx];
-
-                    //velocity is calculated from two vertices of one intersection!
-                    velocityW *= 0.25;
-                    velocityNw *= 0.25;
-
-                    //store velocities
-                    cellData.fluxData().addVelocity(wPhaseIdx, boundaryFaceIdx, velocityW);
-                    cellData.fluxData().addVelocity(nPhaseIdx, boundaryFaceIdx, velocityNw);
-                    cellData.fluxData().setVelocityMarker(boundaryFaceIdx);
+                    potentialBoundW -= pcBound;
+                    break;
                 }
-                else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx))
-                {
-                    int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
-
-                    DimVector& normal = interactionVolume.getNormal(elemIdx, faceIdx);
-
-                    // get neumann boundary value
-                    PrimaryVariables boundValues(interactionVolume.getNeumannValues(intVolFaceIdx));
-
-                    boundValues[wPhaseIdx] /= density_[wPhaseIdx];
-                    boundValues[nPhaseIdx] /= density_[nPhaseIdx];
-
-                    DimVector velocityW(normal);
-                    DimVector velocityNw(normal);
-
-                    velocityW *= boundValues[wPhaseIdx] / (4.0*interactionVolume.getFaceArea(elemIdx, faceIdx));
-                    velocityNw *= boundValues[nPhaseIdx]
-                        / (4.0*interactionVolume.getFaceArea(elemIdx, faceIdx));
-
-                    //store potentials for further calculations (saturation, ...)
-                    cellData.fluxData().addUpwindPotential(wPhaseIdx, boundaryFaceIdx, boundValues[wPhaseIdx]);
-                    cellData.fluxData().addUpwindPotential(nPhaseIdx, boundaryFaceIdx, boundValues[nPhaseIdx]);
-
-                    //store velocities
-                    cellData.fluxData().addVelocity(wPhaseIdx, boundaryFaceIdx, velocityW);
-                    cellData.fluxData().addVelocity(nPhaseIdx, boundaryFaceIdx, velocityNw);
-                    cellData.fluxData().setVelocityMarker(boundaryFaceIdx);
                 }
-                else
-                {
-                    std::cout << "interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx)"
-                              << interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx) << "\n";
-                    DUNE_THROW(Dune::NotImplemented,
-                               "No valid boundary condition type defined for pressure equation!");
-                }
+
+                Scalar potentialDiffW = (potW - potentialBoundW) / dist;
+                Scalar potentialDiffNw = (potNw - potentialBoundNw) / dist;
+
+                //store potentials for further calculations (saturation, ...)
+                cellData.fluxData().addUpwindPotential(wPhaseIdx, boundaryFaceIdx, potentialDiffW);
+                cellData.fluxData().addUpwindPotential(nPhaseIdx, boundaryFaceIdx, potentialDiffNw);
+
+                //calculated phase velocities from advective velocities -> capillary pressure velocity already added in pressure part!
+                DimVector velocityW(0);
+                DimVector velocityNw(0);
+
+                // calculate capillary pressure gradient
+                DimVector potentialGradient = normal;
+                potentialGradient *= (potW - potentialBoundW) / dist;
+                permeability.mv(potentialGradient, velocityW);
+
+                potentialGradient = normal;
+                potentialGradient *= (potNw - potentialBoundNw) / dist;
+                permeability.mv(potentialGradient, velocityNw);
+
+                velocityW *= (potentialDiffW >= 0.) ? lambda[wPhaseIdx] : lambdaBound[wPhaseIdx];
+                velocityNw *= (potentialDiffNw >= 0.) ? lambda[nPhaseIdx] : lambdaBound[nPhaseIdx];
+
+                //velocity is calculated from two vertices of one intersection!
+                velocityW *= 0.25;
+                velocityNw *= 0.25;
+
+                //store velocities
+                cellData.fluxData().addVelocity(wPhaseIdx, boundaryFaceIdx, velocityW);
+                cellData.fluxData().addVelocity(nPhaseIdx, boundaryFaceIdx, velocityNw);
+                cellData.fluxData().setVelocityMarker(boundaryFaceIdx);
             }
+            else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx))
+            {
+                int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
+
+                DimVector& normal = interactionVolume.getNormal(elemIdx, faceIdx);
+
+                // get neumann boundary value
+                PrimaryVariables boundValues(interactionVolume.getNeumannValues(intVolFaceIdx));
+
+                boundValues[wPhaseIdx] /= density_[wPhaseIdx];
+                boundValues[nPhaseIdx] /= density_[nPhaseIdx];
+
+                DimVector velocityW(normal);
+                DimVector velocityNw(normal);
+
+                velocityW *= boundValues[wPhaseIdx] / (4.0*interactionVolume.getFaceArea(elemIdx, faceIdx));
+                velocityNw *= boundValues[nPhaseIdx]
+                                          / (4.0*interactionVolume.getFaceArea(elemIdx, faceIdx));
+
+                //store potentials for further calculations (saturation, ...)
+                cellData.fluxData().addUpwindPotential(wPhaseIdx, boundaryFaceIdx, boundValues[wPhaseIdx]);
+                cellData.fluxData().addUpwindPotential(nPhaseIdx, boundaryFaceIdx, boundValues[nPhaseIdx]);
+
+                //store velocities
+                cellData.fluxData().addVelocity(wPhaseIdx, boundaryFaceIdx, velocityW);
+                cellData.fluxData().addVelocity(nPhaseIdx, boundaryFaceIdx, velocityNw);
+                cellData.fluxData().setVelocityMarker(boundaryFaceIdx);
+            }
+            else
+            {
+                std::cout << "interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx)"
+                        << interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx) << "\n";
+                DUNE_THROW(Dune::NotImplemented,
+                        "No valid boundary condition type defined for pressure equation!");
+            }
+        }
     }
 }
 

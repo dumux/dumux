@@ -36,9 +36,9 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2pAdaptive: public FvMpfa
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum
-        {
-            dim = GridView::dimension, dimWorld = GridView::dimensionworld
-        };
+    {
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -89,14 +89,14 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2pAdaptive: public FvMpfa
 public:
     FvMpfaL3dPressureVelocity2pAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem), velocity_(problem)
-    {
+{
         density_[wPhaseIdx] = 0.;
         density_[nPhaseIdx] = 0.;
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
 
         calcVelocityInTransport_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPFA, CalcVelocityInTransport);
-    }
+}
 
     void calculateVelocity();
 
@@ -114,7 +114,7 @@ public:
         this->storePressureSolution();
 
         if (!calculateVelocityInTransport())
-        calculateVelocity();
+            calculateVelocity();
     }
 
     void initialize(bool solveTwice = true)
@@ -135,7 +135,7 @@ public:
         velocity_.initialize();
 
         if (!calculateVelocityInTransport())
-        calculateVelocity();
+            calculateVelocity();
 
         return;
     }
@@ -145,7 +145,7 @@ public:
         ParentType::update();
 
         if (!calculateVelocityInTransport())
-        calculateVelocity();
+            calculateVelocity();
     }
 
     /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
@@ -281,15 +281,8 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
 
     CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
 
-    const ReferenceElement& referenceElement = ReferenceElements::general(elementPtrI->geometry().type());
-
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();
-
-    int faceIdx = indexInInside;
-
-    if (levelI < levelJ)
-        faceIdx = indexInOutside;
 
     Dune::FieldVector<CellData, 8> cellDataTemp;
 
@@ -307,96 +300,134 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
         cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, 0);
     }
 
-    for (int vIdx = 0; vIdx < numVertices; vIdx++)
+    std::set<int> globalVertIdx;
+
+    if (levelI >= levelJ)
     {
-        int localVertIdx = referenceElement.subEntity(faceIdx, 1, vIdx, dim);
+        globalVertIdx = this->interactionVolumes_.faceVerticeIndices(globalIdxI, indexInInside);
+    }
+    else
+    {
+        globalVertIdx = this->interactionVolumes_.faceVerticeIndices(globalIdxJ, indexInOutside);
+    }
 
-        int globalVertIdx = 0;
-                if (levelI >= levelJ)
-                {
-                    globalVertIdx = problem_.variables().index(
-                            *((*elementPtrI).template subEntity < dim > (localVertIdx)));
-                }
-                else
-                {
-                    globalVertIdx = problem_.variables().index(
-                            *((*elementPtrJ).template subEntity < dim > (localVertIdx)));
-                }
+    std::set<int>::iterator itEnd = globalVertIdx.end();
 
-        InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(globalVertIdx);
+    for (std::set<int>::iterator vIdxIt = globalVertIdx.begin(); vIdxIt != itEnd; ++vIdxIt)
+    {
+        InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(*vIdxIt);
 
         if (interactionVolume.isInnerVolume())
         {
-        // cell index
-        int globalIdx[8];
-        for (int i = 0; i < 8; i++)
-        {
-            globalIdx[i] = problem_.variables().index(*(interactionVolume.getSubVolumeElement(i)));
-            cellDataTemp[i] = problem_.variables().cellData(globalIdx[i]);
-        }
+            // cell index
+            std::vector<std::pair<int,int> > localMpfaElemIdx(0);
 
-        if (!interactionVolume.isHangingNodeVolume())
-        {
-        velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume,
-                cellDataTemp[0], cellDataTemp[1], cellDataTemp[2], cellDataTemp[3],
-                cellDataTemp[4], cellDataTemp[5], cellDataTemp[6], cellDataTemp[7],
-                this->interactionVolumes_, this->transmissibilityCalculator_);
-        }
-        else
-        {
-            velocity_.calculateHangingNodeInteractionVolumeVelocity(interactionVolume,
-                    cellDataTemp[0], cellDataTemp[1], cellDataTemp[2], cellDataTemp[3],
-                    cellDataTemp[4], cellDataTemp[5], cellDataTemp[6], cellDataTemp[7]);
-        }
-
-
-        for (int i = 0; i < 8; i++)
-        {
-            if (globalIdx[i] == globalIdxI)
+            int globalIdx[8];
+            for (int i = 0; i < 8; i++)
             {
+                ElementPointer elem = *(interactionVolume.getSubVolumeElement(i));
+
+                if (interactionVolume.isHangingNodeVolume())
+                {
+                    if (elem == elementPtrI)
+                    {
+                        for (int j = 0; j < 3; j++)
+                        {
+                            for (int k = 0; k < 8; k++)
+                            {
+                                ElementPointer elemJ = *(interactionVolume.getSubVolumeElement(k));
+
+                                if (elemJ == elementPtrJ && IndexTranslator::getFaceIndexFromSubVolume(i,j) == IndexTranslator::getFaceIndexFromElements(i,k))
+                                {
+                                    std::pair<int,int> localIdx = std::make_pair(i, k);
+                                    localMpfaElemIdx.push_back(localIdx);
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (localMpfaElemIdx.size() != 1)
+                        localMpfaElemIdx.resize(1);
+
+                    if (elem == elementPtrI)
+                        localMpfaElemIdx[0].first = i;
+                    else if (elem == elementPtrJ)
+                        localMpfaElemIdx[0].second = i;
+                }
+
+                globalIdx[i] = problem_.variables().index(*elem);
+                cellDataTemp[i] = problem_.variables().cellData(globalIdx[i]);
+            }
+
+            int size = localMpfaElemIdx.size();
+
+            //            if (size > 1)
+            //                std::cout<<"size = "<<size<<"\n";
+
+            for (int i = 0; i < size; i++)
+            {
+                int mpfaFaceIdx = IndexTranslator::getFaceIndexFromElements(localMpfaElemIdx[i].first, localMpfaElemIdx[i].second);
+
+                if (!interactionVolume.isHangingNodeVolume())
+                {
+                    velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume,
+                            cellDataTemp[0], cellDataTemp[1], cellDataTemp[2], cellDataTemp[3],
+                            cellDataTemp[4], cellDataTemp[5], cellDataTemp[6], cellDataTemp[7],
+                            this->interactionVolumes_, this->transmissibilityCalculator_, mpfaFaceIdx);
+                }
+                else
+                {
+                    velocity_.calculateHangingNodeInteractionVolumeVelocity(interactionVolume,
+                            cellDataTemp[0], cellDataTemp[1], cellDataTemp[2], cellDataTemp[3],
+                            cellDataTemp[4], cellDataTemp[5], cellDataTemp[6], cellDataTemp[7], mpfaFaceIdx);
+                }
+
                 if (levelI >= levelJ)
                 {
-                 cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInInside));
-                 cellData.fluxData().setVelocity(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInInside));
-                 cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInInside));
-                 cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInInside));
-
-                 if (levelI > levelJ)
-                 {
-                     cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInInside));
-                     cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInInside));
-                     cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInInside));
-                     cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInInside));
-
-                 }
+                    cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdx[i].first].fluxData().velocity(wPhaseIdx, indexInInside));
+                    cellData.fluxData().setVelocity(nPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdx[i].first].fluxData().velocity(nPhaseIdx, indexInInside));
+                    cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdx[i].first].fluxData().upwindPotential(wPhaseIdx, indexInInside));
+                    cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdx[i].first].fluxData().upwindPotential(nPhaseIdx, indexInInside));
                 }
-            }
-            else if (globalIdx[i] == globalIdxJ)
-            {
                 if (levelJ >= levelI)
                 {
-                cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInOutside));
-                cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInOutside));
-                cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
-                cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
-
-                if (levelJ > levelI)
-                {
-                    cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInOutside));
-                    cellData.fluxData().setVelocity(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInOutside));
-                    cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
-                    cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
-
+                    cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdx[i].second].fluxData().velocity(wPhaseIdx, indexInOutside));
+                    cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdx[i].second].fluxData().velocity(nPhaseIdx, indexInOutside));
+                    cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdx[i].second].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
+                    cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdx[i].second].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
                 }
+
+                if (size > 1)
+                {
+                    for (int i = 0; i < 8; i++)
+                    {
+                        cellDataTemp[i] = problem_.variables().cellData(globalIdx[i]);
+                    }
                 }
             }
         }
     }
-    }
+
     if (levelI == levelJ)
     {
         cellData.fluxData().setVelocityMarker(indexInInside);
         cellDataJ.fluxData().setVelocityMarker(indexInOutside);
+    }
+    else if (levelI > levelJ)
+    {
+        cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside, cellData.fluxData().velocity(wPhaseIdx, indexInInside));
+        cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside, cellData.fluxData().velocity(nPhaseIdx, indexInInside));
+        cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside, -1*cellData.fluxData().upwindPotential(wPhaseIdx, indexInInside));
+        cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, -1*cellData.fluxData().upwindPotential(nPhaseIdx, indexInInside));
+    }
+    else if (levelJ > levelI)
+    {
+        cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, cellDataJ.fluxData().velocity(wPhaseIdx, indexInOutside));
+        cellData.fluxData().setVelocity(nPhaseIdx, indexInInside, cellDataJ.fluxData().velocity(nPhaseIdx, indexInOutside));
+        cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, -1*cellDataJ.fluxData().upwindPotential(wPhaseIdx, indexInOutside));
+        cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, -1*cellDataJ.fluxData().upwindPotential(nPhaseIdx, indexInOutside));
     }
 }
 
@@ -493,9 +524,9 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
         }
 
         Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satW)
-                / viscosity_[wPhaseIdx];
+        / viscosity_[wPhaseIdx];
         Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satW)
-                / viscosity_[nPhaseIdx];
+        / viscosity_[nPhaseIdx];
 
         Scalar potentialDiffW = cellData.fluxData().upwindPotential(wPhaseIdx, isIndex);
         Scalar potentialDiffNw = cellData.fluxData().upwindPotential(nPhaseIdx, isIndex);
@@ -538,13 +569,13 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
         {
             velocityW *= lambdaW * scalarPerm * ((cellData.pressure(wPhaseIdx) - pressBound) / dist + gravityTermW);
             velocityNw *= lambdaNw * scalarPerm * ((cellData.pressure(wPhaseIdx) - pressBound) / dist + gravityTermNw)
-                    + 0.5 * (lambdaNwI + lambdaNwBound) * scalarPerm * (pcI - pcBound) / dist;
+                                            + 0.5 * (lambdaNwI + lambdaNwBound) * scalarPerm * (pcI - pcBound) / dist;
             break;
         }
         case pn:
         {
             velocityW *= lambdaW * scalarPerm * ((cellData.pressure(nPhaseIdx) - pressBound) / dist + gravityTermW)
-                    - 0.5 * (lambdaWI + lambdaWBound) * scalarPerm * (pcI - pcBound) / dist;
+                                            - 0.5 * (lambdaWI + lambdaWBound) * scalarPerm * (pcI - pcBound) / dist;
             velocityNw *= lambdaNw * scalarPerm * ((cellData.pressure(nPhaseIdx) - pressBound) / dist + gravityTermNw);
             break;
         }
@@ -567,8 +598,8 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
         velocityW *= boundValues[wPhaseIdx];
         velocityNw *= boundValues[nPhaseIdx];
 
-            velocityW /= density_[wPhaseIdx];
-            velocityNw /= density_[nPhaseIdx];
+        velocityW /= density_[wPhaseIdx];
+        velocityNw /= density_[nPhaseIdx];
 
         //store potential gradients for further calculations
         cellData.fluxData().setUpwindPotential(wPhaseIdx, isIndex, boundValues[wPhaseIdx]);

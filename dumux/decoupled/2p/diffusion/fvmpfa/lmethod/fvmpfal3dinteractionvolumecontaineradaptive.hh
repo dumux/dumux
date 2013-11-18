@@ -73,6 +73,7 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef std::vector<Dune::FieldVector<std::set<int>, 2*dim> > FaceVerticesVector;
 
     enum
         {
@@ -80,6 +81,7 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
         };
 
     typedef IndexTranslatorAdaptive IndexTranslator;
+
 public:
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
 
@@ -92,6 +94,11 @@ private:
 
 public:
 
+    std::set<int>& faceVerticeIndices(int globalElemIdx, int faceIdx)
+    {
+        return faceVertices_[globalElemIdx][faceIdx];
+    }
+
     FvMpfaL3dInteractionVolumeContainerAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem)
     {
@@ -103,6 +110,7 @@ public:
 
 private:
     Problem& problem_;
+    FaceVerticesVector faceVertices_;
 };
 
 template<class TypeTag>
@@ -1547,6 +1555,9 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
         this->storeIntersectionInfo(*ePtr, elemVertMap);
     }
 
+    faceVertices_.clear();
+    faceVertices_.resize(problem_.gridView().size(0));
+
     // run through all vertices
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
@@ -1600,6 +1611,17 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
             this->addRealFluxFaceArea_(interactionVolume.getFaceArea(4, 0), globalIdx5, interactionVolume.getIndexOnElement(4, 0));
             this->addRealFluxFaceArea_(interactionVolume.getFaceArea(5, 0), globalIdx6, interactionVolume.getIndexOnElement(5, 0));
 
+            faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 0)].insert(globalVertIdx);
+            faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 1)].insert(globalVertIdx);
+            faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 2)].insert(globalVertIdx);
+            faceVertices_[globalIdx2][interactionVolume.getIndexOnElement(1, 0)].insert(globalVertIdx);
+            faceVertices_[globalIdx2][interactionVolume.getIndexOnElement(1, 1)].insert(globalVertIdx);
+            faceVertices_[globalIdx2][interactionVolume.getIndexOnElement(1, 2)].insert(globalVertIdx);
+            faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 0)].insert(globalVertIdx);
+            faceVertices_[globalIdx4][interactionVolume.getIndexOnElement(3, 1)].insert(globalVertIdx);
+            faceVertices_[globalIdx5][interactionVolume.getIndexOnElement(4, 0)].insert(globalVertIdx);
+            faceVertices_[globalIdx6][interactionVolume.getIndexOnElement(5, 0)].insert(globalVertIdx);
+
             if (interactionVolume.getHangingNodeType() != InteractionVolume::twoSmallCells)
             {
                 this->addRealFluxFaceArea_(interactionVolume.getFaceArea(2, 1), globalIdx3, interactionVolume.getIndexOnElement(2, 1));
@@ -1616,6 +1638,21 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
                 this->addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 0), globalIdx8, interactionVolume.getIndexOnElement(7, 0));
                 this->addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 1), globalIdx8, interactionVolume.getIndexOnElement(7, 1));
                 this->addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 2), globalIdx8, interactionVolume.getIndexOnElement(7, 2));
+
+                faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 1)].insert(globalVertIdx);
+                faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 2)].insert(globalVertIdx);
+                faceVertices_[globalIdx4][interactionVolume.getIndexOnElement(3, 0)].insert(globalVertIdx);
+                faceVertices_[globalIdx4][interactionVolume.getIndexOnElement(3, 2)].insert(globalVertIdx);
+                faceVertices_[globalIdx5][interactionVolume.getIndexOnElement(4, 1)].insert(globalVertIdx);
+                faceVertices_[globalIdx5][interactionVolume.getIndexOnElement(4, 2)].insert(globalVertIdx);
+                faceVertices_[globalIdx6][interactionVolume.getIndexOnElement(5, 1)].insert(globalVertIdx);
+                faceVertices_[globalIdx6][interactionVolume.getIndexOnElement(5, 2)].insert(globalVertIdx);
+                faceVertices_[globalIdx7][interactionVolume.getIndexOnElement(6, 0)].insert(globalVertIdx);
+                faceVertices_[globalIdx7][interactionVolume.getIndexOnElement(6, 1)].insert(globalVertIdx);
+                faceVertices_[globalIdx7][interactionVolume.getIndexOnElement(6, 2)].insert(globalVertIdx);
+                faceVertices_[globalIdx8][interactionVolume.getIndexOnElement(7, 0)].insert(globalVertIdx);
+                faceVertices_[globalIdx8][interactionVolume.getIndexOnElement(7, 1)].insert(globalVertIdx);
+                faceVertices_[globalIdx8][interactionVolume.getIndexOnElement(7, 2)].insert(globalVertIdx);
             }
         }
 

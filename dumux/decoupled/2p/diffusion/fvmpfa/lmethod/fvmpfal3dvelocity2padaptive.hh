@@ -37,9 +37,9 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum
-        {
-            dim = GridView::dimension, dimWorld = GridView::dimensionworld
-        };
+    {
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -84,39 +84,39 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
 
 
     enum
-        {
-            pw = Indices::pressureW,
-            pn = Indices::pressureNw,
-            pglobal = Indices::pressureGlobal,
-            sw = Indices::saturationW,
-            sn = Indices::saturationNw,
-            vw = Indices::velocityW,
-            vn = Indices::velocityNw,
-            vt = Indices::velocityTotal
-        };
+    {
+        pw = Indices::pressureW,
+        pn = Indices::pressureNw,
+        pglobal = Indices::pressureGlobal,
+        sw = Indices::saturationW,
+        sn = Indices::saturationNw,
+        vw = Indices::velocityW,
+        vn = Indices::velocityNw,
+        vt = Indices::velocityTotal
+    };
     enum
-        {
-            wPhaseIdx = Indices::wPhaseIdx,
-            nPhaseIdx = Indices::nPhaseIdx,
-            pressureIdx = Indices::pressureIdx,
-            saturationIdx = Indices::saturationIdx,
-            pressureEqIdx = Indices::pressureEqIdx,
-            satEqIdx = Indices::satEqIdx,
-            numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
-        };
+    {
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        pressureIdx = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
+        pressureEqIdx = Indices::pressureEqIdx,
+        satEqIdx = Indices::satEqIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+    };
     enum
-        {
-            globalCorner = 2,
-            globalEdge = 3,
-            neumannNeumann = 0,
-            dirichletDirichlet = 1,
-            dirichletNeumann = 2,
-            neumannDirichlet = 3
-        };
+    {
+        globalCorner = 2,
+        globalEdge = 3,
+        neumannNeumann = 0,
+        dirichletDirichlet = 1,
+        dirichletNeumann = 2,
+        neumannDirichlet = 3
+    };
     enum
-        {
-            innerEdgeFace = 2, innerSideFace = 1
-        };
+    {
+        innerEdgeFace = 2, innerSideFace = 1
+    };
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -136,16 +136,16 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
 public:
     FvMpfaL3dVelocity2pAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem), gravity_(problem.gravity())
-    {
+{
         density_[wPhaseIdx] = 0.;
         density_[nPhaseIdx] = 0.;
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
-    }
+}
 
     void calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume,
             CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
-            CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8);
+            CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8, int faceIdx = -1);
 
 
     void initialize()
@@ -185,8 +185,8 @@ private:
 template<class TypeTag>
 void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume,
         CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
-        CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8)
-{
+        CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8, int faceIdx)
+        {
     ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
     ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
     ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(2);
@@ -343,534 +343,1205 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
     DimVector Tu(0);
     Dune::FieldVector<Scalar, 2 * dim - dim + 1> u(0);
     TransmissibilityType T(0);
+    TransmissibilityType TSecond(0);
     Dune::FieldVector<bool, 4> useCases(false);
 
     int hangingNodeType = interactionVolume.getHangingNodeType();
 
-    // calculate the flux through the subvolumeface 1 (subVolumeFaceIdx = 0)
-    int caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 0, 1, 2, 3,
-                                                               4, 5);
 
-    if (caseL == 1)
+
+    if (faceIdx < 0 || faceIdx == 0)
     {
-        u[0] = potW[0];
-        u[1] = potW[1];
-        u[2] = potW[2];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[0] = Tu[0];
-        potentialDiffW0 = Tu[0];
-
-        u[0] = potNw[0];
-        u[1] = potNw[1];
-        u[2] = potNw[2];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[0] = Tu[0];
-        potentialDiffNw0 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[0];
-        u[1] = potW[1];
-        u[2] = potW[3];
-        u[3] = potW[5];
-
-        T.mv(u, Tu);
-
-        fluxW[0] = Tu[0];
-        potentialDiffW0 = Tu[0];
-
-        u[0] = potNw[0];
-        u[1] = potNw[1];
-        u[2] = potNw[3];
-        u[3] = potNw[5];
-
-        T.mv(u, Tu);
-
-        fluxNw[0] = Tu[0];
-        potentialDiffNw0 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[0];
-        u[1] = potW[1];
-        u[2] = potW[3];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[0] = Tu[0];
-        potentialDiffW0 = Tu[0];
-
-        u[0] = potNw[0];
-        u[1] = potNw[1];
-        u[2] = potNw[3];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[0] = Tu[0];
-        potentialDiffNw0 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[0];
-        u[1] = potW[1];
-        u[2] = potW[2];
-        u[3] = potW[5];
-
-        T.mv(u, Tu);
-
-        fluxW[0] = Tu[0];
-        potentialDiffW0 = Tu[0];
-
-        u[0] = potNw[0];
-        u[1] = potNw[1];
-        u[2] = potNw[2];
-        u[3] = potNw[5];
-
-        T.mv(u, Tu);
-
-        fluxNw[0] = Tu[0];
-        potentialDiffNw0 = Tu[0];
-    }
-
-    // calculate the flux through the subvolumeface 2 (subVolumeFaceIdx = 1)
-    T = 0;
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::twoSmallCells
-        || hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-        useCases[0] = true;
-        useCases[1] = false;
-        useCases[2] = false;
-        useCases[3] = true;
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 3, 0,
-                                                               2, 5, 7, useCases);
-    }
-    else
-    {
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 3, 0,
-                                                               2, 5, 7);
-    }
-
-    if (caseL == 1)
-    {
-        u[0] = potW[1];
-        u[1] = potW[3];
-        u[2] = potW[0];
-        u[3] = potW[5];
-
-        T.mv(u, Tu);
-
-        fluxW[1] = Tu[0];
-        potentialDiffW1 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[3];
-        u[2] = potNw[0];
-        u[3] = potNw[5];
-
-        T.mv(u, Tu);
-
-        fluxNw[1] = Tu[0];
-        potentialDiffNw1 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[1];
-        u[1] = potW[3];
-        u[2] = potW[2];
-        u[3] = potW[7];
-
-        T.mv(u, Tu);
-
-        fluxW[1] = Tu[0];
-        potentialDiffW1 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[3];
-        u[2] = potNw[2];
-        u[3] = potNw[7];
-
-        T.mv(u, Tu);
-
-        fluxNw[1] = Tu[0];
-        potentialDiffNw1 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[1];
-        u[1] = potW[3];
-        u[2] = potW[2];
-        u[3] = potW[5];
-
-        T.mv(u, Tu);
-
-        fluxW[1] = Tu[0];
-        potentialDiffW1 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[3];
-        u[2] = potNw[2];
-        u[3] = potNw[5];
-
-        T.mv(u, Tu);
-
-        fluxNw[1] = Tu[0];
-        potentialDiffNw1 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[1];
-        u[1] = potW[3];
-        u[2] = potW[0];
-        u[3] = potW[7];
-
-        T.mv(u, Tu);
-
-        fluxW[1] = Tu[0];
-        potentialDiffW1 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[3];
-        u[2] = potNw[0];
-        u[3] = potNw[7];
-
-        T.mv(u, Tu);
-
-        fluxNw[1] = Tu[0];
-        potentialDiffNw1 = Tu[0];
-    }
-
-    // calculate the flux through the subvolumeface 3 (subVolumeFaceIdx = 2)
-    T = 0;
-    caseL = 0;
-    if (hangingNodeType != InteractionVolume::twoSmallCells
-        && hangingNodeType != InteractionVolume::fourSmallCellsDiag)
-    {
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 3,
-                                                               2, 1, 0, 7, 6);//, false);
+        // calculate the flux through the subvolumeface 1 (subVolumeFaceIdx = 0)
+        int caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 0, 1, 2, 3,
+                4, 5);
 
         if (caseL == 1)
         {
-            u[0] = potW[3];
-            u[1] = potW[2];
-            u[2] = potW[1];
+            u[0] = potW[0];
+            u[1] = potW[1];
+            u[2] = potW[2];
+            u[3] = potW[4];
+
+            T.mv(u, Tu);
+
+            fluxW[0] = Tu[0];
+            potentialDiffW0 = Tu[0];
+
+            u[0] = potNw[0];
+            u[1] = potNw[1];
+            u[2] = potNw[2];
+            u[3] = potNw[4];
+
+            T.mv(u, Tu);
+
+            fluxNw[0] = Tu[0];
+            potentialDiffNw0 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[0];
+            u[1] = potW[1];
+            u[2] = potW[3];
+            u[3] = potW[5];
+
+            T.mv(u, Tu);
+
+            fluxW[0] = Tu[0];
+            potentialDiffW0 = Tu[0];
+
+            u[0] = potNw[0];
+            u[1] = potNw[1];
+            u[2] = potNw[3];
+            u[3] = potNw[5];
+
+            T.mv(u, Tu);
+
+            fluxNw[0] = Tu[0];
+            potentialDiffNw0 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[0];
+            u[1] = potW[1];
+            u[2] = potW[3];
+            u[3] = potW[4];
+
+            T.mv(u, Tu);
+
+            fluxW[0] = Tu[0];
+            potentialDiffW0 = Tu[0];
+
+            u[0] = potNw[0];
+            u[1] = potNw[1];
+            u[2] = potNw[3];
+            u[3] = potNw[4];
+
+            T.mv(u, Tu);
+
+            fluxNw[0] = Tu[0];
+            potentialDiffNw0 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[0];
+            u[1] = potW[1];
+            u[2] = potW[2];
+            u[3] = potW[5];
+
+            T.mv(u, Tu);
+
+            fluxW[0] = Tu[0];
+            potentialDiffW0 = Tu[0];
+
+            u[0] = potNw[0];
+            u[1] = potNw[1];
+            u[2] = potNw[2];
+            u[3] = potNw[5];
+
+            T.mv(u, Tu);
+
+            fluxNw[0] = Tu[0];
+            potentialDiffNw0 = Tu[0];
+        }
+    }
+
+    if (faceIdx < 0 || faceIdx == 1)
+    {
+        // calculate the flux through the subvolumeface 2 (subVolumeFaceIdx = 1)
+        T = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::twoSmallCells
+                || hangingNodeType == InteractionVolume::fourSmallCellsDiag)
+        {
+            useCases[0] = true;
+            useCases[1] = false;
+            useCases[2] = false;
+            useCases[3] = true;
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 3, 0,
+                    2, 5, 7, useCases);
+        }
+        else
+        {
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 3, 0,
+                    2, 5, 7);
+        }
+
+        if (caseL == 1)
+        {
+            u[0] = potW[1];
+            u[1] = potW[3];
+            u[2] = potW[0];
+            u[3] = potW[5];
+
+            T.mv(u, Tu);
+
+            fluxW[1] = Tu[0];
+            potentialDiffW1 = Tu[0];
+
+            u[0] = potNw[1];
+            u[1] = potNw[3];
+            u[2] = potNw[0];
+            u[3] = potNw[5];
+
+            T.mv(u, Tu);
+
+            fluxNw[1] = Tu[0];
+            potentialDiffNw1 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[1];
+            u[1] = potW[3];
+            u[2] = potW[2];
             u[3] = potW[7];
 
             T.mv(u, Tu);
 
-            fluxW[2] = Tu[0];
-            potentialDiffW2 = Tu[0];
+            fluxW[1] = Tu[0];
+            potentialDiffW1 = Tu[0];
 
-            u[0] = potNw[3];
-            u[1] = potNw[2];
-            u[2] = potNw[1];
+            u[0] = potNw[1];
+            u[1] = potNw[3];
+            u[2] = potNw[2];
             u[3] = potNw[7];
 
             T.mv(u, Tu);
 
-            fluxNw[2] = Tu[0];
-            potentialDiffNw2 = Tu[0];
-        }
-        else if (caseL == 2)
-        {
-            u[0] = potW[3];
-            u[1] = potW[2];
-            u[2] = potW[0];
-            u[3] = potW[6];
-
-            T.mv(u, Tu);
-
-            fluxW[2] = Tu[0];
-            potentialDiffW2 = Tu[0];
-
-            u[0] = potNw[3];
-            u[1] = potNw[2];
-            u[2] = potNw[0];
-            u[3] = potNw[6];
-
-            T.mv(u, Tu);
-
-            fluxNw[2] = Tu[0];
-            potentialDiffNw2 = Tu[0];
+            fluxNw[1] = Tu[0];
+            potentialDiffNw1 = Tu[0];
         }
         else if (caseL == 3)
         {
-            u[0] = potW[3];
-            u[1] = potW[2];
+            u[0] = potW[1];
+            u[1] = potW[3];
+            u[2] = potW[2];
+            u[3] = potW[5];
+
+            T.mv(u, Tu);
+
+            fluxW[1] = Tu[0];
+            potentialDiffW1 = Tu[0];
+
+            u[0] = potNw[1];
+            u[1] = potNw[3];
+            u[2] = potNw[2];
+            u[3] = potNw[5];
+
+            T.mv(u, Tu);
+
+            fluxNw[1] = Tu[0];
+            potentialDiffNw1 = Tu[0];
+        }
+        else
+        {
+            u[0] = potW[1];
+            u[1] = potW[3];
             u[2] = potW[0];
             u[3] = potW[7];
 
             T.mv(u, Tu);
 
-            fluxW[2] = Tu[0];
-            potentialDiffW2 = Tu[0];
+            fluxW[1] = Tu[0];
+            potentialDiffW1 = Tu[0];
 
-            u[0] = potNw[3];
-            u[1] = potNw[2];
+            u[0] = potNw[1];
+            u[1] = potNw[3];
             u[2] = potNw[0];
             u[3] = potNw[7];
 
             T.mv(u, Tu);
 
-            fluxNw[2] = Tu[0];
-            potentialDiffNw2 = Tu[0];
+            fluxNw[1] = Tu[0];
+            potentialDiffNw1 = Tu[0];
+        }
+    }
+
+    if (faceIdx < 0 || faceIdx == 2)
+    {
+        // calculate the flux through the subvolumeface 3 (subVolumeFaceIdx = 2)
+        T = 0;
+        int caseL = 0;
+        if (hangingNodeType != InteractionVolume::twoSmallCells
+                && hangingNodeType != InteractionVolume::fourSmallCellsDiag)
+        {
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 3,
+                    2, 1, 0, 7, 6);//, false);
+
+            if (caseL == 1)
+            {
+                u[0] = potW[3];
+                u[1] = potW[2];
+                u[2] = potW[1];
+                u[3] = potW[7];
+
+                T.mv(u, Tu);
+
+                fluxW[2] = Tu[0];
+                potentialDiffW2 = Tu[0];
+
+                u[0] = potNw[3];
+                u[1] = potNw[2];
+                u[2] = potNw[1];
+                u[3] = potNw[7];
+
+                T.mv(u, Tu);
+
+                fluxNw[2] = Tu[0];
+                potentialDiffNw2 = Tu[0];
+            }
+            else if (caseL == 2)
+            {
+                u[0] = potW[3];
+                u[1] = potW[2];
+                u[2] = potW[0];
+                u[3] = potW[6];
+
+                T.mv(u, Tu);
+
+                fluxW[2] = Tu[0];
+                potentialDiffW2 = Tu[0];
+
+                u[0] = potNw[3];
+                u[1] = potNw[2];
+                u[2] = potNw[0];
+                u[3] = potNw[6];
+
+                T.mv(u, Tu);
+
+                fluxNw[2] = Tu[0];
+                potentialDiffNw2 = Tu[0];
+            }
+            else if (caseL == 3)
+            {
+                u[0] = potW[3];
+                u[1] = potW[2];
+                u[2] = potW[0];
+                u[3] = potW[7];
+
+                T.mv(u, Tu);
+
+                fluxW[2] = Tu[0];
+                potentialDiffW2 = Tu[0];
+
+                u[0] = potNw[3];
+                u[1] = potNw[2];
+                u[2] = potNw[0];
+                u[3] = potNw[7];
+
+                T.mv(u, Tu);
+
+                fluxNw[2] = Tu[0];
+                potentialDiffNw2 = Tu[0];
+            }
+            else
+            {
+                u[0] = potW[3];
+                u[1] = potW[2];
+                u[2] = potW[1];
+                u[3] = potW[6];
+
+                T.mv(u, Tu);
+
+                fluxW[2] = Tu[0];
+                potentialDiffW2 = Tu[0];
+
+                u[0] = potNw[3];
+                u[1] = potNw[2];
+                u[2] = potNw[1];
+                u[3] = potNw[6];
+
+                T.mv(u, Tu);
+
+                fluxNw[2] = Tu[0];
+                potentialDiffNw2 = Tu[0];
+            }
+        }
+    }
+
+    if (faceIdx < 0 || faceIdx == 3)
+    {
+        // calculate the flux through the subvolumeface 4 (subVolumeFaceIdx = 3)
+        T = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::twoSmallCells
+                || hangingNodeType == InteractionVolume::fourSmallCellsDiag)
+        {
+            useCases[0] = false;
+            useCases[1] = true;
+            useCases[2] = true;
+            useCases[3] = false;
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2, 0, 3, 1, 6,
+                    4, useCases);
         }
         else
         {
-            u[0] = potW[3];
-            u[1] = potW[2];
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2,
+                    0, 3, 1, 6, 4);//, false);
+        }
+
+        if (caseL == 1)
+        {
+            u[0] = potW[2];
+            u[1] = potW[0];
+            u[2] = potW[3];
+            u[3] = potW[6];
+
+            T.mv(u, Tu);
+
+            fluxW[3] = Tu[0];
+            potentialDiffW3 = Tu[0];
+
+            u[0] = potNw[2];
+            u[1] = potNw[0];
+            u[2] = potNw[3];
+            u[3] = potNw[6];
+
+            T.mv(u, Tu);
+
+            fluxNw[3] = Tu[0];
+            potentialDiffNw3 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[2];
+            u[1] = potW[0];
+            u[2] = potW[1];
+            u[3] = potW[4];
+
+            T.mv(u, Tu);
+
+            fluxW[3] = Tu[0];
+            potentialDiffW3 = Tu[0];
+
+            u[0] = potNw[2];
+            u[1] = potNw[0];
+            u[2] = potNw[1];
+            u[3] = potNw[4];
+
+            T.mv(u, Tu);
+
+            fluxNw[3] = Tu[0];
+            potentialDiffNw3 = Tu[0];
+        }
+        else if (caseL == 3)
+        {
+            u[0] = potW[2];
+            u[1] = potW[0];
             u[2] = potW[1];
             u[3] = potW[6];
 
             T.mv(u, Tu);
 
-            fluxW[2] = Tu[0];
-            potentialDiffW2 = Tu[0];
+            fluxW[3] = Tu[0];
+            potentialDiffW3 = Tu[0];
 
-            u[0] = potNw[3];
-            u[1] = potNw[2];
+            u[0] = potNw[2];
+            u[1] = potNw[0];
             u[2] = potNw[1];
             u[3] = potNw[6];
 
             T.mv(u, Tu);
 
-            fluxNw[2] = Tu[0];
-            potentialDiffNw2 = Tu[0];
-        }
-    }
-
-    // calculate the flux through the subvolumeface 4 (subVolumeFaceIdx = 3)
-    T = 0;
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::twoSmallCells
-        || hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-        useCases[0] = false;
-        useCases[1] = true;
-        useCases[2] = true;
-        useCases[3] = false;
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2, 0, 3, 1, 6,
-                                                               4, useCases);
-    }
-    else
-    {
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2,
-                                                               0, 3, 1, 6, 4);//, false);
-    }
-
-    if (caseL == 1)
-    {
-        u[0] = potW[2];
-        u[1] = potW[0];
-        u[2] = potW[3];
-        u[3] = potW[6];
-
-        T.mv(u, Tu);
-
-        fluxW[3] = Tu[0];
-        potentialDiffW3 = Tu[0];
-
-        u[0] = potNw[2];
-        u[1] = potNw[0];
-        u[2] = potNw[3];
-        u[3] = potNw[6];
-
-        T.mv(u, Tu);
-
-        fluxNw[3] = Tu[0];
-        potentialDiffNw3 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[2];
-        u[1] = potW[0];
-        u[2] = potW[1];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[3] = Tu[0];
-        potentialDiffW3 = Tu[0];
-
-        u[0] = potNw[2];
-        u[1] = potNw[0];
-        u[2] = potNw[1];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[3] = Tu[0];
-        potentialDiffNw3 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[2];
-        u[1] = potW[0];
-        u[2] = potW[1];
-        u[3] = potW[6];
-
-        T.mv(u, Tu);
-
-        fluxW[3] = Tu[0];
-        potentialDiffW3 = Tu[0];
-
-        u[0] = potNw[2];
-        u[1] = potNw[0];
-        u[2] = potNw[1];
-        u[3] = potNw[6];
-
-        T.mv(u, Tu);
-
-        fluxNw[3] = Tu[0];
-        potentialDiffNw3 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[2];
-        u[1] = potW[0];
-        u[2] = potW[3];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[3] = Tu[0];
-        potentialDiffW3 = Tu[0];
-
-        u[0] = potNw[2];
-        u[1] = potNw[0];
-        u[2] = potNw[3];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[3] = Tu[0];
-        potentialDiffNw3 = Tu[0];
-    }
-
-    // calculate the flux through the subvolumeface 5 (subVolumeFaceIdx = 4)
-    T = 0;
-    TransmissibilityType TSecond(0);
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::sixSmallCells)
-    {
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 5, 4, 7,
-                                                               6, 1, 0);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
-    {
-        caseL = transmissibilityCalculator_().transmissibilityCaseThree(T, interactionVolume, lambda, 4, 0, 2,
-                                                                        5);
-
-        int caseLSecond = transmissibilityCalculator_().transmissibilityCaseFour(TSecond, interactionVolume, lambda, 1, 5, 3,
-                                                                                 4);
-
-        caseL = transmissibilityCalculator_().chooseTransmissibility(T, TSecond, 3, 4);
-
-        if (caseL == caseLSecond)
-            T = TSecond;
-    }
-    if (hangingNodeType == InteractionVolume::sixSmallCells)
-    {
-        if (caseL == 1)
-        {
-            u[0] = potW[5];
-            u[1] = potW[4];
-            u[2] = potW[7];
-            u[3] = potW[1];
-
-            T.mv(u, Tu);
-
-            fluxW[4] = Tu[0];
-            potentialDiffW4 = Tu[0];
-
-            u[0] = potNw[5];
-            u[1] = potNw[4];
-            u[2] = potNw[7];
-            u[3] = potNw[1];
-
-            T.mv(u, Tu);
-
-            fluxNw[4] = Tu[0];
-            potentialDiffNw4 = Tu[0];
-        }
-        else if (caseL == 2)
-        {
-            u[0] = potW[5];
-            u[1] = potW[4];
-            u[2] = potW[6];
-            u[3] = potW[0];
-
-            T.mv(u, Tu);
-
-            fluxW[4] = Tu[0];
-            potentialDiffW4 = Tu[0];
-
-            u[0] = potNw[5];
-            u[1] = potNw[4];
-            u[2] = potNw[6];
-            u[3] = potNw[0];
-
-            T.mv(u, Tu);
-
-            fluxNw[4] = Tu[0];
-            potentialDiffNw4 = Tu[0];
-        }
-        else if (caseL == 3)
-        {
-            u[0] = potW[5];
-            u[1] = potW[4];
-            u[2] = potW[6];
-            u[3] = potW[1];
-
-            T.mv(u, Tu);
-
-            fluxW[4] = Tu[0];
-            potentialDiffW4 = Tu[0];
-
-            u[0] = potNw[5];
-            u[1] = potNw[4];
-            u[2] = potNw[6];
-            u[3] = potNw[1];
-
-            T.mv(u, Tu);
-
-            fluxNw[4] = Tu[0];
-            potentialDiffNw4 = Tu[0];
+            fluxNw[3] = Tu[0];
+            potentialDiffNw3 = Tu[0];
         }
         else
         {
-            u[0] = potW[5];
-            u[1] = potW[4];
-            u[2] = potW[7];
-            u[3] = potW[0];
+            u[0] = potW[2];
+            u[1] = potW[0];
+            u[2] = potW[3];
+            u[3] = potW[4];
 
             T.mv(u, Tu);
 
-            fluxW[4] = Tu[0];
-            potentialDiffW4 = Tu[0];
+            fluxW[3] = Tu[0];
+            potentialDiffW3 = Tu[0];
 
-            u[0] = potNw[5];
-            u[1] = potNw[4];
-            u[2] = potNw[7];
-            u[3] = potNw[0];
+            u[0] = potNw[2];
+            u[1] = potNw[0];
+            u[2] = potNw[3];
+            u[3] = potNw[4];
 
             T.mv(u, Tu);
 
-            fluxNw[4] = Tu[0];
-            potentialDiffNw4 = Tu[0];
+            fluxNw[3] = Tu[0];
+            potentialDiffNw3 = Tu[0];
         }
     }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
+
+    if (faceIdx < 0 || faceIdx == 4)
     {
-        if (caseL == 3)
+
+        // calculate the flux through the subvolumeface 5 (subVolumeFaceIdx = 4)
+        T = 0;
+        TSecond = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::sixSmallCells)
+        {
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 5, 4, 7,
+                    6, 1, 0);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
+        {
+            caseL = transmissibilityCalculator_().transmissibilityCaseThree(T, interactionVolume, lambda, 4, 0, 2,
+                    5);
+
+            int caseLSecond = transmissibilityCalculator_().transmissibilityCaseFour(TSecond, interactionVolume, lambda, 1, 5, 3,
+                    4);
+
+            caseL = transmissibilityCalculator_().chooseTransmissibility(T, TSecond, 3, 4);
+
+            if (caseL == caseLSecond)
+                T = TSecond;
+        }
+        if (hangingNodeType == InteractionVolume::sixSmallCells)
+        {
+            if (caseL == 1)
+            {
+                u[0] = potW[5];
+                u[1] = potW[4];
+                u[2] = potW[7];
+                u[3] = potW[1];
+
+                T.mv(u, Tu);
+
+                fluxW[4] = Tu[0];
+                potentialDiffW4 = Tu[0];
+
+                u[0] = potNw[5];
+                u[1] = potNw[4];
+                u[2] = potNw[7];
+                u[3] = potNw[1];
+
+                T.mv(u, Tu);
+
+                fluxNw[4] = Tu[0];
+                potentialDiffNw4 = Tu[0];
+            }
+            else if (caseL == 2)
+            {
+                u[0] = potW[5];
+                u[1] = potW[4];
+                u[2] = potW[6];
+                u[3] = potW[0];
+
+                T.mv(u, Tu);
+
+                fluxW[4] = Tu[0];
+                potentialDiffW4 = Tu[0];
+
+                u[0] = potNw[5];
+                u[1] = potNw[4];
+                u[2] = potNw[6];
+                u[3] = potNw[0];
+
+                T.mv(u, Tu);
+
+                fluxNw[4] = Tu[0];
+                potentialDiffNw4 = Tu[0];
+            }
+            else if (caseL == 3)
+            {
+                u[0] = potW[5];
+                u[1] = potW[4];
+                u[2] = potW[6];
+                u[3] = potW[1];
+
+                T.mv(u, Tu);
+
+                fluxW[4] = Tu[0];
+                potentialDiffW4 = Tu[0];
+
+                u[0] = potNw[5];
+                u[1] = potNw[4];
+                u[2] = potNw[6];
+                u[3] = potNw[1];
+
+                T.mv(u, Tu);
+
+                fluxNw[4] = Tu[0];
+                potentialDiffNw4 = Tu[0];
+            }
+            else
+            {
+                u[0] = potW[5];
+                u[1] = potW[4];
+                u[2] = potW[7];
+                u[3] = potW[0];
+
+                T.mv(u, Tu);
+
+                fluxW[4] = Tu[0];
+                potentialDiffW4 = Tu[0];
+
+                u[0] = potNw[5];
+                u[1] = potNw[4];
+                u[2] = potNw[7];
+                u[3] = potNw[0];
+
+                T.mv(u, Tu);
+
+                fluxNw[4] = Tu[0];
+                potentialDiffNw4 = Tu[0];
+            }
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
+        {
+            if (caseL == 3)
+            {
+                u[0] = potW[4];
+                u[1] = potW[0];
+                u[2] = potW[2];
+                u[3] = potW[5];
+
+                T.mv(u, Tu);
+
+                fluxW[4] = -Tu[2];
+                potentialDiffW4 = -Tu[2];
+
+                u[0] = potNw[4];
+                u[1] = potNw[0];
+                u[2] = potNw[2];
+                u[3] = potNw[5];
+
+                T.mv(u, Tu);
+
+                fluxNw[4] = -Tu[2];
+                potentialDiffNw4 = -Tu[2];
+            }
+            else if (caseL == 4)
+            {
+                u[0] = potW[1];
+                u[1] = potW[5];
+                u[2] = potW[3];
+                u[3] = potW[4];
+
+                T.mv(u, Tu);
+
+                fluxW[4] = Tu[2];
+                potentialDiffW4 = Tu[2];
+
+                u[0] = potNw[1];
+                u[1] = potNw[5];
+                u[2] = potNw[3];
+                u[3] = potNw[4];
+
+                T.mv(u, Tu);
+
+                fluxNw[4] = Tu[2];
+                potentialDiffNw4 = Tu[2];
+            }
+        }
+    }
+
+    if (faceIdx < 0 || faceIdx == 5)
+    {
+        // calculate the flux through the subvolumeface 6 (subVolumeFaceIdx = 5)
+        T = 0;
+        TSecond = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::sixSmallCells)
+        {
+            useCases[0] = false;
+            useCases[1] = true;
+            useCases[2] = true;
+            useCases[3] = false;
+
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 7, 5, 6, 4, 3,
+                    1, useCases);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
+        {
+            useCases[0] = true;
+            useCases[1] = false;
+            useCases[2] = false;
+            useCases[3] = true;
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda,  7, 5, 6, 4, 3,
+                    1, useCases);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
+        {
+            caseL = transmissibilityCalculator_().transmissibilityCaseThree(T, interactionVolume, lambda, 1, 5, 7, 0);
+
+            int caseLSecond = transmissibilityCalculator_().transmissibilityCaseFour(TSecond, interactionVolume, lambda, 7, 3, 5,
+                    2);
+
+            caseL = transmissibilityCalculator_().chooseTransmissibility(T, TSecond, 3, 4);
+
+            if (caseL == caseLSecond)
+                T = TSecond;
+        }
+
+        if (hangingNodeType == InteractionVolume::sixSmallCells
+                || hangingNodeType == InteractionVolume::fourSmallCellsDiag)
+        {
+            if (caseL == 1)
+            {
+                u[0] = potW[7];
+                u[1] = potW[5];
+                u[2] = potW[6];
+                u[3] = potW[3];
+
+                T.mv(u, Tu);
+
+                fluxW[5] = Tu[0];
+                potentialDiffW5 = Tu[0];
+
+                u[0] = potNw[7];
+                u[1] = potNw[5];
+                u[2] = potNw[6];
+                u[3] = potNw[3];
+
+                T.mv(u, Tu);
+
+                fluxNw[5] = Tu[0];
+                potentialDiffNw5 = Tu[0];
+            }
+            else if (caseL == 2)
+            {
+                u[0] = potW[7];
+                u[1] = potW[5];
+                u[2] = potW[4];
+                u[3] = potW[1];
+
+                T.mv(u, Tu);
+
+                fluxW[5] = Tu[0];
+                potentialDiffW5 = Tu[0];
+
+                u[0] = potNw[7];
+                u[1] = potNw[5];
+                u[2] = potNw[4];
+                u[3] = potNw[1];
+
+                T.mv(u, Tu);
+
+                fluxNw[5] = Tu[0];
+                potentialDiffNw5 = Tu[0];
+            }
+            else if (caseL == 3)
+            {
+                u[0] = potW[7];
+                u[1] = potW[5];
+                u[2] = potW[4];
+                u[3] = potW[3];
+
+                T.mv(u, Tu);
+
+                fluxW[5] = Tu[0];
+                potentialDiffW5 = Tu[0];
+
+                u[0] = potNw[7];
+                u[1] = potNw[5];
+                u[2] = potNw[4];
+                u[3] = potNw[3];
+
+                T.mv(u, Tu);
+
+                fluxNw[5] = Tu[0];
+                potentialDiffNw5 = Tu[0];
+            }
+            else
+            {
+                u[0] = potW[7];
+                u[1] = potW[5];
+                u[2] = potW[6];
+                u[3] = potW[1];
+
+                T.mv(u, Tu);
+
+                fluxW[5] = Tu[0];
+                potentialDiffW5 = Tu[0];
+
+                u[0] = potNw[7];
+                u[1] = potNw[5];
+                u[2] = potNw[6];
+                u[3] = potNw[1];
+
+                T.mv(u, Tu);
+
+                fluxNw[5] = Tu[0];
+                potentialDiffNw5 = Tu[0];
+            }
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
+        {
+            if (caseL == 3)
+            {
+                u[0] = potW[1];
+                u[1] = potW[5];
+                u[2] = potW[7];
+                u[3] = potW[0];
+
+                T.mv(u, Tu);
+
+                fluxW[5] = -Tu[1];
+                potentialDiffW5 = -Tu[1];
+
+                u[0] = potNw[1];
+                u[1] = potNw[5];
+                u[2] = potNw[7];
+                u[3] = potNw[0];
+
+                T.mv(u, Tu);
+
+                fluxNw[5] = -Tu[1];
+                potentialDiffNw5 = -Tu[1];
+            }
+            else
+            {
+                u[0] = potW[7];
+                u[1] = potW[3];
+                u[2] = potW[5];
+                u[3] = potW[2];
+
+                T.mv(u, Tu);
+
+                fluxW[5] = Tu[1];
+                potentialDiffW5 = Tu[1];
+
+                u[0] = potNw[7];
+                u[1] = potNw[3];
+                u[2] = potNw[5];
+                u[3] = potNw[2];
+
+                T.mv(u, Tu);
+
+                fluxNw[5] = Tu[1];
+                potentialDiffNw5 = Tu[1];
+            }
+        }
+    }
+
+    if (faceIdx < 0 || faceIdx == 6)
+    {
+        // calculate the flux through the subvolumeface 7 (subVolumeFaceIdx = 6)
+        T = 0;
+        TSecond = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
+        {
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 6, 7, 4,
+                    5, 2, 3);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
+        {
+            caseL = transmissibilityCalculator_().transmissibilityCaseThree(T, interactionVolume, lambda, 7, 3, 1, 6);
+
+            int caseLSecond = transmissibilityCalculator_().transmissibilityCaseFour(TSecond, interactionVolume, lambda, 2, 6, 0,
+                    7);
+
+            caseL = transmissibilityCalculator_().chooseTransmissibility(T, TSecond, 3, 4);
+
+            if (caseL == caseLSecond)
+                T = TSecond;
+        }
+
+        if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
+        {
+            if (caseL == 1)
+            {
+                u[0] = potW[6];
+                u[1] = potW[7];
+                u[2] = potW[4];
+                u[3] = potW[2];
+
+                T.mv(u, Tu);
+
+                fluxW[6] = Tu[0];
+                potentialDiffW6 = Tu[0];
+
+                u[0] = potNw[6];
+                u[1] = potNw[7];
+                u[2] = potNw[4];
+                u[3] = potNw[2];
+
+                T.mv(u, Tu);
+
+                fluxNw[6] = Tu[0];
+                potentialDiffNw6 = Tu[0];
+            }
+            else if (caseL == 2)
+            {
+                u[0] = potW[6];
+                u[1] = potW[7];
+                u[2] = potW[5];
+                u[3] = potW[3];
+
+                T.mv(u, Tu);
+
+                fluxW[6] = Tu[0];
+                potentialDiffW6 = Tu[0];
+
+                u[0] = potNw[6];
+                u[1] = potNw[7];
+                u[2] = potNw[5];
+                u[3] = potNw[3];
+
+                T.mv(u, Tu);
+
+                fluxNw[6] = Tu[0];
+                potentialDiffNw6 = Tu[0];
+            }
+            else if (caseL == 3)
+            {
+                u[0] = potW[6];
+                u[1] = potW[7];
+                u[2] = potW[5];
+                u[3] = potW[2];
+
+                T.mv(u, Tu);
+
+                fluxW[6] = Tu[0];
+                potentialDiffW6 = Tu[0];
+
+                u[0] = potNw[6];
+                u[1] = potNw[7];
+                u[2] = potNw[5];
+                u[3] = potNw[2];
+
+                T.mv(u, Tu);
+
+                fluxNw[6] = Tu[0];
+                potentialDiffNw6 = Tu[0];
+            }
+            else
+            {
+                u[0] = potW[6];
+                u[1] = potW[7];
+                u[2] = potW[4];
+                u[3] = potW[3];
+
+                T.mv(u, Tu);
+
+                fluxW[6] = Tu[0];
+                potentialDiffW6 = Tu[0];
+
+                u[0] = potNw[6];
+                u[1] = potNw[7];
+                u[2] = potNw[4];
+                u[3] = potNw[3];
+
+                T.mv(u, Tu);
+
+                fluxNw[6] = Tu[0];
+                potentialDiffNw6 = Tu[0];
+            }
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
+        {
+            if (caseL == 3)
+            {
+                u[0] = potW[7];
+                u[1] = potW[3];
+                u[2] = potW[1];
+                u[3] = potW[6];
+
+                T.mv(u, Tu);
+
+                fluxW[6] = -Tu[2];
+                potentialDiffW6 = -Tu[2];
+
+                u[0] = potNw[7];
+                u[1] = potNw[3];
+                u[2] = potNw[1];
+                u[3] = potNw[6];
+
+                T.mv(u, Tu);
+
+                fluxNw[6] = -Tu[2];
+                potentialDiffNw6 = -Tu[2];
+            }
+            else if (caseL == 4)
+            {
+                u[0] = potW[2];
+                u[1] = potW[6];
+                u[2] = potW[0];
+                u[3] = potW[7];
+
+                T.mv(u, Tu);
+
+                fluxW[6] = Tu[2];
+                potentialDiffW6 = Tu[2];
+
+                u[0] = potNw[2];
+                u[1] = potNw[6];
+                u[2] = potNw[0];
+                u[3] = potNw[7];
+
+                T.mv(u, Tu);
+
+                fluxNw[6] = Tu[2];
+                potentialDiffNw6 = Tu[2];
+            }
+        }
+    }
+
+    if (faceIdx < 0 || faceIdx == 7)
+    {
+        // calculate the flux through the subvolumeface 8 (subVolumeFaceIdx = 7)
+        T = 0;
+        TSecond = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::sixSmallCells)
+        {
+            useCases[0] = true;
+            useCases[1] = false;
+            useCases[2] = false;
+            useCases[3] = true;
+
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 6, 5, 7, 0,
+                    2, useCases);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
+        {
+            useCases[0] = false;
+            useCases[1] = true;
+            useCases[2] = true;
+            useCases[3] = false;
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 6, 5, 7, 0,
+                    2, useCases);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
+        {
+            caseL = transmissibilityCalculator_().transmissibilityCaseThree(T, interactionVolume, lambda, 2, 6, 4,
+                    3);
+
+            int caseLSecond = transmissibilityCalculator_().transmissibilityCaseFour(TSecond, interactionVolume, lambda, 4, 0, 6,
+                    1);
+
+
+
+            caseL = transmissibilityCalculator_().chooseTransmissibility(T, TSecond, 3, 4);
+
+            if (caseL == caseLSecond)
+                T = TSecond;
+        }
+
+        if (hangingNodeType == InteractionVolume::sixSmallCells
+                || hangingNodeType == InteractionVolume::fourSmallCellsDiag)
+        {
+
+            if (caseL == 1)
+            {
+                u[0] = potW[4];
+                u[1] = potW[6];
+                u[2] = potW[5];
+                u[3] = potW[0];
+
+                T.mv(u, Tu);
+
+                fluxW[7] = Tu[0];
+                potentialDiffW7 = Tu[0];
+
+                u[0] = potNw[4];
+                u[1] = potNw[6];
+                u[2] = potNw[5];
+                u[3] = potNw[0];
+
+                T.mv(u, Tu);
+
+                fluxNw[7] = Tu[0];
+                potentialDiffNw7 = Tu[0];
+            }
+            else if (caseL == 2)
+            {
+                u[0] = potW[4];
+                u[1] = potW[6];
+                u[2] = potW[7];
+                u[3] = potW[2];
+
+                T.mv(u, Tu);
+
+                fluxW[7] = Tu[0];
+                potentialDiffW7 = Tu[0];
+
+                u[0] = potNw[4];
+                u[1] = potNw[6];
+                u[2] = potNw[7];
+                u[3] = potNw[2];
+
+                T.mv(u, Tu);
+
+                fluxNw[7] = Tu[0];
+                potentialDiffNw7 = Tu[0];
+            }
+            else if (caseL == 3)
+            {
+                u[0] = potW[4];
+                u[1] = potW[6];
+                u[2] = potW[7];
+                u[3] = potW[0];
+
+                T.mv(u, Tu);
+
+                fluxW[7] = Tu[0];
+                potentialDiffW7 = Tu[0];
+
+                u[0] = potNw[4];
+                u[1] = potNw[6];
+                u[2] = potNw[7];
+                u[3] = potNw[0];
+
+                T.mv(u, Tu);
+
+                fluxNw[7] = Tu[0];
+                potentialDiffNw7 = Tu[0];
+            }
+            else
+            {
+                u[0] = potW[4];
+                u[1] = potW[6];
+                u[2] = potW[5];
+                u[3] = potW[2];
+
+                T.mv(u, Tu);
+
+                fluxW[7] = Tu[0];
+                potentialDiffW7 = Tu[0];
+
+                u[0] = potNw[4];
+                u[1] = potNw[6];
+                u[2] = potNw[5];
+                u[3] = potNw[2];
+
+                T.mv(u, Tu);
+
+                fluxNw[7] = Tu[0];
+                potentialDiffNw7 = Tu[0];
+            }
+        }
+        else if(hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
+        {
+            if (caseL == 3)
+            {
+                u[0] = potW[2];
+                u[1] = potW[6];
+                u[2] = potW[4];
+                u[3] = potW[3];
+
+                T.mv(u, Tu);
+
+                fluxW[7] = -Tu[1];
+                potentialDiffW7 = -Tu[1];
+
+                u[0] = potNw[2];
+                u[1] = potNw[6];
+                u[2] = potNw[4];
+                u[3] = potNw[3];
+
+                T.mv(u, Tu);
+
+                fluxNw[7] = -Tu[1];
+                potentialDiffNw7 = -Tu[1];
+            }
+            else if (caseL == 4)
+            {
+                u[0] = potW[4];
+                u[1] = potW[0];
+                u[2] = potW[6];
+                u[3] = potW[1];
+
+                T.mv(u, Tu);
+
+                fluxW[7] = Tu[1];
+                potentialDiffW7 = Tu[1];
+
+                u[0] = potNw[4];
+                u[1] = potNw[0];
+                u[2] = potNw[6];
+                u[3] = potNw[1];
+
+                T.mv(u, Tu);
+
+                fluxNw[7] = Tu[1];
+                potentialDiffNw7 = Tu[1];
+            }
+        }
+    }
+
+    if (faceIdx < 0 || faceIdx == 8)
+    {
+        // calculate the flux through the subvolumeface 9 (subVolumeFaceIdx = 8)
+        T = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::sixSmallCells)
+        {
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 0, 6,
+                    2, 5, 1);
+        }
+        else if (hangingNodeType == InteractionVolume::twoSmallCells || hangingNodeType == InteractionVolume::fourSmallCellsFace)
+        {
+            caseL = transmissibilityCalculator_().transmissibilityCaseTwo(T, interactionVolume, lambda, 4, 0, 2,
+                    1);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag || (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
+        {
+            useCases[0] = false;
+            useCases[1] = true;
+            useCases[2] = false;
+            useCases[3] = true;
+
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 0, 6,
+                    2, 5, 1, useCases);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
+        {
+            useCases[0] = false;
+            useCases[1] = true;
+            useCases[2] = true;
+            useCases[3] = false;
+
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 0, 6,
+                    2, 5, 1, useCases);
+        }
+
+        if (caseL == 1)
+        {
+            u[0] = potW[4];
+            u[1] = potW[0];
+            u[2] = potW[6];
+            u[3] = potW[5];
+
+            T.mv(u, Tu);
+
+            fluxW[8] = Tu[0];
+            potentialDiffW8 = Tu[0];
+
+            u[0] = potNw[4];
+            u[1] = potNw[0];
+            u[2] = potNw[6];
+            u[3] = potNw[5];
+
+            T.mv(u, Tu);
+
+            fluxNw[8] = Tu[0];
+            potentialDiffNw8 = Tu[0];
+        }
+        else if (caseL == 2)
+        {
+            u[0] = potW[4];
+            u[1] = potW[0];
+            u[2] = potW[2];
+            u[3] = potW[1];
+
+            T.mv(u, Tu);
+
+            fluxW[8] = Tu[0];
+            potentialDiffW8 = Tu[0];
+
+            u[0] = potNw[4];
+            u[1] = potNw[0];
+            u[2] = potNw[2];
+            u[3] = potNw[1];
+
+            T.mv(u, Tu);
+
+            fluxNw[8] = Tu[0];
+            potentialDiffNw8 = Tu[0];
+        }
+        else if (caseL == 3)
         {
             u[0] = potW[4];
             u[1] = potW[0];
@@ -879,8 +1550,8 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
 
             T.mv(u, Tu);
 
-            fluxW[4] = -Tu[2];
-            potentialDiffW4 = -Tu[2];
+            fluxW[8] = Tu[0];
+            potentialDiffW8 = Tu[0];
 
             u[0] = potNw[4];
             u[1] = potNw[0];
@@ -889,527 +1560,10 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
 
             T.mv(u, Tu);
 
-            fluxNw[4] = -Tu[2];
-            potentialDiffNw4 = -Tu[2];
-        }
-        else if (caseL == 4)
-        {
-            u[0] = potW[1];
-            u[1] = potW[5];
-            u[2] = potW[3];
-            u[3] = potW[4];
-
-            T.mv(u, Tu);
-
-            fluxW[4] = Tu[2];
-            potentialDiffW4 = Tu[2];
-
-            u[0] = potNw[1];
-            u[1] = potNw[5];
-            u[2] = potNw[3];
-            u[3] = potNw[4];
-
-            T.mv(u, Tu);
-
-            fluxNw[4] = Tu[2];
-            potentialDiffNw4 = Tu[2];
-        }
-    }
-
-    // calculate the flux through the subvolumeface 6 (subVolumeFaceIdx = 5)
-    T = 0;
-    TSecond = 0;
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::sixSmallCells)
-    {
-        useCases[0] = false;
-        useCases[1] = true;
-        useCases[2] = true;
-        useCases[3] = false;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 7, 5, 6, 4, 3,
-                                                               1, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-        useCases[0] = true;
-        useCases[1] = false;
-        useCases[2] = false;
-        useCases[3] = true;
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda,  7, 5, 6, 4, 3,
-                                                               1, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
-    {
-        caseL = transmissibilityCalculator_().transmissibilityCaseThree(T, interactionVolume, lambda, 1, 5, 7, 0);
-
-        int caseLSecond = transmissibilityCalculator_().transmissibilityCaseFour(TSecond, interactionVolume, lambda, 7, 3, 5,
-                                                                                 2);
-
-        caseL = transmissibilityCalculator_().chooseTransmissibility(T, TSecond, 3, 4);
-
-        if (caseL == caseLSecond)
-            T = TSecond;
-    }
-
-    if (hangingNodeType == InteractionVolume::sixSmallCells
-        || hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-        if (caseL == 1)
-        {
-            u[0] = potW[7];
-            u[1] = potW[5];
-            u[2] = potW[6];
-            u[3] = potW[3];
-
-            T.mv(u, Tu);
-
-            fluxW[5] = Tu[0];
-            potentialDiffW5 = Tu[0];
-
-            u[0] = potNw[7];
-            u[1] = potNw[5];
-            u[2] = potNw[6];
-            u[3] = potNw[3];
-
-            T.mv(u, Tu);
-
-            fluxNw[5] = Tu[0];
-            potentialDiffNw5 = Tu[0];
-        }
-        else if (caseL == 2)
-        {
-            u[0] = potW[7];
-            u[1] = potW[5];
-            u[2] = potW[4];
-            u[3] = potW[1];
-
-            T.mv(u, Tu);
-
-            fluxW[5] = Tu[0];
-            potentialDiffW5 = Tu[0];
-
-            u[0] = potNw[7];
-            u[1] = potNw[5];
-            u[2] = potNw[4];
-            u[3] = potNw[1];
-
-            T.mv(u, Tu);
-
-            fluxNw[5] = Tu[0];
-            potentialDiffNw5 = Tu[0];
-        }
-        else if (caseL == 3)
-        {
-            u[0] = potW[7];
-            u[1] = potW[5];
-            u[2] = potW[4];
-            u[3] = potW[3];
-
-            T.mv(u, Tu);
-
-            fluxW[5] = Tu[0];
-            potentialDiffW5 = Tu[0];
-
-            u[0] = potNw[7];
-            u[1] = potNw[5];
-            u[2] = potNw[4];
-            u[3] = potNw[3];
-
-            T.mv(u, Tu);
-
-            fluxNw[5] = Tu[0];
-            potentialDiffNw5 = Tu[0];
+            fluxNw[8] = Tu[0];
+            potentialDiffNw8 = Tu[0];
         }
         else
-        {
-            u[0] = potW[7];
-            u[1] = potW[5];
-            u[2] = potW[6];
-            u[3] = potW[1];
-
-            T.mv(u, Tu);
-
-            fluxW[5] = Tu[0];
-            potentialDiffW5 = Tu[0];
-
-            u[0] = potNw[7];
-            u[1] = potNw[5];
-            u[2] = potNw[6];
-            u[3] = potNw[1];
-
-            T.mv(u, Tu);
-
-            fluxNw[5] = Tu[0];
-            potentialDiffNw5 = Tu[0];
-        }
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
-    {
-        if (caseL == 3)
-        {
-            u[0] = potW[1];
-            u[1] = potW[5];
-            u[2] = potW[7];
-            u[3] = potW[0];
-
-            T.mv(u, Tu);
-
-            fluxW[5] = -Tu[1];
-            potentialDiffW5 = -Tu[1];
-
-            u[0] = potNw[1];
-            u[1] = potNw[5];
-            u[2] = potNw[7];
-            u[3] = potNw[0];
-
-            T.mv(u, Tu);
-
-            fluxNw[5] = -Tu[1];
-            potentialDiffNw5 = -Tu[1];
-        }
-        else
-        {
-            u[0] = potW[7];
-            u[1] = potW[3];
-            u[2] = potW[5];
-            u[3] = potW[2];
-
-            T.mv(u, Tu);
-
-            fluxW[5] = Tu[1];
-            potentialDiffW5 = Tu[1];
-
-            u[0] = potNw[7];
-            u[1] = potNw[3];
-            u[2] = potNw[5];
-            u[3] = potNw[2];
-
-            T.mv(u, Tu);
-
-            fluxNw[5] = Tu[1];
-            potentialDiffNw5 = Tu[1];
-        }
-    }
-
-    // calculate the flux through the subvolumeface 7 (subVolumeFaceIdx = 6)
-    T = 0;
-    TSecond = 0;
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 6, 7, 4,
-                                                               5, 2, 3);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
-    {
-        caseL = transmissibilityCalculator_().transmissibilityCaseThree(T, interactionVolume, lambda, 7, 3, 1, 6);
-
-        int caseLSecond = transmissibilityCalculator_().transmissibilityCaseFour(TSecond, interactionVolume, lambda, 2, 6, 0,
-                                                                                 7);
-
-        caseL = transmissibilityCalculator_().chooseTransmissibility(T, TSecond, 3, 4);
-
-        if (caseL == caseLSecond)
-            T = TSecond;
-    }
-
-    if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-        if (caseL == 1)
-        {
-            u[0] = potW[6];
-            u[1] = potW[7];
-            u[2] = potW[4];
-            u[3] = potW[2];
-
-            T.mv(u, Tu);
-
-            fluxW[6] = Tu[0];
-            potentialDiffW6 = Tu[0];
-
-            u[0] = potNw[6];
-            u[1] = potNw[7];
-            u[2] = potNw[4];
-            u[3] = potNw[2];
-
-            T.mv(u, Tu);
-
-            fluxNw[6] = Tu[0];
-            potentialDiffNw6 = Tu[0];
-        }
-        else if (caseL == 2)
-        {
-            u[0] = potW[6];
-            u[1] = potW[7];
-            u[2] = potW[5];
-            u[3] = potW[3];
-
-            T.mv(u, Tu);
-
-            fluxW[6] = Tu[0];
-            potentialDiffW6 = Tu[0];
-
-            u[0] = potNw[6];
-            u[1] = potNw[7];
-            u[2] = potNw[5];
-            u[3] = potNw[3];
-
-            T.mv(u, Tu);
-
-            fluxNw[6] = Tu[0];
-            potentialDiffNw6 = Tu[0];
-        }
-        else if (caseL == 3)
-        {
-            u[0] = potW[6];
-            u[1] = potW[7];
-            u[2] = potW[5];
-            u[3] = potW[2];
-
-            T.mv(u, Tu);
-
-            fluxW[6] = Tu[0];
-            potentialDiffW6 = Tu[0];
-
-            u[0] = potNw[6];
-            u[1] = potNw[7];
-            u[2] = potNw[5];
-            u[3] = potNw[2];
-
-            T.mv(u, Tu);
-
-            fluxNw[6] = Tu[0];
-            potentialDiffNw6 = Tu[0];
-        }
-        else
-        {
-            u[0] = potW[6];
-            u[1] = potW[7];
-            u[2] = potW[4];
-            u[3] = potW[3];
-
-            T.mv(u, Tu);
-
-            fluxW[6] = Tu[0];
-            potentialDiffW6 = Tu[0];
-
-            u[0] = potNw[6];
-            u[1] = potNw[7];
-            u[2] = potNw[4];
-            u[3] = potNw[3];
-
-            T.mv(u, Tu);
-
-            fluxNw[6] = Tu[0];
-            potentialDiffNw6 = Tu[0];
-        }
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
-    {
-        if (caseL == 3)
-        {
-            u[0] = potW[7];
-            u[1] = potW[3];
-            u[2] = potW[1];
-            u[3] = potW[6];
-
-            T.mv(u, Tu);
-
-            fluxW[6] = -Tu[2];
-            potentialDiffW6 = -Tu[2];
-
-            u[0] = potNw[7];
-            u[1] = potNw[3];
-            u[2] = potNw[1];
-            u[3] = potNw[6];
-
-            T.mv(u, Tu);
-
-            fluxNw[6] = -Tu[2];
-            potentialDiffNw6 = -Tu[2];
-        }
-        else if (caseL == 4)
-        {
-            u[0] = potW[2];
-            u[1] = potW[6];
-            u[2] = potW[0];
-            u[3] = potW[7];
-
-            T.mv(u, Tu);
-
-            fluxW[6] = Tu[2];
-            potentialDiffW6 = Tu[2];
-
-            u[0] = potNw[2];
-            u[1] = potNw[6];
-            u[2] = potNw[0];
-            u[3] = potNw[7];
-
-            T.mv(u, Tu);
-
-            fluxNw[6] = Tu[2];
-            potentialDiffNw6 = Tu[2];
-        }
-    }
-
-    // calculate the flux through the subvolumeface 8 (subVolumeFaceIdx = 7)
-    T = 0;
-    TSecond = 0;
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::sixSmallCells)
-    {
-        useCases[0] = true;
-        useCases[1] = false;
-        useCases[2] = false;
-        useCases[3] = true;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 6, 5, 7, 0,
-                                                               2, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-        useCases[0] = false;
-        useCases[1] = true;
-        useCases[2] = true;
-        useCases[3] = false;
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 6, 5, 7, 0,
-                                                               2, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
-    {
-        caseL = transmissibilityCalculator_().transmissibilityCaseThree(T, interactionVolume, lambda, 2, 6, 4,
-                                                                        3);
-
-        int caseLSecond = transmissibilityCalculator_().transmissibilityCaseFour(TSecond, interactionVolume, lambda, 4, 0, 6,
-                                                                                 1);
-
-
-
-        caseL = transmissibilityCalculator_().chooseTransmissibility(T, TSecond, 3, 4);
-
-        if (caseL == caseLSecond)
-            T = TSecond;
-    }
-
-    if (hangingNodeType == InteractionVolume::sixSmallCells
-        || hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-
-        if (caseL == 1)
-        {
-            u[0] = potW[4];
-            u[1] = potW[6];
-            u[2] = potW[5];
-            u[3] = potW[0];
-
-            T.mv(u, Tu);
-
-            fluxW[7] = Tu[0];
-            potentialDiffW7 = Tu[0];
-
-            u[0] = potNw[4];
-            u[1] = potNw[6];
-            u[2] = potNw[5];
-            u[3] = potNw[0];
-
-            T.mv(u, Tu);
-
-            fluxNw[7] = Tu[0];
-            potentialDiffNw7 = Tu[0];
-        }
-        else if (caseL == 2)
-        {
-            u[0] = potW[4];
-            u[1] = potW[6];
-            u[2] = potW[7];
-            u[3] = potW[2];
-
-            T.mv(u, Tu);
-
-            fluxW[7] = Tu[0];
-            potentialDiffW7 = Tu[0];
-
-            u[0] = potNw[4];
-            u[1] = potNw[6];
-            u[2] = potNw[7];
-            u[3] = potNw[2];
-
-            T.mv(u, Tu);
-
-            fluxNw[7] = Tu[0];
-            potentialDiffNw7 = Tu[0];
-        }
-        else if (caseL == 3)
-        {
-            u[0] = potW[4];
-            u[1] = potW[6];
-            u[2] = potW[7];
-            u[3] = potW[0];
-
-            T.mv(u, Tu);
-
-            fluxW[7] = Tu[0];
-            potentialDiffW7 = Tu[0];
-
-            u[0] = potNw[4];
-            u[1] = potNw[6];
-            u[2] = potNw[7];
-            u[3] = potNw[0];
-
-            T.mv(u, Tu);
-
-            fluxNw[7] = Tu[0];
-            potentialDiffNw7 = Tu[0];
-        }
-        else
-        {
-            u[0] = potW[4];
-            u[1] = potW[6];
-            u[2] = potW[5];
-            u[3] = potW[2];
-
-            T.mv(u, Tu);
-
-            fluxW[7] = Tu[0];
-            potentialDiffW7 = Tu[0];
-
-            u[0] = potNw[4];
-            u[1] = potNw[6];
-            u[2] = potNw[5];
-            u[3] = potNw[2];
-
-            T.mv(u, Tu);
-
-            fluxNw[7] = Tu[0];
-            potentialDiffNw7 = Tu[0];
-        }
-    }
-    else if(hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
-    {
-        if (caseL == 3)
-        {
-            u[0] = potW[2];
-            u[1] = potW[6];
-            u[2] = potW[4];
-            u[3] = potW[3];
-
-            T.mv(u, Tu);
-
-            fluxW[7] = -Tu[1];
-            potentialDiffW7 = -Tu[1];
-
-            u[0] = potNw[2];
-            u[1] = potNw[6];
-            u[2] = potNw[4];
-            u[3] = potNw[3];
-
-            T.mv(u, Tu);
-
-            fluxNw[7] = -Tu[1];
-            potentialDiffNw7 = -Tu[1];
-        }
-        else if (caseL == 4)
         {
             u[0] = potW[4];
             u[1] = potW[0];
@@ -1418,8 +1572,8 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
 
             T.mv(u, Tu);
 
-            fluxW[7] = Tu[1];
-            potentialDiffW7 = Tu[1];
+            fluxW[8] = Tu[0];
+            potentialDiffW8 = Tu[0];
 
             u[0] = potNw[4];
             u[1] = potNw[0];
@@ -1428,521 +1582,406 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
 
             T.mv(u, Tu);
 
-            fluxNw[7] = Tu[1];
-            potentialDiffNw7 = Tu[1];
+            fluxNw[8] = Tu[0];
+            potentialDiffNw8 = Tu[0];
         }
     }
 
-    // calculate the flux through the subvolumeface 9 (subVolumeFaceIdx = 8)
-    T = 0;
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::sixSmallCells)
+    if (faceIdx < 0 || faceIdx == 9)
     {
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 0, 6,
-                                                               2, 5, 1);
-    }
-    else if (hangingNodeType == InteractionVolume::twoSmallCells || hangingNodeType == InteractionVolume::fourSmallCellsFace)
-    {
-        caseL = transmissibilityCalculator_().transmissibilityCaseTwo(T, interactionVolume, lambda, 4, 0, 2,
-                                                                      1);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag || (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
-    {
-        useCases[0] = false;
-        useCases[1] = true;
-        useCases[2] = false;
-        useCases[3] = true;
+        // calculate the flux through the subvolumeface 10 (subVolumeFaceIdx = 9)
+        T = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::sixSmallCells)
+        {
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 5, 3,
+                    7, 0, 4);
+        }
+        else if (hangingNodeType == InteractionVolume::twoSmallCells || hangingNodeType == InteractionVolume::fourSmallCellsFace)
+        {
+            caseL = transmissibilityCalculator_().transmissibilityCaseOne(T, interactionVolume, lambda, 1, 5, 3,
+                    0);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag || (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
+        {
+            useCases[0] = true;
+            useCases[1] = false;
+            useCases[2] = true;
+            useCases[3] = false;
 
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 0, 6,
-                                                               2, 5, 1, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
-    {
-        useCases[0] = false;
-        useCases[1] = true;
-        useCases[2] = true;
-        useCases[3] = false;
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 5, 3,
+                    7, 0, 4, useCases);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
+        {
+            useCases[0] = true;
+            useCases[1] = false;
+            useCases[2] = false;
+            useCases[3] = true;
 
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 0, 6,
-                                                               2, 5, 1, useCases);
-    }
-
-    if (caseL == 1)
-    {
-        u[0] = potW[4];
-        u[1] = potW[0];
-        u[2] = potW[6];
-        u[3] = potW[5];
-
-        T.mv(u, Tu);
-
-        fluxW[8] = Tu[0];
-        potentialDiffW8 = Tu[0];
-
-        u[0] = potNw[4];
-        u[1] = potNw[0];
-        u[2] = potNw[6];
-        u[3] = potNw[5];
-
-        T.mv(u, Tu);
-
-        fluxNw[8] = Tu[0];
-        potentialDiffNw8 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[4];
-        u[1] = potW[0];
-        u[2] = potW[2];
-        u[3] = potW[1];
-
-        T.mv(u, Tu);
-
-        fluxW[8] = Tu[0];
-        potentialDiffW8 = Tu[0];
-
-        u[0] = potNw[4];
-        u[1] = potNw[0];
-        u[2] = potNw[2];
-        u[3] = potNw[1];
-
-        T.mv(u, Tu);
-
-        fluxNw[8] = Tu[0];
-        potentialDiffNw8 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[4];
-        u[1] = potW[0];
-        u[2] = potW[2];
-        u[3] = potW[5];
-
-        T.mv(u, Tu);
-
-        fluxW[8] = Tu[0];
-        potentialDiffW8 = Tu[0];
-
-        u[0] = potNw[4];
-        u[1] = potNw[0];
-        u[2] = potNw[2];
-        u[3] = potNw[5];
-
-        T.mv(u, Tu);
-
-        fluxNw[8] = Tu[0];
-        potentialDiffNw8 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[4];
-        u[1] = potW[0];
-        u[2] = potW[6];
-        u[3] = potW[1];
-
-        T.mv(u, Tu);
-
-        fluxW[8] = Tu[0];
-        potentialDiffW8 = Tu[0];
-
-        u[0] = potNw[4];
-        u[1] = potNw[0];
-        u[2] = potNw[6];
-        u[3] = potNw[1];
-
-        T.mv(u, Tu);
-
-        fluxNw[8] = Tu[0];
-        potentialDiffNw8 = Tu[0];
-    }
-
-    // calculate the flux through the subvolumeface 10 (subVolumeFaceIdx = 9)
-    T = 0;
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::sixSmallCells)
-    {
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 5, 3,
-                                                               7, 0, 4);
-    }
-    else if (hangingNodeType == InteractionVolume::twoSmallCells || hangingNodeType == InteractionVolume::fourSmallCellsFace)
-    {
-        caseL = transmissibilityCalculator_().transmissibilityCaseOne(T, interactionVolume, lambda, 1, 5, 3,
-                                                                      0);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag || (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
-    {
-        useCases[0] = true;
-        useCases[1] = false;
-        useCases[2] = true;
-        useCases[3] = false;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 5, 3,
-                                                               7, 0, 4, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
-    {
-        useCases[0] = true;
-        useCases[1] = false;
-        useCases[2] = false;
-        useCases[3] = true;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 5, 3,
-                                                               7, 0, 4, useCases);
-    }
-
-    if (caseL == 1)
-    {
-        u[0] = potW[1];
-        u[1] = potW[5];
-        u[2] = potW[3];
-        u[3] = potW[0];
-
-        T.mv(u, Tu);
-
-        fluxW[9] = Tu[0];
-        potentialDiffW9 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[5];
-        u[2] = potNw[3];
-        u[3] = potNw[0];
-
-        T.mv(u, Tu);
-
-        fluxNw[9] = Tu[0];
-        potentialDiffNw9 = Tu[0];
-    }
-    else if (caseL == 2)
-    {
-        u[0] = potW[1];
-        u[1] = potW[5];
-        u[2] = potW[7];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[9] = Tu[0];
-        potentialDiffW9 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[5];
-        u[2] = potNw[7];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[9] = Tu[0];
-        potentialDiffNw9 = Tu[0];
-    }
-    else if (caseL == 3)
-    {
-        u[0] = potW[1];
-        u[1] = potW[5];
-        u[2] = potW[7];
-        u[3] = potW[0];
-
-        T.mv(u, Tu);
-
-        fluxW[9] = Tu[0];
-        potentialDiffW9 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[5];
-        u[2] = potNw[7];
-        u[3] = potNw[0];
-
-        T.mv(u, Tu);
-
-        fluxNw[9] = Tu[0];
-        potentialDiffNw9 = Tu[0];
-    }
-    else
-    {
-        u[0] = potW[1];
-        u[1] = potW[5];
-        u[2] = potW[3];
-        u[3] = potW[4];
-
-        T.mv(u, Tu);
-
-        fluxW[9] = Tu[0];
-        potentialDiffW9 = Tu[0];
-
-        u[0] = potNw[1];
-        u[1] = potNw[5];
-        u[2] = potNw[3];
-        u[3] = potNw[4];
-
-        T.mv(u, Tu);
-
-        fluxNw[9] = Tu[0];
-        potentialDiffNw9 = Tu[0];
-    }
-
-    // calculate the flux through the subvolumeface 11 (subVolumeFaceIdx = 10)
-    T = 0;
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::fourSmallCellsFace)
-    {
-        caseL = transmissibilityCalculator_().transmissibilityCaseTwo(T, interactionVolume, lambda, 7, 3, 1, 2);
-    }
-    else if ((hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
-             || hangingNodeType == InteractionVolume::sixSmallCells)
-    {
-        useCases[0] = false;
-        useCases[1] = true;
-        useCases[2] = false;
-        useCases[3] = true;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6,
-                                                               2, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
-    {
-        useCases[0] = false;
-        useCases[1] = true;
-        useCases[2] = true;
-        useCases[3] = false;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6,
-                                                               2, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-        useCases[0] = true;
-        useCases[1] = false;
-        useCases[2] = true;
-        useCases[3] = false;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6,
-                                                               2, useCases);
-    }
-
-    if (hangingNodeType != InteractionVolume::twoSmallCells)
-    {
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 5, 3,
+                    7, 0, 4, useCases);
+        }
 
         if (caseL == 1)
         {
-            u[0] = potW[7];
-            u[1] = potW[3];
-            u[2] = potW[5];
-            u[3] = potW[6];
+            u[0] = potW[1];
+            u[1] = potW[5];
+            u[2] = potW[3];
+            u[3] = potW[0];
 
             T.mv(u, Tu);
 
-            fluxW[10] = Tu[0];
-            potentialDiffW10 = Tu[0];
+            fluxW[9] = Tu[0];
+            potentialDiffW9 = Tu[0];
 
-            u[0] = potNw[7];
-            u[1] = potNw[3];
-            u[2] = potNw[5];
-            u[3] = potNw[6];
+            u[0] = potNw[1];
+            u[1] = potNw[5];
+            u[2] = potNw[3];
+            u[3] = potNw[0];
 
             T.mv(u, Tu);
 
-            fluxNw[10] = Tu[0];
-            potentialDiffNw10 = Tu[0];
+            fluxNw[9] = Tu[0];
+            potentialDiffNw9 = Tu[0];
         }
         else if (caseL == 2)
         {
-            u[0] = potW[7];
-            u[1] = potW[3];
-            u[2] = potW[1];
-            u[3] = potW[2];
+            u[0] = potW[1];
+            u[1] = potW[5];
+            u[2] = potW[7];
+            u[3] = potW[4];
 
             T.mv(u, Tu);
 
-            fluxW[10] = Tu[0];
-            potentialDiffW10 = Tu[0];
+            fluxW[9] = Tu[0];
+            potentialDiffW9 = Tu[0];
 
-            u[0] = potNw[7];
-            u[1] = potNw[3];
-            u[2] = potNw[1];
-            u[3] = potNw[2];
+            u[0] = potNw[1];
+            u[1] = potNw[5];
+            u[2] = potNw[7];
+            u[3] = potNw[4];
 
             T.mv(u, Tu);
 
-            fluxNw[10] = Tu[0];
-            potentialDiffNw10 = Tu[0];
+            fluxNw[9] = Tu[0];
+            potentialDiffNw9 = Tu[0];
         }
         else if (caseL == 3)
         {
-            u[0] = potW[7];
-            u[1] = potW[3];
-            u[2] = potW[1];
-            u[3] = potW[6];
+            u[0] = potW[1];
+            u[1] = potW[5];
+            u[2] = potW[7];
+            u[3] = potW[0];
 
             T.mv(u, Tu);
 
-            fluxW[10] = Tu[0];
-            potentialDiffW10 = Tu[0];
+            fluxW[9] = Tu[0];
+            potentialDiffW9 = Tu[0];
 
-            u[0] = potNw[7];
-            u[1] = potNw[3];
-            u[2] = potNw[1];
-            u[3] = potNw[6];
+            u[0] = potNw[1];
+            u[1] = potNw[5];
+            u[2] = potNw[7];
+            u[3] = potNw[0];
 
             T.mv(u, Tu);
 
-            fluxNw[10] = Tu[0];
-            potentialDiffNw10 = Tu[0];
+            fluxNw[9] = Tu[0];
+            potentialDiffNw9 = Tu[0];
         }
         else
         {
-            u[0] = potW[7];
-            u[1] = potW[3];
-            u[2] = potW[5];
-            u[3] = potW[2];
+            u[0] = potW[1];
+            u[1] = potW[5];
+            u[2] = potW[3];
+            u[3] = potW[4];
 
             T.mv(u, Tu);
 
-            fluxW[10] = Tu[0];
-            potentialDiffW10 = Tu[0];
+            fluxW[9] = Tu[0];
+            potentialDiffW9 = Tu[0];
 
-            u[0] = potNw[7];
-            u[1] = potNw[3];
-            u[2] = potNw[5];
-            u[3] = potNw[2];
+            u[0] = potNw[1];
+            u[1] = potNw[5];
+            u[2] = potNw[3];
+            u[3] = potNw[4];
 
             T.mv(u, Tu);
 
-            fluxNw[10] = Tu[0];
-            potentialDiffNw10 = Tu[0];
+            fluxNw[9] = Tu[0];
+            potentialDiffNw9 = Tu[0];
         }
     }
 
-    // calculate the flux through the subvolumeface 12 (subVolumeFaceIdx = 11)
-    T = 0;
-    caseL = 0;
-    if (hangingNodeType == InteractionVolume::fourSmallCellsFace)
+    if (faceIdx < 0 || faceIdx == 10)
     {
-        caseL = transmissibilityCalculator_().transmissibilityCaseOne(T, interactionVolume, lambda, 2, 6, 0, 3);
-    }
-    else if ((hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
-             || hangingNodeType == InteractionVolume::sixSmallCells)
-    {
-        useCases[0] = true;
-        useCases[1] = false;
-        useCases[2] = true;
-        useCases[3] = false;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3,
-                                                               7, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
-    {
-        useCases[0] = true;
-        useCases[1] = false;
-        useCases[2] = false;
-        useCases[3] = true;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3,
-                                                               7, useCases);
-    }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
-    {
-        useCases[0] = false;
-        useCases[1] = true;
-        useCases[2] = false;
-        useCases[3] = true;
-
-        caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3,
-                                                               7, useCases);
-    }
-
-    if (hangingNodeType != InteractionVolume::twoSmallCells)
-    {
-
-        if (caseL == 1)
+        // calculate the flux through the subvolumeface 11 (subVolumeFaceIdx = 10)
+        T = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::fourSmallCellsFace)
         {
-            u[0] = potW[2];
-            u[1] = potW[6];
-            u[2] = potW[0];
-            u[3] = potW[3];
-
-            T.mv(u, Tu);
-
-            fluxW[11] = Tu[0];
-            potentialDiffW11 = Tu[0];
-
-            u[0] = potNw[2];
-            u[1] = potNw[6];
-            u[2] = potNw[0];
-            u[3] = potNw[3];
-
-            T.mv(u, Tu);
-
-            fluxNw[11] = Tu[0];
-            potentialDiffNw11 = Tu[0];
+            caseL = transmissibilityCalculator_().transmissibilityCaseTwo(T, interactionVolume, lambda, 7, 3, 1, 2);
         }
-        else if (caseL == 2)
+        else if ((hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
+                || hangingNodeType == InteractionVolume::sixSmallCells)
         {
-            u[0] = potW[2];
-            u[1] = potW[6];
-            u[2] = potW[4];
-            u[3] = potW[7];
+            useCases[0] = false;
+            useCases[1] = true;
+            useCases[2] = false;
+            useCases[3] = true;
 
-            T.mv(u, Tu);
-
-            fluxW[11] = Tu[0];
-            potentialDiffW11 = Tu[0];
-
-            u[0] = potNw[2];
-            u[1] = potNw[6];
-            u[2] = potNw[4];
-            u[3] = potNw[7];
-
-            T.mv(u, Tu);
-
-            fluxNw[11] = Tu[0];
-            potentialDiffNw11 = Tu[0];
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6,
+                    2, useCases);
         }
-        else if (caseL == 3)
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
         {
-            u[0] = potW[2];
-            u[1] = potW[6];
-            u[2] = potW[4];
-            u[3] = potW[3];
+            useCases[0] = false;
+            useCases[1] = true;
+            useCases[2] = true;
+            useCases[3] = false;
 
-            T.mv(u, Tu);
-
-            fluxW[11] = Tu[0];
-            potentialDiffW11 = Tu[0];
-
-            u[0] = potNw[2];
-            u[1] = potNw[6];
-            u[2] = potNw[4];
-            u[3] = potNw[3];
-
-            T.mv(u, Tu);
-
-            fluxNw[11] = Tu[0];
-            potentialDiffNw11 = Tu[0];
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6,
+                    2, useCases);
         }
-        else
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
         {
-            u[0] = potW[2];
-            u[1] = potW[6];
-            u[2] = potW[0];
-            u[3] = potW[7];
+            useCases[0] = true;
+            useCases[1] = false;
+            useCases[2] = true;
+            useCases[3] = false;
 
-            T.mv(u, Tu);
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6,
+                    2, useCases);
+        }
 
-            fluxW[11] = Tu[0];
-            potentialDiffW11 = Tu[0];
+        if (hangingNodeType != InteractionVolume::twoSmallCells)
+        {
 
-            u[0] = potNw[2];
-            u[1] = potNw[6];
-            u[2] = potNw[0];
-            u[3] = potNw[7];
+            if (caseL == 1)
+            {
+                u[0] = potW[7];
+                u[1] = potW[3];
+                u[2] = potW[5];
+                u[3] = potW[6];
 
-            T.mv(u, Tu);
+                T.mv(u, Tu);
 
-            fluxNw[11] = Tu[0];
-            potentialDiffNw11 = Tu[0];
+                fluxW[10] = Tu[0];
+                potentialDiffW10 = Tu[0];
+
+                u[0] = potNw[7];
+                u[1] = potNw[3];
+                u[2] = potNw[5];
+                u[3] = potNw[6];
+
+                T.mv(u, Tu);
+
+                fluxNw[10] = Tu[0];
+                potentialDiffNw10 = Tu[0];
+            }
+            else if (caseL == 2)
+            {
+                u[0] = potW[7];
+                u[1] = potW[3];
+                u[2] = potW[1];
+                u[3] = potW[2];
+
+                T.mv(u, Tu);
+
+                fluxW[10] = Tu[0];
+                potentialDiffW10 = Tu[0];
+
+                u[0] = potNw[7];
+                u[1] = potNw[3];
+                u[2] = potNw[1];
+                u[3] = potNw[2];
+
+                T.mv(u, Tu);
+
+                fluxNw[10] = Tu[0];
+                potentialDiffNw10 = Tu[0];
+            }
+            else if (caseL == 3)
+            {
+                u[0] = potW[7];
+                u[1] = potW[3];
+                u[2] = potW[1];
+                u[3] = potW[6];
+
+                T.mv(u, Tu);
+
+                fluxW[10] = Tu[0];
+                potentialDiffW10 = Tu[0];
+
+                u[0] = potNw[7];
+                u[1] = potNw[3];
+                u[2] = potNw[1];
+                u[3] = potNw[6];
+
+                T.mv(u, Tu);
+
+                fluxNw[10] = Tu[0];
+                potentialDiffNw10 = Tu[0];
+            }
+            else
+            {
+                u[0] = potW[7];
+                u[1] = potW[3];
+                u[2] = potW[5];
+                u[3] = potW[2];
+
+                T.mv(u, Tu);
+
+                fluxW[10] = Tu[0];
+                potentialDiffW10 = Tu[0];
+
+                u[0] = potNw[7];
+                u[1] = potNw[3];
+                u[2] = potNw[5];
+                u[3] = potNw[2];
+
+                T.mv(u, Tu);
+
+                fluxNw[10] = Tu[0];
+                potentialDiffNw10 = Tu[0];
+            }
         }
     }
 
+    if (faceIdx < 0 || faceIdx == 11)
+    {
+        // calculate the flux through the subvolumeface 12 (subVolumeFaceIdx = 11)
+        T = 0;
+        int caseL = 0;
+        if (hangingNodeType == InteractionVolume::fourSmallCellsFace)
+        {
+            caseL = transmissibilityCalculator_().transmissibilityCaseOne(T, interactionVolume, lambda, 2, 6, 0, 3);
+        }
+        else if ((hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7)
+                || hangingNodeType == InteractionVolume::sixSmallCells)
+        {
+            useCases[0] = true;
+            useCases[1] = false;
+            useCases[2] = true;
+            useCases[3] = false;
+
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3,
+                    7, useCases);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx6)
+        {
+            useCases[0] = true;
+            useCases[1] = false;
+            useCases[2] = false;
+            useCases[3] = true;
+
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3,
+                    7, useCases);
+        }
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag)
+        {
+            useCases[0] = false;
+            useCases[1] = true;
+            useCases[2] = false;
+            useCases[3] = true;
+
+            caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3,
+                    7, useCases);
+        }
+
+        if (hangingNodeType != InteractionVolume::twoSmallCells)
+        {
+
+            if (caseL == 1)
+            {
+                u[0] = potW[2];
+                u[1] = potW[6];
+                u[2] = potW[0];
+                u[3] = potW[3];
+
+                T.mv(u, Tu);
+
+                fluxW[11] = Tu[0];
+                potentialDiffW11 = Tu[0];
+
+                u[0] = potNw[2];
+                u[1] = potNw[6];
+                u[2] = potNw[0];
+                u[3] = potNw[3];
+
+                T.mv(u, Tu);
+
+                fluxNw[11] = Tu[0];
+                potentialDiffNw11 = Tu[0];
+            }
+            else if (caseL == 2)
+            {
+                u[0] = potW[2];
+                u[1] = potW[6];
+                u[2] = potW[4];
+                u[3] = potW[7];
+
+                T.mv(u, Tu);
+
+                fluxW[11] = Tu[0];
+                potentialDiffW11 = Tu[0];
+
+                u[0] = potNw[2];
+                u[1] = potNw[6];
+                u[2] = potNw[4];
+                u[3] = potNw[7];
+
+                T.mv(u, Tu);
+
+                fluxNw[11] = Tu[0];
+                potentialDiffNw11 = Tu[0];
+            }
+            else if (caseL == 3)
+            {
+                u[0] = potW[2];
+                u[1] = potW[6];
+                u[2] = potW[4];
+                u[3] = potW[3];
+
+                T.mv(u, Tu);
+
+                fluxW[11] = Tu[0];
+                potentialDiffW11 = Tu[0];
+
+                u[0] = potNw[2];
+                u[1] = potNw[6];
+                u[2] = potNw[4];
+                u[3] = potNw[3];
+
+                T.mv(u, Tu);
+
+                fluxNw[11] = Tu[0];
+                potentialDiffNw11 = Tu[0];
+            }
+            else
+            {
+                u[0] = potW[2];
+                u[1] = potW[6];
+                u[2] = potW[0];
+                u[3] = potW[7];
+
+                T.mv(u, Tu);
+
+                fluxW[11] = Tu[0];
+                potentialDiffW11 = Tu[0];
+
+                u[0] = potNw[2];
+                u[1] = potNw[6];
+                u[2] = potNw[0];
+                u[3] = potNw[7];
+
+                T.mv(u, Tu);
+
+                fluxNw[11] = Tu[0];
+                potentialDiffNw11 = Tu[0];
+            }
+        }
+    }
     //store potentials for further calculations (saturation, ...)
     cellData1.fluxData().addUpwindPotential(wPhaseIdx, interactionVolume.getIndexOnElement(0, 0), potentialDiffW0);
     cellData1.fluxData().addUpwindPotential(nPhaseIdx, interactionVolume.getIndexOnElement(0, 0), potentialDiffNw0);
@@ -2104,15 +2143,15 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         switch (i)
         {
         case wPhaseIdx:
-            {
-                flux = fluxW;
-                break;
-            }
+        {
+            flux = fluxW;
+            break;
+        }
         case nPhaseIdx:
-            {
-                flux = fluxNw;
-                break;
-            }
+        {
+            flux = fluxNw;
+            break;
+        }
         }
 
         int hangingNodeType = interactionVolume.getHangingNodeType();
@@ -2171,7 +2210,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
             vel73 *= flux[11] / (interactionVolumes_().getRealFluxFaceArea(interactionVolume, globalIdx7, 6, 0));
         }
         else if (hangingNodeType == InteractionVolume::fourSmallCellsFace
-                 || hangingNodeType == InteractionVolume::fourSmallCellsEdge)
+                || hangingNodeType == InteractionVolume::fourSmallCellsEdge)
         {
             vel12 *= flux[0] / (interactionVolumes_().getRealFluxFaceArea(interactionVolume, globalIdx1, 0, 0));
             vel21 *= flux[0] / (interactionVolumes_().getRealFluxFaceArea(interactionVolume, globalIdx2, 1, 1));
@@ -2353,7 +2392,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
     cellData8.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(7, 0));
     cellData8.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(7, 1));
     cellData8.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(7, 2));
-}
+        }
 
 }
 // end of Dune namespace

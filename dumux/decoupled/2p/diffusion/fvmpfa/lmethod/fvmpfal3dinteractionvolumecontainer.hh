@@ -164,6 +164,14 @@ public:
         return factor;
     }
 
+    Scalar faceAreaFactor(int elemGlobalIdx, int indexInInside)
+    {
+        Scalar factor = getRealFaceArea(elemGlobalIdx, indexInInside);
+        factor /= getRealFluxFaceArea(elemGlobalIdx, indexInInside);
+
+        return factor;
+    }
+
     Scalar getRealFluxFaceArea(InteractionVolume& interactionVolume, int elemGlobalIdx, int elemLocalIdx, int localFaceIdx)
     {
         Scalar factor = realFluxFaceArea_[elemGlobalIdx][interactionVolume.getIndexOnElement(elemLocalIdx, localFaceIdx)][fluxFaceArea];
@@ -171,9 +179,23 @@ public:
         return factor;
     }
 
+    Scalar getRealFluxFaceArea(int elemGlobalIdx, int indexInInside)
+    {
+        Scalar factor = realFluxFaceArea_[elemGlobalIdx][indexInInside][fluxFaceArea];
+
+        return factor;
+    }
+
     Scalar getRealFaceArea(InteractionVolume& interactionVolume, int elemGlobalIdx, int elemLocalIdx, int localFaceIdx)
     {
         Scalar factor = realFluxFaceArea_[elemGlobalIdx][interactionVolume.getIndexOnElement(elemLocalIdx, localFaceIdx)][realFaceArea];
+
+        return factor;
+    }
+
+    Scalar getRealFaceArea(int elemGlobalIdx, int indexInInside)
+    {
+        Scalar factor = realFluxFaceArea_[elemGlobalIdx][indexInInside][realFaceArea];
 
         return factor;
     }
