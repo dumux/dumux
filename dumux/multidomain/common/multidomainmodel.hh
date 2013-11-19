@@ -16,8 +16,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_COUPLED_MODEL_HH
-#define DUMUX_COUPLED_MODEL_HH
+#ifndef DUMUX_MULTIDOMAIN_MODEL_HH
+#define DUMUX_MULTIDOMAIN_MODEL_HH
 
 #include "multidomainproperties.hh"
 #include "multidomainpropertydefaults.hh"
@@ -40,7 +40,7 @@ namespace Dumux
  *        sub-models which are coupled
  */
 template<class TypeTag>
-class CoupledModel
+class MultiDomainModel
 {
     typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -89,7 +89,7 @@ public:
         uCur_= 0;
         uPrev_= 0;
 
-        typedef Dumux::CoupledCommon<TypeTag> Common;
+        typedef Dumux::SplitAndMerge<TypeTag> Common;
         Common::spliceSolVectors(subModel1().curSol(),
                                  subModel2().curSol(),
                                  uCur_);
@@ -251,7 +251,7 @@ public:
         subModel1().updateBegin();
         subModel2().updateBegin();
 
-        typedef Dumux::CoupledCommon<TypeTag> Common;
+        typedef Dumux::SplitAndMerge<TypeTag> Common;
         Common::spliceSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
     }
 
@@ -278,7 +278,7 @@ public:
      */
     void advanceTimeLevel()
     {
-        typedef Dumux::CoupledCommon<TypeTag> Common;
+        typedef Dumux::SplitAndMerge<TypeTag> Common;
         // splice the two sub-vectors together
         Common::spliceSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
         Common::spliceSolVectors(subModel1().prevSol(), subModel2().prevSol(), uPrev_);
@@ -294,7 +294,7 @@ public:
         subModel1().updateFailed();
         subModel2().updateFailed();
 
-        typedef Dumux::CoupledCommon<TypeTag> Common;
+        typedef Dumux::SplitAndMerge<TypeTag> Common;
         // splice the two sub-vectors together
         Common::spliceSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
     };
@@ -309,7 +309,7 @@ public:
         subModel1().updateFailedTry();
         subModel2().updateFailedTry();
 
-        typedef Dumux::CoupledCommon<TypeTag> Common;
+        typedef Dumux::SplitAndMerge<TypeTag> Common;
         // splice the two sub-vectors together
         Common::spliceSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
     };

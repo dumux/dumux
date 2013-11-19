@@ -20,8 +20,8 @@
 * \file
 * \brief Reference implementation of a newton controller for coupled problems.
 */
-#ifndef DUMUX_COUPLED_NEWTON_CONTROLLER_HH
-#define DUMUX_COUPLED_NEWTON_CONTROLLER_HH
+#ifndef DUMUX_MULTIDOMAIN_NEWTON_CONTROLLER_HH
+#define DUMUX_MULTIDOMAIN_NEWTON_CONTROLLER_HH
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/linear/linearsolverproperties.hh>
@@ -49,7 +49,7 @@
 namespace Dumux
 {
 template <class TypeTag>
-class CoupledNewtonController;
+class MultiDomainNewtonController;
 
 namespace Properties
 {
@@ -92,10 +92,10 @@ NEW_PROP_TAG(NewtonMaxSteps);
 
 // set default values for Newton
 // they can be overwritten in the parameter file
-SET_INT_PROP(CoupledModel, NewtonTargetSteps, 8);
-SET_INT_PROP(CoupledModel, NewtonMaxSteps, 15);
-SET_SCALAR_PROP(CoupledModel, NewtonRelTolerance, 1e-5);
-SET_BOOL_PROP(CoupledModel, NewtonWriteConvergence, false);
+SET_INT_PROP(MultiDomain, NewtonTargetSteps, 8);
+SET_INT_PROP(MultiDomain, NewtonMaxSteps, 15);
+SET_SCALAR_PROP(MultiDomain, NewtonRelTolerance, 1e-5);
+SET_BOOL_PROP(MultiDomain, NewtonWriteConvergence, false);
 }
 
 
@@ -108,7 +108,7 @@ SET_BOOL_PROP(CoupledModel, NewtonWriteConvergence, false);
  * methods.
  */
 template <class TypeTag>
-class CoupledNewtonController
+class MultiDomainNewtonController
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, NewtonController) Implementation;
@@ -125,11 +125,11 @@ class CoupledNewtonController
     typedef typename GET_PROP_TYPE(SubTypeTag1, GridView) GridView1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) GridView2;
 
-    typedef CoupledNewtonConvergenceWriter<TypeTag>  ConvergenceWriter;
+    typedef MultiDomainNewtonConvergenceWriter<TypeTag>  ConvergenceWriter;
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
 
 public:
-    CoupledNewtonController(const Problem &problem)
+    MultiDomainNewtonController(const Problem &problem)
         : endIterMsgStream_(std::ostringstream::out)
         , linearSolver_(problem)
         , convergenceWriter_(asImp_())
@@ -149,7 +149,7 @@ public:
     /*!
      * \brief Destructor
      */
-    ~CoupledNewtonController()
+    ~MultiDomainNewtonController()
     {
     };
 
@@ -419,7 +419,7 @@ public:
     */
     void newtonEndStep(SolutionVector &uCurrentIter, SolutionVector &uLastIter)
     {
-        typedef Dumux::CoupledCommon<TypeTag> Common;
+        typedef Dumux::SplitAndMerge<TypeTag> Common;
 
         Common::splitSolVector(this->model().curSol(),
                                this->model().subModel1().curSol(),

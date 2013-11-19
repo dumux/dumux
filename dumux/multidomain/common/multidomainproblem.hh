@@ -20,8 +20,8 @@
  * \file
  * \brief Base class for problems which involve two sub problems
  */
-#ifndef DUMUX_COUPLED_PROBLEM_HH
-#define DUMUX_COUPLED_PROBLEM_HH
+#ifndef DUMUX_MULTIDOMAIN_PROBLEM_HH
+#define DUMUX_MULTIDOMAIN_PROBLEM_HH
 
 #include "multidomainmodel.hh"
 #include "multidomainnewtoncontroller.hh"
@@ -36,7 +36,7 @@ namespace Dumux
  * \todo Please doc me more!
  */
 template<class TypeTag>
-class CoupledProblem
+class MultiDomainProblem
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
@@ -55,7 +55,7 @@ private:
     typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) SubProblem2;
 
 public:
-    CoupledProblem(TimeManager &timeManager)
+    MultiDomainProblem(TimeManager &timeManager)
         : timeManager_(timeManager),
           newtonMethod_(asImp_()),
           newtonCtl_(asImp_())
@@ -349,7 +349,7 @@ public:
     void serialize()
     {
         DUNE_THROW(Dune::NotImplemented,
-                   "Dumux::CoupledProblem::serialize");
+                   "Dumux::MultiDomainProblem::serialize");
     }
 
 protected:
@@ -380,7 +380,7 @@ private:
 // definition of the static class member simname_,
 // which is necessary because it is of type string.
 template <class TypeTag>
-std::string CoupledProblem<TypeTag>::simname_="simCoupled"; //initialized with default "sim"
+std::string MultiDomainProblem<TypeTag>::simname_="simCoupled"; //initialized with default "sim"
 
 }
 

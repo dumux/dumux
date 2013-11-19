@@ -20,8 +20,8 @@
 * \file
 * \brief Reference implementation of a newton convergence writer for coupled problems.
 */
-#ifndef DUMUX_COUPLED_NEWTON_CONVERGENCEWRITER_HH
-#define DUMUX_COUPLED_NEWTON_CONVERGENCEWRITER_HH
+#ifndef DUMUX_MULTIDOMAIN_CONVERGENCEWRITER_HH
+#define DUMUX_MULTIDOMAIN_CONVERGENCEWRITER_HH
 
 #include <dune/pdelab/backend/istlsolverbackend.hh>
 #include <dumux/io/vtkmultiwriter.hh>
@@ -52,12 +52,12 @@ namespace Properties
  *        the Newton scheme
  */
 template <class TypeTag>
-struct CoupledNewtonConvergenceWriter
+struct MultiDomainConvergenceWriter
 {
     //typedef typename GET_PROP_TYPE(TypeTag, Grid) HostGrid;
-    //typedef Dune::mdgrid::FewSubDomainsTraits<HostGrid::dimension,4> MDGridTraits;
-    //typedef Dune::MultiDomainGrid<HostGrid, MDGridTraits> MDGrid;
-    //typedef typename MDGrid::LeafGridView MDGridView;
+    //typedef Dune::mdgrid::FewSubDomainsTraits<HostGrid::dimension,4> MultiDomainGridTraits;
+    //typedef Dune::MultiDomainGrid<HostGrid, MultiDomainGridTraits> MultiDomainGrid;
+    //typedef typename MultiDomainGrid::LeafGridView MultiDomainGridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
 
@@ -76,7 +76,7 @@ struct CoupledNewtonConvergenceWriter
     typedef Dumux::VtkMultiWriter<GridView1> VtkMultiWriter1;
     typedef Dumux::VtkMultiWriter<GridView2> VtkMultiWriter2;
 
-    CoupledNewtonConvergenceWriter(NewtonController &ctl)
+    MultiDomainConvergenceWriter(NewtonController &ctl)
         : ctl_(ctl)
     {
         timeStepIndex_ = 0;
@@ -85,7 +85,7 @@ struct CoupledNewtonConvergenceWriter
         vtkMultiWriter2_ = 0;
     }
 
-    ~CoupledNewtonConvergenceWriter()
+    ~MultiDomainConvergenceWriter()
     {
         delete vtkMultiWriter1_;
         delete vtkMultiWriter2_;
@@ -123,7 +123,7 @@ struct CoupledNewtonConvergenceWriter
             deltaU1.resize(ctl_.method().model().subModel1().numDofs());
             deltaU2.resize(ctl_.method().model().subModel2().numDofs());
 
-            typedef Dumux::CoupledCommon<TypeTag> Common;
+            typedef Dumux::SplitAndMerge<TypeTag> Common;
 
             Common::splitSolVector(uLastIter, uLastIter1, uLastIter2);
             Common::splitSolVector(deltaU, deltaU1, deltaU2);

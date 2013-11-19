@@ -42,7 +42,7 @@ class MultiDomainAssembler
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, MDGrid) MDGrid;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MultiDomainGrid;
 
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) SubTypeTag1;
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) SubTypeTag2;
@@ -62,14 +62,14 @@ class MultiDomainAssembler
     typedef typename GET_PROP_TYPE(SubTypeTag1, LocalOperator) LocalOperator1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, LocalOperator) LocalOperator2;
 
-    typedef typename GET_PROP_TYPE(TypeTag, MDGridFunctionSpace) MDGridFunctionSpace;
-    typedef typename GET_PROP_TYPE(TypeTag, MDCondition) MDCondition;
-    typedef typename GET_PROP_TYPE(TypeTag, MDSubProblem1) MDSubProblem1;
-    typedef typename GET_PROP_TYPE(TypeTag, MDSubProblem2) MDSubProblem2;
-    typedef typename GET_PROP_TYPE(TypeTag, MDCouplingLocalOperator) MDCouplingLocalOperator;
-    typedef typename GET_PROP_TYPE(TypeTag, MDCoupling) MDCoupling;
-    typedef typename GET_PROP_TYPE(TypeTag, MDConstraintsTrafo) MDConstraintsTrafo;
-    typedef typename GET_PROP_TYPE(TypeTag, MDGridOperator) MDGridOperator;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGridFunctionSpace) MultiDomainGridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainCondition) MultiDomainCondition;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainSubProblem1) MultiDomainSubProblem1;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainSubProblem2) MultiDomainSubProblem2;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainCouplingLocalOperator) MultiDomainCouplingLocalOperator;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainCoupling) MultiDomainCoupling;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainConstraintsTrafo) MultiDomainConstraintsTrafo;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGridOperator) MultiDomainGridOperator;
 
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
@@ -125,24 +125,24 @@ public:
         gridFunctionSpace1_ = Dune::make_shared<GridFunctionSpace1>(*scalarGridFunctionSpace1_);
         gridFunctionSpace2_ = Dune::make_shared<GridFunctionSpace2>(*scalarGridFunctionSpace2_);
 
-        mdGridFunctionSpace_ = Dune::make_shared<MDGridFunctionSpace>(globalProblem_->mdGrid(),
+        mdGridFunctionSpace_ = Dune::make_shared<MultiDomainGridFunctionSpace>(globalProblem_->mdGrid(),
         											   *gridFunctionSpace1_,
         											   *gridFunctionSpace2_);
 
         localOperator1_ = Dune::make_shared<LocalOperator1>(problem1_->model());
         localOperator2_ = Dune::make_shared<LocalOperator2>(problem2_->model());
 
-        condition1_ = Dune::make_shared<MDCondition>(0);
-        condition2_ = Dune::make_shared<MDCondition>(1);
+        condition1_ = Dune::make_shared<MultiDomainCondition>(0);
+        condition2_ = Dune::make_shared<MultiDomainCondition>(1);
 
-        mdSubProblem1_ = Dune::make_shared<MDSubProblem1>(*localOperator1_, *condition1_);
-        mdSubProblem2_ = Dune::make_shared<MDSubProblem2>(*localOperator2_, *condition2_);
+        mdSubProblem1_ = Dune::make_shared<MultiDomainSubProblem1>(*localOperator1_, *condition1_);
+        mdSubProblem2_ = Dune::make_shared<MultiDomainSubProblem2>(*localOperator2_, *condition2_);
 
-        couplingLocalOperator_ = Dune::make_shared<MDCouplingLocalOperator>(*globalProblem_);
-        mdCoupling_ = Dune::make_shared<MDCoupling>(*mdSubProblem1_, *mdSubProblem2_, *couplingLocalOperator_);
+        couplingLocalOperator_ = Dune::make_shared<MultiDomainCouplingLocalOperator>(*globalProblem_);
+        mdCoupling_ = Dune::make_shared<MultiDomainCoupling>(*mdSubProblem1_, *mdSubProblem2_, *couplingLocalOperator_);
 
         // TODO proper constraints stuff
-        constraintsTrafo_ = Dune::make_shared<MDConstraintsTrafo>();
+        constraintsTrafo_ = Dune::make_shared<MultiDomainConstraintsTrafo>();
 
         NoDirichletConstraints dirichletVal;
         auto constraints = Dune::PDELab::MultiDomain::constraints<Scalar>(*mdGridFunctionSpace_,
@@ -150,7 +150,7 @@ public:
                                                                           Dune::PDELab::MultiDomain::constrainSubProblem(*mdSubProblem2_,dirichletVal));
         constraints.assemble(*constraintsTrafo_);
 
-        mdGridOperator_ = Dune::make_shared<MDGridOperator>(*mdGridFunctionSpace_, *mdGridFunctionSpace_,
+        mdGridOperator_ = Dune::make_shared<MultiDomainGridOperator>(*mdGridFunctionSpace_, *mdGridFunctionSpace_,
         									 *constraintsTrafo_, *constraintsTrafo_,
         									 *mdSubProblem1_, *mdSubProblem2_, *mdCoupling_);
 
@@ -195,13 +195,13 @@ public:
     { return residual_; }
 
 	//! return the multidomain gridfunctionspace
-    MDGridFunctionSpace &gridFunctionSpace() const
+    MultiDomainGridFunctionSpace &gridFunctionSpace() const
     { return *mdGridFunctionSpace_; }
-    MDGridFunctionSpace &mdGridFunctionSpace() const
+    MultiDomainGridFunctionSpace &mdGridFunctionSpace() const
     { return *mdGridFunctionSpace_; }
     
 	//! return the multidomain constraints trafo
-    MDConstraintsTrafo &constraintsTrafo() const
+    MultiDomainConstraintsTrafo &constraintsTrafo() const
     { return *constraintsTrafo_; }
 
 private:
@@ -220,22 +220,22 @@ private:
 
     Dune::shared_ptr<GridFunctionSpace1> gridFunctionSpace1_;
     Dune::shared_ptr<GridFunctionSpace2> gridFunctionSpace2_;
-    Dune::shared_ptr<MDGridFunctionSpace> mdGridFunctionSpace_;
+    Dune::shared_ptr<MultiDomainGridFunctionSpace> mdGridFunctionSpace_;
 
     Dune::shared_ptr<LocalOperator1> localOperator1_;
     Dune::shared_ptr<LocalOperator2> localOperator2_;
 
-    Dune::shared_ptr<MDCondition> condition1_;
-    Dune::shared_ptr<MDCondition> condition2_;
+    Dune::shared_ptr<MultiDomainCondition> condition1_;
+    Dune::shared_ptr<MultiDomainCondition> condition2_;
 
-    Dune::shared_ptr<MDSubProblem1> mdSubProblem1_;
-    Dune::shared_ptr<MDSubProblem2> mdSubProblem2_;
+    Dune::shared_ptr<MultiDomainSubProblem1> mdSubProblem1_;
+    Dune::shared_ptr<MultiDomainSubProblem2> mdSubProblem2_;
 
-    Dune::shared_ptr<MDCouplingLocalOperator> couplingLocalOperator_;
-    Dune::shared_ptr<MDCoupling> mdCoupling_;
+    Dune::shared_ptr<MultiDomainCouplingLocalOperator> couplingLocalOperator_;
+    Dune::shared_ptr<MultiDomainCoupling> mdCoupling_;
 
-    Dune::shared_ptr<MDConstraintsTrafo> constraintsTrafo_;
-    Dune::shared_ptr<MDGridOperator> mdGridOperator_;
+    Dune::shared_ptr<MultiDomainConstraintsTrafo> constraintsTrafo_;
+    Dune::shared_ptr<MultiDomainGridOperator> mdGridOperator_;
 
     Dune::shared_ptr<JacobianMatrix> matrix_;
 
