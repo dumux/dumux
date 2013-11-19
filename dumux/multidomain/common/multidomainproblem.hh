@@ -23,8 +23,17 @@
 #ifndef DUMUX_MULTIDOMAIN_PROBLEM_HH
 #define DUMUX_MULTIDOMAIN_PROBLEM_HH
 
-#include "multidomainmodel.hh"
-#include "multidomainnewtoncontroller.hh"
+//#include "multidomainmodel.hh"
+//#include "multidomainnewtoncontroller.hh"
+//#include "multidomainproperties.hh"
+//#include "multidomainassembler.hh"
+#include <dumux/modelcoupling/common/multidomainproperties.hh>
+#include <dumux/modelcoupling/common/multidomainassembler.hh>
+#include <dumux/modelcoupling/common/coupledmodel.hh>
+#include <dumux/modelcoupling/common/coupledproperties.hh>
+
+#include <dumux/io/vtkmultiwriter.hh>
+#include <dumux/io/restart.hh>
 
 namespace Dumux
 {
@@ -38,6 +47,14 @@ namespace Dumux
 template<class TypeTag>
 class MultiDomainProblem
 {
+    template<int dim>
+    struct VertexLayout
+    {
+        bool contains(Dune::GeometryType gt) {
+            return gt.dim() == 0;
+        }
+    };
+
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
 
@@ -51,15 +68,53 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) SubTypeTag1;
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) SubTypeTag2;
 
+    typedef typename GET_PROP_TYPE(SubTypeTag1, LocalResidual) LocalResidual1;
+    typedef typename GET_PROP_TYPE(SubTypeTag2, LocalResidual) LocalResidual2;
+
     typedef typename GET_PROP_TYPE(SubTypeTag1, Problem) SubProblem1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) SubProblem2;
 
+    typedef typename GET_PROP_TYPE(SubTypeTag1, GridView) GridView1;
+    typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) GridView2;
+
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) HostGrid;
+    typedef typename GET_PROP_TYPE(TypeTag, MDGrid) MDGrid;
+
+    typedef typename MDGrid::LeafGridView MDGridView;
+    typedef typename MDGrid::Traits::template Codim<0>::Entity MDElement;
+    typedef typename MDGrid::SubDomainGrid SDGrid;
+    typedef typename SDGrid::template Codim<0>::EntityPointer SDElementPointer;
+
+    typedef Dune::MultiDomainMCMGMapper<MDGridView, VertexLayout> VertexMapper;
+
 public:
-    MultiDomainProblem(TimeManager &timeManager)
+    /*!
+      * \brief docme
+      *
+      * \param hostGrid docme
+      * \param timeManager The TimeManager which is used by the simulation
+      *
+      */
+    MultiDomainProblem(HostGrid& hostGrid,
+            		   TimeManager &timeManager)
         : timeManager_(timeManager),
           newtonMethod_(asImp_()),
           newtonCtl_(asImp_())
-    { };
+    {
+        // subdivide grid in two subdomains
+        subID1_ = 0;
+        subID2_ = 1;
+
+        mdGrid_ = Dune::make_shared<MDGrid> (hostGrid);
+
+        sdGrid1_ = &(mdGrid_->subDomain(subID1_));
+        sdGrid2_ = &(mdGrid_->subDomain(subID2_));
+
+        subProblem1_ = Dune::make_shared<SubProblem1>(timeManager, sdGrid1_->leafView());
+        subProblem2_ = Dune::make_shared<SubProblem2>(timeManager, sdGrid2_->leafView());
+
+        mdVertexMapper_ = Dune::make_shared<VertexMapper>(mdGrid_->leafView());
+    };
 
     /*!
      * \brief Called by the Dumux::TimeManager in order to
@@ -71,11 +126,8 @@ public:
     void init()
     {
         // initialize the sub-problems
-        asImp_().subProblem1().init();
-        asImp_().subProblem2().init();
-
-        // specify the elements which couple
-        asImp_().addMetaElements();
+        subProblem1().init();
+        subProblem2().init();
 
         // set the initial condition of the model
         model().init(asImp_());
@@ -101,6 +153,41 @@ public:
     }
 
     /*!
+     * \brief Serialize the simulation's state to disk
+     */
+    void serialize()
+    {
+        typedef Dumux::Restart Restarter;
+        Restarter res;
+        res.serializeBegin(this->asImp_());
+        std::cerr << "Serialize to file '" << res.fileName() << "'\n";
+
+        this->timeManager().serialize(res);
+        this->asImp_().serialize(res);
+        res.serializeEnd();
+    }
+
+    /*!
+     * \brief Load a previously saved state of the whole simulation
+     *        from disk.
+     *
+     * \param tRestart The simulation time on which the program was
+     *                 written to disk.
+     */
+    void restart(Scalar tRestart)
+    {
+        typedef Dumux::Restart Restarter;
+
+        Restarter res;
+
+        res.deserializeBegin(this->asImp_(), tRestart);
+        std::cout << "Deserialize from file '" << res.fileName() << "'\n";
+        this->timeManager().deserialize(res);
+        this->asImp_().deserialize(res);
+        res.deserializeEnd();
+    }
+
+    /*!
      * \brief This method restores the complete state of the problem
      *        from disk.
      *
@@ -111,6 +198,7 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
+        this->model().deserialize(res);
     }
 
     /*!
@@ -136,7 +224,6 @@ public:
         timeManager_.runSimulation(asImp_());
         return true;
     };
-
 
     /*!
      * \brief Called by the time manager before the time integration. Calls preTimeStep()
@@ -216,7 +303,7 @@ public:
      *        disk (i.e. as a VTK file)
      *
      * The default behaviour is to write out every the solution for
-     * very time step. This file is intented to be overwritten by the
+     * very time step. This file is intended to be overwritten by the
      * implementation.
      */
     bool shouldWriteOutput() const
@@ -238,6 +325,32 @@ public:
                   << "does not override the episodeEnd() method. "
                   << "Doing nothing!\n";
     }
+
+    /*!
+     * \brief Called by the time manager after everything which can be
+     *        done about the current time step is finished and the
+     *        model should be prepared to do the next time integration.
+     */
+    void advanceTimeLevel()
+    {
+    	asImp_().subProblem1().advanceTimeLevel();
+    	asImp_().subProblem2().advanceTimeLevel();
+
+        model_.advanceTimeLevel();
+    }
+
+    /*!
+     * \brief Write the relevant quantities of the current solution into an VTK output file.
+     */
+    void writeOutput()
+    {
+        // write the current result to disk
+        if (asImp_().shouldWriteOutput()) {
+            asImp_().subProblem1().writeOutput();
+            asImp_().subProblem2().writeOutput();
+        }
+    }
+
 
     // \}
 
@@ -304,60 +417,140 @@ public:
     { return model_; }
     // \}
 
-    void computeCouplingIndices() const
-    { DUNE_THROW(Dune::NotImplemented, "Coupled problems need to implement the computeCouplingIndices method!"); }
+    /*!
+     * \brief Returns the ID of the first domain
+     */
+    const typename MDGrid::SubDomainType subID1() const
+    { return subID1_; }
 
-    SubProblem1 &subProblem1()
-    { DUNE_THROW(Dune::NotImplemented, "Coupled problems need to implement the subProblem1 method!"); }
-    const SubProblem1 &subProblem1() const
-    { DUNE_THROW(Dune::NotImplemented, "Coupled problems need to implement the subProblem1 method!"); }
+    /*!
+     * \brief Returns the ID of the second domain
+     */
+    const typename MDGrid::SubDomainType subID2() const
+    { return subID2_; }
 
-    SubProblem2 &subProblem2()
-    { DUNE_THROW(Dune::NotImplemented, "Coupled problems need to implement the subProblem2 method!"); }
-    const SubProblem2 &subProblem2() const
-    { DUNE_THROW(Dune::NotImplemented, "Coupled problems need to implement the subProblem2 method!"); }
+    // MAY BE THROWN OUT??
+    /*!
+     * \brief Returns a reference to subproblem1
+     */
+    SubProblem1& subProblem1()
+    { return *subProblem1_; }
+
+    /*!
+     * \brief Returns a const reference to subproblem1
+     */
+    const SubProblem1& subProblem1() const
+    { return *subProblem1_; }
+
+    /*!
+     * \brief Returns a reference to subproblem2
+     */
+    SubProblem2& subProblem2()
+    { return *subProblem2_; }
+
+    /*!
+     * \brief Returns a const reference to subproblem2
+     */
+    const SubProblem2& subProblem2() const
+    { return *subProblem2_; }
+    ///////////////////////////////
 
 
     /*!
-     * \brief Called by the time manager after everything which can be
-     *        done about the current time step is finished and the
-     *        model should be prepared to do the next time integration.
+     * \brief Returns a reference to the localresidual1
      */
-    void advanceTimeLevel()
-    {
-    	asImp_().subProblem1().advanceTimeLevel();
-    	asImp_().subProblem2().advanceTimeLevel();
-
-        model_.advanceTimeLevel();
-    }
+    LocalResidual1& localResidual1()
+    { return subProblem1().model().localResidual(); };
 
     /*!
-     * \brief Write the relevant quantities of the current solution into an VTK output file.
+     * \brief Returns a reference to the localresidual2
      */
-    void writeOutput()
-    {
-        // write the current result to disk
-        if (asImp_().shouldWriteOutput()) {
-            asImp_().subProblem1().writeOutput();
-            asImp_().subProblem2().writeOutput();
-        }
-    }
+    LocalResidual2& localResidual2()
+    { return subProblem2().model().localResidual(); };
 
     /*!
-     * \brief Serialize the simulation's state to disk
+     * \brief Returns a reference to the multidomain grid
      */
-    void serialize()
-    {
-        DUNE_THROW(Dune::NotImplemented,
-                   "Dumux::MultiDomainProblem::serialize");
-    }
+    MDGrid& mdGrid()
+    { return *mdGrid_; }
+
+    /*!
+     * \brief Returns a const reference to the multidomain grid
+     */
+    const MDGrid& mdGrid() const
+    { return *mdGrid_; }
+
+    /*!
+     * \brief Returns the multidomain gridview
+     */
+    const MDGridView mdGridView() const
+    { return mdGrid().leafView(); }
+
+
+    /*!
+     * \brief Returns the multidomain gridview
+     */
+    const MDGridView gridView() const
+    { return mdGrid().leafView(); }
+
+    /*!
+     * \brief Returns a reference to the subdomain1 grid
+     */
+    SDGrid& sdGrid1()
+    { return *sdGrid1_; }
+
+    /*!
+     * \brief Returns a const reference to the subdomain1 grid
+     */
+    const SDGrid& sdGrid1() const
+    { return *sdGrid1_; }
+
+    /*!
+     * \brief Returns a reference to the subdomain2 grid
+     */
+    SDGrid& sdGrid2()
+    { return *sdGrid2_; }
+
+    /*!
+     * \brief Returns a const reference to the subdomain2 grid
+     */
+    const SDGrid& sdGrid2() const
+    { return *sdGrid2_; }
+
+    /*!
+     * \brief Returns the gridview of subdomain1
+     */
+    const GridView1 gridView1() const
+    { return mdGrid().subDomain(subID1_).leafView(); }
+
+    /*!
+     * \brief Returns the gridview of subdomain2
+     */
+    const GridView2 gridView2() const
+    { return mdGrid().subDomain(subID2_).leafView(); }
+
+    /*!
+     * \brief Returns a pointer to the subdomain1 element
+     */
+    SDElementPointer sdElementPointer1(const MDElement& mdElement1)
+    { return mdGrid().subDomain(subID1_).subDomainEntityPointer(mdElement1); }
+
+    /*!
+     * \brief Returns a pointer to the subdomain2 element
+     */
+    SDElementPointer sdElementPointer2(const MDElement& mdElement2)
+    { return mdGrid().subDomain(subID2_).subDomainEntityPointer(mdElement2); }
+
+    /*!
+     * \brief Provides a vertex mapper for the multidomain
+     */
+    VertexMapper& mdVertexMapper()
+    { return *mdVertexMapper_; }
+
 
 protected:
-    void addMetaElements() 
-    {}
-
     void initMortarElements()
-     {}
+    {}
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -376,7 +569,22 @@ private:
     NewtonMethod newtonMethod_;
     NewtonController newtonCtl_;
     Model model_;
+
+    typename MDGrid::SubDomainType subID1_;
+    typename MDGrid::SubDomainType subID2_;
+
+    Dune::shared_ptr<MDGrid> mdGrid_;
+    Dune::shared_ptr<VertexMapper> mdVertexMapper_;
+
+    SDGrid *sdGrid1_;
+    SDGrid *sdGrid2_;
+
+    Dune::shared_ptr<SubProblem1> subProblem1_;
+    Dune::shared_ptr<SubProblem2> subProblem2_;
+
+
 };
+
 // definition of the static class member simname_,
 // which is necessary because it is of type string.
 template <class TypeTag>
