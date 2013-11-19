@@ -16,6 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \brief The SubDomain properties
+ */
 #ifndef DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
 #define DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
 
@@ -33,8 +37,8 @@ namespace Dumux
 {
 namespace Properties
 {
-//! The type tag for problems which use dune-multidomain
-NEW_TYPE_TAG(SubDomain, INHERITS_FROM(BoxPDELab, CoupledSubProblem));
+//! The type tag for the subproblems which use dune-multidomain
+NEW_TYPE_TAG(SubDomain);
 
 //////////////////////////////////////
 // Set property values
@@ -44,11 +48,10 @@ NEW_TYPE_TAG(SubDomain, INHERITS_FROM(BoxPDELab, CoupledSubProblem));
 SET_PROP(SubDomain, Grid)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, CoupledProblemTypeTag) CoupledTypeTag;
-    typedef typename GET_PROP_TYPE(CoupledTypeTag, Grid) HostGrid;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomain) MultiDomain;
+    typedef typename GET_PROP_TYPE(MultiDomain, Grid) HostGrid;
     typedef typename Dune::mdgrid::FewSubDomainsTraits<HostGrid::dimension,4> MDGridTraits;
     typedef typename Dune::MultiDomainGrid<HostGrid, MDGridTraits> Grid;
-
 public:
     typedef typename Grid::SubDomainGrid type;
 };
@@ -58,8 +61,7 @@ SET_TYPE_PROP(SubDomain, BaseLocalResidual, BoxCouplingLocalResidual<TypeTag>);
 
 // set the local operator used for submodels
 SET_TYPE_PROP(SubDomain, LocalOperator,
-              Dumux::PDELab::MultiDomainBoxLocalOperator<TypeTag>);
-
+              Dumux::PDELab::MultiDomainLocalOperator<TypeTag>);
 
 // set the grid functions space for the sub-models
 SET_PROP(SubDomain, ScalarGridFunctionSpace)
@@ -72,6 +74,59 @@ SET_PROP(SubDomain, ScalarGridFunctionSpace)
  public:
     typedef Dune::PDELab::GridFunctionSpace<GridView, FEM, Constraints,
         Dune::PDELab::ISTLVectorBackend<1> > type;
+};
+
+// set the grid functions space for the sub-models
+SET_PROP(SubDomain, GridFunctionSpace)
+{private:
+    typedef typename GET_PROP_TYPE(TypeTag, ScalarGridFunctionSpace) ScalarGridFunctionSpace;
+    enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
+public:
+    typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, numEq, Dune::PDELab::GridFunctionSpaceBlockwiseMapper> type;
+};
+
+// set the grid function space for the sub-models
+SET_TYPE_PROP(SubDomain, Constraints, Dune::PDELab::NoConstraints);
+
+// set the grid functions space for the sub-models
+SET_PROP(SubDomain, ConstraintsTrafo)
+{private:
+  typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+  typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
+public:
+    typedef typename GridFunctionSpace::template ConstraintsContainer<Scalar>::Type type;
+};
+
+// set the grid operator space used for submodels
+// DEPRECATED: use GridOperator instead
+SET_PROP(SubDomain, GridOperatorSpace)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, ConstraintsTrafo) ConstraintsTrafo;
+    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, LocalOperator) LocalOperator;
+    enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
+
+public:
+    typedef Dune::PDELab::GridOperatorSpace<GridFunctionSpace,
+        GridFunctionSpace,
+        LocalOperator,
+        ConstraintsTrafo,
+        ConstraintsTrafo,
+        Dune::PDELab::ISTLBCRSMatrixBackend<numEq, numEq>,
+        true
+        > type;
+};
+
+//! use the local FEM space associated with cubes by default
+SET_PROP(SubDomain, LocalFEMSpace)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum{dim = GridView::dimension};
+
+public:
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type;
 };
 
 // \}

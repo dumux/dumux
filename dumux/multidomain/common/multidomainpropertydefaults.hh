@@ -16,30 +16,41 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_COUPLED_PROPERTY_DEFAULTS_HH
-#define DUMUX_COUPLED_PROPERTY_DEFAULTS_HH
+/*!
+ * \file
+ * \brief Sets default values for the MultiDomain properties
+ */
+#ifndef DUMUX_MULTIDOMAIN_PROPERTY_DEFAULTS_HH
+#define DUMUX_MULTIDOMAIN_PROPERTY_DEFAULTS_HH
+
+#include <dune/istl/bvector.hh>
+#include <dune/istl/bcrsmatrix.hh>
+
+#include <dumux/nonlinear/newtonmethod.hh>
+#include <dumux/common/timemanager.hh>
 
 #include "splitandmerge.hh"
+#include "multidomainmodel.hh"
 #include "multidomainnewtoncontroller.hh"
 #include "multidomainproperties.hh"
 
 namespace Dumux
 {
-template <class TypeTag> class CoupledModel;
-template <class TypeTag> class CoupledJacobianAssembler;
-template <class TypeTag> class CoupledNewtonController;
+template <class TypeTag> class MultiDomain;
+template <class TypeTag> class MultiDomainJacobianAssembler;
+template <class TypeTag> class MultiDomainNewtonController;
 
 namespace Properties
 {
 
-/////////////////////////////////////7
 // Set property values for the coupled model
-SET_BOOL_PROP(CoupledModel, DoEnrichedCoupling, false);
-SET_TYPE_PROP(CoupledModel, Model, Dumux::CoupledModel<TypeTag>);
-SET_TYPE_PROP(CoupledModel, JacobianAssembler, Dumux::CoupledJacobianAssembler<TypeTag>);
-SET_PROP(CoupledModel, SolutionVector)
-{
-private:
+//SET_BOOL_PROP(MultiDomain, DoEnrichedCoupling, false);
+SET_TYPE_PROP(MultiDomain, Model, MultiDomainModel<TypeTag>);
+
+SET_TYPE_PROP(MultiDomain, JacobianAssembler, CoupledJacobianAssembler<TypeTag>);
+
+SET_PROP(MultiDomain, SolutionVector)
+{ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:
@@ -47,26 +58,24 @@ public:
 };
 
 //! use the plain newton method for the coupled problems by default
-SET_TYPE_PROP(CoupledModel, NewtonMethod, Dumux::NewtonMethod<TypeTag>);
+SET_TYPE_PROP(MultiDomain, NewtonMethod, NewtonMethod<TypeTag>);
 
 //! use the plain newton controller for coupled problems by default
-SET_TYPE_PROP(CoupledModel, NewtonController, Dumux::CoupledNewtonController<TypeTag>);
+SET_TYPE_PROP(MultiDomain, NewtonController, CoupledNewtonController<TypeTag>);
 
 //! Set the default type of the time manager for coupled models
-SET_TYPE_PROP(CoupledModel, TimeManager, Dumux::TimeManager<TypeTag>);
+SET_TYPE_PROP(MultiDomain, TimeManager, TimeManager<TypeTag>);
 
-
-SET_PROP(CoupledModel, JacobianMatrix)
-{private:
+SET_PROP(MultiDomain, JacobianMatrix)
+{ private:
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar, numEq, numEq> > type;
 };
 
-SET_PROP(CoupledModel, NumEq)
-{
-private:
+SET_PROP(MultiDomain, NumEq)
+{ private:
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) TypeTag1;
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) TypeTag2;
 
@@ -74,67 +83,53 @@ private:
         numEq1 = GET_PROP_VALUE(TypeTag1, NumEq),
         numEq2 = GET_PROP_VALUE(TypeTag2, NumEq)
     };
-
 public:
     static const int value = numEq1; //TODO: why??
 };
 
-SET_PROP(CoupledModel, NumEq1)
-{
-private:
+SET_PROP(MultiDomain, NumEq1)
+{ private:
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) TypeTag1;
     enum {numEq = GET_PROP_VALUE(TypeTag1, NumEq)};
 public:
     static const int value = numEq;
 };
 
-SET_PROP(CoupledModel, NumEq2)
-{
-private:
+SET_PROP(MultiDomain, NumEq2)
+{ private:
     typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) TypeTag2;
     enum {numEq = GET_PROP_VALUE(TypeTag2, NumEq)};
 public:
     static const int value = numEq;
 };
 
-SET_PROP(CoupledModel, MetaElementList)
-{private:
-    typedef typename GET_PROP_TYPE(TypeTag, MetaElement) MetaElement;
-public:
-    typedef std::vector<MetaElement*> type;
-};
+// Linear solver settings
+SET_TYPE_PROP(MultiDomain, LinearSolver, BoxBiCGStabILU0Solver<TypeTag>};
 
-SET_PROP(CoupledModel, LinearSolver)
-{public:
-  typedef Dumux::BoxBiCGStabILU0Solver<TypeTag> type;
-};
 
-SET_PROP(CoupledModel, LinearSolverResidualReduction)
-{public:
-    static constexpr double value = 1e-6;
-};
+SET_SCALAR_PROP(MultiDomain, LinearSolverResidualReduction, 1e-6);
 
 //! set the default number of maximum iterations for the linear solver
-SET_PROP(CoupledModel, LinearSolverMaxIterations)
-{public:
-    static constexpr int value = 250;
-};
+SET_INT_PROP(MultiDomain, LinearSolverMaxIterations, 250);
 
-SET_INT_PROP(CoupledModel, NewtonMaxTimeStepDivisions, 10);
+SET_INT_PROP(MultiDomain, NewtonMaxTimeStepDivisions, 10);
 
+
+// TODO: move to subdomainpropertydefaults.hh
 // use the time manager for the coupled problem in the sub problems
-SET_PROP(CoupledSubProblem, TimeManager)
-{private:
-    typedef typename GET_PROP_TYPE(TypeTag, CoupledProblemTypeTag) CoupledTypeTag;
+SET_PROP(SubDomainProblem, TimeManager)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomain) CoupledTypeTag;
 public:
     typedef typename GET_PROP_TYPE(CoupledTypeTag, TimeManager) type;
 };
 
 // use the time manager for the coupled problem in the sub problems
-SET_PROP(CoupledSubProblem, ParameterTree)
-{private:
-    typedef typename GET_PROP_TYPE(TypeTag, CoupledProblemTypeTag) CoupledTypeTag;
-    typedef typename GET_PROP(CoupledTypeTag, ParameterTree) ParameterTree;
+SET_PROP(SubDomainProblem, ParameterTree)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomain) MultiDomain;
+    typedef typename GET_PROP(MultiDomain, ParameterTree) ParameterTree;
 public:
     typedef typename ParameterTree::type type;
 
@@ -152,7 +147,6 @@ public:
 
     static type &unusedNewRunTimeParams()
     { return ParameterTree::unusedNewRunTimeParams(); }
-
 };
 
 // \}

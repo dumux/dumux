@@ -16,17 +16,15 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_COUPLED_PROPERTIES_HH
-#define DUMUX_COUPLED_PROPERTIES_HH
-
-#include <dune/istl/bvector.hh>
-#include <dune/istl/bcrsmatrix.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
+/*!
+ * \file
+ * \brief The MultiDomain properties
+ */
+#ifndef DUMUX_MULTIDOMAIN_PROPERTIES_HH
+#define DUMUX_MULTIDOMAIN_PROPERTIES_HH
 
 #include <dumux/implicit/common/implicitproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
-
-#include <dumux/common/timemanager.hh>
 
 /*!
  * \file
@@ -49,7 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(LinearSolverTypeTag, ImplicitBase));
 
 //! The type tag from which sub-problems of coupling models inherit
-NEW_TYPE_TAG(CoupledSubProblem);
+//NEW_TYPE_TAG(SubDomainProblem); // TODO: move to separate file
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -61,22 +59,22 @@ NEW_TYPE_TAG(CoupledSubProblem);
 //////////////////////////////////////////////////////////////////
 
 //! Specifies the type tag of the first sub-problem
-NEW_PROP_TAG(SubProblem1TypeTag);
+NEW_PROP_TAG(SubDomainProblem1);
 
 //! Specifies the type tag of the second sub-problem
-NEW_PROP_TAG(SubProblem2TypeTag);
+NEW_PROP_TAG(SubDomainProblem2);
 
 //! Specifies the type tag of the other sub-problem
-NEW_PROP_TAG(OtherSubProblemTypeTag);
+NEW_PROP_TAG(OtherSubDomainProblem);
 
 //! Specifies the type tag of coupled problem
-NEW_PROP_TAG(CoupledProblemTypeTag);
+NEW_PROP_TAG(MultiDomainProblem);
 
 //! Specifies the local jacobian of a meta element
-NEW_PROP_TAG(CoupledLocalJacobian);
+//NEW_PROP_TAG(CoupledLocalJacobian);
 
 //! Specifies the jacobian assembler
-NEW_PROP_TAG(JacobianAssembler);
+//NEW_PROP_TAG(JacobianAssembler);
 
 //! Specifies the type of the jacobian matrix as used for the linear
 //! solver
@@ -108,9 +106,6 @@ NEW_PROP_TAG(NumEq2);
 //! Specifies the fluidsystem that is used in the subdomains
 NEW_PROP_TAG(FluidSystem);
 
-//! Specifies whether the enriched(mortar) coupling is used (set to false by default)
-NEW_PROP_TAG(DoEnrichedCoupling);
-
 
 //////////////////////////////////////////////////////////////////
 // FROM MULTIDOMAINPROPERTIES.HH
@@ -120,33 +115,32 @@ NEW_PROP_TAG(DoEnrichedCoupling);
 NEW_PROP_TAG(Grid);
 
 //! Specifies the multidomain grid
-NEW_PROP_TAG(MDGrid);
+NEW_PROP_TAG(MultiDomainGrid);
 
 //! Specifies the multidomain grid function space
-NEW_PROP_TAG(MDGridFunctionSpace);
+NEW_PROP_TAG(MultiDomainGridFunctionSpace);
 
 //! Specifies the equality conditions
-NEW_PROP_TAG(MDCondition);
+NEW_PROP_TAG(MultiDomainCondition);
 
 //! Specifies the multidomain type based subproblem for subdomain 1
-NEW_PROP_TAG(MDSubProblem1);
+NEW_PROP_TAG(MultiDomainSubProblem1);
 
 //! Specifies the multidomain type based subproblem for subdomain 2
-NEW_PROP_TAG(MDSubProblem2);
+NEW_PROP_TAG(MultiDomainSubProblem2);
 
 //! the local coupling operator for use with dune-multidomain
-NEW_PROP_TAG(MDCouplingLocalOperator);
+NEW_PROP_TAG(MultiDomainCouplingLocalOperator);
 
 //! Specifies the multidomain coupling
-NEW_PROP_TAG(MDCoupling);
+NEW_PROP_TAG(MultiDomainCoupling);
 
 //! Property tag for the multidomain constraints transformation
-NEW_PROP_TAG(MDConstraintsTrafo);
+NEW_PROP_TAG(MultiDomainConstraintsTrafo);
+NEW_PROP_TAG(ConstraintsTrafo);
 
 //! Specifies the multidomain grid operator
-NEW_PROP_TAG(MDGridOperator);
-
-NEW_PROP_TAG(ConstraintsTrafo);
+NEW_PROP_TAG(MultiDomainGridOperator);
 
 }
 }
