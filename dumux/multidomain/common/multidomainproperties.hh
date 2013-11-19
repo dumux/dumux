@@ -46,13 +46,18 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for problems which utilize the coupling approach
-NEW_TYPE_TAG(CoupledModel, INHERITS_FROM(LinearSolverTypeTag, ImplicitBase));
+NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(LinearSolverTypeTag, ImplicitBase));
 
 //! The type tag from which sub-problems of coupling models inherit
 NEW_TYPE_TAG(CoupledSubProblem);
 
 //////////////////////////////////////////////////////////////////
 // Property tags
+//////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////
+// FROM COUPLEDPROPERTIES.HH
 //////////////////////////////////////////////////////////////////
 
 //! Specifies the type tag of the first sub-problem
@@ -72,12 +77,6 @@ NEW_PROP_TAG(CoupledLocalJacobian);
 
 //! Specifies the jacobian assembler
 NEW_PROP_TAG(JacobianAssembler);
-
-//! Specifies a meta element
-NEW_PROP_TAG(MetaElement);
-
-//! Specifies a list of meta elements
-NEW_PROP_TAG(MetaElementList);
 
 //! Specifies the type of the jacobian matrix as used for the linear
 //! solver
@@ -111,6 +110,43 @@ NEW_PROP_TAG(FluidSystem);
 
 //! Specifies whether the enriched(mortar) coupling is used (set to false by default)
 NEW_PROP_TAG(DoEnrichedCoupling);
+
+
+//////////////////////////////////////////////////////////////////
+// FROM MULTIDOMAINPROPERTIES.HH
+//////////////////////////////////////////////////////////////////
+
+//! Specifies the host grid
+NEW_PROP_TAG(Grid);
+
+//! Specifies the multidomain grid
+NEW_PROP_TAG(MDGrid);
+
+//! Specifies the multidomain grid function space
+NEW_PROP_TAG(MDGridFunctionSpace);
+
+//! Specifies the equality conditions
+NEW_PROP_TAG(MDCondition);
+
+//! Specifies the multidomain type based subproblem for subdomain 1
+NEW_PROP_TAG(MDSubProblem1);
+
+//! Specifies the multidomain type based subproblem for subdomain 2
+NEW_PROP_TAG(MDSubProblem2);
+
+//! the local coupling operator for use with dune-multidomain
+NEW_PROP_TAG(MDCouplingLocalOperator);
+
+//! Specifies the multidomain coupling
+NEW_PROP_TAG(MDCoupling);
+
+//! Property tag for the multidomain constraints transformation
+NEW_PROP_TAG(MDConstraintsTrafo);
+
+//! Specifies the multidomain grid operator
+NEW_PROP_TAG(MDGridOperator);
+
+NEW_PROP_TAG(ConstraintsTrafo);
 
 }
 }
