@@ -127,20 +127,18 @@ public:
     }
 
     /*!
-     * \brief Returns the mass fraction of a given component in a
-     * 		  given phase within the control volume.
+     * \brief Returns the mass fraction of a given component in the
+     * 		  given fluid phase within the control volume.
      *
-     * \param phaseIdx The phase index
      * \param compIdx The component index
      */
     Scalar massFraction(const int compIdx) const
     { return this->fluidState_.massFraction(phaseIdx, compIdx); }
 
     /*!
-     * \brief Returns the mass fraction of a given component in a
-     * 		  given phase within the control volume.
+     * \brief Returns the mass fraction of a given component in the
+     * 		  given fluid phase within the control volume.
      *
-     * \param phaseIdx The phase index
      * \param compIdx The component index
      */
     Scalar moleFraction(const int compIdx) const
