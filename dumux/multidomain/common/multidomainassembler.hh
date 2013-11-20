@@ -44,8 +44,8 @@ class MultiDomainAssembler
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MultiDomainGrid;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) SubTypeTag1;
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) SubTypeTag2;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
 
     typedef typename GET_PROP_TYPE(SubTypeTag1, Problem) SubProblem1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) SubProblem2;

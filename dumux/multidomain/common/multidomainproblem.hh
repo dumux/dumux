@@ -23,14 +23,11 @@
 #ifndef DUMUX_MULTIDOMAIN_PROBLEM_HH
 #define DUMUX_MULTIDOMAIN_PROBLEM_HH
 
-//#include "multidomainmodel.hh"
-//#include "multidomainnewtoncontroller.hh"
-//#include "multidomainproperties.hh"
-//#include "multidomainassembler.hh"
-#include <dumux/modelcoupling/common/multidomainproperties.hh>
-#include <dumux/modelcoupling/common/multidomainassembler.hh>
-#include <dumux/modelcoupling/common/coupledmodel.hh>
-#include <dumux/modelcoupling/common/coupledproperties.hh>
+#include "multidomainmodel.hh"
+#include "multidomainnewtoncontroller.hh"
+#include "multidomainpropertydefaults.hh"
+#include "subdomainpropertydefaults.hh"
+#include "multidomainassembler.hh"
 
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
@@ -65,8 +62,8 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) SubTypeTag1;
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) SubTypeTag2;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
 
     typedef typename GET_PROP_TYPE(SubTypeTag1, LocalResidual) LocalResidual1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, LocalResidual) LocalResidual2;
@@ -78,7 +75,7 @@ private:
     typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) GridView2;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) HostGrid;
-    typedef typename GET_PROP_TYPE(TypeTag, MDGrid) MDGrid;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
 
     typedef typename MDGrid::LeafGridView MDGridView;
     typedef typename MDGrid::Traits::template Codim<0>::Entity MDElement;

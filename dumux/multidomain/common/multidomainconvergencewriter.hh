@@ -36,16 +36,6 @@
  */
 namespace Dumux
 {
-namespace Properties
-{
-    // forward declaration
-    NEW_PROP_TAG(SubProblem1TypeTag);
-    NEW_PROP_TAG(SubProblem2TypeTag);
-    NEW_PROP_TAG(Grid);
-    NEW_PROP_TAG(GridView);
-}
-
-
 //! \cond INTERNAL
 /*!
  * \brief Writes the intermediate solutions during
@@ -54,24 +44,19 @@ namespace Properties
 template <class TypeTag>
 struct MultiDomainConvergenceWriter
 {
-    //typedef typename GET_PROP_TYPE(TypeTag, Grid) HostGrid;
-    //typedef Dune::mdgrid::FewSubDomainsTraits<HostGrid::dimension,4> MultiDomainGridTraits;
-    //typedef Dune::MultiDomainGrid<HostGrid, MultiDomainGridTraits> MultiDomainGrid;
-    //typedef typename MultiDomainGrid::LeafGridView MultiDomainGridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) SubProblem1TypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) SubProblem2TypeTag;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
 
-    typedef typename GET_PROP_TYPE(SubProblem1TypeTag, GridView) GridView1;
-    typedef typename GET_PROP_TYPE(SubProblem2TypeTag, GridView) GridView2;
+    typedef typename GET_PROP_TYPE(SubTypeTag1, GridView) GridView1;
+    typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) GridView2;
 
-    typedef typename GET_PROP_TYPE(SubProblem1TypeTag, SolutionVector) SolutionVector1;
-    typedef typename GET_PROP_TYPE(SubProblem2TypeTag, SolutionVector) SolutionVector2;
+    typedef typename GET_PROP_TYPE(SubTypeTag1, SolutionVector) SolutionVector1;
+    typedef typename GET_PROP_TYPE(SubTypeTag2, SolutionVector) SolutionVector2;
 
     typedef Dumux::VtkMultiWriter<GridView1> VtkMultiWriter1;
     typedef Dumux::VtkMultiWriter<GridView2> VtkMultiWriter2;

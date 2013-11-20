@@ -119,13 +119,13 @@ class MultiDomainNewtonController
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) SubTypeTag1;
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) SubTypeTag2;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
 
     typedef typename GET_PROP_TYPE(SubTypeTag1, GridView) GridView1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) GridView2;
 
-    typedef MultiDomainNewtonConvergenceWriter<TypeTag>  ConvergenceWriter;
+    typedef MultiDomainConvergenceWriter<TypeTag>  ConvergenceWriter;
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
 
 public:

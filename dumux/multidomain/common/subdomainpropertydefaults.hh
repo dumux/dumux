@@ -24,10 +24,10 @@
 #define DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
 
 #include <dune/grid/multidomaingrid.hh>
-//#include <dumux/implicit/pdelab/pdelabadapter.hh>
-#include <dumux/implicit/common/boxcouplinglocalresidual.hh>
+
+#include "subdomainproperties.hh"
 #include "multidomainlocaloperator.hh"
-#include "multidomainproperties.hh"
+#include <dumux/implicit/common/boxcouplinglocalresidual.hh>
 
 /*!
  * \file
@@ -37,18 +37,12 @@ namespace Dumux
 {
 namespace Properties
 {
-//! The type tag for the subproblems which use dune-multidomain
-NEW_TYPE_TAG(SubDomain);
-
-//////////////////////////////////////
-// Set property values
-//////////////////////////////////////
 
 // Specifies the grid type for the subdomains
 SET_PROP(SubDomain, Grid)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomain) MultiDomain;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag) MultiDomain;
     typedef typename GET_PROP_TYPE(MultiDomain, Grid) HostGrid;
     typedef typename Dune::mdgrid::FewSubDomainsTraits<HostGrid::dimension,4> MDGridTraits;
     typedef typename Dune::MultiDomainGrid<HostGrid, MDGridTraits> Grid;
@@ -62,6 +56,14 @@ SET_TYPE_PROP(SubDomain, BaseLocalResidual, BoxCouplingLocalResidual<TypeTag>);
 // set the local operator used for submodels
 SET_TYPE_PROP(SubDomain, LocalOperator,
               Dumux::PDELab::MultiDomainLocalOperator<TypeTag>);
+
+// use the time manager for the coupled problem in the sub problems
+SET_PROP(SubDomain, TimeManager)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag) MultiDomainTypeTag;
+public:
+    typedef typename GET_PROP_TYPE(MultiDomainTypeTag, TimeManager) type;
+};
 
 // set the grid functions space for the sub-models
 SET_PROP(SubDomain, ScalarGridFunctionSpace)
@@ -127,6 +129,30 @@ SET_PROP(SubDomain, LocalFEMSpace)
 
 public:
     typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type;
+};
+
+SET_PROP(SubDomain, ParameterTree)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag) MultiDomainTypeTag;
+    typedef typename GET_PROP(MultiDomainTypeTag, ParameterTree) ParameterTree;
+public:
+    typedef typename ParameterTree::type type;
+
+    static type &tree()
+    { return ParameterTree::tree(); }
+
+    static type &compileTimeParams()
+    { return ParameterTree::compileTimeParams(); }
+
+    static type &runTimeParams()
+    { return ParameterTree::runTimeParams(); }
+
+    static type &deprecatedRunTimeParams()
+    { return ParameterTree::deprecatedRunTimeParams(); }
+
+    static type &unusedNewRunTimeParams()
+    { return ParameterTree::unusedNewRunTimeParams(); }
 };
 
 // \}

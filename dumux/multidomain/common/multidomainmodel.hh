@@ -50,8 +50,8 @@ class MultiDomainModel
     typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem1TypeTag) SubTypeTag1;
-    typedef typename GET_PROP_TYPE(TypeTag, SubProblem2TypeTag) SubTypeTag2;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
 
     typedef typename GET_PROP_TYPE(SubTypeTag1, Problem) SubProblem1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) SubProblem2;
@@ -90,10 +90,10 @@ public:
         uPrev_= 0;
 
         typedef Dumux::SplitAndMerge<TypeTag> Common;
-        Common::spliceSolVectors(subModel1().curSol(),
+        Common::mergeSolVectors(subModel1().curSol(),
                                  subModel2().curSol(),
                                  uCur_);
-        Common::spliceSolVectors(subModel1().prevSol(),
+        Common::mergeSolVectors(subModel1().prevSol(),
                                  subModel2().prevSol(),
                                  uPrev_);
     }
@@ -252,7 +252,7 @@ public:
         subModel2().updateBegin();
 
         typedef Dumux::SplitAndMerge<TypeTag> Common;
-        Common::spliceSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
+        Common::mergeSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
     }
 
 
@@ -279,9 +279,9 @@ public:
     void advanceTimeLevel()
     {
         typedef Dumux::SplitAndMerge<TypeTag> Common;
-        // splice the two sub-vectors together
-        Common::spliceSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
-        Common::spliceSolVectors(subModel1().prevSol(), subModel2().prevSol(), uPrev_);
+        // merge the two sub-vectors together
+        Common::mergeSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
+        Common::mergeSolVectors(subModel1().prevSol(), subModel2().prevSol(), uPrev_);
     };
 
     /*!
@@ -295,8 +295,8 @@ public:
         subModel2().updateFailed();
 
         typedef Dumux::SplitAndMerge<TypeTag> Common;
-        // splice the two sub-vectors together
-        Common::spliceSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
+        // merge the two sub-vectors together
+        Common::mergeSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
     };
 
     /*!
@@ -310,8 +310,8 @@ public:
         subModel2().updateFailedTry();
 
         typedef Dumux::SplitAndMerge<TypeTag> Common;
-        // splice the two sub-vectors together
-        Common::spliceSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
+        // merge the two sub-vectors together
+        Common::mergeSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
     };
 
     /*!

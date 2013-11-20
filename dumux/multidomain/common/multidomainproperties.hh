@@ -46,50 +46,30 @@ namespace Properties
 //! The type tag for problems which utilize the coupling approach
 NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(LinearSolverTypeTag, ImplicitBase));
 
-//! The type tag from which sub-problems of coupling models inherit
-//NEW_TYPE_TAG(SubDomainProblem); // TODO: move to separate file
-
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-
-//////////////////////////////////////////////////////////////////
-// FROM COUPLEDPROPERTIES.HH
-//////////////////////////////////////////////////////////////////
-
-//! Specifies the type tag of the first sub-problem
-NEW_PROP_TAG(SubDomainProblem1);
-
-//! Specifies the type tag of the second sub-problem
-NEW_PROP_TAG(SubDomainProblem2);
-
-//! Specifies the type tag of the other sub-problem
-NEW_PROP_TAG(OtherSubDomainProblem);
-
-//! Specifies the type tag of coupled problem
-NEW_PROP_TAG(MultiDomainProblem);
-
-//! Specifies the local jacobian of a meta element
-//NEW_PROP_TAG(CoupledLocalJacobian);
-
-//! Specifies the jacobian assembler
-//NEW_PROP_TAG(JacobianAssembler);
-
-//! Specifies the type of the jacobian matrix as used for the linear
-//! solver
-NEW_PROP_TAG(JacobianMatrix);
-
-//! specifies whether the convergence rate and the global residual
-//! gets written out to disk for every newton iteration
-NEW_PROP_TAG(NewtonWriteConvergence);
-
-//! the maximum allowed number of timestep divisions for the
-//! Newton solver
-NEW_PROP_TAG(NewtonMaxTimeStepDivisions);
-
 //! Specifies the model
 NEW_PROP_TAG(Model);
+
+//! Specifies the type tag of the first sub-problem
+NEW_PROP_TAG(SubDomain1TypeTag);
+
+//! Specifies the type tag of the second sub-problem
+NEW_PROP_TAG(SubDomain2TypeTag);
+
+//! Specifies the type tag of the other sub-problem
+NEW_PROP_TAG(OtherSubDomainTypeTag);
+
+//! Specifies the type tag of coupled problem
+NEW_PROP_TAG(MultiDomainTypeTag);
+
+//! Specifies the host grid
+NEW_PROP_TAG(Grid);
+
+//! Specifies the multidomain grid
+NEW_PROP_TAG(MultiDomainGrid);
 
 //! Specifies the time manager
 NEW_PROP_TAG(TimeManager);
@@ -106,19 +86,19 @@ NEW_PROP_TAG(NumEq2);
 //! Specifies the fluidsystem that is used in the subdomains
 NEW_PROP_TAG(FluidSystem);
 
-
-//////////////////////////////////////////////////////////////////
-// FROM MULTIDOMAINPROPERTIES.HH
-//////////////////////////////////////////////////////////////////
-
-//! Specifies the host grid
-NEW_PROP_TAG(Grid);
-
-//! Specifies the multidomain grid
-NEW_PROP_TAG(MultiDomainGrid);
+//! the maximum allowed number of timestep divisions for the
+//! Newton solver
+NEW_PROP_TAG(NewtonMaxTimeStepDivisions);
 
 //! Specifies the multidomain grid function space
 NEW_PROP_TAG(MultiDomainGridFunctionSpace);
+
+//! Specifies the multidomain grid operator
+NEW_PROP_TAG(MultiDomainGridOperator);
+
+//! specifies whether the convergence rate and the global residual
+//! gets written out to disk for every Newton iteration
+NEW_PROP_TAG(NewtonWriteConvergence);
 
 //! Specifies the equality conditions
 NEW_PROP_TAG(MultiDomainCondition);
@@ -137,10 +117,11 @@ NEW_PROP_TAG(MultiDomainCoupling);
 
 //! Property tag for the multidomain constraints transformation
 NEW_PROP_TAG(MultiDomainConstraintsTrafo);
-NEW_PROP_TAG(ConstraintsTrafo);
+NEW_PROP_TAG(ConstraintsTrafo); // TODO: required?
 
-//! Specifies the multidomain grid operator
-NEW_PROP_TAG(MultiDomainGridOperator);
+//! Specifies the type of the jacobian matrix as used for the linear
+//! solver
+NEW_PROP_TAG(JacobianMatrix);
 
 }
 }
