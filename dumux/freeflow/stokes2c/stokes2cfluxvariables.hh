@@ -127,7 +127,7 @@ protected:
         {
             molarDensity_ += elemVolVars[idx].molarDensity()*
                 this->face().shapeValue[idx];
-            massFraction_ += elemVolVars[idx].fluidState().massFraction(phaseIdx, transportCompIdx) *
+            massFraction_ += elemVolVars[idx].massFraction(transportCompIdx) *
                 this->face().shapeValue[idx];
             diffusionCoeff_ += elemVolVars[idx].diffusionCoeff() *
                 this->face().shapeValue[idx];
@@ -137,7 +137,7 @@ protected:
             {
                 moleFractionGrad_ +=
                     this->face().grad[idx][dimIdx] *
-                    elemVolVars[idx].fluidState().moleFraction(phaseIdx, transportCompIdx);
+                    elemVolVars[idx].moleFraction(transportCompIdx);
             }
         }
 

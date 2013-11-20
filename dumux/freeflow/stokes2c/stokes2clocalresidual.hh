@@ -90,10 +90,10 @@ public:
         // compute the storage of the component
         storage[transportEqIdx] =
             volVars.density() *
-            volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
+            volVars.massFraction(transportCompIdx);
 
         Valgrind::CheckDefined(volVars.density());
-        Valgrind::CheckDefined(volVars.fluidState().massFraction(phaseIdx, transportCompIdx));
+        Valgrind::CheckDefined(volVars.massFraction(transportCompIdx));
     }
 
     /*!
@@ -121,10 +121,10 @@ public:
 
         if (this->massUpwindWeight_ > 0.0)
             tmp *=  this->massUpwindWeight_ *         // upwind data
-                up.density() * up.fluidState().massFraction(phaseIdx, transportCompIdx);
+                up.density() * up.massFraction(transportCompIdx);
         if (this->massUpwindWeight_ < 1.0)
             tmp += (1.0 - this->massUpwindWeight_) *     // rest
-                dn.density() * dn.fluidState().massFraction(phaseIdx, transportCompIdx);
+                dn.density() * dn.massFraction(transportCompIdx);
 
         flux[transportEqIdx] += tmp;
         Valgrind::CheckDefined(flux[transportEqIdx]);

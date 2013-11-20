@@ -127,6 +127,26 @@ public:
     }
 
     /*!
+     * \brief Returns the mass fraction of a given component in a
+     * 		  given phase within the control volume.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar massFraction(const int compIdx) const
+    { return this->fluidState_.massFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Returns the mass fraction of a given component in a
+     * 		  given phase within the control volume.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar moleFraction(const int compIdx) const
+    { return this->fluidState_.moleFraction(phaseIdx, compIdx); }
+
+    /*!
      * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ of the fluid within the
      *        sub-control volume.
      */
