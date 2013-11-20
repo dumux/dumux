@@ -105,13 +105,13 @@ NEW_PROP_TAG( GridTypeIndices );//!< The grid type indices to decide which grid 
 NEW_PROP_TAG( GridImplementation ); //!< Gives kind of grid implementation in form of a GridType
 NEW_PROP_TAG( MPFAInteractionVolume ); //!< Type of the data container for one interaction volume
 NEW_PROP_TAG( MPFAInteractionVolumeContainer ); //!< Type of the data container for one interaction volume
-NEW_PROP_TAG( MPFATransmissibilityCalculator ); //!< Type of the data container for one interaction volume
+NEW_PROP_TAG( MPFATransmissibilityCalculator ); //!< Type defining the transmissibility calculation
 NEW_PROP_TAG( MPFAEnableSimpleLStencil ); //!< Enable use of the two simpler L-shapes (3-d)
 NEW_PROP_TAG( MPFAEnableComplexLStencil ); //!< Enable use of the two more complex L-shapes (3-d)
 NEW_PROP_TAG( MPFAEnableTPFA );//!< Enable use of TPFA (3-d)
 NEW_PROP_TAG( MPFATransmissibilityCriterionThreshold ); //!< Threshold for transmissibility choice
 NEW_PROP_TAG( MPFATransmissibilityCriterion ); //!< Choose transmissibility criterion
-NEW_PROP_TAG( MPFACalcVelocityInTransport ); //!< Choose transmissibility criterion
+NEW_PROP_TAG( MPFACalcVelocityInTransport ); //!< Enable facewise velocity calculation in the transport step (less efficient!)
 }
 }
 
@@ -148,6 +148,7 @@ SET_SCALAR_PROP(MPFAProperties, MPFATransmissibilityCriterionThreshold, 1e-8);
 //! Set standard criterion
 SET_INT_PROP(MPFAProperties, MPFATransmissibilityCriterion, 0);
 
+//! Disable facewise velocity calculation per default
 SET_BOOL_PROP(MPFAProperties, MPFACalcVelocityInTransport, false);
 }
 }// end of Dune namespace

@@ -30,7 +30,8 @@
 
 namespace Dumux
 {
-
+//! \cond \private
+// Mapper for local interaction volume indices (see doc/docextra/3dmpfa).
 class IndexTranslatorAdaptive: public IndexTranslator
 {
 public:
@@ -178,8 +179,14 @@ const int IndexTranslatorAdaptive::newEdgeIdxFromOldFaceIdxto0_[fluxFacesTotalNu
     {5, 3, 1, 2, 0, 4},
     {5, 3, 4, 1, 2, 0}
 };
+//! \endcond
 
-
+//! \ingroup IMPET
+/*! \brief Class including the information of a 3d interaction volume of an adaptive MPFA L-method that does not change with time.
+ *
+ * Includes information needed to calculate the transmissibility matrices of an L-interaction-volume.
+ *
+ */
 template<class TypeTag>
 class FvMpfaL3dInteractionVolumeAdaptive:public FvMpfaL3dInteractionVolume<TypeTag>
 {
@@ -210,6 +217,8 @@ private:
     typedef std::vector<PrimaryVariables> BCVector;
 
 public:
+
+    //! \cond \private
     enum FaceTypes
     {
         inside = 1,
@@ -217,46 +226,60 @@ public:
         outside = -1,
     };
 
+    //!\copydoc
     enum
     {
         subVolumeTotalNum = IndexTranslatorAdaptive::subVolumeTotalNum,
         fluxFacesTotalNum = IndexTranslatorAdaptive::fluxFacesTotalNum,
         fluxEdgesTotalNum = IndexTranslatorAdaptive::fluxEdgesTotalNum
     };
+    //! \endcond
 
+    //! The different hanging node interaction volume types (see dissertation M. Wolff, http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/)
     enum HangingNodeTypes
     {
-        noHangingNode = -1,
-        twoSmallCells = 0,
-        fourSmallCellsFace = 1,
-        fourSmallCellsEdge = 2,
-        fourSmallCellsDiag = 3,
-        sixSmallCells = 4
+        noHangingNode = -1,//!< regular interaction volume
+        twoSmallCells = 0,//!< hanging-node interaction volume of type 5 or 7
+        fourSmallCellsFace = 1,//!<  hanging-node interaction volume of type 1
+        fourSmallCellsEdge = 2,//!<  hanging-node interaction volume of type 3
+        fourSmallCellsDiag = 3,//!<  hanging-node interaction volume of type 4
+        sixSmallCells = 4//!<  hanging-node interaction volume of type 2 or 6
     };
 
-    //! Constructs a FvMpfaL3dInteractionVolumeAdaptiveInfo object
+    //! Constructs a FvMpfaL3dInteractionVolumeAdaptive object
     /**
      */
     FvMpfaL3dInteractionVolumeAdaptive() :
         hangingNodeType_(noHangingNode)
     {}
 
+    //!\copydoc
     void reset()
     {
         hangingNodeType_ = noHangingNode;
         existingLevel_.clear();
     }
 
+    //!\copydoc
     void setSubVolumeElement(ElementPointer pointer, int subVolumeIdx)
     {
             ParentType::setSubVolumeElement(pointer, subVolumeIdx);
             existingLevel_.insert(pointer.level());
     }
+
+    //! Store the type of hanging-node-interaction volume
+    /*!
+     * \param hNType the type of hanging-node-interaction volume of type Dumux::FvMpfaL3dInteractionVolumeAdaptive<TypeTag>::HangingNodeTypes
+     */
     void setHangingNodeType(int hNType)
     {
         hangingNodeType_ = hNType;
     }
 
+    //! Check if elements in the interaction volume are of the same grid level
+    /*!
+     * \return <tt>true</tt> if all elements are on the same grid level
+     */
     bool sameLevel()
     {
         if (!isHangingNodeVolume())
@@ -267,21 +290,33 @@ public:
         }
     }
 
+    //! Check if an element of a certain grid level is stored
+    /*!
+     * \param level the dune grid level
+     *
+     * \return <tt>true</tt> if an element of a certain grid level is stored
+     */
     bool hasLevel(int level)
     {
         return  existingLevel_.find(level) != existingLevel_.end();
     }
 
+    //! Check whether the interaction volume is a hanging-node volume
+    /*!
+     * \return <tt>true</tt> if the interaction volume is a hanging-node volume
+     */
     bool isHangingNodeVolume()
     {
         return hangingNodeType_ != noHangingNode;
     }
 
+    //! The type of the interaction volume as type of Dumux::FvMpfaL3dInteractionVolumeAdaptive<TypeTag>::HangingNodeTypes
     int getHangingNodeType()
     {
         return hangingNodeType_;
     }
 
+    //!\copydoc
     void printInteractionVolumeInfo()
     {
         ParentType::printInteractionVolumeInfo();
