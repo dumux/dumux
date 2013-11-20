@@ -204,7 +204,9 @@ public:
         }
         // reset entries in restrictionmap
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
-        adaptationMap_.resize();
+        adaptationMap_.resize( typename PersistentContainer::Value() );
+        adaptationMap_.shrinkToFit();
+        adaptationMap_.fill( typename PersistentContainer::Value() );
 #else
         adaptationMap_.clear();
 #endif
