@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
+/*
+ * \file
+* \brief docme
+*/
+
 #ifndef DUMUX_MULTIDOMAIN_MODEL_HH
 #define DUMUX_MULTIDOMAIN_MODEL_HH
 
@@ -24,6 +30,10 @@
 #include "multidomainproblem.hh"
 #include "multidomainnewtoncontroller.hh"
 //#include "coupledjacobianassembler.hh"
+
+/*
+* \brief docme
+*/
 
 namespace Dumux
 {
@@ -39,6 +49,11 @@ namespace Dumux
  * \brief The base class of models which consist of two arbitrary
  *        sub-models which are coupled
  */
+
+/*
+* \brief docme
+*/
+
 template<class TypeTag>
 class MultiDomainModel
 {
@@ -97,6 +112,12 @@ public:
                                  subModel2().prevSol(),
                                  uPrev_);
     }
+
+    /*
+    * \brief docme
+    * \param u docme
+    * \param tmp docme
+    */
 
     Scalar globalResidual(const SolutionVector &u, SolutionVector &tmp)
     {

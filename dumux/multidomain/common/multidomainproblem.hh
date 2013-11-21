@@ -20,6 +20,7 @@
  * \file
  * \brief Base class for problems which involve two sub problems
  */
+
 #ifndef DUMUX_MULTIDOMAIN_PROBLEM_HH
 #define DUMUX_MULTIDOMAIN_PROBLEM_HH
 
@@ -32,6 +33,10 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
 
+/*
+* \brief docme
+*/
+
 namespace Dumux
 {
 
@@ -39,7 +44,7 @@ namespace Dumux
  * \ingroup ModelCoupling
  * \brief Base class for problems which involve two sub problems
  *
- * \todo Please doc me more!
+ * \todo Please docme more!
  */
 template<class TypeTag>
 class MultiDomainProblem
@@ -152,6 +157,7 @@ public:
     /*!
      * \brief Serialize the simulation's state to disk
      */
+
     void serialize()
     {
         typedef Dumux::Restart Restarter;
@@ -171,6 +177,7 @@ public:
      * \param tRestart The simulation time on which the program was
      *                 written to disk.
      */
+
     void restart(Scalar tRestart)
     {
         typedef Dumux::Restart Restarter;
@@ -192,6 +199,7 @@ public:
      *
      * It is the inverse of the serialize() method.
      */
+
     template <class Restarter>
     void deserialize(Restarter &res)
     {
@@ -358,6 +366,7 @@ public:
      * It could be either overwritten by the problem files, or simply
      * declared over the setName() function in the application file.
      */
+
     const char *name() const
     {
         return simname_.c_str();
@@ -528,28 +537,36 @@ public:
 
     /*!
      * \brief Returns a pointer to the subdomain1 element
+     * \param mdElement1 docme
      */
     SDElementPointer sdElementPointer1(const MDElement& mdElement1)
     { return mdGrid().subDomain(subID1_).subDomainEntityPointer(mdElement1); }
 
     /*!
      * \brief Returns a pointer to the subdomain2 element
+     *
+     * \param mdElement2 docme
      */
     SDElementPointer sdElementPointer2(const MDElement& mdElement2)
     { return mdGrid().subDomain(subID2_).subDomainEntityPointer(mdElement2); }
 
     /*!
      * \brief Provides a vertex mapper for the multidomain
+     *
      */
     VertexMapper& mdVertexMapper()
     { return *mdVertexMapper_; }
 
 
 protected:
+    /*
+    * \brief docme
+    * \Returns the implementation of the problem (i.e. static polymorphism)
+    */
     void initMortarElements()
     {}
 
-    //! Returns the implementation of the problem (i.e. static polymorphism)
+
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 

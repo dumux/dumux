@@ -61,6 +61,11 @@ struct MultiDomainConvergenceWriter
     typedef Dumux::VtkMultiWriter<GridView1> VtkMultiWriter1;
     typedef Dumux::VtkMultiWriter<GridView2> VtkMultiWriter2;
 
+    /*
+    * \brief docme
+    * \param ctl docme
+    */
+
     MultiDomainConvergenceWriter(NewtonController &ctl)
         : ctl_(ctl)
     {
@@ -75,6 +80,9 @@ struct MultiDomainConvergenceWriter
         delete vtkMultiWriter1_;
         delete vtkMultiWriter2_;
     };
+    /*
+    * \brief docme
+    */
 
     void beginTimestep()
     {
@@ -86,7 +94,11 @@ struct MultiDomainConvergenceWriter
         if (!vtkMultiWriter2_)
             vtkMultiWriter2_ = new VtkMultiWriter2(problem_().subProblem2().gridView(), "convergence2");
     };
-
+    /*
+    * \brief docme
+    * \param gridView1 docme
+    * \param gridView2 docme
+    */
     void beginIteration(const GridView1 &gridView1,
                         const GridView2 &gridView2)
     {
@@ -94,6 +106,12 @@ struct MultiDomainConvergenceWriter
         vtkMultiWriter1_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
         vtkMultiWriter2_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
     };
+
+    /*
+    * \brief docme
+    * \param uLastIter docme
+    * \param deltaU docme
+    */
 
     void writeFields(const SolutionVector &uLastIter,
                      const SolutionVector &deltaU)
@@ -118,12 +136,19 @@ struct MultiDomainConvergenceWriter
             ctl_.method().model().subModel1().addConvergenceVtkFields(*vtkMultiWriter1_, uLastIter1, deltaU1);
             ctl_.method().model().subModel2().addConvergenceVtkFields(*vtkMultiWriter2_, uLastIter2, deltaU2);
     };
+    /*
+    * \brief docme
+    */
 
     void endIteration()
     {
         vtkMultiWriter1_->endWrite();
         vtkMultiWriter2_->endWrite();
     };
+
+    /*
+    * \brief docme
+    */
 
     void endTimestep()
     {

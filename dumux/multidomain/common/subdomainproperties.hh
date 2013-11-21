@@ -25,6 +25,9 @@
  */
 namespace Dumux
 {
+/*
+* \brief docme
+*/
 namespace Properties
 {
 /*!

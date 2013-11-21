@@ -20,6 +20,7 @@
  * \file
  * \brief Sets default values for the MultiDomain properties
  */
+
 #ifndef DUMUX_MULTIDOMAIN_PROPERTY_DEFAULTS_HH
 #define DUMUX_MULTIDOMAIN_PROPERTY_DEFAULTS_HH
 
@@ -48,12 +49,19 @@
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/timemanager.hh>
 
+/*
+* \brief docme
+*/
 
 namespace Dumux
 {
 template <class TypeTag> class MultiDomainModel;
 template <class TypeTag> class MultiDomainJacobianAssembler;
 template <class TypeTag> class MultiDomainNewtonController;
+
+/*
+* \brief docme
+*/
 
 namespace Properties
 {

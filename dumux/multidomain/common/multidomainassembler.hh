@@ -16,6 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*
+*\ brief docme
+*/
+
 #ifndef DUMUX_MULTIDOMAIN_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_ASSEMBLER_HH
 
@@ -24,9 +28,17 @@
 #include <dune/pdelab/constraints/constraintsparameters.hh>
 #include <dune/pdelab/multidomain/constraints.hh>
 
+/*
+ * \brief docme
+ */
 namespace Dumux {
 
 //! Prevents the setting of a dirichlet constraint anywhere
+
+/*
+ * \brief docme
+ */
+
 struct NoDirichletConstraints :
   public Dune::PDELab::DirichletConstraintsParameters
 {
@@ -36,6 +48,9 @@ struct NoDirichletConstraints :
     return false;
   }
 };
+/*
+ * \brief docme
+ */
 
 template<class TypeTag>
 class MultiDomainAssembler
@@ -80,6 +95,9 @@ class MultiDomainAssembler
     // copying the jacobian assembler is not a good idea
     MultiDomainAssembler(const MultiDomainAssembler &);
 
+/*
+* \brief docme
+*/
 public:
     MultiDomainAssembler()
     {
@@ -180,27 +198,50 @@ public:
 //    	printvector(std::cout, residual_, "residual", "row", 200, 1, 3);
     }
 
-    //! return const reference to matrix
+    /*
+     * \brief docme
+     *
+     * \return const reference to matrix
+     */
     const JacobianMatrix &matrix() const
     { return *matrix_; }
-    //! return reference to matrix
-    // This is not very nice, but required for the AMG solver
+
+    /*
+     * \brief docme
+     *
+     * This is not very nice, but required for the AMG solver
+     *
+     * \return const reference to matrix
+     */
     JacobianMatrix &matrix()
     { return *matrix_; }
 
-    //! return const reference to residual
+    /*
+    * \brief docme
+    * \return const reference to residual
+    */
+
     const SolutionVector &residual() const
     { return residual_; }
     SolutionVector &residual()
     { return residual_; }
 
-	//! return the multidomain gridfunctionspace
+    /*
+    * \brief docme
+    * \return the multidomain gridfunctionspace
+    */
+
+
     MultiDomainGridFunctionSpace &gridFunctionSpace() const
     { return *mdGridFunctionSpace_; }
     MultiDomainGridFunctionSpace &mdGridFunctionSpace() const
     { return *mdGridFunctionSpace_; }
     
-	//! return the multidomain constraints trafo
+    /*
+    * \brief docme
+    * \ return the multidomain constraints trafo
+    */
+
     MultiDomainConstraintsTrafo &constraintsTrafo() const
     { return *constraintsTrafo_; }
 

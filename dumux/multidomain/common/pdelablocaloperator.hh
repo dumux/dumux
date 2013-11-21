@@ -1,5 +1,6 @@
 /*****************************************************************************
- *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
+ *   Copyright (C) 2009-2010 by Bernd Flemisch
+                           *
  *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -19,11 +20,11 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief A local operator for PDELab which wraps the box models.
  */
-#ifndef DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
-#define DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
+
+#ifndef DUMUX_PDELAB_LOCAL_OPERATOR_HH
+#define DUMUX_PDELAB_LOCAL_OPERATOR_HH
 
 #if ! HAVE_DUNE_PDELAB
 #error "DUNE-PDELab must be available in order to include this file!"
@@ -34,7 +35,15 @@
 
 #include <dumux/implicit/box/boxproperties.hh>
 
+/*
+* \brief docme
+*/
+
 namespace Dumux {
+
+/*
+* \brief docme
+*/
 
 namespace PDELab {
 
@@ -54,6 +63,10 @@ class BoxLocalOperator
 
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
+
+/*
+* \brief docme
+*/
 
 public:
     // pattern assembly flags

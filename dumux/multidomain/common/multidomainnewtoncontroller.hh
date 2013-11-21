@@ -43,13 +43,16 @@
 #include "multidomainconvergencewriter.hh"
 
 /*!
- * \file
  * \brief Additional properties required for the coupled Newton controller
  */
 namespace Dumux
 {
 template <class TypeTag>
 class MultiDomainNewtonController;
+
+/*
+* \brief docme
+*/
 
 namespace Properties
 {
@@ -128,6 +131,11 @@ class MultiDomainNewtonController
     typedef MultiDomainConvergenceWriter<TypeTag>  ConvergenceWriter;
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
 
+/*
+* \brief docme
+* \param problem docme
+*/
+
 public:
     MultiDomainNewtonController(const Problem &problem)
         : endIterMsgStream_(std::ostringstream::out)
@@ -204,6 +212,7 @@ public:
     /*!
      * \brief Set the number of iterations after which the Newton
      *        method gives up.
+     * \param maxSteps docme
      */
     void setMaxSteps(int maxSteps)
     { maxSteps_ = maxSteps; }
@@ -324,6 +333,12 @@ public:
             int converged = linearSolver_.solve(A, x, b);
 
             // make sure all processes converged
+/*
+* \brief docme
+* \param convergedSend docme
+* \param converged docme
+*/
+
 #if HAVE_MPI
             int convergedSend = 1;
             MPI_Allreduce(/*sendBuf=*/&convergedSend,
@@ -340,6 +355,12 @@ public:
         }
         catch (const Dune::MatrixBlockError &e) {
             // make sure all processes converged
+/*
+* \brief docme
+* \param convergedSend docme
+* \param converged docme
+*/
+
 #if HAVE_MPI
             int convergedSend = 0;
             int converged;
@@ -361,6 +382,13 @@ public:
         }
         catch (const Dune::Exception &e) {
             // make sure all processes converged
+
+/*
+* \brief docme
+* \param convergedSend docme
+* \param converged docme
+*/
+
 #if HAVE_MPI
             int convergedSend = 0;
             int converged;
@@ -560,20 +588,26 @@ public:
 
     /*!
      * \brief the coupled problem
+     *
+     * \returns the actual implementation for the controller we do
+     * \it this way in order to allow "poor man's virtual methods",
+     * \i.e. methods of subclasses which can be called by the base
+     *\class.
      */
     Problem &problem_()
         { return method_->problem(); }
     const Problem &problem_() const
         { return method_->problem(); }
 
-    // returns the actual implementation for the controller we do
-    // it this way in order to allow "poor man's virtual methods",
-    // i.e. methods of subclasses which can be called by the base
-    // class.
+
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
+
+    /*
+    * \brief docme
+    */
 
     bool verbose_;
 

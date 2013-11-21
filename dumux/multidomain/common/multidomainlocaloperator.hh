@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
+/*
+ * \file
+ * \brief docme
+ */
+
 #ifndef DUMUX_MULTIDOMAIN_LOCAL_OPERATOR_HH
 #define DUMUX_MULTIDOMAIN_LOCAL_OPERATOR_HH
 
@@ -24,13 +30,29 @@
 
 #include <dumux/implicit/box/boxproperties.hh>
 
+/*
+ * \brief docme
+ */
 namespace Dumux {
+
+/*
+ * \brief docme
+ */
 
 namespace PDELab {
 
+/*
+ * \brief docme
+ */
+
 template<class TypeTag>
 class MultiDomainLocalOperator
+
 :
+/*
+* \brief docme
+*/
+
 public Dune::PDELab::FullVolumePattern,
 public Dune::PDELab::LocalOperatorDefaultFlags
 {
@@ -42,6 +64,10 @@ public Dune::PDELab::LocalOperatorDefaultFlags
 	typedef typename Grid::Traits::template Codim<0>::EntityPointer EntityPointer;
 
 	enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
+/*
+* \brief docme
+* \param model docme
+*/
 
 public:
 	// pattern assembly flags
@@ -56,6 +82,12 @@ public:
 
 	/*!
 	 * \brief Volume integral depending on test and ansatz functions
+	 *
+	 * \tparam EG docme
+	 * \tparam LFSU docme
+	 * \tparam X docme
+	 * \tparam LFSV docme
+	 * \tparam R docme
 	 *
 	 * \param eg docme
      * \param lfsu docme
@@ -80,6 +112,12 @@ public:
 
 	/*!
 	 * \brief Jacobian of volume term
+	 *
+	 * \tparam EG docme
+	 * \tparam LFSU docme
+	 * \tparam X docme
+	 * \tparam LFSV docme
+	 * \tparam M docme
 	 *
 	 * \param eg docme
      * \param lfsu docme, is basis
