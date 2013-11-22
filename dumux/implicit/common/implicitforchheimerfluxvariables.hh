@@ -199,7 +199,7 @@ protected:
                                     K,
                                     velocity,
                                     elemVolVars,
-                                    this->gradPotential_[phaseIdx],
+                                    this->potentialGrad_[phaseIdx],
                                     phaseIdx);
 
                 // newton's method: slope (gradF) and current value (residual) of function is known,
@@ -256,7 +256,7 @@ protected:
      * \param K The permeability matrix
      * \param velocity The current velocity approximation.
      * \param elemVolVars The volume variables of the current element
-     * \param gradPotential The gradient in potential
+     * \param potentialGrad The gradient in potential
      * \param phaseIdx The index of the currently considered phase
      */
      void forchheimerResidual_(GlobalPosition & residual,
@@ -265,7 +265,7 @@ protected:
          const DimMatrix & K,
          const GlobalPosition & velocity,
          const ElementVolumeVariables & elemVolVars,
-         const GlobalPosition & gradPotential ,
+         const GlobalPosition & potentialGrad,
          const unsigned int phaseIdx) const
      {
          const VolumeVariables upVolVars    = elemVolVars[this->upstreamIdx(phaseIdx)];
@@ -286,7 +286,7 @@ protected:
          residual = velocity;
 
          // residual += k_r/mu  K grad p
-         K.usmv(mobility, gradPotential, residual);
+         K.usmv(mobility, potentialGrad, residual);
 
          // residual += c_F rho / mu abs(v) sqrt(K) v
          sqrtK.usmv(forchCoeff * density / viscosity * velocity.two_norm(), velocity, residual);

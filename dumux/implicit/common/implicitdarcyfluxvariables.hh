@@ -180,7 +180,7 @@ protected:
         // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
-            gradPotential_[phaseIdx]= 0.0 ;
+            potentialGrad_[phaseIdx]= 0.0 ;
             for (unsigned int idx = 0;
                  idx < face().numFap;
                  idx++) // loop over adjacent vertices
@@ -194,7 +194,7 @@ protected:
                 // the pressure gradient
                 DimVector tmp(feGrad);
                 tmp *= elemVolVars[volVarsIdx].fluidState().pressure(phaseIdx);
-                gradPotential_[phaseIdx] += tmp;
+                potentialGrad_[phaseIdx] += tmp;
             }
 
             // correct the pressure gradient by the gravitational acceleration
@@ -222,7 +222,7 @@ protected:
                 f *= density;
 
                 // calculate the final potential gradient
-                gradPotential_[phaseIdx] -= f;
+                potentialGrad_[phaseIdx] -= f;
             } // gravity
         } // loop over all phases
      }
@@ -280,7 +280,7 @@ protected:
             //  Q = - (K grad phi) dot n /|n| * A
 
 
-            K.mv(gradPotential_[phaseIdx], kGradP_[phaseIdx]);
+            K.mv(potentialGrad_[phaseIdx], kGradP_[phaseIdx]);
             kGradPNormal_[phaseIdx] = kGradP_[phaseIdx]*face().normal;
 
             // determine the upwind direction
@@ -319,7 +319,7 @@ protected:
     DimVector       velocity_[numPhases] ;      //!< The velocity as determined by Darcy's law or by the Forchheimer relation
     Scalar          kGradPNormal_[numPhases] ;  //!< Permeability multiplied with gradient in potential, multiplied with normal (magnitude=area)
     DimVector       kGradP_[numPhases] ; //!< Permeability multiplied with gradient in potential
-    DimVector       gradPotential_[numPhases] ; //!< Gradient of potential, which drives flow
+    DimVector       potentialGrad_[numPhases] ; //!< Gradient of potential, which drives flow
     Scalar          mobilityUpwindWeight_;      //!< Upwind weight for mobility. Set to one for full upstream weighting
 };
 
