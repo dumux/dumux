@@ -24,6 +24,7 @@
 #define DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
 
 #include <dune/grid/multidomaingrid.hh>
+#include <dune/pdelab/finiteelementmap/conformingconstraints.hh>
 
 #include "subdomainproperties.hh"
 #include "multidomainlocaloperator.hh"
