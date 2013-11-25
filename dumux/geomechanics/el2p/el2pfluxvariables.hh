@@ -145,7 +145,7 @@ NEW_PROP_TAG(SpatialParams);
              */
             DimVector potentialGrad(int phaseIdx) const
             {
-                return this->gradPotential_[phaseIdx];
+                return this->potentialGrad_[phaseIdx];
             }
 
             const SCVFace &face() const
