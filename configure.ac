@@ -38,6 +38,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/freeflow/stokes/Makefile
     dumux/freeflow/stokes2c/Makefile
     dumux/freeflow/stokes2cni/Makefile
+    dumux/freeflow/stokesnc/Makefile
     dumux/geomechanics/Makefile
     dumux/geomechanics/elastic/Makefile
     dumux/geomechanics/el1p2c/Makefile
