@@ -64,7 +64,6 @@ namespace Dumux {
  * the implicit Euler method as temporal discretization.
  */
     
-DUNE_DEPRECATED_MSG("Use the stokesnc model for all 2c problems. Adaption is straight forward. Please notice that several functions now require the input argument compIdx in fluxvariables. Related variables are of the size number of components.")
 template<class TypeTag>
 class Stokes2cModel : public StokesModel<TypeTag>
 {
