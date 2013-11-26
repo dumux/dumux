@@ -19,23 +19,25 @@
 /*!
  * \file
  *
- * \brief Adaptation of the box scheme to the two-component Stokes model.
+ * \brief Adaptation of the box scheme to the n-component Stokes model.
  */
-#ifndef DUMUX_STOKES2C_MODEL_HH
-#define DUMUX_STOKES2C_MODEL_HH
+#ifndef DUMUX_STOKESNC_MODEL_HH
+#define DUMUX_STOKESNC_MODEL_HH
 
 #include <dumux/freeflow/stokes/stokesmodel.hh>
 
-#include "stokes2clocalresidual.hh"
-#include "stokes2cproperties.hh"
+#include "stokesnclocalresidual.hh"
+#include "stokesncproperties.hh"
 
 namespace Dumux {
 /*!
- * \ingroup BoxStokes2cModel
+ * \ingroup BoxStokesncModel
  * \brief Adaptation of the BOX scheme to the compositional Stokes model.
  *
- * This model implements an isothermal two-component Stokes flow of a fluid
- * solving a momentum balance, a mass balance and a conservation equation for one component.
+ * This model implements an isothermal n-component Stokes flow of a fluid
+ * solving a momentum balance, a mass balance and a conservation equation for each
+ * component. When using mole fractions naturally the densities represent molar
+ * densites
  *
  * Momentum Balance:
  * \f[
@@ -51,30 +53,31 @@ namespace Dumux {
 \frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
  * \f]
  *
- * Component mass balance equation:
+ * Component mass balance equations:
  * \f[
  \frac{\partial \left(\varrho_g X_g^\kappa\right)}{\partial t}
  + \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_g {\boldsymbol{v}}_g X_g^\kappa
- - D^\kappa_g \varrho_g \frac{M^\kappa}{M_g} \boldsymbol{\nabla} x_g^\kappa \right)
+ - D^\kappa_g \varrho_g \boldsymbol{\nabla} X_g^\kappa \right)
  - q_g^\kappa = 0
  * \f]
  *
  * This is discretized using a fully-coupled vertex
  * centered finite volume (box) scheme as spatial and
- * the implicit Euler method as temporal discretization.
+ * the implicit Euler method in time.
  */
-    
-DUNE_DEPRECATED_MSG("Use the stokesnc model for all 2c problems. Adaption is straight forward. Please notice that several functions now require the input argument compIdx in fluxvariables. Related variables are of the size number of components.")
 template<class TypeTag>
-class Stokes2cModel : public StokesModel<TypeTag>
+class StokesncModel : public StokesModel<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    enum { dim = GridView::dimension };
-    enum { transportCompIdx = Indices::transportCompIdx };
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
+    enum {  dim = GridView::dimension,
+			transportCompIdx = Indices::transportCompIdx,
+			phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx),
+			useMoles = GET_PROP_VALUE(TypeTag, UseMoles),
+			numComponents = Indices::numComponents 
+	};
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
@@ -84,6 +87,7 @@ class Stokes2cModel : public StokesModel<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+	
 
 public:
     //! \copydoc ImplicitModel::addOutputVtkFields
@@ -91,17 +95,27 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
+				
+		typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
 
         const Scalar scale_ = GET_PROP_VALUE(TypeTag, Scaling);
 
         // create the required scalar fields
         unsigned numVertices = this->gridView_().size(dim);
-        ScalarField &pn = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &pN = *writer.allocateManagedBuffer(numVertices);
         ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &Xw = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
+		ScalarField &T = *writer.allocateManagedBuffer(numVertices);
+
+		ScalarField *moleFraction[numComponents];
+            for (int i = 0; i < numComponents; ++i)
+                moleFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
+		
+		ScalarField *massFraction[numComponents];
+		for (int i = 0; i < numComponents; ++i)
+			massFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
+		
+		ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
         VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
 
@@ -112,41 +126,71 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        ElementIterator elemIt = this->gridView_().template begin<0>();
+        ElementIterator endit = this->gridView_().template end<0>();
+        for (; elemIt != endit; ++elemIt)
         {
-            int eIdx = this->elementMapper().map(*eIt);
-            rank[eIdx] = this->gridView_().comm().rank();
+            int idx = this->elementMapper().map(*elemIt);
+            rank[idx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), *elemIt);
+            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
 
-            int numLocalVerts = eIt->template count<dim>();
+            int numLocalVerts = elemIt->template count<dim>();
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*eIt, i, dim);
+                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
                 volVars.update(sol[globalIdx],
                                this->problem_(),
-                               *eIt,
+                               *elemIt,
                                fvGeometry,
                                i,
                                false);
 
-                pn[globalIdx] = volVars.pressure()*scale_;
+                pN[globalIdx] = volVars.pressure()*scale_;
                 delP[globalIdx] = volVars.pressure()*scale_ - 1e5;
-                Xw[globalIdx] = volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
-                rho[globalIdx] = volVars.density()*scale_*scale_*scale_;
+				for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    {
+                        (*moleFraction[compIdx])[globalIdx]= volVars.fluidState().moleFraction(phaseIdx,compIdx);
+						(*massFraction[compIdx])[globalIdx]= volVars.fluidState().massFraction(phaseIdx,compIdx);
+                        Valgrind::CheckDefined((*moleFraction[compIdx])[globalIdx]);
+						Valgrind::CheckDefined((*massFraction[compIdx])[globalIdx]);
+					}
+				
+				T   [globalIdx] = volVars.temperature();
+                
+				rho[globalIdx] = volVars.density()*scale_*scale_*scale_;
                 mu[globalIdx] = volVars.dynamicViscosity()*scale_;
                 velocity[globalIdx] = volVars.velocity();
                 velocity[globalIdx] *= 1/scale_;
             }
         }
-        writer.attachVertexData(pn, "P");
+		writer.attachVertexData(T, "temperature");
+        writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");
-        std::ostringstream outputNameX;
-        outputNameX << "X^" << FluidSystem::componentName(transportCompIdx);
-        writer.attachVertexData(Xw, outputNameX.str());
+		
+		if(useMoles) 
+		{
+			for (int j = 0; j < numComponents; ++j)
+				{
+					std::ostringstream oss;
+					oss << "x"
+					<< FluidSystem::componentName(j)
+					<< FluidSystem::phaseName(phaseIdx);
+					writer.attachVertexData(*moleFraction[j], oss.str().c_str());
+				}
+		} else {
+			for (int j = 0; j < numComponents; ++j)
+			{
+				std::ostringstream oss;
+				oss << "X"
+				<< FluidSystem::componentName(j)
+				<< FluidSystem::phaseName(phaseIdx);
+				writer.attachVertexData(*massFraction[j], oss.str().c_str());
+			}
+		}
+        
+		
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");
         writer.attachVertexData(velocity, "v", dim);
@@ -155,6 +199,6 @@ public:
 
 }
 
-#include "stokes2cpropertydefaults.hh"
+#include "stokesncpropertydefaults.hh"
 
 #endif

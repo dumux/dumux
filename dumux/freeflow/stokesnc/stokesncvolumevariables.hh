@@ -20,25 +20,25 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the compositional Stokes model.
+ *        finite volume in the compositional n-component Stokes model.
  */
-#ifndef DUMUX_STOKES2C_VOLUME_VARIABLES_HH
-#define DUMUX_STOKES2C_VOLUME_VARIABLES_HH
+#ifndef DUMUX_STOKESNC_VOLUME_VARIABLES_HH
+#define DUMUX_STOKESNC_VOLUME_VARIABLES_HH
 
 #include <dumux/freeflow/stokes/stokesvolumevariables.hh>
-#include "stokes2cproperties.hh"
+#include "stokesncproperties.hh"
 
 namespace Dumux
 {
 
 /*!
- * \ingroup BoxStokes2cModel
- * \ingroup ImplicitVolumeVariables
+ * \ingroup BoxStokesncModel
+ * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-component Stokes box model.
+ *        finite volume in the n-component Stokes box model.
  */
 template <class TypeTag>
-class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
+class StokesncVolumeVariables : public StokesVolumeVariables<TypeTag>
 {
     typedef StokesVolumeVariables<TypeTag> ParentType;
 
@@ -53,18 +53,26 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    enum {
-        transportCompIdx = Indices::transportCompIdx,
-        phaseCompIdx = Indices::phaseCompIdx
-    };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
-    enum { transportEqIdx = Indices::transportEqIdx };
-    enum { massOrMoleFracIdx = Indices::massOrMoleFracIdx };
+    //component indices
+    enum {  transportCompIdx = Indices::transportCompIdx,
+            phaseCompIdx = Indices::phaseCompIdx };
+    //number of components
+	enum {	numComponents = Indices::numComponents };
+    //employed phase index
+	enum {	phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
+    //primary variable indices
+	enum {	massOrMoleFracIdx = Indices::massOrMoleFracIdx };
+	//equation indices
+    enum {  conti0EqIdx = Indices::conti0EqIdx,
+            massBalanceIdx = Indices::massBalanceIdx,
+            transportEqIdx = Indices::transportEqIdx };
+    
+    //! property that defines whether mole or mass fractions are used
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     /*!
-     * \copydoc ImplicitVolumeVariables::update()
+     * \copydoc BoxVolumeVariables::update()
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -73,34 +81,46 @@ public:
                 const int scvIdx,
                 const bool isOldSol)
     {
-        // set the mole fractions first
+        
+		// Model is restricted to 2 components when using mass fractions
+		if (!useMoles && numComponents>2) 
+		{
+			DUNE_THROW(Dune::NotImplemented, "This model is restricted to 2 components when using mass fractions! To use mole fractions set property UseMoles true ...");
+		}
+		
+		// set the mole fractions first
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, this->fluidState(), isOldSol);
-
-        // update vertex data for the mass and momentum balance
+		
+		// update vertex data for the mass and momentum balance
         ParentType::update(priVars,
                            problem,
                            element,
                            fvGeometry,
                            scvIdx,
                            isOldSol);
-
+		
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(this->fluidState());
-
-        diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(this->fluidState(),
+		
+		for (int compIdx=0; compIdx<numComponents; compIdx++){
+			if (phaseCompIdx!=compIdx){
+				
+				diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(this->fluidState(),
                                                              paramCache,
                                                              phaseIdx,
-                                                             transportCompIdx,
+                                                             compIdx,
                                                              phaseCompIdx);
 
-        Valgrind::CheckDefined(diffCoeff_);
+				Valgrind::CheckDefined(diffCoeff_[compIdx]);
+			}
+		}
     };
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState()
+     * \copydoc BoxModel::completeFluidState()
      * \param isOldSol Specifies whether this is the previous solution or the current one
      */
     static void completeFluidState(const PrimaryVariables& priVars,
@@ -111,54 +131,60 @@ public:
                                    FluidState& fluidState,
                                    const bool isOldSol = false)
     {
-        Scalar massFraction[numComponents];
-        massFraction[transportCompIdx] = priVars[massOrMoleFracIdx];
-        massFraction[phaseCompIdx] = 1 - massFraction[transportCompIdx];
+        
+		if(!useMoles) //mass-fraction formulation
+		{ 
+			Scalar massOrMoleFrac[numComponents];
+			massOrMoleFrac[transportCompIdx] = priVars[massOrMoleFracIdx];
+			massOrMoleFrac[phaseCompIdx] = 1.0 - massOrMoleFrac[transportCompIdx];
+			// calculate average molar mass of the gas phase
+			Scalar M1 = FluidSystem::molarMass(transportCompIdx);
+			Scalar M2 = FluidSystem::molarMass(phaseCompIdx);
+			Scalar X2 = massOrMoleFrac[phaseCompIdx];
+			Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
 
-        // calculate average molar mass of the gas phase
-        Scalar M1 = FluidSystem::molarMass(transportCompIdx);
-        Scalar M2 = FluidSystem::molarMass(phaseCompIdx);
-        Scalar X2 = massFraction[phaseCompIdx];
-        Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
-
-        // convert mass to mole fractions and set the fluid state
-        fluidState.setMoleFraction(phaseIdx, transportCompIdx, massFraction[transportCompIdx]*avgMolarMass/M1);
-        fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massFraction[phaseCompIdx]*avgMolarMass/M2);
+			// convert mass to mole fractions and set the fluid state
+			fluidState.setMoleFraction(phaseIdx, transportCompIdx, massOrMoleFrac[transportCompIdx]*avgMolarMass/M1);
+			fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massOrMoleFrac[phaseCompIdx]*avgMolarMass/M2);	  
+		}
+		else
+		{
+			Scalar moleFracPhase, sumMoleFrac(0.0);
+			
+			//for components 
+			for (int compIdx=0; compIdx<numComponents; compIdx++)
+			{
+				if (conti0EqIdx+compIdx != massBalanceIdx)
+				{
+					sumMoleFrac += priVars[conti0EqIdx+compIdx];
+					fluidState.setMoleFraction(phaseIdx, compIdx, priVars[conti0EqIdx+compIdx]);
+				}
+			}
+			
+			//molefraction for the main component (no primary variable)
+			moleFracPhase = 1 - sumMoleFrac;
+			fluidState.setMoleFraction(phaseIdx, phaseIdx, moleFracPhase);
+		}
     }
-
-    /*!
-     * \brief Returns the mass fraction of a given component in the
-     * 		  given fluid phase within the control volume.
-     *
-     * \param compIdx The component index
-     */
-    Scalar massFraction(const int compIdx) const
-    { return this->fluidState_.massFraction(phaseIdx, compIdx); }
-
-    /*!
-     * \brief Returns the mass fraction of a given component in the
-     * 		  given fluid phase within the control volume.
-     *
-     * \param compIdx The component index
-     */
-    Scalar moleFraction(const int compIdx) const
-    { return this->fluidState_.moleFraction(phaseIdx, compIdx); }
 
     /*!
      * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ of the fluid within the
      *        sub-control volume.
      */
     Scalar molarDensity() const
-    { return this->fluidState_.density(phaseIdx) / this->fluidState_.averageMolarMass(phaseIdx); }
+    { 
+		return this->fluidState_.density(phaseIdx) / this->fluidState_.averageMolarMass(phaseIdx); 
+		
+	}
 
     /*!
      * \brief Returns the binary (mass) diffusion coefficient
      */
-    Scalar diffusionCoeff() const
-    { return diffCoeff_; }
+    Scalar diffusionCoeff(int compIdx) const
+    { return diffCoeff_[compIdx]; }
 
 protected:
-    Scalar diffCoeff_; //!< Binary diffusion coefficient
+    Scalar diffCoeff_[numComponents]; //!<  Diffusion coefficient
 };
 
 } // end namespace

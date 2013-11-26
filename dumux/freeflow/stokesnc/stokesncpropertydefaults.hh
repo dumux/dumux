@@ -18,23 +18,25 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup BoxStokes2cModel
+ * \ingroup BoxProperties
+ * \ingroup BoxStokesncModel
  *
  * \file
  *
  * \brief Defines the properties required for the compositional
  * Stokes box model.
  */
-#ifndef DUMUX_STOKES2C_PROPERTY_DEFAULTS_HH
-#define DUMUX_STOKES2C_PROPERTY_DEFAULTS_HH
+#ifndef DUMUX_STOKESNC_PROPERTY_DEFAULTS_HH
+#define DUMUX_STOKESNC_PROPERTY_DEFAULTS_HH
 
-#include "stokes2cproperties.hh"
-#include "stokes2cfluxvariables.hh"
-#include "stokes2cindices.hh"
-#include "stokes2clocalresidual.hh"
-#include "stokes2cmodel.hh"
-#include "stokes2cvolumevariables.hh"
+#include <dumux/freeflow/stokes/stokespropertydefaults.hh>
+
+#include "stokesncproperties.hh"
+#include "stokesncfluxvariables.hh"
+#include "stokesncindices.hh"
+#include "stokesnclocalresidual.hh"
+#include "stokesncmodel.hh"
+#include "stokesncvolumevariables.hh"
 
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
@@ -47,51 +49,51 @@ namespace Properties
 // Properties
 //////////////////////////////////////////////////////////////////
 
-SET_PROP(BoxStokes2c, NumEq) //!< set the number of equations
+//!< Define that mass fractions are used in the balance equations
+SET_BOOL_PROP(BoxStokesnc, UseMoles, true);
+		
+SET_PROP(BoxStokesnc, NumEq) //!< set the number of equations
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    static const int dim = Grid::dimension;
- public:
-    static constexpr int value = 2 + dim;
+		typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+		typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+
+		static const int dim = Grid::dimension;
+	public:
+		static constexpr int value = FluidSystem::numComponents + dim;
 };
-
-//! Use the stokes2c local jacobian operator
-SET_TYPE_PROP(BoxStokes2c,
-              LocalResidual,
-              Stokes2cLocalResidual<TypeTag>);
-
+	
+SET_TYPE_PROP(BoxStokesnc, LocalResidual, StokesncLocalResidual<TypeTag>);
+	
 //! the Model property
-SET_TYPE_PROP(BoxStokes2c, Model, Stokes2cModel<TypeTag>);
-
+SET_TYPE_PROP(BoxStokesnc, Model, StokesncModel<TypeTag>);
+	
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxStokes2c, VolumeVariables, Stokes2cVolumeVariables<TypeTag>);
-
+SET_TYPE_PROP(BoxStokesnc, VolumeVariables, StokesncVolumeVariables<TypeTag>);
+		
 //! the FluxVariables property
-SET_TYPE_PROP(BoxStokes2c, FluxVariables, Stokes2cFluxVariables<TypeTag>);
-
+SET_TYPE_PROP(BoxStokesnc, FluxVariables, StokesncFluxVariables<TypeTag>);
+	
 //! Set the Indices for the Stokes2c model.
-SET_TYPE_PROP(BoxStokes2c, Indices, Stokes2cCommonIndices<TypeTag>);
-
-//! Set the number of components to 2
-SET_INT_PROP(BoxStokes2c, NumComponents, 2);
+SET_TYPE_PROP(BoxStokesnc, Indices, StokesncCommonIndices<TypeTag>);
 
 //! Choose the type of the employed fluid state
-SET_PROP(BoxStokes2c, FluidState)
+SET_PROP(BoxStokesnc, FluidState)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-public:
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+		typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+		typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+	public:
+		typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
 };
-
+	
 //! Choose the considered phase (single-phase system); the gas phase is used
-SET_PROP(BoxStokes2c, PhaseIdx)
+SET_PROP(BoxStokesnc, PhaseIdx)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-public:
-    static constexpr int value = FluidSystem::nPhaseIdx;
+		typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+	public:
+		static constexpr int value = FluidSystem::nPhaseIdx;
 };
+	
 
 } // namespace Properties
 } // namespace Dumux
-#endif // DUMUX_STOKES2C_PROPERTY_DEFAULTS_HH
+#endif // DUMUX_STOKESNC_PROPERTY_DEFAULTS_HH

@@ -18,14 +18,15 @@
  *****************************************************************************/
 /*!
  * \file
+ *
  * \brief This file contains the data which is required to calculate the
  *        component fluxes over a face of a finite volume.
  *
  * This means concentration gradients, diffusion coefficients, mass fractions, etc.
  * at the integration point.
  */
-#ifndef DUMUX_STOKES2C_FLUX_VARIABLES_HH
-#define DUMUX_STOKES2C_FLUX_VARIABLES_HH
+#ifndef DUMUX_STOKESNC_FLUX_VARIABLES_HH
+#define DUMUX_STOKESNC_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 #include <dumux/freeflow/stokes/stokesfluxvariables.hh>
@@ -33,23 +34,18 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-NEW_PROP_TAG(Stokes2cIndices); //!< Enumerations for the compositional stokes models
-}
-
 /*!
- * \ingroup BoxStokes2cModel
- * \ingroup ImplicitFluxVariables
+ * \ingroup BoxStokesncModel
+ * \ingroup BoxFluxVariables
  * \brief This template class contains data which is required to
  *        calculate the component fluxes over a face of a finite
- *        volume for the compositional Stokes model.
+ *        volume for the compositional n component Stokes model.
  *
  * This means concentration gradients, diffusion coefficient, mass fractions, etc.
  * at the integration point of a SCV or boundary face.
  */
 template <class TypeTag>
-class Stokes2cFluxVariables : public StokesFluxVariables<TypeTag>
+class StokesncFluxVariables : public StokesFluxVariables<TypeTag>
 {
     typedef StokesFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -59,97 +55,113 @@ class Stokes2cFluxVariables : public StokesFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
-    enum { dim = GridView::dimension };
-    enum { phaseIdx = Indices::phaseIdx };
-    enum { transportCompIdx = Indices::transportCompIdx };
-
-    typedef typename GridView::template Codim<0>::Entity Element;
+    
+    //dimensions
+    enum {	dim = GridView::dimension };
+    //phase indices
+    enum {  phaseIdx = Indices::phaseIdx };
+    //component indices
+	enum {	phaseCompIdx = Indices::phaseCompIdx,
+            transportCompIdx = Indices::transportCompIdx };
+    //number of components
+	enum {	numComponents = Indices::numComponents };
+    
+	typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
+	typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:
-    Stokes2cFluxVariables(const Problem &problem,
+	//Constrcutor calls ParentType function
+	StokesncFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &fvGeometry,
                           const int faceIdx,
                           const ElementVolumeVariables &elemVolVars,
                           const bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+		: ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
         calculateValues_(problem, element, elemVolVars);
     }
-
-    /*!
+	
+	/*!
      * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
      */
     const Scalar molarDensity() const
     { return this->molarDensity_; }
+	
+	/*!
+     * \brief Return the mass fraction of a transported component at the integration point.
+     */
+    const Scalar massFraction(int compIdx) const
+    { return massFraction_[compIdx]; }
 
     /*!
-     * \brief Return the mass fraction of the transported component at the integration point.
+     * \brief Return the molar diffusion coefficient of a transported component at the integration point.
      */
-    const Scalar massFraction() const
-    { return massFraction_; }
-
-    /*!
-     * \brief Return the molar diffusion coefficient at the integration point.
-     */
-    const Scalar diffusionCoeff() const
-    { return diffusionCoeff_; }
-
-    /*!
-     * \brief Return the eddy diffusivity (if implemented).
-     */
-    const Scalar eddyDiffusivity() const
-    { return 0; }
+    const Scalar diffusionCoeff(int compIdx) const
+    { return diffusionCoeff_[compIdx]; }
 
     /*!
      * \brief Return the gradient of the mole fraction at the integration point.
      */
-    const DimVector &moleFractionGrad() const
-    { return moleFractionGrad_; }
+    const DimVector &moleFractionGrad(int compIdx) const
+    { return moleFractionGrad_[compIdx]; }
 
+	/*!
+     * \brief Return the eddy diffusivity (if implemented).
+     */
+    const Scalar eddyDiffusivity() const
+    { return 0; }
 
 protected:
     void calculateValues_(const Problem &problem,
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
     {
-        molarDensity_ = Scalar(0);  
-        massFraction_ = Scalar(0);
-        diffusionCoeff_ = Scalar(0);
-        moleFractionGrad_ = Scalar(0);
 
-        // calculate gradients and secondary variables at IPs
-        for (int idx = 0;
-             idx < this->fvGeometry_.numScv;
-             idx++) // loop over vertices of the element
-        {
-            molarDensity_ += elemVolVars[idx].molarDensity()*
-                this->face().shapeValue[idx];
-            massFraction_ += elemVolVars[idx].massFraction(transportCompIdx) *
-                this->face().shapeValue[idx];
-            diffusionCoeff_ += elemVolVars[idx].diffusionCoeff() *
-                this->face().shapeValue[idx];
+		// loop over all components
+		for (int compIdx=0; compIdx<numComponents; compIdx++){
+			if (phaseCompIdx!=compIdx) //no transport equationen parameters needed for the mass balance
+			{
+				this->molarDensity_ = Scalar(0.0);  				
+				massFraction_[compIdx] = Scalar(0.0);
+				diffusionCoeff_[compIdx] = Scalar(0.0);
+				moleFractionGrad_[compIdx] = Scalar(0.0);
+				
+				// calculate gradients and secondary variables at IPs
+				for (int scvIdx = 0;
+					 scvIdx < this->fvGeometry_.numScv;
+					 scvIdx++) // loop over vertices of the element
+				{
+            
+					this->molarDensity_ += elemVolVars[scvIdx].molarDensity()*
+						this->face().shapeValue[scvIdx];
+					
+					massFraction_[compIdx] += elemVolVars[scvIdx].fluidState().massFraction(phaseIdx, compIdx) *
+						this->face().shapeValue[scvIdx];
+					diffusionCoeff_[compIdx] += elemVolVars[scvIdx].diffusionCoeff(compIdx) *
+						this->face().shapeValue[scvIdx];
 
-            // the gradient of the mass fraction at the IP
-            for (int dimIdx=0; dimIdx<dim; ++dimIdx)
-            {
-                moleFractionGrad_ +=
-                    this->face().grad[idx][dimIdx] *
-                    elemVolVars[idx].moleFraction(transportCompIdx);
-            }
-        }
-
-        Valgrind::CheckDefined(massFraction_);
-        Valgrind::CheckDefined(diffusionCoeff_);
-        Valgrind::CheckDefined(moleFractionGrad_);
+					// the gradient of the mole fraction at the IP
+					for (int dimIdx=0; dimIdx<dim; ++dimIdx)
+					{
+						moleFractionGrad_[compIdx] +=
+							this->face().grad[scvIdx][dimIdx] *
+							elemVolVars[scvIdx].fluidState().moleFraction(phaseIdx, compIdx);
+					}
+				}
+							
+				Valgrind::CheckDefined(massFraction_[compIdx]);
+				Valgrind::CheckDefined(diffusionCoeff_[compIdx]);
+				Valgrind::CheckDefined(moleFractionGrad_[compIdx]);
+			}
+		}
     }
-
-    Scalar molarDensity_;
-    Scalar massFraction_;
-    Scalar diffusionCoeff_;
-    DimVector moleFractionGrad_;
+	
+	Scalar molarDensity_;  
+	Scalar massFraction_[numComponents];
+    Scalar diffusionCoeff_[numComponents];
+    DimVector moleFractionGrad_[numComponents];
 };
 
 } // end namespace

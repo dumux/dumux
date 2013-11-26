@@ -23,49 +23,73 @@
  *        using the compositional Stokes box model.
  *
  */
-#ifndef DUMUX_STOKES2C_LOCAL_RESIDUAL_HH
-#define DUMUX_STOKES2C_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_STOKESNC_LOCAL_RESIDUAL_HH
+#define DUMUX_STOKESNC_LOCAL_RESIDUAL_HH
 
 #include <dumux/freeflow/stokes/stokeslocalresidual.hh>
 
-#include <dumux/freeflow/stokes2c/stokes2cvolumevariables.hh>
-#include <dumux/freeflow/stokes2c/stokes2cfluxvariables.hh>
+#include "stokesncvolumevariables.hh"
+#include "stokesncfluxvariables.hh"
 
 namespace Dumux
 {
 /*!
- * \ingroup BoxStokes2cModel
- * \ingroup ImplicitLocalResidual
+ * \ingroup BoxStokesncModel
+ * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the compositional Stokes box model. This is derived
  *        from the Stokes box model.
  */
 template<class TypeTag>
-class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
+class StokesncLocalResidual : public StokesLocalResidual<TypeTag>
 {
     typedef StokesLocalResidual<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
-    enum { dim = GridView::dimension };
-    enum { transportEqIdx = Indices::transportEqIdx }; //!< Index of the transport equation
-    enum { phaseIdx = Indices::phaseIdx }; //!< Index of the considered phase (only of interest when using two-phase fluidsystems)
-
-    // component indices
-    enum { phaseCompIdx = Indices::phaseCompIdx };          //!< Index of the main component of the fluid phase
-    enum { transportCompIdx = Indices::transportCompIdx };  //!< Index of the minor component of the fluid phase
-
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    
+    //dimensions
+	enum {  dim = GridView::dimension };
+    //number of equations
+    enum {  numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    //number of components
+    enum {  numComponents = Indices::numComponents };
+    //equation indices
+    enum {  massBalanceIdx = Indices::massBalanceIdx,
+            momentumXIdx = Indices::momentumXIdx,
+            lastMomentumIdx = Indices::lastMomentumIdx,
+            transportEqIdx = Indices::transportEqIdx,
+            conti0EqIdx = Indices::conti0EqIdx };
+    //primary variable indices
+    enum {  pressureIdx = Indices::pressureIdx };
+    //phase employed
+    enum { 	phaseIdx = Indices::phaseIdx };
+    //component indices
+    enum {  phaseCompIdx = Indices::phaseCompIdx,
+            transportCompIdx = Indices::transportCompIdx };
+    
+	typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+	
+	typedef Dune::FieldVector<Scalar, dim> DimVector;
+    
+	typedef typename GridView::Intersection Intersection;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+
+	static const bool calculateNavierStokes = GET_PROP_VALUE(TypeTag, EnableNavierStokes);
+
+	//! property that defines whether mole or mass fractions are used
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     /*!
      * \brief Evaluate the stored amount of quantities additional to the Stokes model
-     *        (transport equation).
+     *        (transport equations). For using mole fraction also momentum balances and mass balance 
+     *         have to be calculated using molar quantities
      *
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
@@ -76,24 +100,60 @@ public:
      */
     void computeStorage(PrimaryVariables &storage, const int scvIdx, const bool usePrevSol) const
     {
-        // compute the storage term for the transport equation
-        ParentType::computeStorage(storage, scvIdx, usePrevSol);
-
-        // if flag usePrevSol is set, the solution from the previous
+       
+		// if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
-        // using the implicit euler method.
-        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        // using the implicit Euler method.
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
+		: this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
+		
+        storage = 0.0;
+        if (!useMoles)
+		{
+			/* works for a maximum of two components, for more components 
+			mole fractions must be used (property useMoles => true) */
+			
+			// mass and momentum balance
+			ParentType::computeStorage(storage, scvIdx, usePrevSol);
+			
+			//storage of transported component
+			storage[transportEqIdx] = volVars.density() 
+				* volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
+			
+			Valgrind::CheckDefined(volVars.density());
+			Valgrind::CheckDefined(volVars.fluidState().massFraction(phaseIdx, transportCompIdx));
+			
+		}
+        else
+		{
+        	/*//TODO call parent type function
+            // momentum balance
+            for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
+                storage[momentumIdx] = volVars.molarDensity()
+					* volVars.velocity()[momentumIdx-momentumXIdx];*/
+			
+            // mass and momentum balance
+			ParentType::computeStorage(storage, scvIdx, usePrevSol);
 
-        // compute the storage of the component
-        storage[transportEqIdx] =
-            volVars.density() *
-            volVars.massFraction(transportCompIdx);
-
-        Valgrind::CheckDefined(volVars.density());
-        Valgrind::CheckDefined(volVars.massFraction(transportCompIdx));
+            
+			// mass balance and transport equations
+			for (int compIdx=0; compIdx<numComponents; compIdx++)
+			{
+				if (conti0EqIdx+compIdx != massBalanceIdx)
+					//storage[massBalanceIdx] = volVars.molarDensity();
+				//else // transport equations
+				{
+					storage[conti0EqIdx+compIdx] = volVars.molarDensity()
+						* volVars.fluidState().moleFraction(phaseIdx, compIdx);
+					
+					Valgrind::CheckDefined(volVars.molarDensity());
+					Valgrind::CheckDefined(volVars.fluidState().moleFraction(phaseIdx, compIdx));
+				}
+			}
+		}
     }
 
     /*!
@@ -109,26 +169,61 @@ public:
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
     {
-        // call computation of the advective fluxes of the stokes model
-        // (momentum and mass fluxes)
-        ParentType::computeAdvectiveFlux(flux, fluxVars);
-
-        // vertex data of the upstream and the downstream vertices
-        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
-        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
-
-        Scalar tmp = fluxVars.normalVelocity();
-
-        if (this->massUpwindWeight_ > 0.0)
-            tmp *=  this->massUpwindWeight_ *         // upwind data
-                up.density() * up.massFraction(transportCompIdx);
-        if (this->massUpwindWeight_ < 1.0)
-            tmp += (1.0 - this->massUpwindWeight_) *     // rest
-                dn.density() * dn.massFraction(transportCompIdx);
-
-        flux[transportEqIdx] += tmp;
-        Valgrind::CheckDefined(flux[transportEqIdx]);
-    }
+        // data attached to upstream and the downstream vertices
+		const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
+		const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
+		Scalar tmp = 0.0;
+		
+		if(!useMoles)
+		{
+        	// call ParentType function
+			ParentType::computeAdvectiveFlux(flux,fluxVars);
+			
+			// for transport equations
+			tmp = fluxVars.normalVelocity();  
+			
+			if (this->massUpwindWeight_ > 0.0)
+				tmp *=  this->massUpwindWeight_          // upwind data
+					* up.density()
+                    * up.fluidState().massFraction(phaseIdx, transportCompIdx);
+			
+            if (this->massUpwindWeight_ < 1.0)
+				tmp += (1.0 - this->massUpwindWeight_)      // rest
+					* dn.density()
+                    * dn.fluidState().massFraction(phaseIdx, transportCompIdx);
+			
+			flux[transportEqIdx] += tmp;
+			Valgrind::CheckDefined(flux[transportEqIdx]);
+			
+		}
+        else
+		{
+        	// call ParentType function
+			ParentType::computeAdvectiveFlux(flux,fluxVars);
+            
+			//transport equations
+			for (int compIdx=0; compIdx<numComponents; compIdx++)
+			{
+				if (conti0EqIdx+compIdx != massBalanceIdx) //mass balance is calculated above
+				{
+					tmp = fluxVars.normalVelocity();
+				
+					if (this->massUpwindWeight_ > 0.0)
+						tmp *=  this->massUpwindWeight_          // upwind data
+                            * up.molarDensity()
+                            * up.fluidState().moleFraction(phaseIdx, compIdx);
+					if (this->massUpwindWeight_ < 1.0)
+						tmp += (1.0 - this->massUpwindWeight_)      // rest
+                            * dn.molarDensity()
+                            * dn.fluidState().moleFraction(phaseIdx, compIdx);
+				
+					flux[conti0EqIdx+compIdx] += tmp;
+					Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
+				}
+			}
+        }
+        
+	}
 
     /*!
      * \brief Adds the diffusive component flux to the flux vector over
@@ -140,19 +235,36 @@ public:
     void computeDiffusiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
     {
-        // diffusive mass flux
-        ParentType::computeDiffusiveFlux(flux, fluxVars);
+		// diffusive component flux
+        for (int dimIdx = 0; dimIdx < dim; ++dimIdx){
 
-        // diffusive component flux
-        for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            flux[transportEqIdx] -=
-                fluxVars.moleFractionGrad()[dimIdx] *
-                fluxVars.face().normal[dimIdx] *
-                (fluxVars.diffusionCoeff() + fluxVars.eddyDiffusivity()) *
-                fluxVars.molarDensity() *
-                FluidSystem::molarMass(transportCompIdx);
+			if(!useMoles)
+			{
+                flux[transportEqIdx] -= fluxVars.moleFractionGrad(transportCompIdx)[dimIdx]
+		                          * fluxVars.face().normal[dimIdx]
+		                          *(fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
+		                          * fluxVars.molarDensity()
+		                          * FluidSystem::molarMass(transportCompIdx);// Multipled by molarMass [kg/mol] to convert form [mol/m^3 s] to [kg/m^3 s]
+                Valgrind::CheckDefined(flux[transportEqIdx]);
+			}
+			else
+			{
+				//loop over secondary components
+				for (int compIdx=0; compIdx<numComponents; compIdx++)
+				{
+					if (conti0EqIdx+compIdx != massBalanceIdx) 
+					{
+						flux[conti0EqIdx+compIdx] -= fluxVars.moleFractionGrad(compIdx)[dimIdx]
+								* fluxVars.face().normal[dimIdx]
+								*(fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
+								* fluxVars.molarDensity();
+						Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
+					}
+				}
+				
+            }
 
-        Valgrind::CheckDefined(flux[transportEqIdx]);
+		}
     }
 };
 

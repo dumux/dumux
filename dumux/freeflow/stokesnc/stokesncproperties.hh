@@ -18,16 +18,16 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup BoxStokes2cModel
+ * \ingroup BoxProperties
+ * \ingroup BoxStokesncModel
  *
  * \file
  *
  * \brief Defines the supplementary properties required for the compositional
  * Stokes box model.
  */
-#ifndef DUMUX_STOKES2CPROPERTIES_HH
-#define DUMUX_STOKES2CPROPERTIES_HH
+#ifndef DUMUX_STOKESNC_PROPERTIES_HH
+#define DUMUX_STOKESNC_PROPERTIES_HH
 
 #include <dumux/freeflow/stokes/stokesproperties.hh>
 
@@ -41,14 +41,8 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the compositional Stokes problems
-NEW_TYPE_TAG(BoxStokes2c, INHERITS_FROM(BoxStokes));
-
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(NumComponents); //!< Number of components
-
+NEW_TYPE_TAG(BoxStokesnc, INHERITS_FROM(BoxStokes));
+NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
 }
 
 }
