@@ -58,6 +58,7 @@ public:
             boundaryInfo_[i].isOutflow = 0;
             boundaryInfo_[i].isCouplingInflow = 0;
             boundaryInfo_[i].isCouplingOutflow = 0;
+            boundaryInfo_[i].isMortarCoupling = 0;
 
             eq2pvIdx_[i] = i;
             pv2eqIdx_[i] = i;
@@ -100,6 +101,7 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 0;
             boundaryInfo_[eqIdx].isCouplingInflow = 0;
             boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+            boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
             Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
@@ -117,6 +119,7 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 0;
             boundaryInfo_[eqIdx].isCouplingInflow = 0;
             boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+            boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
             eq2pvIdx_[eqIdx] = eqIdx;
             pv2eqIdx_[eqIdx] = eqIdx;
@@ -137,6 +140,7 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 1;
             boundaryInfo_[eqIdx].isCouplingInflow = 0;
             boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+            boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
             Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
@@ -154,6 +158,7 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 0;
             boundaryInfo_[eqIdx].isCouplingInflow = 1;
             boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+            boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
             Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
@@ -171,6 +176,25 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 0;
             boundaryInfo_[eqIdx].isCouplingInflow = 0;
             boundaryInfo_[eqIdx].isCouplingOutflow = 1;
+            boundaryInfo_[eqIdx].isMortarCoupling = 0;
+
+            Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+        }
+    }
+
+    /*!
+     * \brief Set all boundary conditions to mortar coupling.
+     */
+    void setAllMortarCoupling()
+    {
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+            boundaryInfo_[eqIdx].visited = 1;
+            boundaryInfo_[eqIdx].isDirichlet = 0;
+            boundaryInfo_[eqIdx].isNeumann = 0;
+            boundaryInfo_[eqIdx].isOutflow = 0;
+            boundaryInfo_[eqIdx].isCouplingInflow = 0;
+            boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+            boundaryInfo_[eqIdx].isMortarCoupling = 1;
 
             Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
@@ -190,6 +214,7 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 0;
         boundaryInfo_[eqIdx].isCouplingInflow = 0;
         boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -211,6 +236,7 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 0;
         boundaryInfo_[eqIdx].isCouplingInflow = 0;
         boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         // update the equation <-> primary variable mapping
         eq2pvIdx_[eqIdx] = pvIdx;
@@ -234,6 +260,7 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 1;
         boundaryInfo_[eqIdx].isCouplingInflow = 0;
         boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -249,6 +276,7 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 0;
         boundaryInfo_[eqIdx].isCouplingInflow = 1;
         boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -264,6 +292,23 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 0;
         boundaryInfo_[eqIdx].isCouplingInflow = 0;
         boundaryInfo_[eqIdx].isCouplingOutflow = 1;
+        boundaryInfo_[eqIdx].isMortarCoupling = 0;
+
+        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+    }
+
+    /*!
+     * \brief Set a boundary condition for a single equation to mortar coupling.
+     */
+    void setMortarCoupling(int eqIdx)
+    {
+        boundaryInfo_[eqIdx].visited = 1;
+        boundaryInfo_[eqIdx].isDirichlet = 0;
+        boundaryInfo_[eqIdx].isNeumann = 0;
+        boundaryInfo_[eqIdx].isOutflow = 0;
+        boundaryInfo_[eqIdx].isCouplingInflow = 0;
+        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+        boundaryInfo_[eqIdx].isMortarCoupling = 1;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -390,6 +435,29 @@ public:
     };
 
     /*!
+     * \brief Returns true if an equation is used to specify a
+     *        mortar coupling condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isMortarCoupling(unsigned eqIdx) const
+    {
+        return boundaryInfo_[eqIdx].isMortarCoupling;
+    }
+
+    /*!
+     * \brief Returns true if some equation is used to specify a
+     *        mortar coupling condition.
+     */
+    bool hasMortarCoupling() const
+    {
+        for (int i = 0; i < numEq; ++i)
+            if (boundaryInfo_[i].isMortarCoupling)
+                return true;
+        return false;
+    }
+
+    /*!
      * \brief Returns the index of the equation which should be used
      *        for the Dirichlet condition of the pvIdx's primary
      *        variable.
@@ -420,6 +488,7 @@ private:
         unsigned char isOutflow : 1;
         unsigned char isCouplingInflow : 1;
         unsigned char isCouplingOutflow : 1;
+        unsigned char isMortarCoupling : 1;
     } boundaryInfo_[numEq];
 
     unsigned char eq2pvIdx_[numEq];

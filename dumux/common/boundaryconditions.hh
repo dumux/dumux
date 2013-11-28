@@ -38,6 +38,7 @@ struct BoundaryConditions
 {
     /** \brief These values are ordered according to precedence */
     enum Flags {
+        mortarCoupling = -3, //!< An outflow boundary for coupled models using mortar elements
         couplingOutflow = -2, //!< An outflow boundary for coupled models
         couplingInflow = -1, //!< An inflow boundary for coupled models
         outflow = 0, //!< An outflow boundary
