@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * @file
- * @brief  Definition of a simple two-component Stokes problem
+ * @brief  Definition of a simple two-component Stokes problem for the n-component model
  */
 #ifndef DUMUX_STOKES2CTESTPROBLEM_HH
 #define DUMUX_STOKES2CTESTPROBLEM_HH
@@ -31,7 +31,7 @@
 
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
-#include <dumux/freeflow/stokes2c/stokes2cmodel.hh>
+#include <dumux/freeflow/stokesnc/stokesncmodel.hh>
 
 namespace Dumux
 {
@@ -44,7 +44,7 @@ class Stokes2cTestProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(Stokes2cTestProblem, INHERITS_FROM(BoxStokes2c));
+NEW_TYPE_TAG(Stokes2cTestProblem, INHERITS_FROM(BoxStokesnc));
 
 // Set the grid type
 SET_TYPE_PROP(Stokes2cTestProblem, Grid, Dune::SGrid<2,2>);
@@ -53,7 +53,7 @@ SET_TYPE_PROP(Stokes2cTestProblem, Grid, Dune::SGrid<2,2>);
 SET_TYPE_PROP(Stokes2cTestProblem, Problem, Dumux::Stokes2cTestProblem<TypeTag>);
 
 //! Select the fluid system
-SET_PROP(BoxStokes2c, FluidSystem)
+SET_PROP(BoxStokesnc, FluidSystem)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dumux::FluidSystems::H2OAir<Scalar> type;
@@ -63,14 +63,14 @@ SET_PROP(BoxStokes2c, FluidSystem)
 //SET_TYPE_PROP(BoxStokes, Scalar, long double);
 
 //! a stabilization factor. Set to zero for no stabilization
-SET_SCALAR_PROP(BoxStokes2c, StokesStabilizationAlpha, -1.0);
+SET_SCALAR_PROP(BoxStokesnc, StokesStabilizationAlpha, -1.0);
 
 // Enable gravity
 SET_BOOL_PROP(Stokes2cTestProblem, ProblemEnableGravity, false);
 }
 
 /*!
- * \ingroup BoxStokes2cModel
+ * \ingroup BoxStokesncModel
  * \ingroup ImplicitTestProblems
  * \brief Stokes transport problem with dryer air flowing
  *        from the top to the bottom.
@@ -83,7 +83,7 @@ SET_BOOL_PROP(Stokes2cTestProblem, ProblemEnableGravity, false);
  * of the momentum balance equations in case of Dirichlet bcs for the momentum balance.
  * In the middle of the lower boundary one vertex receives Dirichlet bcs, to set the pressure level.
  *
- * This problem uses the \ref BoxStokes2cModel.
+ * This problem uses the \ref BoxStokesncModel.
  * To run the simulation execute the following line in a shell:
  * <tt>./test_stokes2c -parameterFile ./test_stokes2c.input</tt>
  */
