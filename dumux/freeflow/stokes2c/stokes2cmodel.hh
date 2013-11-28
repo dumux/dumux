@@ -65,7 +65,7 @@ namespace Dumux {
  */
     
 template<class TypeTag>
-class Stokes2cModel : public StokesModel<TypeTag>
+    class Stokes2cModel : public StokesModel<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -85,6 +85,10 @@ class Stokes2cModel : public StokesModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
 public:
+    /* Use Stokes n-component Model freeflow/stokesnc.The 2c model gets replaced by the more general nc model. Adaption to the new model is straight forward. Please not that several functions in the fluxvariables now need an input argument compIdx. Associated variables are of size number of components. The nc model uses mole fraction formulations of the transport equations as default. Mass fractions can be employed via the poperty UseMoles.*/
+    DUNE_DEPRECATED_MSG("Use stokesnc model")
+    Stokes2cModel(){}
+    
     //! \copydoc ImplicitModel::addOutputVtkFields
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
@@ -151,7 +155,6 @@ public:
         writer.attachVertexData(velocity, "v", dim);
     }
 };
-
 }
 
 #include "stokes2cpropertydefaults.hh"

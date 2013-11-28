@@ -63,6 +63,10 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
+    /* Use Stokes n-component Model freeflow/stokesnc.The 2c model gets replaced by the more general nc model. Adaption to the new model is straight forward. Please not that several functions in the fluxvariables now need an input argument compIdx. Associated variables are of size number of components. The nc model uses mole fraction formulations of the transport equations as default. Mass fractions can be employed via the poperty UseMoles.*/
+    DUNE_DEPRECATED_MSG("Use stokesnc model")
+    Stokes2cLocalResidual(){}
+    
     /*!
      * \brief Evaluate the stored amount of quantities additional to the Stokes model
      *        (transport equation).
