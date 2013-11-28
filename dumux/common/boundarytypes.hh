@@ -336,7 +336,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isDirichlet(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isDirichlet; };
+    { return boundaryInfo_[eqIdx].isDirichlet; }
 
     /*!
      * \brief Returns true if some equation is used to specify a
@@ -348,7 +348,7 @@ public:
             if (boundaryInfo_[i].isDirichlet)
                 return true;
         return false;
-    };
+    }
 
     /*!
      * \brief Returns true if an equation is used to specify a
@@ -357,7 +357,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isNeumann(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isNeumann; };
+    { return boundaryInfo_[eqIdx].isNeumann; }
 
     /*!
      * \brief Returns true if some equation is used to specify a
@@ -369,7 +369,7 @@ public:
             if (boundaryInfo_[i].isNeumann)
                 return true;
         return false;
-    };
+    }
 
     /*!
      * \brief Returns true if an equation is used to specify an
@@ -378,7 +378,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isOutflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isOutflow; };
+    { return boundaryInfo_[eqIdx].isOutflow; }
 
     /*!
      * \brief Returns true if some equation is used to specify an
@@ -390,7 +390,7 @@ public:
             if (boundaryInfo_[i].isOutflow)
                 return true;
         return false;
-    };
+    }
 
     /*!
      * \brief Returns true if an equation is used to specify an
@@ -399,7 +399,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isCouplingInflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isCouplingInflow; };
+    { return boundaryInfo_[eqIdx].isCouplingInflow; }
 
     /*!
      * \brief Returns true if some equation is used to specify an
@@ -411,7 +411,7 @@ public:
             if (boundaryInfo_[i].isCouplingInflow)
                 return true;
         return false;
-    };
+    }
 
     /*!
      * \brief Returns true if an equation is used to specify an
@@ -420,7 +420,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isCouplingOutflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isCouplingOutflow; };
+    { return boundaryInfo_[eqIdx].isCouplingOutflow; }
 
     /*!
      * \brief Returns true if some equation is used to specify an
@@ -432,7 +432,7 @@ public:
             if (boundaryInfo_[i].isCouplingOutflow)
                 return true;
         return false;
-    };
+    }
 
     /*!
      * \brief Returns true if an equation is used to specify a
@@ -466,7 +466,7 @@ public:
      *              by the Dirichlet condition.
      */
     unsigned dirichletToEqIndex(unsigned pvIdx) const
-    { return pv2eqIdx_[pvIdx]; };
+    { return pv2eqIdx_[pvIdx]; }
 
     /*!
      * \brief Returns the index of the primary variable which should
@@ -477,7 +477,7 @@ public:
      *              the Dirichlet condition.
      */
     unsigned eqToDirichletIndex(unsigned eqIdx) const
-    { return eq2pvIdx_[eqIdx]; };
+    { return eq2pvIdx_[eqIdx]; }
 
 private:
     // this is a bitfield structure!
