@@ -63,7 +63,8 @@ public:
      *
      *\param temperature temperature of component in \f$\mathrm{[K]}\f$
      *
-     * The saturation pressure is often also called vapor pressure.
+     * The saturation pressure is often also called vapor pressure. This formulation is valid
+     * for a temperature range between 273.15 K and 647.096 K (critical temperature).
      */
     static Scalar saturationPressure(Scalar temperature)
     {
