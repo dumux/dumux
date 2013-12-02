@@ -592,7 +592,7 @@ protected:
     /*!
      * \brief Returns a reference to the grid view.
      */
-    const GridView gridView_() const
+    const GridView &gridView_() const
     { return problem_().gridView(); }
 
     /*!
