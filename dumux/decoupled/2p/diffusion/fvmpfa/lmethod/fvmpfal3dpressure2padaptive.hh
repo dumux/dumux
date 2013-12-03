@@ -26,27 +26,47 @@
 
 /**
  * @file
- * @brief  Finite Volume-MPFAL implementation of a two-phase pressure equation
- * @brief  Remark1: only for 3-D hexahedron grid.
- * @brief  Remark3: number of grid cells in each direction > 1
+ * @brief  3-d finite Volume-MPFAL implementation of a two-phase pressure equation on h-adaptive grids
+ * @brief  Remark1: only for 3-D hexahedrons of quadrilaterals.
+ * @brief  Remark2: number of grid cells in each direction > 1
  */
 
 namespace Dumux
 {
 //! \ingroup FVPressure2p
-/*! Finite Volume-MPFAL-Implementation of the equation
- * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$, or
+/*! \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model on h-adaptive grids.
+ *
+ * * Finite Volume-MPFAL-Implementation of the equation
+ *
+ * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$,
+ * or
  * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
- * \f$\Phi = g\f$ on \f$\Gamma_1\f$, and
- * \f$-\text{div}\, \mathbf{v}_t \cdot \mathbf{n} = J\f$
- * on \f$\Gamma_2\f$. Here,
- * \f$Phi_\alpha \f$ denotes the potential of phase \f$\alpha\f$, \f$K\f$ the intrinsic permeability,
- * \f$\lambda_t\f$ the total mobility, \f$this->f_\alpha\f$ the phase fractional flow function.
+ *
+ * \f$ \Phi = g \f$ on \f$ \Gamma_1 \f$, and
+ * \f$ - \text{div} \, \mathbf{v}_t \cdot \mathbf{n} = J \f$
+ * on \f$ \Gamma_2 \f$.
+ *
+ * Here, \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \mathbf{K} \f$ the intrinsic permeability,
+ * \f$ \lambda_t \f$ the total mobility, \f$ f_\alpha \f$ the phase fractional flow function.
+ *
+ * More details on the equations can be found in
+ *
+ * Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/
  *
  * M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
  * approximation L-method in 3D: numerical convergence and application to two-phase
  * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
  * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ *
+ * M. Wolff, B. Flemisch, R. Helmig, I. Aavatsmark.
+ * Treatment of tensorial relative permeabilities with multipoint flux approximation.
+ * International Journal of Numerical Analysis and Modeling (9), pp. 725-744, 2012.
+ *
+ * Remark1: only for 3-D hexahedrons of quadrilaterals.
+ *
+ * Remark2: number of grid cells in each direction > 1
+ *
+ * \tparam TypeTag The problem Type Tag
  */
 template<class TypeTag>
 class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
@@ -138,10 +158,11 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
     typedef  Dumux::FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 public:
-    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
+    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;//!< Type including methods for calculation of MPFA transmissibilities
+    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;//!< Type for storing interaction volume information
 
 protected:
+    //initializes the matrix to store the system of equations
     friend class FVPressure<TypeTag>;
     void initializeMatrix();
     void initializeMatrixRowSize();
@@ -152,6 +173,10 @@ protected:
     void assemble();
     void assembleHangingNodeInteractionVolume(InteractionVolume& interactionVolume);
 public:
+    /*! \brief Initializes the pressure model
+     *
+     * \copydetails ParentType::initialize()
+     */
     void initialize(bool solveTwice = true)
     {
         ElementIterator element = problem_.gridView().template begin<0>();
@@ -189,6 +214,10 @@ public:
         ParentType::update();
     }
 
+    //! Constructs a FvMpfaL3dPressure2pAdaptive object
+    /**
+     * \param problem A problem class object
+     */
     FvMpfaL3dPressure2pAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem),
         gravity_(problem.gravity())
@@ -219,7 +248,6 @@ public:
 private:
     Problem& problem_;
 
-private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     {   return *static_cast<Implementation *>(this);}
@@ -239,6 +267,7 @@ private:
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);//!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
 };
 
+//! Initializes the sparse matrix for the pressure solution
 template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrix()
 {
@@ -248,6 +277,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrix()
     this->A_.endindices();
 }
 
+//! Initializes the row size of the sparse matrix for the pressure solution
 template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 {
@@ -335,6 +365,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
     return;
 }
 
+//! Initializes the indices of the sparse matrix for the pressure solution
 template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
 {
@@ -382,7 +413,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
     return;
 }
 
-// only for 3-D general hexahedron
+//! assembles the global matrix and rhs vector for the pressure solution
 template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::assemble()
 {
@@ -427,6 +458,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assemble()
     return;
 }
 
+//! assembles the matrix entries of one hanging node interaction volume into the global matrix
 template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(InteractionVolume& interactionVolume)
 {

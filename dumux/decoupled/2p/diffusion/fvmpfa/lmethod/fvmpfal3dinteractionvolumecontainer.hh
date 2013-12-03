@@ -38,7 +38,14 @@ bool sort_compare(const std::vector<int>& entryI, const std::vector<int>& entryJ
 }
 
 //! \ingroup FVPressure2p
-/*! Interactionvolume container for 3-d MPFA L-method
+/*! \brief Interactionvolume container for 3-d MPFA L-method
+ *
+ * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.
+ * Each <tt>InteractionVolume</tt> object stores the information which is necessary to calculate MPFA transmissibility matrices:
+ *
+ * - relationship and orientation of the elements around a vertex (see doc/docextra/3dmpfa)
+ * - geometric information, such as element/face/edge positions, normals, ...
+ *
  */
 template<class TypeTag>
 class FvMpfaL3dInteractionVolumeContainer
@@ -98,7 +105,7 @@ class FvMpfaL3dInteractionVolumeContainer
         };
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume; //!< Type for storing an MPFA-interaction-volume. (Usually of type Dumux::FvMpfaL3dInteractionVolume or Dumux::FvMpfaL3dInteractionVolumeAdaptive)
 
 private:
     typedef std::vector<InteractionVolume> GlobalInteractionVolumeVector;
@@ -112,6 +119,10 @@ private:
     void storeInteractionVolumeInfo();
 public:
 
+    /*! \brief Updates the interaction volume container
+     *
+     * Rebuilds and stores the interaction volumes for the entire grid
+     */
     void update()
     {
         interactionVolumes_.clear();
@@ -123,39 +134,58 @@ public:
         asImp_().storeInteractionVolumeInfo();
     }
 
+
+    /*! \brief Initializes the interaction volume container
+     *
+     * Builds and stores the interaction volumes for the entire grid
+     */
     void initialize(bool solveTwice = true)
     {
-        interactionVolumes_.clear();
-        realFluxFaceArea_.clear();
-
-        realFluxFaceArea_.resize(problem_.gridView().size(dim), Dune::FieldVector<Dune::FieldVector<Scalar, 2>, 2 * dim>(Dune::FieldVector<Scalar, 2>(0.0)));
-        interactionVolumes_.resize(problem_.gridView().size(dim));
-
-        asImp_().storeInteractionVolumeInfo();
+        update();
 
         return;
     }
 
+    //! Returns an interaction volume
+    /*!
+     *  \param vertIdx Global index of a vertex in the DUNE grid
+     */
     InteractionVolume& interactionVolume(int vertexIdx)
     {
         return interactionVolumes_[vertexIdx];
     }
 
+    //! Returns an interaction volume
+    /*!
+     *  \param vertIdx Global index of a vertex in the DUNE grid
+     */
     InteractionVolume& interactionVolume(int vertexIdx) const
     {
         return interactionVolumes_[vertexIdx];
     }
 
+    //! Returns the interaction volumes container
     GlobalInteractionVolumeVector& interactionVolumesGlobal()
     {
         return interactionVolumes_;
     }
 
+    //! Returns the interaction volumes container
     GlobalInteractionVolumeVector& interactionVolumesGlobal() const
     {
         return interactionVolumes_;
     }
 
+    //! Returns the area weighting factor for the fluxes
+    /*!
+     *  \param interactionVolume An interaction volume object
+     *  \param elemGlobalIdx Global index of an element in the DUNE grid
+     *  \param elemLocalIdx Local index of an element in the interaction volume
+     *  \param localFaceIdx  Local index of a flux face with respect to an element of the interaction volume
+     *
+     *  \return Ratio of the element face area and the flux face area through which fluxes are calculated by the MPFA method
+     *  (1 if an element does not touches the domain boundary!)
+     */
     Scalar faceAreaFactor(InteractionVolume& interactionVolume, int elemGlobalIdx, int elemLocalIdx, int localFaceIdx)
     {
         Scalar factor = getRealFaceArea(interactionVolume, elemGlobalIdx, elemLocalIdx, localFaceIdx);
@@ -164,6 +194,14 @@ public:
         return factor;
     }
 
+    //! Returns the area weighting factor for the fluxes
+    /*!
+     *  \param elemGlobalIdx Global index of an element in the DUNE grid
+     *  \param indexInInside Local index of the face in the DUNE reference element
+     *
+     *  \return Ratio of the element face area and the flux face area through which fluxes are calculated by the MPFA method
+     *  (1 if an element does not touches the domain boundary!)
+     */
     Scalar faceAreaFactor(int elemGlobalIdx, int indexInInside)
     {
         Scalar factor = getRealFaceArea(elemGlobalIdx, indexInInside);
@@ -172,6 +210,15 @@ public:
         return factor;
     }
 
+    //! Returns the area trough which fluxes are calculated by the MPFA
+    /*!
+     *  \param interactionVolume An interaction volume object
+     *  \param elemGlobalIdx Global index of an element in the DUNE grid
+     *  \param elemLocalIdx Local index of an element in the interaction volume
+     *  \param localFaceIdx  Local index of a flux face with respect to an element of the interaction volume
+     *
+     *  \return flux face area (equal to the element face area if an element does not touches the domain boundary!)
+     */
     Scalar getRealFluxFaceArea(InteractionVolume& interactionVolume, int elemGlobalIdx, int elemLocalIdx, int localFaceIdx)
     {
         Scalar factor = realFluxFaceArea_[elemGlobalIdx][interactionVolume.getIndexOnElement(elemLocalIdx, localFaceIdx)][fluxFaceArea];
@@ -179,6 +226,13 @@ public:
         return factor;
     }
 
+    //! Returns the area trough which fluxes are calculated by the MPFA
+    /*!
+     *  \param elemGlobalIdx Global index of an element in the DUNE grid
+     *  \param indexInInside Local index of the face in the DUNE reference element
+     *
+     *  \return flux face area (equal to the element face area if an element does not touches the domain boundary!)
+     */
     Scalar getRealFluxFaceArea(int elemGlobalIdx, int indexInInside)
     {
         Scalar factor = realFluxFaceArea_[elemGlobalIdx][indexInInside][fluxFaceArea];
@@ -186,6 +240,15 @@ public:
         return factor;
     }
 
+    //! Returns the face area of the element
+    /*!
+     *  \param interactionVolume An interaction volume object
+     *  \param elemGlobalIdx Global index of an element in the DUNE grid
+     *  \param elemLocalIdx Local index of an element in the interaction volume
+     *  \param localFaceIdx  Local index of a flux face with respect to an element of the interaction volume
+     *
+     *  \return the face area of the element
+     */
     Scalar getRealFaceArea(InteractionVolume& interactionVolume, int elemGlobalIdx, int elemLocalIdx, int localFaceIdx)
     {
         Scalar factor = realFluxFaceArea_[elemGlobalIdx][interactionVolume.getIndexOnElement(elemLocalIdx, localFaceIdx)][realFaceArea];
@@ -193,6 +256,13 @@ public:
         return factor;
     }
 
+    //! Returns the face area of the element
+    /*!
+     *  \param elemGlobalIdx Global index of an element in the DUNE grid
+     *  \param indexInInside Local index of the face in the DUNE reference element
+     *
+     *  \return the face area of the element
+     */
     Scalar getRealFaceArea(int elemGlobalIdx, int indexInInside)
     {
         Scalar factor = realFluxFaceArea_[elemGlobalIdx][indexInInside][realFaceArea];
@@ -200,6 +270,10 @@ public:
         return factor;
     }
 
+    //! Constructs a FvMpfaL3dInteractionVolumeContainer object
+    /**
+     * \param problem A problem class object
+     */
     FvMpfaL3dInteractionVolumeContainer(Problem& problem) :
         problem_(problem)
     {
@@ -228,11 +302,20 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! Returns the implementation of the problem (i.e. static polymorphism)
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 };
 
+/*! \brief Function for storing the elements of an interaction volume and
+ * constructing a map from a vertex to its surrounding elements
+ *
+ * Stores an element in all interaction volumes it belongs to. Additionally, the global index of an element is stored at the position of its local index according to a DUNE reference element
+ * for every vertex of the element.
+ *
+ * \param element A level 0 Entity of a DUNE grid
+ * \param elemVertMap Vector containing the global vertex-element map
+ */
 template<class TypeTag>
 void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap)
 {
@@ -271,6 +354,14 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const 
     elemVertMap[globalVertIdx][0] = globalIdx;
 }
 
+/*! \brief Stores information with respect to DUNE intersections in the interaction volumes
+ *
+ * Stores information with respect to DUNE intersections, such as normals, in the interaction volumes. Assumes a local storage following the DUNE
+ * reference element index, which is performed by the function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap).
+ *
+ * \param element A level 0 Entity of a DUNE grid
+ * \param elemVertMap Vector containing the global vertex-element map
+ */
 template<class TypeTag>
 void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const Element& element, std::vector < std::vector<int> >& elemVertMap)
 {
@@ -1226,6 +1317,20 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
     }
 }
 
+/*! \brief Stores additional information which can be constructed for interaction volumes of non-boundary vertices.
+ *
+ * Stores additional information which can be constructed for interaction volumes of non-boundary vertices:
+ *
+ *  - edge coordinates (coordinates of edge-continuity-points)
+ *  - flux face areas
+ *
+ *  Assumes a local storage following the DUNE reference element index, which is performed by the
+ *  function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap).
+ *
+ * \param interactionVolume An interaction volume object
+ * \param vertex The vertex (level dim entity) for which the interaction volume is stored
+ * \param sameLevel Level indicator: true if all elements of an interaction volume are of the same level
+ */
 template<class TypeTag>
 void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex, bool sameLevel)
 {
@@ -1343,6 +1448,23 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
     interactionVolume.setFaceArea(faceArea, 11);
 }
 
+/*! \brief Stores additional information for interaction volumes of boundary vertices.
+ *
+ * Stores additional information for interaction volumes of boundary vertices:
+ *
+ *  - boundary conditions
+ *  - information for flux weighting along boundary faces (see  Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/, or
+ *  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+ * approximation L-method in 3D: numerical convergence and application to two-phase
+ * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+ * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.)
+ *
+ * Assumes a local storage following the DUNE reference element index, which is performed by the
+ * function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap).
+ *
+ * \param interactionVolume An interaction volume object
+ * \param vertex The vertex (level dim entity) for which the interaction volume is stored
+ */
 template<class TypeTag>
 void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex)
 {
@@ -1905,12 +2027,13 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
 }
 
 
-// only for 3-D general quadrilateral
+//! \brief Stores interaction volumes for each grid vertex
 template<class TypeTag>
 void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
 {
     std::vector < std::vector<int> > elemVertMap(problem_.gridView().size(dim), std::vector<int>(8, -1));
 
+    //Add elements to the interaction volumes and store element-vertex map
     ElementIterator eEndIt = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
@@ -1922,17 +2045,15 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
         if (interactionVolumes_[i].getElementNumber() == 0)
             interactionVolumes_[i].printInteractionVolumeInfo();
 
-    // run through all elements
-
+    // Store information related to DUNE intersections for all interaction volumes
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
-        // get common geometry information for the following computation
-
         ElementPointer ePtr = *eIt;
         storeIntersectionInfo(*ePtr, elemVertMap);
     }
 
-    // run through all vertices
+    // Complete storage of the interaction volumes using the previously stored information
+    // about the orientation and relationship of the DUNE elements in the interaction volumes (see doc/docextra/3dmpfa)
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
@@ -1953,6 +2074,11 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
             DUNE_THROW(Dune::NotImplemented,"Interaction volume is no boundary volume but consists of less than 8 elements");
         }
 
+        // Store information about the MPFA flux face areas for correct flux weighting of
+        // fluxes though faces which intersect the domain boundary (see  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+        // approximation L-method in 3D: numerical convergence and application to two-phase
+        // flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+        // editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.)
         if (!interactionVolume.isBoundaryInteractionVolume())
         {
             ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);

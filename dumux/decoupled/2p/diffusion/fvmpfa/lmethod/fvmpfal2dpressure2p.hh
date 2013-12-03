@@ -41,12 +41,26 @@ namespace Dumux
  *  At Dirichlet boundaries a two-point flux approximation is used.
  * \f[ \Phi = g \;  \text{on} \; \Gamma_1, \quad \text{and} \quad
  * -\text{div}\, \boldsymbol v_t \cdot \mathbf{n} = J \;  \text{on}  \; \Gamma_2. \f]
+ *
  *  Here, \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
  * \f$ \lambda_t \f$ the total mobility, \f$ f_\alpha \f$ the phase fractional flow function.
  *
- * More details on the equations can be found...
+ * More details on the equations can be found in
  *
- *  Remark: only for 3-d hexahedral grids
+ * Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/
+ *
+ * M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+ * approximation L-method in 3D: numerical convergence and application to two-phase
+ * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+ * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ *
+ * M. Wolff, B. Flemisch, R. Helmig, I. Aavatsmark.
+ * Treatment of tensorial relative permeabilities with multipoint flux approximation.
+ * International Journal of Numerical Analysis and Modeling (9), pp. 725-744, 2012.
+ *
+ *  Remark1: only for 2-D quadrilateral grid
+ *
+ *  Remark2: implemented for UGGrid, ALUGrid, or SGrid/YaspGrid
  *
  *\tparam TypeTag The problem Type Tag
  */
@@ -464,12 +478,15 @@ private:
      * this errors due to wrong time-stepping without losing mass conservation. The error term looks as follows:
      * \f[
      *  q_{error} = \begin{cases}
-     *          S < 0 & a_{error} \frac{S}{\Delta t} V \\
-     *          S > 1 & a_{error} \frac{(S - 1)}{\Delta t} V \\
+     *          S < 0 &  \frac{S}{\Delta t} V \\
+     *          S > 1 &  \frac{(S - 1)}{\Delta t} V \\
      *          0 \le S \le 1 & 0
      *      \end{cases}
      *  \f]
-     *  where \f$a_{error}\f$ is a weighting factor (default: \f$a_{error} = 0.5\f$)
+     *
+     *  \param cellData The IMPES <tt>CellData</tt> object of the current cell.
+     *
+     *  \return The scalar value of the error term.
     */
     Scalar evaluateErrorTerm_(CellData& cellData)
     {

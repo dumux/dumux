@@ -24,13 +24,30 @@
 
 /**
  * @file
- * @brief Provides methods for transmissibility calculation
+ * @brief Provides methods for transmissibility calculation in 3-d
  */
 
 namespace Dumux
 {
 //! \ingroup FVPressure2p
-/*! Provides methods for transmissibility calculation.
+/*! \brief Provides methods for transmissibility calculation in 3-d.
+ *
+ *  The transmissibilities are calculated using the MPFA L-method.
+ *
+ * [1] Aavatsmark et al. A new finite-volume approach to efficient discretization on challenging grids. SPE Journal 15, 2010.
+ *
+ * [2] M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+ *     approximation L-method in 3D: numerical convergence and application to two-phase
+ *     flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+ *     editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ *
+ *  Various parameters can be defined via an input parameter file or the property system:
+ *
+ * MPFAEnableSimpleLStencil - enables the two centered flux stencils
+ * MPFAEnableComplexLStencil - enables the two non-centered flux stencils
+ * MPFAEnableTPFA - enables the use of TPFA if neighboring cells are of the same grid level
+ * MPFATransmissibilityCriterion - 0: Criterion of [1] (default), 1: Criterion of [2]
+ *
  */
 template<class TypeTag>
 class FvMpfaL3dTransmissibilityCalculator
@@ -61,12 +78,8 @@ class FvMpfaL3dTransmissibilityCalculator
 
 
 public:
-    typedef Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TransmissibilityType;
+    typedef Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TransmissibilityType;//!< Type of the transmissibility matrix
 
-    enum
-        {
-            hangingNodeCell = 99
-        };
     int chooseTransmissibility(TransmissibilityType& transmissibilityOne, TransmissibilityType& transmissibilityTwo, int lTypeOne, int lTypeTwo);
 
     int transmissibility(Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
@@ -109,7 +122,10 @@ public:
                                  int idx1, int idx2, int idx3, int idx6);
 
 
-
+    //! Constructs a FvMpfaL3dTransmissibilityCalculator object
+    /**
+     * \param problem A problem class object
+     */
     FvMpfaL3dTransmissibilityCalculator(Problem& problem) :
         problem_(problem)
     {
@@ -155,6 +171,18 @@ private:
     int transCriterion_;
 };
 
+/*! \brief Compares two transmissibility matrices according to a L-selection criterion
+ *
+ * Compares two transmissibility matrices according to the L-selection criterion which is chosen via the parameter/property
+ * MPFATransmissibilityCriterion (Criterion of [1], 1: Criterion of [2]) and returns the number of the preferable L-shape (1-4).
+ *
+ * \param transmissibilityOne A first transmissibility matrix
+ * \param transmissibilityTwo A second transmissibility matrix
+ * \param lTypeOne Type of the L-shape of the first matrix (1-4)
+ * \param lTypeTwo Type of the L-shape of the second matrix (1-4)
+ *
+ * \return The type of the preferable L-shape (1-4)
+ */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::chooseTransmissibility(TransmissibilityType& transmissibilityOne, TransmissibilityType& transmissibilityTwo, int lTypeOne, int lTypeTwo)
 {
@@ -218,6 +246,20 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::chooseTransmissibility(Transmi
 
 }
 
+/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2
+ *
+ *  \param transmissibility Reference to the local transmissibility matrix
+ *  \param interactionVolume An interaction volume object
+ *  \param lambda A vector containing the mobilities of the interaction volume cells in the order of the local interaction volume index
+ *  \param idx1 Local index of cell 1 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx2 Local index of cell 2 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx3 Local index of cell 3 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx4 Local index of cell 4 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx5 Local index of cell 5 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx6 Local index of cell 6 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *
+ *  \return The type of the chosen L-shape (1-4)
+ */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
                                                                    TransmissibilityType& transmissibility, InteractionVolume& interactionVolume,
@@ -300,6 +342,21 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
     }
 }
 
+/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2
+ *
+ *  \param transmissibility Reference to the local transmissibility matrix
+ *  \param interactionVolume An interaction volume object
+ *  \param lambda A vector containing the mobilities of the interaction volume cells in the order of the local interaction volume index
+ *  \param idx1 Local index of cell 1 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx2 Local index of cell 2 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx3 Local index of cell 3 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx4 Local index of cell 4 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx5 Local index of cell 5 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx6 Local index of cell 6 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param useCases Vector of enabling/disabling single L-shape types (Can be necessary for certain configurations in the case of hanging nodes)
+ *
+ *  \return The type of the chosen L-shape (1-4)
+ */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
                                                                    TransmissibilityType& transmissibility, InteractionVolume& interactionVolume,
@@ -454,6 +511,15 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
     }
 }
 
+/*! \brief Calculates a TPFA transmissibility matrix for the flux face between the cells with the local index idx1 and idx2
+ *
+ *  \param transmissibility Reference to the local transmissibility matrix
+ *  \param interactionVolume An interaction volume object
+ *  \param lambda A vector containing the mobilities of the interaction volume cells in the order of the local interaction volume index
+ *  \param idx1 Local index of cell 1 for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx2 Local index of cell 2 for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *
+ */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityTPFA(
                                                                        Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
@@ -542,6 +608,27 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityTPFA(
     return 1;
 }
 
+/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 1
+ *
+ * For more details on L-shape type 1 see:
+ *
+ *  Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/, or
+ *
+ *  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+ * approximation L-method in 3D: numerical convergence and application to two-phase
+ * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+ * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ *
+ *  \param transmissibility Reference to the local transmissibility matrix
+ *  \param interactionVolume An interaction volume object
+ *  \param lambda A vector containing the mobilities of the interaction volume cells in the order of the local interaction volume index
+ *  \param idx1 Local index of cell 1 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx2 Local index of cell 2 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx3 Local index of cell 3 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa
+ *  \param idx5 Local index of cell 5 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *
+ *  \return 1 (L-shape 1)
+ */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
                                                                           Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
@@ -906,6 +993,27 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
     return 1;
 }
 
+/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 2
+ *
+ * For more details on L-shape type 2 see:
+ *
+ *  Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/, or
+ *
+ *  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+ * approximation L-method in 3D: numerical convergence and application to two-phase
+ * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+ * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ *
+ *  \param transmissibility Reference to the local transmissibility matrix
+ *  \param interactionVolume An interaction volume object
+ *  \param lambda A vector containing the mobilities of the interaction volume cells in the order of the local interaction volume index
+ *  \param idx1 Local index of cell 1 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx2 Local index of cell 2 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx4 Local index of cell 4 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa
+ *  \param idx6 Local index of cell 6 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *
+ *  \return 2 (L-shape 2)
+ */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
                                                                           Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
@@ -1283,6 +1391,27 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
     return 2;
 }
 
+/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 3
+ *
+ * For more details on L-shape type 3 see:
+ *
+ *  Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/, or
+ *
+ *  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+ * approximation L-method in 3D: numerical convergence and application to two-phase
+ * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+ * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ *
+ *  \param transmissibility Reference to the local transmissibility matrix
+ *  \param interactionVolume An interaction volume object
+ *  \param lambda A vector containing the mobilities of the interaction volume cells in the order of the local interaction volume index
+ *  \param idx1 Local index of cell 1 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx2 Local index of cell 2 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx4 Local index of cell 4 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa
+ *  \param idx5 Local index of cell 5 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *
+ *  \return 3 (L-shape 3)
+ */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseThree(
                                                                             Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
@@ -1661,6 +1790,27 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseThree(
     return 3;
 }
 
+/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 4
+ *
+ * For more details on L-shape type 4 see:
+ *
+ *  Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/, or
+ *
+ *  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+ * approximation L-method in 3D: numerical convergence and application to two-phase
+ * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+ * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ *
+ *  \param transmissibility Reference to the local transmissibility matrix
+ *  \param interactionVolume An interaction volume object
+ *  \param lambda A vector containing the mobilities of the interaction volume cells in the order of the local interaction volume index
+ *  \param idx1 Local index of cell 1 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx2 Local index of cell 2 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *  \param idx3 Local index of cell 3 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa
+ *  \param idx6 Local index of cell 6 of 6 cells for the calculation of the flux between cell idx1 and idx2  (see doc/docextra/3dmpfa)
+ *
+ *  \return 4 (L-shape 4)
+ */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseFour(
                                                                            Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,

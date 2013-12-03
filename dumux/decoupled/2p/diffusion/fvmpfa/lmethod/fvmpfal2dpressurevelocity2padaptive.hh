@@ -30,22 +30,14 @@ namespace Dumux
 {
 
 //! \ingroup FVPressure2p
-/*! \brief Determines the velocity from a grid adaptive finite volume solution of the  pressure equation of a sequential model (IMPES).
- * Calculates phase velocities or total velocity from a known pressure field applying a grid adaptive finite volume discretization and a MPFA L-method.
- * At Dirichlet boundaries a two-point flux approximation is used.
- * The pressure has to be given as piecewise constant cell values.
- * The velocities are calculated as
+/*! \brief Class for the calculation of velocities from the  pressure solution of an IMPES scheme using a grid adaptive MPFA L-method.
  *
- *\f[ \boldsymbol v_\alpha = - \lambda_\alpha \boldsymbol K \textbf{grad}\, \Phi_\alpha, \f]
- * and,
- * \f[ \boldsymbol v_t = \boldsymbol v_w + \boldsymbol v_n,\f]
- *
- * where \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
- * and \f$ \lambda_\alpha \f$ a phase mobility.
+ * Can be used for calculating the complete velocity field before the solution of the transport equation (more efficient),
+ * or for face-wise velocity calculation directly in the transport solution (less efficient).
  *
  * Remark1: only for 2-D quadrilateral grids!
  *
- * Remark2: can use UGGrid, ALUGrid or SGrid/YaspGrid!
+ * Remark2: can use UGGrid, ALUGrid
  *
  * Remark3: Allowed difference in grid levels of two neighboring cells: 1
  *
@@ -125,7 +117,7 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfa
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
-    //! Constructs a FVMPFAO2pFABoundVelocity2p object
+    //! Constructs a FvMpfaL2dPressureVelocity2pAdaptive object
     /*!
      * \param problem A problem class object
      */
@@ -147,6 +139,7 @@ public:
     void calculateVelocity(const Intersection&, CellData&);
     void calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData);
 
+    //! Function for updating the velocity field if iterations are necessary in the transport solution
     void updateVelocity()
     {
         this->updateMaterialLaws();
@@ -234,9 +227,9 @@ private:
 };
 // end of template
 
-/*! \brief Calculates the velocities at a cell-cell interfaces.
+/*! \brief Calculates the velocities at a cell-cell interfaces for the entire simulation grid.
  *
- * Calculates the velocities at a cell-cell interfaces from a given pressure field.
+ * Calculates the velocities at a cell-cell interfaces from a given pressure field for the entire simulation grid.
  *
  */
 template<class TypeTag>
@@ -334,6 +327,13 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
     return;
 } // end method calcTotalVelocity
 
+/*! \brief Calculates the velocity at a cell-cell interface.
+ *
+ * Calculates the velocity at a cell-cell interface from a given pressure field.
+ *
+ * \param intersection Intersection of two grid cells
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
@@ -502,6 +502,13 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
     }
 }
 
+/*! \brief Calculates the velocity at a boundary.
+ *
+ * Calculates the velocity at a boundary from a given pressure field.
+ *
+ * \param intersection Boundary intersection
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
 {

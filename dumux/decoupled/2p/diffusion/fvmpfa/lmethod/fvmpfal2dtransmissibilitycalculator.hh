@@ -25,13 +25,19 @@
 
 /**
  * @file
- * @brief Provides methods for transmissibility calculation
+ * @brief Provides methods for transmissibility calculation 2-d
  */
 
 namespace Dumux
 {
 //! \ingroup FVPressure2p
-/*! Provides methods for transmissibility calculation.
+/*! \brief Provides methods for transmissibility calculation in 2-d.
+ *
+ *  The transmissibilities are calculated using the MPFA L-method.
+ *
+ *  Aavatsmark et al. A compact multipoint flux calculation method with improved robustness.
+ *  Numerical Methods for Partial Differential Equations 24. 2008
+ *
  */
 template<class TypeTag>
 class FvMpfaL2dTransmissibilityCalculator
@@ -56,13 +62,14 @@ class FvMpfaL2dTransmissibilityCalculator
     typedef typename Dumux::FVMPFALInteractionVolume<TypeTag> InteractionVolume;
 
 public:
-    typedef Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TransmissibilityType;
+    typedef Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TransmissibilityType;//!< Type of the transmissibility matrix
 
+    //! return values for the transmissibility functions
     enum
     {
-        leftTriangle = -1,
-        noTransmissibility = 0,
-        rightTriangle = 1
+        leftTriangle = -1,//!< Left L-shape
+        noTransmissibility = 0,//!< No transmissibility calculated
+        rightTriangle = 1 //!< Right L-shape
     };
 
     // Calculates tranmissibility matrix
@@ -84,7 +91,10 @@ public:
     std::vector<DimVector >& lambda,
     int idx1, int idx2, int idx3);
 
-
+    //! Constructs a FvMpfaL2dTransmissibilityCalculator object
+    /**
+     * \param problem A problem class object
+     */
     FvMpfaL2dTransmissibilityCalculator(Problem& problem) :
         problem_(problem), R_(0)
     {

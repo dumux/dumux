@@ -23,11 +23,23 @@
 
 /**
  * @file
- * @brief  Base class for defining an instance of a numerical diffusion model
+ * @brief  3d Velocity Field from a finite volume solution of a pressure equation using a grid adaptive MPFA L-method.
  */
 
 namespace Dumux
 {
+//! \ingroup FVPressure2p
+/*! \brief Class for the calculation of 3d velocities from the  pressure solution of an IMPES scheme using a grid adaptive MPFA L-method.
+ *
+ * Can be used for calculating the complete velocity field before the solution of the transport equation (more efficient),
+ * or for face-wise velocity calculation directly in the transport solution (less efficient).
+ *
+ * Remark1: only for 3-D Hexahedrons of quadrilaterals!
+ *
+ * Remark2: Allowed difference in grid levels of two neighboring cells: 1
+ *
+ * \tparam TypeTag The problem Type Tag
+ */
 template<class TypeTag> class FvMpfaL3dPressureVelocity2pAdaptive: public FvMpfaL3dPressure2pAdaptive<TypeTag>
 {
     typedef FvMpfaL3dPressure2pAdaptive<TypeTag> ParentType;
@@ -87,6 +99,10 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2pAdaptive: public FvMpfa
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
+    //! Constructs a FvMpfaL3dPressureVelocity2pAdaptive object
+    /*!
+     * \param problem A problem class object
+     */
     FvMpfaL3dPressureVelocity2pAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem), velocity_(problem)
 {
@@ -100,13 +116,11 @@ public:
 
     void calculateVelocity();
 
-public:
-
     // Calculates the velocity at a cell-cell interface.
     void calculateVelocity(const Intersection&, CellData&);
     void calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData);
 
-
+    //! Function for updating the velocity field if iterations are necessary in the transport solution
     void updateVelocity()
     {
         this->updateMaterialLaws();
@@ -117,6 +131,10 @@ public:
             calculateVelocity();
     }
 
+    /*! \brief Initializes pressure and velocity
+     *
+     * \copydetails ParentType::initialize()
+     */
     void initialize(bool solveTwice = true)
     {
         ElementIterator element = problem_.gridView().template begin<0>();
@@ -140,6 +158,11 @@ public:
         return;
     }
 
+    /*! \brief Pressure and velocity update
+     *
+     * \copydetails ParentType::update()
+     *
+     */
     void update()
     {
         ParentType::update();
@@ -157,8 +180,16 @@ public:
         return calcVelocityInTransport_;
     }
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds velocity output to the output file
+     *
+     * Adds the phase velocities or a total velocity (depending on the formulation) to the output.
+     * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
+     * if it is larger than zero also secondary variables are written.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -179,7 +210,11 @@ private:
 };
 // end of template
 
-// only for 3-D general hexahedron
+/*! \brief Calculates the velocities at a cell-cell interfaces for the entire simulation grid.
+ *
+ * Calculates the velocities at a cell-cell interfaces from a given pressure field for the entire simulation grid.
+ *
+ */
 template<class TypeTag>
 void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
 {
@@ -265,6 +300,13 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
     return;
 }
 
+/*! \brief Calculates the velocity at a cell-cell interface.
+ *
+ * Calculates the velocity at a cell-cell interface from a given pressure field.
+ *
+ * \param intersection Intersection of two grid cells
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
@@ -431,6 +473,13 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
     }
 }
 
+/*! \brief Calculates the velocity at a boundary.
+ *
+ * Calculates the velocity at a boundary from a given pressure field.
+ *
+ * \param intersection Boundary intersection
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
 {

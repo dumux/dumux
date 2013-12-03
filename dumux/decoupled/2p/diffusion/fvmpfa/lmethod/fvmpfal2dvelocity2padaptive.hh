@@ -24,11 +24,29 @@
 
 /**
  * @file
- * @brief  Velocity calculation using a 2-d MPFA L-method
+ * @brief  Velocity calculation on adaptive grids using a 2-d MPFA L-method
  */
 
 namespace Dumux
 {
+//! \ingroup FVPressure2p
+/*! \brief Class for calculating 2-d velocities from cell-wise constant pressure values.
+ * Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization and a MPFA L-method.
+ * At Dirichlet boundaries a two-point flux approximation is used.
+ * The pressure has to be given as piecewise constant cell values.
+ * The velocities are calculated as
+ *
+ *\f[ \boldsymbol v_\alpha = - \lambda_\alpha \boldsymbol K \textbf{grad}\, \Phi_\alpha, \f]
+ * and,
+ * \f[ \boldsymbol v_t = \boldsymbol v_w + \boldsymbol v_n,\f]
+ *
+ * where \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
+ * and \f$ \lambda_\alpha \f$ a phase mobility.
+ *
+ * Remark1: only for quadrilaterals!
+ *
+ * \tparam TypeTag The problem Type Tag
+ */
 template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelocity2p<TypeTag>
 {
     typedef FvMpfaL2dVelocity2p<TypeTag> ParentType;
@@ -111,10 +129,15 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
+    //! Constructs a FvMpfaL2dVelocity2pAdaptive object
+    /*!
+     * \param problem A problem class object
+     */
     FvMpfaL2dVelocity2pAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem)
     {}
 
+    //calculate velocities for flux faces of a hanging node interaction volume
     void calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1, CellData& cellData2, CellData& cellData4, InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces);
 
 private:
@@ -122,6 +145,16 @@ private:
 };
 // end of template
 
+/*! \brief Calculates the velocities at the flux faces of an interation volume around a hanging node vertex.
+ *
+ *  Calculates the velocities at the flux faces of an interation volume around a hanging node vertex and adds them to the face velocity vectors in the <tt>CellData</tt> objects.
+ *
+ * \param interactionVolume An <tt>InteractionVolume</tt> object including the information for calculating the MPFA transmissibilities
+ * \param cellData1  <tt>CellData</tt> object of an IMPES model for sub-volume 1
+ * \param cellData2  <tt>CellData</tt> object of an IMPES model for sub-volume 2
+ * \param cellData4  <tt>CellData</tt> object of an IMPES model for sub-volume 4
+ * \param innerBoundaryVolumeFaces container including information about faces intersecting a boundary
+ */
 template<class TypeTag>
 void FvMpfaL2dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1, CellData& cellData2, CellData& cellData4, InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces)
 {

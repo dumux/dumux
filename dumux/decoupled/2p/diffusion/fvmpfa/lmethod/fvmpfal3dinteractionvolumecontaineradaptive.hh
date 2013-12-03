@@ -27,14 +27,21 @@
 
 /**
  * @file
- * @brief  Interactionvolume container for 3-d MPFA L-method
+ * @brief  Interactionvolume container for 3-d MPFA L-method on an h-adaptive grid
  */
 
 namespace Dumux
 {
 
 //! \ingroup FVPressure2p
-/*! Interactionvolume container for 3-d MPFA L-method
+/*! \brief Interactionvolume container for 3-d MPFA L-method on an h-adaptive grid
+ *
+ * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.
+ * Each <tt>InteractionVolume</tt> object stores the information which is necessary to calculate MPFA transmissibility matrices:
+ *
+ * - relationship and orientation of the elements around a vertex (see doc/docextra/3dmpfa)
+ * - geometric information, such as element/face/edge positions, normals, ...
+ *
  */
 template<class TypeTag>
 class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVolumeContainer<TypeTag>
@@ -83,7 +90,7 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
     typedef IndexTranslatorAdaptive IndexTranslator;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
+    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;//!< Type for storing an MPFA-interaction-volume. (Usually of type Dumux::FvMpfaL3dInteractionVolume or Dumux::FvMpfaL3dInteractionVolumeAdaptive)
 
 private:
 
@@ -94,11 +101,22 @@ private:
 
 public:
 
+    /*! \brief Returns the set of vertices on an element face
+     *
+     * The DUNE reference elements does not allow to access hanging nodes from a given element face.
+     * However, if a flux through a entire element face has to be calculated, e.g. if single fluxes
+     * have to be updated in an implicit treatment of the transport equation, it is necessary to get
+     * the complete set of vertices on a face: 4 corners + all hanging nodes.
+     */
     std::set<int>& faceVerticeIndices(int globalElemIdx, int faceIdx)
     {
         return faceVertices_[globalElemIdx][faceIdx];
     }
 
+    //! Constructs a FvMpfaL3dInteractionVolumeContainerAdaptive object
+    /**
+     * \param problem A problem class object
+     */
     FvMpfaL3dInteractionVolumeContainerAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem)
     {
@@ -113,11 +131,32 @@ private:
     FaceVerticesVector faceVertices_;
 };
 
+/*! \brief Stores additional information which can be constructed for interaction volumes of non-boundary vertices.
+ *
+ * Stores additional information which can be constructed for interaction volumes of non-boundary vertices:
+ *
+ *  - edge coordinates (coordinates of edge-continuity-points)
+ *  - flux face areas
+ *
+ *  Assumes a local storage following the DUNE reference element index, which is performed by the
+ *  function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap).
+ *
+ *  In the case of an adaptive grids with hanging nodes it is important to notice, that the smaller cell of two intersecting cells of different grid level determines the geometric information
+ *    of the flux face (size, position of the center, etc.). This has to be stored correctly for both sides (elements) of
+ *    an intersection.
+ *
+ * \param interactionVolume An interaction volume object
+ * \param vertex The vertex (level dim entity) for which the interaction volume is stored
+ */
 template<class TypeTag>
 void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex)
 {
+    // if cells of different grid level appear, the geometric information is constructed going from the
+    // coarsest level to the finest level. This ensures that coarser information ins always overwritten by
+    // finer information.
     if (!interactionVolume.sameLevel())
     {
+        // sort the local element indices according to the grid level
         std::vector < std::vector<int> > levelIdx(8, std::vector<int>(2));
         for (int i = 0; i < 8; i++)
         {
@@ -127,6 +166,10 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteraction
 
         std::sort(levelIdx.begin(), levelIdx.end(), sort_compare);
 
+        // Generate and store the geometric information going from the coarsest to the finest level.
+        // For the calculation we take advantage from the fact that the ordering inside the interaction volume
+        // with respect to the DUNE reference element is known due to the storage process of the elements in
+        // Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap)
         for (int i = 0; i < 8; i++)
         {
             int idx = levelIdx[i][0];
@@ -236,6 +279,25 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteraction
     }
 }
 
+/*! \brief Stores additional information which can be constructed for interaction volumes around hanging nodes.
+ *
+ *  Stores additional information which can be constructed for interaction volumes around hanging nodes.
+ *
+ *  - missing cells: As hanging nodes cannot be accessed from a cell face using the DUNE reference element,
+ *                   the attached coarser cells do not appear in the interaction volume object after execution
+ *                   of the function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap).
+ *                   We take advantage of this fact because it allows us to identify the type of hanging-node interaction volume.
+ *                   If, for example, only two cells are stored, we know that the interaction volume is of type 5 according to
+ *                   Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/
+ *                   As first step, the orientation of the stored elements in the local interaction volume indices
+ *                   is rotated such that cells 1 and 2 according to the local index (see doc/docextra/3dmpfa) are always of the smallest existing level. Thus, the relationship between
+ *                   the grid elements in a hanging-node-interaction-volume is always known if the type of interaction volume is known
+ *                   (1-7, see Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/). As a second step, the missing cells
+ *                   are added.
+ *  - edge coordinates (coordinates of edge-continuity-points)
+ *  - flux face areas
+ *
+ */
 template<class TypeTag>
 void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex)
 {
@@ -243,6 +305,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
     interactionVolume.setCenterPosition(centerPos);
 
+    // sort the local element indices according to the grid level
     std::vector < std::vector<int> > levelIdx(8, std::vector<int>(2));
     for (int i = 0; i < 8; i++)
     {
@@ -255,7 +318,10 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
     std::sort(levelIdx.begin(), levelIdx.end(), sort_compare);
 
-
+    // Generate and store the geometric information going from the coarsest to the finest level.
+     // For the calculation we take advantage from the fact that the ordering inside the interaction volume
+     // with respect to the DUNE reference element is known due to the storage process of the elements in
+     // Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap)
     for (int i = 0; i < 8; i++)
     {
         if (levelIdx[i][1] < 0)
@@ -362,8 +428,12 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
         }
     }
 
+    // Choose the type of the hanging-node-interaction-volume depending on the number of stored fine
+    // elements (see dissertation M. Wolff, http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/)
+    // and add missing elements and geometric information
     switch (interactionVolume.getElementNumber())
     {
+    // hanging-node interaction volume of type 5 or 7
     case 2:
         {
             InteractionVolume hangingNodeVolume;
@@ -567,6 +637,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
             break;
         }
+        //hanging-node interaction volume of type 1, 3 or 4
     case 4:
         {
             InteractionVolume hangingNodeVolume;
@@ -1325,6 +1396,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
             break;
         }
+        //hanging-node interaction volume of type 2 or 6
     case 6:
         {
             InteractionVolume hangingNodeVolume;
@@ -1528,12 +1600,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
     }
 }
 
-// only for 3-D general quadrilateral
+//! \brief Stores interaction volumes for each grid vertex
 template<class TypeTag>
 void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolumeInfo()
 {
     std::vector < std::vector<int> > elemVertMap(problem_.gridView().size(dim), std::vector<int>(8, -1));
 
+    //Add elements to the interaction volumes and store element-vertex map
     ElementIterator eEndIt = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
@@ -1545,12 +1618,9 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
         if (this->interactionVolumes_[i].getElementNumber() == 0)
             this->interactionVolumes_[i].printInteractionVolumeInfo();
 
-    // run through all elements
-
+    // Store information related to DUNE intersections for all interaction volumes
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
-        // get common geometry information for the following computation
-
         ElementPointer ePtr = *eIt;
         this->storeIntersectionInfo(*ePtr, elemVertMap);
     }
@@ -1558,7 +1628,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
     faceVertices_.clear();
     faceVertices_.resize(problem_.gridView().size(0));
 
-    // run through all vertices
+    // Complete storage of the interaction volumes using the previously stored information
+    // about the orientation and relationship of the DUNE elements in the interaction volumes (see doc/docextra/3dmpfa)
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {

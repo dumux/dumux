@@ -27,29 +27,43 @@
 
 /**
  * @file
- * @brief  Finite Volume-MPFAL implementation of a two-phase pressure equation
- * @brief  Remark1: only for 3-D hexahedron grid.
- * @brief  Remark3: number of grid cells in each direction > 1
+ * @brief  3-d finite Volume-MPFAL implementation of a two-phase pressure equation
+ * @brief  Remark1: only for 3-D hexahedrons of quadrilaterals.
  */
 
 namespace Dumux
 {
 //! \ingroup FVPressure2p
-/*! Finite Volume-MPFAL-Implementation of the equation
- * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$, or
+/*! \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model
+ *
+ * Finite Volume-MPFAL-Implementation of the equation
+ * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$,
+ * or
  * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
- * \f$\Phi = g\f$ on \f$\Gamma_1\f$, and
- * \f$-\text{div}\, \mathbf{v}_t \cdot \mathbf{n} = J\f$
- * on \f$\Gamma_2\f$. Here,
- * \f$Phi_\alpha \f$ denotes the potential of phase \f$\alpha\f$, \f$K\f$ the intrinsic permeability,
- * \f$\lambda_t\f$ the total mobility, \f$this->f_\alpha\f$ the phase fractional flow function.
+ *
+ * \f$ \Phi = g \f$ on \f$ \Gamma_1 \f$, and
+ * \f$ - \text{div} \, \mathbf{v}_t \cdot \mathbf{n} = J \f$
+ * on \f$ \Gamma_2 \f$.
+ *
+ * Here, \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \mathbf{K} \f$ the intrinsic permeability,
+ * \f$ \lambda_t \f$ the total mobility, \f$ f_\alpha \f$ the phase fractional flow function.
  *
  * More details on the equations can be found in
+ *
+ * Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/
+ *
  * M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
  * approximation L-method in 3D: numerical convergence and application to two-phase
  * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
  * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
  *
+ * M. Wolff, B. Flemisch, R. Helmig, I. Aavatsmark.
+ * Treatment of tensorial relative permeabilities with multipoint flux approximation.
+ * International Journal of Numerical Analysis and Modeling (9), pp. 725-744, 2012.
+ *
+ * Remark1: only for 3-D hexahedrons of quadrilaterals.
+ *
+ * \tparam TypeTag The problem Type Tag
  */
 template<class TypeTag>
 class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
@@ -142,8 +156,8 @@ class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
     typedef  Dumux::FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 public:
-    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
+    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;//!< Type including methods for calculation of MPFA transmissibilities
+    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;//!< Type for storing interaction volume information
 protected:
     //initializes the matrix to store the system of equations
     friend class FVPressure<TypeTag>;
@@ -161,6 +175,10 @@ public:
     //constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
+    /*! \brief Initializes the pressure model
+     *
+     * \copydetails ParentType::initialize()
+     */
     void initialize(bool solveTwice = true)
     {
         ElementIterator element = problem_.gridView().template begin<0>();
@@ -188,6 +206,7 @@ public:
         return;
     }
 
+    //! \brief Globally stores the pressure solution
     void storePressureSolution()
     {
         // iterate through leaf grid an evaluate c0 at cell center
@@ -198,6 +217,10 @@ public:
         }
     }
 
+    /*! \brief Stores the pressure solution of a cell
+     *
+     * \param element Dune grid element
+     */
     void storePressureSolution(const Element& element)
     {
         int globalIdx = problem_.variables().index(element);
@@ -245,7 +268,11 @@ public:
         cellData.fluxData().resetVelocity();
     }
 
-    //! updates the pressure field (analog to update function in Dumux::IMPET)
+    /*! \brief Pressure update
+     *
+     * \copydetails ParentType::update()
+     *
+     */
     void update()
     {
         int size = problem_.gridView().size(0);
@@ -295,6 +322,22 @@ public:
         return;
     }
 
+    /* \brief Volume correction term to correct for unphysical saturation overshoots/undershoots.
+     *
+     * These can occur if the estimated time step for the explicit transport was too large. Correction by an artificial source term allows to correct
+     * this errors due to wrong time-stepping without losing mass conservation. The error term looks as follows:
+     * \f[
+     *  q_{error} = \begin{cases}
+     *          S < 0 & \frac{S}{\Delta t} V \\
+     *          S > 1 & \frac{(S - 1)}{\Delta t} V \\
+     *          0 \le S \le 1 & 0
+     *      \end{cases}
+     *  \f]
+     *
+     *  \param cellData The IMPES <tt>CellData</tt> object of the current cell.
+     *
+     *  \return The scalar value of the error term.
+    */
     Scalar evaluateErrorTerm(CellData& cellData)
     {
         //error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
@@ -404,16 +447,25 @@ public:
         }
     }
 
+    //! Returns the global container of the stored interaction volumes
     InteractionVolumeContainer& interactionVolumes()
     {
         return interactionVolumes_;
     }
 
+    //! Returns the transmissibility calculator
+    /*!
+     *  Object including methods for the MPFA transmissibility calculation
+     */
     TransmissibilityCalculator& transmissibilityCalculator()
     {
         return transmissibilityCalculator_;
     }
 
+    //! Constructs a FvMpfaL3dPressure2p object
+    /**
+     * \param problem A problem class object
+     */
     FvMpfaL3dPressure2p(Problem& problem) :
         ParentType(problem), problem_(problem),
         interactionVolumes_(problem), transmissibilityCalculator_(problem),
@@ -453,8 +505,8 @@ private:
     Problem& problem_;
 
 protected:
-    InteractionVolumeContainer interactionVolumes_;
-    TransmissibilityCalculator transmissibilityCalculator_;
+    InteractionVolumeContainer interactionVolumes_;//!<Global container of the stored interaction volumes
+    TransmissibilityCalculator transmissibilityCalculator_;//!<The transmissibility calculator including methods for the MPFA transmissibility calculation
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
@@ -484,6 +536,7 @@ private:
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);//!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
 };
 
+//! Initializes the sparse matrix for the pressure solution
 template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::initializeMatrix()
 {
@@ -493,6 +546,7 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrix()
     this->A_.endindices();
 }
 
+//! Initializes the row size of the sparse matrix for the pressure solution
 template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
 {
@@ -532,6 +586,7 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
     return;
 }
 
+//! Initializes the indices of the sparse matrix for the pressure solution
 template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
 {
@@ -568,7 +623,7 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
     return;
 }
 
-// only for 3-D general hexahedron
+//! assembles the global matrix and rhs vector for the pressure solution
 template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::assemble()
 {
@@ -601,6 +656,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assemble()
     return;
 }
 
+//! assembles the matrix entries of one interaction volume into the global matrix
 template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVolume& interactionVolume)
 {

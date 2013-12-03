@@ -32,6 +32,24 @@
 
 namespace Dumux
 {
+//! \ingroup FVPressure2p
+/*! \brief Class for calculating velocities from cell-wise constant pressure values.
+ * Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization and a MPFA O-method.
+ * At Dirichlet boundaries a two-point flux approximation is used.
+ * The pressure has to be given as piecewise constant cell values.
+ * The velocities are calculated as
+ *
+ *\f[ \boldsymbol v_\alpha = - \lambda_\alpha \boldsymbol K \textbf{grad}\, \Phi_\alpha, \f]
+ * and,
+ * \f[ \boldsymbol v_t = \boldsymbol v_w + \boldsymbol v_n,\f]
+ *
+ * where \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
+ * and \f$ \lambda_\alpha \f$ a phase mobility.
+ *
+ * Remark1: only for 2-D quadrilateral grids!
+ *
+ * \tparam TypeTag The problem Type Tag
+ */
 template<class TypeTag> class FvMpfaO2dVelocity2P
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -112,6 +130,10 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
+    //! Constructs a FvMpfaO2dVelocity2P object
+    /*!
+     * \param problem A problem class object
+     */
     FvMpfaO2dVelocity2P(Problem& problem) :
         problem_(problem), gravity_(problem.gravity())
     {
@@ -123,9 +145,11 @@ public:
         vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
+    //calculate velocities for all flux faces of an interaction volume
     void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1, CellData& cellData2, CellData& cellData3, CellData& cellData4, InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces);
     void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx);
 
+    //!Initializes the velocity model
     void initialize()
     {
         ElementIterator element = problem_.gridView().template begin<0>();
@@ -143,8 +167,16 @@ public:
         return;
     }
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds velocity output to the output file
+     *
+     * Adds the phase velocities or a total velocity (depending on the formulation) to the output.
+     * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
+     * if it is larger than zero also secondary variables are written.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -230,6 +262,17 @@ private:
 };
 // end of template
 
+/*! \brief Calculates the velocities at the flux faces of an interation volume around a vertex which is not a boundary vertex.
+ *
+ *  Calculates the velocities at the flux faces of an interation volume around a vertex which is not a boundary vertex and adds them to the face velocity vectors in the <tt>CellData</tt> objects.
+ *
+ * \param interactionVolume An <tt>InteractionVolume</tt> object including the information for calculating the MPFA transmissibilities
+ * \param cellData1  <tt>CellData</tt> object of an IMPES model for sub-volume 1
+ * \param cellData2  <tt>CellData</tt> object of an IMPES model for sub-volume 2
+ * \param cellData3  <tt>CellData</tt> object of an IMPES model for sub-volume 3
+ * \param cellData4  <tt>CellData</tt> object of an IMPES model for sub-volume 4
+ * \param innerBoundaryVolumeFaces container including information about faces intersecting a boundary
+ */
 template<class TypeTag>
 void FvMpfaO2dVelocity2P<TypeTag>::calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1, CellData& cellData2, CellData& cellData3, CellData& cellData4, InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces)
 {
@@ -513,6 +556,14 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     cellData4.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(3, 1));
 }
 
+/*! \brief Calculates the velocity at a boundary flux faces.
+ *
+ *  Calculates the velocity at a boundary flux face and adds it to the face velocity vector in the <tt>CellData</tt> object.
+ *
+ * \param interactionVolume An <tt>InteractionVolume</tt> object including the information for calculating the MPFA transmissibilities
+ * \param cellData  <tt>CellData</tt> object of an IMPES model for the sub-volume including the boundary face
+ * \param elemIdx local sub-volume index
+ */
 template<class TypeTag>
 void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx)
 {

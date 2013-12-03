@@ -44,12 +44,23 @@ namespace Dumux
  *  Here, \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
  * \f$ \lambda_t \f$ the total mobility, \f$ f_\alpha \f$ the phase fractional flow function.
  *
- * More details on the equations can be found in H. Hoteit, A. Firoozabadi.
- * Numerical modeling of thwo-phase flow in heterogeneous permeable media with different capillarity pressures. Adv Water Res (31), 2008
+ * More details on the equations can be found in
+ *
+ * Wolff 2013: http://elib.uni-stuttgart.de/opus/volltexte/2013/8661/
+ *
+ * M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+ * approximation L-method in 3D: numerical convergence and application to two-phase
+ * flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
+ * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.
+ *
+ * M. Wolff, B. Flemisch, R. Helmig, I. Aavatsmark.
+ * Treatment of tensorial relative permeabilities with multipoint flux approximation.
+ * International Journal of Numerical Analysis and Modeling (9), pp. 725-744, 2012.
+ *
  *
  *  Remark1: only for 2-D quadrilateral grid
  *
- *  Remark2: implemented for UGGrid, ALUGrid, or SGrid/YaspGrid
+ *  Remark2: implemented for UGGrid, ALUGrid
  *
  *  Remark3: Allowed difference in grid levels of two neighboring cells: 1
  *
