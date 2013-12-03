@@ -134,7 +134,7 @@ private:
         	std::pair<Scalar, Scalar> entry;
         	entry.first = 1 - snr_;
 
-        	entry.second = vTot_  / porosity;
+        	entry.second = vTot_  / (porosity * (1 - swr_ - snr_));
 
         	frontParams_.push_back(entry);
         }
