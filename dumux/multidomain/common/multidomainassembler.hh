@@ -198,6 +198,13 @@ public:
 //    	printvector(std::cout, residual_, "residual", "row", 200, 1, 3);
     }
 
+    /*!
+     * \brief docme
+     */
+    void reassembleAll()
+    {
+    }
+
     /*
      * \brief docme
      *

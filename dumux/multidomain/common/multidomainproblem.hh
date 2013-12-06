@@ -76,8 +76,8 @@ private:
     typedef typename GET_PROP_TYPE(SubTypeTag1, Problem) SubProblem1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) SubProblem2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, GridView) GridView1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) GridView2;
+    typedef typename GET_PROP_TYPE(SubTypeTag1, GridView) SubDomainGridView1;
+    typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) SubDomainGridView2;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) HostGrid;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
@@ -97,26 +97,21 @@ public:
       * \param timeManager The TimeManager which is used by the simulation
       *
       */
-    MultiDomainProblem(HostGrid& hostGrid,
+    MultiDomainProblem(MDGrid &mdGrid,
             		   TimeManager &timeManager)
-        : timeManager_(timeManager),
-          newtonMethod_(asImp_()),
-          newtonCtl_(asImp_())
-    {
-        // subdivide grid in two subdomains
-        subID1_ = 0;
-        subID2_ = 1;
-
-        mdGrid_ = Dune::make_shared<MDGrid> (hostGrid);
-
-        sdGrid1_ = &(mdGrid_->subDomain(subID1_));
-        sdGrid2_ = &(mdGrid_->subDomain(subID2_));
-
-        subProblem1_ = Dune::make_shared<SubProblem1>(timeManager, sdGrid1_->leafView());
-        subProblem2_ = Dune::make_shared<SubProblem2>(timeManager, sdGrid2_->leafView());
-
-        mdVertexMapper_ = Dune::make_shared<VertexMapper>(mdGrid_->leafView());
-    };
+        : timeManager_(timeManager)
+		, newtonMethod_(asImp_())
+		, newtonCtl_(asImp_())
+		, mdGrid_(mdGrid)
+		, mdGridView_(mdGrid.leafView())
+		, mdVertexMapper_(mdGrid_.leafView())
+		, subID1_(0)
+		, subID2_(1)
+		, sdGrid1_(mdGrid.subDomain(subID1_))
+		, sdGrid2_(mdGrid.subDomain(subID2_))
+		, subProblem1_(timeManager, sdGrid1_.leafView())
+		, subProblem2_(timeManager, sdGrid2_.leafView())
+    {  };
 
     /*!
      * \brief Called by the Dumux::TimeManager in order to
@@ -440,27 +435,25 @@ public:
      * \brief Returns a reference to subproblem1
      */
     SubProblem1& subProblem1()
-    { return *subProblem1_; }
+    { return subProblem1_; }
 
     /*!
      * \brief Returns a const reference to subproblem1
      */
-    const SubProblem1& subProblem1() const
-    { return *subProblem1_; }
+//    const SubProblem1& subProblem1() const
+//    { return subProblem1_; }
 
     /*!
      * \brief Returns a reference to subproblem2
      */
     SubProblem2& subProblem2()
-    { return *subProblem2_; }
+    { return subProblem2_; }
 
     /*!
      * \brief Returns a const reference to subproblem2
      */
-    const SubProblem2& subProblem2() const
-    { return *subProblem2_; }
-    ///////////////////////////////
-
+//    const SubProblem2& subProblem2() const
+//    { return subProblem2_; }
 
     /*!
      * \brief Returns a reference to the localresidual1
@@ -478,69 +471,79 @@ public:
      * \brief Returns a reference to the multidomain grid
      */
     MDGrid& mdGrid()
-    { return *mdGrid_; }
+    { return mdGrid_; }
 
     /*!
      * \brief Returns a const reference to the multidomain grid
      */
     const MDGrid& mdGrid() const
-    { return *mdGrid_; }
+    { return mdGrid_; }
 
     /*!
      * \brief Returns the multidomain gridview
      */
-    const MDGridView mdGridView() const
-    { return mdGrid().leafView(); }
+    const MDGridView& mdGridView() const
+    { return mdGridView_; }
 
 
     /*!
      * \brief Returns the multidomain gridview
      */
-    const MDGridView gridView() const
-    { return mdGrid().leafView(); }
+    const MDGridView& gridView() const
+    { return mdGridView_; }
 
     /*!
-     * \brief Returns a reference to the subdomain1 grid
+     * \brief Provides a vertex mapper for the multidomain
+     *
      */
-    SDGrid& sdGrid1()
-    { return *sdGrid1_; }
+    VertexMapper& mdVertexMapper()
+    { return mdVertexMapper_; }
 
     /*!
      * \brief Returns a const reference to the subdomain1 grid
      */
     const SDGrid& sdGrid1() const
-    { return *sdGrid1_; }
-
-    /*!
-     * \brief Returns a reference to the subdomain2 grid
-     */
-    SDGrid& sdGrid2()
-    { return *sdGrid2_; }
+    { return sdGrid1_; }
 
     /*!
      * \brief Returns a const reference to the subdomain2 grid
      */
     const SDGrid& sdGrid2() const
-    { return *sdGrid2_; }
+    { return sdGrid2_; }
 
     /*!
      * \brief Returns the gridview of subdomain1
      */
-    const GridView1 gridView1() const
+    DUNE_DEPRECATED_MSG("use sdGridView1 instead")
+    const SubDomainGridView1 gridView1() const
     { return mdGrid().subDomain(subID1_).leafView(); }
 
     /*!
      * \brief Returns the gridview of subdomain2
      */
-    const GridView2 gridView2() const
+    DUNE_DEPRECATED_MSG("use sdGridView2 instead")
+    const SubDomainGridView2 gridView2() const
     { return mdGrid().subDomain(subID2_).leafView(); }
+
+    /*!
+     * \brief Returns the gridview of subdomain1
+     */
+    const SubDomainGridView1 sdGridView1() const
+    { return sdGrid1_.leafView(); }
+//    mdGrid().subDomain(subID1_).leafView(); }
+
+    /*!
+     * \brief Returns the gridview of subdomain2
+     */
+    const SubDomainGridView2 sdGridView2() const
+    { return sdGrid2_.leafView(); }
 
     /*!
      * \brief Returns a pointer to the subdomain1 element
      * \param mdElement1 docme
      */
     SDElementPointer sdElementPointer1(const MDElement& mdElement1)
-    { return mdGrid().subDomain(subID1_).subDomainEntityPointer(mdElement1); }
+    { return sdGrid1_.subDomainEntityPointer(mdElement1); }
 
     /*!
      * \brief Returns a pointer to the subdomain2 element
@@ -548,14 +551,7 @@ public:
      * \param mdElement2 docme
      */
     SDElementPointer sdElementPointer2(const MDElement& mdElement2)
-    { return mdGrid().subDomain(subID2_).subDomainEntityPointer(mdElement2); }
-
-    /*!
-     * \brief Provides a vertex mapper for the multidomain
-     *
-     */
-    VertexMapper& mdVertexMapper()
-    { return *mdVertexMapper_; }
+    { return sdGrid2_.subDomainEntityPointer(mdElement2); }
 
 
 protected:
@@ -582,21 +578,21 @@ private:
     TimeManager &timeManager_;
     NewtonMethod newtonMethod_;
     NewtonController newtonCtl_;
+
     Model model_;
+
+	MDGrid &mdGrid_;
+    const MDGridView mdGridView_;
+    VertexMapper mdVertexMapper_;
 
     typename MDGrid::SubDomainType subID1_;
     typename MDGrid::SubDomainType subID2_;
 
-    Dune::shared_ptr<MDGrid> mdGrid_;
-    Dune::shared_ptr<VertexMapper> mdVertexMapper_;
+    const SDGrid& sdGrid1_;
+    const SDGrid& sdGrid2_;
 
-    SDGrid *sdGrid1_;
-    SDGrid *sdGrid2_;
-
-    Dune::shared_ptr<SubProblem1> subProblem1_;
-    Dune::shared_ptr<SubProblem2> subProblem2_;
-
-
+    SubProblem1 subProblem1_;
+    SubProblem2 subProblem2_;
 };
 
 // definition of the static class member simname_,
