@@ -49,7 +49,7 @@ namespace Properties
 // Properties
 //////////////////////////////////////////////////////////////////
 
-//!< Define that mass fractions are used in the balance equations
+//!< Define that mole fractions are used in the balance equations
 SET_BOOL_PROP(BoxStokesnc, UseMoles, true);
 		
 SET_PROP(BoxStokesnc, NumEq) //!< set the number of equations

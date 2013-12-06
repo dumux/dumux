@@ -87,7 +87,7 @@ public:
      * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
      */
     const Scalar molarDensity() const
-    { return this->molarDensity_; }
+    { return molarDensity_; }
 	
 	/*!
      * \brief Return the mass fraction of a transported component at the integration point.
@@ -121,9 +121,9 @@ protected:
 
 		// loop over all components
 		for (int compIdx=0; compIdx<numComponents; compIdx++){
-			if (phaseCompIdx!=compIdx) //no transport equationen parameters needed for the mass balance
+			if (phaseCompIdx!=compIdx) //no transport equation parameters needed for the mass balance
 			{
-				this->molarDensity_ = Scalar(0.0);  				
+				molarDensity_ = Scalar(0.0);
 				massFraction_[compIdx] = Scalar(0.0);
 				diffusionCoeff_[compIdx] = Scalar(0.0);
 				moleFractionGrad_[compIdx] = Scalar(0.0);
@@ -134,10 +134,9 @@ protected:
 					 scvIdx++) // loop over vertices of the element
 				{
             
-					this->molarDensity_ += elemVolVars[scvIdx].molarDensity()*
+					molarDensity_ += elemVolVars[scvIdx].molarDensity()*
 						this->face().shapeValue[scvIdx];
-					
-					massFraction_[compIdx] += elemVolVars[scvIdx].fluidState().massFraction(phaseIdx, compIdx) *
+					massFraction_[compIdx] += elemVolVars[scvIdx].massFraction(compIdx) *
 						this->face().shapeValue[scvIdx];
 					diffusionCoeff_[compIdx] += elemVolVars[scvIdx].diffusionCoeff(compIdx) *
 						this->face().shapeValue[scvIdx];
@@ -147,10 +146,11 @@ protected:
 					{
 						moleFractionGrad_[compIdx] +=
 							this->face().grad[scvIdx][dimIdx] *
-							elemVolVars[scvIdx].fluidState().moleFraction(phaseIdx, compIdx);
+							elemVolVars[scvIdx].moleFraction(compIdx);
 					}
 				}
 							
+				Valgrind::CheckDefined(molarDensity_);
 				Valgrind::CheckDefined(massFraction_[compIdx]);
 				Valgrind::CheckDefined(diffusionCoeff_[compIdx]);
 				Valgrind::CheckDefined(moleFractionGrad_[compIdx]);

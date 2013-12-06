@@ -100,57 +100,44 @@ public:
      */
     void computeStorage(PrimaryVariables &storage, const int scvIdx, const bool usePrevSol) const
     {
-       
-		// if flag usePrevSol is set, the solution from the previous
+        // compute the storage term for the transport equation
+        ParentType::computeStorage(storage, scvIdx, usePrevSol);
+
+        // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit Euler method.
-        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
-		: this->curVolVars_();
+        const ElementVolumeVariables &elemVolVars = usePrevSol ?
+        			this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 		
-        storage = 0.0;
         if (!useMoles)
 		{
 			/* works for a maximum of two components, for more components 
 			mole fractions must be used (property useMoles => true) */
 			
-			// mass and momentum balance
-			ParentType::computeStorage(storage, scvIdx, usePrevSol);
-			
 			//storage of transported component
 			storage[transportEqIdx] = volVars.density() 
-				* volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
+				* volVars.massFraction(transportCompIdx);
 			
 			Valgrind::CheckDefined(volVars.density());
-			Valgrind::CheckDefined(volVars.fluidState().massFraction(phaseIdx, transportCompIdx));
+			Valgrind::CheckDefined(volVars.massFraction(transportCompIdx));
 			
 		}
         else
 		{
-        	/*//TODO call parent type function
-            // momentum balance
-            for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
-                storage[momentumIdx] = volVars.molarDensity()
-					* volVars.velocity()[momentumIdx-momentumXIdx];*/
-			
-            // mass and momentum balance
-			ParentType::computeStorage(storage, scvIdx, usePrevSol);
-
-            
 			// mass balance and transport equations
 			for (int compIdx=0; compIdx<numComponents; compIdx++)
 			{
 				if (conti0EqIdx+compIdx != massBalanceIdx)
-					//storage[massBalanceIdx] = volVars.molarDensity();
 				//else // transport equations
 				{
 					storage[conti0EqIdx+compIdx] = volVars.molarDensity()
-						* volVars.fluidState().moleFraction(phaseIdx, compIdx);
+						* volVars.moleFraction(compIdx);
 					
 					Valgrind::CheckDefined(volVars.molarDensity());
-					Valgrind::CheckDefined(volVars.fluidState().moleFraction(phaseIdx, compIdx));
+					Valgrind::CheckDefined(volVars.moleFraction(compIdx));
 				}
 			}
 		}
@@ -169,53 +156,46 @@ public:
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
     {
+      	// call ParentType function
+		ParentType::computeAdvectiveFlux(flux,fluxVars);
+            
         // data attached to upstream and the downstream vertices
 		const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
 		const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
-		Scalar tmp = 0.0;
+
+		Scalar tmp = fluxVars.normalVelocity();  
 		
 		if(!useMoles)
 		{
-        	// call ParentType function
-			ParentType::computeAdvectiveFlux(flux,fluxVars);
-			
 			// for transport equations
-			tmp = fluxVars.normalVelocity();  
-			
 			if (this->massUpwindWeight_ > 0.0)
 				tmp *=  this->massUpwindWeight_          // upwind data
 					* up.density()
-                    * up.fluidState().massFraction(phaseIdx, transportCompIdx);
+                    * up.massFraction(transportCompIdx);
 			
             if (this->massUpwindWeight_ < 1.0)
 				tmp += (1.0 - this->massUpwindWeight_)      // rest
 					* dn.density()
-                    * dn.fluidState().massFraction(phaseIdx, transportCompIdx);
+                    * dn.massFraction(transportCompIdx);
 			
 			flux[transportEqIdx] += tmp;
 			Valgrind::CheckDefined(flux[transportEqIdx]);
-			
 		}
         else
 		{
-        	// call ParentType function
-			ParentType::computeAdvectiveFlux(flux,fluxVars);
-            
 			//transport equations
 			for (int compIdx=0; compIdx<numComponents; compIdx++)
 			{
 				if (conti0EqIdx+compIdx != massBalanceIdx) //mass balance is calculated above
 				{
-					tmp = fluxVars.normalVelocity();
-				
 					if (this->massUpwindWeight_ > 0.0)
 						tmp *=  this->massUpwindWeight_          // upwind data
                             * up.molarDensity()
-                            * up.fluidState().moleFraction(phaseIdx, compIdx);
+                            * up.moleFraction(compIdx);
 					if (this->massUpwindWeight_ < 1.0)
 						tmp += (1.0 - this->massUpwindWeight_)      // rest
                             * dn.molarDensity()
-                            * dn.fluidState().moleFraction(phaseIdx, compIdx);
+                            * dn.moleFraction(compIdx);
 				
 					flux[conti0EqIdx+compIdx] += tmp;
 					Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
@@ -236,15 +216,15 @@ public:
                               const FluxVariables &fluxVars) const
     {
 		// diffusive component flux
-        for (int dimIdx = 0; dimIdx < dim; ++dimIdx){
-
+        for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
+        {
 			if(!useMoles)
 			{
                 flux[transportEqIdx] -= fluxVars.moleFractionGrad(transportCompIdx)[dimIdx]
 		                          * fluxVars.face().normal[dimIdx]
 		                          *(fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
 		                          * fluxVars.molarDensity()
-		                          * FluidSystem::molarMass(transportCompIdx);// Multipled by molarMass [kg/mol] to convert form [mol/m^3 s] to [kg/m^3 s]
+		                          * FluidSystem::molarMass(transportCompIdx);// Multiplied by molarMass [kg/mol] to convert form [mol/m^3 s] to [kg/m^3 s]
                 Valgrind::CheckDefined(flux[transportEqIdx]);
 			}
 			else

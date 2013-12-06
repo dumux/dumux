@@ -105,17 +105,20 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(this->fluidState());
 		
-		for (int compIdx=0; compIdx<numComponents; compIdx++){
-			if (phaseCompIdx!=compIdx){
-				
+        for (int compIdx=0; compIdx<numComponents; compIdx++)
+        {
+			if (phaseCompIdx!=compIdx)
+			{
 				diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(this->fluidState(),
                                                              paramCache,
                                                              phaseIdx,
                                                              compIdx,
                                                              phaseCompIdx);
-
-				Valgrind::CheckDefined(diffCoeff_[compIdx]);
 			}
+			else
+				diffCoeff_[compIdx] = 0.0;
+
+			Valgrind::CheckDefined(diffCoeff_[compIdx]);
 		}
     };
 
@@ -163,19 +166,34 @@ public:
 			
 			//molefraction for the main component (no primary variable)
 			moleFracPhase = 1 - sumMoleFrac;
-			fluidState.setMoleFraction(phaseIdx, phaseIdx, moleFracPhase);
+			fluidState.setMoleFraction(phaseIdx, phaseCompIdx, moleFracPhase);
 		}
     }
+
+    /*!
+     * \brief Returns the mass fraction of a given component in the
+     * 		  given fluid phase within the control volume.
+     *
+     * \param compIdx The component index
+     */
+    Scalar massFraction(const int compIdx) const
+    { return this->fluidState_.massFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Returns the mass fraction of a given component in the
+     * 		  given fluid phase within the control volume.
+     *
+     * \param compIdx The component index
+     */
+    Scalar moleFraction(const int compIdx) const
+    { return this->fluidState_.moleFraction(phaseIdx, compIdx); }
 
     /*!
      * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ of the fluid within the
      *        sub-control volume.
      */
     Scalar molarDensity() const
-    { 
-		return this->fluidState_.density(phaseIdx) / this->fluidState_.averageMolarMass(phaseIdx); 
-		
-	}
+    { return this->fluidState_.density(phaseIdx) / this->fluidState_.averageMolarMass(phaseIdx); }
 
     /*!
      * \brief Returns the binary (mass) diffusion coefficient
