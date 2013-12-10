@@ -65,6 +65,8 @@ template<class TypeTag>
 class FVSaturation2P: public FVTransport<TypeTag>
 {
     typedef FVTransport<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) Implementation;
+
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum
@@ -276,7 +278,7 @@ public:
         int size = problem_.gridView().size(0);
         for (int i = 0; i < size; i++)
         {
-            updateSaturationSolution(i, updateVec[i][0], dt);
+            asImp_().updateSaturationSolution(i, updateVec[i][0], dt);
         }
     }
 
@@ -290,7 +292,7 @@ public:
         int size = problem_.gridView().size(0);
         for (int i = 0; i < size; i++)
         {
-            updateSaturationSolution(i, updateVec[i][0], dt);
+            asImp_().updateSaturationSolution(i, updateVec[i][0], dt);
         }
     }
 
@@ -478,6 +480,14 @@ public:
     }
 
 private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
     Problem& problem_;
     Dune::shared_ptr<Velocity> velocity_;
     Dune::shared_ptr<CapillaryFlux> capillaryFlux_;
