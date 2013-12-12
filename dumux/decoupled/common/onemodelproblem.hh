@@ -94,7 +94,8 @@ public:
           bBoxMin_(std::numeric_limits<double>::max()),
           bBoxMax_(-std::numeric_limits<double>::max()),
           variables_(gridView),
-          outputInterval_(1)
+          outputInterval_(1),
+          outputTimeInterval_(0)
     {
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -121,7 +122,8 @@ public:
           bBoxMin_(std::numeric_limits<double>::max()),
           bBoxMax_(-std::numeric_limits<double>::max()),
           variables_(gridView),
-          outputInterval_(1)
+          outputInterval_(1),
+          outputTimeInterval_(0)
     {
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -394,6 +396,17 @@ public:
     }
 
     /*!
+     * \brief Sets a time interval for Output
+     *
+     * The default is 0.0 -> Output determined by output number interval (<tt>setOutputInterval(int)</tt>)
+     */
+    void setOutputTimeInterval(const Scalar timeInterval)
+    {
+        outputTimeInterval_ = (timeInterval > 0.0) ? timeInterval : 1e100;
+        timeManager().startNextEpisode(outputTimeInterval_);
+    }
+
+    /*!
      * \brief Sets the interval for Output
      *
      * The default is 1 -> Output every time step
@@ -409,9 +422,20 @@ public:
      * very time step. This file is intented to be overwritten by the
      * implementation.
      */
+
     bool shouldWriteOutput() const
     {
-        if (this->timeManager().timeStepIndex() % outputInterval_ == 0 || this->timeManager().willBeFinished())
+        if (outputInterval_ > 0)
+        {
+            if (timeManager().timeStepIndex() % outputInterval_ == 0
+                || timeManager().willBeFinished()
+                || timeManager().episodeWillBeOver())
+            {
+                return true;
+            }
+        }
+        else if (timeManager().willBeFinished()
+                 || timeManager().episodeWillBeOver() || timeManager().timeStepIndex() == 0)
         {
             return true;
         }
@@ -439,9 +463,16 @@ public:
      */
     void episodeEnd()
     {
-        std::cerr << "The end of an episode is reached, but the problem "
-                  << "does not override the episodeEnd() method. "
-                  << "Doing nothing!\n";
+        if (outputTimeInterval_ > 0.0 && !timeManager().finished())
+        {
+            timeManager().startNextEpisode(outputTimeInterval_);
+        }
+        else if (!timeManager().finished())
+        {
+            std::cerr << "The end of an episode is reached, but the problem "
+                      << "does not override the episodeEnd() method. "
+                      << "Doing nothing!\n";
+        }
     };
 
     // \}
@@ -632,6 +663,7 @@ private:
 
     Dune::shared_ptr<VtkMultiWriter> resultWriter_;
     int outputInterval_;
+    Scalar outputTimeInterval_;
 };
 
 }
