@@ -99,7 +99,9 @@ public:
         fluxVars.sigma().mv(normal, tmp);
 
         for (int i=0; i < dim; ++i)
-        flux[Indices::momentum(i)] = tmp[i];
+        {
+          flux[Indices::momentum(i)] = tmp[i];
+        }
     }
 
     /*!
@@ -126,11 +128,13 @@ public:
         tmp1 *= volVars.rockDensity();
 
         for (int i = 0; i < dim; ++i)
-        source[Indices::momentum(i)] += tmp1[i];
+        {
+          source[Indices::momentum(i)] += tmp1[i];
+        }
     }
 
 };
 
-}
+} // end namespace Dumux
 
-#endif
+#endif // DUMUX_ELASTIC_LOCAL_RESIDUAL_HH

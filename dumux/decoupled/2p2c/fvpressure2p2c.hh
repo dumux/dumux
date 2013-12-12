@@ -959,9 +959,10 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     {
         pc = MaterialLaw::pc(problem().spatialParams().materialLawParams(elementI),
                 fluidState.saturation(wPhaseIdx));
-        int maxiter = 5; int iterout = -1;
+        unsigned int maxiter = 5;
+        int iterout = -1;
         //start iteration loop
-        for(int iter=0; iter < maxiter; iter++)
+        for (unsigned int iter = 0; iter < maxiter; iter++)
         {
             //prepare pressures to enter flash calculation
             switch (pressureType)
@@ -993,8 +994,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
                 maxiter = 1;
             iterout = iter;
         }
-        if(iterout !=0)
-        Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << globalIdx << ", pc delta still " << fabs(oldPc-pc) << std::endl;
+        if (iterout != 0)
+          Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << globalIdx << ", pc delta still " << fabs(oldPc-pc) << std::endl;
     }
     // initialize phase properties not stored in fluidstate
     cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
