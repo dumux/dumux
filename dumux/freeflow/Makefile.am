@@ -1,4 +1,4 @@
-SUBDIRS = stokes stokes2c stokes2cni stokesnc
+SUBDIRS = stokes stokes2c stokes2cni stokesnc stokesncni
 
 freeflowdir = $(includedir)/dumux/freeflow
 
