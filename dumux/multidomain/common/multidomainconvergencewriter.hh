@@ -49,14 +49,14 @@ struct MultiDomainConvergenceWriter
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubDomain1TypeTag;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubDomain2TypeTag;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, GridView) GridView1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) GridView2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, GridView) GridView1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, GridView) GridView2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, SolutionVector) SolutionVector1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, SolutionVector) SolutionVector2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, SolutionVector) SolutionVector1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, SolutionVector) SolutionVector2;
 
     typedef Dumux::VtkMultiWriter<GridView1> VtkMultiWriter1;
     typedef Dumux::VtkMultiWriter<GridView2> VtkMultiWriter2;
@@ -89,10 +89,10 @@ struct MultiDomainConvergenceWriter
         ++timeStepIndex_;
         iteration_ = 0;
         if (!vtkMultiWriter1_)
-            vtkMultiWriter1_ = new VtkMultiWriter1(problem_().subProblem1().gridView(), "convergence1");
+            vtkMultiWriter1_ = new VtkMultiWriter1(problem_().sdProblem1().gridView(), "convergence1");
 
         if (!vtkMultiWriter2_)
-            vtkMultiWriter2_ = new VtkMultiWriter2(problem_().subProblem2().gridView(), "convergence2");
+            vtkMultiWriter2_ = new VtkMultiWriter2(problem_().sdProblem2().gridView(), "convergence2");
     };
     /*
     * \brief docme
@@ -121,10 +121,10 @@ struct MultiDomainConvergenceWriter
             SolutionVector1 deltaU1;
             SolutionVector2 deltaU2;
 
-            uLastIter1.resize(ctl_.method().model().subModel1().numDofs());
-            uLastIter2.resize(ctl_.method().model().subModel2().numDofs());
-            deltaU1.resize(ctl_.method().model().subModel1().numDofs());
-            deltaU2.resize(ctl_.method().model().subModel2().numDofs());
+            uLastIter1.resize(ctl_.method().model().sdModel1().numDofs());
+            uLastIter2.resize(ctl_.method().model().sdModel2().numDofs());
+            deltaU1.resize(ctl_.method().model().sdModel1().numDofs());
+            deltaU2.resize(ctl_.method().model().sdModel2().numDofs());
 
             typedef Dumux::SplitAndMerge<TypeTag> Common;
 
@@ -133,8 +133,8 @@ struct MultiDomainConvergenceWriter
 
 
             std::cout << "\n writing convergence file of current Newton iteration \n";
-            ctl_.method().model().subModel1().addConvergenceVtkFields(*vtkMultiWriter1_, uLastIter1, deltaU1);
-            ctl_.method().model().subModel2().addConvergenceVtkFields(*vtkMultiWriter2_, uLastIter2, deltaU2);
+            ctl_.method().model().sdModel1().addConvergenceVtkFields(*vtkMultiWriter1_, uLastIter1, deltaU1);
+            ctl_.method().model().sdModel2().addConvergenceVtkFields(*vtkMultiWriter2_, uLastIter2, deltaU2);
     };
     /*
     * \brief docme

@@ -65,14 +65,16 @@ class MultiDomainModel
     typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubDomain1TypeTag;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubDomain2TypeTag;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, Problem) SubProblem1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) SubProblem2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, Problem) SubDomainProblem1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, Problem) SubDomainProblem2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, Model) SubModel1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, Model) SubModel2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, Model) SubDomainModel1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, Model) SubDomainModel2;
+
+    typedef Dumux::SplitAndMerge<TypeTag> SplitAndMerge;
 
     enum {
         numEq1 = GET_PROP_VALUE(TypeTag, NumEq1),
@@ -95,22 +97,18 @@ public:
         jacAsm_ = new JacobianAssembler();
         jacAsm_->init(problem);
 
-//        uCur_.resize(asImp_().numDofs());
-//        uPrev_.resize(asImp_().numDofs());
-
         uCur_.resize(jacAsm_->residual().size());
         uPrev_.resize(jacAsm_->residual().size());
 
         uCur_= 0;
         uPrev_= 0;
 
-        typedef Dumux::SplitAndMerge<TypeTag> Common;
-        Common::mergeSolVectors(subModel1().curSol(),
-                                 subModel2().curSol(),
-                                 uCur_);
-        Common::mergeSolVectors(subModel1().prevSol(),
-                                 subModel2().prevSol(),
-                                 uPrev_);
+        SplitAndMerge::mergeSolVectors(sdModel1().curSol(),
+                                	   sdModel2().curSol(),
+                                	   uCur_);
+        SplitAndMerge::mergeSolVectors(sdModel1().prevSol(),
+                                	   sdModel2().prevSol(),
+                                	   uPrev_);
     }
 
     /*
@@ -188,46 +186,78 @@ public:
     /*!
      * \brief A reference to the problem on which the model is applied.
      */
-    SubProblem1 &subProblem1()
-    { return problem().subProblem1(); }
+    SubDomainProblem1 &sdProblem1()
+    { return problem().sdProblem1(); }
     /*!
-     * \copydoc subProblem1()
+     * \copydoc sdProblem1()
      */
-    const SubProblem1 &subProblem1() const
-    { return problem().subProblem1(); }
+    const SubDomainProblem1 &sdProblem1() const
+    { return problem().sdProblem1(); }
 
     /*!
      * \brief A reference to the problem on which the model is applied.
      */
-    SubProblem2 &subProblem2()
-    { return problem().subProblem2(); }
+    SubDomainProblem2 &sdProblem2()
+    { return problem().sdProblem2(); }
     /*!
-     * \copydoc subProblem2()
+     * \copydoc sdProblem2()
      */
-    const SubProblem2 &subProblem2() const
-    { return problem().subProblem2(); }
+    const SubDomainProblem2 &sdProblem2() const
+    { return problem().sdProblem2(); }
 
     /*!
      * \brief A reference to the first sub-problem's model.
      */
-    SubModel1 &subModel1()
-    { return subProblem1().model(); }
+    SubDomainModel1 &sdModel1()
+    { return sdProblem1().model(); }
     /*!
-     * \copydoc subModel1()
+     * \copydoc sdModel1()
      */
-    const SubModel1 &subModel1() const
-    { return subProblem1().model(); }
+    const SubDomainModel1 &sdModel1() const
+    { return sdProblem1().model(); }
 
     /*!
      * \brief A reference to the second sub-problem's model.
      */
-    SubModel2 &subModel2()
-    { return subProblem2().model(); }
+    SubDomainModel2 &sdModel2()
+    { return sdProblem2().model(); }
     /*!
-     * \copydoc subModel2()
+     * \copydoc sdModel2()
      */
-    const SubModel2 &subModel2() const
-    { return subProblem2().model(); }
+    const SubDomainModel2 &sdModel2() const
+    { return sdProblem2().model(); }
+
+    DUNE_DEPRECATED_MSG("use sdProblem1 instead")
+    SubDomainProblem1 &subProblem1()
+    { return sdProblem1(); }
+
+    DUNE_DEPRECATED_MSG("use sdProblem1 instead")
+    const SubDomainProblem1 &subProblem1() const
+    { return sdProblem1(); }
+
+    DUNE_DEPRECATED_MSG("use sdProblem2 instead")
+    SubDomainProblem2 &subProblem2()
+    { return sdProblem2(); }
+
+    DUNE_DEPRECATED_MSG("use sdProblem2 instead")
+    const SubDomainProblem2 &subProblem2() const
+    { return sdProblem2(); }
+
+    DUNE_DEPRECATED_MSG("use sdModel1 instead")
+    SubDomainModel1 &subModel1()
+    { return sdModel1(); }
+
+    DUNE_DEPRECATED_MSG("use sdModel1 instead")
+    const SubDomainModel1 &subModel1() const
+    { return sdModel1(); }
+
+    DUNE_DEPRECATED_MSG("use sdModel2 instead")
+    SubDomainModel2 &subModel2()
+    { return sdModel2(); }
+
+    DUNE_DEPRECATED_MSG("use sdModel2 instead")
+    const SubDomainModel2 &subModel2() const
+    { return sdModel2(); }
 
     /*!
      * \brief Try to progress the model to the next timestep.
@@ -280,11 +310,10 @@ public:
      */
     void updateBegin()
     {
-        subModel1().updateBegin();
-        subModel2().updateBegin();
+        sdModel1().updateBegin();
+        sdModel2().updateBegin();
 
-        typedef Dumux::SplitAndMerge<TypeTag> Common;
-        Common::mergeSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
+        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
     }
 
 
@@ -295,8 +324,8 @@ public:
      */
     void updateSuccessful()
     {
-        subModel1().updateSuccessful();
-        subModel2().updateSuccessful();
+        sdModel1().updateSuccessful();
+        sdModel2().updateSuccessful();
     }
     
     /*!
@@ -310,10 +339,9 @@ public:
      */
     void advanceTimeLevel()
     {
-        typedef Dumux::SplitAndMerge<TypeTag> Common;
         // merge the two sub-vectors together
-        Common::mergeSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
-        Common::mergeSolVectors(subModel1().prevSol(), subModel2().prevSol(), uPrev_);
+        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
+        SplitAndMerge::mergeSolVectors(sdModel1().prevSol(), sdModel2().prevSol(), uPrev_);
     };
 
     /*!
@@ -323,12 +351,11 @@ public:
      */
     void updateFailed()
     {
-        subModel1().updateFailed();
-        subModel2().updateFailed();
+        sdModel1().updateFailed();
+        sdModel2().updateFailed();
 
-        typedef Dumux::SplitAndMerge<TypeTag> Common;
         // merge the two sub-vectors together
-        Common::mergeSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
+        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
     };
 
     /*!
@@ -338,12 +365,11 @@ public:
      */
     void updateFailedTry()
     {
-        subModel1().updateFailedTry();
-        subModel2().updateFailedTry();
+        sdModel1().updateFailedTry();
+        sdModel2().updateFailedTry();
 
-        typedef Dumux::SplitAndMerge<TypeTag> Common;
         // merge the two sub-vectors together
-        Common::mergeSolVectors(subModel1().curSol(), subModel2().curSol(), uCur_);
+        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
     };
 
     /*!
@@ -367,8 +393,8 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
-        subProblem1().serialize(res);
-        subProblem2().serialize(res);
+        sdProblem1().serialize(res);
+        sdProblem2().serialize(res);
     }
 
     /*!
@@ -380,8 +406,8 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
-        subProblem1().deserialize(res);
-        subProblem2().deserialize(res);
+        sdProblem1().deserialize(res);
+        sdProblem2().deserialize(res);
         wasRestarted_ = true;
     }
 
@@ -390,7 +416,7 @@ public:
      */
     size_t numDofs() const
     {
-		return subModel1().numDofs()*numEq1 + subModel2().numDofs()*numEq2;
+		return sdModel1().numDofs()*numEq1 + sdModel2().numDofs()*numEq2;
     }
 
     void resetJacobianAssembler()

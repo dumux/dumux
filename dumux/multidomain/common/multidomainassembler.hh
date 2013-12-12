@@ -59,23 +59,23 @@ class MultiDomainAssembler
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MultiDomainGrid;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubDomain1TypeTag;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubDomain2TypeTag;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, Problem) SubProblem1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) SubProblem2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, Problem) SubDomainProblem1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, Problem) SubDomainProblem2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, LocalFEMSpace) FEM1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, LocalFEMSpace) FEM2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, LocalFEMSpace) FEM1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, LocalFEMSpace) FEM2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, ScalarGridFunctionSpace) ScalarGridFunctionSpace1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, ScalarGridFunctionSpace) ScalarGridFunctionSpace2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, ScalarGridFunctionSpace) ScalarGridFunctionSpace1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, ScalarGridFunctionSpace) ScalarGridFunctionSpace2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, GridFunctionSpace) GridFunctionSpace1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, GridFunctionSpace) GridFunctionSpace2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, GridFunctionSpace) GridFunctionSpace1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, GridFunctionSpace) GridFunctionSpace2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, LocalOperator) LocalOperator1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, LocalOperator) LocalOperator2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, LocalOperator) LocalOperator1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, LocalOperator) LocalOperator2;
 
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGridFunctionSpace) MultiDomainGridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainCondition) MultiDomainCondition;
@@ -89,8 +89,8 @@ class MultiDomainAssembler
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, Constraints) Constraints1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, Constraints) Constraints2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, Constraints) Constraints1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, Constraints) Constraints2;
 
     // copying the jacobian assembler is not a good idea
     MultiDomainAssembler(const MultiDomainAssembler &);
@@ -102,8 +102,8 @@ public:
     MultiDomainAssembler()
     {
         globalProblem_ = 0;
-        problem1_= 0;
-        problem2_= 0;
+        sdProblem1_= 0;
+        sdProblem2_= 0;
     }
 
     ~MultiDomainAssembler()
@@ -118,8 +118,8 @@ public:
     void init(Problem& problem)
     {
         globalProblem_ = &problem;
-        problem1_ = &globalProblem_->subProblem1();
-        problem2_ = &globalProblem_->subProblem2();
+        sdProblem1_ = &globalProblem_->sdProblem1();
+        sdProblem2_ = &globalProblem_->sdProblem2();
 
         fem1_ = Dune::make_shared<FEM1>();
         fem2_ = Dune::make_shared<FEM2>();
@@ -127,12 +127,12 @@ public:
         constraints1_ = Dune::make_shared<Constraints1>();
         constraints2_ = Dune::make_shared<Constraints2>();
 
-        scalarGridFunctionSpace1_ = Dune::make_shared<ScalarGridFunctionSpace1>(problem1_->gridView(),
-        									*fem1_,
-        									*constraints1_);
-        scalarGridFunctionSpace2_ = Dune::make_shared<ScalarGridFunctionSpace2>(problem2_->gridView(),
-        									*fem2_,
-        									*constraints2_);
+        scalarGridFunctionSpace1_ = Dune::make_shared<ScalarGridFunctionSpace1>(globalProblem_->sdGridView1(),
+        																		*fem1_,
+        																		*constraints1_);
+        scalarGridFunctionSpace2_ = Dune::make_shared<ScalarGridFunctionSpace2>(globalProblem_->sdGridView2(),
+        																		*fem2_,
+        																		*constraints2_);
         // constraints store indices of ghost dofs
         constraints1_->compute_ghosts(*scalarGridFunctionSpace1_);
         constraints2_->compute_ghosts(*scalarGridFunctionSpace2_);
@@ -147,8 +147,8 @@ public:
         											   *gridFunctionSpace1_,
         											   *gridFunctionSpace2_);
 
-        localOperator1_ = Dune::make_shared<LocalOperator1>(problem1_->model());
-        localOperator2_ = Dune::make_shared<LocalOperator2>(problem2_->model());
+        localOperator1_ = Dune::make_shared<LocalOperator1>(sdProblem1_->model());
+        localOperator2_ = Dune::make_shared<LocalOperator2>(sdProblem2_->model());
 
         condition1_ = Dune::make_shared<MultiDomainCondition>(0);
         condition2_ = Dune::make_shared<MultiDomainCondition>(1);
@@ -254,8 +254,8 @@ public:
 
 private:
     Problem *globalProblem_;
-    SubProblem1 *problem1_;
-    SubProblem2 *problem2_;
+    SubDomainProblem1 *sdProblem1_;
+    SubDomainProblem2 *sdProblem2_;
 
     Dune::shared_ptr<FEM1> fem1_;
     Dune::shared_ptr<FEM2> fem2_;

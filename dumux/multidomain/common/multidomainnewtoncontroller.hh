@@ -69,11 +69,11 @@ class MultiDomainNewtonController : public NewtonController<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubDomain1TypeTag;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubDomain2TypeTag;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, GridView) GridView1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) GridView2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, GridView) GridView1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, GridView) GridView2;
 
     typedef MultiDomainConvergenceWriter<TypeTag>  ConvergenceWriter;
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
@@ -255,21 +255,11 @@ public:
         typedef Dumux::SplitAndMerge<TypeTag> Common;
 
         Common::splitSolVector(this->model_().curSol(),
-                               this->model_().subModel1().curSol(),
-                               this->model_().subModel2().curSol());
+                               this->model_().sdModel1().curSol(),
+                               this->model_().sdModel2().curSol());
 
         ParentType::newtonEndStep(uCurrentIter, uLastIter);
     }
-
-//    /*!
-//    * \brief Called if the newton method broke down.
-//    *
-//    * This method is called _after_ newtonEnd()
-//    */
-//    void newtonFail()
-//    {
-//        numSteps_ = std::max(maxSteps_, targetSteps_*2);
-//    }
 
     /*!
     * \brief Called when the newton method was sucessful.

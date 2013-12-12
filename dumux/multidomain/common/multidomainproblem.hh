@@ -67,27 +67,27 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubDomain1TypeTag;
+    typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubDomain2TypeTag;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, LocalResidual) LocalResidual1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, LocalResidual) LocalResidual2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, LocalResidual) LocalResidual1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, LocalResidual) LocalResidual2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, Problem) SubProblem1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, Problem) SubProblem2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, Problem) SubDomainProblem1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, Problem) SubDomainProblem2;
 
-    typedef typename GET_PROP_TYPE(SubTypeTag1, GridView) SubDomainGridView1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, GridView) SubDomainGridView2;
+    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, GridView) SubDomainGridView1;
+    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, GridView) SubDomainGridView2;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) HostGrid;
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MultiDomainGrid;
 
-    typedef typename MDGrid::LeafGridView MDGridView;
-    typedef typename MDGrid::Traits::template Codim<0>::Entity MDElement;
-    typedef typename MDGrid::SubDomainGrid SDGrid;
-    typedef typename SDGrid::template Codim<0>::EntityPointer SDElementPointer;
+    typedef typename MultiDomainGrid::LeafGridView MultiDomainGridView;
+    typedef typename MultiDomainGrid::Traits::template Codim<0>::Entity MultiDomainElement;
+    typedef typename MultiDomainGrid::SubDomainGrid SubDomainGrid;
+    typedef typename SubDomainGrid::template Codim<0>::EntityPointer SubDomainElementPointer;
 
-    typedef Dune::MultiDomainMCMGMapper<MDGridView, VertexLayout> VertexMapper;
+    typedef Dune::MultiDomainMCMGMapper<MultiDomainGridView, VertexLayout> VertexMapper;
 
 public:
     /*!
@@ -97,7 +97,7 @@ public:
       * \param timeManager The TimeManager which is used by the simulation
       *
       */
-    MultiDomainProblem(MDGrid &mdGrid,
+    MultiDomainProblem(MultiDomainGrid &mdGrid,
             		   TimeManager &timeManager)
         : timeManager_(timeManager)
 		, newtonMethod_(asImp_())
@@ -105,12 +105,12 @@ public:
 		, mdGrid_(mdGrid)
 		, mdGridView_(mdGrid.leafView())
 		, mdVertexMapper_(mdGrid_.leafView())
-		, subID1_(0)
-		, subID2_(1)
-		, sdGrid1_(mdGrid.subDomain(subID1_))
-		, sdGrid2_(mdGrid.subDomain(subID2_))
-		, subProblem1_(timeManager, sdGrid1_.leafView())
-		, subProblem2_(timeManager, sdGrid2_.leafView())
+		, sdID1_(0)
+		, sdID2_(1)
+		, sdGrid1_(mdGrid.subDomain(sdID1_))
+		, sdGrid2_(mdGrid.subDomain(sdID2_))
+		, sdProblem1_(timeManager, sdGrid1_.leafView())
+		, sdProblem2_(timeManager, sdGrid2_.leafView())
     {  };
 
     /*!
@@ -123,8 +123,8 @@ public:
     void init()
     {
         // initialize the sub-problems
-        subProblem1().init();
-        subProblem2().init();
+        sdProblem1().init();
+        sdProblem2().init();
 
         // set the initial condition of the model
         model().init(asImp_());
@@ -231,8 +231,8 @@ public:
      */
     void preTimeStep()
     {
-        asImp_().subProblem1().preTimeStep();
-        asImp_().subProblem2().preTimeStep();
+        asImp_().sdProblem1().preTimeStep();
+        asImp_().sdProblem2().preTimeStep();
     }
 
     /*!
@@ -272,8 +272,8 @@ public:
      */
     void postTimeStep()
     {
-        asImp_().subProblem1().postTimeStep();
-        asImp_().subProblem2().postTimeStep();
+        asImp_().sdProblem1().postTimeStep();
+        asImp_().sdProblem2().postTimeStep();
     }
 
     /*!
@@ -333,8 +333,8 @@ public:
      */
     void advanceTimeLevel()
     {
-    	asImp_().subProblem1().advanceTimeLevel();
-    	asImp_().subProblem2().advanceTimeLevel();
+    	asImp_().sdProblem1().advanceTimeLevel();
+    	asImp_().sdProblem2().advanceTimeLevel();
 
         model_.advanceTimeLevel();
     }
@@ -346,8 +346,8 @@ public:
     {
         // write the current result to disk
         if (asImp_().shouldWriteOutput()) {
-            asImp_().subProblem1().writeOutput();
-            asImp_().subProblem2().writeOutput();
+            asImp_().sdProblem1().writeOutput();
+            asImp_().sdProblem2().writeOutput();
         }
     }
 
@@ -421,75 +421,63 @@ public:
     /*!
      * \brief Returns the ID of the first domain
      */
-    const typename MDGrid::SubDomainType subID1() const
-    { return subID1_; }
+    const typename MultiDomainGrid::SubDomainType sdID1() const
+    { return sdID1_; }
 
     /*!
      * \brief Returns the ID of the second domain
      */
-    const typename MDGrid::SubDomainType subID2() const
-    { return subID2_; }
+    const typename MultiDomainGrid::SubDomainType sdID2() const
+    { return sdID2_; }
 
     // MAY BE THROWN OUT??
     /*!
      * \brief Returns a reference to subproblem1
      */
-    SubProblem1& subProblem1()
-    { return subProblem1_; }
-
-    /*!
-     * \brief Returns a const reference to subproblem1
-     */
-//    const SubProblem1& subProblem1() const
-//    { return subProblem1_; }
+    SubDomainProblem1& sdProblem1()
+    { return sdProblem1_; }
 
     /*!
      * \brief Returns a reference to subproblem2
      */
-    SubProblem2& subProblem2()
-    { return subProblem2_; }
-
-    /*!
-     * \brief Returns a const reference to subproblem2
-     */
-//    const SubProblem2& subProblem2() const
-//    { return subProblem2_; }
+    SubDomainProblem2& sdProblem2()
+    { return sdProblem2_; }
 
     /*!
      * \brief Returns a reference to the localresidual1
      */
     LocalResidual1& localResidual1()
-    { return subProblem1().model().localResidual(); };
+    { return sdProblem1().model().localResidual(); };
 
     /*!
      * \brief Returns a reference to the localresidual2
      */
     LocalResidual2& localResidual2()
-    { return subProblem2().model().localResidual(); };
+    { return sdProblem2().model().localResidual(); };
 
     /*!
      * \brief Returns a reference to the multidomain grid
      */
-    MDGrid& mdGrid()
+    MultiDomainGrid& mdGrid()
     { return mdGrid_; }
 
     /*!
      * \brief Returns a const reference to the multidomain grid
      */
-    const MDGrid& mdGrid() const
+    const MultiDomainGrid& mdGrid() const
     { return mdGrid_; }
 
     /*!
      * \brief Returns the multidomain gridview
      */
-    const MDGridView& mdGridView() const
+    const MultiDomainGridView& mdGridView() const
     { return mdGridView_; }
 
 
     /*!
      * \brief Returns the multidomain gridview
      */
-    const MDGridView& gridView() const
+    const MultiDomainGridView& gridView() const
     { return mdGridView_; }
 
     /*!
@@ -502,35 +490,44 @@ public:
     /*!
      * \brief Returns a const reference to the subdomain1 grid
      */
-    const SDGrid& sdGrid1() const
+    const SubDomainGrid& sdGrid1() const
     { return sdGrid1_; }
 
     /*!
      * \brief Returns a const reference to the subdomain2 grid
      */
-    const SDGrid& sdGrid2() const
+    const SubDomainGrid& sdGrid2() const
     { return sdGrid2_; }
 
-    /*!
-     * \brief Returns the gridview of subdomain1
-     */
+    DUNE_DEPRECATED_MSG("use sdID1 instead")
+    const typename MultiDomainGrid::SubDomainType subID1() const
+    { return sdID1(); }
+
+    DUNE_DEPRECATED_MSG("use sdID2 instead")
+    const typename MultiDomainGrid::SubDomainType subID2() const
+    { return sdID2(); }
+
+    DUNE_DEPRECATED_MSG("use sdProblem1 instead")
+    SubDomainProblem1& subProblem1()
+    { return sdProblem1(); }
+
+    DUNE_DEPRECATED_MSG("use sdProblem2 instead")
+    SubDomainProblem2& subProblem2()
+    { return sdProblem2(); }
+
     DUNE_DEPRECATED_MSG("use sdGridView1 instead")
     const SubDomainGridView1 gridView1() const
-    { return mdGrid().subDomain(subID1_).leafView(); }
+    { return mdGrid().subDomain(sdID1_).leafView(); }
 
-    /*!
-     * \brief Returns the gridview of subdomain2
-     */
     DUNE_DEPRECATED_MSG("use sdGridView2 instead")
     const SubDomainGridView2 gridView2() const
-    { return mdGrid().subDomain(subID2_).leafView(); }
+    { return mdGrid().subDomain(sdID2_).leafView(); }
 
     /*!
      * \brief Returns the gridview of subdomain1
      */
     const SubDomainGridView1 sdGridView1() const
     { return sdGrid1_.leafView(); }
-//    mdGrid().subDomain(subID1_).leafView(); }
 
     /*!
      * \brief Returns the gridview of subdomain2
@@ -542,7 +539,7 @@ public:
      * \brief Returns a pointer to the subdomain1 element
      * \param mdElement1 docme
      */
-    SDElementPointer sdElementPointer1(const MDElement& mdElement1)
+    SubDomainElementPointer sdElementPointer1(const MultiDomainElement& mdElement1)
     { return sdGrid1_.subDomainEntityPointer(mdElement1); }
 
     /*!
@@ -550,7 +547,7 @@ public:
      *
      * \param mdElement2 docme
      */
-    SDElementPointer sdElementPointer2(const MDElement& mdElement2)
+    SubDomainElementPointer sdElementPointer2(const MultiDomainElement& mdElement2)
     { return sdGrid2_.subDomainEntityPointer(mdElement2); }
 
 
@@ -581,18 +578,18 @@ private:
 
     Model model_;
 
-	MDGrid &mdGrid_;
-    const MDGridView mdGridView_;
+	MultiDomainGrid &mdGrid_;
+    const MultiDomainGridView mdGridView_;
     VertexMapper mdVertexMapper_;
 
-    typename MDGrid::SubDomainType subID1_;
-    typename MDGrid::SubDomainType subID2_;
+    typename MultiDomainGrid::SubDomainType sdID1_;
+    typename MultiDomainGrid::SubDomainType sdID2_;
 
-    const SDGrid& sdGrid1_;
-    const SDGrid& sdGrid2_;
+    const SubDomainGrid& sdGrid1_;
+    const SubDomainGrid& sdGrid2_;
 
-    SubProblem1 subProblem1_;
-    SubProblem2 subProblem2_;
+    SubDomainProblem1 sdProblem1_;
+    SubDomainProblem2 sdProblem2_;
 };
 
 // definition of the static class member simname_,
