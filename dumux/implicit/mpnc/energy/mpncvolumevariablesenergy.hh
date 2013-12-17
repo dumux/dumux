@@ -202,6 +202,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             Scalar h = FluidSystem::enthalpy(fs, paramCache, phaseIdx);
             fs.setEnthalpy(phaseIdx, h);
+            thermalConductivity_[phaseIdx] = FluidSystem::thermalConductivity(fs, phaseIdx);
         }
     }
 
@@ -211,6 +212,13 @@ public:
      */
     Scalar heatCapacity() const
     { return heatCapacity_; };
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the fluid phase in
+     *        the sub-control volume.
+     */
+    Scalar thermalConductivity(const unsigned int phaseIdx) const
+    { return thermalConductivity_[phaseIdx] ; };
 
     /*!
      * \brief Returns the total density of the given soil [kg / m^3] in
@@ -232,6 +240,7 @@ public:
 protected:
     Scalar heatCapacity_;
     Scalar soilDensity_;
+    Scalar thermalConductivity_[numPhases] ;
 };
 
 } // end namespace

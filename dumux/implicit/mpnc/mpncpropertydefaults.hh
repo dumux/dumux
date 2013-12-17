@@ -36,6 +36,8 @@
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+
 
 /*!
  * \ingroup Properties
@@ -198,6 +200,14 @@ private:
     enum { enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) };
 public:
     typedef MPNCVtkWriterEnergy<TypeTag, enableEnergy, enableKineticEnergy> type;
+};
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(MPNC, ThermalConductivityModel)
+{ private :
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+  public:
+    typedef ThermalConductivitySomerton<Scalar> type;
 };
 
 //! The VTK writer for user specified data (does nothing by default)

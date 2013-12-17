@@ -105,6 +105,7 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTr
     typedef Dune::FieldVector<CoordScalar, dim>  DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
 
 public:
     /*!
@@ -147,79 +148,19 @@ public:
         // project the heat flux vector on the face's normal vector
         temperatureGradientNormal_ = temperatureGradient * face.normal;
 
-
-        lambdaPm_ = lumpedLambdaPm(problem,
-                                   element,
-                                   fvGeometry,
-                                   face,
-                                   elemVolVars) ;
-
-    }
-    /*!
-     * \brief The lumped / average conductivity of solid plus phases \f$[W/mK]\f$.
-     *
-     * \param problem The problem
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param face The SCV (sub-control-volume) face
-     * \param elemVolVars The volume variables of the current element
-     */
-    Scalar lumpedLambdaPm(const Problem &problem,
-                          const Element &element,
-                          const FVElementGeometry & fvGeometry,
-                          const SCVFace & face,
-                          const ElementVolumeVariables & elemVolVars)
-    {
-         // arithmetic mean of the liquid saturation and the porosity
-         const unsigned int i = face.i;
-         const unsigned int j = face.j;
-
-         const FluidState &fsI = elemVolVars[i].fluidState();
-         const FluidState &fsJ = elemVolVars[j].fluidState();
-         const Scalar swi = fsI.saturation(wPhaseIdx);
-         const Scalar swj = fsJ.saturation(wPhaseIdx);
-
-         typename FluidSystem::ParameterCache paramCacheI, paramCacheJ;
-         paramCacheI.updateAll(fsI);
-         paramCacheJ.updateAll(fsJ);
-
-         const Scalar sw = std::max<Scalar>(0.0, 0.5*(swi + swj));
-
-         //        const Scalar lambdaDry = 0.583; // W / (K m) // works, orig
-         //        const Scalar lambdaWet = 1.13; // W / (K m) // works, orig
-
-         const Scalar lambdaSoilI = problem.spatialParams().soilThermalConductivity(element, fvGeometry, i);
-         const Scalar lambdaSoilJ = problem.spatialParams().soilThermalConductivity(element, fvGeometry, i);
-         const Scalar lambdaDry = 0.5 * (lambdaSoilI + FluidSystem::thermalConductivity(fsI, paramCacheI, nPhaseIdx)); // W / (K m)
-         const Scalar lambdaWet = 0.5 * (lambdaSoilJ + FluidSystem::thermalConductivity(fsJ, paramCacheJ, wPhaseIdx)) ; // W / (K m)
-
-         // the heat conductivity of the matrix. in general this is a
-         // tensorial value, but we assume isotropic heat conductivity.
-         // This is the Sommerton approach with lambdaDry =
-         // lambdaSn100%.  Taken from: H. Class: "Theorie und
-         // numerische Modellierung nichtisothermer Mehrphasenprozesse
-         // in NAPL-kontaminierten poroesen Medien", PhD Thesis, University of
-         // Stuttgart, Institute of Hydraulic Engineering, p. 57
-
-         Scalar result;
-         if (sw < 0.1) {
-             // regularization
-             Dumux::Spline<Scalar> sp(0, 0.1, // x1, x2
-                                      0, sqrt(0.1), // y1, y2
-                                      5*0.5/sqrt(0.1), 0.5/sqrt(0.1)); // m1, m2
-             result = lambdaDry + sp.eval(sw)*(lambdaWet - lambdaDry);
-         }
-         else
-             result = lambdaDry + std::sqrt(sw)*(lambdaWet - lambdaDry);
-
-         return result;
+        lambdaEff_ = 0;
+        calculateEffThermalConductivity_(problem,
+        								 element,
+        								 fvGeometry,
+        								 face,
+        								 elemVolVars);
     }
 
     /*!
      * \brief The lumped / average conductivity of solid plus phases \f$[W/mK]\f$.
      */
-    Scalar lambdaPm() const
-    { return lambdaPm_; }
+    Scalar lambdaEff() const
+    { return lambdaEff_; }
 
     /*!
      * \brief The normal of the gradient of temperature .
@@ -229,8 +170,71 @@ public:
         return temperatureGradientNormal_;
     }
 
+protected:
+    /*!
+	 * \brief Calculate the effective thermal conductivity of
+	 * 		  the porous medium plus residing phases \f$[W/mK]\f$.
+	 *		  This basically means to access the model for averaging
+	 *		  the individual conductivities, set by the property ThermalConductivityModel.
+	 *		  Except the adapted arguments, this is the same function
+	 *		  as used in the implicit TwoPTwoCNIFluxVariables.
+	 */
+    void calculateEffThermalConductivity_(const Problem &problem,
+                                          const Element &element,
+                                          const FVElementGeometry & fvGeometry,
+                                          const SCVFace & face,
+                                          const ElementVolumeVariables &elemVolVars)
+    {
+        const unsigned i = face.i;
+        const unsigned j = face.j;
+        Scalar lambdaI, lambdaJ;
+
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            lambdaI =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].fluidState().saturation(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(element, fvGeometry, i),
+                                                                   problem.spatialParams().porosity(element, fvGeometry, i));
+            lambdaJ =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].fluidState().saturation(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(element, fvGeometry, j),
+                                                                   problem.spatialParams().porosity(element, fvGeometry, j));
+        }
+        else
+        {
+            const Element & elementI = *fvGeometry.neighbors[i];
+            FVElementGeometry fvGeometryI;
+            fvGeometryI.subContVol[0].global = elementI.geometry().center();
+
+            lambdaI =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].fluidState().saturation(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(elementI, fvGeometryI, 0),
+                                                                   problem.spatialParams().porosity(elementI, fvGeometryI, 0));
+
+            const Element & elementJ = *fvGeometry.neighbors[j];
+            FVElementGeometry fvGeometryJ;
+            fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
+
+            lambdaJ =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].fluidState().saturation(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(elementJ, fvGeometryJ, 0),
+                                                                   problem.spatialParams().porosity(elementJ, fvGeometryJ, 0));
+        }
+
+        // -> harmonic mean
+        lambdaEff_ = harmonicMean(lambdaI, lambdaJ);
+    }
+
 private:
-    Scalar lambdaPm_;
+    Scalar lambdaEff_ ;
     Scalar temperatureGradientNormal_;
 };
 

@@ -149,7 +149,7 @@ public:
         Valgrind::CheckDefined(soilDensity_);
 
         soilThermalConductivity_ =
-                problem.spatialParams().soilThermalConductivity(element, fvGeometry, scvIdx);
+                problem.spatialParams().thermalConductivitySolid(element, fvGeometry, scvIdx);
         Valgrind::CheckDefined(soilThermalConductivity_);
 
         // set the enthalpies

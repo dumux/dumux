@@ -257,7 +257,7 @@ public:
                                     const ElementVolumeVariables & elemVolVars)
     {
         //lumped heat conduction of the rock matrix and the fluid phases
-        Scalar lumpedConductivity   = fluxVars.fluxVarsEnergy().lambdaPm() ;
+        Scalar lumpedConductivity   = fluxVars.fluxVarsEnergy().lambdaEff() ;
         Scalar temperatureGradientNormal  = fluxVars.fluxVarsEnergy().temperatureGradientNormal() ;
         Scalar lumpedHeatConduction = - lumpedConductivity * temperatureGradientNormal ;
         flux[energyEqIdx] += lumpedHeatConduction ;

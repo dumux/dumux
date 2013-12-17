@@ -536,7 +536,7 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
-    const Scalar  soilThermalConductivity(const Element & element,
+    const Scalar  thermalConductivitySolid(const Element & element,
                                           const FVElementGeometry & fvGeometry,
                                           const unsigned int scvIdx)const
     { return soilThermalConductivity_ ;} // conductivity of solid  [W / (m K ) ]
