@@ -138,8 +138,6 @@ public:
             // times porosity times phase saturation at the nodes i
             // and j
             //
-            // TODO (?): move this calculation to the soil (possibly
-            // that's a bad idea, though)
             Scalar red_i =
                 elemVolVars[i].fluidState().saturation(phaseIdx)/elemVolVars[i].porosity() *
                 pow(elemVolVars[i].porosity() * elemVolVars[i].fluidState().saturation(phaseIdx), 7.0/3);

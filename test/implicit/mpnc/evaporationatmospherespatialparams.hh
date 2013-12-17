@@ -206,8 +206,8 @@ public:
                 porosityFF_                 = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.FreeFlow.porosity);
                 intrinsicPermeabilityFF_    = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.FreeFlow.permeability);
 
-                soilDensity_                = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.density);
-                soilThermalConductivity_    = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.soilThermalConductivity);
+                densitySolid_               = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.density);
+                thermalConductivitySolid_    = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.soilThermalConductivity);
                 heatCapacity_               = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.heatCapacity);
 
                 aWettingNonWettingA1_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.aWettingNonWettingA1);
@@ -527,10 +527,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
-    const Scalar soilDensity(const Element & element,
+    const Scalar densitySolid(const Element & element,
                              const FVElementGeometry & fvGeometry,
                              const unsigned int scvIdx) const
-    { return soilDensity_ ;} // density of solid [kg/m^3]
+    { return densitySolid_ ;} // density of solid [kg/m^3]
 
     /*!\brief Returns the thermal conductivity \f$[W/(m K)]\f$ of the rock matrix.
      * \param element     The finite element
@@ -539,7 +539,7 @@ public:
     const Scalar  thermalConductivitySolid(const Element & element,
                                           const FVElementGeometry & fvGeometry,
                                           const unsigned int scvIdx)const
-    { return soilThermalConductivity_ ;} // conductivity of solid  [W / (m K ) ]
+    { return thermalConductivitySolid_ ;} // conductivity of solid  [W / (m K ) ]
 
     /*!\brief Give back whether the tested position (input) is a specific region (porous medium part) in the domain
      *
@@ -614,8 +614,8 @@ private:
     MaterialLawParams   materialParamsFF_ ;
 
     // solid parameters
-    Scalar soilDensity_ ;
-    Scalar soilThermalConductivity_ ;
+    Scalar densitySolid_ ;
+    Scalar thermalConductivitySolid_ ;
     Scalar heatCapacity_ ;
 
     // interfacial area parameters

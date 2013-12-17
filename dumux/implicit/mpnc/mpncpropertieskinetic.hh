@@ -39,12 +39,12 @@ NEW_TYPE_TAG(BoxMPNCKinetic, INHERITS_FROM(BoxMPNC));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(AwnSurface);   //!< The material law which ought to be used (extracted from the soil)
-NEW_PROP_TAG(AwnSurfaceParams); //!< The context material law (extracted from the soil)
-NEW_PROP_TAG(AwsSurface);   //!< The material law which ought to be used (extracted from the soil)
-NEW_PROP_TAG(AwsSurfaceParams); //!< The context material law (extracted from the soil)
-NEW_PROP_TAG(AnsSurface);   //!< The material law which ought to be used (extracted from the soil)
-NEW_PROP_TAG(AnsSurfaceParams); //!< The context material law (extracted from the soil)
+NEW_PROP_TAG(AwnSurface);   //!< The material law which ought to be used (extracted from the spatialParams)
+NEW_PROP_TAG(AwnSurfaceParams); //!< The context material law (extracted from the spatialParams)
+NEW_PROP_TAG(AwsSurface);   //!< The material law which ought to be used (extracted from the spatialParams)
+NEW_PROP_TAG(AwsSurfaceParams); //!< The context material law (extracted from the spatialParams)
+NEW_PROP_TAG(AnsSurface);   //!< The material law which ought to be used (extracted from the spatialParams)
+NEW_PROP_TAG(AnsSurfaceParams); //!< The context material law (extracted from the spatialParams)
 
 NEW_PROP_TAG(VtkAddDeltaP); // !< Output of pressure minus a fixed value
 SET_BOOL_PROP(MPNC, VtkAddDeltaP, false);

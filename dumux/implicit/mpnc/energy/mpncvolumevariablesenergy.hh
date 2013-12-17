@@ -194,9 +194,9 @@ public:
             problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
 
-        soilDensity_ =
-            problem.spatialParams().soilDensity(element, fvGeometry, scvIdx);
-        Valgrind::CheckDefined(soilDensity_);
+        densitySolid_ =
+            problem.spatialParams().densitySolid(element, fvGeometry, scvIdx);
+        Valgrind::CheckDefined(densitySolid_);
 
         // set the enthalpies
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -221,11 +221,11 @@ public:
     { return thermalConductivity_[phaseIdx] ; };
 
     /*!
-     * \brief Returns the total density of the given soil [kg / m^3] in
+     * \brief Returns the total density of the given solid phase [kg / m^3] in
      *        the sub-control volume.
      */
-    Scalar soilDensity() const
-    { return soilDensity_; };
+    Scalar densitySolid() const
+    { return densitySolid_; };
 
     /*!
      * \brief If running under valgrind this produces an error message
@@ -234,12 +234,12 @@ public:
     void checkDefined() const
     {
         Valgrind::CheckDefined(heatCapacity_);
-        Valgrind::CheckDefined(soilDensity_);
+        Valgrind::CheckDefined(densitySolid_);
     }
 
 protected:
     Scalar heatCapacity_;
-    Scalar soilDensity_;
+    Scalar densitySolid_;
     Scalar thermalConductivity_[numPhases] ;
 };
 

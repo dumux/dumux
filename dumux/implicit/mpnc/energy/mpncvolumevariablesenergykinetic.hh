@@ -138,19 +138,19 @@ public:
         Valgrind::CheckDefined(heatCapacity_);
 
         for(int phaseIdx =0; phaseIdx<numPhases; ++phaseIdx){
-            fluidThermalConductivity_[phaseIdx] =
+            thermalConductivityFluid_[phaseIdx] =
 	      FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
         }
-        Valgrind::CheckDefined(fluidThermalConductivity_);
+        Valgrind::CheckDefined(thermalConductivityFluid_);
 
 
-        soilDensity_ =
-                problem.spatialParams().soilDensity(element, fvGeometry, scvIdx);
-        Valgrind::CheckDefined(soilDensity_);
+        densitySolid_ =
+                problem.spatialParams().densitySolid(element, fvGeometry, scvIdx);
+        Valgrind::CheckDefined(densitySolid_);
 
-        soilThermalConductivity_ =
+        thermalConductivitySolid_ =
                 problem.spatialParams().thermalConductivitySolid(element, fvGeometry, scvIdx);
-        Valgrind::CheckDefined(soilThermalConductivity_);
+        Valgrind::CheckDefined(thermalConductivitySolid_);
 
         // set the enthalpies
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -176,18 +176,18 @@ public:
     { return temperature_[phaseIdx]; }
 
     /*!
-     * \brief Returns the total density of the given soil [kg / m^3] in
+     * \brief Returns the total density of the given solid phase [kg / m^3] in
      *        the sub-control volume.
      */
-    Scalar soilDensity() const
-    { return soilDensity_; }
+    Scalar densitySolid() const
+    { return densitySolid_; }
 
     /*!
-     * \brief Returns the conductivity of the given soil [kg / m^3] in
+     * \brief Returns the conductivity of the given solid phase [kg / m^3] in
      *        the sub-control volume.
      */
-    Scalar soilThermalConductivity() const
-    { return soilThermalConductivity_; }
+    Scalar thermalConductivitySolid() const
+    { return thermalConductivitySolid_; }
 
     /*!
      * \brief Returns the conductivity of the given fluid [kg / m^3] in
@@ -198,9 +198,9 @@ public:
     Scalar thermalConductivity(const unsigned int phaseIdx) const
     {
         if(phaseIdx == wPhaseIdx or phaseIdx == nPhaseIdx )
-            return fluidThermalConductivity_[phaseIdx];
+            return thermalConductivityFluid_[phaseIdx];
         else if (phaseIdx == sPhaseIdx )
-            return soilThermalConductivity_;
+            return thermalConductivitySolid_;
         else
             DUNE_THROW(Dune::NotImplemented,
                     "wrong index");
@@ -216,18 +216,18 @@ public:
     void checkDefined() const
     {
         Valgrind::CheckDefined(temperature_);
-        Valgrind::CheckDefined(fluidThermalConductivity_);
-        Valgrind::CheckDefined(soilThermalConductivity_);
-        Valgrind::CheckDefined(soilDensity_);
+        Valgrind::CheckDefined(thermalConductivityFluid_);
+        Valgrind::CheckDefined(thermalConductivitySolid_);
+        Valgrind::CheckDefined(densitySolid_);
         Valgrind::CheckDefined(heatCapacity_);
     }
 
 protected:
     Scalar temperature_[numPhases + 1];
     Scalar heatCapacity_;
-    Scalar soilDensity_;
-    Scalar soilThermalConductivity_;
-    Scalar fluidThermalConductivity_[numPhases];
+    Scalar densitySolid_;
+    Scalar thermalConductivitySolid_;
+    Scalar thermalConductivityFluid_[numPhases];
 };
 
 } // end namespace

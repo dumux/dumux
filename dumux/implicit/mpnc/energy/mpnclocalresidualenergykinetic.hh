@@ -113,7 +113,7 @@ public:
         else if(phaseIdx == sPhaseIdx) {
             // heat stored in the rock matrix
             storage[energyEq0Idx+phaseIdx] += volVars.temperature(phaseIdx) *
-                                               volVars.soilDensity() *
+                                               volVars.densitySolid() *
                                                (1.-volVars.porosity()) *
                                                volVars.heatCapacity();
         }
@@ -199,7 +199,6 @@ public:
          * CAUTION: this is not exactly correct: does diffusion carry the upstream phase enthalpy? To be more precise this should be the components enthalpy. In the same vein: Counter current diffusion is not accounted for here.
          */
         const Scalar enthalpy =  up.fluidState().enthalpy(phaseIdx) ;
-
         flux[energyEq0Idx + phaseIdx] += enthalpy * massFlux  ;
     }
     /*!
@@ -309,9 +308,9 @@ public:
         const Scalar nonWettingToSolidEnergyExchange   = factorEnergyTransfer * (Tn - Ts) / characteristicLength * ans * lambdaNS * nusseltNS  ;
 
 //#warning HEAT TRANSFER OFF
-//        const Scalar WettingToNonWettingEnergyExchange = 0. ;
-//        const Scalar WettingToSolidEnergyExchange      = 0. ;
-//        const Scalar NonWettingToSolidEnergyExchange   = 0. ;
+//        const Scalar wettingToNonWettingEnergyExchange = 0. ;
+//        const Scalar wettingToSolidEnergyExchange      = 0. ;
+//        const Scalar nonWettingToSolidEnergyExchange   = 0. ;
 
 
         for(int phaseIdx =0; phaseIdx<numEnergyEqs; ++phaseIdx){
