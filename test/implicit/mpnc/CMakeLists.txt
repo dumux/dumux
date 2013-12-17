@@ -44,12 +44,11 @@ add_dumux_test(test_boxmpnckinetic test_boxmpnckinetic test_boxmpnckinetic.cc
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/evaporationatmosphere-reference.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/evaporationatmosphere-00002.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/evaporationatmosphere-00006.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_boxmpnckinetic
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_boxmpnckinetic.input
-  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/interfacedomain.dgf
-  -TimeManager.TEnd 1e-2
-  -TimeManager.DtInitial 1e-2)
+  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/interfacedomain.dgf)
+  
 target_link_libraries(test_boxmpnckinetic ${DUNE_LIBS}  ${MPI_LIBRARIES})
 add_dune_alugrid_flags(test_boxmpnckinetic)
 add_dune_ug_flags(test_boxmpnckinetic)

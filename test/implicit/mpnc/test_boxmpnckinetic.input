@@ -11,8 +11,8 @@
 # Mandatory arguments											#
 #############################################################
 [TimeManager]
-DtInitial		= 1e-2 	# [s]
-TEnd = 1e5 # [s] 
+DtInitial		= 1.5 	# [s]
+TEnd = 10 # [s] 
 MaxTimeStepSize		= 2e20 		# maximum allowed timestep size
 
 #
@@ -29,8 +29,8 @@ File =  ./grids/interfacedomain.dgf   # ./grids/evaporationatmosphere5x79.dgf # 
 Refinement = 0
 
 #Number of elements in x-, y-, z-direction
-CellsX = 29 #
-CellsY = 65 #
+CellsX = 14 #
+CellsY = 30 #
 CellsZ = 1
 #Grading and refinement of the mesh
 Grading = 1.13
@@ -142,12 +142,12 @@ hammer = 1e4
 #############################################################
 #Nonlinear  control
 #############################################################
- [ Newton ]
- MaxSteps = "30"
- TargetSteps = "20"
+# [ Newton ]
+# MaxSteps = "30"
+# TargetSteps = "20"
 #
-[Implicit]
-MaxTimeStepDivisions=20
+# [Implicit]
+# MaxTimeStepDivisions=20
 #
 
                   

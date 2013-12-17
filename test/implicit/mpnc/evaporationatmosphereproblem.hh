@@ -138,7 +138,7 @@ SET_BOOL_PROP(EvaporationAtmosphereProblem, ImplicitEnableSmoothUpwinding, false
 SET_BOOL_PROP(EvaporationAtmosphereProblem, NewtonEnableChop, false);
 
 // use forward differences instead of central ones
-SET_INT_PROP(EvaporationAtmosphereProblem, ImplicitNumericDifferenceMethod, 0);
+SET_INT_PROP(EvaporationAtmosphereProblem, ImplicitNumericDifferenceMethod, +1);
 
 // disable partial jacobian matrix reassembly
 SET_BOOL_PROP(EvaporationAtmosphereProblem, ImplicitEnablePartialReassemble, false);
