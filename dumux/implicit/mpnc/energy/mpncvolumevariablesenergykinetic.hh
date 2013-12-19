@@ -182,12 +182,20 @@ public:
     Scalar densitySolid() const
     { return densitySolid_; }
 
+	DUNE_DEPRECATED_MSG("use densitySolid() instead")
+    Scalar soilDensity() const
+    { return densitySolid(); }
+
     /*!
      * \brief Returns the conductivity of the given solid phase [kg / m^3] in
      *        the sub-control volume.
      */
     Scalar thermalConductivitySolid() const
     { return thermalConductivitySolid_; }
+
+	DUNE_DEPRECATED_MSG("use thermalConductivitySolid() instead")
+    Scalar soilThermalConductivity() const
+    { return thermalConductivitySolid(); }
 
     /*!
      * \brief Returns the conductivity of the given fluid [kg / m^3] in

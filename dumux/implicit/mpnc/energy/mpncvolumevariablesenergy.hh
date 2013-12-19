@@ -211,21 +211,25 @@ public:
      *        the sub-control volume.
      */
     Scalar heatCapacity() const
-    { return heatCapacity_; };
+    { return heatCapacity_; }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the fluid phase in
      *        the sub-control volume.
      */
     Scalar thermalConductivity(const unsigned int phaseIdx) const
-    { return thermalConductivity_[phaseIdx] ; };
+    { return thermalConductivity_[phaseIdx] ; }
 
     /*!
      * \brief Returns the total density of the given solid phase [kg / m^3] in
      *        the sub-control volume.
      */
     Scalar densitySolid() const
-    { return densitySolid_; };
+    { return densitySolid_; }
+
+	DUNE_DEPRECATED_MSG("use densitySolid() instead")
+    Scalar soilDensity() const
+    { return densitySolid(); }
 
     /*!
      * \brief If running under valgrind this produces an error message
