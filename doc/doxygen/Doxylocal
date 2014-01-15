@@ -18,5 +18,3 @@ EXAMPLE_PATH          += @srcdir@/extradoc
 IMAGE_PATH             = @srcdir@/images
 
 EXTRA_PACKAGES        += amsmath,amssymb
-
-HAVE_DOT               = NO
