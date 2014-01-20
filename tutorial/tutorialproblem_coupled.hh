@@ -67,7 +67,6 @@ SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cu
 SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::UGGrid<2>);
 #else
 SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::YaspGrid<2>);
-std::cout << "If you want to use simpleces instead of cubes, install and use ALUGrid or UGGrid." <<< std::endl;
 #endif // HAVE_ALUGRID
 SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
 
@@ -126,6 +125,9 @@ public:
         : ParentType(timeManager, gridView)
         , eps_(3e-6)
     {
+#if !(HAVE_ALUGRID || HAVE_UG)
+      std::cout << "If you want to use simplices instead of cubes, install and use ALUGrid or UGGrid." << std::endl;
+#endif // !(HAVE_ALUGRID || HAVE_UG)
     }
 
     //! Specifies the problem name. This is used as a prefix for files
