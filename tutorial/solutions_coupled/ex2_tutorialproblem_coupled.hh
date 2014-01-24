@@ -90,7 +90,9 @@ class Ex2TutorialProblemCoupled : public ImplicitPorousMediaProblem<TypeTag> /*@
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     // Grid dimension
-    enum { dim = GridView::dimension };
+    enum { dim = GridView::dimension,
+           dimWorld = GridView::dimensionworld
+    };
 
     // Types from DUNE-Grid
     typedef typename GridView::template Codim<0>::Entity Element;
