@@ -4,6 +4,7 @@ SUBDIRS = common \
           geomechanics \
           implicit \
           material \
+          multidomain \
           references
 
 EXTRA_DIST = CMakeLists.txt
