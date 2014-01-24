@@ -28,7 +28,7 @@
 
 #include "subdomainproperties.hh"
 #include "multidomainlocaloperator.hh"
-#include <dumux/implicit/common/boxcouplinglocalresidual.hh>
+#include <dumux/multidomain/couplinglocalresiduals/boxcouplinglocalresidual.hh>
 
 /*!
  * \file
