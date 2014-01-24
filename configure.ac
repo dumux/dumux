@@ -83,6 +83,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/material/eos/Makefile 
     dumux/multidomain/Makefile 
     dumux/multidomain/common/Makefile 
+    dumux/multidomain/2cstokes2p2c/Makefile 
     dumux/nonlinear/Makefile
     dumux/parallel/Makefile 
     m4/Makefile
