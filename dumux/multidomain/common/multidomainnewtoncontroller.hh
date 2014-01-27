@@ -34,6 +34,8 @@ namespace Dumux
 template <class TypeTag>
 class MultiDomainNewtonController;
 
+template <class TypeTag>
+class MultiDomainConvergenceWriter;
 /*
 * \brief docme
 */

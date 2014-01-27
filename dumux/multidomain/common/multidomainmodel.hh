@@ -28,8 +28,8 @@
 #include "multidomainproperties.hh"
 #include "multidomainpropertydefaults.hh"
 #include "multidomainproblem.hh"
+#include "multidomainconvergencewriter.hh"
 #include "multidomainnewtoncontroller.hh"
-//#include "coupledjacobianassembler.hh"
 
 /*
 * \brief docme
