@@ -19,6 +19,8 @@
 #ifndef DUMUX_SUBDOMAIN_PROPERTIES_HH
 #define DUMUX_SUBDOMAIN_PROPERTIES_HH
 
+#include <dumux/common/propertysystem.hh>
+
 /*!
  * \file
  * \brief Specify properties required for the submodels

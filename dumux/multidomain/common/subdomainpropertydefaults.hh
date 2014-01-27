@@ -24,9 +24,12 @@
 #define DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
 
 #include <dune/grid/multidomaingrid.hh>
+#include <dune/pdelab/backend/istlvectorbackend.hh>
+#include <dune/pdelab/finiteelementmap/q1fem.hh>
 #include <dune/pdelab/finiteelementmap/conformingconstraints.hh>
 
 #include "subdomainproperties.hh"
+#include "multidomainproperties.hh"
 #include "multidomainlocaloperator.hh"
 #include <dumux/multidomain/couplinglocalresiduals/boxcouplinglocalresidual.hh>
 
