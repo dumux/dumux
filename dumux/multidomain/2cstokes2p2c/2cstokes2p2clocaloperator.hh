@@ -157,12 +157,12 @@ class TwoCStokesTwoPTwoCLocalOperator :
      *        respective positions in the matrix.
      *
      * \param intersectionGeometry the geometry of the intersection
-     * \param lfsu_s local function space of the Stokes domain
+     * \param lfsu_s local basis for the trial space of the Stokes domain
      * \param unknowns1 the unknowns vector of the Stokes element (formatted according to PDELab)
-     * \param lfsv_s docme
-     * \param lfsu_n local function space of the Darcy domain
+     * \param lfsv_s local basis for the test space of the Stokes domain
+     * \param lfsu_n local basis for the trail space of the Darcy domain
      * \param unknowns2 the unknowns vector of the Darcy element (formatted according to PDELab)
-     * \param lfsv_n docme
+     * \param lfsv_n local basis for the test space of the Darcy domain
      * \param couplingRes1 the coupling residual from the Stokes domain
      * \param couplingRes2 the coupling residual from the Darcy domain
      *
@@ -252,8 +252,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
      * \brief Update the volume variables of the element and extract the unknowns from dune-pdelab vectors
      *        and bring them into a form which fits to dumux.
      *
-     * \param lfsu_s local function space of the Stokes domain
-     * \param lfsu_n local function space of the Darcy domain
+     * \param lfsu_s local basis for the trial space of the Stokes domain
+     * \param lfsu_n local basis for the trial space of the Darcy domain
      * \param unknowns1 the unknowns vector of the Stokes element (formatted according to PDELab)
      * \param unknowns2 the unknowns vector of the Darcy element (formatted according to PDELab)
      * \param sdElement1 the element in the Stokes domain
@@ -305,8 +305,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
     /*!
      * \brief Evaluation of the coupling from Stokes (1 or s) to Darcy (2 or n).
      *
-     * \param lfsu_s local function space of the Stokes domain
-     * \param lfsu_n local function space of the Darcy domain
+     * \param lfsu_s local basis for the trial space of the Stokes domain
+     * \param lfsu_n local basis for the trial space of the Darcy domain
      * \param vertInElem1 local vertex index in element1
      * \param vertInElem2 local vertex index in element2
      * \param sdElement1 the element in the Stokes domain
@@ -456,21 +456,14 @@ class TwoCStokesTwoPTwoCLocalOperator :
             }
         }
         if (cParams.boundaryTypes2.isCouplingOutflow(contiWEqIdx2))
-        {
-            // set residualDarcy[contiLEqIdx2] = X in 2p2clocalresidual.hh
-            couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
-                                    -cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1));
-        }
-        //artificial Dirichlet conditions for testing reasons (residual of the subproblem has to be set to zero)
-        //      globalProblem_.sdProblem2().model().localResidual().residualReference(vertInElem1)[massBalanceIdx2] = 0;
-        //      couplingRes2[comp2 + massBalanceIdx2] = cParams.elemVolVarsCur2[vertInElem2].pressure() - 1.001;
+        	std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
     }
 
     /*!
      * \brief Evaluation of the coupling from Darcy (2 or n) to Stokes (1 or s).
      *
-     * \param lfsu_s local function space of the Stokes domain
-     * \param lfsu_n local function space of the Darcy domain
+     * \param lfsu_s local basis for the trial space of the Stokes domain
+     * \param lfsu_n local basis for the trial space of the Darcy domain
      * \param vertInElem1 local vertex index in element1
      * \param vertInElem2 local vertex index in element2
      * \param sdElement1 the element in the Stokes domain
@@ -529,42 +522,15 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
         //coupling residual is added to "real" residual
         //here each node is passed twice, hence only half of the dirichlet condition has to be set
-        //TODO what to do at boundary nodes which appear only once?(vertInElem1)[transportEqIdx1];
+        //TODO what to do at boundary nodes which appear only once?
         if (cParams.boundaryTypes1.isCouplingOutflow(transportEqIdx1))
         {
             // set residualStokes[transportEqIdx1] = x in stokes2clocalresidual.hh
             couplingRes1.accumulate(lfsu_s.child(transportEqIdx1), vertInElem1,
                                     -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
         }
-        // Be careful: this upwind direction won't work for transport in case of two phases
         if (cParams.boundaryTypes1.isCouplingInflow(transportEqIdx1))
-        {
-            if (globalProblem_.sdProblem2().isCornerPoint(globalPos2))
-            {
-                const Scalar advectiveFlux = normalFlux2[nPhaseIdx2] * cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2)
-                    + normalFlux2[wPhaseIdx2] * cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2);
-                const Scalar diffusiveFlux = boundaryVars2.moleFractionGrad(nPhaseIdx2) // grad X^w_g
-                    * boundaryVars2.face().normal
-                    * boundaryVars2.porousDiffCoeff(nPhaseIdx2) // D^w_g
-                    * boundaryVars2.molarDensity(nPhaseIdx2)
-                    * FluidSystem::molarMass(wCompIdx2);
-
-
-                couplingRes1.accumulate(lfsu_s.child(transportEqIdx1), vertInElem1,
-                                        -(advectiveFlux - diffusiveFlux));
-            }
-            else
-            {
-                couplingRes1.accumulate(lfsu_s.child(transportEqIdx1), vertInElem1,
-                                        globalProblem_.localResidual2().residual(vertInElem2)[contiWEqIdx2]);
-            }
-        }
-
-        //    vy as Dirichlet condition for free flow (set, if B&J defined as Dirichlet condition)
-        //        (residual of the subproblem has to be set to zero)
-        //        globalProblem_.sdProblem1().model().localResidual().residualReference(vertInElem1)[momentumYIdx] = 0;
-        //        Scalar normalVel = 0.0;//cParams.elemVolVarsCur1[vertInElem1].velocity[1];
-        //        couplingRes1[comp1+momentumYIdx1] = cParams.elemVolVarsCur1[vertInElem1].velocity[1] - normalVel;//1*bfArea1;
+        	std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
     }
 
  protected:
