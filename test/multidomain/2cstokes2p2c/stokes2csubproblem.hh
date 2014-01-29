@@ -19,7 +19,7 @@
 /**
  * \file
  * \ingroup Stokes2cProblems
- * \brief  Definition of an isothermal compositional Stokes problem
+ * \brief  Isothermal compositional Stokes subproblem with coupling at the bottom boundary.
  */
 #ifndef DUMUX_STOKES2C_SUBPROBLEM_HH
 #define DUMUX_STOKES2C_SUBPROBLEM_HH
@@ -107,19 +107,20 @@ SET_BOOL_PROP(Stokes2cSubProblem, EnableNavierStokes, false);
 }
 
 /*!
- * \ingroup Stokes2cBoxProblems
- * \brief Stokes2c problem with air flowing
+ * \ingroup BoxStokesncModel
+ * \ingroup ImplicitTestProblems
+ * \brief Stokes2c subproblem with air flowing
  *        from the left to the right.
  *
- * The stokes subdomain is sized 1m times 1m. The boundary conditions for the momentum balances
- * are all set to Dirichlet. The mass balance receives
+ * The stokes subdomain is sized 0.25m times 0.25m. The boundary conditions
+ * for the momentum balances are all set to Dirichlet, except on the right
+ * boundary, where outflow conditions are set. The mass balance receives
  * outflow bcs, which are replaced in the localresidual by the sum
- * of the two momentum balances. In the middle of the right boundary,
- * one vertex receives Dirichlet bcs, to set the pressure level.
+ * of the two momentum balances. On the right boundary Dirichlet bcs are
+ * set for the pressure.
  *
  * This sub problem uses the \ref Stokes2cModel. It is part of the 2cstokes2p2c model and
  * is combined with the 2p2csubproblem for the Darcy domain.
- *
  */
 template <class TypeTag>
 class Stokes2cSubProblem : public StokesProblem<TypeTag>
@@ -134,13 +135,13 @@ class Stokes2cSubProblem : public StokesProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum {
 
+    enum {
         // Number of equations and grid dimension
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
-        dim = GridView::dimension,
-
-        // copy some indices for convenience
+        dim = GridView::dimension
+    };
+    enum { // equation indices
         massBalanceIdx = Indices::massBalanceIdx,
 
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
@@ -182,7 +183,7 @@ class Stokes2cSubProblem : public StokesProblem<TypeTag>
 
 public:
     /*!
-     * \brief docme
+     * \brief The sub-problem for the free-flow compartment
      *
      * \param timeManager The time manager
      * \param gridView The grid view
@@ -234,7 +235,8 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * This problem assumes a temperature of 10 degrees Celsius.
+     * This problem assumes a constant temperature, which can
+     * be set in the parameter file.
      */
     Scalar temperature() const
     {
@@ -270,7 +272,6 @@ public:
                 values.setAllDirichlet();
         }
 
-
         if (onRightBoundary_(globalPos))
         {
             values.setAllOutflow();
@@ -285,22 +286,12 @@ public:
             values.setNeumann(transportEqIdx);
 
             if (globalPos[0] > runUpDistanceX_-eps_ && time > initializationTime_)
-            {
                 values.setAllCouplingOutflow();
-//                values.setCouplingInflow(energyEqIdx);
-            }
         }
 
         // the mass balance has to be of type outflow
         // it does not get a coupling condition, since pn is a condition for stokes
         values.setOutflow(massBalanceIdx);
-        //        // set all corner points to dirichlet
-        //        if ((onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) &&
-        //                (onUpperBoundary_(globalPos) || onLowerBoundary_(globalPos)))
-        //        {
-        //            values.setAllDirichlet();
-        ////            values.setCouplingOutflow(momentumXIdx);
-        //        }
 
         // set pressure at one point, do NOT specify this
         // if the Darcy domain has a Dirichlet condition for pressure
@@ -357,10 +348,8 @@ public:
         if (onLeftBoundary_(globalPos)
                 && globalPos[1] > bboxMin_[1] && globalPos[1] < bboxMax_[1])
         {
-            values[transportEqIdx] = -xVelocity*density*refMassfrac_;
-
-//                    (globalPos[1] - bboxMin_[1])*(bboxMax_[1] - globalPos[1])
-//                                    / (0.25*height_()*height_()));
+        	// rho*v*X at inflow
+        	values[transportEqIdx] = -xVelocity*density*refMassfrac_;
         }
     }
 
@@ -371,7 +360,7 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param is The intersection between element and boundary
-     * \param scvIdx The local subcontrolvolume index
+     * \param scvIdx The local subcontrol volume index
      * \param boundaryFaceIdx The index of the boundary face
      *
      * \return Beavers-Joseph coefficient
@@ -461,9 +450,9 @@ public:
     // required in case of mortar coupling
     // otherwise it should return false
     /*!
-     * \brief docme
+     * \brief Auxiliary function used for the mortar coupling
      *
-     * \param global Pos The global position
+     * \param globalPos The global position
      *
      */
     bool isInterfaceCornerPoint(const GlobalPosition &globalPos) const
@@ -508,19 +497,26 @@ private:
         values[massOrMoleFracIdx] = refMassfrac_;
     }
 
+    // set the profile of the inflow velocity (horizontal direction)
     const Scalar xVelocity_(const GlobalPosition &globalPos) const
     {
         const Scalar vmax = vxMax_ + hourlyVariation_(sinusVelVar_);
-        // const Scalar relativeHeight = (globalPos[1]-bboxMin_[1])/height_();
-        // linear profile
-//        return vmax*relativeHeight + bjSlipVel_; // BJ slip velocity is added as sqrt(Kxx)
+
         // parabolic profile
         return  4*vmax*(globalPos[1] - bboxMin_[1])*(bboxMax_[1] - globalPos[1])
                 / (height_()*height_()) + bjSlipVel_;
+
+        // linear profile
+        // const Scalar relativeHeight = (globalPos[1]-bboxMin_[1])/height_();
+//        return vmax*relativeHeight + bjSlipVel_; // BJ slip velocity is added as sqrt(Kxx)
+
+
         // logarithmic profile
+        // const Scalar relativeHeight = (globalPos[1]-bboxMin_[1])/height_();
 //        return 0.1*vmax*log((relativeHeight+1e-3)/1e-3) + bjSlipVel_;
     }
 
+    // updates the fluid state to obtain required quantities for IC/BC
     void updateFluidStateForBC_(FluidState& fluidState) const
     {
         fluidState.setTemperature(refTemperature());
@@ -540,12 +536,14 @@ private:
         fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massFraction[phaseCompIdx]*M1/massToMoleDenominator);
     }
 
+    // can be used for the diurnal variation of a boundary condition
     const Scalar diurnalVariation_(const Scalar value) const
     {
         const Scalar time = this->timeManager().time();
         return sin(2*M_PI*time/86400) * value;
     }
 
+    // can be used for the hourly variation of a boundary condition
     const Scalar hourlyVariation_(const Scalar value) const
     {
         const Scalar time = this->timeManager().time();
@@ -570,6 +568,7 @@ private:
                 || onLowerBoundary_(globalPos) || onUpperBoundary_(globalPos));
     }
 
+    // the height of the free-flow domain
     const Scalar height_() const
     { return bboxMax_[1] - bboxMin_[1]; }
 

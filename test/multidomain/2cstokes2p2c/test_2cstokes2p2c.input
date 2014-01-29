@@ -26,7 +26,7 @@ MaxTimeStepSize = 180
 InitTime = 864 
 
 #Simulation end
-TEnd= 1.3e6
+TEnd= 0.6e6
 
 #Define the length of an episode (for output)
 EpisodeLength = 43200
@@ -89,10 +89,10 @@ VxMax = 3.5
 BeaversJosephSlipVel = 0.00134
 SinusVelVar = 0.0
 ExponentMTC = 0.0 # 1./6., Mass transfer coefficient for S^MTC
-UseBoundaryLayerModel = 9 # integer, 0 for no boundary layer model, 1 for Blasius, 2 for turbulent BL, 3 for constant thickness
+UseBoundaryLayerModel = 0 # integer, 0 for no boundary layer model, 1 for Blasius, 2 for turbulent BL, 3 for constant thickness
 BoundaryLayerOffset = 0.0 # For BL model like Blasius, determines a virtual run-up distance for the flow
-ConstThickness = 0.0018 # for a constant BL thickness, use BL model 3
-MassTransferModel = 2 # 0 for none, 1 for power law, 2 for Schluender model
+ConstThickness = 0.0016 # for a constant BL thickness, use BL model 3
+MassTransferModel = 0 # 0 for none, 1 for power law, 2 for Schluender model
 
 #############################################################
 [PorousMedium]
@@ -101,7 +101,7 @@ RefPressurePM = 1e5
 RefTemperaturePM = 298.15
 InitialSw1 = 0.98
 InitialSw2 = 0.98
-CharPoreDiameter = 1e-4
+CharPoreDiameter = 1e-4 # for Schluender mass-transfer model
 
 #############################################################
 [SpatialParams]
@@ -111,7 +111,7 @@ AlphaBJ = 1.0
 
 # for homogeneous setups (0 for heterogeneous):
 SoilType = 2
-RegularizationThreshold = 1e-2
+RegularizationThreshold = 1e-2 # linearization threshold for pc-Sw
 
 # GStat stuff, only required for SoilType=0
 GenerateNewPermeability = true
@@ -167,4 +167,3 @@ MaxTimeStepDivisions = 20
 ResidualReduction = 1e-10
 Verbosity = 0
 MaxIterations = 200
-

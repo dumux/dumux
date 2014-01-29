@@ -93,7 +93,6 @@ public:
     typedef FluidSystem type;
 };
 
-
 // use formulation based on mass fractions
 SET_BOOL_PROP(TwoPTwoCSubProblem, UseMoles, false);
 
@@ -104,6 +103,21 @@ SET_BOOL_PROP(TwoPTwoCSubProblem, VtkAddVelocity, true);
 SET_BOOL_PROP(TwoPTwoCSubProblem, ProblemEnableGravity, true);
 }
 
+/*!
+ * \ingroup Stokes2cBoxProblems
+ * \brief Stokes2c problem with air flowing
+ *        from the left to the right.
+ *
+ * The stokes subdomain is sized 1m times 1m. The boundary conditions for the momentum balances
+ * are all set to Dirichlet. The mass balance receives
+ * outflow bcs, which are replaced in the localresidual by the sum
+ * of the two momentum balances. In the middle of the right boundary,
+ * one vertex receives Dirichlet bcs, to set the pressure level.
+ *
+ * This sub problem uses the \ref Stokes2cModel. It is part of the 2cstokes2p2c model and
+ * is combined with the 2p2csubproblem for the Darcy domain.
+ *
+ */
 template <class TypeTag = TTAG(TwoPTwoCSubProblem) >
 class TwoPTwoCSubProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
@@ -312,11 +326,11 @@ public:
     /*!
      * \brief Return the initial phase state inside a control volume.
      *
-     * \param vert The vertex
+     * \param vertex The vertex
      * \param globalIdx The index of the global vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const Vertex &vert,
+    int initialPhasePresence(const Vertex &vertex,
                              const int &globalIdx,
                              const GlobalPosition &globalPos) const
     {
