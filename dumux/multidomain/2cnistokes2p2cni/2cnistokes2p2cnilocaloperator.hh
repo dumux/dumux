@@ -26,8 +26,8 @@
 
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2clocaloperator.hh>
 
-#include <dumux/freeflow/stokesncni/stokesncnimodel.hh>
-#include <dumux/implicit/2p2cnicoupling/2p2cnicouplingmodel.hh>
+//#include <dumux/freeflow/stokesncni/stokesncnimodel.hh>
+//#include <dumux/implicit/2p2cnicoupling/2p2cnicouplingmodel.hh>
 
 namespace Dumux {
 

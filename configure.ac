@@ -131,6 +131,7 @@ AC_CONFIG_FILES([dumux.pc
     test/material/tabulation/Makefile
     test/multidomain/Makefile
     test/multidomain/2cstokes2p2c/Makefile
+    test/multidomain/2cnistokes2p2cni/Makefile
     test/references/Makefile
     tutorial/Makefile
 ])
