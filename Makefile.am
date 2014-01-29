@@ -6,11 +6,8 @@ EXTRA_DIST = \
   bin/runTest.sh  \
   cmake/modules/CMakeLists.txt \
   cmake/modules/*.cmake \
-  cmake/pkg/dumux-config.cmake.in \
   CMakeLists.txt \
   config.h.cmake \
-  dumux-config.cmake.in \
-  dumux-version.cmake.in \
   INSTALL.cmake \
   dune.module \
   CHANGELOG COPYING README \
