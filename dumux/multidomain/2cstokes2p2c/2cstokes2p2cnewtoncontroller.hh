@@ -50,9 +50,7 @@ public:
         : ParentType(problem)
     {  }
 
-    /*!
-     * \brief Indicates that one Newton iteration was finished.
-     */
+    //! \copydoc Dumux::NewtonController::newtonEndStep()
     void newtonEndStep(SolutionVector &uCurrentIter, SolutionVector &uLastIter)
     {
         ParentType::newtonEndStep(uCurrentIter, uLastIter);
