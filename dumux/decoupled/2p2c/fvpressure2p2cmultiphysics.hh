@@ -126,8 +126,8 @@ public:
     void get1pFluxOnBoundary(EntryType&,
                             const Intersection&, const CellData&);
 
-    //initialize mult-physics-specific pressure model stuff
-    void initialize()
+    //initialize multi-physics-specific pressure model constituents
+    void initialize(bool solveTwice = false)
     {
         // assign whole domain to most complex subdomain, => 2p
         int size = this->problem().gridView().size(0);
@@ -398,7 +398,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
     // compressibility term: 1p domain, so no dv_dp calculated
     if (true)
     {
-        Scalar incp = 1e-2;
+        Scalar& incp = this->incp_;
 
         // numerical derivative of fluid volume with respect to pressure
         PhaseVector p_(incp);
@@ -429,7 +429,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
             // dV_dp > 0 is unphysical: Try inverse increment for secant
             if (cellDataI.dv_dp()>0)
             {
-                Dune::dinfo <<__FILE__<< "dv_dp still larger 0 after inverting secant"<< std::endl;
+                Dune::dinfo <<__FILE__<< "dv_dp still larger 0 after inverting secant. regularize"<< std::endl;
+                cellDataI.dv_dp() *= -1;
             }
         }
 

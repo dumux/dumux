@@ -341,10 +341,16 @@ public:
                 if(dim >=3)
                     permZ_[globalIdx] = problem_.spatialParams().intrinsicPermeability(*eIt)[2][2];
             }
-            *permPtrY = permY_;
-            *permPtrZ = permZ_;
-            initializationOutputWriter_.attachCellData(*permPtrY, "permeability Y");
-            initializationOutputWriter_.attachCellData(*permPtrZ, "permeability Z");
+            if(dim >=2)
+            {
+                *permPtrY = permY_;
+                initializationOutputWriter_.attachCellData(*permPtrY, "permeability Y");
+            }
+            if(dim >=3)
+            {
+                *permPtrZ = permZ_;
+                initializationOutputWriter_.attachCellData(*permPtrZ, "permeability Z");
+            }
         }
 #endif
 
@@ -385,6 +391,8 @@ protected:
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
+
+    Scalar incp_ = 1e1; //!< Increment for the volume derivative w.r.t pressure
 
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
 private:
@@ -777,7 +785,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
         if(fabs(massIncrement[compIdx]) < 1e-8 * cellData.density(compIdx))
             massIncrement[compIdx] = 1e-8* cellData.density(compIdx);   // as phaseIdx = compIdx
     }
-    Scalar incp = 1e-2;
+    Scalar& incp = incp_;
 
     /**********************************
      * c) Secant method for derivatives

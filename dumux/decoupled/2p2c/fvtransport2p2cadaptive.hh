@@ -493,17 +493,21 @@ void FVTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2>&
             if(potential[phaseIdx] > 0.)
             {
                 lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
-                cellDataI.setUpwindCell(intersectionIterator->indexInInside(), contiEqIdx, true);
+                if(elementI->level()>neighborPointer->level())
+                    cellDataI.setUpwindCell(intersectionIterator->indexInInside(), contiEqIdx, true);
             }
             else if(potential[phaseIdx] < 0.)
             {
                 lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
-                cellDataI.setUpwindCell(intersectionIterator->indexInInside(), contiEqIdx, false);
+                if(elementI->level()>neighborPointer->level())
+                    cellDataI.setUpwindCell(intersectionIterator->indexInInside(), contiEqIdx, false);
             }
             else
             {
                 doUpwinding[phaseIdx] = false;
+                if(elementI->level()>neighborPointer->level())
                 cellDataI.setUpwindCell(intersectionIterator->indexInInside(), contiEqIdx, false);
+                else
                 cellDataJ.setUpwindCell(intersectionIterator->indexInOutside(), contiEqIdx, false);
             }
         }
@@ -525,10 +529,10 @@ void FVTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2>&
                 doUpwinding[phaseIdx] = false;
             else    // i.e. restrictFluxInTransport == 1
             {
-               //check if harmonic weithing is necessary
-                if (!cellIwasUpwindCell && cellDataJ.mobility(phaseIdx) != 0.) // check if outflow induce neglected (i.e. mob=0) phase flux
+               //check if harmonic weighting is necessary
+                if (potential[phaseIdx] > 0. && cellDataJ.mobility(phaseIdx) != 0.) // check if outflow induce neglected (i.e. mob=0) phase flux
                     lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
-                else if (cellIwasUpwindCell && cellDataI.mobility(phaseIdx) != 0.) // check if inflow induce neglected phase flux
+                else if (potential[phaseIdx] < 0. && cellDataI.mobility(phaseIdx) != 0.) // check if inflow induce neglected phase flux
                     lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
                 else
                     doUpwinding[phaseIdx] = false;

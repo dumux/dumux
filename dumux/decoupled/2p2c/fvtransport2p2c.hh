@@ -108,10 +108,12 @@ class FVTransport2P2C
     typedef Dune::FieldVector<Scalar, NumComponents> ComponentVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
-protected:
+public:
     //! @copydoc FVPressure::EntryType
     typedef Dune::FieldVector<Scalar, 2> EntryType;
+    typedef Dune::FieldVector<Scalar, 2> TimeStepFluxType;
 
+protected:
     struct LocalTimesteppingData
     {
         Dune::FieldVector<EntryType, 2*dim> faceFluxes;
@@ -167,7 +169,7 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        if(problem().vtkOutputLevel()>=3)
+        if(problem().vtkOutputLevel()>3)
         {
             typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
             int size = problem_.gridView().size(0);
@@ -300,14 +302,6 @@ protected:
     Scalar accumulatedDt_; //! Current time-interval in sub-time-stepping routine
     const Scalar dtThreshold_; //! Threshold for sub-time-stepping routine
     std::vector<LocalTimesteppingData> timeStepData_; //! Stores data for sub-time-stepping
-private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc Dumux::IMPETProblem::asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
 
     void updatedTargetDt_(Scalar &dt);
 
@@ -320,6 +314,16 @@ private:
     Scalar subCFLFactor_;
     bool localTimeStepping_;
     int verbosity_;
+
+
+private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 };
 
 //! \brief Calculate the update vector and determine timestep size
@@ -705,11 +709,11 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
                 doUpwinding[phaseIdx] = false;
             else    // i.e. restrictFluxInTransport == 1
             {
-               //check if harmonic weithing is necessary
-                if (!wasUpwindCell && (cellDataJ.mobility(phaseIdx) != 0.   // check if outflow induce neglected (i.e. mob=0) phase flux
+               //check if harmonic weighting is necessary
+                if (potential[phaseIdx] > 0. && (cellDataJ.mobility(phaseIdx) != 0.   // check if outflow induce neglected (i.e. mob=0) phase flux
                        or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())))
                     lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
-                else if (wasUpwindCell && (cellDataI.mobility(phaseIdx) != 0. // check if inflow induce neglected phase flux
+                else if (potential[phaseIdx] < 0. && (cellDataI.mobility(phaseIdx) != 0. // check if inflow induce neglected phase flux
                         or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())))
                     lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
                 else
