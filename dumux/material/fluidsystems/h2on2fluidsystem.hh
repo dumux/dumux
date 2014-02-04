@@ -630,12 +630,10 @@ public:
             // "partial specific enthalpies" of the components.
             Scalar hH2O =
                 fluidState.massFraction(nPhaseIdx, H2OIdx)
-                * H2O::gasEnthalpy(T,
-                                   p*fluidState.moleFraction(nPhaseIdx, H2OIdx));
+                * H2O::gasEnthalpy(T, p);
             Scalar hN2 =
                 fluidState.massFraction(nPhaseIdx, N2Idx)
-                * N2::gasEnthalpy(T,
-                                  p*fluidState.moleFraction(nPhaseIdx, N2Idx));
+                * N2::gasEnthalpy(T, p);
             return hH2O + hN2;
         }
     }
