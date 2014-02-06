@@ -30,7 +30,7 @@
 #endif
 
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
-#include <dumux/freeflow/stokes2cni/stokes2cnimodel.hh>
+#include <dumux/freeflow/stokesncni/stokesncnimodel.hh>
 
 namespace Dumux
 {
@@ -43,7 +43,7 @@ class Stokes2cniTestProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(Stokes2cniTestProblem, INHERITS_FROM(BoxStokes2cni));
+NEW_TYPE_TAG(Stokes2cniTestProblem, INHERITS_FROM(BoxStokesncni));
 
 // Set the grid type
 SET_TYPE_PROP(Stokes2cniTestProblem, Grid, Dune::SGrid<2,2>);
@@ -73,9 +73,9 @@ SET_BOOL_PROP(Stokes2cniTestProblem, ProblemEnableGravity, true);
 }
 
 /*!
- * \ingroup BoxStokes2cniModel
+ * \ingroup BoxStokesncniModel
  * \ingroup ImplicitTestProblems
- * \brief Stokes2cni problem with air flowing
+ * \brief Stokesncni problem with air flowing
  *        from the bottom to the top, blowing away a warm and dry square.
  *
  * The domain is sized 1m times 1m. An air flow from the bottom boundary blows a warm and dry square,
@@ -86,7 +86,7 @@ SET_BOOL_PROP(Stokes2cniTestProblem, ProblemEnableGravity, true);
  * On the upper boundary a Dirichlet condition is set for the mass balance to fix the pressure.
  * Gravity is on in this example.
  *
- * This problem uses the \ref BoxStokes2cniModel.
+ * This problem uses the \ref BoxStokesncniModel.
  * To run the simulation execute the following line in shell:
  * <tt>./test_stokes2cni  -parameterFile ./test_stokes2cni.input</tt>
  */
