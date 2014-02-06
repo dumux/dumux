@@ -85,7 +85,8 @@ public:
 		// Model is restricted to 2 components when using mass fractions
 		if (!useMoles && numComponents>2) 
 		{
-			DUNE_THROW(Dune::NotImplemented, "This model is restricted to 2 components when using mass fractions! To use mole fractions set property UseMoles true ...");
+			DUNE_THROW(Dune::NotImplemented, "This model is restricted to 2 components when using mass fractions!\
+			                                  To use mole fractions set property UseMoles true ...");
 		}
 		
 		// set the mole fractions first
@@ -148,7 +149,7 @@ public:
 
 			// convert mass to mole fractions and set the fluid state
 			fluidState.setMoleFraction(phaseIdx, transportCompIdx, massOrMoleFrac[transportCompIdx]*avgMolarMass/M1);
-			fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massOrMoleFrac[phaseCompIdx]*avgMolarMass/M2);	  
+			fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massOrMoleFrac[phaseCompIdx]*avgMolarMass/M2);
 		}
 		else
 		{

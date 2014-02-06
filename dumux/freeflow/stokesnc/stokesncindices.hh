@@ -45,29 +45,39 @@ struct StokesncCommonIndices : public StokesCommonIndices<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-	
-	// Dimension (copied for convenience)
+
+    // Dimension (copied for convenience)
     static const int dim = StokesCommonIndices<TypeTag>::dim; //!< Number of dimensions
 
     // Phase Index
-    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx); //!< Index of the employed phase in case of a two-phase fluidsystem (set by default to nPhase)
+    //!< Index of the employed phase in case of a two-phase fluidsystem (set by default to nPhase)
+    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
-	// Number of Components
-	static const int numComponents = FluidSystem::numComponents; //!< Number of components in employed fluidsystem
-	
-	// Component indices
-	static const int phaseCompIdx = phaseIdx; //!< The index of the main component of the considered phase
-	static const int transportCompIdx = (unsigned int)(1-phaseIdx); //!< The index of the first transported component; ASSUMES phase indices of 0 and 1
-	
-	// Transport equation indices
-	static const int conti0EqIdx = PVOffset + dim; //!< The index of the mass conservation equation of the first component. In analogy to porous media models "conti" is used here to describe mass conservation equations, i.e total mass balance and transport equations.
-	static const int massBalanceIdx = conti0EqIdx + phaseCompIdx; //!< The index of the mass balance equation sits on the slot of the employed phase
-	static const int transportEqIdx = conti0EqIdx + transportCompIdx; //!< The index of the transport equation for a two component model. For n>2 please don't use this index, because it looses its actual meaning.
-	
-	// Primary variables
-	static const int massOrMoleFracIdx = transportEqIdx; //!< The index of the first mass or mole fraction of the transported component in primary variable vectors
-	static const int pressureIdx = massBalanceIdx; //!< The index of the pressure in primary variable vectors
-    
+    // Number of Components
+    //!< Number of components in employed fluidsystem
+    static const int numComponents = FluidSystem::numComponents;
+
+    // Component indices
+    //!< The index of the main component of the considered phase
+    static const int phaseCompIdx = phaseIdx;
+    //!< The index of the first transported component; ASSUMES phase indices of 0 and 1
+    static const int transportCompIdx = (unsigned int)(1-phaseIdx);
+
+    // Transport equation indices
+    //!< The index of the mass conservation equation of the first component. In analogy to porous media models "conti"
+    //!< is used here to describe mass conservation equations, i.e total mass balance and transport equations.
+    static const int conti0EqIdx = PVOffset + dim;
+    //!< The index of the mass balance equation sits on the slot of the employed phase
+    static const int massBalanceIdx = conti0EqIdx + phaseCompIdx;
+    //!< The index of the transport equation for a two component model.
+    //!< For n>2 please don't use this index, because it looses its actual meaning.
+    static const int transportEqIdx = conti0EqIdx + transportCompIdx;
+
+    // Primary variables
+    //!< The index of the first mass or mole fraction of the transported component in primary variable vectors
+    static const int massOrMoleFracIdx = transportEqIdx;
+    //!< The index of the pressure in primary variable vectors
+    static const int pressureIdx = massBalanceIdx;
 };
 } // end namespace
 
