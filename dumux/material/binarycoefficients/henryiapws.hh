@@ -39,6 +39,10 @@ namespace Dumux
  * Distribution Constant for Gases in H2O and D2O at High
  * Temperatures"
  * http://www.iapws.org/relguide/HenGuide.pdf
+ *
+ * Range of validity: T = {278.12 ; 636.46}
+ * approximations beyond this range are increasingly incorrect.
+ * However, close to the critical the values are more, again.
  */
 template <class Scalar>
 inline Scalar henryIAPWS(Scalar E,
@@ -48,6 +52,11 @@ inline Scalar henryIAPWS(Scalar E,
                          Scalar temperature)
 {
     typedef Dumux::H2O<Scalar> H2O;
+
+    // regularizing temperature helps for stability.
+    // Results are unphysical!
+    if (temperature > H2O::criticalTemperature()  )
+    	temperature = H2O::criticalTemperature()  ;
 
     Scalar Tr = temperature/H2O::criticalTemperature();
     Scalar tau = 1 - Tr;
