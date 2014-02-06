@@ -45,7 +45,8 @@ namespace Dumux
  * 
  * and solves the mass continuity equation:
  * \f[
- \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
+ \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
+ - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
  * \f]
  * All equations are discretized using a vertex-centered finite volume (box)
  * or cell-centered finite volume scheme as spatial

@@ -53,8 +53,8 @@ namespace Dumux {
  (\textbf{grad}\; p_\alpha - \varrho_\alpha \mbox{\bf g}) \right\}
  \nonumber \\
  \nonumber \\
- && - \sum\limits_\alpha \text{div} \left\{ D_{\alpha,\text{pm}}^\kappa \varrho_\alpha \frac{M^\kappa}{M_\alpha}
- \textbf{grad} x^\kappa_{\alpha} \right\}
+ && - \sum\limits_\alpha \text{div} \left\{ D_{\alpha,\text{pm}}^\kappa
+ \varrho_\alpha \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa_{\alpha} \right\}
  - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha
  \f}
  *
@@ -88,8 +88,11 @@ namespace Dumux {
  * An adaptive primary variable switch is included. The phase state is stored for all nodes
  * of the system. The following cases can be distinguished:
  * <ul>
- *  <li> All three phases are present: Primary variables are two saturations \f$(S_w\f$ and \f$S_n)\f$, a pressure, in this case \f$p_g\f$, and the temperature \f$T\f$. </li>
- *  <li> Only the water phase is present: Primary variables are now the mole fractions of air and contaminant in the water phase \f$(x_w^a\f$ and \f$x_w^c)\f$, as well as temperature and the gas pressure, which is, of course, in a case where only the water phase is present, just the same as the water pressure. </li>
+ *  <li> All three phases are present: Primary variables are two saturations \f$(S_w\f$ and \f$S_n)\f$,
+ *       a pressure, in this case \f$p_g\f$, and the temperature \f$T\f$. </li>
+ *  <li> Only the water phase is present: Primary variables are now the mole fractions of air and
+ *       contaminant in the water phase \f$(x_w^a\f$ and \f$x_w^c)\f$, as well as temperature and the gas pressure,
+ *       which is, of course, in a case where only the water phase is present, just the same as the water pressure. </li>
  *  <li> Gas and NAPL phases are present: Primary variables \f$(S_n\f$, \f$x_g^w\f$, \f$p_g\f$, \f$T)\f$. </li>
  *  <li> Water and NAPL phases are present: Primary variables \f$(S_n\f$, \f$x_w^a\f$, \f$p_g\f$, \f$T)\f$. </li>
  *  <li> Only gas phase is present: Primary variables \f$(x_g^w\f$, \f$x_g^c\f$, \f$p_g\f$, \f$T)\f$. </li>

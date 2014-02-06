@@ -730,7 +730,8 @@ private:
 };
 
 template <class TypeTag>
-const typename ThreePThreeCVolumeVariables<TypeTag>::Scalar ThreePThreeCVolumeVariables<TypeTag>::R = Constants<typename GET_PROP_TYPE(TypeTag, Scalar)>::R;
+const typename ThreePThreeCVolumeVariables<TypeTag>::Scalar ThreePThreeCVolumeVariables<TypeTag>::R
+                 = Constants<typename GET_PROP_TYPE(TypeTag, Scalar)>::R;
 
 } // end namespace
 

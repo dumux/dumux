@@ -71,7 +71,8 @@ public:
             gasFlux_(fluxes, fluxVars, molarDensity);
         else if ( FluidSystem::isLiquid(phaseIdx) ){
             #if MACROSCALE_DIFFUSION_ONLY_GAS
-                    return ; // in the case that only the diffusion in the gas phase is considered, the liquidFlux should not be called
+                    return ; // in the case that only the diffusion in the gas phase is considered,
+                             // the liquidFlux should not be called
             #endif
             liquidFlux_(fluxes, fluxVars, molarDensity);
         }
@@ -155,7 +156,8 @@ protected:
                 fluxes[compIdx] =
                     - xGrad *
                     molarDensity
-                    * fluxVars.porousDiffCoeffG(compIdx, nCompIdx) ; // this is == 0 for nComp==comp, i.e. no diffusion of the main component of the phase
+                    * fluxVars.porousDiffCoeffG(compIdx, nCompIdx) ; // this is == 0 for nComp==comp,
+                                                                     // i.e. no diffusion of the main component of the phase
                 }
         }
     }

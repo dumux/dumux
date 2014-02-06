@@ -104,8 +104,8 @@ public:
         this->resizePhaseBuffer_(prandtlNumber_);
         this->resizePhaseBuffer_(nusseltNumber_);
 
-
-        if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/) {
+        /*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/
+        if (velocityAveragingInModel and not velocityOutput) {
             Scalar numVertices = this->problem_.gridView().size(dim);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 velocity_[phaseIdx].resize(numVertices);
@@ -158,8 +158,10 @@ public:
             aws_[globalIdx]          = volVars.interfacialArea(wPhaseIdx, sPhaseIdx);
             ans_[globalIdx]          = volVars.interfacialArea(nPhaseIdx, sPhaseIdx);
 
-            if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/){
-                int numVertices = this->problem_.gridView().size(dim); // numVertices for vertexCentereed, numVolumes for volume centered
+            /*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/
+            if (velocityAveragingInModel and not velocityOutput){
+                // numVertices for vertexCentereed, numVolumes for volume centered
+                int numVertices = this->problem_.gridView().size(dim);
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     for (int I = 0; I < numVertices; ++I)
                         velocity_[phaseIdx][I] = this->problem_.model().volumeDarcyVelocity(phaseIdx, I);
@@ -196,7 +198,8 @@ public:
             this->commitPhaseBuffer_(writer, "prandtlNumber_%s", prandtlNumber_);
         if (nusseltOutput)
             this->commitPhaseBuffer_(writer, "nusseltNumber_%s", nusseltNumber_);
-        if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two timies the same field name*/){
+        /*only one of the two output options, otherwise paraview segfaults due to two timies the same field name*/
+        if (velocityAveragingInModel and not velocityOutput){
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 // commit the phase velocity
                 std::ostringstream oss;

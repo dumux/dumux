@@ -99,17 +99,19 @@ public:
                 const unsigned int scvIdx)
     {
         // obtain (standard) material parameters (needed for the residual saturations)
-        const MaterialLawParams & materialParams  = problem.spatialParams().materialLawParams(element,fvGeometry,scvIdx) ;
+        const MaterialLawParams & materialParams  = problem.spatialParams().materialLawParams(element,fvGeometry,scvIdx);
 
         //obtain parameters for interfacial area constitutive relations
-        const AwnSurfaceParams & aWettingNonWettingSurfaceParams    = problem.spatialParams().aWettingNonWettingSurfaceParams(element,fvGeometry,scvIdx) ;
-        const AnsSurfaceParams & aNonWettingSolidSurfaceParams      = problem.spatialParams().aNonWettingSolidSurfaceParams(element,fvGeometry,scvIdx) ;
+        const AwnSurfaceParams & aWettingNonWettingSurfaceParams
+               = problem.spatialParams().aWettingNonWettingSurfaceParams(element,fvGeometry,scvIdx);
+        const AnsSurfaceParams & aNonWettingSolidSurfaceParams
+               = problem.spatialParams().aNonWettingSolidSurfaceParams(element,fvGeometry,scvIdx);
 
         Valgrind::CheckDefined(aWettingNonWettingSurfaceParams);
         Valgrind::CheckDefined(aNonWettingSolidSurfaceParams);
 
-        const Scalar pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx) ;
-        const Scalar Sw = fluidState.saturation(wPhaseIdx)  ;
+        const Scalar pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx);
+        const Scalar Sw = fluidState.saturation(wPhaseIdx);
         Valgrind::CheckDefined(Sw);
         Valgrind::CheckDefined(pc);
         Scalar awn;
@@ -168,9 +170,10 @@ if (AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams,
 //                positionString << " x"<< (i+1) << "="  << globalPos[i] << " "   ;
 //            positionString << "\n";
 //
-//        	std::cout<<"a_{ns} > a_s, set a_{ns}=" << ans <<" to a_{ns}=a_s="<<solidSurface_ << " with S_w="<< Sw << " p_c= "<< pc <<  positionString.str() ;
+//              std::cout<<"a_{ns} > a_s, set a_{ns}=" << ans <<" to a_{ns}=a_s="<<solidSurface_ << "
+//                                    with S_w="<< Sw << " p_c= "<< pc <<  positionString.str() ;
 //
-//        	ans = solidSurface_ ;
+//              ans = solidSurface_ ;
 //        }
 
 #endif
@@ -186,7 +189,8 @@ if (AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams,
         interfacialArea_[sPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0. ;
 #else
-        const AwsSurfaceParams & aWettingSolidSurfaceParams         = problem.spatialParams().aWettingSolidSurfaceParams();
+        const AwsSurfaceParams & aWettingSolidSurfaceParams
+               = problem.spatialParams().aWettingSolidSurfaceParams();
         Valgrind::CheckDefined(aWettingSolidSurfaceParams);
         const Scalar aws = AwsSurface::interfacialArea(aWettingSolidSurfaceParams,materialParams, Sw, pc ); // 10.; //
         interfacialArea_[wPhaseIdx][sPhaseIdx] = aws ;
@@ -216,12 +220,8 @@ if (AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams,
             const Scalar dynamicViscosity     = fluidState.viscosity(phaseIdx);
             const Scalar density              = fluidState.density(phaseIdx);
             const Scalar kinematicViscosity   = dynamicViscosity / density;
-            const Scalar heatCapacity         = FluidSystem::heatCapacity(fluidState,
-								                                          paramCache,
-								                                          phaseIdx);
-            const Scalar thermalConductivity  = FluidSystem::thermalConductivity(fluidState,
-									                                       paramCache,
-                                                                           phaseIdx);
+            const Scalar heatCapacity         = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
+            const Scalar thermalConductivity  = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
 
             // diffusion coefficient of non-wetting component in wetting phase
             const Scalar diffCoeff = volVars.diffCoeff(phaseIdx, wCompIdx, nCompIdx) ;

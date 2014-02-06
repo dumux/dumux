@@ -344,7 +344,8 @@ class BoxFVElementGeometry
     typedef typename LocalFiniteElement::Traits::LocalBasisType::Traits LocalBasisTraits;
     typedef typename LocalBasisTraits::JacobianType ShapeJacobian;
 
-    Scalar quadrilateralArea(const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2, const GlobalPosition& p3)
+    Scalar quadrilateralArea(const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2,
+                             const GlobalPosition& p3)
     {
         return 0.5*fabs((p3[0] - p1[0])*(p2[1] - p0[1]) - (p3[1] - p1[1])*(p2[0] - p0[0]));
     }
@@ -356,7 +357,8 @@ class BoxFVElementGeometry
         c[2] = a[0]*b[1] - a[1]*b[0];
     }
 
-    Scalar pyramidVolume (const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2, const GlobalPosition& p3, const GlobalPosition& p4)
+    Scalar pyramidVolume (const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2,
+                          const GlobalPosition& p3, const GlobalPosition& p4)
     {
         GlobalPosition a(p2); a -= p0;
         GlobalPosition b(p3); b -= p1;
@@ -369,7 +371,8 @@ class BoxFVElementGeometry
         return 1.0/6.0*(n*a);
     }
 
-    Scalar prismVolume (const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2, const GlobalPosition& p3, const GlobalPosition& p4, const GlobalPosition& p5)
+    Scalar prismVolume (const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2,
+                        const GlobalPosition& p3, const GlobalPosition& p4, const GlobalPosition& p5)
     {
         GlobalPosition a(p4);
         for (int k = 0; k < dimWorld; ++k)
@@ -405,7 +408,8 @@ class BoxFVElementGeometry
             + prismVolume(p0,p2,p3,p4,p6,p7);
     }
 
-    void normalOfQuadrilateral3D(GlobalPosition &normal, const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2, const GlobalPosition& p3)
+    void normalOfQuadrilateral3D(GlobalPosition &normal, const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2,
+                                 const GlobalPosition& p3)
     {
         GlobalPosition a(p2);
         for (int k = 0; k < dimWorld; ++k)
@@ -592,12 +596,12 @@ public:
     int numScvf; //!< number of inner-domain subcontrolvolume faces 
     int numNeighbors; //!< needed for compatibility with cc models
     std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
-    
+
     const LocalFiniteElementCache feCache_;
-    
+
     void updateInner(const Element& element) //!< needed for compatibility with cc models
     {}
-    
+
     void update(const GridView& gridView, const Element& element)
     {
         const Geometry& geometry = element.geometry();
@@ -772,7 +776,8 @@ public:
                             + referenceElement.position(rightEdge, dim-1);
                         boundaryFace[bfIdx].ipLocal *= 0.25;
                         boundaryFace[bfIdx].area = quadrilateralArea3D(subContVol[vertInElement].global,
-                                                                       edgeCoordinates[rightEdge], faceCoordinates[faceIdx], edgeCoordinates[leftEdge]);
+                                                                       edgeCoordinates[rightEdge], faceCoordinates[faceIdx],
+                                                                       edgeCoordinates[leftEdge]);
                         break;
                     default:
                         DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry for dim = " << dim);

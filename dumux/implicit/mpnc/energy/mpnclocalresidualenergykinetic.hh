@@ -83,9 +83,12 @@ public:
      * Imagine a displacement process, with the initial state being a fully saturated porous medium.
      * If the residing phase is now displaced by another phase, what happens at the front of the process?
      * At the very front there is one cell in which the invading phase enters and no invading (but residing) phase leaves.
-     * With enthalpy in the flux term and internal energy in the storage term, the difference (pv) has to be converted into temperature in order to fulfill energy conservation.
-     * -> A temperature peak at the front arises (if spatial discretization is sufficiently fine). This peak has a maximum value and does not increase with further refinement.
-     * -> Further evidence for this explanation: in a simple setting (constant parameters, few cells) the temperature peak can be correctly predicted a priori.
+     * With enthalpy in the flux term and internal energy in the storage term,
+     * the difference (pv) has to be converted into temperature in order to fulfill energy conservation.
+     * -> A temperature peak at the front arises (if spatial discretization is sufficiently fine).
+     * This peak has a maximum value and does not increase with further refinement.
+     * -> Further evidence for this explanation: in a simple setting (constant parameters,
+     * few cells) the temperature peak can be correctly predicted a priori.
      * -> -> For those situations with a distinct displacement process the same quantity has to be stored and transported
      * This is equivalent to neglecting volume changing work.
      *
@@ -196,7 +199,9 @@ public:
         const VolumeVariables & up = elemVolVars[upIdx];
 
         /* todo
-         * CAUTION: this is not exactly correct: does diffusion carry the upstream phase enthalpy? To be more precise this should be the components enthalpy. In the same vein: Counter current diffusion is not accounted for here.
+         * CAUTION: this is not exactly correct: does diffusion carry the upstream phase enthalpy?
+         * To be more precise this should be the components enthalpy.
+         * In the same vein: Counter current diffusion is not accounted for here.
          */
         const Scalar enthalpy =  up.fluidState().enthalpy(phaseIdx) ;
         flux[energyEq0Idx + phaseIdx] += enthalpy * massFlux  ;
@@ -348,7 +353,8 @@ public:
 //        -> Therefore, this contribution needs to be added.
 
 //        -> the particle always brings the energy of the originating phase.
-//        -> Energy advectivly transported into a phase = the moles of a component that go into a phase * molMass * enthalpy of the component in the *originating* phase
+//        -> Energy advectivly transported into a phase = the moles of a component that go into a
+//           phase * molMass * enthalpy of the component in the *originating* phase
 
         // The fluidsystem likes to get a fluidstate. ...
         const FluidState & fluidState = volVars.fluidState();
@@ -357,19 +363,19 @@ public:
             switch (phaseIdx){
             case wPhaseIdx:
                 source[energyEq0Idx + phaseIdx] += (componentIntoPhaseMassTransfer[wPhaseIdx][nCompIdx]
-                                                                                              * FluidSystem::molarMass(nCompIdx)
-                                                                                              * FluidSystem::componentEnthalpy(fluidState, nPhaseIdx, nCompIdx) );
+                                                    * FluidSystem::molarMass(nCompIdx)
+                                                    * FluidSystem::componentEnthalpy(fluidState, nPhaseIdx, nCompIdx) );
                 source[energyEq0Idx + phaseIdx] += (componentIntoPhaseMassTransfer[wPhaseIdx][wCompIdx]
-                                                                                              * FluidSystem::molarMass(wCompIdx)
-                                                                                              * FluidSystem::componentEnthalpy(fluidState, nPhaseIdx, wCompIdx));
+                                                    * FluidSystem::molarMass(wCompIdx)
+                                                    * FluidSystem::componentEnthalpy(fluidState, nPhaseIdx, wCompIdx));
                 break;
             case nPhaseIdx:
                 source[energyEq0Idx + phaseIdx] += (componentIntoPhaseMassTransfer[nPhaseIdx][nCompIdx]
-                                                                                              * FluidSystem::molarMass(nCompIdx)
-                                                                                              * FluidSystem::componentEnthalpy(fluidState, wPhaseIdx, nCompIdx));
+                                                    * FluidSystem::molarMass(nCompIdx)
+                                                    * FluidSystem::componentEnthalpy(fluidState, wPhaseIdx, nCompIdx));
                 source[energyEq0Idx + phaseIdx] += (componentIntoPhaseMassTransfer[nPhaseIdx][wCompIdx]
-                                                                                              * FluidSystem::molarMass(wCompIdx)
-                                                                                              * FluidSystem::componentEnthalpy(fluidState, wPhaseIdx, wCompIdx));
+                                                    * FluidSystem::molarMass(wCompIdx)
+                                                    * FluidSystem::componentEnthalpy(fluidState, wPhaseIdx, wCompIdx));
                 break;
             case sPhaseIdx:
                 break; // no sorption

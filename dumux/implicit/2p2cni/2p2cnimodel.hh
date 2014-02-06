@@ -76,7 +76,8 @@ namespace Dumux {
  * default, the model uses \f$p_w\f$ and \f$S_n\f$.
  * In case that only one phase (nonwetting or wetting phase) is present the second primary
  * variable represents a mass fraction. The correct assignment of the second
- * primary variable is performed by a phase state dependent primary variable switch. The phase state is stored for all nodes of the system. The following cases can be distinguished:
+ * primary variable is performed by a phase state dependent primary variable switch.
+ * The phase state is stored for all nodes of the system. The following cases can be distinguished:
  * <ul>
  *  <li>
  *    Both phases are present: The saturation is used (either\f$S_n\f$ or \f$S_w\f$, dependent on the chosen formulation).

@@ -72,16 +72,23 @@ public:
     static const int bothPhases = 2; //!< Both phases are present
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on the formulation) in a solution vector
-    static const int switchIdx = PVOffset + 1; //!< Index of either the saturation or the mass fraction of the non-wetting/wetting phase
+    //!< Index for wetting/non-wetting phase pressure (depending on the formulation) in a solution vector
+    static const int pressureIdx = PVOffset + 0;
+    //!< Index of either the saturation or the mass fraction of the non-wetting/wetting phase
+    static const int switchIdx = PVOffset + 1;
 
-    static const int pwIdx = pressureIdx; //!< Index for wetting phase pressure in a solution vector
-    static const int snOrXIdx = switchIdx; //!< Index of either the saturation of the non-wetting phase or the mass fraction secondary component in the only phase
+    //!< Index for wetting phase pressure in a solution vector
+    static const int pwIdx = pressureIdx;
+    //!< Index of either the saturation of the non-wetting phase or the mass fraction secondary component in the only phase
+    static const int snOrXIdx = switchIdx;
 
     // equation indices
-    static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
-    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< Index of the mass conservation equation for the primary component of the wetting phase
-    static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the primary component of the non-wetting phase
+    //!< Index of the mass conservation equation for the first component
+    static const int conti0EqIdx = PVOffset;
+    //!< Index of the mass conservation equation for the primary component of the wetting phase
+    static const int contiWEqIdx = conti0EqIdx + wCompIdx;
+    //!< Index of the mass conservation equation for the primary component of the non-wetting phase
+    static const int contiNEqIdx = conti0EqIdx + nCompIdx;
 };
 
 /*!
@@ -112,16 +119,23 @@ public:
     static const int bothPhases = 3; //!< Both phases are present
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on the formulation) in a solution vector
-    static const int switchIdx = PVOffset + 1; //!< Index of either the saturation or the mass fraction of the non-wetting/wetting phase
+    //!< Index for wetting/non-wetting phase pressure (depending on the formulation) in a solution vector
+    static const int pressureIdx = PVOffset + 0;
+    //!< Index of either the saturation or the mass fraction of the non-wetting/wetting phase
+    static const int switchIdx = PVOffset + 1;
 
-    static const int pnIdx = pressureIdx; //!< Index for non-wetting phase pressure in a solution vector
-    static const int swOrXIdx = switchIdx; //!< Index of either the saturation of the liquid phase or the mass fraction of the secondary component in the only phase
+    //!< Index for non-wetting phase pressure in a solution vector
+    static const int pnIdx = pressureIdx;
+    //!< Index of either the saturation of the liquid phase or the mass fraction of the secondary component in the only phase
+    static const int swOrXIdx = switchIdx;
 
     // Equation indices
-    static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
-    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< Index of the mass conservation equation for the primary component of the wetting phase
-    static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the primary component of the non-wetting phase
+    //!< Index of the mass conservation equation for the first component
+    static const int conti0EqIdx = PVOffset;
+    //!< Index of the mass conservation equation for the primary component of the wetting phase
+    static const int contiWEqIdx = conti0EqIdx + wCompIdx;
+    //!< Index of the mass conservation equation for the primary component of the non-wetting phase
+    static const int contiNEqIdx = conti0EqIdx + nCompIdx;
 };
 
 // \}
