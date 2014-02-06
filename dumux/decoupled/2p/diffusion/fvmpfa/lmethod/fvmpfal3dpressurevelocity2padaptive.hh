@@ -381,8 +381,9 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
                             {
                                 ElementPointer elemJ = *(interactionVolume.getSubVolumeElement(k));
 
-                                if (elemJ == elementPtrJ && IndexTranslator::getFaceIndexFromSubVolume(i,j)
-                                          == IndexTranslator::getFaceIndexFromElements(i,k))
+                                if (elemJ == elementPtrJ &&
+                                    IndexTranslator::getFaceIndexFromSubVolume(i,j)
+                                            == IndexTranslator::getFaceIndexFromElements(i,k))
                                 {
                                     std::pair<int,int> localIdx = std::make_pair(i, k);
                                     localMpfaElemIdx.push_back(localIdx);

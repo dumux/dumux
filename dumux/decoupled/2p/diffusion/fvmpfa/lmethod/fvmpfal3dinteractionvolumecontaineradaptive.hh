@@ -99,6 +99,8 @@ private:
     void storeHangingNodeInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex);
     void storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex);
     friend ParentType;
+
+protected:
     void storeInteractionVolumeInfo();
 
 public:
@@ -129,6 +131,16 @@ public:
     }
 
 private:
+    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) Implementation;
+
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    {   return *static_cast<Implementation *>(this);}
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    {   return *static_cast<const Implementation *>(this);}
+
     Problem& problem_;
     FaceVerticesVector faceVertices_;
 };
@@ -1622,18 +1634,18 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         ElementPointer ePtr = *eIt;
-        this->storeSubVolumeElements(*ePtr, elemVertMap);
+        asImp_().storeSubVolumeElements(*ePtr, elemVertMap);
     }
 
-    for (unsigned int i = 0; i < this->interactionVolumes_.size(); i++)
-        if (this->interactionVolumes_[i].getElementNumber() == 0)
-            this->interactionVolumes_[i].printInteractionVolumeInfo();
+    for (unsigned int i = 0; i < asImp_().interactionVolumes_.size(); i++)
+        if (asImp_().interactionVolumes_[i].getElementNumber() == 0)
+            asImp_().interactionVolumes_[i].printInteractionVolumeInfo();
 
     // Store information related to DUNE intersections for all interaction volumes
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         ElementPointer ePtr = *eIt;
-        this->storeIntersectionInfo(*ePtr, elemVertMap);
+        asImp_().storeIntersectionInfo(*ePtr, elemVertMap);
     }
 
     faceVertices_.clear();
@@ -1646,15 +1658,15 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
     {
         int globalVertIdx = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = this->interactionVolumes_[globalVertIdx];
+        InteractionVolume& interactionVolume = asImp_().interactionVolumes_[globalVertIdx];
 
         if (interactionVolume.getElementNumber() == 8)
         {
-            this->storeInnerInteractionVolume(interactionVolume, *vIt);
+            asImp_().storeInnerInteractionVolume(interactionVolume, *vIt);
         }
         else if (interactionVolume.isBoundaryInteractionVolume())
         {
-            this->storeBoundaryInteractionVolume(interactionVolume, *vIt);
+            asImp_().storeBoundaryInteractionVolume(interactionVolume, *vIt);
         }
         //hanging node!
         else
@@ -1682,16 +1694,16 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
             int globalIdx7 = problem_.variables().index(*elementPointer7);
             int globalIdx8 = problem_.variables().index(*elementPointer8);
 
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(0, 0), globalIdx1, interactionVolume.getIndexOnElement(0, 0));
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(0, 1), globalIdx1, interactionVolume.getIndexOnElement(0, 1));
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(0, 2), globalIdx1, interactionVolume.getIndexOnElement(0, 2));
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(1, 0), globalIdx2, interactionVolume.getIndexOnElement(1, 0));
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(1, 1), globalIdx2, interactionVolume.getIndexOnElement(1, 1));
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(1, 2), globalIdx2, interactionVolume.getIndexOnElement(1, 2));
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(2, 0), globalIdx3, interactionVolume.getIndexOnElement(2, 0));
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(3, 1), globalIdx4, interactionVolume.getIndexOnElement(3, 1));
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(4, 0), globalIdx5, interactionVolume.getIndexOnElement(4, 0));
-            this->addRealFluxFaceArea_(interactionVolume.getFaceArea(5, 0), globalIdx6, interactionVolume.getIndexOnElement(5, 0));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(0, 0), globalIdx1, interactionVolume.getIndexOnElement(0, 0));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(0, 1), globalIdx1, interactionVolume.getIndexOnElement(0, 1));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(0, 2), globalIdx1, interactionVolume.getIndexOnElement(0, 2));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(1, 0), globalIdx2, interactionVolume.getIndexOnElement(1, 0));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(1, 1), globalIdx2, interactionVolume.getIndexOnElement(1, 1));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(1, 2), globalIdx2, interactionVolume.getIndexOnElement(1, 2));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(2, 0), globalIdx3, interactionVolume.getIndexOnElement(2, 0));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(3, 1), globalIdx4, interactionVolume.getIndexOnElement(3, 1));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(4, 0), globalIdx5, interactionVolume.getIndexOnElement(4, 0));
+            asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(5, 0), globalIdx6, interactionVolume.getIndexOnElement(5, 0));
 
             faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 0)].insert(globalVertIdx);
             faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 1)].insert(globalVertIdx);
@@ -1706,20 +1718,20 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
 
             if (interactionVolume.getHangingNodeType() != InteractionVolume::twoSmallCells)
             {
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(2, 1), globalIdx3, interactionVolume.getIndexOnElement(2, 1));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(2, 2), globalIdx3, interactionVolume.getIndexOnElement(2, 2));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(3, 0), globalIdx4, interactionVolume.getIndexOnElement(3, 0));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(3, 2), globalIdx4, interactionVolume.getIndexOnElement(3, 2));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(4, 1), globalIdx5, interactionVolume.getIndexOnElement(4, 1));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(4, 2), globalIdx5, interactionVolume.getIndexOnElement(4, 2));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(5, 1), globalIdx6, interactionVolume.getIndexOnElement(5, 1));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(5, 2), globalIdx6, interactionVolume.getIndexOnElement(5, 2));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(6, 0), globalIdx7, interactionVolume.getIndexOnElement(6, 0));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(6, 1), globalIdx7, interactionVolume.getIndexOnElement(6, 1));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(6, 2), globalIdx7, interactionVolume.getIndexOnElement(6, 2));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 0), globalIdx8, interactionVolume.getIndexOnElement(7, 0));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 1), globalIdx8, interactionVolume.getIndexOnElement(7, 1));
-                this->addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 2), globalIdx8, interactionVolume.getIndexOnElement(7, 2));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(2, 1), globalIdx3, interactionVolume.getIndexOnElement(2, 1));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(2, 2), globalIdx3, interactionVolume.getIndexOnElement(2, 2));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(3, 0), globalIdx4, interactionVolume.getIndexOnElement(3, 0));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(3, 2), globalIdx4, interactionVolume.getIndexOnElement(3, 2));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(4, 1), globalIdx5, interactionVolume.getIndexOnElement(4, 1));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(4, 2), globalIdx5, interactionVolume.getIndexOnElement(4, 2));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(5, 1), globalIdx6, interactionVolume.getIndexOnElement(5, 1));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(5, 2), globalIdx6, interactionVolume.getIndexOnElement(5, 2));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(6, 0), globalIdx7, interactionVolume.getIndexOnElement(6, 0));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(6, 1), globalIdx7, interactionVolume.getIndexOnElement(6, 1));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(6, 2), globalIdx7, interactionVolume.getIndexOnElement(6, 2));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 0), globalIdx8, interactionVolume.getIndexOnElement(7, 0));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 1), globalIdx8, interactionVolume.getIndexOnElement(7, 1));
+                asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 2), globalIdx8, interactionVolume.getIndexOnElement(7, 2));
 
                 faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 1)].insert(globalVertIdx);
                 faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 2)].insert(globalVertIdx);

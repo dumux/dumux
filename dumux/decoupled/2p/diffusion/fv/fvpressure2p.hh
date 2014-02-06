@@ -229,8 +229,8 @@ public:
 
                 numIter++;
             }
-            //            std::cout<<"Pressure defect = "<<pressureNorm<<";
-            //            "<<numIter<<" Iterations needed for initial pressure field"<<std::endl;
+            //std::cout<<"Pressure defect = "<<pressureNorm<<"; "<<
+            //        numIter<<" Iterations needed for initial pressure field"<<std::endl;
         }
 
         storePressureSolution();

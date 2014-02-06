@@ -1521,7 +1521,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
                     1);
         }
         else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag ||
-                (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
+                	(hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
         {
             useCases[0] = false;
             useCases[1] = true;
@@ -1649,7 +1649,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
                     0);
         }
         else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag ||
-                (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
+                	(hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
         {
             useCases[0] = true;
             useCases[1] = false;

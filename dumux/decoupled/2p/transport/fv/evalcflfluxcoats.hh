@@ -545,14 +545,14 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             	case pw:
                 	{
                     	potWBound = bcValues[eqIdxPress] + density_[wPhaseIdx] * gdeltaZ;
-                       potNwBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),
-                                                                           satWBound) + density_[nPhaseIdx] * gdeltaZ;
+                       potNwBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound)
+                        								 + density_[nPhaseIdx] * gdeltaZ;
                     	break;
                 	}
             	case pn:
                 	{
-                           potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),
-                                                                              satWBound) + density_[wPhaseIdx] * gdeltaZ;
+                           potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),satWBound)
+                           									+ density_[wPhaseIdx] * gdeltaZ;
                     	potNwBound = bcValues[eqIdxPress] + density_[nPhaseIdx] * gdeltaZ;
                    		break;
                 	}
@@ -589,13 +589,13 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
 
   	          	if (hasPotWBound && !hasPotNwBound)
     	      	{
-                       potNwBound = potWBound + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),
-                                                                satWBound) + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
+                       potNwBound = potWBound + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),satWBound)
+                       						  + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
    	          	}
     	        else if (!hasPotWBound && hasPotNwBound)
         	    {
-                   potWBound = potNwBound - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),
-                                                            satWBound) + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
+                   potWBound = potNwBound - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),satWBound)
+                   						  + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
             	}
         	}
             else if (bcType.isNeumann(eqIdxPress))

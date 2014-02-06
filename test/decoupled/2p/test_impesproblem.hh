@@ -280,8 +280,8 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
             Scalar pRef = referencePressureAtPos(globalPos);
             Scalar temp = temperatureAtPos(globalPos);
 
-            values[pwIdx] = (2e5 + (this->bBoxMax()[dim-1]
-                            - globalPos[dim-1]) * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
+            values[pwIdx] = (2e5 + (this->bBoxMax()[dim-1] - globalPos[dim-1]) 
+            					   * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
         }
         else
         {
