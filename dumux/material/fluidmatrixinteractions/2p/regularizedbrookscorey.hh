@@ -74,7 +74,8 @@ public:
      *
      * regularized part:
      *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line (yes, there is a kink :-( ).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *                       by a straight line (yes, there is a kink :-( ).
      *
      * For the non-regularized part:
      *
@@ -111,7 +112,8 @@ public:
      *
      * regularized part:
      *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line (yes, there is a kink :-( ).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *                       by a straight line (yes, there is a kink :-( ).
      *
      *  The according quantities are obtained by exploiting theorem of intersecting lines.
      *
@@ -156,7 +158,8 @@ public:
      *
      * regularized part:
      *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line and use that slope (yes, there is a kink :-( ).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *                       by a straight line and use that slope (yes, there is a kink :-( ).
      *
      * For the non-regularized part:
      *
@@ -188,7 +191,8 @@ public:
      *
      *  regularized part:
      *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line and use that slope (yes, there is a kink :-( ).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *                       by a straight line and use that slope (yes, there is a kink :-( ).
      *
      * For the non-regularized part:
      *

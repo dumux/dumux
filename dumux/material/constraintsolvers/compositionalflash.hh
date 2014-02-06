@@ -189,7 +189,8 @@ public:
      * \param presentPhaseIdx Subdomain Index = Indication which phase is present
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
-    static void concentrationFlash1p2c(FluidState1p2c& fluidState, const Scalar& Z1,const Dune::FieldVector<Scalar, numPhases> phasePressure,const int presentPhaseIdx, const Scalar& temperature)
+    static void concentrationFlash1p2c(FluidState1p2c& fluidState, const Scalar& Z1,const Dune::FieldVector<Scalar,numPhases>
+                                       phasePressure,const int presentPhaseIdx, const Scalar& temperature)
     {
         // set the temperature, pressure
         fluidState.setTemperature(temperature);

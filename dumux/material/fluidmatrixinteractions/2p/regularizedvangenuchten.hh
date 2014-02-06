@@ -83,7 +83,8 @@ public:
      *
      * regularized part:
      *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line (yes, there is a kink :-( ).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *                       by a straight line (yes, there is a kink :-( ).
      *
      *  For not-regularized part:
      *
@@ -133,7 +134,8 @@ public:
      *
      * regularized part:
      *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line (yes, there is a kink :-( ).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *                       by a straight line (yes, there is a kink :-( ).
      *
      *  The according quantities are obtained by exploiting theorem of intersecting lines.
      *
@@ -192,7 +194,8 @@ public:
     *
     * regularized part:
     *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-    *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line and use that slope (yes, there is a kink :-( ).
+    *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+    *                       by a straight line and use that slope (yes, there is a kink :-( ).
     *
     *        For not-regularized part:
     *
@@ -221,7 +224,8 @@ public:
      *
      *  regularized part:
      *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line and use that slope (yes, there is a kink :-( ).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *                       by a straight line and use that slope (yes, there is a kink :-( ).
      *
      *        For not-regularized part:
         \copydetails VanGenuchten::dsw_dpc()
@@ -331,8 +335,8 @@ private:
      *          saturations below the minimum saturation.
      *
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      */
     static Scalar mLow_(const Params &params)
     {
@@ -346,8 +350,8 @@ private:
      *          saturations above the minimum saturation.
      *
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      */
     static Scalar mHigh_(const Params &params)
     {

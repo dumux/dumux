@@ -44,7 +44,9 @@ public:
     ParkerVanGen3PParams()
     {betaGw_ = betaNw_ = betaGn_ = 1.;}
 
-    ParkerVanGen3PParams(Scalar vgAlpha, Scalar vgn, Scalar KdNAPL, Scalar rhoBulk, Dune::FieldVector<Scalar, 4> residualSaturation, Scalar betaNw = 1., Scalar betaGn = 1., Scalar betaGw = 1., bool regardSnr=false)
+    ParkerVanGen3PParams(Scalar vgAlpha, Scalar vgn, Scalar KdNAPL, Scalar rhoBulk,
+                         Dune::FieldVector<Scalar, 4> residualSaturation, Scalar betaNw = 1.,
+                         Scalar betaGn = 1., Scalar betaGw = 1., bool regardSnr=false)
     {
         setVgAlpha(vgAlpha);
         setVgn(vgn);

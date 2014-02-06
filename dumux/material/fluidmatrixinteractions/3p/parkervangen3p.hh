@@ -96,7 +96,8 @@ public:
             /* value and derivative at regularization point */
             if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
             pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
-            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)*(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgn();
+            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
+                      *(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swr())/params.vgn();
 
             /* evaluate tangential */
             r        = (se-seRegu)*pcPrime+pc;
@@ -140,7 +141,8 @@ public:
             /* value and derivative at regularization point */
             if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
             pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
-            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)*(-1/vgm)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgn();
+            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
+                      *(-1/vgm)/params.vgAlpha()/(1-params.snr()-params.swr())/params.vgn();
 
             /* evaluate tangential */
             r        = (se-seRegu)*pcPrime+pc;
@@ -183,7 +185,8 @@ public:
             /* value and derivative at regularization point */
             if (se<=pcvgReg) seRegu = pcvgReg; else seRegu = 1-pcvgReg;
             pc       = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn())/params.vgAlpha();
-            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)*(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgn();
+            pcPrime = std::pow(std::pow(seRegu,-1/vgm)-1,1/params.vgn()-1)*std::pow(seRegu,-1/vgm-1)
+                      *(-1/vgm)/params.vgAlpha()/(1-params.sgr()-params.swrx())/params.vgn();
 
             /* evaluate tangential */
             r        = (se-seRegu)*pcPrime+pc;

@@ -63,8 +63,8 @@ public:
     *
      * \param swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+                        and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return          Capillary pressure calculated by Brooks & Corey constitutive relation.
      */
     static Scalar pc(const Params &params, Scalar swe)
@@ -143,8 +143,8 @@ public:
      *
      * \param swe       The mobile saturation of the wetting phase.
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return          Relative permeability of the wetting phase calculated as implied by Brooks & Corey.
      */
     static Scalar krw(const Params &params, Scalar swe)
@@ -161,9 +161,10 @@ public:
      *
      * \param swe       The mobile saturation of the wetting phase.
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.
-     * \return          Derivative of the relative permeability of the wetting phase w.r.t. effective wetting phase saturation calculated as implied by Brooks & Corey.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
+     * \return          Derivative of the relative permeability of the wetting phase w.r.t. effective wetting phase
+     *                  saturation calculated as implied by Brooks & Corey.
      */
     static Scalar dkrw_dsw(const Params &params, Scalar swe)
     {
@@ -200,9 +201,10 @@ public:
      *
      * \param swe       The mobile saturation of the wetting phase.
      * \param params    A container object that is populated with the appropriate coefficients for the respective law.
-     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
-     *                  is constructed accordingly. Afterwards the values are set there, too.
-     * \return          Derivative of the relative permeability of the non-wetting phase w.r.t. effective wetting phase saturation calculated as implied by Brooks & Corey.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
+     *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
+     * \return          Derivative of the relative permeability of the non-wetting phase w.r.t. effective wetting phase
+     *                  saturation calculated as implied by Brooks & Corey.
      */
     static Scalar dkrn_dsw(const Params &params, Scalar swe)
     {

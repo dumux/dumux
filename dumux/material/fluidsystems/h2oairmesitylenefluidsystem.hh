@@ -477,7 +477,8 @@ public:
                                            fluidState.pressure(phaseIdx));
             Scalar hgw = H2O::gasEnthalpy(fluidState.temperature(phaseIdx),
                                           fluidState.pressure(phaseIdx));
-            Scalar hga = Air::gasEnthalpy(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx)); // pressure is only a dummy here (not dependent on pressure, just temperature)
+            // pressure is only a dummy here (not dependent on pressure, just temperature)
+            Scalar hga = Air::gasEnthalpy(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
 
             Scalar result = 0;
             result += hgw * fluidState.massFraction(gPhaseIdx, H2OIdx);

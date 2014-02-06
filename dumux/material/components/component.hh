@@ -124,7 +124,8 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::vaporPressure()"); }
 
     /*!
-     * \brief The density in \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure in \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     * \brief The density in \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure in
+     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -133,7 +134,8 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::density()"); }
 
     /*!
-     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the liquid component at a given pressure in \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the liquid component at a given pressure in
+     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -178,8 +180,8 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::liquidInternalEnergy()"); }
 
     /*!
-     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of the pure component at a given pressure in \f$\mathrm{[Pa]}\f$ and
-     * temperature in \f$\mathrm{[K]}\f$.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of the pure component at a given pressure in
+     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$

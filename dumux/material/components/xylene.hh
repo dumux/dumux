@@ -175,10 +175,12 @@ public:
         // I.e. choosing T=273.15K  as reference point for liquid enthalpy.
 
         const Scalar sqrt1over3 = std::sqrt(1./3.);
-        const Scalar TEval1 = 0.5*(temperature-273.15)*        sqrt1over3 + 0.5*(273.15+temperature)  ; // evaluation points according to Gauss-Legendre integration
-        const Scalar TEval2 = 0.5*(temperature-273.15)* (-1)*  sqrt1over3 + 0.5*(273.15+temperature)  ; // evaluation points according to Gauss-Legendre integration
+        // evaluation points according to Gauss-Legendre integration
+        const Scalar TEval1 = 0.5*(temperature-273.15)*        sqrt1over3 + 0.5*(273.15+temperature);
+        // evaluation points according to Gauss-Legendre integration
+        const Scalar TEval2 = 0.5*(temperature-273.15)* (-1)*  sqrt1over3 + 0.5*(273.15+temperature);
 
-        const Scalar h_n = 0.5 * (temperature-273.15) * ( liquidHeatCapacity(TEval1, pressure) + liquidHeatCapacity(TEval2, pressure) ) ;
+        const Scalar h_n = 0.5 * (temperature-273.15) * ( liquidHeatCapacity(TEval1, pressure) + liquidHeatCapacity(TEval2, pressure) );
 
         return h_n;
     }
@@ -192,7 +194,7 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar heatVap(Scalar temperature,
-    				const Scalar pressure)
+                          const Scalar pressure)
     {
         temperature = std::min(temperature, criticalTemperature()); // regularization
         temperature = std::max(temperature, 0.0); // regularization
@@ -202,11 +204,11 @@ public:
         constexpr Scalar p_crit = criticalPressure();
 
         //        Chen method, eq. 7-11.4 (at boiling)
-            	const Scalar DH_v_boil = Consts::R * T_crit * Tr1
-            							* (3.978 * Tr1 - 3.958 + 1.555*std::log(p_crit * 1e-5 /*Pa->bar*/ ) )
-            							/ (1.07 - Tr1); /* [J/mol] */
+                const Scalar DH_v_boil = Consts::R * T_crit * Tr1
+                                          * (3.978 * Tr1 - 3.958 + 1.555*std::log(p_crit * 1e-5 /*Pa->bar*/ ) )
+                                          / (1.07 - Tr1); /* [J/mol] */
 
-    	/* Variation with temp according to Watson relation eq 7-12.1*/
+        /* Variation with temp according to Watson relation eq 7-12.1*/
         const Scalar Tr2 = temperature/criticalTemperature();
         const Scalar n = 0.375;
         const Scalar DH_vap = DH_v_boil * std::pow(((1.0 - Tr2)/(1.0 - Tr1)), n);
@@ -217,8 +219,8 @@ public:
     /*!
      * \brief Specific enthalpy of xylene vapor \f$\mathrm{[J/kg]}\f$.
      *
-     *		This relation is true on the vapor pressure curve, i.e. as long
-     *		as there is a liquid phase present.
+     *          This relation is true on the vapor pressure curve, i.e. as long
+     *          as there is a liquid phase present.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$

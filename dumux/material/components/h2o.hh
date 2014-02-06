@@ -818,8 +818,8 @@ public:
                     or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
                     or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
                     or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
-            DUNE_THROW(NumericalProblem,
-                    "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability: p= " << pressure << "T= " << temperature);
+            DUNE_THROW(NumericalProblem, "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability: p= "
+                       << pressure << "T= " << temperature);
         }
 
         Scalar rho = liquidDensity(temperature, pressure);
@@ -847,8 +847,8 @@ public:
                     or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
                     or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
                     or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
-            DUNE_THROW(NumericalProblem,
-                    "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability: p= " << pressure << " T= " << temperature);
+            DUNE_THROW(NumericalProblem, "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability: p= "
+                       << pressure << " T= " << temperature);
         }
 
         Scalar rho = gasDensity(temperature, pressure);
