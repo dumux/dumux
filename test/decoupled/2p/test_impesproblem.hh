@@ -40,7 +40,8 @@
 #include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 
-//following includes are only needed if a global pressure formulation is chosen! Then only a total velocity can be reconstructed for the transport step
+//following includes are only needed if a global pressure formulation is chosen!
+//Then only a total velocity can be reconstructed for the transport step
 #include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
 #include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
 
@@ -279,7 +280,8 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
             Scalar pRef = referencePressureAtPos(globalPos);
             Scalar temp = temperatureAtPos(globalPos);
 
-            values[pwIdx] = (2e5 + (this->bBoxMax()[dim-1] - globalPos[dim-1]) * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
+            values[pwIdx] = (2e5 + (this->bBoxMax()[dim-1]
+                            - globalPos[dim-1]) * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
         }
         else
         {

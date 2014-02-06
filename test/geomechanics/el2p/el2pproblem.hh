@@ -243,13 +243,16 @@ public:
 
         // variable which determines if output should be written (initially set to false)
         output_ = false;
-        // define if current run is initialization run (initially set to true, will be set to false if initialization is over)
+        // define if current run is initialization run
+        // (initially set to true, will be set to false if initialization is over)
         initializationRun_ = true;
-        // defines if feedback from geomechanics on flow is taken into account or not (usually the coupling is switched off for the initialization run)
+        // defines if feedback from geomechanics on flow is taken into account or not
+        // (usually the coupling is switched off for the initialization run)
         coupled_ = false;
         // set initial episode length equal to length of initialization period
         this->timeManager().startNextEpisode(tInitEnd);
-        // transfer the episode index to spatial parameters (during intialization episode hydraulic different parameters might be applied)
+        // transfer the episode index to spatial parameters
+        // (during intialization episode hydraulic different parameters might be applied)
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
     }
 
@@ -337,11 +340,14 @@ public:
       rockDensity = this->spatialParams().rockDensity(globalPos);
 
       // initial total stress field here assumed to be isotropic, lithostatic
-      stress[0] = brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dim-1]) + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dim-1]);
+      stress[0] = brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dim-1])
+                  + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dim-1]);
       if(dim >=2)
-      stress[1] = brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dim-1]) + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dim-1]);
+      stress[1] = brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dim-1])
+                  + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dim-1]);
       if(dim == 3)
-      stress[2] = brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dim-1]) + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dim-1]);
+      stress[2] = brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dim-1])
+                  + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dim-1]);
 
       return stress;
     }
@@ -547,7 +553,8 @@ public:
      * potentially solution dependent and requires some box method
      * specific things.
      *
-     * \param values The neumann values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
+     * \param values The neumann values for the conservation equations in units of
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param intersection The intersection between element and boundary
@@ -596,7 +603,8 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
-     * \param values The source values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
+     * \param values The source values for the conservation equations in units of
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
@@ -619,7 +627,8 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
-     * \param values The source values for the conservation equations in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
+     * \param values The source values for the conservation equations in units of
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param globalPos The position of the integration point of the boundary segment.
      *
      * For this method, the \a values parameter stores the rate mass

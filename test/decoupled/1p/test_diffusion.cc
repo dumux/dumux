@@ -125,11 +125,14 @@ int main(int argc, char** argv)
         std::cout.precision(2);
         std::cout << "\t error press \t error grad\t sumflux\t erflm\t\t uMin\t\t uMax\t\t time" << std::endl;
         std::cout << "2pfa\t " << fvResult.relativeL2Error << "\t " << fvResult.ergrad << "\t " << fvResult.sumflux
-                        << "\t " << fvResult.erflm << "\t " << fvResult.uMin << "\t " << fvResult.uMax << "\t " << fvTime << std::endl;
-        std::cout << "mpfa-o\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.ergrad << "\t " << mpfaResult.sumflux
-                        << "\t " << mpfaResult.erflm << "\t " << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaTime << std::endl;
-        std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.ergrad << "\t " << mimeticResult.sumflux
-                        << "\t " << mimeticResult.erflm << "\t " << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticTime << std::endl;
+                        << "\t " << fvResult.erflm << "\t " << fvResult.uMin
+                        << "\t " << fvResult.uMax << "\t " << fvTime << std::endl;
+        std::cout << "mpfa-o\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.ergrad
+                        << "\t " << mpfaResult.sumflux << "\t " << mpfaResult.erflm
+                        << "\t " << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaTime << std::endl;
+        std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.ergrad
+                        << "\t " << mimeticResult.sumflux << "\t " << mimeticResult.erflm
+                        << "\t " << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticTime << std::endl;
 
 
 

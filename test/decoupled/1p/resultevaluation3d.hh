@@ -512,7 +512,8 @@ public:
             exactSol[eIdx] = exactPressure;
 
             // output local relative error for each cell
-            //std::cout << "local relative error for cell "<< eIdx << " is: " << (approxPressure - exactPressure)/exactPressure << std::endl;
+            //std::cout << "local relative error for cell "<< eIdx << " is: "
+            //          << (approxPressure - exactPressure)/exactPressure << std::endl;
 
             numerator += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
             denominator += volume*exactPressure*exactPressure;
@@ -833,7 +834,8 @@ public:
 
                 //                if (std::abs(fluxDiff) > 1e-16)
                 //                {
-                //                    std::cout << "faceGlobal " << faceGlobal << ": exact " << exactFlux << ", approximate " << approximateFlux << std::endl;
+                //                    std::cout << "faceGlobal " << faceGlobal << ": exact "
+                //                              << exactFlux << ", approximate " << approximateFlux << std::endl;
                 //                }
 
                 // update mean value error

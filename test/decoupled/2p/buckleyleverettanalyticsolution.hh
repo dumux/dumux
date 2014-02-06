@@ -267,7 +267,9 @@ private:
                     	Scalar xMinus = frontParams_[i+1].second * time;
                         if (globalPos[0] <= x && globalPos[0] > xMinus)
                         {
-                        	analyticSolution_[index] = frontParams_[i].first - (frontParams_[i].first - frontParams_[i+1].first)/(x - xMinus) * (x - globalPos[0]);
+                            analyticSolution_[index] = frontParams_[i].first
+                                                       - (frontParams_[i].first - frontParams_[i+1].first)
+                                                       / (x - xMinus) * (x - globalPos[0]);
                             break;
                         }
                     }

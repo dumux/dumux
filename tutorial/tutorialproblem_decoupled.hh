@@ -55,7 +55,8 @@ class TutorialProblemDecoupled;
 namespace Properties
 {
 // create a new type tag for the problem
-NEW_TYPE_TAG(TutorialProblemDecoupled, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TutorialSpatialParamsDecoupled)); /*@\label{tutorial-decoupled:create-type-tag}@*/
+NEW_TYPE_TAG(TutorialProblemDecoupled, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP,
+                                                     TutorialSpatialParamsDecoupled)); /*@\label{tutorial-decoupled:create-type-tag}@*/
 
 // Set the problem property
 SET_PROP(TutorialProblemDecoupled, Problem) /*@\label{tutorial-decoupled:set-problem}@*/

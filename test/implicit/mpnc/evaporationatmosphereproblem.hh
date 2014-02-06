@@ -569,8 +569,10 @@ public:
 
         // actually setting the fluxes
         if(onLeftBoundary_(globalPos) and this->spatialParams().inFF_(globalPos)){
-            priVars[conti00EqIdx + nPhaseIdx * numComponents + wCompIdx] = -molarFlux * fluidState.moleFraction(nPhaseIdx, wCompIdx);
-            priVars[conti00EqIdx + nPhaseIdx * numComponents + nCompIdx] = -molarFlux * fluidState.moleFraction(nPhaseIdx, nCompIdx);
+            priVars[conti00EqIdx + nPhaseIdx * numComponents + wCompIdx]
+             = -molarFlux * fluidState.moleFraction(nPhaseIdx, wCompIdx);
+            priVars[conti00EqIdx + nPhaseIdx * numComponents + nCompIdx]
+             = -molarFlux * fluidState.moleFraction(nPhaseIdx, nCompIdx);
             // energy equations are specified mass specifically
             if(enableKineticEnergy){
                 priVars[energyEq0Idx + nPhaseIdx] = - massFluxInjectedPhase
@@ -613,7 +615,8 @@ private:
             S[nPhaseIdx]    = 1. - S[wPhaseIdx] ;
         }
         else
-            DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+            DUNE_THROW(Dune::InvalidStateException,
+                       "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
 
         for (int i = 0; i < numPhases - 1; ++i)
             priVars[S0Idx + i] = S[i];
@@ -643,9 +646,11 @@ private:
         if (this->spatialParams().inPM_(globalPos)){
             // hydrostatic distribution for initial water pressure distribution
             // This should work better. Alas: it doesn't.
-            // The same pressure distribution arises, but with initially no hydrostatics prescribed much better convergence is achieved.
+            // The same pressure distribution arises, but with initially no hydrostatics prescribed
+            // much better convergence is achieved.
 //             const Scalar densityW = 998.23; // from first timestep result
-//             p[wPhaseIdx] = pnInitial_  + densityW*(-1)*this->gravity()[dim-1]*(this->spatialParams().heightPM() - globalPos[dim-1]) - std::abs(capPress[wPhaseIdx]);
+//             p[wPhaseIdx] = pnInitial_  + densityW*(-1)*this->gravity()[dim-1]*(this->spatialParams().heightPM()
+//                                                                                - globalPos[dim-1]) - std::abs(capPress[wPhaseIdx]);
 
             // Therefore: use homogenous pressure in the domain and let the newton find the pressure distribution
             p[wPhaseIdx] = pnInitial_  - std::abs(capPress[wPhaseIdx]);
