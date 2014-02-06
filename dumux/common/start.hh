@@ -218,7 +218,7 @@ void dumuxMessage_(bool start)
     {
         std::srand(std::time(0));
         // roll the dice to decide which start message will be displayed:
-        dice_ = std::rand() % 9; // has to be n+1
+        dice_ = std::rand() % 10; // has to be n+1
     }
 
 
@@ -245,7 +245,7 @@ void dumuxMessage_(bool start)
                     <<" mistakes which it is useful to make, because they lead little"
                     <<" by little to the truth. Jules Verne, A journey to the center of the earth\n";
             else
-                std::cout <<" [We see that] science is eminently perfectible, and that each theory has "
+                std::cout <<"[We see that] science is eminently perfectible, and that each theory has "
                 <<"constantly to give way to a fresh one. Jules Verne, Journey to the Center of the Earth\n";
 
         break;
@@ -290,7 +290,7 @@ void dumuxMessage_(bool start)
                 std::cout << "             ###   #                @   @         @@ @@          @ \n";
                 std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @\n";
                 std::cout << "         ##          #              @   @  @   @  @   @  @   @     \n";
-                std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.4\n";
+                std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.5\n";
                 std::cout << "       #               #                                           \n";
                 std::cout << "      #                 #                                          \n";
                 std::cout << "     #                   ##        %%%                             \n";
@@ -304,12 +304,42 @@ void dumuxMessage_(bool start)
                 std::cout << "             ###   #                @   @         @@ @@          @ \n";
                 std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @\n";
                 std::cout << "         ##          #              @   @  @   @  @   @  @   @     \n";
-                std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.4\n";
+                std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.5\n";
                 std::cout << "       #               #                                           \n";
                 std::cout << "      #                 #                                          \n";
                 std::cout << "     #                   ##        %%%                             \n";
                 std::cout << "    #                      ###    %   %  %%     %%                 \n";
                 std::cout << "####                          #%%%     %%  %%%%%  %%%%%%%%%%%%%%%%%\n";
+            }
+        break;
+        case 9:
+          if(start)
+            {
+                std::cout << "\n";
+                std::cout << "###         #   #        # #                            \n";
+                std::cout << "#  #  #  #  ## ##  #  #   #                             \n";
+                std::cout << "#  #  #  #  # # #  #  #  # #                            \n";
+                std::cout << "###    ##   #   #   ##                                  \n";
+                std::cout << "                                                        \n";
+                std::cout << "Dune for Multi-{ Phase,                                 \n";
+                std::cout << "                 Component,                             \n";
+                std::cout << "                 Scale,                                 \n";
+                std::cout << "                 Physics,                               \n";
+                std::cout << "                 ...} flow and transport in porous media\n";
+            }
+            else
+            {
+                std::cout << "\n";
+                std::cout << "###         #   #        # #                            \n";
+                std::cout << "#  #  #  #  ## ##  #  #   #                             \n";
+                std::cout << "#  #  #  #  # # #  #  #  # #                            \n";
+                std::cout << "###    ##   #   #   ##                                  \n";
+                std::cout << "                                                        \n";
+                std::cout << "Dune for Multi-{ Phase,                                 \n";
+                std::cout << "                 Component,                             \n";
+                std::cout << "                 Scale,                                 \n";
+                std::cout << "                 Physics,                               \n";
+                std::cout << "                 ...} flow and transport in porous media\n";
             }
         break;
         //TODO: If you add a case, you have to increase the modulus at the beginning of the function!
@@ -499,7 +529,7 @@ int start_(int argc,
 
     // instantiate and run the concrete problem
     TimeManager timeManager;
-    Problem problem(timeManager, GridCreator::grid().leafGridView());
+    Problem problem(timeManager, GridCreator::grid().leafView());
     timeManager.init(problem, restartTime, dt, tEnd, restart);
     timeManager.run();
     // print dumux end message
