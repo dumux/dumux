@@ -35,7 +35,8 @@ namespace Dumux
 {
 //! \ingroup FVPressure2p
 /*! \brief Class for calculating 2-d velocities from cell-wise constant pressure values.
- * Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization and a MPFA L-method.
+ * Calculates phase velocities or total velocity from a known pressure field applying a
+ * finite volume discretization and a MPFA L-method.
  * At Dirichlet boundaries a two-point flux approximation is used.
  * The pressure has to be given as piecewise constant cell values.
  * The velocities are calculated as
@@ -44,7 +45,8 @@ namespace Dumux
  * and,
  * \f[ \boldsymbol v_t = \boldsymbol v_w + \boldsymbol v_n,\f]
  *
- * where \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
+ * where \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$,
+ * \f$ \boldsymbol K \f$ the intrinsic permeability,
  * and \f$ \lambda_\alpha \f$ a phase mobility.
  *
  * Remark1: only for quadrilaterals!
@@ -148,8 +150,11 @@ public:
     }
 
     //calculate velocities for flux faces of an interaction volume
-    void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1, CellData& cellData2, CellData& cellData3, CellData& cellData4, InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces);
-    void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx);
+    void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1,
+                                                 CellData& cellData2, CellData& cellData3, CellData& cellData4,
+                                                 InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces);
+    void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume,
+                                                    CellData& cellData, int elemIdx);
 
     //!Initializes the velocity model
     void initialize()
@@ -184,10 +189,10 @@ public:
     {
         if (vtkOutputLevel_ > 0)
         {
-            Dune::BlockVector < DimVector > &velocityWetting = *(writer.template allocateManagedBuffer<Scalar, dim>(
-                                                                                                                    problem_.gridView().size(0)));
-            Dune::BlockVector < DimVector > &velocityNonwetting = *(writer.template allocateManagedBuffer<Scalar, dim>(
-                                                                                                                       problem_.gridView().size(0)));
+            Dune::BlockVector < DimVector > &velocityWetting = *(writer.template allocateManagedBuffer<Scalar,
+                                                                 dim>(problem_.gridView().size(0)));
+            Dune::BlockVector < DimVector > &velocityNonwetting = *(writer.template allocateManagedBuffer<Scalar,
+                                                                    dim>(problem_.gridView().size(0)));
 
             // compute update vector
             ElementIterator eEndIt = problem_.gridView().template end<0>();
@@ -261,15 +266,19 @@ protected:
     int vtkOutputLevel_;
 
     static constexpr Scalar threshold_ = 1e-15;
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);//!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);//!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);//!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
+    //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 // end of template
 
 /*! \brief Calculates the velocities at the flux faces of an interation volume around a vertex which is not a boundary vertex.
  *
- *  Calculates the velocities at the flux faces of an interation volume around a vertex which is not a boundary vertex and adds them to the face velocity vectors in the <tt>CellData</tt> objects.
+ *  Calculates the velocities at the flux faces of an interation volume around a vertex which is not
+ *  a boundary vertex and adds them to the face velocity vectors in the <tt>CellData</tt> objects.
  *
  * \param interactionVolume An <tt>InteractionVolume</tt> object including the information for calculating the MPFA transmissibilities
  * \param cellData1  <tt>CellData</tt> object of an IMPES model for sub-volume 1
@@ -279,7 +288,10 @@ protected:
  * \param innerBoundaryVolumeFaces container including information about faces intersecting a boundary
  */
 template<class TypeTag>
-void FvMpfaL2dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1, CellData& cellData2, CellData& cellData3, CellData& cellData4, InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces)
+void FvMpfaL2dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume,
+                                                                           CellData& cellData1, CellData& cellData2,
+                                                                           CellData& cellData3, CellData& cellData4,
+                                                                           InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces)
 {
     ElementPointer & elementPointer1 = interactionVolume.getSubVolumeElement(0);
     ElementPointer & elementPointer2 = interactionVolume.getSubVolumeElement(1);
@@ -729,7 +741,8 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
  * \param elemIdx local sub-volume index
  */
 template<class TypeTag>
-void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx)
+void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume,
+                                                                              CellData& cellData, int elemIdx)
 {
         ElementPointer & elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
 

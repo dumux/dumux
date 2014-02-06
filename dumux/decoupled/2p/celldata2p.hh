@@ -36,7 +36,8 @@ class FluxData2P;
  * \ingroup IMPES
  */
 //! Class including data of one grid cell.
-/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class. Further, resulting cell values for constitutive relationships like
+/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
+ *! Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
@@ -50,7 +51,8 @@ class CellData2P;
  * \ingroup IMPES
  */
 //! Class including the variables and data of discretized data of the constitutive relations for one grid cell.
-/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class. Further, resulting cell values for constitutive relationships like
+/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
+ *! Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
@@ -373,7 +375,8 @@ public:
  * \ingroup IMPES
  */
 //! Class including the variables and data of discretized data of the constitutive relations for one grid cell.
-/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class. Further, resulting cell values for constitutive relationships like
+/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
+ *! Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *

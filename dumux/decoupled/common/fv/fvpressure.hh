@@ -33,10 +33,13 @@ namespace Dumux
 //! The finite volume base class for the solution of a pressure equation
 /*! \ingroup IMPET
  *  Base class for finite volume (FV) implementations of a diffusion-like pressure equation.
- *  The class provides a methods for assembling of the global matrix and right hand side (RHS) as well as for solving the system of equations.
+ *  The class provides a methods for assembling of the global matrix and right hand side (RHS)
+ *  as well as for solving the system of equations.
  *  Additionally, it contains the global matrix, the RHS-vector as well as the solution vector.
- *  A certain pressure equation defined in the implementation of this base class must be splitted into a storage term, a flux term and a source term.
- *  Corresponding functions (<tt>getSource()</tt>, <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt>) have to be defined in the implementation.
+ *  A certain pressure equation defined in the implementation of this base class must be splitted
+ *  into a storage term, a flux term and a source term.
+ *  Corresponding functions (<tt>getSource()</tt>, <tt>getStorage()</tt>, <tt>getFlux()</tt> and
+ *  <tt>getFluxOnBoundary()</tt>) have to be defined in the implementation.
  *
  * \tparam TypeTag The Type Tag
  */
@@ -77,7 +80,9 @@ protected:
 
     //! Indices of matrix and rhs entries
     /**
-    * During the assembling of the global system of equations get-functions are called (getSource(), getFlux(), etc.), which return global matrix or right hand side entries in a vector. These can be accessed using following indices:
+    * During the assembling of the global system of equations get-functions are called (getSource(),
+    * getFlux(), etc.), which return global matrix or right hand side entries in a vector.
+    * These can be accessed using following indices:
     */
     enum
     {
@@ -100,10 +105,12 @@ protected:
     /*!\brief Function which assembles the system of equations to be solved
      *
      *  This function assembles the Matrix and the right hand side (RHS) vector to solve for
-     * a pressure field with a Finite-Volume (FV) discretization. Implementations of this base class have to provide the methods
-     * <tt>getSource()</tt>, <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt> if the assemble() method is called!
+     * a pressure field with a Finite-Volume (FV) discretization.
+     * Implementations of this base class have to provide the methods <tt>getSource()</tt>,
+     * <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt> if the assemble() method is called!
      *
-     * \param first Indicates if function is called at the initialization step or during the simulation (If <tt>first</tt> is <tt>true</tt>, no pressure field of previous iterations is required)
+     * \param first Indicates if function is called at the initialization step or during the simulation
+     * (If <tt>first</tt> is <tt>true</tt>, no pressure field of previous iterations is required)
      */
     void assemble(bool first);
 
@@ -118,7 +125,8 @@ protected:
     const PressureSolution& pressure() const
     {   return pressure_;}
 
-    //!Initialization of the pressure solution vector: Initialization with meaningful values may result in better convergence of the linear solver!
+    //!Initialization of the pressure solution vector: Initialization with meaningful values may
+    //result in better convergence of the linear solver!
     void initializePressure()
     {
         ElementIterator eEndIt = problem_.gridView().template end<0>();
@@ -263,7 +271,8 @@ public:
 
     /*! \brief Set a pressure to be fixed at a certain cell.
      *
-     *Allows to fix a pressure somewhere (at one certain cell) in the domain. This can be necessary e.g. if only Neumann boundary conditions are defined.
+     *Allows to fix a pressure somewhere (at one certain cell) in the domain.
+     *This can be necessary e.g. if only Neumann boundary conditions are defined.
      *The pressure is fixed until the <tt>unsetFixPressureAtIndex()</tt> function is called
      *
      * \param pressure Pressure value at globalIdx
@@ -392,10 +401,12 @@ void FVPressure<TypeTag>::initializeMatrixIndices()
 /*!\brief Function which assembles the system of equations to be solved
  *
  *  This function assembles the Matrix and the right hand side (RHS) vector to solve for
- * a pressure field with a Finite-Volume (FV) discretization. Implementations of this base class have to provide the methods
- * <tt>getSource()</tt>, <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt> if the assemble() method is called!
+ * a pressure field with a Finite-Volume (FV) discretization.
+ * Implementations of this base class have to provide the methods <tt>getSource()</tt>,
+ * <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt> if the assemble() method is called!
  *
- * \param first Indicates if function is called at the initialization step or during the simulation (If <tt>first</tt> is <tt>true</tt>, no pressure field of previous iterations is required)
+ * \param first Indicates if function is called at the initialization step or during the simulation
+ *              (If <tt>first</tt> is <tt>true</tt>, no pressure field of previous iterations is required)
  */
 template<class TypeTag>
 void FVPressure<TypeTag>::assemble(bool first)

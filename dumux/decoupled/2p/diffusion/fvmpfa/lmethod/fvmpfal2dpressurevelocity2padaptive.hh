@@ -222,8 +222,10 @@ private:
      Scalar viscosity_[numPhases];
      bool calcVelocityInTransport_;
 
-     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+     //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+     //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 // end of template
 
@@ -264,7 +266,8 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
                 CellData& cellData3 = problem_.variables().cellData(globalIdx3);
                 CellData& cellData4 = problem_.variables().cellData(globalIdx4);
 
-                velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume, cellData1, cellData2, cellData3, cellData4, this->innerBoundaryVolumeFaces_);
+                velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume, cellData1, cellData2, cellData3,
+                                                                  cellData4, this->innerBoundaryVolumeFaces_);
 
             }
             else if (interactionVolume.getElementNumber() == 3)
@@ -283,7 +286,8 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
                   CellData& cellData2 = problem_.variables().cellData(globalIdx2);
                   CellData& cellData4 = problem_.variables().cellData(globalIdx4);
 
-                  velocity_.calculateHangingNodeInteractionVolumeVelocity(interactionVolume, cellData1, cellData2, cellData4, this->innerBoundaryVolumeFaces_);
+                  velocity_.calculateHangingNodeInteractionVolumeVelocity(interactionVolume, cellData1, cellData2,
+                                                                          cellData4, this->innerBoundaryVolumeFaces_);
 
             }
             else
@@ -421,7 +425,8 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
                 cellDataTemp[2] = problem_.variables().cellData(globalIdx[2]);
                 cellDataTemp[3] = problem_.variables().cellData(globalIdx[3]);
 
-                velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume, cellDataTemp[0], cellDataTemp[1], cellDataTemp[2], cellDataTemp[3], this->innerBoundaryVolumeFaces_);
+                velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume, cellDataTemp[0], cellDataTemp[1],
+                                                                  cellDataTemp[2], cellDataTemp[3], this->innerBoundaryVolumeFaces_);
             }
             else if (interactionVolume.getElementNumber() == 3)
             {
@@ -443,7 +448,8 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
                 cellDataTemp[2] = problem_.variables().cellData(globalIdx[2]);
 
 
-                velocity_.calculateHangingNodeInteractionVolumeVelocity(interactionVolume, cellDataTemp[0], cellDataTemp[1], cellDataTemp[2], this->innerBoundaryVolumeFaces_);
+                velocity_.calculateHangingNodeInteractionVolumeVelocity(interactionVolume, cellDataTemp[0], cellDataTemp[1],
+                                                                        cellDataTemp[2], this->innerBoundaryVolumeFaces_);
             }
             else
             {
@@ -457,17 +463,25 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
             {
                 if (levelI >= levelJ)
                 {
-                 cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInInside));
-                 cellData.fluxData().setVelocity(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInInside));
-                 cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInInside));
-                 cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInInside));
+                 cellData.fluxData().setVelocity(wPhaseIdx, indexInInside,
+                                                 cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInInside));
+                 cellData.fluxData().setVelocity(nPhaseIdx, indexInInside,
+                                                 cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInInside));
+                 cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside,
+                                                        cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInInside));
+                 cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside,
+                                                        cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInInside));
 
                  if (levelI > levelJ)
                  {
-                     cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInInside));
-                     cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInInside));
-                     cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInInside));
-                     cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInInside));
+                     cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside,
+                                                      cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInInside));
+                     cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside,
+                                                      cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInInside));
+                     cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside,
+                                                             cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInInside));
+                     cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside,
+                                                             cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInInside));
 
                  }
                 }
@@ -477,17 +491,25 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
             {
                 if (levelJ >= levelI)
                 {
-                cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInOutside));
-                cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInOutside));
-                cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
-                cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
+                cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside,
+                                                 cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInOutside));
+                cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside,
+                                                 cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInOutside));
+                cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside,
+                                                        cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
+                cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside,
+                                                        cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
 
                 if (levelJ > levelI)
                 {
-                    cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInOutside));
-                    cellData.fluxData().setVelocity(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInOutside));
-                    cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
-                    cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
+                    cellData.fluxData().setVelocity(wPhaseIdx, indexInInside,
+                                                    cellDataTemp[i].fluxData().velocity(wPhaseIdx, indexInOutside));
+                    cellData.fluxData().setVelocity(nPhaseIdx, indexInInside,
+                                                    cellDataTemp[i].fluxData().velocity(nPhaseIdx, indexInOutside));
+                    cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside,
+                                                           cellDataTemp[i].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
+                    cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside,
+                                                           cellDataTemp[i].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
 
                 }
                 }
@@ -636,7 +658,8 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
         //calculate unit distVec
         distVec /= dist;
         Scalar areaScaling = (unitOuterNormal * distVec);
-        //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+        //this treatment of g allows to account for gravity flux through faces where the face normal
+        //has no z component (e.g. parallelepiped grids)
         Scalar gravityTermW = (problem_.gravity() * distVec) * density_[wPhaseIdx] * areaScaling;
         Scalar gravityTermNw = (problem_.gravity() * distVec) * density_[nPhaseIdx] * areaScaling;
 

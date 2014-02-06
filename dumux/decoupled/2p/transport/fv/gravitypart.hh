@@ -38,8 +38,9 @@ namespace Dumux
  * \bar \lambda \boldsymbol K \, (\rho_n - \rho_w) \, g \, \textbf{grad} \, z,
  * \f]
  *
- * where \f$ \bar \lambda = \lambda_w f_n = \lambda_n f_w \f$ and \f$ \lambda \f$ is a phase mobility and \f$ f \f$ a phase fractional flow function,
- * \f$ \boldsymbol K \f$ is the intrinsic permeability, \f$ \rho \f$ is a phase density and  \f$ g \f$ is the gravity constant.
+ * where \f$ \bar \lambda = \lambda_w f_n = \lambda_n f_w \f$ and \f$ \lambda \f$ is a phase
+ * mobility and \f$ f \f$ a phase fractional flow function, \f$ \boldsymbol K \f$ is the intrinsic
+ * permeability, \f$ \rho \f$ is a phase density and  \f$ g \f$ is the gravity constant.
  *
  * \tparam TypeTag The Type Tag
  */
@@ -219,7 +220,8 @@ public:
 
 private:
     Problem& problem_; //problem data
-    const bool preComput_;//if preCompute = true the mobilities are taken from the variable object, if preCompute = false new mobilities will be taken (for implicit Scheme)
+    const bool preComput_;//if preCompute = true the mobilities are taken from the variable object,
+                          //if preCompute = false new mobilities will be taken (for implicit Scheme)
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
 };}

@@ -43,7 +43,8 @@ namespace Dumux
  * \f[
  *  \boldsymbol v = -\frac{1}{\mu} \boldsymbol K \left(\textbf{grad}\, p + \rho \, g  \, \textbf{grad}\, z\right),
  * \f]
- * where \f$ p \f$ is the pressure, \f$ \boldsymbol K \f$ the absolute permeability, \f$ \mu \f$ the viscosity, \f$ \rho \f$ the density, and \f$ g \f$ the gravity constant,
+ * where \f$ p \f$ is the pressure, \f$ \boldsymbol K \f$ the absolute permeability,
+ *       \f$ \mu \f$ the viscosity, \f$ \rho \f$ the density, and \f$ g \f$ the gravity constant,
  * and \f$ q \f$ is the source term.
  * At the boundary, \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v \cdot \boldsymbol n = q_N\f$
  * on \f$ \Gamma_{Neumann} \f$.

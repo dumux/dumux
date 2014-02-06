@@ -72,11 +72,14 @@ NEW_PROP_TAG( NonwettingPhase); //!< The non-wetting phase of a two-phase model
 NEW_PROP_TAG( FluidSystem ); //!< Defines the fluid system
 NEW_PROP_TAG( FluidState );//!< Defines the fluid state
 
-NEW_PROP_TAG( ImpetErrorTermFactor ); //!< Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
+//!< Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
+NEW_PROP_TAG( ImpetErrorTermFactor );
 
-NEW_PROP_TAG( ImpetErrorTermLowerBound );//!< Lower threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
+//!< Lower threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
+NEW_PROP_TAG( ImpetErrorTermLowerBound );
 
-NEW_PROP_TAG( ImpetErrorTermUpperBound );//!< Upper threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
+//!< Upper threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
+NEW_PROP_TAG( ImpetErrorTermUpperBound );
 }
 }
 

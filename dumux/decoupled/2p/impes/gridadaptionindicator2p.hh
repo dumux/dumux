@@ -188,8 +188,10 @@ public:
 
     /*! @brief Constructs a GridAdaptionIndicator instance
      *
-     *  This standard indicator is based on the saturation gradient. It checks the local gradient compared to the maximum global gradient.
-     *  The indicator is compared locally to a refinement/coarsening threshold to decide whether a cell should be marked for refinement or coarsening or should not be adapted.
+     *  This standard indicator is based on the saturation gradient.
+     *  It checks the local gradient compared to the maximum global gradient.
+     *  The indicator is compared locally to a refinement/coarsening threshold to decide whether
+     *  a cell should be marked for refinement or coarsening or should not be adapted.
      *
      * \param problem The problem object
      */

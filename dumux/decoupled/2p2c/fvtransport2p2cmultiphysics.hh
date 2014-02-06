@@ -35,11 +35,14 @@ namespace Dumux
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[
-      \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{alpha} \bf{v}_{\alpha}\right) + q^{\kappa},
+      \frac{\partial C^\kappa}{\partial t} =
+      - \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{alpha} \bf{v}_{\alpha}\right) + q^{\kappa},
  *  \f]
  *  where \f$ \bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
- *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
- *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
+ *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
+ *  \f$ \lambda_{\alpha} \f$ the phase mobility,
+ *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
+ *  \f$ C^{\kappa} \f$ the total Component concentration.
  *
  * The model domain is automatically divided into a single-phase and a two-phase domain. As the flux computation is relatively cheap,
  * the same method is used for the real transport step independently of the subdomain.
@@ -249,7 +252,8 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     
     if(impet)
     {
-        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "<<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor)<< std::endl;
+        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell <<
+          " leads to dt = "<<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor)<< std::endl;
         if(this->averagedFaces_ != 0)
             Dune::dinfo  << " Averageing done for " << this->averagedFaces_ << " faces. "<< std::endl;
     }

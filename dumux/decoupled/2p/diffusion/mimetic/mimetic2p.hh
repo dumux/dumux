@@ -90,8 +90,10 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
         Sn = Indices::saturationNw,
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
-        pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation), //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-        saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation) //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+        //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+        pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation),
+        //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+        saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation)
     };
 
     typedef typename GridView::Grid Grid;
@@ -262,7 +264,8 @@ public:
         return (dInv*(qmean + (F*pressTrace)));
     }
 
-    void constructVelocity(const Element& element, Dune::FieldVector<Scalar,2*dim>& vel, Dune::FieldVector<Scalar,2*dim>& pressTrace, Scalar press)
+    void constructVelocity(const Element& element, Dune::FieldVector<Scalar,2*dim>& vel,
+                           Dune::FieldVector<Scalar,2*dim>& pressTrace, Scalar press)
     {
         int globalIdx = problem_.variables().index(element);
 
@@ -279,7 +282,8 @@ public:
                 vel[i] += W_[globalIdx][i][j]*faceVol[j]*(press - pressTrace[j]);
     }
 
-    void constructVelocity(const Element& element, int faceIdx, Scalar& vel, Dune::FieldVector<Scalar,2*dim>& pressTrace, Scalar press)
+    void constructVelocity(const Element& element, int faceIdx, Scalar& vel,
+                           Dune::FieldVector<Scalar,2*dim>& pressTrace, Scalar press)
     {
         int globalIdx = problem_.variables().index(element);
 
@@ -295,7 +299,8 @@ public:
                 vel += W_[globalIdx][faceIdx][j]*faceVol[j]*(press - pressTrace[j]);
     }
 
-    void computeReconstructionMatrices(const Element& element, const Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim>& W, Dune::FieldVector<Scalar, 2 * dim>& F, Scalar& dInv)
+    void computeReconstructionMatrices(const Element& element, const Dune::FieldMatrix<Scalar,
+                                       2 * dim, 2 * dim>& W, Dune::FieldVector<Scalar, 2 * dim>& F, Scalar& dInv)
     {
         Dune::FieldVector<Scalar, 2 * dim> c(0);
         Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim> Pi(0);
@@ -730,9 +735,11 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleBC(const Element& element, int 
             {
                 problem_.dirichlet(boundValues, *isIt);
                 if (pressureType == pw)
-                    this->b[faceIndex] = boundValues[pressureIdx] + (problem_.bBoxMax() - isIt->geometry().center()) * problem_.gravity() * density_[wPhaseIdx];
+                    this->b[faceIndex] = boundValues[pressureIdx] +
+                    (problem_.bBoxMax() - isIt->geometry().center()) * problem_.gravity() * density_[wPhaseIdx];
                 else if (pressureType == pn)
-                    this->b[faceIndex] = boundValues[pressureIdx] + (problem_.bBoxMax() - isIt->geometry().center()) * problem_.gravity() * density_[nPhaseIdx];
+                    this->b[faceIndex] = boundValues[pressureIdx] +
+                    (problem_.bBoxMax() - isIt->geometry().center()) * problem_.gravity() * density_[nPhaseIdx];
                 else
                     this->b[faceIndex] = boundValues[pressureIdx];
             }

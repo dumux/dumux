@@ -35,9 +35,11 @@ namespace Dumux
 /*! \brief Grid adaptive finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
  * Grid adaptive finite volume MPFA L-method discretization of the equations
- * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \textbf{grad}\, \Phi_w + f_n \lambda_t \boldsymbol K \textbf{grad}\, \Phi_{cap}   ) = 0, \f]
+ * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \textbf{grad}\,
+ * \Phi_w + f_n \lambda_t \boldsymbol K \textbf{grad}\, \Phi_{cap}   ) = 0, \f]
  * or
- * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \textbf{grad}\, \Phi_n - f_w \lambda_t \boldsymbol K \textbf{grad}\, \Phi_{cap}   ) = 0. \f]
+ * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \textbf{grad}\,
+ * \Phi_n - f_w \lambda_t \boldsymbol K \textbf{grad}\, \Phi_{cap}   ) = 0. \f]
  *  At Dirichlet boundaries a two-point flux approximation is used.
  * \f[ \Phi = g \;  \text{on} \; \Gamma_1, \quad \text{and} \quad
  * -\text{div}\, \boldsymbol v_t \cdot \mathbf{n} = J \;  \text{on}  \; \Gamma_2. \f]
@@ -302,7 +304,8 @@ public:
     {
         int gridSize = problem_.gridView().size(0);
 
-        //error bounds for error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
+        //error bounds for error term for incompressible models to correct unphysical saturation
+        //over/undershoots due to saturation transport
         timeStep_ = problem_.timeManager().timeStepSize();
         maxError_ = 0.0;
         for (int i = 0; i < gridSize; i++)
@@ -507,9 +510,12 @@ private:
     int vtkOutputLevel_;
 
     static constexpr Scalar threshold_ = 1e-15;
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
 
     Scalar evaluateErrorTerm_(CellData& cellData)
     {

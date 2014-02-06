@@ -42,35 +42,47 @@ namespace Dumux
  * In the incompressible case a wetting \f$(w) \f$ phase pressure as primary variable leads to
  *
  * \f[
- * - \text{div}\,  \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_w + f_n \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
+ * - \text{div}\,  \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_w + f_n \textbf{grad}\,
+ *   p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
  * \f]
  *
  * a non-wetting (\f$ n \f$) phase pressure yields
  * \f[
- *  - \text{div}\,  \left[\lambda \boldsymbol K  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g  \, \textbf{grad}\, z\right)\right] = q,
+ *  - \text{div}\,  \left[\lambda \boldsymbol K  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\,
+ *    p_c + \sum f_\alpha \rho_\alpha \, g  \, \textbf{grad}\, z\right)\right] = q,
  *  \f]
  * and a global pressure leads to
  * \f[
- * - \text{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_{global} + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q.
+ * - \text{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\,
+ *   p_{global} + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q.
  * \f]
  * Here, \f$ p_\alpha \f$ is a phase pressure, \f$ p_ {global} \f$ the global pressure of a classical fractional flow formulation
- * (see e.g. P. Binning and M. A. Celia, ''Practical implementation of the fractional flow approach to multi-phase flow simulation'', Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
- * \f$ p_c = p_n - p_w \f$ is the capillary pressure, \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda = \lambda_w +  \lambda_n \f$ the total mobility depending on the
- * saturation (\f$ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha \f$),\f$ f_\alpha = \lambda_\alpha / \lambda \f$ the fractional flow function of a phase,
+ * (see e.g. P. Binning and M. A. Celia, ''Practical implementation of the fractional flow approach to multi-phase flow simulation'',
+ *  Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
+ * \f$ p_c = p_n - p_w \f$ is the capillary pressure, \f$ \boldsymbol K \f$ the absolute permeability,
+ * \f$ \lambda = \lambda_w +  \lambda_n \f$ the total mobility depending on the
+ * saturation (\f$ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha \f$),
+ * \f$ f_\alpha = \lambda_\alpha / \lambda \f$ the fractional flow function of a phase,
  * \f$ \rho_\alpha \f$ a phase density, \f$ g \f$ the gravity constant and \f$ q \f$ the source term.
  *
  * For all cases, \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v_{total} \cdot  \boldsymbol n  = q_N \f$
  * on \f$ \Gamma_{Neumann} \f$.
  *
- * The slightly compressible case is only implemented for phase pressures! In this case for a wetting \f$(w) \f$ phase pressure as primary variable the equations are formulated as
+ * The slightly compressible case is only implemented for phase pressures! In this case for a wetting
+ * \f$(w) \f$ phase pressure as primary variable the equations are formulated as
  * \f[
- * \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\textbf{grad}\, p_w + f_n \, \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
+ * \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,
+ * \left[\lambda \boldsymbol{K} \left(\textbf{grad}\, p_w + f_n \, \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \,
+ * g \, \textbf{grad}\, z\right)\right] = q,
  * \f]
  * and for a non-wetting (\f$ n \f$) phase pressure as
  *  \f[
- *  \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q,
+ *  \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,
+ * \left[\lambda \boldsymbol{K}  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \,
+ * g \, \textbf{grad}\, z\right)\right] = q,
  *  \f]
- * In this slightly compressible case the following definitions are valid:  \f$ \lambda = \rho_w \lambda_w + \rho_n \lambda_n \f$, \f$ f_\alpha = (\rho_\alpha \lambda_\alpha) / \lambda \f$
+ * In this slightly compressible case the following definitions are valid:
+ * \f$ \lambda = \rho_w \lambda_w + \rho_n \lambda_n \f$, \f$ f_\alpha = (\rho_\alpha \lambda_\alpha) / \lambda \f$
  * This model assumes that temporal changes in density are very small and thus terms of temporal derivatives are negligible in the pressure equation.
  * Depending on the formulation the terms including time derivatives of saturations are simplified by inserting  \f$ S_w + S_n = 1 \f$.
  *
@@ -217,7 +229,8 @@ public:
 
                 numIter++;
             }
-            //            std::cout<<"Pressure defect = "<<pressureNorm<<"; "<<numIter<<" Iterations needed for initial pressure field"<<std::endl;
+            //            std::cout<<"Pressure defect = "<<pressureNorm<<";
+            //            "<<numIter<<" Iterations needed for initial pressure field"<<std::endl;
         }
 
         storePressureSolution();
@@ -233,7 +246,8 @@ public:
     void update()
     {
         timeStep_ = problem_.timeManager().timeStepSize();
-        //error bounds for error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
+        //error bounds for error term for incompressible models
+        //to correct unphysical saturation over/undershoots due to saturation transport
         if (!compressibility_)
         {
             maxError_ = 0.0;
@@ -546,8 +560,10 @@ private:
     int vtkOutputLevel_;
 
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
 /*! \brief Function which calculates the source entry
@@ -587,9 +603,11 @@ void FVPressure2P<TypeTag>::getSource(EntryType& entry, const Element& element
  *      \phi \sum_\alpha \rho_\alpha \frac{\partial S_\alpha}{\partial t} V
  * \f]
  *
- * In the incompressible case an volume correction term is calculated which corrects for unphysical saturation overshoots/undershoots.
- * These can occur if the estimated time step for the explicit transport was too large. Correction by an artificial source term allows to correct
- * this errors due to wrong time-stepping without losing mass conservation. The error term looks as follows:
+ * In the incompressible case an volume correction term is calculated which corrects
+ * for unphysical saturation overshoots/undershoots.
+ * These can occur if the estimated time step for the explicit transport was too large.
+ * Correction by an artificial source term allows to correct this errors due to wrong time-stepping
+ * without losing mass conservation. The error term looks as follows:
  * \f[
  *  q_{error} = \begin{cases}
  *          S < 0 & a_{error} \frac{S}{\Delta t} V \\
@@ -1031,7 +1049,8 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 
 /*! \brief Updates constitutive relations and stores them in the variable class
  *
- * Stores mobility, fractional flow function and capillary pressure for all grid cells. In the compressible case additionally the densities and viscosities are stored.
+ * Stores mobility, fractional flow function and capillary pressure for all grid cells.
+ * In the compressible case additionally the densities and viscosities are stored.
  */
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()

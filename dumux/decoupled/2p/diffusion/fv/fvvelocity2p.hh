@@ -37,14 +37,17 @@ namespace Dumux
  * \f[
  * \boldsymbol v_\alpha = \lambda_\alpha \boldsymbol K \left(\textbf{grad}\, p_\alpha + \rho_\alpha g  \textbf{grad}\, z \right),
  * \f]
- * where \f$ p_\alpha \f$ denotes the pressure of phase \f$ _\alpha \f$ (wetting or non-wetting), \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda_\alpha \f$ the phase mobility, \f$ \rho_\alpha \f$ the phase density and \f$ g \f$ the gravity constant.
+ * where \f$ p_\alpha \f$ denotes the pressure of phase \f$ _\alpha \f$ (wetting or non-wetting),
+ * \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda_\alpha \f$ the phase mobility,
+ * \f$ \rho_\alpha \f$ the phase density and \f$ g \f$ the gravity constant.
  * The total velocity is either calculated as sum of the phase velocities
  * \f[
  * \boldsymbol v_{total} = \boldsymbol v_{wetting}+\boldsymbol v_{non-wetting},
  * \f]
  * or with a given global pressure
  * \f[
- * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \left(\textbf{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \textbf{grad}\, z\right).
+ * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \left(\textbf{grad}\,
+ *  p_{global} + \sum f_\alpha \rho_\alpha g  \textbf{grad}\, z\right).
  * \f]
  *
  * \tparam TypeTag The Type Tag
@@ -270,10 +273,13 @@ private:
 
     int vtkOutputLevel_;
 
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);//!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);//!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);//!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
 /*! \brief Calculates the velocity at a cell-cell interface.
@@ -387,7 +393,8 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     //calculate unit distVec
     distVec /= dist;
     Scalar areaScaling = (unitOuterNormal * distVec);
-    //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+    //this treatment of g allows to account for gravity flux through faces where the face normal
+    //has no z component (e.g. parallelepiped grids)
     Scalar gravityTermW = (gravity_ * distVec) * density_[wPhaseIdx] * areaScaling;
     Scalar gravityTermNw = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
 
@@ -620,7 +627,8 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         //calculate unit distVec
         distVec /= dist;
         Scalar areaScaling = (unitOuterNormal * distVec);
-        //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+        //this treatment of g allows to account for gravity flux through faces where the face normal
+        //has no z component (e.g. parallelepiped grids)
         Scalar gravityTermW = (gravity_ * distVec) * density_[wPhaseIdx] * areaScaling;
         Scalar gravityTermNw = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
 

@@ -65,7 +65,8 @@ public:
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Element&,int)
      */
-    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, const Element& element, int phaseIdx = -1)
+    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux,
+                 const Element& element, int phaseIdx = -1)
     {
         addFlux(lambdaW, lambdaNw, viscosityW, viscosityNw, flux, phaseIdx);
     }
@@ -74,7 +75,8 @@ public:
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
      */
-    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, const Intersection& intersection, int phaseIdx = -1)
+    void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux,
+                 const Intersection& intersection, int phaseIdx = -1)
     {
         addFlux(lambdaW, lambdaNw, viscosityW, viscosityNw, flux, phaseIdx);
     }
@@ -121,7 +123,8 @@ private:
     void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, int phaseIdx = -1)
     {
         Scalar krSum = lambdaW * viscosityW + lambdaNw * viscosityNw;
-        Scalar viscosityRatio = 1 - fabs(0.5 - viscosityNw / (viscosityW + viscosityNw));//1 - fabs(viscosityWI-viscosityNwI)/(viscosityWI+viscosityNwI);
+        Scalar viscosityRatio = 1 - fabs(0.5 - viscosityNw / (viscosityW + viscosityNw));
+        //1 - fabs(viscosityWI-viscosityNwI)/(viscosityWI+viscosityNwI);
 
         switch (phaseIdx)
          {
@@ -250,7 +253,8 @@ typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCfl
     }
     else
     {
-        cFLFluxOut = std::min(volumeCorrectionFactorOutW / getCFLFluxOut(wPhaseIdx), volumeCorrectionFactorOutNw / getCFLFluxOut(nPhaseIdx));
+        cFLFluxOut = std::min(volumeCorrectionFactorOutW / getCFLFluxOut(wPhaseIdx),
+                              volumeCorrectionFactorOutNw / getCFLFluxOut(nPhaseIdx));
     }
 
     //determine timestep

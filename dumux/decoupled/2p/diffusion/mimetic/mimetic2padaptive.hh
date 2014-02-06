@@ -92,8 +92,10 @@ class MimeticTwoPLocalStiffnessAdaptive: public LocalStiffness<TypeTag, 1>
         Sn = Indices::saturationNw,
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
-        pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation), //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-        saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation) //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+        //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+        pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation),
+        //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+        saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation)
     };
 
     typedef typename GridView::Grid Grid;
@@ -283,7 +285,8 @@ public:
         return (dInv*(qmean + (F*pressTrace)));
     }
 
-    void constructVelocity(const Element& element, Dune::DynamicVector<Scalar>& vel, Dune::DynamicVector<Scalar>& pressTrace, Scalar press)
+    void constructVelocity(const Element& element, Dune::DynamicVector<Scalar>& vel,
+                           Dune::DynamicVector<Scalar>& pressTrace, Scalar press)
     {
         int globalIdx = problem_.variables().index(element);
 
@@ -316,7 +319,8 @@ public:
 
     }
 
-    void computeReconstructionMatrices(const Element& element, const Dune::DynamicMatrix<Scalar>& W, Dune::DynamicVector<Scalar>& F, Scalar& dInv)
+    void computeReconstructionMatrices(const Element& element, const Dune::DynamicMatrix<Scalar>& W,
+                                       Dune::DynamicVector<Scalar>& F, Scalar& dInv)
     {
         int globalIdx = problem_.variables().index(element);
 
@@ -491,7 +495,8 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
 
     //collect information needed for calculation of fluxes due to capillary-potential (pc + gravity!)
     std::vector<Scalar> pcPotFace(numFaces);
-    Scalar pcPot = (problem_.bBoxMax() - element.geometry().center()) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
+    Scalar pcPot = (problem_.bBoxMax() - element.geometry().center()) * problem_.gravity()
+                    * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
     int idx = 0;
     IntersectionIterator isEndIt = gridView_.iend(element);
@@ -513,7 +518,8 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
             N[idx][k] = unitOuterNormal[k];
         }
 
-        pcPotFace[idx] = (problem_.bBoxMax() - faceGlobal) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
+        pcPotFace[idx] = (problem_.bBoxMax() - faceGlobal) * problem_.gravity()
+                         * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
         idx++;
     }
@@ -760,9 +766,11 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleBC(const Element& eleme
             {
                 problem_.dirichlet(boundValues, *isIt);
                 if (pressureType == pw)
-                    this->b[faceIndex] = boundValues[pressureIdx] + (problem_.bBoxMax() - isIt->geometry().center()) * problem_.gravity() * density_[wPhaseIdx];
+                    this->b[faceIndex] = boundValues[pressureIdx] + (problem_.bBoxMax()
+                                         - isIt->geometry().center()) * problem_.gravity() * density_[wPhaseIdx];
                 else if (pressureType == pn)
-                    this->b[faceIndex] = boundValues[pressureIdx] + (problem_.bBoxMax() - isIt->geometry().center()) * problem_.gravity() * density_[nPhaseIdx];
+                    this->b[faceIndex] = boundValues[pressureIdx] + (problem_.bBoxMax()
+                                         - isIt->geometry().center()) * problem_.gravity() * density_[nPhaseIdx];
                 else
                     this->b[faceIndex] = boundValues[pressureIdx];
             }

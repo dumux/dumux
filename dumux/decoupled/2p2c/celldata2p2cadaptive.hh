@@ -65,7 +65,8 @@ private:
     };
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
     int upwindError_[numPhases];
 
 public:
@@ -233,7 +234,8 @@ public:
         // Introduce a hydrostatic pressure distribution inside the father cell
         Scalar gTimesHeight = problem.gravity()
                     * (son.geometry().center() - father.geometry().center());
-        gTimesHeight *= (adaptedValuesFather.totalConcentration_[wCompIdx]+adaptedValuesFather.totalConcentration_[nCompIdx])/ problem.spatialParams().porosity(son);
+        gTimesHeight *= (adaptedValuesFather.totalConcentration_[wCompIdx]+adaptedValuesFather.totalConcentration_[nCompIdx])/
+                         problem.spatialParams().porosity(son);
 //        int globalIdxSon = problem.variables().index(son);
 
 

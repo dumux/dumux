@@ -46,13 +46,17 @@ namespace Dumux
  *  Isothermal conditions and local thermodynamic
  *  equilibrium are assumed.  Gravity is included.
  *  \f[
-         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
+         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
+         \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
           = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
  *  \f]
  *  where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
- *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
- *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
- *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
+ *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields
+ *  \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
+ *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
+ *  \f$ \lambda_{\alpha} \f$ the phase mobility,
+ *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
+ *  \f$ C^{\kappa} \f$ the total Component concentration.
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  *
@@ -166,7 +170,8 @@ public:
         if(regulateBoundaryPermeability)
         {
             minimalBoundaryPermeability = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.MinBoundaryPermeability);
-            Dune::dinfo << " Warning: Regulating Boundary Permeability requires correct subface indices on reference elements!" << std::endl;
+            Dune::dinfo << " Warning: Regulating Boundary Permeability requires correct subface indices on reference elements!"
+                        << std::endl;
         }
     }
 
@@ -178,7 +183,8 @@ protected:
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -503,7 +509,8 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         {
             if (cellDataI.wasRefined() && cellDataJ.wasRefined())
             {
-                problem().variables().cellData(problem().variables().index(*elementPtrI)).setUpwindCell(intersection.indexInInside(), contiWEqIdx, false);
+                problem().variables().cellData(problem().variables().index(*elementPtrI)).setUpwindCell(intersection.indexInInside(),
+                                                                                                        contiWEqIdx, false);
                 cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);
             }
 
@@ -536,7 +543,8 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         {
             if (cellDataI.wasRefined() && cellDataJ.wasRefined())
             {
-                problem().variables().cellData(problem().variables().index(*elementPtrI)).setUpwindCell(intersection.indexInInside(), contiNEqIdx, false);
+                problem().variables().cellData(problem().variables().index(*elementPtrI)).setUpwindCell(intersection.indexInInside(),
+                                                                                                        contiNEqIdx, false);
                 cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);
             }
             Scalar averagedMassFraction[2];
@@ -995,16 +1003,19 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             iterout = iter;
         }
         if (iterout != 0)
-          Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << globalIdx << ", pc delta still " << fabs(oldPc-pc) << std::endl;
+          Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << globalIdx
+                      << ", pc delta still " << fabs(oldPc-pc) << std::endl;
     }
     // initialize phase properties not stored in fluidstate
     cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
     cellData.setViscosity(nPhaseIdx, FluidSystem::viscosity(fluidState, nPhaseIdx));
 
     // initialize mobilities
-    cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI), fluidState.saturation(wPhaseIdx))
+    cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI),
+                                                     fluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(wPhaseIdx));
-    cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem().spatialParams().materialLawParams(elementI), fluidState.saturation(wPhaseIdx))
+    cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem().spatialParams().materialLawParams(elementI),
+                                                     fluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(nPhaseIdx));
 
     // determine volume mismatch between actual fluid volume and pore volume

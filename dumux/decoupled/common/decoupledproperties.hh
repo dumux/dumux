@@ -165,12 +165,18 @@ public:
      * This defines the primary and secondary variable vectors at each degree of freedom.
      */
     typedef Dune::FieldVector<Scalar, numEq> PrimaryVariables;
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarSolution;//!<type for vector of scalars
-    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numComponents> ComponentProperty;//!<type for vector of phase properties
-    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> PhaseProperty;//!<type for vector of phase properties
-    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> FluidProperty;//!<type for vector of fluid properties: Vector[element][phase]
-    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, numPhases>, maxIntersections > > PhasePropertyElemFace;//!<type for vector of vectors (of size 2 x dimension) of scalars
-    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections > > DimVecElemFace;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
+    //!<type for vector of scalars
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarSolution;
+    //!<type for vector of phase properties
+    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numComponents> ComponentProperty;
+    //!<type for vector of phase properties
+    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> PhaseProperty;
+    //!<type for vector of fluid properties: Vector[element][phase]
+    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> FluidProperty;
+    //!<type for vector of vectors (of size 2 x dimension) of scalars
+    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, numPhases>, maxIntersections > > PhasePropertyElemFace;
+    //!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
+    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections > > DimVecElemFace;
 };
 
 SET_TYPE_PROP(DecoupledModel,  Variables, VariableClass<TypeTag>);

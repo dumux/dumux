@@ -32,7 +32,8 @@ namespace Dumux
  * \ingroup IMPES
  */
 //! Class storing data assigned to a cell-cell interfaces, so-called flux-data.
-/*! Stores velocities and potentials at cell-cell interfaces. Further it provides methods which interpret stored phase potentials for upwind decisions.
+/*! Stores velocities and potentials at cell-cell interfaces.
+ *! Further it provides methods which interpret stored phase potentials for upwind decisions.
  *
  * @tparam TypeTag The problem TypeTag
  */

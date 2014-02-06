@@ -37,7 +37,8 @@ namespace Dumux
  * \brief Base class for finite volume velocity reconstruction
  *
  * Provides a basic frame for calculating a global velocity field.
- * The definition of the local velocity calculation as well as the storage or other postprocessing has to be provided by the local velocity implementation.
+ * The definition of the local velocity calculation as well as the storage or other postprocessing
+ * has to be provided by the local velocity implementation.
  * This local implementation has to have the form of VelocityDefault.
  *
  * \tparam TypeTag The Type Tag
@@ -93,7 +94,8 @@ private:
 
 /*! \brief Function which reconstructs a global velocity field
  *
- * Iterates through the grid and calls the local calculateVelocity(...) or calculateVelocityOnBoundary(...) functions which have to be provided by the local velocity implementation (see e.g. VelocityDefault )
+ * Iterates through the grid and calls the local calculateVelocity(...) or calculateVelocityOnBoundary(...)
+ * functions which have to be provided by the local velocity implementation (see e.g. VelocityDefault )
  */
 template<class TypeTag, class Velocity>
 void FVVelocity<TypeTag, Velocity>::calculateVelocity()

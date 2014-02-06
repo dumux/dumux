@@ -34,13 +34,16 @@
 namespace Dumux
 {
 //! \ingroup FVPressure2p
-/*! \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model on h-adaptive grids.
+/*! \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation
+ *! \of the sequential IMPES model on h-adaptive grids.
  *
  * * Finite Volume-MPFAL-Implementation of the equation
  *
- * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$,
+ * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\,
+ * \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$,
  * or
- * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
+ * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\,
+ * \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
  *
  * \f$ \Phi = g \f$ on \f$ \Gamma_1 \f$, and
  * \f$ - \text{div} \, \mathbf{v}_t \cdot \mathbf{n} = J \f$
@@ -158,8 +161,10 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
     typedef  Dumux::FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 public:
-    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;//!< Type including methods for calculation of MPFA transmissibilities
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;//!< Type for storing interaction volume information
+    //!< Type including methods for calculation of MPFA transmissibilities
+    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
+    //!< Type for storing interaction volume information
+    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
 
 protected:
     //initializes the matrix to store the system of equations
@@ -262,9 +267,12 @@ private:
     Scalar viscosity_[numPhases];
 
     static constexpr Scalar threshold_ = 1e-15;
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);//!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);//!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);//!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
 };
 
 //! Initializes the sparse matrix for the pressure solution
@@ -398,7 +406,8 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
 
                     this->A_.addindex(globalIdxI, globalIdxJ);
 
-                    if (interactionVolume.isHangingNodeVolume() && interactionVolume.getHangingNodeType() == InteractionVolume::sixSmallCells && !interactionVolume.sameLevel())
+                    if (interactionVolume.isHangingNodeVolume() && interactionVolume.getHangingNodeType() ==
+                        InteractionVolume::sixSmallCells && !interactionVolume.sameLevel())
                     {
                         if (neighbor->level() == levelI-2)
                         {
@@ -1385,7 +1394,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(
     {
         caseL = this->transmissibilityCalculator_.transmissibilityCaseThree(T, interactionVolume, lambda, 1, 5, 7, 0);
 
-        int caseLSecond = this->transmissibilityCalculator_.transmissibilityCaseFour(TSecond, interactionVolume, lambda, 7, 3, 5,                                                                                       2);
+        int caseLSecond = this->transmissibilityCalculator_.transmissibilityCaseFour(TSecond, interactionVolume, lambda, 7, 3, 5, 2);
 
         caseL = this->transmissibilityCalculator_.chooseTransmissibility(T, TSecond, 3, 4);
 
@@ -1951,7 +1960,8 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(
         caseL = this->transmissibilityCalculator_.transmissibilityCaseTwo(T, interactionVolume, lambda, 4, 0, 2,
                                                                           1);
     }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag || (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
+    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag ||
+            (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
     {
         useCases[0] = false;
         useCases[1] = true;
@@ -2089,7 +2099,8 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(
         caseL = this->transmissibilityCalculator_.transmissibilityCaseOne(T, interactionVolume, lambda, 1, 5, 3,
                                                                           0);
     }
-    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag || (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
+    else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag ||
+            (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
     {
         useCases[0] = true;
         useCases[1] = false;

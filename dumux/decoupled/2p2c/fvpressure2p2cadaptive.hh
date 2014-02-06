@@ -56,13 +56,17 @@ NEW_PROP_TAG(GridAdaptEnableSecondHalfEdge);
  *  Isothermal conditions and local thermodynamic
  *  equilibrium are assumed.  Gravity is included.
  *  \f[
-         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
+         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
+         \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
           = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
  *  \f]
  *  where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
- *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
- *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
- *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
+ *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields
+ *  \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
+ *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
+ *  \f$ \lambda_{\alpha} \f$ the phase mobility,
+ *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
+ *  \f$ C^{\kappa} \f$ the total Component concentration.
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  * The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
@@ -266,7 +270,8 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                     int halfedgesStored
                         = problem().variables().getMpfaData(*isIt, additionalIsIt, T, additionalT, globalPos3, globalIdx3);
                     if (halfedgesStored == 0)
-                        halfedgesStored = problem().pressureModel().computeTransmissibilities(isIt,additionalIsIt, T,additionalT, globalPos3, globalIdx3 );
+                        halfedgesStored = problem().pressureModel().computeTransmissibilities(isIt,additionalIsIt, T,additionalT,
+                                                                                              globalPos3, globalIdx3 );
 
                     if(halfedgesStored == 2)
                     {
@@ -332,7 +337,8 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                     int halfedgesStored
                         = problem().variables().getMpfaData(*isIt, additionalIsIt, T, additionalT, globalPos3, globalIdx3);
                     if (halfedgesStored == 0)
-                        halfedgesStored = problem().pressureModel().computeTransmissibilities(isIt,additionalIsIt, T,additionalT, globalPos3, globalIdx3 );
+                        halfedgesStored = problem().pressureModel().computeTransmissibilities(isIt,additionalIsIt, T,additionalT,
+                                                                                              globalPos3, globalIdx3 );
                     // add off diagonal index if 2 half-edges regarded
                     if(halfedgesStored == 2)
                         this->A_.addindex(globalIdxI, problem().variables().index(*additionalIsIt->outside()));
@@ -482,7 +488,8 @@ void FVPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                 \sum_{\kappa} X^{\kappa}_{\alpha} \frac{\partial v_{t}}{\partial C^{\kappa}}
       + \frac{ V_i}{U_i} \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
        \left( \sum_k \tau_{2k} p^t_{\alpha,k} + \varrho_{\alpha} \sum_k \tau_{2k} \mathbf{g}^T \mathbf{x}_{k} \right)
-          \sum_{\kappa} X^{\kappa}_{\alpha} \frac{\frac{\partial v_{t,j}}{\partial C^{\kappa}_j}-\frac{\partial v_{t,i}}{\partial C^{\kappa}_i}}{\Delta x}
+          \sum_{\kappa} X^{\kappa}_{\alpha} \frac{\frac{\partial v_{t,j}}{\partial C^{\kappa}_j}
+          -\frac{\partial v_{t,i}}{\partial C^{\kappa}_i}}{\Delta x}
     \f]
  *
  * We provide two options: Calculating the flux expressed by twice the flux

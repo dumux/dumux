@@ -38,13 +38,17 @@ namespace Dumux
 /*! \ingroup multiphase
  *  Provides the common ground to solve compositional pressure equations of the form
  *  \f[
-         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
+         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}}
+         \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
           = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
  *  \f]
  *  where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
- *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
- *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
- *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
+ *  \f$ c_{total} \f$ represents the total compressibility, for constant porosity this yields
+ *  \f$ - \frac{\partial V_{total}}{\partial p_{\alpha}} \f$,
+ *  \f$p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
+ *  \f$ \lambda_{\alpha} \f$ the phase mobility,
+ *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
+ *  \f$ C^{\kappa} \f$ the total Component concentration.
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  *
@@ -391,10 +395,10 @@ protected:
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
-
     Scalar incp_ = 1e1; //!< Increment for the volume derivative w.r.t pressure
+    //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
 
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
 private:
     Problem& problem()
     {
@@ -493,7 +497,7 @@ void FVPressureCompositional<TypeTag>::initialize(bool solveTwice)
 //            problem_.variables().communicateUpdateEstimate();
 
             // pressure calculation
-            problem_.pressureModel().assemble(false);                 Dune::dinfo << "pressure guess number "<< numIter <<std::endl;
+            problem_.pressureModel().assemble(false);             Dune::dinfo << "pressure guess number "<< numIter <<std::endl;
             problem_.pressureModel().solve();
             // update the compositional variables
             problem_.pressureModel().initialMaterialLaws(true);
@@ -669,9 +673,11 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         cellData.setViscosity(nPhaseIdx, FluidSystem::viscosity(fluidState, nPhaseIdx));
 
         // initialize mobilities
-        cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt),
+                                                         fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(wPhaseIdx));
-        cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt),
+                                                         fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(nPhaseIdx));
 
         // calculate perimeter used as weighting factor

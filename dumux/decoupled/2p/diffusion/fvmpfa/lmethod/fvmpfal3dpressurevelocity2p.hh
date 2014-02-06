@@ -205,8 +205,10 @@ private:
     Scalar viscosity_[numPhases];
     bool calcVelocityInTransport_;
 
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 // end of template
 
@@ -357,15 +359,23 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
                 this->interactionVolumes_, this->transmissibilityCalculator_, mpfaFaceIdx);
 
 
-        cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdxI].fluxData().velocity(wPhaseIdx, indexInInside));
-        cellData.fluxData().setVelocity(nPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdxI].fluxData().velocity(nPhaseIdx, indexInInside));
-        cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdxI].fluxData().upwindPotential(wPhaseIdx, indexInInside));
-        cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside, cellDataTemp[localMpfaElemIdxI].fluxData().upwindPotential(nPhaseIdx, indexInInside));
+        cellData.fluxData().setVelocity(wPhaseIdx, indexInInside,
+               cellDataTemp[localMpfaElemIdxI].fluxData().velocity(wPhaseIdx, indexInInside));
+        cellData.fluxData().setVelocity(nPhaseIdx, indexInInside,
+               cellDataTemp[localMpfaElemIdxI].fluxData().velocity(nPhaseIdx, indexInInside));
+        cellData.fluxData().setUpwindPotential(wPhaseIdx, indexInInside,
+               cellDataTemp[localMpfaElemIdxI].fluxData().upwindPotential(wPhaseIdx, indexInInside));
+        cellData.fluxData().setUpwindPotential(nPhaseIdx, indexInInside,
+               cellDataTemp[localMpfaElemIdxI].fluxData().upwindPotential(nPhaseIdx, indexInInside));
 
-        cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdxJ].fluxData().velocity(wPhaseIdx, indexInOutside));
-        cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdxJ].fluxData().velocity(nPhaseIdx, indexInOutside));
-        cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdxJ].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
-        cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, cellDataTemp[localMpfaElemIdxJ].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
+        cellDataJ.fluxData().setVelocity(wPhaseIdx, indexInOutside,
+               cellDataTemp[localMpfaElemIdxJ].fluxData().velocity(wPhaseIdx, indexInOutside));
+        cellDataJ.fluxData().setVelocity(nPhaseIdx, indexInOutside,
+               cellDataTemp[localMpfaElemIdxJ].fluxData().velocity(nPhaseIdx, indexInOutside));
+        cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, indexInOutside,
+               cellDataTemp[localMpfaElemIdxJ].fluxData().upwindPotential(wPhaseIdx, indexInOutside));
+        cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside,
+               cellDataTemp[localMpfaElemIdxJ].fluxData().upwindPotential(nPhaseIdx, indexInOutside));
         }
     }
     cellData.fluxData().setVelocityMarker(indexInInside);

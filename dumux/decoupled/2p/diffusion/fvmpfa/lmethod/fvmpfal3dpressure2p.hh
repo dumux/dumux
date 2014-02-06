@@ -37,9 +37,11 @@ namespace Dumux
 /*! \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model
  *
  * Finite Volume-MPFAL-Implementation of the equation
- * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$,
+ * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\,
+ * \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$,
  * or
- * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
+ * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\,
+ * \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
  *
  * \f$ \Phi = g \f$ on \f$ \Gamma_1 \f$, and
  * \f$ - \text{div} \, \mathbf{v}_t \cdot \mathbf{n} = J \f$
@@ -156,8 +158,10 @@ class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
     typedef  Dumux::FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 public:
-    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;//!< Type including methods for calculation of MPFA transmissibilities
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;//!< Type for storing interaction volume information
+    //!< Type including methods for calculation of MPFA transmissibilities
+    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
+    //!< Type for storing interaction volume information
+    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
 protected:
     //initializes the matrix to store the system of equations
     friend class FVPressure<TypeTag>;
@@ -277,7 +281,8 @@ public:
     {
         int size = problem_.gridView().size(0);
 
-        //error bounds for error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
+        //error bounds for error term for incompressible models to correct unphysical saturation
+        //over/undershoots due to saturation transport
         timeStep_ = problem_.timeManager().timeStepSize();
         maxError_ = 0.0;
         for (int i = 0; i < size; i++)
@@ -324,7 +329,8 @@ public:
 
     /* \brief Volume correction term to correct for unphysical saturation overshoots/undershoots.
      *
-     * These can occur if the estimated time step for the explicit transport was too large. Correction by an artificial source term allows to correct
+     * These can occur if the estimated time step for the explicit transport was too large.
+     * Correction by an artificial source term allows to correct
      * this errors due to wrong time-stepping without losing mass conservation. The error term looks as follows:
      * \f[
      *  q_{error} = \begin{cases}
@@ -506,7 +512,8 @@ private:
 
 protected:
     InteractionVolumeContainer interactionVolumes_;//!<Global container of the stored interaction volumes
-    TransmissibilityCalculator transmissibilityCalculator_;//!<The transmissibility calculator including methods for the MPFA transmissibility calculation
+    //!<The transmissibility calculator including methods for the MPFA transmissibility calculation
+    TransmissibilityCalculator transmissibilityCalculator_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
@@ -531,9 +538,12 @@ private:
     int vtkOutputLevel_;
 
     static constexpr Scalar threshold_ = 1e-15;
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);//!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);//!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);//!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
 };
 
 //! Initializes the sparse matrix for the pressure solution
@@ -2361,9 +2371,8 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
 
                     pcBound += gravityDiffBound;
 
-                    Dune::FieldVector<Scalar, numPhases> lambdaBound(
-                                                                     MaterialLaw::krw(problem_.spatialParams().materialLawParams(*elementPointer),
-                                                                                      satWBound));
+                    Dune::FieldVector<Scalar, numPhases>
+                      lambdaBound(MaterialLaw::krw(problem_.spatialParams().materialLawParams(*elementPointer),satWBound));
                     lambdaBound[nPhaseIdx] = MaterialLaw::krn(
                                                               problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
                     lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];

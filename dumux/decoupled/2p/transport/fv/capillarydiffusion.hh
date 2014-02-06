@@ -36,7 +36,8 @@ namespace Dumux
  * \bar \lambda \boldsymbol K \textbf{grad} \, p_c,
  * \f]
  *
- * where \f$ \bar \lambda = \lambda_w f_n = \lambda_n f_w \f$ and \f$ \lambda \f$ is a phase mobility and \f$ f \f$ a phase fractional flow function,
+ * where \f$ \bar \lambda = \lambda_w f_n = \lambda_n f_w \f$ and \f$ \lambda \f$ is a phase mobility
+ * and \f$ f \f$ a phase fractional flow function,
  * \f$ \boldsymbol K \f$ is the intrinsic permeability and \f$ p_c = p_c(S_w) \f$ the capillary pressure.
  *
  * \tparam TypeTag The Type Tag
@@ -88,7 +89,8 @@ public:
      *  \param satJ           saturation of neighbor element
      *  \param pcGradient     gradient of capillary pressure between element I and J
      */
-    void getFlux (DimVector& flux, const Intersection& intersection, Scalar satI, Scalar satJ, const DimVector& pcGradient) const
+    void getFlux (DimVector& flux, const Intersection& intersection, Scalar satI, Scalar satJ,
+                  const DimVector& pcGradient) const
     {
         ElementPointer element = intersection.inside();
         // get global coordinate of cell center
@@ -231,7 +233,8 @@ public:
 
 private:
     Problem& problem_;//problem data
-    const bool preComput_;//if preCompute = true the mobilities are taken from the variable object, if preCompute = false new mobilities will be taken (for implicit Scheme)
+    const bool preComput_;//if preCompute = true the mobilities are taken from the variable object,
+                          //if preCompute = false new mobilities will be taken (for implicit Scheme)
 };
 }
 

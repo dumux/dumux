@@ -208,7 +208,8 @@ public:
             }
             }
 
-            //velocity reconstruction: !!! The velocity which is not reconstructed from the primary pressure variable can be slightly wrong and not conservative!!!!
+            //velocity reconstruction: !!! The velocity which is not reconstructed from the primary
+            //pressure variable can be slightly wrong and not conservative!!!!
             // -> Should not be used for transport!!
             loc.constructVelocity(*eIt, velocityW, pressTraceW, cellData.potential(wPhaseIdx));
             loc.constructVelocity(*eIt, velocityNw, pressTraceNw, cellData.potential(nPhaseIdx));

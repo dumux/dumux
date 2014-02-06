@@ -37,20 +37,28 @@ namespace Dumux
  *  \phi \frac{\partial (\rho_\alpha S_\alpha)}{\partial t} + \text{div}\, (\rho_\alpha \boldsymbol{v_\alpha}) = q_\alpha,
  *  \f]
  *
- *  where \f$ S_\alpha \f$ is the saturation of phase \f$ \alpha \f$ (wetting \f$(w) \f$, non-wetting \f$(n) \f$) and \f$ \boldsymbol v_\alpha \f$ is the phase velocity defined by the multi-phase Darcy equation.
- *  If a phase velocity is reconstructed from the pressure solution it can be directly inserted into the previous equation. In the incompressible case the equation is further divided by the phase density \f$ \rho_\alpha \f$. If a total velocity is reconstructed the saturation equation is reformulated into:
+ *  where \f$ S_\alpha \f$ is the saturation of phase \f$ \alpha \f$ (wetting \f$(w) \f$,
+ *  non-wetting \f$(n) \f$) and \f$ \boldsymbol v_\alpha \f$ is the phase velocity defined by
+ *  the multi-phase Darcy equation.
+ *  If a phase velocity is reconstructed from the pressure solution it can be directly inserted into
+ *  the previous equation. In the incompressible case the equation is further divided by the phase density
+ *  \f$ \rho_\alpha \f$. If a total velocity is reconstructed the saturation equation is reformulated into:
  *
  * \f[
- *  \phi \frac{\partial S_w}{\partial t} + f_w \text{div}\, \boldsymbol{v}_{t} + f_w \lambda_n \boldsymbol{K}\left(\textbf{grad}\, p_c + (\rho_n-\rho_w) \, g \, \textbf{grad} z \right)= q_\alpha,
+ *  \phi \frac{\partial S_w}{\partial t} + f_w \text{div}\, \boldsymbol{v}_{t} + f_w \lambda_n \boldsymbol{K}\left(\textbf{grad}\,
+ *  p_c + (\rho_n-\rho_w) \, g \, \textbf{grad} z \right)= q_\alpha,
  * \f]
  * to get a wetting phase saturation or
  * \f[
- * \phi \frac{\partial S_n}{\partial t} + f_n \text{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\textbf{grad}\, p_c + (\rho_n-\rho_w) \, g \, \textbf{grad} z \right)= q_\alpha,
+ * \phi \frac{\partial S_n}{\partial t} + f_n \text{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\textbf{grad}\,
+ * p_c + (\rho_n-\rho_w) \, g \, \textbf{grad} z \right)= q_\alpha,
  * \f]
  * if the non-wetting phase saturation is the primary transport variable.
  *
- *  The total velocity formulation is only implemented for incompressible fluids and \f$ f_\alpha \f$ is the fractional flow function, \f$ \lambda_\alpha \f$ is the mobility, \f$ \boldsymbol K \f$ the absolute permeability,
- *  \f$ p_c \f$ the capillary pressure, \f$ \rho \f$ the fluid density, \f$ g \f$ the gravity constant, and \f$ q \f$ the source term.
+ *  The total velocity formulation is only implemented for incompressible fluids and \f$ f_\alpha \f$
+ *  is the fractional flow function, \f$ \lambda_\alpha \f$ is the mobility, \f$ \boldsymbol K \f$
+ *  the absolute permeability,\f$ p_c \f$ the capillary pressure, \f$ \rho \f$ the fluid density,
+ *  \f$ g \f$ the gravity constant, and \f$ q \f$ the source term.
  *
  *
  *  In the IMPES models the default setting is:
@@ -173,7 +181,8 @@ public:
     void updateMaterialLaws();
 
 
-    /* \brief Writes the current values of the primary transport variable into the <tt>transportedQuantity</tt>-vector (comes as function argument)
+    /* \brief Writes the current values of the primary transport variable
+     * \into the <tt>transportedQuantity</tt>-vector (comes as function argument)
      *
      * \copydetails FVTransport::getTransportedQuantity(TransportSolutionType&)
      *
@@ -331,7 +340,8 @@ public:
 
     /*! \brief Adds saturation output to the output file
      *
-     * Adds the phase saturation to the output. If the velocity is calculated in the transport model it is also added to the output.
+     * Adds the phase saturation to the output.
+     * If the velocity is calculated in the transport model it is also added to the output.
      * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
      * if it is larger than zero also secondary variables are written.
      *
@@ -451,7 +461,8 @@ public:
      * \param problem A problem class object
      */
     FVSaturation2P(Problem& problem) :
-            ParentType(problem), problem_(problem), threshold_(1e-6), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals))
+            ParentType(problem), problem_(problem), threshold_(1e-6),
+            switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals))
     {
         if (compressibility_ && velocityType_ == vt)
         {
@@ -512,8 +523,11 @@ private:
  *
  * \copydetails FVTransport::getFlux(Scalar&,const Intersection&,CellData&)
  *
- * If a total velocity formulation is used this functions calculates not only the advective flux but also fluxes due to gravity and capillary diffusion.
- * These have to be defined separately as implementation of a DiffusivePart or ConvectivePart (e.g. GravityPart / CapillaryDiffusion ) and added to the property system via properties <tt>CapillaryFlux</tt> and <tt>GravityFlux</tt>.
+ * If a total velocity formulation is used this functions calculates not only the advective flux
+ * but also fluxes due to gravity and capillary diffusion.
+ * These have to be defined separately as implementation of a DiffusivePart or ConvectivePart
+ * (e.g. GravityPart / CapillaryDiffusion ) and added to the property system via properties
+ * <tt>CapillaryFlux</tt> and <tt>GravityFlux</tt>.
  */
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& intersection, CellData& cellDataI)
@@ -611,7 +625,8 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
     case vt:
     {
         //add cflFlux for time-stepping
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                            viscosity_[nPhaseIdx], factorTotal, intersection);
 
         //determine phase saturations from primary saturation variable
         Scalar satWI = cellDataI.saturation(wPhaseIdx);
@@ -654,8 +669,10 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
         factorTotal += gravityFlux;
 
         //add cflFlux for time-stepping
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * capillaryFlux, intersection);
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * gravityFlux, intersection);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                            viscosity_[nPhaseIdx], 10 * capillaryFlux, intersection);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                            viscosity_[nPhaseIdx], 10 * gravityFlux, intersection);
 
         break;
     }
@@ -668,8 +685,10 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
         }
 
         //add cflFlux for time-stepping
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                            viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                            viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
 
         break;
     }
@@ -827,7 +846,8 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         {
         case vt:
         {
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], factorTotal, intersection);
 
             Scalar pcI = cellDataI.capillaryPressure();
 
@@ -857,8 +877,10 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
                 //vt*fn
                 factorTotal *= lambdaNw / (lambdaW + lambdaNw);
                 capillaryFlux *= -1; //add cflFlux for time-stepping
-                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
+                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                    viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                    viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
                 gravityFlux *= -1;
                 break;
             }
@@ -868,8 +890,10 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
             factorTotal += gravityFlux;
 
             //add cflFlux for time-stepping
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * capillaryFlux, intersection);
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], 10 * gravityFlux, intersection);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], 10 * capillaryFlux, intersection);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], 10 * gravityFlux, intersection);
 
             break;
         }
@@ -882,8 +906,10 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
             }
 
             //add cflFlux for time-stepping
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
 
             break;
         }
@@ -921,13 +947,16 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         case vt:
         {
             //add cflFlux for time-stepping
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW + factorNw, intersection);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], factorW + factorNw, intersection);
             break;
         }
         default:
         {
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
 
             break;
         }
@@ -953,22 +982,26 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
             {
                 //vt*fw
                 factorTotal *= lambdaW / (lambdaW + lambdaNw);
-                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
+                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                    viscosity_[nPhaseIdx], factorTotal, intersection);
                 break;
             }
             case sn:
             {
                 //vt*fn
                 factorTotal *= lambdaNw / (lambdaW + lambdaNw);
-                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorTotal, intersection);
+                this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                    viscosity_[nPhaseIdx], factorTotal, intersection);
                 break;
             }
             }
         }
         else
         {
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
-            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], factorW, intersection, wPhaseIdx);
+            this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                                viscosity_[nPhaseIdx], factorNw, intersection, nPhaseIdx);
         }
     }
     switch (velocityType_)
@@ -1065,9 +1098,11 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
     default:
     {
         //add cflFlux for time-stepping
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], sourceVec[wPhaseIdx] * -1 * volume, element,
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                            viscosity_[nPhaseIdx], sourceVec[wPhaseIdx] * -1 * volume, element,
                 wPhaseIdx);
-        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx], viscosity_[nPhaseIdx], sourceVec[nPhaseIdx] * -1 * volume, element,
+        this->evalCflFluxFunction().addFlux(lambdaW, lambdaNw, viscosity_[wPhaseIdx],
+                                            viscosity_[nPhaseIdx], sourceVec[nPhaseIdx] * -1 * volume, element,
                 nPhaseIdx);
         break;
     }

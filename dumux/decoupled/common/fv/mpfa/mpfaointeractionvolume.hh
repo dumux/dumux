@@ -365,8 +365,10 @@ public:
     //! Get \f$ \boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \f$  for the transmissiblity calculation
     /*!
      *  \param subVolumeIdx The local element index in the interaction volume
-     *  \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element for the normal \f$ \boldsymbol n \f$
-     *  \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element for the vector \f$ \boldsymbol \nu \f$
+     *  \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element
+     *                                   for the normal \f$ \boldsymbol n \f$
+     *  \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element
+     *                                   for the vector \f$ \boldsymbol \nu \f$
      *
      *  \return \f$ \boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \f$
      */
@@ -379,12 +381,15 @@ public:
     /*!
      * \param relPerm relative permeability value (\f$ \boldsymbol n^\text{T} k_{r\alpha} \f$)
      * \param subVolumeIdx The local element index in the interaction volume
-     * \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element for the normal \f$ \boldsymbol n \f$
-     * \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element for the vector \f$ \boldsymbol \nu \f$
+     * \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element
+     *                                  for the normal \f$ \boldsymbol n \f$
+     * \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element
+     *                                  for the vector \f$ \boldsymbol \nu \f$
      *
      *  \return \f$ \boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \f$
      */
-    Scalar getNtkrkNu(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
+    Scalar getNtkrkNu(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN,
+                      int subVolumeFaceIdxInInsideNu) const
     {
         DimVector krKNu(permTimesNu_[subVolumeIdx][subVolumeFaceIdxInInsideNu]);
 
@@ -393,31 +398,39 @@ public:
         return normal_[subVolumeIdx][subVolumeFaceIdxInInsideN] * krKNu;
     }
 
-    //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \right) \f$  for the transmissiblity calculation
+    //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \right) \f$
+    //! for the transmissiblity calculation
     /*!
      *  \param subVolumeIdx The local element index in the interaction volume
-     *  \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element for the normal \f$ \boldsymbol n \f$
-     *  \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element for the vector \f$ \boldsymbol \nu \f$
+     *  \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element
+     *                                   for the normal \f$ \boldsymbol n \f$
+     *  \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element
+     *                                   for the vector \f$ \boldsymbol \nu \f$
      *
      *  \return \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \right) \f$
      */
     Scalar getNtkNu_df(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
-        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkNu(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
+        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkNu(subVolumeIdx, subVolumeFaceIdxInInsideN,
+                                                                            subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
     }
 
-    //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \right) \f$  for the transmissiblity calculation
+    //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \right) \f$
+    //! for the transmissiblity calculation
     /*!
      *  \param relPerm relative permeability value (\f$ \boldsymbol n^\text{T} k_{r\alpha} \f$)
      *  \param subVolumeIdx The local element index in the interaction volume
-     *  \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element for the normal \f$ \boldsymbol n \f$
-     *  \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element for the vector \f$ \boldsymbol \nu \f$
+     *  \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element
+     *                                   for the normal \f$ \boldsymbol n \f$
+     *  \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element
+     *                                    for the vector \f$ \boldsymbol \nu \f$
      *
      *  \return \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \right) \f$
      */
     Scalar getNtkrkNu_df(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
-        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkrkNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
+        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkrkNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN,
+                                                                              subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
     }
 
 private:

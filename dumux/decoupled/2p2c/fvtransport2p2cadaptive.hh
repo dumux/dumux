@@ -42,11 +42,14 @@ NEW_PROP_TAG(GridAdaptEnableMultiPointFluxApproximation);
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[
-      \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{alpha} \bf{v}_{\alpha}\right) + q^{\kappa},
+      \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha}
+      \varrho_{alpha} \bf{v}_{\alpha}\right) + q^{\kappa},
  *  \f]
  *  where \f$ \bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
- *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
- *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
+ *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability,
+ *  \f$ \lambda_{\alpha} \f$ the phase mobility,
+ *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and
+ *  \f$ C^{\kappa} \f$ the total Component concentration.
  *
  *  \tparam TypeTag The Type Tag
  */
@@ -123,7 +126,8 @@ protected:
     Problem& problem_;
 
     bool enableMPFA;
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
 };
 
 //! \brief Calculate the update vector and determine timestep size
@@ -411,9 +415,11 @@ void FVTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2>&
         TransmissivityMatrix additionalT(0.);
 
         int halfedgesStored
-            = problem().variables().getMpfaData(*intersectionIterator, additionalIsIt, T, additionalT, globalPos3, globalIdx3);
+            = problem().variables().getMpfaData(*intersectionIterator, additionalIsIt, T, additionalT,
+                                                globalPos3, globalIdx3);
         if (halfedgesStored == 0)
-            halfedgesStored = problem().pressureModel().computeTransmissibilities(intersectionIterator,additionalIsIt, T,additionalT, globalPos3, globalIdx3 );
+            halfedgesStored = problem().pressureModel().computeTransmissibilities(intersectionIterator,additionalIsIt,
+                                                                                  T,additionalT, globalPos3, globalIdx3 );
 
         // acess cell 3 and prepare mpfa
         Scalar press3 = problem().pressureModel().pressure(globalIdx3);
@@ -529,10 +535,12 @@ void FVTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2>&
                 doUpwinding[phaseIdx] = false;
             else    // i.e. restrictFluxInTransport == 1
             {
-               //check if harmonic weighting is necessary
-                if (potential[phaseIdx] > 0. && cellDataJ.mobility(phaseIdx) != 0.) // check if outflow induce neglected (i.e. mob=0) phase flux
+                //check if harmonic weighting is necessary
+                // check if outflow induce neglected (i.e. mob=0) phase flux
+                if (potential[phaseIdx] > 0. && cellDataJ.mobility(phaseIdx) != 0.)
                     lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
-                else if (potential[phaseIdx] < 0. && cellDataI.mobility(phaseIdx) != 0.) // check if inflow induce neglected phase flux
+                // check if inflow induce neglected phase flux
+                else if (potential[phaseIdx] < 0. && cellDataI.mobility(phaseIdx) != 0.) 
                     lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
                 else
                     doUpwinding[phaseIdx] = false;
@@ -571,7 +579,8 @@ void FVTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2>&
                 // verbose (only for one side)
                 if(globalIdxI > globalIdxJ)
                     Dune::dinfo << "harmonicMean flux of phase" << phaseIdx <<" used from cell" << globalIdxI<< " into " << globalIdxJ
-                    << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersectionIterator->indexInInside(), contiEqIdx) << " but pot = "<< potential[phaseIdx] <<  " \n";
+                    << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersectionIterator->indexInInside(),
+                                                                    contiEqIdx) << " but pot = "<< potential[phaseIdx] <<  " \n";
                 #endif
 
                 //e) stop further standard calculations

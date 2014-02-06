@@ -45,7 +45,8 @@ SET_INT_PROP(DecoupledModel, TimeManagerSubTimestepVerbosity, 0);
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[
-      \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{alpha} \bf{v}_{\alpha}\right) + q^{\kappa},
+      \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha}
+      \varrho_{alpha} \bf{v}_{\alpha}\right) + q^{\kappa},
  *  \f]
  *  where \f$ \bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
  *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
@@ -267,7 +268,9 @@ public:
      * \param problem a problem class object
      */
     FVTransport2P2C(Problem& problem) :
-        totalConcentration_(0.), problem_(problem), switchNormals(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)), accumulatedDt_(0), dtThreshold_(1e-6), subCFLFactor_(1.0)
+        totalConcentration_(0.), problem_(problem),
+        switchNormals(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)), accumulatedDt_(0),
+        dtThreshold_(1e-6), subCFLFactor_(1.0)
     {
         restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,int, Impet, RestrictFluxInTransport);
         regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
@@ -294,14 +297,21 @@ protected:
     bool impet_; //!< indicating if we are in an estimate (false) or real impet (true) step.
     int averagedFaces_; //!< number of faces were flux was restricted
 
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    int restrictFluxInTransport_; //!< Restriction of flux on new pressure field if direction reverses from the pressure equation
-    bool regulateBoundaryPermeability; //! Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
-    Scalar minimalBoundaryPermeability; //! Minimal limit for the boundary permeability
+    //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< Restriction of flux on new pressure field if direction reverses from the pressure equation
+    int restrictFluxInTransport_;
+    //! Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
+    bool regulateBoundaryPermeability;
+    //! Minimal limit for the boundary permeability
+    Scalar minimalBoundaryPermeability;
     bool switchNormals;
-    Scalar accumulatedDt_; //! Current time-interval in sub-time-stepping routine
-    const Scalar dtThreshold_; //! Threshold for sub-time-stepping routine
-    std::vector<LocalTimesteppingData> timeStepData_; //! Stores data for sub-time-stepping
+    //! Current time-interval in sub-time-stepping routine
+    Scalar accumulatedDt_;
+    //! Threshold for sub-time-stepping routine
+    const Scalar dtThreshold_;
+    //! Stores data for sub-time-stepping
+    std::vector<LocalTimesteppingData> timeStepData_;
 
     void updatedTargetDt_(Scalar &dt);
 
@@ -758,7 +768,8 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
                 // verbose (only for one side)
                 if(globalIdxI > globalIdxJ)
                     Dune::dinfo << "harmonicMean flux of phase" << phaseIdx <<" used from cell" << globalIdxI<< " into " << globalIdxJ
-                    << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx) << " but pot = "<< potential[phaseIdx] <<  " \n";
+                    << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersection.indexInInside(),
+                                                                    contiEqIdx) << " but pot = "<< potential[phaseIdx] <<  " \n";
                 #endif
             }
 
@@ -1212,7 +1223,8 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
 
                     int indexInOutside = isIt->indexInOutside();
 
-                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_ || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
+                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_ ||
+                        localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
                     {
                         Scalar timeStep  = std::min(localDataI.dt, localDataJ.dt);
 

@@ -80,7 +80,8 @@ class FvMpfaL3dTransmissibilityCalculator
 public:
     typedef Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TransmissibilityType;//!< Type of the transmissibility matrix
 
-    int chooseTransmissibility(TransmissibilityType& transmissibilityOne, TransmissibilityType& transmissibilityTwo, int lTypeOne, int lTypeTwo);
+    int chooseTransmissibility(TransmissibilityType& transmissibilityOne,
+                               TransmissibilityType& transmissibilityTwo, int lTypeOne, int lTypeTwo);
 
     int transmissibility(Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
                          InteractionVolume& interactionVolume,
@@ -90,7 +91,8 @@ public:
     int transmissibility(Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
                          InteractionVolume& interactionVolume,
                          std::vector<DimVector >& lambda,
-                         int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, Dune::FieldVector<bool, 4> &useCases);
+                         int idx1, int idx2, int idx3, int idx4, int idx5, int idx6,
+                         Dune::FieldVector<bool, 4> &useCases);
 
 
     int transmissibilityTPFA(Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
@@ -184,7 +186,9 @@ private:
  * \return The type of the preferable L-shape (1-4)
  */
 template<class TypeTag>
-int FvMpfaL3dTransmissibilityCalculator<TypeTag>::chooseTransmissibility(TransmissibilityType& transmissibilityOne, TransmissibilityType& transmissibilityTwo, int lTypeOne, int lTypeTwo)
+int FvMpfaL3dTransmissibilityCalculator<TypeTag>::chooseTransmissibility(TransmissibilityType& transmissibilityOne,
+                                                                         TransmissibilityType& transmissibilityTwo,
+                                                                         int lTypeOne, int lTypeTwo)
 {
     if (transCriterion_ == sDiff)
     {
@@ -262,8 +266,11 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::chooseTransmissibility(Transmi
  */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
-                                                                   TransmissibilityType& transmissibility, InteractionVolume& interactionVolume,
-                                                                   std::vector<DimVector>& lambda, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6)
+                                                                   TransmissibilityType& transmissibility,
+                                                                   InteractionVolume& interactionVolume,
+                                                                   std::vector<DimVector>& lambda,
+                                                                   int idx1, int idx2, int idx3, int idx4,
+                                                                   int idx5, int idx6)
 {
     int level1 = interactionVolume.getSubVolumeElement(idx1)->level();
     int level2 = interactionVolume.getSubVolumeElement(idx2)->level();
@@ -293,7 +300,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
 
         TransmissibilityType transCaseThree(0);
 
-        int DUNE_UNUSED transTypeCaseThree = transmissibilityCaseThree(transCaseThree, interactionVolume, lambda, idx1, idx2, idx4, idx5);
+        int DUNE_UNUSED transTypeCaseThree = transmissibilityCaseThree(transCaseThree, interactionVolume,
+                                                                       lambda, idx1, idx2, idx4, idx5);
         transTypeTemp = transmissibilityCaseFour(transTemp, interactionVolume, lambda, idx1, idx2, idx3, idx6);
 
         transTypeTemp = chooseTransmissibility(transCaseThree, transTemp, 3, 4);
@@ -312,7 +320,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
     {
         TransmissibilityType transTemp(0);
 
-        int DUNE_UNUSED transTypeTemp = transmissibilityCaseOne(transTemp, interactionVolume, lambda, idx1, idx2, idx3, idx5);
+        int DUNE_UNUSED transTypeTemp = transmissibilityCaseOne(transTemp, interactionVolume,
+                                                                lambda, idx1, idx2, idx3, idx5);
         int transType = transmissibilityCaseTwo(transmissibility, interactionVolume, lambda, idx1, idx2, idx4, idx6);
 
         transType = chooseTransmissibility(transTemp, transmissibility, 1, 2);
@@ -359,8 +368,11 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
  */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
-                                                                   TransmissibilityType& transmissibility, InteractionVolume& interactionVolume,
-                                                                   std::vector<DimVector>& lambda, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, Dune::FieldVector<bool, 4> &useCases)
+                                                                   TransmissibilityType& transmissibility,
+                                                                   InteractionVolume& interactionVolume,
+                                                                   std::vector<DimVector>& lambda, int idx1,
+                                                                   int idx2, int idx3, int idx4, int idx5,
+                                                                   int idx6, Dune::FieldVector<bool, 4> &useCases)
 {
     int level1 = interactionVolume.getSubVolumeElement(idx1)->level();
     int level2 = interactionVolume.getSubVolumeElement(idx2)->level();
@@ -453,8 +465,10 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
         {
             TransmissibilityType transTemp(0);
 
-            int DUNE_UNUSED transTypeTemp = transmissibilityCaseOne(transTemp, interactionVolume, lambda, idx1, idx2, idx3, idx5);
-            int transType = transmissibilityCaseTwo(transmissibility, interactionVolume, lambda, idx1, idx2, idx4, idx6);
+            int DUNE_UNUSED transTypeTemp = transmissibilityCaseOne(transTemp, interactionVolume,
+                                                                    lambda, idx1, idx2, idx3, idx5);
+            int transType = transmissibilityCaseTwo(transmissibility, interactionVolume,
+                                                    lambda, idx1, idx2, idx4, idx6);
 
             transType = chooseTransmissibility(transTemp, transmissibility, 1, 2);
 
@@ -482,8 +496,10 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
         {
             TransmissibilityType transTemp(0);
 
-            int DUNE_UNUSED transTypeTemp = transmissibilityCaseThree(transTemp, interactionVolume, lambda, idx1, idx2, idx4, idx5);
-            int transType = transmissibilityCaseFour(transmissibility, interactionVolume, lambda, idx1, idx2, idx3, idx6);
+            int DUNE_UNUSED transTypeTemp = transmissibilityCaseThree(transTemp, interactionVolume,
+                                                                      lambda, idx1, idx2, idx4, idx5);
+            int transType = transmissibilityCaseFour(transmissibility, interactionVolume,
+                                                     lambda, idx1, idx2, idx3, idx6);
 
             transType = chooseTransmissibility(transTemp, transmissibility, 3, 4);
 
@@ -522,7 +538,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(
  */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityTPFA(
-                                                                       Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+                                                                       Dune::FieldMatrix<Scalar,
+                                                                       dim,2*dim-dim+1>& transmissibility,
                                                                        InteractionVolume& interactionVolume,
                                                                        std::vector<DimVector >& lambda,
                                                                        int idx1, int idx2)
@@ -631,7 +648,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityTPFA(
  */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
-                                                                          Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+                                                                          Dune::FieldMatrix<Scalar,
+                                                                          dim,2*dim-dim+1>& transmissibility,
                                                                           InteractionVolume& interactionVolume,
                                                                           std::vector<DimVector >& lambda,
                                                                           int idx1, int idx2, int idx3, int idx5)
@@ -1016,7 +1034,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
  */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
-                                                                          Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+                                                                          Dune::FieldMatrix<Scalar,
+                                                                          dim,2*dim-dim+1>& transmissibility,
                                                                           InteractionVolume& interactionVolume,
                                                                           std::vector<DimVector >& lambda,
                                                                           int idx1, int idx2, int idx4, int idx6)
@@ -1414,7 +1433,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
  */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseThree(
-                                                                            Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+                                                                            Dune::FieldMatrix<Scalar,
+                                                                            dim,2*dim-dim+1>& transmissibility,
                                                                             InteractionVolume& interactionVolume,
                                                                             std::vector<DimVector >& lambda,
                                                                             int idx1, int idx2, int idx4, int idx5)
@@ -1813,7 +1833,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseThree(
  */
 template<class TypeTag>
 int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseFour(
-                                                                           Dune::FieldMatrix<Scalar,dim,2*dim-dim+1>& transmissibility,
+                                                                           Dune::FieldMatrix<Scalar,
+                                                                           dim,2*dim-dim+1>& transmissibility,
                                                                            InteractionVolume& interactionVolume,
                                                                            std::vector<DimVector >& lambda,
                                                                            int idx1, int idx2, int idx3, int idx6)

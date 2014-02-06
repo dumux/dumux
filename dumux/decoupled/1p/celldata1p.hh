@@ -36,7 +36,8 @@ class FluxData1P;
  * \ingroup OnePhase
  */
 //! Class including data of one grid cell.
-/*! The variables of one-phase flow, which are the pressure as well as additional data assigned to cell-cell interfaces, so-called flux-data, are stored.
+/*! The variables of one-phase flow, which are the pressure as well as additional data assigned to
+ *! cell-cell interfaces, so-called flux-data, are stored.
  *
  * \tparam TypeTag The problem TypeTag
  */

@@ -306,7 +306,8 @@ void EvalCflFluxCoats<TypeTag>::addDefaultFlux(Scalar flux, int phaseIdx)
  * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
  */
 template<class TypeTag>
-void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux,
+void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
+                                             Scalar& viscosityW, Scalar& viscosityNw, Scalar flux,
                                              const Intersection& intersection, int phaseIdx)
 {
     if (rejectForTimeStepping_)
@@ -544,12 +545,14 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw, 
             	case pw:
                 	{
                     	potWBound = bcValues[eqIdxPress] + density_[wPhaseIdx] * gdeltaZ;
-                    	potNwBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[nPhaseIdx] * gdeltaZ;
+                       potNwBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),
+                                                                           satWBound) + density_[nPhaseIdx] * gdeltaZ;
                     	break;
                 	}
             	case pn:
                 	{
-                	    potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + density_[wPhaseIdx] * gdeltaZ;
+                           potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),
+                                                                              satWBound) + density_[wPhaseIdx] * gdeltaZ;
                     	potNwBound = bcValues[eqIdxPress] + density_[nPhaseIdx] * gdeltaZ;
                    		break;
                 	}
@@ -586,11 +589,13 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw, 
 
   	          	if (hasPotWBound && !hasPotNwBound)
     	      	{
-        	        potNwBound = potWBound + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
+                       potNwBound = potWBound + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),
+                                                                satWBound) + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
    	          	}
     	        else if (!hasPotWBound && hasPotNwBound)
         	    {
-            	    potWBound = potNwBound - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound) + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
+                   potWBound = potNwBound - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),
+                                                            satWBound) + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
             	}
         	}
             else if (bcType.isNeumann(eqIdxPress))
@@ -707,7 +712,8 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw, 
             potDiff = cellDataI.potential(nPhaseIdx) - potNwBound;
             cflFlux -= transmissibility * lambdaW * dLambdaNwDs * std::abs(potDiff) / lambdaT;
 
-            if ((cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside) && lambdaW > threshold_) || (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside) && lambdaW < threshold_))
+            if ((cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside) && lambdaW > threshold_) ||
+                (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside) && lambdaW < threshold_))
             {
                 cflFluxFunctionCoatsOut_ += cflFlux;
             }

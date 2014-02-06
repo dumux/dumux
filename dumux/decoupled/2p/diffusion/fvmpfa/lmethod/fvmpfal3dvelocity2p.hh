@@ -166,8 +166,10 @@ public:
     void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume,
             CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
             CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8,
-            InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator, int faceIdx = -1);
-    void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData, int elemIdx);
+            InteractionVolumeContainer& interactionVolumes,
+            TransmissibilityCalculator& transmissibilityCalculator, int faceIdx = -1);
+    void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume,
+                                                    CellData& cellData, int elemIdx);
 
     //!Initializes the velocity model
     void initialize(bool solveTwice = true)
@@ -202,10 +204,10 @@ public:
     {
         if (vtkOutputLevel_ > 0)
         {
-            Dune::BlockVector < DimVector > &velocityWetting = *(writer.template allocateManagedBuffer<Scalar, dim>(
-                    problem_.gridView().size(0)));
-            Dune::BlockVector < DimVector > &velocityNonwetting = *(writer.template allocateManagedBuffer<Scalar, dim>(
-                    problem_.gridView().size(0)));
+            Dune::BlockVector < DimVector > &velocityWetting = *(writer.template allocateManagedBuffer<Scalar,
+                                                                 dim>(problem_.gridView().size(0)));
+            Dune::BlockVector < DimVector > &velocityNonwetting = *(writer.template allocateManagedBuffer<Scalar,
+                                                                    dim>(problem_.gridView().size(0)));
 
             // compute update vector
             ElementIterator eEndIt = problem_.gridView().template end<0>();
@@ -278,15 +280,19 @@ private:
     int vtkOutputLevel_;
 
     static constexpr Scalar threshold_ = 1e-15;
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);//!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);//!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);//!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
+    //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 // end of template
 
 /*! \brief Calculates the velocities at the flux faces of an interation volume around a vertex which is not a boundary vertex.
  *
- *  Calculates the velocities at the flux faces of an interation volume around a vertex which is not a boundary vertex and adds them to the face velocity vectors in the <tt>CellData</tt> objects.
+ *  Calculates the velocities at the flux faces of an interation volume around a vertex
+ *  which is not a boundary vertex and adds them to the face velocity vectors in the <tt>CellData</tt> objects.
  *
  * \param interactionVolume An <tt>InteractionVolume</tt> object including the information for calculating the MPFA transmissibilities
  * \param cellData1  <tt>CellData</tt> object of an IMPES model for sub-volume 1

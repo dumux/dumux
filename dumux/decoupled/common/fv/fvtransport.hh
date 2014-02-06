@@ -46,8 +46,10 @@ SET_INT_PROP(DecoupledModel, TimeManagerSubTimestepVerbosity, 0);
  *  \f[
  *      u_{new} = u_{old} + \Delta t \Delta u_{update}
  *  \f]
- *  A certain transport equation defined in a implementation of this base class must be splitted into a flux term and a source term.
- *  Corresponding functions (<tt>getSource()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt>) have to be defined in the implementation.
+ *  A certain transport equation defined in a implementation of this base class must be splitted
+ *  into a flux term and a source term.
+ *  Corresponding functions (<tt>getSource()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt>)
+ *  have to be defined in the implementation.
  *
  * \tparam TypeTag The Type Tag
  */
@@ -153,9 +155,11 @@ public:
     /*! \brief Updates constitutive relations and stores them in the variable class*/
     void updateMaterialLaws();
 
-    /*! \brief Writes the current values of the primary transport variable into the <tt>transportedQuantity</tt>-vector (comes as function argument)
+    /*! \brief Writes the current values of the primary transport variable into the
+     *  <tt>transportedQuantity</tt>-vector (comes as function argument)
      *
-     * \param transportedQuantity Vector of the size of global numbers of degrees of freedom of the primary transport variable.
+     * \param transportedQuantity Vector of the size of global numbers of degrees of freedom
+     *  of the primary transport variable.
      */
     void getTransportedQuantity(TransportSolutionType& transportedQuantity);
 
@@ -216,7 +220,8 @@ public:
      * \param problem A problem class object
      */
     FVTransport(Problem& problem) :
-        problem_(problem), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)), subCFLFactor_(1.0), accumulatedDt_(0), dtThreshold_(1e-6)
+        problem_(problem), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)),
+        subCFLFactor_(1.0), accumulatedDt_(0), dtThreshold_(1e-6)
     {
         evalCflFluxFunction_ = Dune::make_shared<EvalCflFluxFunction>(problem);
 
@@ -485,7 +490,8 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
 
                     int indexInOutside = isIt->indexInOutside();
 
-                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_ || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
+                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_ ||
+                        localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
                     {
                         Scalar timeStep  = std::min(localDataI.dt, localDataJ.dt);
 

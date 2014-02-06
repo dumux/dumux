@@ -131,7 +131,8 @@ public:
 
     /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
      *
-     * Returns false (In the adaptive finite volume scheme the velocity has to be calculated separately to make sure the hanging nodes are treated correctly.)
+     * Returns false (In the adaptive finite volume scheme the velocity has to be calculated separately
+     * to make sure the hanging nodes are treated correctly.)
      */
     bool calculateVelocityInTransport()
     {
@@ -144,10 +145,13 @@ private:
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
 
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
 /*! \brief Calculates the velocity at a cell-cell interface.
@@ -406,8 +410,10 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         {
         case pw:
         {
-            velocityW *= lambdaWIJ * kMean * (cellData.pressure(wPhaseIdx) - (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
-            velocityNw *= lambdaNwIJ * kMean * (cellData.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
+            velocityW *= lambdaWIJ * kMean * (cellData.pressure(wPhaseIdx) -
+                          (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
+            velocityNw *= lambdaNwIJ * kMean * (cellData.pressure(nPhaseIdx) -
+                          (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
 
             velocityW += gravityTermW;
             velocityNw += gravityTermNw;
@@ -415,8 +421,10 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         }
         case pn:
         {
-            velocityNw *= lambdaNwIJ * kMean * (cellData.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
-            velocityW *= lambdaWIJ * kMean * (cellData.pressure(wPhaseIdx) - (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
+            velocityNw *= lambdaNwIJ * kMean * (cellData.pressure(nPhaseIdx) -
+                           (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
+            velocityW *= lambdaWIJ * kMean * (cellData.pressure(wPhaseIdx) -
+                           (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
 
             velocityW += gravityTermW;
             velocityNw += gravityTermNw;
@@ -548,7 +556,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         //calculate unit distVec
         distVec /= dist;
         Scalar areaScaling = (unitOuterNormal * distVec);
-        //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+        //this treatment of g allows to account for gravity flux through faces
+        //where the face normal has no z component (e.g. parallelepiped grids)
         Scalar gravityTermW = (gravity_ * distVec) * density_[wPhaseIdx] * areaScaling;
         Scalar gravityTermNw = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
 

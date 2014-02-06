@@ -105,7 +105,8 @@ class FvMpfaL3dInteractionVolumeContainer
         };
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume; //!< Type for storing an MPFA-interaction-volume. (Usually of type Dumux::FvMpfaL3dInteractionVolume or Dumux::FvMpfaL3dInteractionVolumeAdaptive)
+    //!< Type for storing an MPFA-interaction-volume. (Usually of type Dumux::FvMpfaL3dInteractionVolume or Dumux::FvMpfaL3dInteractionVolumeAdaptive)
+    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
 
 private:
     typedef std::vector<InteractionVolume> GlobalInteractionVolumeVector;
@@ -128,7 +129,8 @@ public:
         interactionVolumes_.clear();
         realFluxFaceArea_.clear();
 
-        realFluxFaceArea_.resize(problem_.gridView().size(dim), Dune::FieldVector<Dune::FieldVector<Scalar, 2>, 2 * dim>(Dune::FieldVector<Scalar, 2>(0.0)));
+        realFluxFaceArea_.resize(problem_.gridView().size(dim), Dune::FieldVector<Dune::FieldVector<Scalar,
+                                 2>, 2 * dim>(Dune::FieldVector<Scalar, 2>(0.0)));
         interactionVolumes_.resize(problem_.gridView().size(dim));
 
         asImp_().storeInteractionVolumeInfo();
@@ -310,14 +312,16 @@ private:
 /*! \brief Function for storing the elements of an interaction volume and
  * constructing a map from a vertex to its surrounding elements
  *
- * Stores an element in all interaction volumes it belongs to. Additionally, the global index of an element is stored at the position of its local index according to a DUNE reference element
+ * Stores an element in all interaction volumes it belongs to. Additionally,
+ * the global index of an element is stored at the position of its local index according to a DUNE reference element
  * for every vertex of the element.
  *
  * \param element A level 0 Entity of a DUNE grid
  * \param elemVertMap Vector containing the global vertex-element map
  */
 template<class TypeTag>
-void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap)
+void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
+                                                                          std::vector < std::vector<int> >& elemVertMap)
 {
     int globalIdx = problem_.variables().index(element);
 
@@ -356,14 +360,18 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const 
 
 /*! \brief Stores information with respect to DUNE intersections in the interaction volumes
  *
- * Stores information with respect to DUNE intersections, such as normals, in the interaction volumes. Assumes a local storage following the DUNE
- * reference element index, which is performed by the function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap).
+ * Stores information with respect to DUNE intersections, such as normals,
+ * in the interaction volumes. Assumes a local storage following the DUNE
+ * reference element index, which is performed by the function
+ * Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
+ * std::vector < std::vector<int> >& elemVertMap).
  *
  * \param element A level 0 Entity of a DUNE grid
  * \param elemVertMap Vector containing the global vertex-element map
  */
 template<class TypeTag>
-void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const Element& element, std::vector < std::vector<int> >& elemVertMap)
+void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const Element& element,
+                                                                         std::vector < std::vector<int> >& elemVertMap)
 {
     BoundaryTypes bcType;
 
@@ -1325,14 +1333,16 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
  *  - flux face areas
  *
  *  Assumes a local storage following the DUNE reference element index, which is performed by the
- *  function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap).
+ *  function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
+ *                                                                                       std::vector < std::vector<int> >& elemVertMap).
  *
  * \param interactionVolume An interaction volume object
  * \param vertex The vertex (level dim entity) for which the interaction volume is stored
  * \param sameLevel Level indicator: true if all elements of an interaction volume are of the same level
  */
 template<class TypeTag>
-void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex, bool sameLevel)
+void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(InteractionVolume& interactionVolume,
+                                                                               const Vertex& vertex, bool sameLevel)
 {
     const DimVector& centerPos = vertex.geometry().center();
 
@@ -1460,13 +1470,15 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
  * editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.)
  *
  * Assumes a local storage following the DUNE reference element index, which is performed by the
- * function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap).
+ * function Dumux::FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const Element& element,
+ *                                                                                      std::vector < std::vector<int> >& elemVertMap).
  *
  * \param interactionVolume An interaction volume object
  * \param vertex The vertex (level dim entity) for which the interaction volume is stored
  */
 template<class TypeTag>
-void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex)
+void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolume(InteractionVolume& interactionVolume,
+                                                                                  const Vertex& vertex)
 {
     const DimVector& centerPos = vertex.geometry().center();
 
@@ -2075,7 +2087,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
         }
 
         // Store information about the MPFA flux face areas for correct flux weighting of
-        // fluxes though faces which intersect the domain boundary (see  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
+        // fluxes though faces which intersect the domain boundary
+        // (see  M. Wolff, Y. Cao, B. Flemisch, R. Helmig, and B. Wohlmuth (2013a). Multi-point flux
         // approximation L-method in 3D: numerical convergence and application to two-phase
         // flow through porous media. In P. Bastian, J. Kraus, R. Scheichl, and M. Wheeler,
         // editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.)

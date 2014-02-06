@@ -241,10 +241,11 @@ public:
                 if (useFluxInd_ || usePercentileFlux_)
                 {
                     int isIndex = isIt->indexInInside();
-                    flux[isIndex] += (isIt->centerUnitOuterNormal() * cellDataI.fluxData().velocityTotal(idxInInside)) * isIt->geometry().volume();
+                    flux[isIndex] += (isIt->centerUnitOuterNormal()
+                                      * cellDataI.fluxData().velocityTotal(idxInInside)) * isIt->geometry().volume();
 
-                    //                    Scalar velNorm = cellDataI.fluxData().velocityTotal(idxInInside).two_norm();
-                    //                    indicatorVectorFlux_[globalIdxI] = std::max(velNorm, indicatorVectorFlux_[globalIdxI]);
+                    //Scalar velNorm = cellDataI.fluxData().velocityTotal(idxInInside).two_norm();
+                    //indicatorVectorFlux_[globalIdxI] = std::max(velNorm, indicatorVectorFlux_[globalIdxI]);
                 }
 
                 const typename IntersectionIterator::Intersection &intersection = *isIt;
@@ -595,8 +596,10 @@ public:
 
     /*! \brief Constructs a GridAdaptionIndicator instance
      *
-     *  This standard indicator is based on the saturation gradient. It checks the local gradient compared to the maximum global gradient.
-     *  The indicator is compared locally to a refinement/coarsening threshold to decide whether a cell should be marked for refinement or coarsening or should not be adapted.
+     *  This standard indicator is based on the saturation gradient.
+     *  It checks the local gradient compared to the maximum global gradient.
+     *  The indicator is compared locally to a refinement/coarsening threshold to decide whether
+     *  a cell should be marked for refinement or coarsening or should not be adapted.
      *
      * \param problem The problem object
      */
