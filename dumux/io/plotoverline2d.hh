@@ -74,7 +74,8 @@ public:
      *
      *        The writer needs to be called in postTimeStep().
      *
-     *        This function puts output variables (TemperaturePhase, Saturation, t, tIndex, ...) over space (1D, over a line) into a text file,
+     *        This function puts output variables (TemperaturePhase, Saturation, t, tIndex, ...)
+     *        over space (1D, over a line) into a text file,
      *        so they can be read in by another program like matlab.
      *        The file can be found by the extension: dat
      */
@@ -142,7 +143,7 @@ public:
                     dataFile << "# This output file was generated from code compiled at " << __TIME__ <<", "<< __DATE__<< "\n";
                     dataFile << "\n";
                     dataFile << "# Header\n";
-                    dataFile << "#timestep\t time\t\t \t\t x \t\t y  \t\tSw \t\t\t Tw\t\t Tn\t Ts \t xH2On \t xH2OnEquil \t xN2w \txN2wEquil " << std::endl;
+                    dataFile << "#timestep\t time\t\t \t\t x \t\t y  \t\tSw \t\t\t Tw\t\t Tn\t Ts \t xH2On \t xH2OnEquil \t xN2w \txN2wEquil\n";
                     dataFile.close();
                 }
 

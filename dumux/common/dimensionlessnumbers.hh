@@ -58,7 +58,8 @@ public:
  *                              into this function (e.g.: face-area weighted average). [m/s]
  * \param charcteristicLength   Typically, in the context of porous media flow, the mean grain size is taken as the characteristic length
  *                              for calculation of Re. [m]
- * \param kinematicViscosity    Is defined as the dynamic (or absolute) viscosity divided by the density. http://en.wikipedia.org/wiki/Viscosity#Dynamic_viscosity. [m^2/s]
+ * \param kinematicViscosity    Is defined as the dynamic (or absolute) viscos  ity divided by the density.
+ *                              http://en.wikipedia.org/wiki/Viscosity#Dynamic_viscosity. [m^2/s]
  *
  * \return                      The Reynolds Number as calculated from the input parameters
  */
@@ -78,13 +79,17 @@ static Scalar reynoldsNumber(const Scalar darcyMagVelocity,
  *          \f[
  *          \textnormal{Pr}= \frac{\nu}{\alpha} = \frac{c_p \mu}{\lambda}\, ,
  *          \f]
- *          with kinematic viscosity\f$\nu\f$, thermal diffusivity \f$\alpha\f$, heat capacity \f$c_p\f$, dynamic viscosity \f$\mu\f$ and thermal conductivity \f$\lambda\f$.
- *          Therefore, Pr is a material specific property (i.e.: not a function of flow directly but only of temperature, pressure and fluid).
+ *          with kinematic viscosity\f$\nu\f$, thermal diffusivity \f$\alpha\f$, heat capacity \f$c_p\f$,
+ *          dynamic viscosity \f$\mu\f$ and thermal conductivity \f$\lambda\f$.
+ *          Therefore, Pr is a material specific property (i.e.: not a function of flow directly
+ *          but only of temperature, pressure and fluid).
  *
  *          source for Prandtl number definition: http://en.wikipedia.org/wiki/Prandtl_number
  *
- * \param dynamicViscosity      Dynamic (absolute) viscosity over density.  http://en.wikipedia.org/wiki/Viscosity#Dynamic_viscosity [m^2/s]
- * \param heatCapacity          Heat capacity at constant pressure. Specifies the energy change for a given temperature change [J / (kg K)]
+ * \param dynamicViscosity      Dynamic (absolute) viscosity over density.
+ *                              http://en.wikipedia.org/wiki/Viscosity#Dynamic_viscosity [m^2/s]
+ * \param heatCapacity          Heat capacity at constant pressure.
+ *                              Specifies the energy change for a given temperature change [J / (kg K)]
  * \param thermalConductivity   Conductivity to heat. Specifies how well matter transfers energy without moving. [W/(m K)]
  * \return                      The Prandtl Number as calculated from the input parameters.
  */
@@ -122,12 +127,14 @@ struct NusseltFormulation
  *          (packed bed flow as the chemical engineers call it).
  *
  *          source for Nusselt number definition: http://en.wikipedia.org/wiki/Nusselt_number
- *          source for further empirical correlations for Nusselt Numbers: VDI-Gesellschaft, VDI-Waermeatlas, VDI-Verlag Duesseldorf, 2006
+ *          source for further empirical correlations for Nusselt Numbers:
+ *          VDI-Gesellschaft, VDI-Waermeatlas, VDI-Verlag Duesseldorf, 2006
  *
  * \param reynoldsNumber    Dimensionless number relating inertial and viscous forces [-].
  * \param prandtlNumber     Dimensionless number relating viscosity and thermal diffusivity (temperaturleitfaehigkeit) [-].
  * \param porosity          The fraction of the porous medium which is void space.
- * \param formulation       Switch for deciding which parametrization of the Nusselt number is to be used. Set via the property NusseltFormulation.
+ * \param formulation       Switch for deciding which parametrization of the Nusselt number is to be used.
+ *                          Set via the property NusseltFormulation.
  * \return                  The Nusselt number as calculated from the input parameters [-].
  */
 static Scalar nusseltNumberForced(const Scalar reynoldsNumber,
@@ -136,8 +143,10 @@ static Scalar nusseltNumberForced(const Scalar reynoldsNumber,
                                   const int formulation )
 {
     if (formulation == NusseltFormulation::dittusBoelter){
-       /* example: very common and simple case: flow straight circular pipe, only convection (no boiling), 10000<Re<120000, 0.7<Pr<120, far from pipe entrance, smooth surface of pipe ...
-        Dittus, F.W and Boelter, L.M.K, Heat Transfer in Automobile Radiators of the Tubular Type, Publications in Engineering, Vol. 2, pages 443-461, 1930
+       /* example: very common and simple case: flow straight circular pipe, only convection (no boiling),
+        * 10000<Re<120000, 0.7<Pr<120, far from pipe entrance, smooth surface of pipe ...
+        * Dittus, F.W and Boelter, L.M.K, Heat Transfer in Automobile Radiators of the Tubular Type,
+        * Publications in Engineering, Vol. 2, pages 443-461, 1930
         */
            return 0.023 * pow(reynoldsNumber, 0.8) * pow(prandtlNumber,0.33);
     }
@@ -184,12 +193,14 @@ static Scalar nusseltNumberForced(const Scalar reynoldsNumber,
  *          \f[
  *          \textnormal{Sc}= \frac{\nu}{D} = \frac{\mu}{\rho D}\, ,
  *          \f]
- *          with kinematic viscosity\f$\nu\f$, diffusion coefficient \f$D\f$, dynamic viscosity \f$\mu\f$ and mass density\f$\rho\f$.
- *          Therefore, Sc is a material specific property (i.e.: not a function of flow directly but only of temperature, pressure and fluid).
+ *          with kinematic viscosity\f$\nu\f$, diffusion coefficient \f$D\f$, dynamic viscosity
+ *          \f$\mu\f$ and mass density\f$\rho\f$. Therefore, Sc is a material specific property
+ *          (i.e.: not a function of flow directly but only of temperature, pressure and fluid).
  *
  *          source for Schmidt number definition: http://en.wikipedia.org/wiki/Schmidt_number
  *
- * \param dynamicViscosity      Dynamic (absolute) viscosity over density.  http://en.wikipedia.org/wiki/Viscosity#Dynamic_viscosity [m^2/s]
+ * \param dynamicViscosity      Dynamic (absolute) viscosity over density.
+ *                              http://en.wikipedia.org/wiki/Viscosity#Dynamic_viscosity [m^2/s]
  * \param massDensity           Mass density of the considered phase. [kg / m^3]
  * \param diffusionCoefficient  Measure for how well a component can move through a phase due to a concentration gradient. [m^2/s]
  * \return                      The Schmidt Number as calculated from the input parameters.
@@ -234,7 +245,8 @@ struct SherwoodFormulation
  *
  * \param schmidtNumber     Dimensionless number relating viscosity and mass diffusivity [-].
  * \param reynoldsNumber    Dimensionless number relating inertial and viscous forces [-].
- * \param formulation       Switch for deciding which parametrization of the Sherwood number is to be used. Set via the property SherwoodFormulation.
+ * \param formulation       Switch for deciding which parametrization of the Sherwood number is to be used.
+ *                          Set via the property SherwoodFormulation.
  * \return                  The Nusselt number as calculated from the input parameters [-].
  */
 

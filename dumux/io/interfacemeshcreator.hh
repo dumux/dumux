@@ -89,7 +89,8 @@ std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal <<
             }
             else if (lengthLeft > 0.5)
             {
-                Scalar nLeftDouble = std::ceil(-log((1.0 + sqrt(1.0 + 4.0*pow(gradingFactors[comp], numElements[comp])*lengthRight/lengthLeft))
+                Scalar nLeftDouble = std::ceil(-log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactors[comp], numElements[comp])
+                                                                      * lengthRight/lengthLeft))
                             /(2.0*pow(gradingFactors[comp], numElements[comp])))/log(gradingFactors[comp]));
                 nLeft = std::min((int)std::ceil(nLeftDouble), numElements[comp]);
 
@@ -105,7 +106,8 @@ std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal <<
             }
             else
             {
-                Scalar nRightDouble = -log((1.0 + sqrt(1.0 + 4.0*pow(gradingFactors[comp], numElements[comp])*lengthLeft/lengthRight))
+                Scalar nRightDouble = -log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactors[comp], numElements[comp])
+                                                             * lengthLeft/lengthRight))
                             /(2.0*pow(gradingFactors[comp], numElements[comp])))/log(gradingFactors[comp]);
                 nRight = std::min((int)std::ceil(nRightDouble), numElements[comp]);
 
@@ -119,7 +121,8 @@ std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal <<
                 else
                     hLeft = hRight = 1.0/numElements[comp];
             }
-std::cout << "lengthLeft = " << lengthLeft << ", lengthRight = " << lengthRight << ", hLeft = " << hLeft << ", hRight = " << hRight << ", nLeft = " << nLeft << ", nRight = " << nRight << std::endl;
+std::cout << "lengthLeft = " << lengthLeft << ", lengthRight = " << lengthRight << ", hLeft = " << hLeft <<
+             ", hRight = " << hRight << ", nLeft = " << nLeft << ", nRight = " << nRight << std::endl;
 
             int numVertices = numElements[comp] + 1;
             localPositions[comp].resize(numVertices);

@@ -128,11 +128,9 @@ public:
         constraints2_ = Dune::make_shared<Constraints2>();
 
         scalarGridFunctionSpace1_ = Dune::make_shared<ScalarGridFunctionSpace1>(globalProblem_->sdGridView1(),
-        																		*fem1_,
-        																		*constraints1_);
+                                                                                *fem1_, *constraints1_);
         scalarGridFunctionSpace2_ = Dune::make_shared<ScalarGridFunctionSpace2>(globalProblem_->sdGridView2(),
-        																		*fem2_,
-        																		*constraints2_);
+                                                                                *fem2_, *constraints2_);
         // constraints store indices of ghost dofs
         constraints1_->compute_ghosts(*scalarGridFunctionSpace1_);
         constraints2_->compute_ghosts(*scalarGridFunctionSpace2_);
@@ -144,8 +142,8 @@ public:
         gridFunctionSpace2_ = Dune::make_shared<GridFunctionSpace2>(*scalarGridFunctionSpace2_);
 
         mdGridFunctionSpace_ = Dune::make_shared<MultiDomainGridFunctionSpace>(globalProblem_->mdGrid(),
-        											   *gridFunctionSpace1_,
-        											   *gridFunctionSpace2_);
+                                                                               *gridFunctionSpace1_,
+                                                                               *gridFunctionSpace2_);
 
         localOperator1_ = Dune::make_shared<LocalOperator1>(sdProblem1_->model());
         localOperator2_ = Dune::make_shared<LocalOperator2>(sdProblem2_->model());
@@ -164,13 +162,15 @@ public:
 
         NoDirichletConstraints dirichletVal;
         auto constraints = Dune::PDELab::MultiDomain::constraints<Scalar>(*mdGridFunctionSpace_,
-                                                                          Dune::PDELab::MultiDomain::constrainSubProblem(*mdSubProblem1_,dirichletVal),
-                                                                          Dune::PDELab::MultiDomain::constrainSubProblem(*mdSubProblem2_,dirichletVal));
+                                                                          Dune::PDELab::MultiDomain::constrainSubProblem(*mdSubProblem1_,
+                                                                                                                         dirichletVal),
+                                                                          Dune::PDELab::MultiDomain::constrainSubProblem(*mdSubProblem2_,
+                                                                                                                         dirichletVal));
         constraints.assemble(*constraintsTrafo_);
 
         mdGridOperator_ = Dune::make_shared<MultiDomainGridOperator>(*mdGridFunctionSpace_, *mdGridFunctionSpace_,
-        									 *constraintsTrafo_, *constraintsTrafo_,
-        									 *mdSubProblem1_, *mdSubProblem2_, *mdCoupling_);
+                                                                     *constraintsTrafo_, *constraintsTrafo_,
+                                                                     *mdSubProblem1_, *mdSubProblem2_, *mdCoupling_);
 
         matrix_ = Dune::make_shared<JacobianMatrix>(*mdGridOperator_);
         *matrix_ = 0;

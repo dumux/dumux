@@ -67,7 +67,8 @@ NEW_PROP_TAG(GridOperatorSpace); //!< The grid operator space
 NEW_PROP_TAG(GridOperator); //!< The grid operator space
 NEW_PROP_TAG(PressureFEM); //!< FE space used for pressure, saturation, ...
 NEW_PROP_TAG(DisplacementFEM); //!< FE space used for displacement
-NEW_PROP_TAG(VtkRockMechanicsSignConvention); //!< Returns whether the output should be written according to rock mechanics sign convention (compressive stresses > 0)
+NEW_PROP_TAG(VtkRockMechanicsSignConvention); //!< Returns whether the output should be written according to
+                                              //!< rock mechanics sign convention (compressive stresses > 0)
 
 //! Specifies the grid function space used for sub-problems
 NEW_PROP_TAG(GridFunctionSpace);

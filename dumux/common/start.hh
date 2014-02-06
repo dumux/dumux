@@ -499,7 +499,7 @@ int start_(int argc,
 
     // instantiate and run the concrete problem
     TimeManager timeManager;
-    Problem problem(timeManager, GridCreator::grid().leafView());
+    Problem problem(timeManager, GridCreator::grid().leafGridView());
     timeManager.init(problem, restartTime, dt, tEnd, restart);
     timeManager.run();
     // print dumux end message

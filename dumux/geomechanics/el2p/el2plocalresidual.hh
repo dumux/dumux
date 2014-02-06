@@ -40,7 +40,9 @@ namespace Dumux {
 template<class TypeTag>
 class ElTwoPLocalResidual: public BoxLocalResidual<TypeTag> {
 protected:
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     enum {
         dim = GridView::dimension
@@ -49,7 +51,11 @@ protected:
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
         numFluidPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
