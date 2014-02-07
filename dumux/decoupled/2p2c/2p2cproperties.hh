@@ -80,7 +80,7 @@ NEW_PROP_TAG( ImpetErrorTermUpperBound ); //!< Lower bound where error is not co
 NEW_PROP_TAG( FluidSystem ); //!< The fluid system
 NEW_PROP_TAG( FluidState ); //!< The fluid state
 NEW_PROP_TAG( ImpetEnableVolumeIntegral ); //!< Enables volume integral in the pressure equation (volume balance formulation)
-//!< A minimum permeability can be assigned via the runtime-Parameter SpatialParams.minBoundaryPermeability
+//! A minimum permeability can be assigned via the runtime-Parameter SpatialParams.minBoundaryPermeability
 NEW_PROP_TAG( RegulateBoundaryPermeability );
 }}
 
@@ -138,7 +138,7 @@ SET_INT_PROP(DecoupledTwoPTwoC,
 SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    //!<type for vector of vector (of scalars)
+    //! type for vector of vector (of scalars)
     typedef typename Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> > > type;
 
 };
@@ -147,7 +147,7 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCompressibility, true); //!< Compositiona
 SET_BOOL_PROP(DecoupledTwoPTwoC, VisitFacesOnlyOnce, false); //!< Faces are regarded from both sides
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false); //!< Capillarity is enabled
 SET_INT_PROP(DecoupledTwoPTwoC, VtkOutputLevel,2); //!< Default verbosity for VtkOutputLevel is 2 = pretty verbose
-//!< Restrict (no upwind) flux in transport step if direction reverses after pressure equation
+//! Restrict (no upwind) flux in transport step if direction reverses after pressure equation
 SET_INT_PROP(DecoupledTwoPTwoC, ImpetRestrictFluxInTransport, 0);
 
 SET_PROP(DecoupledTwoPTwoC, BoundaryMobility) //!< Saturation scales flux on Dirichlet B.C.

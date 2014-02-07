@@ -396,7 +396,7 @@ protected:
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
     Scalar incp_ = 1e1; //!< Increment for the volume derivative w.r.t pressure
-    //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
 
 private:

@@ -66,8 +66,8 @@ NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered i
 NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind weight for the mass conservation equations
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
-NEW_PROP_TAG(ReplaceCompEqIdx); //!< The index of the total mass balance equation, if one component
-                                //!< balance is replaced (ReplaceCompEqIdx < NumComponents)
+//! The index of the total mass balance equation, if one component balance is replaced (ReplaceCompEqIdx < NumComponents)
+NEW_PROP_TAG(ReplaceCompEqIdx);
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the VTK output
 NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient

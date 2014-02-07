@@ -297,9 +297,9 @@ protected:
     bool impet_; //!< indicating if we are in an estimate (false) or real impet (true) step.
     int averagedFaces_; //!< number of faces were flux was restricted
 
-    //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
-    //!< Restriction of flux on new pressure field if direction reverses from the pressure equation
+    //! Restriction of flux on new pressure field if direction reverses from the pressure equation
     int restrictFluxInTransport_;
     //! Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
     bool regulateBoundaryPermeability;
@@ -1223,8 +1223,8 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
 
                     int indexInOutside = isIt->indexInOutside();
 
-                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_ ||
-                        localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
+                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_
+                        || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
                     {
                         Scalar timeStep  = std::min(localDataI.dt, localDataJ.dt);
 

@@ -52,10 +52,10 @@ namespace Dumux
  * or a global pressure leading to
  * \f[ - \text{div}\, \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_{global}
  *     + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q.\f]
- *  Here, \f$p\f$ denotes a pressure, \f$\boldsymbol{K}\f$ the absolute permeability,
- *  \f$\lambda\f$ the total mobility, possibly depending on the
+ * Here, \f$p\f$ denotes a pressure, \f$\boldsymbol{K}\f$ the absolute permeability,
+ * \f$\lambda\f$ the total mobility, possibly depending on the
  * saturation,\f$f\f$ the fractional flow function of a phase, \f$\rho\f$ a phase density,
- *  \f$g\f$ the gravity constant and \f$q\f$ the source term.
+ * \f$g\f$ the gravity constant and \f$q\f$ the source term.
  * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
  * on \f$\Gamma_{Dirichlet}\f$.
  *
@@ -88,9 +88,9 @@ template<class TypeTag> class MimeticPressure2P
         sn = Indices::saturationNw,
         vw = Indices::velocityW,
         vn = Indices::velocityNw,
-        //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+        //! gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
         pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation),
-        //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+        //! gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
         saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation),
     };
     enum

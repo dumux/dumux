@@ -490,8 +490,8 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
 
                     int indexInOutside = isIt->indexInOutside();
 
-                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_ ||
-                        localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
+                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_
+                        || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
                     {
                         Scalar timeStep  = std::min(localDataI.dt, localDataJ.dt);
 

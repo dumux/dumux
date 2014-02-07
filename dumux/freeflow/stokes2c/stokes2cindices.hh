@@ -41,19 +41,19 @@ template <class TypeTag, int PVOffset = 0>
 struct Stokes2cCommonIndices : public StokesCommonIndices<TypeTag>
 {
     // Phase index
-    //!< Index of the employed phase in case of a two-phase fluidsystem (set by default to nPhase)
+    //! Index of the employed phase in case of a two-phase fluidsystem (set by default to nPhase)
     static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
     // Component indices
     static const int phaseCompIdx = phaseIdx; //!< The index of the main component of the considered phase
-    //!< The index of the transported (minor) component; ASSUMES phase indices of 0 and 1
+    //! The index of the transported (minor) component; ASSUMES phase indices of 0 and 1
     static const int transportCompIdx = (unsigned int)(1-phaseIdx);
 
     // equation and primary variable indices
     static const int dim = StokesCommonIndices<TypeTag>::dim;
     static const int transportEqIdx = PVOffset + dim+1; //!< The index for the transport equation
 
-    //!< The index of the mass or mole fraction of the transported component in primary variable vectors
+    //! The index of the mass or mole fraction of the transported component in primary variable vectors
     static const int massOrMoleFracIdx = transportEqIdx;
 };
 } // end namespace

@@ -205,9 +205,9 @@ private:
     Scalar viscosity_[numPhases];
     bool calcVelocityInTransport_;
 
-    //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    //! gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
-    //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    //! gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 // end of template

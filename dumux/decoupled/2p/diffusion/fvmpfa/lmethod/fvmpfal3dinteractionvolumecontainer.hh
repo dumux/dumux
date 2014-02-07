@@ -105,7 +105,7 @@ class FvMpfaL3dInteractionVolumeContainer
         };
 
 public:
-    //!< Type for storing an MPFA-interaction-volume. (Usually of type Dumux::FvMpfaL3dInteractionVolume or Dumux::FvMpfaL3dInteractionVolumeAdaptive)
+    //! Type for storing an MPFA-interaction-volume. (Usually of type Dumux::FvMpfaL3dInteractionVolume or Dumux::FvMpfaL3dInteractionVolumeAdaptive)
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
 
 private:
@@ -129,8 +129,8 @@ public:
         interactionVolumes_.clear();
         realFluxFaceArea_.clear();
 
-        realFluxFaceArea_.resize(problem_.gridView().size(dim), Dune::FieldVector<Dune::FieldVector<Scalar,
-                                 2>, 2 * dim>(Dune::FieldVector<Scalar, 2>(0.0)));
+        realFluxFaceArea_.resize(problem_.gridView().size(dim),
+                                 Dune::FieldVector<Dune::FieldVector<Scalar, 2>, 2 * dim>(Dune::FieldVector<Scalar, 2>(0.0)));
         interactionVolumes_.resize(problem_.gridView().size(dim));
 
         asImp_().storeInteractionVolumeInfo();

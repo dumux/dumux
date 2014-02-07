@@ -269,7 +269,7 @@ private:
                         {
                             analyticSolution_[index] = frontParams_[i].first
                                                        - (frontParams_[i].first - frontParams_[i+1].first)
-                                                       / (x - xMinus) * (x - globalPos[0]);
+                                                         / (x - xMinus) * (x - globalPos[0]);
                             break;
                         }
                     }

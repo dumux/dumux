@@ -411,8 +411,9 @@ public:
      */
     Scalar getNtkNu_df(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
-        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkNu(subVolumeIdx, subVolumeFaceIdxInInsideN,
-                                                                            subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
+        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]
+                * getNtkNu(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu)
+                / dF_[subVolumeIdx];
     }
 
     //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \right) \f$
@@ -429,8 +430,9 @@ public:
      */
     Scalar getNtkrkNu_df(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
-        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNtkrkNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN,
-                                                                              subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
+        return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]
+                * getNtkrkNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu)
+                / dF_[subVolumeIdx];
     }
 
 private:

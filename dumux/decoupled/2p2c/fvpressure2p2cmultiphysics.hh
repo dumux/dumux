@@ -223,7 +223,7 @@ protected:
     // subdomain map
     Dune::BlockVector<Dune::FieldVector<int,1> > nextSubdomain;  //! vector holding next subdomain
     const GlobalPosition& gravity_; //!< vector including the gravity constant
-    //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
     Dune::Timer timer_; //!< A timer for the time spent on the multiphysics framework.
 

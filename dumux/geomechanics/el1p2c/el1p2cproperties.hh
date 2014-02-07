@@ -60,9 +60,9 @@ NEW_PROP_TAG(SpatialParams); //!< The type of the soil properties object
 NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(ImplicitMassUpwindWeight);   //!< The default value of the upwind weight
-//!< Returns whether the stabilization terms are included in the balance equations
+//! Returns whether the stabilization terms are included in the balance equations
 NEW_PROP_TAG(ImplicitWithStabilization);
-//!< Returns whether the output should be written according to rock mechanics sign convention (compressive stresses > 0)
+//! Returns whether the output should be written according to rock mechanics sign convention (compressive stresses > 0)
 NEW_PROP_TAG(VtkRockMechanicsSignConvention);
 }
 // \}

@@ -83,11 +83,11 @@ SET_TYPE_PROP(IMPET, Model, IMPET<TypeTag>);
 //Set defaults
 SET_SCALAR_PROP(IMPET, ImpetSubCFLFactor, 1.0);
 SET_SCALAR_PROP(IMPET, ImpetCFLFactor, 1.0);
-//!< 0 = no iterations, 1 = iterate IterationNumber iterations, 2 = iterate until converged or IterationNumber is reached
+//! 0 = no iterations, 1 = iterate IterationNumber iterations, 2 = iterate until converged or IterationNumber is reached
 SET_INT_PROP(IMPET, ImpetIterationFlag, 0);
 SET_INT_PROP(IMPET, ImpetIterationNumber, 2);
 SET_SCALAR_PROP(IMPET, ImpetMaximumDefect, 1e-5);
-//!< 1 = new solution is new solution, 0 = old solution is new solution
+//! 1 = new solution is new solution, 0 = old solution is new solution
 SET_SCALAR_PROP(IMPET, ImpetRelaxationFactor, 1.0);
 SET_SCALAR_PROP(IMPET, ImpetDtVariationRestrictionFactor, std::numeric_limits<double>::max());
 SET_SCALAR_PROP(IMPET, ImpetPorosityThreshold, 1e-6);

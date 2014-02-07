@@ -158,9 +158,9 @@ class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
     typedef  Dumux::FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
 public:
-    //!< Type including methods for calculation of MPFA transmissibilities
+    //! Type including methods for calculation of MPFA transmissibilities
     typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
-    //!< Type for storing interaction volume information
+    //! Type for storing interaction volume information
     typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
 protected:
     //initializes the matrix to store the system of equations
@@ -512,7 +512,7 @@ private:
 
 protected:
     InteractionVolumeContainer interactionVolumes_;//!<Global container of the stored interaction volumes
-    //!<The transmissibility calculator including methods for the MPFA transmissibility calculation
+    //! The transmissibility calculator including methods for the MPFA transmissibility calculation
     TransmissibilityCalculator transmissibilityCalculator_;
 
 private:
@@ -538,11 +538,11 @@ private:
     int vtkOutputLevel_;
 
     static constexpr Scalar threshold_ = 1e-15;
-    //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    //! gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
-    //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    //! gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
-    //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    //! gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
 };
 

@@ -65,7 +65,7 @@ private:
     };
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
-    //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
     int upwindError_[numPhases];
 

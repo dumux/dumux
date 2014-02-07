@@ -45,9 +45,9 @@ NEW_TYPE_TAG(FVTransportTwoP, INHERITS_FROM(TransportTwoP));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
+//! Bool property which tells the transport model if it should use constitutive relations which
+//! are precomputed at the begin of the time step or if it should recompute the relations
 NEW_PROP_TAG( PrecomputedConstRels );
-//! < Bool property which tells the transport model if it should use constitutive relations which
-//!   are precomputed at the begin of the time step or if it should recompute the relations
 }
 }
 

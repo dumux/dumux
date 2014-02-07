@@ -46,8 +46,8 @@ NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, DecoupledTwoP));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( CapillaryFlux );         //!< The type of the diffusive part in a transport equation
-NEW_PROP_TAG( GravityFlux );        //!< The type of a convective part in a transport equation
+NEW_PROP_TAG(CapillaryFlux); //!< The type of the diffusive part in a transport equation
+NEW_PROP_TAG(GravityFlux); //!< The type of a convective part in a transport equation
 }
 }
 

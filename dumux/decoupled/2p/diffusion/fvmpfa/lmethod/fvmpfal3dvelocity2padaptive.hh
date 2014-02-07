@@ -199,11 +199,11 @@ private:
     Scalar viscosity_[numPhases];
 
     static constexpr Scalar threshold_ = 1e-15;
-    //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    //! gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
-    //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    //! gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
-    //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    //! gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 // end of template
@@ -1514,14 +1514,14 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
             caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 4, 0, 6,
                     2, 5, 1);
         }
-        else if (hangingNodeType == InteractionVolume::twoSmallCells ||
-                 hangingNodeType == InteractionVolume::fourSmallCellsFace)
+        else if (hangingNodeType == InteractionVolume::twoSmallCells
+                 || hangingNodeType == InteractionVolume::fourSmallCellsFace)
         {
             caseL = transmissibilityCalculator_().transmissibilityCaseTwo(T, interactionVolume, lambda, 4, 0, 2,
                     1);
         }
-        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag ||
-                	(hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag
+                 || (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
         {
             useCases[0] = false;
             useCases[1] = true;
@@ -1642,14 +1642,14 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
             caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 1, 5, 3,
                     7, 0, 4);
         }
-        else if (hangingNodeType == InteractionVolume::twoSmallCells ||
-                 hangingNodeType == InteractionVolume::fourSmallCellsFace)
+        else if (hangingNodeType == InteractionVolume::twoSmallCells
+                 || hangingNodeType == InteractionVolume::fourSmallCellsFace)
         {
             caseL = transmissibilityCalculator_().transmissibilityCaseOne(T, interactionVolume, lambda, 1, 5, 3,
                     0);
         }
-        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag ||
-                	(hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
+        else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag
+                 || (hangingNodeType == InteractionVolume::fourSmallCellsEdge && globalIdx5 != globalIdx7))
         {
             useCases[0] = true;
             useCases[1] = false;
