@@ -146,7 +146,7 @@ public:
     static Scalar krw(const Params &params, Scalar swe)
     {
         return relperm_(params, swe);
-    };
+    }
 
     /*!
      * \brief The relative permeability for the non-wetting phase.

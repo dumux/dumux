@@ -160,7 +160,7 @@ public:
     static Scalar krw(const Params &params, Scalar sw)
     {
         return EffLaw::krw(params, swToSwe(params, sw));
-    };
+    }
 
     /*!
      * \brief The relative permeability for the non-wetting phase.

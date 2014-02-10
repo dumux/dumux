@@ -152,7 +152,7 @@ public:
         assert(0 <= swe && swe <= 1);
 
         return pow(swe, 2.0/params.lambda() + 3);
-    };
+    }
 
     /*!
      * \brief The derivative of the relative permeability for the
@@ -171,7 +171,7 @@ public:
         assert(0 <= swe && swe <= 1);
 
         return (2.0/params.lambda() + 3)*pow(swe, 2.0/params.lambda() + 2);
-    };
+    }
 
     /*!
      * \brief The relative permeability for the non-wetting phase of

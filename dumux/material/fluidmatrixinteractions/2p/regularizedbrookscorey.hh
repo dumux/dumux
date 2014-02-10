@@ -253,7 +253,7 @@ public:
             return 1.0;
 
         return BrooksCorey::krw(params, swe);
-    };
+    }
 
     /*!
      * \brief   Regularized version of the  relative permeability

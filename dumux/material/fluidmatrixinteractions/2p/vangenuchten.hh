@@ -150,7 +150,7 @@ public:
 
         Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.vgm()), params.vgm());
         return sqrt(swe)*r*r;
-    };
+    }
 
     /*!
      * \brief The derivative of the relative permeability for the
@@ -169,7 +169,7 @@ public:
         const Scalar x = 1.0 - std::pow(swe, 1.0/params.vgm());
         const Scalar xToM = std::pow(x, params.vgm());
         return (1.0 - xToM)/std::sqrt(swe) * ( (1.0 - xToM)/2 + 2*xToM*(1.0-x)/x );
-    };
+    }
 
     /*!
      * \brief The relative permeability for the non-wetting phase
@@ -188,7 +188,7 @@ public:
         return
             pow(1 - swe, 1.0/3) *
             pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
-    };
+    }
 
     /*!
      * \brief The derivative of the relative permeability for the
