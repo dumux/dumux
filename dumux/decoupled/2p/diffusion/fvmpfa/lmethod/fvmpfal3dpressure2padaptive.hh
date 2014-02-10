@@ -497,8 +497,8 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assembleHangingNodeInteractionVolume(
     Scalar volume4 = elementPointer4->geometry().volume();
     Scalar volume5 = elementPointer5->geometry().volume();
     Scalar volume6 = elementPointer6->geometry().volume();
-    Scalar volume7 = elementPointer7->geometry().volume();
-    Scalar volume8 = elementPointer8->geometry().volume();
+    Scalar volume7 DUNE_UNUSED = elementPointer7->geometry().volume();
+    Scalar volume8 DUNE_UNUSED = elementPointer8->geometry().volume();
 
     // cell index
     int globalIdx1 = problem_.variables().index(*elementPointer1);

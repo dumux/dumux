@@ -312,8 +312,6 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
 template<class TypeTag>
 void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
-    int numVertices = intersection.geometry().corners();
-
     ElementPointer elementPtrI = intersection.inside();
     ElementPointer elementPtrJ = intersection.outside();
 

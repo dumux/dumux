@@ -308,7 +308,7 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
     ElementPointer elementPtrI = intersection.inside();
     ElementPointer elementPtrJ = intersection.outside();
 
-    int globalIdxI = problem_.variables().index(*elementPtrI);
+    int globalIdxI DUNE_UNUSED = problem_.variables().index(*elementPtrI);
     int globalIdxJ = problem_.variables().index(*elementPtrJ);
 
     CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
