@@ -284,7 +284,8 @@ public:
         localTimeStepping_ = subCFLFactor_/cFLFactor < 1.0 - dtThreshold_;
 
         if (localTimeStepping_)
-            std::cout<<"max CFL-Number of "<<cFLFactor<<", max Sub-CFL-Number of "<<subCFLFactor_<<": Enable local time-stepping!\n";
+            std::cout<<"max CFL-Number of "<<cFLFactor<<", max Sub-CFL-Number of "
+                <<subCFLFactor_<<": Enable local time-stepping!" << std::endl;
     }
 
     virtual ~FVTransport2P2C()
@@ -768,8 +769,8 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
                 // verbose (only for one side)
                 if(globalIdxI > globalIdxJ)
                     Dune::dinfo << "harmonicMean flux of phase" << phaseIdx <<" used from cell" << globalIdxI<< " into " << globalIdxJ
-                    << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersection.indexInInside(),
-                                                                    contiEqIdx) << " but pot = "<< potential[phaseIdx] <<  " \n";
+                    << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx)
+                    << " but pot = "<< potential[phaseIdx] <<  std::endl;
                 #endif
             }
 
@@ -1330,7 +1331,7 @@ void FVTransport2P2C<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
                 subDt += dtCorrection;
 
                 if (verbosity_ > 0)
-                    std::cout<<"    Sub-time-step size: "<<subDt<<"\n";
+                    std::cout<<"    Sub-time-step size: "<<subDt<< std::endl;
 
                     bool stopTimeStep = false;
                     int size = problem_.gridView().size(0);

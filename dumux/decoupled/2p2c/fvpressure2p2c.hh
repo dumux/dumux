@@ -348,6 +348,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
 {
     entries = 0.;
     ElementPtr elementPtrI = intersection.inside();
+    int globalIdxI = problem().variables().index(*elementPtrI);
 
     // get global coordinate of cell center
     const GlobalPosition& globalPos = elementPtrI->geometry().center();
@@ -509,8 +510,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         {
             if (cellDataI.wasRefined() && cellDataJ.wasRefined())
             {
-                problem().variables().cellData(problem().variables().index(*elementPtrI)).setUpwindCell(intersection.indexInInside(),
-                                                                                                        contiWEqIdx, false);
+                problem().variables().cellData(globalIdxI).setUpwindCell(intersection.indexInInside(), contiWEqIdx, false);
                 cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);
             }
 
@@ -543,8 +543,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         {
             if (cellDataI.wasRefined() && cellDataJ.wasRefined())
             {
-                problem().variables().cellData(problem().variables().index(*elementPtrI)).setUpwindCell(intersection.indexInInside(),
-                                                                                                        contiNEqIdx, false);
+                problem().variables().cellData(globalIdxI).setUpwindCell(intersection.indexInInside(), contiNEqIdx, false);
                 cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);
             }
             Scalar averagedMassFraction[2];

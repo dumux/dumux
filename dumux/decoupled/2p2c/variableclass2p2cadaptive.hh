@@ -37,9 +37,9 @@ namespace Dumux
 //! Class holding additionally mpfa data of adaptive compositional models.
 /*!
  * This class provides the possibility to store and load the transmissibilities (and associated infos)
- * of the mpfa method per irregular face. While this class provides the storage container for both 2D
- * and 3D implementation, only the 2D storage methods are included here.
- * Note that according to the number of half-edges (sub-faces) regarded, one ore two transmissibility
+ * of the mpfa method per irregular face. This class provides the storage container and access methods
+ * for both 2D and 3D implementation.
+ * Note that according to the number of half-edges (sub-faces) regarded, one ore more transmissibility
  * can be stored and loaded.
  *
  * @tparam TypeTag The Type Tag
@@ -67,7 +67,10 @@ private:
     };
     enum    //!< for first and second half edge (2D) or subvolume face (3D)
     {
-        first = 0, second = 1
+        first = 0,
+        second = 1,
+        diagonal1 = 2,
+        diagonal2 = 3
     };
     // convenience shortcuts for Vectors/Matrices
     typedef Dune::FieldVector<Scalar, GridView::dimensionworld> GlobalPosition;
@@ -75,40 +78,40 @@ private:
 
 protected:
     /** in the 2D case, we need to store 1 additional cell. In 3D, we store
-    * dim-1=2 cells for one interaction volume, and 4 if two interaction volumes
+    * dim-1=2 cells for one interaction volume, and 8 cells if four interaction volumes
     * are regarded.
     */
-    const static int storageRequirement = (dim-1)*(dim-1);
+    const static int storageRequirement = pow((dim-1), dim);
     //! Storage object for data related to the MPFA method
     /**
-     * This Struct stores the transmissibility coefficients
-     * for the two half-eges of an irregular interface (one
-     * near a hanging node) in an h-adaptive simulation.
+     * This Object stores the transmissibility coefficients
+     * for all interaction regions/volumes of an irregular interface
+     * in an h-adaptive simulation. It is valid for 2D/3D
      */
     struct mpfaData
     {
-        TransmissivityMatrix T1_[2];
+        TransmissivityMatrix T1_[(dim-1)*2];
         int globalIdx3_[storageRequirement];
         GlobalPosition globalPos3_[storageRequirement];
         std::vector<IntersectionIterator> secondHalfEdgeIntersection_;
-        bool hasSecondHalfEdge;
+        int interactionRegionsStored;
 
         //! Constructor for the local storage object of mpfa data
         mpfaData()
         {
-            hasSecondHalfEdge = false;
+            interactionRegionsStored = 0;
         }
-        //! stores an intersection
-        /** This also provides the information that both half-edges are
-         * regarded and information was stored.
+        //! stores an intersection for the 2D implementation
+        /** This method also provides the information that both half-edges (2D) are
+         * regarded and information was stored: Two interaction regions are applied
          * \param is23 Intersection pointing to 3rd cell of additional interaction region
          */
         void setIntersection(IntersectionIterator& is23)
         {
             secondHalfEdgeIntersection_.push_back(is23);
-            hasSecondHalfEdge = true;
+            interactionRegionsStored = 2;
         };
-        //! Acess method to the stored intersection
+        //! Acess method to the stored intersection (only 2D)
         const IntersectionIterator& getIntersection()
         {
             return secondHalfEdgeIntersection_[0];
@@ -153,8 +156,8 @@ public:
         problem.pressureModel().adaptPressure();
     }
 
-    //! Stores Mpfa Data on an intersection
-    /** The method stores information to the interaction region (Transmissitivity
+    //! Stores Mpfa Data of one interaction region on an intersection
+    /** The method stores information of ONE interaction region (Transmissitivity
      * as well as details of the 3rd cell in the region) into a storage container.
      * The key to each element is the index of the intersection, seen from the smaller
      * cell (only this is unique).
@@ -192,8 +195,9 @@ public:
 
 		irregularInterfaceMap_[intersectionID].globalPos3_[0] = globalPos3;
 		irregularInterfaceMap_[intersectionID].globalIdx3_[0] = globalIdx3;
-        return;
     }
+
+
     //! Stores Mpfa Data on an intersection for both half-edges
     /** The method stores information of both interaction regions (Transmissitivity
      * as well as details of the 3rd cells of both regions) into a storage container.
@@ -253,9 +257,110 @@ public:
         return;
     }
 
-    //! Provides acess to stored Mpfa Data on an intersection for both half-edges
+    //! Stores 3D Mpfa Data on an intersection
+    /** The method stores information of the interaction region (Transmissitivity
+     * as well as details of the 3rd & 4th cell in the region) into a storage container.
+     * The key to each element is the index of the intersection, seen from the smaller
+     * cell (only this index is unique).
+     * If we arrive from the "wrong" (i.e. non-unique) direction, we invert fluxes.
+     *
+     * \param irregularIs The current irregular intersection
+     * \param T1 Transmissitivity matrix for flux calculations
+     * \param globalPos3 The position of the 3rd cell of the interaction region
+     * \param globalIdx3 The index of the 3rd cell of the interaction region
+     * \param globalPos4 The position of the 4th cell of the interaction region
+     * \param globalIdx4 The index of the 4th cell of the interaction region
+     * \param subFaceIdx The index of the subface (up to 4 subfaces possible in 3D)
+     */
+    void storeMpfaData3D(const typename GridView::Intersection & irregularIs,
+                        const TransmissivityMatrix& T1,
+                        const GlobalPosition& globalPos3,
+                        const int& globalIdx3,
+                        const GlobalPosition& globalPos4,
+                        const int& globalIdx4,
+                        int subFaceIdx = 0)
+    {
+        // if the second interaction Region (subfaceIdx=1) needs to be stored,
+        // we need an offset for the second globalPos and globalIdxes
+        const int offset = subFaceIdx * 2;
+
+        IdType intersectionID
+                = grid_.localIdSet().subId(*irregularIs.inside(),
+                                            irregularIs.indexInInside(), 1);
+
+        // mapping is only unique from smaller cell (if *inside and not *outside)
+        if (irregularIs.inside().level() < irregularIs.outside().level())
+        {
+            // IS is regarded from larger cell: get the unique ID as seen from smaller
+            intersectionID
+                = grid_.localIdSet().subId(*irregularIs.outside(),
+                                            irregularIs.indexInOutside(), 1);
+
+            // store as if it was seen from smaller: change i & j
+            irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][0] = -T1[1];
+            irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][1] = -T1[0];
+            irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][2] = -T1[2];
+            irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][3] = -T1[3];
+        }
+        else
+        {
+            // proceed with numbering according to case2
+            irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][0] = T1[0];
+            irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][1] = T1[1];
+            irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][2] = T1[2];
+            irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][3] = T1[3];
+        }
+        irregularInterfaceMap_[intersectionID].globalPos3_[offset+0] = globalPos3;
+        irregularInterfaceMap_[intersectionID].globalIdx3_[offset+0] = globalIdx3;
+        irregularInterfaceMap_[intersectionID].globalPos3_[offset+1] = globalPos4;
+        irregularInterfaceMap_[intersectionID].globalIdx3_[offset+1] = globalIdx4;
+
+        irregularInterfaceMap_[intersectionID].interactionRegionsStored
+            = std::max(irregularInterfaceMap_[intersectionID].interactionRegionsStored, subFaceIdx+1);
+
+        return;
+    }
+
+    //! Weigths the transmissivity coefficient by the flux area (3D)
+    /** Each cell face could contain up to 4 interaction regions in 3D. If fewer interaction
+     * regions are considered (e.g. at a boundary), the flux goes through a higher area than
+     * was regarded in the calculation of the interaction region. Therefore, the transmissibility
+     * coefficients have to be weighted (scaled).
+     * If no specific face Index is given, all present Transmissibility matrices are weighted
+     * homogeneously by the given weight.
+     * \param irregularIs The current irregular intersection
+     * \param weight The weighting factor
+     * \param subFaceIdx The index of the subface (up to 4 subfaces possible in 3D)
+     */
+    void performTransmissitivityWeighting(const typename GridView::Intersection & irregularIs,
+                       Scalar weight, int subFaceIdx = -1)
+    {
+        IdType intersectionID
+                = grid_.localIdSet().subId(*irregularIs.inside(),
+                                            irregularIs.indexInInside(), 1);
+
+        // mapping is only unique from smaller cell (if *inside and not *outside)
+        if (irregularIs.inside().level() < irregularIs.outside().level())
+        {
+            // IS is regarded from larger cell: get the unique ID as seen from smaller
+            intersectionID
+                = grid_.localIdSet().subId(*irregularIs.outside(),
+                                            irregularIs.indexInOutside(), 1);
+        }
+
+        // for subFaceIdx == -1, we weight all subfaces equally
+        if(subFaceIdx == -1)
+        {
+            for(int i = 0; i < irregularInterfaceMap_[intersectionID].interactionRegionsStored; i++)
+                irregularInterfaceMap_[intersectionID].T1_[i] *= weight;
+        }
+        else    //weight specifically
+            irregularInterfaceMap_[intersectionID].T1_[subFaceIdx] *= weight;
+    }
+
+    //! Provides access to stored Mpfa Data on an intersection for both half-edges
     /** The method gets information of both interaction regions (Transmissitivity
-     * as well as details of the 3rd cells of both regions) into a storage container.
+     * as well as details of the 3rd cells of both regions) from a storage container.
      * The key to each element is the index of the intersection, seen from the smaller
      * cell (only this is unique).
      * If we arrive from the "wrong" (i.e. non-unique) direction, we invert fluxes.
@@ -298,7 +403,7 @@ public:
             globalPos3 = irregularInterfaceMap_[intersectionID].globalPos3_[0];
             globalIdx3 = irregularInterfaceMap_[intersectionID].globalIdx3_[0];
             //second half edge
-            if(irregularInterfaceMap_[intersectionID].hasSecondHalfEdge)
+            if(irregularInterfaceMap_[intersectionID].interactionRegionsStored == 2)
             {
                 secondHalfEdgeIntersectionIt = irregularInterfaceMap_[intersectionID].getIntersection();
                 T1_secondHalfEdge[0] = -irregularInterfaceMap_[intersectionID].T1_[second][2];
@@ -320,7 +425,7 @@ public:
         globalPos3 = irregularInterfaceMap_[intersectionID].globalPos3_[0];
         globalIdx3 = irregularInterfaceMap_[intersectionID].globalIdx3_[0];
         //second half edge
-        if(irregularInterfaceMap_[intersectionID].hasSecondHalfEdge)
+        if(irregularInterfaceMap_[intersectionID].interactionRegionsStored == 2)
         {
             secondHalfEdgeIntersectionIt = irregularInterfaceMap_[intersectionID].getIntersection();
             T1_secondHalfEdge = irregularInterfaceMap_[intersectionID].T1_[second];
@@ -330,6 +435,81 @@ public:
             return 2;
         }
         return 1;
+    }
+
+
+    //! Provides access to stored 3D Mpfa Data on an intersection for up to 4 subfaces
+    /** The method gets information of up to 4 interaction regions (Transmissitivity
+     * as well as details of the 3rd & 4th cells of the regions) from a storage container.
+     * The key to each element is the index of the intersection, seen from the smaller
+     * cell (only this is unique).
+     * If we arrive from the "wrong" (i.e. non-unique) direction, we invert fluxes.
+     *
+     * \param irregularIs The current irregular intersection
+     * \param secondHalfEdgeIntersectionIt Iterator to the intersection connecting the second interaction region
+     * \param T1 Transmissitivity matrix for flux calculations: unique interaction region
+     * \param T1_secondHalfEdge Second transmissitivity matrix for flux calculations for non-unique interaction region
+     * \param globalPos3 The position of the 3rd cell of the first interaction region
+     * \param globalIdx3 The index of the 3rd cell of the first interaction region
+     * \param globalPos4 The position of the 4th cell of the interaction region
+     * \param globalIdx4 The index of the 4th cell of the interaction region
+     * \param subFaceIdx The index of the subface (up to 4 subfaces possible in 3D)
+     */
+    int getMpfaData3D(const Intersection& irregularIs,
+                        TransmissivityMatrix& T1,
+                        GlobalPosition& globalPos3,
+                        int& globalIdx3,
+                        GlobalPosition& globalPos4,
+                        int& globalIdx4,
+                        int subFaceIdx = 0)
+    {
+        // if the second interaction Region (subfaceIdx=1) needs to be stored,
+        // we need an offset for the second globalPos and globalIdxes
+        const int offset = subFaceIdx * 2;
+
+        IdType intersectionID
+                = grid_.localIdSet().subId(*irregularIs.inside(),
+                                            irregularIs.indexInInside(), 1);
+        // mapping is only unique from smaller cell (if *inside and not *outside)
+        if (irregularIs.inside().level() < irregularIs.outside().level())
+        {
+            // IS is regarded from larger cell: get the unique number as seen from smaller
+            intersectionID
+                = grid_.localIdSet().subId(*irregularIs.outside(),
+                                            irregularIs.indexInOutside(), 1);
+
+            // check if T1ransmissibility matrix was stored for that IF
+            if (irregularInterfaceMap_.find(intersectionID) == irregularInterfaceMap_.end())
+                return 0; // no stored data!
+
+            // If data is stored, it is so as if the IF is regarded from smaller cell.
+            // since we are looking from larger cell, cells i & j have to be changed
+            // Additionally, flux points in opposite direction: - sign
+            T1[0] = -irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][1];
+            T1[1] = -irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][0];
+            T1[2] = -irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][2];
+            T1[3] = -irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][3];
+
+        }
+        else
+        {
+            // check if T1ransmissibility matrix was stored for that IF
+            if (irregularInterfaceMap_.find(intersectionID) == irregularInterfaceMap_.end())
+                return 0; // no stored data!
+
+            T1[0] = irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][0];
+            T1[1] = irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][1];
+            T1[2] = irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][2];
+            T1[3] = irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][3];
+        }
+
+        // return what does not depend on direction: additional cells
+        globalPos3 = irregularInterfaceMap_[intersectionID].globalPos3_[offset+0];
+        globalIdx3 = irregularInterfaceMap_[intersectionID].globalIdx3_[offset+0];
+        globalPos4 = irregularInterfaceMap_[intersectionID].globalPos3_[offset+1];
+        globalIdx4 = irregularInterfaceMap_[intersectionID].globalIdx3_[offset+1];
+
+        return irregularInterfaceMap_[intersectionID].interactionRegionsStored;
     }
 	//@}
 

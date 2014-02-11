@@ -359,8 +359,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
  * \param cellDataI Data of cell I
  */
 template<class TypeTag>
-void FVPressure2P2CMultiPhysics<TypeTag>::get1pSource(Dune::FieldVector<Scalar,
-     2>& sourceEntry, const Element& elementI, const CellData& cellDataI)
+void FVPressure2P2CMultiPhysics<TypeTag>::get1pSource(Dune::FieldVector<Scalar, 2>& sourceEntry,
+        const Element& elementI, const CellData& cellDataI)
 {
     sourceEntry=0.;
 
