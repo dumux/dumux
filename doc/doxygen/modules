@@ -277,6 +277,12 @@
      * \ingroup Sequential
      * \defgroup IMPET Models
      */     
+	
+		/*!
+		* \ingroup IMPET
+		* \defgroup mpfa MPFA framework
+		*/
+	  
         /*!
          * \ingroup IMPET
          * \defgroup OnePhase Single Phase (FV)

@@ -30,7 +30,7 @@
 
 namespace Dumux
 {
-//! \ingroup FVPressure2p
+//! \ingroup FVPressure2p mpfa
 /*! \brief Provides methods for transmissibility calculation in 2-d.
  *
  *  The transmissibilities are calculated using the MPFA L-method.

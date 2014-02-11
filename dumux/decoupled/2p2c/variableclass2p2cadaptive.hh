@@ -32,7 +32,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup Adaptive2p2c
+ * \ingroup Adaptive2p2c mpfa
  */
 //! Class holding additionally mpfa data of adaptive compositional models.
 /*!

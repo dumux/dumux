@@ -37,7 +37,7 @@ bool sort_compare(const std::vector<int>& entryI, const std::vector<int>& entryJ
     return (entryI[1] < entryJ[1]);
 }
 
-//! \ingroup FVPressure2p
+//! \ingroup FVPressure2p mpfa
 /*! \brief Interactionvolume container for 3-d MPFA L-method
  *
  * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.

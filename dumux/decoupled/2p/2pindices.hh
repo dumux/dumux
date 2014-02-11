@@ -53,16 +53,19 @@ struct DecoupledTwoPCommonIndices
 
     //saturation flags
     static const int saturationW = 0; //!< Indicates wetting phase saturation
-    static const int saturationNw = 1; //!<  Indicates non-wetting phase saturation
+    static const int saturationN = 1; //!<  Indicates non-wetting phase saturation
+    static const int saturationNw = saturationN; //!<  Indicates non-wetting phase saturation
 
     //pressure flags
     static const int pressureW = 0; //!< Indicates wetting phase pressure
-    static const int pressureNw = 1; //!<  Indicates non-wetting phase pressure
+    static const int pressureN = 1; //!<  Indicates non-wetting phase pressure
+    static const int pressureNw = pressureN; //!<  Indicates non-wetting phase pressure
     static const int pressureGlobal = 2; //!<  Indicates global-pressure
 
     //velocity flags
     static const int velocityW = 0; //!< Indicates wetting phase velocity
-    static const int velocityNw = 1; //!<  Indicates non-wetting phase velocity
+    static const int velocityN = 1; //!<  Indicates non-wetting phase velocity
+    static const int velocityNw = velocityN; //!<  Indicates non-wetting phase velocity
     static const int velocityTotal = 2; //!<  Indicates total velocity
 };
 

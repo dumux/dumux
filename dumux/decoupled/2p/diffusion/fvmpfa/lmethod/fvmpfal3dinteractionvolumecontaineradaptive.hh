@@ -33,7 +33,7 @@
 namespace Dumux
 {
 
-//! \ingroup FVPressure2p
+//! \ingroup FVPressure2p mpfa
 /*! \brief Interactionvolume container for 3-d MPFA L-method on an h-adaptive grid
  *
  * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.

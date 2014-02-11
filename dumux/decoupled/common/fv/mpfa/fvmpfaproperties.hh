@@ -19,7 +19,7 @@
 
 /*!
  * \ingroup IMPET
- * \ingroup IMPETProperties
+ * \ingroup IMPETProperties mpfa
  * \file
  *
  * \brief Properties for a MPFA method.
