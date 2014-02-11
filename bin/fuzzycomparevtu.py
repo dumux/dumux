@@ -20,10 +20,10 @@ def isFuzzyEqualNode(node1, node2, absolute, relative):
         return False
     for node1child, node2child in zip(node1.childNodes, node2.childNodes):
         if node1child.nodeType != node2child.nodeType:
-            print 'Node type differs in ', note1.tagName
+            print 'Node type differs in ', node1.tagName
             return False
         if node1child.nodeType == node1child.TEXT_NODE and not isFuzzyEqualText(node1child.data, node2child.data, absolute, relative):
-            print 'Data differs in node ', node1.tagName
+            print 'Data differs in parameter ', node2.attributes.items(), ' at node ', node2child.nodeType
             return False
         if node1child.nodeType == node1child.ELEMENT_NODE and not isFuzzyEqualNode(node1child, node2child, absolute, relative):
             return False
@@ -42,13 +42,13 @@ def isFuzzyEqualText(text1, text2, absolute, relative):
         number2 = float(number2)
         if (abs(number1 - number2) > absolute 
             and (number2 == 0.0 or abs(abs(number1 / number2) - 1.0) > relative)):
-            print 'Difference to large between', number1, ' and ', number2
+            print 'Difference is too large between', number1, ' and ', number2
             return False
     return True
 
 # main programm
 # handle arguments and print help message
-parser = argparse.ArgumentParser(description='Fuzzy compare two VTK\
+parser = argparse.ArgumentParser(description='Fuzzy compare of two VTK\
     (Visualization Toolkit) files. The files are accepted if for every\
     value the difference is below the absolute error or below the\
     relative error or below both.')
