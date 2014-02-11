@@ -19,12 +19,12 @@
 
 /*!
  * \ingroup IMPEC
- * \ingroup Adaptive2p2c
+ * \ingroup Adaptive2p2c mpfa
  * \ingroup IMPETProperties
  *
  * \file
  *
- * \brief Defines the properties required for the decoupled 2p2c models.
+ * \brief Defines the properties required for the adaptive decoupled 2p2c models.
  */
 #ifndef DUMUX_2P2CADAPTIVE_PROPERTIES_HH
 #define DUMUX_2P2CADAPTIVE_PROPERTIES_HH
@@ -56,12 +56,12 @@ NEW_TYPE_TAG(DecoupledTwoPTwoCAdaptive, INHERITS_FROM(DecoupledTwoPTwoC));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG( GridAdaptEnableMultiPointFluxApproximation); //!< HangingNode: Two-point flux approximation (false) or mpfa (true)
-NEW_PROP_TAG( GridAdaptEnableSecondHalfEdge ); //!< Uses second interaction volume for second half-edge in 2D
+NEW_PROP_TAG(GridAdaptMaxInteractionVolumes); //!< Maximum number of interaction regions (2D and 3D)
 }}
 
 //Dumux includes
-#include <dumux/decoupled/2p2c/fvpressure2p2cadaptive.hh>
-#include <dumux/decoupled/2p2c/fvtransport2p2cadaptive.hh>
+#include <dumux/decoupled/2p2c/fv2dpressure2p2cadaptive.hh>
+#include <dumux/decoupled/2p2c/fv2dtransport2p2cadaptive.hh>
 #include <dumux/decoupled/2p2c/variableclass2p2cadaptive.hh>
 #include <dumux/decoupled/2p2c/celldata2p2cadaptive.hh>
 
@@ -72,14 +72,15 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 SET_BOOL_PROP(DecoupledTwoPTwoCAdaptive, AdaptiveGrid, true);
 SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, GridTypeIndices, GridTypes); //! Property not used but default necessary for mpfa2p
-SET_BOOL_PROP(DecoupledTwoPTwoCAdaptive, GridAdaptEnableSecondHalfEdge, true); //!< Uses second interaction volume for second half-edge in 2D
 SET_BOOL_PROP(DecoupledTwoPTwoCAdaptive, GridAdaptEnableMultiPointFluxApproximation, true); //!< applies an mpfa method around hanging nodes
+SET_INT_PROP(DecoupledTwoPTwoCAdaptive, GridAdaptMaxInteractionVolumes, 4); //!< Uses up to 4 interaction regions as default
+
 SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, CellData, CellData2P2CAdaptive<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, Variables, VariableClass2P2CAdaptive<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, Indices, DecoupledTwoPTwoCIndicesAdaptive<TypeTag>);
 // Set the model properties
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, TransportModel, FVTransport2P2CAdaptive<TypeTag>);
-SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, PressureModel, FVPressure2P2CAdaptive<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, TransportModel, FV2dTransport2P2CAdaptive<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, PressureModel, FV2dPressure2P2CAdaptive<TypeTag>);
 }
 
 
