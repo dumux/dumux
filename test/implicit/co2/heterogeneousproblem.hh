@@ -24,6 +24,7 @@
 #ifndef DUMUX_HETEROGENEOUS_PROBLEM_HH
 #define DUMUX_HETEROGENEOUS_PROBLEM_HH
 
+#include <dune/common/version.hh>
 
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid/2d/alugrid.hh>
@@ -193,7 +194,11 @@ public:
      */
     HeterogeneousProblem(TimeManager &timeManager,
                      const GridView &gridView)
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        : ParentType(timeManager, GridCreator::grid().leafGridView()),
+#else
         : ParentType(timeManager, GridCreator::grid().leafView()),
+#endif
           //Boundary Id Setup:
           injectionTop_(1),
           injectionBottom_(2),

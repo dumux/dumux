@@ -91,7 +91,11 @@ int main(int argc, char** argv)
         bool consecutiveNumbering = true;
 
         typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), Problem) FVProblem;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        FVProblem fvProblem(grid->leafGridView(), delta);
+#else
         FVProblem fvProblem(grid->leafView(), delta);
+#endif
         fvProblem.setName("fvdiffusion");
         timer.reset();
         fvProblem.init();
@@ -99,27 +103,45 @@ int main(int argc, char** argv)
         double fvTime = timer.elapsed();
         fvProblem.writeOutput();
         Dumux::ResultEvaluation fvResult;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        fvResult.evaluate(grid->leafGridView(), fvProblem, consecutiveNumbering);
+
+        typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), Problem) MPFAOProblem;
+        MPFAOProblem mpfaProblem(grid->leafGridView(), delta);
+#else
         fvResult.evaluate(grid->leafView(), fvProblem, consecutiveNumbering);
 
         typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), Problem) MPFAOProblem;
         MPFAOProblem mpfaProblem(grid->leafView(), delta);
+#endif
         mpfaProblem.setName("fvmpfaodiffusion");
         timer.reset();
         mpfaProblem.init();
         double mpfaTime = timer.elapsed();
         mpfaProblem.writeOutput();
         Dumux::ResultEvaluation mpfaResult;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        mpfaResult.evaluate(grid->leafGridView(), mpfaProblem, consecutiveNumbering);
+
+        typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), Problem) MimeticProblem;
+        MimeticProblem mimeticProblem(grid->leafGridView(), delta);
+#else
         mpfaResult.evaluate(grid->leafView(), mpfaProblem, consecutiveNumbering);
 
         typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), Problem) MimeticProblem;
         MimeticProblem mimeticProblem(grid->leafView(), delta);
+#endif
         mimeticProblem.setName("mimeticdiffusion");
         timer.reset();
         mimeticProblem.init();
         double mimeticTime = timer.elapsed();
         mimeticProblem.writeOutput();
         Dumux::ResultEvaluation mimeticResult;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        mimeticResult.evaluate(grid->leafGridView(), mimeticProblem, consecutiveNumbering);
+#else
         mimeticResult.evaluate(grid->leafView(), mimeticProblem, consecutiveNumbering);
+#endif
 
         std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
         std::cout.precision(2);

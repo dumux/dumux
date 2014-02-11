@@ -529,7 +529,11 @@ int start_(int argc,
 
     // instantiate and run the concrete problem
     TimeManager timeManager;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+    Problem problem(timeManager, GridCreator::grid().leafGridView());
+#else
     Problem problem(timeManager, GridCreator::grid().leafView());
+#endif
     timeManager.init(problem, restartTime, dt, tEnd, restart);
     timeManager.run();
     // print dumux end message

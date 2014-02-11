@@ -26,6 +26,8 @@
 #ifndef DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 #define DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
@@ -143,6 +145,19 @@ public:
     void setParams(GridPointer *gridPtr)
     {
         gridPtr_ = gridPtr;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        int numElements = (*gridPtr_)->leafGridView().size(0);
+        paramIdx_.resize(numElements);
+
+        ElementIterator eIt = (*gridPtr_)->leafGridView().template begin<0>();
+        const ElementIterator eEndIt = (*gridPtr_)->leafGridView().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
+        {
+            int eIdx = (*gridPtr_)->leafGridView().indexSet().index(*eIt);
+            int param = (*gridPtr_).parameters(*eIt)[0];
+            paramIdx_[eIdx] = param;
+        }
+#else
         int numElements = (*gridPtr_)->leafView().size(0);
         paramIdx_.resize(numElements);
 
@@ -154,6 +169,7 @@ public:
             int param = (*gridPtr_).parameters(*eIt)[0];
             paramIdx_[eIdx] = param;
         }
+#endif
 
     }
 
@@ -169,7 +185,13 @@ public:
                                        const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {
-        int eIdx = (*gridPtr_)->leafView().indexSet().index(element); //Get the global index of the element
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        //Get the global index of the element
+        int eIdx = (*gridPtr_)->leafGridView().indexSet().index(element);
+#else
+        //Get the global index of the element
+        int eIdx = (*gridPtr_)->leafView().indexSet().index(element);
+#endif
 
         if (paramIdx_[eIdx] == barrierTop_)
             return barrierTopK_;
@@ -191,7 +213,13 @@ public:
                     const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
-        int eIdx = (*gridPtr_)->leafView().indexSet().index(element); //Get the global index of the element
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        //Get the global index of the element
+        int eIdx = (*gridPtr_)->leafGridView().indexSet().index(element);
+#else
+        //Get the global index of the element
+        int eIdx = (*gridPtr_)->leafView().indexSet().index(element);
+#endif
 
         if (paramIdx_[eIdx] == barrierTop_)
             return barrierTopPorosity_;

@@ -104,7 +104,11 @@ int main(int argc, char** argv)
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
         TimeManager timeManager;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        Problem problem(timeManager, grid.leafGridView(), L, H);
+#else
         Problem problem(timeManager, grid.leafView(), L, H);
+#endif
 
         // initialize the simulation
         timeManager.init(problem, startTime, firstDt, tEnd, restart);

@@ -28,9 +28,10 @@
 // Check if DUNE-PDELab has been patched for our needs.
 #ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
 
-#include "el2pproblem.hh"
 #include <dune/common/precision.hh>
+#include <dune/common/version.hh>
 #include <dumux/common/start.hh>
+#include "el2pproblem.hh"
 
 int main(int argc, char** argv) {
     try {
@@ -68,7 +69,11 @@ int main(int argc, char** argv) {
         TimeManager timeManager;
 
         // instantiate problem
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+        Problem problem(timeManager, gridPtr->leafGridView(), tInitEnd);
+#else
         Problem problem(timeManager, gridPtr->leafView(),tInitEnd);
+#endif
 
         // set the initial approximated hydrostatic pressure distribution
         // based on an averaged brine density

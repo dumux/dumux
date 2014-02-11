@@ -18,12 +18,11 @@
  *****************************************************************************/
 #include "config.h"
 
-#include "evaporationatmosphereproblem.hh"
+#include <dune/common/version.hh>
 
 #include <dumux/common/start.hh>
-
 #include <dumux/io/interfacemeshcreator.hh>
-
+#include "evaporationatmosphereproblem.hh"
 
 /*!
  * \brief Print a usage string for simulations.
@@ -283,8 +282,12 @@ int start_(int argc,
     TimeManager timeManager;
 
     // instantiate coupled problem
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+    Problem problem(timeManager, gridPtr->leafGridView());
+#else
     Problem problem(timeManager,
                     gridPtr->leafView());
+#endif
 
     Dumux::Parameters::print<TypeTag>();
 

@@ -17,8 +17,6 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-#include <dumux/decoupled/common/onemodelproblem.hh>
-
 /*!
  * \file
  *
@@ -27,6 +25,9 @@
  */
 #ifndef DUMUX_BENCHMARKRESULT_HH
 #define DUMUX_BENCHMARKRESULT_HH
+
+#include <dune/common/version.hh>
+#include <dumux/decoupled/common/onemodelproblem.hh>
 
 namespace Dumux
 {
@@ -106,15 +107,20 @@ public:
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
         typedef typename Dune::ReferenceElements<ct, dim> ReferenceElements;
+        const GV& gridview(grid.levelGridView(grid.maxLevel()));
+        const IS& indexset(gridview.indexSet());
+        EM elementmapper(gridview);
+        FM facemapper(gridview);
+        SolutionType& exactSol(grid.levelGridView(grid.maxLevel()));
 #else
         typedef typename Geometry::Jacobian JacobianInverseTransposed;
         typedef typename Dune::GenericReferenceElements<ct, dim> ReferenceElements;
-#endif
         const GV& gridview(grid.levelView(grid.maxLevel()));
         const IS& indexset(gridview.indexSet());
         EM elementmapper(gridview);
         FM facemapper(gridview);
         SolutionType& exactSol(grid.levelView(grid.maxLevel()));
+#endif
 
         uMean = 0;
         double domainVolume = 0;

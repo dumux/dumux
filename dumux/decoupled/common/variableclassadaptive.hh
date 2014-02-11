@@ -99,7 +99,11 @@ public:
         for (int level = grid_.maxLevel(); level >= 0; level--)
         {
             //get grid view on level grid
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+            LevelGridView levelView = grid_.levelGridView(level);
+#else
             LevelGridView levelView = grid_.levelView(level);
+#endif
             for (LevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
             {
                 //get your map entry
@@ -153,7 +157,11 @@ public:
 
         for (int level = 0; level <= grid_.maxLevel(); level++)
         {
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
+            LevelGridView levelView = grid_.levelGridView(level);
+#else
             LevelGridView levelView = grid_.levelView(level);
+#endif
             for (LevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
             {
                 // only treat non-ghosts, ghost data is communicated afterwards
