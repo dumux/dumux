@@ -19,14 +19,14 @@ MaxLevel = 1
 # CoarsenTolerance = 0.1
 # RefineTolerance = 0.15
 EnableMultiPointFluxApproximation = 1
-EnableSecondHalfEdge = 1
+MaxInteractionVolumes = 2
 
 #############################################################
 #Problem parameters
 #############################################################
 [Problem]
 
-SimulationName  = test_adaptive2p2c     # name of the output files
+SimulationName  = test_adaptive2p2c2d     # name of the output files
 OutputInterval = 5
 
 [TimeManager]

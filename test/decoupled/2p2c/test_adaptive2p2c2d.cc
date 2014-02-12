@@ -23,7 +23,7 @@
  */
 #include "config.h"
 
-#include "test_adaptive2p2cproblem.hh"
+#include "test_adaptive2p2c2dproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -60,7 +60,7 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
 #if HAVE_ALUGRID
-    typedef TTAG(Adaptive2p2c) TypeTag;
+    typedef TTAG(Adaptive2p2c2d) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
 #else
 #warning ALUGrid needed for this test.

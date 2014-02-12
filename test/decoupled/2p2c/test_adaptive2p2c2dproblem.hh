@@ -21,8 +21,8 @@
  *
  * \brief Test problem for the adaptive sequential 2p2c model
  */
-#ifndef DUMUX_TEST_ADAPTIVE_2P2C_PROBLEM_HH
-#define DUMUX_TEST_ADAPTIVE_2P2C_PROBLEM_HH
+#ifndef DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
+#define DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 
 #include <dune/grid/alugrid.hh>
 // #include <dune/grid/uggrid.hh>
@@ -44,58 +44,59 @@ namespace Dumux
 {
 
 template<class TypeTag>
-class Adaptive2p2c;
+class Adaptive2p2c2d;
 
 namespace Properties
 {
-NEW_TYPE_TAG(Adaptive2p2c, INHERITS_FROM(DecoupledTwoPTwoCAdaptive,Test2P2CSpatialParams));
+NEW_TYPE_TAG(Adaptive2p2c2d, INHERITS_FROM(DecoupledTwoPTwoCAdaptive,Test2P2CSpatialParams));
 
 // Set the grid type
-SET_PROP(Adaptive2p2c, Grid)
+SET_PROP(Adaptive2p2c2d, Grid)
 {
 #if HAVE_ALUGRID
     typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
-// #elif HAVE_UG
-//     typedef Dune::UGGrid<2> type;
+// #elseif HAVE_UG
+//     typedef Dune::UGGrid<2> type; //would need a DGF file to specify closure
 #endif
     
 };
 // set the GridCreator property
-SET_TYPE_PROP(Adaptive2p2c, GridCreator, CubeGridCreator<TypeTag>);
+SET_TYPE_PROP(Adaptive2p2c2d, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the problem property
-SET_PROP(Adaptive2p2c, Problem)
+SET_PROP(Adaptive2p2c2d, Problem)
 {
-    typedef Dumux::Adaptive2p2c<TTAG(Adaptive2p2c)> type;
+    typedef Dumux::Adaptive2p2c2d<TTAG(Adaptive2p2c2d)> type;
 };
 
 // Select fluid system
-SET_PROP(Adaptive2p2c, FluidSystem)
+SET_PROP(Adaptive2p2c2d, FluidSystem)
 {
     typedef Dumux::H2OAirFluidSystem<TypeTag> type;
 //    typedef Dumux::H2ON2FluidSystem<TypeTag> type;
 //    typedef Dumux::Brine_CO2_System<TypeTag, Dumux::Benchmark3::CO2Tables> type;
 };
 
-SET_BOOL_PROP(Adaptive2p2c, EnableComplicatedFluidSystem, true);
+// Set the 2d Transport and Pressure model (already set as default in properties file)
+SET_TYPE_PROP(Adaptive2p2c2d, TransportModel, FV2dTransport2P2CAdaptive<TypeTag>);
+SET_TYPE_PROP(Adaptive2p2c2d, PressureModel, FV2dPressure2P2CAdaptive<TypeTag>);
+
+SET_BOOL_PROP(Adaptive2p2c2d, EnableComplicatedFluidSystem, true);
 
 // Select water formulation
-SET_PROP(Adaptive2p2c, Components) : public GET_PROP(TypeTag, DefaultComponents)
+SET_PROP(Adaptive2p2c2d, Components) : public GET_PROP(TypeTag, DefaultComponents)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 //    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
         typedef Dumux::H2O<Scalar> H2O;
 };
 // Specify indicator
-SET_TYPE_PROP(Adaptive2p2c, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
+SET_TYPE_PROP(Adaptive2p2c2d, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(Adaptive2p2c, ProblemEnableGravity, true);
-SET_INT_PROP(Adaptive2p2c,
-        BoundaryMobility,
-        GET_PROP_TYPE(TypeTag, Indices)::permDependent);
-SET_BOOL_PROP(Adaptive2p2c, EnableCapillarity, true);
-SET_INT_PROP(Adaptive2p2c, PressureFormulation,
+SET_BOOL_PROP(Adaptive2p2c2d, ProblemEnableGravity, true);
+SET_BOOL_PROP(Adaptive2p2c2d, EnableCapillarity, true);
+SET_INT_PROP(Adaptive2p2c2d, PressureFormulation,
         GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
 }
@@ -106,8 +107,7 @@ SET_INT_PROP(Adaptive2p2c, PressureFormulation,
  * 
  * \brief test problem for the grid-adaptive sequential 2p2c model
  *
- * The domain is box shaped (2D), as the gird-adaptive model can only run in
- * two dimensions!. All sides are closed (Neumann 0 boundary)
+ * The domain is box shaped (2D). All sides are closed (Neumann 0 boundary)
  * except the top and bottom boundaries (Dirichlet). A Gas (Air)
  * is injected over a vertical well in the center of the domain.
  *
@@ -115,14 +115,14 @@ SET_INT_PROP(Adaptive2p2c, PressureFormulation,
  * The input file can alter the grid adaptation in group [GridAdapt]:
  * MinLevel and MaxLevel define the refinement levels of the grid.
  * Afterwards, the refinement tolerances can be specified. On hanging
- * nodes, an mpfa can be used (EnableMultiPointFluxApproximation = 1), at
- * best taken both half-edges into account (EnableSecondHalfEdge = 1).
+ * nodes, a MPFA can be used (EnableMultiPointFluxApproximation = 1), at
+ * best taken both interaction regions into account (MaxInteractionVolumes = 2).
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_adaptive2p2c -parameterFile ./test_adaptive2p2c.input</tt>
  */
-template<class TypeTag = TTAG(Adaptive2p2c)>
-class Adaptive2p2c: public IMPETProblem2P2C<TypeTag>
+template<class TypeTag = TTAG(Adaptive2p2c2d)>
+class Adaptive2p2c2d: public IMPETProblem2P2C<TypeTag>
 {
 typedef IMPETProblem2P2C<TypeTag> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -155,7 +155,7 @@ typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-Adaptive2p2c(TimeManager &timeManager, const GridView& gridView) :
+Adaptive2p2c2d(TimeManager &timeManager, const GridView& gridView) :
     ParentType(timeManager, gridView),
             debugWriter_(gridView, "gridAfterAdapt")
 {
@@ -246,6 +246,7 @@ const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulat
 {
     bcFormulation = Indices::concentration;
 }
+
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletAtPos()
  */
@@ -263,6 +264,7 @@ void dirichletAtPos(PrimaryVariables &bcValues, const GlobalPosition& globalPos)
     bcValues[Indices::contiNEqIdx] = 1.- bcValues[Indices::contiWEqIdx];
 
 }
+
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::neumannAtPos()
  */
@@ -270,6 +272,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 {
     this->setZero(neumannValues);
 }
+
 /*!
  * \copydoc Dumux::IMPETProblem::source()
  */
@@ -286,6 +289,7 @@ void source(PrimaryVariables &values, const Element &element)
     if (fabs(globalPos[0] - 4.8) < 0.5 && fabs(globalPos[1] - 4.8) < 0.5)
         values[Indices::contiNEqIdx] = 0.0001;
 }
+
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::initialFormulation()
  */
@@ -293,6 +297,7 @@ const void initialFormulation(typename Indices::BoundaryFormulation &initialForm
 {
     initialFormulation = Indices::concentration;
 }
+
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::initConcentrationAtPos()
  */
