@@ -449,7 +449,7 @@ public:
     }
 
     /*!
-     * \brief Specific isochoric heat capacity of liquid water \f$\mathrm{[J/kg]}\f$.
+     * \brief Specific isochoric heat capacity of liquid water \f$\mathrm{[J/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$

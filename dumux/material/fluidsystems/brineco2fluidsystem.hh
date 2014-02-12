@@ -560,14 +560,25 @@ public:
 
     /*!
      * \copydoc BaseFluidSystem::heatCapacity
+     * 
+     * We employ the heat capacity of the pure phases.
+     * Todo: Include compositional effects.
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \tparam FluidState the fluid state class
      */
+    using Base::heatCapacity;
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
-                               const ParameterCache &paramCache,
                                int phaseIdx)
     {
-        // TODO!
-        DUNE_THROW(Dune::NotImplemented, "Heat capacities");
+        if(phaseIdx == wPhaseIdx)
+            return H2O::liquidHeatCapacity(fluidState.temperature(phaseIdx),
+                                           fluidState.pressure(phaseIdx));
+        else
+            return CO2::liquidHeatCapacity(fluidState.temperature(phaseIdx),
+                                       fluidState.pressure(phaseIdx));
     }
 
 private:

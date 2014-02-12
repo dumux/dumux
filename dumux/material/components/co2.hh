@@ -249,11 +249,36 @@ public:
         DUNE_THROW(NumericalProblem, "CO2::liquidPressure()");
     }
 
+    /*!
+     * \brief Specific isobaric heat capacity of the component [J/kg] as a liquid.
+     * USE WITH CAUTION! Exploits enthalpy function with artificial increment
+     * of the temperature!
+     * Equation with which the specific heat capacity is calculated : \f$ c_p = \frac{dh}{dT}\f$
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
+    {
+        //temperature difference :
+        Scalar dT = 1.; // 1K temperature increment
+        Scalar temperature2 = temperature+dT;
+
+        // enthalpy difference
+        Scalar hold = liquidEnthalpy(temperature, pressure);
+        Scalar hnew = liquidEnthalpy(temperature2, pressure);
+        Scalar dh = hold-hnew;
+
+        //specific heat capacity
+        return dh/dT ;
+    }
+
 
     /*!
      * \brief The dynamic viscosity [N/m^3*s] of CO2.
      * Equations given in: - Vesovic et al., 1990
      *                     - Fenhour et al., 1998
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
