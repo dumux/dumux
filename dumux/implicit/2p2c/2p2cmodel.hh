@@ -19,7 +19,8 @@
 /*!
  * \file
  *
- * \brief Adaption of the fully implicit scheme to the two-phase two-component flow model.
+ * \brief Adaption of the fully implicit scheme to the
+ *        two-phase two-component fully implicit model.
  */
 #ifndef DUMUX_2P2C_MODEL_HH
 #define DUMUX_2P2C_MODEL_HH
@@ -32,7 +33,8 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPTwoCModel
- * \brief Adaption of the fully implicit scheme to the two-phase two-component flow model.
+ * \brief Adaption of the fully implicit scheme to the
+ *        two-phase two-component fully implicit model.
  *
  * This model implements two-phase two-component flow of two compressible and
  * partially miscible fluids \f$\alpha \in \{ w, n \}\f$ composed of the two components
@@ -196,10 +198,9 @@ public:
     }
 
     /*!
-     * \brief Compute the total storage inside one phase of all
-     *        conservation quantities.
+     * \brief Compute the total storage of all conservation quantities in one phase
      *
-     * \param storage Contains the storage of each component for one phase
+     * \param storage Contains the storage of each component in one phase
      * \param phaseIdx The phase index
      */
     void globalPhaseStorage(PrimaryVariables &storage, const int phaseIdx)
@@ -225,7 +226,7 @@ public:
 
     /*!
      * \brief Called by the update() method if applying the Newton
-     *         method was unsuccessful.
+     *        method was unsuccessful.
      */
     void updateFailed()
     {
@@ -252,7 +253,7 @@ public:
     }
 
     /*!
-     * \brief Return true if the primary variables were switched for
+     * \brief Returns true if the primary variables were switched for
      *        at least one vertex after the last timestep.
      */
     bool switched() const
@@ -264,7 +265,7 @@ public:
      * \brief Returns the phase presence of the current or the old solution of a degree of freedom.
      *
      * \param globalIdx The global index of the degree of freedom
-     * \param oldSol Evaluate function with solution of current or previous time step
+     * \param oldSol Based on oldSol current or previous time step is used
      */
     int phasePresence(int globalIdx, bool oldSol) const
     {
@@ -539,7 +540,7 @@ public:
     };
 
     /*!
-     * \brief Reset the current phase presence of all vertices to the old one.
+     * \brief Resets the current phase presence of all vertices to the old one.
      *
      * This is done after an update failed.
      */
@@ -554,7 +555,7 @@ public:
     }
 
     /*!
-     * \brief Set the phase presence of all vertices state to the current one.
+     * \brief Sets the phase presence of all vertices state to the current one.
      */
     void updateOldPhasePresence_()
     {
@@ -567,7 +568,7 @@ public:
     }
 
     /*!
-     * \brief Set whether there was a primary variable switch after
+     * \brief Sets whether there was a primary variable switch after
      *        the last timestep.
      */
     void setSwitched_(bool yesno)
@@ -576,8 +577,8 @@ public:
     }
 
     /*!
-     * \brief Perform variable switch at a vertex; Returns true if a
-    //  	  variable switch was performed.
+     * \brief Performs variable switch at a vertex, returns true if a
+     *        variable switch was performed.
      */
     bool primaryVarSwitch_(SolutionVector &globalSol,
                            const VolumeVariables &volVars,

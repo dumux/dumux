@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
+ * \brief Contains the data which is required to calculate
  *        all fluxes of components over a face of a finite volume for
- *        the two-phase two-component model.
+ *        the two-phase two-component model fully implicit model.
  */
 #ifndef DUMUX_2P2C_FLUX_VARIABLES_HH
 #define DUMUX_2P2C_FLUX_VARIABLES_HH
@@ -36,9 +36,9 @@ namespace Dumux
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitFluxVariables
- * \brief This template class contains the data which is required to
- *        calculate all fluxes of components over a face of a finite
- *        volume for the two-phase two-component model.
+ * \brief Contains the data which is required to calculate
+ *        all fluxes of components over a face of a finite volume for
+ *        the two-phase two-component model fully implicit model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the integration point, etc.
@@ -204,7 +204,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 
  public:
     /*!
-     * \brief The effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
      *        for each fluid phase in the porous medium.
      *
      * \param phaseIdx The phase index
@@ -213,7 +213,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
     { return porousDiffCoeff_[phaseIdx]; };
 
     /*!
-     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase.
+     * \brief Returns the density \f$\mathrm{[kg/m^3]}\f$ of a phase.
      *
      * \param phaseIdx The phase index
      */
@@ -221,7 +221,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase.
+     * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ of a phase.
      *
      * \param phaseIdx The phase index
      */
@@ -229,7 +229,8 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
     { return molarDensity_[phaseIdx]; }
 
     /*!
-     * \brief The mole fraction gradient of the dissolved component in a phase.
+     * \brief Returns the mole fraction gradient \f$\mathrm{[1/m]}\f$
+     *        of the dissolved component in a phase.
      *
      * \param phaseIdx The phase index
      */

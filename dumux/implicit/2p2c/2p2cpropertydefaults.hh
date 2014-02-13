@@ -83,20 +83,18 @@ SET_PROP(TwoPTwoC, NumPhases)
                   "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 };
 
-SET_INT_PROP(TwoPTwoC, NumEq, 2); //!< set the number of equations to 2
+//! Set the number of equations to 2
+SET_INT_PROP(TwoPTwoC, NumEq, 2);
 
 //! Set the default formulation to pw-sn
 SET_INT_PROP(TwoPTwoC,
              Formulation,
              TwoPTwoCFormulation::pwsn);
 
-//! set as default that no component mass balance is replaced by the total mass balance
+//! Set as default that no component mass balance is replaced by the total mass balance
 SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, 2);
 
-/*!
- * \brief Set the property for the material parameters by extracting
- *        it from the material law.
- */
+//! Set the property for the material parameters by extracting it from the material law.
 SET_PROP(TwoPTwoC, MaterialLawParams)
 {
  private:
@@ -106,33 +104,33 @@ SET_PROP(TwoPTwoC, MaterialLawParams)
     typedef typename MaterialLaw::Params type;
 };
 
-//! Use the 2p2c local Jacobian operator for the 2p2c model
+//! Use the 2p2c local Jacobian operator
 SET_TYPE_PROP(TwoPTwoC,
               LocalResidual,
               TwoPTwoCLocalResidual<TypeTag>);
 
-//! Use the 2p2c specific Newton controller for the 2p2c model
+//! Use the 2p2c Newton controller
 SET_TYPE_PROP(TwoPTwoC, NewtonController, TwoPTwoCNewtonController<TypeTag>);
 
-//! the Model property
+//! Use the 2p2c model
 SET_TYPE_PROP(TwoPTwoC, Model, TwoPTwoCModel<TypeTag>);
 
-//! the VolumeVariables property
+//! Use the 2p2c VolumeVariables
 SET_TYPE_PROP(TwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 
-//! the FluxVariables property
+//! Use the 2p2c FluxVariables
 SET_TYPE_PROP(TwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
 
-//! define the base flux variables to realize Darcy flow
+//! Set the BaseFluxVariables to realize Darcy flow
 SET_TYPE_PROP(TwoPTwoC, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
-//! the upwind weight for the mass conservation equations.
+//! Set the upwind weight for the mass conservation equations
 SET_SCALAR_PROP(TwoPTwoC, ImplicitMassUpwindWeight, 1.0);
 
-//! set default mobility upwind weight to 1.0, i.e. fully upwind
+//! Set default mobility upwind weight to 1.0, i.e. fully upwind
 SET_SCALAR_PROP(TwoPTwoC, ImplicitMobilityUpwindWeight, 1.0);
 
-//! The indices required by the isothermal 2p2c model
+//! Set the indices required by the isothermal 2p2c
 SET_PROP(TwoPTwoC, Indices)
 { private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
@@ -140,11 +138,10 @@ SET_PROP(TwoPTwoC, Indices)
     typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
 };
 
-//! The spatial parameters to be employed.
-//! Use ImplicitSpatialParams by default.
+//! Use the ImplicitSpatialParams by default
 SET_TYPE_PROP(TwoPTwoC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
-//! The model after Millington (1961) is used for the effective diffusivity
+//! Use the model after Millington (1961) for the effective diffusivity
 SET_PROP(TwoPTwoC, EffectiveDiffusivityModel)
 { private :
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -152,16 +149,16 @@ SET_PROP(TwoPTwoC, EffectiveDiffusivityModel)
     typedef DiffusivityMillingtonQuirk<Scalar> type;
 };
 
-// disable velocity output by default
+//! Disable velocity output by default
 SET_BOOL_PROP(TwoPTwoC, VtkAddVelocity, false);
 
-// enable gravity by default
+//! Enable gravity by default
 SET_BOOL_PROP(TwoPTwoC, ProblemEnableGravity, true);
 
-SET_BOOL_PROP(TwoPTwoC, UseMoles, true); //!< Define that mole fractions are used in the balance equations per default
+//! Use mole fractions in the balance equations by default
+SET_BOOL_PROP(TwoPTwoC, UseMoles, true);
 
-
-//! default value for the Forchheimer coefficient
+//! Set default value for the Forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation

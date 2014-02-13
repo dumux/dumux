@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Definition of the spatial parameters for the injection problem
- *        which uses the isothermal two-phase two component
+ *        which uses the isothermal two-phase two-component
  *        fully implicit model.
  */
 
@@ -66,9 +66,9 @@ SET_PROP(InjectionSpatialParams, MaterialLaw)
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitTestProblems
- * \brief Definition of the spatial parameters for the injection
- *        problem which uses the isothermal two-phase two-component
- *        fully implicit model
+ * \brief Definition of the spatial parameters for the injection problem
+ *        which uses the isothermal two-phase two-component
+ *        fully implicit model.
  */
 template<class TypeTag>
 class InjectionSpatialParams : public ImplicitSpatialParams<TypeTag>
@@ -132,12 +132,11 @@ public:
     {}
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvGeometry,
@@ -150,12 +149,11 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
+     * \brief Returns the porosity \f$[-]\f$
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvGeometry,
@@ -169,11 +167,11 @@ public:
 
 
     /*!
-     * \brief return the parameter object for the Brooks-Corey material law which depends on the position
+     * \brief Returns the parameter object for the Brooks-Corey material law
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                const FVElementGeometry &fvGeometry,
@@ -186,14 +184,15 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
+     * \brief Returns the effective heat capacity \f$[J/m^3 K]\f$
      *
-     * This is only required for non-isothermal models.
+     * This is only required for non-isothermal models. This function does not
+     * return the specific heat capacity, but an effective heat capacity, which is
+     * \f$c_\textrm{p,eff,s} = c_\textrm{p,s} \varrho_\textrm{s} \left(1 - \phi\right)\f$
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     Scalar heatCapacity(const Element &element,
                         const FVElementGeometry &fvGeometry,
@@ -207,12 +206,13 @@ public:
 
 
     /*!
-     * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the porous material.
+     * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the solid
+     *
+     * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     Scalar thermalConductivitySolid(const Element &element,
                                     const FVElementGeometry &fvGeometry,

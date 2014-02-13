@@ -337,14 +337,14 @@ public:
     }
 
     /*!
-     * \brief Returns the phase state for the control volume.
+     * \brief Returns the phase state within the control volume.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
 
     /*!
      * \brief Returns the saturation of a given phase within
-     *        the control volume.
+     *        the control volume in \f$[-]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -353,7 +353,7 @@ public:
 
     /*!
      * \brief Returns the mass fraction of a given component in a
-     * 		  given phase within the control volume.
+     *        given phase within the control volume in \f$[-]\f$.
      *
      * \param phaseIdx The phase index
      * \param compIdx The component index
@@ -363,7 +363,7 @@ public:
 
     /*!
      * \brief Returns the mass fraction of a given component in a
-     * 		  given phase within the control volume.
+     *        given phase within the control volume in \f$[-]\f$.
      *
      * \param phaseIdx The phase index
      * \param compIdx The component index
@@ -373,7 +373,7 @@ public:
 
     /*!
      * \brief Returns the mass density of a given phase within the
-     *        control volume.
+     *        control volume in \f$[kg/m^3]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -382,7 +382,7 @@ public:
 
     /*!
      * \brief Returns the mass density of a given phase within the
-     *        control volume.
+     *        control volume in \f$[mol/m^3]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -391,7 +391,7 @@ public:
 
     /*!
      * \brief Returns the effective pressure of a given phase within
-     *        the control volume.
+     *        the control volume in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -399,7 +399,7 @@ public:
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
-     * \brief Returns temperature inside the sub-control volume.
+     * \brief Returns temperature within the control volume in \f$[K]\f$.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperature of the rock matrix and of all fluid phases are
@@ -410,7 +410,7 @@ public:
 
     /*!
      * \brief Returns the relative permeability of a given phase within
-     *        the control volume.
+     *        the control volume in \f$[-]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -421,7 +421,7 @@ public:
 
     /*!
      * \brief Returns the effective mobility of a given phase within
-     *        the control volume.
+     *        the control volume in \f$[s*m/kg]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -431,19 +431,20 @@ public:
     }
 
     /*!
-     * \brief Returns the effective capillary pressure within the control volume.
+     * \brief Returns the effective capillary pressure within the control volume
+     *        in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      */
     Scalar capillaryPressure() const
     { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
 
     /*!
-     * \brief Returns the average porosity within the control volume.
+     * \brief Returns the average porosity within the control volume in \f$[-]\f$.
      */
     Scalar porosity() const
     { return porosity_; }
 
     /*!
-     * \brief Returns the binary diffusion coefficients for a phase
+     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffCoeff(const int phaseIdx) const
     { return diffCoeff_[phaseIdx]; }
@@ -478,8 +479,8 @@ protected:
                        bool isOldSol)
     { }
 
-    Scalar porosity_;        //!< Effective porosity within the control volume
-    Scalar relativePermeability_[numPhases];  //!< Relative permeability within the control volume
+    Scalar porosity_; //!< Effective porosity within the control volume
+    Scalar relativePermeability_[numPhases]; //!< Relative permeability within the control volume
     Scalar diffCoeff_[numPhases]; //!< Binary diffusion coefficients for the phases
     FluidState fluidState_;
 

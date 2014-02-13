@@ -19,10 +19,6 @@
 /*!
  * \file
  * \brief A two-phase two-component specific controller for the Newton solver.
- *
- * This controller 'knows' what a 'physically meaningful' solution is
- * which allows the Newton method to abort quicker if the solution is
- * way out of bounds.
  */
 #ifndef DUMUX_2P2C_NEWTON_CONTROLLER_HH
 #define DUMUX_2P2C_NEWTON_CONTROLLER_HH
@@ -39,7 +35,7 @@ namespace Dumux {
  * \brief A two-phase two-component specific controller for the Newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
- * which allows the Newton method to abort quicker if the solution is
+ * which allows the Newton method to abort earlier if the solution is
  * way out of bounds.
  */
 template <class TypeTag>

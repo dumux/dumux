@@ -20,8 +20,7 @@
  * \ingroup Properties
  * \ingroup ImplicitProperties
  * \ingroup TwoPTwoCModel
- */
-/*!
+ *
  * \file
  *
  * \brief Defines the properties required for the two-phase two-component
@@ -51,25 +50,25 @@ NEW_TYPE_TAG(CCTwoPTwoC, INHERITS_FROM(CCModel, TwoPTwoC));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
+NEW_PROP_TAG(NumPhases); //!< Number of fluid phases in the system
 NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
-NEW_PROP_TAG(Formulation);   //!< The formulation of the model
+NEW_PROP_TAG(Formulation); //!< The formulation of the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< The type of the multi-component relations
 
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
+NEW_PROP_TAG(MaterialLaw); //!< The material law which ought to be used (extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extracted from the spatial parameters)
 NEW_PROP_TAG(EffectiveDiffusivityModel); //!< The employed model for the computation of the effective diffusivity
 
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
+NEW_PROP_TAG(UseMoles); //!< Defines whether mole (true) or mass (false) fractions are used
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind weight for the mass conservation equations
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
-//! The index of the total mass balance equation, if one component balance is replaced (ReplaceCompEqIdx < NumComponents)
-NEW_PROP_TAG(ReplaceCompEqIdx);
+NEW_PROP_TAG(ReplaceCompEqIdx); //!< The index of the total mass balance equation,
+                                //!< if one component balance is replaced (ReplaceCompEqIdx < NumComponents)
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the VTK output
-NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
+NEW_PROP_TAG(BaseFluxVariables); //!< The base flux variables
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 }
 }

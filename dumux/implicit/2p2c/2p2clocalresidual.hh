@@ -36,7 +36,8 @@ namespace Dumux
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase two-component fully implicit model.
  *
- * This class is used to fill the gaps in BoxLocalResidual for the two-phase two-component flow.
+ * This class is used to fill the gaps in ImplicitLocalResidual for the
+ * two-phase two-component flow.
  */
 template<class TypeTag>
 class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
@@ -74,12 +75,14 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     static constexpr unsigned int replaceCompEqIdx =
         GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 
-    //! property that defines whether mole or mass fractions are used
+    //! Property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
  public:
     /*!
-     * \brief Constructor. Sets the upwind weight.
+     * \brief Constructor
+     *
+     * Sets the mass upwind weight.
      */
     TwoPTwoCLocalResidual()
     {
@@ -120,12 +123,12 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
-     * The result should be averaged over the volume (e.g. phase mass
-     * inside a sub-control volume divided by the volume)
-     *
      *  \param storage The mass of the component within the sub-control volume
      *  \param scvIdx The sub-control-volume index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     *  \param usePrevSol Based on usePrevSol solution of current or previous time step is used
+     *
+     * The result should be averaged over the volume (e.g. phase mass
+     * inside a sub-control volume divided by the volume)
      */
     void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
     {
@@ -346,7 +349,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     }
 
     /*!
-     * \brief Adds the diffusive mass flux of all components over
+     * \brief Evaluates the diffusive mass flux of all components over
      *        a face of a sub-control volume.
      *
      * \param flux The flux over the sub-control-volume face for each component
@@ -406,9 +409,9 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     }
 
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Evaluates the source term
      *
-     * \param source The source/sink in the sub-control volume for each component
+     * \param source The source/sink in the sub-control volume
      * \param scvIdx The index of the sub-control volume
      *
      * Be careful what you use, mole or mass fraction! Think of the units!
@@ -473,10 +476,13 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     }
 
     /*!
-     * \brief Return the equation index of the first mass-balance equation
-     *        of the component (used for loops); if one component mass balance
-     *        is replaced by the total mass balance, this is the index
-     *        of the remaining component mass-balance equation.
+     * \brief Returns the equation index of the first mass-balance equation
+     *        of the component (used for loops)
+     *
+     * Returns the equation index of the first mass-balance equation
+     * of the component (used for loops) if one component mass balance
+     * is replaced by the total mass balance, this is the index
+     * of the remaining component mass-balance equation.
      */
     unsigned int contiCompIdx1_() const {
         switch (replaceCompEqIdx)
@@ -488,10 +494,13 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     }
 
     /*!
-     * \brief Return the equation index of the second mass balance
-     *        of the component (used for loops);
-     *        if one component mass balance is replaced by the total mass balance
-     *        (replaceCompEqIdx < 2), this index is the same as contiCompIdx1().
+     * \brief Returns the equation index of the second mass balance
+     *        of the component (used for loops)
+     *
+     * Returns the equation index of the second mass balance
+     * of the component (used for loops)
+     * if one component mass balance is replaced by the total mass balance
+     * (replaceCompEqIdx < 2), this index is the same as contiCompIdx1().
      */
     unsigned int contiCompIdx2_() const {
         switch (replaceCompEqIdx)
