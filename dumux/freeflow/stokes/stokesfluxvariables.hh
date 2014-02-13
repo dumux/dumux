@@ -231,10 +231,26 @@ public:
 
     /*!
      * \brief Return the dynamic eddy viscosity 
-     * \f$\mathrm{[Pa\cdot s]} = \mathrm{[N\cdot s/m^2]}\f$ (if implemented).
+     *        \f$\mathrm{[Pa \cdot s]} = \mathrm{[N \cdot s/m^2]}\f$ (if implemented).
      */
+    DUNE_DEPRECATED_MSG("Function eddyViscosity() is deprecated, use dynamicEddyViscosity() instead.")
     const Scalar eddyViscosity() const
+    { return dynamicEddyViscosity(); }
+
+    /*!
+     * \brief Return the dynamic eddy viscosity 
+     *        \f$\mathrm{[Pa \cdot s]} = \mathrm{[N \cdot s/m^2]}\f$ (if implemented).
+     */
+    const Scalar dynamicEddyViscosity() const
+    { return kinematicEddyViscosity() * density(); }
+
+    /*!
+     * \brief Return the kinematic eddy viscosity 
+     *        \f$\mathrm{[m^2/s]}\f$ (if implemented).
+     */
+    const Scalar kinematicEddyViscosity() const
     { return 0; }
+
 
 //    /*!
 //     * \brief Return the divergence of the normal velocity at the

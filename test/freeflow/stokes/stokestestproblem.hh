@@ -67,7 +67,10 @@ SET_TYPE_PROP(BoxStokes, Scalar, double);
 //! A stabilization factor. Set negative for stabilization and to zero for no stabilization
 SET_SCALAR_PROP(StokesTestProblem, StokesStabilizationAlpha, -1.0);
 
-// Enable gravity
+//! Disable unsymmetrized velecoity gradient by default
+SET_BOOL_PROP(StokesTestProblem, EnableUnsymmetrizedVelocityGradient, false);
+
+//! Disable gravity by default
 SET_BOOL_PROP(StokesTestProblem, ProblemEnableGravity, false);
 }
 

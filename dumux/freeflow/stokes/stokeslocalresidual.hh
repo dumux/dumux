@@ -90,7 +90,8 @@ protected:
 
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    
+
+    static const bool enableUnsymmetrizedVelocityGradient = GET_PROP_VALUE(TypeTag, EnableUnsymmetrizedVelocityGradient);
     static const bool calculateNavierStokes = GET_PROP_VALUE(TypeTag, EnableNavierStokes);
 
  public:
@@ -215,22 +216,30 @@ protected:
         // at the center of the SCV in computeSource
         // dynamic viscosity is upwinded
 
-        // compute symmetrized gradient for the momentum flux:
-        // mu (grad v + (grad v)^t)
-        Dune::FieldMatrix<Scalar, dim, dim> symmVelGrad = fluxVars.velocityGrad();
-        for (int i=0; i<dim; ++i)
-            for (int j=0; j<dim; ++j)
-                symmVelGrad[i][j] += fluxVars.velocityGrad()[j][i];
+        Dune::FieldMatrix<Scalar, dim, dim> velGrad = fluxVars.velocityGrad();
+        if (enableUnsymmetrizedVelocityGradient)
+        {
+            // nothing has to be done in this case:
+            // grad v
+        }
+        else
+        {
+            // compute symmetrized gradient for the momentum flux:
+            // grad v + (grad v)^T
+            for (int i=0; i<dim; ++i)
+                for (int j=0; j<dim; ++j)
+                    velGrad[i][j] += fluxVars.velocityGrad()[j][i];
+        }
 
         DimVector velGradComp(0.);
         for (int velIdx = 0; velIdx < dim; ++velIdx)
         {
-            velGradComp = symmVelGrad[velIdx];
+            velGradComp = velGrad[velIdx];
 
             // TODO: dilatation term has to be accounted for in outflow, coupling, neumann
             //            velGradComp[velIdx] += 2./3*fluxVars.velocityDiv;
 
-            velGradComp *= fluxVars.dynamicViscosity() + fluxVars.eddyViscosity();
+            velGradComp *= fluxVars.dynamicViscosity() + fluxVars.dynamicEddyViscosity();
 
             flux[momentumXIdx + velIdx] -=
                 velGradComp*fluxVars.face().normal;
@@ -244,7 +253,7 @@ protected:
             //                    gravityTerm;
 
         }
-        
+
         // this term changes the Stokes equation to the Navier-Stokes equation
         // rho v (v*n)
         // rho and first v are upwinded, second v is evaluated at the face
@@ -380,12 +389,27 @@ protected:
                     // the fluxes at the boundary are added in the second step
                     if (momentumBalanceDirichlet_(bcTypes))
                     {
-                        DimVector muGradVelNormal(0.);
                         const DimVector &boundaryFaceNormal =
                             boundaryVars.face().normal;
 
-                        boundaryVars.velocityGrad().umv(boundaryFaceNormal, muGradVelNormal);
-                        muGradVelNormal *= boundaryVars.dynamicViscosity();
+                        Dune::FieldMatrix<Scalar, dim, dim> velGrad = boundaryVars.velocityGrad();
+                        if (enableUnsymmetrizedVelocityGradient)
+                        {
+                            // nothing has to be done in this case:
+                            // grad v
+                        }
+//                         else
+//                         {
+//                             // compute symmetrized gradient for the momentum flux:
+//                             // grad v + (grad v)^T
+//                             for (int i=0; i<dim; ++i)
+//                                 for (int j=0; j<dim; ++j)
+//                                     velGrad[i][j] += boundaryVars.velocityGrad()[j][i];
+//                         }
+
+                        DimVector muGradVelNormal(0.0);
+                        velGrad.umv(boundaryFaceNormal, muGradVelNormal);
+                        muGradVelNormal *= boundaryVars.dynamicViscosity() + boundaryVars.dynamicEddyViscosity();
 
                         for (unsigned int i=0; i < this->residual_.size(); i++)
                             Valgrind::CheckDefined(this->residual_[i]);
@@ -467,14 +491,30 @@ protected:
                     const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
                     tangent[0] = elementUnitNormal[1];  //TODO: 3D
                     tangent[1] = -elementUnitNormal[0];
-                    DimVector tangentialVelGrad;
-                    boundaryVars.velocityGrad().mv(tangent, tangentialVelGrad);
-                    tangentialVelGrad *= boundaryVars.dynamicViscosity();
+
+                    Dune::FieldMatrix<Scalar, dim, dim> velGrad = boundaryVars.velocityGrad();
+                    if (enableUnsymmetrizedVelocityGradient)
+                    {
+                        // nothing has to be done in this case:
+                        // grad v
+                    }
+//                     else
+//                     {
+//                         // compute symmetrized gradient for the momentum flux:
+//                         // mu (grad v + (grad v)^t)
+//                         for (int i=0; i<dim; ++i)
+//                             for (int j=0; j<dim; ++j)
+//                                 velGrad[i][j] += boundaryVars.velocityGrad()[j][i];
+//                     }
+
+                    DimVector muGradVelTangential(0.0);
+                    velGrad.mv(tangent, muGradVelTangential);
+                    muGradVelTangential *= boundaryVars.dynamicViscosity() + boundaryVars.dynamicEddyViscosity();
 
                     this->residual_[scvIdx][massBalanceIdx] -= stabilizationBeta_*0.5*
                         this->curVolVars_(scvIdx).pressure();
                     this->residual_[scvIdx][massBalanceIdx] -= stabilizationBeta_*0.5*
-                        (tangentialVelGrad*tangent);
+                        (muGradVelTangential*tangent);
 
                     for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; momentumIdx++)
                         this->residual_[scvIdx][massBalanceIdx] -= stabilizationBeta_*0.5
@@ -525,12 +565,28 @@ protected:
                 const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
                 tangent[0] = elementUnitNormal[1];
                 tangent[1] = -elementUnitNormal[0];
-                DimVector tangentialVelGrad;
-                boundaryVars.velocityGrad().mv(tangent, tangentialVelGrad);
 
+                Dune::FieldMatrix<Scalar, dim, dim> velGrad = boundaryVars.velocityGrad();
+                if (enableUnsymmetrizedVelocityGradient)
+                {
+                    // nothing has to be done in this case:
+                    // grad v
+                }
+                else
+                {
+                    // compute symmetrized gradient for the momentum flux:
+                    // mu (grad v + (grad v)^t)
+                    for (int i=0; i<dim; ++i)
+                        for (int j=0; j<dim; ++j)
+                            velGrad[i][j] += boundaryVars.velocityGrad()[j][i];
+                }
+
+                DimVector muGradVelTangential(0.0);
+                velGrad.umv(tangent, muGradVelTangential);
+                muGradVelTangential *= boundaryVars.dynamicViscosity() + boundaryVars.dynamicEddyViscosity();
+ 
                 this->residual_[scvIdx][massBalanceIdx] -= 0.5*stabilizationBeta_
-                    * boundaryVars.dynamicViscosity()
-                    * (tangentialVelGrad*tangent);
+                    * (muGradVelTangential*tangent);
             }
         }
     }

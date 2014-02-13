@@ -134,6 +134,9 @@ SET_BOOL_PROP(BoxStokes, EvalGradientsAtSCVCenter, true);
 //! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
 SET_INT_PROP(BoxStokes, PhaseIdx, 0);
 
+//! Use symmetrizedVelocityGradient by default
+SET_BOOL_PROP(BoxStokes, EnableUnsymmetrizedVelocityGradient, false);
+
 //! Set calculation to Stokes, not Navier-Stokes
 SET_BOOL_PROP(BoxStokes, EnableNavierStokes, false);
 
@@ -143,7 +146,7 @@ SET_SCALAR_PROP(BoxStokes, StokesStabilizationAlpha, 0.0);
 //! Stabilization factor for the boundaries
 SET_SCALAR_PROP(BoxStokes, StokesStabilizationBeta, 0.0);
 
-// enable gravity by default
+//! Set gravity by default
 SET_BOOL_PROP(BoxStokes, ProblemEnableGravity, true);
 
 }
