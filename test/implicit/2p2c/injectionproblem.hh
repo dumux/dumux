@@ -20,8 +20,6 @@
  * \file
  *
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
- *
- * \copydoc Dumux::InjectionProblem
  */
 #ifndef DUMUX_INJECTION_PROBLEM_HH
 #define DUMUX_INJECTION_PROBLEM_HH
@@ -254,7 +252,7 @@ public:
     { return name_; }
 
     /*!
-     * \brief Returns the temperature
+     * \brief Returns the temperature \f$ K \f$
      */
     Scalar temperature() const
     { return temperature_; };
@@ -262,7 +260,8 @@ public:
     /*!
      * \brief Returns the source term
      *
-     * \param values Stores the source value
+     * \param values Stores the source values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
     void sourceAtPos(PrimaryVariables &values,
@@ -295,10 +294,11 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet
+     * \brief Evaluates the boundary conditions for a Dirichlet
      *        boundary segment
      *
-     * \param values Stores the value of the Dirichlet boundary condition
+     * \param values Stores the Dirichlet values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
@@ -307,10 +307,10 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
+     * \brief Evaluates the boundary conditions for a Neumann
      *        boundary segment in dependency on the current solution.
      *
-     * \param values The Neumann values for the conservation equations in units of
+     * \param values Stores the Neumann values for the conservation equations in
      *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
@@ -356,9 +356,10 @@ public:
     // \{
 
     /*!
-     * \brief Returns the initial values for a control volume
+     * \brief Evaluates the initial values for a control volume
      *
-     * \param values Stores the initial values for the primary variables
+     * \param values Stores the initial values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
     void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
@@ -381,7 +382,15 @@ public:
     // \}
 
 private:
-    // the internal method for the initial condition
+    /*!
+     * \brief Evaluates the initial values for a control volume
+     *
+     * The internal method for the initial condition
+     *
+     * \param values Stores the initial values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variables} ] \f$
+     * \param globalPos The global position
+     */
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
