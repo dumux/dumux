@@ -26,18 +26,11 @@
 #define DUMUX_3P3C_VOLUME_VARIABLES_HH
 
 #include <dumux/implicit/common/implicitmodel.hh>
-#include <dumux/common/math.hh>
-
-#include <dune/common/collectivecommunication.hh>
-#include <vector>
-#include <iostream>
-
-#include "3p3cproperties.hh"
-
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include "3p3cproperties.hh"
 
 namespace Dumux
 {

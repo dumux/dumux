@@ -26,18 +26,11 @@
 #define DUMUX_2P2C_VOLUME_VARIABLES_HH
 
 #include <dumux/implicit/common/implicitmodel.hh>
-#include <dumux/common/math.hh>
-
-#include <dune/common/collectivecommunication.hh>
-#include <vector>
-#include <iostream>
-
-#include "2p2cproperties.hh"
-#include "2p2cindices.hh"
-
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include "2p2cproperties.hh"
+#include "2p2cindices.hh"
 
 namespace Dumux
 {

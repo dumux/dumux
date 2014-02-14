@@ -26,16 +26,9 @@
 #define DUMUX_3P_VOLUME_VARIABLES_HH
 
 #include <dumux/implicit/common/implicitmodel.hh>
-#include <dumux/common/math.hh>
-
-#include <dune/common/collectivecommunication.hh>
-#include <vector>
-#include <iostream>
-
-#include "3pproperties.hh"
-
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
+#include "3pproperties.hh"
 
 namespace Dumux
 {

@@ -26,18 +26,12 @@
 #ifndef DUMUX_STOKES_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_STOKES_LOCAL_RESIDUAL_BASE_HH
 
-#include <dumux/implicit/common/implicitmodel.hh>
-//#include <dumux/implicit/box/boxcouplinglocalresidual.hh>
+#include <dune/grid/common/grid.hh>
 
+#include <dumux/implicit/common/implicitmodel.hh>
 #include "stokesproperties.hh"
 #include "stokesvolumevariables.hh"
 #include "stokesfluxvariables.hh"
-
-#include <dune/common/collectivecommunication.hh>
-#include <vector>
-#include <iostream>
-
-#include<dune/grid/common/grid.hh>
 
 namespace Dumux
 {
