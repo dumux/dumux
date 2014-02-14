@@ -186,13 +186,13 @@ protected:
                  idx++) // loop over adjacent vertices
             {
                 // FE gradient at vertex idx
-                const DimVector &feGrad = face().grad[idx];
+                const GlobalPosition &feGrad = face().grad[idx];
 
                 // index for the element volume variables
                 int volVarsIdx = face().fapIndices[idx];
 
                 // the pressure gradient
-                DimVector tmp(feGrad);
+                GlobalPosition tmp(feGrad);
                 tmp *= elemVolVars[volVarsIdx].fluidState().pressure(phaseIdx);
                 potentialGrad_[phaseIdx] += tmp;
             }
@@ -201,7 +201,7 @@ protected:
             if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             {
                 // ask for the gravitational acceleration at the given SCV face
-                DimVector g(problem.gravityAtPos(face().ipGlobal));
+                GlobalPosition g(problem.gravityAtPos(face().ipGlobal));
 
                 // calculate the phase density at the integration point. we
                 // only do this if the wetting phase is present in both cells
@@ -218,7 +218,7 @@ protected:
                 const Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
 
                 // make gravity acceleration a force
-                DimVector f(g);
+                GlobalPosition f(g);
                 f *= density;
 
                 // calculate the final potential gradient
