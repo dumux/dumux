@@ -54,9 +54,6 @@ class SplitAndMerge
     typedef typename GET_PROP_TYPE(SubTypeTag1, JacobianMatrix) JacobianMatrix1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, JacobianMatrix) JacobianMatrix2;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(SubTypeTag1, Model) Model1;
-    typedef typename GET_PROP_TYPE(SubTypeTag2, Model) Model2;
 
     enum {
             numEq1 = GET_PROP_VALUE(SubTypeTag1, NumEq),

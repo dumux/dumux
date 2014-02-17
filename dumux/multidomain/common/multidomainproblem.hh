@@ -79,8 +79,7 @@ private:
     typedef typename GET_PROP_TYPE(SubDomain1TypeTag, GridView) SubDomainGridView1;
     typedef typename GET_PROP_TYPE(SubDomain2TypeTag, GridView) SubDomainGridView2;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) HostGrid;
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MultiDomainGrid;
+     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MultiDomainGrid;
 
     typedef typename MultiDomainGrid::LeafGridView MultiDomainGridView;
     typedef typename MultiDomainGrid::Traits::template Codim<0>::Entity MultiDomainElement;
