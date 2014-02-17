@@ -429,11 +429,16 @@ public:
     const typename MultiDomainGrid::SubDomainType sdID2() const
     { return sdID2_; }
 
-    // MAY BE THROWN OUT??
     /*!
      * \brief Returns a reference to subproblem1
      */
     SubDomainProblem1& sdProblem1()
+    { return sdProblem1_; }
+    
+    /*!
+     * \brief Returns a const reference to subproblem1
+     */
+    const SubDomainProblem1& sdProblem1() const
     { return sdProblem1_; }
 
     /*!
@@ -441,6 +446,13 @@ public:
      */
     SubDomainProblem2& sdProblem2()
     { return sdProblem2_; }
+    
+    /*!
+     * \brief Returns a const reference to subproblem2
+     */
+    const SubDomainProblem2& sdProblem2() const
+    { return sdProblem2_; }
+
 
     /*!
      * \brief Returns a reference to the localresidual1
