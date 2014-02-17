@@ -143,12 +143,12 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 
             // the mole fraction gradient of the wetting phase
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, nCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(wPhaseIdx, nCompIdx);
             moleFractionGrad_[wPhaseIdx] += tmp;
 
             // the mole fraction gradient of the non-wetting phase
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(nPhaseIdx, wCompIdx);
             moleFractionGrad_[nPhaseIdx] += tmp;
         }
     }

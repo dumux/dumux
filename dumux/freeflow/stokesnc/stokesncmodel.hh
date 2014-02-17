@@ -151,8 +151,8 @@ public:
                 delP[globalIdx] = volVars.pressure()*scale_ - 1e5;
 				for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
-                        (*moleFraction[compIdx])[globalIdx]= volVars.fluidState().moleFraction(phaseIdx,compIdx);
-						(*massFraction[compIdx])[globalIdx]= volVars.fluidState().massFraction(phaseIdx,compIdx);
+                        (*moleFraction[compIdx])[globalIdx]= volVars.moleFraction(phaseIdx,compIdx);
+						(*massFraction[compIdx])[globalIdx]= volVars.massFraction(phaseIdx,compIdx);
                         Valgrind::CheckDefined((*moleFraction[compIdx])[globalIdx]);
 						Valgrind::CheckDefined((*massFraction[compIdx])[globalIdx]);
 					}
