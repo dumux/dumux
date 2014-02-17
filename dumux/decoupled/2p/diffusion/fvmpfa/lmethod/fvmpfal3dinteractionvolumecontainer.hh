@@ -150,7 +150,7 @@ public:
 
     //! Returns an interaction volume
     /*!
-     *  \param vertIdx Global index of a vertex in the DUNE grid
+     *  \param vertexIdx Global index of a vertex in the DUNE grid
      */
     InteractionVolume& interactionVolume(int vertexIdx)
     {
@@ -159,7 +159,7 @@ public:
 
     //! Returns an interaction volume
     /*!
-     *  \param vertIdx Global index of a vertex in the DUNE grid
+     *  \param vertexIdx Global index of a vertex in the DUNE grid
      */
     InteractionVolume& interactionVolume(int vertexIdx) const
     {

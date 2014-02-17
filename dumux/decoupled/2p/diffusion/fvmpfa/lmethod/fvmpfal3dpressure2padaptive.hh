@@ -35,7 +35,7 @@ namespace Dumux
 {
 //! \ingroup FVPressure2p
 /*! \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation
- *! \of the sequential IMPES model on h-adaptive grids.
+ *! of the sequential IMPES model on h-adaptive grids.
  *
  * * Finite Volume-MPFAL-Implementation of the equation
  *

@@ -104,7 +104,7 @@ const int IndexTranslator::faceIndexFromElements_[subVolumeTotalNum][subVolumeTo
 };
 //! \endcond
 
-//! \ingroup IMPET
+//! \ingroup IMPET mpfa
 /*! \brief Class including the information of a 3d interaction volume of a MPFA L-method that does not change with time.
  *
  * Includes information needed to calculate the transmissibility matrices of an L-interaction-volume.

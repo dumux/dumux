@@ -181,7 +181,7 @@ const int IndexTranslatorAdaptive::newEdgeIdxFromOldFaceIdxto0_[fluxFacesTotalNu
 };
 //! \endcond
 
-//! \ingroup IMPET
+//! \ingroup IMPET mpfa
 /*! \brief Class including the information of a 3d interaction volume of an adaptive MPFA L-method that does not change with time.
  *
  * Includes information needed to calculate the transmissibility matrices of an L-interaction-volume.
@@ -253,14 +253,14 @@ public:
         hangingNodeType_(noHangingNode)
     {}
 
-    //!\copydoc
+    //!\copydoc FvMpfaL3dInteractionVolume::reset()
     void reset()
     {
         hangingNodeType_ = noHangingNode;
         existingLevel_.clear();
     }
 
-    //!\copydoc
+    //!\copydoc FvMpfaL3dInteractionVolume::setSubVolumeElement()
     void setSubVolumeElement(ElementPointer pointer, int subVolumeIdx)
     {
             ParentType::setSubVolumeElement(pointer, subVolumeIdx);
@@ -316,7 +316,7 @@ public:
         return hangingNodeType_;
     }
 
-    //!\copydoc
+    //!\copydoc FvMpfaL3dInteractionVolume::printInteractionVolumeInfo()
     void printInteractionVolumeInfo()
     {
         ParentType::printInteractionVolumeInfo();

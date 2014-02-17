@@ -271,13 +271,13 @@ private:
 // end of template
 
 /*! \brief Calculates the velocities at the flux faces of an interation volume around a vertex
- *! \which is not a boundary vertex.
+ *! which is not a boundary vertex.
  *
  *  Calculates the velocities at the flux faces of an interation volume around a vertex which is
  *  not a boundary vertex and adds them to the face velocity vectors in the <tt>CellData</tt> objects.
  *
  * \param interactionVolume An <tt>InteractionVolume</tt> object including the information for
- * \calculating the MPFA transmissibilities
+ *      calculating the MPFA transmissibilities
  * \param cellData1  <tt>CellData</tt> object of an IMPES model for sub-volume 1
  * \param cellData2  <tt>CellData</tt> object of an IMPES model for sub-volume 2
  * \param cellData3  <tt>CellData</tt> object of an IMPES model for sub-volume 3

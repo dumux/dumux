@@ -493,7 +493,8 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
  * through the one unique interaction region on the hanging node if one
  * halfedge is stored (eg on boundaries). Or using the second interaction
  * region covering neighboring cells.
- * Due to that, the matrix and rhs entries are filled up within this function.
+ * The contribution in other cells than I or J make it necessary that
+ * the matrix and rhs entries are filled up within this function.
  * \param intersectionIterator Iterator of the intersection between cell I and J
  * \param cellDataI Data of cell I
  */

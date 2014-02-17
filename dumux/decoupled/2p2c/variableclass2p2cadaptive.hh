@@ -448,7 +448,6 @@ public:
      * \param irregularIs The current irregular intersection
      * \param secondHalfEdgeIntersectionIt Iterator to the intersection connecting the second interaction region
      * \param T1 Transmissitivity matrix for flux calculations: unique interaction region
-     * \param T1_secondHalfEdge Second transmissitivity matrix for flux calculations for non-unique interaction region
      * \param globalPos3 The position of the 3rd cell of the first interaction region
      * \param globalIdx3 The index of the 3rd cell of the first interaction region
      * \param globalPos4 The position of the 4th cell of the interaction region
