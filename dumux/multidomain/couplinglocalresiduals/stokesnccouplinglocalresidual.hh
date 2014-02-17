@@ -42,12 +42,9 @@ template<class TypeTag>
 class StokesncCouplingLocalResidual : public StokesncLocalResidual<TypeTag>
 {
 protected:
-    typedef StokesncCouplingLocalResidual<TypeTag> ThisType;
-    typedef StokesncLocalResidual<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -82,10 +79,6 @@ protected:
         dimZIdx = Indices::dimZIdx //!< Index for the third component of a vector
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
     typedef typename GridView::ctype CoordScalar;
     typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
     typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
@@ -94,18 +87,12 @@ protected:
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, DofMapper) DofMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 

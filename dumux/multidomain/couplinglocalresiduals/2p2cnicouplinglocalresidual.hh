@@ -41,7 +41,6 @@ namespace Dumux
 template<class TypeTag>
 class TwoPTwoCNICouplingLocalResidual : public TwoPTwoCNILocalResidual<TypeTag>
 {
-    typedef TwoPTwoCNICouplingLocalResidual<TypeTag> ThisType;
     typedef TwoPTwoCNILocalResidual<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

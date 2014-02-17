@@ -39,11 +39,8 @@ template<class TypeTag>
 class BoxCouplingLocalResidual : public BoxLocalResidual<TypeTag>
 {
 private:
-    typedef BoxCouplingLocalResidual<TypeTag> ThisType;
-    typedef BoxLocalResidual<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum {
@@ -56,31 +53,15 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::Grid::ctype CoordScalar;
 
-    typedef Dune::FieldVector<Scalar, dim>  LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
 
-    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename Element::Geometry Geometry;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    typedef Dune::FieldMatrix<Scalar, numEq, numEq>  MatrixBlock;
-    typedef Dune::Matrix<MatrixBlock> LocalBlockMatrix;
 
     // copying the local residual class is not a good idea
     BoxCouplingLocalResidual(const BoxCouplingLocalResidual &);
