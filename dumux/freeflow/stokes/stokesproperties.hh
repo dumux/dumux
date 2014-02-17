@@ -60,7 +60,7 @@ NEW_PROP_TAG(EnableNavierStokes); //!< Returns whether Navier-Stokes should be s
 
 NEW_PROP_TAG(PhaseIdx); //!< A phase index in case that a two-phase fluidsystem is used
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
-NEW_PROP_TAG(Scaling); //!Defines Scaling of the model
+NEW_PROP_TAG(Scaling); //!<Defines Scaling of the model
 }
 }
 
