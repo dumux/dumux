@@ -87,7 +87,14 @@ public:
     /*!
      * \brief Return the eddy conductivity (if implemented).
      */
+    DUNE_DEPRECATED_MSG("Function eddyConductivity() is deprecated, use thermalEddyConductivity() instead.")
     const Scalar eddyConductivity() const
+    { return thermalEddyConductivity(); }
+
+    /*!
+     * \brief Return the thermal eddy conductivity \f$\mathrm{[W/(m*K)]}\f$ (if implemented).
+     */
+    const Scalar thermalEddyConductivity() const
     { return 0; }
 
 protected:
