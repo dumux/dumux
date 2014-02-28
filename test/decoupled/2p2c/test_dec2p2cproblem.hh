@@ -268,8 +268,7 @@ void dirichletAtPos(PrimaryVariables &bcValues ,const GlobalPosition& globalPos)
  */
 void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalPos) const
 {
-    neumannValues[Indices::contiNEqIdx] =0.;
-    neumannValues[Indices::contiWEqIdx] =0.;
+    this->setZero(neumannValues);
 //    if (globalPos[1] < 15 && globalPos[1]> 5)
 //    {
 //        neumannValues[Indices::contiNEqIdx] = -0.015;
@@ -288,8 +287,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
  */
 void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
-    sourceValues[Indices::contiWEqIdx]=0.;
-    sourceValues[Indices::contiNEqIdx]=0.;
+    this->setZero(sourceValues);
     if (fabs(globalPos[0] - 4.8) < 0.5 && fabs(globalPos[1] - 4.8) < 0.5)
         sourceValues[Indices::contiNEqIdx] = 0.0001;
 }

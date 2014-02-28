@@ -332,7 +332,7 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! @copydoc Dumux::IMPETProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 };

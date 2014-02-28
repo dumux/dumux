@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the adaptive 2p2c model
+ * \brief Test for the adaptive 2p2c model in 2d
  */
 #include "config.h"
 
@@ -42,16 +42,12 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd              End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
-                                        "\t-Grid.File                     Name of the file containing the grid \n"
-                                        "\t                               definition in DGF format\n"
-                                        "\t-SpatialParams.LensLowerLeftX  x-coordinate of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensLowerLeftY  y-coordinate of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightX x-coordinate of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightY y-coordinate of the upper right corner of the lens [m] \n"
-                                        "\n";
-
+                                       "\t-TimeManager.TEnd      End of the simulation [s] \n"
+                                       "\t-TimeManager.DtInitial Initial timestep size [s] \n"
+                                       "\t-Grid.NumberOfCellsX   Resolution in x-direction [-]\n"
+                                       "\t-Grid.NumberOfCellsY   Resolution in y-direction [-]\n"
+                                       "\t-Grid.UpperRightX      Length of the domain [m]\n"
+                                       "\t-Grid.UpperRightY      Height of the domain [m]\n";
         std::cout << errorMessageOut
                   << "\n";
     }

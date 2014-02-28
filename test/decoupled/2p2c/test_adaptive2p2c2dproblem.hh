@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test problem for the adaptive sequential 2p2c model
+ * \brief Test problem for the adaptive sequential 2p2c model in 2D
  */
 #ifndef DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
@@ -205,6 +205,7 @@ Adaptive2p2c2d(TimeManager &timeManager, const GridView& gridView) :
  */
 // \{
 
+//! @copydoc Dumux::TestDecTwoPTwoCProblem::shouldWriteRestartFile()
 bool shouldWriteRestartFile() const
 {
     return false;
