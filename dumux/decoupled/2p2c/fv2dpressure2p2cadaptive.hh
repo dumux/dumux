@@ -26,10 +26,11 @@
 #include <dune/istl/preconditioners.hh>
 
 // dumux environment
+#include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
+#include <dumux/decoupled/2p2c/2p2cadaptiveproperties.hh>
 // include 2p mpfa pressure model
 #include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2dtransmissibilitycalculator.hh>
 
-#include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
 #include <dumux/common/math.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 

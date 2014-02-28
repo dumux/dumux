@@ -61,7 +61,9 @@ NEW_PROP_TAG(GridAdaptMaxInteractionVolumes); //!< Maximum number of interaction
 
 //Dumux includes
 #include <dumux/decoupled/2p2c/fv2dpressure2p2cadaptive.hh>
+#include <dumux/decoupled/2p2c/fv3dpressure2p2cadaptive.hh>
 #include <dumux/decoupled/2p2c/fv2dtransport2p2cadaptive.hh>
+#include <dumux/decoupled/2p2c/fv3dtransport2p2cadaptive.hh>
 #include <dumux/decoupled/2p2c/variableclass2p2cadaptive.hh>
 #include <dumux/decoupled/2p2c/celldata2p2cadaptive.hh>
 
