@@ -314,9 +314,9 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 }
 
 /*!
- * \copydoc Dumux::IMPETProblem::source()
+ * \copydoc Dumux::IMPETProblem::sourceAtPos()
  */
-void source(PrimaryVariables &values, const Element &element)
+void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
     this->setZero(sourceValues);
     if (fabs(globalPos[0] - 4.8) < 0.5 && fabs(globalPos[1] - 4.8) < 0.5)
