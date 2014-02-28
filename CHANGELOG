@@ -4,7 +4,10 @@ Differences Between DuMuX 2.4 and DuMuX 2.5
 * IMPORTANT NOTES:
 
 * IMPROVEMENTS and ENHANCEMENTS:
-
+  - The three-dimensional implementation of the MPFA L-method is made
+    available for the decoupled compositional 2p2c models. It also allows 
+    for simulation on an adaptive grid.
+    
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
 
 * Deprecated CLASSES/FILES, to be removed after 2.5:
