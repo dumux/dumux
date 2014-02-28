@@ -30,7 +30,7 @@ UpperRightZ = 10 # [m] height of the domain
 #Define Boundary Conditions
 #############################################################
 [BoundaryConditions]
-Injectionrate = 1e-3	# kg / sec
+Injectionrate = 1e-4	# kg / sec
 
 #############################################################
 #Simulation control
