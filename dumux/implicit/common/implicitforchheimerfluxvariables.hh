@@ -19,8 +19,8 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        all fluxes of fluid phases over a face of a finite volume,
- *        according to the Forchheimer-relation between velocity and pressure.
+ *        volume fluxes of fluid phases over a face of a finite volume by means
+ *        of the Forchheimer approximation.
  */
 #ifndef DUMUX_IMPLICIT_FORCHHEIMER_FLUX_VARIABLES_HH
 #define DUMUX_IMPLICIT_FORCHHEIMER_FLUX_VARIABLES_HH
@@ -260,13 +260,13 @@ protected:
      * \param phaseIdx The index of the currently considered phase
      */
      void forchheimerResidual_(GlobalPosition & residual,
-         const Scalar forchCoeff,
-         const DimMatrix & sqrtK,
-         const DimMatrix & K,
-         const GlobalPosition & velocity,
-         const ElementVolumeVariables & elemVolVars,
-         const GlobalPosition & potentialGrad,
-         const unsigned int phaseIdx) const
+    		 	 	 	 	 const Scalar forchCoeff,
+    		 	 	 	 	 const DimMatrix & sqrtK,
+    		 	 	 	 	 const DimMatrix & K,
+    		 	 	 	 	 const GlobalPosition & velocity,
+    		 	 	 	 	 const ElementVolumeVariables & elemVolVars,
+    		 	 	 	 	 const GlobalPosition & potentialGrad,
+    		 	 	 	 	 const unsigned int phaseIdx) const
      {
          const VolumeVariables upVolVars    = elemVolVars[this->upstreamIdx(phaseIdx)];
          const VolumeVariables downVolVars  = elemVolVars[this->downstreamIdx(phaseIdx)];
@@ -330,11 +330,11 @@ protected:
       * \param phaseIdx The index of the currently considered phase
       */
      void forchheimerDerivative_(Tensor & derivative,
-             const Scalar forchCoeff,
-             const DimMatrix & sqrtK,
-             const GlobalPosition & velocity,
-             const ElementVolumeVariables & elemVolVars,
-             const unsigned int phaseIdx) const
+    		 	 	 	 	 	 const Scalar forchCoeff,
+    		 	 	 	 	 	 const DimMatrix & sqrtK,
+    		 	 	 	 	 	 const GlobalPosition & velocity,
+    		 	 	 	 	 	 const ElementVolumeVariables & elemVolVars,
+    		 	 	 	 	 	 const unsigned int phaseIdx) const
      {
          const VolumeVariables upVolVars    = elemVolVars[this->upstreamIdx(phaseIdx)];
          const VolumeVariables downVolVars  = elemVolVars[this->downstreamIdx(phaseIdx)];

@@ -19,10 +19,9 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        all fluxes of fluid phases over a face of a finite volume.
+ *        volume fluxes of fluid phases over a face of a finite volume by means
+ *        of the Darcy approximation.
  *
- * This means pressure and temperature gradients, phase densities at
- * the integration point, etc.
  */
 #ifndef DUMUX_IMPLICIT_DARCY_FLUX_VARIABLES_HH
 #define DUMUX_IMPLICIT_DARCY_FLUX_VARIABLES_HH
@@ -171,7 +170,6 @@ protected:
      * \param problem The problem
      * \param element The finite element
      * \param elemVolVars The volume variables of the current element
-     * are calculated for interior SCV faces or boundary faces, default=false
      */
     void calculateGradients_(const Problem &problem,
                              const Element &element,
@@ -311,14 +309,14 @@ protected:
         }// loop all phases
     }
 
-    const FVElementGeometry &fvGeometry_;   //!< Information about the geometry of discretization
-    const unsigned int faceIdx_;            //!< The index of the sub control volume face
+    const FVElementGeometry &fvGeometry_;   	//!< Information about the geometry of discretization
+    const unsigned int faceIdx_;            	//!< The index of the sub control volume face
     const bool      onBoundary_;                //!< Specifying whether we are currently on the boundary of the simulation domain
     unsigned int    upstreamIdx_[numPhases] , downstreamIdx_[numPhases]; //!< local index of the upstream / downstream vertex
     Scalar          volumeFlux_[numPhases] ;    //!< Velocity multiplied with normal (magnitude=area)
     DimVector       velocity_[numPhases] ;      //!< The velocity as determined by Darcy's law or by the Forchheimer relation
     Scalar          kGradPNormal_[numPhases] ;  //!< Permeability multiplied with gradient in potential, multiplied with normal (magnitude=area)
-    DimVector       kGradP_[numPhases] ; //!< Permeability multiplied with gradient in potential
+    DimVector       kGradP_[numPhases] ; 		//!< Permeability multiplied with gradient in potential
     DimVector       potentialGrad_[numPhases] ; //!< Gradient of potential, which drives flow
     Scalar          mobilityUpwindWeight_;      //!< Upwind weight for mobility. Set to one for full upstream weighting
 };
