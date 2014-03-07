@@ -443,11 +443,19 @@ protected:
             if (value < 0)
                 fluidState.setPressure(phaseIdx, 0.0);
 
+            bool allMoleFractionsAreZero = true;
             for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
                 value = fluidState.moleFraction(phaseIdx, compIdx);
-                if (value < 0)
+                if (value > 0)
+                    allMoleFractionsAreZero = false;
+                else if (value < 0)
                     fluidState.setMoleFraction(phaseIdx, compIdx, 0.0);
             }
+
+            // set at least one mole fraction to a positive value
+            // to prevent breakdown of the linear solver in completeFluidState_
+            if (allMoleFractionsAreZero)
+                fluidState.setMoleFraction(phaseIdx, /*compIdx=*/0, 1e-10);
         }
 
         // last saturation
