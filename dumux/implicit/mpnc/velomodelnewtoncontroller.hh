@@ -53,6 +53,15 @@ public:
         : ParentType(problem)
     {};
 
+    void newtonBeginStep(){
+        ParentType::newtonBeginStep();
+
+        // Averages the face velocities of a vertex. Implemented in the model.
+        // The velocities are stored in the model.
+    	if(velocityAveragingInModel)
+    		this->problem_().model().calcVelocityAverage();
+    }
+
     void newtonUpdate(SolutionVector &uCurrentIter,
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
@@ -60,11 +69,6 @@ public:
         ParentType::newtonUpdate(uCurrentIter,
                                 uLastIter,
                                 deltaU);
-
-        // Averages the face velocities of a vertex. Implemented in the model.
-        // The velocities are stored in the model.
-        if(velocityAveragingInModel)
-            this->problem_().model().calcVelocityAverage();
     }
 };
 
