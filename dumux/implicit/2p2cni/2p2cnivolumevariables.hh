@@ -115,16 +115,9 @@ protected:
     }
 
     /*!
-     * \brief Update all quantities for a given control volume.
-     *
-     * \param sol The solution primary variables
-     * \param problem The problem
-     * \param element The element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
-     * \param isOldSol Evaluate function with solution of current or previous time step
+     * \copydoc ImplicitVolumeVariables::update
      */
-    void updateEnergy_(const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &priVars,
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &fvGeometry,

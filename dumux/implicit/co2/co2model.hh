@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX or CC scheme to the two-phase two-component flow model without constraint solver.
+ * \brief Adaption of the fully implicit scheme to the CO2Model model.
  */
 #ifndef DUMUX_CO2_MODEL_HH
 #define DUMUX_CO2_MODEL_HH
@@ -150,7 +150,8 @@ public:
 
 
      /*!
-      * \brief Set the old phase of all verts state to the current one.
+      * \brief Performs variable switch at a vertex, returns true if a
+      *        variable switch was performed.
       */
      bool primaryVarSwitch_(SolutionVector &globalSol,
                               const VolumeVariables &volVars, int globalIdx,

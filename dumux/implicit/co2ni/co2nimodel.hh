@@ -19,7 +19,8 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX or CC scheme to the non-isothermal two-phase two-component flow model without constraint solver.
+ * \brief Adaption of the fully implicit scheme to the non-isothermal
+ *        CO2 model.
  */
 #ifndef DUMUX_CO2NI_MODEL_HH
 #define DUMUX_CO2NI_MODEL_HH
@@ -29,7 +30,8 @@
 namespace Dumux {
 /*!
  * \ingroup CO2NIModel
- * \brief Adaption of the BOX or CC scheme to the non-isothermal two-phase two-component flow model.
+* \brief Adaption of the fully implicit scheme to the non-isothermal
+ *        CO2 model.
  *
  *   See TwoPTwoCNI model for reference to the equations.
  *   The CO2NI model is derived from the CO2 model. In the CO2 model the phase switch criterion

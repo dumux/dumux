@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Definition of a problem, where CO2 is injected under a reservoir.
+ * \brief Definition of a problem, where CO2 is injected in a reservoir.
  */
 #ifndef DUMUX_HETEROGENEOUS_NI_PROBLEM_NI_HH
 #define DUMUX_HETEROGENEOUS_NI_PROBLEM_NI_HH
@@ -85,12 +85,7 @@ SET_SCALAR_PROP(HeterogeneousNIProblem, ProblemSalinity, 1e-1);
 SET_TYPE_PROP(HeterogeneousNIProblem, Model, CO2NIModel<TypeTag>);
 SET_TYPE_PROP(HeterogeneousNIProblem, VolumeVariables, CO2NIVolumeVariables<TypeTag>);
 
-// Enable gravity
-SET_BOOL_PROP(HeterogeneousNIProblem, ProblemEnableGravity, true);
-
-SET_BOOL_PROP(HeterogeneousNIProblem, ImplicitEnableJacobianRecycling, false);
-SET_BOOL_PROP(HeterogeneousNIProblem, VtkAddVelocity, false);
-
+// Use Moles
 SET_BOOL_PROP(HeterogeneousNIProblem, UseMoles, false);
 }
 
@@ -98,7 +93,7 @@ SET_BOOL_PROP(HeterogeneousNIProblem, UseMoles, false);
 /*!
  * \ingroup CO2NIModel
  * \ingroup ImplicitTestProblems
- * \brief Problem where CO2 is injected under a low permeable layer in a depth of 1200m.
+ * \brief Definition of a problem, where CO2 is injected in a reservoir.
  *
  * The domain is sized 200m times 100m and consists of four layers, a
  * permeable reservoir layer at the bottom, a barrier rock layer with reduced permeability followed by another reservoir layer
@@ -258,7 +253,9 @@ public:
     }
 
     /*!
-     * \brief Called directly after the time integration.
+     * \brief User defined output after the time integration
+     *
+     * Will be called diretly after the time integration.
      */
     void postTimeStep()
     {
@@ -275,7 +272,9 @@ public:
     }
 
     /*!
-     * \brief Add enthalpy and peremeability to output.
+     * \brief Append all quantities of interest which can be derived
+     *        from the solution of the current time step to the VTK
+     *        writer.
      */
     void addOutputVtkFields()
         {
@@ -355,13 +354,14 @@ public:
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         return temperature_(globalPos);
-    };
+    }
 #endif
 
     /*!
-     * \brief Returns the sources within the domain.
+     * \brief Returns the source term
      *
-     * \param values Stores the source values, acts as return value
+     * \param values Stores the source values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      *
      * Depending on whether useMoles is set on true or false, the flux has to be given either in
@@ -416,13 +416,12 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet
+     *        boundary segment
      *
-     * \param values The dirichlet values for the primary variables
+     * \param values Stores the Dirichlet values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
-     *
-     * For this method, the \a values parameter stores primary variables.
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
@@ -430,23 +429,22 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
+     * \brief Evaluate the boundary conditions for a Neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations
+      * \param values Stores the Neumann values for the conservation equations in
+     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite volume geometry of the element
      * \param intersection The intersection between element and boundary
-     * \param scvIdx The local vertex index
+     * \param scvIdx The local index of the sub-control volume
      * \param boundaryFaceIdx The index of the boundary face
      *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
+     * The \a values store the mass flux of each phase normal to the boundary.
+     * Negative values indicate an inflow.
      *
      * Depending on whether useMoles is set on true or false, the flux has to be given either in
      * kg/(m^2*s) or mole/(m^2*s) in the input file!!
-     * Note that the energy balance is always calculated in terms of specific enthalpies [J/kg]
-     * and that the Neumann fluxes have to be specified accordingly.
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -476,13 +474,11 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial values for a control volume
      *
-     * \param values The initial values for the primary variables
-     * \param globalPos The center of the finite volume which ought to be set.
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
+     * \param values Stores the initial values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variables} ] \f$
+     * \param globalPos The global position
      */
     void initialAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
@@ -491,10 +487,10 @@ public:
     }
 
     /*!
-     * \brief Return the initial phase state inside a control volume.
+     * \brief Returns the initial phase state for a control volume.
      *
      * \param vertex The vertex
-     * \param globalIdx The index of the global vertex
+     * \param globalIdx The global index of the vertex
      * \param globalPos The global position
      */
     int initialPhasePresence(const Vertex &vertex,
@@ -505,7 +501,15 @@ public:
     // \}
 
 private:
-    // the internal method for the initial condition
+    /*!
+     * \brief Evaluates the initial values for a control volume
+     *
+     * The internal method for the initial condition
+     *
+     * \param values Stores the initial values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variables} ] \f$
+     * \param globalPos The global position
+     */
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {

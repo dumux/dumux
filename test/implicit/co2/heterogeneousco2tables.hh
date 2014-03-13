@@ -19,8 +19,8 @@
 /**
  * \file
  *
- * \brief Provides the class with the tabulated values of CO2 for the
- *        benchmark3 problem
+ * \brief Provides the class with the tabulated values of CO2 density
+ *        and enthalpy
  */
 #ifndef DUMUX_HETEROGENEOUS_CO2TABLES_HH
 #define DUMUX_HETEROGENEOUS_CO2TABLES_HH

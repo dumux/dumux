@@ -69,7 +69,7 @@ public:
     { return this->fluidState_.internalEnergy(phaseIdx); };
 
     /*!
-     * \brief Returns the total enthalpy of a phase in the sub-control
+     * \brief Returns the total enthalpy of a phase in the control
      *        volume.
      *
      * \param phaseIdx The phase index
@@ -79,14 +79,14 @@ public:
 
     /*!
      * \brief Returns the total heat capacity \f$\mathrm{[J/(K*m^3]}\f$ of the rock matrix in
-     *        the sub-control volume.
+     *        the control volume.
      */
     Scalar heatCapacity() const
     { return heatCapacity_; };
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the fluid phase in
-     *        the sub-control volume.
+     *        the control volume.
      */
     Scalar thermalConductivity(const int phaseIdx) const
     { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); };
@@ -115,16 +115,9 @@ protected:
     }
 
     /*!
-     * \brief Update all quantities for a given control volume.
-     *
-     * \param sol The solution primary variables
-     * \param problem The problem
-     * \param element The element
-     * \param fvGeometry Evaluate function with solution of current or previous time step
-     * \param scvIdx The local index of the SCV (sub-control volume)
-     * \param isOldSol Evaluate function with solution of current or previous time step
+     * \copydoc ImplicitVolumeVariables::update
      */
-    void updateEnergy_(const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &priVars,
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &fvGeometry,

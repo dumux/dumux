@@ -20,8 +20,7 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the non-isothermal CO2
- *        model.
+ *        finite volume in the CO2 model.
  */
 #ifndef DUMUX_CO2_VOLUME_VARIABLES_HH
 #define DUMUX_CO2_VOLUME_VARIABLES_HH
@@ -34,8 +33,7 @@ namespace Dumux
  * \ingroup CO2Model
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the isothermal CO2
- *        model.
+ *        finite volume in the CO2 model.
  */
 template <class TypeTag>
 class CO2VolumeVariables: public TwoPTwoCVolumeVariables<TypeTag>
@@ -103,14 +101,7 @@ public:
 
 
     /*!
-     * \brief Update all quantities for a given control volume.
-     *
-     * \param priVars The primary variables
-     * \param problem The problem
-     * \param element The element
-     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param scvIdx The local index of the SCV (sub-control volume)
-     * \param isOldSol Evaluate function with solution of current or previous time step
+     * \copydoc ImplicitVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -421,6 +412,9 @@ protected:
         return 0;
     }
 
+    /*!
+     * \brief Called by update() to compute the energy related quantities
+     */
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
