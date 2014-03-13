@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Defines the indices used by the non-isotherm two-phase fully implicit model.
+ * \brief Defines the indices used by the non-isothermal two-phase fully implicit model.
  */
 #ifndef DUMUX_2PNI_INDICES_HH
 #define DUMUX_2PNI_INDICES_HH
@@ -32,7 +32,9 @@ namespace Dumux
 /*!
  * \ingroup TwoPNIModel
  * \ingroup ImplicitIndices
- * \brief Enumerations for the non-isothermal two-phase model
+ * \brief Defines the indices used by the non-isothermal two-phase fully implicit model.
+ *
+ * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
 class TwoPNIIndices : public TwoPIndices<TypeTag, PVOffset>

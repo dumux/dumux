@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  * \ingroup ImplicitProperties
  * \ingroup Properties
  * \file
@@ -49,8 +49,11 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Property defaults
 //////////////////////////////////////////////////////////////////
-SET_INT_PROP(TwoP, NumEq, 2); //!< set the number of equations to 2
-SET_INT_PROP(TwoP, NumPhases, 2); //!< The number of phases in the 2p model is 2
+//! Set the number of equations to 2
+SET_INT_PROP(TwoP, NumEq, 2);
+
+//! The number of phases in the 2p model is 2
+SET_INT_PROP(TwoP, NumPhases, 2);
 
 //! Set the default formulation to pWsN
 SET_INT_PROP(TwoP,

@@ -119,7 +119,7 @@
          */
         /*!
          * \ingroup ImplicitModels
-         * \defgroup TwoPBoxModel Two-phase 
+         * \defgroup TwoPModel Two-phase 
          *
          * \copydetails Dumux::TwoPModel
          */

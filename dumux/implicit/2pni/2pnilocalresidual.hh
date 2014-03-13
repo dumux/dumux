@@ -79,7 +79,7 @@ public:
      * inside a sub control volume divided by the volume)
      *
      *  \param storage The phase mass within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param scvIdx The sub-control volume index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
@@ -153,6 +153,7 @@ public:
      * \param flux The diffusive flux over the sub-control-volume face for each phase
      * \param fluxVars The flux variables at the current SCV
      *
+     * This method is called by compute flux (base class).
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const

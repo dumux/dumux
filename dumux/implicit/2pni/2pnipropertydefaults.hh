@@ -19,11 +19,11 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- *  \ingroup TwoPNIBoxModel
+ * \ingroup TwoPNIModel
  * \file
  *
  * \brief Defines the default values for most of the properties
- *        required by the non-isotherm two-phase fully implicit model.
+ *        required by the non-isothermal two-phase fully implicit model.
  */
 
 #ifndef DUMUX_2PNI_PROPERTY_DEFAULTS_HH
@@ -47,8 +47,8 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
-
-SET_INT_PROP(TwoPNI, NumEq, 3); //!< set the number of equations to 3
+//! Set the number of equations to 3
+SET_INT_PROP(TwoPNI, NumEq, 3);
 
 //! Use the 2pni local jacobian operator for the 2pni model
 SET_TYPE_PROP(TwoPNI,

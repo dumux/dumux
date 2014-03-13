@@ -61,7 +61,7 @@ class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
 public:
     /*!
      * \brief Returns the total internal energy of a phase in the
-     *        sub-control volume.
+     *        sub-control volume in \f$\mathrm{[J/kg]}\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -70,7 +70,7 @@ public:
 
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
-     *        volume.
+     *        volume in \f$\mathrm{[J/kg]}\f$.
      *
      * \param phaseIdx The phase index
      */

@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase fully implicit model.
@@ -61,7 +61,9 @@ protected:
 
 public:
     /*!
-     * \brief Constructor. Sets the upwind weight.
+     * \brief Constructor
+     *
+     * Sets the upwind weight.
      */
     TwoPLocalResidual()
     {
@@ -73,11 +75,14 @@ public:
 
     /*!
      * \brief Evaluate the amount of all conservation quantities
-     *        (e.g. phase mass) within a finite sub-control volume.
+     *        (e.g. phase mass) within a sub-control volume.
      *
      *  \param storage The phase mass within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
+     *
+     * The result should be averaged over the volume (e.g. phase mass
+     * inside a sub-control volume divided by the volume)
      */
     void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
     {
@@ -99,13 +104,12 @@ public:
     }
 
     /*!
-     * \brief Evaluates the mass flux over a face of a sub-control
-     *        volume.
+     * \brief Evaluates the total flux of all conservation quantities
+     *        over a face of a sub-control volume.
      *
-     * \param flux The flux over the SCV (sub-control-volume) face for each phase
-     * \param faceIdx The index of the SCV face
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     *        are calculated for interior SCV faces or boundary faces, default=false
+     * \param flux The flux over the sub-control-volume face for each component
+     * \param faceIdx The index of the sub-control-volume face
+     * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
      */
     void computeFlux(PrimaryVariables &flux, int faceIdx, const bool onBoundary=false) const
     {
@@ -156,7 +160,7 @@ public:
      *        the face of a sub-control volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each phase
-     * \param fluxVars The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current sub-control-volume
      *
      * It doesn't do anything in two-phase model but is used by the
      * non-isothermal two-phase models to calculate diffusive heat

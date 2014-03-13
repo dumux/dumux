@@ -46,7 +46,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
-
+//! Set the number of equations to 3
 SET_INT_PROP(TwoPTwoCNI, NumEq, 3); //!< set the number of equations to 3
 
 //! Use the 2p2cni local jacobian operator for the 2p2cni model

@@ -33,8 +33,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPBoxModel
- * \brief A two-phase, isothermal flow model using the fully implicit scheme.
+ * \ingroup TwoPModel
+ * \brief Adaption of the fully implicit scheme to the two-phase flow model.
  *
  * This model implements two-phase flow of two immiscible fluids
  * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy

@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        all fluxes (mass and energy) of all phases over a face of a finite volume.
+ * \brief This file contains data which is required to calculate
+ *        the heat fluxes over a face of a finite volume for the non-isothermal
+ *        two-phase model.
  *
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
@@ -38,12 +39,9 @@ namespace Dumux
 /*!
  * \ingroup TwoPNIModel
  * \ingroup ImplicitFluxVariables
- * \brief This template class contains the data which is required to
- *        calculate all fluxes (mass and energy) of all phases over a
- *        face of a finite volume for the non-isothermal two-phase model.
- *
- * This means pressure and concentration gradients, phase densities at
- * the integration point, etc.
+ * \brief This file contains data which is required to calculate
+ *        the heat fluxes over a face of a finite volume for the non-isothermal
+ *        two-phase model.
  */
 template <class TypeTag>
 class TwoPNIFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
@@ -71,7 +69,7 @@ class TwoPNIFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 
 public:
 
-    /*
+    /*!
      * \brief The constructor
      *
      * \param problem The problem
@@ -79,8 +77,7 @@ public:
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     * are calculated for interior SCV faces or boundary faces, default=false
+     * \param onBoundary Distinguishes if we are on a sub-control-volume face or on a boundary face
      */
 
     TwoPNIFluxVariables(const Problem &problem,

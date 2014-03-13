@@ -19,7 +19,7 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  */
 /*!
  * \file

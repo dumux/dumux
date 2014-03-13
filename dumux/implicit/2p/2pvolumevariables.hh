@@ -34,7 +34,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase model.
@@ -167,14 +167,14 @@ public:
     }
 
     /*!
-     * \brief Returns the phase state for the control-volume.
+     * \brief Returns the phase state for the control volume.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
 
     /*!
-     * \brief Returns the effective saturation of a given phase within
-     *        the control volume.
+     * \brief Returns the saturation of a given phase within
+     *        the control volume in \f$[-]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -183,7 +183,7 @@ public:
 
     /*!
      * \brief Returns the mass density of a given phase within the
-     *        control volume.
+     *        control volume in \f$[kg/m^3]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -192,7 +192,7 @@ public:
 
     /*!
      * \brief Returns the effective pressure of a given phase within
-     *        the control volume.
+     *        the control volume in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -200,13 +200,15 @@ public:
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
-     * \brief Returns the capillary pressure within the control volume [Pa].
+     * \brief Returns the capillary pressure within the control volume
+     * in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      */
     Scalar capillaryPressure() const
     { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
 
     /*!
-     * \brief Returns temperature inside the sub-control volume.
+     * \brief Returns temperature inside the sub-control volume
+     * in \f$[K]\f$.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperature of the rock matrix and of all fluid phases are
@@ -217,7 +219,7 @@ public:
 
     /*!
      * \brief Returns the effective mobility of a given phase within
-     *        the control volume.
+     *        the control volume in \f$[s*m/kg]\f$.
      *
      * \param phaseIdx The phase index
      */
@@ -225,7 +227,7 @@ public:
     { return mobility_[phaseIdx]; }
 
     /*!
-     * \brief Returns the average porosity within the control volume.
+     * \brief Returns the average porosity within the control volume in \f$[-]\f$.
      */
     Scalar porosity() const
     { return porosity_; }

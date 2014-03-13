@@ -19,7 +19,7 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- *  \ingroup TwoPNIBoxModel
+ *  \ingroup TwoPNIModel
  * \file
  *
  * \brief Defines the properties required for the non-isotherm two-phase fully implicit model.

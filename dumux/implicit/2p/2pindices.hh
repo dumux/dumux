@@ -32,9 +32,9 @@ namespace Dumux
 
 
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  * \ingroup ImplicitIndices
- * \brief Specificy whether a pw-sn or a pn-sw formulation is used.
+ * \brief Enumerates the formulations which the two-phase model accepts.
  */
 struct TwoPFormulation
 {
@@ -43,9 +43,11 @@ struct TwoPFormulation
 };
 
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  * \ingroup ImplicitIndices
- * \brief The common indices for the isothermal two-phase model.
+ * \brief Defines the indices required for the two-phase fully implicit model.
+ *
+ * \tparam TypeTag The problem type tag
  */
 template <class TypeTag>
 struct TwoPCommonIndices
@@ -87,7 +89,7 @@ struct TwoPIndices
 };
 
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  * \ingroup ImplicitIndices
  * \brief The indices for the \f$p_n-S_w\f$ formulation of the
  *        isothermal two-phase model.

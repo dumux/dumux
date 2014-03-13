@@ -61,10 +61,10 @@ public:
 };
 }
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the LensProblem which uses the
- *        twophase box model
+ *        two-phase fully implicit model
  */
 template<class TypeTag>
 class LensSpatialParams : public ImplicitSpatialParams<TypeTag>
@@ -139,12 +139,11 @@ public:
     }
 
     /*!
-     * \brief Intrinsic permability
+     * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
      *
-     * \param element The current element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     * \return Intrinsic permeability
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     Scalar intrinsicPermeability(const Element &element,
                                  const FVElementGeometry &fvGeometry,
@@ -158,12 +157,11 @@ public:
     }
 
     /*!
-     * \brief Porosity
+     * \brief Returns the porosity \f$[-]\f$
      *
-     * \param element The current element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     * \return Porosity
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvGeometry,
@@ -171,12 +169,11 @@ public:
     { return 0.4; }
 
     /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
+     * \brief Returns the parameter object for the Brooks-Corey material law
      *
-     * \param element The current element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     * \return the material parameters object
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                 const FVElementGeometry &fvGeometry,
