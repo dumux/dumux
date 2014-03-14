@@ -58,5 +58,5 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
 
   # add test
   add_test(${dumux_test} ${dumux_test_args})
-  add_dependencies(${_test_target} ${dumux_test})
+  add_dependencies(${_test_target} ${dumux_test_executable})
 endmacro(add_dumux_test)
