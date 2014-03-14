@@ -58,17 +58,20 @@ namespace Dumux
     }
 
     /**
-     * \brief The dynamic viscosity given by a fixed value to garantee
+     * \brief The dynamic viscosity given by a fixed value to guarantee
      *        a Reynolds number.
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
-      Scalar renoldsNumber = 100.0;
+      Scalar reynoldsNumber = 100.0;
       Scalar characteristicLength = 1.0;
+      Scalar characteristicVelocity = 1.0;
       // Density of N2 for pressure of 0.1 MPa,
       // temperature of 283.15 degree Celsius (from NIST homepage)
       Scalar characteristicDensity = 1.1903;
-      return characteristicLength / (renoldsNumber * characteristicDensity);
+
+      return characteristicLength * characteristicVelocity * characteristicDensity
+             / reynoldsNumber;
     }
   };
 } // end namespace
