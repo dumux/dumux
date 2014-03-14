@@ -23,10 +23,12 @@
 #define DUMUX_FV3DTRANSPORT2P2C_ADAPTIVE_HH
 
 #include <dune/grid/common/gridenums.hh>
-#include <dumux/decoupled/2p2c/2p2cproperties.hh>
-#include <dumux/decoupled/2p2c/fvtransport2p2c.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/linear/vectorexchange.hh>
+
+#include "2p2cadaptiveproperties.hh"
+#include "fvtransport2p2c.hh"
 
 /**
  * @file

@@ -38,6 +38,10 @@ namespace Dumux
 //****** forward declarations  ******//
 template<class TypeTag>
 struct DecoupledTwoPTwoCIndicesAdaptive;
+template<class TypeTag>
+class FV2dPressure2P2CAdaptive;
+template<class TypeTag>
+class FV2dTransport2P2CAdaptive;
 
 ////////////////////////////////
 // properties
