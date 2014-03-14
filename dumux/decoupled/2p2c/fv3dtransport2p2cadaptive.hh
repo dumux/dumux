@@ -106,7 +106,8 @@ class FV3dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
     {return problem_;};
 
 public:
-    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
+    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec,
+                        bool impes = false);
 
     void getMpfaFlux(Dune::FieldVector<Scalar, 2>&, Dune::FieldVector<Scalar, 2>&,
             const IntersectionIterator&, CellData&);
@@ -159,7 +160,7 @@ protected:
  */
 template<class TypeTag>
 void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
-                              TransportSolutionType& updateVec, bool impet = false)
+                              TransportSolutionType& updateVec, bool impet)
 {
     this->impet_ = impet;
 

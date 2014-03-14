@@ -19,6 +19,12 @@
 #ifndef DUMUX_VARIABLECLASS2P2C_ADAPTIVE_HH
 #define DUMUX_VARIABLECLASS2P2C_ADAPTIVE_HH
 
+#include <dune/common/version.hh>
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+#include <dune/common/power.hh>
+#else
+#include <dune/common/misc.hh>
+#endif
 
 // for  parallelization
 #include <dumux/decoupled/common/variableclassadaptive.hh>
@@ -81,7 +87,11 @@ protected:
     * dim-1=2 cells for one interaction volume, and 8 cells if four interaction volumes
     * are regarded.
     */
-    const static int storageRequirement = pow((dim-1), dim);
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+    const static int storageRequirement = Dune::StaticPower<dim-1, dim>::power;
+#else
+    const static int storageRequirement = Dune::Power_m_p<dim-1, dim>::power;
+#endif
     //! Storage object for data related to the MPFA method
     /**
      * This Object stores the transmissibility coefficients
