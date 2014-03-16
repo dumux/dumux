@@ -300,7 +300,13 @@ public:
         }
 
         if(!this->fluidState_)
+        {
             this->fluidState_ = Dune::make_shared<FluidState>();
+            // properly initialize pressure, since it is evaluated later:
+            this->fluidState_->setPressure(wPhaseIdx, 1e5);
+            this->fluidState_->setPressure(nPhaseIdx, 1e5);
+        }
+
         return *this->fluidState_;
     }
 
