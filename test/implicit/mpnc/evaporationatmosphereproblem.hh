@@ -83,12 +83,12 @@ NEW_TYPE_TAG(EvaporationAtmosphereProblem,
 // Set the grid type
 SET_PROP(EvaporationAtmosphereProblem, Grid)
 {
-#ifdef HAVE_UG
-    typedef typename Dune::UGGrid<2> type;
-#elif HAVE_ALUGRID
+#if HAVE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
+#elif HAVE_UG
+    typedef typename Dune::UGGrid<2> type;
 #else
-    Dune::YaspGrid<2> type;
+    typedef typename Dune::YaspGrid<2> type;
 #endif
 };
 
