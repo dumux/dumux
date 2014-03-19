@@ -13,7 +13,6 @@ Details regarding the installation of \Dune are provided on the \Dune website \c
 If you are interested in more details about the build system that is used,
 they can be found in the {\Dune} Buildsystem Howto \cite{DUNE-BS}.
 
-
 All \Dune modules, including \Dumux, get extracted into a common directory, as it is done in an ordinary \Dune installation. 
 We refer to that directory abstractly as {\Dune} root directory or, in short, as {\Dune}-Root. 
 If it is used as directory's path of a shell command it is typed as \texttt{\Dune-Root}. 
@@ -33,132 +32,101 @@ by the shell-command \texttt{dunecontrol} which is part of the \Dune build syste
 \section{Prerequisites} \label{sec:prerequisites}
 The GNU tool chain of \texttt{g++}  and the tools of the GNU build system \cite{GNU-BS}, also known as GNU autotools
 (\texttt{autoconf}, \texttt{automake}, \texttt{autogen}, \texttt{libtool}), as well as \texttt{make}
-must be available in a recent version. For example Ubuntu Linux provides these tools with the
-packages \texttt{autoconf}, \texttt{automake}, \texttt{libtool}
-and the \Cplusplus compiler \texttt{g++} and \texttt{make} are contained in \texttt{build-essential}. Packages required for Ubuntu users are listed in Table \ref{tbl:ubuntu-pkg}. For the installation of \Dumux using \texttt{dune-pdelab}, \texttt{dune-multidomain}, \texttt{dune-multidomaingrid} and the external packages UG and SuperLU on SUSE, the package \texttt{csh} was not required. Some of the package names differ from Ubuntu to SUSE, so that \texttt{boost-devel}, \texttt{gcc-c++} and \texttt{make} have to be installed (Nov. 2012).
-
-At the time of writing this manual, it is expected that \texttt{g++} of version $\geqslant$ 4.5.0, \texttt{automake} of version $\geqslant$ 1.9,
-\texttt{autoconf} of version $\geqslant$ 2.65, \texttt{autogen} of version $\geqslant$ 5.9.7,  \texttt{libtool} of version $\geqslant$ 2.2.6
-and GNU \texttt{make} version $\geqslant$ 3.81 should do their job for building \Dumux.
+must be available in a recent version. For a list of prerequisite software packages to install,see
+\cite{DUNE-WIKI-PREREQUISITE-SOFTWARE}.
 
 The building of included documentation like this handbook requires \LaTeX{} and auxiliary tools
-like \texttt{dvipdf} and \texttt{bibtex}. One usually chooses a \LaTeX{} distribution like \texttt{texlive} for this purpose.
+\texttt{bibtex}. One usually chooses a \LaTeX{} distribution like \texttt{texlive} for this purpose.
 It is possible to switch off the building of the documentation by setting the switch \texttt{--disable-documentation} 
-in the \texttt{CONFIGURE\_FLAGS} of the building options (see Chapter \ref{buildIt}).
+in the \texttt{CONFIGURE\_FLAGS} of the building options, see Chapter \ref{buildIt}.
 Additional parts of documentation are contained within the source code files as special formatted comments.
-Extracting them can be done using \texttt{doxygen} (version $\geqslant$ 1.7.2 works). 
-See for this optional step Section \ref{sec:build-doxy-doc}.
+Extracting them can be done using \texttt{doxygen}, cf. Section \ref{sec:build-doxy-doc}.
 
 Depending on whether you are going to use external libraries and modules for additional \Dune features, 
 additional software packages may be required. Some hints on that are given in Section \ref{sec:external-modules-libraries}.
 
-For the extraction of the content of tar files, the GNU version of \texttt{tar} is used.
-The Subversion (svn) software repositories can be accessed with help of a subversion client.
-
-\begin{table}
-\centering
-\caption{Ubuntu package names for Ubuntu 12.04}
-\begin{tabular}{llll}
-\toprule
-\textbf{purpose} & \textbf{package names} \\
-\midrule
-general: & subversion & git & gfortran \\
-& automake & build-essential & libboost-all-dev \\
-& doxygen & csh\\
-\midrule
-for alberta: & freeglut3-dev &  \\
-\midrule
-for parallel use: & openmpi-common & mpi-default-bin & mpi-default-dev \\
-\midrule
-for ug parallel: & flex & bison & \\
-\midrule
-for alberta parallel: & libblas-dev &\\
-\midrule
-for debugging: & valgrind &\\
-\bottomrule
-\end{tabular}
-\label{tbl:ubuntu-pkg}
-\end{table}
+Subversion (SVN) and a Git clients must be installed to download modules from Subversion and Git repositories.
 
 \section{Obtaining source code for \Dune and \Dumux}
-As stated above, the \Dumux release 2.2.0 and trunk (developer tree) are based on the \Dune release 2.2.0, 
-comprising the core modules \texttt{dune-common}, \texttt{dune-grid}, \texttt{dune-geometry}, \texttt{dune-istl} and \texttt{dune-localfunctions}.
-% and the external dune module \texttt{dune-pdelab}.
-For working with \Dumux, these modules are required.
+As stated above, the \Dumux release and trunk (developer tree) are based on the most recent
+\Dune release 2.3, comprising the core modules dune-common, dune-geometry, dune-grid,
+dune-istl and dune-localfunctions. For working with \Dumux, these modules are required. The
+external module dune-PDELab is recommended and required for several \Dumux features.
 
 Two possibilities exist to get the source code of \Dune and \Dumux.
-Firstly, \Dune and \Dumux can be downloaded as tar files from the respective \Dune and \Dumux website. They have to be extracted as described in the next paragraph.
+Firstly, \Dune and \Dumux can be downloaded as tar files from the respective \Dune and \Dumux website.
+They have to be extracted as described in the next paragraph.
 Secondly, a method to obtain the most recent source code (or, more generally, any of its previous revisions) by direct access 
-via Internet to the software repositories of the revision control system is described in the subsequent part. 
+to the software repositories of the revision control system is described in the subsequent part. 
 
 However, if a user does not want to use the most recent version,
-certain version tags (i.\,e. special names), version numbers and even software branches are means 
+certain version tags or branches (i.\,e. special names) are means 
 of the software revision control system to provide access to different versions of the software.
 
 \paragraph{Obtaining the software by installing tar files}
 The slightly old-fashionedly named tape-archive-file, shortly named tar file or tarball, is a common file format for distributing collections of files contained within these archives.
 The extraction from the tar files is done as follows: 
-Download the tarballs from the respective \Dune (version 2.2.0) and \Dumux websites to a certain folder in your file system.
-Create the {\Dune} root directory, named DUMUX in the example below. Then extract the content of the tar files, e.\,g. with the command-line program \texttt{tar}.
+Download the tarballs from the respective \Dune (version 2.3) and \Dumux websites to a certain folder in your file system.
+Create the {\Dune} root directory, named \texttt{dune} in the example below.
+Then extract the content of the tar files, e.\,g. with the command-line program \texttt{tar}.
 This can be achieved by the following shell commands. Replace \texttt{path\_to\_tarball} with the directory name where the downloaded files are actually located.
-After extraction, the actual name of the \emph{dumux root directory} is \texttt{dumux-2.2}. 
+After extraction, the actual name of the \emph{dumux root directory} is \texttt{dumux-2.5}
+(or whatever version you downloaded).
 
 \begin{lstlisting}[style=Bash]
-$ mkdir DUMUX
-$ cd DUMUX
-$ tar xzvf path_to_tarball_of/dune-common-2.2.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dune-grid-2.2.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dune-geometry-2.2.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dune-istl-2.2.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dune-localfunctions-2.2.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dumux-2.2.tar.gz
+$ mkdir dune
+$ cd dune
+$ tar xzvf path_to_tarball_of/dune-common-2.3.0.tar.gz 
+$ tar xzvf path_to_tarball_of/dune-geometry-2.3.0.tar.gz 
+$ tar xzvf path_to_tarball_of/dune-grid-2.3.0.tar.gz 
+$ tar xzvf path_to_tarball_of/dune-istl-2.3.0.tar.gz 
+$ tar xzvf path_to_tarball_of/dune-localfunctions-2.3.0.tar.gz 
+$ tar xzvf path_to_tarball_of/dumux-2.5.tar.gz
 \end{lstlisting}
 
-Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial on the Dune grid interface:
-
-\begin{lstlisting}[style=Bash]
-$ tar xzvf path_to_tarball_of/dune-grid-howto-2.2.0.tar.gz
-\end{lstlisting}
+Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
+on the Dune grid interface, act similar.
 
 \paragraph{Obtaining \Dune and \Dumux from software repositories} 
-
 Direct access to a software revision control system for downloading code can be of advantage for the user later on. 
-It can be easier for him to keep up with code changes and to receive important bug fixes using the update command of the revision control system. 
-\Dune and \Dumux use Apache Subversion for their software repositories. To access them a certain program is needed which is referred to here shortly as subversion client. 
-In our description, we use the subversion client of the Apache Subversion software itself, which is a command-line tool named \texttt{svn}. 
-It is available for most Linux and Unix distributions as software package.
+It can be easier for him to keep up with code changes and to receive important bug fixes using
+the update or pull command of the revision control system. \Dune uses Git and \Dumux uses Apache
+Subversion for their software repositories. To access them a certain programs are needed which
+is referred to here shortly as Subversion client or Git client. In our description, we use the
+Subversion client \texttt{svn} of the Apache Subversion software itself.
 
 In the technical language of Apache Subversion \emph{checking out a certain software version} means nothing more then fetching 
-a local copy from the software repository and laying it out in the file system.  In addition to the software some more files for the use of the software revision control system itself are created. They are kept in directories named \texttt{.svn} and can be found in each subfolder which is under version control.
-If you have developer access to \Dumux, it is also possible to do the opposite, i.\,e. to load up a modified revision of software into the software repository. This is usually termed as \emph{software commit}.
+a local copy from the software repository and laying it out in the file system.
+In addition to the software some more files for the use of the software revision
+control system itself are created. If you have developer access to \Dumux, it is
+also possible to do the opposite, i.\,e. to load up a modified revision of software
+into the software repository. This is usually termed as \emph{commit}.
 
 The installation procedure is done as follows:
-Create a  {\Dune} root directory, named \texttt{DUMUX} in the lines below.
+Create a  {\Dune} root directory, named \texttt{dune} in the lines below.
 Then, enter the previously created directory and check out the desired modules. 
-As you see below, the check-out uses two different servers for getting the sources, one for \Dune and one for {\Dumux}.
-The \Dune modules of the stable 2.2 release branch are checked out as described on the \Dune website \cite{DUNE-DOWNLOAD-GIT}:
+As you see below, the check-out uses two different servers for getting the sources,
+one for \Dune and one for {\Dumux}.
+The \Dune modules of the stable 2.3 release branch are checked out as described
+on the \Dune website \cite{DUNE-DOWNLOAD-GIT}:
 
 \begin{lstlisting}[style=Bash]
 $ mkdir DUMUX
 $ cd DUMUX
-$ git clone http://git.dune-project.org/repositories/dune-common/releases/2.2
-$ git clone http://git.dune-project.org/repositories/dune-geometry/releases/2.2
-$ git clone http://git.dune-project.org/repositories/dune-grid/releases/2.2
-$ git clone http://git.dune-project.org/repositories/dune-istl/releases/2.2
-$ git clone http://git.dune-project.org/repositories/dune-localfunctions/releases/2.2
+$ git clone http://git.dune-project.org/repositories/dune-common/releases/2.3
+$ git clone http://git.dune-project.org/repositories/dune-geometry/releases/2.3
+$ git clone http://git.dune-project.org/repositories/dune-grid/releases/2.3
+$ git clone http://git.dune-project.org/repositories/dune-istl/releases/2.3
+$ git clone http://git.dune-project.org/repositories/dune-localfunctions/releases/2.3
+$ git clone http://git.dune-project.org/repositories/dune-pdelab/releases/1.1
 \end{lstlisting}
 
 The newest and maybe unstable developments are also provided in these repositories and is called \emph{master}.
 Please check the \Dune website \cite{DUNE-DOWNLOAD-GIT} for further information. However, the current \Dumux release
-is based on the stable 2.2 release and it might not compile without further adaptations using the the newest versions of \Dune.
+is based on the stable 2.3 release and it might not compile without further adaptations using the the newest versions of \Dune.
 
-The additional module \texttt{dune-grid-howto} is a tutorial which provides information about the \Dune grid interface.
-It may give you an idea of how some abstractions in \Dune are done.
-The installation of \texttt{dune-grid-howto} is optional and is not required by \Dumux. It is done by: 
-
-\begin{lstlisting}[style=Bash]
-$ git clone http://git.dune-project.org/repositories/dune-grid-howto/releases/2.2
-\end{lstlisting}
+Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
+on the Dune grid interface, act similar.
 
 The \texttt{dumux} module is checked out as described below (see also the \Dumux website \cite{DUMUX-HP}).
 Its file tree has to be created in the \Dune-Root directory, where the \Dune modules have also been checked out to. Subsequently, the next command
