@@ -145,10 +145,10 @@ public:
             int eqIdx = conti0EqIdx + phaseIdx;
             flux[eqIdx] += fluxVars.volumeFlux(phaseIdx)
                 * (massUpwindWeight
-                   * up.fluidState().density(phaseIdx)
+                   * up.density(phaseIdx)
                    +
                    (1.0 - massUpwindWeight)
-                   * dn.fluidState().density(phaseIdx));
+                   * dn.density(phaseIdx));
         }
     }
 
