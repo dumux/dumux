@@ -97,7 +97,9 @@ protected:
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
-    // the stokes model needs a modified treatment of the BCs
+    /*!
+     * \brief Modified boundary treatment for the stokes model
+     */
     void evalBoundary_()
     {
         assert(this->residual_.size() == this->fvGeometry_().numScv);
@@ -409,6 +411,6 @@ private:
 
 };
 
-}
+} // namespace Dumux
 
-#endif
+#endif // DUMUX_STOKESNC_COUPLING_LOCAL_RESIDUAL_HH

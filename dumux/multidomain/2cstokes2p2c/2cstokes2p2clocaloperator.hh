@@ -169,10 +169,10 @@ class TwoCStokesTwoPTwoCLocalOperator :
      */
     template<typename IntersectionGeom, typename LFSU1, typename LFSU2,
              typename X, typename LFSV1, typename LFSV2,typename RES>
-        void alpha_coupling (const IntersectionGeom& intersectionGeometry,
-                             const LFSU1& lfsu_s, const X& unknowns1, const LFSV1& lfsv_s,
-                             const LFSU2& lfsu_n, const X& unknowns2, const LFSV2& lfsv_n,
-                             RES& couplingRes1, RES& couplingRes2) const
+    void alpha_coupling (const IntersectionGeom& intersectionGeometry,
+                         const LFSU1& lfsu_s, const X& unknowns1, const LFSV1& lfsv_s,
+                         const LFSU2& lfsu_n, const X& unknowns2, const LFSV2& lfsv_n,
+                         RES& couplingRes1, RES& couplingRes2) const
     {
         const MDElementPointer mdElementPointer1 = intersectionGeometry.inside();
         const MDElementPointer mdElementPointer2 = intersectionGeometry.outside();
@@ -262,10 +262,10 @@ class TwoCStokesTwoPTwoCLocalOperator :
      *
      */
     template<typename LFSU1, typename LFSU2, typename X, typename CParams>
-        void updateElemVolVars (const LFSU1& lfsu_s, const LFSU2& lfsu_n,
-                                const X& unknowns1, const X& unknowns2,
-                                const SDElement1& sdElement1, const SDElement2& sdElement2,
-                                CParams &cParams) const
+    void updateElemVolVars (const LFSU1& lfsu_s, const LFSU2& lfsu_n,
+                            const X& unknowns1, const X& unknowns2,
+                            const SDElement1& sdElement1, const SDElement2& sdElement2,
+                            CParams &cParams) const
     {
         cParams.fvGeometry1.update(globalProblem_.sdGridView1(), sdElement1);
         cParams.fvGeometry2.update(globalProblem_.sdGridView2(), sdElement2);
@@ -318,12 +318,12 @@ class TwoCStokesTwoPTwoCLocalOperator :
      * \param couplingRes2 the coupling residual from the Darcy domain
      */
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
-        void evalCoupling12(const LFSU1& lfsu_s, const LFSU2& lfsu_n,
-                            const int vertInElem1, const int vertInElem2,
-                            const SDElement1& sdElement1, const SDElement2& sdElement2,
-                            const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
-                            const CParams &cParams,
-                            RES1& couplingRes1, RES2& couplingRes2) const
+    void evalCoupling12(const LFSU1& lfsu_s, const LFSU2& lfsu_n,
+                        const int vertInElem1, const int vertInElem2,
+                        const SDElement1& sdElement1, const SDElement2& sdElement2,
+                        const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
+                        const CParams &cParams,
+                        RES1& couplingRes1, RES2& couplingRes2) const
     {
         const DimVector& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
         const DimVector& bfNormal1 = boundaryVars1.face().normal;
@@ -475,12 +475,12 @@ class TwoCStokesTwoPTwoCLocalOperator :
      * \param couplingRes2 the coupling residual from the Darcy domain
      */
     template<typename LFSU1, typename LFSU2, typename RES1, typename RES2, typename CParams>
-        void evalCoupling21(const LFSU1& lfsu_s, const LFSU2& lfsu_n,
-                            const int vertInElem1, const int vertInElem2,
-                            const SDElement1& sdElement1, const SDElement2& sdElement2,
-                            const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
-                            const CParams &cParams,
-                            RES1& couplingRes1, RES2& couplingRes2) const
+    void evalCoupling21(const LFSU1& lfsu_s, const LFSU2& lfsu_n,
+                        const int vertInElem1, const int vertInElem2,
+                        const SDElement1& sdElement1, const SDElement2& sdElement2,
+                        const BoundaryVariables1& boundaryVars1, const BoundaryVariables2& boundaryVars2,
+                        const CParams &cParams,
+                        RES1& couplingRes1, RES2& couplingRes2) const
     {
         const DimVector& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
         DimVector normalFlux2(0.);
@@ -535,10 +535,10 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
  protected:
     /*!
-     * \brief allows to choose the approximation of the boundary layer thickness:
-     *           1) Blasius solution
-     *           2) and 3) approximations of a turbulent boundary layer
-     *           9) constant boundary layer thickness, which can be set in the parameter file
+     * \brief allows to choose the approximation of the boundary layer thickness:<br>
+     *        1) Blasius solution<br>
+     *        2) and 3) approximations of a turbulent boundary layer<br>
+     *        9) constant boundary layer thickness, which can be set in the parameter file
      */
     template<typename CParams>
         const Scalar computeBoundaryLayerThickness(const CParams& cParams,
@@ -594,11 +594,11 @@ class TwoCStokesTwoPTwoCLocalOperator :
     }
 
     /*!
-     * \brief Provides different options for the computations of the mass transfer coefficient:
-     *           1) exponential law with a saturation as base and a mass transfer coefficient as exponent
-     *           2) the conventional Schlünder model with one characteristic pore size
-     *           3) the Schlünder model with a variable characteristic pore size deduced from the
-     *                two-phase relations (Van Genuchten curve)
+     * \brief Provides different options for the computations of the mass transfer coefficient:<br>
+     *        1) exponential law with a saturation as base and a mass transfer coefficient as exponent<br>
+     *        2) the conventional Schlünder model with one characteristic pore size<br>
+     *        3) the Schlünder model with a variable characteristic pore size deduced from the
+     *           two-phase relations (Van Genuchten curve)
      */
     template<typename CParams>
         const Scalar massTransferCoefficient(const CParams &cParams,
@@ -677,9 +677,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
  private:
     /*!
-     * \brief A struct that contains data of the FF and PM
-     * including boundary types, volume variables in both subdomains
-     * and geometric information
+     * \brief A struct that contains data of the FF and PM including boundary types,
+     *        volume variables in both subdomains and geometric information
      */
     struct CParams
     {

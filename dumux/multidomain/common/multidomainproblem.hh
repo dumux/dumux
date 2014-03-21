@@ -33,18 +33,12 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
 
-/*
-* \brief docme
-*/
 
 namespace Dumux
 {
 
 /*!
- * \ingroup ModelCoupling
- * \brief Base class for problems which involve two sub problems
- *
- * \todo Please docme more!
+ * \brief Base class for problems which involve two sub problems (multidomain problems)s
  */
 template<class TypeTag>
 class MultiDomainProblem
@@ -90,9 +84,9 @@ private:
 
 public:
     /*!
-      * \brief docme
+      * \brief Base class for the multi domain problem
       *
-      * \param hostGrid docme
+      * \param mdGrid The multi domain grid
       * \param timeManager The TimeManager which is used by the simulation
       *
       */
@@ -112,13 +106,7 @@ public:
 		, sdProblem2_(timeManager, sdGrid2_.leafView())
     {  };
 
-    /*!
-     * \brief Called by the Dumux::TimeManager in order to
-     *        initialize the problem and the sub-problems.
-     *
-     * If you overload this method don't forget to call
-     * ParentType::init()
-     */
+    //! \copydoc Dumux::ImplicitProblem::init()
     void init()
     {
         // initialize the sub-problems
@@ -132,26 +120,13 @@ public:
         asImp_().initMortarElements();
     }
 
-    /*!
-     * \brief This method writes the complete state of the problem
-     *        to the harddisk.
-     *
-     * \param res docme
-     *
-     * The file will start with the prefix returned by the name()
-     * method, has the current time of the simulation clock in it's
-     * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
-     * file.)  See Dumux::Restart for details.
-     */
+    //! \copydoc Dumux::ImplicitProblem::serialize()
     template <class Restarter>
     void serialize(Restarter &res)
     {
     }
 
-    /*!
-     * \brief Serialize the simulation's state to disk
-     */
-
+    //! \copydoc Dumux::ImplicitProblem::serialize()
     void serialize()
     {
         typedef Dumux::Restart Restarter;
@@ -164,14 +139,7 @@ public:
         res.serializeEnd();
     }
 
-    /*!
-     * \brief Load a previously saved state of the whole simulation
-     *        from disk.
-     *
-     * \param tRestart The simulation time on which the program was
-     *                 written to disk.
-     */
-
+    //! \copydoc Dumux::ImplicitProblem::restart()
     void restart(Scalar tRestart)
     {
         typedef Dumux::Restart Restarter;
@@ -185,15 +153,7 @@ public:
         res.deserializeEnd();
     }
 
-    /*!
-     * \brief This method restores the complete state of the problem
-     *        from disk.
-     *
-     * \param res docme
-     *
-     * It is the inverse of the serialize() method.
-     */
-
+    //! \copydoc Dumux::ImplicitProblem::deserialize()
     template <class Restarter>
     void deserialize(Restarter &res)
     {
@@ -205,16 +165,7 @@ public:
      */
     // \{
 
-    /*!
-     * \brief Start the simulation procedure.
-     *
-     * \param dtInitial docme
-     * \param tEnd docme
-     *
-     * This method is usually called by the main() function and simply
-     * uses Dumux::TimeManager::runSimulation() to do the actual
-     * work.
-     */
+    //! \copydoc Dumux::ImplicitProblem::simulate()
     bool simulate(Scalar dtInitial, Scalar tEnd)
     {
         // set the initial time step and the time where the simulation ends
@@ -234,10 +185,7 @@ public:
         asImp_().sdProblem2().preTimeStep();
     }
 
-    /*!
-     * \brief Called by Dumux::TimeManager in order to do a time
-     *        integration on the model.
-     */
+    //! \copydoc Dumux::ImplicitProblem::timeIntegration()
     void timeIntegration()
     {
         // TODO: should be called from the group Implicit
@@ -275,14 +223,7 @@ public:
         asImp_().sdProblem2().postTimeStep();
     }
 
-    /*!
-     * \brief Called by Dumux::TimeManager whenever a solution for a
-     *        timestep has been computed and the simulation time has
-     *        been updated.
-     *
-     * \param dt docme
-     *
-     */
+    //! \copydoc Dumux::ImplicitProblem::nextTimeStepSize()
     Scalar nextTimeStepSize(const Scalar dt)
     {
         return newtonCtl_.suggestTimeStepSize(dt);
@@ -297,27 +238,15 @@ public:
     	model_.updateSuccessful();
     };
 
-    /*!
-     * \brief Returns true if the current solution should be written to
-     *        disk (i.e. as a VTK file)
-     *
-     * The default behaviour is to write out every the solution for
-     * very time step. This file is intended to be overwritten by the
-     * implementation.
-     */
+    //! \copydoc Dumux::ImplicitProblem::shouldWriteOutput()
     bool shouldWriteOutput() const
     { return true; }
 
-    /*!
-     * \brief Returns true if the current state of the simulation should be written to
-     *        disk
-     */
+    //! \copydoc Dumux::ImplicitProblem::shouldWriteRestartFile()
     bool shouldWriteRestartFile() const
     { return false; }
 
-    /*!
-     * \brief Called by the time manager after the end of an episode.
-     */
+    //! \copydoc Dumux::ImplicitProblem::episodeEnd()
     void episodeEnd()
     {
         std::cerr << "The end of an episode is reached, but the problem "
@@ -325,11 +254,7 @@ public:
                   << "Doing nothing!\n";
     }
 
-    /*!
-     * \brief Called by the time manager after everything which can be
-     *        done about the current time step is finished and the
-     *        model should be prepared to do the next time integration.
-     */
+    //! \copydoc Dumux::ImplicitProblem::advanceTimeLevel()
     void advanceTimeLevel()
     {
     	asImp_().sdProblem1().advanceTimeLevel();
@@ -338,9 +263,7 @@ public:
         model_.advanceTimeLevel();
     }
 
-    /*!
-     * \brief Write the relevant quantities of the current solution into an VTK output file.
-     */
+    //! \copydoc Dumux::ImplicitProblem::writeOutput()
     void writeOutput()
     {
         // write the current result to disk
@@ -353,66 +276,35 @@ public:
 
     // \}
 
-    /*!
-     * \brief The problem name.
-     *
-     * This is used as a prefix for files generated by the simulation.
-     * It could be either overwritten by the problem files, or simply
-     * declared over the setName() function in the application file.
-     */
-
+    //! \copydoc Dumux::ImplicitProblem::name()
     const char *name() const
-    {
-        return simname_.c_str();
-    }
+    { return simname_.c_str(); }
 
-    /*!
-     * \brief Set the problem name.
-     *
-     * \param newName docme
-     *
-     * This function sets the simulation name, which should be called before
-     * the application porblem is declared! If not, the default name "sim"
-     * will be used.
-     */
+    //! \copydoc Dumux::ImplicitProblem::setName()
     static void setName(const char *newName)
-    {
-        simname_ = newName;
-    }
+    { simname_ = newName; }
 
-    /*!
-     * \brief Returns TimeManager object used by the simulation
-     */
+    //! \copydoc Dumux::ImplicitProblem::timeManager()
     TimeManager &timeManager()
     { return timeManager_; }
 
-    /*!
-     * \copydoc timeManager()
-     */
+    //! \copydoc Dumux::ImplicitProblem::timeManager()
     const TimeManager &timeManager() const
     { return timeManager_; }
 
-    /*!
-     * \brief Returns NewtonControler object used by the simulation
-     */
+    //! \copydoc Dumux::ImplicitProblem::newtonController()
     NewtonController &newtonController()
     { return newtonCtl_; }
 
-    /*!
-     * \brief Returns NewtonControler object used by the simulation
-     */
+    //! \copydoc Dumux::ImplicitProblem::newtonController()
     const NewtonController &newtonController() const
     { return newtonCtl_; }
 
-    /*!
-     * \brief Returns numerical model used for the problem.
-     */
+    //! \copydoc Dumux::ImplicitProblem::model()
     Model &model()
     { return model_; }
 
-    /*!
-     * \copydoc model()
-     */
+    //! \copydoc Dumux::ImplicitProblem::model()
     const Model &model() const
     { return model_; }
     // \}
@@ -434,7 +326,7 @@ public:
      */
     SubDomainProblem1& sdProblem1()
     { return sdProblem1_; }
-    
+
     /*!
      * \brief Returns a const reference to subproblem1
      */
@@ -446,13 +338,12 @@ public:
      */
     SubDomainProblem2& sdProblem2()
     { return sdProblem2_; }
-    
+
     /*!
      * \brief Returns a const reference to subproblem2
      */
     const SubDomainProblem2& sdProblem2() const
     { return sdProblem2_; }
-
 
     /*!
      * \brief Returns a reference to the localresidual1
@@ -484,7 +375,6 @@ public:
     const MultiDomainGridView& mdGridView() const
     { return mdGridView_; }
 
-
     /*!
      * \brief Returns the multidomain gridview
      */
@@ -493,7 +383,6 @@ public:
 
     /*!
      * \brief Provides a vertex mapper for the multidomain
-     *
      */
     VertexMapper& mdVertexMapper()
     { return mdVertexMapper_; }
@@ -548,7 +437,8 @@ public:
 
     /*!
      * \brief Returns a pointer to the subdomain1 element
-     * \param mdElement1 docme
+     *
+     * \param mdElement1 The multi domain element1
      */
     SubDomainElementPointer sdElementPointer1(const MultiDomainElement& mdElement1)
     { return sdGrid1_.subDomainEntityPointer(mdElement1); }
@@ -556,17 +446,13 @@ public:
     /*!
      * \brief Returns a pointer to the subdomain2 element
      *
-     * \param mdElement2 docme
+     * \param mdElement2 The multi domain element2
      */
     SubDomainElementPointer sdElementPointer2(const MultiDomainElement& mdElement2)
     { return sdGrid2_.subDomainEntityPointer(mdElement2); }
 
 
 protected:
-    /*
-    * \brief docme
-    * \Returns the implementation of the problem (i.e. static polymorphism)
-    */
     void initMortarElements()
     {}
 
@@ -608,6 +494,6 @@ private:
 template <class TypeTag>
 std::string MultiDomainProblem<TypeTag>::simname_="simCoupled"; //initialized with default "sim"
 
-}
+} // namespace Dumux
 
-#endif
+#endif // DUMUX_MULTIDOMAIN_PROBLEM_HH

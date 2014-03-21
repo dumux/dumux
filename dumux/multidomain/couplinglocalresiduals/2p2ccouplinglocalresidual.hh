@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Supplements the TwoPTwoCLocalResidual by the required functions for a coupled application.
- *
+ * \brief Extending the TwoPTwoCLocalResidual by the required functions for
+ *        a coupled application.
  */
 #ifndef DUMUX_2P2C_COUPLING_LOCAL_RESIDUAL_HH
 #define DUMUX_2P2C_COUPLING_LOCAL_RESIDUAL_HH
@@ -33,7 +32,8 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPTwoCModel
- * \brief Supplements the TwoPTwoCModel by the required functions for a coupled application.
+ * \brief Extending the TwoPTwoCLocalResidual by the required functions for
+ *        a coupled application.
  */
 template<class TypeTag>
 class TwoPTwoCCouplingLocalResidual : public TwoPTwoCLocalResidual<TypeTag>
@@ -77,12 +77,13 @@ class TwoPTwoCCouplingLocalResidual : public TwoPTwoCLocalResidual<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
-    /*!
-     * \brief Constructor. Sets the upwind weight.
-     */
+    //! \brief Constructor
     TwoPTwoCCouplingLocalResidual()
     { };
 
+    /*!
+     * \brief Implementation of the boundary evaluation
+     */
     void evalBoundary_()
     {
         ParentType::evalBoundary_();
@@ -158,7 +159,9 @@ public:
         }
     }
 
-
+    /*!
+     * \brief Evaluates the phase storage
+     */
     Scalar evalPhaseStorage(const int scvIdx) const
     {
         Scalar phaseStorage = computePhaseStorage(scvIdx, false);
@@ -176,7 +179,7 @@ public:
     }
 
     /*!
-     * compute storage term of all components within all phases
+     * \brief Compute storage term of all components within all phases
      */
     Scalar computePhaseStorage(const int scvIdx, bool usePrevSol) const
     {
@@ -228,7 +231,7 @@ public:
     }
 
     /*!
-     * \brief Compute the advective fluxes within the different phases.
+     * \brief Returns the advective fluxes within the different phases.
      */
     Scalar computeAdvectivePhaseFlux(const FluxVariables &fluxVars) const
     {
@@ -260,7 +263,7 @@ public:
     }
 
     /*!
-     * \brief Compute the diffusive fluxes within the different phases.
+     * \brief Returns the diffusive fluxes within the different phases.
      */
     Scalar computeDiffusivePhaseFlux(const FluxVariables &fluxVars) const
     {
@@ -278,7 +281,7 @@ public:
      * \brief Set the Dirichlet-like conditions for the coupling
      *        and replace the existing residual
      *
-     * \param idx vertex index for the coupling condition
+     * \param scvIdx Sub control vertex index for the coupling condition
      */
     void evalCouplingVertex_(const int scvIdx)
     {
@@ -328,6 +331,9 @@ public:
         return false;
     }
 
+    /*!
+     * \brief Returns the fluxes of the specified sub control volume
+     */
     Scalar elementFluxes(const int scvIdx)
     {
         return elementFluxes_[scvIdx];
@@ -337,6 +343,6 @@ protected:
     ElementFluxVector elementFluxes_;
 };
 
-}
+} // namespace Dumux
 
-#endif
+#endif // DUMUX_2P2C_COUPLING_LOCAL_RESIDUAL_HH

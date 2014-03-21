@@ -17,9 +17,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-/*
+/*!
  * \file
- * \brief docme
+ * \brief Local operator base class for multidomain problems
  */
 
 #ifndef DUMUX_MULTIDOMAIN_LOCAL_OPERATOR_HH
@@ -30,31 +30,17 @@
 
 #include <dumux/implicit/box/boxproperties.hh>
 
-/*
- * \brief docme
- */
 namespace Dumux {
-
-/*
- * \brief docme
- */
 
 namespace PDELab {
 
-/*
- * \brief docme
+/*!
+ * \brief Local operator base class for multidomain problems
  */
-
 template<class TypeTag>
 class MultiDomainLocalOperator
-
-:
-/*
-* \brief docme
-*/
-
-public Dune::PDELab::FullVolumePattern,
-public Dune::PDELab::LocalOperatorDefaultFlags
+ : public Dune::PDELab::FullVolumePattern,
+   public Dune::PDELab::LocalOperatorDefaultFlags
 {
 	// copying the local operator for PDELab is not a good idea
 	MultiDomainLocalOperator(const MultiDomainLocalOperator &);
@@ -64,10 +50,6 @@ public Dune::PDELab::LocalOperatorDefaultFlags
 	typedef typename Grid::Traits::template Codim<0>::EntityPointer EntityPointer;
 
 	enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
-/*
-* \brief docme
-* \param model docme
-*/
 
 public:
 	// pattern assembly flags
@@ -76,26 +58,26 @@ public:
 	// residual assembly flags
 	enum { doAlphaVolume = true };
 
+    //! \brief The constructor
 	MultiDomainLocalOperator(Model &model)
 	: model_(model)
 	{}
 
-	/*!
-	 * \brief Volume integral depending on test and ansatz functions
-	 *
-	 * \tparam EG docme
-	 * \tparam LFSU docme
-	 * \tparam X docme
-	 * \tparam LFSV docme
-	 * \tparam R docme
-	 *
-	 * \param eg docme
-     * \param lfsu docme
-     * \param x docme
-	 * \param lfsv docme
-	 * \param r docme
-	 *
-	 */
+    /*!
+     * \brief Volume integral depending on test and ansatz functions
+     *
+     * \tparam EG Element geometry
+     * \tparam LFSU Local function space for ansatz functions
+     * \tparam X Coefficient vector
+     * \tparam LFSV Local function space for test functions
+     * \tparam R Residual vector
+     *
+     * \param eg Element geometry
+     * \param lfsu Local functions space for ansatz functions
+     * \param x Coefficient vector
+     * \param lfsv Local function space for test functions
+     * \param r Residual vector
+     */
 	template<typename EG, typename LFSU, typename X, typename LFSV, typename R>
 	void alpha_volume (const EG& eg, const LFSU& lfsu, const X& x,
 			const LFSV& lfsv, R& r) const
@@ -110,22 +92,22 @@ public:
 		    r.accumulate(lfsv, comp, model_.localResidual().residual(comp%numVertices)[comp/numVertices]);
 	}
 
-	/*!
-	 * \brief Jacobian of volume term
-	 *
-	 * \tparam EG docme
-	 * \tparam LFSU docme
-	 * \tparam X docme
-	 * \tparam LFSV docme
-	 * \tparam M docme
-	 *
-	 * \param eg docme
-     * \param lfsu docme, is basis
-     * \param x docme
-	 * \param lfsv docme, is test
-	 * \param mat docme
-	 *
-	 */
+    /*!
+     * \brief Jacobian of volume term
+     *
+     * \tparam EG Element geometry
+     * \tparam LFSU Local function space for ansatz functions
+     * \tparam X Coefficient vector
+     * \tparam LFSV Local function space for test functions
+     * \tparam M Matrix
+     *
+     * \param eg Element geometry
+     * \param lfsu Local functions space for ansatz functions
+     * \param x Coefficient vector
+     * \param lfsv Local function space for test functions
+     * \param mat Matrix
+     *
+     */
     template<typename EG, typename LFSU, typename X, typename LFSV, typename M>
     void jacobian_volume (const EG& eg,
             const LFSU& lfsu,
@@ -154,4 +136,4 @@ private:
 } // namespace PDELab
 } // namespace Dumux
 
-#endif
+#endif // DUMUX_MULTIDOMAIN_LOCAL_OPERATOR_HH

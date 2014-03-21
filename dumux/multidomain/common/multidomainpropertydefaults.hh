@@ -49,19 +49,14 @@
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/timemanager.hh>
 
-/*
-* \brief docme
-*/
-
+/*!
+ * \brief Sets default values for the coupled model
+ */
 namespace Dumux
 {
 template <class TypeTag> class MultiDomainModel;
 template <class TypeTag> class MultiDomainJacobianAssembler;
 template <class TypeTag> class MultiDomainNewtonController;
-
-/*
-* \brief docme
-*/
 
 namespace Properties
 {
@@ -232,19 +227,20 @@ public:
     static const int value = numEq;
 };
 
-// Linear solver settings
+// set the type of the linear solver
 SET_TYPE_PROP(MultiDomain, LinearSolver, BoxBiCGStabILU0Solver<TypeTag>);
 
-
+// set the minimum residual reduction of the linear solver
 SET_SCALAR_PROP(MultiDomain, LinearSolverResidualReduction, 1e-6);
 
-//! set the default number of maximum iterations for the linear solver
+// set the default number of maximum iterations for the linear solver
 SET_INT_PROP(MultiDomain, LinearSolverMaxIterations, 250);
 
+// set the maximum time step divisions
 SET_INT_PROP(MultiDomain, NewtonMaxTimeStepDivisions, 10);
 
-// \}
-}
-}
-#endif
+} // namespace Properties
+} // namespace Dumux
+
+#endif // DUMUX_MULTIDOMAIN_PROPERTY_DEFAULTS_HH
 

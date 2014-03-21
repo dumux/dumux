@@ -17,10 +17,11 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-/*
+/*!
  * \file
-* \brief docme
-*/
+ * \brief The base class of models which consist of two arbitrary
+ *        sub-models which are coupled
+ */
 
 #ifndef DUMUX_MULTIDOMAIN_MODEL_HH
 #define DUMUX_MULTIDOMAIN_MODEL_HH
@@ -31,29 +32,18 @@
 #include "multidomainconvergencewriter.hh"
 #include "multidomainnewtoncontroller.hh"
 
-/*
-* \brief docme
-*/
-
 namespace Dumux
 {
 
 /*!
- * \defgroup ModelCoupling Coupled implicit models
+ * \defgroup Multidomain Coupled implicit models
  */
 
-
 /*!
- * \ingroup ModelCoupling
- *
+ * \ingroup Multidomain
  * \brief The base class of models which consist of two arbitrary
  *        sub-models which are coupled
  */
-
-/*
-* \brief docme
-*/
-
 template<class TypeTag>
 class MultiDomainModel
 {
@@ -85,8 +75,7 @@ public:
     /*!
      * \brief Apply the initial conditions to the model.
      *
-     * \param problem docme
-     *
+     * \param problem The problem
      */
     void init(Problem &problem)
     {
@@ -111,12 +100,12 @@ public:
                                 	   uPrev_);
     }
 
-    /*
-    * \brief docme
-    * \param u docme
-    * \param tmp docme
-    */
-
+    /*!
+     * \brief Compute the global residual for an arbitrary solution vector.
+     *
+     * \param u unused
+     * \param tmp unused
+     */
     Scalar globalResidual(const SolutionVector &u, SolutionVector &tmp)
     {
         DUNE_THROW(Dune::NotImplemented, "");
@@ -259,13 +248,7 @@ public:
     const SubDomainModel2 &subModel2() const
     { return sdModel2(); }
 
-    /*!
-     * \brief Try to progress the model to the next timestep.
-     *
-     * \param solver docme
-     * \param controller docme
-     *
-     */
+    //! \copydoc Dumux::ImplicitModel::update()
     bool update(NewtonMethod &solver,
                 NewtonController &controller)
     {
@@ -292,22 +275,11 @@ public:
     }
 
 
-    /*!
-     * \brief Check the plausibility of the current solution
-     *
-     *        This has to be done by the actual model, it knows
-     *        best, what (ranges of) variables to check.
-     *        This is primarily a hook
-     *        which the actual model can overload.
-     */
+    //! \copydoc Dumux::ImplicitModel::checkPlausibility()
     void checkPlausibility() const
     { }
 
-    /*!
-     * \brief Called by the update() method before it tries to
-     *        apply the newton method. This is primary a hook
-     *        which the actual model can overload.
-     */
+    //! \copydoc Dumux::ImplicitModel::updateBegin()
     void updateBegin()
     {
         sdModel1().updateBegin();
@@ -316,18 +288,13 @@ public:
         SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
     }
 
-
-    /*!
-     * \brief Called by the update() method if it was
-     *        successful. This is primary a hook which the actual
-     *        model can overload.
-     */
+    //! \copydoc Dumux::ImplicitModel::updateSuccessful()
     void updateSuccessful()
     {
         sdModel1().updateSuccessful();
         sdModel2().updateSuccessful();
     }
-    
+
     /*!
      * \brief Called by the problem if a timeintegration was
      *        successful, post processing of the solution is done and the
@@ -344,11 +311,7 @@ public:
         SplitAndMerge::mergeSolVectors(sdModel1().prevSol(), sdModel2().prevSol(), uPrev_);
     };
 
-    /*!
-     * \brief Called by the update() method if a try was ultimately
-     *        unsuccessful. This is primary a hook which the
-     *        actual model can overload.
-     */
+    //! \copydoc Dumux::ImplicitModel::updateFailed()
     void updateFailed()
     {
         sdModel1().updateFailed();
@@ -358,11 +321,7 @@ public:
         SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
     };
 
-    /*!
-     * \brief Called by the update() method if a try was
-     *         unsuccessful. This is primary a hook which the
-     *         actual model can overload.
-     */
+    //! \copydoc Dumux::ImplicitModel::updateFailedTry()
     void updateFailedTry()
     {
         sdModel1().updateFailedTry();
@@ -375,21 +334,16 @@ public:
     /*!
      * \brief Calculate the global residual.
      *
-     * \param globResidual docme
+     * \param globResidual The global residual
      *
-     * The global deflection of the mass balance from zero.
+     * The global deflection of the balance equation from zero.
      */
     void evalGlobalResidual(SolutionVector &globResidual)
     {
         DUNE_THROW(Dune::NotImplemented, "");
     }
 
-    /*!
-     * \brief Serializes the current state of the model.
-     *
-     * \param res docme
-     *
-     */
+    //! \copydoc Dumux::ImplicitModel::serialize()
     template <class Restarter>
     void serialize(Restarter &res)
     {
@@ -397,12 +351,7 @@ public:
         sdProblem2().serialize(res);
     }
 
-    /*!
-     * \brief Deserializes the state of the model.
-     *
-     * \param res docme
-     *
-     */
+    //! \copydoc Dumux::ImplicitModel::deserialize()
     template <class Restarter>
     void deserialize(Restarter &res)
     {
@@ -419,6 +368,7 @@ public:
 		return sdModel1().numDofs()*numEq1 + sdModel2().numDofs()*numEq2;
     }
 
+    //! \copydoc Dumux::ImplicitModel::resetJacobianAssembler()
     void resetJacobianAssembler()
     {
         delete jacAsm_;
@@ -446,6 +396,6 @@ protected:
 
     bool wasRestarted_;
 };
-}
+} // namespace Dumux
 
-#endif
+#endif // DUMUX_MULTIDOMAIN_MODEL_HH

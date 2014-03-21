@@ -26,18 +26,10 @@
 #include "multidomainproperties.hh"
 #include <dumux/common/valgrind.hh>
 
-/*
-* \brief docme
-*/
-
 namespace Dumux
 {
 /*!
  * \addtogroup ModelCoupling
- */
-// \{
-
-/*!
  * \brief Some methods required by several classes of the coupling model.
  */
 template<class TypeTag>
@@ -64,14 +56,14 @@ public:
      * \brief Merge two solution vectors of the sub models into a
      *        global vector: nonoverlapping case.
      *
-     * \param vec1 docme
-     * \param vec2 docme
-     * \param dest docme
+     * \param vec1 Input vector with solution of subdomain 1
+     * \param vec2 Input vector with solution of subdomain 2
+     * \param dest Destination vector for global solution
      *
      */
     static void mergeSolVectors(const SolutionVector1 &vec1,
-                                 const SolutionVector2 &vec2,
-                                 SolutionVector &dest)
+                                const SolutionVector2 &vec2,
+                                SolutionVector &dest)
     {
 //        printvector(std::cout, vec1, "vec1", "row", 200, 1, 3);
 //        printvector(std::cout, vec2, "vec2", "row", 200, 1, 3);
@@ -79,7 +71,6 @@ public:
         int nDofs1 = vec1.size();
         int nDofs2 = vec2.size();
 
-        // merge the global vector into two individual ones
         for (int i = 0; i < nDofs1; ++i)
             for (int j = 0; j < numEq1; j++)
             {
@@ -95,18 +86,16 @@ public:
 
                 Valgrind::CheckDefined(dest[nDofs1*numEq1 + i*numEq2 + j][0]);
             }
-
 //        printvector(std::cout, dest, "dest", "row", 200, 1, 3);
-
     }
 
     /*!
      * \brief Split a global solution vector into two solution vectors
      *        of the sub models: nonoverlapping case.
      *
-     * \param vec docme
-     * \param dest1 docme
-     * \param dest2 docme
+     * \param vec Input vector with global solution
+     * \param dest1 Destination vector with solution of subdomain 1
+     * \param dest2 Destination vector with solution of subdomain 2
      *
      */
     static void splitSolVector(const SolutionVector &vec,
@@ -128,17 +117,16 @@ public:
 
 //        printvector(std::cout, dest1, "dest1", "row", 200, 1, 3);
 //        printvector(std::cout, dest2, "dest2", "row", 200, 1, 3);
-
     }
 
     /*!
      * \brief Merge two solution vectors of the sub models into a
      *        global vector: more general case.
      *
-     * \param vec1 docme
-     * \param vec2 docme
-     * \param dest docme
-     * \param subDOFToCoupledDOF docme
+     * \param vec1 Input vector with solution of subdomain 1
+     * \param vec2 Input vector with solution of subdomain 2
+     * \param dest Destination vector for global solution
+     * \param subDOFToCoupledDOF unused
      *
      */
     static void mergeSolVectors(const SolutionVector1 &vec1,
@@ -167,10 +155,10 @@ public:
      * \brief Split a global solution vector into two solution vectors
      *        of the sub models: more general case.
      *
-     * \param vec docme
-     * \param dest1 docme
-     * \param dest2 docme
-     * \param subDOFToCoupledDOF docme
+     * \param vec Input vector with global solution
+     * \param dest1 Destination vector with solution of subdomain 1
+     * \param dest2 Destination vector with solution of subdomain 2
+     * \param subDOFToCoupledDOF Identification vector between sub and global DOFs
      *
      */
     static void splitSolVector(const SolutionVector &vec,
@@ -199,7 +187,6 @@ public:
         }
 //        printvector(std::cout, dest1, "dest1", "row", 200, 1, 3);
 //        printvector(std::cout, dest2, "dest2", "row", 200, 1, 3);
-
     }
 
 
@@ -207,14 +194,14 @@ public:
      * \brief Merge individual jacobian matrices of the sub models
      *        into a global jacobian matrix.
      *
-     * \param M1 docme
-     * \param M2 docme
-     * \param M docme
+     * \param M1 Input jacobian matrix of subdomain 1
+     * \param M2 Input jacobian matrix of subdomain 2
+     * \param M Destination global jacobian matrix
      *
      */
     static void mergeMatrices(const JacobianMatrix1 &M1,
-                               const JacobianMatrix2 &M2,
-                               JacobianMatrix &M)
+                              const JacobianMatrix2 &M2,
+                              JacobianMatrix &M)
     {
     	DUNE_THROW(Dune::NotImplemented, "mergeMatrices in coupled common");
     }
@@ -222,9 +209,9 @@ public:
     /*!
      * \brief Copy a sub matrix into into the main diagonal of the global matrix.
      *
-     * \param Msub docme
-     * \param M docme
-     * \param offset docme?
+     * \param Msub Sub matrix
+     * \param M Global matrix
+     * \param offset Offset in rows and columns
      *
      */
     template <class SubMatrix>
@@ -248,8 +235,6 @@ public:
     }
 
 };
-// \}
-
 } // namespace Dumux
 
-#endif
+#endif // DUMUX_SPLIT_AND_MERGE_HH

@@ -30,13 +30,8 @@
 #include "splitandmerge.hh"
 #include "multidomainnewtoncontroller.hh"
 
-/*!
- * \file
- * \brief Forward declaration of properties required for the coupled Newton convergence writer
- */
 namespace Dumux
 {
-//! \cond INTERNAL
 /*!
  * \brief Writes the intermediate solutions during
  *        the Newton scheme
@@ -61,11 +56,10 @@ struct MultiDomainConvergenceWriter
     typedef Dumux::VtkMultiWriter<GridView1> VtkMultiWriter1;
     typedef Dumux::VtkMultiWriter<GridView2> VtkMultiWriter2;
 
-    /*
-    * \brief docme
-    * \param ctl docme
+    /*!
+    * \brief The constructor
+    * \param ctl The newton controller
     */
-
     MultiDomainConvergenceWriter(NewtonController &ctl)
         : ctl_(ctl)
     {
@@ -75,15 +69,16 @@ struct MultiDomainConvergenceWriter
         vtkMultiWriter2_ = 0;
     }
 
+    //! \brief Destructor
     ~MultiDomainConvergenceWriter()
     {
         delete vtkMultiWriter1_;
         delete vtkMultiWriter2_;
     };
-    /*
-    * \brief docme
-    */
 
+    /*!
+     * \brief Start and advance in time
+     */
     void beginTimestep()
     {
         ++timeStepIndex_;
@@ -94,11 +89,13 @@ struct MultiDomainConvergenceWriter
         if (!vtkMultiWriter2_)
             vtkMultiWriter2_ = new VtkMultiWriter2(problem_().sdProblem2().gridView(), "convergence2");
     };
-    /*
-    * \brief docme
-    * \param gridView1 docme
-    * \param gridView2 docme
-    */
+
+    /*!
+     * \brief Start and advance one iteration
+     *
+     * \param gridView1 The grid view of sub problem 1
+     * \param gridView2 The grid view of sub problem 2
+     */
     void beginIteration(const GridView1 &gridView1,
                         const GridView2 &gridView2)
     {
@@ -107,12 +104,14 @@ struct MultiDomainConvergenceWriter
         vtkMultiWriter2_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
     };
 
-    /*
-    * \brief docme
-    * \param uLastIter docme
-    * \param deltaU docme
-    */
-
+    /*!
+     * \brief Start and advance one iteration
+     *
+     * \param uLastIter The solution of the last iteration
+     * \param deltaU The delta as calculated from solving the linear
+     *               system of equations. This parameter also stores
+     *               the updated solution.
+     */
     void writeFields(const SolutionVector &uLastIter,
                      const SolutionVector &deltaU)
     {
@@ -136,20 +135,15 @@ struct MultiDomainConvergenceWriter
             ctl_.method().model().sdModel1().addConvergenceVtkFields(*vtkMultiWriter1_, uLastIter1, deltaU1);
             ctl_.method().model().sdModel2().addConvergenceVtkFields(*vtkMultiWriter2_, uLastIter2, deltaU2);
     };
-    /*
-    * \brief docme
-    */
 
+    //! \brief End of iteration
     void endIteration()
     {
         vtkMultiWriter1_->endWrite();
         vtkMultiWriter2_->endWrite();
     };
 
-    /*
-    * \brief docme
-    */
-
+    //! \brief End of time step
     void endTimestep()
     {
         ++timeStepIndex_;
@@ -169,5 +163,4 @@ private:
 
 } // namespace Dumux
 
-
-#endif
+#endif // DUMUX_MULTIDOMAIN_CONVERGENCEWRITER_HH

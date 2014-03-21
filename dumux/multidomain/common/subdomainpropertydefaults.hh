@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The SubDomain properties
+ * \brief Specify default properties required in the subdomains of dune-multidomain
  */
 #ifndef DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
 #define DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
@@ -34,14 +34,11 @@
 #include <dumux/multidomain/couplinglocalresiduals/boxcouplinglocalresidual.hh>
 
 /*!
- * \file
  * \brief Specify default properties required in the subdomains of dune-multidomain
  */
 namespace Dumux
 {
-/*
-* \brief docme
-*/
+
 namespace Properties
 {
 
@@ -57,7 +54,7 @@ public:
     typedef typename Grid::SubDomainGrid type;
 };
 
-// Set the default BaseLocalResidual to BoxCouplingLocalResidual
+// set the default BaseLocalResidual to BoxCouplingLocalResidual
 SET_TYPE_PROP(SubDomain, BaseLocalResidual, BoxCouplingLocalResidual<TypeTag>);
 
 // set the local operator used for submodels
@@ -127,7 +124,7 @@ public:
         > type;
 };
 
-//! use the local FEM space associated with cubes by default
+// use the local FEM space associated with cubes by default
 SET_PROP(SubDomain, LocalFEMSpace)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -162,9 +159,7 @@ public:
     { return ParameterTree::unusedNewRunTimeParams(); }
 };
 
-// \}
+} // namespace Properties
+} // namespace Dumux
 
-}
-}
-
-#endif
+#endif // DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH

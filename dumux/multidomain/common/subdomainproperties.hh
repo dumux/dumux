@@ -27,9 +27,6 @@
  */
 namespace Dumux
 {
-/*
-* \brief docme
-*/
 namespace Properties
 {
 /*!
@@ -74,6 +71,6 @@ NEW_PROP_TAG(LocalFEMSpace);
 //! Specifies the local operator
 NEW_PROP_TAG(LocalOperator);
 
-}
-}
-#endif
+} // namespace Properties
+} // namespace Dumux
+#endif // DUMUX_SUBDOMAIN_PROPERTIES_HH

@@ -35,15 +35,7 @@
 
 #include <dumux/implicit/box/boxproperties.hh>
 
-/*
-* \brief docme
-*/
-
 namespace Dumux {
-
-/*
-* \brief docme
-*/
 
 namespace PDELab {
 
@@ -64,10 +56,6 @@ class BoxLocalOperator
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
-/*
-* \brief docme
-*/
-
 public:
     // pattern assembly flags
     enum { doPatternVolume = true };
@@ -77,6 +65,8 @@ public:
 
 
     /*!
+     * \brief Constructor
+     *
      * \param model The physical model for the box scheme.
      */
     BoxLocalOperator(Model &model)
@@ -157,4 +147,4 @@ private:
 } // namespace PDELab
 } // namespace Dumux
 
-#endif
+#endif // DUMUX_PDELAB_LOCAL_OPERATOR_HH

@@ -36,9 +36,6 @@ class MultiDomainNewtonController;
 
 template <class TypeTag>
 class MultiDomainConvergenceWriter;
-/*
-* \brief docme
-*/
 
 namespace Properties
 {
@@ -79,11 +76,12 @@ class MultiDomainNewtonController : public NewtonController<TypeTag>
     typedef MultiDomainConvergenceWriter<TypeTag>  ConvergenceWriter;
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
 
-/*
-* \brief docme
-* \param problem docme
-*/
 public:
+    /*!
+     * \brief Constructor
+     *
+     * \param problem The problem
+     */
     MultiDomainNewtonController(const Problem &problem)
         : ParentType(problem)
 		, endIterMsgStream_(std::ostringstream::out)
@@ -109,9 +107,10 @@ public:
     * \brief Update the error of the solution compared to the
     *        previous iteration.
     *
-    * \param uLastIter docme
-    * \param deltaU docme
-    *
+    * \param uLastIter The solution of the last iteration
+    * \param deltaU The delta as calculated from solving the linear
+    *               system of equations. This parameter also stores
+    *               the updated solution.
     */
     void newtonUpdateRelError(const SolutionVector &uLastIter,
                               const SolutionVector &deltaU)
@@ -134,12 +133,12 @@ public:
     }
 
     /*!
-     * \brief Solve the linear system of equations \f$ \mathbf{A}x - b
-     *        = 0\f$.
+     * \brief Solve the linear system of equations
+     *        \f$ \mathbf{A} x - b = 0\f$.
      *
-     * \param A docme
-     * \param x docme
-     * \param b docme
+     * \param A Coefficient matrix A
+     * \param x Vector of unknowns
+     * \param b Right hand side
      *
      * Throws Dumux::NumericalProblem if the linear solver didn't
      * converge.
@@ -223,8 +222,8 @@ public:
     * updates can be implemented. The default behaviour is just to
     * subtract deltaU from uLastIter.
     *
-    * \param uCurrentIter docme
-    * \param uLastIter   The solution of the last iteration
+    * \param uCurrentIter The solution of the current iteration
+    * \param uLastIter The solution of the last iteration
     * \param deltaU The delta as calculated from solving the linear
     *               system of equations. This parameter also stores
     *               the updated solution.
@@ -247,7 +246,7 @@ public:
     /*!
     * \brief Indicates that one newton iteration was finished.
     *
-    * \param uCurrentIter docme
+    * \param uCurrentIter The solution of the current iteration
     * \param uLastIter The solution of the last iteration
     *
     */
@@ -325,4 +324,4 @@ private:
 
 } // namespace Dumux
 
-#endif
+#endif // DUMUX_MULTIDOMAIN_NEWTON_CONTROLLER_HH

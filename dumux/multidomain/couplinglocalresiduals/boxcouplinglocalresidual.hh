@@ -67,9 +67,11 @@ private:
     BoxCouplingLocalResidual(const BoxCouplingLocalResidual &);
 
 public:
+    //! \brief The constructor
     BoxCouplingLocalResidual()
     { }
 
+    //! \brief The destructor
     ~BoxCouplingLocalResidual()
     { }
 
@@ -77,9 +79,14 @@ public:
      * \brief Compute the local residual, i.e. the deviation of the
      *        equations from zero. Gets a solution vector computed by PDELab
      *
+     * \tparam ElemSolVectorType The local solution for the element using PDELab ordering
+     * 
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
+     * \param fvGeometry The element geometry
      * \param elementSolVector The local solution for the element using PDELab ordering
+     * \param volVarsPrev Volume variables of the previous time step
+     * \param volVarsCur Volume variables of the current time step
      */
     template<typename ElemSolVectorType>
     void evalPDELab(const Element &element,
@@ -114,6 +121,9 @@ public:
      *
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
+     * \param fvGeometry The element geometry
+     * \param volVarsPrev Volume variables of the previous time step
+     * \param volVarsCur Volume variables of the current time step
      */
     void evalNoBoundary(const Element &element,
                         const FVElementGeometry fvGeometry,
@@ -194,10 +204,9 @@ public:
 
 protected:
     /*!
-     * /brief Empty method, has to be overwritten if required.
+     * \brief Empty method, has to be overwritten if required.
      *        Called e.g. for the removal of the stabilization of the
      *        stokes model.
-     *
      */
     void evalBoundaryPDELab_()
     { }
@@ -215,6 +224,6 @@ protected:
     }
 };
 
-}
+} // namespace Dumux
 
-#endif
+#endif // DUMUX_BOX_COUPLING_LOCAL_RESIDUAL_HH

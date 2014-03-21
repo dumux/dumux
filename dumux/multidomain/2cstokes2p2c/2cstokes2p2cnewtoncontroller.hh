@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Reference implementation of a Newton controller for coupled 2cStokes - 2p2c problems
+ * \brief Reference implementation of a Newton controller for the coupling of a two-component Stokes model
+ *        and a two-phase two-component porous-medium model under isothermal conditions.
  */
 #ifndef DUMUX_2CSTOKES_2P2C_NEWTON_CONTROLLER_HH
 #define DUMUX_2CSTOKES_2P2C_NEWTON_CONTROLLER_HH
@@ -32,10 +33,11 @@ namespace Dumux
 {
 
 /*!
- * \brief Implementation of a Newton controller for coupled 2cStokes - 2p2c problems
+ * \brief Implementation of a Newton controller for the coupling of a two-component Stokes model
+ *        and a two-phase two-component porous-medium model under isothermal conditions.
  *
- * 		  The Newton controller ensures that the updateStaticData routine is called
- * 		  in the porous-medium sub-problem
+ * The Newton controller ensures that the updateStaticData routine is called
+ * in the porous-medium sub-problem
  */
 template <class TypeTag>
 class TwoCStokesTwoPTwoCNewtonController : public MultiDomainNewtonController<TypeTag>

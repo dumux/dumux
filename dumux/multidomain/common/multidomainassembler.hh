@@ -16,9 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*
-*\ brief docme
-*/
+/*!
+ * \file
+ * \brief An assembler for the global Jacobian matrix for multidomain models.
+ */
 
 #ifndef DUMUX_MULTIDOMAIN_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_ASSEMBLER_HH
@@ -28,17 +29,12 @@
 #include <dune/pdelab/constraints/constraintsparameters.hh>
 #include <dune/pdelab/multidomain/constraints.hh>
 
-/*
- * \brief docme
- */
+
 namespace Dumux {
 
-//! Prevents the setting of a dirichlet constraint anywhere
-
-/*
- * \brief docme
+/*!
+ * \brief Prevents the setting of a Dirichlet constraint anywhere
  */
-
 struct NoDirichletConstraints :
   public Dune::PDELab::DirichletConstraintsParameters
 {
@@ -48,10 +44,10 @@ struct NoDirichletConstraints :
     return false;
   }
 };
-/*
- * \brief docme
- */
 
+/*!
+ * \brief An assembler for the global Jacobian matrix for multidomain models.
+ */
 template<class TypeTag>
 class MultiDomainAssembler
 {
@@ -94,10 +90,9 @@ class MultiDomainAssembler
     // copying the jacobian assembler is not a good idea
     MultiDomainAssembler(const MultiDomainAssembler &);
 
-/*
-* \brief docme
-*/
+
 public:
+    //! \brief The constructor
     MultiDomainAssembler()
     {
         globalProblem_ = 0;
@@ -105,15 +100,11 @@ public:
         sdProblem2_= 0;
     }
 
+    //! \brief The destructor
     ~MultiDomainAssembler()
     { }
 
-    /*!
-     * \brief docme
-     *
-     * \param problem docme
-     *
-     */
+    //! \copydoc Dumux::ImplicitModel::init()
     void init(Problem& problem)
     {
         globalProblem_ = &problem;
@@ -177,9 +168,7 @@ public:
         residual_.resize(matrix_->N());
     }
 
-    /*!
-     * \brief docme
-     */
+    //! \copydoc Dumux::ImplicitModel::assemble()
     void assemble()
     {
 //        std::cerr  << __FILE__ << ":" << __LINE__ << "\n";
@@ -197,57 +186,44 @@ public:
 //    	printvector(std::cout, residual_, "residual", "row", 200, 1, 3);
     }
 
-    /*!
-     * \brief docme
-     */
+    //! \copydoc Dumux::ImplicitModel::reassembleAll()
     void reassembleAll()
-    {
-    }
+    { }
 
-    /*
-     * \brief docme
-     *
-     * \return const reference to matrix
-     */
+    //! \copydoc Dumux::ImplicitModel::matrix()
     const JacobianMatrix &matrix() const
     { return *matrix_; }
 
-    /*
-     * \brief docme
+    /*!
+     * \brief Return constant reference to global Jacobian matrix.
+     *        This is not very nice, but required for the AMG solver
      *
-     * This is not very nice, but required for the AMG solver
-     *
-     * \return const reference to matrix
+     * \return A const reference to matrix
      */
     JacobianMatrix &matrix()
     { return *matrix_; }
 
-    /*
-    * \brief docme
-    * \return const reference to residual
-    */
-
+    //! \copydoc Dumux::ImplicitModel::residual()
     const SolutionVector &residual() const
     { return residual_; }
     SolutionVector &residual()
     { return residual_; }
 
-    /*
-    * \brief docme
-    * \return the multidomain gridfunctionspace
-    */
-
-
+    /*!
+     * \brief Return constant reference to the multidomain gridfunctionspace
+     */
     MultiDomainGridFunctionSpace &gridFunctionSpace() const
     { return *mdGridFunctionSpace_; }
+
+    /*!
+     * \brief Return constant reference to the multidomain gridfunctionspace
+     */
     MultiDomainGridFunctionSpace &mdGridFunctionSpace() const
     { return *mdGridFunctionSpace_; }
-    
-    /*
-    * \brief docme
-    * \ return the multidomain constraints trafo
-    */
 
+    /*!
+     * \brief Return the multidomain constraints transformation
+     */
     MultiDomainConstraintsTrafo &constraintsTrafo() const
     { return *constraintsTrafo_; }
 
@@ -291,5 +267,4 @@ private:
 
 } // namespace Dumux
 
-#endif
-
+#endif // DUMUX_MULTIDOMAIN_ASSEMBLER_HH

@@ -33,9 +33,7 @@
  */
 namespace Dumux
 {
-/*
-* \brief docme
-*/
+
 namespace Properties
 {
 /*!
@@ -127,6 +125,7 @@ NEW_PROP_TAG(ConstraintsTrafo); // TODO: required?
 //! solver
 NEW_PROP_TAG(JacobianMatrix);
 
-}
-}
-#endif
+} // namespace Properties
+} // namespace Dumux
+
+#endif // DUMUX_MULTIDOMAIN_PROPERTIES_HH
