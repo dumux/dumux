@@ -132,77 +132,77 @@ private:
             // the concentration gradient of the components
             // component in the phases
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, wCompIdx);
+            tmp *= elemVolVars[volVarsIdx].massFraction(wPhaseIdx, wCompIdx);
             massFractionCompWGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, wCompIdx);
+            tmp *= elemVolVars[volVarsIdx].massFraction(nPhaseIdx, wCompIdx);
             massFractionCompWGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(gPhaseIdx, wCompIdx);
+            tmp *= elemVolVars[volVarsIdx].massFraction(gPhaseIdx, wCompIdx);
             massFractionCompWGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, nCompIdx);
+            tmp *= elemVolVars[volVarsIdx].massFraction(wPhaseIdx, nCompIdx);
             massFractionCompNGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, nCompIdx);
+            tmp *= elemVolVars[volVarsIdx].massFraction(nPhaseIdx, nCompIdx);
             massFractionCompNGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(gPhaseIdx, nCompIdx);
+            tmp *= elemVolVars[volVarsIdx].massFraction(gPhaseIdx, nCompIdx);
             massFractionCompNGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, gCompIdx);
+            tmp *= elemVolVars[volVarsIdx].massFraction(wPhaseIdx, gCompIdx);
             massFractionCompGGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, gCompIdx);
+            tmp *= elemVolVars[volVarsIdx].massFraction(nPhaseIdx, gCompIdx);
             massFractionCompGGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(gPhaseIdx, gCompIdx);
+            tmp *= elemVolVars[volVarsIdx].massFraction(gPhaseIdx, gCompIdx);
             massFractionCompGGrad_[gPhaseIdx] += tmp;
 
             // the molar concentration gradients of the components
             // in the phases
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, wCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(wPhaseIdx, wCompIdx);
             moleFractionCompWGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(nPhaseIdx, wCompIdx);
             moleFractionCompWGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(gPhaseIdx, wCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(gPhaseIdx, wCompIdx);
             moleFractionCompWGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, nCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(wPhaseIdx, nCompIdx);
             moleFractionCompNGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, nCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(nPhaseIdx, nCompIdx);
             moleFractionCompNGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(gPhaseIdx, nCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(gPhaseIdx, nCompIdx);
             moleFractionCompNGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, gCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(wPhaseIdx, gCompIdx);
             moleFractionCompGGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, gCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(nPhaseIdx, gCompIdx);
             moleFractionCompGGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(gPhaseIdx, gCompIdx);
+            tmp *= elemVolVars[volVarsIdx].moleFraction(gPhaseIdx, gCompIdx);
             moleFractionCompGGrad_[gPhaseIdx] += tmp;
         }
     }

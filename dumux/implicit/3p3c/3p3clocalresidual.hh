@@ -103,7 +103,7 @@ public:
                     volVars.porosity()
                     * volVars.saturation(phaseIdx)
                     * volVars.molarDensity(phaseIdx)
-                    * volVars.fluidState().moleFraction(phaseIdx, compIdx);
+                    * volVars.moleFraction(phaseIdx, compIdx);
             }
         }
     }
@@ -164,12 +164,12 @@ public:
                 int eqIdx = conti0EqIdx + compIdx;
                 flux[eqIdx] += fluxVars.volumeFlux(phaseIdx)
                     * (massUpwindWeight
-                       * up.fluidState().molarDensity(phaseIdx)
-                       * up.fluidState().moleFraction(phaseIdx, compIdx)
+                       * up.molarDensity(phaseIdx)
+                       * up.moleFraction(phaseIdx, compIdx)
                        +
                        (1.0 - massUpwindWeight)
-                       * dn.fluidState().molarDensity(phaseIdx)
-                       * dn.fluidState().moleFraction(phaseIdx, compIdx));
+                       * dn.molarDensity(phaseIdx)
+                       * dn.moleFraction(phaseIdx, compIdx));
             }
         }
     }

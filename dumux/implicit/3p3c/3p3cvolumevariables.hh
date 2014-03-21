@@ -600,6 +600,26 @@ public:
     { return fluidState_.saturation(phaseIdx); }
 
     /*!
+     * \brief Returns the mass fraction of a given component in a
+     *        given phase within the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar massFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.massFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief Returns the mole fraction of a given component in a
+     *        given phase within the control volume in \f$[-]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
+     */
+    Scalar moleFraction(const int phaseIdx, const int compIdx) const
+    { return fluidState_.moleFraction(phaseIdx, compIdx); }
+
+    /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
      *

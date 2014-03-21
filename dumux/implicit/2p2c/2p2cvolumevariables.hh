@@ -355,7 +355,7 @@ public:
     { return fluidState_.massFraction(phaseIdx, compIdx); }
 
     /*!
-     * \brief Returns the mass fraction of a given component in a
+     * \brief Returns the mole fraction of a given component in a
      *        given phase within the control volume in \f$[-]\f$.
      *
      * \param phaseIdx The phase index

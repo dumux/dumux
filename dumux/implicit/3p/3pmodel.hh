@@ -158,9 +158,9 @@ public:
                 int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                    (*saturation[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().saturation(phaseIdx);
-                    (*pressure[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().pressure(phaseIdx);
-                    (*density[phaseIdx])[globalIdx] = elemVolVars[scvIdx].fluidState().density(phaseIdx);
+                    (*saturation[phaseIdx])[globalIdx] = elemVolVars[scvIdx].saturation(phaseIdx);
+                    (*pressure[phaseIdx])[globalIdx] = elemVolVars[scvIdx].pressure(phaseIdx);
+                    (*density[phaseIdx])[globalIdx] = elemVolVars[scvIdx].density(phaseIdx);
                 }
 
                 (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();

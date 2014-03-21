@@ -109,10 +109,10 @@ public:
         {
             // storage term of continuity equation - massfractions
             storage[conti0EqIdx] +=
-                volVars.fluidState().density(phaseIdx)*volVars.porosity();
+                volVars.density()*volVars.porosity();
             //storage term of the transport equation - massfractions
             storage[transportEqIdx] +=
-                volVars.fluidState().density(phaseIdx) * volVars.fluidState().massFraction(phaseIdx, transportCompIdx) * volVars.porosity();
+                volVars.density() * volVars.massFraction(transportCompIdx) * volVars.porosity();
         }
         else //mole-fraction formulation
         {
@@ -121,7 +121,7 @@ public:
             storage[conti0EqIdx] += volVars.molarDensity()*volVars.porosity();
             // storage term of the transport equation - molefractions
             storage[transportEqIdx] +=
-                volVars.fluidState().molarDensity(phaseIdx)*volVars.fluidState().moleFraction(phaseIdx, transportCompIdx) *
+                volVars.molarDensity()*volVars.moleFraction(transportCompIdx) *
                 volVars.porosity();
         }
 
@@ -183,9 +183,9 @@ public:
             // advective flux of the second component - massfraction
             flux[transportEqIdx] +=
                 fluxVars.KmvpNormal() *
-                ((    upwindWeight_)*up.fluidState().density(phaseIdx) * up.fluidState().massFraction(phaseIdx, transportCompIdx)/up.viscosity()
+                ((    upwindWeight_)*up.density() * up.massFraction(transportCompIdx)/up.viscosity()
                  +
-                 (1 - upwindWeight_)*dn.fluidState().density(phaseIdx)*dn.fluidState().massFraction(phaseIdx, transportCompIdx)/dn.viscosity());
+                 (1 - upwindWeight_)*dn.density()*dn.massFraction(transportCompIdx)/dn.viscosity());
         }
         else //mole-fraction formulation
         {
@@ -200,9 +200,9 @@ public:
             // advective flux of the second component -molefraction
             flux[transportEqIdx] +=
                 fluxVars.KmvpNormal() *
-                ((    upwindWeight_)*up.molarDensity() * up.fluidState().moleFraction(phaseIdx, transportCompIdx)/up.viscosity()
+                ((    upwindWeight_)*up.molarDensity() * up.moleFraction(transportCompIdx)/up.viscosity()
                  +
-                 (1 - upwindWeight_)*dn.molarDensity() * dn.fluidState().moleFraction(phaseIdx, transportCompIdx)/dn.viscosity());
+                 (1 - upwindWeight_)*dn.molarDensity() * dn.moleFraction(transportCompIdx)/dn.viscosity());
         }
 
     }
