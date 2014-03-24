@@ -206,7 +206,7 @@ public:
         // compute storage term of all components within all phases
         Scalar phaseStorage = volVars.density(phaseIdx)
                 * volVars.saturation(phaseIdx)
-                * volVars.fluidState().massFraction(phaseIdx, compIdx);
+                * volVars.massFraction(phaseIdx, compIdx);
         phaseStorage *= volVars.porosity();
 
         return phaseStorage;
@@ -270,14 +270,14 @@ public:
                 fluxVars.volumeFlux(phaseIdx)
                 * massUpwindWeight
                 * up.density(phaseIdx)
-                * up.fluidState().massFraction(phaseIdx, compIdx);
+                * up.massFraction(phaseIdx, compIdx);
         if (massUpwindWeight < 1.0)
             // downstream vertex
             advectivePhaseFlux +=
                 fluxVars.volumeFlux(phaseIdx)
                 * (1 - massUpwindWeight)
                 * dn.density(phaseIdx)
-                * dn.fluidState().massFraction(phaseIdx, compIdx);
+                * dn.massFraction(phaseIdx, compIdx);
 
         return advectivePhaseFlux;
     }
@@ -312,7 +312,7 @@ public:
 
         // set mass fraction; TODO: this is fixed to contiWEqIdx so far!
         if (this->bcTypes_(scvIdx).isCouplingOutflow(contiWEqIdx))
-            this->residual_[scvIdx][contiWEqIdx] = volVars.fluidState().massFraction(nPhaseIdx, wCompIdx);
+            this->residual_[scvIdx][contiWEqIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
 
         // set temperature as part of the coupling
         if (this->bcTypes_(scvIdx).isCouplingOutflow(energyEqIdx))

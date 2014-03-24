@@ -612,7 +612,7 @@ public:
                                         int vertInElem1)
     {
         Scalar advFlux = elemVolVars1[vertInElem1].density() *
-            elemVolVars1[vertInElem1].fluidState().massFraction(phaseIdx, transportCompIdx1) *
+            elemVolVars1[vertInElem1].massFraction(phaseIdx, transportCompIdx1) *
             boundaryVars1.normalVelocity();
         return advFlux;
     }

@@ -144,7 +144,7 @@ public:
 
                 pn  [globalIdx] = volVars.pressure();
                 delP[globalIdx] = volVars.pressure() - 1e5;
-                Xw  [globalIdx] = volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
+                Xw  [globalIdx] = volVars.massFraction(phaseIdx, transportCompIdx);
                 T   [globalIdx] = volVars.temperature();
                 rho [globalIdx] = volVars.density();
                 mu  [globalIdx] = volVars.dynamicViscosity();
