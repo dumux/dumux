@@ -321,7 +321,11 @@ public:
         SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
     };
 
-    //! \copydoc Dumux::ImplicitModel::updateFailedTry()
+     /*!
+      * \brief Called by the update() method if a try was
+      *         unsuccessful. This is primary a hook which the
+      *         actual model can overload.
+      */
     void updateFailedTry()
     {
         sdModel1().updateFailedTry();

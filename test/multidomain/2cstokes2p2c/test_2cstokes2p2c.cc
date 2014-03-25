@@ -19,7 +19,8 @@
 /*!
  * \file
  *
- * \brief test for the coupled 2c-Stokes and 2p2c-Darcy model
+ * \brief Test for the coupled isothermal two-component Stokes and
+ *        isothermal two-phase two-component Darcy model
  */
 
 #include "config.h"
@@ -40,7 +41,7 @@
 /*!
  * \brief Print a usage string for simulations.
  *
- * \param progname The name of the executable
+ * \param progName The name of the executable
  */
 void printUsage(const char *progName)
 {
@@ -208,19 +209,16 @@ int start_(int argc,
 }
 
 /*!
- * \ingroup Start
- *
  * \brief Provides a main function which reads in parameters from the
  *        command line and a parameter file.
  *
- *        In this function only the differentiation between debugger
- *        or not is made.
+ * In this function only the differentiation between debugger
+ * or not is made.
  *
  * \tparam TypeTag  The type tag of the problem which needs to be solved
  *
  * \param argc  The number of command line arguments of the program
  * \param argv  The contents of the command line arguments of the program
- * \param usage Callback function for printing the usage message
  */
 template <class TypeTag>
 int start(int argc,

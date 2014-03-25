@@ -72,7 +72,7 @@ class StokesncVolumeVariables : public StokesVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \copydoc BoxVolumeVariables::update()
+     * \copydoc ImplicitVolumeVariables::update()
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -198,6 +198,8 @@ public:
 
     /*!
      * \brief Returns the binary (mass) diffusion coefficient
+     *
+     * \param compIdx The component index
      */
     Scalar diffusionCoeff(int compIdx) const
     { return diffCoeff_[compIdx]; }

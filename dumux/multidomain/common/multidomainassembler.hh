@@ -104,7 +104,7 @@ public:
     ~MultiDomainAssembler()
     { }
 
-    //! \copydoc Dumux::ImplicitModel::init()
+    //! \copydoc ImplicitAssembler::init()
     void init(Problem& problem)
     {
         globalProblem_ = &problem;
@@ -168,7 +168,7 @@ public:
         residual_.resize(matrix_->N());
     }
 
-    //! \copydoc Dumux::ImplicitModel::assemble()
+    //! \copydoc ImplicitAssembler::assemble()
     void assemble()
     {
 //        std::cerr  << __FILE__ << ":" << __LINE__ << "\n";
@@ -186,11 +186,11 @@ public:
 //    	printvector(std::cout, residual_, "residual", "row", 200, 1, 3);
     }
 
-    //! \copydoc Dumux::ImplicitModel::reassembleAll()
+    //! \copydoc ImplicitAssembler::reassembleAll()
     void reassembleAll()
     { }
 
-    //! \copydoc Dumux::ImplicitModel::matrix()
+    //! \copydoc ImplicitAssembler::matrix()
     const JacobianMatrix &matrix() const
     { return *matrix_; }
 
@@ -203,7 +203,7 @@ public:
     JacobianMatrix &matrix()
     { return *matrix_; }
 
-    //! \copydoc Dumux::ImplicitModel::residual()
+    //! \copydoc ImplicitAssembler::residual()
     const SolutionVector &residual() const
     { return residual_; }
     SolutionVector &residual()

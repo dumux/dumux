@@ -3,16 +3,12 @@
 #############################################################
 
 #############################################################
-#General conditions: Problem, TimeManager, Vtk, Grid
-#############################################################
-
-#############################################################
 [Problem]
 #############################################################
 #First part of the interface, where it is not coupled;
 #set to zero or negative if not desired
-RunUpDistanceX = 0.0 # 0.06, has to be larger than NoDarcyX !?
-NoDarcyX = 0.0 # 0.05
+RunUpDistanceX = 0.0
+NoDarcyX = 0.0
 
 #############################################################
 [TimeManager]
@@ -46,17 +42,16 @@ UseInterfaceMeshCreator = true
 
 #Name of the dgf file (grid)
 File = grids/interfacedomain.dgf
-#File = grids/test_2cnistokes2p2cni.dgf
 Refinement = 0
 
 #Number of elements in x-, y-, z-direction
 CellsX = 30
 CellsY = 62
 CellsZ = 1
-#Grading and refinement of the mesh
+#Grading and refinement of the mesh in y direction
 Grading = 1.13
 
-#Extend of entire domain
+#Extend of the entire domain
 XMin = 0.0
 XMax = 0.25
 YMin = 0.0
@@ -88,16 +83,16 @@ RefTemperature = 298.15
 RefMassfrac = 0.008
 VxMax = 3.5
 BeaversJosephSlipVel = 0.00134
-ExponentMTC = 0.0 # 1./6., Mass transfer coefficient for S^MTC
-UseBoundaryLayerModel = 0 # integer, 0 for no boundary layer model, 1 for Blasius, 2 for turbulent BL, 9 for constant thickness
-BoundaryLayerOffset = 0.00 # For BL model like Blasius, determines a virtual run-up distance for the flow
-ConstThickness = 0.0016 # for a constant BL thickness, use BL model 3
-MassTransferModel = 0 # 0 for none, 1 for power law, 2 for Schluender model
+ExponentMTC = 0.0           # 1./6., Mass transfer coefficient for S^MTC
+UseBoundaryLayerModel = 0   # 0 for no boundary layer model, 1 for Blasius, 2 and 3 for turbulent BL, 9 for constant thickness
+BoundaryLayerOffset = 0.0   # for BL model like Blasius, determines a virtual run-up distance for the flow
+ConstThickness = 0.0016     # for a constant BL thickness, use BL model 9
+MassTransferModel = 0       # 0 for none, 1 for power law, 2 for Schluender model
 
-SinusVelVar = 0.0 	# hourly velocity variation
-SinusPVar = 0.0 	# diurnal pressure variation
-SinusTVar = 0.0 	# diurnal temperature variation
-SinusXVar = 0.0 	# diurnal variation of the vapor concentration (massfraction)
+SinusVelVar = 0.0   # hourly velocity variation
+SinusPVar = 0.0     # diurnal pressure variation
+SinusTVar = 0.0     # diurnal temperature variation
+SinusXVar = 0.0     # diurnal variation of the vapor concentration (massfraction)
 
 #############################################################
 [PorousMedium]
@@ -106,7 +101,7 @@ RefPressurePM = 1e5
 RefTemperaturePM = 298.15
 InitialSw1 = 0.98
 InitialSw2 = 0.98
-CharPoreRadius = 1e-4
+CharPoreRadius = 1e-4       # for Schluender mass-transfer model
 PlotFluidProperties = false
 
 #############################################################
@@ -117,8 +112,7 @@ AlphaBJ = 1.0
 
 # for homogeneous setups (0 for heterogeneous):
 SoilType = 2
-# threshold of the linearization of the capillary pressure curve
-RegularizationThreshold = 1e-2
+RegularizationThreshold = 1e-2 # linearization threshold for pc-Sw
 
 # GStat stuff, only required for SoilType=0
 GenerateNewPermeability = true
@@ -181,7 +175,7 @@ RelTolerance = 1e-5
 TargetSteps = 8
 MaxSteps = 12
 WriteConvergence = false 
-MaxTimeStepDivisions = 20 # should be in group Implicit
+MaxTimeStepDivisions = 20
 
 #############################################################
 [LinearSolver]

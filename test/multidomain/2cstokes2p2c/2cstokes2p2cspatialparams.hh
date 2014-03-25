@@ -16,6 +16,14 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Spatial parameters for the
+ *        coupling of an isothermal two-component Stokes
+ *        and an isothermal two-phase two-component Darcy model.
+ */
+
 #ifndef DUMUX_TWOCSTOKES_2P2C_SPATIALPARAMS_HH
 #define DUMUX_TWOCSTOKES_2P2C_SPATIALPARAMS_HH
 
@@ -53,8 +61,8 @@ private:
     // define the material law which is parameterized by effective
     // saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//    typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
-//    typedef RegularizedVanGenuchten<Scalar, LinearizedRegVanGenuchtenParams<Scalar, TypeTag> > EffMaterialLaw;
+    // typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
+    // typedef RegularizedVanGenuchten<Scalar, LinearizedRegVanGenuchtenParams<Scalar, TypeTag> > EffMaterialLaw;
     typedef RegularizedVanGenuchten<Scalar> EffMaterialLaw;
 public:
     // define the material law parameterized by absolute saturations
@@ -63,7 +71,14 @@ public:
 }
 
 
-/** \todo Please doc me! */
+/*!
+ * \ingroup TwoPTwoCModel
+ * \ingroup StokesModel
+ * \ingroup ImplicitTestProblems
+ * \brief Definition of the spatial parameters for
+ *        the coupling of an isothermal two-component Stokes
+ *        and an isothermal two-phase two-component Darcy model.
+ */
 template<class TypeTag>
 class TwoCStokesTwoPTwoCSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
@@ -104,7 +119,9 @@ public:
     typedef std::vector<MaterialLawParams> MaterialLawParamsVector;
 
     /*!
-     * \brief Spatial parameters for the coupled 2cstokes and 2p2c test
+     * \brief Spatial parameters for the
+     *        coupling of an isothermal two-component Stokes
+     *        and an isothermal two-phase two-component Darcy model.
      *
      * \param gridView The GridView which is used by the problem
      */
@@ -162,19 +179,21 @@ public:
         }
     }
 
+    /*!
+     * \brief The destructor
+     */
     ~TwoCStokesTwoPTwoCSpatialParams()
     {}
 
     /*!
-     * \brief The intrinsic permeability of the porous medium.
+     * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
      *
-     * \param element       The current finite element
-     * \param fvGeometry    The current finite volume geometry of the element
-     * \param scvIdx       The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
-                                        const FVElementGeometry &fvGeometry,
+                                       const FVElementGeometry &fvGeometry,
                                        const int scvIdx) const
     {
 //        // heterogeneous parameter field computed with GSTAT
@@ -195,7 +214,13 @@ public:
 //        }
     }
 
-    //! \copydoc Dumux::ImplicitSpatialParamsOneP::porosity()
+    /*!
+     * \brief Returns the porosity \f$[-]\f$
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
+     */
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
@@ -211,7 +236,13 @@ public:
     }
 
 
-    //! \copydoc Dumux::ImplicitSpatialParams::materialLawParams()
+    /*!
+     * \brief Returns the parameter object for the material law
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
+     */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                const FVElementGeometry &fvGeometry,
                                                const int scvIdx) const
@@ -233,14 +264,15 @@ public:
 
 
     /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
+     * \brief Returns the effective heat capacity \f$[J/m^3 K]\f$
      *
-     * This is only required for non-isothermal models.
+     * This is only required for non-isothermal models. This function does not
+     * return the specific heat capacity, but an effective heat capacity, which is
+     * \f$c_\textrm{p,eff,s} = c_\textrm{p,s} \varrho_\textrm{s} \left(1 - \phi\right)\f$
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     Scalar heatCapacity(const Element &element,
                         const FVElementGeometry &fvGeometry,
@@ -253,13 +285,14 @@ public:
     }
 
     /*!
-      * \brief docme
-      *
-      * \param element The finite element
-      * \param fvGeometry The finite-volume geometry
-      * \param scvIdx The local subcontrolvolume index
-      *
-      */
+     * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the solid
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
+     */
     Scalar thermalConductivitySolid(const Element &element,
                                     const FVElementGeometry &fvGeometry,
                                     const int scvIdx) const
@@ -275,26 +308,30 @@ public:
     }
 
     /*!
-     * \brief docme
+     * \brief Returns the index of the used soil type
      *
-     * \param global Pos The global position
+     * The soil, can be chosen as runtime parameter:
+     * 1: coarse,
+     * 2: medium,
+     * 3: fine
      *
+     * \param globalPos The global position
      */
     const unsigned checkSoilType(const GlobalPosition &globalPos) const
     {
-        // one soil, which can be chosen as runtime parameter:
-        // 1: coarse
-        // 2: medium
-        // 3: fine
         return soilType_;
     }
 
     /*!
-     * \brief This method allows the generation of a statistical field for the soil parameters
-     * 		  using GStat
+     * \brief This method allows the generation of a statistical field
+     *        for the intrinsic permeability using GStat
+     *
+     * Because gstat is not open source and has to be installed manually,
+     * the content of this function is deactivated (commented) by
+     * default. If you have gstat installed, please uncomment
+     * the lines between the curly brackets.
      *
      * \param gridView The GridView which is used by the problem
-     *
      */
     void loadIntrinsicPermeability(const GridView& gridView)
     {
@@ -424,10 +461,12 @@ public:
 //        vtkwriter.write("permeability", Dune::VTK::OutputType::ascii);
     }
 
-    //
     /*!
-     * \brief This is called from the coupled problem
-     * 		  and creates a gnuplot output of the Pc-Sw curve -- currently commented
+     * \brief This is called from the coupled problem and creates
+     *        a gnuplot output of the Pc-Sw curve
+     *
+     * If this function should be used, uncomment the lines between
+     * the curly brackets.
      */
     void plotMaterialLaw()
     {
@@ -484,6 +523,6 @@ private:
     MaterialLawParams fineParams_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif // DUMUX_TWOCSTOKES_2P2C_SPATIALPARAMS_HH

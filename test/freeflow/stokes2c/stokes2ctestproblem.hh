@@ -83,7 +83,7 @@ SET_BOOL_PROP(Stokes2cTestProblem, ProblemEnableGravity, false);
  * of the momentum balance equations in case of Dirichlet bcs for the momentum balance.
  * In the middle of the lower boundary one vertex receives Dirichlet bcs, to set the pressure level.
  *
- * This problem uses the \ref BoxStokesncModel.
+ * This problem uses the \ref StokesncModel.
  * To run the simulation execute the following line in a shell:
  * <tt>./test_stokes2c -parameterFile ./test_stokes2c.input</tt>
  */

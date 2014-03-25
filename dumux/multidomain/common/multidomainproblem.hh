@@ -165,10 +165,15 @@ public:
      */
     // \{
 
-    //! \copydoc Dumux::ImplicitProblem::simulate()
+    /*!
+     * \brief Set the initial time step and the time where the simulation ends
+     *        and starts simulation
+     *
+     * \param dtInitial Initial time step
+     * \param tEnd Time, when simulation ends
+     */
     bool simulate(Scalar dtInitial, Scalar tEnd)
     {
-        // set the initial time step and the time where the simulation ends
         timeManager_.setEndTime(tEnd);
         timeManager_.setTimeStepSize(dtInitial);
         timeManager_.runSimulation(asImp_());

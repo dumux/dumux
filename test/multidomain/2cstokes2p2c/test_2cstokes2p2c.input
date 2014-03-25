@@ -3,16 +3,12 @@
 #############################################################
 
 #############################################################
-#General conditions: Problem, TimeManager, Vtk, Grid
-#############################################################
-
-#############################################################
 [Problem]
 #############################################################
 #First part of the interface, where it is not coupled;
 #set to zero or negative if not desired
-RunUpDistanceX = 0.0 # 0.06, has to be larger than NoDarcyX !?
-NoDarcyX = 0.0 # 0.05
+RunUpDistanceX = 0.0
+NoDarcyX = 0.0
 
 #############################################################
 [TimeManager]
@@ -37,7 +33,7 @@ EpisodeLength = 43200
 #Names for VTK output
 NameFF = stokes2c
 NamePM = 2p2c
-AddVelocity = 1 
+AddVelocity = 1
 
 #############################################################
 [Grid]
@@ -52,10 +48,10 @@ Refinement = 0
 CellsX = 30
 CellsY = 62
 CellsZ = 1
-#Grading and refinement of the mesh
+#Grading and refinement of the mesh in y direction
 Grading = 1.13
 
-#Extend of entire domain
+#Extend of the entire domain
 XMin = 0.0
 XMax = 0.25
 YMin = 0.0
@@ -88,11 +84,11 @@ RefMassfrac = 0.008
 VxMax = 3.5
 BeaversJosephSlipVel = 0.00134
 SinusVelVar = 0.0
-ExponentMTC = 0.0 # 1./6., Mass transfer coefficient for S^MTC
-UseBoundaryLayerModel = 0 # integer, 0 for no boundary layer model, 1 for Blasius, 2 for turbulent BL, 3 for constant thickness
-BoundaryLayerOffset = 0.0 # For BL model like Blasius, determines a virtual run-up distance for the flow
-ConstThickness = 0.0016 # for a constant BL thickness, use BL model 3
-MassTransferModel = 0 # 0 for none, 1 for power law, 2 for Schluender model
+ExponentMTC = 0.0           # 1./6., Mass transfer coefficient for S^MTC
+UseBoundaryLayerModel = 0   # 0 for no boundary layer model, 1 for Blasius, 2 and 3 for turbulent BL, 9 for constant thickness
+BoundaryLayerOffset = 0.0   # for BL model like Blasius, determines a virtual run-up distance for the flow
+ConstThickness = 0.0016     # for a constant BL thickness, use BL model 9
+MassTransferModel = 0       # 0 for none, 1 for power law, 2 for Schluender model
 
 #############################################################
 [PorousMedium]
@@ -101,7 +97,7 @@ RefPressurePM = 1e5
 RefTemperaturePM = 298.15
 InitialSw1 = 0.98
 InitialSw2 = 0.98
-CharPoreDiameter = 1e-4 # for Schluender mass-transfer model
+CharPoreDiameter = 1e-4     # for Schluender mass-transfer model
 
 #############################################################
 [SpatialParams]

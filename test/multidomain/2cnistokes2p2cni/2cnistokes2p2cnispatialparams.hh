@@ -16,6 +16,14 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Spatial parameters for the
+ *        coupling of an non-isothermal two-component Stokes
+ *        and an non-isothermal two-phase two-component Darcy model.
+ */
+
 #ifndef DUMUX_TWOCNISTOKES2P2CNISPATIALPARAMS_HH
 #define DUMUX_TWOCNISTOKES2P2CNISPATIALPARAMS_HH
 
@@ -59,7 +67,12 @@ public:
 
 
 /*!
- * \brief docme
+ * \ingroup TwoPTwoCNiModel
+ * \ingroup StokesniModel
+ * \ingroup ImplicitTestProblems
+ * \brief Definition of the spatial parameters for
+ *        the coupling of an non-isothermal two-component Stokes
+ *        and an non-isothermal two-phase two-component Darcy model.
  */
 template<class TypeTag>
 class TwoCNIStokesTwoPTwoCNISpatialParams : public ImplicitSpatialParams<TypeTag>
@@ -96,10 +109,11 @@ public:
     typedef std::vector<MaterialLawParams> MaterialLawParamsVector;
 
     /*!
-     * \brief docme
+     * \brief Spatial parameters for the
+     *        coupling of an isothermal two-component Stokes
+     *        and an isothermal two-phase two-component Darcy model.
      *
-     * \param gridView The GridView which is used by the problem.
-     *
+     * \param gridView The GridView which is used by the problem
      */
     TwoCNIStokesTwoPTwoCNISpatialParams(const GridView& gridView)
         : ParentType(gridView),
@@ -156,17 +170,18 @@ public:
         }
     }
 
+    /*!
+     * \brief The destructor
+     */
     ~TwoCNIStokesTwoPTwoCNISpatialParams()
     { }
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
      *
-     * \param element       The current finite element
-     * \param fvGeometry    The current finite volume geometry of the element
-     * \param scvIdx       The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
                                  	   const FVElementGeometry &fvGeometry,
@@ -186,7 +201,13 @@ public:
 			return mediumPermeability_;
     }
 
-    //! \copydoc Dumux::ImplicitSpatialParamsOneP::porosity()
+    /*!
+     * \brief Returns the porosity \f$[-]\f$
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
+     */
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
@@ -204,7 +225,13 @@ public:
     }
 
 
-    //! \copydoc Dumux::ImplicitSpatialParams::materialLawParams()
+    /*!
+     * \brief Returns the parameter object for the material law
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
+     */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                const FVElementGeometry &fvGeometry,
                                                const int scvIdx) const
@@ -224,14 +251,15 @@ public:
 
 
     /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
+     * \brief Returns the effective heat capacity \f$[J/m^3 K]\f$
      *
-     * This is only required for non-isothermal models.
+     * This is only required for non-isothermal models. This function does not
+     * return the specific heat capacity, but an effective heat capacity, which is
+     * \f$c_\textrm{p,eff,s} = c_\textrm{p,s} \varrho_\textrm{s} \left(1 - \phi\right)\f$
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     Scalar heatCapacity(const Element &element,
                         const FVElementGeometry &fvGeometry,
@@ -245,12 +273,13 @@ public:
     }
 
     /*!
-     * \brief docme
+     * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the solid
+     *
+     * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      */
     Scalar thermalConductivitySolid(const Element &element,
                                     const FVElementGeometry &fvGeometry,
@@ -269,26 +298,27 @@ public:
     }
 
     /*!
-     * \brief docme
+     * \brief Returns the index of the used soil type
      *
-     * \param pos The position of the boundary face's integration point in global coordinates
+     * The soil, can be chosen as runtime parameter:
+     * 1: coarse,
+     * 2: medium,
+     * 3: fine,
+     * 4: LeverettJ (x < xMaterialInterface)
      *
+     * \param pos The global position
      */
     const unsigned checkSoilType(const GlobalPosition &pos) const
     {
-
-// one soil, which can be chosen as runtime parameter:
-// 1: coarse
-// 2: medium
-// 3: fine
-// 4: LeverettJ (x < xMaterialInterface)
 		return soilType_;
     }
 
-    // this is called from the coupled problem
-    // and creates a gnuplot output of the Pc-Sw curve
     /*!
-     * \brief docme
+     * \brief This is called from the coupled problem and creates
+     *        a gnuplot output of the Pc-Sw curve
+     *
+     * If this function should be used, uncomment the lines between
+     * the curly brackets.
      */
     void plotMaterialLaw()
     {
@@ -367,5 +397,5 @@ private:
 };
 
 } // end namespace
-#endif
 
+#endif // DUMUX_TWOCNISTOKES2P2CNISPATIALPARAMS_HH

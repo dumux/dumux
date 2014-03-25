@@ -16,11 +16,21 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
- * @file
- * \ingroup docme
- * @brief  docme
+/*!
+ * \file
+ * \ingroup StokesniProblems
+ * \ingroup 2p2cniProblems
+ * \brief The problem class for the coupling of a non-isothermal two-component Stokes
+ *        and a non-isothermal two-phase two-component Darcy model.
+ *
+ * The problem class for the coupling of a non-isothermal two-component Stokes (stokes2cn)
+ * and a non-isothermal two-phase two-component Darcy model (2p2cni).
+ * It uses the 2p2cniCoupling model and the Stokes2cnicoupling model and provides
+ * the problem specifications for common parameters of the two submodels.
+ * The initial and boundary conditions of the submodels are specified in the two subproblems,
+ * 2p2cnisubproblem.hh and stokes2cnisubproblem.hh, which are accessible via the coupled problem.
  */
+
 #ifndef DUMUX_2CNISTOKES2P2CNIPROBLEM_HH
 #define DUMUX_2CNISTOKES2P2CNIPROBLEM_HH
 
@@ -133,15 +143,17 @@ SET_BOOL_PROP(TwoCNIStokesTwoPTwoCNIProblem, NewtonWriteConvergence, false);
 }
 
 /*!
- * \brief The problem class for the coupling of a non-isothermal two-component Stokes (stokes2cni)
- *        and a non-isothermal two-phase two-component Darcy model (2p2cni).
+ * \ingroup StokesniProblems
+ * \ingroup 2p2cniProblems
+ * \brief The problem class for the coupling of a non-isothermal two-component Stokes
+ *        and a non-isothermal two-phase two-component Darcy model.
  *
- *        The problem class for the coupling of a non-isothermal two-component Stokes (stokes2cni)
- *        and a non-isothermal two-phase two-component Darcy model (2p2cni).
- *        It uses the 2p2cniCoupling model and the Stokes2cnicoupling model and provides
- *        the problem specifications for common parameters of the two submodels.
- *        The initial and boundary conditions of the submodels are specified in the two subproblems,
- *        2p2cnisubproblem.hh and stokes2cnisubproblem.hh, which are accessible via the coupled problem.
+ * The problem class for the coupling of a non-isothermal two-component Stokes (stokes2cn)
+ * and a non-isothermal two-phase two-component Darcy model (2p2cni).
+ * It uses the 2p2cniCoupling model and the Stokes2cnicoupling model and provides
+ * the problem specifications for common parameters of the two submodels.
+ * The initial and boundary conditions of the submodels are specified in the two subproblems,
+ * 2p2cnisubproblem.hh and stokes2cnisubproblem.hh, which are accessible via the coupled problem.
  */
 template <class TypeTag = TTAG(TwoCNIStokesTwoPTwoCNIProblem) >
 class TwoCNIStokesTwoPTwoCNIProblem : public MultiDomainProblem<TypeTag>
@@ -235,14 +247,13 @@ class TwoCNIStokesTwoPTwoCNIProblem : public MultiDomainProblem<TypeTag>
     typedef typename MDGrid::template Codim<0>::LeafIterator ElementIterator;
     typedef typename MDGrid::LeafSubDomainInterfaceIterator SDInterfaceIterator;
 
-    /*!
-     * \brief docme
-     *
-     * \param hostGrid docme
-     * \param timeManager The TimeManager which is used by the simulation
-     *
-     */
 public:
+    /*!
+     * \brief The problem for the coupling of Stokes and Darcy flow
+     *
+     * \param mdGrid The multidomain grid
+     * \param timeManager The time manager
+     */
     TwoCNIStokesTwoPTwoCNIProblem(MDGrid &mdGrid,
     							  TimeManager &timeManager)
         : ParentType(mdGrid, timeManager)
@@ -286,12 +297,21 @@ public:
             this->timeManager().startNextEpisode(episodeLength_);
     }
 
+    /*!
+     * \brief The destructor
+     */
     ~TwoCNIStokesTwoPTwoCNIProblem()
     {
         fluxFile_.close();
     };
 
-    //! \copydoc Dumux::CoupledProblem::init()
+    /*!
+     * \brief Called by the Dumux::TimeManager in order to
+     *        initialize the problem.
+     *
+     * If you overload this method don't forget to call
+     * ParentType::init()
+     */
     void init()
     {
         ParentType::init();
@@ -312,7 +332,10 @@ public:
     }
 
     /*!
-     * \brief docme
+     * \brief Initialization of the grids
+     *
+     * This function splits the multidomain grid in the two
+     * individual subdomain grids and takes care of parallelization.
      */
     void initializeGrid()
     {
@@ -345,7 +368,10 @@ public:
         gridinfo(this->sdGrid2());
     }
 
-    //! \copydoc Dumux::CoupledProblem::postTimeStep()
+    /*!
+     * \brief Called by the time manager after the time integration to
+     *        do some post processing on the solution.
+     */
     void postTimeStep()
     {
         // call the postTimeStep function of the subproblems
@@ -361,7 +387,11 @@ public:
         }
     }
 
-    //! \copydoc Dumux::CoupledProblem::episodeEnd()
+    /*!
+     * \brief Called when the end of an simulation episode is reached.
+     *
+     * Typically a new episode should be started in this method.
+     */
     void episodeEnd()
     {
         this->timeManager().startNextEpisode(episodeLength_);
@@ -372,9 +402,12 @@ public:
 		}
     }
 
-    /*
-     * \brief Calculates fluxes and coupling terms at the interface for the Stokes model.
-     *        Flux output files are created and the summarized flux is written to a file.
+    /*!
+     * \brief Calculates fluxes and coupling terms at the interface
+     *        for the Stokes model.
+     * 
+     * Flux output files are created and the summarized flux is
+     * written to a file.
      */
     void calculateFirstInterfaceFluxes()
     {
@@ -506,9 +539,12 @@ public:
                       << sumEnergyFluxes << "; ";
     }
 
-    /*
-     * \brief Calculates fluxes and coupling terms at the interface for the Darcy model.
-     *        Flux output files are created and the summarized flux is written to a file.
+    /*!
+     * \brief Calculates fluxes and coupling terms at the interface
+     *        for the Darcy model.
+     *
+     * Flux output files are created and the summarized flux is written
+     * to a file.
      */
     void calculateSecondInterfaceFluxes()
     {
@@ -634,6 +670,15 @@ public:
         }
     }
 
+    /*!
+     * \brief Returns the advective vapor fluxes
+     *
+     * The phaseIdx and transportCompIdx1 are predefined
+     *
+     * \param elemVolVars1 All volume variables for the element
+     * \param boundaryVars1 Flux variables (\todo violates naming convention)
+     * \param vertInElem1 Vertex index for the inside element
+     */
     Scalar computeAdvectiveVaporFluxes1(const ElementVolumeVariables1& elemVolVars1,
                                         const BoundaryVariables1& boundaryVars1,
                                         int vertInElem1)
@@ -644,6 +689,15 @@ public:
         return advFlux;
     }
 
+    /*!
+     * \brief Returns the diffusive vapor fluxes
+     *
+     * The transportCompIdx1 is predefined
+     *
+     * \param elemVolVars1 All volume variables for the element
+     * \param boundaryVars1 Flux variables (\todo violates naming convention)
+     * \param vertInElem1 Vertex index for the inside elements
+     */
     Scalar computeDiffusiveVaporFluxes1(const ElementVolumeVariables1& elemVolVars1,
                                         const BoundaryVariables1& boundaryVars1,
                                         int vertInElem1)
@@ -656,7 +710,14 @@ public:
         return diffFlux;
     }
 
-    //! \copydoc Dumux::CoupledProblem::shouldWriteRestartFile()
+    /*!
+     * \brief Returns true if a restart file should be written to
+     *        disk.
+     *
+     * The default behavior is to write one restart file every 5 time
+     * steps. This file is intended to be overwritten by the
+     * implementation.
+     */
     bool shouldWriteRestartFile() const
     {
         if ((this->timeManager().timeStepIndex() > 0 &&
@@ -668,7 +729,14 @@ public:
     }
 
 
-    //! \copydoc Dumux::CoupledProblem::shouldWriteOutput()
+    /*!
+     * \brief Returns true if the current solution should be written to
+     *        disk (i.e. as a VTK file)
+     *
+     * The default behavior is to write out the solution for
+     * every time step. This function is intended to be overwritten by the
+     * implementation.
+     */
     bool shouldWriteOutput() const
     {
         if (this->timeManager().timeStepIndex() % freqOutput_ == 0
@@ -679,7 +747,8 @@ public:
 
     /*!
      * \brief Returns true if a file with the fluxes across the
-     * free-flow -- porous-medium interface should be written.
+     *        free-flow -- porous-medium interface should be
+     *        written to disk.
      */
     bool shouldWriteFluxFile() const
     {
@@ -704,11 +773,17 @@ public:
 
     }
 
+    /*!
+     * \brief Returns a pointer to the Stokes problem
+     */
     Stokes2cniSubProblem& stokes2cniProblem()
     { return this->sdProblem1(); }
     const Stokes2cniSubProblem& stokes2cniProblem() const
     { return this->sdProblem1(); }
 
+    /*!
+     * \brief Returns a pointer to the Darcy problem
+     */
     TwoPTwoCNISubProblem& twoPtwoCNIProblem()
     { return this->sdProblem2(); }
     const TwoPTwoCNISubProblem& twoPtwoCNIProblem() const
@@ -755,4 +830,4 @@ private:
 
 } //end namespace
 
-#endif
+#endif // DUMUX_2CNISTOKES2P2CNIPROBLEM_HH

@@ -16,6 +16,21 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup StokesProblems
+ * \ingroup 2p2cProblems
+ * \brief The problem class for the coupling of an isothermal two-component Stokes
+ *        and an isothermal two-phase two-component Darcy model.
+ *
+ * The problem class for the coupling of an isothermal two-component Stokes (stokes2c)
+ * and an isothermal two-phase two-component Darcy model (2p2c).
+ * It uses the 2p2cCoupling model and the Stokes2ccoupling model and provides
+ * the problem specifications for common parameters of the two submodels.
+ * The initial and boundary conditions of the submodels are specified in the two subproblems,
+ * 2p2csubproblem.hh and stokes2csubproblem.hh, which are accessible via the coupled problem.
+ */
+
 #ifndef DUMUX_2CSTOKES2P2CPROBLEM_HH
 #define DUMUX_2CSTOKES2P2CPROBLEM_HH
 
@@ -121,15 +136,17 @@ SET_BOOL_PROP(TwoCStokesTwoPTwoCProblem, NewtonWriteConvergence, false);
 }
 
 /*!
+ * \ingroup StokesProblems
+ * \ingroup 2p2cProblems
  * \brief The problem class for the coupling of an isothermal two-component Stokes
  *        and an isothermal two-phase two-component Darcy model.
  *
- *        The problem class for the coupling of an isothermal two-component Stokes (stokes2c)
- *        and an isothermal two-phase two-component Darcy model (2p2c).
- *        It uses the 2p2cCoupling model and the Stokes2ccoupling model and provides
- *        the problem specifications for common parameters of the two submodels.
- *        The initial and boundary conditions of the submodels are specified in the two subproblems,
- *        2p2csubproblem.hh and stokes2csubproblem.hh, which are accessible via the coupled problem.
+ * The problem class for the coupling of an isothermal two-component Stokes (stokes2c)
+ * and an isothermal two-phase two-component Darcy model (2p2c).
+ * It uses the 2p2cCoupling model and the Stokes2ccoupling model and provides
+ * the problem specifications for common parameters of the two submodels.
+ * The initial and boundary conditions of the submodels are specified in the two subproblems,
+ * 2p2csubproblem.hh and stokes2csubproblem.hh, which are accessible via the coupled problem.
  */
 template <class TypeTag = TTAG(TwoCStokesTwoPTwoCProblem) >
 class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
@@ -220,11 +237,10 @@ class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
 
 public:
     /*!
-     * \brief docme
+     * \brief The problem for the coupling of Stokes and Darcy flow
      *
-     * \param hostGrid docme
+     * \param mdGrid The multidomain grid
      * \param timeManager The time manager
-     *
      */
     TwoCStokesTwoPTwoCProblem(MDGrid &mdGrid,
                               TimeManager &timeManager)
@@ -268,12 +284,21 @@ public:
             this->timeManager().startNextEpisode(episodeLength_);
     }
 
+    /*!
+     * \brief The destructor
+     */
     ~TwoCStokesTwoPTwoCProblem()
     {
         fluxFile_.close();
     };
 
-    //! \copydoc Dumux::CoupledProblem::init()
+    /*!
+     * \brief Called by the Dumux::TimeManager in order to
+     *        initialize the problem.
+     *
+     * If you overload this method don't forget to call
+     * ParentType::init()
+     */
     void init()
     {
         ParentType::init();
@@ -293,7 +318,10 @@ public:
     }
 
     /*!
-     * \brief docme
+     * \brief Initialization of the grids
+     *
+     * This function splits the multidomain grid in the two
+     * individual subdomain grids and takes care of parallelization.
      */
     void initializeGrid()
     {
@@ -329,7 +357,10 @@ public:
         this->sdProblem2().spatialParams().loadIntrinsicPermeability(this->sdGridView2());
     }
 
-    //! \copydoc Dumux::CoupledProblem::postTimeStep()
+    /*!
+     * \brief Called by the time manager after the time integration to
+     *        do some post processing on the solution.
+     */
     void postTimeStep()
     {
         // call the postTimeStep function of the subproblems
@@ -345,13 +376,20 @@ public:
         }
     }
 
-    //! \copydoc Dumux::CoupledProblem::episodeEnd()
+    /*!
+     * \brief Called when the end of an simulation episode is reached.
+     *
+     * Typically a new episode should be started in this method.
+     */
     void episodeEnd()
     { this->timeManager().startNextEpisode(episodeLength_); }
 
-    /*
-     * \brief Calculates fluxes and coupling terms at the interface for the Stokes model.
-     *        Flux output files are created and the summarized flux is written to a file.
+    /*!
+     * \brief Calculates fluxes and coupling terms at the interface
+     *        for the Stokes model.
+     * 
+     * Flux output files are created and the summarized flux is
+     * written to a file.
      */
     void calculateFirstInterfaceFluxes()
     {
@@ -478,9 +516,12 @@ public:
                       << advectiveVaporFlux-diffusiveVaporFlux << "; ";
     }
 
-    /*
-     * \brief Calculates fluxes and coupling terms at the interface for the Darcy model.
-     *        Flux output files are created and the summarized flux is written to a file.
+    /*!
+     * \brief Calculates fluxes and coupling terms at the interface
+     *        for the Darcy model.
+     *
+     * Flux output files are created and the summarized flux is written
+     * to a file.
      */
     void calculateSecondInterfaceFluxes()
     {
@@ -600,12 +641,13 @@ public:
     }
 
     /*!
-     * \brief docme
+     * \brief Returns the advective vapor fluxes
      *
-     * \param elemVolVars1 docme
-     * \param boundaryVars1 docme
-     * \param vertInElem1 docme
+     * The phaseIdx and transportCompIdx1 are predefined
      *
+     * \param elemVolVars1 All volume variables for the element
+     * \param boundaryVars1 Flux variables (\todo violates naming convention)
+     * \param vertInElem1 Vertex index for the inside element
      */
     Scalar computeAdvectiveVaporFluxes1(const ElementVolumeVariables1& elemVolVars1,
                                         const BoundaryVariables1& boundaryVars1,
@@ -618,12 +660,13 @@ public:
     }
 
     /*!
-     * \brief docme
+     * \brief Returns the diffusive vapor fluxes
      *
-     * \param elemVolVars1 docme
-     * \param boundaryVars1 docme
-     * \param vertInElem1 docme
+     * The transportCompIdx1 is predefined
      *
+     * \param elemVolVars1 All volume variables for the element
+     * \param boundaryVars1 Flux variables (\todo violates naming convention)
+     * \param vertInElem1 Vertex index for the inside elements
      */
     Scalar computeDiffusiveVaporFluxes1(const ElementVolumeVariables1& elemVolVars1,
                                         const BoundaryVariables1& boundaryVars1,
@@ -637,7 +680,14 @@ public:
         return diffFlux;
     }
 
-    //! \copydoc Dumux::CoupledProblem::shouldWriteRestartFile()
+    /*!
+     * \brief Returns true if a restart file should be written to
+     *        disk.
+     *
+     * The default behavior is to write one restart file every 5 time
+     * steps. This file is intended to be overwritten by the
+     * implementation.
+     */
     bool shouldWriteRestartFile() const
     {
         if ((this->timeManager().timeStepIndex() > 0 &&
@@ -648,8 +698,14 @@ public:
         return false;
     }
 
-
-    //! \copydoc Dumux::CoupledProblem::shouldWriteOutput()
+    /*!
+     * \brief Returns true if the current solution should be written to
+     *        disk (i.e. as a VTK file)
+     *
+     * The default behavior is to write out the solution for
+     * every time step. This function is intended to be overwritten by the
+     * implementation.
+     */
     bool shouldWriteOutput() const
     {
         if (this->timeManager().timeStepIndex() % freqOutput_ == 0
@@ -660,7 +716,8 @@ public:
 
     /*!
      * \brief Returns true if a file with the fluxes across the
-     * free-flow -- porous-medium interface should be written.
+     *        free-flow -- porous-medium interface should be
+     *        written to disk.
      */
     bool shouldWriteFluxFile() const
     {
@@ -685,11 +742,17 @@ public:
 
     }
 
+    /*!
+     * \brief Returns a pointer to the Stokes problem
+     */
     Stokes2cSubProblem& stokes2cProblem()
     { return this->sdProblem1(); }
     const Stokes2cSubProblem& stokes2cProblem() const
     { return this->sdProblem1(); }
 
+    /*!
+     * \brief Returns a pointer to the Darcy problem
+     */
     TwoPTwoCSubProblem& twoPtwoCProblem()
     { return this->sdProblem2(); }
     const TwoPTwoCSubProblem& twoPtwoCProblem() const
@@ -733,6 +796,6 @@ private:
     std::ofstream fluxFile_;
 };
 
-} //end namespace
+} // namespace Dumux
 
-#endif
+#endif // DUMUX_2CSTOKES2P2CPROBLEM_HH

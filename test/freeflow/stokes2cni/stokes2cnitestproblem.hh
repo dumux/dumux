@@ -86,7 +86,7 @@ SET_BOOL_PROP(Stokes2cniTestProblem, ProblemEnableGravity, true);
  * On the upper boundary a Dirichlet condition is set for the mass balance to fix the pressure.
  * Gravity is on in this example.
  *
- * This problem uses the \ref BoxStokesncniModel.
+ * This problem uses the \ref StokesncniModel.
  * To run the simulation execute the following line in shell:
  * <tt>./test_stokes2cni  -parameterFile ./test_stokes2cni.input</tt>
  */

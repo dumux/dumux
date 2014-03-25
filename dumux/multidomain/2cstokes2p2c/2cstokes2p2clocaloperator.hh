@@ -404,7 +404,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
                     const Scalar massTransferCoeff = massTransferCoefficient(cParams, sdElement1, sdElement2, globalPos1,
                                                                              vertInElem1, vertInElem2);
                     if (massTransferCoeff > 1.0 || massTransferCoeff < 0.0)
-                        std::cout << "MTC out of bounds! >>> " << massTransferCoeff << std::endl;
+                        std::cout << "MTC out of bounds, should be in between 0.0 and 1.0! >>> " << massTransferCoeff << std::endl;
 
 
                     if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
