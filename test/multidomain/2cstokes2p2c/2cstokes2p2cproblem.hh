@@ -42,7 +42,9 @@
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2clocaloperator.hh>
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2cnewtoncontroller.hh>
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#ifdef HAVE_PARDISO
 #include <dumux/linear/pardisobackend.hh>
+#endif // HAVE_PARDISO
 
 #include "2cstokes2p2cspatialparams.hh"
 #include "stokes2csubproblem.hh"
@@ -65,6 +67,8 @@ SET_PROP(TwoCStokesTwoPTwoCProblem, Grid)
     typedef typename Dune::UGGrid<2> type;
 #elif HAVE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
+#else
+#error Required UG or ALUGrid.
 #endif
 };
 
@@ -654,7 +658,7 @@ public:
                                         int vertInElem1)
     {
         Scalar advFlux = elemVolVars1[vertInElem1].density() *
-            elemVolVars1[vertInElem1].massFraction(phaseIdx, transportCompIdx1) *
+            elemVolVars1[vertInElem1].massFraction(transportCompIdx1) *
             boundaryVars1.normalVelocity();
         return advFlux;
     }

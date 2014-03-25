@@ -304,9 +304,9 @@ protected:
                 if (bcTypes.isCouplingOutflow(eqIdx))
                 {
                     if(useMoles)
-                        this->residual_[scvIdx][eqIdx] = volVars.moleFraction(phaseIdx, compIdx);
+                        this->residual_[scvIdx][eqIdx] = volVars.moleFraction(compIdx);
                     else
-                        this->residual_[scvIdx][eqIdx] = volVars.massFraction(phaseIdx, compIdx);
+                        this->residual_[scvIdx][eqIdx] = volVars.massFraction(compIdx);
 					Valgrind::CheckDefined(this->residual_[scvIdx][eqIdx]);
                 }
             }
