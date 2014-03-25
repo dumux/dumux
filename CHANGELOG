@@ -5,13 +5,18 @@ Differences Between DuMuX 2.4 and DuMuX 2.5
 
 * IMPROVEMENTS and ENHANCEMENTS:
   - The three-dimensional implementation of the MPFA L-method is made
-    available for the decoupled compositional 2p2c models. It also allows 
+    available for the decoupled compositional 2p2c models. It also allows
     for simulation on an adaptive grid.
+  - The coupling of 2c2p with Stokes2c and 2c2pNI with Stokes2cNI was
+    added. Be aware of the harsh version restrictions mentioned in
+    dumux/test/modelcoupling/README .
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - Dropped support for PDELab 1.0.1, PDELab 1.1 is required.
 
 * Deprecated CLASSES/FILES, to be removed after 2.5:
+  - Stokes2cModel was replaced by StokesNCModel, similar for more
+    Stokes2c* classes.
 
 * Deprecated PROPERTY NAMES, to be removed after 2.5: BEWARE: The compiler will
   not print any warning if a deprecated property name is used.

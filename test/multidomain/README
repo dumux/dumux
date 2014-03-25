@@ -1,0 +1,34 @@
+== Running the test cases in test/multidomain ==
+
+Due to the lack of stable versions of the upstream Dune modules
+Dune-MultidomainGrid and Dune-Multidomain, we have compatibility
+issues with the release version of the Dune Core Modules. You
+have to use specific revisions of these, as listed below.
+
+dune-common Git commit 6fb2492cca04e07ad43074a29667b633b4fa0680
+dune-geometry Git commit cda1d514d79f13e70de2d55fdf6906864c2fdcdd
+dune-grid Git commit cfec4c46bd59219337660ed833fe38cd2acbd364
+dune-istl Git commit b2c9640a4873ca905caf8e29ebc348a817801e9b
+dune-localfunctions Git commit d7776478e0e56beceebc48ddfca068b1c115dff3
+
+dune-PDELab Git commit 1de21a0859e10914ba5c3b70f67c5517573ac70e
+dune-multidomaingrid Git commit 30ff14d6b49c8adabf9e5cec67f20fcb3270a77e
+dune-multidomain Git commit deac3cecfc6697c1f5316d55c0fadd74f51d92bc
+
+Then you have to patch PDELab with the patch from patches/pdelab-1.1.0.patch .
+And you have to patch DuMuX with both the patches from
+patches/dumux-m4.patch and patches/dumux-multidomain.patch .
+
+Install the external grid manager UG. Additional you need to install a
+direct linear solver like SuperLU or PARDISO.
+You need Boost fusion for dune-multidomaingrid.
+
+There are compiler restrictions:
+- GCC 4.6 works.
+- GCC 4.7 produces segmentation faults.
+- GCC 4.8 works only with unoptimized builds (-O0).
+- Clang is not supported.
+- Intel ICC is not tested.
+
+For your convenience we provide the Shell script installRequiredModules.sh
+in the same folder as this README.

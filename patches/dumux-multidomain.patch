@@ -1,0 +1,17 @@
+Index: dumux/io/interfacemeshcreator.hh
+===================================================================
+--- dumux/io/interfacemeshcreator.hh	(revision 12659)
++++ dumux/io/interfacemeshcreator.hh	(working copy)
+@@ -29,11 +29,8 @@
+         typedef typename HelperGridView::Traits::template Codim<0>::Entity HelperElement;
+         typedef typename HelperElement::Geometry HelperGeometry;
+ 
+-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
+-        HelperElementIterator helperElementIterator = helperGrid.leafGridView().template begin<0>();
+-#else
+         HelperElementIterator helperElementIterator = helperGrid.leafView().template begin<0>();
+-#endif
++
+         const HelperElement& helperElement = *helperElementIterator;
+         const HelperGeometry& helperGeometry = helperElement.geometry();
+ 
