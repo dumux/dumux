@@ -128,6 +128,9 @@ public:
         coarseMaterialParams_.setLambda(2.0);
     }
 
+    /*!
+     * \brief The destructor
+     */
     ~InjectionSpatialParams()
     {}
 
@@ -167,7 +170,8 @@ public:
 
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law
+     * \brief Returns the parameter object for the capillary-pressure/
+     *        saturation material law
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
@@ -203,7 +207,6 @@ public:
             * 2700 // density of granite [kg/m^3]
             * (1 - porosity(element, fvGeometry, scvIdx));
     }
-
 
     /*!
      * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the solid
