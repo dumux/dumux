@@ -606,7 +606,7 @@ In this exercise we want to investigate the influence of time dependent boundary
 After this, change the run-time parameters so that they match the
 domain described by figure \ref{tutorial-coupled:ex5_Domain}. Adapt
 the problem class so that the boundary conditions are consistent with
-figure \ref{tutorial-coupled:ex5_BC}. Here you can see the time dependence of the nonwetting saturation, where water infiltrates only during $\unit[10^5]{s}$ and $\unit[4 \cdot 10^5]{s}$. To implement these time dependencies you need the actual time $t_{n+1}=t_n + \Delta t$ and the endtime of the simulation. For this you can use the methods \texttt{this->timeManager().time()}, \texttt{this->timeManager().timeStepSize()} and \texttt{this->timeManager().endtime()}. 
+figure \ref{tutorial-coupled:ex5_BC}. Here you can see the time dependence of the nonwetting saturation, where water infiltrates only during $\unit[10^5]{s}$ and $\unit[4 \cdot 10^5]{s}$. To implement these time dependencies you need the actual time $t_{n+1}=t_n + \Delta t$ and the endtime of the simulation. For this you can use the methods \texttt{this->timeManager().time()}, \texttt{this->timeManager().timeStepSize()} and \texttt{this->timeManager().endTime()}. 
 
 Initially, the domain is fully saturated with oil and the pressure is $p_w = 2 \times
 10^5\,\text{Pa}$.  Water infiltrates from the left side. Create a grid
