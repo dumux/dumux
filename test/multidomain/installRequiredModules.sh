@@ -55,6 +55,5 @@ patch -p0 < ../dumux/patches/pdelab-1.1.0.patch
 cd ..
 
 cd dumux
-patch -p0 < patches/dumux-m4.patch
 patch -p0 < patches/dumux-multidomain.patch
 cd ..
