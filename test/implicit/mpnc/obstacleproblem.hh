@@ -325,13 +325,13 @@ public:
      * \brief Evaluate the source term for all balance equations within a given
      *        sub-control-volume.
      *
-     * 		\param priVars Stores the solution for the conservation equations in
+     * \param values Stores the solution for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
-     *      \param element The finite element
-     * 		\param fvGeometry The finite volume geometry of the element
-     * 		\param scvIdx The local index of the sub-control volume
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume
      *
-     * 		Positive values mean that mass is created, negative ones mean that it vanishes.
+     * Positive values mean that mass is created, negative ones mean that it vanishes.
      */
     void source(PrimaryVariables &values,
                 const Element &element,
