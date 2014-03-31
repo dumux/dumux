@@ -10,4 +10,6 @@ endif
 
 test_2cnistokes2p2cni_SOURCES = test_2cnistokes2p2cni.cc
 
+EXTRA_DIST = CMakeLists.txt
+
 include $(top_srcdir)/am/global-rules

@@ -10,4 +10,6 @@ endif
 
 test_2cstokes2p2c_SOURCES = test_2cstokes2p2c.cc
 
+EXTRA_DIST = CMakeLists.txt
+
 include $(top_srcdir)/am/global-rules
