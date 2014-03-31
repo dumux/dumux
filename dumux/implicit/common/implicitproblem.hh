@@ -257,7 +257,7 @@ public:
      * are specific to the fully-implicit method.
      *
      * \param values The neumann values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^{\textrm{dim}-1} \cdot s )] \f$
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param intersection The intersection between element and boundary
@@ -290,7 +290,7 @@ public:
      *        boundary segment.
      *
      * \param values The neumann values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^{\textrm{dim}-1} \cdot s )] \f$
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param intersection The intersection between element and boundary
@@ -316,7 +316,7 @@ public:
      *        boundary segment.
      *
      * \param values The neumann values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^{\textrm{dim}-1} \cdot s )] \f$
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param globalPos The position of the boundary face's integration point in global coordinates
      *
      * For this method, the \a values parameter stores the mass flux
@@ -342,7 +342,7 @@ public:
      * are specific to the fully-implicit method.
      *
      * \param values The source and sink values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^\textrm{dim} \cdot s )] \f$
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param scvIdx The local subcontrolvolume index
@@ -367,7 +367,7 @@ public:
      *        sub-control-volume.
      *
      * \param values The source and sink values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^\textrm{dim} \cdot s )] \f$
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param scvIdx The local subcontrolvolume index
@@ -390,7 +390,7 @@ public:
      *        sub-control-volume.
      *
      * \param values The source and sink values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^\textrm{dim} \cdot s )] \f$
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param globalPos The position of the center of the finite volume
      *            for which the source term ought to be
      *            specified in global coordinates
