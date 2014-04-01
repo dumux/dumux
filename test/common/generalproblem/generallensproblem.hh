@@ -172,7 +172,7 @@ SET_SCALAR_PROP(DecoupledGeneralLensProblem, ImpetCFLFactor, 0.95);
  * just the hydrostatic pressure. The DNAPL saturation on both sides
  * is zero.
  *
- * This problem uses the \ref TwoPBoxModel.
+ * This problem uses the \ref TwoPModel.
  *
  * This problem should typically be simulated until \f$t_{\text{end}}
  * \approx 20\,000\;s\f$ is reached. A good choice for the initial time step

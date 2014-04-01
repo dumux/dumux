@@ -118,6 +118,10 @@ class Stokes2cniTestProblem : public StokesProblem<TypeTag>
         massOrMoleFracIdx = Indices::massOrMoleFracIdx,
         temperatureIdx = Indices::temperatureIdx
     };
+    enum { //component indices
+        transportCompIdx = Indices::transportCompIdx,
+        phaseCompIdx = Indices::phaseCompIdx
+    };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -129,6 +133,8 @@ class Stokes2cniTestProblem : public StokesProblem<TypeTag>
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     Stokes2cniTestProblem(TimeManager &timeManager, const GridView &gridView)
@@ -243,11 +249,21 @@ private:
         values[pressureIdx] = 1e5 + 1.189*this->gravity()[1]*globalPos[1];
         values[massOrMoleFracIdx] = 1e-4;
         values[temperatureIdx] = 283.15;
-        if(globalPos[0]<0.75 && globalPos[0]>0.25 &&
-                globalPos[1]<0.75 && globalPos[1]>0.25)
+        if(globalPos[0] < 0.75 && globalPos[0] > 0.25 &&
+                globalPos[1] < 0.75 && globalPos[1] > 0.25)
         {
             values[massOrMoleFracIdx] = 0.9e-4;
             values[temperatureIdx] = 284.15;
+        }
+
+        if(useMoles)
+        {
+            Scalar M1 = FluidSystem::molarMass(transportCompIdx);
+            Scalar M2 = FluidSystem::molarMass(phaseCompIdx);
+            Scalar X1 = values[massOrMoleFracIdx];
+            Scalar X2 = 1.0 - X1;
+
+            values[massOrMoleFracIdx] = (X1/M1)/(X1/M1 + X2/M2);
         }
     }
     // \}
