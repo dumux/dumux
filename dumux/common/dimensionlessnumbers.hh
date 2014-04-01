@@ -263,15 +263,17 @@ static Scalar sherwoodNumber(const Scalar reynoldsNumber,
 
     else {
         DUNE_THROW(Dune::NotImplemented, "wrong index");
-    }}
+    }
+}
 
 
 /*!
  * \brief   Calculate the thermal diffusivity alpha [m^2/s].
  *
  *          The thermal diffusivity is a measure for how fast "temperature (not heat!) spreads".
- *          It is defined as \alpha = k / (rho c_p)
- *          with \alpha: k: thermal conductivity [W/mK], rho: density [kg/m^3], c_p: cpecific heat capacity at constant pressure [J/kgK].
+ *          It is defined as \f$\alpha = \frac{k}{\rho c_p}\f$
+ *          with \f$\alpha\f$: \f$k\f$: thermal conductivity [W/mK], \f$\rho\f$: density [kg/m^3],
+ *          \f$c_p\f$: cpecific heat capacity at constant pressure [J/kgK].
  *
  *          Source for thermal diffusivity definition: http://en.wikipedia.org/wiki/Thermal_diffusivity
  *

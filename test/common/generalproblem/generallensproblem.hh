@@ -146,7 +146,7 @@ SET_SCALAR_PROP(DecoupledGeneralLensProblem, ImpetCFLFactor, 0.95);
 }
 
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  * \ingroup IMPETtests
  *
  * \brief Soil contamination problem where DNAPL infiltrates a fully

@@ -649,8 +649,10 @@ public:
      *
      * The phaseIdx and transportCompIdx1 are predefined
      *
+     * \todo boundaryVars1 violates naming convention
+     *
      * \param elemVolVars1 All volume variables for the element
-     * \param boundaryVars1 Flux variables (\todo violates naming convention)
+     * \param boundaryVars1 Flux variables
      * \param vertInElem1 Vertex index for the inside element
      */
     Scalar computeAdvectiveVaporFluxes1(const ElementVolumeVariables1& elemVolVars1,
@@ -668,8 +670,10 @@ public:
      *
      * The transportCompIdx1 is predefined
      *
+     * \todo boundaryVars1 violates naming convention
+     *
      * \param elemVolVars1 All volume variables for the element
-     * \param boundaryVars1 Flux variables (\todo violates naming convention)
+     * \param boundaryVars1 Flux variables
      * \param vertInElem1 Vertex index for the inside elements
      */
     Scalar computeDiffusiveVaporFluxes1(const ElementVolumeVariables1& elemVolVars1,
