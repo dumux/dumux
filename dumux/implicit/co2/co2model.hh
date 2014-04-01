@@ -167,7 +167,7 @@ public:
            if (phasePresence == nPhaseOnly)
            {
 
-               Scalar xnw = volVars.fluidState().moleFraction(nPhaseIdx, wCompIdx);
+               Scalar xnw = volVars.moleFraction(nPhaseIdx, wCompIdx);
                Scalar xnwMax = FluidSystem::equilibriumMoleFraction(volVars.fluidState(), paramCache, nPhaseIdx);
 
                if(xnw > xnwMax)
@@ -193,7 +193,7 @@ public:
            else if (phasePresence == wPhaseOnly)
            {
 
-               Scalar xwn = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+               Scalar xwn = volVars.moleFraction(wPhaseIdx, nCompIdx);
                Scalar xwnMax = FluidSystem::equilibriumMoleFraction(volVars.fluidState(), paramCache, wPhaseIdx);
 
                //If mole fraction is higher than the equilibrium mole fraction make a phase switch
@@ -235,12 +235,12 @@ public:
                    if(!useMoles) //mass-fraction formulation
                    {
 					   globalSol[globalIdx][switchIdx]
-						   = volVars.fluidState().massFraction(wPhaseIdx, nCompIdx);
+						   = volVars.massFraction(wPhaseIdx, nCompIdx);
                    }
                    else //mole-fraction formulation
                    {
 					   globalSol[globalIdx][switchIdx]
-					       = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
+					       = volVars.moleFraction(wPhaseIdx, nCompIdx);
                    }
                }
                else if (volVars.saturation(wPhaseIdx) <= Smin)
@@ -255,12 +255,12 @@ public:
                    if(!useMoles) //mass-fraction formulation
                    {
 					   globalSol[globalIdx][switchIdx]
-						   = volVars.fluidState().massFraction(nPhaseIdx, wCompIdx);
+						   = volVars.massFraction(nPhaseIdx, wCompIdx);
                    }
                    else //mole-fraction formulation
                    {
 						globalSol[globalIdx][switchIdx]
-						= volVars.fluidState().moleFraction(nPhaseIdx, wCompIdx);
+						= volVars.moleFraction(nPhaseIdx, wCompIdx);
                    }
                }
            }
