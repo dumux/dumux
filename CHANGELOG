@@ -7,9 +7,13 @@ Differences Between DuMuX 2.4 and DuMuX 2.5
   - The three-dimensional implementation of the MPFA L-method is made
     available for the decoupled compositional 2p2c models. It also allows
     for simulation on an adaptive grid.
-  - The coupling of 2c2p with Stokes2c and 2c2pNI with Stokes2cNI was
-    added. Be aware of the harsh version restrictions mentioned in
-    dumux/test/modelcoupling/README .
+  - Coupling of 2c2p with stokesnc and 2p2cNI with Stokesncni was
+    added. The stokes2c and stokes2cni are now DEPRICATED and will be kicked 
+    out by the next release. Instead generalized stokesnc and stokesncni 
+    models are introduced. Unlike 2c models the transport equations in 
+    the nc models are capapable of using both mass and mole fractions.
+    NOTE: For coupling test examples be aware of the harsh version 
+    restrictions mentioned in dumux/test/modelcoupling/README.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - Dropped support for PDELab 1.0.1, PDELab 1.1 is required.
