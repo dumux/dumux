@@ -18,8 +18,8 @@
  * \file
  * \brief Base class for all problems which use the two-phase DFM fully implicit model
  */
-#ifndef DUMUX_BOXMODELS_2PDFM_PROBLEM_HH
-#define DUMUX_BOXMODELS_2PDFM_PROBLEM_HH
+#ifndef DUMUX_MODELS_2PDFM_PROBLEM_HH
+#define DUMUX_MODELS_2PDFM_PROBLEM_HH
 
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include "2pdfmproperties.hh"
@@ -28,7 +28,7 @@ namespace Dumux
 {
 /*!
  * \ingroup ImplicitBaseProblems
- * \ingroup TwoPDFMBoxModel
+ * \ingroup TwoPDFMModel
  * \brief Base class for all problems which use the two-phase DFM fully implicit model
  */
 template<class TypeTag>
@@ -60,4 +60,4 @@ public:
 };
 } // end namespace
 
-#endif // DUMUX_BOXMODELS_2PDFM_PROBLEM_HH
+#endif // DUMUX_MODELS_2PDFM_PROBLEM_HH

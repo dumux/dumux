@@ -20,8 +20,8 @@
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase discrete fracture-matrix model.
  */
-#ifndef DUMUX_BOXMODELS_2PDFM_VOLUME_VARIABLES_HH
-#define DUMUX_BOXMODELS_2PDFM_VOLUME_VARIABLES_HH
+#ifndef DUMUX_MODELS_2PDFM_VOLUME_VARIABLES_HH
+#define DUMUX_MODELS_2PDFM_VOLUME_VARIABLES_HH
 
 #include <dune/common/fvector.hh>
 
@@ -32,7 +32,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPDFMBoxModel
+ * \ingroup TwoPDFMModel
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase discrete fracture-matrix model.
@@ -387,4 +387,4 @@ private:
 };
 } // end namespace
 
-#endif // DUMUX_BOXMODELS_2PDFM_VOLUME_VARIABLES_HH
+#endif // DUMUX_MODELS_2PDFM_VOLUME_VARIABLES_HH

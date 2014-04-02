@@ -20,8 +20,8 @@
  * \brief Element-wise calculation of the residual for the finite volume in the
  *        two phase discrete fracture-matrix model.
  */
-#ifndef DUMUX_BOXMODELS_2PDFM_LOCAL_RESIDUAL_HH
-#define DUMUX_BOXMODELS_2PDFM_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_MODELS_2PDFM_LOCAL_RESIDUAL_HH
+#define DUMUX_MODELS_2PDFM_LOCAL_RESIDUAL_HH
 
 #include <dumux/implicit/2p/2plocalresidual.hh>
 #include "2pdfmproperties.hh"
@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPDFMBoxModel
+ * \ingroup TwoPDFMModel
  * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase discrete fracture fully implicit model.
@@ -333,4 +333,4 @@ private:
 
 } // end namespace
 
-#endif // DUMUX_BOXMODELS_2PDFM_LOCAL_RESIDUAL_HH
+#endif // DUMUX_MODELS_2PDFM_LOCAL_RESIDUAL_HH

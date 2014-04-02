@@ -21,11 +21,11 @@
  *        2pDFM fully implicit model.
  * 
  * \ingroup Properties
- * \ingroup TwoPDFMBoxModel
+ * \ingroup TwoPDFMModel
  * \ingroup ImplicitProperties
  */
-#ifndef DUMUX_BOXMODELS_2PDFM_PROPERTY_DEFAULTS_HH
-#define DUMUX_BOXMODELS_2PDFM_PROPERTY_DEFAULTS_HH
+#ifndef DUMUX_MODELS_2PDFM_PROPERTY_DEFAULTS_HH
+#define DUMUX_MODELS_2PDFM_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include <dumux/material/components/nullcomponent.hh>
@@ -142,4 +142,4 @@ SET_BOOL_PROP(TwoPDFM, ProblemEnableGravity, true);
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif // DUMUX_BOXMODELS_2PDFM_PROPERTY_DEFAULTS_HH
+#endif // DUMUX_MODELS_2PDFM_PROPERTY_DEFAULTS_HH

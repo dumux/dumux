@@ -20,8 +20,8 @@
  *        all fluxes of fluid phases over a face of a finite volume in the
  *        two phase discrete fracture-matrix model.
  */
-#ifndef DUMUX_BOXMODELS_2PDFM_FLUX_VARIABLES_HH
-#define DUMUX_BOXMODELS_2PDFM_FLUX_VARIABLES_HH
+#ifndef DUMUX_MODELS_2PDFM_FLUX_VARIABLES_HH
+#define DUMUX_MODELS_2PDFM_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
@@ -34,7 +34,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPDFMBoxModel
+ * \ingroup TwoPDFMModel
  * \ingroup ImplicitFluxVariables
  * \brief Contains the data which is required to calculate the fluxes of 
  *        the fluid phases over a face of a finite volume for the two-phase
@@ -226,4 +226,4 @@ private:
 
 } // end namespace
 
-#endif // DUMUX_BOXMODELS_2PDFM_FLUX_VARIABLES_HH
+#endif // DUMUX_MODELS_2PDFM_FLUX_VARIABLES_HH

@@ -22,8 +22,8 @@
 *        model.
 */
 
-#ifndef DUMUX_BOXMODELS_2PDFM_MODEL_HH
-#define DUMUX_BOXMODELS_2PDFM_MODEL_HH
+#ifndef DUMUX_MODELS_2PDFM_MODEL_HH
+#define DUMUX_MODELS_2PDFM_MODEL_HH
 
 #include <dumux/implicit/2p/2pmodel.hh>
 #include "2pdfmproperties.hh"
@@ -32,7 +32,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPDFMBoxModel
+ * \ingroup TwoPDFMModel
  * \brief A two-phase, isothermal flow model using the fully implicit scheme.
  *
  * This model implements two-phase flow of two immiscible fluids
@@ -75,4 +75,4 @@ class TwoPDFMModel : public TwoPModel<TypeTag>
 
 #include "2pdfmpropertydefaults.hh"
 
-#endif // DUMUX_BOXMODELS_2PDFM_MODEL_HH
+#endif // DUMUX_MODELS_2PDFM_MODEL_HH

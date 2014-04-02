@@ -58,10 +58,10 @@ public:
 };
 }
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup TwoPModel
  * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the 2PDFMProblem which uses the
- *        twophase box model
+ *        twophase model
  */
 template<class TypeTag>
 class TwoPDFMSpatialParams : public ImplicitSpatialParams<TypeTag>

@@ -21,11 +21,11 @@
  * 
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup TwoPDFMBoxModel
+ * \ingroup TwoPDFMModel
  */
 
-#ifndef DUMUX_BOXMODELS_2PDFM_PROPERTIES_HH
-#define DUMUX_BOXMODELS_2PDFM_PROPERTIES_HH
+#ifndef DUMUX_MODELS_2PDFM_PROPERTIES_HH
+#define DUMUX_MODELS_2PDFM_PROPERTIES_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
@@ -69,4 +69,4 @@ NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written 
 } // end namespace Properties
 } // end namespace Dumux
 
-#endif // DUMUX_BOXMODELS_2PDFM_PROPERTIES_HH
+#endif // DUMUX_MODELS_2PDFM_PROPERTIES_HH
