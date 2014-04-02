@@ -101,15 +101,15 @@
      */
         /*!
          * \ingroup ImplicitModels
-         * \defgroup OnePBoxModel One-phase
+         * \defgroup OnePModel One-phase
          *
-         * \copydetails Dumux::OnePBoxModel
+         * \copydetails Dumux::OnePModel
          */
         /*!
          * \ingroup ImplicitModels
-         * \defgroup OnePTwoCBoxModel One-phase Two-component
+         * \defgroup OnePTwoCModel One-phase Two-component
          *
-         * \copydetails Dumux::OnePTwoCBoxModel
+         * \copydetails Dumux::OnePTwoCModel
          */
         /*!
          * \ingroup ImplicitModels

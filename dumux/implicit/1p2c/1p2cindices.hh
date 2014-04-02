@@ -32,7 +32,7 @@ namespace Dumux
 // \{
 
 /*!
- * \ingroup OnePTwoCBoxModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitIndices
  * \brief The indices for the isothermal single-phase, two-component model.
  */

@@ -252,7 +252,7 @@ public:
     { return name_; }
 
     /*!
-     * \brief Returns the temperature \f$ K \f$
+     * \brief Returns the temperature [K]
      */
     Scalar temperature() const
     { return temperature_; };

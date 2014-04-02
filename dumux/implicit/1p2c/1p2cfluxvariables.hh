@@ -37,7 +37,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePTwoCBoxModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate the fluxes of the fluid phases over a face of a
@@ -381,11 +381,11 @@ protected:
             const Element& elementI = *fvGeometry_.neighbors[face().i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
-            
+
             const Element& elementJ = *fvGeometry_.neighbors[face().j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
-            
+
             sp.meanK(K_,
                      sp.intrinsicPermeability(elementI, fvGeometryI, 0),
                      sp.intrinsicPermeability(elementJ, fvGeometryJ, 0));

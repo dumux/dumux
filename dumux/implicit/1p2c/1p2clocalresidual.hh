@@ -32,7 +32,7 @@ namespace Dumux
 {
 /*!
  *
- * \ingroup OnePTwoCBoxModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitLocalResidual
  * \brief Calculate the local Jacobian for the single-phase,
  *        two-component model in the fully implicit scheme.

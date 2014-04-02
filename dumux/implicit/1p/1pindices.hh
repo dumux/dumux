@@ -28,7 +28,7 @@ namespace Dumux
 // \{
 
 /*!
- * \ingroup OnePBoxModel
+ * \ingroup OnePModel
  * \ingroup ImplicitIndices
  * \brief Indices for the one-phase model.
  */

@@ -19,7 +19,7 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup OnePTwoCBoxModel
+ * \ingroup OnePTwoCModel
  * \file
  *
  * \brief Defines some default values for the properties of the the

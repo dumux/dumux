@@ -34,7 +34,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePTwoCBoxModel
+ * \ingroup OnePTwoCModel
  * \brief Adaption of the fully implicit scheme to the one-phase two-component flow model.
  *
  * This model implements a one-phase flow of a compressible fluid, that consists of two components,

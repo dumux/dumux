@@ -90,7 +90,7 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
 
 
 /*!
- * \ingroup OnePTwoCBoxModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitTestProblems
  *
  * \brief Definition of a problem, for the 1p2c problem:
@@ -111,7 +111,7 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
  *
- * This problem uses the \ref OnePTwoCBoxModel model.
+ * This problem uses the \ref OnePTwoCModel model.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_box1p2c -parameterFile ./test_box1p2c.input</tt> or 
@@ -195,7 +195,7 @@ public:
     }
 
     /*!
-     * \brief Returns the temperature within the domain.
+     * \brief Returns the temperature within the domain [K].
      *
      * This problem assumes a temperature of 20 degrees Celsius.
      */
@@ -227,7 +227,7 @@ public:
         {
             values.setAllNeumann();
         }
-        
+
         // outflow condition for the transport equation at right boundary
         if(globalPos[0] > this->bBoxMax()[0] - eps_)
             values.setOutflow(transportEqIdx);

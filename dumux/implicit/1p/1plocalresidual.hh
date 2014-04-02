@@ -30,7 +30,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup OnePBoxModel
+ * \ingroup OnePModel
  * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the one-phase fully implicit model.

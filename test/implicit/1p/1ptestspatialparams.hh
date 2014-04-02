@@ -31,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePBoxModel
+ * \ingroup OnePModel
  * \ingroup ImplicitTestProblems
  *
  * \brief The spatial parameters class for the test problem using the
@@ -86,7 +86,7 @@ public:
     }
 
     /*!
-     * \brief Return the intrinsic permeability for the current sub-control volume.
+     * \brief Return the intrinsic permeability for the current sub-control volume in [m^2].
      *
      * \param element The current finite element
      * \param fvGeometry The current finite volume geometry of the element
@@ -105,7 +105,7 @@ public:
             return permeability_;
     }
 
-    /*! \brief Define the porosity.
+    /*! \brief Define the porosity in [-].
    *
    * \param element The finite element
    * \param fvGeometry The finite volume geometry

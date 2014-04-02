@@ -106,7 +106,7 @@ SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
 }
 
 /*!
- * \ingroup OnePBoxModel
+ * \ingroup OnePModel
  * \ingroup ImplicitTestProblems
  * \brief  Test problem for the one-phase model:
  * water is flowing from bottom to top through and around a low permeable lens.
@@ -185,7 +185,7 @@ public:
     }
 
     /*!
-     * \brief Return the temperature within the domain.
+     * \brief Return the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */

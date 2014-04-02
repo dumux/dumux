@@ -33,7 +33,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePBoxModel
+ * \ingroup OnePModel
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the one-phase model.
@@ -143,7 +143,7 @@ public:
     { return fluidState_.viscosity(/*phaseIdx=*/0); }
 
     /*!
-     * \brief Returns the mobility.
+     * \brief Returns the mobility \f$\mathrm{[1/(Pa s)]}\f$.
      * 
      * This function enables the use of ImplicitDarcyFluxVariables 
      * with the 1p fully implicit model, ALTHOUGH the term mobility is

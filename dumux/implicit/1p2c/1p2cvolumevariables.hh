@@ -33,7 +33,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePTwoCBoxModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the single-phase, two-component model.

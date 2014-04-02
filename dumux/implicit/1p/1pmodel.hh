@@ -33,7 +33,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup OnePBoxModel
+ * \ingroup OnePModel
  * \brief A single-phase, isothermal flow model using the fully implicit scheme.
  *
  * Single-phase, isothermal flow model, which uses a standard Darcy approach as the

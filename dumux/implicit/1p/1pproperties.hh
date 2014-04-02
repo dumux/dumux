@@ -19,7 +19,7 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup OnePBoxModel
+ * \ingroup OnePModel
  * \file
  *
  * \brief Defines the properties required for the one-phase fully implicit model.
