@@ -46,7 +46,6 @@ namespace Properties
 //! The type tags for the implicit two-phase DFM problems
 NEW_TYPE_TAG(TwoPDFM);
 NEW_TYPE_TAG(BoxTwoPDFM, INHERITS_FROM(BoxModel, TwoPDFM));
-NEW_TYPE_TAG(CCTwoPDFM, INHERITS_FROM(CCModel, TwoPDFM));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
