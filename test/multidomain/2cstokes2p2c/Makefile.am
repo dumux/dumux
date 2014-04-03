@@ -8,8 +8,9 @@ headercheck_IGNORE = \
   stokes2csubproblem.hh
 endif
 
-test_2cstokes2p2c_SOURCES = test_2cstokes2p2c.cc
+noinst_HEADERS = *.hh
+EXTRA_DIST = *.input grids/*.dgf CMakeLists.txt
 
-EXTRA_DIST = CMakeLists.txt
+test_2cstokes2p2c_SOURCES = test_2cstokes2p2c.cc
 
 include $(top_srcdir)/am/global-rules
