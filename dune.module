@@ -3,7 +3,7 @@
 ################################
 
 Module: dumux
-Version: 2.5-svn
+Version: 2.6-svn
 Maintainer: dumux@listserv.uni-stuttgart.de
-Depends: dune-grid (>= 2.2) dune-localfunctions (>= 2.2) dune-istl (>= 2.2)
-Suggests: dune-pdelab (>=1.0) dune-multidomain
+Depends: dune-grid (>= 2.3) dune-localfunctions (>= 2.3) dune-istl (>= 2.3)
+Suggests: dune-pdelab (>=1.1) dune-multidomain
