@@ -1,7 +1,6 @@
 #ifndef DUMUX_INTERFACEMESHCREATOR_HH
 #define DUMUX_INTERFACEMESHCREATOR_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 
@@ -29,11 +28,7 @@ public:
         typedef typename HelperGridView::Traits::template Codim<0>::Entity HelperElement;
         typedef typename HelperElement::Geometry HelperGeometry;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
         HelperElementIterator helperElementIterator = helperGrid.leafGridView().template begin<0>();
-#else
-        HelperElementIterator helperElementIterator = helperGrid.leafView().template begin<0>();
-#endif
         const HelperElement& helperElement = *helperElementIterator;
         const HelperGeometry& helperGeometry = helperElement.geometry();
 

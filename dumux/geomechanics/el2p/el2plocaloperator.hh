@@ -62,11 +62,7 @@ class El2PLocalOperator
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
-            typedef typename GridView::template Codim<0>::Entity::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
-#else
-            typedef typename GridView::template Codim<0>::Entity::Geometry::Jacobian JacobianInverseTransposed;
-#endif
+    typedef typename GridView::template Codim<0>::Entity::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename Dune::PDELab::IntersectionGeometry<Intersection>::ctype DT;
@@ -387,19 +383,11 @@ public:
             // get dimension of face
             const int dimIs = Dune::PDELab::IntersectionGeometry<Intersection>::Entity::Geometry::dimension;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
             // get reference element for intersection geometry (reference element for face if dim = 3)
             const Dune::ReferenceElement<DT,dimIs>& refElement = Dune::ReferenceElements<DT,dimIs>::general(geomType);
             // get reference element for edges of intersection geometry (reference element for edge if dim = 3), needed for Dirichlet BC
-            const Dune::ReferenceElement<DT,dimIs-1> &face_refElement
-            = Dune::ReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());
-#else
-            // get reference element for intersection geometry (reference element for face if dim = 3)
-            const Dune::GenericReferenceElement<DT,dimIs>& refElement = Dune::GenericReferenceElements<DT,dimIs>::general(geomType);
-            // get reference element for edges of intersection geometry (reference element for edge if dim = 3), needed for Dirichlet BC
-            const Dune::GenericReferenceElement<DT,dimIs-1> &face_refElement
-            = Dune::GenericReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());
-#endif
+            const Dune::ReferenceElement<DT,dimIs-1> &face_refElement =
+                Dune::ReferenceElements<DT,dimIs-1>::general(isIt->geometryInInside().type());
 
             // Treat Neumann boundary conditions
             // loop over quadrature points and integrate normal stress changes (traction changes)

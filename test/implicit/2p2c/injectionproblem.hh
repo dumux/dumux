@@ -24,7 +24,6 @@
 #ifndef DUMUX_INJECTION_PROBLEM_HH
 #define DUMUX_INJECTION_PROBLEM_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
@@ -158,11 +157,7 @@ public:
      */
     InjectionProblem(TimeManager &timeManager,
                      const GridView &gridView)
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
         : ParentType(timeManager, GridCreator::grid().leafGridView())
-#else
-        : ParentType(timeManager, GridCreator::grid().leafView())
-#endif
     {
         try
         {

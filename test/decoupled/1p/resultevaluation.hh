@@ -78,11 +78,7 @@ public:
         typedef typename Element::Geometry Geometry;
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
-#else
-        typedef typename Geometry::Jacobian JacobianInverseTransposed;    
-#endif
 
         uMin = 1e100;
         uMax = -1e100;
@@ -111,14 +107,8 @@ public:
 
             // element geometry
             const Geometry& geometry = element.geometry();
-
             Dune::GeometryType geomType = geometry.type();
-
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
             typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-#else
-            typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-#endif
             const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
             Dune::FieldVector<Scalar,dim> global = geometry.global(local);
 

@@ -49,13 +49,8 @@ class IntersectionToVertexBC
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
-#else
-    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
-#endif
 
 public:
     IntersectionToVertexBC(const Problem& problem)

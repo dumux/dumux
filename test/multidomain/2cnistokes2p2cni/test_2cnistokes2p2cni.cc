@@ -27,13 +27,7 @@
 #include <iostream>
 #include <boost/format.hpp>
 
-#include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
 #include <dune/common/parallel/mpihelper.hh>
-#else
-#include <dune/common/mpihelper.hh>
-#endif
-
 #include <dune/common/parametertreeparser.hh>
 #include <dumux/io/interfacemeshcreator.hh>
 

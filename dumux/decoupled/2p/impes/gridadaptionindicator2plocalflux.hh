@@ -98,11 +98,7 @@ private:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-#else
-    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-#endif
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;

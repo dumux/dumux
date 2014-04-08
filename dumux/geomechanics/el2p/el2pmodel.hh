@@ -121,11 +121,7 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     };
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
-            typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
-#else
-            typedef typename Element::Geometry::Jacobian JacobianInverseTransposed;
-#endif
+    typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> DimVector;

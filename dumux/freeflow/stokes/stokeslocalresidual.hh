@@ -67,13 +67,8 @@ protected:
     };
     enum { pressureIdx = Indices::pressureIdx }; //!< Index of the pressure in a solution vector
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
-#else
-    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
-#endif
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 

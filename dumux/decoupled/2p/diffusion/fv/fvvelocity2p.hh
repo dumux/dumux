@@ -80,22 +80,14 @@ class FVVelocity2P
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename Element::Geometry Geometry;
-    #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
-        typedef typename Geometry::JacobianTransposed JacobianTransposed;
-    #else
-        typedef typename Geometry::Jacobian JacobianTransposed;
-    #endif
+    typedef typename Geometry::JacobianTransposed JacobianTransposed;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-#else
-    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-#endif
 
     enum
     {

@@ -18,8 +18,6 @@
  *****************************************************************************/
 #include "config.h"
 
-#include <dune/common/version.hh>
-
 #include <dumux/common/start.hh>
 #include <dumux/io/interfacemeshcreator.hh>
 #include "evaporationatmosphereproblem.hh"
@@ -282,13 +280,7 @@ int start_(int argc,
     TimeManager timeManager;
 
     // instantiate coupled problem
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
     Problem problem(timeManager, gridPtr->leafGridView());
-#else
-    Problem problem(timeManager,
-                    gridPtr->leafView());
-#endif
-
     Dumux::Parameters::print<TypeTag>();
 
     // run the simulation

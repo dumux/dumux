@@ -19,7 +19,6 @@
 #ifndef DUMUX_VARIABLECLASS_ADAPTIVE_HH
 #define DUMUX_VARIABLECLASS_ADAPTIVE_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dumux/linear/vectorexchange.hh>
 #include "variableclass.hh"
@@ -89,21 +88,14 @@ public:
      */
     void storePrimVars(const Problem& problem)
     {
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
         adaptationMap_.resize();
-#else
-        adaptationMap_.reserve();
-#endif
 
         // loop over all levels of the grid
         for (int level = grid_.maxLevel(); level >= 0; level--)
         {
             //get grid view on level grid
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
             LevelGridView levelView = grid_.levelGridView(level);
-#else
-            LevelGridView levelView = grid_.levelView(level);
-#endif
+
             for (LevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
             {
                 //get your map entry
@@ -149,19 +141,12 @@ public:
      */
     void reconstructPrimVars(const Problem& problem)
     {
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
         adaptationMap_.resize();
-#else
-        adaptationMap_.reserve();
-#endif
 
         for (int level = 0; level <= grid_.maxLevel(); level++)
         {
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
             LevelGridView levelView = grid_.levelGridView(level);
-#else
-            LevelGridView levelView = grid_.levelView(level);
-#endif
+
             for (LevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
             {
                 // only treat non-ghosts, ghost data is communicated afterwards
@@ -211,13 +196,9 @@ public:
 
         }
         // reset entries in restrictionmap
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
         adaptationMap_.resize( typename PersistentContainer::Value() );
         adaptationMap_.shrinkToFit();
         adaptationMap_.fill( typename PersistentContainer::Value() );
-#else
-        adaptationMap_.clear();
-#endif
 
 #if HAVE_MPI
         // communicate ghost data

@@ -28,15 +28,9 @@
 #if HAVE_ALUGRID | HAVE_UGGRID
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
 #include <dune/common/parallel/mpihelper.hh>
-#else
-#include <dune/common/mpihelper.hh>
-#endif
-
-#include <dune/grid/common/gridinfo.hh>
 #include <dune/common/parametertreeparser.hh>
+#include <dune/grid/common/gridinfo.hh>
 
 #include <dumux/common/start.hh>
 
@@ -132,11 +126,8 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(FVTypeTag, Problem) FVProblem;
         typedef GET_PROP(FVTypeTag, ParameterTree) FVParameterTree;
         Dune::ParameterTreeParser::readINITree(parameterFileName, FVParameterTree::tree());
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
         FVProblem *fvProblem = new FVProblem(grid->leafGridView());
-#else
-        FVProblem *fvProblem = new FVProblem(grid->leafView());
-#endif
+
         std::string fvOutput("test_diffusion3d_fv");
         fvOutput += outputName;
         if (numRefine > 0)
@@ -152,12 +143,7 @@ int main(int argc, char** argv)
         double fvTime = timer.elapsed();
         fvProblem->writeOutput();
         Dumux::ResultEvaluation fvResult;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
         fvResult.evaluate(grid->leafGridView(), *fvProblem, consecutiveNumbering);
-#else
-        fvResult.evaluate(grid->leafView(), *fvProblem, consecutiveNumbering);
-#endif
-
         delete fvProblem;
 
         typedef TTAG (FVMPFAL3DTestProblem)
@@ -165,12 +151,8 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(MPFALTypeTag, Problem) MPFALProblem;
         typedef GET_PROP(MPFALTypeTag, ParameterTree) MPFALParameterTree;
         Dune::ParameterTreeParser::readINITree(parameterFileName, MPFALParameterTree::tree());
-
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
         MPFALProblem *mpfaProblem = new MPFALProblem(grid->leafGridView());
-#else
-        MPFALProblem *mpfaProblem = new MPFALProblem(grid->leafView());
-#endif
+
         std::string fvmpfaOutput("test_diffusion3d_fvmpfal");
         fvmpfaOutput += outputName;
         if (numRefine > 0)
@@ -185,12 +167,7 @@ int main(int argc, char** argv)
         double mpfaTime = timer.elapsed();
         mpfaProblem->writeOutput();
         Dumux::ResultEvaluation mpfaResult;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
         mpfaResult.evaluate(grid->leafGridView(), *mpfaProblem, consecutiveNumbering);
-#else
-        mpfaResult.evaluate(grid->leafView(), *mpfaProblem, consecutiveNumbering);
-#endif
-
         delete mpfaProblem;
 
         typedef TTAG (MimeticTestProblem)
@@ -198,12 +175,8 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(MimeticTypeTag, Problem) MimeticProblem;
         typedef GET_PROP(MimeticTypeTag, ParameterTree) MimeticParameterTree;
         Dune::ParameterTreeParser::readINITree(parameterFileName, MimeticParameterTree::tree());
-
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
         MimeticProblem *mimeticProblem = new MimeticProblem(grid->leafGridView());
-#else
-        MimeticProblem *mimeticProblem = new MimeticProblem(grid->leafView());
-#endif
+
         std::string mimeticOutput("test_diffusion3d_mimetic");
         mimeticOutput += outputName;
         if (numRefine > 0)
@@ -218,12 +191,7 @@ int main(int argc, char** argv)
         double mimeticTime = timer.elapsed();
         mimeticProblem->writeOutput();
         Dumux::ResultEvaluation mimeticResult;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
         mimeticResult.evaluate(grid->leafGridView(), *mimeticProblem, consecutiveNumbering);
-#else
-        mimeticResult.evaluate(grid->leafView(), *mimeticProblem, consecutiveNumbering);
-#endif
-
         delete mimeticProblem;
 
         std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);

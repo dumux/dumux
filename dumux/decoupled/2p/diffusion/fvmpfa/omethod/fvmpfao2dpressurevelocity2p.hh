@@ -72,13 +72,8 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
     typedef typename GridView::Traits::template Codim<dim>::EntityPointer VertexPointer;
     typedef typename GridView::Intersection Intersection;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
-#else
-    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
-#endif
 
     typedef Dumux::FVMPFAOInteractionVolume<TypeTag> InteractionVolume;
 

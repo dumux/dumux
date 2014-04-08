@@ -30,7 +30,6 @@
 #include <sstream>
 #include <iomanip>
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/gridfactory.hh>
 
@@ -527,13 +526,8 @@ public:
         {
              Dune::GeometryType geomType = eIt->geometry().type();
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
              const typename Dune::ReferenceElementContainer<DT,dim>::value_type&
                  refElement = Dune::ReferenceElements<DT,dim>::general(geomType);
-#else
-             const typename Dune::GenericReferenceElementContainer<DT,dim>::value_type&
-                 refElement = Dune::GenericReferenceElements<DT,dim>::general(geomType);
-#endif
 
               // Loop over element faces
               for (int i = 0; i < refElement.size(1); i++)

@@ -24,7 +24,6 @@
 #ifndef DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 
-#include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
@@ -329,15 +328,9 @@ class BoxFVElementGeometry
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
-#else
-    typedef typename Geometry::Jacobian JacobianInverseTransposed;
-    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
-#endif
 
     typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
     typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;

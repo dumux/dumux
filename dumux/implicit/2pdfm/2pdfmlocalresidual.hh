@@ -68,14 +68,8 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<DT, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<DT, dim> ReferenceElement;
-#else
-    typedef typename Dune::GenericReferenceElements<DT, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<DT, dim> ReferenceElement;
-#endif
-
 
 public:
     /*!

@@ -27,12 +27,7 @@
 #include <iostream>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
 #include <dune/common/parallel/mpihelper.hh>
-#else
-#include <dune/common/mpihelper.hh>
-#endif
 #include <dune/grid/common/gridinfo.hh>
 
 #include "test_multiphysics2p2cproblem.hh"
@@ -104,11 +99,7 @@ int main(int argc, char** argv)
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
         TimeManager timeManager;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
         Problem problem(timeManager, grid.leafGridView(), L, H);
-#else
-        Problem problem(timeManager, grid.leafView(), L, H);
-#endif
 
         // initialize the simulation
         timeManager.init(problem, startTime, firstDt, tEnd, restart);

@@ -20,7 +20,6 @@
 #define DUMUX_FV3DPRESSURE2P2C_ADAPTIVE_HH
 
 // dune environent:
-#include <dune/common/version.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
@@ -124,13 +123,9 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
 
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 3)
     typedef Dune::ReferenceElements<Scalar, dim> ReferenceElementContainer;
     typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
-#else
-    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
-    typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
-#endif
+
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;

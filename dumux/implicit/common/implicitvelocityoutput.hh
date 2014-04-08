@@ -60,11 +60,7 @@ class ImplicitVelocityOutput
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
-#else
-    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
-#endif
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };

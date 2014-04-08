@@ -27,7 +27,6 @@
 #include <string>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/version.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
@@ -43,11 +42,7 @@ class VtkNestedFunction : public Dune::VTKFunction<GridView>
     enum { dim = GridView::dimension };
     typedef typename GridView::ctype ctype;
     typedef typename GridView::template Codim<0>::Entity Element;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<ctype, dim> ReferenceElements;
-#else
-    typedef typename Dune::GenericReferenceElements<ctype, dim> ReferenceElements;
-#endif
 
 public:
     VtkNestedFunction(std::string name,

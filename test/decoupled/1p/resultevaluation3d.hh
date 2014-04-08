@@ -26,7 +26,6 @@
 #ifndef DUMUX_BENCHMARKRESULT_HH
 #define DUMUX_BENCHMARKRESULT_HH
 
-#include <dune/common/version.hh>
 #include <dumux/decoupled/common/onemodelproblem.hh>
 
 namespace Dumux
@@ -104,7 +103,6 @@ public:
 
         enum{dim = Grid::dimension};
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
         typedef typename Dune::ReferenceElements<ct, dim> ReferenceElements;
         const GV& gridview(grid.levelGridView(grid.maxLevel()));
@@ -112,15 +110,6 @@ public:
         EM elementmapper(gridview);
         FM facemapper(gridview);
         SolutionType& exactSol(grid.levelGridView(grid.maxLevel()));
-#else
-        typedef typename Geometry::Jacobian JacobianInverseTransposed;
-        typedef typename Dune::GenericReferenceElements<ct, dim> ReferenceElements;
-        const GV& gridview(grid.levelView(grid.maxLevel()));
-        const IS& indexset(gridview.indexSet());
-        EM elementmapper(gridview);
-        FM facemapper(gridview);
-        SolutionType& exactSol(grid.levelView(grid.maxLevel()));
-#endif
 
         uMean = 0;
         double domainVolume = 0;
@@ -447,13 +436,8 @@ public:
         typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > SolVector;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
         typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-#else
-        typedef typename Geometry::Jacobian JacobianInverseTransposed;
-        typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-#endif
 
         ElementMapper elementMapper(gridView);
         SolVector exactSol(gridView.size(0));
@@ -739,15 +723,9 @@ public:
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
         typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
         typedef typename Dune::ReferenceElements<Scalar, dim-1> ReferenceFaces;
-#else
-        typedef typename Geometry::Jacobian JacobianInverseTransposed;
-        typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-        typedef typename Dune::GenericReferenceElements<Scalar, dim-1> ReferenceFaces;
-#endif
 
         ElementMapper elementMapper(gridView);
 

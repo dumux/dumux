@@ -106,11 +106,7 @@ template<class TypeTag> class MimeticPressure2P
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename Element::Geometry Geometry;
-    #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
-        typedef typename Geometry::JacobianTransposed JacobianTransposed;
-    #else
-        typedef typename Geometry::Jacobian JacobianTransposed;
-    #endif
+    typedef typename Geometry::JacobianTransposed JacobianTransposed;
 
     typedef typename GET_PROP_TYPE(TypeTag, LocalStiffness) LocalStiffness;
     typedef Dune::BlockVector< Dune::FieldVector<Scalar, 1> > TraceType;
@@ -125,13 +121,8 @@ template<class TypeTag> class MimeticPressure2P
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
-#else
-    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
-#endif
 
     //initializes the matrix to store the system of equations
     void initializeMatrix();

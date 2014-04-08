@@ -48,11 +48,8 @@ class ElTwoPElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(T
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
-            typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
-#else
-            typedef typename Element::Geometry::Jacobian JacobianInverseTransposed;
-#endif
+    typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;

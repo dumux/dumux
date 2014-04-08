@@ -56,13 +56,8 @@ class FvMpfaL3d2P2CInteractionVolumeContainerAdaptive : public FvMpfaL3dInteract
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
-#else
-    typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
-#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 

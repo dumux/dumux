@@ -69,13 +69,8 @@ class ImplicitModel
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 3)
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
-#else
-    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
-#endif
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
