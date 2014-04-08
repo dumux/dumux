@@ -16,7 +16,6 @@ dune-multidomaingrid Git commit 30ff14d6b49c8adabf9e5cec67f20fcb3270a77e
 dune-multidomain Git commit deac3cecfc6697c1f5316d55c0fadd74f51d92bc
 
 Then you have to patch PDELab with the patch from patches/pdelab-1.1.0.patch .
-And you have to patch DuMuX with the patch from patches/dumux-multidomain.patch .
 
 Install the external grid manager UG. Additional you need to install a
 direct linear solver like SuperLU or PARDISO.
