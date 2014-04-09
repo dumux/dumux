@@ -1,4 +1,4 @@
-check_PROGRAMS = test_boxmpnc test_ccmpnc test_forchheimer2p test_forchheimer1p test_boxmpnckinetic
+check_PROGRAMS = test_boxmpnc test_ccmpnc test_forchheimer2p test_forchheimer1p test_boxmpnckinetic test_boxmpncthermalnonequil
 noinst_HEADERS = *.hh
 
 EXTRA_DIST= *.input CMakeLists.txt grids/*.dgf
@@ -10,6 +10,7 @@ test_ccmpnc_SOURCES = test_ccmpnc.cc
 test_forchheimer2p_SOURCES = test_forchheimer2p.cc
 test_forchheimer1p_SOURCES = test_forchheimer1p.cc
 test_boxmpnckinetic_SOURCES = test_boxmpnckinetic.cc
+test_boxmpncthermalnonequil_SOURCES = test_boxmpncthermalnonequil.cc
 
 
 
