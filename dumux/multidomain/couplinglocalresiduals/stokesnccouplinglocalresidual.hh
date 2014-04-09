@@ -159,7 +159,8 @@ public:
                                 boundaryVars.face().normal;
 
                         boundaryVars.velocityGrad().umv(boundaryFaceNormal, muGradVelNormal);
-                        muGradVelNormal *= boundaryVars.dynamicViscosity();
+                        muGradVelNormal *= (boundaryVars.dynamicViscosity()
+                                            + boundaryVars.dynamicEddyViscosity());
 
                         for (int i=0; i < this->residual_.size(); i++)
                             Valgrind::CheckDefined(this->residual_[i]);
@@ -352,7 +353,8 @@ protected:
                     this->residual_[scvIdx][dimIdx] += beaversJosephCoeff *
                                             boundaryFaceArea *
                                             tangentialV[dimIdx] *
-                                            boundaryVars.dynamicViscosity();
+                                            (boundaryVars.dynamicViscosity()
+                                             + boundaryVars.dynamicEddyViscosity());
 
                 ////////////////////////////////////////////////////////////////////////////////////
                 //normal component has only to be set if no coupling conditions are defined

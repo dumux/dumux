@@ -388,7 +388,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
                 const Scalar diffusiveFlux =
                     bfNormal1.two_norm() *
                     normalMoleFracGrad *
-                    boundaryVars1.diffusionCoeff(transportCompIdx1) *
+                    (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
                     boundaryVars1.molarDensity() *
                     FluidSystem::molarMass(transportCompIdx1);
 
@@ -412,7 +412,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
                         const Scalar diffusiveFluxAtCorner =
                             bfNormal1 *
                             boundaryVars1.moleFractionGrad(transportCompIdx1) *
-                            boundaryVars1.diffusionCoeff(transportCompIdx1) *
+                            (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
                             boundaryVars1.molarDensity() *
                             FluidSystem::molarMass(transportCompIdx1);
 
@@ -439,7 +439,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
                     const Scalar diffusiveFlux =
                         bfNormal1 *
                         boundaryVars1.moleFractionGrad(transportCompIdx1) *
-                        boundaryVars1.diffusionCoeff(transportCompIdx1) *
+                        (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
                         boundaryVars1.molarDensity() *
                         FluidSystem::molarMass(transportCompIdx1);
 
