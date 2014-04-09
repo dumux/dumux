@@ -55,8 +55,8 @@ NEW_PROP_TAG(MPNCModelKinetic);
 //! Enable kinetic resolution of mass transfer processes?
 NEW_PROP_TAG(EnableKinetic);
 
-//! Enable kinetic resolution of energy transfer processes?
-NEW_PROP_TAG(EnableKineticEnergy);
+//! Property for the definition of the number of energy equations (0,1,2,3)
+NEW_PROP_TAG(NumEnergyEquations);
 
 //! average the velocity in the model
 NEW_PROP_TAG(VelocityAveragingInModel);

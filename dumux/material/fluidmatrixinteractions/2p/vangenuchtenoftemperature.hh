@@ -43,6 +43,7 @@ template <class ScalarT, class ParamsT = RegularizedVanGenuchtenParams<ScalarT> 
 class RegularizedVanGenuchtenOfTemperature : public Dumux::RegularizedVanGenuchten<ScalarT, ParamsT>
 {
     typedef Dumux::RegularizedVanGenuchten<ScalarT, ParamsT> RegularizedVanGenuchten;
+    // Data is in /home/pnuske/paper/pcOfT/
 
 public:
     typedef ParamsT Params;

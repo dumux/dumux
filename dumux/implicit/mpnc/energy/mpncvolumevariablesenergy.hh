@@ -37,13 +37,13 @@ namespace Dumux
  * only isothermal in the sense that the temperature at a location and
  * a time is specified outside of the model!
  */
-template <class TypeTag, bool enableEnergy/*=false*/, bool kineticEnergyTransfer /*=don't care*/>
+template <class TypeTag, bool enableEnergy/*=false*/, int numEnergyEquations /*=don't care*/>
 class MPNCVolumeVariablesEnergy
 {
-    static_assert(!(kineticEnergyTransfer && !enableEnergy),
+    static_assert(not (numEnergyEquations and not enableEnergy),
                   "No kinetic energy transfer may only be enabled "
                   "if energy is enabled in general.");
-    static_assert(!kineticEnergyTransfer,
+    static_assert(numEnergyEquations < 1,
                   "No kinetic energy transfer module included, "
                   "but kinetic energy transfer enabled.");
 
@@ -123,7 +123,7 @@ public:
  *        finite volume in the two-phase, N-component model.
  */
 template <class TypeTag>
-class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyTransfer=*/false>
+class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/ 1 >
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -227,9 +227,6 @@ public:
     Scalar densitySolid() const
     { return densitySolid_; }
 
-	DUNE_DEPRECATED_MSG("use densitySolid() instead")
-    Scalar soilDensity() const
-    { return densitySolid(); }
 
     /*!
      * \brief If running under valgrind this produces an error message

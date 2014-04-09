@@ -31,19 +31,18 @@
 
 namespace Dumux
 {
-
 /*!
  * \ingroup MPNCModel
  * \ingroup ImplicitFluxVariables
  * \brief Variables for the enthalpy fluxes in the MpNc model
  */
-template <class TypeTag, bool enableEnergy/*=false*/, bool kineticEnergyTransfer/*=false*/>
+template <class TypeTag, bool enableEnergy/*=false*/, int numEnergyEquations/*=0*/>
 class MPNCFluxVariablesEnergy
 {
-    static_assert(!(kineticEnergyTransfer && !enableEnergy),
+    static_assert(!(numEnergyEquations && !enableEnergy),
                   "No kinetic energy transfer may only be enabled "
                   "if energy is enabled in general.");
-    static_assert(!kineticEnergyTransfer,
+    static_assert(!numEnergyEquations,
                   "No kinetic energy transfer module included, "
                   "but kinetic energy transfer enabled.");
 
@@ -83,7 +82,7 @@ public:
 };
 
 template <class TypeTag>
-class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTransfer=*/false>
+class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*numEnergyEquations=*/1>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

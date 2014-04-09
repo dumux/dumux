@@ -53,12 +53,13 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
-    enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum {numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
-
+    
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -69,7 +70,7 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
-    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
+    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations> EnergyResid;
     typedef MPNCLocalResidualMass<TypeTag, enableKinetic> MassResid;
 
 public:
@@ -238,16 +239,16 @@ public:
      */
     void eval(const Element &element,
               const FVElementGeometry &fvGeometry,
-              const ElementVolumeVariables &prevVolVars,
-              const ElementVolumeVariables &curVolVars,
+              const ElementVolumeVariables &prevElemVolVars,
+              const ElementVolumeVariables &curElemVolVars,
               const ElementBoundaryTypes &bcType)
     {
         ParentType::eval(element,
                          fvGeometry,
-                         prevVolVars,
-                         curVolVars,
+                         prevElemVolVars,
+                         curElemVolVars,
                          bcType);
-
+      
         if (GET_PROP_VALUE(TypeTag, ImplicitIsBox) 
             || !bcType.hasDirichlet())
         {

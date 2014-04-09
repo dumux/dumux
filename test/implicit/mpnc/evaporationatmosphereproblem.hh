@@ -62,9 +62,9 @@
 #include <dumux/io/plotoverline2d.hh>
 
 #include <dumux/material/fluidstates/nonequilibriumfluidstate.hh>
-#include <dumux/material/fluidstates/nonequilibriumenergyfluidstate.hh>
-#include <dumux/material/fluidstates/nonequilibriummassfluidstate.hh>
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+//#include <dumux/material/fluidstates/nonequilibriumenergyfluidstate.hh>
+//#include <dumux/material/fluidstates/nonequilibriummassfluidstate.hh>
+//#include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
 #include "evaporationatmospherespatialparams.hh"
 
@@ -161,7 +161,7 @@ SET_BOOL_PROP(EvaporationAtmosphereProblem, NewtonWriteConvergence, false);
 // Specify whether there is any energy equation
 SET_BOOL_PROP(EvaporationAtmosphereProblem, EnableEnergy, true );
 // Specify whether the kinetic energy module is used
-SET_BOOL_PROP(EvaporationAtmosphereProblem, EnableKineticEnergy, true);
+SET_INT_PROP(EvaporationAtmosphereProblem, NumEnergyEquations, 3);
 // Specify whether the kinetic mass module is use
 SET_BOOL_PROP(EvaporationAtmosphereProblem, EnableKinetic, true);
 //#################
@@ -236,7 +236,7 @@ class EvaporationAtmosphereProblem
     enum { nCompIdx        = FluidSystem::N2Idx};
     enum {  enableKinetic       = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum { enableEnergy        = GET_PROP_VALUE(TypeTag, EnableEnergy)};
-    enum { enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum { numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
     enum { velocityOutput             = GET_PROP_VALUE(TypeTag, VtkAddVelocities)};
     enum { velocityAveragingInModel   = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel)};
 
@@ -539,7 +539,7 @@ public:
         for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
             fluidState.setPressure(phaseIdx, pnInitial_);
 
-        if(enableKineticEnergy){
+        if(numEnergyEquations){
             fluidState.setTemperature(nPhaseIdx, TInject_ );
             fluidState.setTemperature(wPhaseIdx, TInitial_ ); // this value is a good one, TInject does not work
         }
@@ -559,7 +559,7 @@ public:
                                                      nPhaseIdx);
         fluidState.setDensity(nPhaseIdx, density);
 
-        if(enableKineticEnergy){
+        if(numEnergyEquations){
             for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
                 const Scalar h = FluidSystem::enthalpy(fluidState,
                                                        dummyCache,
@@ -583,7 +583,7 @@ public:
             priVars[conti00EqIdx + nPhaseIdx * numComponents + nCompIdx]
              = -molarFlux * fluidState.moleFraction(nPhaseIdx, nCompIdx);
             // energy equations are specified mass specifically
-            if(enableKineticEnergy){
+            if(numEnergyEquations){
                 priVars[energyEq0Idx + nPhaseIdx] = - massFluxInjectedPhase
                                                         * fluidState.enthalpy(nPhaseIdx) ;
             }
@@ -673,7 +673,7 @@ private:
         for (int phaseIdx = 0; phaseIdx < numPhases ; ++phaseIdx) {
             equilibriumFluidState.setSaturation(phaseIdx, S[phaseIdx]);
 
-            if(enableKineticEnergy){
+            if(numEnergyEquations){
                 equilibriumFluidState.setTemperature(phaseIdx, TInitial_ );
             }
             else
@@ -727,7 +727,7 @@ private:
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << pressureFormulation << " is invalid.");
 
         // temperature
-        if(enableEnergy or enableKineticEnergy)
+        if(enableEnergy or numEnergyEquations)
         	for (int energyEqIdx=0; energyEqIdx< numEnergyEqs; ++energyEqIdx)
         		priVars[energyEq0Idx + energyEqIdx] = T;
 

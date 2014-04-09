@@ -64,12 +64,12 @@ class MPNCFluxVariables
     enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
-    enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum {numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef MPNCFluxVariablesDiffusion<TypeTag, enableDiffusion> FluxVariablesDiffusion;
-    typedef MPNCFluxVariablesEnergy<TypeTag, enableEnergy, enableKineticEnergy> FluxVariablesEnergy;
+    typedef MPNCFluxVariablesEnergy<TypeTag, enableEnergy, numEnergyEquations> FluxVariablesEnergy;
 
 public:
     /*

@@ -41,7 +41,7 @@ namespace Dumux
 // specialization for the case of kinetic mass AND energy transfer
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class TypeTag, bool enableKinetic >
-class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*/true>
+class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*numEnergyEqs=*/3>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -69,6 +69,8 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*bool enableKineticEnergy=*
     enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
     enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
     enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
+    enum { enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)} ;
+
 
     typedef DimensionlessNumbers<Scalar> DimLessNum ;
 
@@ -223,9 +225,11 @@ if (AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams,
             const Scalar heatCapacity         = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
             const Scalar thermalConductivity  = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
 
+            // If Diffusion is not enabled, Sherwood is divided by zero
+            assert( enableDiffusion  ) ;
+
             // diffusion coefficient of non-wetting component in wetting phase
             const Scalar diffCoeff = volVars.diffCoeff(phaseIdx, wCompIdx, nCompIdx) ;
-
             const Scalar porosity = problem.spatialParams().porosity(element,
                                                                    fvGeometry,
                                                                    scvIdx);
@@ -332,11 +336,149 @@ private:
 };
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// specialization for the case of NO kinetic mass but kinteic energy transfer of a fluid mixture and solid
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+template <class TypeTag>
+class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/false, /*numEnergyEqs=*/2>
+{
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename FluidSystem::ParameterCache ParameterCache;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    typedef typename GridView::template Codim<0>::Entity Element;
+
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { dim = GridView::dimension};
+    enum { dimWorld = GridView::dimensionworld};
+    enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
+    enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
+
+    typedef DimensionlessNumbers<Scalar> DimLessNum ;
+public:
+    /*!
+     * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     */
+    void update(const VolumeVariables & volVars,
+                const FluidState & fluidState,
+                const ParameterCache &paramCache,
+                const PrimaryVariables &priVars,
+                const Problem &problem,
+                const Element & element,
+                const FVElementGeometry & fvGeometry,
+                const unsigned int scvIdx)
+    {
+        factorMassTransfer_   = problem.spatialParams().factorMassTransfer(element,
+                                                                           fvGeometry,
+                                                                           scvIdx);
+
+        factorEnergyTransfer_   = problem.spatialParams().factorEnergyTransfer(element,
+                                                                               fvGeometry,
+                                                                               scvIdx);
+
+        characteristicLength_   = problem.spatialParams().characteristicLength(element,
+                                                                               fvGeometry,
+                                                                               scvIdx);
+
+        // setting the dimensionless numbers.
+        // obtaining the respective quantities.
+        const unsigned int globalVertexIdx = problem.vertexMapper().map(element, scvIdx, dim);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            const Scalar darcyMagVelocity     = problem.model().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
+            const Scalar dynamicViscosity     = fluidState.viscosity(phaseIdx);
+            const Scalar density              = fluidState.density(phaseIdx);
+            const Scalar kinematicViscosity   = dynamicViscosity / density;
+            const Scalar heatCapacity         = FluidSystem::heatCapacity(fluidState,
+								                                          paramCache,
+								                                          phaseIdx);
+            const Scalar thermalConductivity  = FluidSystem::thermalConductivity(fluidState,
+									                                       paramCache,
+                                                                           phaseIdx);
+
+            const Scalar porosity = problem.spatialParams().porosity(element,
+                                                                   fvGeometry,
+                                                                   scvIdx);
+
+            reynoldsNumber_[phaseIdx]   = DimLessNum::reynoldsNumber(darcyMagVelocity,
+                                                                     characteristicLength_,
+                                                                     kinematicViscosity);
+
+            prandtlNumber_[phaseIdx]    = DimLessNum::prandtlNumber(dynamicViscosity,
+                                                                    heatCapacity,
+                                                                    thermalConductivity);
+
+
+            nusseltNumber_[phaseIdx]    = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
+                                                                          prandtlNumber_[phaseIdx],
+                                                                          porosity,
+                                                                          nusseltFormulation);
+        }
+    }
+
+
+    //! access function Reynolds Number
+    const Scalar reynoldsNumber(const unsigned int phaseIdx) const
+    { return reynoldsNumber_[phaseIdx]; }
+
+    //! access function Prandtl Number
+    const Scalar prandtlNumber(const unsigned int phaseIdx) const
+    { return prandtlNumber_[phaseIdx]; }
+
+    //! access function Nusselt Number
+    const Scalar nusseltNumber(const unsigned int phaseIdx) const
+    { return nusseltNumber_[phaseIdx]; }
+
+    //! access function characteristic length
+    const Scalar characteristicLength() const
+    { return characteristicLength_; }
+
+    //! access function pre factor energy transfer
+    const Scalar factorEnergyTransfer() const
+    { return factorEnergyTransfer_; }
+
+    //! access function pre factor mass transfer
+    const Scalar factorMassTransfer() const
+    { return factorMassTransfer_; }
+
+    /*!
+     * \brief If running in valgrind this makes sure that all
+     *        quantities in the volume variables are defined.
+     */
+    void checkDefined() const
+    {
+#if !defined NDEBUG && HAVE_VALGRIND
+        Valgrind::CheckDefined(reynoldsNumber_);
+        Valgrind::CheckDefined(prandtlNumber_);
+        Valgrind::CheckDefined(nusseltNumber_);
+        Valgrind::CheckDefined(characteristicLength_);
+        Valgrind::CheckDefined(factorEnergyTransfer_);
+        Valgrind::CheckDefined(factorMassTransfer_);
+#endif
+    }
+
+private:
+    //! dimensionless numbers
+    Scalar reynoldsNumber_[numPhases];
+    Scalar prandtlNumber_[numPhases];
+    Scalar nusseltNumber_[numPhases];
+    Scalar characteristicLength_;
+    Scalar factorEnergyTransfer_;
+    Scalar factorMassTransfer_;
+    Scalar solidSurface_ ;
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // specialization for the case of (only) kinetic mass transfer
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class TypeTag>
-class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*bool enableKineticEnergy=*/false>
+class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*numEnergyEqs=*/0>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;

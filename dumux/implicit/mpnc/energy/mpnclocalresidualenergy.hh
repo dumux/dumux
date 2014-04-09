@@ -34,13 +34,13 @@ namespace Dumux {
  *
  * This class just does nothing.
  */
-template <class TypeTag, bool enableEnergy/*=false*/, bool kineticEnergyTransfer /*=false*/>
+template <class TypeTag, bool enableEnergy/*=false*/, int numEnergyEquations /*=0*/>
 class MPNCLocalResidualEnergy
 {
-    static_assert(!(kineticEnergyTransfer && !enableEnergy),
+    static_assert(!(numEnergyEquations && !enableEnergy),
                   "No kinetic energy transfer may only be enabled "
                   "if energy is enabled in general.");
-    static_assert(!kineticEnergyTransfer,
+    static_assert(!numEnergyEquations,
                   "No kinetic energy transfer module included, "
                   "but kinetic energy transfer enabled.");
 
@@ -121,7 +121,7 @@ public:
 
 
 template <class TypeTag>
-class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticenergyTransfer=*/false>
+class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/ 1 >
 {
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
@@ -186,6 +186,11 @@ public:
             * fs.internalEnergy(phaseIdx)
             * fs.saturation(phaseIdx)
             * volVars.porosity();
+
+#ifndef NDEBUG
+if (!std::isfinite(storage[energyEqIdx]))
+    DUNE_THROW(NumericalProblem, "Calculated non-finite energy storage");
+#endif
     }
     /*!
       * \brief Evaluates the total flux of all conservation quantities
@@ -244,6 +249,10 @@ public:
         // the enthalpy transport
         const VolumeVariables &up = elemVolVars[upIdx];
         flux[energyEqIdx] += up.fluidState().enthalpy(phaseIdx) * massFlux;
+#ifndef NDEBUG
+if (!std::isfinite(flux[energyEqIdx]) )
+    DUNE_THROW(NumericalProblem, "Calculated non-finite energy flux");
+#endif
     }
     /*!
         * \brief The heat conduction in the phase
@@ -260,7 +269,11 @@ public:
         Scalar lumpedConductivity   = fluxVars.fluxVarsEnergy().lambdaEff() ;
         Scalar temperatureGradientNormal  = fluxVars.fluxVarsEnergy().temperatureGradientNormal() ;
         Scalar lumpedHeatConduction = - lumpedConductivity * temperatureGradientNormal ;
-        flux[energyEqIdx] += lumpedHeatConduction ;
+        flux[energyEqIdx] += lumpedHeatConduction;
+#ifndef NDEBUG
+if (!std::isfinite(flux[energyEqIdx]) )
+    DUNE_THROW(NumericalProblem, "Calculated non-finite energy flux");
+#endif
     }
 
     /*!

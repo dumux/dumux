@@ -84,8 +84,13 @@ public:
     template <class MultiWriter>
     void allocBuffers(MultiWriter &writer)
     {
+//        this->resizePhaseComponentBuffer_(drivingThingyMu_);
+//        this->resizePhaseComponentBuffer_(drivingThingyMole_);
         this->resizePhaseComponentBuffer_(moleFracEquil_);
+
+//        this->resizePhaseComponentBuffer_(percentageEquilMoleFrac_);
         if (deltaPOutput_) this->resizeScalarBuffer_(deltaP_, isBox);
+
     }
 
     /*!
@@ -112,6 +117,15 @@ public:
                     moleFracEquil_[phaseIdx][compIdx][globalIdx]          = volVars.xEquil(phaseIdx, compIdx);
                 }
             }
+
+//            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+//                for (unsigned  int compIdx = 0; compIdx < numComponents; ++ compIdx) {
+//                    drivingThingyMole_[phaseIdx][compIdx][globalIdx]        = volVars.xEquil(phaseIdx, compIdx) - volVars.fluidState().moleFraction(phaseIdx, compIdx);
+//                    drivingThingyMu_[phaseIdx][compIdx][globalIdx]          = volVars.chemicalPotentialEquil(phaseIdx, compIdx) - volVars.chemicalPotential(phaseIdx, compIdx);
+////                    percentageEquilMoleFrac_[phaseIdx][compIdx][globalIdx]  = (volVars.fluidState().moleFraction(phaseIdx, compIdx)) /  volVars.xEquil(phaseIdx, compIdx);
+//                }
+//            }
+
             if (deltaPOutput_) {
                 deltaP_[globalIdx] = volVars.fluidState().pressure(nPhaseIdx) - 100000.;
             }
@@ -124,6 +138,10 @@ public:
     template <class MultiWriter>
     void commitBuffers(MultiWriter &writer)
     {
+//        this->commitPhaseComponentBuffer_(writer, "dirivingThingyMole_%s^%s", drivingThingyMole_);
+//        this->commitPhaseComponentBuffer_(writer, "dirivingThingyMu_%s^%s", drivingThingyMu_);
+//        this->commitPhaseComponentBuffer_(writer, "percentageEquilMoleFrac_%s^%s", percentageEquilMoleFrac_);
+
         if(xEquilOutput){
             this->commitPhaseComponentBuffer_(writer, "xEquil_%s^%s", moleFracEquil_);
         }
@@ -133,6 +151,11 @@ public:
 
 private:
     PhaseComponentMatrix moleFracEquil_;
+//    PhaseComponentMatrix drivingThingyMole_;
+//    PhaseComponentMatrix drivingThingyMu_;
+//    PhaseComponentMatrix percentageEquilMoleFrac_;
+
+
     ScalarVector deltaP_;
 };
 

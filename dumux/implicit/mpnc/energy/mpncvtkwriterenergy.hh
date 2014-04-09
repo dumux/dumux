@@ -39,10 +39,10 @@ namespace Dumux
  */
 template<class TypeTag,
          bool enableEnergy /* = false */,
-         bool enableKineticEnergy /* = false */>
+         int numEnergyEquations/*=0*/>
 class MPNCVtkWriterEnergy : public MPNCVtkWriterModule<TypeTag>
 {
-    static_assert(enableKineticEnergy == false,
+    static_assert(numEnergyEquations < 1,
                   "If you enable kinetic energy transfer between fluids, you"
                   "also have to enable the energy in general!");
 
@@ -130,7 +130,7 @@ private:
  * local thermal equilibrium. (i.e. no kinetic energy transfer)
  */
 template<class TypeTag>
-class MPNCVtkWriterEnergy<TypeTag, /* enableEnergy = */ true, /* enableKineticEnergy = */ false >
+class MPNCVtkWriterEnergy<TypeTag, /* enableEnergy = */ true, /* numEnergyEquations = */ 1 >
     : public MPNCVtkWriterModule<TypeTag>
 {
     typedef MPNCVtkWriterModule<TypeTag> ParentType;

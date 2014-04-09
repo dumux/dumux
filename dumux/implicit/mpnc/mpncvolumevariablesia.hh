@@ -39,10 +39,10 @@ namespace Dumux
  * This is the specialization for the cases which do _not_ require
  * specific interfacial area.
  */
-template <class TypeTag, bool enableKinetic /* = false */, bool enableKineticEnergy /* = false */>
+template <class TypeTag, bool enableKinetic /* = false */, bool numEnergyEquations /* = false */>
 class MPNCVolumeVariablesIA
 {
-    static_assert(not enableKinetic and not enableKineticEnergy,
+    static_assert(not enableKinetic and not numEnergyEquations,
                   "The kinetic energy modules need specific interfacial area "
                   "but no suitable specialization of the IA volume variables module "
                   "has been included.");

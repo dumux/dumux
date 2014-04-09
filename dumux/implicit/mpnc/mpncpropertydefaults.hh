@@ -144,7 +144,7 @@ SET_BOOL_PROP(MPNC, EnableDiffusion, false);
 SET_BOOL_PROP(MPNC, EnableKinetic, false);
 
 //! disable kinetic energy transfer by default
-SET_BOOL_PROP(MPNC, EnableKineticEnergy, false);
+SET_INT_PROP(MPNC, NumEnergyEquations, 0);
 
 //! disable Maxwell Diffusion by default: use Fick
 SET_BOOL_PROP(MPNC, UseMaxwellDiffusion, false);
@@ -197,9 +197,9 @@ SET_PROP(MPNC, MPNCVtkEnergyModule)
 {
 private:
     enum { enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy) };
-    enum { enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) };
+    enum { numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations) };
 public:
-    typedef MPNCVtkWriterEnergy<TypeTag, enableEnergy, enableKineticEnergy> type;
+    typedef MPNCVtkWriterEnergy<TypeTag, enableEnergy, numEnergyEquations> type;
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity

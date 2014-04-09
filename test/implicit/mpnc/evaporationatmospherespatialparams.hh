@@ -151,7 +151,7 @@ class EvaporationAtmosphereSpatialParams : public ImplicitSpatialParams<TypeTag>
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {sPhaseIdx = FluidSystem::sPhaseIdx};
-    enum { enableKineticEnergy  = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum { numEnergyEquations  = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
     enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy)};
 
@@ -267,7 +267,7 @@ public:
 
                     fluidState.setSaturation(phaseIdx, S[phaseIdx]);
                     if(enableEnergy){
-                        if (enableKineticEnergy)
+                        if (numEnergyEquations>1)
                             fluidState.setTemperature(phaseIdx,TInitial);
                         else
                             fluidState.setTemperature(TInitial);

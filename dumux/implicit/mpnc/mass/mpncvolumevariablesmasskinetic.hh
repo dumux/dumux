@@ -130,6 +130,24 @@ public:
                 }
             }
 
+            // Setting the equilibrium chemical potential (in a kinetic model not necessarily the same as the actual chemical potential)
+            for(int smallLoopPhaseIdx=0; smallLoopPhaseIdx<numPhases; ++smallLoopPhaseIdx){
+                for (int compIdx=0; compIdx< numComponents; ++ compIdx){
+                    chemicalPotentialEquil_[smallLoopPhaseIdx][compIdx] = FluidSystem::chemicalPotential(equilFluidState,
+                                                                                                         smallLoopPhaseIdx,
+                                                                                                         compIdx);
+                }
+            }
+
+            // Setting the actual chemical potential (in a kinetic model not necessarily the same as the equilibrium chemical potential)
+            for(int smallLoopPhaseIdx=0; smallLoopPhaseIdx<numPhases; ++smallLoopPhaseIdx){
+                for (int compIdx=0; compIdx< numComponents; ++ compIdx){
+                    chemicalPotential_[smallLoopPhaseIdx][compIdx] = FluidSystem::chemicalPotential(actualFluidState,
+                                                                                                    smallLoopPhaseIdx,
+                                                                                                    compIdx);
+                }
+            }
+
             // compute densities of all phases
             for(int smallLoopPhaseIdx=0; smallLoopPhaseIdx<numPhases; ++smallLoopPhaseIdx){
                 const Scalar rho = FluidSystem::density(actualFluidState, paramCache, smallLoopPhaseIdx);
@@ -141,7 +159,8 @@ public:
         }
 
     /*!
-     * \brief The mole fraction we would have in the case of chemical equilibrium
+     * \brief The mole fraction we would have in the case of chemical equilibrium /
+     *        on the interface.
      *
      *     \param phaseIdx The index of the fluid phase
      *     \param compIdx The local index of the component
@@ -152,19 +171,45 @@ public:
     }
 
     /*!
+     * \brief The chemical potential we would have in the case of chemical equilibrium / on the interface
+     *
+     *     \param phaseIdx The index of the fluid phase
+     *     \param compIdx The local index of the component
+     */
+    const Scalar chemicalPotential(const unsigned int phaseIdx, const unsigned int compIdx) const
+    {
+        return chemicalPotential_[phaseIdx][compIdx] ;
+    }
+
+    /*!
+     * \brief The actual chemical potential we currently have. In the case of non-equilibrium this is not
+     *        necessarily equilibrium.
+     *
+     *     \param phaseIdx The index of the fluid phase
+     *     \param compIdx The local index of the component
+     */
+    const Scalar chemicalPotentialEquil(const unsigned int phaseIdx, const unsigned int compIdx) const
+    {
+        return chemicalPotentialEquil_[phaseIdx][compIdx] ;
+    }
+
+    /*!
      * \brief If running in valgrind this makes sure that all
      *        quantities in the volume variables are defined.
      */
     void checkDefined() const
     {
 #if HAVE_VALGRIND && !defined NDEBUG
-//        Valgrind::CheckDefined(interfacialArea_); // only include if we do not have the interfacial area from the energy volume variables
         Valgrind::CheckDefined(xEquil_);
+        Valgrind::CheckDefined(chemicalPotentialEquil_);
+        Valgrind::CheckDefined(chemicalPotential_);
 #endif
     }
 
 private:
     Scalar xEquil_[numPhases][numComponents];
+    Scalar chemicalPotentialEquil_[numPhases][numComponents];
+    Scalar chemicalPotential_[numPhases][numComponents];
 };
 
 } // end namespace

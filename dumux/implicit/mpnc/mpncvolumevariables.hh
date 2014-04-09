@@ -45,10 +45,10 @@ namespace Dumux
 template <class TypeTag>
 class MPNCVolumeVariables
     : public ImplicitVolumeVariables<TypeTag>
-    , public MPNCVolumeVariablesIA<TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic), GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
+    , public MPNCVolumeVariablesIA<TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic), GET_PROP_VALUE(TypeTag, NumEnergyEquations)>
     , public MPNCVolumeVariablesMass<TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic)>
     , public MPNCVolumeVariablesDiffusion<TypeTag, GET_PROP_VALUE(TypeTag, EnableDiffusion) || GET_PROP_VALUE(TypeTag, EnableKinetic)>
-    , public MPNCVolumeVariablesEnergy<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergy), GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
+    , public MPNCVolumeVariablesEnergy<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergy), GET_PROP_VALUE(TypeTag, NumEnergyEquations)>
 {
     typedef ImplicitVolumeVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
@@ -76,15 +76,15 @@ class MPNCVolumeVariables
     enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
-    enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum {numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
     enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion) || enableKinetic};
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef MPNCVolumeVariablesMass<TypeTag, enableKinetic> MassVolumeVariables;
-    typedef MPNCVolumeVariablesEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyVolumeVariables;
-    typedef MPNCVolumeVariablesIA<TypeTag, enableKinetic, enableKineticEnergy> IAVolumeVariables;
+    typedef MPNCVolumeVariablesEnergy<TypeTag, enableEnergy, numEnergyEquations> EnergyVolumeVariables;
+    typedef MPNCVolumeVariablesIA<TypeTag, enableKinetic, numEnergyEquations> IAVolumeVariables;
     typedef MPNCVolumeVariablesDiffusion<TypeTag, enableDiffusion> DiffusionVolumeVariables;
 
 public:
@@ -214,6 +214,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // viscosities
             Scalar mu = FluidSystem::viscosity(fluidState_, paramCache, phaseIdx);
+
             fluidState_.setViscosity(phaseIdx, mu);
         }
 

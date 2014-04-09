@@ -33,8 +33,11 @@
 namespace Dumux
 {
 
+/*!
+ * \brief Specialization for the case of *3* energy balance equations.
+ */
 template <class TypeTag>
-class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyTransfer=*/true>
+class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/3>
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -110,8 +113,180 @@ public:
         return temperatureGradient_[energyEqIdx];
     }
 
+private:
+    DimVector temperatureGradient_[numEnergyEqs];
+};
+
+
+/*!
+ * \brief Specialization for the case of *2* energy balance equations.
+ */
+template <class TypeTag>
+class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/2>
+{
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices)  Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar)  Scalar;
+
+    typedef typename GridView::ctype CoordScalar;
+    typedef typename GridView::template Codim<0>::Entity Element;
+
+    enum {dim = GridView::dimension};
+    enum {numEnergyEqs          = Indices::numPrimaryEnergyVars};
+    enum {wPhaseIdx             = FluidSystem::wPhaseIdx};
+    enum {nPhaseIdx             = FluidSystem::nPhaseIdx};
+
+
+    typedef Dune::FieldVector<CoordScalar, dim>  DimVector;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolume SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
+
+
+public:
+    /*!
+     * \brief The constructor
+     */
+    MPNCFluxVariablesEnergy()
+    {}
+    /*!
+     * \brief update
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the fully implicit scheme
+     * \param face The SCV (sub-control-volume) face
+     * \param fluxVars The flux variables
+     * \param elemVolVars The volume variables of the current element
+     */
+    void update(const Problem & problem,
+                const Element & element,
+                const FVElementGeometry & fvGeometry,
+                const SCVFace & face,
+                const FluxVariables & fluxVars,
+                const ElementVolumeVariables & elemVolVars)
+    {
+        // calculate temperature gradient using finite element
+        // gradients
+        DimVector tmp ;
+
+        for(int energyEqIdx=0; energyEqIdx<numEnergyEqs; energyEqIdx++)
+            temperatureGradient_[energyEqIdx] = 0.;
+
+        for (unsigned int idx = 0;
+                idx < face.numFap;
+                idx++){
+            // FE gradient at vertex idx
+            const DimVector & feGrad = face.grad[idx];
+
+            for (int energyEqIdx =0; energyEqIdx < numEnergyEqs; ++energyEqIdx){
+                // index for the element volume variables
+                int volVarsIdx = face.fapIndices[idx];
+
+                tmp = feGrad;
+                tmp   *= elemVolVars[volVarsIdx].temperature(energyEqIdx);
+                temperatureGradient_[energyEqIdx] += tmp;
+            }
+        }
+
+        lambdaEff_ = 0;
+        calculateEffThermalConductivity_(problem,
+        								 element,
+        								 fvGeometry,
+        								 face,
+        								 elemVolVars);
+
+
+    }
+
+    /*!
+     * \brief The lumped / average conductivity of solid plus phases \f$[W/mK]\f$.
+     */
+    Scalar lambdaEff() const
+    { return lambdaEff_; }
+
+    /*!
+     * \brief The total heat flux \f$[J/s]\f$ due to heat conduction
+     *        of the rock matrix over the sub-control volume's face.
+     *
+     * \param energyEqIdx The index of the energy equation
+     */
+    DimVector temperatureGradient(const unsigned int energyEqIdx) const
+    {
+        return temperatureGradient_[energyEqIdx];
+    }
+
+protected:
+    /*!
+	 * \brief Calculate the effective thermal conductivity of
+	 * 		  the porous medium plus residing phases \f$[W/mK]\f$.
+	 *		  This basically means to access the model for averaging
+	 *		  the individual conductivities, set by the property ThermalConductivityModel.
+	 *		  Except the adapted arguments, this is the same function
+	 *		  as used in the implicit TwoPTwoCNIFluxVariables.
+	 */
+    void calculateEffThermalConductivity_(const Problem &problem,
+                                          const Element &element,
+                                          const FVElementGeometry & fvGeometry,
+                                          const SCVFace & face,
+                                          const ElementVolumeVariables &elemVolVars)
+    {
+        const unsigned i = face.i;
+        const unsigned j = face.j;
+        Scalar lambdaI, lambdaJ;
+
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            lambdaI =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].fluidState().saturation(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(element, fvGeometry, i),
+                                                                   problem.spatialParams().porosity(element, fvGeometry, i));
+            lambdaJ =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].fluidState().saturation(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(element, fvGeometry, j),
+                                                                   problem.spatialParams().porosity(element, fvGeometry, j));
+        }
+        else
+        {
+            const Element & elementI = *fvGeometry.neighbors[i];
+            FVElementGeometry fvGeometryI;
+            fvGeometryI.subContVol[0].global = elementI.geometry().center();
+
+            lambdaI =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].fluidState().saturation(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[i].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(elementI, fvGeometryI, 0),
+                                                                   problem.spatialParams().porosity(elementI, fvGeometryI, 0));
+
+            const Element & elementJ = *fvGeometry.neighbors[j];
+            FVElementGeometry fvGeometryJ;
+            fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
+
+            lambdaJ =
+                ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].fluidState().saturation(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(wPhaseIdx),
+                                                                   elemVolVars[j].thermalConductivity(nPhaseIdx),
+                                                                   problem.spatialParams().thermalConductivitySolid(elementJ, fvGeometryJ, 0),
+                                                                   problem.spatialParams().porosity(elementJ, fvGeometryJ, 0));
+        }
+
+        // -> arithmetic mean, open to discussion
+        lambdaEff_ = 0.5 * (lambdaI+lambdaJ);
+    }
+
 
 private:
+    Scalar lambdaEff_ ;
     DimVector temperatureGradient_[numEnergyEqs];
 };
 

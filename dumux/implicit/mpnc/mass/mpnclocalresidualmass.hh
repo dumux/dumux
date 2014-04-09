@@ -51,11 +51,11 @@ protected:
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { enableDiffusion  = GET_PROP_VALUE(TypeTag, EnableDiffusion) };
     enum { enableEnergy     = GET_PROP_VALUE(TypeTag, EnableEnergy) };
-    enum { enableKineticEnergy     = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) };
+    enum { numEnergyEquations     = GET_PROP_VALUE(TypeTag, NumEnergyEquations) };
 
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
     typedef MPNCDiffusion<TypeTag, enableDiffusion> Diffusion;
-    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
+    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations> EnergyResid;
 
 public:
     /*!
@@ -78,9 +78,14 @@ public:
             storage[compIdx] +=
                 volVars.fluidState().saturation(phaseIdx)*
                 volVars.fluidState().molarity(phaseIdx, compIdx);
+#ifndef NDEBUG
+if (!std::isfinite(storage[compIdx]))
+    DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
+#endif
         }
 
         storage *= volVars.porosity();
+
     }
 
     /*!
@@ -98,10 +103,7 @@ public:
     {
 
         const Scalar volumeFlux =  fluxVars.volumeFlux(phaseIdx) ;
-        #ifndef NDEBUG
-        if (!std::isfinite(volumeFlux))
-            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux");
-        #endif
+
 
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
@@ -118,6 +120,8 @@ public:
         const VolumeVariables &up = fluxVars.volVars(upIdx);
         const VolumeVariables &dn = fluxVars.volVars(dnIdx);
 
+if (!std::isfinite(volumeFlux))
+    DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase" << phaseIdx);
         ////////
         // advective fluxes of all components in the phase
         ////////
@@ -179,9 +183,9 @@ public:
                         ((     massUpwindWeight)*up.fluidState().molarity(phaseIdx, compIdx)
                                 +
                         (  1. - massUpwindWeight)*dn.fluidState().molarity(phaseIdx, compIdx) );
-
-
-            }
+						if (!std::isfinite(flux[compIdx]))
+							DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in phase " <<  phaseIdx << " comp " << compIdx << "T: "<<  up.fluidState().temperature(phaseIdx) << "S "<<up.fluidState().saturation(phaseIdx)  ) ;
+			}
         }
     }
 
@@ -250,10 +254,10 @@ class MPNCLocalResidualMass
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { conti0EqIdx      = Indices::conti0EqIdx };
     enum { enableEnergy     = GET_PROP_VALUE(TypeTag, EnableEnergy) };
-    enum { enableKineticEnergy     = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) };
+    enum { numEnergyEquations     = GET_PROP_VALUE(TypeTag, NumEnergyEquations) };
 
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
+    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations> EnergyResid;
 
 public:
     /*!
@@ -323,15 +327,21 @@ public:
 
             MassCommon::computeDiffusivePhaseFlux(phaseComponentValuesDiffusion, fluxVars, phaseIdx);
             Valgrind::CheckDefined(phaseComponentValuesDiffusion);
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx){
                 flux[conti0EqIdx + compIdx] +=
                         phaseComponentValuesDiffusion[compIdx];
+            }
+
+
 
             // Right now I think that adding the two contributions individually into the flux is best for debugging and understanding.
             // The Energy module needs both contributions.
             phaseComponentValuesMassTransport[phaseIdx] = phaseComponentValuesDiffusion + phaseComponentValuesAdvection ;
+
             Valgrind::CheckDefined(flux);
         }
+//        std::cout<< "KPN Mass: flux: " << flux << endl;
+
 
         // \todo
         //
@@ -361,10 +371,11 @@ public:
     static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars)
     {
-    	static_assert(not enableKineticEnergy, // enableKinetic is disabled, in this specialization
-    			"In the case of kinetic energy transfer the advective energy transport between the phases has to be considered. "
-    			"It is hard (technically) to say how much mass got transfered in the case of chemical equilibrium. "
-    			"Therefore, kineticEnergy and no kinetic mass does not fit (yet).");
+//    	static_assert(not enableKineticEnergy, // enableKinetic is disabled, in this specialization
+//    			"In the case of kinetic energy transfer the advective energy transport between the phases has to be considered. "
+//    			"It is hard (technically) to say how much mass got transfered in the case of chemical equilibrium. "
+//    			"Therefore, kineticEnergy and no kinetic mass does not fit (yet).");
+
 
         // mass transfer is not considered in this mass module
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)

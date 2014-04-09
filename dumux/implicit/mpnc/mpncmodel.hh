@@ -118,11 +118,17 @@ class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef Dumux::MPNCVtkWriter<TypeTag> MPNCVtkWriter;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
     enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
-    enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum {numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
     enum {enableSmoothUpwinding = GET_PROP_VALUE(TypeTag, ImplicitEnableSmoothUpwinding)};
     enum {enablePartialReassemble = GET_PROP_VALUE(TypeTag, ImplicitEnablePartialReassemble)};
     enum {enableJacobianRecycling = GET_PROP_VALUE(TypeTag, ImplicitEnableJacobianRecycling)};
@@ -130,6 +136,12 @@ class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
+    enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
+    enum { dimWorld = GridView::dimensionworld};
+    enum { dim = GridView::dimension};
+
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
 
 public:
     void init(Problem &problem)
@@ -144,7 +156,7 @@ public:
                 << "    components: " << numComponents << "\n"
                 << "    equations: " << numEq << "\n"
                 << "    kinetic mass transfer: " << enableKinetic<< "\n"
-                << "    kinetic energy transfer: " << enableKineticEnergy<< "\n"
+                << "    number of energy equations: " << numEnergyEquations<< "\n"
                 << "    diffusion: " << enableDiffusion << "\n"
                 << "    energy equation: " << enableEnergy << "\n"
                 << "    smooth upwinding: " << enableSmoothUpwinding << "\n"

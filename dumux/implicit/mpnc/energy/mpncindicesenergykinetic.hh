@@ -29,10 +29,11 @@ namespace Dumux
 {
 
 /*!
- * \brief The indices required for the energy equation.
+ * \brief The indices required for the energy equation. Specialization for the case of
+ * 		  *3* energy balance equations.
  */
 template <int PVOffset>
-struct MPNCEnergyIndices<PVOffset, /*enableEnergy=*/true, /*kineticEnergyTransfer=*/true>
+struct MPNCEnergyIndices<PVOffset, /*enableEnergy=*/true, /*numEnergyEquations=*/3>
 {
 public:
     /*!
@@ -60,12 +61,58 @@ public:
     static const unsigned int energyEqIdx = energyEq0Idx;
 };
 
+/*!
+ * \brief The indices required for the energy equation. Specialization for the case of
+ * 		  *2* energy balance equations.
+ */
+template <int PVOffset>
+struct MPNCEnergyIndices<PVOffset, /*enableEnergy=*/true, /*numEnergyEquations=*/2>
+{
+public:
+    /*!
+     * \brief This module defines one new primary variable.
+     */
+    static const unsigned int numPrimaryVars = 2;
+
+    /*!
+     * \brief Index for the temperature of the wetting phase in a vector of primary
+     *        variables.
+     */
+    static const unsigned int temperature0Idx = PVOffset + 0;
+
+    /*!
+     * \brief Compatibility with non kinetic models
+     */
+    static const unsigned int temperatureIdx = temperature0Idx;
+    /*!
+     * \brief Equation index of the energy equation.
+     */
+    static const unsigned int energyEq0Idx = PVOffset + 0;
+    /*!
+     * \brief Equation index of the energy equation.
+     */
+    static const unsigned int energyEqSolidIdx = energyEq0Idx + numPrimaryVars - 1  ;
+
+    /*!
+     * \brief Index for storing e.g. temperature fluidState
+     */
+    static const unsigned int  temperatureFluidIdx = 0 ;
+    static const unsigned int  temperatureSolidIdx = 1 ;
+
+
+    /*!
+     * \brief Compatibility with non kinetic models
+     */
+    static const unsigned int energyEqIdx = energyEq0Idx;
+
+
+};
 
 /*!
  * \brief The indices required for the energy equation.
  */
 template <int PVOffset, bool isNonIsothermal>
-struct MPNCEnergyIndices<PVOffset, isNonIsothermal, /*kineticEnergyTransfer=*/false >
+struct MPNCEnergyIndices<PVOffset, isNonIsothermal, /*numEnergyEquations=*/1 >
 {
 public:
     /*!
@@ -90,7 +137,7 @@ public:
  * This is a dummy class for the isothermal case.
  */
 template <int PVOffset>
-struct MPNCEnergyIndices<PVOffset, /*isNonIsothermal=*/false, /*kineticEnergyTransfer*/false>
+struct MPNCEnergyIndices<PVOffset, /*isNonIsothermal=*/false, /*numEnergyEquations*/0>
 {
 public:
     /*!

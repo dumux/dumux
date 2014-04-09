@@ -110,8 +110,8 @@ NEW_PROP_TAG(EnableDiffusion);
 //! Enable kinetic resolution of mass transfer processes?
 NEW_PROP_TAG(EnableKinetic);
 
-//! Enable kinetic resolution of energy transfer processes?
-NEW_PROP_TAG(EnableKineticEnergy);
+//! Property for the definition of the number of energy equations (0,1,2,3)
+NEW_PROP_TAG(NumEnergyEquations);
 
 //! Enable Maxwell Diffusion? (If false: use Fickian Diffusion) Maxwell incorporated the mutual
 //! influences of multiple diffusing components. However, Fick seems to be more robust.
