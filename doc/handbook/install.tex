@@ -113,12 +113,30 @@ on the \Dune website \cite{DUNE-DOWNLOAD-GIT}:
 \begin{lstlisting}[style=Bash]
 $ mkdir DUMUX
 $ cd DUMUX
-$ git clone http://git.dune-project.org/repositories/dune-common/releases/2.3
-$ git clone http://git.dune-project.org/repositories/dune-geometry/releases/2.3
-$ git clone http://git.dune-project.org/repositories/dune-grid/releases/2.3
-$ git clone http://git.dune-project.org/repositories/dune-istl/releases/2.3
-$ git clone http://git.dune-project.org/repositories/dune-localfunctions/releases/2.3
-$ git clone http://git.dune-project.org/repositories/dune-pdelab/releases/1.1
+$ git clone http://git.dune-project.org/repositories/dune-common
+$ cd dune-common
+$ git checkout releases/2.3
+$ cd ..
+$ git clone http://git.dune-project.org/repositories/dune-geometry
+$ cd dune-geometry
+$ git checkout releases/2.3
+$ cd ..
+$ git clone http://git.dune-project.org/repositories/dune-grid
+$ cd dune-grid
+$ git checkout releases/2.3
+$ cd ..
+$ git clone http://git.dune-project.org/repositories/dune-istl
+$ cd dune-istl
+$ git checkout releases/2.3
+$ cd ..
+$ git clone http://git.dune-project.org/repositories/dune-localfunctions
+$ cd dune-localfunctions
+$ git checkout releases/2.3
+$ cd ..
+$ git clone http://git.dune-project.org/repositories/dune-pdelab
+$ cd dune-pdelab
+$ git checkout releases/1.1
+$ cd ..
 \end{lstlisting}
 
 The newest and maybe unstable developments are also provided in these repositories and is called \emph{master}.
