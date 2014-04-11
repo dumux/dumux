@@ -1,8 +1,8 @@
-Index: dune/pdelab/backend/istlvectorbackend.hh
-===================================================================
---- dune/pdelab/backend/istlvectorbackend.hh	(revision 2292)
-+++ dune/pdelab/backend/istlvectorbackend.hh	(working copy)
-@@ -30,6 +34,8 @@
+diff --git a/dune/pdelab/backend/istlvectorbackend.hh b/dune/pdelab/backend/istlvectorbackend.hh
+index ad2419e..ef219f3 100644
+--- a/dune/pdelab/backend/istlvectorbackend.hh
++++ b/dune/pdelab/backend/istlvectorbackend.hh
+@@ -30,6 +30,8 @@ namespace Dune {
        typedef typename ContainerType::size_type size_type;
        typedef ISTLVectorBackend<BLOCKSIZE> Backend;
  
@@ -11,7 +11,7 @@ Index: dune/pdelab/backend/istlvectorbackend.hh
        ISTLBlockVectorContainer (const T& t_) : container(t_.globalSize()/BLOCKSIZE)
        {}
        ISTLBlockVectorContainer (const T& t_, const E& e) : container(t_.globalSize()/BLOCKSIZE)
-@@ -89,6 +95,11 @@
+@@ -89,6 +91,11 @@ namespace Dune {
          return container.two_norm();
        }
  
@@ -23,7 +23,7 @@ Index: dune/pdelab/backend/istlvectorbackend.hh
        typename Dune::template FieldTraits<E>::real_type one_norm() const
        {
          return container.one_norm();
-@@ -163,6 +174,16 @@
+@@ -163,6 +170,16 @@ namespace Dune {
          return container.size()*BLOCKSIZE;
        }
  
@@ -32,7 +32,7 @@ Index: dune/pdelab/backend/istlvectorbackend.hh
 +        return container.size();
 +      }
 +
-+      void resize(size_t n) 
++      void resize(size_t n)
 +      {
 +        container.resize(n);
 +      }
@@ -40,11 +40,11 @@ Index: dune/pdelab/backend/istlvectorbackend.hh
        template<typename X>
        void std_copy_to (std::vector<X>& x) const
        {
-Index: dune/pdelab/backend/novlpistlsolverbackend.hh
-===================================================================
---- dune/pdelab/backend/novlpistlsolverbackend.hh	(revision 2292)
-+++ dune/pdelab/backend/novlpistlsolverbackend.hh	(working copy)
-@@ -1251,7 +1251,7 @@
+diff --git a/dune/pdelab/backend/novlpistlsolverbackend.hh b/dune/pdelab/backend/novlpistlsolverbackend.hh
+index 49a0080..9bf1eae 100644
+--- a/dune/pdelab/backend/novlpistlsolverbackend.hh
++++ b/dune/pdelab/backend/novlpistlsolverbackend.hh
+@@ -1251,7 +1251,7 @@ namespace Dune {
                              int verbose_=1, bool reuse_=false,
                              bool usesuperlu_=true)
          : gfs(gfs_), phelper(gfs,verbose_), maxiter(maxiter_),
@@ -53,7 +53,7 @@ Index: dune/pdelab/backend/novlpistlsolverbackend.hh
            verbose(verbose_), reuse(reuse_), firstapply(true),
            usesuperlu(usesuperlu_)
        {
-@@ -1314,10 +1314,10 @@
+@@ -1314,10 +1314,10 @@ namespace Dune {
          \param[in] r right hand side
          \param[in] reduction to be achieved
        */
@@ -66,11 +66,11 @@ Index: dune/pdelab/backend/novlpistlsolverbackend.hh
          typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
            Dune::Amg::FirstDiagonal> > Criterion;
  #if HAVE_MPI
-Index: dune/pdelab/backend/ovlpistlsolverbackend.hh
-===================================================================
---- dune/pdelab/backend/ovlpistlsolverbackend.hh	(revision 2292)
-+++ dune/pdelab/backend/ovlpistlsolverbackend.hh	(working copy)
-@@ -803,7 +803,7 @@
+diff --git a/dune/pdelab/backend/ovlpistlsolverbackend.hh b/dune/pdelab/backend/ovlpistlsolverbackend.hh
+index 107a831..40c252f 100644
+--- a/dune/pdelab/backend/ovlpistlsolverbackend.hh
++++ b/dune/pdelab/backend/ovlpistlsolverbackend.hh
+@@ -803,7 +803,7 @@ namespace Dune {
        ISTLBackend_AMG(const GFS& gfs_, unsigned maxiter_=5000, 
                        int verbose_=1, bool reuse_=false,
                        bool usesuperlu_=true)
@@ -79,7 +79,7 @@ Index: dune/pdelab/backend/ovlpistlsolverbackend.hh
            verbose(verbose_), reuse(reuse_), firstapply(true),
            usesuperlu(usesuperlu_)
        {
-@@ -864,11 +864,12 @@
+@@ -864,11 +864,12 @@ namespace Dune {
          \param[in] r right hand side
          \param[in] reduction to be achieved
        */
@@ -94,7 +94,7 @@ Index: dune/pdelab/backend/ovlpistlsolverbackend.hh
          typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
            Dune::Amg::FirstDiagonal> > Criterion;
  #if HAVE_MPI
-@@ -900,8 +901,7 @@
+@@ -900,8 +901,7 @@ namespace Dune {
          Solver<VectorType> solver(oop,sp,*amg,reduction,maxiter,verb);
          Dune::InverseOperatorResult stat;
          
@@ -104,11 +104,11 @@ Index: dune/pdelab/backend/ovlpistlsolverbackend.hh
          stats.tsolve= watch.elapsed();
          res.converged  = stat.converged;
          res.iterations = stat.iterations;
-Index: dune/pdelab/backend/seqistlsolverbackend.hh
-===================================================================
---- dune/pdelab/backend/seqistlsolverbackend.hh	(revision 2292)
-+++ dune/pdelab/backend/seqistlsolverbackend.hh	(working copy)
-@@ -543,10 +543,10 @@
+diff --git a/dune/pdelab/backend/seqistlsolverbackend.hh b/dune/pdelab/backend/seqistlsolverbackend.hh
+index 4d69622..a54c27c 100644
+--- a/dune/pdelab/backend/seqistlsolverbackend.hh
++++ b/dune/pdelab/backend/seqistlsolverbackend.hh
+@@ -543,10 +543,10 @@ namespace Dune {
          \param[in] r right hand side
          \param[in] reduction to be achieved
        */

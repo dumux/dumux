@@ -1,17 +1,10 @@
 - In order to use the AMGBackend, you have to apply the patch 
-  pdelab-1.0.1.patch / pdelab-1.1.0.patch in your directory containing
-  DUNE-PDELab 1.0.1 / 1.1.0, e.g.:
-  patch -p0 <../dumux/patches/pdelab-1.0.1.patch
+  pdelab-1.1.0.patch in your directory containing
+  DUNE-PDELab 1.1.0, e.g.:
+  patch -p1 <../dumux/patches/pdelab-1.1.0.patch
 
 - If the AMGBackend should be used without SuperLU as coarse grid solver, it can
   be benefitial to decrease the corresponding tolerance. To do so, apply the
-  patch istl-2.2.0.patch / istl-2.2.1.patch in your directory containing
-  DUNE-ISTL 2.2.0 / 2.2.1, e.g.:
-  patch -p0 <../dumux/patches/istl-2.2.0.patch
-
-- To use DuMuX with Dune-trunk in versions after 2013-03-20 (dune-common r7429)
-  m4/dumux.m4 must be patched. This will be done in DuMuX-trunk after the
-  Dune 2.3 release. Otherwise dumux-devel and dumux-lecture will not be able
-  to find the module DuMuX.
-  To patch your local copy inside the dumux folder:
-  patch -p0 < ../patches/dumux-m4.patch
+  patch istl-2.3.0.patch in your directory containing
+  DUNE-ISTL 2.3.0, e.g.:
+  patch -p1 <../dumux/patches/istl-2.3.0.patch
