@@ -59,6 +59,8 @@ add_dumux_test(test_boxmpncthermalnonequil test_boxmpncthermalnonequil test_boxm
   ${CMAKE_CURRENT_BINARY_DIR}/test_boxmpncthermalnonequil
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_boxmpncthermalnonequil.input
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/combustionOutflowGridLinNX100LogNx100.dgf)
+add_dune_superlu_flags(test_boxmpncthermalnonequil)
+
   
 target_link_libraries(test_boxmpnckinetic ${DUNE_LIBS}  ${MPI_LIBRARIES})
 add_dune_alugrid_flags(test_boxmpnckinetic)
