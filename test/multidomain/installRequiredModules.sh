@@ -51,5 +51,5 @@ svn co svn://svn.iws.uni-stuttgart.de/DUMUX/dumux/branches/release-2.5 dumux
 
 # apply patches to PDELab
 cd dune-pdelab
-patch -p0 < ../dumux/patches/pdelab-1.1.0.patch
+patch -p1 < ../dumux/patches/pdelab-1.1.0.patch
 cd ..
