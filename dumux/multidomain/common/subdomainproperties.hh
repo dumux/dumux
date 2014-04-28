@@ -21,10 +21,6 @@
 
 #include <dumux/common/propertysystem.hh>
 
-/*!
- * \file
- * \brief Specify properties required for the submodels
- */
 namespace Dumux
 {
 namespace Properties

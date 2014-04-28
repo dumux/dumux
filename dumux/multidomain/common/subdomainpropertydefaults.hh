@@ -33,9 +33,6 @@
 #include "multidomainlocaloperator.hh"
 #include <dumux/multidomain/couplinglocalresiduals/boxcouplinglocalresidual.hh>
 
-/*!
- * \brief Specify default properties required in the subdomains of dune-multidomain
- */
 namespace Dumux
 {
 

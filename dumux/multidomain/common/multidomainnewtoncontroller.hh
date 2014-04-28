@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
 * \file
-* \brief Reference implementation of a newton controller for coupled problems.
+* \brief Additional properties required for the coupled Newton controller.
 */
 #ifndef DUMUX_MULTIDOMAIN_NEWTON_CONTROLLER_HH
 #define DUMUX_MULTIDOMAIN_NEWTON_CONTROLLER_HH
@@ -26,9 +26,6 @@
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include "multidomainconvergencewriter.hh"
 
-/*!
- * \brief Additional properties required for the coupled Newton controller
- */
 namespace Dumux
 {
 template <class TypeTag>
