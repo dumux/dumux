@@ -473,7 +473,7 @@ protected:
                 // negative change of the storage term of the last
                 // iteration of the last time step...)
                 residual_[i] = storageTerm_[i];
-                residual_[i] *= -1;
+                residual_[i] *= -1.0;
             }
 
             reuseMatrix_ = false;
