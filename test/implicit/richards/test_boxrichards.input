@@ -16,7 +16,7 @@ TEnd = 3000 # [s]
 File = ./grids/richardslens-24x16.dgf
 
 [Problem]
-Name = richardslensbox
+Name = richardslenscc
 
 ###############################################################
 # Simulation restart
