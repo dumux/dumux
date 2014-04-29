@@ -55,8 +55,6 @@ int start_(int argc,
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
-    typedef Dune::GridPtr<Grid> GridPointer;
-
     ////////////////////////////////////////////////////////////
     // Load the input parameters
     ////////////////////////////////////////////////////////////

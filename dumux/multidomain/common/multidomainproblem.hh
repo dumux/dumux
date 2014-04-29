@@ -102,8 +102,8 @@ public:
 		, sdID2_(1)
 		, sdGrid1_(mdGrid.subDomain(sdID1_))
 		, sdGrid2_(mdGrid.subDomain(sdID2_))
-		, sdProblem1_(timeManager, sdGrid1_.leafView())
-		, sdProblem2_(timeManager, sdGrid2_.leafView())
+		, sdProblem1_(timeManager, sdGrid1_.leafGridView())
+		, sdProblem2_(timeManager, sdGrid2_.leafGridView())
     {  };
 
     //! \copydoc Dumux::ImplicitProblem::init()
@@ -432,13 +432,13 @@ public:
      * \brief Returns the gridview of subdomain1
      */
     const SubDomainGridView1 sdGridView1() const
-    { return sdGrid1_.leafView(); }
+    { return sdGrid1_.leafGridView(); }
 
     /*!
      * \brief Returns the gridview of subdomain2
      */
     const SubDomainGridView2 sdGridView2() const
-    { return sdGrid2_.leafView(); }
+    { return sdGrid2_.leafGridView(); }
 
     /*!
      * \brief Returns a pointer to the subdomain1 element
