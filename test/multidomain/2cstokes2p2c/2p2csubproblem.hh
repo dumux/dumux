@@ -25,12 +25,15 @@
 #ifndef DUMUX_2P2C_SUBPROBLEM_HH
 #define DUMUX_2P2C_SUBPROBLEM_HH
 
+#include <dune/pdelab/gridoperator/gridoperator.hh>
+
+#include <dumux/implicit/2p2c/2p2cindices.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/multidomain/couplinglocalresiduals/2p2ccouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/common/multidomainlocaloperator.hh>
 
-#include "2cstokes2p2cproblem.hh"
+#include "2cstokes2p2cspatialparams.hh"
 
 namespace Dumux
 {

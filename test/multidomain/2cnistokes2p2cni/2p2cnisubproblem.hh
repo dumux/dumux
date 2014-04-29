@@ -29,15 +29,17 @@
 #include "config.h"
 #endif
 
+#include <dune/pdelab/finiteelementmap/conformingconstraints.hh>
+#include <dune/pdelab/gridoperator/gridoperator.hh>
+
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/2p2cni/2p2cnimodel.hh>
 #include <dumux/multidomain/couplinglocalresiduals/2p2cnicouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/common/multidomainlocaloperator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
-#include <dune/pdelab/finiteelementmap/conformingconstraints.hh>
 
-#include "2cnistokes2p2cniproblem.hh"
+#include "2cnistokes2p2cnispatialparams.hh"
 
 namespace Dumux
 {
