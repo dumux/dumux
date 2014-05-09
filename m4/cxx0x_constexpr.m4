@@ -1,6 +1,5 @@
 AC_DEFUN([CONSTEXPR_CHECK],[
   AC_REQUIRE([AC_PROG_CXX])
-  AC_REQUIRE([GXX0X])
   AC_LANG_PUSH([C++])
   AC_MSG_CHECKING([whether constexpr is supported])
   AC_COMPILE_IFELSE(
