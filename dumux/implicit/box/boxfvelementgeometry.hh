@@ -674,7 +674,7 @@ public:
                     diffVec[m] -= subContVol[i].global[m];
                 // make sure the normal points to the right direction
                 if (subContVolFace[k].normal * diffVec < 0)
-                    subContVolFace[k].normal *= -1;
+                    subContVolFace[k].normal *= -1.0;
             }
             else if (dim==3) {
                 int leftFace;
