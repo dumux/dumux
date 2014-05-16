@@ -1,6 +1,8 @@
 # -*- Autoconf -*-
-DUNE_AC_INIT
-AM_INIT_AUTOMAKE
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ([2.62])
+DUNE_AC_INIT # gets module version from dune.module file
 AC_CONFIG_SRCDIR([dumux/common/spline.hh])
 AC_CONFIG_HEADERS([config.h])
 

@@ -47,7 +47,6 @@ AC_DEFUN([DUMUX_CHECKS_PRIVATE],
      AC_LATEX_PACKAGE(amsfonts,scrreprt,have_latex_pkg_amsfonts)
      AC_LATEX_PACKAGE(amsmath,scrreprt,have_latex_pkg_amsmath)
      AC_LATEX_PACKAGE(amssymb,scrreprt,have_latex_pkg_amssymb)
-     # AC_LATEX_PACKAGE(babel,scrreprt,have_latex_pkg_babel)
      AC_LATEX_PACKAGE(color,scrreprt,have_latex_pkg_color)
      AC_LATEX_PACKAGE(enumerate,scrreprt,have_latex_pkg_enumerate)
      AC_LATEX_PACKAGE(graphics,scrreprt,have_latex_pkg_graphics)
@@ -156,7 +155,6 @@ AC_DEFUN([DUMUX_CHECKS_PRIVATE],
 
   AC_SUBST([PDFLATEX],[$pdflatex])
   AC_SUBST([BIBTEX],[$bibtex])
-  AC_SUBST([DVIPDF],[$dvipdf])
 
   AM_CONDITIONAL([BUILD_HANDBOOK], [test "$build_handbook" == "yes"])
   if test "$build_handbook" == "yes"; then
