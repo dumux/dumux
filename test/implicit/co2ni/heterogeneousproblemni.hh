@@ -533,7 +533,7 @@ private:
     {
         Scalar T = 283.0 + (depthBOR_ - globalPos[dim-1])*0.03; 
         return T;
-    };
+    }
 
     Scalar depthBOR_;
     Scalar injectionRate_;

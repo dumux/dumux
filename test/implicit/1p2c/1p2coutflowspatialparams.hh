@@ -75,7 +75,7 @@ public:
      */
     void update(const SolutionVector &globalSolution)
     {
-    };
+    }
 
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.

@@ -152,7 +152,7 @@ public:
      */
     void update(const SolutionVector &globalSolution)
     {
-    };
+    }
 
     /*!
      * \brief Apply the intrinsic permeability tensor to a pressure
@@ -283,7 +283,7 @@ private:
         else if (0.15 >= globalPos[1] && 1.20 <= globalPos[0])
             return true;
         else return false;
-    };
+    }
 
     Scalar fineK_;
     Scalar coarseK_;

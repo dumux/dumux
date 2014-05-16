@@ -309,7 +309,7 @@ public:
      * This is not specific to the discretization.
      */
     Scalar temperature() const
-    { return TInitial_; };
+    { return TInitial_; }
 
     /*!
      * \name Problem Params
@@ -330,7 +330,7 @@ public:
     Scalar boxTemperature(const Element &element,
                           const FVElementGeometry &fvGeometry,
                           const unsigned int scvIdx) const
-    { return TInitial_; };
+    { return TInitial_; }
 
     // \}
 

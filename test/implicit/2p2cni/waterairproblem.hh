@@ -221,7 +221,7 @@ public:
     Scalar temperature() const
     {
         return 273.15 + 10; // -> 10°C
-    };
+    }
 #endif
 
     /*!
