@@ -202,7 +202,7 @@ public:
         coarsentol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenTolerance);
     }
 
-private:
+protected:
     Problem& problem_;
     Scalar refinetol_;
     Scalar coarsentol_;
