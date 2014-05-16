@@ -83,7 +83,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
     // increase volume until we are at surface pressure. use the
     // newton method for this
     ComponentVector tmpMolarities;
-    for (int i = 0;; ++i) {
+    for (int i = 0; ; ++i) {
         if (i >= 20)
             DUNE_THROW(Dumux::NumericalProblem,
                        "Newton method did not converge after 20 iterations");

@@ -250,7 +250,7 @@ int invertCubicPolynomial(SolContainer *sol,
         }
 
         // two additional real roots at t = sqrt(-p) and t = -sqrt(-p)
-        sol[0] = -std::sqrt(-p) - b/3;;
+        sol[0] = -std::sqrt(-p) - b/3;
         sol[1] = 0.0 - b/3;
         sol[2] = std::sqrt(-p) - b/3;
 

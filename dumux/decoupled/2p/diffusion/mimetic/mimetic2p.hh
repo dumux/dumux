@@ -469,7 +469,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
     // build the matrices R and ~N
     Dune::FieldMatrix<Scalar, 2 * dim, dim> R(0), N(0);
 
-    //       std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;;
+    //       std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;
 
     //collect information needed for calculation of fluxes due to capillary-potential (pc + gravity!)
     Scalar gravPotFace[2*dim];

@@ -488,7 +488,7 @@ public:
                 Scalar xnn = xgn * pg_
                              / (FluidSystem::fugacityCoefficient(fluidState_,
                                                                  nPhaseIdx,nCompIdx)
-                                * pn_);;
+                                * pn_);
                 Scalar xna = 1.e-10;
                 Scalar xnw = 1.e-10;
 

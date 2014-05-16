@@ -281,7 +281,7 @@ public:
 //                const unsigned int globalVertexIdx = this->problem_().vertexMapper().map(*eIt, scvIdx, dim);
 //				for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
 //					const Scalar eps = 1e-6 ;
-//					const Scalar velocityTest = volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);;
+//					const Scalar velocityTest = volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
 //					if (not std::isfinite(velocityTest) ){
 //						message <<"\nUnphysical Value in Velocity: \n";
 //						message << "\tv" <<"_"<<FluidSystem::phaseName(phaseIdx)<<"=" << std::scientific

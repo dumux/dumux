@@ -268,7 +268,7 @@ public:
         }
 
         //initial_(values, globalPos, element);
-        //const MaterialLawParams& materialParams = this->spatialParams().materialLawParams();;
+        //const MaterialLawParams& materialParams = this->spatialParams().materialLawParams();
         //MaterialLaw::pcgw(materialParams, 1.0);
     }
 
