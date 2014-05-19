@@ -37,21 +37,10 @@
 
 #include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
 #include "el1p2cspatialparams.hh"
-
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid/2d/alugrid.hh>
-#else
-#warning ALUGrid is necessary for this test.
+#if HAVE_DUNE_PDELAB
+#include <dumux/linear/amgbackend.hh>
 #endif
 
-#if HAVE_DUNE_PDELAB
-
-// Check if DUNE-PDELab has been patched for our needs.
-#ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
-#include <dumux/linear/amgbackend.hh>
-#endif // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
-
-#endif // HAVE_DUNE_PDELAB
 namespace Dumux
 {
     template<class TypeTag>
@@ -60,18 +49,6 @@ namespace Dumux
     namespace Properties
     {
     NEW_TYPE_TAG(El1P2CProblem, INHERITS_FROM(BoxElasticOnePTwoC));
-
-    // Set the grid type
-//     SET_PROP(El1P2CProblem, Grid) {
-//         typedef Dune::SGrid<3,3> type;
-//     };
-
-//     // Set the grid type
-//     #if HAVE_ALUGRID
-//     SET_TYPE_PROP(El1P2CProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-//     #else
-//     SET_TYPE_PROP(El1P2CProblem, Grid, Dune::YaspGrid<2>);
-//     #endif
 
     // Set the grid type
     SET_PROP(El1P2CProblem, Grid)
@@ -108,14 +85,16 @@ namespace Dumux
     // Include stabilization term to prevent pressure oscillations
     SET_BOOL_PROP(El1P2CProblem, ImplicitWithStabilization, true);
 
-    // Apply superlu as linear solver
-// #if HAVE_SUPERLU
-//     SET_TYPE_PROP(El1P2CProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
-// #endif
-    
-    #ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
+// Check if DUNE-PDELab is available and has been patched for our needs.
+#if HAVE_DUNE_PDELAB &&  DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
     SET_TYPE_PROP(El1P2CProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
-    #endif
+  // #endif // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
+#elif HAVE_SUPERLU
+    SET_TYPE_PROP(El1P2CProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
+#else
+#warning Neither DUNE_PDELAB nor SuperLU detected, you are not able to run this test!
+#endif // HAVE_DUNE_PDELAB
+
 }
 
 /*!
