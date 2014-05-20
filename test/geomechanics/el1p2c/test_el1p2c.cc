@@ -23,11 +23,6 @@
  */
 #include "config.h"
 
-#if HAVE_DUNE_PDELAB
-
-// Check if DUNE-PDELab has been patched for our needs.
-#ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
-
 #include "el1p2cproblem.hh"
 #include <dune/common/precision.hh>
 #include <dumux/common/start.hh>
@@ -66,37 +61,18 @@ void usage(const char *progName, const std::string &errorMsg)
                   << "\n";
     }
 }
+
+#include <iostream>
+
 int main(int argc, char** argv)
 {
+#if !DUNE_PDELAB_IS_PATCHED_FOR_DUMUX && !#HAVE_SUPERLU
+    std::cerr << "If you have either a patched dune-pdelab or SuperLU to run this test.\n" << std::endl;
+    return 77;
+#else
     Dune::FMatrixPrecision<>::set_singular_limit(1e-22);
     typedef TTAG(El1P2CProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+#endif   
 }
 
-#else // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
-
-#warning You need to have  a patched dune-pdelab to run this test, see ../../../patches/README for details.
-
-#include <iostream>
-
-int main()
-{
-    std::cerr << "You need to have a patched dune-pdelab to run this test, "
-                 "see ../../../patches/README for details." << std::endl;
-    return 77;
-}
-
-#endif // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
-
-#else // HAVE_DUNE_PDELAB
-
-#warning You need to have dune-pdelab installed and patched to run this test.
-
-#include <iostream>
-
-int main()
-{
-    std::cerr << "You need to have dune-pdelab installed and patched to run this test.\n";
-    return 77;
-}
-#endif // HAVE_DUNE_PDELAB
