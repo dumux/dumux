@@ -66,8 +66,8 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if !DUNE_PDELAB_IS_PATCHED_FOR_DUMUX && !#HAVE_SUPERLU
-    std::cerr << "If you have either a patched dune-pdelab or SuperLU to run this test.\n" << std::endl;
+#if !DUNE_PDELAB_IS_PATCHED_FOR_DUMUX && !HAVE_SUPERLU
+    std::cerr << "You need to have either a patched dune-pdelab or SuperLU to run this test.\n" << std::endl;
     return 77;
 #else
     Dune::FMatrixPrecision<>::set_singular_limit(1e-22);
