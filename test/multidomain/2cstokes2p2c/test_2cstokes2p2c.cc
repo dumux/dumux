@@ -40,7 +40,7 @@
 void printUsage(const char *progName)
 {
     std::cout << "usage: " << progName
-            << " [--restart restartTime] -parameterFile test_2cstokes2p2c.input\n";
+            << " [--restart restartTime] -ParameterFile test_2cstokes2p2c.input\n";
     exit(1);
 }
 
@@ -62,7 +62,7 @@ int start_(int argc,
     typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
     Dune::ParameterTreeParser::readOptions(argc, argv, ParameterTree::tree());
 
-    if (ParameterTree::tree().hasKey("parameterFile") || argc==1)
+    if (ParameterTree::tree().hasKey("ParameterFile") || argc==1)
     {
         // read input file, but do not overwrite options specified
         // on the command line, since the latter have precedence.
@@ -77,7 +77,7 @@ int start_(int argc,
             inputFileName += ".input";
         }
         else
-            inputFileName = GET_RUNTIME_PARAM(TypeTag, std::string, parameterFile); // otherwise we read from the command line
+            inputFileName = GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile); // otherwise we read from the command line
 
         std::ifstream parameterFile;
 
