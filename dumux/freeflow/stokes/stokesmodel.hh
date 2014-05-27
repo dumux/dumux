@@ -54,8 +54,8 @@ namespace Dumux
  *
  * By setting the property <code>EnableNavierStokes</code> to <code>true</code> the Navier-Stokes
  * equation can be solved. In this case an additional term
- *  \f[
-\varrho_g \left(\boldsymbol{v}_g \boldsymbol{\cdot} \boldsymbol{\nabla} \right) \boldsymbol{v}_g 
+ * \f[
+ *    + \varrho_g \left(\boldsymbol{v}_g \boldsymbol{\cdot} \boldsymbol{\nabla} \right) \boldsymbol{v}_g 
  * \f]
  * is added to the momentum balance equation.
  * 
