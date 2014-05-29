@@ -49,14 +49,7 @@
 
 #include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
 
-#if HAVE_DUNE_PDELAB
-
-// Check if DUNE-PDELab has been patched for our needs.
-#ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
 #include <dumux/linear/amgbackend.hh>
-#endif // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
-
-#endif // HAVE_DUNE_PDELAB
 
 namespace Dumux
 {
@@ -134,7 +127,6 @@ SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<Typ
 
 SET_SCALAR_PROP(IMPESTestProblem, ImpetCFLFactor, 0.95);
 
-#ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
 // set up an additional problem where the AMG backend is used
 NEW_TYPE_TAG(IMPESTestProblemWithAMG, INHERITS_FROM(IMPESTestProblem));
 // use the AMG backend for the corresponding test
@@ -143,7 +135,6 @@ SET_TYPE_PROP(IMPESTestProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag>)
 SET_TYPE_PROP(IMPESTestProblemWithAMG, Grid, Dune::YaspGrid<2>);
 // set the GridCreator property
 SET_TYPE_PROP(IMPESTestProblemWithAMG, GridCreator, Dumux::DgfGridCreator<TypeTag>);
-#endif
 }
 
 /*!
