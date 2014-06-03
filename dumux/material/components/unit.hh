@@ -32,7 +32,7 @@ namespace Dumux
 /*!
  * \ingroup Components
  *
- * \brief Rough estimate for testing purposes of water.
+ * \brief A component which returns one for all liquid properties.
  *
  * \tparam Scalar  The type used for scalar values
  */
@@ -42,7 +42,7 @@ class Unit : public Component<Scalar, Unit<Scalar> >
 
 public:
     /*!
-     * \brief A human readable name for the water.
+     * \brief A human readable name for the component.
      */
     static const char *name()
     { return "Unit"; }
@@ -54,7 +54,7 @@ public:
     { return false; }
 
     /*!
-     * \brief Rough estimate of the density of water \f$\mathrm{[kg/m^3]}\f$.
+     * \brief Sets the density to one \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -65,7 +65,7 @@ public:
     }
 
     /*!
-     * \brief Rough estimate of the viscosity of water in \f$\mathrm{[Pa*s]}\f$.
+     * \brief Sets the viscosity to one \f$\mathrm{[Pa*s]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
