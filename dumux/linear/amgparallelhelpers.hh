@@ -386,21 +386,20 @@ class EntityExchanger
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, AMGLocalFemMap) LocalFemMap;
+    typedef typename GET_PROP(TypeTag, AMGLocalFemMap) LocalFemMap;
     enum { numEq = JacobianMatrix::block_type::rows};
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum {dim = GridView::dimension};
     typedef typename GridView::Traits::Grid Grid;
     typedef typename Matrix::block_type BlockType;
-    typedef typename GridView::template Codim<LocalFemMap::dof_codim>::Iterator EntityIterator;
+    typedef typename GridView::template Codim<LocalFemMap::dofCodim>::Iterator EntityIterator;
     typedef typename Grid::Traits::GlobalIdSet IDS;
     typedef typename IDS::IdType IdType;
     typedef typename Matrix::RowIterator RowIterator;
     typedef typename Matrix::ColIterator ColIterator;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
+    enum { dofCodim = LocalFemMap::dofCodim };
 
 public:
     /*! \brief Constructor. Sets up the local to global relations.
