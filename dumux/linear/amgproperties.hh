@@ -51,7 +51,7 @@ SET_PROP(BoxModel, AMGLocalFemMap)
  public:
     enum{
         //! \brief The codimension that the degrees of freedom are attached to.
-        dof_codimension = GridView::dimension
+        dofCoDim = GridView::dimension
     };
 };
 
@@ -63,7 +63,7 @@ SET_PROP(CCModel, AMGLocalFemMap)
  public:
     enum{
         //! \brief The codimension that the degrees of freedom are attached to.
-        dof_codimension = 0
+        dofCodim = 0
     };
 };
 
@@ -75,7 +75,7 @@ SET_PROP(DecoupledModel, AMGLocalFemMap)
  public:
     enum{
         //! \brief The codimension that the degrees of freedom are attached to.
-        dof_codimension = 0
+        dofCodim = 0
     };
 };
 
@@ -143,7 +143,7 @@ SET_PROP(CCModel, AMGPDELabBackend)
 //! decoupled model: use the overlapping PDELab AMG backend
 SET_PROP(DecoupledModel, AMGPDELabBackend)
 {
-    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
+    //typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
  public:
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     enum {
