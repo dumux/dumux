@@ -40,8 +40,7 @@ class ParallelISTLHelper
     typedef typename GET_PROP(TypeTag, AMGLocalFemMap) LocalFemMap;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? GridView::dimension : 0 };
+    enum { dofCodim = LocalFemMap::dofCodim };
 
     class BaseGatherScatter
     {
@@ -856,6 +855,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
                 attr = Dune::OwnerOverlapCopyAttributeSet::copy;
             }
             c.indexSet().add(index, typename C::ParallelIndexSet::LocalIndex(i, attr));
+        }
     }
     c.indexSet().endResize();
     //std::cout<<gv.comm().rank()<<": index set size = "<<c.indexSet().size()<<std::endl;
@@ -878,5 +878,6 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
 
 }
 #endif
-}
+} // end namespace Dumux
+
 #endif
