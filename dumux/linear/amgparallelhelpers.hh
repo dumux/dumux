@@ -178,8 +178,8 @@ class ParallelISTLHelper
     {
         typedef int DataType;
 
-        NeighbourGatherScatter(int rank_, std::set<int>& neighbours_)
-            : myrank(rank_), neighbours(neighbours_)
+        NeighbourGatherScatter(const Problem& problem, int rank_, std::set<int>& neighbours_)
+            : BaseGatherScatter(problem), myrank(rank_), neighbours(neighbours_)
         {}
 
 
@@ -241,16 +241,16 @@ class ParallelISTLHelper
         template<class MessageBuffer, class EntityType>
         void gather (MessageBuffer& buff, EntityType& e) const
         {
-            bool data=true;
+            int data=true;
             buff.write(data);
         }
 
         template<class MessageBuffer, class EntityType>
         void scatter (MessageBuffer& buff, const EntityType &e, size_t n)
         {
-            bool x;
+            int x;
             buff.read(x);
-            bool& data= shared_[this->map(e)];
+            int& data= shared_[this->map(e)];
             data = data || x;
         }
     private:
@@ -414,8 +414,9 @@ public:
 
         const GridView& gridView = problem.model().gridView();
 
-        EntityIterator entityEndIt = gridView.template end<dim>();
-        for (EntityIterator entityIt = gridView.template begin<dim>(); entityIt != entityEndIt; ++entityIt)
+        EntityIterator entityEndIt = gridView.template end<LocalFemMap::dofCodim>();
+        for (EntityIterator entityIt = gridView.template begin<LocalFemMap::dofCodim>();
+             entityIt != entityEndIt; ++entityIt)
         {
             if (entityIt->partitionType() == Dune::BorderEntity)
             {
@@ -708,7 +709,7 @@ public:
     {
         if (problem_.model().gridView().comm().size() > 1)
         {
-            MatEntryExchange datahandle(problem_.model().gridView(), gid2Index_, index2GID_, A);
+            MatEntryExchange datahandle(problem_, gid2Index_, index2GID_, A);
             problem_.model().gridView().communicate(datahandle,
                                                     Dune::InteriorBorder_InteriorBorder_Interface,
                                                     Dune::ForwardCommunication);
@@ -853,7 +854,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
             else {
                 attr = Dune::OwnerOverlapCopyAttributeSet::copy;
             }
-            c.indexSet().add(index, typename C::ParallelIndexSet::LocalIndex(i, attr));
+            c.indexSet().add(*index, typename C::ParallelIndexSet::LocalIndex(*i, attr));
         }
     }
     c.indexSet().endResize();
@@ -863,7 +864,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
     // Compute neighbours using communication
     typedef NeighbourGatherScatter NeighbourGS;
     std::set<int> neighbours;
-    NeighbourGatherScatter ngs(gridview.comm().rank(),
+    NeighbourGatherScatter ngs(problem_, gridview.comm().rank(),
                                neighbours);
 
     if (gridview.comm().size()>1)
