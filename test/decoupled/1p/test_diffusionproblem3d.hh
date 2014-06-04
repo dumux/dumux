@@ -22,7 +22,7 @@
 #ifndef DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 #define DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 
-#if HAVE_ALUGRID | HAVE_UGGRID
+#if HAVE_ALUGRID || HAVE_UG
 
 #include <dune/grid/alugrid/3d/alugrid.hh>
 #include <dune/grid/uggrid.hh>
