@@ -25,7 +25,7 @@
 #include "config.h"
 #include <iostream>
 
-#if HAVE_ALUGRID | HAVE_UG
+#if HAVE_ALUGRID || HAVE_UG
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
