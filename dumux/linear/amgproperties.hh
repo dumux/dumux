@@ -51,7 +51,7 @@ SET_PROP(BoxModel, AMGLocalFemMap)
  public:
     enum{
         //! \brief The codimension that the degrees of freedom are attached to.
-        dofCoDim = GridView::dimension
+        dofCodim = GridView::dimension
     };
 };
 
