@@ -30,6 +30,7 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 
+#include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/amgproperties.hh>
 #include <dumux/linear/amgparallelhelpers.hh>
 #include <dumux/linear/p0fem.hh>
@@ -94,7 +95,7 @@ public:
      * \param problem the problem at hand
      */
     AMGBackend(const Problem& problem)
-    : problem_(problem)
+    : problem_(problem), phelper_(problem_)
     {
     }
 
@@ -112,27 +113,28 @@ public:
         int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
         static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
         
-#if HAVE_MPI        
-        typename PDELabBackend::Comm comm(problem_.model().gridView().comm(),
-                                 PDELabBackend::isNonOverlapping?
-                                 Dune::SolverCategory::nonoverlapping:
-                                 Dune::SolverCategory::overlapping);        
+#if HAVE_MPI
+        Dune::SolverCategory::Category category = PDELabBackend::isNonOverlapping?
+            Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
+        typename PDELabBackend::Comm comm(problem_.model().gridView().comm(), category);        
 
         if(PDELabBackend::isNonOverlapping)
         {
-            // extend the matrix pattern such that it is usable for AMG        
-
+            // extend the matrix pattern such that it is usable for AMG
+            EntityExchanger<TypeTag> exchanger(problem_);
+            exchanger.getExtendedMatrix(A, phelper_);
+            exchanger.sumEntries(A);
         }
         typename PDELabBackend::LinearOperator fop(A, comm);
         typename PDELabBackend::ScalarProduct sp(comm);
-        int rank = comm_.communicator().rank();
+        int rank = comm.communicator().rank();
+        phelper_.createIndexSetAndProjectForAMG(A, comm);
 #else
         typename PDELabBackend::Comm  comm;
         typename PDELabBackend::LinearOperator fop(A);
         typename PDELabBackend::ScalarProduct sp;
         int rank=0;
 #endif
-        
         typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments
             SmootherArgs;
         typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,
@@ -162,6 +164,7 @@ public:
     
 private:
     const Problem& problem_;
+    ParallelISTLHelper<TypeTag> phelper_;
     Dune::InverseOperatorResult result_;
 };
 

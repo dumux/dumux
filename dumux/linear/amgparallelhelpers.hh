@@ -37,7 +37,7 @@ template<class TypeTag>
 class ParallelISTLHelper
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, AMGLocalFemMap) LocalFemMap;
+    typedef typename GET_PROP(TypeTag, AMGLocalFemMap) LocalFemMap;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -50,24 +50,14 @@ class ParallelISTLHelper
         : problem_(problem)
         {}
 
-        bool contains(int dim, int codim)
-        {
-            return dofCodim==codim;
-        }
-
-        bool fixedSize(int dim, int codim)
-        {
-            return true;
-
-        }
         template<class EntityType>
-        int map(const EntityType& e)
+        int map(const EntityType& e) const
         {
             return problem_.model().dofMapper().map(e);
         }
 
     private:
-        Problem& problem_;
+        const Problem& problem_;
     };
 
 
@@ -78,7 +68,8 @@ class ParallelISTLHelper
      * Can be used to mark ghost cells.
      */
     class GhostGatherScatter
-        : public BaseGatherScatter, Dune::CommDataHandleIF<GhostGatherScatter,std::size_t>
+        : public BaseGatherScatter,
+          public Dune::CommDataHandleIF<GhostGatherScatter,std::size_t>
     {
     public:
         typedef std::size_t DataType;
@@ -88,8 +79,20 @@ class ParallelISTLHelper
             : BaseGatherScatter(problem), ranks_(ranks)
         {}
 
+
+        bool contains(int dim, int codim) const
+        {
+            return dofCodim==codim;
+        }
+
+        bool fixedSize(int dim, int codim) const
+        {
+            return true;
+
+        }
+
         template<class MessageBuffer, class EntityType>
-        void gather (MessageBuffer& buff, const EntityType& e)
+        void gather (MessageBuffer& buff, const EntityType& e) const
         {
             std::size_t& data= ranks_[this->map(e)];
             if (e.partitionType()!=Dune::InteriorEntity && e.partitionType()!=Dune::BorderEntity)
@@ -98,7 +101,7 @@ class ParallelISTLHelper
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter (MessageBuffer& buff, const EntityType& e)
+        void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
         {
             std::size_t x;
             std::size_t& data = ranks_[this->map(e)];
@@ -119,7 +122,8 @@ class ParallelISTLHelper
      * Used to compute an owner rank for each unknown.
      */
     class InteriorBorderGatherScatter
-        : public BaseGatherScatter, Dune::CommDataHandleIF<InteriorBorderGatherScatter,std::size_t>
+        : public BaseGatherScatter, 
+          public Dune::CommDataHandleIF<InteriorBorderGatherScatter,std::size_t>
     {
     public:
         typedef std::size_t DataType;
@@ -129,8 +133,19 @@ class ParallelISTLHelper
             : BaseGatherScatter(problem), ranks_(ranks)
         {}
 
+
+        bool contains(int dim, int codim) const
+        {
+            return dofCodim==codim;
+        }
+
+        bool fixedSize(int dim, int codim) const
+        {
+            return true;
+
+        }
         template<class MessageBuffer, class EntityType>
-        void gather (MessageBuffer& buff, const EntityType& e)
+        void gather (MessageBuffer& buff, const EntityType& e) const
         {
 
             std::size_t& data = ranks_[this->map(e)];
@@ -140,7 +155,7 @@ class ParallelISTLHelper
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter (MessageBuffer& buff, const EntityType& e)
+        void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
         {
             std::size_t x;
             std::size_t& data = ranks_[this->map(e)];
@@ -159,7 +174,8 @@ class ParallelISTLHelper
      *
      */
     struct NeighbourGatherScatter
-        : public BaseGatherScatter, Dune::CommDataHandleIF<NeighbourGatherScatter,int>
+        : public BaseGatherScatter,
+          public Dune::CommDataHandleIF<NeighbourGatherScatter,int>
     {
         typedef int DataType;
 
@@ -167,14 +183,26 @@ class ParallelISTLHelper
             : myrank(rank_), neighbours(neighbours_)
         {}
 
+
+        bool contains(int dim, int codim) const
+        {
+            return dofCodim==codim;
+        }
+
+        bool fixedSize(int dim, int codim) const
+        {
+            return true;
+
+        }
+
         template<class MessageBuffer, class EntityType>
-        void gather (MessageBuffer& buff, const EntityType &e)
+        void gather (MessageBuffer& buff, const EntityType &e) const
         {
             buff.write(myrank);
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter (MessageBuffer& buff, const EntityType &e)
+        void scatter (MessageBuffer& buff, const EntityType &e, size_t n)
         {
             int x;
             buff.read(x);
@@ -190,7 +218,8 @@ class ParallelISTLHelper
      *
      */
     struct SharedGatherScatter
-        : public BaseGatherScatter, Dune::CommDataHandleIF<SharedGatherScatter,int>
+        : public BaseGatherScatter,
+          public Dune::CommDataHandleIF<SharedGatherScatter,int>
     {
         typedef int DataType;
 
@@ -199,15 +228,26 @@ class ParallelISTLHelper
             : BaseGatherScatter(problem), shared_(shared)
         {}
 
+        bool contains(int dim, int codim) const
+        {
+            return dofCodim==codim;
+        }
+
+        bool fixedSize(int dim, int codim) const
+        {
+            return true;
+
+        }
+
         template<class MessageBuffer, class EntityType>
-        void gather (MessageBuffer& buff, EntityType& e)
+        void gather (MessageBuffer& buff, EntityType& e) const
         {
             bool data=true;
             buff.write(data);
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter (MessageBuffer& buff, const EntityType &e)
+        void scatter (MessageBuffer& buff, const EntityType &e, size_t n)
         {
             bool x;
             buff.read(x);
@@ -225,7 +265,8 @@ class ParallelISTLHelper
      */
     template<typename GI>
     struct GlobalIndexGatherScatter
-        : public BaseGatherScatter, Dune::CommDataHandleIF<GlobalIndexGatherScatter<GI>, GI>
+        : public BaseGatherScatter,
+          public Dune::CommDataHandleIF<GlobalIndexGatherScatter<GI>, GI>
     {
         typedef GI DataType;
         GlobalIndexGatherScatter(std::vector<GI>& gindices,
@@ -233,14 +274,25 @@ class ParallelISTLHelper
             : BaseGatherScatter(problem), gindices_(gindices_)
         {}
 
+        bool contains(int dim, int codim) const
+        {
+            return dofCodim==codim;
+        }
+
+        bool fixedSize(int dim, int codim) const
+        {
+            return true;
+
+        }
+
         template<class MessageBuffer, class EntityType>
-        void gather (MessageBuffer& buff, const EntityType& e)
+        void gather (MessageBuffer& buff, const EntityType& e) const
         {
             buff.write(gindices_[this->map(e)]);
         }
 
         template<class MessageBuffer, class EntityType>
-        void scatter (MessageBuffer& buff, const EntityType& e)
+        void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
         {
             DataType x;
             buff.read(x);
@@ -253,27 +305,27 @@ class ParallelISTLHelper
 public:
 
     ParallelISTLHelper (const Problem& problem, int verbose=1)
-        : problem_(problem), owner_(problem.dofMapper().size(),
-                                    problem.gridView().comm().rank()),
-          isGhost_(problem.dofMapper().size(),0.0), verbose_(verbose)
+        : problem_(problem), owner_(problem.model().dofMapper().size(),
+                                    problem.model().gridView().comm().rank()),
+          isGhost_(problem.model().dofMapper().size(),0.0), verbose_(verbose)
     {
         // find out about ghosts
         GhostGatherScatter ggs(owner_,problem);
 
-        if (problem.gridView().comm().size()>1)
-            problem.gridView().communicate(ggs,Dune::InteriorBorder_All_Interface,Dune::ForwardCommunication);
+        if (problem.model().gridView().comm().size()>1)
+            problem.model().gridView().communicate(ggs,Dune::InteriorBorder_All_Interface,Dune::ForwardCommunication);
 
         isGhost_ = owner_;
 
         // partition interior/border
         InteriorBorderGatherScatter dh(owner_, problem_);
 
-        if (problem.gridView().comm().size()>1)
-            problem.gridView().communicate(dh,Dune::InteriorBorder_InteriorBorder_Interface,Dune::ForwardCommunication);
+        if (problem.model().gridView().comm().size()>1)
+            problem.model().gridView().communicate(dh,Dune::InteriorBorder_InteriorBorder_Interface,Dune::ForwardCommunication);
 
         // convert vector into mask vector
         for(auto v=owner_.begin(), vend=owner_.end(); v!=vend;++v)
-            if(*v=problem.gridView().comm().rank())
+            if(*v=problem.model().gridView().comm().rank())
                 *v=1.0;
             else
                 *v=0.0;
@@ -614,7 +666,7 @@ public:
         @param A Matrix to operate on.
         @param helper ParallelelISTLHelper.
     */
-    void getextendedmatrix (Matrix& A,const ParallelISTLHelper<TypeTag>& helper)
+    void getExtendedMatrix (Matrix& A,const ParallelISTLHelper<TypeTag>& helper)
     {
         if (problem_.model().gridView().comm().size() > 1) {
             Matrix tmp(A);
@@ -665,6 +717,14 @@ public:
         }
     }
 
+#if HAVE_MPI
+    /**
+     * @brief Extends the sparsity pattern of the discretization matrix for AMG.
+     * @param A A reference to the matrix to change.
+     */
+    void getExtendedMatrix (Matrix& A) const;
+#endif
+
 private:
     const Problem& problem_;
     std::map<IdType,int> gid2Index_;
@@ -672,8 +732,8 @@ private:
 };
 
 #if HAVE_MPI
-
-void getextendedmatrix (M& A) const
+template<class TypeTag>
+void EntityExchanger<TypeTag>::getExtendedMatrix (Matrix& A) const
 {
     const GridView& gridView = problem_.model().gridView();
     if (gridView.comm().size() > 1) {
@@ -711,8 +771,9 @@ void getextendedmatrix (M& A) const
     }
 }
 
+template<class TypeTag>
 template<typename M, typename C>
-void ParallelISTLHelper<GFS,skipBlocksizeCheck>::createIndexSetAndProjectForAMG(M& m, C& c)
+void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
 {
     const GridView& gridview = problem_.model().gridView();
 
@@ -733,10 +794,10 @@ void ParallelISTLHelper<GFS,skipBlocksizeCheck>::createIndexSetAndProjectForAMG(
         if(*v)
             ++count;
 
-    dverb<<gridview.comm().rank()<<": shared count is "<< count.touint()
+    Dune::dverb<<gridview.comm().rank()<<": shared count is "<< count.touint()
          <<std::endl;
 
-    dverb<<gridview.comm().rank()<<": shared block count is "
+    Dune::dverb<<gridview.comm().rank()<<": shared block count is "
          << count.touint()<<std::endl;
 
 
@@ -757,9 +818,11 @@ void ParallelISTLHelper<GFS,skipBlocksizeCheck>::createIndexSetAndProjectForAMG(
     auto shared=sharedDofs.begin();
     auto index=scalarIndices.begin();
 
-    for(auto i=vi.begin(), ien=vi.end(); i!=vi; ++i, ++shared)
+    for(auto i=owner_.begin(), iend=owner_.end(); i!=iend; ++i, ++shared)
         if(*i==1.0 && *shared){
             *index=start;
+            ++start;
+            ++index;
         }
 
     // publish global indices for the shared DOFS to other processors.
@@ -773,9 +836,9 @@ void ParallelISTLHelper<GFS,skipBlocksizeCheck>::createIndexSetAndProjectForAMG(
     // Setup the index set
     c.indexSet().beginResize();
     index=scalarIndices.begin();
-    auto ghost=isGhost.begin();
+    auto ghost=isGhost_.begin();
 
-    for(auto i=v.begin(), iend=vend(); i!=iend; ++i)
+    for(auto i=owner_.begin(), iend=owner_.end(); i!=iend; ++i)
     {
         Dune::OwnerOverlapCopyAttributeSet::AttributeSet attr;
         if(*index!=std::numeric_limits<GlobalIndex>::max()){
@@ -784,15 +847,15 @@ void ParallelISTLHelper<GFS,skipBlocksizeCheck>::createIndexSetAndProjectForAMG(
                 // This dof is managed by us.
                 attr = Dune::OwnerOverlapCopyAttributeSet::owner;
             }
-            else if ( *g==(1<<24) && ( c.getSolverCategory() ==
-                                       static_cast<int>(SolverCategory::nonoverlapping)) ){
+            else if ( *ghost==(1<<24) && ( c.getSolverCategory() ==
+                                           static_cast<int>(Dune::SolverCategory::nonoverlapping)) ){
                 //use attribute overlap for ghosts in novlp grids
                 attr = Dune::OwnerOverlapCopyAttributeSet::overlap;
             }
             else {
                 attr = Dune::OwnerOverlapCopyAttributeSet::copy;
             }
-            c.indexSet().add(index, typename C::ParallelIndexSet::LocalIndex(i, attr)));
+            c.indexSet().add(index, typename C::ParallelIndexSet::LocalIndex(i, attr));
     }
     c.indexSet().endResize();
     //std::cout<<gv.comm().rank()<<": index set size = "<<c.indexSet().size()<<std::endl;

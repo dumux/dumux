@@ -78,14 +78,14 @@ SET_PROP(DecoupledModel, AMGLocalFemMap)
         dof_codimension = 0
     };
 };
-/*
+
 //! set a property JacobianMatrix also for the decoupled models
 SET_PROP(DecoupledModel, JacobianMatrix)
 {
 public:
 typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) type;
 };
-*/
+
  //! the type of the employed PDELab backend
 NEW_PROP_TAG(AMGPDELabBackend);
 
@@ -103,8 +103,8 @@ SET_PROP(BoxModel, AMGPDELabBackend)
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
 #if HAVE_MPI
-    typedef Dune::OwnerOverlapCopyCommunication<bigunsignedint<96>,int> Comm;
-    typedef Dune::NonoverlappingSchwarzOperator<MType,VType, VType> LinearOperator;
+    typedef Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int> Comm;
+    typedef Dune::NonoverlappingSchwarzOperator<MType,VType, VType,Comm> LinearOperator;
     typedef Dune::NonoverlappingSchwarzScalarProduct<VType,Comm> ScalarProduct;
     typedef Dune::NonoverlappingBlockPreconditioner<Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
 #else
@@ -128,10 +128,10 @@ SET_PROP(CCModel, AMGPDELabBackend)
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
 #if HAVE_MPI
-    typedef Dune::OwnerOverlapCopyCommunication<bigunsignedint<96>,int> Comm;
-    typedef Dune::OverlappingSchwarzOperator<MType,VType, VType> LinearOperator;
+    typedef Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int> Comm;
+    typedef Dune::OverlappingSchwarzOperator<MType,VType, VType,Comm> LinearOperator;
     typedef Dune::OverlappingSchwarzScalarProduct<VType,Comm> ScalarProduct;
-    typedef Dune::BlockPreconditioner<Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
+    typedef Dune::BlockPreconditioner<MType,VType,Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
 #else
     typedef Dune::Amg::SequentialInformation Comm;
     typedef Dune::MatrixAdapter<MType,VType,VType> LinearOperator;
@@ -154,10 +154,10 @@ SET_PROP(DecoupledModel, AMGPDELabBackend)
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
 #if HAVE_MPI
-    typedef Dune::OwnerOverlapCopyCommunication<bigunsignedint<96>,int> Comm;
-    typedef Dune::OverlappingSchwarzOperator<MType,VType, VType> LinearOperator;
+    typedef Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int> Comm;
+    typedef Dune::OverlappingSchwarzOperator<MType,VType, VType,Comm> LinearOperator;
     typedef Dune::OverlappingSchwarzScalarProduct<VType,Comm> ScalarProduct;
-    typedef Dune::BlockPreconditioner<Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
+    typedef Dune::BlockPreconditioner<MType,VType,Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
 #else
     typedef Dune::Amg::SequentialInformation Comm;
     typedef Dune::MatrixAdapter<MType,VType,VType> LinearOperator;
