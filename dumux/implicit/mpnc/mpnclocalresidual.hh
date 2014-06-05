@@ -233,8 +233,8 @@ public:
      *
      * 		\param element The finite element
      * 		\param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * 		\param prevVolVars The volume variables of the previous timestep
-     * 		\param curVolVars The volume variables of the current timestep
+     * 		\param prevElemVolVars The element volume variables of the previous timestep
+     * 		\param curElemVolVars The element volume variables of the current timestep
      *      \param bcType The types of the boundary conditions for all vertices of the element
      */
     void eval(const Element &element,

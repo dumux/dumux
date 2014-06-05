@@ -199,7 +199,8 @@ SET_BOOL_PROP(EvaporationAtmosphereProblem, VelocityAveragingInModel, true);
 /*!
  * \ingroup MpNcBoxproblems
  *
- * \brief Problem where the evaporation is tested.
+ * \brief Problem that simulates the coupled heat and mass transfer processes resulting form the evaporation of liquid water from
+ *  	  a porous medium sub-domain into a gas filled "quasi-freeflow" sub-domain.
  */
 template <class TypeTag>
 class EvaporationAtmosphereProblem
