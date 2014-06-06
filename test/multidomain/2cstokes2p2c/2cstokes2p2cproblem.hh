@@ -314,7 +314,14 @@ public:
         if (this->timeManager().time() == 0)
         {
             fluxFile_.open("fluxes.out");
-            fluxFile_ << "time; flux1; advFlux1; diffFlux1; totalFlux1; flux2; wPhaseFlux2; nPhaseFlux2\n";
+            fluxFile_ << "Time;"
+                      << "TotalWaterVaporFluxFF;" // from residuum
+                      << "AdvWaterVaporFluxFF;" // from gradients (imprecise)
+                      << "DiffWaterVaporFluxFF;" // from gradients (imprecise)
+                      << "TotalWaterComponentFluxPM;"
+                      << "WaterFluxLiquidPhasePM;"
+                      << "WaterFluxGasPhasePM;"
+                      << std::endl;
             counter_ = 1;
         }
         else
@@ -399,9 +406,9 @@ public:
     {
         const MDGrid& mdGrid = this->mdGrid();
         ElementVolumeVariables1 elemVolVarsPrev1, elemVolVarsCur1;
-        Scalar sumVaporFluxes = 0.;
-        Scalar advectiveVaporFlux = 0.;
-        Scalar diffusiveVaporFlux = 0.;
+        Scalar totalWaterComponentFlux = 0.;
+        Scalar advectiveWaterVaporFlux = 0.;
+        Scalar diffusiveWaterVaporFlux = 0.;
 
         // count number of elements to determine number of interface nodes
         int numElements = 0;
@@ -482,9 +489,9 @@ public:
                                                            elemVolVarsCur1,
                                                            /*onBoundary=*/true);
 
-                advectiveVaporFlux += computeAdvectiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
-                diffusiveVaporFlux += computeDiffusiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
-                sumVaporFluxes += firstVertexDefect[vertInElem1][transportEqIdx1];
+                advectiveWaterVaporFlux += computeAdvectiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
+                diffusiveWaterVaporFlux += computeDiffusiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
+                totalWaterComponentFlux += firstVertexDefect[vertInElem1][transportEqIdx1];
 				}
             }
         } // end loop over element faces on interface
@@ -493,12 +500,12 @@ public:
         {
             std::cout << "Writing flux file\n";
             char outputname[20];
-            sprintf(outputname, "%s%05d%s","fluxes1_", counter_,".out");
+            sprintf(outputname, "%s%05d%s","fluxesFF_", counter_,".out");
             std::ofstream outfile(outputname, std::ios_base::out);
-            outfile << "Xcoord1 "
-                    << "totalFlux1 "
-                    << "componentFlux1 "
-                    << "count1 "
+            outfile << "XCoordFF;"
+                    << "TotalMassFluxFF;"
+                    << "TotalComponentMassFluxFF;"
+                    << "CountFF"
                     << std::endl;
             for (int interfaceVertIdx=0; interfaceVertIdx < numInterfaceVertices; interfaceVertIdx++)
             {
@@ -506,18 +513,19 @@ public:
                     std::cerr << "too often at one node!!";
 
                 if (outputVector[interfaceVertIdx].count==2)
-                    outfile << outputVector[interfaceVertIdx].xCoord << " "
-                            << outputVector[interfaceVertIdx].defect[massBalanceIdx1] << " " // total mass flux
-                            << outputVector[interfaceVertIdx].defect[transportEqIdx1] << " " // total flux of component
-                            << outputVector[interfaceVertIdx].count << " "
+                    outfile << outputVector[interfaceVertIdx].xCoord << ";"
+                            << outputVector[interfaceVertIdx].defect[massBalanceIdx1] << ";" // total mass flux
+                            << outputVector[interfaceVertIdx].defect[transportEqIdx1] << ";" // total flux of component
+                            << outputVector[interfaceVertIdx].count
                             << std::endl;
             }
             outfile.close();
         }
         if (shouldWriteVaporFlux())
-            fluxFile_ << this->timeManager().time() + this->timeManager().timeStepSize() << "; "
-                      << sumVaporFluxes << "; " << advectiveVaporFlux << "; " << diffusiveVaporFlux << "; "
-                      << advectiveVaporFlux-diffusiveVaporFlux << "; ";
+            fluxFile_ << this->timeManager().time() + this->timeManager().timeStepSize() << ";"
+                      << totalWaterComponentFlux << ";"
+                      << advectiveWaterVaporFlux << ";"
+                      << diffusiveWaterVaporFlux << ";";
     }
 
     /*!
@@ -532,7 +540,7 @@ public:
         const MDGrid& mdGrid = this->mdGrid();
         ElementVolumeVariables2 elemVolVarsPrev2, elemVolVarsCur2;
 
-        Scalar sumVaporFluxes = 0.;
+        Scalar totalWaterComponentFlux = 0.;
         Scalar sumWaterFluxInGasPhase = 0.;
 
         // count number of elements to determine number of interface nodes
@@ -606,7 +614,7 @@ public:
     	                sumWaterFluxInGasPhase +=
         	                this->localResidual2().evalPhaseStorage(vertInElem2);
 
-            	    sumVaporFluxes += secondVertexDefect[vertInElem2][contiWEqIdx2];
+            	    totalWaterComponentFlux += secondVertexDefect[vertInElem2][contiWEqIdx2];
                 	sumWaterFluxInGasPhase +=
                     	this->localResidual2().elementFluxes(vertInElem2);
           		}
@@ -616,11 +624,11 @@ public:
         if (shouldWriteFluxFile())
         {
             char outputname[20];
-            sprintf(outputname, "%s%05d%s","fluxes2_", counter_,".out");
+            sprintf(outputname, "%s%05d%s","fluxesPM_", counter_,".out");
             std::ofstream outfile(outputname, std::ios_base::out);
-            outfile << "Xcoord2 "
-                    << "totalFlux2 "
-                    << "componentFlux2 "
+            outfile << "XCoordPM;"
+                    << "TotalMassFluxPM;"
+                    << "TotalComponentMassFluxPM"
                     << std::endl;
 
             for (int interfaceVertIdx=0; interfaceVertIdx < numInterfaceVertices; interfaceVertIdx++)
@@ -629,18 +637,19 @@ public:
                     std::cerr << "too often at one node!!";
 
                 if (outputVector[interfaceVertIdx].count==2)
-                    outfile << outputVector[interfaceVertIdx].xCoord << " "
-                            << outputVector[interfaceVertIdx].defect[contiTotalMassIdx2] << " " // total mass flux
-                            << outputVector[interfaceVertIdx].defect[contiWEqIdx2] << " " // total flux of component
+                    outfile << outputVector[interfaceVertIdx].xCoord << ";"
+                            << outputVector[interfaceVertIdx].defect[contiTotalMassIdx2] << ";" // total mass flux
+                            << outputVector[interfaceVertIdx].defect[contiWEqIdx2] // total flux of component
                             << std::endl;
             }
             outfile.close();
         }
         if (shouldWriteVaporFlux()){
-            Scalar sumWaterFluxInLiquidPhase = sumVaporFluxes - sumWaterFluxInGasPhase;
-            fluxFile_ << sumVaporFluxes << "; "
-                      << sumWaterFluxInLiquidPhase << "; "
-                      << sumWaterFluxInGasPhase << std::endl;
+            Scalar sumWaterFluxInLiquidPhase = totalWaterComponentFlux - sumWaterFluxInGasPhase;
+            fluxFile_ << totalWaterComponentFlux << ";"
+                      << sumWaterFluxInLiquidPhase << ";"
+                      << sumWaterFluxInGasPhase
+                      << std::endl;
         }
     }
 
