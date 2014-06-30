@@ -78,12 +78,19 @@ StabilizationAlpha = -1.0
 #############################################################
 [FreeFlow]
 #############################################################
+RefVelocity = 3.5
 RefPressure = 1e5
+RefMassfrac = 0.008          # 0.01
 RefTemperature = 298.15
-RefMassfrac = 0.008
-VxMax = 3.5
+SinusVelAmplitude = 0.0           # 0.1
+SinusVelPeriod = 3600             # in seconds
+SinusPressureAmplitude = 0.0      # 0.5
+SinusPressurePeriod = 3600        # in seconds
+SinusConcentrationAmplitude = 0.0 # 0.5
+SinusConcentrationPeriod = 3600   # in seconds
+SinusTemperatureAmplitude = 0.0   # 0.5
+SinusTemperaturePeriod = 3600     # in seconds
 BeaversJosephSlipVel = 0.00134
-SinusVelVar = 0.0
 ExponentMTC = 0.0           # 1./6., Mass transfer coefficient for S^MTC
 UseBoundaryLayerModel = 0   # 0 for no boundary layer model, 1 for Blasius, 2 and 3 for turbulent BL, 9 for constant thickness
 BoundaryLayerOffset = 0.0   # for BL model like Blasius, determines a virtual run-up distance for the flow

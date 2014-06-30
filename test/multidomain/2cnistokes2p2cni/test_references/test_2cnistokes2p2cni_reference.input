@@ -78,21 +78,24 @@ StabilizationAlpha = -1.0
 #############################################################
 [FreeFlow]
 #############################################################
+RefVelocity = 3.5
 RefPressure = 1e5
+RefMassfrac = 0.008          # 0.01
 RefTemperature = 298.15
-RefMassfrac = 0.008
-VxMax = 3.5
+SinusVelAmplitude = 0.0           # 0.1
+SinusVelPeriod = 3600             # in seconds
+SinusPressureAmplitude = 0.0      # 0.5
+SinusPressurePeriod = 3600        # in seconds
+SinusConcentrationAmplitude = 0.0 # 0.5
+SinusConcentrationPeriod = 3600   # in seconds
+SinusTemperatureAmplitude = 0.0   # 0.5
+SinusTemperaturePeriod = 3600     # in seconds
 BeaversJosephSlipVel = 0.00134
 ExponentMTC = 0.0           # 1./6., Mass transfer coefficient for S^MTC
 UseBoundaryLayerModel = 0   # 0 for no boundary layer model, 1 for Blasius, 2 and 3 for turbulent BL, 9 for constant thickness
 BoundaryLayerOffset = 0.0   # for BL model like Blasius, determines a virtual run-up distance for the flow
 ConstThickness = 0.0016     # for a constant BL thickness, use BL model 9
 MassTransferModel = 0       # 0 for none, 1 for power law, 2 for Schluender model
-
-SinusVelVar = 0.0   # hourly velocity variation
-SinusPVar = 0.0     # diurnal pressure variation
-SinusTVar = 0.0     # diurnal temperature variation
-SinusXVar = 0.0     # diurnal variation of the vapor concentration (massfraction)
 
 #############################################################
 [PorousMedium]
