@@ -91,11 +91,6 @@ class TwoCStokesTwoPTwoCSpatialParams : public ImplicitSpatialParams<TypeTag>
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    enum {
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx
-    };
 
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;

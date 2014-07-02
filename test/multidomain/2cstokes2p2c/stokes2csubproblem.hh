@@ -25,9 +25,13 @@
 #ifndef DUMUX_STOKES2C_SUBPROBLEM_HH
 #define DUMUX_STOKES2C_SUBPROBLEM_HH
 
+#include <dune/pdelab/gridoperator/gridoperator.hh>
+
 #include <dumux/freeflow/stokesnc/stokesncmodel.hh>
 #include <dumux/multidomain/couplinglocalresiduals/stokesnccouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
+
+#include "2cstokes2p2cspatialparams.hh"
 
 namespace Dumux
 {

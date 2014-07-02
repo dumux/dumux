@@ -38,6 +38,7 @@
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
+#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/multidomain/common/multidomainproblem.hh>
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2cnewtoncontroller.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/2cnistokes2p2cnilocaloperator.hh>
@@ -48,8 +49,6 @@
 #endif // HAVE_PARDISO
 
 #include "2cnistokes2p2cnispatialparams.hh"
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
-
 #include "stokes2cnisubproblem.hh"
 #include "2p2cnisubproblem.hh"
 
