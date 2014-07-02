@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The MultiDomain properties
+ * \brief Specify properties required for the coupled model
  */
 #ifndef DUMUX_MULTIDOMAIN_PROPERTIES_HH
 #define DUMUX_MULTIDOMAIN_PROPERTIES_HH
@@ -27,10 +27,6 @@
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 
-/*!
- * \file
- * \brief Specify properties required for the coupled model
- */
 namespace Dumux
 {
 

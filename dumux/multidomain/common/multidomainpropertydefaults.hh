@@ -49,9 +49,6 @@
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/timemanager.hh>
 
-/*!
- * \brief Sets default values for the coupled model
- */
 namespace Dumux
 {
 template <class TypeTag> class MultiDomainModel;
