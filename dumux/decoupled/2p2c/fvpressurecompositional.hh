@@ -368,7 +368,8 @@ public:
      * \param problem a problem class object
      */
     FVPressureCompositional(Problem& problem) : FVPressure<TypeTag>(problem),
-        problem_(problem), initializationOutputWriter_(problem.gridView(),"initOutput2p2c")
+        problem_(problem), initializationOutputWriter_(problem.gridView(),"initOutput2p2c"),
+        maxError_(0.0), incp_(1.0e1)
     {
         updateEstimate_.resize(GET_PROP_VALUE(TypeTag, NumPhases));
         for  (int i=0; i<GET_PROP_VALUE(TypeTag, NumPhases); i++)
@@ -382,7 +383,6 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "Global Pressure type not supported!");
         }
-        maxError_=0.;
     }
 protected:
     TransportSolutionType updateEstimate_; //! Update estimate for changes in volume for the pressure equation
@@ -392,10 +392,10 @@ protected:
     Dumux::VtkMultiWriter<GridView> initializationOutputWriter_;
 
     Scalar maxError_; //!< Maximum volume error of all cells
+    Scalar incp_; //!< Increment for the volume derivative w.r.t pressure
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
-    Scalar incp_ = 1e1; //!< Increment for the volume derivative w.r.t pressure
     //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
 
