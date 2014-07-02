@@ -26,7 +26,6 @@
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
-#include <cmath>
 #include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/implicit/richards/richardsmodel.hh>
@@ -154,18 +153,18 @@ public:
     {
         eps_ = 3e-6;
         pnRef_ = 1e5;
-        
+
         lensLowerLeft_[0] = 1.0;
         lensLowerLeft_[1] = 2.0;
-        
+
         lensUpperRight_[0] = 4.0;
         lensUpperRight_[1] = 3.0;
-        
+
         this->spatialParams().setLensCoords(lensLowerLeft_, lensUpperRight_);
         
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
     }
-    
+
     /*!
      * \name Problem parameters
      */
@@ -178,14 +177,14 @@ public:
      */
     const std::string name() const
     { return name_; }
-    
+
     /*!
      * \brief Returns the temperature [K] within a finite volume
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
-    { return 273.15 + 10; } // -> 10°C
+    { return 273.15 + 10; }; // -> 10°C
 
     /*!
      * \brief Returns the reference pressure [Pa] of the non-wetting
@@ -202,16 +201,16 @@ public:
     Scalar referencePressure(const Element &element,
                              const FVElementGeometry &fvGeometry,
                              const int scvIdx) const
-    { return pnRef_; }
-    
+    { return pnRef_; };
+
     void sourceAtPos(PrimaryVariables &values,
-                     const GlobalPosition &globalPos) const
+                const GlobalPosition &globalPos) const
     {
         values = 0;
     }
-    
+
     // \}
-    
+
     /*!
      * \name Boundary conditions
      */
@@ -225,17 +224,17 @@ public:
      * \param globalPos The position for which the boundary type is set
      */
     void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+                       const GlobalPosition &globalPos) const
     {
         if (onLeftBoundary_(globalPos) ||
             onRightBoundary_(globalPos))
-            {
-                values.setAllDirichlet();
-            }
+        {
+            values.setAllDirichlet();
+        }
         else
             values.setAllNeumann();
     }
-    
+
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
@@ -248,15 +247,10 @@ public:
     void dirichletAtPos(PrimaryVariables &values,
                    const GlobalPosition &globalPos) const
     {
-        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-        const Scalar pwTop = 98942.8;
-        const Scalar pwBottom = 95641.1;
-        Scalar pw = pwBottom
-          + 0.5 * (std::tanh( (5.0 * globalPos[1]) - 15.0 + time/10.0) + 1.0) * (pwTop - pwBottom);
-        values[pwIdx] = pw ;
-        
+        // use initial values as boundary conditions
+        initial_(values, globalPos);
     }
-    
+
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
@@ -271,10 +265,10 @@ public:
                  const GlobalPosition &globalPos) const
     {
         values = 0.0;
-        //if (onInlet_(globalPos)) {
+        if (onInlet_(globalPos)) {
             // inflow of water
-        //  values[contiEqIdx] = -0.04; // kg / (m * s)
-        //}
+            values[contiEqIdx] = -0.04; // kg / (m * s)
+        }
     }
 
     /*!
@@ -293,20 +287,18 @@ public:
      */
     void initialAtPos(PrimaryVariables &values,
                  const GlobalPosition &globalPos) const
-    { initial_(values, globalPos); }
+    { initial_(values, globalPos); };
 
     // \}
 
 private:
     void initial_(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        /*Scalar sw = 0.0;
+        Scalar sw = 0.0;
         Scalar pc =
             MaterialLaw::pc(this->spatialParams().materialLawParams(globalPos),
                             sw);
-                            values[pwIdx] = pnRef_ - pc;*/
-        dirichletAtPos(values, globalPos);
-
+        values[pwIdx] = pnRef_ - pc;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
@@ -338,10 +330,10 @@ private:
 
     Scalar eps_;
     Scalar pnRef_;
-    std::string name_;
+
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
-   
+    std::string name_;
 };
 } //end namespace
 
