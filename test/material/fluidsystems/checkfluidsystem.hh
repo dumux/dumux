@@ -28,6 +28,8 @@
 #ifndef DUMUX_CHECK_FLUIDSYSTEM_HH
 #define DUMUX_CHECK_FLUIDSYSTEM_HH
 
+#include <dune/common/classname.hh>
+
 // include all fluid systems in dumux-stable
 #include <dumux/material/fluidsystems/1pfluidsystem.hh>
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
@@ -47,10 +49,12 @@
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 #include <dumux/material/fluidstates/isothermalimmisciblefluidstate.hh>
 
-#include <dune/common/classname.hh>
+namespace Dumux
+{
 
-// this is a fluid state which makes sure that only the quantities
-// allowed are accessed
+/*! \brief This fluid state ensures that only the allowed quantities
+ * are accessed
+ */
 template<class Scalar, class FluidSystem, class BaseFluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem> >
 class HairSplittingFluidState: protected BaseFluidState
 {
@@ -542,4 +546,6 @@ void checkFluidSystem()
     std::cout << "----------------------------------\n";
 }
 
-#endif
+} // end namespace Dumux
+
+#endif // DUMUX_CHECK_FLUIDSYSTEM_HH
