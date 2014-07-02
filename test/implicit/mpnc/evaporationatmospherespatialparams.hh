@@ -136,7 +136,8 @@ public:
 
 } // end namespace properties
 
-/* \brief Definition of the soil properties for the poor man's coupling / evaporation atmosphere with kinetic model
+/**
+ * \brief Definition of the spatial parameters for the evaporation atmosphere Problem (using a "poor man's coupling")
  */
 template<class TypeTag>
 class EvaporationAtmosphereSpatialParams : public ImplicitSpatialParams<TypeTag>
