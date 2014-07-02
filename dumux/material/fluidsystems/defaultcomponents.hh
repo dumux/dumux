@@ -78,7 +78,7 @@ public:
         Dune::dinfo << "Initializing tables for the H2O fluid properties ("
                     << nT*nP
                     << " entries).\n";
-        H2O::init(273.15, 623.15, nT, -10, 20e6, nP);;
+        H2O::init(273.15, 623.15, nT, -10, 20e6, nP);
     }
 };
 

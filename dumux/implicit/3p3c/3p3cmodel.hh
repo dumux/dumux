@@ -817,7 +817,7 @@ protected:
             {
                 newPhasePresence = threePhases;
                 globalSol[globalIdx][switch1Idx] = volVars.saturation(wPhaseIdx);
-                globalSol[globalIdx][switch2Idx] = volVars.saturation(nPhaseIdx);;
+                globalSol[globalIdx][switch2Idx] = volVars.saturation(nPhaseIdx);
             }
             else if ((gasFlag == 1) && (nonwettingFlag == 1))
             {

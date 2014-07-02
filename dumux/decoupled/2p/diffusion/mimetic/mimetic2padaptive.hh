@@ -491,7 +491,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
     Dune::DynamicMatrix<Scalar> R(numFaces, dim, 0.);
     Dune::DynamicMatrix<Scalar> N(numFaces, dim, 0.);
 
-    //       std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;;
+    //       std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;
 
     //collect information needed for calculation of fluxes due to capillary-potential (pc + gravity!)
     std::vector<Scalar> pcPotFace(numFaces);

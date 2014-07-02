@@ -344,7 +344,7 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         // no difference for supercritical CO2
-        return gasViscosity(temperature, pressure);;
+        return gasViscosity(temperature, pressure);
     };
 };
 

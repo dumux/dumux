@@ -179,7 +179,7 @@ public:
     Scalar evalPhaseStorage(const int scvIdx) const
     {
         Scalar phaseStorage = computePhaseStorage(scvIdx, false);
-        Scalar oldPhaseStorage = computePhaseStorage(scvIdx, true);;
+        Scalar oldPhaseStorage = computePhaseStorage(scvIdx, true);
         Valgrind::CheckDefined(phaseStorage);
         Valgrind::CheckDefined(oldPhaseStorage);
 

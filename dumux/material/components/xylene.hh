@@ -101,9 +101,9 @@ public:
 
     static Scalar vaporPressure(Scalar temperature)
     {
-        const Scalar A = 7.00909;;
-        const Scalar B = 1462.266;;
-        const Scalar C = 215.110;;
+        const Scalar A = 7.00909;
+        const Scalar B = 1462.266;
+        const Scalar C = 215.110;
 
         Scalar T = temperature - 273.15;
         Scalar psat = 1.334*std::pow(10.0, (A - (B/(T + C))));  // in [mbar]

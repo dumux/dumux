@@ -210,7 +210,7 @@ public:
 
         if (maxLocalDelta > 0.)
         {
-            indicatorVector_ /= maxLocalDelta;;
+            indicatorVector_ /= maxLocalDelta;
         }
         if (globaldelta > 0.)
         {

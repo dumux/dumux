@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 int main()
 {
     std::cerr << "You need to have a patched dune-pdelab to run this test, "
-                 "see ../../../patches/README for details." << std::endl;;
+                 "see ../../../patches/README for details." << std::endl;
     return 77;
 }
 

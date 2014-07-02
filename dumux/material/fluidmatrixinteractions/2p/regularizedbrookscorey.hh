@@ -145,7 +145,7 @@ public:
         else if (swe > 1.0) {
             Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
             Scalar pcsweHigh = BrooksCorey::pc(params, 1.0);
-            return 1.0 + (pc - pcsweHigh)/m;;
+            return 1.0 + (pc - pcsweHigh)/m;
         }
 
         return BrooksCorey::sw(params, pc);
