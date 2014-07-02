@@ -35,14 +35,12 @@ integer property NumEnergyEquations
 Differences Between DuMuX 2.4 and DuMuX 2.5
 ===================================================
 
-* IMPORTANT NOTES:
-
 * IMPROVEMENTS and ENHANCEMENTS:
   - The three-dimensional implementation of the MPFA L-method is made
     available for the decoupled compositional 2p2c models. It also allows
     for simulation on an adaptive grid.
   - Coupling of 2c2p with stokesnc and 2p2cNI with Stokesncni was
-    added. The stokes2c and stokes2cni are now DEPRICATED and will be kicked 
+    added. The stokes2c and stokes2cni are now DEPRECATED and will be kicked 
     out by the next release. Instead generalized stokesnc and stokesncni 
     models are introduced. Unlike 2c models the transport equations in 
     the nc models are capapable of using both mass and mole fractions.
@@ -55,21 +53,6 @@ Differences Between DuMuX 2.4 and DuMuX 2.5
 * Deprecated CLASSES/FILES, to be removed after 2.5:
   - Stokes2cModel was replaced by StokesNCModel, similar for more
     Stokes2c* classes.
-
-* Deprecated PROPERTY NAMES, to be removed after 2.5: BEWARE: The compiler will
-  not print any warning if a deprecated property name is used.
-
-* Deprecated CONSTANTS/ENUMS, to be removed after 2.5: BEWARE: Older compilers 
-  will not print any warning if a deprecated constant/enum is used.
-
-* Deprecated public MEMBER VARIABLES, to be removed after 2.5: BEWARE: Older
-  compilers will not print any warning if a deprecated public member variable 
-  is used.
-
-* Deprecated MEMBER FUNCTIONS, to be removed after 2.5:
-
-* Deprecated MACROS, to be removed after 2.5: BEWARE: The compiler will not
-  print any warning if a deprecated macro is used.
 
 * DELETED classes/files, property names, constants/enums, 
   member functions, which have been deprecated in DuMuX 2.4:
