@@ -323,7 +323,7 @@ public:
      * This problem assumes a uniform temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
-    { return temperature_; };
+    { return temperature_; }
 
 private:
     // internal method for the initial condition (reused for the

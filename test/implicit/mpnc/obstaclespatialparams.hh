@@ -139,7 +139,7 @@ public:
      */
     void update(const SolutionVector &globalSol)
     {
-    };
+    }
 
     /*!
      * \brief Returns the intrinsic permeability tensor.
@@ -197,7 +197,7 @@ private:
         return
             10 <= pos[0] && pos[0] <= 20 &&
             0 <= pos[1] && pos[1] <= 35;
-    };
+    }
 
     Scalar coarseK_;
     Scalar fineK_;

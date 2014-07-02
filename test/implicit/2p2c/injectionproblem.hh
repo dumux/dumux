@@ -255,7 +255,7 @@ public:
      * \brief Returns the temperature [K]
      */
     Scalar temperature() const
-    { return temperature_; };
+    { return temperature_; }
 
     /*!
      * \brief Returns the source term

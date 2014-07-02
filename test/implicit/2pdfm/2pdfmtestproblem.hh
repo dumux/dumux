@@ -202,7 +202,7 @@ public:
      * This problem assumes a uniform temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
-    { return temperature_; };
+    { return temperature_; }
 
     /*!
      * \brief Returns the source within the domain.
