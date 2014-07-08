@@ -116,7 +116,7 @@ public:
 #if HAVE_MPI
         Dune::SolverCategory::Category category = PDELabBackend::isNonOverlapping?
             Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
-        typename PDELabBackend::Comm comm(problem_.model().gridView().comm(), category);        
+        typename PDELabBackend::Comm comm(problem_.gridView().comm(), category);        
 
         if(PDELabBackend::isNonOverlapping)
         {
