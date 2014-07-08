@@ -122,7 +122,7 @@ SET_PROP(CCModel, AMGPDELabBackend)
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     enum {
         numEq = JacobianMatrix::block_type::rows,
-        isNonOverlapping = true
+        isNonOverlapping = false
     };
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
