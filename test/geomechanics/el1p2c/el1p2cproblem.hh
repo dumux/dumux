@@ -37,9 +37,7 @@
 
 #include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
 #include "el1p2cspatialparams.hh"
-#if HAVE_DUNE_PDELAB
 #include <dumux/linear/amgbackend.hh>
-#endif
 
 namespace Dumux
 {
@@ -87,7 +85,6 @@ namespace Dumux
 
 // Check if DUNE-PDELab is available and has been patched for our needs.
     SET_TYPE_PROP(El1P2CProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
-  // #endif // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
 
 }
 
