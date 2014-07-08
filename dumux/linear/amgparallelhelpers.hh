@@ -304,27 +304,32 @@ class ParallelISTLHelper
 public:
 
     ParallelISTLHelper (const Problem& problem, int verbose=1)
-        : problem_(problem), owner_(problem.model().dofMapper().size(),
-                                    problem.model().gridView().comm().rank()),
-          isGhost_(problem.model().dofMapper().size(),0.0), verbose_(verbose)
-    {
+        : problem_(problem), verbose_(verbose), initialized_()
+    {}
+    
+    // \brief Initializes the markers for ghosts and owners with the correct size and values.
+    //
+    void initGhostsAndOwners(){
+        owner_.resize(problem_.model().dofMapper().size(),
+                      problem_.gridView().comm().rank());
+        isGhost_.resize(problem_.model().dofMapper().size(),0.0);
         // find out about ghosts
-        GhostGatherScatter ggs(owner_,problem);
+        GhostGatherScatter ggs(owner_,problem_);
 
-        if (problem.model().gridView().comm().size()>1)
-            problem.model().gridView().communicate(ggs,Dune::InteriorBorder_All_Interface,Dune::ForwardCommunication);
+        if (problem_.gridView().comm().size()>1)
+            problem_.gridView().communicate(ggs,Dune::InteriorBorder_All_Interface,Dune::ForwardCommunication);
 
         isGhost_ = owner_;
 
         // partition interior/border
         InteriorBorderGatherScatter dh(owner_, problem_);
 
-        if (problem.model().gridView().comm().size()>1)
-            problem.model().gridView().communicate(dh,Dune::InteriorBorder_InteriorBorder_Interface,Dune::ForwardCommunication);
+        if (problem_.gridView().comm().size()>1)
+            problem_.gridView().communicate(dh,Dune::InteriorBorder_InteriorBorder_Interface,Dune::ForwardCommunication);
 
         // convert vector into mask vector
         for(auto v=owner_.begin(), vend=owner_.end(); v!=vend;++v)
-            if(*v=problem.model().gridView().comm().rank())
+            if(*v=problem_.gridView().comm().rank())
                 *v=1.0;
             else
                 *v=0.0;
@@ -357,7 +362,6 @@ public:
     /**
      * @brief Creates a matrix suitable for parallel AMG and the parallel information
      *
-     * It is silently assumed that the unknows are associated with vertices.
      *
      * @tparam MatrixType The type of the ISTL matrix used.
      * @tparam Comm The type of the OwnerOverlapCopyCommunication
@@ -373,6 +377,8 @@ private:
     std::vector<std::size_t> owner_; // vector to identify unique decomposition
     std::vector<std::size_t> isGhost_; //vector to identify ghost dofs
     int verbose_; //verbosity
+    // \brief whether isGhost and owner arrays are initialized
+    bool initialized_;
 };
 
 /**
@@ -412,7 +418,7 @@ public:
         gid2Index_.clear();
         index2GID_.clear();
 
-        const GridView& gridView = problem.model().gridView();
+        const GridView& gridView = problem.gridView();
 
         EntityIterator entityEndIt = gridView.template end<LocalFemMap::dofCodim>();
         for (EntityIterator entityIt = gridView.template begin<LocalFemMap::dofCodim>();
@@ -667,12 +673,12 @@ public:
     */
     void getExtendedMatrix (Matrix& A,const ParallelISTLHelper<TypeTag>& helper)
     {
-        if (problem_.model().gridView().comm().size() > 1) {
+        if (problem_.gridView().comm().size() > 1) {
             Matrix tmp(A);
             std::size_t nnz=0;
             // get entries from other processes
             MatPatternExchange datahandle(problem_, gid2Index_, index2GID_, A, helper);
-            problem_.model().gridView().communicate(datahandle,
+            problem_.gridView().communicate(datahandle,
                                                     Dune::InteriorBorder_InteriorBorder_Interface,
                                                     Dune::ForwardCommunication);
             std::vector<std::set<int> >& sparsity = datahandle.sparsity();
@@ -707,10 +713,10 @@ public:
     */
     void sumEntries (Matrix& A)
     {
-        if (problem_.model().gridView().comm().size() > 1)
+        if (problem_.gridView().comm().size() > 1)
         {
             MatEntryExchange datahandle(problem_, gid2Index_, index2GID_, A);
-            problem_.model().gridView().communicate(datahandle,
+            problem_.gridView().communicate(datahandle,
                                                     Dune::InteriorBorder_InteriorBorder_Interface,
                                                     Dune::ForwardCommunication);
         }
@@ -734,7 +740,7 @@ private:
 template<class TypeTag>
 void EntityExchanger<TypeTag>::getExtendedMatrix (Matrix& A) const
 {
-    const GridView& gridView = problem_.model().gridView();
+    const GridView& gridView = problem_.gridView();
     if (gridView.comm().size() > 1) {
         Matrix tmp(A);
         std::size_t nnz=0;
@@ -774,7 +780,14 @@ template<class TypeTag>
 template<typename M, typename C>
 void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
 {
-    const GridView& gridview = problem_.model().gridView();
+    if(!initialized_){
+        // This is the first time this function is called.
+        // Therefore we need to initialize the marker vectors for ghosts and
+        // owned dofs
+        initGhostsAndOwners();
+        initialized_=true;
+    }
+    const GridView& gridview = problem_.gridView();
 
     // First find out which dofs we share with other processors
     std::vector<int> sharedDofs(problem_.model().dofMapper().size(), false);
