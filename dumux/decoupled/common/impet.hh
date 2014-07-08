@@ -51,6 +51,7 @@ template<class TypeTag> class IMPET
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
 
     enum IterationType
@@ -192,6 +193,14 @@ public:
 
         return;
     }
+
+    /*!
+     * \brief Mapper for the entities where degrees of freedoms are defined.
+     */
+    const ElementMapper &dofMapper() const
+    {
+        return problem_.elementMapper();
+    }    
 
     //! Constructs an IMPET object
     /**
