@@ -248,11 +248,11 @@ In the following list, you can find some external modules and external libraries
   The parallel version needs also a graph partitioner, such as \texttt{ParMETIS}.
   Download: \texttt{\url{http://aam.mathematik.uni-freiburg.de/IAM/Research/alugrid}}
 
-\item \textbf{\Dune-multidomaingrid} and \textbf{\Dune-multidomaingrid}: External modules which offer a meta grid that
+\item \textbf{\Dune-multidomaingrid} and \textbf{\Dune-multidomain}: External modules which offer a meta grid that
   has different sub-domains. Each sub-domain can have a local operator that is coupled by a coupling condition. They are
   used for multi-physics approaches or domain decomposition methods. Download:
-  \texttt{\url{http://users.dune-project.org/projects/dune-multidomaingrid}}
-  and \texttt{\url{http://users.dune-project.org/projects/dune-multidomain}}
+  \texttt{\url{https://github.com/smuething/dune-multidomaingrid}}
+  and \texttt{\url{https://github.com/smuething/dune-multidomain}}
 
 \item \textbf{\Dune-PDELab}: External module to write more easily discretizations. PDELab provides
   a sound number of discretizations like FEM or discontinuous Galerkin methods.
@@ -277,10 +277,7 @@ The following are dependencies of some of the used libraries. You will need them
 \begin{itemize}
 \item \textbf{MPI}: The parallel version of \Dune and also some of the external dependencies need MPI
   when they are going to be built for parallel computing. \texttt{OpenMPI} and \texttt{MPICH} in a recent
-  version have been reported to work. 
-
-\item \textbf{lex/yacc} or \textbf{flex/bison}: These are quite common developing tools, code generators
-  for lexical analyzers and parsers. This is a prerequisite for UG.
+  version have been reported to work.
 
 \item \textbf{BLAS}: Alberta and SuperLU make use of BLAS. Thus install GotoBLAS2, ATLAS, non-optimized BLAS
   or BLAS provided by a chip manufacturer. Take care that the installation scripts select the intended
