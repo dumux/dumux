@@ -284,7 +284,7 @@ public:
         // file so that the data set can be loaded even if the
         // simulation is aborted (or not yet finished)
         finishMultiFile_();
-    };
+    }
 
     /*!
      * \brief Write the multi-writer's state to a restart file.

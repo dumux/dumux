@@ -87,7 +87,7 @@ public:
     static Grid &grid()
     {
         return *simplexGrid_;
-    };
+    }
 
     /*!
      * \brief Distributes the grid on all processes of a parallel
@@ -96,7 +96,7 @@ public:
     static void loadBalance()
     {
         simplexGrid_->loadBalance();
-    };
+    }
 
 private:
     static GridPointer simplexGrid_;
