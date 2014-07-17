@@ -7,3 +7,4 @@ add_dumux_test(test_stokes2cni test_stokes2cni test_stokes2cni.cc
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_stokes2cni.input
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_stokes2cni.dgf)
 add_dune_superlu_flags(test_stokes2cni)
+add_dune_umfpack_flags(test_stokes2cni)

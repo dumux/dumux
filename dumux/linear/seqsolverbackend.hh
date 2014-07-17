@@ -26,6 +26,7 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
+#include <dune/istl/umfpack.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/basicproperties.hh>
@@ -587,7 +588,63 @@ private:
   Dune::InverseOperatorResult result_;
   const Problem& problem_;
 };
-#endif
+#endif // HAVE_SUPERLU
+
+
+
+#if HAVE_UMFPACK
+template <class TypeTag>
+class UMFPackBackend
+{
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+
+public:
+
+  UMFPackBackend(const Problem& problem)
+  : problem_(problem)
+  {}
+
+  template<class Matrix, class Vector>
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
+  {
+    Vector bTmp(b);
+
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    enum {blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize)};
+    typedef typename Dune::FieldMatrix<Scalar, blockSize, blockSize> MatrixBlock;
+    typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
+
+    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    Dune::UMFPack<ISTLMatrix> solver(A, verbosity > 0);
+
+    solver.apply(x, bTmp, result_);
+
+    int size = x.size();
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < blockSize; j++)
+        {
+            if (std::isnan(x[i][j]) || std::isinf(x[i][j]))
+            {
+                result_.converged = false;
+                break;
+            }
+        }
+    }
+
+    return result_.converged;
+  }
+
+  const Dune::InverseOperatorResult& result() const
+  {
+    return result_;
+  }
+
+private:
+  Dune::InverseOperatorResult result_;
+  const Problem& problem_;
+};
+#endif // HAVE_UMFPACK
 
 }
 #endif

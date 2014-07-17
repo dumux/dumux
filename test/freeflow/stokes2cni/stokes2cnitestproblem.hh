@@ -28,6 +28,7 @@
 #if HAVE_PARDISO
 #include <dumux/linear/pardisobackend.hh>
 #endif
+#include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/freeflow/stokesncni/stokesncnimodel.hh>
@@ -57,6 +58,10 @@ SET_PROP(Stokes2cniTestProblem, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dumux::FluidSystems::H2OAir<Scalar> type;
 };
+
+#if HAVE_UMFPACK
+SET_TYPE_PROP(Stokes2cniTestProblem, LinearSolver, UMFPackBackend<TypeTag>);
+#endif
 
 //! Scalar is set to type long double for higher accuracy
 //SET_TYPE_PROP(Stokes2cniTestProblem, Scalar, long double);
