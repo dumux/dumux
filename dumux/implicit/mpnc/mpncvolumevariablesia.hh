@@ -39,7 +39,7 @@ namespace Dumux
  * This is the specialization for the cases which do _not_ require
  * specific interfacial area.
  */
-template <class TypeTag, bool enableKinetic, int numEnergyEquations>
+template <class TypeTag, bool enableKinetic /* = false */, bool numEnergyEquations /* = false */>
 class MPNCVolumeVariablesIA
 {
     static_assert(not enableKinetic and not numEnergyEquations,

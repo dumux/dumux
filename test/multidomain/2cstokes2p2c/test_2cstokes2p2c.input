@@ -49,7 +49,7 @@ CellsX = 30
 CellsY = 62
 CellsZ = 1
 #Grading and refinement of the mesh in y direction
-Grading = 1.01
+Grading = 1.13
 
 #Extend of the entire domain
 XMin = 0.0

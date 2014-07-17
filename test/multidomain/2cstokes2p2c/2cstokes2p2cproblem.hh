@@ -63,12 +63,12 @@ NEW_TYPE_TAG(TwoCStokesTwoPTwoCProblem, INHERITS_FROM(MultiDomain));
 SET_PROP(TwoCStokesTwoPTwoCProblem, Grid)
 {
  public:
-#if 0//def HAVE_UG
+#ifdef HAVE_UG
     typedef typename Dune::UGGrid<2> type;
 #elif HAVE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 #else
-#error UGGrid or ALUGrid is required.
+#error Required UG or ALUGrid.
 #endif
 };
 

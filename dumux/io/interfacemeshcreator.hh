@@ -17,142 +17,10 @@ public:
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
 
-    static Grid* create(const std::string& dgfName,
-                        const Dune::FieldVector<int, dim>& numElementsLeft,
-                        const Dune::FieldVector<int, dim>& numElementsRight,
-                        const Dune::FieldVector<Scalar, dim>& refinePoint,
-                        const Dune::FieldVector<Scalar, dim>& gradingFactors,
-                        const bool refineTop = false)
-    {
-        typedef Dune::SGrid<dim,dim> HelperGrid;
-        Dune::GridPtr<HelperGrid> helperGridPtr(dgfName);
-        HelperGrid& helperGrid = *helperGridPtr;
-        typedef typename HelperGrid::LeafGridView HelperGridView;
-        typedef typename HelperGridView::template Codim<0>::Iterator HelperElementIterator;
-        typedef typename HelperGridView::Traits::template Codim<0>::Entity HelperElement;
-        typedef typename HelperElement::Geometry HelperGeometry;
-
-        HelperElementIterator helperElementIterator = helperGrid.leafGridView().template begin<0>();
-        const HelperElement& helperElement = *helperElementIterator;
-        const HelperGeometry& helperGeometry = helperElement.geometry();
-        Dune::FieldVector<Scalar,dim> refinePointLocal(helperGeometry.local(refinePoint));
-
-        std::vector<std::vector<Scalar> > localPositions(dim);
-        for (int comp = 0; comp < dim; comp++)
-        {
-            Scalar lengthLeft = refinePointLocal[comp];
-            Scalar lengthRight = 1.0 - lengthLeft;
-
-            Scalar nLeft = numElementsLeft[comp];
-            Scalar nRight = numElementsRight[comp];
-
-            Scalar hLeft = 0;
-            Scalar hRight = 0;
-            if (comp == dim - 1 && refineTop)
-            {
-                lengthRight *= 0.5;
-
-                hLeft = lengthLeft*(1.0 - gradingFactors[comp])/(1.0 - pow(gradingFactors[comp], nLeft));
-                hRight = lengthRight*(1.0 - gradingFactors[comp])/(1.0 - pow(gradingFactors[comp], nRight));
-            }
-            else
-            {
-                if (gradingFactors[comp] > 1.0)
-                {
-                    if (nLeft != 0)
-                        hLeft = lengthLeft*(1.0 - gradingFactors[comp])
-                                /(1.0 - pow(gradingFactors[comp], nLeft));
-
-                    if (nRight != 0)
-                        hRight = lengthRight*(1.0 - gradingFactors[comp])
-                                 /(1.0 - pow(gradingFactors[comp], nRight));
-                }
-                else
-                {
-                    if (nLeft != 0)
-                        hLeft = 1.0/nLeft;
-
-                    if (nRight != 0)
-                        hRight = 1.0/nRight;
-                }
-            }
-std::cout << "lengthLeft = " << lengthLeft << ", lengthRight = " << lengthRight << ", hLeft = " << hLeft <<
-             ", hRight = " << hRight << ", nLeft = " << nLeft << ", nRight = " << nRight << std::endl;
-
-            int numVertices = numElements[comp] + 1;
-            localPositions[comp].resize(numVertices);
-
-            localPositions[comp][0] = 0.0;
-            for (int i = 0; i < nLeft; i++)
-            {
-                Scalar hI = hLeft*pow(gradingFactors[comp], nLeft-1-i);
-                localPositions[comp][i+1] = localPositions[comp][i] + hI;
-            }
-
-            for (int i = 0; i < nRight; i++)
-            {
-                Scalar hI = hRight*pow(gradingFactors[comp], i);
-                localPositions[comp][nLeft+i+1] = localPositions[comp][nLeft+i] + hI;
-            }
-
-            if (comp == dim - 1 && refineTop)
-                for (int i = 0; i < nRight; i++)
-                {
-                    Scalar hI = hRight*pow(gradingFactors[comp], nRight-1-i);
-                    localPositions[comp][nLeft+nRight+i+1] = localPositions[comp][nLeft+nRight+i] + hI;
-                }
-
-            if (localPositions[comp][numVertices-1] != 1.0)
-            {
-                for (int i = 0; i < numVertices; i++)
-                    localPositions[comp][i] /= localPositions[comp][numVertices-1];
-            }
-        }
-
-        Dune::GridFactory<Grid> factory;
-
-        int nX = numElements[0];
-        int nY = numElements[1];
-        for (int j = 0; j < nY + 1; j++)
-        {
-            Dune::FieldVector<Scalar,dim> local;
-            local[1] = localPositions[1][j];
-            for (int i = 0; i < nX + 1; i++)
-            {
-                local[0] = localPositions[0][i];
-
-                Dune::FieldVector<Scalar,dim> position(helperGeometry.global(local));
-                factory.insertVertex(position);
-            }
-        }
-
-        for (int j = 0; j < nY; j++)
-        {
-            for (int i = 0; i < nX; i++)
-            {
-                std::vector<unsigned int> vertices(4);
-
-                vertices[0] = j*(nX+1) + i;
-                vertices[1] = j*(nX+1) + i+1;
-                vertices[2] = (j+1)*(nX+1) + i;
-                vertices[3] = (j+1)*(nX+1) + i+1;
-
-                factory.insertElement(Dune::GeometryType(Dune::GeometryType::cube,dim), vertices);
-            }
-        }
-
-        return factory.createGrid();
-    }
-
     static Grid* create(const std::string& dgfName, const Dune::FieldVector<int, dim>& numElements,
                         const Scalar interfaceY, const Scalar gradingFactor, const bool refineTop = false)
     {
-        Dune::FieldVector<Scalar,dim> refinePoint(0);
-        refinePoint[dim-1] = interfaceY;
-        Dune::FieldVector<Scalar,dim> gradingFactors(1);
-        gradingFactors[dim-1] = gradingFactor;
-
-        typedef Dune::SGrid<dim,dim> HelperGrid;
+	typedef Dune::SGrid<dim,dim> HelperGrid;
         Dune::GridPtr<HelperGrid> helperGridPtr(dgfName);
         HelperGrid& helperGrid = *helperGridPtr;
         typedef typename HelperGrid::LeafGridView HelperGridView;
@@ -164,8 +32,14 @@ std::cout << "lengthLeft = " << lengthLeft << ", lengthRight = " << lengthRight 
         const HelperElement& helperElement = *helperElementIterator;
         const HelperGeometry& helperGeometry = helperElement.geometry();
 
+        Dune::FieldVector<Scalar,dim> refinePoint(0);
+	refinePoint[dim-1] = interfaceY;
+        Dune::FieldVector<Scalar,dim> gradingFactors(1);
+        gradingFactors[dim-1] = gradingFactor;
+
         Dune::FieldVector<Scalar,dim> refinePointLocal(helperGeometry.local(refinePoint));
 std::cout << "rglobal = " << refinePoint << ", rlocal = " << refinePointLocal << std::endl;
+        Dune::GridFactory<Grid> factory;
 
         int nX = numElements[0];
         int nY = numElements[1];
@@ -280,35 +154,35 @@ std::cout << "lengthLeft = " << lengthLeft << ", lengthRight = " << lengthRight 
             }
         }
 
-        Dune::GridFactory<Grid> factory;
-
+        Dune::FieldVector<Scalar,dim> local;
         for (int j = 0; j < nY + 1; j++)
-        {
-            Dune::FieldVector<Scalar,dim> local;
-            local[1] = localPositions[1][j];
-            for (int i = 0; i < nX + 1; i++)
             {
-                local[0] = localPositions[0][i];
+                local[1] = localPositions[1][j];
+                for (int i = 0; i < nX + 1; i++)
+                {
+                    local[0] = localPositions[0][i];
 
-                Dune::FieldVector<Scalar,dim> position(helperGeometry.global(local));
-                factory.insertVertex(position);
+                    Dune::FieldVector<Scalar,dim> position(helperGeometry.global(local));
+                    factory.insertVertex(position);
+
+                }
             }
-        }
 
         for (int j = 0; j < nY; j++)
-        {
-            for (int i = 0; i < nX; i++)
             {
-                std::vector<unsigned int> vertices(4);
+                for (int i = 0; i < nX; i++)
+                {
+                    std::vector<unsigned int> vertices(4);
 
-                vertices[0] = j*(nX+1) + i;
-                vertices[1] = j*(nX+1) + i+1;
-                vertices[2] = (j+1)*(nX+1) + i;
-                vertices[3] = (j+1)*(nX+1) + i+1;
+                    vertices[0] = j*(nX+1) + i;
+                    vertices[1] = j*(nX+1) + i+1;
+                    vertices[2] = (j+1)*(nX+1) + i;
+                    vertices[3] = (j+1)*(nX+1) + i+1;
+                    
+                    factory.insertElement(Dune::GeometryType(Dune::GeometryType::cube,dim), vertices);
 
-                factory.insertElement(Dune::GeometryType(Dune::GeometryType::cube,dim), vertices);
+                }
             }
-        }
 
         return factory.createGrid();
     }
