@@ -24,7 +24,7 @@ dune_project()
 
 #add_subdirectory("m4")
 #add_subdirectory("dumux")
-#add_subdirectory("doc")
+add_subdirectory("doc")
 add_subdirectory("cmake/modules")
 add_subdirectory("test")
 add_subdirectory("tutorial")
