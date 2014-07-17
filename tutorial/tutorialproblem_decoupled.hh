@@ -89,10 +89,11 @@ public:
 }; /*@\label{tutorial-decoupled:2p-system-end}@*/
 
 SET_TYPE_PROP(TutorialProblemDecoupled, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-decoupled:cflflux}@*/
-SET_SCALAR_PROP(TutorialProblemDecoupled, ImpetCFLFactor, 0.95); /*@\label{tutorial-decoupled:cflfactor}@*/
+SET_SCALAR_PROP(TutorialProblemDecoupled, ImpetCFLFactor, 0.02); /*@\label{tutorial-decoupled:cflfactor}@*/
 
 // Disable gravity
 SET_BOOL_PROP(TutorialProblemDecoupled, ProblemEnableGravity, false); /*@\label{tutorial-decoupled:gravity}@*/
+SET_BOOL_PROP(TutorialProblemDecoupled, EnableCompressibility, false);
 } /*@\label{tutorial-decoupled:propertysystem-end}@*/
 
 /*! \ingroup DecoupledProblems
@@ -136,7 +137,29 @@ public:
         : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
     {
         //write only every 10th time step to output file
-        this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
+        //this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
+        this->timeManager().startNextEpisode(500.0);
+    }
+
+    void episodeEnd()
+    {
+        this->timeManager().startNextEpisode(500.0);
+    }
+
+    bool shouldWriteRestartFile()
+    {
+        return false;
+    }
+
+    bool shouldWriteOutput() const
+    {
+        if (this->timeManager().time() + this->timeManager().timeStepSize() < eps_ ||
+            this->timeManager().willBeFinished() ||
+            this->timeManager().episodeWillBeOver())
+        {
+            return true;
+        }
+        return false;
     }
 
     //! The problem name.
@@ -145,14 +168,6 @@ public:
     const char *name() const    /*@\label{tutorial-decoupled:name}@*/
     {
         return "tutorial_decoupled";
-    }
-
-    //!  Returns true if a restart file should be written.
-    /* The default behaviour is to write no restart file.
-     */
-    bool shouldWriteRestartFile() const /*@\label{tutorial-decoupled:restart}@*/
-    {
-        return false;
     }
 
     //! Returns the temperature within the domain at position globalPos.
@@ -180,7 +195,7 @@ public:
      */
     Scalar referencePressure(const Element& element) const /*@\label{tutorial-decoupled:refPressure}@*/
     {
-        return 2e5;
+        return 1e5;
     }
 
     //! Source of mass \f$ [\frac{kg}{m^3 \cdot s}] \f$ of a finite volume.
@@ -222,11 +237,15 @@ public:
 //                bcTypes.setAllDirichlet(); // alternative if the same BC is used for both types of equations
             }
             // all other boundaries
+            else if (globalPos[0] > this->bBoxMax()[0] - eps_)//at east boundary
+            {
+                bcTypes.setNeumann(pressEqIdx);//Neumann for the pressure equation
+                bcTypes.setOutflow(satEqIdx);//Outflow for the transport equation
+            }
+            // all other boundaries, i.e., top and bottom, Neumann
             else
             {
-                bcTypes.setNeumann(pressEqIdx);
-                bcTypes.setNeumann(satEqIdx);
-//                bcTypes.setAllNeumann(); // alternative if the same BC is used for both types of equations
+                bcTypes.setAllNeumann();
             }
     }
     //! Value for dirichlet boundary condition at position globalPos.

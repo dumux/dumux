@@ -54,6 +54,7 @@ private:
     // material law typedefs
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     // select material law to be used
+    //typedef LinearMaterial<Scalar> RawMaterialLaw;     /*@\label{tutorial-coupled:rawlaw}@*/
     typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;     /*@\label{tutorial-coupled:rawlaw}@*/
 public:
     // adapter for absolute law
@@ -155,7 +156,9 @@ public:
 
         //parameters of Brooks & Corey Law
         materialParams_.setPe(500.0);
-        materialParams_.setLambda(2);
+        materialParams_.setLambda(4.0);
+        //materialParams_.setEntryPc(10.0);
+        //materialParams_.setMaxPc(20.0);
     }
 
 private:

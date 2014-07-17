@@ -9,7 +9,7 @@
 ###############################################################
 
 [TimeManager]
-TEnd = 500000 # duration of the simulation [s]
+TEnd = 10000 # duration of the simulation [s]
 DtInitial = 10 # initial time step size [s]
 
 [Grid]

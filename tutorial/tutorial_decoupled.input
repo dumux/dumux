@@ -18,6 +18,12 @@ UpperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
 NumberOfCellsX = 100 # x-resolution of the grid
 NumberOfCellsY = 1 # y-resolution of the grid
 
+[Vtk]
+OutputLevel = 1
+
+[Impet]
+ErrorTermFactor = 0.0
+
 ###############################################################
 # Simulation restart
 #
