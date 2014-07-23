@@ -46,6 +46,7 @@ namespace Dumux
 template<class TypeTag>
 class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVolumeContainer<TypeTag>
 {
+    friend class FvMpfaL3dInteractionVolumeContainer<TypeTag>;
     typedef FvMpfaL3dInteractionVolumeContainer<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -93,7 +94,6 @@ private:
 
     void storeHangingNodeInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex);
     void storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex);
-    friend ParentType;
 
 protected:
     void storeInteractionVolumeInfo();
