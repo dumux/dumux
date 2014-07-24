@@ -663,7 +663,6 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                        "wrong range");
 
-        const Scalar lambdaSolid 			= volVars.thermalConductivity(sPhaseIdx);
         const Scalar factorEnergyTransfer   = volVars.factorEnergyTransfer()  ;
 
         solidToFluidEnergyExchange = factorEnergyTransfer * (TSolid - TFluid) / characteristicLength * as * fluidConductivity ;
@@ -737,7 +736,6 @@ public:
         const FluidState & fs = volVars.fluidState() ;
 		const Scalar g( 9.81 ) ;
 		const Scalar gamma(0.0589) ;
-        const Scalar TFluid 	= volVars.temperature(temperatureFluidIdx);
         const Scalar TSolid 	= volVars.temperature(temperatureSolidIdx);
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
 

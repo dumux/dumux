@@ -716,7 +716,6 @@ private:
 			// Set fugacities
 			//////////////////////////////////////
 			for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-				const Scalar fug = fluidState.fugacity(refPhaseIdx);
 				priVars[conti00EqIdx + compIdx] = fluidState.fugacity(refPhaseIdx,compIdx);
 			}
 		} // end not enableKinetic
