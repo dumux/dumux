@@ -177,7 +177,7 @@ NEW_PROP_TAG(SpatialParams);
                 localFunctionSpace.vread(problem.model().curSol(), curSolutionValues);
                 // type of function space for solid displacement vector
                 typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
-                const DisplacementLFS& displacementLFS = localFunctionSpace.template getChild<1>();
+                const DisplacementLFS& displacementLFS = localFunctionSpace.template child<1>();
                 // number of degrees of freedom for each displacement value (here number of element vertices)
                 const unsigned int dispSize = displacementLFS.child(0).size();
                 // type of function space of solid displacement value (one for each coordinate direction)
