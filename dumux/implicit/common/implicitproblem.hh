@@ -26,7 +26,6 @@
 #include "implicitproperties.hh"
 #include "implicitmodel.hh"
 
-#include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
 
 namespace Dumux
@@ -47,7 +46,8 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef Dumux::VtkMultiWriter<GridView> VtkMultiWriter;
+    typedef typename GET_PROP_TYPE(TypeTag, VtkMultiWriter) VtkMultiWriter;
+
 
     typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;

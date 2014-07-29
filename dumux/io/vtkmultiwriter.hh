@@ -50,7 +50,7 @@ namespace Dumux {
  * simplifies writing datasets consisting of multiple files. (i.e.
  * multiple time steps or grid refinements within a time step.)
  */
-template<class GridView>
+template<class GridView, Dune::VTK::OutputType OutputValue = Dune::VTK::ascii >
 class VtkMultiWriter
 {
     enum { dim = GridView::dimension };
@@ -245,7 +245,8 @@ public:
     void endWrite(bool onlyDiscard = false)
     {
         if (!onlyDiscard) {
-            curWriter_->write(curOutFileName_.c_str(), Dune::VTK::ascii);
+            curWriter_->write(curOutFileName_.c_str(), OutputValue);
+
 
             // determine name to write into the multi-file for the
             // current time step
