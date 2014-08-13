@@ -93,6 +93,14 @@ public:
     { return this->fluidState_.enthalpy(phaseIdx); }
 
     /*!
+     * \brief Returns the component enthalpy in the sub-control volume.
+     */
+    Scalar componentEnthalpy(unsigned int componentIdx) const
+    {
+        return FluidSystem::componentEnthalpy(this->fluidState_, phaseIdx, componentIdx);
+    }
+
+    /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the fluid phase in the sub-control volume.
      */

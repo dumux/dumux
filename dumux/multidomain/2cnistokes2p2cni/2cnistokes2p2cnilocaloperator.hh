@@ -64,6 +64,7 @@ public:
     enum {
         energyEqIdx1 = Stokes2cniIndices::energyEqIdx          //!< Index of the energy balance equation
     };
+    enum {  numComponents = Stokes2cniIndices::numComponents };
     enum { // indices in the Darcy domain
         numPhases2 = GET_PROP_VALUE(TwoPTwoCNITypeTag, NumPhases),
 
@@ -76,6 +77,7 @@ public:
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;       //!< A field vector with dim entries
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     typedef TwoCStokesTwoPTwoCLocalOperator<TypeTag> ParentType;
 
@@ -120,9 +122,18 @@ public:
                     bfNormal1 *
                     boundaryVars1.temperatureGrad() *
                     (boundaryVars1.thermalConductivity() + boundaryVars1.thermalEddyConductivity());
-
+                Scalar diffusiveFlux = 0.0;
+                for (int compIdx=0; compIdx < numComponents; compIdx++)
+                {
+                    diffusiveFlux += boundaryVars1.moleFractionGrad(compIdx)
+                                     * boundaryVars1.face().normal
+                                     *(boundaryVars1.diffusionCoeff(compIdx) + boundaryVars1.eddyDiffusivity())
+                                     * boundaryVars1.molarDensity()
+                                     * FluidSystem::molarMass(compIdx) // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s]
+                                     * boundaryVars1.componentEnthalpy(compIdx);
+                }
                 couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
-                                        -(convectiveFlux - conductiveFlux));
+                                        -(convectiveFlux - diffusiveFlux - conductiveFlux));
             }
             else
             {

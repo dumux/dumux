@@ -213,6 +213,7 @@ public:
             sinusTAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperatureAmplitude);
             sinusTPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperaturePeriod);
 
+            useDirichletFF_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, UseDirichletFF);
             bjSlipVel_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BeaversJosephSlipVel);
             alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
             xMaterialInterface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MaterialInterfaceX);
@@ -266,19 +267,34 @@ public:
 
         if (onUpperBoundary_(globalPos))
         {
-            values.setNeumann(transportEqIdx);
-            values.setNeumann(energyEqIdx);
+            if (useDirichletFF_)
+            {
+                values.setNeumann(transportEqIdx);
+                values.setDirichlet(temperatureIdx, energyEqIdx);
+            }
+            else
+            {
+                values.setNeumann(transportEqIdx);
+                values.setNeumann(energyEqIdx);
+            }
         }
 
-		// Left inflow boundaries should be Neumann, otherwise the
-		// evaporative fluxes are much more grid dependent
+        // Left inflow boundaries should be Neumann, otherwise the
+        // evaporative fluxes are much more grid dependent
         if (onLeftBoundary_(globalPos))
         {
-            values.setNeumann(transportEqIdx);
-            values.setNeumann(energyEqIdx);
-
-            if (onUpperBoundary_(globalPos)) // corner point
-                values.setAllDirichlet();
+            if (useDirichletFF_)
+            {
+                values.setDirichlet(massOrMoleFracIdx, transportEqIdx);
+                values.setDirichlet(temperatureIdx, energyEqIdx);
+            }
+            else
+            {
+                values.setNeumann(transportEqIdx);
+                values.setNeumann(energyEqIdx);
+                if (onUpperBoundary_(globalPos)) // corner point
+                    values.setAllDirichlet();
+            }
         }
 
         if (onRightBoundary_(globalPos))
@@ -292,10 +308,17 @@ public:
         if (onLowerBoundary_(globalPos))
         {
             values.setAllDirichlet();
-            if (!onLeftBoundary_(globalPos)) // is this required?
+            if (useDirichletFF_)
+            {
+                values.setNeumann(transportEqIdx);
+                values.setDirichlet(temperatureIdx, energyEqIdx);
+            }
+            else
             {
                 values.setNeumann(transportEqIdx);
                 values.setNeumann(energyEqIdx);
+                if (onLeftBoundary_(globalPos)) // corner point
+                    values.setAllDirichlet();
             }
 
             if (globalPos[0] > runUpDistanceX_-eps_ && time > initializationTime_)
@@ -638,6 +661,7 @@ private:
     Scalar sinusTAmplitude_;
     Scalar sinusTPeriod_;
 
+    bool useDirichletFF_;
     Scalar bjSlipVel_;
     Scalar alphaBJ_;
 

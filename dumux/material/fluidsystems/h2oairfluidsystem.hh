@@ -653,6 +653,38 @@ public:
     }
 
     /*!
+     * \brief Returns the specific enthalpy [J/kg] of a component in a specific phase
+     */
+    template <class FluidState>
+    static Scalar componentEnthalpy(const FluidState &fluidState,
+                                    int phaseIdx,
+                                    int componentIdx)
+    {
+        Scalar T = fluidState.temperature(nPhaseIdx);
+        Scalar p = fluidState.pressure(nPhaseIdx);
+        Valgrind::CheckDefined(T);
+        Valgrind::CheckDefined(p);
+
+        if (phaseIdx == wPhaseIdx)
+        {
+            DUNE_THROW(Dune::NotImplemented, "The component enthalpies in the liquid phase are not implemented.");
+        }
+        else if (phaseIdx == nPhaseIdx)
+        {
+            if (componentIdx ==  H2OIdx)
+            {
+                return H2O::gasEnthalpy(T, p);
+            }
+            else if (componentIdx == AirIdx)
+            {
+                return Air::gasEnthalpy(T, p);
+            }
+            DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
+
+    /*!
      * \brief Thermal conductivity of a fluid phase [W/(m K)].
      *
      * Use the conductivity of air and water as a first approximation.

@@ -9,6 +9,7 @@
 #set to zero or negative if not desired
 RunUpDistanceX = 0.0
 NoDarcyX = 0.0
+UseDirichletFF = true
 
 #############################################################
 [TimeManager]
@@ -65,7 +66,7 @@ InterfacePos = 0.25
 #############################################################
 #Frequency of restart file, flux and VTK output
 FreqRestart = 1000      # how often restart files are written out 
-FreqOutput = 50         # frequency of VTK output
+FreqOutput = 10         # frequency of VTK output
 FreqMassOutput = 2      # frequency of mass and evaporation rate output (Darcy)
 FreqFluxOutput = 1000   # frequency of detailed flux output
 FreqVaporFluxOutput = 2 # frequency of summarized flux output

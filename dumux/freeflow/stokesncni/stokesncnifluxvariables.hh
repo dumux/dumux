@@ -50,10 +50,15 @@ class StokesncniFluxVariables : public StokesncFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     enum { dim = GridView::dimension };
+
+    //number of components
+    enum {  numComponents = Indices::numComponents };
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
@@ -77,6 +82,12 @@ public:
      */
     const Scalar thermalConductivity() const
     { return thermalConductivity_; }
+
+    /*!
+     * \brief Return the enthalpy of a component \f$\mathrm{[J/kg]}\f$ at the integration point.
+     */
+    const Scalar componentEnthalpy(int componentIdx) const
+    { return componentEnthalpy_[componentIdx]; }
 
     /*!
      * \brief Returns the temperature gradient at the integration point.
@@ -123,9 +134,21 @@ protected:
         }
         Valgrind::CheckDefined(thermalConductivity_);
         Valgrind::CheckDefined(temperatureGrad_);
+
+        for (unsigned int i = 0; i < numComponents; ++i)
+        {
+            componentEnthalpy_[i] = Scalar(0.0);
+            for (int idx = 0; idx < this->fvGeometry_.numScv; idx++) // loop over vertices of the element
+            {
+                componentEnthalpy_[i] += elemVolVars[idx].componentEnthalpy(i)
+                                         * this->face().shapeValue[idx];
+            }
+            Valgrind::CheckDefined(componentEnthalpy_[i]);
+        }
     }
 
     Scalar thermalConductivity_;
+    Scalar componentEnthalpy_[numComponents];
     DimVector temperatureGrad_;
 };
 

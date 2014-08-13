@@ -9,6 +9,7 @@
 #set to zero or negative if not desired
 RunUpDistanceX = 0.0
 NoDarcyX = 0.0
+UseDirichletFF = true
 
 #############################################################
 [TimeManager]
