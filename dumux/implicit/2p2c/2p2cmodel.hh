@@ -312,6 +312,7 @@ public:
                         moleFrac[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
         ScalarField *temperature = writer.allocateManagedBuffer(numDofs);
         ScalarField *poro = writer.allocateManagedBuffer(numDofs);
+        ScalarField *permeability = writer.allocateManagedBuffer(numDofs);
         VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numDofs);
         VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
@@ -375,6 +376,7 @@ public:
                         Valgrind::CheckDefined((*moleFrac[phaseIdx][compIdx])[globalIdx][0]);
                     }
                 (*poro)[globalIdx]  = elemVolVars[scvIdx].porosity();
+                (*permeability)[globalIdx] = elemVolVars[scvIdx].permeability();
                 (*temperature)[globalIdx] = elemVolVars[scvIdx].temperature();
                 (*phasePresence)[globalIdx]
                     = staticDat_[globalIdx].phasePresence;
@@ -414,8 +416,9 @@ public:
             }
         }
         writer.attachDofData(*poro, "porosity", isBox);
-        writer.attachDofData(*temperature,    "temperature", isBox);
-        writer.attachDofData(*phasePresence,  "phase presence", isBox);
+        writer.attachDofData(*permeability, "permeability", isBox);
+        writer.attachDofData(*temperature, "temperature", isBox);
+        writer.attachDofData(*phasePresence, "phase presence", isBox);
 
         if (velocityOutput.enableOutput()) // check if velocity output is demanded
         {
