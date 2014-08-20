@@ -159,11 +159,6 @@ public:
                                                      scvIdx);
         Valgrind::CheckDefined(porosity_);
 
-        permeability_ = problem.spatialParams().intrinsicPermeability(element,
-                										fvGeometry,
-                										scvIdx);
-        Valgrind::CheckDefined(permeability_);
-
         // energy related quantities not contained in the fluid state
         asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
@@ -442,12 +437,6 @@ public:
     { return porosity_; }
 
     /*!
-     * \brief Returns the average porosity within the control volume in \f$[-]\f$.
-     */
-    Scalar permeability() const
-    { return permeability_; }
-
-    /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffCoeff(const int phaseIdx) const
@@ -484,7 +473,6 @@ protected:
     { }
 
     Scalar porosity_; //!< Effective porosity within the control volume
-    Scalar permeability_;//!< Intrinsic permeability within the control volume
     Scalar relativePermeability_[numPhases]; //!< Relative permeability within the control volume
     Scalar diffCoeff_[numPhases]; //!< Binary diffusion coefficients for the phases
     FluidState fluidState_;
