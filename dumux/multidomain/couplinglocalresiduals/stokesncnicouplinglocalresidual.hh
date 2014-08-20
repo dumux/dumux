@@ -184,32 +184,46 @@ namespace Dumux
 						//has to be calculated to fulfill the mass balance
 						//convert suddomain intersection into multidomain intersection and check whether it is an outer boundary
 						if(!GridView::Grid::multiDomainIntersection(*isIt).neighbor()
-                           && this->momentumBalanceHasNeumann_(this->bcTypes_(idx)))
+                           && (this->boundaryHasMortarCoupling_(this->bcTypes_(idx)) || this->momentumBalanceHasNeumann_(this->bcTypes_(idx))))
 						{
-							const GlobalPosition& globalPos = this->fvGeometry_().subContVol[idx].global;
-							//problem specific function, in problem orientation of interface is known
-							if(this->problem_().isInterfaceCornerPoint(globalPos))
-							{
-								PrimaryVariables priVars(0.0);
-								//                         DimVector faceCoord = this->fvGeometry_().boundaryFace[boundaryFaceIdx].ipGlobal;
-								//                         std::cout<<faceCoord<<std::endl;
-								//calculate the actual boundary fluxes and add to residual (only for momentum equation, mass balance already has outflow)
-								asImp_()->computeFlux(priVars, boundaryFaceIdx, true/*on boundary*/);
-								for(int equationIdx = 0; equationIdx < numEq; ++equationIdx)
-								{
-									if(equationIdx == massBalanceIdx)
-										continue;
-									this->residual_[idx][equationIdx] += priVars[equationIdx];
-								}
-							}
+						    const GlobalPosition& globalPos = this->fvGeometry_().subContVol[idx].global;
+                            //problem specific function, in problem orientation of interface is known
+                            if(this->problem_().isInterfaceCornerPoint(globalPos))
+                            {
+                                 PrimaryVariables priVars(0.0);
+                                //                         DimVector faceCoord = this->fvGeometry_().boundaryFace[boundaryFaceIdx].ipGlobal;
+                                //                         std::cout<<faceCoord<<std::endl;
+
+                                 const int numVertices = refElement.size(dim);
+                                 bool evalBoundaryFlux = false;
+                                 for(int equationIdx = 0; equationIdx < numEq; ++equationIdx)
+                                 {
+                                     for(int i= 0; i < numVertices; i++)
+                                     {
+                                         //if vertex is on boundary and not the coupling vertex: check whether an outflow condition is set
+                                         if(this->model_().onBoundary(this->element_(), i) && i!=idx)
+                                             if (!this->bcTypes_(i).isOutflow(equationIdx))
+                                                 evalBoundaryFlux = true;
+                                     }
+
+                                     //calculate the actual boundary fluxes and add to residual (only for momentum and transport equation, mass balance already has outflow)
+                                     if(evalBoundaryFlux)
+                                     {
+                                         asImp_()->computeFlux(priVars, boundaryFaceIdx, true/*on boundary*/);
+                                         this->residual_[idx][equationIdx] += priVars[equationIdx];
+                                     }
+                                 }
+                            }
 						}
 						// Beavers-Joseph condition at the coupling boundary/interface
 						if(boundaryHasCoupling_(bcTypes))
 						{
 							evalBeaversJoseph_(isIt, idx, boundaryFaceIdx, boundaryVars);
-							asImp_()->evalCouplingVertex_(isIt, idx, boundaryFaceIdx, boundaryVars);
 						}
-						
+						if(boundaryHasCoupling_(bcTypes) || boundaryHasMortarCoupling_(bcTypes))
+                        {
+                            asImp_()->evalCouplingVertex_(isIt, idx, boundaryFaceIdx, boundaryVars);
+                        }
 						// count the number of outer faces to determine, if we are on
 						// a corner point and if an interpolation should be done
 						numberOfOuterFaces++;
@@ -282,7 +296,7 @@ namespace Dumux
 			
 			// add pressure correction - required for pressure coupling,
 			// if p.n comes from the pm
-			if (bcTypes.isCouplingOutflow(momentumYIdx) && beaversJosephCoeff)
+			if ((bcTypes.isCouplingOutflow(momentumYIdx) && beaversJosephCoeff) || bcTypes.isMortarCoupling(momentumYIdx))
 			{
 				DimVector pressureCorrection(isIt->centerUnitOuterNormal());
 				pressureCorrection *= volVars.pressure(); // TODO: 3D
@@ -393,6 +407,15 @@ namespace Dumux
 			return false;
 		}
 		
+	    // return true, if at least one equation on the boundary has a mortar coupling condition
+	    bool boundaryHasMortarCoupling_(const BoundaryTypes& bcTypes) const
+	    {
+	        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+	            if (bcTypes.isMortarCoupling(eqIdx))
+	                return true;
+	        return false;
+	    }
+
 	private:
 		Implementation *asImp_()
 		{ return static_cast<Implementation *>(this); }
