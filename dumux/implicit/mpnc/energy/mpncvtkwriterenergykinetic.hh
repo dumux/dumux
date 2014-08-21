@@ -290,10 +290,13 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/2> LocalResidual;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { dim = GridView::dimension };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { wPhaseIdx        = FluidSystem::wPhaseIdx};
+
     enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
     enum { velocityAveragingInModel = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel) };
 
@@ -335,7 +338,7 @@ public:
         this->resizePhaseBuffer_(reynoldsNumber_);
         this->resizePhaseBuffer_(prandtlNumber_);
         this->resizePhaseBuffer_(nusseltNumber_);
-
+        this->resizeScalarBuffer_(qBoil_);
 
         if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/) {
             Scalar numVertices = this->problem_.gridView().size(dim);
@@ -363,9 +366,12 @@ public:
         int numLocalVertices = element.geometry().corners();
         for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
             const unsigned int globalIdx = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
+
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+        	qBoil_[globalIdx] = LocalResidual::QBoilFunc(volVars, volVars.fluidState().saturation(wPhaseIdx));
+
+        	for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 enthalpy_[phaseIdx][globalIdx]          = volVars.fluidState().enthalpy(phaseIdx);
                 internalEnergy_[phaseIdx][globalIdx]    = volVars.fluidState().internalEnergy(phaseIdx);
                 reynoldsNumber_[phaseIdx][globalIdx]    = volVars.reynoldsNumber(phaseIdx);
@@ -381,6 +387,7 @@ public:
 
             if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/){
                 int numVertices = this->problem_.gridView().size(dim); // numVertices for vertexCentereed, numVolumes for volume centered
+
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     for (int I = 0; I < numVertices; ++I)
                         velocity_[phaseIdx][I] = this->problem_.model().volumeDarcyVelocity(phaseIdx, I);
@@ -398,6 +405,8 @@ public:
         if (temperatureOutput){
             this->commitTemperaturesBuffer_(writer, "T_%s", temperature_);
         }
+
+        this->commitScalarBuffer_(writer, "qBoil", qBoil_);
 
         if (enthalpyOutput)
             this->commitPhaseBuffer_(writer, "h_%s", enthalpy_);
@@ -483,7 +492,7 @@ private:
     PhaseVector reynoldsNumber_ ;
     PhaseVector prandtlNumber_ ;
     PhaseVector nusseltNumber_ ;
-
+    ScalarVector qBoil_ ;
     PhaseDimField  velocity_;
 };
 
