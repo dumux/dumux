@@ -339,6 +339,8 @@ public:
         this->resizePhaseBuffer_(prandtlNumber_);
         this->resizePhaseBuffer_(nusseltNumber_);
         this->resizeScalarBuffer_(qBoil_);
+        this->resizeScalarBuffer_(qsf_);
+
 
         if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/) {
             Scalar numVertices = this->problem_.gridView().size(dim);
@@ -370,6 +372,7 @@ public:
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
         	qBoil_[globalIdx] = LocalResidual::QBoilFunc(volVars, volVars.fluidState().saturation(wPhaseIdx));
+        	qsf_[globalIdx] = LocalResidual::qsf(volVars);
 
         	for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 enthalpy_[phaseIdx][globalIdx]          = volVars.fluidState().enthalpy(phaseIdx);
@@ -407,6 +410,8 @@ public:
         }
 
         this->commitScalarBuffer_(writer, "qBoil", qBoil_);
+        this->commitScalarBuffer_(writer, "qsf", qsf_);
+
 
         if (enthalpyOutput)
             this->commitPhaseBuffer_(writer, "h_%s", enthalpy_);
@@ -493,6 +498,7 @@ private:
     PhaseVector prandtlNumber_ ;
     PhaseVector nusseltNumber_ ;
     ScalarVector qBoil_ ;
+    ScalarVector qsf_ ;
     PhaseDimField  velocity_;
 };
 
