@@ -139,7 +139,9 @@ AC_CONFIG_FILES([dumux.pc
 ])
 
 # implicitly set the Dune-flags everywhere
-AC_SUBST(AM_CPPFLAGS, "$ALL_PKG_CPPFLAGS" )
+# we need single quotes, and $(..) here because top_srcdir is only defined in the Makefile
+# and not in configure
+AC_SUBST(AM_CPPFLAGS, '-I$(top_srcdir) $(ALL_PKG_CPPFLAGS)' ) 
 AC_SUBST(AM_LDFLAGS, "$ALL_PKG_LDFLAGS" )
 
 LIBS="$DUNE_LIBS $ALL_PKG_LIBS"
