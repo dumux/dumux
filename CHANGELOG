@@ -4,6 +4,9 @@ Differences Between DuMuX 2.5 and DuMuX 2.6
 * IMPORTANT NOTES:
 
 * IMPROVEMENTS and ENHANCEMENTS:
+  - multidomain models can now be used with the 2.3 release versions of DUNE core modules
+  - the free flow models now include the component enthalpy fluxes transported
+    by diffusion process (h^k D grad x), which was not considered before 
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
 - in the fully implicit mpnc model a further specialization allows now to describe two-phase flow with 
