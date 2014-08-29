@@ -93,7 +93,7 @@ private:
 
     void storeHangingNodeInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex);
     void storeInnerInteractionVolume(InteractionVolume& interactionVolume, const Vertex& vertex);
-    friend ParentType;
+    friend class FvMpfaL3dInteractionVolumeContainer<TypeTag>;
 
 protected:
     void storeInteractionVolumeInfo();
