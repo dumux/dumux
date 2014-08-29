@@ -1,5 +1,5 @@
 couplinglocalresidualsdir = $(includedir)/dumux/multidomain/couplinglocalresiduals
-couplinglocalresiduals_HEADERS = *.hh
+couplinglocalresiduals_HEADERS := $(wildcard *.hh)
 
 if !HAVE_DUNE_MULTIDOMAIN
 headercheck_IGNORE = \

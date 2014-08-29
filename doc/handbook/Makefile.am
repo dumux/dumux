@@ -1,5 +1,5 @@
 if BUILD_HANDBOOK
-TEXSOURCE = *.tex
+TEXSOURCE := $(wildcard *.tex)
 MAINDOCS = dumux-handbook.pdf
 
 DOCS = $(HTDOCS) $(MAINDOCS)
@@ -11,8 +11,8 @@ CURDIR=doc/handbook
 handbookdir=$(docdir)/handbook
 handbook_DATA = dumux-handbook.pdf
 
-CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.ps
-CLEANFILES += *.4ct *.4tc *.css *.idv *.idx *.lg *.tid *.tmp *.tms *.xref
+CLEANFILES := $(wildcard *.aux) $(wildcard *.bbl) $(wildcard *.blg) $(wildcard *.log) $(wildcard *.out) $(wildcard *.toc) $(wildcard *.dvi) $(wildcard *.ps)
+CLEANFILES +:= $(wildcard *.4ct) $(wildcard *.4tc) $(wildcard *.css) $(wildcard *.idv) $(wildcard *.idx) $(wildcard *.lg) $(wildcard *.tid) $(wildcard *.tmp) $(wildcard *.tms) $(wildcard *.xref)
 CLEANFILES += $(DOCS)
 
 doc: $(TEXSOURCE)

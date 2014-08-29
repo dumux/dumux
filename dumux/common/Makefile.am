@@ -1,4 +1,4 @@
 commondir = $(includedir)/dumux/common
-common_HEADERS = *.hh
+common_HEADERS := $(wildcard *.hh)
 
 include $(top_srcdir)/am/global-rules

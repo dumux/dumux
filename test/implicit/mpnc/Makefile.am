@@ -1,9 +1,9 @@
 check_PROGRAMS = test_boxmpnc test_ccmpnc test_forchheimer2p test_forchheimer1p test_boxmpnckinetic test_boxmpncthermalnonequil
-noinst_HEADERS = *.hh
+noinst_HEADERS := $(wildcard *.hh)
 
-EXTRA_DIST= *.input CMakeLists.txt grids/*.dgf
+EXTRA_DIST:= $(wildcard *.input) CMakeLists.txt grids/$(wildcard *.dgf)
 gridsdir=$(datadir)/dumux/grids
-grids_DATA=grids/*.dgf
+grids_DATA=grids/$(wildcard *.dgf)
 
 test_boxmpnc_SOURCES = test_boxmpnc.cc
 test_ccmpnc_SOURCES = test_ccmpnc.cc

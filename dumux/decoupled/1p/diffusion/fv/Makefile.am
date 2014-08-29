@@ -1,5 +1,5 @@
 fvdir = $(includedir)/dumux/decoupled/1p/diffusion/fv
-fv_HEADERS = *.hh
+fv_HEADERS := $(wildcard *.hh)
 
 
 

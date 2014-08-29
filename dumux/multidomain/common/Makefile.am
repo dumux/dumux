@@ -1,5 +1,5 @@
 commondir = $(includedir)/dumux/multidomain/common
-common_HEADERS = *.hh
+common_HEADERS := $(wildcard *.hh)
 
 if !HAVE_DUNE_MULTIDOMAIN
 headercheck_IGNORE = \

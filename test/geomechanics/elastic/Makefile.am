@@ -1,7 +1,7 @@
 check_PROGRAMS = test_elastic
 
-noinst_HEADERS = *.hh
-EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
+noinst_HEADERS := $(wildcard *.hh)
+EXTRA_DIST:=$(wildcard *.input) grids/$(wildcard *.dgf) CMakeLists.txt
 
 test_elastic_SOURCES = test_elastic.cc
 
