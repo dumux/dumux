@@ -120,6 +120,7 @@ public:
 
         if(PDELabBackend::isNonOverlapping)
         {
+            phelper_.initGhostsAndOwners();
             // extend the matrix pattern such that it is usable for AMG
             EntityExchanger<TypeTag> exchanger(problem_);
             exchanger.getExtendedMatrix(A, phelper_);

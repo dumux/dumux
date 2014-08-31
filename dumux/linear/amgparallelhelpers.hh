@@ -84,10 +84,15 @@ class ParallelISTLHelper
             return dofCodim==codim;
         }
 
-        bool fixedSize(int dim, int codim) const
+        bool fixedsize(int dim, int codim) const
         {
             return true;
+        }
 
+        template<class EntityType>
+        size_t size (EntityType& e) const
+        {
+            return 1;
         }
 
         template<class MessageBuffer, class EntityType>
@@ -138,11 +143,18 @@ class ParallelISTLHelper
             return dofCodim==codim;
         }
 
-        bool fixedSize(int dim, int codim) const
+        bool fixedsize(int dim, int codim) const
         {
             return true;
 
         }
+
+        template<class EntityType>
+        size_t size (EntityType& e) const
+        {
+            return 1;
+        }
+
         template<class MessageBuffer, class EntityType>
         void gather (MessageBuffer& buff, const EntityType& e) const
         {
@@ -188,10 +200,15 @@ class ParallelISTLHelper
             return dofCodim==codim;
         }
 
-        bool fixedSize(int dim, int codim) const
+        bool fixedsize(int dim, int codim) const
         {
             return true;
+        }
 
+        template<class EntityType>
+        size_t size (EntityType& e) const
+        {
+            return 1;
         }
 
         template<class MessageBuffer, class EntityType>
@@ -232,10 +249,16 @@ class ParallelISTLHelper
             return dofCodim==codim;
         }
 
-        bool fixedSize(int dim, int codim) const
+        bool fixedsize(int dim, int codim) const
         {
             return true;
 
+        }
+
+        template<class EntityType>
+        size_t size (EntityType& e) const
+        {
+            return 1;
         }
 
         template<class MessageBuffer, class EntityType>
@@ -270,7 +293,7 @@ class ParallelISTLHelper
         typedef GI DataType;
         GlobalIndexGatherScatter(std::vector<GI>& gindices,
                                  const Problem& problem)
-            : BaseGatherScatter(problem), gindices_(gindices_)
+            : BaseGatherScatter(problem), gindices_(gindices)
         {}
 
         bool contains(int dim, int codim) const
@@ -278,10 +301,15 @@ class ParallelISTLHelper
             return dofCodim==codim;
         }
 
-        bool fixedSize(int dim, int codim) const
+        bool fixedsize(int dim, int codim) const
         {
             return true;
+        }
 
+        template<class EntityType>
+        size_t size (EntityType& e) const
+        {
+            return 1;
         }
 
         template<class MessageBuffer, class EntityType>
@@ -304,7 +332,7 @@ class ParallelISTLHelper
 public:
 
     ParallelISTLHelper (const Problem& problem, int verbose=1)
-        : problem_(problem), verbose_(verbose), initialized_()
+        : problem_(problem), verbose_(verbose), initialized_(false)
     {}
     
     // \brief Initializes the markers for ghosts and owners with the correct size and values.
@@ -333,6 +361,8 @@ public:
                 *v=1.0;
             else
                 *v=0.0;
+
+        initialized_=true;
     }
 
     // keep only DOFs assigned to this processor
@@ -785,7 +815,6 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
         // Therefore we need to initialize the marker vectors for ghosts and
         // owned dofs
         initGhostsAndOwners();
-        initialized_=true;
     }
     const GridView& gridview = problem_.gridView();
 
