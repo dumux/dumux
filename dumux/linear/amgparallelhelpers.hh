@@ -59,6 +59,54 @@ class ParallelISTLHelper
         const Problem& problem_;
     };
 
+    /**
+     * @brief GatherScatter implementation that makes a right hand side in the box model consistent.
+     */
+    template<class V>
+    class ConsistencyBoxGatherScatter
+        : public BaseGatherScatter,
+          public Dune::CommDataHandleIF<ConsistencyBoxGatherScatter<V>,typename V::block_type>
+    {
+    public:
+        typedef typename V::block_type DataType;
+        
+        ConsistencyBoxGatherScatter(V& container, const Problem& problem)
+            : BaseGatherScatter(problem), container_(container)
+        {}
+        
+        bool contains(int dim, int codim) const
+        {
+            return dofCodim==codim;
+        }
+
+        bool fixedsize(int dim, int codim) const
+        {
+            return true;
+        }
+
+        template<class EntityType>
+        size_t size (EntityType& e) const
+        {
+            return 1;
+        }
+
+        template<class MessageBuffer, class EntityType>
+        void gather (MessageBuffer& buff, const EntityType& e) const
+        {
+            buff.write(container_[this->map(e)]);
+        }
+
+        template<class MessageBuffer, class EntityType>
+        void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
+        {
+            typename V::block_type block;
+            buff.read(block);
+            container_[this->map(e)]+=block;
+        }
+    private:
+        V& container_;
+    };
+    
 
     /**
      * @brief Writes 1<<24 to each data item (of the container) that is gathered or scattered
@@ -112,8 +160,6 @@ class ParallelISTLHelper
             buff.read(x);
             if (e.partitionType()!=Dune::InteriorEntity && e.partitionType()!=Dune::BorderEntity)
                 data= (1<<24);
-            else
-                data = x;
         }
     private:
         std::vector<std::size_t>& ranks_;
@@ -357,7 +403,7 @@ public:
 
         // convert vector into mask vector
         for(auto v=owner_.begin(), vend=owner_.end(); v!=vend;++v)
-            if(*v=problem_.gridView().comm().rank())
+            if(*v==problem_.gridView().comm().rank())
                 *v=1.0;
             else
                 *v=0.0;
@@ -386,6 +432,20 @@ public:
     {
         return isGhost_[i];
     }
+    
+    // \brief Make a vector of the box model consistent.
+    template<typename B, typename A>
+    void makeNonOverlappingConsistent(Dune::BlockVector<B,A>& v)
+    {
+#if HAVE_MPI
+        const GridView& gridview = problem_.gridView();
+        ConsistencyBoxGatherScatter<Dune::BlockVector<B,A> > gs(v, problem_);
+        if (gridview.comm().size()>1)
+            gridview.communicate(gs,Dune::InteriorBorder_InteriorBorder_Interface,
+                                 Dune::ForwardCommunication);
+#endif
+    }
+    
 
 #if HAVE_MPI
 
@@ -803,6 +863,7 @@ void EntityExchanger<TypeTag>::getExtendedMatrix (Matrix& A) const
             for (ColIterator j = tmp[i.index()].begin(); j != tmp[i.index()].end(); ++j){
                 A[i.index()][j.index()] = tmp[i.index()][j.index()];
             }
+        sumEntries(A);
     }
 }
 
@@ -830,17 +891,14 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
     // Count shared dofs that we own
     typedef typename C::ParallelIndexSet::GlobalIndex GlobalIndex;
     GlobalIndex count=0;
-
-    for(auto v=sharedDofs.begin(), vend=sharedDofs.end(); v != vend; ++v)
-        if(*v)
+    auto owned=owner_.begin();
+    
+    for(auto v=sharedDofs.begin(), vend=sharedDofs.end(); v != vend; ++v, ++owned)
+        if(*v && *owned==1.0)
             ++count;
 
     Dune::dverb<<gridview.comm().rank()<<": shared count is "<< count.touint()
          <<std::endl;
-
-    Dune::dverb<<gridview.comm().rank()<<": shared block count is "
-         << count.touint()<<std::endl;
-
 
     std::vector<GlobalIndex> counts(gridview.comm().size());
     gridview.comm().allgather(&count, 1, &(counts[0]));
@@ -859,11 +917,10 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
     auto shared=sharedDofs.begin();
     auto index=scalarIndices.begin();
 
-    for(auto i=owner_.begin(), iend=owner_.end(); i!=iend; ++i, ++shared)
+    for(auto i=owner_.begin(), iend=owner_.end(); i!=iend; ++i, ++shared, ++index)
         if(*i==1.0 && *shared){
             *index=start;
             ++start;
-            ++index;
         }
 
     // publish global indices for the shared DOFS to other processors.
@@ -879,7 +936,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
     index=scalarIndices.begin();
     auto ghost=isGhost_.begin();
 
-    for(auto i=owner_.begin(), iend=owner_.end(); i!=iend; ++i)
+    for(auto i=owner_.begin(), iend=owner_.end(); i!=iend; ++i, ++ghost, ++index)
     {
         Dune::OwnerOverlapCopyAttributeSet::AttributeSet attr;
         if(*index!=std::numeric_limits<GlobalIndex>::max()){
@@ -896,7 +953,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
             else {
                 attr = Dune::OwnerOverlapCopyAttributeSet::copy;
             }
-            c.indexSet().add(*index, typename C::ParallelIndexSet::LocalIndex(*i, attr));
+            c.indexSet().add(*index, typename C::ParallelIndexSet::LocalIndex(i-owner_.begin(), attr));
         }
     }
     c.indexSet().endResize();

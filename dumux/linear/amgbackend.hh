@@ -116,11 +116,17 @@ public:
 #if HAVE_MPI
         Dune::SolverCategory::Category category = PDELabBackend::isNonOverlapping?
             Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
-        typename PDELabBackend::Comm comm(problem_.gridView().comm(), category);        
 
         if(PDELabBackend::isNonOverlapping)
         {
             phelper_.initGhostsAndOwners();
+        }
+
+        typename PDELabBackend::Comm comm(problem_.gridView().comm(), category);
+        phelper_.createIndexSetAndProjectForAMG(A, comm);
+        
+        if(PDELabBackend::isNonOverlapping)
+        {
             // extend the matrix pattern such that it is usable for AMG
             EntityExchanger<TypeTag> exchanger(problem_);
             exchanger.getExtendedMatrix(A, phelper_);
@@ -129,7 +135,12 @@ public:
         typename PDELabBackend::LinearOperator fop(A, comm);
         typename PDELabBackend::ScalarProduct sp(comm);
         int rank = comm.communicator().rank();
-        phelper_.createIndexSetAndProjectForAMG(A, comm);
+
+        // Make rhs consistent
+        if(PDELabBackend::isNonOverlapping)
+        {
+            phelper_.makeNonOverlappingConsistent(b);
+        }
 #else
         typename PDELabBackend::Comm  comm;
         typename PDELabBackend::LinearOperator fop(A);
