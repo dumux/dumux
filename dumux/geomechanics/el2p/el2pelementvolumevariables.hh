@@ -102,16 +102,16 @@ public:
 
         // pressure and saturation local function space (mass balance equations)
         typedef typename LocalFunctionSpace::template Child<0>::Type PressSatLFS;
-        const PressSatLFS& pressSatLFS = localFunctionSpace.template getChild<0>();
+        const PressSatLFS& pressSatLFS = localFunctionSpace.template child<0>();
         // local function space for pressure
         typedef typename PressSatLFS::template Child<0>::Type PressLFS;
-        const PressLFS& pressLFS = pressSatLFS.template getChild<0>();
+        const PressLFS& pressLFS = pressSatLFS.template child<0>();
         // local function space for saturation
         typedef typename PressSatLFS::template Child<1>::Type SatLFS;
-        const SatLFS& satLFS = pressSatLFS.template getChild<1>();
+        const SatLFS& satLFS = pressSatLFS.template child<1>();
         // local function space for solid displacement
         typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
-        const DisplacementLFS& displacementLFS = localFunctionSpace.template getChild<1>();
+        const DisplacementLFS& displacementLFS = localFunctionSpace.template child<1>();
         typedef typename DisplacementLFS::template Child<0>::Type ScalarDispLFS;
 
         int numScv = element.template count<dim>();
@@ -189,7 +189,7 @@ public:
 
         // local function space for solid displacement
         typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
-        const DisplacementLFS& displacementLFS = localFunctionSpace.template getChild<1>();
+        const DisplacementLFS& displacementLFS = localFunctionSpace.template child<1>();
         const unsigned int dispSize = displacementLFS.child(0).size();
         typedef typename DisplacementLFS::template Child<0>::Type ScalarDispLFS;
         // further types required for gradient calculations

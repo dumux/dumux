@@ -369,7 +369,7 @@ public:
      */
     FVPressureCompositional(Problem& problem) : FVPressure<TypeTag>(problem),
         problem_(problem), initializationOutputWriter_(problem.gridView(),"initOutput2p2c"),
-        incp_(1e1)
+        maxError_(0.0), incp_(1.0e1)
     {
         updateEstimate_.resize(GET_PROP_VALUE(TypeTag, NumPhases));
         for  (int i=0; i<GET_PROP_VALUE(TypeTag, NumPhases); i++)
@@ -383,7 +383,6 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "Global Pressure type not supported!");
         }
-        maxError_=0.;
     }
 protected:
     TransportSolutionType updateEstimate_; //! Update estimate for changes in volume for the pressure equation

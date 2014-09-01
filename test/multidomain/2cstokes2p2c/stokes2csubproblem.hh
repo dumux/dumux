@@ -202,18 +202,26 @@ public:
             bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
             bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMax);
 
-            refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
+            refVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
             refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefPressure);
             refMassfrac_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
-            vxMax_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, VxMax);
-            bjSlipVel_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BeaversJosephSlipVel);
-            sinusVelVar_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelVar);
+            refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
 
+            sinusVAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelAmplitude);
+            sinusVPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelPeriod);
+            sinusPAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusPressureAmplitude);
+            sinusPPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusPressurePeriod);
+            sinusXAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusConcentrationAmplitude);
+            sinusXPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusConcentrationPeriod);
+            sinusTAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperatureAmplitude);
+            sinusTPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperaturePeriod);
+
+            bjSlipVel_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BeaversJosephSlipVel);
+            alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
             xMaterialInterface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MaterialInterfaceX);
+
             runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, RunUpDistanceX); // first part of the interface without coupling
             initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
-
-            alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
         }
         catch (Dumux::ParameterException &e) {
             std::cerr << e << ". Abort!\n";
@@ -338,9 +346,9 @@ public:
 
         values[velocityXIdx] = xVelocity_(globalPos);
         values[velocityYIdx] = 0.0;
-        values[pressureIdx] = refPressure_
+        values[pressureIdx] = refPressure()
                 + density*this->gravity()[1]*(globalPos[1] - bboxMin_[1]);
-        values[massOrMoleFracIdx] = refMassfrac_;
+        values[massOrMoleFracIdx] = refMassfrac();
     }
 
     /*!
@@ -379,7 +387,7 @@ public:
                 && globalPos[1] > bboxMin_[1] && globalPos[1] < bboxMax_[1])
         {
         	// rho*v*X at inflow
-        	values[transportEqIdx] = -xVelocity*density*refMassfrac_;
+        	values[transportEqIdx] = -xVelocity * density * refMassfrac();
         }
     }
 
@@ -512,17 +520,21 @@ public:
     const SpatialParams &spatialParams() const
     { return spatialParams_; }
 
+    //! \brief Returns the reference velocity.
+    const Scalar refVelocity() const
+    { return refVelocity_ + variation_(sinusVAmplitude_, sinusVPeriod_); }
+
     //! \brief Returns the reference pressure.
     const Scalar refPressure() const
-    { return refPressure_; }
-
-    //! \brief Returns the reference temperature.
-    const Scalar refTemperature() const
-    { return refTemperature_; }
+    { return refPressure_ + variation_(sinusPAmplitude_, sinusPPeriod_); }
 
     //! \brief Returns the reference mass fraction.
     const Scalar refMassfrac() const
-    { return refMassfrac_; }
+    { return refMassfrac_ + variation_(sinusXAmplitude_, sinusXPeriod_); }
+
+    //! \brief Returns the reference temperature.
+    const Scalar refTemperature() const
+    { return refTemperature_+ variation_(sinusTAmplitude_, sinusTPeriod_); }
 
 private:
     /*!
@@ -541,15 +553,15 @@ private:
         values[velocityXIdx] = xVelocity_(globalPos);
         values[velocityYIdx] = 0.;
 
-        values[pressureIdx] = refPressure_
+        values[pressureIdx] = refPressure()
                 + density*this->gravity()[1]*(globalPos[1] - bboxMin_[1]);
-        values[massOrMoleFracIdx] = refMassfrac_;
+        values[massOrMoleFracIdx] = refMassfrac();
     }
 
     //! \brief set the profile of the inflow velocity (horizontal direction)
     const Scalar xVelocity_(const GlobalPosition &globalPos) const
     {
-        const Scalar vmax = vxMax_ + hourlyVariation_(sinusVelVar_);
+        const Scalar vmax = refVelocity();
 
         // parabolic profile
         return  4*vmax*(globalPos[1] - bboxMin_[1])*(bboxMax_[1] - globalPos[1])
@@ -569,7 +581,7 @@ private:
     void updateFluidStateForBC_(FluidState& fluidState) const
     {
         fluidState.setTemperature(refTemperature());
-        fluidState.setPressure(phaseIdx, refPressure_);
+        fluidState.setPressure(phaseIdx, refPressure());
 
         Scalar massFraction[numComponents];
         massFraction[transportCompIdx] = refMassfrac();
@@ -585,19 +597,9 @@ private:
         fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massFraction[phaseCompIdx]*M1/massToMoleDenominator);
     }
 
-    // can be used for the diurnal variation of a boundary condition
-    const Scalar diurnalVariation_(const Scalar value) const
-    {
-        const Scalar time = this->timeManager().time();
-        return sin(2*M_PI*time/86400) * value;
-    }
-
-    // can be used for the hourly variation of a boundary condition
-    const Scalar hourlyVariation_(const Scalar value) const
-    {
-        const Scalar time = this->timeManager().time();
-        return sin(2*M_PI*time/3600) * value;
-    }
+    // can be used for the variation of a boundary condition
+    const Scalar variation_(const Scalar amplitude, const Scalar period) const
+    { return sin(2*M_PI*this->timeManager().time()/period) * amplitude; }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < bboxMin_[0] + eps_; }
@@ -628,13 +630,21 @@ private:
     GlobalPosition bboxMin_;
     GlobalPosition bboxMax_;
 
+    Scalar refVelocity_;
     Scalar refPressure_;
-    Scalar refTemperature_;
     Scalar refMassfrac_;
+    Scalar refTemperature_;
 
-    Scalar vxMax_;
+    Scalar sinusVAmplitude_;
+    Scalar sinusVPeriod_;
+    Scalar sinusPAmplitude_;
+    Scalar sinusPPeriod_;
+    Scalar sinusXAmplitude_;
+    Scalar sinusXPeriod_;
+    Scalar sinusTAmplitude_;
+    Scalar sinusTPeriod_;
+
     Scalar bjSlipVel_;
-    Scalar sinusVelVar_;
     Scalar alphaBJ_;
 
     Scalar xMaterialInterface_;

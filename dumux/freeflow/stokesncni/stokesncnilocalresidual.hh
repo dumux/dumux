@@ -50,13 +50,16 @@ class StokesncniLocalResidual : public StokesncLocalResidual<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    enum { dim = GridView::dimension };
-    enum { energyEqIdx = Indices::energyEqIdx }; //!< Index of the transport equation
+    enum { dim = GridView::dimension }; // dimensions
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) }; // number of equations
+    enum { numComponents = Indices::numComponents }; // number of components
+    enum { energyEqIdx = Indices::energyEqIdx}; // equation indices
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     /*!
@@ -116,7 +119,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the conductive energy flux
+     * \brief Evaluates the diffusive component energy flux
      *        over the face of a sub-control volume.
      *
      * \param flux The vector for the fluxes over the SCV face
@@ -128,12 +131,44 @@ public:
         // diffusive mass flux
         ParentType::computeDiffusiveFlux(flux, fluxVars);
 
+        // conductive energy flux
+        computeConductiveFlux(flux, fluxVars);
+
+        // diffusive component energy flux
+        for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
+        {
+            for (int compIdx=0; compIdx<numComponents; compIdx++)
+            {
+                flux[energyEqIdx] -= fluxVars.moleFractionGrad(compIdx)[dimIdx]
+                                     * fluxVars.face().normal[dimIdx]
+                                     *(fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
+                                     * fluxVars.molarDensity()
+                                     * FluidSystem::molarMass(compIdx) // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s]
+                                     * fluxVars.componentEnthalpy(compIdx);
+            }
+        }
+        Valgrind::CheckDefined(flux[energyEqIdx]);
+    }
+
+    /*!
+     * \brief Evaluates the conductive energy flux
+     *        over the face of a sub-control volume.
+     *
+     * \param flux The vector for the fluxes over the SCV face
+     * \param fluxVars The flux variables at the current SCV face
+     */
+    void computeConductiveFlux(PrimaryVariables &flux,
+                               const FluxVariables &fluxVars) const
+    {
         // diffusive heat flux
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
+        {
             flux[energyEqIdx] -=
                 fluxVars.temperatureGrad()[dimIdx] *
                 fluxVars.face().normal[dimIdx] *
                 (fluxVars.thermalConductivity() + fluxVars.thermalEddyConductivity());
+        }
+        Valgrind::CheckDefined(flux[energyEqIdx]);
     }
 };
 

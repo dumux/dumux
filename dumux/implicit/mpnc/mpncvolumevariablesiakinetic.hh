@@ -225,8 +225,6 @@ if (AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams,
             const Scalar heatCapacity         = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
             const Scalar thermalConductivity  = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
 
-            // If Diffusion is not enabled, Sherwood is divided by zero
-            assert( enableDiffusion  ) ;
 
             // diffusion coefficient of non-wetting component in wetting phase
             const Scalar diffCoeff = volVars.diffCoeff(phaseIdx, wCompIdx, nCompIdx) ;
@@ -251,6 +249,7 @@ if (AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams,
                                                                     density,
                                                                     diffCoeff);
 
+            // If Diffusion is not enabled, Sherwood is divided by zero
             sherwoodNumber_[phaseIdx]   = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
                                                                       schmidtNumber_[phaseIdx],
                                                                       sherwoodFormulation);

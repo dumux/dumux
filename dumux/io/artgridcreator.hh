@@ -398,7 +398,7 @@ public:
     static Grid &grid()
     {
         return *grid_;
-    };
+    }
 
     /*!
      * \brief Distributes the grid on all processes of a parallel
@@ -407,7 +407,7 @@ public:
     static void loadBalance()
     {
         grid_->loadBalance();
-    };
+    }
 
     static int vertexNumber()
     {

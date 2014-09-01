@@ -157,7 +157,7 @@ public:
     void serializeEnd()
     {
         outStream_.close();
-    };
+    }
 
 
     /*!
@@ -221,7 +221,7 @@ public:
         if (buf != cookie)
             DUNE_THROW(Dune::IOError,
                        "Could not start section '" << cookie << "'");
-    };
+    }
 
     /*!
      * \brief End of a section in the serialized output.
@@ -289,7 +289,7 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented,
                    "Dumux::Restart::restartFileList()");
-    };
+    }
 
 
 private:

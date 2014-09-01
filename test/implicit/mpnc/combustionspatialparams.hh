@@ -65,7 +65,7 @@ private:
 }// end namespace properties
 
 /**
- * \brief Definition of the soil properties for the kinetic Energy problem
+ * \brief Definition of the spatial parameters for the one component combustion problem
  *
  */
 template<class TypeTag>

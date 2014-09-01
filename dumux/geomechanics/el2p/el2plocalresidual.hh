@@ -140,7 +140,7 @@ public:
 //
 //
 //            typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
-//            const DisplacementLFS& displacementLFS = localFunctionSpace.template getChild<1>();
+//            const DisplacementLFS& displacementLFS = localFunctionSpace.template child<1>();
 //            const unsigned int dispSize = displacementLFS.child(0).size();
 //
 //                    typedef typename DisplacementLFS::template Child<0>::Type ScalarDispLFS;

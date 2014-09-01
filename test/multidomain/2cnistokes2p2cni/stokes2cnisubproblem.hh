@@ -199,22 +199,27 @@ public:
             bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
             bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMax);
 
-            refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
+            refVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
             refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefPressure);
             refMassfrac_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
-            vxMax_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, VxMax);
+            refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
+
+            sinusVAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelAmplitude);
+            sinusVPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelPeriod);
+            sinusPAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusPressureAmplitude);
+            sinusPPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusPressurePeriod);
+            sinusXAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusConcentrationAmplitude);
+            sinusXPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusConcentrationPeriod);
+            sinusTAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperatureAmplitude);
+            sinusTPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperaturePeriod);
+
+            useDirichletFF_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, UseDirichletFF);
             bjSlipVel_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BeaversJosephSlipVel);
-
-            sinusVelVar_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelVar);
-            sinusPVar_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusPVar);
-            sinusTVar_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTVar);
-            sinusXVar_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusXVar);
-
+            alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
             xMaterialInterface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MaterialInterfaceX);
+
             runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, RunUpDistanceX); // first part of the interface without coupling
             initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
-
-            alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
         }
         catch (Dumux::ParameterException &e) {
             std::cerr << e << ". Abort!\n";
@@ -262,19 +267,34 @@ public:
 
         if (onUpperBoundary_(globalPos))
         {
-            values.setNeumann(transportEqIdx);
-            values.setNeumann(energyEqIdx);
+            if (useDirichletFF_)
+            {
+                values.setNeumann(transportEqIdx);
+                values.setDirichlet(temperatureIdx, energyEqIdx);
+            }
+            else
+            {
+                values.setNeumann(transportEqIdx);
+                values.setNeumann(energyEqIdx);
+            }
         }
 
-		// Left inflow boundaries should be Neumann, otherwise the
-		// evaporative fluxes are much more grid dependent
+        // Left inflow boundaries should be Neumann, otherwise the
+        // evaporative fluxes are much more grid dependent
         if (onLeftBoundary_(globalPos))
         {
-            values.setNeumann(transportEqIdx);
-            values.setNeumann(energyEqIdx);
-
-            if (onUpperBoundary_(globalPos)) // corner point
-                values.setAllDirichlet();
+            if (useDirichletFF_)
+            {
+                values.setDirichlet(massOrMoleFracIdx, transportEqIdx);
+                values.setDirichlet(temperatureIdx, energyEqIdx);
+            }
+            else
+            {
+                values.setNeumann(transportEqIdx);
+                values.setNeumann(energyEqIdx);
+                if (onUpperBoundary_(globalPos)) // corner point
+                    values.setAllDirichlet();
+            }
         }
 
         if (onRightBoundary_(globalPos))
@@ -288,10 +308,17 @@ public:
         if (onLowerBoundary_(globalPos))
         {
             values.setAllDirichlet();
-            if (!onLeftBoundary_(globalPos)) // is this required?
+            if (useDirichletFF_)
+            {
+                values.setNeumann(transportEqIdx);
+                values.setDirichlet(temperatureIdx, energyEqIdx);
+            }
+            else
             {
                 values.setNeumann(transportEqIdx);
                 values.setNeumann(energyEqIdx);
+                if (onLeftBoundary_(globalPos)) // corner point
+                    values.setAllDirichlet();
             }
 
             if (globalPos[0] > runUpDistanceX_-eps_ && time > initializationTime_)
@@ -512,17 +539,21 @@ public:
     const SpatialParams &spatialParams() const
     { return spatialParams_; }
 
+    //! \brief Returns the reference velocity.
+    const Scalar refVelocity() const
+    { return refVelocity_ + variation_(sinusVAmplitude_, sinusVPeriod_); }
+
     //! \brief Returns the reference pressure.
     const Scalar refPressure() const
-    { return refPressure_ + diurnalVariation_(sinusPVar_); }
-
-    //! \brief Returns the reference temperature.
-    const Scalar refTemperature() const
-    { return refTemperature_+ diurnalVariation_(sinusTVar_); }
+    { return refPressure_ + variation_(sinusPAmplitude_, sinusPPeriod_); }
 
     //! \brief Returns the reference mass fraction.
     const Scalar refMassfrac() const
-    { return refMassfrac_ + diurnalVariation_(sinusXVar_); }
+    { return refMassfrac_ + variation_(sinusXAmplitude_, sinusXPeriod_); }
+
+    //! \brief Returns the reference temperature.
+    const Scalar refTemperature() const
+    { return refTemperature_+ variation_(sinusTAmplitude_, sinusTPeriod_); }
 
 private:
     /*!
@@ -550,7 +581,7 @@ private:
     //! \brief set the profile of the inflow velocity (horizontal direction)
     const Scalar xVelocity_(const GlobalPosition &globalPos) const
     {
-        const Scalar vmax = vxMax_ + hourlyVariation_(sinusVelVar_);
+        const Scalar vmax = refVelocity();
 //        const Scalar relativeHeight = (globalPos[1]-bboxMin_[1])/height_();
         // linear profile
 //        return vmax*relativeHeight + bjSlipVel_; // BJ slip velocity is added as sqrt(Kxx)
@@ -583,19 +614,9 @@ private:
         fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massFraction[phaseCompIdx]*M1/massToMoleDenominator);
     }
 
-
-    const Scalar diurnalVariation_(const Scalar value) const
-    {
-        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-        return sin(2*M_PI*time/86400) * value;
-    }
-
-
-    const Scalar hourlyVariation_(const Scalar value) const
-    {
-        const Scalar time = this->timeManager().time();
-        return sin(2*M_PI*time/3600) * value;
-    }
+    // can be used for the variation of a boundary condition
+    const Scalar variation_(const Scalar amplitude, const Scalar period) const
+    { return sin(2*M_PI*this->timeManager().time()/period) * amplitude; }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < bboxMin_[0] + eps_; }
@@ -626,18 +647,23 @@ private:
     GlobalPosition bboxMin_;
     GlobalPosition bboxMax_;
 
+    Scalar refVelocity_;
     Scalar refPressure_;
-    Scalar refTemperature_;
     Scalar refMassfrac_;
+    Scalar refTemperature_;
 
-    Scalar vxMax_;
+    Scalar sinusVAmplitude_;
+    Scalar sinusVPeriod_;
+    Scalar sinusPAmplitude_;
+    Scalar sinusPPeriod_;
+    Scalar sinusXAmplitude_;
+    Scalar sinusXPeriod_;
+    Scalar sinusTAmplitude_;
+    Scalar sinusTPeriod_;
+
+    bool useDirichletFF_;
     Scalar bjSlipVel_;
     Scalar alphaBJ_;
-
-    Scalar sinusVelVar_;
-    Scalar sinusPVar_;
-    Scalar sinusTVar_;
-    Scalar sinusXVar_;
 
     Scalar xMaterialInterface_;
     Scalar runUpDistanceX_;

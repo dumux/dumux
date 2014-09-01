@@ -64,7 +64,7 @@ namespace Dumux {
  * Energy balance equation:
  * \f[
 \frac{\partial (\varrho_g  u_g)}{\partial t}
-+ \boldsymbol{\nabla} \left( \boldsymbol{\cdot} \varrho_g h_g {\boldsymbol{v}}_g
++ \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_g h_g {\boldsymbol{v}}_g
 - \lambda_g \boldsymbol{\nabla} T \right) - q_T = 0
  * \f]
  *

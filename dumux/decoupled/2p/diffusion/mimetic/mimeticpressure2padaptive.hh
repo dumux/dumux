@@ -306,10 +306,9 @@ public:
                         * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
                 }
 
-                DimVector refVelocity(0);
-                refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
-                refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
-                refVelocity[2] = 0.5 * (fluxW[5] - fluxW[4]);
+                DimVector refVelocity;
+                for (int k = 0; k < dim; k++)
+                    refVelocity[k] = 0.5 * (fluxW[2*k+1] - fluxW[2*k]);
 
                 const DimVector& localPos = ReferenceElements::general(eIt->geometry().type()).position(0, 0);
 
@@ -323,11 +322,9 @@ public:
 
                 (*velocityWetting)[globalIdx] = elementVelocity;
 
-                refVelocity = 0;
-                refVelocity[0] = 0.5 * (fluxNw[1] - fluxNw[0]);
-                refVelocity[1] = 0.5 * (fluxNw[3] - fluxNw[2]);
-                refVelocity[2] = 0.5 * (fluxNw[5] - fluxNw[4]);
-
+                for (int k = 0; k < dim; k++)
+                    refVelocity[k] = 0.5 * (fluxNw[2*k+1] - fluxNw[2*k]);
+                
                 // calculate the element velocity by the Piola transformation
                 elementVelocity = 0;
                 jacobianT.umtv(refVelocity, elementVelocity);

@@ -242,8 +242,13 @@ public:
             storageLastTimestep_ = Scalar(0);
             lastMassOutputTime_ = Scalar(0);
 
-            outfile.open("evaporation.out");
-            outfile << "time; massChange; evaporationRate; energyChange; massH2O" << std::endl;
+            outfile.open("storage.out");
+            outfile << "Time;"
+                    << "TotalMassChange;"
+                    << "WaterMassChange;"
+                    << "IntEnergyChange;"
+                    << "WaterMass"
+                    << std::endl;
         }
         catch (Dumux::ParameterException &e) {
             std::cerr << e << ". Abort!\n";
@@ -539,27 +544,28 @@ public:
             if (this->timeManager().timeStepIndex() % freqMassOutput_ == 0
                     || this->timeManager().episodeWillBeOver())
             {
-                PrimaryVariables evaporationRate(0.);
-                evaporationRate = storageLastTimestep_ - storage;
+                PrimaryVariables storageChange(0.);
+                storageChange = storageLastTimestep_ - storage;
 
                 assert(time - lastMassOutputTime_ != 0);
-                evaporationRate /= (time - lastMassOutputTime_);
+                storageChange /= (time - lastMassOutputTime_);
                 // 2d: interface length has to be accounted for
                 // in order to obtain kg/m²s
-                evaporationRate /= (bboxMax_[0]-bboxMin_[0]);
+                storageChange /= (bboxMax_[0]-bboxMin_[0]);
 
-                std::cout << "TotalMass: " << storage[contiTotalMassIdx]
-                          << " MassH2O: " << storage[contiWEqIdx]
+                std::cout << "Time: " << time
+                          << " TotalMass: " << storage[contiTotalMassIdx]
+                          << " WaterMass: " << storage[contiWEqIdx]
                           << " IntEnergy: " << storage[energyEqIdx]
-                          << " EvaporationRate: " << evaporationRate[contiWEqIdx]
-                          << " Time: " << time <<std::endl;
+                          << " WaterMassChange: " << storageChange[contiWEqIdx]
+                          << std::endl;
                 if (this->timeManager().time() != 0.)
-                    outfile << time <<
-							"; " << evaporationRate[contiTotalMassIdx] <<
-                            "; " << evaporationRate[contiWEqIdx] <<
-                            "; " << evaporationRate[energyEqIdx] <<
-                            "; " << storage[contiWEqIdx] <<
-                            std::endl;
+                    outfile << time << ";"
+                            << storageChange[contiTotalMassIdx] << ";"
+                            << storageChange[contiWEqIdx] << ";"
+                            << storageChange[energyEqIdx] << ";"
+                            << storage[contiWEqIdx]
+                            << std::endl;
 
                 storageLastTimestep_ = storage;
                 lastMassOutputTime_ = time;
