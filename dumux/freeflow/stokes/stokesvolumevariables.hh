@@ -144,6 +144,14 @@ public:
     Scalar density() const
     { return fluidState_.density(phaseIdx); }
 
+
+    /*!
+     * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ of the fluid within the
+     *        sub-control volume.
+     */
+    Scalar molarDensity() const
+    { return this->fluidState_.density(phaseIdx) / this->fluidState_.averageMolarMass(phaseIdx); }
+
     /*!
      * \brief Returns the fluid pressure \f$\mathrm{[Pa]}\f$ within
      *        the sub-control volume.

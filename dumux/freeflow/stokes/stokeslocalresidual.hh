@@ -82,6 +82,7 @@ protected:
 
     static const bool enableUnsymmetrizedVelocityGradient = GET_PROP_VALUE(TypeTag, EnableUnsymmetrizedVelocityGradient);
     static const bool calculateNavierStokes = GET_PROP_VALUE(TypeTag, EnableNavierStokes);
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
  public:
     /*!
@@ -121,8 +122,12 @@ protected:
 
         storage = 0.0;
 
-        // mass balance
-        storage[massBalanceIdx] = volVars.density();
+        if(!useMoles)
+            // mass balance mass fraction based
+            storage[massBalanceIdx] = volVars.density();
+        else
+            // mass balance mole fraction based
+            storage[massBalanceIdx] = volVars.molarDensity();
 
         // momentum balance
         for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
@@ -180,13 +185,26 @@ protected:
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
 
-        // mass balance with upwinded density
         DimVector massBalanceResidual = fluxVars.velocity();
-        if (massUpwindWeight_ == 1.0) // fully upwind
-            massBalanceResidual *= up.density();
+
+        if(!useMoles)
+        {
+            // mass balance with upwinded density
+            if (massUpwindWeight_ == 1.0) // fully upwind
+                massBalanceResidual *= up.density();
+            else
+                massBalanceResidual *= massUpwindWeight_ * up.density() +
+                                       (1.-massUpwindWeight_) * dn.density();
+        }
         else
-            massBalanceResidual *= massUpwindWeight_ * up.density() +
-                (1.-massUpwindWeight_) * dn.density();
+        {
+            // mass balance with upwinded molarDensity
+            if (massUpwindWeight_ == 1.0) // fully upwind
+                massBalanceResidual *= up.molarDensity();
+            else
+                massBalanceResidual *= massUpwindWeight_ * up.molarDensity() +
+                                       (1.-massUpwindWeight_) * dn.molarDensity();
+        }
 
         if (!fluxVars.onBoundary())
         {

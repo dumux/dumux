@@ -42,7 +42,6 @@ namespace Properties
 
 //! The type tag for the compositional Stokes problems
 NEW_TYPE_TAG(BoxStokesnc, INHERITS_FROM(BoxStokes));
-NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
 }
 
 }
