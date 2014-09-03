@@ -60,6 +60,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/implicit/common/Makefile 
     dumux/implicit/co2/Makefile
     dumux/implicit/co2ni/Makefile
+    dumux/implicit/nonisothermal/Makefile
     dumux/implicit/mpnc/Makefile 
     dumux/implicit/mpnc/diffusion/Makefile
     dumux/implicit/mpnc/energy/Makefile
@@ -71,7 +72,8 @@ AC_CONFIG_FILES([dumux.pc
     dumux/material/binarycoefficients/Makefile 
     dumux/material/components/Makefile 
     dumux/material/components/iapws/Makefile 
-    dumux/material/fluidmatrixinteractions/Makefile 
+    dumux/material/fluidmatrixinteractions/Makefile
+    dumux/material/fluidmatrixinteractions/1p/Makefile 
     dumux/material/fluidmatrixinteractions/2p/Makefile 
     dumux/material/fluidmatrixinteractions/2pia/Makefile 
     dumux/material/fluidmatrixinteractions/3p/Makefile 

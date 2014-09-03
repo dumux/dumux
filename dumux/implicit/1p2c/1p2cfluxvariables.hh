@@ -247,6 +247,20 @@ public:
     { return downstreamIdx_; }
 
     /*!
+    * \brief Return the local index of the upstream control volume
+    *        for a given phase.
+    */
+    int upstreamIdx(int phaseIdx) const
+    { return upstreamIdx_; }
+
+    /*!
+     * \brief Return the local index of the downstream control volume
+     *        for a given phase.
+     */
+    int downstreamIdx(int phaseIdx) const
+    { return downstreamIdx_; }
+
+    /*!
      * \brief Return the volumetric flux over a face of a given phase.
      *
      *        This is the calculated velocity multiplied by the unit normal

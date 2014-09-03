@@ -129,9 +129,10 @@ public:
                                    const int scvIdx,
                                    FluidState& fluidState)
     {
-        Scalar T = Implementation::temperature_(priVars, problem, element,
+        Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
-        fluidState.setTemperature(T);
+        fluidState.setTemperature(t);
+        fluidState.setSaturation(phaseIdx, 1.);
 
         fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
 
@@ -157,6 +158,10 @@ public:
         fluidState.setDensity(phaseIdx, value);
         value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
         fluidState.setViscosity(phaseIdx, value);
+
+        // compute and set the enthalpy
+        Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
+        fluidState.setEnthalpy(phaseIdx, h);
     }
 
     /*!
@@ -252,6 +257,14 @@ protected:
                                const int scvIdx)
     {
         return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
+    }
+
+    template<class ParameterCache>
+    static Scalar enthalpy_(const FluidState& fluidState,
+                            const ParameterCache& paramCache,
+                            const int phaseIdx)
+    {
+        return 0;
     }
 
     /*!
