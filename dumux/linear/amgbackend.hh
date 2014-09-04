@@ -95,7 +95,7 @@ public:
      * \param problem the problem at hand
      */
     AMGBackend(const Problem& problem)
-    : problem_(problem), phelper_(problem_)
+    : problem_(problem), phelper_(problem_), firstCall_(true)
     {
     }
 
@@ -117,13 +117,12 @@ public:
         Dune::SolverCategory::Category category = PDELabBackend::isNonOverlapping?
             Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
 
-        if(PDELabBackend::isNonOverlapping)
+        if(PDELabBackend::isNonOverlapping && firstCall_)
         {
             phelper_.initGhostsAndOwners();
         }
 
         typename PDELabBackend::Comm comm(problem_.gridView().comm(), category);
-        phelper_.createIndexSetAndProjectForAMG(A, comm);
         
         if(PDELabBackend::isNonOverlapping)
         {
@@ -132,6 +131,8 @@ public:
             exchanger.getExtendedMatrix(A, phelper_);
             exchanger.sumEntries(A);
         }
+        phelper_.createIndexSetAndProjectForAMG(A, comm);
+
         typename PDELabBackend::LinearOperator fop(A, comm);
         typename PDELabBackend::ScalarProduct sp(comm);
         int rank = comm.communicator().rank();
@@ -152,17 +153,21 @@ public:
         typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,
                                                                           Dune::Amg::FirstDiagonal> >
             Criterion;
-        Criterion criterion(15, 2000);
-        criterion.setDefaultValuesIsotropic(2);
+        Dune::Amg::Parameters params(15,11000,1.2,1.6,Dune::Amg::noAccu/*Dune::Amg::atOnceAccu*/);
+        params.setDefaultValuesIsotropic(GET_PROP_TYPE(TypeTag, GridView)::Traits::Grid::dimension);
+        params.setDebugLevel(verbosity);
+        Criterion criterion(params);
         SmootherArgs smootherArgs;
         smootherArgs.iterations = 1;
         smootherArgs.relaxationFactor = 1;
-        
-        AMGType amg(fop, criterion, smootherArgs, 1, 1, 1, false, comm);
+
+        AMGType amg(fop, criterion, smootherArgs, comm);        
         Dune::BiCGSTABSolver<typename PDELabBackend::VType> solver(fop, sp, amg, residReduction, maxIt, 
                                                                  rank==0?verbosity: 0);
-        solver.apply(x, b, result_);
 
+
+        solver.apply(x, b, result_);
+        firstCall_ = false;
         return result_.converged;
         }
 
@@ -178,6 +183,7 @@ private:
     const Problem& problem_;
     ParallelISTLHelper<TypeTag> phelper_;
     Dune::InverseOperatorResult result_;
+    bool firstCall_;
 };
 
 /*!
