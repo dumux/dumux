@@ -24,131 +24,18 @@
 #ifndef DUMUX_AMGBACKEND_HH
 #define DUMUX_AMGBACKEND_HH
 
-#if HAVE_DUNE_PDELAB
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/istl/paamg/amg.hh>
+#include <dune/istl/paamg/pinfo.hh>
+#include <dune/istl/solvers.hh>
 
-#include <dune/pdelab/gridoperator/gridoperator.hh>
-#include <dune/pdelab/backend/novlpistlsolverbackend.hh>
-#include <dune/pdelab/backend/ovlpistlsolverbackend.hh>
-#include <dune/pdelab/backend/seqistlsolverbackend.hh>
-#include <dune/pdelab/backend/istlvectorbackend.hh>
-
-#include <dune/pdelab/finiteelementmap/q1fem.hh>
+#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/linear/amgproperties.hh>
+#include <dumux/linear/amgparallelhelpers.hh>
 #include <dumux/linear/p0fem.hh>
 
-#include <dumux/implicit/box/boxproperties.hh>
-#include <dumux/implicit/cellcentered/ccproperties.hh>
-#include <dumux/decoupled/common/pressureproperties.hh>
-#include "linearsolverproperties.hh"
-
 namespace Dumux {
-
-// forward declaration for the property definitions
-template <class TypeTag> class AMGBackend;
-
-namespace Properties
-{
-//! the PDELab finite element map used for the gridfunctionspace
-NEW_PROP_TAG(AMGLocalFemMap);
-
-//! box: use the (multi-)linear local FEM space associated with cubes by default
-SET_PROP(BoxModel, AMGLocalFemMap)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum{dim = GridView::dimension};
-public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type;
-};
-
-//! cell-centered: use the element-wise constant local FEM space by default
-SET_PROP(CCModel, AMGLocalFemMap)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum{dim = GridView::dimension};
-public:
-    typedef Dumux::P0LocalFiniteElementMap<Scalar,Scalar,dim>  type;
-};
-
-//! decoupled models: use the element-wise constant local FEM space by default
-SET_PROP(DecoupledModel, AMGLocalFemMap)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum{dim = GridView::dimension};
-public:
-    typedef Dumux::P0LocalFiniteElementMap<Scalar,Scalar,dim>  type;
-};
-
-//! the type of the employed PDELab backend
-NEW_PROP_TAG(AMGPDELabBackend);
-
-//! box: use the non-overlapping PDELab AMG backend
-SET_PROP(BoxModel, AMGPDELabBackend)
-{
-    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
-public:
-    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_AMG_SSOR<GridOperator> type;
-};
-
-//! cell-centered: use the overlapping PDELab AMG backend
-SET_PROP(CCModel, AMGPDELabBackend)
-{
-    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
-public:
-    typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<GridOperator> type;
-};
-
-//! decoupled model: use the overlapping PDELab AMG backend
-SET_PROP(DecoupledModel, AMGPDELabBackend)
-{
-    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
-public:
-    typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<GridOperator> type;
-};
-
-//! box: reset the type of solution vector to be PDELab conforming
-SET_PROP(BoxModel, SolutionVector)
-{
-    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
-public:
-    typedef typename GridOperator::Traits::Domain type;
-};
-
-//! cell-centered: reset the type of solution vector to be PDELab conforming
-SET_PROP(CCModel, SolutionVector)
-{
-    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
-public:
-    typedef typename GridOperator::Traits::Domain type;
-};
-
-
-//! decoupled model: reset the type of solution vector to be PDELab conforming
-SET_PROP(DecoupledModel, PressureSolutionVector)
-{
-    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
-public:
-    typedef typename GridOperator::Traits::Domain type;
-};
-
-//! decoupled model: reset the type of solution vector to be PDELab conforming
-SET_PROP(DecoupledModel, PressureRHSVector)
-{
-    typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
-public:
-    typedef typename GridOperator::Traits::Domain type;
-};
-
-//! set a property JacobianMatrix also for the decoupled models
-SET_PROP(DecoupledModel, JacobianMatrix)
-{
-public:
-    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) type;
-};
-
-
-}
 
 /*!
  * \brief Scale the linear system by the inverse of 
@@ -188,51 +75,28 @@ class AMGBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, AMGLocalFemMap) LocalFemMap;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    enum { dim = GridView::dimension };
-    typedef typename Dune::PDELab::NoConstraints Constraints;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     enum { numEq = JacobianMatrix::block_type::rows};
-    typedef Dune::PDELab::GridFunctionSpace<GridView, 
-                                            LocalFemMap, 
-                                            Constraints, 
-                                            Dune::PDELab::ISTLVectorBackend<numEq> 
-                                           > ScalarGridFunctionSpace;
-    typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, 
-                                                 numEq, 
-                                                 Dune::PDELab::GridFunctionSpaceBlockwiseMapper
-                                                > GridFunctionSpace;
-    typedef typename GridFunctionSpace::template ConstraintsContainer<Scalar>::Type ConstraintsTrafo;
-    typedef int LocalOperator;
 
-public:
-    typedef typename Dune::PDELab::GridOperator<GridFunctionSpace,
-                                       GridFunctionSpace,
-                                       LocalOperator,
-                                       Dune::PDELab::ISTLBCRSMatrixBackend<numEq, numEq>,
-                                       Scalar, Scalar, Scalar,
-                                       ConstraintsTrafo,
-                                       ConstraintsTrafo,
-                                       true
-                                      > GridOperator;
-    typedef typename GET_PROP_TYPE(TypeTag, AMGPDELabBackend) PDELabBackend;
+    typedef typename GET_PROP(TypeTag, AMGPDELabBackend) PDELabBackend;
+    typedef typename PDELabBackend::LinearOperator LinearOperator;
+    typedef typename PDELabBackend::VType VType;
+    typedef typename PDELabBackend::Comm Comm;
+    typedef typename PDELabBackend::Smoother Smoother;
+    typedef Dune::Amg::AMG<typename PDELabBackend::LinearOperator, VType,
+                           Smoother,Comm> AMGType;
+    typedef typename PDELabBackend::LinearOperator::matrix_type BCRSMat;
 
+public:    
     /*!
      * \brief Construct the backend.
      * 
      * \param problem the problem at hand
      */
     AMGBackend(const Problem& problem)
-    : problem_(problem)
+    : problem_(problem), phelper_(problem_), firstCall_(true)
     {
-        fem_ = Dune::make_shared<LocalFemMap>();
-        constraints_ = Dune::make_shared<Constraints>();
-        scalarGridFunctionSpace_ = Dune::make_shared<ScalarGridFunctionSpace>(problem.gridView(), *fem_, *constraints_);
-        gridFunctionSpace_ = Dune::make_shared<GridFunctionSpace>(*scalarGridFunctionSpace_);
-        int maxIt = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
-        int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
-        imp_ = Dune::make_shared<PDELabBackend>(*gridFunctionSpace_, maxIt, verbosity);
     }
 
     /*!
@@ -245,17 +109,68 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
+        int maxIt = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+        int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
         static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
-        imp_->apply(A, x, b, residReduction);
+        
+#if HAVE_MPI
+        Dune::SolverCategory::Category category = PDELabBackend::isNonOverlapping?
+            Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
 
-        result_.converged  = imp_->result().converged;
-        result_.iterations = imp_->result().iterations;
-        result_.elapsed    = imp_->result().elapsed;
-        result_.reduction  = imp_->result().reduction;
-        result_.conv_rate  = imp_->result().conv_rate;
+        if(PDELabBackend::isNonOverlapping && firstCall_)
+        {
+            phelper_.initGhostsAndOwners();
+        }
 
+        typename PDELabBackend::Comm comm(problem_.gridView().comm(), category);
+        
+        if(PDELabBackend::isNonOverlapping)
+        {
+            // extend the matrix pattern such that it is usable for AMG
+            EntityExchanger<TypeTag> exchanger(problem_);
+            exchanger.getExtendedMatrix(A, phelper_);
+            exchanger.sumEntries(A);
+        }
+        phelper_.createIndexSetAndProjectForAMG(A, comm);
+
+        typename PDELabBackend::LinearOperator fop(A, comm);
+        typename PDELabBackend::ScalarProduct sp(comm);
+        int rank = comm.communicator().rank();
+
+        // Make rhs consistent
+        if(PDELabBackend::isNonOverlapping)
+        {
+            phelper_.makeNonOverlappingConsistent(b);
+        }
+#else
+        typename PDELabBackend::Comm  comm;
+        typename PDELabBackend::LinearOperator fop(A);
+        typename PDELabBackend::ScalarProduct sp;
+        int rank=0;
+#endif
+        typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments
+            SmootherArgs;
+        typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,
+                                                                          Dune::Amg::FirstDiagonal> >
+            Criterion;
+        // \todo Check whether the default accumulation mode atOnceAccu is needed.
+        Dune::Amg::Parameters params(15,2000,1.2,1.6,Dune::Amg::atOnceAccu);
+        params.setDefaultValuesIsotropic(GET_PROP_TYPE(TypeTag, GridView)::Traits::Grid::dimension);
+        params.setDebugLevel(verbosity);
+        Criterion criterion(params);
+        SmootherArgs smootherArgs;
+        smootherArgs.iterations = 1;
+        smootherArgs.relaxationFactor = 1;
+
+        AMGType amg(fop, criterion, smootherArgs, comm);        
+        Dune::BiCGSTABSolver<typename PDELabBackend::VType> solver(fop, sp, amg, residReduction, maxIt, 
+                                                                 rank==0?verbosity: 0);
+
+
+        solver.apply(x, b, result_);
+        firstCall_ = false;
         return result_.converged;
-    }
+        }
 
     /*!
      * \brief The result containing the convergence history.
@@ -267,12 +182,9 @@ public:
     
 private:
     const Problem& problem_;
-    Dune::shared_ptr<LocalFemMap> fem_;
-    Dune::shared_ptr<Constraints> constraints_;
-    Dune::shared_ptr<ScalarGridFunctionSpace> scalarGridFunctionSpace_;
-    Dune::shared_ptr<GridFunctionSpace> gridFunctionSpace_;
-    Dune::shared_ptr<PDELabBackend> imp_;
+    ParallelISTLHelper<TypeTag> phelper_;
     Dune::InverseOperatorResult result_;
+    bool firstCall_;
 };
 
 /*!
@@ -282,8 +194,15 @@ template <class TypeTag>
 class SeqAMGBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename AMGBackend<TypeTag>::GridOperator GridOperator;
-    typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_AMG_SSOR<GridOperator> PDELabBackend;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+    enum { numEq = JacobianMatrix::block_type::rows};
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
+    typedef Dune::Amg::SequentialInformation Comm;
+    typedef Dune::AssembledLinearOperator<MType,VType, VType> LinearOperator;
+    typedef Dune::SeqSSOR<MType,VType, VType> Smoother;
+    typedef Dune::Amg::AMG<LinearOperator,VType,Smoother> AMGType;
 public:
 
     /*!
@@ -307,19 +226,22 @@ public:
     {
         int maxIt = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
         int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
-        imp_ = Dune::make_shared<PDELabBackend>(maxIt, verbosity);
-
         static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
-        imp_->apply(A, x, b, residReduction);
+        LinearOperator fop(A);
+        typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<typename LinearOperator::matrix_type,
+                                                                          Dune::Amg::FirstDiagonal> >
+            Criterion;
+        Criterion criterion(15,2000);
+        criterion.setDefaultValuesIsotropic(2);
+        typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+        SmootherArgs smootherArgs;
+        smootherArgs.iterations = 1;
+        smootherArgs.relaxationFactor = 1;
 
-        result_.converged  = imp_->result().converged;
-        result_.iterations = imp_->result().iterations;
-        result_.elapsed    = imp_->result().elapsed;
-        result_.reduction  = imp_->result().reduction;
-        result_.conv_rate  = imp_->result().conv_rate;
-
-        imp_.template reset<PDELabBackend>(0);
-        
+        AMGType amg(fop, criterion, smootherArgs, 1, 1, 1);
+        Dune::BiCGSTABSolver<VType> solver(fop, amg, residReduction, maxIt, 
+                                          verbosity);
+        solver.apply(x, b, result_);        
         return result_.converged;
     }
 
@@ -333,7 +255,6 @@ public:
 
 private:
     const Problem& problem_;
-    Dune::shared_ptr<PDELabBackend> imp_;
     Dune::InverseOperatorResult result_;
 };
 
@@ -347,8 +268,15 @@ template <class TypeTag>
 class ScaledSeqAMGBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename AMGBackend<TypeTag>::GridOperator GridOperator;
-    typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_AMG_SSOR<GridOperator> PDELabBackend;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+    enum { numEq = JacobianMatrix::block_type::rows};
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
+    typedef Dune::Amg::SequentialInformation Comm;
+    typedef Dune::MatrixAdapter<MType,VType, VType> LinearOperator;
+    typedef Dune::SeqSSOR<MType,VType, VType> Smoother;
+    typedef Dune::Amg::AMG<LinearOperator,VType,Smoother> AMGType;
 public:
 
     /*!
@@ -374,18 +302,20 @@ public:
 
         int maxIt = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
         int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
-        imp_ = Dune::make_shared<PDELabBackend>(maxIt, verbosity);
-        
         static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
-        imp_->apply(A, x, b, residReduction);
-
-        result_.converged  = imp_->result().converged;
-        result_.iterations = imp_->result().iterations;
-        result_.elapsed    = imp_->result().elapsed;
-        result_.reduction  = imp_->result().reduction;
-        result_.conv_rate  = imp_->result().conv_rate;
-
-        imp_.template reset<PDELabBackend>(0);
+        LinearOperator fop(A);
+        typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MType,
+                                                                          Dune::Amg::FirstDiagonal> >
+            Criterion;
+        Criterion criterion(15,2000);
+        criterion.setDefaultValuesIsotropic(2);
+        typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+        SmootherArgs smootherArgs;
+        smootherArgs.iterations = 1;
+        smootherArgs.relaxationFactor = 1;
+        AMGType amg(fop, criterion, smootherArgs, 1, 1, 1);
+        Dune::BiCGSTABSolver<VType> solver(fop, amg, residReduction, maxIt, 
+                                          verbosity);
         
         return result_.converged;
     }
@@ -400,11 +330,9 @@ public:
 
 private:
     const Problem& problem_;
-    Dune::shared_ptr<PDELabBackend> imp_;
     Dune::InverseOperatorResult result_;
 };
 
 } // namespace Dumux
 
-#endif // HAVE_DUNE_PDELAB
 #endif // DUMUX_AMGBACKEND_HH

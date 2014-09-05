@@ -40,14 +40,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#if HAVE_DUNE_PDELAB
-
-// Check if DUNE-PDELab has been patched for our needs.
-#ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
 #include <dumux/linear/amgbackend.hh>
-#endif // DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
-
-#endif // HAVE_DUNE_PDELAB
 
 #include "1ptestspatialparams.hh"
 
@@ -93,13 +86,11 @@ SET_INT_PROP(OnePTestProblem, LinearSolverVerbosity, 0);
 SET_INT_PROP(OnePTestProblem, LinearSolverPreconditionerIterations, 1);
 SET_SCALAR_PROP(OnePTestProblem, LinearSolverPreconditionerRelaxation, 1.0);
 
-#ifdef DUNE_PDELAB_IS_PATCHED_FOR_DUMUX
 NEW_TYPE_TAG(OnePTestBoxProblemWithAMG, INHERITS_FROM(OnePTestBoxProblem));
 NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
 // Solver settings for the tests using AMG
 SET_TYPE_PROP(OnePTestBoxProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
 SET_TYPE_PROP(OnePTestCCProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
-#endif
 
 // Enable gravity
 SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
