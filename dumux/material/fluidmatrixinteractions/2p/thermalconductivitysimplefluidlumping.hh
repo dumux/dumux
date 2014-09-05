@@ -28,6 +28,7 @@
 
 namespace Dumux
 {
+
 /*!
  * \ingroup fluidmatrixinteractionslaws
  *
@@ -36,6 +37,7 @@ template<class TypeTag>
 class ThermalConductivitySimpleFluidLumping
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum { numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
 
 
