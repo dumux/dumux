@@ -6,7 +6,7 @@ CURDIR=doc
 # relative to $(CURDIR)
 BASEDIR=..
 
-EXTRA_DIST = logo/*.eps
+EXTRA_DIST = logo/$(wildcard *.eps)
 
 include $(top_srcdir)/am/webstuff
 include $(top_srcdir)/am/global-rules

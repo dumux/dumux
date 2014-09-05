@@ -1,5 +1,5 @@
 fvdir = $(includedir)/dumux/decoupled/common/fv
-fv_HEADERS = *.hh
+fv_HEADERS := $(wildcard *.hh)
 
 SUBDIRS = mpfa
 

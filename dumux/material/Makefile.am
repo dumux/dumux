@@ -9,6 +9,6 @@ SUBDIRS = \
 	  spatialparams
 
 materialdir = $(includedir)/dumux/material
-material_HEADERS = *.hh
+material_HEADERS := $(wildcard *.hh)
 
 include $(top_srcdir)/am/global-rules

@@ -1,7 +1,7 @@
 check_PROGRAMS = test_box2p2cni test_cc2p2cni
 
-noinst_HEADERS = *.hh
-EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
+noinst_HEADERS := $(wildcard *.hh)
+EXTRA_DIST:=$(wildcard *.input) grids/$(wildcard *.dgf) CMakeLists.txt
 
 test_box2p2cni_SOURCES = test_box2p2cni.cc
 test_cc2p2cni_SOURCES = test_cc2p2cni.cc

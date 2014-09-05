@@ -1,7 +1,7 @@
 check_PROGRAMS = test_box3p3c test_cc3p3c
 
-noinst_HEADERS = *.hh
-EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
+noinst_HEADERS := $(wildcard *.hh)
+EXTRA_DIST:=$(wildcard *.input) grids/$(wildcard *.dgf) CMakeLists.txt
 
 test_box3p3c_SOURCES = test_box3p3c.cc
 test_cc3p3c_SOURCES = test_cc3p3c.cc

@@ -1,5 +1,5 @@
 2cstokes2p2cdir = $(includedir)/dumux/multidomain/2cstokes2p2c
-2cstokes2p2c_HEADERS = *.hh
+2cstokes2p2c_HEADERS := $(wildcard *.hh)
 
 if !HAVE_DUNE_MULTIDOMAIN
 headercheck_IGNORE = \

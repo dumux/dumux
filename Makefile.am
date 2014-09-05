@@ -5,7 +5,7 @@ EXTRA_DIST = \
   bin/fuzzycomparevtu.py \
   bin/runTest.sh  \
   cmake/modules/CMakeLists.txt \
-  cmake/modules/*.cmake \
+  cmake/modules/$(wildcard *.cmake) \
   CMakeLists.txt \
   config.h.cmake \
   INSTALL.cmake \

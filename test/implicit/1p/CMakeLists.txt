@@ -41,3 +41,5 @@ add_dumux_test(test_cc1pwithamg test_cc1pwithamg test_cc1pwithamg.cc
   -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_1p_2d.dgf
   -TimeManager.TEnd 1
   -TimeManager.DtInitial 1)
+
+add_dune_alugrid_flags(test_cc1pwithamg test_box1pwithamg)

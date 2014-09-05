@@ -1,7 +1,7 @@
 check_PROGRAMS = test_el1p2c
 
-noinst_HEADERS = *.hh
-EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
+noinst_HEADERS := $(wildcard *.hh)
+EXTRA_DIST:=$(wildcard *.input) grids/$(wildcard *.dgf) CMakeLists.txt
 
 test_el1p2c_SOURCES = test_el1p2c.cc
 

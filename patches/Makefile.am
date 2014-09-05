@@ -1,5 +1,5 @@
 patchesdir = $(includedir)/patches
 
-EXTRA_DIST=*.patch README
+EXTRA_DIST:=$(wildcard *.patch) README
 
 include $(top_srcdir)/am/global-rules
