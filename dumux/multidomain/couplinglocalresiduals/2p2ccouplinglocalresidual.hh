@@ -88,8 +88,8 @@ public:
     {
         ParentType::evalBoundary_();
 
-        typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-        typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+        typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+        typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
         const ReferenceElement &refElement = ReferenceElements::general(this->element_().geometry().type());
 
         // evaluate Dirichlet-like coupling conditions

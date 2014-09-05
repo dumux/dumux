@@ -433,8 +433,8 @@ public:
             const SDElement1& sdElement1 = *sdElementPointer1;
             fvGeometry1.update(this->sdGridView1(), sdElement1);
 
-            const Dune::GenericReferenceElement<typename MDGrid::ctype,dim>& referenceElement1 =
-                Dune::GenericReferenceElements<typename MDGrid::ctype,dim>::general(mdElement1.type());
+            const Dune::ReferenceElement<typename MDGrid::ctype,dim>& referenceElement1 =
+                Dune::ReferenceElements<typename MDGrid::ctype,dim>::general(mdElement1.type());
             const int numVerticesOfFace = referenceElement1.size(firstFaceIdx, 1, dim);
 
             // evaluate residual of the sub model without boundary conditions (stabilization is removed)
@@ -566,8 +566,8 @@ public:
             const SDElement2& sdElement2 = *sdElementPointer2;
             fvGeometry2.update(this->sdGridView2(), sdElement2);
 
-            const Dune::GenericReferenceElement<typename MDGrid::ctype,dim>& referenceElement2 =
-                Dune::GenericReferenceElements<typename MDGrid::ctype,dim>::general(mdElement2.type());
+            const Dune::ReferenceElement<typename MDGrid::ctype,dim>& referenceElement2 =
+                Dune::ReferenceElements<typename MDGrid::ctype,dim>::general(mdElement2.type());
             const int numVerticesOfFace = referenceElement2.size(secondFaceIdx, 1, dim);
 
             // evaluate residual of the sub model without boundary conditions

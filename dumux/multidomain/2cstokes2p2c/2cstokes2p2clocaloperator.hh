@@ -195,14 +195,14 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
         // first element
         const int faceIdx1 = intersectionGeometry.indexInInside();
-        const Dune::GenericReferenceElement<typename MDGrid::ctype,dim>& referenceElement1 =
-            Dune::GenericReferenceElements<typename MDGrid::ctype,dim>::general(mdElement1.type());
+        const Dune::ReferenceElement<typename MDGrid::ctype,dim>& referenceElement1 =
+            Dune::ReferenceElements<typename MDGrid::ctype,dim>::general(mdElement1.type());
         const int numVerticesOfFace = referenceElement1.size(faceIdx1, 1, dim);
 
         // second element
         const int faceIdx2 = intersectionGeometry.indexInOutside();
-        const Dune::GenericReferenceElement<typename MDGrid::ctype,dim>& referenceElement2 =
-            Dune::GenericReferenceElements<typename MDGrid::ctype,dim>::general(mdElement2.type());
+        const Dune::ReferenceElement<typename MDGrid::ctype,dim>& referenceElement2 =
+            Dune::ReferenceElements<typename MDGrid::ctype,dim>::general(mdElement2.type());
 
         // TODO: assumes same number of vertices on a coupling face
         for (int vertexInFace = 0; vertexInFace < numVerticesOfFace; ++vertexInFace)

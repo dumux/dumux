@@ -83,8 +83,8 @@ namespace Dumux
 		};
 		
 		typedef typename GridView::ctype CoordScalar;
-		typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-		typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+		typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+		typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
 		
 		typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 		typedef Dune::FieldVector<Scalar, dim> DimVector;
