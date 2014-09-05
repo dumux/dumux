@@ -28,17 +28,19 @@
 #ifndef DUMUX_2P2C_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P2C_PROPERTY_DEFAULTS_HH
 
+#include "2p2cproperties.hh"
 #include "2p2cmodel.hh"
 #include "2p2cindices.hh"
 #include "2p2cfluxvariables.hh"
 #include "2p2cvolumevariables.hh"
-#include "2p2cproperties.hh"
 #include "2p2clocalresidual.hh"
 #include "2p2cnewtoncontroller.hh"
 
+#include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 namespace Dumux
 {
@@ -104,9 +106,9 @@ SET_PROP(TwoPTwoC, MaterialLawParams)
     typedef typename MaterialLaw::Params type;
 };
 
-//! Use the 2p2c local Jacobian operator
-SET_TYPE_PROP(TwoPTwoC,
-              LocalResidual,
+//! Use the 2p2c local residual operator
+SET_TYPE_PROP(TwoPTwoC, 
+              LocalResidual, 
               TwoPTwoCLocalResidual<TypeTag>);
 
 //! Use the 2p2c Newton controller
@@ -163,7 +165,50 @@ SET_BOOL_PROP(TwoPTwoC, UseMoles, true);
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);}
+SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(NonIsothermal, ThermalConductivityModel)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+public:
+    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+};
+
+//! temperature is already written by the isothermal model
+SET_BOOL_PROP(TwoPTwoCNI, NiOutputLevel, 0);
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+
+// set isothermal Model
+SET_TYPE_PROP(TwoPTwoCNI, IsothermalModel, TwoPTwoCModel<TypeTag>);
+
+// set isothermal FluxVariables
+SET_TYPE_PROP(TwoPTwoCNI, IsothermalFluxVariables, TwoPTwoCFluxVariables<TypeTag>);
+
+//set isothermal VolumeVariables
+SET_TYPE_PROP(TwoPTwoCNI, IsothermalVolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
+
+//set isothermal LocalResidual
+SET_TYPE_PROP(TwoPTwoCNI, IsothermalLocalResidual, TwoPTwoCLocalResidual<TypeTag>);
+
+//set isothermal Indices
+SET_PROP(TwoPTwoCNI, IsothermalIndices)
+{ 
+private:
+    enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
+public:
+    typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
+};
+
+//set isothermal NumEq
+SET_INT_PROP(TwoPTwoCNI, IsothermalNumEq, 2);
+
+}
 
 }
 

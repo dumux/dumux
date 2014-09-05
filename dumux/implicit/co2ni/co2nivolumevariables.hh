@@ -26,6 +26,7 @@
 #ifndef DUMUX_CO2NI_VOLUME_VARIABLES_HH
 #define DUMUX_CO2NI_VOLUME_VARIABLES_HH
 
+#include <dumux/implicit/2p2cni/2p2cniproperties.hh>
 #include <dumux/implicit/co2/co2volumevariables.hh>
 
 namespace Dumux

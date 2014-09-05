@@ -25,6 +25,7 @@
 #ifndef DUMUX_NEW_2P2CNI_MODEL_HH
 #define DUMUX_NEW_2P2CNI_MODEL_HH
 
+#include "2p2cniproperties.hh"
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
 
 namespace Dumux {

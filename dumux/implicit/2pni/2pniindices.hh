@@ -23,6 +23,7 @@
 #ifndef DUMUX_2PNI_INDICES_HH
 #define DUMUX_2PNI_INDICES_HH
 
+#include "2pniproperties.hh"
 #include <dumux/implicit/2p/2pindices.hh>
 
 namespace Dumux

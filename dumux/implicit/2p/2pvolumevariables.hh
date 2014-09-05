@@ -48,7 +48,6 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -70,6 +69,9 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
+    // export type of fluid state for non-isothermal models
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */

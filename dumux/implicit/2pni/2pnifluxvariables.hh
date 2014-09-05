@@ -28,10 +28,9 @@
 #ifndef DUMUX_2PNI_FLUX_VARIABLES_HH
 #define DUMUX_2PNI_FLUX_VARIABLES_HH
 
+#include "2pniproperties.hh"
 #include <dumux/common/math.hh>
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
-
-#include "2pniproperties.hh"
 
 namespace Dumux
 {

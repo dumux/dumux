@@ -28,12 +28,14 @@
 #ifndef DUMUX_2P_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P_PROPERTY_DEFAULTS_HH
 
+#include "2pproperties.hh"
 #include "2pmodel.hh"
 #include "2pindices.hh"
 #include "2pvolumevariables.hh"
 #include "2pproperties.hh"
 #include "2plocalresidual.hh"
 
+#include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
@@ -41,6 +43,7 @@
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 namespace Dumux
 {
@@ -144,8 +147,50 @@ SET_BOOL_PROP(TwoP, ProblemEnableGravity, true);
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(NonIsothermal, ThermalConductivityModel)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+public:
+    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+};
+
+//! temperature is already written by the isothermal model
+SET_BOOL_PROP(TwoPNI, NiOutputLevel, 0);
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+
+// set isothermal Model
+SET_TYPE_PROP(TwoPNI, IsothermalModel, TwoPModel<TypeTag>);
+
+// set isothermal FluxVariables
+SET_TYPE_PROP(TwoPNI, IsothermalFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
+
+//set isothermal VolumeVariables
+SET_TYPE_PROP(TwoPNI, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>);
+
+//set isothermal LocalResidual
+SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, TwoPLocalResidual<TypeTag>);
+
+//set isothermal Indices
+SET_PROP(TwoPNI, IsothermalIndices)
+{ 
+private:
+    enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
+public:
+    typedef TwoPIndices<TypeTag, Formulation, 0> type;
+};
+
+//set isothermal NumEq
+SET_INT_PROP(TwoPNI, IsothermalNumEq, 2);
+
 }
-//
+
 
 }
 

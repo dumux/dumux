@@ -27,6 +27,8 @@
 #ifndef DUMUX_2PNI_PROPERTIES_HH
 #define DUMUX_2PNI_PROPERTIES_HH
 
+#warning You are including the old 2pni model which will be removed after 2.6. See CHANGELOG for details.
+
 #include <dumux/implicit/2p/2pproperties.hh>
 
 namespace Dumux

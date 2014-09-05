@@ -25,6 +25,7 @@
 #ifndef DUMUX_2PNI_VOLUME_VARIABLES_HH
 #define DUMUX_2PNI_VOLUME_VARIABLES_HH
 
+#include "2pniproperties.hh"
 #include <dumux/implicit/2p/2pvolumevariables.hh>
 
 namespace Dumux

@@ -25,7 +25,10 @@
 #ifndef DUMUX_CO2NI_MODEL_HH
 #define DUMUX_CO2NI_MODEL_HH
 
+#include <dumux/implicit/2p2cni/2p2cniproperties.hh>
 #include <dumux/implicit/co2/co2model.hh>
+
+#warning You are including the old CO2NI model which will be removed after 2.6. See CHANGELOG for details.
 
 namespace Dumux {
 /*!
