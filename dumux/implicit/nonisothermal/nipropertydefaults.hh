@@ -19,22 +19,26 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup BoxStokes2cniModel
- *
+ * \ingroup TwoPTwoCNIModel
  * \file
  *
- * \brief Sets default properties for the non-isothermal compositional
- *        Stokes box model.
+ * \brief Defines default values for most properties required by the
+ *        non-isothermal two-phase two-component fully implicit model.
  */
-#ifndef DUMUX_STOKES2CNI_PROPERTY_DEFAULTS_HH
-#define DUMUX_STOKES2CNI_PROPERTY_DEFAULTS_HH
+#ifndef DUMUX_NI_PROPERTY_DEFAULTS_HH
+#define DUMUX_NI_PROPERTY_DEFAULTS_HH
 
 
-#include "stokes2cnifluxvariables.hh"
-#include "stokes2cniindices.hh"
-#include "stokes2cnilocalresidual.hh"
-#include "stokes2cnimodel.hh"
-#include "stokes2cnivolumevariables.hh"
+
+
+#include "niindices.hh"
+#include "nimodel.hh"
+#include "nilocalresidual.hh"
+#include "nivolumevariables.hh"
+#include "nifluxvariables.hh"
+
+#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+
 
 namespace Dumux
 {
@@ -42,33 +46,35 @@ namespace Dumux
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////
-// Properties
+// Property values
 //////////////////////////////////////////////////////////////////
 
-SET_PROP(BoxStokes2cni, NumEq) //!< set the number of equations
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    static const int dim = Grid::dimension;
- public:
-    static constexpr int value = 3 + dim;
-};
-
-//! Use the stokes2cni local jacobian operator for the compositional stokes model
-SET_TYPE_PROP(BoxStokes2cni,
+//! Use the 2p2cni local jacobian operator for the 2p2cni model
+SET_TYPE_PROP(NonIsothermal,
               LocalResidual,
-              Stokes2cniLocalResidual<TypeTag>);
+              NILocalResidual<TypeTag>);
 
-//! the Model property
-SET_TYPE_PROP(BoxStokes2cni, Model, Stokes2cniModel<TypeTag>);
+
+SET_INT_PROP(NonIsothermal, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq)+1);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxStokes2cni, VolumeVariables, Stokes2cniVolumeVariables<TypeTag>);
+SET_TYPE_PROP(NonIsothermal, VolumeVariables, NIVolumeVariables<TypeTag>);
 
-//! the FluxVariables property
-SET_TYPE_PROP(BoxStokes2cni, FluxVariables, Stokes2cniFluxVariables<TypeTag>);
 
-// Set the indices for the Stokes2cni model
-SET_TYPE_PROP(BoxStokes2cni, Indices,  Stokes2cniCommonIndices<TypeTag>);
+////! the FluxVariables property
+SET_TYPE_PROP(NonIsothermal, FluxVariables, NIFluxVariables<TypeTag>);
+
+////! the Indices property
+//! The indices required by the non-isothermal 2p2c model
+SET_TYPE_PROP(NonIsothermal, Indices, NIIndices<TypeTag, 0>);
+
+//! the Model property
+SET_TYPE_PROP(NonIsothermal, Model, NIModel<TypeTag>);
+
+
+
+
 }
+
 }
 #endif

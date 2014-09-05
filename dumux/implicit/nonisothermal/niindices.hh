@@ -16,33 +16,39 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup BoxStokes2cniModel
- *
- * \file
- *
- * \brief Defines the additional properties required for the non-isothermal compositional
- * Stokes box model.
- */
-#ifndef DUMUX_STOKES2CNI_PROPERTIES_HH
-#define DUMUX_STOKES2CNI_PROPERTIES_HH
 
-#include <dumux/freeflow/stokes2c/stokes2cproperties.hh>
+/*!
+ * \file
+ * \brief Defines the indices used by the non-isothermal two-phase two-component model
+ */
+#ifndef DUMUX_NI_INDICES_HH
+#define DUMUX_NI_INDICES_HH
+
+
 
 namespace Dumux
 {
-namespace Properties
+/*!
+ * \ingroup TwoPTwoCNIModel
+ * \ingroup ImplicitIndices
+ * \brief Indices for the non-isothermal two-phase two-component model
+ *
+ * \tparam formulation The formulation, either pwsn or pnsw.
+ * \tparam PVOffset The first index in a primary variable vector.
+ */
+template <class TypeTag, int PVOffset = 0>
+class NIIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
 {
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
 
-//! The type tag for the non-isothermal compositional Stokes problems
-NEW_TYPE_TAG(BoxStokes2cni, INHERITS_FROM(BoxStokes2c));
+public:
 
-}
+
+        static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+        static const int temperatureIdx = PVOffset + numEq -1; //! The index for temperature in primary variable vectors.
+        static const int energyEqIdx = PVOffset + numEq -1; //! The index for energy in equation vectors.
+
+
+};
 
 }
 #endif

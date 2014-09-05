@@ -131,7 +131,8 @@ public:
 // Used for the computation of the pressure gradients
 SET_BOOL_PROP(BoxStokes, EvalGradientsAtSCVCenter, true);
 
-//! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
+//! Set the phaseIndex per default to zero (for two-phase or two-component system imported
+//  from fluid systems, see property defaults in stokesnc model).
 SET_INT_PROP(BoxStokes, PhaseIdx, 0);
 
 //! Use symmetrizedVelocityGradient by default
@@ -139,6 +140,9 @@ SET_BOOL_PROP(BoxStokes, EnableUnsymmetrizedVelocityGradient, false);
 
 //! Set calculation to Stokes, not Navier-Stokes
 SET_BOOL_PROP(BoxStokes, EnableNavierStokes, false);
+
+//! The mass density is used in the continuity equation
+SET_BOOL_PROP(BoxStokes, UseMoles, false);
 
 //! A stabilization factor. Set negative for stabilization and to zero for no stabilization
 SET_SCALAR_PROP(BoxStokes, StokesStabilizationAlpha, 0.0);

@@ -121,13 +121,13 @@ protected:
 
 		// loop over all components
 		for (int compIdx=0; compIdx<numComponents; compIdx++){
+            molarDensity_ = Scalar(0.0);
+            massFraction_[compIdx] = Scalar(0.0);
+            diffusionCoeff_[compIdx] = Scalar(0.0);
+            moleFractionGrad_[compIdx] = Scalar(0.0);
+                
 			if (phaseCompIdx!=compIdx) //no transport equation parameters needed for the mass balance
 			{
-				molarDensity_ = Scalar(0.0);
-				massFraction_[compIdx] = Scalar(0.0);
-				diffusionCoeff_[compIdx] = Scalar(0.0);
-				moleFractionGrad_[compIdx] = Scalar(0.0);
-				
 				// calculate gradients and secondary variables at IPs
 				for (int scvIdx = 0;
 					 scvIdx < this->fvGeometry_.numScv;

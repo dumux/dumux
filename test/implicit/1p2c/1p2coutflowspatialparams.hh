@@ -61,6 +61,9 @@ public:
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
+
+        // heat conductivity of granite
+        lambdaSolid_ = 2.8;
     }
 
     ~OnePTwoCOutflowSpatialParams()
@@ -126,9 +129,47 @@ public:
         return false;
     }
 
+    /*!
+     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
+     *                    the heat capacity needs to be defined
+     */
+    Scalar heatCapacity(const Element &element,
+                        const FVElementGeometry &fvGeometry,
+                        const int scvIdx) const
+    {
+        return
+            790 // specific heat capacity of granite [J / (kg K)]
+            * 2700 // density of granite [kg/m^3]
+            * (1 - porosity(element, fvGeometry, scvIdx));
+    }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the porous material.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
+     *                    the heat capacity needs to be defined
+     */
+    Scalar thermalConductivitySolid(const Element &element,
+                                    const FVElementGeometry &fvGeometry,
+                                    const int scvIdx) const
+    {
+        return lambdaSolid_;
+    }
+
+
+
 private:
     Scalar permeability_;
     Scalar porosity_;
+    Scalar lambdaSolid_;
 };
 
 }

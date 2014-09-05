@@ -1,4 +1,4 @@
-SUBDIRS = 2p 2pia 3p mp
+SUBDIRS = 1p 2p 2pia 3p mp
 
 fluidmatrixinteractionsdir = $(includedir)/dumux/material/fluidmatrixinteractions
 fluidmatrixinteractions_HEADERS := $(wildcard *.hh)

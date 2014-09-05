@@ -56,7 +56,7 @@ protected:
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
-		numComponents = FluidSystem::numComponents
+		numComponents = Indices::numComponents
     };
     enum {
         //indices of the equations

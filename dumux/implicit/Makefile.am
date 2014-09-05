@@ -14,6 +14,7 @@ SUBDIRS = 1p \
           co2ni \
           common \
           mpnc \
+	  nonisothermal \
           richards
 
 implicitdir = $(includedir)/dumux/implicit
