@@ -26,8 +26,7 @@
 #ifndef DUMUX_NEW_NI_LOCAL_RESIDUAL_HH
 #define DUMUX_NEW_NI_LOCAL_RESIDUAL_HH
 
-
-
+#include "niproperties.hh"
 
 namespace Dumux
 {

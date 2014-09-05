@@ -32,6 +32,7 @@
 
 #include<dumux/implicit/box/boxproperties.hh>
 #include<dumux/implicit/cellcentered/ccproperties.hh>
+#include<dumux/implicit/nonisothermal/niproperties.hh>
 
 namespace Dumux
 {
@@ -43,13 +44,13 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tags for the implicit one-phase two-component problems
+//! The type tags for the implicit isothermal one-phase two-component problems
 NEW_TYPE_TAG(OnePTwoC);
 NEW_TYPE_TAG(BoxOnePTwoC, INHERITS_FROM(BoxModel, OnePTwoC));
 NEW_TYPE_TAG(CCOnePTwoC, INHERITS_FROM(CCModel, OnePTwoC));
-//! The type tags for the implicit one-phase two-component non-isothermal problems
-NEW_TYPE_TAG(NonIsothermal, INHERITS_FROM(OnePTwoC));
-NEW_TYPE_TAG(OnePTwoCNI, INHERITS_FROM(NonIsothermal));
+
+//! The type tags for the corresponding non-isothermal problems
+NEW_TYPE_TAG(OnePTwoCNI, INHERITS_FROM(OnePTwoC, NonIsothermal));
 NEW_TYPE_TAG(BoxOnePTwoCNI, INHERITS_FROM(BoxModel, OnePTwoCNI));
 NEW_TYPE_TAG(CCOnePTwoCNI, INHERITS_FROM(CCModel, OnePTwoCNI));
 
@@ -71,18 +72,6 @@ NEW_PROP_TAG(UseMoles); //!< Defines whether mole (true) or mass (false) fractio
 NEW_PROP_TAG(Scaling); //!< Defines Scaling of the model
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
-
-//////////////////////////////////////////////////////////////////
-// Property tags required for the non-isothermal model
-//////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(IsothermalModel);
-NEW_PROP_TAG(IsothermalFluxVariables);
-NEW_PROP_TAG(IsothermalVolumeVariables);
-NEW_PROP_TAG(IsothermalLocalResidual);
-NEW_PROP_TAG(IsothermalIndices);
-NEW_PROP_TAG(IsothermalNumEq);
-NEW_PROP_TAG(HaveVariableFormulation);
-NEW_PROP_TAG(ThermalConductivityModel);   //!< The model for the effective thermal conductivity
 
 }
 // \}

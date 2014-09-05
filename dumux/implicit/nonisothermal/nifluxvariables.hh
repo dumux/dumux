@@ -18,36 +18,29 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains data which is required to calculate
- *        the heat fluxes over a face of a finite volume.
- *
- * This means temperature gradients and the normal matrix
- * heat flux.
+ * \brief flux variables for the implicit non-isothermal models
  */
 #ifndef DUMUX_NI_FLUX_VARIABLES_HH
 #define DUMUX_NI_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 
+#include "niproperties.hh"
 
 namespace Dumux
 {
 
 /*!
- * \ingroup TwoPTwoCNIModel
+ * \ingroup NIModel
  * \ingroup ImplicitFluxVariables
- * \brief This template class contains data which is required to
+ * \brief This class contains data which is required to
  *        calculate the heat fluxes over a face of a finite
- *        volume for the non-isothermal two-phase two-component model.
+ *        volume for the implicit non-isothermal models.
  *        The mass fluxes are computed in the parent class.
- *
- * This means temperature gradients and the normal matrix
- * heat flux.
  */
 template <class TypeTag>
 class NIFluxVariables : public GET_PROP_TYPE(TypeTag, IsothermalFluxVariables)
 {
-
     typedef typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -55,15 +48,12 @@ class NIFluxVariables : public GET_PROP_TYPE(TypeTag, IsothermalFluxVariables)
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum { dimWorld = GridView::dimensionworld };
     enum { dim = GridView::dimension };
     typedef Dune::FieldVector<Scalar, dim> DimVector;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-//    static const bool isNonIsothermal = GET_PROP_VALUE(TypeTag, IsNonIsothermal);
 
 public:
 
@@ -83,14 +73,9 @@ public:
                             const int faceIdx,
                             const ElementVolumeVariables &elemVolVars,
                             bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+    : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
-
-            faceIdx_ = faceIdx;
-
-            calculateValues_(problem, element, elemVolVars);
-
-
+        calculateValues_(problem, element, elemVolVars);
     }
 
     /*!
@@ -136,8 +121,6 @@ protected:
         lambdaEff_ = 0;
         calculateEffThermalConductivity_(problem, element, elemVolVars);
 
-
-
         // project the heat flux vector on the face's normal vector
         normalMatrixHeatFlux_ = temperatureGrad_* this->face().normal;
         normalMatrixHeatFlux_ *= -lambdaEff_;
@@ -148,53 +131,49 @@ protected:
                                           const ElementVolumeVariables &elemVolVars)
     {
         const unsigned i = this->face().i;
-             const unsigned j = this->face().j;
-             Scalar lambdaI, lambdaJ;
+        const unsigned j = this->face().j;
+        Scalar lambdaI, lambdaJ;
 
-             if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
-             {
-                 lambdaI =
-                     ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i],
-                                                                        problem.spatialParams().thermalConductivitySolid(element, this->fvGeometry_, i),
-                                                                        problem.spatialParams().porosity(element, this->fvGeometry_, i));
-                 lambdaJ =
-                     ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j],
-                                                                        problem.spatialParams().thermalConductivitySolid(element, this->fvGeometry_, j),
-                                                                        problem.spatialParams().porosity(element, this->fvGeometry_, j));
-             }
-             else
-             {
-                 const Element& elementI = *this->fvGeometry_.neighbors[i];
-                 FVElementGeometry fvGeometryI;
-                 fvGeometryI.subContVol[0].global = elementI.geometry().center();
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
+        {
+            lambdaI =
+              ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i],
+                                                                     problem.spatialParams(),
+                                                                     element, this->fvGeometry_, i);
 
-                 lambdaI =
-                     ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i],
-                                                                        problem.spatialParams().thermalConductivitySolid(elementI, fvGeometryI, 0),
-                                                                        problem.spatialParams().porosity(elementI, fvGeometryI, 0));
+            lambdaJ =
+              ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j],
+                                                                     problem.spatialParams(),
+                                                                     element, this->fvGeometry_, j);
+        }
+        else
+        {
+            const Element& elementI = *this->fvGeometry_.neighbors[i];
+            FVElementGeometry fvGeometryI;
+            fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
-                 const Element& elementJ = *this->fvGeometry_.neighbors[j];
-                 FVElementGeometry fvGeometryJ;
-                 fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
+            lambdaI =
+              ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i],
+                                                                     problem.spatialParams(),
+                                                                     elementI, fvGeometryI, 0);
 
-                 lambdaJ =
-                     ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j],
-                                                                        problem.spatialParams().thermalConductivitySolid(elementJ, fvGeometryJ, 0),
-                                                                        problem.spatialParams().porosity(elementJ, fvGeometryJ, 0));
-             }
+            const Element& elementJ = *this->fvGeometry_.neighbors[j];
+            FVElementGeometry fvGeometryJ;
+            fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 
-             // -> harmonic mean
-             lambdaEff_ = harmonicMean(lambdaI, lambdaJ);
+            lambdaJ =
+              ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j],
+                                                                     problem.spatialParams(),
+                                                                     elementJ, fvGeometryJ, 0);
+        }
+
+        lambdaEff_ = harmonicMean(lambdaI, lambdaJ);
     }
-
-
 
 private:
     Scalar lambdaEff_;
     Scalar normalMatrixHeatFlux_;
     DimVector temperatureGrad_;
-    int faceIdx_;
-
 };
 
 } // end namespace

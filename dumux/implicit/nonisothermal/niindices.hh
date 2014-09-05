@@ -24,7 +24,7 @@
 #ifndef DUMUX_NI_INDICES_HH
 #define DUMUX_NI_INDICES_HH
 
-
+#include "niproperties.hh"
 
 namespace Dumux
 {

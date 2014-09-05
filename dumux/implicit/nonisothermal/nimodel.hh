@@ -19,13 +19,12 @@
 /*!
  * \file
  *
- * \brief Adaption of the fully implicit scheme to the non-isothermal
- *        two-phase two-component flow model.
+ * \brief the implicit non-isothermal model
  */
-#ifndef DUMUX_NEW_NI_MODEL_HH
-#define DUMUX_NEW_NI_MODEL_HH
+#ifndef DUMUX_NI_MODEL_HH
+#define DUMUX_NI_MODEL_HH
 
-
+#include "niproperties.hh"
 
 namespace Dumux {
 
@@ -51,57 +50,42 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        //Call the ParentType output function
+        // call the ParentType output function
         ParentType::addOutputVtkFields(sol, writer);
 
+        if (GET_PROP_VALUE(TypeTag, NiOutputLevel) == 0)
+            return;
+
+        // get the number of degrees of freedom
+        unsigned numDofs = this->numDofs();
+
+        // create required scalar fields
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        ScalarField &temperature = *writer.allocateManagedBuffer(numDofs);
 
-                     // get the number of degrees of freedom
-                     unsigned numDofs = this->numDofs();
-                     unsigned numElements = this->gridView_().size(0);
-//                     unsigned numElements = this->problem_().gridView().size(0);
+        ElementIterator eIt = this->gridView().template begin<0>();
+        ElementIterator eEndIt = this->gridView().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
+        {
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView_(), *eIt);
 
-                     //create required scalar fields
-                     ScalarField &temperature = *writer.allocateManagedBuffer(numDofs);
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(this->problem_(),
+                               *eIt,
+                               fvGeometry,
+                               false /* oldSol? */);
 
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            {
+                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                temperature[globalIdx] = elemVolVars[scvIdx].temperature();
+            }
+        }
 
-                     //Fill the scalar fields with values
-                     ScalarField &rank = *writer.allocateManagedBuffer(numElements);
-
-                     ElementIterator eIt = this->gridView().template begin<0>();
-                     ElementIterator eEndIt = this->gridView().template end<0>();
-                     for (; eIt != eEndIt; ++eIt)
-                     {
-                         int eIdx = this->problem_().model().elementMapper().map(*eIt);
-                         rank[eIdx] = this->gridView_().comm().rank();
-
-                         FVElementGeometry fvGeometry;
-                         fvGeometry.update(this->gridView_(), *eIt);
-
-                         ElementVolumeVariables elemVolVars;
-                         elemVolVars.update(this->problem_(),
-                                            *eIt,
-                                            fvGeometry,
-                                            false /* oldSol? */);
-
-                         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                         {
-                             int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-                             temperature[globalIdx] = elemVolVars[scvIdx].temperature();
-
-                         }
-
-
-                     }
-
-                     //pass the scalar fields to the vtkwriter
-                     writer.attachDofData(temperature, "temperature", isBox);
-
+        writer.attachDofData(temperature, "temperature", isBox);
     }
-
 };
 
 }
-
-
 #endif

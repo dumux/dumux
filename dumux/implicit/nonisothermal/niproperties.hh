@@ -22,43 +22,47 @@
  * \ingroup NIModel
  * \file
  *
- * \brief Defines default values for most properties required by the
+ * \brief Defines the properties required for the
  *        implicit non-isothermal models.
  */
-#ifndef DUMUX_NI_PROPERTY_DEFAULTS_HH
-#define DUMUX_NI_PROPERTY_DEFAULTS_HH
 
-#include "niindices.hh"
-#include "nimodel.hh"
-#include "nilocalresidual.hh"
-#include "nivolumevariables.hh"
-#include "nifluxvariables.hh"
+#ifndef DUMUX_NI_PROPERTIES_HH
+#define DUMUX_NI_PROPERTIES_HH
+
+#include <dumux/implicit/common/implicitproperties.hh>
 
 namespace Dumux
 {
-
+// \{
 namespace Properties
 {
 
 //////////////////////////////////////////////////////////////////
-// Property values
+// Type tags
 //////////////////////////////////////////////////////////////////
+NEW_TYPE_TAG(NonIsothermal);
 
-SET_TYPE_PROP(NonIsothermal, LocalResidual, NILocalResidual<TypeTag>);
+//////////////////////////////////////////////////////////////////
+// Property tags required for the non-isothermal models
+//////////////////////////////////////////////////////////////////
+NEW_PROP_TAG(IsothermalModel);
+NEW_PROP_TAG(IsothermalFluxVariables);
+NEW_PROP_TAG(IsothermalVolumeVariables);
+NEW_PROP_TAG(IsothermalLocalResidual);
+NEW_PROP_TAG(IsothermalIndices);
+NEW_PROP_TAG(IsothermalNumEq);
+NEW_PROP_TAG(HaveVariableFormulation);
+NEW_PROP_TAG(ThermalConductivityModel);
+NEW_PROP_TAG(NiOutputLevel);
 
-SET_INT_PROP(NonIsothermal, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq)+1);
-
-SET_TYPE_PROP(NonIsothermal, VolumeVariables, NIVolumeVariables<TypeTag>);
-
-SET_TYPE_PROP(NonIsothermal, FluxVariables, NIFluxVariables<TypeTag>);
-
-SET_TYPE_PROP(NonIsothermal, Indices, NIIndices<TypeTag, 0>);
-
-SET_TYPE_PROP(NonIsothermal, Model, NIModel<TypeTag>);
-
-SET_BOOL_PROP(NonIsothermal, NiOutputLevel, 1);
+// forward declaration of other property tags
+NEW_PROP_TAG(Indices);
+NEW_PROP_TAG(NumPhases);
+NEW_PROP_TAG(ImplicitMassUpwindWeight);
+NEW_PROP_TAG(FluidSystem);
 
 }
-
+// \}
 }
+
 #endif

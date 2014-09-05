@@ -28,6 +28,13 @@
 
 namespace Dumux
 {
+
+struct SimpleTwoPIndices
+{
+    static const int wPhaseIdx = 0;
+    static const int nPhaseIdx = 1;
+};
+
 /*!
  * \ingroup fluidmatrixinteractionslaws
  *
@@ -55,12 +62,45 @@ namespace Dumux
  \f]
  *
  */
-template<class Scalar>
+template<class Scalar, class Indices = SimpleTwoPIndices>
 class ThermalConductivitySomerton
 {
 public:
     /*!
-     * \brief Returns the effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974).
+     * \brief effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
+     *
+     * \param volVars volume variables
+     * \param spatialParams spatial parameters
+     * \param element element (to be passed to spatialParams)
+     * \param fvGeometry fvGeometry (to be passed to spatialParams)
+     * \param scvIdx scvIdx (to be passed to spatialParams)
+     *
+     * \return effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
+     *
+     * This gives an interpolation of the effective thermal conductivities of a porous medium
+     * filled with the non-wetting phase and a porous medium filled with the wetting phase.
+     * These two effective conductivities are computed as geometric mean of the solid and the
+     * fluid conductivities and interpolated with the square root of the wetting saturation.
+     * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis.
+     */
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
+                                               const SpatialParams& spatialParams,
+                                               const Element& element,
+                                               const FVGeometry& fvGeometry,
+                                               int scvIdx)
+    {
+        Scalar sw = volVars.saturation(Indices::wPhaseIdx);
+        Scalar lambdaW = volVars.thermalConductivityFluid(Indices::wPhaseIdx);
+        Scalar lambdaN = volVars.thermalConductivityFluid(Indices::nPhaseIdx);
+        Scalar lambdaSolid = volVars.thermalConductivitySolid();
+        Scalar porosity = volVars.porosity();
+
+        return effectiveThermalConductivity(sw, lambdaW, lambdaN, lambdaSolid, porosity);
+    }
+
+    /*!
+     * \brief effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
      *
      * \param sw The saturation of the wetting phase
      * \param lambdaW the thermal conductivity of the wetting phase
@@ -68,13 +108,7 @@ public:
      * \param lambdaSolid the thermal conductivity of the solid phase
      * \param porosity The porosity
      *
-     * \return Effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
-     *
-     * This gives an interpolation of the effective thermal conductivities of a porous medium
-     * filled with the non-wetting phase and a porous medium filled with the wetting phase.
-     * These two effective conductivities are computed as geometric mean of the solid and the
-     * fluid conductivities and interpolated with the square root of the wetting saturation.
-     * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis.
+     * \return effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
      */
     static Scalar effectiveThermalConductivity(const Scalar sw,
                                                const Scalar lambdaW,
@@ -83,7 +117,7 @@ public:
                                                const Scalar porosity)
     {
         const Scalar satW = std::max<Scalar>(0.0, sw);
-        // geometric means
+        // geometric mean
         const Scalar lSat = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaW, porosity);
         const Scalar lDry = std::pow(lambdaSolid, (1.0 - porosity)) * std::pow(lambdaN, porosity);
 

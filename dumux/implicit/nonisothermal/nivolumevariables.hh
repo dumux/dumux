@@ -26,8 +26,7 @@
 #ifndef DUMUX_NI_VOLUME_VARIABLES_HH
 #define DUMUX_NI_VOLUME_VARIABLES_HH
 
-
-
+#include "niproperties.hh"
 
 namespace Dumux
 {
@@ -87,17 +86,24 @@ public:
     { return heatCapacity_; };
 
     /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the fluid phase in
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of a fluid phase in
      *        the sub-control volume.
      */
-    Scalar thermalConductivity(const int phaseIdx) const
+    Scalar thermalConductivityFluid(const int phaseIdx) const
     { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); };
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the solid phase in
+     *        the sub-control volume.
+     */
+    Scalar thermalConductivitySolid() const
+    { return thermalConductivitySolid_; };
 
 
 protected:
-//    // this method gets called by the parent class. since this method
-//    // is protected, we are friends with our parent..
-    friend class NIVolumeVariables::ParentType;
+    // The methods below get called by the parent class. Since they
+    // are protected, we are friends with our parent.
+    friend class GET_PROP_TYPE(TypeTag, IsothermalVolumeVariables);
 
     static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem& problem,
@@ -133,13 +139,16 @@ protected:
                        const int scvIdx,
                        bool isOldSol)
     {
-        // compute and set the heat capacity of the solid phase
         heatCapacity_ = problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
+
+        thermalConductivitySolid_
+            = problem.spatialParams().thermalConductivitySolid(element, fvGeometry, scvIdx);
+        Valgrind::CheckDefined(thermalConductivitySolid_);
     };
 
     Scalar heatCapacity_;
-
+    Scalar thermalConductivitySolid_;
 };
 
 } // end namespace

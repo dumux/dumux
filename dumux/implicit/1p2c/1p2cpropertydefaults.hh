@@ -110,9 +110,8 @@ SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
 SET_PROP(NonIsothermal, ThermalConductivityModel)
 { private :
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
   public:
-    typedef ThermalConductivityAverage<Scalar, VolumeVariables> type;
+    typedef ThermalConductivityAverage<Scalar> type;
 };
 
 //////////////////////////////////////////////////////////////////

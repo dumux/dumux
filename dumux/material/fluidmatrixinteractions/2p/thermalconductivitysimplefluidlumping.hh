@@ -41,6 +41,33 @@ class ThermalConductivitySimpleFluidLumping
 
 public:
     /*!
+     * \brief effective thermal conductivity \f$[W/(m K)]\f$
+     *
+     * \param volVars volume variables
+     * \param spatialParams spatial parameters
+     * \param element element (to be passed to spatialParams)
+     * \param fvGeometry fvGeometry (to be passed to spatialParams)
+     * \param scvIdx scvIdx (to be passed to spatialParams)
+     *
+     * \return effective thermal conductivity \f$[W/(m K)]\f$
+     */
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
+                                               const SpatialParams& spatialParams,
+                                               const Element& element,
+                                               const FVGeometry& fvGeometry,
+                                               int scvIdx)
+    {
+        Scalar sw = volVars.saturation(Indices::wPhaseIdx);
+        Scalar lambdaW = volVars.thermalConductivityFluid(Indices::wPhaseIdx);
+        Scalar lambdaN = volVars.thermalConductivityFluid(Indices::nPhaseIdx);
+        Scalar lambdaSolid = volVars.thermalConductivitySolid();
+        Scalar porosity = volVars.porosity();
+
+        return effectiveThermalConductivity(sw, lambdaW, lambdaN, lambdaSolid, porosity);
+    }
+
+    /*!
      * \brief Returns the effective thermal conductivity \f$[W/(m K)]\f$.
      *
      * \param sw The saturation of the wetting phase
@@ -57,24 +84,24 @@ public:
                                                const Scalar lambdaSolid,
                                                const Scalar porosity)
     {
-    	assert(numEnergyEquations != 3) ;
+        assert(numEnergyEquations != 3) ;
 
         // Franz Lindner / Shi & Wang 2011
-            const Scalar satW = std::max<Scalar>(0.0, sw);
+        const Scalar satW = std::max<Scalar>(0.0, sw);
 
-            const Scalar kfeff = porosity *((1.-satW)*lambdaN + satW*lambdaW) ; // arithmetic
+        const Scalar kfeff = porosity *((1.-satW)*lambdaN + satW*lambdaW) ; // arithmetic
 
-            Scalar keff ;
+        Scalar keff ;
 
-            if ( numEnergyEquations == 2){ // solid dealed with individually (extra balance equation)
-            	keff = kfeff ;
-            }
-            else{
-                const Scalar kseff = (1.0-porosity)  * lambdaSolid ;
-                keff = kfeff  + kseff;
-            }
+        if (numEnergyEquations == 2){ // solid dealed with individually (extra balance equation)
+            keff = kfeff ;
+        }
+        else {
+            const Scalar kseff = (1.0-porosity)  * lambdaSolid ;
+            keff = kfeff  + kseff;
+        }
 
-            return keff ;
+        return keff ;
     }
 };
 }

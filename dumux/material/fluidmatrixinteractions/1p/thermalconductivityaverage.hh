@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief   Relation for the saturation-dependent effective thermal conductivity
+ * \brief simple effective thermal conductivity
  */
 #ifndef THERMALCONDUCTIVITY_AVERAGE_HH
 #define THERMALCONDUCTIVITY_AVERAGE_HH
@@ -32,58 +32,36 @@ namespace Dumux
 /*!
  * \ingroup fluidmatrixinteractionslaws
  *
- * \brief Relation for the saturation-dependent effective thermal conductivity
- *
- *  The Somerton method computes the thermal conductivity of dry and the wet soil material
- *  and uses a root function of the wetting saturation to compute the
- *  effective thermal conductivity for a two-phase fluidsystem. The individual thermal
- *  conductivities are calculated as geometric mean of the thermal conductivity of the porous
- *  material and of the respective fluid phase.
- *
- * The material law is:
- * \f[
- \lambda_\text{eff} = \lambda_{\text{dry}} + \sqrt{(S_w)} \left(\lambda_\text{wet} - \lambda_\text{dry}\right)
- \f]
- *
- * with
- * \f[
- \lambda_\text{wet} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
- \f]
- * and
- *
- * \f[
- \lambda_\text{dry} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
- \f]
- *
+ * \brief Relation for a simple effective thermal conductivity
  */
-template<class Scalar, class VolumeVariables>
+template<class Scalar>
 class ThermalConductivityAverage
 {
 public:
     /*!
-     * \brief Returns the effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974).
+     * \brief simple effective thermal conductivity \f$[W/(m K)]\f$
      *
-     * \param sw The saturation of the wetting phase
-     * \param lambdaW the thermal conductivity of the wetting phase
-     * \param lambdaN the thermal conductivity of the non-wetting phase
-     * \param lambdaSolid the thermal conductivity of the solid phase
-     * \param porosity The porosity
+     * \param volVars volume variables
+     * \param spatialParams spatial parameters
+     * \param element element (to be passed to spatialParams)
+     * \param fvGeometry fvGeometry (to be passed to spatialParams)
+     * \param scvIdx scvIdx (to be passed to spatialParams)
      *
-     * \return Effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
-     *
-     * This gives an interpolation of the effective thermal conductivities of a porous medium
-     * filled with the non-wetting phase and a porous medium filled with the wetting phase.
-     * These two effective conductivities are computed as geometric mean of the solid and the
-     * fluid conductivities and interpolated with the square root of the wetting saturation.
-     * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis.
+     * \return effective thermal conductivity \f$[W/(m K)]\f$
      */
-    static Scalar effectiveThermalConductivity(const VolumeVariables volVars,
-                                               const Scalar lambdaSolid,
-                                               const Scalar porosity)
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
+                                               const SpatialParams& spatialParams,
+                                               const Element& element,
+                                               const FVGeometry& fvGeometry,
+                                               int scvIdx)
     {
-        //Get the thermal conductivity from the volume variables
-         Scalar lambdaW = volVars.thermalConductivity(0);
-         return lambdaSolid*(1-porosity) + lambdaW*porosity;
+        //Get the thermal conductivities and the porosity from the volume variables
+        Scalar lambdaW = volVars.thermalConductivityFluid(0);
+        Scalar lambdaSolid = volVars.thermalConductivitySolid();
+        Scalar porosity = volVars.porosity();
+
+        return lambdaSolid*(1-porosity) + lambdaW*porosity;
     }
 };
 }
