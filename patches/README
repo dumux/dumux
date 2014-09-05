@@ -1,8 +1,3 @@
-- In order to use the AMGBackend, you have to apply the patch 
-  pdelab-1.1.0.patch in your directory containing
-  DUNE-PDELab 1.1.0, e.g.:
-  patch -p1 <../dumux/patches/pdelab-1.1.0.patch
-
 - If the AMGBackend should be used without SuperLU as coarse grid solver, it can
   be benefitial to decrease the corresponding tolerance. To do so, apply the
   patch istl-2.3.0.patch in your directory containing

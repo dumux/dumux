@@ -1,16 +1,11 @@
 == Running the test cases in test/multidomain ==
 
-Due to the lack of stable versions of the upstream Dune modules
-Dune-MultidomainGrid and Dune-Multidomain, we have compatibility
-issues with the release version of the Dune Core Modules. You
-have to use specific revisions of these, as listed below.
-
+You need the following releases of the DUNE core modules and 
+dune-multidomain(grid):
 Dune core modules: release 2.3
-Dune-PDELab release 1.1
+Dune-PDELab: release 2.0
 dune-multidomaingrid: release branch 2.3
-dune-multidomain Git commit deac3cecfc6697c1f5316d55c0fadd74f51d92bc
-
-Then you have to patch PDELab with the patch from patches/pdelab-1.1.0.patch .
+dune-multidomain: release branch 2.0
 
 Install the external grid manager UG. Additional you need to install a
 direct linear solver like SuperLU or PARDISO.
