@@ -51,7 +51,7 @@
  * \endcode
  */
 #define GET_PARAM(TypeTag, ParamType, ParamName)                        \
-    Dumux::Parameters::get<TypeTag,                                     \
+    ::Dumux::Parameters::get<TypeTag,                                   \
                            ParamType,                                   \
                            PTAG_(ParamName)>(#ParamName, #ParamName)
 
@@ -72,7 +72,7 @@
  * \endcode
  */
 #define GET_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName)  \
-    Dumux::Parameters::get<TypeTag,                                     \
+    ::Dumux::Parameters::get<TypeTag,                                   \
                            ParamType,                                   \
                            PTAG_(GroupName##ParamName)>(#GroupName#ParamName, #GroupName, #ParamName)
 
@@ -89,7 +89,7 @@
  * \endcode
  */
 #define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamName) \
-        Dumux::Parameters::getRuntime<TypeTag, ParamType>(#ParamName)
+    ::Dumux::Parameters::getRuntime<TypeTag, ParamType>(#ParamName)
 
 /*!
  * \ingroup Parameter
@@ -107,7 +107,7 @@
  * \endcode
  */
 #define GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName) \
-    Dumux::Parameters::getRuntime<TypeTag, ParamType>(#GroupName, #ParamName)
+    ::Dumux::Parameters::getRuntime<TypeTag, ParamType>(#GroupName, #ParamName)
 
 namespace Dumux
 {
@@ -474,7 +474,7 @@ private:
         // retrieve actual parameter from the parameter tree
         if (!Params::tree().hasKey(canonicalName) && !Params::tree().hasKey(paramName)) {
             print<TypeTag>();
-            DUNE_THROW(Dumux::ParameterException,
+            DUNE_THROW(::Dumux::ParameterException,
                        "Mandatory parameter '" << canonicalName
                        << "' was not specified");
         }
