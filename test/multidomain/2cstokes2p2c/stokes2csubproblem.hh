@@ -25,8 +25,6 @@
 #ifndef DUMUX_STOKES2C_SUBPROBLEM_HH
 #define DUMUX_STOKES2C_SUBPROBLEM_HH
 
-#include <dune/pdelab/gridoperator/gridoperator.hh>
-
 #include <dumux/freeflow/stokesnc/stokesncmodel.hh>
 #include <dumux/multidomain/couplinglocalresiduals/stokesnccouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
@@ -63,27 +61,6 @@ SET_PROP(Stokes2cSubProblem, MaterialLawParams)
 SET_TYPE_PROP(Stokes2cSubProblem,
               LocalResidual,
               StokesncCouplingLocalResidual<TypeTag>);
-
-SET_TYPE_PROP(Stokes2cSubProblem, Constraints,
-        Dune::PDELab::NonoverlappingConformingDirichletConstraints);
-
-SET_PROP(Stokes2cSubProblem, GridOperator)
-{
- private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, ConstraintsTrafo) ConstraintsTrafo;
-    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
-    typedef Dumux::PDELab::MultiDomainLocalOperator<TypeTag> LocalOperator;
-
-    enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
- public:
-    typedef Dune::PDELab::GridOperator<GridFunctionSpace,
-        GridFunctionSpace, LocalOperator,
-        Dune::PDELab::ISTLBCRSMatrixBackend<numEq, numEq>,
-        Scalar, Scalar, Scalar,
-        ConstraintsTrafo, ConstraintsTrafo,
-        true> type;
-};
 
 SET_PROP(Stokes2cSubProblem, FluidSystem)
 {

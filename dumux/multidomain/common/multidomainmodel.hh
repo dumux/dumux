@@ -86,18 +86,18 @@ public:
         jacAsm_ = new JacobianAssembler();
         jacAsm_->init(problem);
 
-        uCur_.resize(jacAsm_->residual().size());
-        uPrev_.resize(jacAsm_->residual().size());
+        uCur_ = Dune::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
+        uPrev_ = Dune::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
 
-        uCur_= 0;
-        uPrev_= 0;
+        *uCur_= 0;
+        *uPrev_= 0;
 
         SplitAndMerge::mergeSolVectors(sdModel1().curSol(),
                                 	   sdModel2().curSol(),
-                                	   uCur_);
+                                	   *uCur_);
         SplitAndMerge::mergeSolVectors(sdModel1().prevSol(),
                                 	   sdModel2().prevSol(),
-                                	   uPrev_);
+                                	   *uPrev_);
     }
 
     /*!
@@ -132,25 +132,25 @@ public:
      * \brief Reference to the current solution as a block vector.
      */
     const SolutionVector &curSol() const
-    { return uCur_; }
+    { return *uCur_; }
 
     /*!
      * \brief Reference to the current solution as a block vector.
      */
     SolutionVector &curSol()
-    { return uCur_; }
+    { return *uCur_; }
 
     /*!
      * \brief Reference to the previous solution as a block vector.
      */
     const SolutionVector &prevSol() const
-    { return uPrev_; }
+    { return *uPrev_; }
 
     /*!
      * \brief Reference to the previous solution as a block vector.
      */
     SolutionVector &prevSol()
-    { return uPrev_; }
+    { return *uPrev_; }
 
     /*!
      * \brief Returns the operator assembler for the global jacobian of
@@ -253,8 +253,8 @@ public:
                 NewtonController &controller)
     {
 #if HAVE_VALGRIND
-        for (size_t i = 0; i < curSol().size(); ++i)
-            Valgrind::CheckDefined(curSol()[i]);
+        for (size_t i = 0; i < curSol().base().size(); ++i)
+            Valgrind::CheckDefined(curSol().base()[i]);
 #endif // HAVE_VALGRIND
 
         asImp_().updateBegin();
@@ -266,8 +266,8 @@ public:
             asImp_().updateSuccessful();
 
 #if HAVE_VALGRIND
-        for (size_t i = 0; i < curSol().size(); ++i) {
-            Valgrind::CheckDefined(curSol()[i]);
+        for (size_t i = 0; i < curSol().base().size(); ++i) {
+            Valgrind::CheckDefined(curSol().base()[i]);
         }
 #endif // HAVE_VALGRIND
 
@@ -285,7 +285,7 @@ public:
         sdModel1().updateBegin();
         sdModel2().updateBegin();
 
-        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
+        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), *uCur_);
     }
 
     //! \copydoc Dumux::ImplicitModel::updateSuccessful()
@@ -307,8 +307,8 @@ public:
     void advanceTimeLevel()
     {
         // merge the two sub-vectors together
-        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
-        SplitAndMerge::mergeSolVectors(sdModel1().prevSol(), sdModel2().prevSol(), uPrev_);
+        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), *uCur_);
+        SplitAndMerge::mergeSolVectors(sdModel1().prevSol(), sdModel2().prevSol(), *uPrev_);
     };
 
     //! \copydoc Dumux::ImplicitModel::updateFailed()
@@ -318,7 +318,7 @@ public:
         sdModel2().updateFailed();
 
         // merge the two sub-vectors together
-        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
+        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), *uCur_);
     };
 
      /*!
@@ -332,7 +332,7 @@ public:
         sdModel2().updateFailedTry();
 
         // merge the two sub-vectors together
-        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), uCur_);
+        SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), *uCur_);
     };
 
     /*!
@@ -395,8 +395,8 @@ protected:
 
     // cur is the current solution, prev the solution of the previous
     // time step
-    SolutionVector uCur_;
-    SolutionVector uPrev_;
+    Dune::shared_ptr<SolutionVector> uCur_;
+    Dune::shared_ptr<SolutionVector> uPrev_;
 
     bool wasRestarted_;
 };

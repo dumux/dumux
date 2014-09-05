@@ -25,8 +25,9 @@
 
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/pdelab/backend/istlvectorbackend.hh>
-#include <dune/pdelab/finiteelementmap/q1fem.hh>
-#include <dune/pdelab/finiteelementmap/conformingconstraints.hh>
+#include <dune/pdelab/backend/istlmatrixbackend.hh>
+#include <dune/pdelab/finiteelementmap/qkfem.hh>
+#include <dune/pdelab/constraints/conforming.hh>
 
 #include "subdomainproperties.hh"
 #include "multidomainproperties.hh"
@@ -66,6 +67,9 @@ public:
     typedef typename GET_PROP_TYPE(MultiDomainTypeTag, TimeManager) type;
 };
 
+// set the constraints for the sub-models
+SET_TYPE_PROP(SubDomain, Constraints, Dune::PDELab::NoConstraints);
+
 // set the grid functions space for the sub-models
 SET_PROP(SubDomain, ScalarGridFunctionSpace)
 {
@@ -76,7 +80,7 @@ SET_PROP(SubDomain, ScalarGridFunctionSpace)
     enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
  public:
     typedef Dune::PDELab::GridFunctionSpace<GridView, FEM, Constraints,
-        Dune::PDELab::ISTLVectorBackend<1> > type;
+        Dune::PDELab::ISTLVectorBackend<> > type;
 };
 
 // set the grid functions space for the sub-models
@@ -84,41 +88,10 @@ SET_PROP(SubDomain, GridFunctionSpace)
 {private:
     typedef typename GET_PROP_TYPE(TypeTag, ScalarGridFunctionSpace) ScalarGridFunctionSpace;
     enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
+    typedef typename Dune::PDELab::EntityBlockedOrderingTag OrderingTag;
+    typedef typename Dune::PDELab::ISTLVectorBackend<> VBE;
 public:
-    typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, numEq, Dune::PDELab::GridFunctionSpaceBlockwiseMapper> type;
-};
-
-// set the grid function space for the sub-models
-SET_TYPE_PROP(SubDomain, Constraints, Dune::PDELab::NoConstraints);
-
-// set the grid functions space for the sub-models
-SET_PROP(SubDomain, ConstraintsTrafo)
-{private:
-  typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-  typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
-public:
-    typedef typename GridFunctionSpace::template ConstraintsContainer<Scalar>::Type type;
-};
-
-// set the grid operator space used for submodels
-// DEPRECATED: use GridOperator instead
-SET_PROP(SubDomain, GridOperatorSpace)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, ConstraintsTrafo) ConstraintsTrafo;
-    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalOperator) LocalOperator;
-    enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
-
-public:
-    typedef Dune::PDELab::GridOperatorSpace<GridFunctionSpace,
-        GridFunctionSpace,
-        LocalOperator,
-        ConstraintsTrafo,
-        ConstraintsTrafo,
-        Dune::PDELab::ISTLBCRSMatrixBackend<numEq, numEq>,
-        true
-        > type;
+    typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, numEq, VBE, OrderingTag> type;
 };
 
 // use the local FEM space associated with cubes by default
@@ -129,7 +102,7 @@ SET_PROP(SubDomain, LocalFEMSpace)
     enum{dim = GridView::dimension};
 
 public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type;
+    typedef Dune::PDELab::QkLocalFiniteElementMap<GridView,Scalar,Scalar,1>  type;
 };
 
 SET_PROP(SubDomain, ParameterTree)

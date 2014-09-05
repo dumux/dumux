@@ -65,8 +65,8 @@ public:
                                 const SolutionVector2 &vec2,
                                 SolutionVector &dest)
     {
-//        printvector(std::cout, vec1, "vec1", "row", 200, 1, 3);
-//        printvector(std::cout, vec2, "vec2", "row", 200, 1, 3);
+//         printvector(std::cout, vec1, "vec1", "row", 200, 1, 3);
+//         printvector(std::cout, vec2, "vec2", "row", 200, 1, 3);
 
         int nDofs1 = vec1.size();
         int nDofs2 = vec2.size();
@@ -74,19 +74,19 @@ public:
         for (int i = 0; i < nDofs1; ++i)
             for (int j = 0; j < numEq1; j++)
             {
-				dest[i*numEq1 + j][0] = vec1[i][j];
+				dest.base()[i*numEq1 + j][0] = vec1[i][j];
 
-                Valgrind::CheckDefined(dest[i*numEq1 + j][0]);
+                Valgrind::CheckDefined(dest.base()[i*numEq1 + j][0]);
             }
 
         for (int i = 0; i < nDofs2; ++i)
             for (int j = 0; j < numEq2; j++)
             {
-				dest[nDofs1*numEq1 + i*numEq2 + j][0] = vec2[i][j];
+				dest.base()[nDofs1*numEq1 + i*numEq2 + j][0] = vec2[i][j];
 
-                Valgrind::CheckDefined(dest[nDofs1*numEq1 + i*numEq2 + j][0]);
+                Valgrind::CheckDefined(dest.base()[nDofs1*numEq1 + i*numEq2 + j][0]);
             }
-//        printvector(std::cout, dest, "dest", "row", 200, 1, 3);
+//         printvector(std::cout, dest.base(), "dest", "row", 200, 1, 3);
     }
 
     /*!
@@ -102,21 +102,21 @@ public:
                                SolutionVector1 &dest1,
                                SolutionVector2 &dest2)
     {
-//        printvector(std::cout, vec, "vec", "row", 200, 1, 3);
+//         printvector(std::cout, vec.base(), "vec", "row", 200, 1, 3);
 
         int nDofs1 = dest1.size();
         int nDofs2 = dest2.size();
 
         for (int i = 0; i < nDofs1; ++i)
             for (int j = 0; j < numEq1; j++)
-				dest1[i][j] = vec[i*numEq1 + j][0];
+				dest1[i][j] = vec.base()[i*numEq1 + j][0];
 
         for (int i = 0; i < nDofs2; ++i)
             for (int j = 0; j < numEq2; j++)
-				dest2[i][j] = vec[nDofs1*numEq1 + i*numEq2 + j][0];
+				dest2[i][j] = vec.base()[nDofs1*numEq1 + i*numEq2 + j][0];
 
-//        printvector(std::cout, dest1, "dest1", "row", 200, 1, 3);
-//        printvector(std::cout, dest2, "dest2", "row", 200, 1, 3);
+//         printvector(std::cout, dest1, "dest1", "row", 200, 1, 3);
+//         printvector(std::cout, dest2, "dest2", "row", 200, 1, 3);
     }
 
     /*!
@@ -136,19 +136,19 @@ public:
     {
         int nDofs1 = vec1.size();
         int nDofs2 = vec2.size();
-//        printvector(std::cout, vec1, "vec1", "row", 200, 1, 3);
-//        printvector(std::cout, vec2, "vec2", "row", 200, 1, 3);
+//         printvector(std::cout, vec1, "vec1", "row", 200, 1, 3);
+//         printvector(std::cout, vec2, "vec2", "row", 200, 1, 3);
 
         for (int i = 0; i < nDofs1; ++i)
             for (int j = 0; j < numEq1; j++)
-                dest[i*numEq1 + j] = vec1[i][j];
+                dest.base()[i*numEq1 + j] = vec1[i][j];
 
         for (int i = 0; i < nDofs2; ++i)
         {
             for (int j = numEq1; j < numEq2; j++)
-                dest[nDofs1*numEq1 + i*(numEq2-numEq1) + (j - numEq1)] = vec2[i][j];
+                dest.base()[nDofs1*numEq1 + i*(numEq2-numEq1) + (j - numEq1)] = vec2[i][j];
         }
-//        printvector(std::cout, dest, "dest", "row", 200, 1, 3);
+//         printvector(std::cout, dest.base(), "dest", "row", 200, 1, 3);
     }
 
     /*!
@@ -169,24 +169,24 @@ public:
         int nDofs1 = dest1.size();
         int nDofs2 = dest2.size();
 
-//        printvector(std::cout, vec, "vec", "row", 200, 1, 3);
+//         printvector(std::cout, vec.base(), "vec", "row", 200, 1, 3);
         for (int i = 0; i < nDofs1; ++i)
             for (int j = 0; j < numEq1; j++)
-                dest1[i][j] = vec[i*numEq1 + j];
+                dest1[i][j] = vec.base()[i*numEq1 + j];
 
         for (int i = 0; i < nDofs2; ++i)
         {
             int blockIdxCoupled = subDOFToCoupledDOF[i];
             for (int j = 0; j < numEq1; j++)
             {
-                dest2[i][j] = vec[blockIdxCoupled*numEq1 + j];
+                dest2[i][j] = vec.base()[blockIdxCoupled*numEq1 + j];
             }
 
             for (int j = numEq1; j < numEq2; j++)
-                dest2[i][j] = vec[nDofs1*numEq1 + i*(numEq2-numEq1) + (j - numEq1)];
+                dest2[i][j] = vec.base()[nDofs1*numEq1 + i*(numEq2-numEq1) + (j - numEq1)];
         }
-//        printvector(std::cout, dest1, "dest1", "row", 200, 1, 3);
-//        printvector(std::cout, dest2, "dest2", "row", 200, 1, 3);
+//         printvector(std::cout, dest1, "dest1", "row", 200, 1, 3);
+//         printvector(std::cout, dest2, "dest2", "row", 200, 1, 3);
     }
 
 

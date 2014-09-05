@@ -119,10 +119,10 @@ public:
         SolutionVector uNewI = uLastIter;
         uNewI -= deltaU;
 
-        for (unsigned int i = 0; i < uLastIter.size(); ++i) {
-            for (unsigned int j = 0; j < uLastIter[i].size(); ++j) {
-                Scalar vertexError = std::abs(deltaU[i][j]);
-                vertexError /= std::max<Scalar>(1.0, std::abs(uLastIter[i][j] + uNewI[i][j])/2);
+        for (unsigned int i = 0; i < uLastIter.base().size(); ++i) {
+            for (unsigned int j = 0; j < uLastIter.base()[i].size(); ++j) {
+                Scalar vertexError = std::abs(deltaU.base()[i][j]);
+                vertexError /= std::max<Scalar>(1.0, std::abs(uLastIter.base()[i][j] + uNewI.base()[i][j])/2);
 
                 this->error_ = std::max(this->error_, vertexError);
             }
@@ -151,7 +151,7 @@ public:
         // close to the final value, a reduction of 6 orders of
         // magnitude in the defect should be sufficient...
         try {
-            int converged = linearSolver_.solve(A, x, b);
+            int converged = linearSolver_.solve(A.base(), x.base(), b.base());
 
 #if HAVE_MPI
             // make sure all processes converged
@@ -185,7 +185,7 @@ public:
             Dumux::NumericalProblem p;
             std::string msg;
             std::ostringstream ms(msg);
-            ms << e.what() << "M=" << A[e.r][e.c];
+            ms << e.what() << "M=" << A.base()[e.r][e.c];
             p.message(ms.str());
             throw p;
         }

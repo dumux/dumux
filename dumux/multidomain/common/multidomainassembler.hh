@@ -29,21 +29,7 @@
 #include <dune/pdelab/constraints/constraintsparameters.hh>
 #include <dune/pdelab/multidomain/constraints.hh>
 
-
 namespace Dumux {
-
-/*!
- * \brief Prevents the setting of a Dirichlet constraint anywhere
- */
-struct NoDirichletConstraints :
-  public Dune::PDELab::DirichletConstraintsParameters
-{
-  template<typename I>
-  bool isDirichlet(const I& intersection, const Dune::FieldVector<typename I::ctype, I::dimension-1> & coord) const
-  {
-    return false;
-  }
-};
 
 /*!
  * \brief An assembler for the global Jacobian matrix for multidomain models.
@@ -84,12 +70,8 @@ class MultiDomainAssembler
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
 
-    typedef typename GET_PROP_TYPE(SubDomain1TypeTag, Constraints) Constraints1;
-    typedef typename GET_PROP_TYPE(SubDomain2TypeTag, Constraints) Constraints2;
-
     // copying the jacobian assembler is not a good idea
     MultiDomainAssembler(const MultiDomainAssembler &);
-
 
 public:
     //! \brief The constructor
@@ -111,22 +93,13 @@ public:
         sdProblem1_ = &globalProblem_->sdProblem1();
         sdProblem2_ = &globalProblem_->sdProblem2();
 
-        fem1_ = Dune::make_shared<FEM1>();
-        fem2_ = Dune::make_shared<FEM2>();
-
-        constraints1_ = Dune::make_shared<Constraints1>();
-        constraints2_ = Dune::make_shared<Constraints2>();
+        fem1_ = Dune::make_shared<FEM1>(globalProblem_->sdGridView1());
+        fem2_ = Dune::make_shared<FEM2>(globalProblem_->sdGridView2());
 
         scalarGridFunctionSpace1_ = Dune::make_shared<ScalarGridFunctionSpace1>(globalProblem_->sdGridView1(),
-                                                                                *fem1_, *constraints1_);
+                                                                                *fem1_);
         scalarGridFunctionSpace2_ = Dune::make_shared<ScalarGridFunctionSpace2>(globalProblem_->sdGridView2(),
-                                                                                *fem2_, *constraints2_);
-        // constraints store indices of ghost dofs
-        constraints1_->compute_ghosts(*scalarGridFunctionSpace1_);
-        constraints2_->compute_ghosts(*scalarGridFunctionSpace2_);
-        Valgrind::CheckDefined(*constraints1_);
-        Valgrind::CheckDefined(*constraints2_);
-//        std::cerr  << __FILE__ << ":" << __LINE__ << "\n";
+                                                                                *fem2_);
 
         gridFunctionSpace1_ = Dune::make_shared<GridFunctionSpace1>(*scalarGridFunctionSpace1_);
         gridFunctionSpace2_ = Dune::make_shared<GridFunctionSpace2>(*scalarGridFunctionSpace2_);
@@ -147,16 +120,7 @@ public:
         couplingLocalOperator_ = Dune::make_shared<MultiDomainCouplingLocalOperator>(*globalProblem_);
         mdCoupling_ = Dune::make_shared<MultiDomainCoupling>(*mdSubProblem1_, *mdSubProblem2_, *couplingLocalOperator_);
 
-        // TODO proper constraints stuff
         constraintsTrafo_ = Dune::make_shared<MultiDomainConstraintsTrafo>();
-
-        NoDirichletConstraints dirichletVal;
-        auto constraints = Dune::PDELab::MultiDomain::constraints<Scalar>(*mdGridFunctionSpace_,
-                                                                          Dune::PDELab::MultiDomain::constrainSubProblem(*mdSubProblem1_,
-                                                                                                                         dirichletVal),
-                                                                          Dune::PDELab::MultiDomain::constrainSubProblem(*mdSubProblem2_,
-                                                                                                                         dirichletVal));
-        constraints.assemble(*constraintsTrafo_);
 
         mdGridOperator_ = Dune::make_shared<MultiDomainGridOperator>(*mdGridFunctionSpace_, *mdGridFunctionSpace_,
                                                                      *constraintsTrafo_, *constraintsTrafo_,
@@ -165,25 +129,19 @@ public:
         matrix_ = Dune::make_shared<JacobianMatrix>(*mdGridOperator_);
         *matrix_ = 0;
 
-        residual_.resize(matrix_->N());
+        residual_ = Dune::make_shared<SolutionVector>(*mdGridFunctionSpace_);
     }
 
     //! \copydoc ImplicitAssembler::assemble()
     void assemble()
     {
-//        std::cerr  << __FILE__ << ":" << __LINE__ << "\n";
-
     	// assemble the matrix
     	*matrix_ = 0;
-
-        residual_ = 0;
     	mdGridOperator_->jacobian(globalProblem_->model().curSol(), *matrix_);
-//    	printmatrix(std::cout, matrix_->base(), "global stiffness matrix", "row", 11, 3);
 
     	// calculate the global residual
-    	residual_ = 0;
-    	mdGridOperator_->residual(globalProblem_->model().curSol(), residual_);
-//    	printvector(std::cout, residual_, "residual", "row", 200, 1, 3);
+    	*residual_ = 0;
+    	mdGridOperator_->residual(globalProblem_->model().curSol(), *residual_);
     }
 
     //! \copydoc ImplicitAssembler::reassembleAll()
@@ -205,9 +163,9 @@ public:
 
     //! \copydoc ImplicitAssembler::residual()
     const SolutionVector &residual() const
-    { return residual_; }
+    { return *residual_; }
     SolutionVector &residual()
-    { return residual_; }
+    { return *residual_; }
 
     /*!
      * \brief Return constant reference to the multidomain gridfunctionspace
@@ -235,9 +193,6 @@ private:
     Dune::shared_ptr<FEM1> fem1_;
     Dune::shared_ptr<FEM2> fem2_;
 
-    Dune::shared_ptr<Constraints1> constraints1_;
-    Dune::shared_ptr<Constraints2> constraints2_;
-
     Dune::shared_ptr<ScalarGridFunctionSpace1> scalarGridFunctionSpace1_;
     Dune::shared_ptr<ScalarGridFunctionSpace2> scalarGridFunctionSpace2_;
 
@@ -262,7 +217,7 @@ private:
 
     Dune::shared_ptr<JacobianMatrix> matrix_;
 
-    SolutionVector residual_;
+    Dune::shared_ptr<SolutionVector> residual_;
 };
 
 } // namespace Dumux

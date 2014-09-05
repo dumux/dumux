@@ -31,7 +31,7 @@ namespace Properties
 // \{
 
 //////////////////////////////////////////////////////////////////
-// Type tags tags
+// Type tags
 //////////////////////////////////////////////////////////////////
 
 //! The type tag from which sub-problems of coupling models inherit
@@ -49,17 +49,8 @@ NEW_PROP_TAG(ScalarGridFunctionSpace);
 //! Specifies the grid function space used for sub-problems
 NEW_PROP_TAG(GridFunctionSpace);
 
-//! Specifies the grid operator used for sub-problems
-NEW_PROP_TAG(GridOperator);
-
-//! Specifies the grid operator space used for sub-problems
-NEW_PROP_TAG(GridOperatorSpace);
-
 //! Specifies the type of the constraints
 NEW_PROP_TAG(Constraints);
-
-//! Specifies the type of the constraints transformation
-NEW_PROP_TAG(ConstraintsTrafo);
 
 //! Specifies the local finite element space
 NEW_PROP_TAG(LocalFEMSpace);

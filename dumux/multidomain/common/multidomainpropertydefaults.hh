@@ -36,8 +36,6 @@
 #include <dune/pdelab/multidomain/coupling.hh>
 #include <dune/pdelab/multidomain/gridoperator.hh>
 
-#include <dune/pdelab/finiteelementmap/p1fem.hh>
-#include <dune/pdelab/finiteelementmap/q1fem.hh>
 #include <dune/pdelab/gridoperator/gridoperator.hh>
 
 #include "subdomainpropertydefaults.hh"
@@ -71,15 +69,17 @@ SET_PROP(MultiDomain, MultiDomainGridFunctionSpace)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
+    typedef typename Dune::PDELab::LexicographicOrderingTag OrderingTag;
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubTypeTag2;
     typedef typename GET_PROP_TYPE(SubTypeTag1, GridFunctionSpace) GridFunctionSpace1;
     typedef typename GET_PROP_TYPE(SubTypeTag2, GridFunctionSpace) GridFunctionSpace2;
 public:
     typedef Dune::PDELab::MultiDomain::MultiDomainGridFunctionSpace<MDGrid,
-																	Dune::PDELab::ISTLVectorBackend<1>,
-																	GridFunctionSpace1,
-																	GridFunctionSpace2> type;
+                                                                    Dune::PDELab::ISTLVectorBackend<>,
+                                                                    OrderingTag,
+                                                                    GridFunctionSpace1,
+                                                                    GridFunctionSpace2> type;
 };
 
 // set the subdomain equality condition by default
@@ -140,16 +140,17 @@ public:
 SET_PROP(MultiDomain, MultiDomainConstraintsTrafo)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubTypeTag1;
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGridFunctionSpace) MDGridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef typename GET_PROP_TYPE(SubTypeTag1, ConstraintsTrafo) type;
+    typedef typename MDGridFunctionSpace::template ConstraintsContainer<Scalar>::Type type;
 };
 
 SET_PROP(MultiDomain, MultiDomainGridOperator)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGridFunctionSpace) MDGridFunctionSpace;
-    typedef Dune::PDELab::ISTLBCRSMatrixBackend<1,1> MBE;
+    typedef Dune::PDELab::ISTLMatrixBackend MBE;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainSubProblem1) MDSubProblem1;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainSubProblem2) MDSubProblem2;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainCoupling) MDCoupling;

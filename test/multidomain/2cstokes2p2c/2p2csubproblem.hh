@@ -25,8 +25,6 @@
 #ifndef DUMUX_2P2C_SUBPROBLEM_HH
 #define DUMUX_2P2C_SUBPROBLEM_HH
 
-#include <dune/pdelab/gridoperator/gridoperator.hh>
-
 #include <dumux/implicit/2p2c/2p2cindices.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/multidomain/couplinglocalresiduals/2p2ccouplinglocalresidual.hh>
@@ -60,31 +58,6 @@ SET_PROP(TwoPTwoCSubProblem, ReplaceCompEqIdx)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     static const int value = Indices::contiNEqIdx;
-};
-
-// set the constraints for multidomain / pdelab // not required here
-SET_TYPE_PROP(TwoPTwoCSubProblem, Constraints,
-        Dune::PDELab::NonoverlappingConformingDirichletConstraints);
-
-// set the grid operator
-SET_PROP(TwoPTwoCSubProblem, GridOperator)
-{
- private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, ConstraintsTrafo) ConstraintsTrafo;
-    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
-    typedef Dumux::PDELab::MultiDomainLocalOperator<TypeTag> LocalOperator;
-
-    enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
-
- public:
-    typedef Dune::PDELab::GridOperator<GridFunctionSpace,
-        GridFunctionSpace, LocalOperator,
-        Dune::PDELab::ISTLBCRSMatrixBackend<numEq, numEq>,
-        Scalar, Scalar, Scalar,
-        ConstraintsTrafo,
-        ConstraintsTrafo,
-        true> type;
 };
 
 // the fluidsystem is set in the coupled problem
