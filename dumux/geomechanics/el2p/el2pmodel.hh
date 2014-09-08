@@ -26,9 +26,9 @@
 #ifndef DUMUX_ELASTIC2P_MODEL_HH
 #define DUMUX_ELASTIC2P_MODEL_HH
 
-#include "el2pproperties.hh"
-#include <dumux/common/eigenvalues.hh>
 #include <dune/pdelab/gridfunctionspace/interpolate.hh>
+#include <dumux/common/eigenvalues.hh>
+#include "el2pproperties.hh"
 
 namespace Dumux {
 
@@ -163,11 +163,11 @@ public:
         int numScv = this->gridView().size(dim);
         // get p and S entries for this vertex
         for (int eqIdx = 0; eqIdx < numEq-dim; ++eqIdx) {
-            outStream << this->curSol()[dofIdx*(numEq-dim) + eqIdx][0]<<" ";
+            outStream << this->curSol().base()[dofIdx*(numEq-dim) + eqIdx][0]<<" ";
         }
         // get ux, uy, uz entries for this vertex
         for (int j = 0; j< dim; ++j)
-            outStream << this->curSol()[numScv*(numEq-dim) + dofIdx*dim + j][0] <<" ";
+            outStream << this->curSol().base()[numScv*(numEq-dim) + dofIdx*dim + j][0] <<" ";
 
         int vIdx = this->dofMapper().map(entity);
         if (!outStream.good())
@@ -202,10 +202,10 @@ public:
         int numScv = this->gridView().size(dim);
         for (int eqIdx = 0; eqIdx < numEq-dim; ++eqIdx) {
         // read p and S entries for this vertex
-        inStream >> this->curSol()[dofIdx*(numEq-dim) + eqIdx][0];}
+        inStream >> this->curSol().base()[dofIdx*(numEq-dim) + eqIdx][0];}
         for (int j = 0; j< dim; ++j){
             // read ux, uy, uz entries for this vertex
-            inStream >> this->curSol()[numScv*(numEq-dim) + dofIdx*dim + j][0];}
+            inStream >> this->curSol().base()[numScv*(numEq-dim) + dofIdx*dim + j][0];}
     }
 
 
@@ -323,6 +323,8 @@ public:
         FVElementGeometry fvGeometry;
         ElementVolumeVariables elemVolVars;
 
+        const GridFunctionSpace& gridFunctionSpace = this->problem_().model().jacobianAssembler().gridFunctionSpace();
+        const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();
         // initialize start and end of element iterator
         ElementIterator eIt = this->gridView_().template begin<0>();
         ElementIterator eEndit = this->gridView_().template end<0>();
@@ -332,10 +334,16 @@ public:
             // get FE function spaces to calculate gradients (gradient data of momentum balance
             // equation is not stored in fluxvars since it is not evaluated at box integration point)
             // copy the values of the sol vector to the localFunctionSpace values of the current element
-            LocalFunctionSpace localFunctionSpace(this->problem_().model().jacobianAssembler().gridFunctionSpace());
+            LocalFunctionSpace localFunctionSpace(gridFunctionSpace);
             localFunctionSpace.bind(*eIt);
-            std::vector<Scalar> values;
-            localFunctionSpace.vread(sol, values);
+            std::vector<Scalar> values(localFunctionSpace.size());
+            for (typename LocalFunctionSpace::Traits::IndexContainer::size_type k=0; k<localFunctionSpace.size(); ++k)
+            {
+                const typename GridFunctionSpace::Ordering::Traits::DOFIndex& di = localFunctionSpace.dofIndex(k);
+                typename GridFunctionSpace::Ordering::Traits::ContainerIndex ci;
+                ordering.mapIndex(di.view(),ci);
+                values[k] = sol[ci];
+            }
 
             // local function space for solid displacement
             typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
@@ -682,8 +690,8 @@ public:
         InitialSolution initialSolution(initialPressSat, initialDisplacement);
 
         int numDofs = this->jacobianAssembler().gridFunctionSpace().size();
-        this->curSol().resize(numDofs);
-        this->prevSol().resize(numDofs);
+        //this->curSol().resize(numDofs);
+        //this->prevSol().resize(numDofs);
         std::cout << "numDofs = " << numDofs << std::endl;
 
         Dune::PDELab::interpolate(initialSolution,

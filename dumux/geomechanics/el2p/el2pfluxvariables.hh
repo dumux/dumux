@@ -167,14 +167,23 @@ NEW_PROP_TAG(SpatialParams);
             {
                 typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
                 typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
-                LocalFunctionSpace localFunctionSpace(problem.model().jacobianAssembler().gridFunctionSpace());
+                const GridFunctionSpace& gridFunctionSpace = problem.model().jacobianAssembler().gridFunctionSpace();
+                const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();
+                LocalFunctionSpace localFunctionSpace(gridFunctionSpace);
                 localFunctionSpace.bind(element);
                 // copy values of previous solution into prevSolutionValues Vector
-                std::vector<Scalar> prevSolutionValues;
-                localFunctionSpace.vread(problem.model().prevSol(), prevSolutionValues);
+                std::vector<Scalar> prevSolutionValues(localFunctionSpace.size());
                 // copy values of current solution into curSolutionValues Vector
-                std::vector<Scalar> curSolutionValues;
-                localFunctionSpace.vread(problem.model().curSol(), curSolutionValues);
+                std::vector<Scalar> curSolutionValues(localFunctionSpace.size());
+                for (typename LocalFunctionSpace::Traits::IndexContainer::size_type k=0; k<localFunctionSpace.size(); ++k)
+                {
+                    const typename GridFunctionSpace::Ordering::Traits::DOFIndex& di = localFunctionSpace.dofIndex(k);
+                    typename GridFunctionSpace::Ordering::Traits::ContainerIndex ci;
+                    ordering.mapIndex(di.view(),ci);
+                    prevSolutionValues[k] = problem.model().prevSol()[ci];
+                    curSolutionValues[k] = problem.model().curSol()[ci];
+                }
+
                 // type of function space for solid displacement vector
                 typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;
                 const DisplacementLFS& displacementLFS = localFunctionSpace.template child<1>();

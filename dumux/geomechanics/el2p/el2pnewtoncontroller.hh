@@ -64,8 +64,8 @@ public:
         // deflection in any degree of freedom.
         this->error_ = 0;
 
-        for (int i = 0; i < int(uOld.size()); ++i) {
-            Scalar vertErr = std::abs(deltaU[i]/(1.0 + std::abs((uOld[i]) + uOld[i] - deltaU[i])/2));
+        for (int i = 0; i < int(uOld.base().size()); ++i) {
+            Scalar vertErr = std::abs(deltaU.base()[i]/(1.0 + std::abs((uOld.base()[i]) + uOld.base()[i] - deltaU.base()[i])/2));
             this->error_ = std::max(this->error_, vertErr);
         }
 
@@ -103,7 +103,7 @@ public:
         try {
             if (this->numSteps_ == 0)
             {
-                Scalar norm2 = b.two_norm2();
+                Scalar norm2 = b.base().two_norm2();
                 if (this->gridView_().comm().size() > 1)
                     norm2 = this->gridView_().comm().sum(norm2);
 
@@ -111,7 +111,7 @@ public:
                 lastAbsoluteError_ = initialAbsoluteError_;
             }
 
-            int converged = linearSolver_.solve(A, x, b);
+            int converged = linearSolver_.solve(A.base(), x.base(), b.base());
 //            printvector(std::cout, x.base(), "x", "row", 5, 1, 5);
 //            printvector(std::cout, b.base(), "rhs", "row", 5, 1, 5);
 //            Dune::writeMatrixToMatlab(A.base(), "matrix.txt");
@@ -139,7 +139,7 @@ public:
             Dumux::NumericalProblem p;
             std::string msg;
             std::ostringstream ms(msg);
-            ms << e.what() << "M=" << A[e.r][e.c];
+            ms << e.what() << "M=" << A.base()[e.r][e.c];
             p.message(ms.str());
             throw p;
         }

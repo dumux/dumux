@@ -114,10 +114,18 @@ public:
         typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
 
         // copy the values of the globalSol vector to the localFunctionSpace values of the current element
-        LocalFunctionSpace localFunctionSpace(this->problemPtr_->model().jacobianAssembler().gridFunctionSpace());
+        const GridFunctionSpace& gridFunctionSpace = this->problemPtr_->model().jacobianAssembler().gridFunctionSpace();
+        const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();
+        LocalFunctionSpace localFunctionSpace(gridFunctionSpace);
         localFunctionSpace.bind(this->element_());
-        std::vector<Scalar> elementValues;
-        localFunctionSpace.vread(this->problemPtr_->model().curSol(), elementValues);
+        std::vector<Scalar> elementValues(localFunctionSpace.size());
+        for (typename LocalFunctionSpace::Traits::IndexContainer::size_type k=0; k<localFunctionSpace.size(); ++k)
+        {
+            const typename GridFunctionSpace::Ordering::Traits::DOFIndex& di = localFunctionSpace.dofIndex(k);
+            typename GridFunctionSpace::Ordering::Traits::ContainerIndex ci;
+            ordering.mapIndex(di.view(),ci);
+            elementValues[k] = this->problemPtr_->model().curSol()[ci];
+        }
         // pressure and saturation local function space (mass balance equations)
         typedef typename LocalFunctionSpace::template Child<0>::Type PressSatLFS;
         const PressSatLFS& pressSatLFS = localFunctionSpace.template child<0>();

@@ -28,9 +28,17 @@
 #ifndef DUMUX_ELASTIC2P_PROPERTY_DEFAULTS_HH
 #define DUMUX_ELASTIC2P_PROPERTY_DEFAULTS_HH
 
+#include <dune/pdelab/backend/istlmatrixbackend.hh>
+#include <dune/pdelab/gridfunctionspace/gridfunctionspace.hh>
+#include <dune/pdelab/backend/istlvectorbackend.hh>
+#include <dune/pdelab/common/function.hh>
+#include <dune/pdelab/gridoperator/gridoperator.hh>
+#include <dune/pdelab/finiteelementmap/qkfem.hh>
+
 #include "el2pproperties.hh"
 
 #include "el2pmodel.hh"
+#include "el2pbasemodel.hh"
 #include "el2pindices.hh"
 #include "el2plocalresidual.hh"
 #include "el2plocaljacobian.hh"
@@ -43,12 +51,7 @@
 #include "el2pindices.hh"
 #include <dumux/implicit/box/boxpropertydefaults.hh>
 #include <dumux/implicit/2p/2ppropertydefaults.hh>
-#include <dune/pdelab/gridfunctionspace/gridfunctionspace.hh>
-#include <dune/pdelab/backend/istlvectorbackend.hh>
-#include <dune/pdelab/common/function.hh>
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dune/pdelab/gridoperator/gridoperator.hh>
-#include <dune/pdelab/finiteelementmap/q1fem.hh>
 
 namespace Dumux
 {
@@ -137,7 +140,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, ConstraintsTrafo) ConstraintsTrafo;
     typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, LocalOperator) LocalOperator;
-
+    typedef typename Dune::PDELab::ISTLMatrixBackend MatrixBackend;
 
     enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
@@ -146,7 +149,7 @@ public:
     typedef Dune::PDELab::GridOperator<GridFunctionSpace,
             GridFunctionSpace,
             LocalOperator,
-            Dune::PDELab::ISTLBCRSMatrixBackend<1, 1>,
+            MatrixBackend,
             Scalar, Scalar, Scalar,
             ConstraintsTrafo,
             ConstraintsTrafo,
@@ -157,18 +160,61 @@ public:
 SET_PROP(BoxElasticTwoP, JacobianMatrix)
 {
 private:
+    //typedef typename GET_PROP_TYPE(TypeTag, GridOperator) GridOperator;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GFSU;
+    typedef typename GFSU::template ConstraintsContainer<Scalar>::Type CU;
+      //! The global assembler type
+      typedef Dune::PDELab::DefaultAssembler<GFSU,GFSU,CU,CU,true> Assembler;
+
+      //! The type of the domain (solution).
+      typedef typename Dune::PDELab::BackendVectorSelector<GFSU,Scalar>::Type Domain;
+      //! The type of the range (residual).
+      typedef typename Dune::PDELab::BackendVectorSelector<GFSU,Scalar>::Type Range;
+      //! The type of the jacobian.
+    typedef typename Dune::PDELab::ISTLMatrixBackend MB;
+      typedef typename Dune::PDELab::BackendMatrixSelector<MB,Domain,Range,Scalar>::Type Jacobian;
+
+      //! The local assembler type
+    typedef typename GET_PROP_TYPE(TypeTag, LocalOperator) LOP;
     typedef typename GET_PROP_TYPE(TypeTag, GridOperator) GridOperator;
+      typedef Dune::PDELab::DefaultLocalAssembler<GridOperator,LOP,true>
+      LocalAssembler;
+      //! The grid operator traits
+      typedef Dune::PDELab::GridOperatorTraits
+      <GFSU,GFSU,MB,Scalar,Scalar,Scalar,CU,CU,Assembler,LocalAssembler> Traits;
 public:
-    typedef typename GridOperator::Traits::Jacobian type;
+    typedef typename Traits::Jacobian type;
 };
 
 SET_PROP(BoxElasticTwoP, SolutionVector)
 {
 private:
+    //typedef typename GET_PROP_TYPE(TypeTag, GridOperator) GridOperator;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GFSU;
+    typedef typename GFSU::template ConstraintsContainer<Scalar>::Type CU;
+      //! The global assembler type
+      typedef Dune::PDELab::DefaultAssembler<GFSU,GFSU,CU,CU,true> Assembler;
+
+      //! The type of the domain (solution).
+      typedef typename Dune::PDELab::BackendVectorSelector<GFSU,Scalar>::Type Domain;
+      //! The type of the range (residual).
+      typedef typename Dune::PDELab::BackendVectorSelector<GFSU,Scalar>::Type Range;
+      //! The type of the jacobian.
+    typedef typename Dune::PDELab::ISTLMatrixBackend MB;
+      typedef typename Dune::PDELab::BackendMatrixSelector<MB,Domain,Range,Scalar>::Type Jacobian;
+
+      //! The local assembler type
+    typedef typename GET_PROP_TYPE(TypeTag, LocalOperator) LOP;
     typedef typename GET_PROP_TYPE(TypeTag, GridOperator) GridOperator;
+      typedef Dune::PDELab::DefaultLocalAssembler<GridOperator,LOP,true>
+      LocalAssembler;
+      //! The grid operator traits
+      typedef Dune::PDELab::GridOperatorTraits
+      <GFSU,GFSU,MB,Scalar,Scalar,Scalar,CU,CU,Assembler,LocalAssembler> Traits;
 public:
-    typedef typename GridOperator::Traits::Domain type;
+    typedef typename Traits::Domain type;
 };
 
 SET_PROP(BoxElasticTwoP, PressureGridFunctionSpace)
@@ -176,15 +222,17 @@ SET_PROP(BoxElasticTwoP, PressureGridFunctionSpace)
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureFEM)) FEM;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename Dune::PDELab::EntityBlockedOrderingTag OrderingTag;
+    typedef typename Dune::PDELab::ISTLVectorBackend<> VBE;
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
          dim = GridView::dimension};
 public:
     typedef Dune::PDELab::NoConstraints Constraints;
 
-    typedef Dune::PDELab::GridFunctionSpace<GridView, FEM, Constraints, Dune::PDELab::ISTLVectorBackend<1> >
+    typedef Dune::PDELab::GridFunctionSpace<GridView, FEM, Constraints, VBE>
         ScalarGridFunctionSpace;
 
-    typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, numEq-dim, Dune::PDELab::GridFunctionSpaceBlockwiseMapper>
+    typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, numEq-dim, VBE, OrderingTag>
         type;
 
     typedef typename type::template ConstraintsContainer<Scalar>::Type
@@ -196,14 +244,16 @@ SET_PROP(BoxElasticTwoP, DisplacementGridFunctionSpace)
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(DisplacementFEM)) FEM;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename Dune::PDELab::EntityBlockedOrderingTag OrderingTag;
+    typedef typename Dune::PDELab::ISTLVectorBackend<> VBE;
     enum{dim = GridView::dimension};
 public:
     typedef Dune::PDELab::NoConstraints Constraints;
 
-    typedef Dune::PDELab::GridFunctionSpace<GridView, FEM, Constraints, Dune::PDELab::ISTLVectorBackend<1> >
+    typedef Dune::PDELab::GridFunctionSpace<GridView, FEM, Constraints, VBE>
         ScalarGridFunctionSpace;
 
-    typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, dim, Dune::PDELab::GridFunctionSpaceBlockwiseMapper>
+    typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, dim, VBE, OrderingTag>
         type;
 
     typedef typename type::template ConstraintsContainer<Scalar>::Type
@@ -215,13 +265,14 @@ SET_PROP(BoxElasticTwoP, GridFunctionSpace)
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureGridFunctionSpace)) PressureGFS;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(DisplacementGridFunctionSpace)) DisplacementGFS;
-    typedef Dune::PDELab::GridFunctionSpaceLexicographicMapper GFSMapper;
+    typedef typename Dune::PDELab::LexicographicOrderingTag OrderingTag;
+    typedef typename Dune::PDELab::ISTLVectorBackend<> VBE;
 public:
     typedef Dune::PDELab::NoConstraints Constraints;
 
     typedef void ScalarGridFunctionSpace;
 
-    typedef Dune::PDELab::CompositeGridFunctionSpace<GFSMapper, PressureGFS, DisplacementGFS> type;
+    typedef Dune::PDELab::CompositeGridFunctionSpace<VBE, OrderingTag, PressureGFS, DisplacementGFS> type;
 
     typedef typename type::template ConstraintsContainer<Scalar>::Type
         ConstraintsTrafo;
@@ -290,13 +341,13 @@ SET_PROP(BoxElasticTwoP, LocalOperator)
 //! use the local FEM space associated with cubes by default
 SET_PROP(BoxElasticTwoP, LocalFEMSpace)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    enum{dim = GridView::dimension};
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type;
+    typedef Dune::PDELab::QkLocalFiniteElementMap<GridView,Scalar,Scalar,1>  type;
 };
+
 /*!
  * \brief A vector of primary variables.
  */
@@ -311,6 +362,8 @@ public:
 
 //! The local jacobian operator
 SET_TYPE_PROP(BoxElasticTwoP, LocalJacobian, Dumux::ElTwoPLocalJacobian<TypeTag>);
+
+SET_TYPE_PROP(BoxElasticTwoP, BaseModel, ElTwoPBaseModel<TypeTag>);
 
 //! set number of equations of the mathematical model as default
 SET_INT_PROP(BoxElasticTwoP, LinearSolverBlockSize, 1);

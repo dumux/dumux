@@ -30,6 +30,7 @@
 #include "el2pco2tables.hh"
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/geomechanics/el2p/el2pmodel.hh>
+#include <dune/pdelab/finiteelementmap/qkfem.hh>
 
 #include "el2pspatialparams.hh"
 
@@ -58,24 +59,22 @@ SET_PROP(El2P_TestProblem, Grid) {
     typedef Dune::SGrid<3,3> type;
 };
 
-// Set the finite element map for the pressure
 SET_PROP(El2P_TestProblem, PressureFEM)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    enum{dim = GridView::dimension};
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+
 public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type;
+    typedef Dune::PDELab::QkLocalFiniteElementMap<GridView,Scalar,Scalar,1>  type;
 };
 
-// Set the finite element map for the displacement
 SET_PROP(El2P_TestProblem, DisplacementFEM)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    enum{dim = GridView::dimension};
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+
 public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type;
+    typedef Dune::PDELab::QkLocalFiniteElementMap<GridView,Scalar,Scalar,1>  type;
 };
 
 // Set the problem property
@@ -313,7 +312,7 @@ public:
         {
             int globalIdx = vertexMapper_.map(*vIt);
             //
-            pInit_[globalIdx] = -this->model().curSol()[globalIdx*2][0];
+            pInit_[globalIdx] = -this->model().curSol().base()[globalIdx*2][0];
         }
     }
 
@@ -394,7 +393,7 @@ public:
     {
         Scalar pValue = 0.0;
 
-        typename El2P_TestProblem<TypeTag>::LocalFEMSpace feMap;
+        typename El2P_TestProblem<TypeTag>::LocalFEMSpace feMap(this->gridView());
         const typename LocalFEMSpace::Traits::FiniteElementType
         &localFiniteElement = feMap.find(element.geometry().type());
         typedef Dune::FieldVector<CoordScalar, 1> ShapeValue;

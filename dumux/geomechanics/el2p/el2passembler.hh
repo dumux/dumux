@@ -124,53 +124,11 @@ public:
 
     El2PAssembler()
     {
-#if HAVE_DUNE_PDELAB
-        constraints_ = 0;
-
-        pressureFEM_ = 0;
-        pressureScalarGFS_ = 0;
-        pressureGFS_ = 0;
-
-        displacementFEM_ = 0;
-        displacementScalarGFS_ = 0;
-        displacementGFS_ = 0;
-
-        gridFunctionSpace_ = 0;
-        constraintsTrafo_ = 0;
-        localOperator_ = 0;
-        gridOperator_ = 0;
-#endif // HAVE_DUNE_PDELAB
-
-        problemPtr_ = 0;
-        matrix_ = 0;
-
         // set reassemble tolerance to 0, so that if partial
         // reassembly of the jacobian matrix is disabled, the
         // reassemble tolerance is always smaller than the current
         // relative tolerance
         reassembleTolerance_ = 0.0;
-    }
-
-    ~El2PAssembler()
-    {
-        delete matrix_;
-
-#if HAVE_DUNE_PDELAB
-        delete gridOperator_;
-        delete localOperator_;
-        delete constraintsTrafo_;
-        delete gridFunctionSpace_;
-
-        delete displacementGFS_;
-        delete displacementScalarGFS_;
-        delete displacementFEM_;
-
-        delete pressureGFS_;
-        delete pressureScalarGFS_;
-        delete pressureFEM_;
-
-        delete constraints_;
-#endif
     }
 
     /*!
@@ -186,37 +144,38 @@ public:
     {
         problemPtr_ = &problem;
 
-        constraints_ = new Constraints();
+        constraints_ = Dune::make_shared<Constraints>();
 
-        pressureFEM_ = new PressureFEM();
-        pressureScalarGFS_ = new PressureScalarGFS(problemPtr_->gridView(), *pressureFEM_, *constraints_);
-        pressureGFS_ = new PressureGFS(*pressureScalarGFS_);
+        pressureFEM_ = Dune::make_shared<PressureFEM>(problemPtr_->gridView());
+        pressureScalarGFS_ = Dune::make_shared<PressureScalarGFS>(problemPtr_->gridView(), *pressureFEM_, *constraints_);
+        pressureGFS_ = Dune::make_shared<PressureGFS>(*pressureScalarGFS_);
 
-        displacementFEM_ = new DisplacementFEM();
-        displacementScalarGFS_ = new DisplacementScalarGFS(problemPtr_->gridView(), *displacementFEM_, *constraints_);
-        displacementGFS_ = new DisplacementGFS(*displacementScalarGFS_);
+        displacementFEM_ = Dune::make_shared<DisplacementFEM>(problemPtr_->gridView());
+        displacementScalarGFS_ = Dune::make_shared<DisplacementScalarGFS>(problemPtr_->gridView(), *displacementFEM_, *constraints_);
+        displacementGFS_ = Dune::make_shared<DisplacementGFS>(*displacementScalarGFS_);
 
-        gridFunctionSpace_ = new GridFunctionSpace(*pressureGFS_, *displacementGFS_);
+        gridFunctionSpace_ = Dune::make_shared<GridFunctionSpace>(*pressureGFS_, *displacementGFS_);
 
-        constraintsTrafo_ = new ConstraintsTrafo();
+        constraintsTrafo_ = Dune::make_shared<ConstraintsTrafo>();
 
         // initialize the grid operator spaces
-        localOperator_ = new LocalOperator(problemPtr_->model());
+        localOperator_ = Dune::make_shared<LocalOperator>(problemPtr_->model());
         gridOperator_ =
-            new GridOperator(*gridFunctionSpace_, *constraintsTrafo_,
+            Dune::make_shared<GridOperator>(*gridFunctionSpace_, *constraintsTrafo_,
                                   *gridFunctionSpace_, *constraintsTrafo_, *localOperator_);
 
         // allocate raw matrix
-        matrix_ = new JacobianMatrix(*gridOperator_);
+        matrix_ = Dune::make_shared<JacobianMatrix>(*gridOperator_);
 
         // initialize the jacobian matrix and the right hand side
         // vector
         *matrix_ = 0;
         reuseMatrix_ = false;
 
+        residual_ = Dune::make_shared<SolutionVector>(*gridFunctionSpace_);
+
         int numVertices = gridView_().size(dim);
         int numElements = gridView_().size(0);
-        residual_.resize(matrix_->N());
 
         totalElems_ = gridView_().comm().sum(numElements);
 
@@ -240,8 +199,8 @@ public:
         *matrix_ = 0;
         gridOperator_->jacobian(problemPtr_->model().curSol(), *matrix_);
 
-        residual_ = 0;
-        gridOperator_->residual(problemPtr_->model().curSol(), residual_);
+        *residual_ = 0;
+        gridOperator_->residual(problemPtr_->model().curSol(), *residual_);
 
         return;
     }
@@ -547,7 +506,7 @@ public:
      * \brief Return constant reference to global residual vector.
      */
     const SolutionVector& residual() const
-    { return residual_; }
+    { return *residual_; }
 
 
 private:
@@ -558,7 +517,7 @@ private:
         int numVertices = gridView_().size(dim);
 
         // allocate raw matrix
-        matrix_ = new JacobianMatrix(numVertices, numVertices, JacobianMatrix::random);
+        matrix_ = Dune::make_shared<JacobianMatrix>(numVertices, numVertices, JacobianMatrix::random);
 
         // find out the global indices of the neighboring vertices of
         // each vertex
@@ -613,7 +572,7 @@ private:
     void resetSystem_()
     {
         // always reset the right hand side.
-        residual_ = 0.0;
+        *residual_ = 0.0;
 
         if (!enablePartialReassemble) {
             // If partial reassembly of the jacobian is not enabled,
@@ -656,9 +615,9 @@ private:
     Problem *problemPtr_;
 
     // the jacobian matrix
-    JacobianMatrix *matrix_;
+    Dune::shared_ptr<JacobianMatrix> matrix_;
     // the right-hand side
-    SolutionVector residual_;
+    Dune::shared_ptr<SolutionVector> residual_;
 
     // attributes required for jacobian matrix recycling
     bool reuseMatrix_;
@@ -675,17 +634,17 @@ private:
     Scalar reassembleTolerance_;
 
 
-    Constraints *constraints_;
-    PressureFEM *pressureFEM_;
-    DisplacementFEM *displacementFEM_;
-    PressureScalarGFS *pressureScalarGFS_;
-    DisplacementScalarGFS *displacementScalarGFS_;
-    PressureGFS *pressureGFS_;
-    DisplacementGFS *displacementGFS_;
-    GridFunctionSpace *gridFunctionSpace_;
-    ConstraintsTrafo *constraintsTrafo_;
-    LocalOperator *localOperator_;
-    GridOperator *gridOperator_;
+    Dune::shared_ptr<Constraints> constraints_;
+    Dune::shared_ptr<PressureFEM> pressureFEM_;
+    Dune::shared_ptr<DisplacementFEM> displacementFEM_;
+    Dune::shared_ptr<PressureScalarGFS> pressureScalarGFS_;
+    Dune::shared_ptr<DisplacementScalarGFS> displacementScalarGFS_;
+    Dune::shared_ptr<PressureGFS> pressureGFS_;
+    Dune::shared_ptr<DisplacementGFS> displacementGFS_;
+    Dune::shared_ptr<GridFunctionSpace> gridFunctionSpace_;
+    Dune::shared_ptr<ConstraintsTrafo> constraintsTrafo_;
+    Dune::shared_ptr<LocalOperator> localOperator_;
+    Dune::shared_ptr<GridOperator> gridOperator_;
 };
 
 } // namespace PDELab

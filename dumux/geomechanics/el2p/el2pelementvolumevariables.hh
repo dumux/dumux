@@ -94,11 +94,19 @@ public:
             problem.model().prevSol():
             problem.model().curSol();
 
+        const GridFunctionSpace& gridFunctionSpace = problem.model().jacobianAssembler().gridFunctionSpace();
+        const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();
         // copy the values of the globalSol vector to the localFunctionSpace values of the current element
-        LocalFunctionSpace localFunctionSpace(problem.model().jacobianAssembler().gridFunctionSpace());
+        LocalFunctionSpace localFunctionSpace(gridFunctionSpace);
         localFunctionSpace.bind(element);
-        std::vector<Scalar> values;
-        localFunctionSpace.vread(globalSol, values);
+        std::vector<Scalar> values(localFunctionSpace.size());
+        for (typename LocalFunctionSpace::Traits::IndexContainer::size_type k=0; k<localFunctionSpace.size(); ++k)
+        {
+            const typename GridFunctionSpace::Ordering::Traits::DOFIndex& di = localFunctionSpace.dofIndex(k);
+            typename GridFunctionSpace::Ordering::Traits::ContainerIndex ci;
+            ordering.mapIndex(di.view(),ci);
+            values[k] = globalSol[ci];
+        }
 
         // pressure and saturation local function space (mass balance equations)
         typedef typename LocalFunctionSpace::template Child<0>::Type PressSatLFS;
@@ -182,10 +190,18 @@ public:
             problem.model().curSol();
 
         // copy the values of the globalSol vector to the localFunctionSpace values of the current element
-        LocalFunctionSpace localFunctionSpace(problem.model().jacobianAssembler().gridFunctionSpace());
+        const GridFunctionSpace& gridFunctionSpace = problem.model().jacobianAssembler().gridFunctionSpace();
+        const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();
+        LocalFunctionSpace localFunctionSpace(gridFunctionSpace);
         localFunctionSpace.bind(element);
-        std::vector<Scalar> values;
-        localFunctionSpace.vread(globalSol, values);
+        std::vector<Scalar> values(localFunctionSpace.size());
+        for (typename LocalFunctionSpace::Traits::IndexContainer::size_type k=0; k<localFunctionSpace.size(); ++k)
+        {
+            const typename GridFunctionSpace::Ordering::Traits::DOFIndex& di = localFunctionSpace.dofIndex(k);
+            typename GridFunctionSpace::Ordering::Traits::ContainerIndex ci;
+            ordering.mapIndex(di.view(),ci);
+            values[k] = globalSol[ci];
+        }
 
         // local function space for solid displacement
         typedef typename LocalFunctionSpace::template Child<1>::Type DisplacementLFS;

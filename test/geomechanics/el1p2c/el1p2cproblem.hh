@@ -53,7 +53,7 @@ namespace Dumux
     {
 	typedef Dune::YaspGrid<3> type;
     };
-    
+
     // Set the problem property
     SET_PROP(El1P2CProblem, Problem)
     {
@@ -83,9 +83,8 @@ namespace Dumux
     // Include stabilization term to prevent pressure oscillations
     SET_BOOL_PROP(El1P2CProblem, ImplicitWithStabilization, true);
 
-// Check if DUNE-PDELab is available and has been patched for our needs.
+    // use the algebraic multigrid
     SET_TYPE_PROP(El1P2CProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
-
 }
 
 /*!
