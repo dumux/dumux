@@ -33,6 +33,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/implicit/co2/co2volumevariables.hh>
+#include <dumux/implicit/co2/co2model.hh>
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/box/intersectiontovertexbc.hh>
@@ -81,6 +82,7 @@ SET_SCALAR_PROP(HeterogeneousNIProblem, ProblemSalinity, 1e-1);
 
 //! the CO2 Model and VolumeVariables properties
 SET_TYPE_PROP(HeterogeneousNIProblem, IsothermalVolumeVariables, CO2VolumeVariables<TypeTag>);
+SET_TYPE_PROP(HeterogeneousNIProblem, IsothermalModel, CO2Model<TypeTag>);
 
 // Use Moles
 SET_BOOL_PROP(HeterogeneousNIProblem, UseMoles, false);
