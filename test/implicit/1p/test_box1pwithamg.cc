@@ -23,9 +23,6 @@
  */
 #include "config.h"
 
-
-// Check if DUNE-PDELab has been patched for our needs.
-
 #include "1ptestproblem.hh"
 #include <dumux/common/start.hh>
 

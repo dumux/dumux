@@ -28,6 +28,12 @@ cd dune-localfunctions
 git checkout releases/2.3
 cd ..
 
+# download dune-typetree
+git clone http://git.dune-project.org/repositories/dune-typetree
+cd dune-typetree
+git checkout releases/2.3
+cd ..
+
 # download dune-PDELab
 git clone http://git.dune-project.org/repositories/dune-pdelab
 cd dune-pdelab
