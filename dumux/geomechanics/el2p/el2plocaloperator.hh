@@ -460,7 +460,7 @@ public:
                         {
                             // get local coordinate for this degree of freedom
 //                             this doesn't work: DimVector local = isIt->geometryInInside().global(face_refElement.position(j,codim-1));
-                            DimVector local = refElement.template mapping<1>(faceIdx).global(face_refElement.position(j, codim-1));
+                            DimVector local = refElement.template geometry<1>(faceIdx).global(face_refElement.position(j, codim-1));
 
                             GlobalPosition globalPos = eg.geometry().global(local);
 
