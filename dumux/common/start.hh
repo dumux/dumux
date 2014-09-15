@@ -23,6 +23,7 @@
 #ifndef DUMUX_START_HH
 #define DUMUX_START_HH
 
+#include <ctime>
 #include <iostream>
 
 #include <dune/common/parametertreeparser.hh>
