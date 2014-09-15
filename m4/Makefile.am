@@ -7,8 +7,7 @@ M4FILES = \
 	ac_prog_pdflatex.m4 \
 	cxx0x_constexpr.m4 \
 	dumux.m4 \
-	dumux_quad.m4 \
-	patched_pdelab.m4
+	dumux_quad.m4
 
 aclocaldir = $(datadir)/aclocal
 aclocal_DATA = $(M4FILES)
