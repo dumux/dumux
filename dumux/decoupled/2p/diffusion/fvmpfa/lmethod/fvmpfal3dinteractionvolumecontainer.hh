@@ -399,9 +399,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
             ElementPointer outside = isIt->outside();
             int globalIdxJ = problem_.variables().index(*outside);
 
-            if (levelI == outside.level() && globalIdx > globalIdxJ)
+            if (levelI == outside->level() && globalIdx > globalIdxJ)
                 takeIntersection = false;
-            if (levelI < outside.level())
+            if (levelI < outside->level())
                 takeIntersection = false;
         }
 

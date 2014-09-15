@@ -179,7 +179,7 @@ public:
 				= grid_.localIdSet().subId(*irregularIs.inside(),
 											irregularIs.indexInInside(), 1);
     	// mapping is only unique from smaller cell (if *inside and not *outside)
-    	if (irregularIs.inside().level() < irregularIs.outside().level())
+    	if (irregularIs.inside()->level() < irregularIs.outside()->level())
 		{
     		// IS is regarded from larger cell: get the unique number as seen from smaller
     		intersectionID
@@ -226,7 +226,7 @@ public:
                                             irregularIs.indexInInside(), 1);
 
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside().level() < irregularIs.outside().level())
+        if (irregularIs.inside()->level() < irregularIs.outside()->level())
         {
             // IS is regarded from larger cell: get the unique number as seen from smaller
             intersectionID
@@ -291,7 +291,7 @@ public:
                                             irregularIs.indexInInside(), 1);
 
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside().level() < irregularIs.outside().level())
+        if (irregularIs.inside()->level() < irregularIs.outside()->level())
         {
             // IS is regarded from larger cell: get the unique ID as seen from smaller
             intersectionID
@@ -342,7 +342,7 @@ public:
                                             irregularIs.indexInInside(), 1);
 
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside().level() < irregularIs.outside().level())
+        if (irregularIs.inside()->level() < irregularIs.outside()->level())
         {
             // IS is regarded from larger cell: get the unique ID as seen from smaller
             intersectionID
@@ -385,7 +385,7 @@ public:
                 = grid_.localIdSet().subId(*irregularIs.inside(),
                                             irregularIs.indexInInside(), 1);
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside().level() < irregularIs.outside().level())
+        if (irregularIs.inside()->level() < irregularIs.outside()->level())
         {
             // IS is regarded from larger cell: get the unique number as seen from smaller
             intersectionID
@@ -471,7 +471,7 @@ public:
                 = grid_.localIdSet().subId(*irregularIs.inside(),
                                             irregularIs.indexInInside(), 1);
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside().level() < irregularIs.outside().level())
+        if (irregularIs.inside()->level() < irregularIs.outside()->level())
         {
             // IS is regarded from larger cell: get the unique number as seen from smaller
             intersectionID

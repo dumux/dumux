@@ -176,7 +176,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteraction
         for (int i = 0; i < 8; i++)
         {
             levelIdx[i][0] = i;
-            levelIdx[i][1] = interactionVolume.getSubVolumeElement(i).level();
+            levelIdx[i][1] = interactionVolume.getSubVolumeElement(i)->level();
         }
 
         std::sort(levelIdx.begin(), levelIdx.end(), sort_compare);
@@ -330,7 +330,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
     {
         levelIdx[i][0] = i;
         if (interactionVolume.hasSubVolumeElement(i))
-            levelIdx[i][1] = interactionVolume.getSubVolumeElement(i).level();
+            levelIdx[i][1] = interactionVolume.getSubVolumeElement(i)->level();
         else
             levelIdx[i][1] = -1;
     }

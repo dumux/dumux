@@ -363,8 +363,8 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             cflFluxFunctionCoatsOut_ = 0;
             return;
         }
-        
-        if (element.level() != neighbor.level())
+
+        if (element->level() != neighbor->level())
         {
             rejectForTimeStepping_ = true;
             cflFluxFunctionCoatsIn_ = 0;

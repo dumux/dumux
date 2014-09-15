@@ -257,7 +257,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                 rowSize++;
 
                 // if mpfa is used, more entries might be needed if both halfedges are regarded
-                if (enableMPFA && enableSecondHalfEdge && isIt->outside()->level()!=eIt.level())
+                if (enableMPFA && (enableSecondHalfEdge && isIt->outside()->level() != eIt->level()))
                 {
                     GlobalPosition globalPos3(0.);
                     int globalIdx3=-1;
@@ -324,7 +324,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                 this->A_.addindex(globalIdxI, globalIdxJ);
 
                 // if mpfa is used, more entries might be needed if both halfedges are regarded
-                if (enableMPFA && enableSecondHalfEdge && isIt->outside()->level()!=eIt.level())
+                if (enableMPFA && (enableSecondHalfEdge && isIt->outside()->level() != eIt->level()))
                 {
                     GlobalPosition globalPos3(0.);
                     int globalIdx3=-1;

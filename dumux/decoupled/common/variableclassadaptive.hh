@@ -114,7 +114,7 @@ public:
                     adaptedValues.count = 1;
                 }
                 //Average in father
-                if (eIt.level() > 0)
+                if (eIt->level() > 0)
                 {
                     ElementPointer epFather = eIt->father();
                     AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
@@ -169,7 +169,7 @@ public:
                 else
                 {
                     // value is not in map, interpolate from father element
-                    if (eIt.level() > 0)
+                    if (eIt->level() > 0)
                     {
                         ElementPointer epFather = eIt->father();
 

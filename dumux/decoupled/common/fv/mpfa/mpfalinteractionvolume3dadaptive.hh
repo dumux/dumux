@@ -264,7 +264,7 @@ public:
     void setSubVolumeElement(ElementPointer pointer, int subVolumeIdx)
     {
             ParentType::setSubVolumeElement(pointer, subVolumeIdx);
-            existingLevel_.insert(pointer.level());
+            existingLevel_.insert(pointer->level());
     }
 
     //! Store the type of hanging-node-interaction volume

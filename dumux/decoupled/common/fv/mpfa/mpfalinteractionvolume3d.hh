@@ -578,7 +578,7 @@ public:
             if (elements_[i].size() > 0)
             {
             std::cout<<"element "<<i<<":\n";
-            std::cout<<"element level: "<<elements_[i][0].level()<<"\n";
+            std::cout<<"element level: "<<elements_[i][0]->level()<<"\n";
             std::cout<<"element position: "<<elements_[i][0]->geometry().center()<<"\n";
             std::cout<<"element volume: "<<elements_[i][0]->geometry().volume()<<"\n";
             std::cout<<"face indices on element: "<<indexOnElement_[i]<<"\n";
@@ -618,7 +618,7 @@ public:
 //            if (elements_[i].size() > 0)
 //            {
 //            dataFile<<"element "<<i<<":\n";
-//            dataFile<<"element level: "<<elements_[i][0].level()<<"\n";
+//            dataFile<<"element level: "<<elements_[i][0]->level()<<"\n";
 //            dataFile<<"element position: "<<elements_[i][0]->geometry().center()<<"\n";
 //            dataFile<<"element volume: "<<elements_[i][0]->geometry().volume()<<"\n";
 //            dataFile<<"face indices on element: "<<indexOnElement_[i]<<"\n";

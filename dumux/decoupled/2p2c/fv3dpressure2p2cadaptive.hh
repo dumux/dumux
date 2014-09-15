@@ -364,7 +364,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                 rowSize++;
 
                 // special treatment for hanging nodes in the mpfa case
-                if (enableMPFA && eIt.level() < isIt->outside()->level())
+                if (enableMPFA && (eIt->level() < isIt->outside()->level()))
                 {
                     // each cell might have 4 hanging nodes with 4 irregular neighbors each
                     // get global ID of Interface from larger cell
@@ -407,7 +407,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                     int globalIdxJ = problem().variables().index(*isIt->outside());
 
                     // if mpfa is used, more entries might be needed if all interactionRegions are regarded
-                    if (isIt->outside()->level() > eIt.level()) //look from larger cell
+                    if (isIt->outside()->level() > eIt->level()) //look from larger cell
                     {
                         VertexPointer outerCornerPtr(isIt->inside()->template subEntity<dim>(0)); //initialize with rubbish
                         // prepare additional pointer to cells
@@ -602,7 +602,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixIndices()
                 this->A_.addindex(globalIdxI, globalIdxJ);
 
                 // special treatment for hanging nodes in the mpfa case
-                if (enableMPFA && eIt.level() < isIt->outside()->level())
+                if (enableMPFA && (eIt->level() < isIt->outside()->level()))
                 {
                     // prepare stuff to enter transmissibility calculation
                     GlobalPosition globalPos3(0.);
@@ -1353,7 +1353,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 
     // determine ID of intersection seen from larger cell
     int intersectionID = 0;
-    if(isIt->inside().level() < isIt->outside().level())
+    if(isIt->inside()->level() < isIt->outside()->level())
         intersectionID = problem().grid().localIdSet().subId(*eIt,
                 isIt->indexInInside(), 1);
     else

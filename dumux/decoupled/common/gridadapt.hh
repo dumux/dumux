@@ -269,7 +269,7 @@ public:
                             {
                                 ElementPointer outside = is->outside();
                                 if ((problem_.grid().getMark(*outside) > 0)
-                                    || outside.level() > eIt.level())
+                                    || outside->level() > eIt->level())
                                 {
                                     coarsenPossible = false;
                                 }
@@ -374,8 +374,8 @@ private:
             if (outside->partitionType() == Dune::GhostEntity)
                 continue;
 
-            if ((outside.level()<levelMax_)
-                && (outside.level()<entity.level()))
+            if ((outside->level() < levelMax_)
+                && (outside->level() < entity.level()))
             {
                 problem_.grid().mark(1, *outside);
                 ++marked_;
