@@ -23,8 +23,9 @@
 #ifndef DUMUX_CC_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_CC_ELEMENT_VOLUME_VARIABLES_HH
 
-#include "ccproperties.hh"
+#include <dune/common/version.hh>
 
+#include "ccproperties.hh"
 
 namespace Dumux
 {
@@ -104,7 +105,11 @@ public:
                 || elemBCTypes.hasNeumann() 
                 || elemBCTypes.hasOutflow())
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                this->resize(numNeighbors + element.subEntities(1));
+#else
                 this->resize(numNeighbors + element.template count<1>());
+#endif
 
                 // add volume variables for the boundary faces
                 IntersectionIterator isIt = problem.gridView().ibegin(element);

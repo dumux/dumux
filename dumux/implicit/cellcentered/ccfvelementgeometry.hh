@@ -24,6 +24,7 @@
 #ifndef DUMUX_CC_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_CC_FV_ELEMENTGEOMETRY_HH
 
+#include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
@@ -211,7 +212,11 @@ public:
         if (onBoundary)
         {
             ElementPointer elementPointer(element);
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            for (int bfIdx = 0; bfIdx < element.subEntities(1); bfIdx++)
+#else
             for (int bfIdx = 0; bfIdx < element.template count<1>(); bfIdx++)
+#endif
             {
                 boundaryFace[bfIdx].j = numNeighbors + bfIdx;
                 boundaryFace[bfIdx].fapIndices[1] = boundaryFace[bfIdx].j;

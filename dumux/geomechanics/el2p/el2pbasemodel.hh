@@ -23,6 +23,7 @@
 #ifndef DUMUX_ELASTIC2P_BASE_MODEL_HH
 #define DUMUX_ELASTIC2P_BASE_MODEL_HH
 
+#include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
 #include <dune/istl/bvector.hh>
 
@@ -135,7 +136,11 @@ public:
         if (!isBox || !enableHints_)
             return;
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int n = element.subEntities(dim);
+#else
         int n = element.template count<dim>();
+#endif
         prevVolVars.resize(n);
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
@@ -158,7 +163,11 @@ public:
         if (!isBox || !enableHints_)
             return;
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int n = element.subEntities(dim);
+#else
         int n = element.template count<dim>();
+#endif
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
             int globalIdx = vertexMapper().map(element, i, dim);
@@ -228,7 +237,12 @@ public:
 
             if (isBox)
             {
-                for (int i = 0; i < eIt->template count<dim>(); ++i) {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                for (int i = 0; i < eIt->subEntities(dim); ++i)
+#else
+                for (int i = 0; i < eIt->template count<dim>(); ++i)
+#endif
+                {
                     int globalI = vertexMapper().map(*eIt, i, dim);
                     residual[globalI] += localResidual().residual(i);
                 }
@@ -277,7 +291,11 @@ public:
 
                 if (isBox)
                 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                    for (int i = 0; i < eIt->subEntities(dim); ++i)
+#else
                     for (int i = 0; i < eIt->template count<dim>(); ++i)
+#endif
                         storage += localResidual().storageTerm()[i];
                 }
                 else
