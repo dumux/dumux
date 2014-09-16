@@ -11,8 +11,8 @@ CURDIR=doc/handbook
 handbookdir=$(docdir)/handbook
 handbook_DATA = dumux-handbook.pdf
 
-CLEANFILES := $(wildcard *.aux) $(wildcard *.bbl) $(wildcard *.blg) $(wildcard *.log) $(wildcard *.out) $(wildcard *.toc) $(wildcard *.dvi) $(wildcard *.ps)
-CLEANFILES +:= $(wildcard *.4ct) $(wildcard *.4tc) $(wildcard *.css) $(wildcard *.idv) $(wildcard *.idx) $(wildcard *.lg) $(wildcard *.tid) $(wildcard *.tmp) $(wildcard *.tms) $(wildcard *.xref)
+CLEANFILES := $(wildcard *.aux) $(wildcard *.bbl) $(wildcard *.blg) $(wildcard *.log) $(wildcard *.out) $(wildcard *.toc) $(wildcard *.dvi) $(wildcard *.ps) \
+  $(wildcard *.4ct) $(wildcard *.4tc) $(wildcard *.css) $(wildcard *.idv) $(wildcard *.idx) $(wildcard *.lg) $(wildcard *.tid) $(wildcard *.tmp) $(wildcard *.tms) $(wildcard *.xref)
 CLEANFILES += $(DOCS)
 
 doc: $(TEXSOURCE)
