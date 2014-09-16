@@ -29,6 +29,7 @@
 #include<dune/common/fvector.hh>
 #include<dune/common/fmatrix.hh>
 #include<dune/common/exceptions.hh>
+#include<dune/common/version.hh>
 #include<dune/geometry/type.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/mcmgmapper.hh>
@@ -135,7 +136,11 @@ public:
         ElementIterator eEndIt = gridView_.template end<0>();
         for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numFaces = eIt->subEntities(1);
+#else
             int numFaces = eIt->template count<1>();
+#endif
 
             for (int i = 0; i < numFaces; i++)
             {
@@ -162,7 +167,11 @@ public:
         // LOOP 2 : insert the nonzeros
         for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numFaces = eIt->subEntities(1);
+#else
             int numFaces = eIt->template count<1>();
+#endif
 
             for (int i = 0; i < numFaces; i++)
             {
@@ -250,7 +259,11 @@ public:
         ElementIterator eEndIt = gridView_.template end<0>();
         for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            unsigned int numFaces = eIt->subEntities(1);
+#else
             unsigned int numFaces = eIt->template count<1>();
+#endif
 
             // get local to global id map
             for (unsigned int k = 0; k < numFaces; k++)
@@ -287,7 +300,11 @@ public:
         // run over all leaf elements
         for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            unsigned int numFaces = eIt->subEntities(1);
+#else
             unsigned int numFaces = eIt->template count<1>();
+#endif
 
             // get local to global id map
             for (unsigned int k = 0; k < numFaces; k++)

@@ -27,6 +27,7 @@
 #include <string>
 
 #include <dune/common/fvector.hh>
+#include <dune/common/version.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
@@ -82,7 +83,11 @@ public:
             double min=1e100;
             int imin=-1;
             Dune::GeometryType geomType = element.type();
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int n = element.subEntities(dim);
+#else
             int n = element.template count<dim>();
+#endif
             for (int i=0; i < n; ++i)
             {
                 Dune::FieldVector<ctype,dim> local =

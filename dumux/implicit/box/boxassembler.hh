@@ -23,6 +23,8 @@
 #ifndef DUMUX_BOX_ASSEMBLER_HH
 #define DUMUX_BOX_ASSEMBLER_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/common/exceptions.hh>
 #include <dumux/implicit/common/implicitassembler.hh>
 #include <dumux/parallel/vertexhandles.hh>
@@ -101,7 +103,12 @@ private:
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
+
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numVertices = eIt->subEntities(dim);
+#else
             int numVertices = eIt->template count<dim>();
+#endif
             for (int i=0; i < numVertices; ++i) {
                 int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 if (this->vertexColor_[globalI] == ParentType::Red) {
@@ -127,7 +134,11 @@ private:
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numVertices = eIt->subEntities(dim);
+#else
             int numVertices = eIt->template count<dim>();
+#endif
             for (int i = 0; i < numVertices; ++i) {
                 int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is already red, don't recolor it to
@@ -159,7 +170,11 @@ private:
             // check whether the element features a yellow
             // (resp. orange at this point) vertex
             bool isYellow = false;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numVertices = eIt->subEntities(dim);
+#else
             int numVertices = eIt->template count<dim>();
+#endif
             for (int i = 0; i < numVertices; ++i) {
                 int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 if (this->vertexColor_[globalI] == ParentType::Orange) {
@@ -181,7 +196,11 @@ private:
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numVertices = eIt->subEntities(dim);
+#else
             int numVertices = eIt->template count<dim>();
+#endif
             for (int i = 0; i < numVertices; ++i) {
                 int globalI = this->vertexMapper_().map(*eIt, i, dim);
                 // if a vertex is orange, recolor it to yellow!
@@ -230,7 +249,11 @@ private:
         const ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
             const Element &element = *eIt;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numVerticesLocal = element.subEntities(dim);
+#else
             int numVerticesLocal = element.template count<dim>();
+#endif
 
             // if the element is not in the interior or the process
             // border, all dofs just contain main-diagonal entries
@@ -297,7 +320,11 @@ private:
 
         this->model_().localJacobian().assemble(element);
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int numVerticesLocal = element.subEntities(dim);
+#else
         int numVerticesLocal = element.template count<dim>();
+#endif
         for (int i=0; i < numVerticesLocal; ++ i) {
             int globI = this->vertexMapper_().map(element, i, dim);
 
@@ -336,7 +363,11 @@ private:
     {
         this->model_().localResidual().eval(element);
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int numVerticesLocal = element.subEntities(dim);
+#else
         int numVerticesLocal = element.template count<dim>();
+#endif
         for (int i = 0; i < numVerticesLocal; ++ i) {
             int globI = this->vertexMapper_().map(element, i, dim);
 
@@ -350,7 +381,11 @@ private:
     // "assemble" a ghost element
     void assembleGhostElement_(const Element &element)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int numVerticesLocal = element.subEntities(dim);
+#else
         int numVerticesLocal = element.template count<dim>();
+#endif
         for (int i=0; i < numVerticesLocal; ++i) {
             const VertexPointer vp = element.template subEntity<dim>(i);
 

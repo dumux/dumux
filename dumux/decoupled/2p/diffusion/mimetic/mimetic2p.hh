@@ -34,6 +34,7 @@
 #include<sstream>
 
 #include<dune/common/exceptions.hh>
+#include<dune/common/version.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/geometry/type.hh>
 #include<dune/geometry/quadraturerules.hh>
@@ -181,7 +182,11 @@ public:
      */
     void assemble(const Element& element, int k = 1)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        unsigned int numFaces = element.subEntities(1);
+#else
         unsigned int numFaces = element.template count<1>();
+#endif
         this->setcurrentsize(numFaces);
 
         // clear assemble data
@@ -217,7 +222,11 @@ public:
      */
     void assembleBoundaryCondition(const Element& element, int k = 1)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        unsigned int numFaces = element.subEntities(1);
+#else
         unsigned int numFaces = element.template count<1>();
+#endif
         this->setcurrentsize(numFaces);
 
         // clear assemble data
@@ -234,7 +243,11 @@ public:
     void completeRHS(const Element& element, Dune::FieldVector<int, 2*dim>& local2Global, Vector& f)
     {
         int globalIdx = problem_.variables().index(element);
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        unsigned int numFaces = element.subEntities(1);
+#else
         unsigned int numFaces = element.template count<1>();
+#endif
 
         Dune::FieldVector<Scalar, 2 * dim> F(0.);
         Scalar dInv = 0.;
@@ -401,7 +414,11 @@ private:
 template<class TypeTag>
 void MimeticTwoPLocalStiffness<TypeTag>::assembleV(const Element& element, int)
 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+    unsigned int numFaces = element.subEntities(1);
+#else
     unsigned int numFaces = element.template count<1>();
+#endif
     this->setcurrentsize(numFaces);
 
     int globalIdx = problem_.variables().index(element);
@@ -453,7 +470,11 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
         Scalar& dInv,
         Scalar& qmean)
 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+    unsigned int numFaces = element.subEntities(1);
+#else
     unsigned int numFaces = element.template count<1>();
+#endif
     this->setcurrentsize(numFaces);
 
     // get global coordinate of cell center

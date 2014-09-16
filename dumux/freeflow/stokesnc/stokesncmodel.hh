@@ -24,6 +24,8 @@
 #ifndef DUMUX_STOKESNC_MODEL_HH
 #define DUMUX_STOKESNC_MODEL_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/freeflow/stokes/stokesmodel.hh>
 
 #include "stokesnclocalresidual.hh"
@@ -136,7 +138,11 @@ public:
             fvGeometry.update(this->gridView_(), *elemIt);
             elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numLocalVerts = elemIt->subEntities(dim);
+#else
             int numLocalVerts = elemIt->template count<dim>();
+#endif
             for (int i = 0; i < numLocalVerts; ++i)
             {
                 int globalIdx = this->vertexMapper().map(*elemIt, i, dim);

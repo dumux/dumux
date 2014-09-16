@@ -361,7 +361,11 @@ public:
             elemVolVars.update(this->problem_(), *eIt, fvGeometry, false);
 
             // loop over all local vertices of the cell
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numScv = eIt->subEntities(dim);
+#else
             int numScv = eIt->template count<dim>();
+#endif
 
             for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
             {

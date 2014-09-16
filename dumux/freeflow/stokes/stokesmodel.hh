@@ -24,6 +24,8 @@
  * \brief Base class for all models which use the Stokes box model.
  */
 
+#include <dune/common/version.hh>
+
 #include <dumux/implicit/common/implicitmodel.hh>
 
 #include "stokeslocalresidual.hh"
@@ -171,7 +173,11 @@ public:
             fvGeometry.update(this->gridView_(), *eIt);
             elemBcTypes.update(this->problem_(), *eIt);
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int numLocalVerts = eIt->subEntities(dim);
+#else
             int numLocalVerts = eIt->template count<dim>();
+#endif
             for (int i = 0; i < numLocalVerts; ++i)
             {
                 int globalIdx = this->vertexMapper().map(*eIt, i, dim);
