@@ -55,6 +55,7 @@ public:
     /*!
      * \brief The capillary pressure-saturation curve.
      *
+     * \param params Array of parameters
      * \param Sw Effective saturation of of the wetting phase \f$\overline{S}_w\f$
      */
     static Scalar pc(const Params &params, Scalar Sw)
@@ -118,6 +119,7 @@ public:
     /*!
      * \brief The relative permeability for the wetting phase.
      *
+     * \param params Array of parameters
      * \param Sw The mobile saturation of the wetting phase.
      */
     static Scalar krw(const Params &params, Scalar Sw)
@@ -128,6 +130,7 @@ public:
     /*!
      * \brief The relative permeability for the non-wetting phase.
      *
+     * \param params Array of parameters
      * \param Sw The mobile saturation of the wetting phase.
      */
     static Scalar krn(const Params &params, Scalar Sw)

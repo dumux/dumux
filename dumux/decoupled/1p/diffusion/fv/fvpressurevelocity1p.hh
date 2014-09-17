@@ -59,7 +59,7 @@ template<class TypeTag> class FVPressureVelocity1P: public FVPressure1P<TypeTag>
 public:
     /*! \brief Initializes the pressure model
      *
-     * \copydetails ParentType::initialize()
+     * \copydetails FVPressure::initialize()
      */
     void initialize()
     {
@@ -69,7 +69,7 @@ public:
 
     /*! \brief Pressure update
      *
-     * \copydetails ParentType::update()
+     * \copydetails FVPressure::update()
      *
      */
     void update()

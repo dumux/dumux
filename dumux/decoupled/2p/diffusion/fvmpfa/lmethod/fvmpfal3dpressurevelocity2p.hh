@@ -128,7 +128,7 @@ public:
 
     /*! \brief Initializes pressure and velocity
      *
-     * \copydetails ParentType::initialize()
+     * \copydetails FVPressure::initialize()
      */
     void initialize(bool solveTwice = true)
     {
@@ -155,8 +155,7 @@ public:
 
     /*! \brief Pressure and velocity update
      *
-     * \copydetails ParentType::update()
-     *
+     * \copydetails FVPressure::update()
      */
     void update()
     {

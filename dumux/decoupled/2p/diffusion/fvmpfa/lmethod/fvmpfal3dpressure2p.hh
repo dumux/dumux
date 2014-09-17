@@ -176,7 +176,7 @@ public:
 
     /*! \brief Initializes the pressure model
      *
-     * \copydetails ParentType::initialize()
+     * \copydetails FVPressure::initialize()
      */
     void initialize(bool solveTwice = true)
     {
@@ -269,8 +269,7 @@ public:
 
     /*! \brief Pressure update
      *
-     * \copydetails ParentType::update()
-     *
+     * \copydetails FVPressure::update()
      */
     void update()
     {

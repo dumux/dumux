@@ -32,8 +32,8 @@
 namespace Dumux
 {
 
-//! \ingroup Adaptive2p2c mpfa
-/*! \brief Interactionvolume container for compositional adaptive 3-d (using MPFA L-method) Model
+/*! \ingroup Adaptive2p2c mpfa
+ * \brief Interactionvolume container for compositional adaptive 3-d (using MPFA L-method) Model
  *
  * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.
  *

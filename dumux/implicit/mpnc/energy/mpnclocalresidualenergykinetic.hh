@@ -583,13 +583,14 @@ public:
         											+
         									(1.-massUpwindWeight_) * transportedThingDn ) ;
     }
+
     /*! \brief The heat conduction in the phase
-	*
-	*        \param flux The flux over the SCV (sub-control-volume) face for each component
-	*        \param fluxVars The flux Variables
-	*        \param elemVolVars The volume variables of the current element
-	*        \param phaseIdx The local index of the phases
-	*/
+     *
+     *  \param flux The flux over the SCV (sub-control-volume) face for each component
+     *  \param fluxVars The flux Variables
+     *  \param elemVolVars The volume variables of the current element
+     *  \param energyEqIdx The index of the phase energy equation
+     */
     static void computeHeatConduction(PrimaryVariables & flux,
                                       const FluxVariables & fluxVars,
                                       const ElementVolumeVariables & elemVolVars,

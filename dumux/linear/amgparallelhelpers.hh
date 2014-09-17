@@ -499,8 +499,7 @@ class EntityExchanger
 
 public:
     /*! \brief Constructor. Sets up the local to global relations.
-
-      \param[in] gridView The grid view to operate on.
+      \param[in] problem The problem to be solved.
     */
     EntityExchanger(const Problem& problem)
     : problem_(problem)
@@ -633,7 +632,7 @@ public:
         }
 
         /** @brief Constructor
-            @param[in] gridView Grid view.
+            @param[in] problem The problem to be solved.
             @param[in] g2i Global to local index map.
             @param[in] i2g Local to global index map.
             @param[in] A Matrix to operate on.
@@ -739,7 +738,7 @@ public:
         }
 
         /** @brief Constructor
-            @param[in] gridView Grid view.
+            @param[in] problem The problem to be solved.
             @param[in] g2i Global to local index map.
             @param[in] i2g Local to global index map.
             @param[in] A Matrix to operate on.

@@ -120,7 +120,7 @@ public:
 
     /*! \brief Pressure update
      *
-     *  \copydetails FVPressure2P::update()
+     *  \copydetails FVPressure::update()
      *
      *  The grid-adaptive implementation also reconstructs the velocity directly after the pressure update.
      *  This is necessary to make sure the hanging nodes are treated correctly!
