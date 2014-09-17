@@ -24,7 +24,7 @@
 #ifndef DUMUX_2P2CNI_COUPLING_LOCAL_RESIDUAL_HH
 #define DUMUX_2P2CNI_COUPLING_LOCAL_RESIDUAL_HH
 
-#include <dumux/implicit/2p2cni/2p2cnilocalresidual.hh>
+#include <dumux/implicit/nonisothermal/nilocalresidual.hh>
 
 #define VELOCITY_OUTPUT 1 // uncomment this line if an output of the velocity is needed
 
@@ -37,9 +37,9 @@ namespace Dumux
  *        a coupled application.
  */
 template<class TypeTag>
-class TwoPTwoCNICouplingLocalResidual : public TwoPTwoCNILocalResidual<TypeTag>
+class TwoPTwoCNICouplingLocalResidual : public NILocalResidual<TypeTag>
 {
-    typedef TwoPTwoCNILocalResidual<TypeTag> ParentType;
+    typedef NILocalResidual<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

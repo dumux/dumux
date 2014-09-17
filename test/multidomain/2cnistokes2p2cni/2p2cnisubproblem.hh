@@ -30,7 +30,7 @@
 #endif
 
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/implicit/2p2cni/2p2cnimodel.hh>
+#include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/multidomain/couplinglocalresiduals/2p2cnicouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/common/multidomainlocaloperator.hh>
