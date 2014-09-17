@@ -24,14 +24,15 @@
 #ifndef DUMUX_EL2P_TESTPROBLEM_HH
 #define DUMUX_EL2P_TESTPROBLEM_HH
 
+#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
-
-#include "el2pco2tables.hh"
-#include <dumux/implicit/common/implicitporousmediaproblem.hh>
-#include <dumux/geomechanics/el2p/el2pmodel.hh>
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
 
+#include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
+#include <dumux/implicit/common/implicitporousmediaproblem.hh>
+#include <dumux/geomechanics/el2p/el2pmodel.hh>
+
+#include "el2pco2tables.hh"
 #include "el2pspatialparams.hh"
 
 namespace Dumux
@@ -400,7 +401,11 @@ public:
         std::vector<ShapeValue> shapeVal;
         localFiniteElement.localBasis().evaluateFunction(localPos, shapeVal);
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        for (int i = 0; i < element.subEntities(dim); i++)
+#else
         for (int i = 0; i < element.template count<dim>(); i++)
+#endif
         {
             int globalIdx = this->vertexMapper().map(element, i, dim);
             pValue += pInit_[globalIdx] * shapeVal[i];
