@@ -24,8 +24,11 @@
 #ifndef DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 
+#if HAVE_ALUGRID
 #include <dune/grid/alugrid.hh>
-// #include <dune/grid/uggrid.hh>
+#elif HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/io/cubegridcreator.hh>
 
@@ -34,7 +37,6 @@
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p/impes/gridadaptionindicator2p.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
@@ -53,7 +55,7 @@ NEW_TYPE_TAG(Adaptive2p2c2d, INHERITS_FROM(DecoupledTwoPTwoCAdaptive,Test2P2CSpa
 // Set the grid type
 SET_PROP(Adaptive2p2c2d, Grid)
 {
-#if HAVE_ALUGRID
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 // #elseif HAVE_UG
 //     typedef Dune::UGGrid<2> type; //would need a DGF file to specify closure

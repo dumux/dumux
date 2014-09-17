@@ -33,9 +33,11 @@
 // The DUNE grid used
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid.hh>
+#else HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
 #else
 #include <dune/grid/yaspgrid.hh>
-#endif // HAVE_ALUGRID
+#endif
 
 // Spatially dependent parameters
 #include "ex5_tutorialspatialparams_coupled.hh"
@@ -59,7 +61,7 @@ SET_PROP(Ex5TutorialProblemCoupled, Problem) /*@\label{tutorial-coupled:set-prob
 { typedef Dumux::Ex5TutorialProblemCoupled<TypeTag> type;};
 
 // Set grid and the grid creator to be used
-#if HAVE_ALUGRID
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(Ex5TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid}@*/
 #else
 SET_TYPE_PROP(Ex5TutorialProblemCoupled, Grid, Dune::YaspGrid<2>);

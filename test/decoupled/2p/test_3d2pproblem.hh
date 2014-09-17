@@ -25,15 +25,16 @@
 #define DUMUX_TEST_3D2P_PROBLEM_HH
 
 #if HAVE_ALUGRID
-
 #include <dune/grid/alugrid/3d/alugrid.hh>
+#elif HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+
 #include <dumux/io/cubegridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
-
-#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 
 #include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal3dpressureproperties2p.hh>
 #include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal3dpressureproperties2padaptive.hh>
@@ -41,7 +42,7 @@
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2padaptive.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressureproperties2p.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressureproperties2padaptive.hh>
-
+#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 #include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 
 #include "test_3d2pspatialparams.hh"
@@ -422,7 +423,5 @@ GlobalPosition inflowEdge_;
 GlobalPosition outflowEdge_;
 };
 } //end namespace
-
-#endif
 
 #endif

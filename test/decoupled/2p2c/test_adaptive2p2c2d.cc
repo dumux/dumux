@@ -55,7 +55,7 @@ void usage(const char *progName, const std::string &errorMsg)
 // The main function using the standard start procedure
 int main(int argc, char** argv)
 {
-#if HAVE_ALUGRID
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     typedef TTAG(Adaptive2p2c2d) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
 #else

@@ -67,7 +67,7 @@ SET_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid)
  public:
 #ifdef HAVE_UG
     typedef typename Dune::UGGrid<2> type;
-#elif HAVE_ALUGRID
+#elif HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 #else
 #error Required UG or ALUGrid.

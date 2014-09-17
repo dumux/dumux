@@ -51,8 +51,11 @@
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-//#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#ifdef HAVE_ALUGRID
 #include <dune/grid/alugrid.hh>
+#elif HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/implicit/mpnc/mpncmodelkinetic.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
@@ -83,7 +86,7 @@ NEW_TYPE_TAG(EvaporationAtmosphereProblem,
 // Set the grid type
 SET_PROP(EvaporationAtmosphereProblem, Grid)
 {
-#if HAVE_ALUGRID
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 #elif HAVE_UG
     typedef typename Dune::UGGrid<2> type;

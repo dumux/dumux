@@ -30,6 +30,9 @@
 #include <dune/common/parallel/mpihelper.hh>
 
 #include <dune/grid/io/file/dgfparser.hh>
+#ifdef HAVE_DUNE_ALUGRID
+#include <dune/alugrid/dgf.hh>
+#endif // HAVE_DUNE_ALUGRID
 
 #include "propertysystem.hh"
 #include "parameters.hh"

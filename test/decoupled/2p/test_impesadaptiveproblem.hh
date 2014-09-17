@@ -25,8 +25,11 @@
 #define DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 
 #if HAVE_ALUGRID
-
 #include <dune/grid/alugrid/2d/alugrid.hh>
+#elif HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+
 #include <dumux/io/cubegridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -268,6 +271,4 @@ private:
 };
 } //end namespace
 
-#endif
-
-#endif
+#endif // DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH

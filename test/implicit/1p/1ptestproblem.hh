@@ -30,6 +30,8 @@
 #endif
 #if HAVE_ALUGRID
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#elif HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
 #endif
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>

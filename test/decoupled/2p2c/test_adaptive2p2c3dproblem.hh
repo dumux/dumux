@@ -24,22 +24,18 @@
 #ifndef DUMUX_TEST_ADAPTIVE3D_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE3D_2P2C_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid.hh>
-#include <dumux/io/cubegridcreator.hh>
+#elif HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/common/math.hh>
 #include <dumux/decoupled/2p2c/2p2cadaptiveproperties.hh>
-
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p/impes/gridadaptionindicator2p.hh>
-
+#include <dumux/io/cubegridcreator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
@@ -58,7 +54,6 @@ NEW_TYPE_TAG(Adaptive2p2c3d, INHERITS_FROM(DecoupledTwoPTwoCAdaptive,Test2P2CSpa
 SET_PROP(Adaptive2p2c3d, Grid)
 {
     typedef  Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming> type;
-//    typedef Dune::UGGrid<3> type;  //would need a DGF file to specify closure
 };
 // set the GridCreator property
 SET_TYPE_PROP(Adaptive2p2c3d, GridCreator, CubeGridCreator<TypeTag>);
@@ -346,6 +341,4 @@ Scalar injectionrate_;
 };
 } //end namespace
 
-#endif
-
-#endif // HAVE_ALUGRID
+#endif // DUMUX_TEST_ADAPTIVE3D_2P2C_PROBLEM_HH

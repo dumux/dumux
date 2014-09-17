@@ -24,7 +24,7 @@
  */
 #include "config.h"
 
-#if HAVE_ALUGRID
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 
 #include "test_impesadaptiveproblem.hh"
 #include <dumux/common/start.hh>

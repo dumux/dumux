@@ -25,8 +25,10 @@
 #define DUMUX_TEST_MPFA2P_PROBLEM_HH
 
 #if HAVE_ALUGRID
-
 #include <dune/grid/alugrid/2d/alugrid.hh>
+#elif HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/io/cubegridcreator.hh>
 
@@ -500,6 +502,4 @@ McWhorterAnalytic<TypeTag> analyticSolution_;
 };
 } //end namespace
 
-#endif 
-
-#endif
+#endif // DUMUX_TEST_MPFA2P_PROBLEM_HH
