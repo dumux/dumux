@@ -24,10 +24,11 @@
 #ifndef DUMUX_MULTIDOMAIN_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_ASSEMBLER_HH
 
+#include <dune/pdelab/constraints/common/constraintsparameters.hh>
+#include <dune/pdelab/multidomain/constraints.hh>
+
 #include "multidomainproperties.hh"
 #include "multidomainpropertydefaults.hh"
-#include <dune/pdelab/constraints/constraintsparameters.hh>
-#include <dune/pdelab/multidomain/constraints.hh>
 
 namespace Dumux {
 

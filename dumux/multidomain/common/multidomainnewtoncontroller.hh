@@ -32,7 +32,7 @@ template <class TypeTag>
 class MultiDomainNewtonController;
 
 template <class TypeTag>
-class MultiDomainConvergenceWriter;
+struct MultiDomainConvergenceWriter;
 
 namespace Properties
 {
