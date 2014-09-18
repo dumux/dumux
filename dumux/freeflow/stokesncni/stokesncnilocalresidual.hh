@@ -54,6 +54,7 @@ class StokesncniLocalResidual : public StokesncLocalResidual<TypeTag>
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) }; // number of equations
     enum { numComponents = Indices::numComponents }; // number of components
     enum { energyEqIdx = Indices::energyEqIdx}; // equation indices
+    enum { phaseCompIdx = Indices::phaseCompIdx};
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -137,15 +138,31 @@ public:
         // diffusive component energy flux
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
         {
+            Scalar sumDiffusiveFluxes = 0;
             for (int compIdx=0; compIdx<numComponents; compIdx++)
             {
-                flux[energyEqIdx] -= fluxVars.moleFractionGrad(compIdx)[dimIdx]
-                                     * fluxVars.face().normal[dimIdx]
-                                     *(fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
-                                     * fluxVars.molarDensity()
-                                     * FluidSystem::molarMass(compIdx) // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s]
-                                     * fluxVars.componentEnthalpy(compIdx);
+                if (compIdx != phaseCompIdx)
+                {
+                    Valgrind::CheckDefined(fluxVars.moleFractionGrad(compIdx)[dimIdx]);
+                    Valgrind::CheckDefined(fluxVars.face().normal[dimIdx]);
+                    Valgrind::CheckDefined(fluxVars.diffusionCoeff(compIdx));
+                    Valgrind::CheckDefined(fluxVars.eddyDiffusivity());
+                    Valgrind::CheckDefined(fluxVars.molarDensity());
+                    Valgrind::CheckDefined(FluidSystem::molarMass(compIdx));
+                    Valgrind::CheckDefined(fluxVars.componentEnthalpy(compIdx));
+                    Scalar diffusiveFlux = fluxVars.moleFractionGrad(compIdx)[dimIdx]
+                                        * fluxVars.face().normal[dimIdx]
+                                        *(fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
+                                        * fluxVars.molarDensity();
+                    sumDiffusiveFluxes += diffusiveFlux;
+                    flux[energyEqIdx] -= diffusiveFlux * fluxVars.componentEnthalpy(compIdx)
+                                         * FluidSystem::molarMass(compIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s];
+                }
             }
+
+            // the diffusive flux of the phase component is the negative of the sum of the component fluxes
+            flux[energyEqIdx] += sumDiffusiveFluxes * fluxVars.componentEnthalpy(phaseCompIdx)
+                                 * FluidSystem::molarMass(phaseCompIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s];
         }
         Valgrind::CheckDefined(flux[energyEqIdx]);
     }
