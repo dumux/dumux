@@ -4,5 +4,6 @@ add_subdirectory("freeflow")
 add_subdirectory("geomechanics")
 add_subdirectory("implicit")
 add_subdirectory("material")
+add_subdirectory("multidomain")
 
 add_directory_test_target(_test_target)

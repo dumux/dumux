@@ -1,7 +1,20 @@
-# Test for 2cstokes2p2c can be performed by the following commands:
-# make test_2cstokes2p2c && ./test_2cstokes2p2c -ParameterFile test_references/test_2cstokes2p2c_reference.input | tee log_test.out
-# ../../../bin/runTest.sh ../../../bin/fuzzycomparevtu.py test_references/stokes2c-00043.vtu stokes2c-00043.vtu /usr/bin/echo " "
-# ../../../bin/runTest.sh ../../../bin/fuzzycomparevtu.py test_references/2p2c-00043.vtu 2p2c-00043.vtu /usr/bin/echo " "
-add_dumux_test(test_2cstokes2p2c test_2cstokes2p2c test_2cstokes2p2c
+# test: test_2cstokes2p2c_1ff
+add_dumux_test(test_2cstokes2p2c_1ff test_2cstokes2p2c test_2cstokes2p2c.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/2cstokes2p2c-ff-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/stokes2c-00007.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_2cstokes2p2c
-  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2cstokes2p2c.input)
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2cstokes2p2c_reference.input  
+  )
+add_dune_superlu_flags(test_2cstokes2p2c)
+add_dune_ug_flags(test_2cstokes2p2c)
+
+# test: test_2cstokes2p2c_2pm
+add_dumux_test(test_2cstokes2p2c_2pm test_2cstokes2p2c test_2cstokes2p2c.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/2cstokes2p2c-pm-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/2p2c-00007.vtu
+  echo "test_2cstokes2p2c_pm"
+  )

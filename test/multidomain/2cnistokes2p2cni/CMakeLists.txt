@@ -1,7 +1,20 @@
-# Test for 2cnistokes2p2cni can be performed by the following commands:
-# make test_2cnistokes2p2cni && ./test_2cnistokes2p2cni -ParameterFile test_references/test_2cnistokes2p2cni_reference.input | tee log_test.out
-# ../../../bin/runTest.sh ../../../bin/fuzzycomparevtu.py test_references/stokes2cni-00043.vtu stokes2cni-00043.vtu /usr/bin/echo " "
-# ../../../bin/runTest.sh ../../../bin/fuzzycomparevtu.py test_references/2p2cni-00043.vtu 2p2cni-00043.vtu /usr/bin/echo " "
-add_dumux_test(test_2cnistokes2p2cni test_2cnistokes2p2cni test_2cnistokes2p2cni
+# test: test_2cnistokes2p2cni_1ff
+add_dumux_test(test_2cnistokes2p2cni_1ff test_2cnistokes2p2cni test_2cnistokes2p2cni.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/2cnistokes2p2cni-ff-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/stokes2cni-00004.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_2cnistokes2p2cni
-  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2cnistokes2p2cni.input)
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2cnistokes2p2cni_reference.input
+  )
+add_dune_superlu_flags(test_2cnistokes2p2cni)
+add_dune_ug_flags(test_2cnistokes2p2cni)
+
+# test: test_2cnistokes2p2cni_2pm
+add_dumux_test(test_2cnistokes2p2cni_2pm test_2cnistokes2p2cni test_2cnistokes2p2cni.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/2cnistokes2p2cni-pm-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/2p2cni-00004.vtu
+  echo "test_2cnistokes2p2cni_pm"
+  )
