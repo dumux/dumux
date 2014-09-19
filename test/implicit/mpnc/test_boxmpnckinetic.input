@@ -1,12 +1,7 @@
-
-
-
-
 #############################################################
 #Configuration file for test_inputfile
 #############################################################
-                  
-                  
+
 #############################################################
 # Mandatory arguments											#
 #############################################################
@@ -23,7 +18,7 @@ MaxTimeStepSize		= 2e20 		# maximum allowed timestep size
 UseInterfaceMeshCreator = true
 
 #Name of the dgf file (grid)
-File =  ./grids/interfacedomain.dgf   # ./grids/evaporationatmosphere5x79.dgf # ./grids/interfacedomain.dgf
+File =  ./grids/interfacedomain.dgf   # ./grids/evaporationatmosphere5x79.dgf
 # for a quadratic dgf  and  for the log-graded mesh respectively
 
 Refinement = 0
