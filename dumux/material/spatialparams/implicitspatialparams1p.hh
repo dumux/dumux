@@ -84,8 +84,8 @@ public:
                Scalar K2) const
     {
         const Scalar K = Dumux::harmonicMean(K1, K2);
-        for (int i = 0; i < dimWorld; ++i) {
-            for (int j = 0; j < dimWorld; ++j)
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j)
                 result[i][j] = 0;
             result[i][i] = K;
         }
@@ -103,8 +103,8 @@ public:
     {
         // entry-wise harmonic mean. this is almost certainly wrong if
         // you have off-main diagonal entries in your permeabilities!
-        for (int i = 0; i < dimWorld; ++i)
-            for (int j = 0; j < dimWorld; ++j)
+        for (int i = 0; i < dim; ++i)
+            for (int j = 0; j < dim; ++j)
                 result[i][j] = harmonicMean(K1[i][j], K2[i][j]);
     }
 
