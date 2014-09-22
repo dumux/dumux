@@ -118,7 +118,7 @@ public:
      *
      * \param phaseIdx index of the phase
      */
-    DimVector velocity(const unsigned int phaseIdx) const
+    GlobalPosition velocity(const unsigned int phaseIdx) const
     { return velocity_[phaseIdx] ; }
 
     /*!
@@ -314,10 +314,10 @@ protected:
     const bool      onBoundary_;                //!< Specifying whether we are currently on the boundary of the simulation domain
     unsigned int    upstreamIdx_[numPhases] , downstreamIdx_[numPhases]; //!< local index of the upstream / downstream vertex
     Scalar          volumeFlux_[numPhases] ;    //!< Velocity multiplied with normal (magnitude=area)
-    DimVector       velocity_[numPhases] ;      //!< The velocity as determined by Darcy's law or by the Forchheimer relation
+    GlobalPosition  velocity_[numPhases] ;      //!< The velocity as determined by Darcy's law or by the Forchheimer relation
     Scalar          kGradPNormal_[numPhases] ;  //!< Permeability multiplied with gradient in potential, multiplied with normal (magnitude=area)
-    DimVector       kGradP_[numPhases] ; 		//!< Permeability multiplied with gradient in potential
-    DimVector       potentialGrad_[numPhases] ; //!< Gradient of potential, which drives flow
+    GlobalPosition  kGradP_[numPhases] ; //!< Permeability multiplied with gradient in potential
+    GlobalPosition  potentialGrad_[numPhases] ; //!< Gradient of potential, which drives flow
     Scalar          mobilityUpwindWeight_;      //!< Upwind weight for mobility. Set to one for full upstream weighting
 };
 

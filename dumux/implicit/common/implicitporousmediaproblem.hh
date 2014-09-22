@@ -115,7 +115,7 @@ public:
      * This is discretization independent interface. By default it
      * just calls gravity().
      */
-    const DimVector &gravityAtPos(const GlobalPosition &globalPos) const
+    const GlobalPosition &gravityAtPos(const GlobalPosition &pos) const
     { return asImp_().gravity(); }
 
     /*!
@@ -127,7 +127,7 @@ public:
      * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
      * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      */
-    const DimVector &gravity() const
+    const GlobalPosition &gravity() const
     { return gravity_; }
 
     /*!
@@ -152,7 +152,7 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    DimVector gravity_;
+    GlobalPosition gravity_;
 
     // fluids and material properties
     Dune::shared_ptr<SpatialParams> spatialParams_;
