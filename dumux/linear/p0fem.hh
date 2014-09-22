@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Finite element map for P0 elements
+ */
+
 #ifndef DUMUX_P0FEM_HH
 #define DUMUX_P0FEM_HH
 
@@ -28,6 +34,9 @@
 
 namespace Dumux {
 
+/*!
+ * \brief Finite element map for P0 elements
+ */
 template<class D, class R, int d, bool isCube = true>
 class P0LocalFiniteElementMap
 : public Dune::PDELab::SimpleLocalFiniteElementMap< Dune::P0LocalFiniteElement<D,R,d> >

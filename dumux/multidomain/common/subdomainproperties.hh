@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup Properties
+ * \ingroup ImplicitProperties
+ * \ingroup MultidomainModel
+ * \brief Specify properties required for the subdomains of the coupled model
+ */
 #ifndef DUMUX_SUBDOMAIN_PROPERTIES_HH
 #define DUMUX_SUBDOMAIN_PROPERTIES_HH
 
@@ -25,10 +32,6 @@ namespace Dumux
 {
 namespace Properties
 {
-/*!
- * \addtogroup ModelCoupling
- */
-// \{
 
 //////////////////////////////////////////////////////////////////
 // Type tags

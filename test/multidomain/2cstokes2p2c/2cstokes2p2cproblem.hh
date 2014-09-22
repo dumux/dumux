@@ -18,8 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup StokesProblems
- * \ingroup 2p2cProblems
  * \brief The problem class for the coupling of an isothermal two-component Stokes
  *        and an isothermal two-phase two-component Darcy model.
  *
@@ -140,8 +138,8 @@ SET_BOOL_PROP(TwoCStokesTwoPTwoCProblem, NewtonWriteConvergence, false);
 }
 
 /*!
- * \ingroup StokesProblems
- * \ingroup 2p2cProblems
+ * \ingroup ImplicitTestProblems
+ * \ingroup MultidomainProblems
  * \brief The problem class for the coupling of an isothermal two-component Stokes
  *        and an isothermal two-phase two-component Darcy model.
  *

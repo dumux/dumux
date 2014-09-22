@@ -67,6 +67,7 @@ namespace Dumux {
  * \f[
 \frac{\partial (\varrho_g  u_g)}{\partial t}
 + \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_g h_g {\boldsymbol{v}}_g
+- \sum_\kappa \left[ h^\kappa_g D^\kappa_g \varrho_g \frac{M^\kappa}{M_g} \nabla x^\kappa_g \right]
 - \lambda_g \boldsymbol{\nabla} T \right) - q_T = 0
  * \f]
  *

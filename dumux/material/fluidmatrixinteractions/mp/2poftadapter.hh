@@ -17,10 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file 2poftadapter.hh
+ * \file
  *
- * Makes the twophase capillary pressure-saturation relations
- * available under the M-phase API for material laws.
+ * \brief Makes the twophase capillary pressure-saturation relations
+ *        available under the M-phase API for material laws.
  *
  * Also use the temperature dependent version of the material laws.
  */

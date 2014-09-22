@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup 2p2cniProblems
  * \brief Non-isothermal two-phase two-component porous-medium subproblem
  *        with coupling at the top boundary.
  */
@@ -94,7 +93,8 @@ SET_BOOL_PROP(TwoPTwoCNISubProblem, ProblemEnableGravity, true);
 }
 
 /*!
- * \ingroup 2p2cniProblems
+ * \ingroup ImplicitTestProblems
+ * \ingroup MultidomainProblems
  * \brief Non-isothermal two-phase two-component porous-medium subproblem
  *        with coupling at the top boundary.
  *

@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Linear
  *
  * \brief Provides linear solvers using the PDELab AMG backends.
  */

@@ -17,10 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file heatpipelaw.hh
+ * \file
  *
- * Implementation of the capillary pressure <-> saturation relation
- * for the heatpipe problem.
+ * \brief Implementation of the capillary pressure <-> saturation relation
+ *        for the heatpipe problem.
  */
 #ifndef HEATPIPELAW_HH
 #define HEATPIPELAW_HH
@@ -40,10 +40,10 @@ namespace Dumux
  * \ingroup material
  *
  * \brief Implementation of the capillary pressure <-> saturation
- *        relation for the heatpipe problem. This class bundles the
- *        "raw" curves as static members and doesn't concern itself
- *        converting absolute to effective saturations and vince
- *        versa.
+ *        relation for the heatpipe problem.
+ *
+ * This class bundles the "raw" curves as static members and doesn't concern itself
+ * converting absolute to effective saturations and vince versa.
  */
 template <class ScalarT, class ParamsT = HeatPipeLawParams<ScalarT> >
 class HeatPipeLaw

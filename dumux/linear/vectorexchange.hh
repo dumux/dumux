@@ -16,6 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \brief Contains a class to exchange entries of a vector
+ */
 #ifndef DUMUX_VECTOR_EXCHANGE_HH
 #define DUMUX_VECTOR_EXCHANGE_HH
 
@@ -23,8 +27,9 @@
 
 namespace Dumux
 {
-
-// A DataHandle class to exchange entries of a vector
+/*!
+ * \brief A data handle class to exchange entries of a vector
+ */
 template<class Mapper, class Vector> // mapper type and vector type
 class VectorExchange 
   : public Dune::CommDataHandleIF<VectorExchange<Mapper,Vector>,

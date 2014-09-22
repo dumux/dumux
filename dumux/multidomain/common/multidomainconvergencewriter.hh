@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
-* \file
-* \brief Reference implementation of a newton convergence writer for coupled problems.
+ * \file
+ * \brief Reference implementation of a newton convergence writer for coupled problems.
 */
 #ifndef DUMUX_MULTIDOMAIN_CONVERGENCEWRITER_HH
 #define DUMUX_MULTIDOMAIN_CONVERGENCEWRITER_HH
@@ -33,6 +33,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup MultidomainModel
  * \brief Writes the intermediate solutions during
  *        the Newton scheme
  */

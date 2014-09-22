@@ -32,6 +32,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup TwoPTwoCNIStokesTwoCNIModel
  * \brief The extension of the local operator for the coupling of a two-component Stokes model
  *        and a two-phase two-component Darcy model for non-isothermal conditions.
  */

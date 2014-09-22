@@ -18,7 +18,6 @@
  *****************************************************************************/
 /**
  * \file
- * \ingroup Stokes2cProblems
  * \brief Isothermal two-component stokes subproblem with air flowing
  *        from the left to the right and coupling at the bottom.
  */
@@ -86,8 +85,8 @@ SET_BOOL_PROP(Stokes2cSubProblem, EnableNavierStokes, false);
 }
 
 /*!
- * \ingroup BoxStokesncModel
  * \ingroup ImplicitTestProblems
+ * \ingroup MultidomainProblems
  * \brief Isothermal two-component stokes subproblem with air flowing
  *        from the left to the right and coupling at the bottom.
  *

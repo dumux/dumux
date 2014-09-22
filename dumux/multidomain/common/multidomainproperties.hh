@@ -18,6 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Properties
+ * \ingroup ImplicitProperties
+ * \ingroup MultidomainModel
  * \brief Specify properties required for the coupled model
  */
 #ifndef DUMUX_MULTIDOMAIN_PROPERTIES_HH
@@ -32,9 +35,6 @@ namespace Dumux
 
 namespace Properties
 {
-/*!
- * \addtogroup ModelCoupling
- */
 // \{
 
 //////////////////////////////////////////////////////////////////
@@ -117,8 +117,7 @@ NEW_PROP_TAG(MultiDomainCoupling);
 NEW_PROP_TAG(MultiDomainConstraintsTrafo);
 NEW_PROP_TAG(ConstraintsTrafo); // TODO: required?
 
-//! Specifies the type of the jacobian matrix as used for the linear
-//! solver
+//! Specifies the type of the jacobian matrix as used for the linear solver
 NEW_PROP_TAG(JacobianMatrix);
 
 } // namespace Properties

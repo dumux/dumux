@@ -29,9 +29,9 @@
 namespace Dumux
 {
 
-
 /*!
- * \ingroup TwoPTwoCModel
+ * \ingroup ImplicitLocalResidual
+ * \ingroup TwoPTwoCStokesTwoCModel
  * \brief Extending the TwoPTwoCLocalResidual by the required functions for
  *        a coupled application.
  */

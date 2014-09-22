@@ -26,13 +26,12 @@
 
 #include <dumux/multidomain/common/multidomainnewtoncontroller.hh>
 
-/*!
- * \file
- */
 namespace Dumux
 {
 
 /*!
+ * \ingroup Newton
+ * \ingroup TwoPTwoCStokesTwoCModel
  * \brief Implementation of a Newton controller for the coupling of a two-component Stokes model
  *        and a two-phase two-component porous-medium model under isothermal conditions.
  *

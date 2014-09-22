@@ -38,6 +38,7 @@ namespace Dumux {
 namespace PDELab {
 
 /*!
+ * \ingroup MultidomainModel
  * \brief A local operator for PDELab which wraps the box models.
  */
 template<class TypeTag>

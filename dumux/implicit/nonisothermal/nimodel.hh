@@ -27,7 +27,14 @@
 #include "niproperties.hh"
 
 namespace Dumux {
-
+/*!
+ * \ingroup NIModel
+ *  *
+ * This model implements a non-isothermal flow for single and multi-phase
+ * transport problems
+ *
+ * \todo The equations have to be added here
+ */
 template<class TypeTag>
 class NIModel : public GET_PROP_TYPE(TypeTag, IsothermalModel)
 {

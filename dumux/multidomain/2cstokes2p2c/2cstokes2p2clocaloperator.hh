@@ -39,6 +39,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup TwoPTwoCStokesTwoCModel
  * \brief The local operator for the coupling of a two-component Stokes model
  *        and a two-phase two-component porous-medium model under isothermal conditions.
  */

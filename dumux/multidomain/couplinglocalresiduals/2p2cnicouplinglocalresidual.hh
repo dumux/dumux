@@ -32,7 +32,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPTwoCNIModel
+ * \ingroup ImplicitLocalResidual
+ * \ingroup TwoPTwoCNIStokesTwoCNIModel
  * \brief Extending the TwoPTwoCNILocalResidual by the required functions for
  *        a coupled application.
  */

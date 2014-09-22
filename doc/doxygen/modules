@@ -185,21 +185,15 @@
          */
         /*!
          * \ingroup ImplicitModels
+         * \defgroup NIModel Non-Isothermal
+         *
+         * \copydetails Dumux::NIModel
+         */
+        /*!
+         * \ingroup ImplicitModels
          * \defgroup BoxStokesModel Stokes
          *
          * \copydetails Dumux::StokesModel
-         */
-        /*!
-         * \ingroup ImplicitModels
-         * \defgroup BoxStokes2cModel Two-component Stokes
-         *
-         * \copydetails Dumux::Stokes2cModel
-         */
-        /*!
-         * \ingroup ImplicitModels
-         * \defgroup BoxStokes2cniModel Non-isothermal two-component Stokes
-         *
-         * \copydetails Dumux::Stokes2cniModel
          */
          /*!
          * \ingroup ImplicitModels
@@ -230,6 +224,24 @@
          * \defgroup ElTwoPBoxModel Two-phase immiscible linear elastic 
          *
          * \copydetails Dumux::ElTwoPModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup MultidomainModel Multidomain
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup TwoPTwoCStokesTwoCModel Two-component, Stokes-Darcy
+         *
+         * \copydetails Dumux::TwoPTwoCModel
+         * \copydetails Dumux::StokesncModel
+         */
+        /*!
+         * \ingroup ImplicitModels
+         * \defgroup TwoPTwoCNIStokesTwoCNIModel Non-isothermal, two-component, Stokes-Darcy
+         *
+         * \copydetails Dumux::TwoPTwoCNIModel
+         * \copydetails Dumux::StokesncniModel
          */
     /*!
      * \ingroup ImplicitModel

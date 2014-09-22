@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \addtogroup ModelCoupling
+ * \ingroup MultidomainModel
  * \brief Some methods required by several classes of the coupling model.
  */
 template<class TypeTag>

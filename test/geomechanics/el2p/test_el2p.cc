@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the el2p CC model
+ * \brief Test for the el2p cell centered model
  */
 #include "config.h"
 

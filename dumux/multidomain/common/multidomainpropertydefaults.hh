@@ -18,6 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Properties
+ * \ingroup ImplicitProperties
+ * \ingroup MultidomainModel
  * \brief Sets default values for the MultiDomain properties
  */
 

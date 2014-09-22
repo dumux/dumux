@@ -16,7 +16,6 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  * \brief Local operator base class for multidomain problems
@@ -35,6 +34,7 @@ namespace Dumux {
 namespace PDELab {
 
 /*!
+ * \ingroup MultidomainModel
  * \brief Local operator base class for multidomain problems
  */
 template<class TypeTag>

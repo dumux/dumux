@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Test for the elastic model.
+ */
 #include "config.h"
 
 #include "elasticmatrixproblem.hh"

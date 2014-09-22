@@ -17,9 +17,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
-* \file
-* \brief Additional properties required for the coupled Newton controller.
-*/
+ * \file
+ * \brief Additional properties required for the coupled Newton controller.
+ */
 #ifndef DUMUX_MULTIDOMAIN_NEWTON_CONTROLLER_HH
 #define DUMUX_MULTIDOMAIN_NEWTON_CONTROLLER_HH
 
@@ -45,6 +45,8 @@ SET_SCALAR_PROP(MultiDomain, NewtonRelTolerance, 1e-5);
 
 
 /*!
+ * \ingroup Newton
+ * \ingroup MultidomainModel
  * \brief Reference implementation of a newton controller for coupled problems.
  *
  * If you want to specialize only some methods but are happy with

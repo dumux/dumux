@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup Properties
+ * \ingroup Linear
+ *
+ * \brief Defines some fundamental properties for the PDELab AMG solver.
+ */
 #ifndef DUMUXAMGPROPERTIES_HH
 #define DUMUXAMGPROPERTIES_HH
 

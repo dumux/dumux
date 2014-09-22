@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPTwoCNIModel
+ * \ingroup NIModel
  * \ingroup ImplicitIndices
  * \brief Indices for the non-isothermal two-phase two-component model
  *

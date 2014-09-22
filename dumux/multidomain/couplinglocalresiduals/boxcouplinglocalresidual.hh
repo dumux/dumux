@@ -28,8 +28,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxModel
- * \ingroup BoxLocalResidual
+ * \ingroup ImplicitLocalResidual
+ * \ingroup TwoPTwoCNIStokesTwoCNIModel
  * \brief Element-wise calculation of the residual matrix for models
  *        based on the box scheme .
  *

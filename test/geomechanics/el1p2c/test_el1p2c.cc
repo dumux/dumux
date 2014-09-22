@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the elasticity 1p2c model
+ * \brief Test for the elasticity 1p2c model
  */
 #include "config.h"
 

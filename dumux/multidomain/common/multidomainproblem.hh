@@ -38,6 +38,8 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup ImplicitBaseProblems
+ * \ingroup MultidomainModel
  * \brief Base class for problems which involve two sub problems (multidomain problems)s
  */
 template<class TypeTag>

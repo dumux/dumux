@@ -18,7 +18,6 @@
  *****************************************************************************/
 /**
  * \file
- * \ingroup Stokes2cniProblems
  * \brief Non-isothermal two-component stokes subproblem with air flowing
  *        from the left to the right and coupling at the bottom.
  */
@@ -83,8 +82,8 @@ SET_BOOL_PROP(Stokes2cniSubProblem, EnableNavierStokes, false);
 }
 
 /*!
- * \ingroup BoxStokesncniModel
  * \ingroup ImplicitTestProblems
+ * \ingroup MultidomainProblems
  * \brief Non-isothermal two-component stokes subproblem with air flowing
  *        from the left to the right and coupling at the bottom.
  *

@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup 2p2cProblems
  * \brief Isothermal two-phase two-component porous-medium subproblem
  *        with coupling at the top boundary.
  */
@@ -81,7 +80,8 @@ SET_BOOL_PROP(TwoPTwoCSubProblem, ProblemEnableGravity, true);
 }
 
 /*!
- * \ingroup 2p2cProblems
+ * \ingroup ImplicitTestProblems
+ * \ingroup MultidomainProblems
  * \brief Isothermal two-phase two-component porous-medium subproblem
  *        with coupling at the top boundary.
  *

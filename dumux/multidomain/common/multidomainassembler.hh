@@ -33,6 +33,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup MultidomainModel
  * \brief An assembler for the global Jacobian matrix for multidomain models.
  */
 template<class TypeTag>

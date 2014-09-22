@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Provides a helper class for nonoverlapping
+ *        decomposition using the PDELab AMG.
+ */
 #ifndef DUMUX_AMGPARALLELHELPERS_HH
 #define DUMUX_AMGPARALLELHELPERS_HH
 
@@ -27,11 +33,10 @@
 namespace Dumux
 {
 
-//========================================================
-// A parallel helper class providing a nonoverlapping
-// decomposition of all degrees of freedom
-//========================================================
-
+/*!
+ * \brief A parallel helper class providing a nonoverlapping
+ *        decomposition of all degrees of freedom
+ */
 // operator that resets result to zero at constrained DOFS
 template<class TypeTag>
 class ParallelISTLHelper

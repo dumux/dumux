@@ -309,7 +309,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 }
 
 /*!
- * \copydoc Dumux::IMPETProblem::sourceAtPos()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::sourceAtPos()
  */
 void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {

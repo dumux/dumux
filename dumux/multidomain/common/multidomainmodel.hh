@@ -16,7 +16,6 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  * \brief The base class of models which consist of two arbitrary
@@ -34,13 +33,8 @@
 
 namespace Dumux
 {
-
 /*!
- * \defgroup Multidomain Coupled implicit models
- */
-
-/*!
- * \ingroup Multidomain
+ * \ingroup MultidomainModel
  * \brief The base class of models which consist of two arbitrary
  *        sub-models which are coupled
  */

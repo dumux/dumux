@@ -72,9 +72,8 @@ public:
 
 
 /*!
- * \ingroup TwoPTwoCModel
- * \ingroup StokesModel
  * \ingroup ImplicitTestProblems
+ * \ingroup MultidomainProblems
  * \brief Definition of the spatial parameters for
  *        the coupling of an isothermal two-component Stokes
  *        and an isothermal two-phase two-component Darcy model.

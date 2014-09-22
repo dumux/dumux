@@ -17,10 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file heatpipelawparams.hh
+ * \file
  *
- * Specification of the material params for the heat pipe's capillary
- * pressure model.
+ * \brief Specification of the material params for the heat pipe's capillary
+ *        pressure model.
  */
 #ifndef DUMUX_HEATPIPELAWPARAMS_HH
 #define DUMUX_HEATPIPELAWPARAMS_HH

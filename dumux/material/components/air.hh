@@ -21,7 +21,7 @@
  *
  * \ingroup Components
  *
- * \brief A simple class for the \f$Air\f$ fluid properties
+ * \brief A simple class for the air fluid properties
  */
 #ifndef DUMUX_AIR_HH
 #define DUMUX_AIR_HH
@@ -35,7 +35,7 @@ namespace Dumux
 /*!
  * \ingroup Components
  *
- * \brief A class for the \f$AIR\f$ fluid properties
+ * \brief A class for the air fluid properties
  *
  * \tparam Scalar The type used for scalar values
  */

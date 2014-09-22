@@ -23,7 +23,7 @@
 
 /*!
  * \ingroup Properties
- * \ingroup CCProperties
+ * \ingroup ImplicitProperties
  * \ingroup CCModel
  * \file
  * \brief Specify the shape functions, operator assemblers, etc

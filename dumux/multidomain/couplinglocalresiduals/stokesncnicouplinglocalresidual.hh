@@ -32,12 +32,16 @@
 namespace Dumux
 {
 	/*!
-	 * \ingroup BoxStokesModel
+   * \ingroup ImplicitLocalResidual
+   * \ingroup TwoPTwoCNIStokesTwoCNIModel
 	 * \brief Element-wise calculation of the Jacobian matrix for problems
 	 *        using the Stokes box model.
 	 *
 	 * This class is also used for the stokes transport
 	 * model, which means that it uses static polymorphism.
+   * 
+   * \todo Please doc me more!
+   * This file should contain a more detailed description of the coupling conditions.
 	 */
 	template<class TypeTag>
 	class StokesncniCouplingLocalResidual : public StokesncniLocalResidual<TypeTag>

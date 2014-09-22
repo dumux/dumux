@@ -18,6 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Properties
+ * \ingroup ImplicitProperties
+ * \ingroup MultidomainModel
  * \brief Specify default properties required in the subdomains of dune-multidomain
  */
 #ifndef DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH

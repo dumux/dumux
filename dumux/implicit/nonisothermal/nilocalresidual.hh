@@ -31,7 +31,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPTwoCNIModel
+ * \ingroup NIModel
  * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase two-component fully implicit model.
