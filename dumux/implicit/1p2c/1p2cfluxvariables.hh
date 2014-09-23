@@ -72,6 +72,7 @@ class OnePTwoCFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
@@ -149,13 +150,13 @@ public:
     /*!
      * \brief Return the intrinsic permeability tensor \f$\mathrm{[m^2]}\f$.
      */
-    const DimMatrix &intrinsicPermeability() const
+    const DimWorldMatrix &intrinsicPermeability() const
     { return K_; }
 
     /*!
      * \brief Return the dispersion tensor \f$\mathrm{[m^2/s]}\f$.
      */
-    const DimMatrix &dispersionTensor() const
+    const DimWorldMatrix &dispersionTensor() const
     { return dispersionTensor_; }
 
     /*!
@@ -521,10 +522,10 @@ protected:
     Scalar porousDiffCoeff_;
 
     //! the dispersion tensor in the porous medium
-    DimMatrix dispersionTensor_;
+    DimWorldMatrix dispersionTensor_;
 
     //! the intrinsic permeability tensor
-    DimMatrix K_;
+    DimWorldMatrix K_;
     // intrinsic permeability times pressure potential gradient
     GlobalPosition Kmvp_;
     // projected on the face normal
