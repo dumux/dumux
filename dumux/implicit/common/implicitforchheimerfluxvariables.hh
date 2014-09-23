@@ -93,7 +93,7 @@ class ImplicitForchheimerFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
+    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
@@ -135,7 +135,7 @@ protected:
     {
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
-        DimMatrix K;
+        DimWorldMatrix K;
         if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
         {
             spatialParams.meanK(K,
@@ -169,7 +169,7 @@ protected:
         // Make sure the permeability matrix does not have off-diagonal entries
         assert( isDiagonal_(K) );
 
-        DimMatrix sqrtK(0.0);
+        DimWorldMatrix sqrtK(0.0);
         for (int i = 0; i < dim; ++i)
             sqrtK[i][i] = std::sqrt(K[i][i]);
 
@@ -183,7 +183,7 @@ protected:
             GlobalPosition deltaV;           // the change in velocity between Newton iterations
             GlobalPosition residual(10e10);  // the residual (function value that is to be minimized)
             GlobalPosition tmp;              // temporary variable for numerical differentiation
-            Tensor    gradF;            // slope of equation that is to be solved
+            DimWorldMatrix    gradF;            // slope of equation that is to be solved
 
             // search by means of the Newton method for a root of Forchheimer equation
             for (int k = 0; residual.two_norm() > 1e-12 ; ++k) {
@@ -261,8 +261,8 @@ protected:
      */
      void forchheimerResidual_(GlobalPosition & residual,
     		 	 	 	 	 const Scalar forchCoeff,
-    		 	 	 	 	 const DimMatrix & sqrtK,
-    		 	 	 	 	 const DimMatrix & K,
+    		 	 	 	 	 const DimWorldMatrix & sqrtK,
+    		 	 	 	 	 const DimWorldMatrix & K,
     		 	 	 	 	 const GlobalPosition & velocity,
     		 	 	 	 	 const ElementVolumeVariables & elemVolVars,
     		 	 	 	 	 const GlobalPosition & potentialGrad,
@@ -329,9 +329,9 @@ protected:
       * \param elemVolVars The volume variables of the current element
       * \param phaseIdx The index of the currently considered phase
       */
-     void forchheimerDerivative_(Tensor & derivative,
+     void forchheimerDerivative_(DimWorldMatrix & derivative,
     		 	 	 	 	 	 const Scalar forchCoeff,
-    		 	 	 	 	 	 const DimMatrix & sqrtK,
+    		 	 	 	 	 	 const DimWorldMatrix & sqrtK,
     		 	 	 	 	 	 const GlobalPosition & velocity,
     		 	 	 	 	 	 const ElementVolumeVariables & elemVolVars,
     		 	 	 	 	 	 const unsigned int phaseIdx) const
@@ -380,7 +380,7 @@ protected:
       * \return True if all off-diagonals are zero.
       *
      */
-     const bool isDiagonal_(const DimMatrix & K) const
+     const bool isDiagonal_(const DimWorldMatrix & K) const
      {
          for (int i = 0; i < dim; i++) {
              for (int k = 0; k < dim; k++) {
