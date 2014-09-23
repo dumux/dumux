@@ -49,7 +49,9 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
     typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
@@ -226,7 +228,7 @@ public:
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
 
             // dispersive flux of second component - massfraction
-                       DimVector normalDisp;
+                       GlobalPosition normalDisp;
                        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
                        tmp -= fluxVars.molarDensity()*
                        (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
@@ -241,7 +243,7 @@ public:
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
 
             // dispersive flux of second component - molefraction
-                        DimVector normalDisp;
+                        GlobalPosition normalDisp;
                         fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
                         tmp -= fluxVars.molarDensity()*
                             (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));

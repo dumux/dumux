@@ -65,9 +65,11 @@ class OnePTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar,dim> DimVector;
+    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 public:
     //! The type returned by the fluidState() method
@@ -223,7 +225,7 @@ public:
     /*!
      * \brief Returns the dispersivity of the fluid's streamlines.
      */
-    const DimVector &dispersivity() const
+    const GlobalPosition &dispersivity() const
     { return dispersivity_; }
 
     /*!
@@ -280,7 +282,7 @@ protected:
 
     Scalar porosity_;    //!< Effective porosity within the control volume
     Scalar tortuosity_;
-    DimVector dispersivity_;
+    GlobalPosition dispersivity_;
     Scalar diffCoeff_;
     FluidState fluidState_;
 

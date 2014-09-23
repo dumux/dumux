@@ -76,7 +76,8 @@ class MPNCModelKinetic : public MPNCModel<TypeTag>
     enum { dim = GridView::dimension};
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
+    typedef Dune::BlockVector<GlobalPosition>                GlobalPositionField;
+    typedef Dune::array<GlobalPositionField, numPhases>      PhaseGlobalPositionField;
 
     typedef std::vector<Dune::FieldVector<Scalar, 1> >  ScalarVector;
     typedef Dune::array<ScalarVector, numPhases>         PhaseVector;
@@ -172,7 +173,7 @@ public:
                             elemVolVars);
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                    DimVector faceDarcyVelocity = fluxVars.velocity(phaseIdx);
+                    GlobalPosition faceDarcyVelocity = fluxVars.velocity(phaseIdx);
                     faceDarcyVelocity   *= scvfArea;
 
                     // although not yet really a volume average, see later: divide by surface
@@ -331,12 +332,12 @@ public:
      * \param phaseIdx The index of the fluid phase
      * \param globalIdx The global index of the degree of freedom
      */
-    const DimVector volumeDarcyVelocity(const unsigned int phaseIdx,
+    const GlobalPosition volumeDarcyVelocity(const unsigned int phaseIdx,
                                         const unsigned int globalIdx) const
     { return volumeDarcyVelocity_[phaseIdx][globalIdx]; }
 
 private:
-    PhaseDimVectorField volumeDarcyVelocity_;
+    PhaseGlobalPositionField volumeDarcyVelocity_;
     PhaseVector         volumeDarcyMagVelocity_ ;
     ScalarVector        boxSurface_ ;
 };

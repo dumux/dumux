@@ -86,8 +86,8 @@ public:
     {
         // calculate temperature gradient using finite element
         // gradients
-        DimVector temperatureGrad(0);
-        DimVector tmp(0.0);
+        GlobalPosition temperatureGrad(0);
+        GlobalPosition tmp(0.0);
         for (unsigned int idx = 0; idx < this->face().numFap; idx++)
         {
             tmp = this->face().grad[idx];

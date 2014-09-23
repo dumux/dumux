@@ -48,12 +48,14 @@ class MPNCFluxVariablesDiffusion
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     enum{dim = GridView::dimension};
+    enum{dimWorld = GridView::dimensionworld};
     enum{numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum{numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum{wPhaseIdx = FluidSystem::wPhaseIdx};
     enum{nPhaseIdx = FluidSystem::nPhaseIdx};
 
     typedef Dune::FieldVector<Scalar, dim>  DimVector;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
 public:
     /*!
@@ -88,13 +90,13 @@ public:
         }
 
 
-        DimVector tmp ;
+        GlobalPosition tmp ;
         for (unsigned int idx = 0;
              idx < face.numFap;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
-            const DimVector & feGrad = face.grad[idx];
+            const GlobalPosition & feGrad = face.grad[idx];
 
             // index for the element volume variables
             int volVarsIdx = face.fapIndices[idx];
@@ -196,7 +198,7 @@ public:
                         const unsigned int compIdx) const
     { return moleFraction_[phaseIdx][compIdx]; }
 
-    const DimVector &moleFractionGrad(const unsigned int phaseIdx,
+    const GlobalPosition &moleFractionGrad(const unsigned int phaseIdx,
                                   const unsigned int compIdx) const
     { return moleFractionGrad_[phaseIdx][compIdx];}
 
@@ -210,7 +212,7 @@ protected:
     Scalar porousDiffCoeffG_[numComponents][numComponents];
 
     // the concentration gradients of all components in all phases
-    DimVector moleFractionGrad_[numPhases][numComponents];
+    GlobalPosition moleFractionGrad_[numPhases][numComponents];
 
     // the mole fractions of each component at the integration point
     Scalar moleFraction_[numPhases][numComponents];

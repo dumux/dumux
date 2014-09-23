@@ -65,6 +65,7 @@ class ImplicitDarcyFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
@@ -238,7 +239,7 @@ protected:
     {
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
-        DimMatrix K;
+        DimWorldMatrix K;
         if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
         {
             spatialParams.meanK(K,

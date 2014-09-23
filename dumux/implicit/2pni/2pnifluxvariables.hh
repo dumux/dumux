@@ -55,10 +55,12 @@ class TwoPNIFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
+    enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
 
     typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> DimVector;
+    typedef Dune::FieldVector<CoordScalar, dim> DimVector;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -104,7 +106,7 @@ public:
     /*!
      * \brief The local temperature gradient at the IP of the considered scv face.
      */
-    DimVector temperatureGradient() const
+    GlobalPosition temperatureGradient() const
     { return temperatureGrad_; }
 
     /*!
@@ -121,7 +123,7 @@ protected:
         // calculate temperature gradient using finite element
         // gradients
         temperatureGrad_ = 0;
-        DimVector tmp(0.0);
+        GlobalPosition tmp(0.0);
         for (unsigned int idx = 0; idx < this->face().numFap; idx++)
         {
             tmp = this->face().grad[idx];
@@ -197,7 +199,7 @@ protected:
 private:
     Scalar lambdaEff_;
     Scalar normalMatrixHeatFlux_;
-    DimVector temperatureGrad_;
+    GlobalPosition temperatureGrad_;
     int faceIdx_;
 };
 

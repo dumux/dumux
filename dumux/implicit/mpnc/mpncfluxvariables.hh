@@ -61,12 +61,14 @@ class MPNCFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
 
     enum {dim= GridView::dimension};
+    enum {dimWorld= GridView::dimensionworld};
     enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef MPNCFluxVariablesDiffusion<TypeTag, enableDiffusion> FluxVariablesDiffusion;
     typedef MPNCFluxVariablesEnergy<TypeTag, enableEnergy, numEnergyEquations> FluxVariablesEnergy;
@@ -134,7 +136,7 @@ public:
                               const unsigned int compIdx) const
     { return fluxVarsDiffusion_.moleFraction(phaseIdx, compIdx); }
 
-    const DimVector &moleFractionGrad(const unsigned int phaseIdx,
+    const GlobalPosition &moleFractionGrad(const unsigned int phaseIdx,
                                       const unsigned int compIdx) const
     { return fluxVarsDiffusion_.moleFractionGrad(phaseIdx, compIdx); }
 
@@ -143,7 +145,7 @@ public:
 
     ////////////////////////////////////////////////
     // forward calls to the temperature module
-    const DimVector &temperatureGrad() const
+    const GlobalPosition &temperatureGrad() const
     { return fluxVarsEnergy_.temperatureGrad(); }
 
     const FluxVariablesEnergy &fluxVarsEnergy() const

@@ -59,6 +59,7 @@ class ThreePThreeCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariable
 
     enum {
         dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
@@ -66,6 +67,7 @@ class ThreePThreeCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariable
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     typedef Dune::FieldVector<Scalar, dim> 	DimVector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -118,13 +120,13 @@ private:
                              const ElementVolumeVariables &elemVolVars)
     {
         // calculate gradients
-        DimVector tmp(0.0);
+        GlobalPosition tmp(0.0);
         for (unsigned int idx = 0;
              idx < this->face().numFap;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
-            const DimVector &feGrad = this->face().grad[idx];
+            const GlobalPosition &feGrad = this->face().grad[idx];
 
             // index for the element volume variables 
             int volVarsIdx = this->face().fapIndices[idx];
@@ -320,7 +322,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    const DimVector &massFractionCompWGrad(int phaseIdx) const
+    const GlobalPosition &massFractionCompWGrad(int phaseIdx) const
     {return massFractionCompWGrad_[phaseIdx];}
 
     /*!
@@ -328,7 +330,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    const DimVector &massFractionCompNGrad(int phaseIdx) const
+    const GlobalPosition &massFractionCompNGrad(int phaseIdx) const
     { return massFractionCompNGrad_[phaseIdx]; };
 
     /*!
@@ -336,7 +338,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    const DimVector &massFractionCompGGrad(int phaseIdx) const
+    const GlobalPosition &massFractionCompGGrad(int phaseIdx) const
     { return massFractionCompGGrad_[phaseIdx]; };
 
     /*!
@@ -344,7 +346,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    const DimVector &moleFractionCompWGrad(int phaseIdx) const
+    const GlobalPosition &moleFractionCompWGrad(int phaseIdx) const
     { return moleFractionCompWGrad_[phaseIdx]; };
 
     /*!
@@ -352,7 +354,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    const DimVector &moleFractionCompNGrad(int phaseIdx) const
+    const GlobalPosition &moleFractionCompNGrad(int phaseIdx) const
     { return moleFractionCompNGrad_[phaseIdx]; };
 
     /*!
@@ -360,17 +362,17 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    const DimVector &moleFractionCompGGrad(int phaseIdx) const
+    const GlobalPosition &moleFractionCompGGrad(int phaseIdx) const
     { return moleFractionCompGGrad_[phaseIdx]; };
 
 protected:
     // gradients
-    DimVector massFractionCompWGrad_[numPhases];
-    DimVector massFractionCompNGrad_[numPhases];
-    DimVector massFractionCompGGrad_[numPhases];
-    DimVector moleFractionCompWGrad_[numPhases];
-    DimVector moleFractionCompNGrad_[numPhases];
-    DimVector moleFractionCompGGrad_[numPhases];
+    GlobalPosition massFractionCompWGrad_[numPhases];
+    GlobalPosition massFractionCompNGrad_[numPhases];
+    GlobalPosition massFractionCompGGrad_[numPhases];
+    GlobalPosition moleFractionCompWGrad_[numPhases];
+    GlobalPosition moleFractionCompNGrad_[numPhases];
+    GlobalPosition moleFractionCompGGrad_[numPhases];
 
     // density of each face at the integration point
     Scalar density_[numPhases], molarDensity_[numPhases];

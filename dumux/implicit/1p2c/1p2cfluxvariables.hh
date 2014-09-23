@@ -131,7 +131,7 @@ public:
     * \brief Return the pressure potential multiplied with the
     *        intrinsic permeability as vector (for velocity output).
     */
-   DimVector Kmvp() const
+   GlobalPosition Kmvp() const
    { return Kmvp_; }
 
    /*!
@@ -161,7 +161,7 @@ public:
     /*!
      * \brief Return the pressure potential gradient \f$\mathrm{[Pa/m]}\f$.
      */
-    const DimVector &potentialGrad() const
+    const GlobalPosition &potentialGrad() const
     { return potentialGrad_; }
 
 
@@ -170,7 +170,7 @@ public:
      *
      * \param compIdx The index of the considered component
      */
-    const DimVector &moleFractionGrad(int compIdx) const
+    const GlobalPosition &moleFractionGrad(int compIdx) const
     {
        if (compIdx != 1)
        { DUNE_THROW(Dune::InvalidStateException,
@@ -292,7 +292,7 @@ protected:
         const VolumeVariables &volVarsI = elemVolVars[face().i];
         const VolumeVariables &volVarsJ = elemVolVars[face().j];
 
-        DimVector tmp;
+        GlobalPosition tmp;
         //The decision of the if-statement depends on the function useTwoPointGradient(const Element &element,
         //int vertexI,int vertexJ) defined in test/tissue_tumor_spatialparameters.hh
         if (!problem.spatialParams().useTwoPointGradient(element, face().i, face().j)) {
@@ -303,7 +303,7 @@ protected:
                     idx++) // loop over adjacent vertices
             {
                 // FE gradient at vertex idx
-                const DimVector &feGrad = face().grad[idx];
+                const GlobalPosition &feGrad = face().grad[idx];
 
                 // index for the element volume variables 
                 int volVarsIdx = face().fapIndices[idx];
@@ -356,7 +356,7 @@ protected:
             Scalar density = (rhoI + rhoJ)/2;
 
             // ask for the gravitational acceleration at the given SCV face
-            DimVector g(problem.gravityAtPos(face().ipGlobal));
+            GlobalPosition g(problem.gravityAtPos(face().ipGlobal));
 
             // make it a force
             g *= density;
@@ -482,7 +482,7 @@ protected:
         dispersivity[1] = 0.5 * (volVarsI.dispersivity()[1] +  volVarsJ.dispersivity()[1]);
 
         //calculate velocity at interface: v = -1/mu * vDarcy = -1/mu * K * grad(p)
-        DimVector velocity;
+        GlobalPosition velocity;
         Valgrind::CheckDefined(potentialGrad());
         Valgrind::CheckDefined(K_);
         K_.mv(potentialGrad(), velocity);
@@ -514,9 +514,9 @@ protected:
     const bool onBoundary_;
 
     //! pressure potential gradient
-    DimVector potentialGrad_;
+    GlobalPosition potentialGrad_;
     //! mole-fraction gradient
-    DimVector moleFractionGrad_;
+    GlobalPosition moleFractionGrad_;
     //! the effective diffusion coefficent in the porous medium
     Scalar porousDiffCoeff_;
 
@@ -526,7 +526,7 @@ protected:
     //! the intrinsic permeability tensor
     DimMatrix K_;
     // intrinsic permeability times pressure potential gradient
-    DimVector Kmvp_;
+    GlobalPosition Kmvp_;
     // projected on the face normal
     Scalar KmvpNormal_;
 

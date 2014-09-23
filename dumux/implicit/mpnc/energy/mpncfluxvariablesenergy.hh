@@ -102,6 +102,7 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*numEnergyEquati
     enum{wPhaseIdx = FluidSystem::wPhaseIdx};
 
     typedef Dune::FieldVector<CoordScalar, dim>  DimVector;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
     typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
@@ -131,8 +132,8 @@ public:
     {
         // calculate temperature gradient using finite element
         // gradients
-        DimVector tmp(0.0);
-        DimVector temperatureGradient(0.);
+        GlobalPosition tmp(0.0);
+        GlobalPosition temperatureGradient(0.);
         for (int idx = 0; idx < face.numFap; idx++)
         {
             tmp = face.grad[idx];

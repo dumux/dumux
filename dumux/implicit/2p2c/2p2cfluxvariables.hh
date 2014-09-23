@@ -64,9 +64,11 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld} ;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
@@ -104,7 +106,7 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
                           const ElementVolumeVariables &elemVolVars)
     {
         // calculate densities at the integration points of the face
-        DimVector tmp(0.0);
+        GlobalPosition tmp(0.0);
         for (unsigned int idx = 0;
              idx < this->face().numFap;
              idx++) // loop over adjacent vertices
@@ -130,13 +132,13 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
                              const ElementVolumeVariables &elemVolVars)
     {
         // calculate gradients
-        DimVector tmp(0.0);
+        GlobalPosition tmp(0.0);
         for (unsigned int idx = 0;
              idx < this->face().numFap;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
-            const DimVector &feGrad = this->face().grad[idx];
+            const GlobalPosition &feGrad = this->face().grad[idx];
 
             // index for the element volume variables
             int volVarsIdx = this->face().fapIndices[idx];
@@ -234,12 +236,12 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
      *
      * \param phaseIdx The phase index
      */
-    const DimVector &moleFractionGrad(int phaseIdx) const
+    const GlobalPosition &moleFractionGrad(int phaseIdx) const
     { return moleFractionGrad_[phaseIdx]; };
 
  protected:
     // mole fraction gradients
-    DimVector moleFractionGrad_[numPhases];
+    GlobalPosition moleFractionGrad_[numPhases];
 
     // density of each face at the integration point
     Scalar density_[numPhases], molarDensity_[numPhases];

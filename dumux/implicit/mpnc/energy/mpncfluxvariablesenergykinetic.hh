@@ -48,9 +48,11 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquatio
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum {dim = GridView::dimension};
+    enum {dimWorld = GridView::dimensionworld};
     enum {numEnergyEqs             = Indices::numPrimaryEnergyVars};
 
     typedef Dune::FieldVector<CoordScalar, dim>  DimVector;
+    typedef Dune::FieldVector<CoordScalar, dimWorld>  GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
@@ -80,7 +82,7 @@ public:
     {
         // calculate temperature gradient using finite element
         // gradients
-        DimVector tmp ;
+        GlobalPosition tmp ;
 
         for(int energyEqIdx=0; energyEqIdx<numEnergyEqs; energyEqIdx++)
             temperatureGradient_[energyEqIdx] = 0.;
@@ -89,7 +91,7 @@ public:
                 idx < face.numFap;
                 idx++){
             // FE gradient at vertex idx
-            const DimVector & feGrad = face.grad[idx];
+            const GlobalPosition & feGrad = face.grad[idx];
 
             for (int energyEqIdx =0; energyEqIdx < numEnergyEqs; ++energyEqIdx){
                 // index for the element volume variables
@@ -108,13 +110,13 @@ public:
      *
      * \param energyEqIdx The index of the energy equation
      */
-    DimVector temperatureGradient(const unsigned int energyEqIdx) const
+    GlobalPosition temperatureGradient(const unsigned int energyEqIdx) const
     {
         return temperatureGradient_[energyEqIdx];
     }
 
 private:
-    DimVector temperatureGradient_[numEnergyEqs];
+    GlobalPosition temperatureGradient_[numEnergyEqs];
 };
 
 
@@ -141,7 +143,7 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquatio
     enum {nPhaseIdx             = FluidSystem::nPhaseIdx};
 
 
-    typedef Dune::FieldVector<CoordScalar, dim>  DimVector;
+    typedef Dune::FieldVector<CoordScalar, dim>  GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
@@ -173,7 +175,7 @@ public:
     {
         // calculate temperature gradient using finite element
         // gradients
-        DimVector tmp ;
+        GlobalPosition tmp ;
 
         for(int energyEqIdx=0; energyEqIdx<numEnergyEqs; energyEqIdx++)
             temperatureGradient_[energyEqIdx] = 0.;
@@ -182,7 +184,7 @@ public:
                 idx < face.numFap;
                 idx++){
             // FE gradient at vertex idx
-            const DimVector & feGrad = face.grad[idx];
+            const GlobalPosition & feGrad = face.grad[idx];
 
             for (int energyEqIdx =0; energyEqIdx < numEnergyEqs; ++energyEqIdx){
                 // index for the element volume variables
@@ -216,7 +218,7 @@ public:
      *
      * \param energyEqIdx The index of the energy equation
      */
-    DimVector temperatureGradient(const unsigned int energyEqIdx) const
+    GlobalPosition temperatureGradient(const unsigned int energyEqIdx) const
     {
         return temperatureGradient_[energyEqIdx];
     }
@@ -287,7 +289,7 @@ protected:
 
 private:
     Scalar lambdaEff_ ;
-    DimVector temperatureGradient_[numEnergyEqs];
+    GlobalPosition temperatureGradient_[numEnergyEqs];
 };
 
 } // end namespace
