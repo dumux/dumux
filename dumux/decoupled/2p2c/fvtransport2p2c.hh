@@ -19,12 +19,14 @@
 #ifndef DUMUX_FVTRANSPORT2P2C_HH
 #define DUMUX_FVTRANSPORT2P2C_HH
 
+#include <cmath>
+#include <unordered_map>
+
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
 #include <dumux/material/constraintsolvers/compositionalflash.hh>
 #include <dumux/common/math.hh>
 #include <dumux/linear/vectorexchange.hh>
-#include <unordered_map>
 
 /**
  * @file
@@ -1170,7 +1172,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                         BCfluidState.saturation(wPhaseIdx));
                 // TODO: get right criterion, do output for evaluation
                 //converge criterion
-                if (abs(oldPc-pcBound)<10)
+                if (std::abs(oldPc - pcBound) < 10.0)
                     iter = maxiter;
             }
         }

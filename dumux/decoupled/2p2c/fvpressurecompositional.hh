@@ -19,8 +19,10 @@
 #ifndef DUMUX_FVPRESSURECOMPOSITIONAL_HH
 #define DUMUX_FVPRESSURECOMPOSITIONAL_HH
 
+#include <cmath>
+
 // dumux environment
-#include "dumux/common/math.hh"
+#include <dumux/common/math.hh>
 #include <dumux/decoupled/common/fv/fvpressure.hh>
 #include <dumux/material/constraintsolvers/compositionalflash.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
@@ -646,7 +648,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                                             fluidState.saturation(wPhaseIdx));
                         // TODO: get right criterion, do output for evaluation
                         //converge criterion
-                        if (abs(oldPc-pc)<10)
+                        if (std::abs(oldPc - pc) < 10.0)
                             iter = maxiter;
 
                         pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt),
