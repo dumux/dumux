@@ -11,11 +11,11 @@ tutorial_coupled_SOURCES = tutorial_coupled.cc
 
 EXTRA_DIST = \
   CMakeLists.txt $(wildcard *.input) \
-  solutions_coupled/$(wildcard *.hh) \
-  solutions_coupled/$(wildcard *.diff) \
-  solutions_coupled/$(wildcard *.input) \
-  solutions_decoupled/$(wildcard *.hh) \
-  solutions_decoupled/$(wildcard *.diff) \
-  solutions_decoupled/$(wildcard *.input)
+  $(wildcard solutions_coupled/*.hh) \
+  $(wildcard solutions_coupled/*.diff) \
+  $(wildcard solutions_coupled/*.input) \
+  $(wildcard solutions_decoupled/*.hh) \
+  $(wildcard solutions_decoupled/*.diff) \
+  $(wildcard solutions_decoupled/*.input)
 
 include $(top_srcdir)/am/global-rules
