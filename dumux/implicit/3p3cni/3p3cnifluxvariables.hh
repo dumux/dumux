@@ -58,7 +58,8 @@ class ThreePThreeCNIFluxVariables : public ThreePThreeCFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     enum {
-        dim = GridView::dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
