@@ -37,6 +37,8 @@
 #if HAVE_ALBERTA
 #include <dune/grid/albertagrid/agrid.hh>
 #endif
+
+#include <dune/grid/common/backuprestore.hh>
 #include <dune/grid/utility/grapedataioformattypes.hh>
 
 namespace Dumux
@@ -131,9 +133,8 @@ public:
     template<class Problem>
     static void serializeGrid(Problem& problem)
     {
-        std::string gridName = restartGridFileName_(problem);
-        double time = problem.timeManager().time();
-        problem.grid().template writeGrid<Dune::xdr> (gridName, time);
+        Dune::BackupRestoreFacility<Grid>::backup(
+            problem.grid(), restartGridFileName_(problem));
     }
     /*!
      * \brief Restart the grid from the file.
@@ -142,9 +143,8 @@ public:
     template<class Problem>
     static void restartGrid(Problem& problem)
     {
-        std::string gridName = restartGridFileName_(problem);
-        double time = problem.timeManager().time();
-        problem.grid().template readGrid<Dune::xdr> (gridName, time);
+        problem.setGrid(*Dune::BackupRestoreFacility<Grid>::restore(
+            restartGridFileName_(problem)));
     }
 
 private:
