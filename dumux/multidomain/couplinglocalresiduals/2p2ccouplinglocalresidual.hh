@@ -25,6 +25,7 @@
 #define DUMUX_2P2C_COUPLING_LOCAL_RESIDUAL_HH
 
 #include <dumux/implicit/2p2c/2p2clocalresidual.hh>
+#include <dumux/implicit/2p2c/2p2cproperties.hh>
 
 namespace Dumux
 {

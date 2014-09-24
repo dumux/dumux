@@ -25,6 +25,7 @@
 #define DUMUX_2P2CNI_COUPLING_LOCAL_RESIDUAL_HH
 
 #include <dumux/implicit/nonisothermal/nilocalresidual.hh>
+#include <dumux/implicit/2p2c/2p2cproperties.hh>
 
 #define VELOCITY_OUTPUT 1 // uncomment this line if an output of the velocity is needed
 

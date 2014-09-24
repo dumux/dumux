@@ -26,6 +26,7 @@
 #define DUMUX_MPNC_VTK_WRITER_ENERGY_KINETIC_HH
 
 #include <dumux/implicit/mpnc/mpncvtkwritermodule.hh>
+#include <dumux/implicit/mpnc/energy/mpnclocalresidualenergykinetic.hh>
 #include "mpncvtkwriterenergy.hh"
 
 namespace Dumux

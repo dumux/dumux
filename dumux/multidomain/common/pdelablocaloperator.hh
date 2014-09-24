@@ -30,6 +30,7 @@
 
 #include<dune/pdelab/localoperator/pattern.hh>
 #include<dune/pdelab/localoperator/flags.hh>
+#include<dune/pdelab/gridoperator/common/localmatrix.hh>
 
 #include <dumux/implicit/box/boxproperties.hh>
 
