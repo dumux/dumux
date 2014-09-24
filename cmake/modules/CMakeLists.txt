@@ -1,6 +1,5 @@
 set(modules
   CheckConstexpr.cmake
-  CheckPatchedPDELab.cmake
   DumuxMacros.cmake
   DumuxTestMacros.cmake)
 include(GNUInstallDirs)
