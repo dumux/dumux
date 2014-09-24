@@ -20,7 +20,6 @@ add_dumux_test(test_diffusion3d test_diffusion3d test_diffusion3d.cc
   ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_mimetic-00001.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d
-  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_diffusion3d.input
-  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_diffusion3d_ug1.dgf)
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_diffusion3d_reference.input)
 add_dune_alugrid_flags(test_diffusion3d)
 add_dune_ug_flags(test_diffusion3d)

@@ -1,7 +1,7 @@
 ###############################################################
-# Parameter file for test_2p.
+# Parameter file for test_generalproblem2p.
 # Everything behind a '#' is a comment.
-# Type "./test_2p --help" for more information.
+# Type "./test_generalproblem2p --help" for more information.
 ###############################################################
 
 ###############################################################

@@ -3,7 +3,5 @@ add_dumux_test(test_el1p2c test_el1p2c test_el1p2c.cc
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/el1p2c-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/el1p2c-00015.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test_el1p2c
-  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_el1p2c.input
-  -Grid.File ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_el1p2c.dgf)
+  ${CMAKE_CURRENT_BINARY_DIR}/test_el1p2c)
 add_dune_superlu_flags(test_el1p2c)
