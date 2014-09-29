@@ -74,6 +74,11 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
         // read a --my-opt=VALUE option. This gets transformed
         // into the parameter "MyOpt" with the value being "VALUE"
         if (argv[i][1] == '-') {
+            // the syntax --my-opt=VALUE is deprecated and will be removed after DuMuX 2.6
+            std::cout << std::endl
+              << "Warning: the syntax --my-opt=VALUE is deprecated and will be removed after DuMuX 2.6"
+              << std::endl << std::endl;
+
             std::string s(argv[i] + 2);
             // There is nothing after the '='
             if (s.size() == 0 || s[0] == '=')
@@ -175,8 +180,6 @@ std::string usageTextBlock()
     return  "Options usually are parameters given to the simulation, \n"
             "and have to be specified with this syntax: \n"
             "\t-GroupName.ParameterName VALUE, for example -TimeManager.TEnd 100\n"
-            "Alternative supported syntax:\n"
-            "\t--group-name.parameter-name=VALUE, for example --time-manager.t-end=100\n"
             "\n"
             "If -ParameterFile is specified, parameters can also be defined there. In this case,\n"
             "lines of the form \n"

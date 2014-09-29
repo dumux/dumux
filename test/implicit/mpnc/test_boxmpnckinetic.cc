@@ -59,6 +59,11 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
         // read a --my-opt=VALUE option. This gets transformed
         // into the parameter "MyOpt" with the value being "VALUE"
         if (argv[i][1] == '-') {
+            // the syntax --my-opt=VALUE is deprecated and will be removed after DuMuX 2.6
+            std::cout << std::endl
+                << "Warning: the syntax --my-opt=VALUE is deprecated and will be removed after DuMuX 2.6"
+                << std::endl << std::endl;
+
             std::string s(argv[i] + 2);
             // There is nothing after the '='
             if (s.size() == 0 || s[0] == '=')
