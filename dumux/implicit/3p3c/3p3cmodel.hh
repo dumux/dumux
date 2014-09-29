@@ -335,50 +335,52 @@ public:
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            int eIdx = this->problem_().elementMapper().map(*eIt);
-            (*rank)[eIdx] = this->gridView_().comm().rank();
-
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), *eIt);
-
-
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                               *eIt,
-                               fvGeometry,
-                               false /* oldSol? */);
-
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            if(eIt->partitionType() == Dune::InteriorEntity)
             {
-                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                int eIdx = this->problem_().elementMapper().map(*eIt);
+                (*rank)[eIdx] = this->gridView_().comm().rank();
 
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                    (*saturation[phaseIdx])[globalIdx] = elemVolVars[scvIdx].saturation(phaseIdx);
-                    (*pressure[phaseIdx])[globalIdx] = elemVolVars[scvIdx].pressure(phaseIdx);
-                    (*density[phaseIdx])[globalIdx] = elemVolVars[scvIdx].density(phaseIdx);
-                }
+                FVElementGeometry fvGeometry;
+                fvGeometry.update(this->gridView_(), *eIt);
 
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                    for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                        (*moleFraction[phaseIdx][compIdx])[globalIdx] =
-                            elemVolVars[scvIdx].moleFraction(phaseIdx,
-                                                              compIdx);
 
-                        Valgrind::CheckDefined((*moleFraction[phaseIdx][compIdx])[globalIdx]);
+                ElementVolumeVariables elemVolVars;
+                elemVolVars.update(this->problem_(),
+                                   *eIt,
+                                   fvGeometry,
+                                   false /* oldSol? */);
+
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                {
+                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+
+                    for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+                        (*saturation[phaseIdx])[globalIdx] = elemVolVars[scvIdx].saturation(phaseIdx);
+                        (*pressure[phaseIdx])[globalIdx] = elemVolVars[scvIdx].pressure(phaseIdx);
+                        (*density[phaseIdx])[globalIdx] = elemVolVars[scvIdx].density(phaseIdx);
                     }
+
+                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+                        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+                            (*moleFraction[phaseIdx][compIdx])[globalIdx] =
+                                elemVolVars[scvIdx].moleFraction(phaseIdx,
+                                                                  compIdx);
+
+                            Valgrind::CheckDefined((*moleFraction[phaseIdx][compIdx])[globalIdx]);
+                        }
+                    }
+
+                    (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();
+                    (*perm)[globalIdx] = elemVolVars[scvIdx].permeability();
+                    (*temperature)[globalIdx] = elemVolVars[scvIdx].temperature();
+                    (*phasePresence)[globalIdx] = staticDat_[globalIdx].phasePresence;
                 }
 
-                (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();
-                (*perm)[globalIdx] = elemVolVars[scvIdx].permeability();
-                (*temperature)[globalIdx] = elemVolVars[scvIdx].temperature();
-                (*phasePresence)[globalIdx] = staticDat_[globalIdx].phasePresence;
+                // velocity output
+                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *eIt, wPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, nPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, gPhaseIdx);
             }
-
-            // velocity output
-            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *eIt, wPhaseIdx);
-            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, nPhaseIdx);
-            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, gPhaseIdx);
-
         }
 
         writer.attachDofData(*saturation[wPhaseIdx], "Sw", isBox);

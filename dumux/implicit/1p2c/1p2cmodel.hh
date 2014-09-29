@@ -135,34 +135,37 @@ public:
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            int eIdx = this->problem_().model().elementMapper().map(*eIt);
-            rank[eIdx] = this->gridView_().comm().rank();
-
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), *eIt);
-
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                               *eIt,
-                               fvGeometry,
-                               false /* oldSol? */);
-
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            if(eIt->partitionType() == Dune::InteriorEntity)
             {
-                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                int eIdx = this->problem_().model().elementMapper().map(*eIt);
+                rank[eIdx] = this->gridView_().comm().rank();
 
-                pressure[globalIdx] = elemVolVars[scvIdx].pressure();
-                delp[globalIdx] = elemVolVars[scvIdx].pressure() - 1e5;
-                moleFraction0[globalIdx] = elemVolVars[scvIdx].moleFraction(0);
-                moleFraction1[globalIdx] = elemVolVars[scvIdx].moleFraction(1);
-                massFraction0[globalIdx] = elemVolVars[scvIdx].massFraction(0);
-                massFraction1[globalIdx] = elemVolVars[scvIdx].massFraction(1);
-                rho[globalIdx] = elemVolVars[scvIdx].density();
-                mu[globalIdx] = elemVolVars[scvIdx].viscosity();
+                FVElementGeometry fvGeometry;
+                fvGeometry.update(this->gridView_(), *eIt);
+
+                ElementVolumeVariables elemVolVars;
+                elemVolVars.update(this->problem_(),
+                                   *eIt,
+                                   fvGeometry,
+                                   false /* oldSol? */);
+
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                {
+                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+
+                    pressure[globalIdx] = elemVolVars[scvIdx].pressure();
+                    delp[globalIdx] = elemVolVars[scvIdx].pressure() - 1e5;
+                    moleFraction0[globalIdx] = elemVolVars[scvIdx].moleFraction(0);
+                    moleFraction1[globalIdx] = elemVolVars[scvIdx].moleFraction(1);
+                    massFraction0[globalIdx] = elemVolVars[scvIdx].massFraction(0);
+                    massFraction1[globalIdx] = elemVolVars[scvIdx].massFraction(1);
+                    rho[globalIdx] = elemVolVars[scvIdx].density();
+                    mu[globalIdx] = elemVolVars[scvIdx].viscosity();
+                }
+
+                // velocity output
+                velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, *eIt, phaseIdx);
             }
-
-            // velocity output
-            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, *eIt, phaseIdx);
         }
 
         writer.attachDofData(pressure, "P", isBox);

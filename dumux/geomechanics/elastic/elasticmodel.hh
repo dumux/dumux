@@ -124,6 +124,8 @@ public:
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
+            if(eIt->partitionType() == Dune::InteriorEntity)
+            {
             int eIdx = this->problem_().model().elementMapper().map(*eIt);
             rank[eIdx] = this->gridView_().comm().rank();
 
@@ -183,6 +185,7 @@ public:
                 {
                     sigmaz[eIdx] += stress[2];
                 }
+            }
             }
         }
 

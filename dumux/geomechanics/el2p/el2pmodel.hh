@@ -284,6 +284,8 @@ public:
 
 
         for (unsigned int eIdx = 0; eIdx < numElements; ++eIdx) {
+            if(eIt->partitionType() == Dune::InteriorEntity)
+            {
             deltaEffStressX[eIdx] = Scalar(0.0);
             if (dim >= 2)
                 deltaEffStressY[eIdx] = Scalar(0.0);
@@ -630,7 +632,7 @@ public:
             // Pressure margins according to J. Rutqvist et al. / International Journal of Rock Mecahnics & Mining Sciences 45 (2008), 132-143
             Pcrtens[eIdx] = Peff - principalStress3[eIdx];
             Pcrshe[eIdx] = Peff - Psc;
-
+        }
         }
 
         writer.attachVertexData(Te, "T");

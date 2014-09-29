@@ -74,19 +74,22 @@ public:
         ElementIterator eEndIt = this->gridView().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), *eIt);
-
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                               *eIt,
-                               fvGeometry,
-                               false /* oldSol? */);
-
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            if(eIt->partitionType() == Dune::InteriorEntity)
             {
-                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-                temperature[globalIdx] = elemVolVars[scvIdx].temperature();
+                FVElementGeometry fvGeometry;
+                fvGeometry.update(this->gridView_(), *eIt);
+
+                ElementVolumeVariables elemVolVars;
+                elemVolVars.update(this->problem_(),
+                                   *eIt,
+                                   fvGeometry,
+                                   false /* oldSol? */);
+
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                {
+                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                    temperature[globalIdx] = elemVolVars[scvIdx].temperature();
+                }
             }
         }
 

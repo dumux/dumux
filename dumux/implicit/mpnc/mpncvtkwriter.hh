@@ -80,33 +80,36 @@ public:
         ElementIterator eEndIt = problem_.gridView().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            fvGeometry.update(problem_.gridView(), *eIt);
-            elemBcTypes.update(problem_, *eIt);
-            this->problem_.model().setHints(*eIt, elemVolVars);
-            elemVolVars.update(problem_,
-                               *eIt,
-                               fvGeometry,
-                               false);
-            this->problem_.model().updateCurHints(*eIt, elemVolVars);
+            if(eIt->partitionType() == Dune::InteriorEntity)
+            {
+                fvGeometry.update(problem_.gridView(), *eIt);
+                elemBcTypes.update(problem_, *eIt);
+                this->problem_.model().setHints(*eIt, elemVolVars);
+                elemVolVars.update(problem_,
+                                   *eIt,
+                                   fvGeometry,
+                                   false);
+                this->problem_.model().updateCurHints(*eIt, elemVolVars);
 
-            // tell the sub-writers to do what ever they need to with
-            // their internal buffers when a given element is seen.
-            commonWriter_.processElement(*eIt,
-                                         fvGeometry,
-                                         elemVolVars,
-                                         elemBcTypes);
-            massWriter_.processElement(*eIt,
-                                       fvGeometry,
-                                       elemVolVars,
-                                       elemBcTypes);
-            energyWriter_.processElement(*eIt,
-                                         fvGeometry,
-                                         elemVolVars,
-                                         elemBcTypes);
-            customWriter_.processElement(*eIt,
-                                         fvGeometry,
-                                         elemVolVars,
-                                         elemBcTypes);
+                // tell the sub-writers to do what ever they need to with
+                // their internal buffers when a given element is seen.
+                commonWriter_.processElement(*eIt,
+                                             fvGeometry,
+                                             elemVolVars,
+                                             elemBcTypes);
+                massWriter_.processElement(*eIt,
+                                           fvGeometry,
+                                           elemVolVars,
+                                           elemBcTypes);
+                energyWriter_.processElement(*eIt,
+                                             fvGeometry,
+                                             elemVolVars,
+                                             elemBcTypes);
+                customWriter_.processElement(*eIt,
+                                             fvGeometry,
+                                             elemVolVars,
+                                             elemBcTypes);
+            }
         }
 
         // write everything to the output file

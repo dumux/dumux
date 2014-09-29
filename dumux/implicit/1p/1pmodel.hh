@@ -105,32 +105,35 @@ public:
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            int eIdx = this->problem_().model().elementMapper().map(*eIt);
-            (*rank)[eIdx] = this->gridView_().comm().rank();
-
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), *eIt);
-
-            ElementVolumeVariables elemVolVars;
-            elemVolVars.update(this->problem_(),
-                               *eIt,
-                               fvGeometry,
-                               false /* oldSol? */);
-
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            if(eIt->partitionType() == Dune::InteriorEntity)
             {
-                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                int eIdx = this->problem_().model().elementMapper().map(*eIt);
+                (*rank)[eIdx] = this->gridView_().comm().rank();
 
-                const SpatialParams &spatialParams = this->problem_().spatialParams();
+                FVElementGeometry fvGeometry;
+                fvGeometry.update(this->gridView_(), *eIt);
 
-                (*p)[globalIdx] = elemVolVars[scvIdx].pressure();
-                (*K)[globalIdx] = spatialParams.intrinsicPermeability(*eIt,
-                                                                     fvGeometry,
-                                                                     scvIdx);
+                ElementVolumeVariables elemVolVars;
+                elemVolVars.update(this->problem_(),
+                                   *eIt,
+                                   fvGeometry,
+                                   false /* oldSol? */);
+
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                {
+                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+
+                    const SpatialParams &spatialParams = this->problem_().spatialParams();
+
+                    (*p)[globalIdx] = elemVolVars[scvIdx].pressure();
+                    (*K)[globalIdx] = spatialParams.intrinsicPermeability(*eIt,
+                                                                         fvGeometry,
+                                                                         scvIdx);
+                }
+
+                // velocity output
+                velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, *eIt, /*phaseIdx=*/0);
             }
-
-            // velocity output
-            velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, *eIt, /*phaseIdx=*/0);
         }
 
         writer.attachDofData(*p, "p", isBox);
