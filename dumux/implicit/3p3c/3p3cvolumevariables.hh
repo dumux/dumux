@@ -582,6 +582,12 @@ public:
 
         // energy related quantities not contained in the fluid state
         asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        // compute and set the enthalpy
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            Scalar h = Implementation::enthalpy_(fluidState_, paramCache, phaseIdx);
+            fluidState_.setEnthalpy(phaseIdx, h);
+        }
     }
 
     /*!
@@ -719,6 +725,14 @@ protected:
                        const int scvIdx,
                        bool isOldSol)
     { }
+
+    template<class ParameterCache>
+    static Scalar enthalpy_(const FluidState& fluidState,
+                            const ParameterCache& paramCache,
+                            const int phaseIdx)
+    {
+        return 0;
+    }
 
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 

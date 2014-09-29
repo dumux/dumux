@@ -114,6 +114,9 @@ public:
         finePorosity_ = 0.42;
         coarsePorosity_ = 0.42;
 
+        // heat conductivity of granite
+        lambdaSolid_ = 2.8;
+
         // residual saturations
         fineMaterialParams_.setSwr(0.12);
         fineMaterialParams_.setSwrx(0.12);
@@ -275,6 +278,21 @@ public:
         heatFlux *= -heatCond;
     }
 
+    /*!
+     * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the porous material.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
+     *                    the heat capacity needs to be defined
+     */
+    Scalar thermalConductivitySolid(const Element &element,
+                                    const FVElementGeometry &fvGeometry,
+                                    const int scvIdx) const
+    {
+        return lambdaSolid_;
+    }
+
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
@@ -293,6 +311,8 @@ private:
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;
+
+    Scalar lambdaSolid_;
 };
 
 }

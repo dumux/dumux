@@ -28,6 +28,8 @@
 #ifndef DUMUX_3P3CNI_PROPERTIES_HH
 #define DUMUX_3P3CNI_PROPERTIES_HH
 
+#warning You are including the old 2pni model which will be removed after 2.6. See CHANGELOG for details.
+
 #include <dumux/implicit/3p3c/3p3cproperties.hh>
 
 namespace Dumux

@@ -38,9 +38,11 @@
 #include "3p3cnewtoncontroller.hh"
 #include "3p3clocalresidual.hh"
 
+#include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 
 namespace Dumux
 {
@@ -147,6 +149,46 @@ SET_BOOL_PROP(ThreePThreeC, ProblemEnableGravity, true);
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(NonIsothermal, ThermalConductivityModel)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+public:
+    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+};
+
+//! temperature is already written by the isothermal model
+SET_BOOL_PROP(ThreePThreeCNI, NiOutputLevel, 0);
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+
+// set isothermal Model
+SET_TYPE_PROP(ThreePThreeCNI, IsothermalModel, ThreePThreeCModel<TypeTag>);
+
+// set isothermal FluxVariables
+SET_TYPE_PROP(ThreePThreeCNI, IsothermalFluxVariables, ThreePThreeCFluxVariables<TypeTag>);
+
+//set isothermal VolumeVariables
+SET_TYPE_PROP(ThreePThreeCNI, IsothermalVolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
+
+//set isothermal LocalResidual
+SET_TYPE_PROP(ThreePThreeCNI, IsothermalLocalResidual, ThreePThreeCLocalResidual<TypeTag>);
+
+//set isothermal Indices
+SET_PROP(ThreePThreeCNI, IsothermalIndices)
+{
+
+public:
+    typedef ThreePThreeCIndices<TypeTag, /*PVOffset=*/0> type;
+};
+
+//set isothermal NumEq
+SET_INT_PROP(ThreePThreeCNI, IsothermalNumEq, 3);
 
 }
 
