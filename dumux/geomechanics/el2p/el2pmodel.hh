@@ -333,6 +333,9 @@ public:
         // loop over all elements (cells)
         for (; eIt != eEndit; ++eIt) {
 
+            if(eIt->partitionType() == Dune::InteriorEntity)
+            {
+
             // get FE function spaces to calculate gradients (gradient data of momentum balance
             // equation is not stored in fluxvars since it is not evaluated at box integration point)
             // copy the values of the sol vector to the localFunctionSpace values of the current element
@@ -531,6 +534,7 @@ public:
                     totalStressZ[eIdx][1] = initStressZ[eIdx][1] + deltaEffStressZ[eIdx][1];
                     totalStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    - deltaEffPressure[eIdx];
                 }
+            }
             }
         }
 
