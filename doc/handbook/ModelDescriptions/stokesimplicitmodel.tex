@@ -8,7 +8,7 @@ This model implements laminar Stokes flow of a single fluid, solving the momentu
 
 and the mass balance equation \[ \frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0. \]
 
-By setting the property {\ttfamily Enable\-Navier\-Stokes} to {\ttfamily true} the Navier-\/\-Stokes equation can be solved. In this case an additional term \[ \varrho_g \left(\boldsymbol{v}_g \boldsymbol{\cdot} \boldsymbol{\nabla} \right) \boldsymbol{v}_g \] is added to the momentum balance equation.
+By setting the property {\ttfamily Enable\-Navier\-Stokes} to {\ttfamily true} the Navier-\/\-Stokes equation can be solved. In this case an additional term \[ + \varrho_g \left(\boldsymbol{v}_g \boldsymbol{\cdot} \boldsymbol{\nabla} \right) \boldsymbol{v}_g \] is added to the momentum balance equation.
 
 This is discretized by a fully-\/coupled vertex-\/centered finite volume (box) scheme in space and by the implicit Euler method in time.
 

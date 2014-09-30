@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief the implicit non-isothermal model
+ * \brief The implicit non-isothermal model.
  */
 #ifndef DUMUX_NI_MODEL_HH
 #define DUMUX_NI_MODEL_HH
@@ -29,12 +29,38 @@
 namespace Dumux {
 /*!
  * \ingroup NIModel
- *  *
- * This model implements a non-isothermal flow for single and multi-phase
- * transport problems
+ * \brief The implicit non-isothermal model.
  *
- * \todo The equations have to be added here
+ * This model implements a generic energy balance for single and multi-phase
+ * transport problems. Currently the non-isothermal model can be used on top of
+ * the 1p2c, 2p, 2p2c and 3p3c models. Comparison to simple analytical solutions
+ * for pure convective and conductive problems are found in the 1p2c test. Also refer
+ * to this test for details on how to activate the non-isothermal model.
+ *
+ * For the energy balance, local thermal equilibrium is assumed. This
+ * results in one energy conservation equation for the porous solid
+ * matrix and the fluids:
+ \f{align*}{
+ \phi \frac{\partial \sum_\alpha \varrho_\alpha u_\alpha S_\alpha}{\partial t}
+ & +
+ \left( 1 - \phi \right) \frac{\partial (\varrho_s c_s T)}{\partial t}
+ -
+ \sum_\alpha \text{div}
+ \left\{
+ \varrho_\alpha h_\alpha
+ \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
+ \left( \textbf{grad}\,p_\alpha - \varrho_\alpha \mbox{\bf g} \right)
+ \right\} \\
+    & - \text{div} \left(\lambda_{pm} \textbf{grad} \, T \right)
+    - q^h = 0.
+ \f}
+ * where \f$h_\alpha\f$ is the specific enthalpy of a fluid phase
+ * \f$\alpha\f$ and \f$u_\alpha = h_\alpha -
+ * p_\alpha/\varrho_\alpha\f$ is the specific internal energy of the
+ * phase.
+ *
  */
+
 template<class TypeTag>
 class NIModel : public GET_PROP_TYPE(TypeTag, IsothermalModel)
 {
