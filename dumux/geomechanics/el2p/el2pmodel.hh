@@ -284,8 +284,6 @@ public:
 
 
         for (unsigned int eIdx = 0; eIdx < numElements; ++eIdx) {
-            if(eIt->partitionType() == Dune::InteriorEntity)
-            {
             deltaEffStressX[eIdx] = Scalar(0.0);
             if (dim >= 2)
                 deltaEffStressY[eIdx] = Scalar(0.0);
@@ -332,7 +330,6 @@ public:
         ElementIterator eEndit = this->gridView_().template end<0>();
         // loop over all elements (cells)
         for (; eIt != eEndit; ++eIt) {
-
             if(eIt->partitionType() == Dune::InteriorEntity)
             {
 
@@ -535,7 +532,7 @@ public:
                     totalStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    - deltaEffPressure[eIdx];
                 }
             }
-            }
+        }
         }
 
         // calculate principal stresses i.e. the eigenvalues of the total stress tensor
@@ -636,7 +633,7 @@ public:
             // Pressure margins according to J. Rutqvist et al. / International Journal of Rock Mecahnics & Mining Sciences 45 (2008), 132-143
             Pcrtens[eIdx] = Peff - principalStress3[eIdx];
             Pcrshe[eIdx] = Peff - Psc;
-        }
+
         }
 
         writer.attachVertexData(Te, "T");
