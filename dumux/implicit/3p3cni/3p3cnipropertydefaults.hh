@@ -30,7 +30,7 @@
 #ifndef DUMUX_3P3CNI_PROPERTY_DEFAULTS_HH
 #define DUMUX_3P3CNI_PROPERTY_DEFAULTS_HH
 
-#include <dumux/implicit/3p3c/3p3cpropertydefaults.hh>
+#include <dumux/implicit/3p/3ppropertydefaults.hh>
 
 #include "3p3cnimodel.hh"
 #include "3p3cniindices.hh"
