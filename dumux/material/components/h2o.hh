@@ -802,7 +802,7 @@ public:
      *
      * Implementation taken from:
      * freesteam - IAPWS-IF97 steam tables library
-     * Copyright (C) 2004-2009  John Pye
+     * copyright (C) 2004-2009  John Pye
      *
      * Appendix B: Recommended Interpolating equation for Industrial Use
      * see http://www.iapws.org/relguide/thcond.pdf
@@ -831,7 +831,7 @@ public:
      *
      * Implementation taken from:
      * freesteam - IAPWS-IF97 steam tables library
-     * Copyright (C) 2004-2009  John Pye
+     * copyright (C) 2004-2009  John Pye
      *
      * Appendix B: Recommended Interpolating equation for Industrial Use
      * see http://www.iapws.org/relguide/thcond.pdf
