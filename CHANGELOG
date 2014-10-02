@@ -6,7 +6,10 @@ Differences Between DuMuX 2.5 and DuMuX 2.6
 * IMPROVEMENTS and ENHANCEMENTS:
   - multidomain models can now be used with the 2.3 release versions of DUNE core modules
   - the free flow models now include the component enthalpy fluxes transported
-    by diffusion process (h^k D grad x), which was not considered before 
+    by diffusion process (h^k D grad x), which was not considered before
+  - UMFPack is a new direct linear solver and can be use as a drop-in replacement for
+    SuperLU. Some users claim a speed-up up to the factor of seven. We know cases where
+    it was 10% slower, so please measure for your problems.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
 - in the fully implicit mpnc model a further specialization allows now to describe two-phase flow with 
@@ -14,6 +17,8 @@ two energy equations. The boolean property EnableKineticEnergy has therefore bee
 integer property NumEnergyEquations
 
 * Deprecated CLASSES/FILES, to be removed after 2.6:
+  - FVPressure2P2CAdaptive, use 2d-specific implementation FV2dPressure2P2CAdaptive instead.
+  - FVTransport2P2CAdaptive, use 2d-specific implementation FV2dTransport2P2CAdaptive instead.
 
 * Deprecated PROPERTY NAMES, to be removed after 2.6: BEWARE: The compiler will
   not print any warning if a deprecated property name is used.
@@ -26,6 +31,9 @@ integer property NumEnergyEquations
   is used.
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.6:
+  - In Stokes fluxes the method eddyViscosity() is deprecated, use dynamicEddyViscosity() instead.
+  - In Stokes non-isothermal fluxes the method eddyConductivity() is deprecated, use
+    thermalEddyConductivity() instead.
 
 * Deprecated MACROS, to be removed after 2.6: BEWARE: The compiler will not
   print any warning if a deprecated macro is used.
