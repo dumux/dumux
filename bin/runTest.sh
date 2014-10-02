@@ -18,6 +18,7 @@ REFERENCE_RESULT="$2"
 TEST_RESULT="$3"
 TEST_BINARY="$4"
 TEST_ARGS="${@:5:100}"
+rm -fv $TEST_RESULT
 
 # make sure we have at least 3 parameters
 if test "$#" -lt 4; then

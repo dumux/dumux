@@ -13,7 +13,7 @@ def isFuzzyEqualNode(node1, node2, absolute, relative):
         print 'The name of the node differs in ', node1.tagName, ' and ', node2.tagName
         return False
     if sorted(node1.attributes.items()) != sorted(node2.attributes.items()):
-        print 'Attributs differ in node ', node1.tagName
+        print 'Attributes differ in node ', node1.tagName
         return False
     if len(node1.childNodes) != len(node2.childNodes):
         print 'Number of children differs in node ', node1.tagName
@@ -46,7 +46,7 @@ def isFuzzyEqualText(text1, text2, absolute, relative):
             return False
     return True
 
-# main programm
+# main program
 # handle arguments and print help message
 parser = argparse.ArgumentParser(description='Fuzzy compare of two VTK\
     (Visualization Toolkit) files. The files are accepted if for every\

@@ -16,5 +16,6 @@ add_dumux_test(test_2cnistokes2p2cni_2pm test_2cnistokes2p2cni test_2cnistokes2p
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/2cnistokes2p2cni-pm-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/2p2cni-00004.vtu
-  echo "test_2cnistokes2p2cni_pm"
+  ${CMAKE_CURRENT_BINARY_DIR}/test_2cnistokes2p2cni
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2cnistokes2p2cni_reference.input
   )
