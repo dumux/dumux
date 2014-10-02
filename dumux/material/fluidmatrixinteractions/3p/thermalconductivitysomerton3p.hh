@@ -50,22 +50,22 @@ struct SimpleThreePIndices
  *
  * The material law is:
  * \f[
- \lambda_\text{eff} = \lambdaG_\text{eff} + \sqrt{(S_w)} \left(\lambdaW_\text{eff} - \lambdaG_\text{eff}\right) +
- \sqrt{(S_n)} \left(\lambdaN_\text{eff} - \lambdaG_\text{eff}\right)
+ \lambda_\text{eff} = \lambda_\text{g,eff} + \sqrt{(S_w)} \left(\lambda_\text{w,eff} - \lambda_\text{g,eff}\right) +
+ \sqrt{(S_n)} \left(\lambda0_\text{n,eff} - \lambda_\text{g,eff}\right)
  \f]
  *
  * with
  * \f[
- \lambdaW_\text{eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
+ \lambda_\text{w,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
  \f]
  * and
  *
  * \f[
- \lambdaN_\text{eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
+ \lambda0_\text{n,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
  \f]
  *
  * * \f[
- \lambdaG_\text{eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_g^\phi.
+ \lambda_\text{g,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_g^\phi.
  \f]
  */
 template<class Scalar, class Indices = SimpleThreePIndices>
