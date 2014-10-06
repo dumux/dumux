@@ -70,9 +70,9 @@ public:
 
     //! Index for gas phase pressure in a solution vector
     static const int pgIdx = pressureIdx;
-    //! Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
+    //! Index of the either the saturation of the wetting phase or the mole fraction secondary component if a phase is not present
     static const int sOrX1Idx = switch1Idx;
-    //! Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
+    //! Index of the either the saturation of the nonwetting phase or the mole fraction secondary component if a phase is not present
     static const int sOrX2Idx = switch2Idx;
 
     // equation indices
