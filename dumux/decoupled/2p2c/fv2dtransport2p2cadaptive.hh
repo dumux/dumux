@@ -531,7 +531,7 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
             else if (potential[phaseIdx] < 0. && !cellIwasUpwindCell)
                 lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
             // potential direction does not coincide with that of P.E.
-            else if(this->restrictFluxInTransport_ == 2)   // perform central averageing for all direction changes
+            else if(this->restrictFluxInTransport_ == 2)   // perform central averaging for all direction changes
                 doUpwinding[phaseIdx] = false;
             else    // i.e. restrictFluxInTransport == 1
             {
@@ -556,7 +556,7 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
                     continue;
                 }
 
-                //b) perform harmonic averageing
+                //b) perform harmonic averaging
                 fluxEntries[wCompIdx] -= potential[phaseIdx] / volume
                         * harmonicMean(cellDataI.massFraction(phaseIdx, wCompIdx) * cellDataI.mobility(phaseIdx) * cellDataI.density(phaseIdx),
                                 cellDataJ.massFraction(phaseIdx, wCompIdx) * cellDataJ.mobility(phaseIdx) * cellDataJ.density(phaseIdx));

@@ -134,7 +134,7 @@ public:
         adaptedValues.fluxData_=this->fluxData();
     }
 
-    //! adds cell information to father element for possible averageing / coarsening
+    //! adds cell information to father element for possible averaging / coarsening
     /**
      * Sum up the adaptedValues (sons values) into father element. We store from leaf
      * upwards, so sons are stored first, then cells on the next leaf (=fathers)

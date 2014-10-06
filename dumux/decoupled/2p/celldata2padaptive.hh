@@ -110,7 +110,7 @@ public:
         adaptedValues.potNw = this->potential(nPhaseIdx);
         adaptedValues.volCorr = this->volumeCorrection();
     }
-    //! Stores sons entries into father element for averageing
+    //! Stores sons entries into father element for averaging
     /**
      * Sum up the adaptedValues (sons values) into father element. We store from leaf
      * upwards, so sons are stored first, then cells on the next leaf (=fathers)
