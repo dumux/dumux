@@ -16,8 +16,9 @@
  *****************************************************************************/
 /*!
  * \file
- * Specification of the material params for the interfacial area surface
- * parameters
+ *
+ * \brief Specification of the parameters for a function relating volume specific interfacial area to capillary pressure and saturation.
+ * This function is exponential.
  */
 #ifndef AWN_SURFACE_EXP_FCT_PARAMS_HH
 #define AWN_SURFACE_EXP_FCT_PARAMS_HH

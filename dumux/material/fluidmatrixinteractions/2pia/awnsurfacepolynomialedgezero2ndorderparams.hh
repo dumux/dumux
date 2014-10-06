@@ -14,6 +14,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Specification of the parameters for a function relating volume specific interfacial area to capillary pressure and saturation.
+ * This parametrization is a second order polynomial which is zero for saturations of zero and one.
+ */
 #ifndef AWN_SURFACE_POLYNOMIAL_EDGE_ZERO_2ND_ORDER_PARAMS_HH
 #define AWN_SURFACE_POLYNOMIAL_EDGE_ZERO_2ND_ORDER_PARAMS_HH
 

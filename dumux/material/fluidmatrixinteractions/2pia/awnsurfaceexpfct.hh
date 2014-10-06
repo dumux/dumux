@@ -15,11 +15,11 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *****************************************************************************/
 /*!
- * \file 
- * Specification of the material params specific interfacial area surface
- * as a function of wetting phase Saturation and capillary pressure.
+ * \file
+ *
+ * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
+ * This function is exponential.
  */
-
 #ifndef AWN_SURFACE_EXP_FCT_HH
 #define AWN_SURFACE_EXP_FCT_HH
 

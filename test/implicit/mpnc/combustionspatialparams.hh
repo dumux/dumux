@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file combustionspatialparams.hh
+ *
+ * \brief Spatialparameters for the combustionproblem1c. Parameters for the actual simulation domain and an outflow region are provided.
+ */
 #ifndef DUMUX_COMBUSTION_SPATIALPARAMS_HH
 #define DUMUX_COMBUSTION_SPATIALPARAMS_HH
 
@@ -132,7 +137,7 @@ public:
                 Snr_            = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.Snr);
 
                 characteristicLength_	= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.meanPoreSize);
-                intrinsicPermeability_  =  (std::pow(characteristicLength_,2.0)  * std::pow(porosity_,3.0)) / (150.0 * std::pow((1.0-porosity_),2.0));
+                intrinsicPermeability_  =  (std::pow(characteristicLength_,2.0)  * std::pow(porosity_,3.0)) / (150.0 * std::pow((1.0-porosity_),2.0)); // 1.69e-10 ; //
 
                 factorEnergyTransfer_         = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorEnergyTransfer);
                 factorMassTransfer_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorMassTransfer);

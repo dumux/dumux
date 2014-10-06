@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file evaporationatmospherespatialparams.hh
+ * \brief spatialparameters for the kinetic test-case of the mpnc model. "Poor-mans" coupling of free-flow and porous medium.
+ *
+ */
 #ifndef DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 #define DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 

@@ -14,17 +14,15 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
- * \file CombustionProblem.hh
- * \ingroup MpNcBoxproblems
+/*!
+ * \file combustionproblem1c.hh
  *
- * \brief Problem where hot, pure air is injected from the left hand side into a initially
- *        isotherm domain. A kinetic model is used: i.e. three different (fluid, gas, solid)
+ * \brief Problem where hot, pure liquid water is injected from the left hand side into a initially
+ *        isotherm domain. The water is fully evaporated by a strong heat source.
+ *        A local thermal non-equilibrium model is used: i.e. two different (fluid, solid)
  *        temperatures are primary variables.
  *
- *        The Problem is written, such that the kinetic consideration for mass and energy can
- *        be switched of by merely setting kinetic, kineticenergy respectivly to false.
- *        Boundary and initial conditions are specified for all cases.
+ * \ingroup MpNcBoxproblems
  *
  * \author Philipp Nuske
  */

@@ -16,8 +16,9 @@
  *****************************************************************************/
 /*!
  * \file
- * Specification of the material params for the interfacial area surfaces
- * parameters
+ *
+ * \brief Specification of the parameters for a function relating volume specific interfacial area to capillary pressure and saturation.
+ * This is of third order in pc.
  */
 #ifndef AWN_SURFACE_EXP_SW_PC_TO_3_PARAMS
 #define AWN_SURFACE_EXP_SW_PC_TO_3_PARAMS

@@ -16,11 +16,10 @@
  *****************************************************************************/
 /*!
  * \file
- * Specification of the material params specific interfacial area surface as
- * a function of wetting phase Saturation and capillary pressure.
+ *
+ * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
+ * This function is of third order in pc.
  */
-
-
 #ifndef AWN_SURFACE_EXP_SW_PC_TO_3
 #define AWN_SURFACE_EXP_SW_PC_TO_3
 

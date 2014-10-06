@@ -16,8 +16,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*
- * \file EvaporationAtmosphereProblem.hh
+/*!
+ * \file evaporationatmosphereproblem.hh
  * \ingroup MpNcBoxproblems
  *
  * \brief Problem showcasing the capabilities of the kinetic model.

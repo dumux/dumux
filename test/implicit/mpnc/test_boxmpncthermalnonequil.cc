@@ -14,6 +14,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/**
+ * \file
+ *
+ * \brief Test for the local thermal non-equilibrium module of the mpnc box model.
+ */
 #include "config.h"
 
 //#include "combustionproblem.hh"

@@ -16,8 +16,9 @@
  *****************************************************************************/
 /*!
  * \file
- * Specification of the material params specific interfacial area surface
- * as a function of wetting phase Saturation and capillara pressure.
+ *
+ * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
+ * This parametrization is a second order polynomial.
  */
 
 #ifndef AWN_SURFACE_POLYNOMIAL_2ND_ORDER_HH

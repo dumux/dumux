@@ -14,6 +14,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Specification of the parameters for a function relating volume specific interfacial area to capillary pressure and saturation.
+ * This parametrization uses a maximum value of capillary pressure.
+ */
 #ifndef AWN_SURFACE_PCMAX_FCT_PARAMS_HH
 #define AWN_SURFACE_PCMAX_FCT_PARAMS_HH
 
