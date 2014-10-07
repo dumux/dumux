@@ -23,7 +23,7 @@
 #ifndef DUMUX_STOKES2CNITESTPROBLEM_HH
 #define DUMUX_STOKES2CNITESTPROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #if HAVE_PARDISO
 #include <dumux/linear/pardisobackend.hh>
@@ -47,7 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(Stokes2cniTestProblem, INHERITS_FROM(BoxStokesncni));
 
 // Set the grid type
-SET_TYPE_PROP(Stokes2cniTestProblem, Grid, Dune::SGrid<2,2>);
+SET_TYPE_PROP(Stokes2cniTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(Stokes2cniTestProblem, Problem, Stokes2cniTestProblem<TypeTag>);

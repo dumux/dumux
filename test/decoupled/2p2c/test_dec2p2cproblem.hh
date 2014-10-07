@@ -24,12 +24,7 @@
 #ifndef DUMUX_TEST_2P2C_PROBLEM_HH
 #define DUMUX_TEST_2P2C_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
 #include <dumux/io/cubegridcreator.hh>
 
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
@@ -59,8 +54,7 @@ SET_TYPE_PROP(TestDecTwoPTwoCProblem, GridCreator, CubeGridCreator<TypeTag>);
 // Set the grid type
 SET_PROP(TestDecTwoPTwoCProblem, Grid)
 {
-        typedef Dune::YaspGrid<3> type;
-//    typedef Dune::SGrid<3, 3> type;
+    typedef Dune::YaspGrid<3> type;
 };
 
 // Set the problem property

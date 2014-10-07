@@ -30,7 +30,6 @@
 #if HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #endif
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dumux/io/simplexgridcreator.hh>
 #include <dumux/io/cubegridcreator.hh>
 

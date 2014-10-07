@@ -90,16 +90,16 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        Dune::FieldVector<int,dim> N(10);
-        Dune::FieldVector<double ,dim> L(0);
-        Dune::FieldVector<double,dim> H(10);
-        Grid grid(N,L,H);
+        Dune::array<int,dim> N;
+        std::fill(N.begin(), N.end(), 10);
+        Dune::FieldVector<double,dim> H(10.0);
+        Grid grid(H, N);
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
         TimeManager timeManager;
-        Problem problem(timeManager, grid.leafGridView(), L, H);
+        Problem problem(timeManager, grid.leafGridView(), H);
 
         // initialize the simulation
         timeManager.init(problem, startTime, firstDt, tEnd, restart);

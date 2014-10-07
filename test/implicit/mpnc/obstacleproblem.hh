@@ -28,7 +28,6 @@
 #include <dune/common/parametertreeparser.hh>
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/mpnc/mpncmodel.hh>

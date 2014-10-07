@@ -32,7 +32,6 @@
 #warning ALUGrid is necessary for this test.
 #endif
 
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/implicit/co2/co2volumevariables.hh>
 #include <dumux/implicit/co2/co2model.hh>

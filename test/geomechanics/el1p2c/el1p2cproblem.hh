@@ -30,7 +30,6 @@
 #endif
 #include<iostream>
 
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 
 #include <dumux/geomechanics/el1p2c/el1p2cmodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>

@@ -28,7 +28,6 @@
 #if HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #endif
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/1p2c/1p2cmodel.hh>
@@ -64,7 +63,6 @@ SET_PROP(OnePTwoCOutflowProblem, Grid)
     typedef Dune::UGGrid<2> type;
 #else
 //    typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
-//    typedef Dune::SGrid<2, 2> type;
     typedef Dune::YaspGrid<2> type;
 #endif
 };

@@ -24,7 +24,7 @@
 #ifndef DUMUX_INJECTION_PROBLEM_HH
 #define DUMUX_INJECTION_PROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
@@ -47,7 +47,7 @@ NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCModel, InjectionProblem));
 // Set the grid type
 SET_PROP(InjectionProblem, Grid)
 {
-    typedef Dune::SGrid<2,2> type;
+    typedef Dune::YaspGrid<2> type;
 };
 
 // Set the problem property

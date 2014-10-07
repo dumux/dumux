@@ -25,10 +25,7 @@
 #ifndef DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 #define DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 
 #include <dumux/implicit/3p/3pmodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
@@ -49,7 +46,7 @@ NEW_TYPE_TAG(InfiltrationThreePBoxProblem, INHERITS_FROM(BoxModel, InfiltrationT
 NEW_TYPE_TAG(InfiltrationThreePCCProblem, INHERITS_FROM(CCModel, InfiltrationThreePProblem));
 
 // Set the grid type
-SET_TYPE_PROP(InfiltrationThreePProblem, Grid, Dune::SGrid<2,2>);
+SET_TYPE_PROP(InfiltrationThreePProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(InfiltrationThreePProblem, Problem, Dumux::InfiltrationThreePProblem<TypeTag>);

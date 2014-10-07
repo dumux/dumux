@@ -24,12 +24,7 @@
 #ifndef DUMUX_TEST_2P_PROBLEM_HH
 #define DUMUX_TEST_2P_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
 
 #include <dumux/material/components/unit.hh>
 
@@ -60,8 +55,7 @@ SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<Type
 // Set the grid type
 SET_PROP(FVVelocity2PTestProblem, Grid)
 {
-    //    typedef Dune::YaspGrid<2> type;
-    typedef Dune::SGrid<2, 2> type;
+    typedef Dune::YaspGrid<2> type;
 };
 
 // Set the wetting phase
@@ -95,8 +89,7 @@ SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem
 // Set the grid type
 SET_PROP(FVMPFAOVelocity2PTestProblem, Grid)
 {
-    //    typedef Dune::YaspGrid<2> type;
-    typedef Dune::SGrid<2, 2> type;
+    typedef Dune::YaspGrid<2> type;
 };
 
 // Set the wetting phase
@@ -127,8 +120,7 @@ SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem
 // Set the grid type
 SET_PROP(MimeticPressure2PTestProblem, Grid)
 {
-//        typedef Dune::YaspGrid<2> type;
-    typedef Dune::SGrid<2, 2> type;
+    typedef Dune::YaspGrid<2> type;
 };
 
 // Set the wetting phase

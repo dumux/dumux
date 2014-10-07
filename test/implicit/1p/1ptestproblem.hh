@@ -33,7 +33,6 @@
 #elif HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/grid/io/file/gmshreader.hh>
 
@@ -68,7 +67,6 @@ public:
 // Set the grid type
 SET_PROP(OnePTestProblem, Grid)
 {
-  //typedef Dune::SGrid<2, 2> type;
   typedef Dune::YaspGrid<2> type;
   //typedef Dune::UGGrid<2> type;
   //typedef Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming> type;
@@ -116,9 +114,9 @@ SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
  * <tt>./test_cc1p -parameterFile test_cc1p.input</tt>
  * 
  * The same parameter file can be also used for 3d simulation but you need to change line
- * <tt>typedef Dune::SGrid<2,2> type;</tt> to
- * <tt>typedef Dune::SGrid<3,3> type;</tt> in the problem file
- * and use <tt>1p_3d.dgf</tt> in the parameter file.
+ * <tt>typedef Dune::YaspGrid<2> type;</tt> to
+ * <tt>typedef Dune::YaspGrid<3> type;</tt> in the problem file
+ * and use <tt>test_1p_3d.dgf</tt> in the parameter file.
  */
 template <class TypeTag>
 class OnePTestProblem : public ImplicitPorousMediaProblem<TypeTag>

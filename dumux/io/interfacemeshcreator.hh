@@ -26,7 +26,7 @@
 #define DUMUX_INTERFACEMESHCREATOR_HH
 
 #include <dune/grid/common/gridfactory.hh>
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 namespace Dumux
 {
@@ -50,7 +50,7 @@ public:
     static Grid* create(const std::string& dgfName, const Dune::FieldVector<int, dim>& numElements,
                         const Scalar interfaceY, const Scalar gradingFactor, const bool refineTop = false)
     {
-	typedef Dune::SGrid<dim,dim> HelperGrid;
+        typedef Dune::YaspGrid<dim> HelperGrid;
         Dune::GridPtr<HelperGrid> helperGridPtr(dgfName);
         HelperGrid& helperGrid = *helperGridPtr;
         typedef typename HelperGrid::LeafGridView HelperGridView;

@@ -23,10 +23,6 @@
 #ifndef DUMUX_STOKES2CTESTPROBLEM_HH
 #define DUMUX_STOKES2CTESTPROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#endif
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
@@ -47,7 +43,7 @@ namespace Properties
 NEW_TYPE_TAG(Stokes2cTestProblem, INHERITS_FROM(BoxStokesnc));
 
 // Set the grid type
-SET_TYPE_PROP(Stokes2cTestProblem, Grid, Dune::SGrid<2,2>);
+SET_TYPE_PROP(Stokes2cTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(Stokes2cTestProblem, Problem, Dumux::Stokes2cTestProblem<TypeTag>);

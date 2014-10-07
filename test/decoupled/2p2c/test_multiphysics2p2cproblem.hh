@@ -24,12 +24,7 @@
 #ifndef DUMUX_TEST_2P2C_PROBLEM_HH
 #define DUMUX_TEST_2P2C_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
 
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p2c/fvpressure2p2cmultiphysics.hh>
@@ -58,8 +53,7 @@ SET_TYPE_PROP(TestMultTwoPTwoCProblem, CellData, Dumux::CellData2P2Cmultiphysics
 // Set the grid type
 SET_PROP(TestMultTwoPTwoCProblem, Grid)
 {
-    //    typedef Dune::YaspGrid<2> type;
-    typedef Dune::SGrid<3, 3> type;
+    typedef Dune::YaspGrid<3> type;
 };
 
 // Set the problem property
@@ -157,8 +151,8 @@ typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-TestMultTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
-ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight), eps_(1e-6), depthBOR_(1000.0)
+TestMultTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition upperRight = 0) :
+ParentType(timeManager, gridView), lowerLeft_(0), upperRight_(upperRight), eps_(1e-6), depthBOR_(1000.0)
 {
     // Specifies how many time-steps are done before output will be written.
 //    this->setOutputInterval(20);

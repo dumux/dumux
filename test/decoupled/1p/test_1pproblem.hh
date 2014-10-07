@@ -29,7 +29,6 @@
 #endif
 
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
 #include <dumux/io/cubegridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -61,7 +60,6 @@ SET_TYPE_PROP(TestProblemOneP, GridCreator, CubeGridCreator<TypeTag>);
 SET_PROP(TestProblemOneP, Grid)
 {
         typedef Dune::YaspGrid<2> type;
-//    typedef Dune::SGrid<2, 2> type;
 };
 
 // Set the wetting phase

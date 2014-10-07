@@ -25,7 +25,7 @@
 #define DUMUX_EL2P_TESTPROBLEM_HH
 
 #include <dune/common/version.hh>
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
 
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
@@ -57,7 +57,7 @@ NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
 
 // Set the grid type
 SET_PROP(El2P_TestProblem, Grid) {
-    typedef Dune::SGrid<3,3> type;
+    typedef Dune::YaspGrid<3> type;
 };
 
 SET_PROP(El2P_TestProblem, PressureFEM)
