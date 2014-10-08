@@ -38,6 +38,8 @@ class VertexHandleSum
     : public Dune::CommDataHandleIF< VertexHandleSum<FieldType, Container, VertexMapper>,
                                      FieldType >
 {
+    typedef typename VertexMapper::Index VertexMapperIndex;
+
 public:
     VertexHandleSum(Container &container,
                     const VertexMapper &mapper)
@@ -68,14 +70,14 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        int vIdx = mapper_.map(e);
+        VertexMapperIndex vIdx = mapper_.map(e);
         buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        int vIdx = mapper_.map(e);
+        VertexMapperIndex vIdx = mapper_.map(e);
 
         FieldType tmp;
         buff.read(tmp);
@@ -96,6 +98,8 @@ class VertexHandleMax
     : public Dune::CommDataHandleIF< VertexHandleMax<FieldType, Container, VertexMapper>,
                                      FieldType >
 {
+    typedef typename VertexMapper::Index VertexMapperIndex;
+
 public:
     VertexHandleMax(Container &container,
                     const VertexMapper &mapper)
@@ -126,14 +130,14 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        int vIdx = mapper_.map(e);
+        VertexMapperIndex vIdx = mapper_.map(e);
         buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        int vIdx = mapper_.map(e);
+        VertexMapperIndex vIdx = mapper_.map(e);
 
         FieldType tmp;
         buff.read(tmp);
@@ -155,6 +159,8 @@ class VertexHandleMin
     : public Dune::CommDataHandleIF< VertexHandleMin<FieldType, Container, VertexMapper>,
                                      FieldType >
 {
+    typedef typename VertexMapper::Index VertexMapperIndex;
+
 public:
     VertexHandleMin(Container &container,
                     const VertexMapper &mapper)
@@ -185,14 +191,14 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        int vIdx = mapper_.map(e);
+        VertexMapperIndex vIdx = mapper_.map(e);
         buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        int vIdx = mapper_.map(e);
+        VertexMapperIndex vIdx = mapper_.map(e);
 
         FieldType tmp;
         buff.read(tmp);

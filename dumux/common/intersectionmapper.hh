@@ -51,7 +51,7 @@ class IntersectionMapper
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
-
+    typedef typename ElementMapper::Index ElementMapperIndex;
 
 
 public:
@@ -79,48 +79,48 @@ public:
         return elementMapper_;
     }
 
-    int map(const Element& element) const
+    ElementMapperIndex map(const Element& element) const
     {
         return elementMapper_.map(element);
     }
 
-    int map(int elemIdx, int faceIdx)
+    ElementMapperIndex map(int elemIdx, int faceIdx)
     {
         return intersectionMapGlobal_[elemIdx][faceIdx];
     }
 
-    int map(int elemIdx, int faceIdx) const
+    ElementMapperIndex map(int elemIdx, int faceIdx) const
     {
         return (intersectionMapGlobal_[elemIdx].find(faceIdx))->second;//use find() for const function!
     }
 
-    int map(const Element& element, int faceIdx)
+    ElementMapperIndex map(const Element& element, int faceIdx)
     {
         return intersectionMapGlobal_[map(element)][faceIdx];
     }
 
-    int map(const Element& element, int faceIdx) const
+    ElementMapperIndex map(const Element& element, int faceIdx) const
     {
         return intersectionMapGlobal_[map(element)].find(faceIdx)->second;//use find() for const function!
     }
 
-    int maplocal(int elemIdx, int faceIdx)
+    ElementMapperIndex maplocal(int elemIdx, int faceIdx)
     {
         return intersectionMapLocal_[elemIdx][faceIdx];
     }
 
-    int maplocal(int elemIdx, int faceIdx) const
+    ElementMapperIndex maplocal(int elemIdx, int faceIdx) const
     {
         return (intersectionMapLocal_[elemIdx].find(faceIdx))->second;//use find() for const function!
     }
 
 
-    int maplocal(const Element& element, int faceIdx)
+    ElementMapperIndex maplocal(const Element& element, int faceIdx)
     {
         return intersectionMapLocal_[map(element)][faceIdx];
     }
 
-    int maplocal(const Element& element, int faceIdx) const
+    ElementMapperIndex maplocal(const Element& element, int faceIdx) const
     {
         return (intersectionMapLocal_[map(element)].find(faceIdx))->second;//use find() for const function!
     }
