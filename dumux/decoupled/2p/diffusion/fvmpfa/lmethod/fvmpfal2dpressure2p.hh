@@ -552,30 +552,12 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
             // get 'nextIsIt'
             switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
-            // for SGrid
+            // for SGrid and YaspGrid
             case GridTypeIndices::sGrid:
-            {
-                if (nextIsIt == isEndIt)
-                    nextIsIt = isItBegin;
-                else
-                {
-                    nextIsIt = ++tempisIt;
-
-                    if (nextIsIt == isEndIt)
-                    {
-                        nextIsIt = ++tempisItBegin;
-                    }
-                }
-
-                break;
-            }
-                // for YaspGrid
             case GridTypeIndices::yaspGrid:
             {
                 if (nextIsIt == isEndIt)
-                {
                     nextIsIt = isItBegin;
-                }
                 else
                 {
                     nextIsIt = ++tempisIt;
@@ -588,15 +570,8 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
 
                 break;
             }
-                // for ALUGrid
+            // for ALUGrid and UGGrid
             case GridTypeIndices::aluGrid:
-            {
-                if (nextIsIt == isEndIt)
-                    nextIsIt = isItBegin;
-
-                break;
-            }
-                // for UGGrid
             case GridTypeIndices::ugGrid:
             {
                 if (nextIsIt == isEndIt)
@@ -674,26 +649,8 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
             // get 'nextIsIt'
             switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
-            // for SGrid
+            // for SGrid and YaspGrid
             case GridTypeIndices::sGrid:
-            {
-                if (nextIsIt == isEndIt)
-                {
-                    nextIsIt = isItBegin;
-                }
-                else
-                {
-                    nextIsIt = ++tempisIt;
-
-                    if (nextIsIt == isEndIt)
-                    {
-                        nextIsIt = ++tempisItBegin;
-                    }
-                }
-
-                break;
-            }
-                // for YaspGrid
             case GridTypeIndices::yaspGrid:
             {
                 if (nextIsIt == isEndIt)
@@ -712,15 +669,8 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
 
                 break;
             }
-                // for ALUGrid
+            // for ALUGrid and UGGrid
             case GridTypeIndices::aluGrid:
-            {
-                if (nextIsIt == isEndIt)
-                    nextIsIt = isItBegin;
-
-                break;
-            }
-                // for UGGrid
             case GridTypeIndices::ugGrid:
             {
                 if (nextIsIt == isEndIt)
@@ -829,26 +779,8 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
             //get isIt14
             switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
-            // for SGrid
+            // for SGrid and YaspGrid
             case GridTypeIndices::sGrid:
-            {
-                if (isIt14 == isIt12End)
-                {
-                    isIt14 = isIt12Begin;
-                }
-                else
-                {
-                    isIt14 = ++tempIsIt;
-
-                    if (isIt14 == isIt12End)
-                    {
-                        isIt14 = ++tempIsItBegin;
-                    }
-                }
-
-                break;
-            }
-                // for YaspGrid
             case GridTypeIndices::yaspGrid:
             {
                 if (isIt14 == isIt12End)
@@ -867,15 +799,8 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
                 break;
             }
-                // for ALUGrid
+            // for ALUGrid and UGGrid
             case GridTypeIndices::aluGrid:
-            {
-                if (isIt14 == isIt12End)
-                    isIt14 = isIt12Begin;
-
-                break;
-            }
-                // for UGGrid
             case GridTypeIndices::ugGrid:
             {
                 if (isIt14 == isIt12End)
