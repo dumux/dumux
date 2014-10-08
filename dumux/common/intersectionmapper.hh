@@ -79,48 +79,48 @@ public:
         return elementMapper_;
     }
 
-    auto map(const Element& element) const
+    int map(const Element& element) const
     {
         return elementMapper_.map(element);
     }
 
-    auto map(int elemIdx, int faceIdx)
+    int map(int elemIdx, int faceIdx)
     {
         return intersectionMapGlobal_[elemIdx][faceIdx];
     }
 
-    auto map(int elemIdx, int faceIdx) const
+    int map(int elemIdx, int faceIdx) const
     {
         return (intersectionMapGlobal_[elemIdx].find(faceIdx))->second;//use find() for const function!
     }
 
-    auto map(const Element& element, int faceIdx)
+    int map(const Element& element, int faceIdx)
     {
         return intersectionMapGlobal_[map(element)][faceIdx];
     }
 
-    auto map(const Element& element, int faceIdx) const
+    int map(const Element& element, int faceIdx) const
     {
         return intersectionMapGlobal_[map(element)].find(faceIdx)->second;//use find() for const function!
     }
 
-    auto maplocal(int elemIdx, int faceIdx)
+    int maplocal(int elemIdx, int faceIdx)
     {
         return intersectionMapLocal_[elemIdx][faceIdx];
     }
 
-    auto maplocal(int elemIdx, int faceIdx) const
+    int maplocal(int elemIdx, int faceIdx) const
     {
         return (intersectionMapLocal_[elemIdx].find(faceIdx))->second;//use find() for const function!
     }
 
 
-    auto maplocal(const Element& element, int faceIdx)
+    int maplocal(const Element& element, int faceIdx)
     {
         return intersectionMapLocal_[map(element)][faceIdx];
     }
 
-    auto maplocal(const Element& element, int faceIdx) const
+    int maplocal(const Element& element, int faceIdx) const
     {
         return (intersectionMapLocal_[map(element)].find(faceIdx))->second;//use find() for const function!
     }

@@ -68,14 +68,14 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        auto vIdx = mapper_.map(e);
+        int vIdx = mapper_.map(e);
         buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        auto vIdx = mapper_.map(e);
+        int vIdx = mapper_.map(e);
 
         FieldType tmp;
         buff.read(tmp);
@@ -126,14 +126,14 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        auto vIdx = mapper_.map(e);
+        int vIdx = mapper_.map(e);
         buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        auto vIdx = mapper_.map(e);
+        int vIdx = mapper_.map(e);
 
         FieldType tmp;
         buff.read(tmp);
@@ -185,14 +185,14 @@ public:
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
-        auto vIdx = mapper_.map(e);
+        int vIdx = mapper_.map(e);
         buff.write(container_[vIdx]);
     }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        auto vIdx = mapper_.map(e);
+        int vIdx = mapper_.map(e);
 
         FieldType tmp;
         buff.read(tmp);
