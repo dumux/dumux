@@ -81,7 +81,7 @@ public:
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
         buff.write(gridView_.comm().rank());
-        buff.write(map_.map(e));
+        buff.write(static_cast<int>(map_.map(e)));
     }
 
     template<class MessageBufferImp, class EntityType>
