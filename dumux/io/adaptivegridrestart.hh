@@ -70,13 +70,21 @@ struct GridRestartCheck<Dune::SGrid<dim, dim>, dim>
 template<int dim>
 struct GridRestartCheck<Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>, dim>
 {
+#if HAVE_ALUGRID
     static const bool allowRestart = true;
+#else
+    static const bool allowRestart = false;
+#endif
 };
 
 template<int dim>
 struct GridRestartCheck<Dune::ALUGrid<dim, dim, Dune::simplex, Dune::conforming>, dim>
 {
+#if HAVE_ALUGRID
     static const bool allowRestart = true;
+#else
+    static const bool allowRestart = false;
+#endif
 };
 #endif
 
@@ -110,13 +118,18 @@ public:
     template<class Problem>
     static void serializeGrid(Problem& problem)
     {
+        DUNE_THROW(Dune::NotImplemented,
+                   "Adaptive restart functionality currently only works for ALUGrid (not dune-alugrid).");
     }
+
     /*!
      * \brief Restart the grid from the file.
      */
     template<class Problem>
     static void restartGrid(Problem& problem)
     {
+        DUNE_THROW(Dune::NotImplemented,
+                   "Adaptive restart functionality currently only works for ALUGrid (not dune-alugrid).");
     }
 };
 
@@ -133,18 +146,26 @@ public:
     template<class Problem>
     static void serializeGrid(Problem& problem)
     {
-        Dune::BackupRestoreFacility<Grid>::backup(
-            problem.grid(), restartGridFileName_(problem));
+        std::string gridName = restartGridFileName_(problem);
+        double time = problem.timeManager().time();
+        problem.grid().template writeGrid<Dune::xdr> (gridName, time);
+        // TODO use the BackupRestoreFacility with dune-alugrid, see FS#237
+        //Dune::BackupRestoreFacility<Grid>::backup(
+        //    problem.grid(), restartGridFileName_(problem));
     }
+
     /*!
      * \brief Restart the grid from the file.
      */
-
     template<class Problem>
     static void restartGrid(Problem& problem)
     {
-        problem.setGrid(*Dune::BackupRestoreFacility<Grid>::restore(
-            restartGridFileName_(problem)));
+        std::string gridName = restartGridFileName_(problem);
+        double time = problem.timeManager().time();
+        problem.grid().template readGrid<Dune::xdr> (gridName, time);
+        // TODO use the BackupRestoreFacility with dune-alugrid, see FS#237
+        //problem.setGrid(*Dune::BackupRestoreFacility<Grid>::restore(
+        //    restartGridFileName_(problem)));
     }
 
 private:
