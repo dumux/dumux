@@ -76,12 +76,14 @@ After extraction, the actual name of the \emph{dumux root directory} is \texttt{
 \begin{lstlisting}[style=Bash]
 $ mkdir dune
 $ cd dune
-$ tar xzvf path_to_tarball_of/dune-common-2.3.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dune-geometry-2.3.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dune-grid-2.3.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dune-istl-2.3.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dune-localfunctions-2.3.0.tar.gz 
-$ tar xzvf path_to_tarball_of/dumux-2.5.tar.gz
+$ tar xzvf path_to_tarball_of/dune-common-2.3.1.tar.gz 
+$ tar xzvf path_to_tarball_of/dune-geometry-2.3.1.tar.gz 
+$ tar xzvf path_to_tarball_of/dune-grid-2.3.1.tar.gz 
+$ tar xzvf path_to_tarball_of/dune-istl-2.3.1.tar.gz 
+$ tar xzvf path_to_tarball_of/dune-localfunctions-2.3.1.tar.gz
+$ tar xzvf path_to_tarball_of/dune-pdelab-2.0.0.tar.gz
+$ tar xzvf path_to_tarball_of/dune-typetree-2.3.1.tar.gz
+$ tar xzvf path_to_tarball_of/dumux-2.6.tar.gz
 \end{lstlisting}
 
 Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
@@ -135,7 +137,11 @@ $ git checkout releases/2.3
 $ cd ..
 $ git clone http://git.dune-project.org/repositories/dune-pdelab
 $ cd dune-pdelab
-$ git checkout releases/1.1
+$ git checkout releases/2.0
+$ cd ..
+$ git clone http://git.dune-project.org/repositories/dune-typetree
+$ cd dune-typetree
+$ git checkout releases/2.3
 $ cd ..
 \end{lstlisting}
 
