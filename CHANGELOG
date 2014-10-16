@@ -1,44 +1,84 @@
 Differences Between DuMuX 2.5 and DuMuX 2.6
 ===================================================
 
-* IMPORTANT NOTES:
-  - To set paramaters from the command line, --parameterFile=NAME is deprecated. Use
-    from now on -ParameterFile NAME.
-
 * IMPROVEMENTS and ENHANCEMENTS:
-  - multidomain models can now be used with the 2.3 release versions of DUNE core modules
-  - the free flow models now include the component enthalpy fluxes transported
-    by diffusion process (h^k D grad x), which was not considered before
-  - UMFPack is a new direct linear solver and can be use as a drop-in replacement for
-    SuperLU. Some users claim a speed-up up to the factor of seven. We know cases where
-    it was 10% slower, so please measure for your problems.
+  - For the non-isothermal porous media models, the energy equation is
+    implemented in a more generic way for all models in
+    dumux/implicit/nonisothermal. The existing TypeTag names like TwoPNI stay
+    the same. If a new non-isothermal model should be used, it is important
+    to NOT include anything from the old model-specific implementation like
+    from dumux/implicit/2pni, but to include from the model folder without the
+    "ni". See test/implicit/2pni for details. In principle, any isothermal
+    porous media model can be enhanced with the energy equation. Ideally, only
+    the corresponding property files have to be augmented. See
+    dumux/implicit/2p/2ppropert*.hh for details. The 1p2c model already has
+    been enhanced, the remaining models will follow in 2.7.
+
+  - The AMG backend is based directly on dune-istl now. No PDELab is required
+    anymore. The tests so far exhibit an improved robustness. Thanks to Markus
+    Blatt for the work.
+
+  - The multidomain models can now be used with the 2.3 release versions of the
+    DUNE core modules and dune-multidomaingrid, and the 2.0 release versions
+    of dune-pdelab and dune-multidomain. See test/multidomain/README for
+    details.
+
+  - In the fully implicit mpnc model, a further specialization allows now to
+    describe two-phase flow with two energy equations.
+
+  - The free flow models now include the component enthalpy fluxes transported
+    by diffusion processes (h^k D grad x), which was not considered before.
+
+  - UMFPack is a new direct linear solver and can be use as a drop-in
+    replacement for SuperLU. Some users claim a speed-up up to a factor of
+    seven. We know cases where it was 10% slower, so please measure for your
+    problems.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
-  - in the fully implicit mpnc model a further specialization allows now to describe two-phase
-  flow with two energy equations. The boolean property EnableKineticEnergy has therefore been
-  changed to the integer property NumEnergyEquations
+  - The 3p3cni model now also uses an effective thermal conductivity model
+    (ETCM). The ETCM is easily exchangeable. The default one is
+    ThermalConductivitySomerton, which is implemented in
+    dumux/material/fluidmatrixinteractions/3p. The ETCM requires that 3p3cni
+    spatial parameters provide a function thermalConductivitySolid instead of
+    matrixHeatFlux. See test/implicit/3p3cni/columnxylolspatialparams.hh for
+    details. Moreover, the employed fluid system has to actually implement the
+    function thermalConductivity. See
+    dumux/material/fluidsystems/h2oairxylenefluidsystem.hh for details.
+
+  - The non-isothermal flux variables call the effective thermal conductivity
+    models (ETCM) in a different way. If you used a self-written ETCM and want
+    to use a new non-isothermal model, the ETCM has to be adapted. See
+    material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh for
+    details.
+
+  - Fully implicit mpnc model: in order to account for the possibility of using
+    two energy equations, the boolean property EnableKineticEnergy has been
+    changed to the integer property NumEnergyEquations.
+
+* Deprecated way of setting command line parameters, to be removed after 2.6:
+  - To set paramaters from the command line, the notation --parameterFile=NAME
+    is deprecated. Use from now on -ParameterFile NAME.
 
 * Deprecated CLASSES/FILES, to be removed after 2.6:
-  - FVPressure2P2CAdaptive, use 2d-specific implementation FV2dPressure2P2CAdaptive instead.
-  - FVTransport2P2CAdaptive, use 2d-specific implementation FV2dTransport2P2CAdaptive instead.
+  - The old non-isothermal porous media models are deprecated. Technically,
+    including a ..niproperties.hh file triggers a deprecation warning.
 
-* Deprecated PROPERTY NAMES, to be removed after 2.6: BEWARE: The compiler will
-  not print any warning if a deprecated property name is used.
+  - FVPressure2P2CAdaptive, use dimension-specific implementations
+    FV2dPressure2P2CAdaptive and FV3dPressure2P2CAdaptive instead.
 
-* Deprecated CONSTANTS/ENUMS, to be removed after 2.6: BEWARE: Older compilers 
-  will not print any warning if a deprecated constant/enum is used.
-
-* Deprecated public MEMBER VARIABLES, to be removed after 2.6: BEWARE: Older
-  compilers will not print any warning if a deprecated public member variable 
-  is used.
+  - FVTransport2P2CAdaptive, use dimension-specific implementations
+    FV2dTransport2P2CAdaptive and FV3dTransport2P2CAdaptive instead.
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.6:
-  - In Stokes fluxes the method eddyViscosity() is deprecated, use dynamicEddyViscosity() instead.
-  - In Stokes non-isothermal fluxes the method eddyConductivity() is deprecated, use
-    thermalEddyConductivity() instead.
+  - In the Stokes flux variables, the method eddyViscosity() is deprecated, use
+    dynamicEddyViscosity() instead.
 
-* Deprecated MACROS, to be removed after 2.6: BEWARE: The compiler will not
-  print any warning if a deprecated macro is used.
+  - In the Stokes non-isothermal flux variables, the method eddyConductivity()
+    is deprecated, use thermalEddyConductivity() instead.
+
+  - Already in 2.5, the following member functions of MultiDomainModel/Problem
+    have been deprecated: subProblemX, subModelX, subIDX, gridViewX with X=1,2.
+    They are replaced by sdProblemX, sdModelX, sdIDX, sdGridViewX.
 
 * DELETED classes/files, property names, constants/enums, 
   member functions, which have been deprecated in DuMuX 2.5:
