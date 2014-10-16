@@ -6,7 +6,7 @@ CURDIR=doc
 # relative to $(CURDIR)
 BASEDIR=..
 
-EXTRA_DIST = logo/$(wildcard *.eps) \
+EXTRA_DIST = $(wildcard logo/*.eps) \
 		CMakeLists.txt	
 
 include $(top_srcdir)/am/webstuff

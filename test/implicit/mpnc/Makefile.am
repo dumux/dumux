@@ -3,7 +3,7 @@ noinst_HEADERS := $(wildcard *.hh)
 
 EXTRA_DIST:= $(wildcard *.input) CMakeLists.txt $(wildcard grids/*.dgf)
 gridsdir=$(datadir)/dumux/grids
-grids_DATA=grids/$(wildcard *.dgf)
+grids_DATA=$(wildcard grids/*.dgf)
 
 test_boxmpnc_SOURCES = test_boxmpnc.cc
 test_ccmpnc_SOURCES = test_ccmpnc.cc
