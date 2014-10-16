@@ -9,7 +9,7 @@ headercheck_IGNORE = \
 endif
 
 noinst_HEADERS := $(wildcard *.hh)
-EXTRA_DIST := $(wildcard *.input) grids/$(wildcard *.dgf) CMakeLists.txt
+EXTRA_DIST := $(wildcard *.input) $(wildcard grids/*.dgf) CMakeLists.txt
 
 test_2cnistokes2p2cni_SOURCES = test_2cnistokes2p2cni.cc
 

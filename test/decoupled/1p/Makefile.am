@@ -2,7 +2,7 @@
 check_PROGRAMS = test_diffusion test_diffusion3d test_1p
 
 noinst_HEADERS := $(wildcard *.hh)
-EXTRA_DIST:=$(wildcard *.input) grids/$(wildcard *.dgf) CMakeLists.txt
+EXTRA_DIST:=$(wildcard *.input) $(wildcard grids/*.dgf) CMakeLists.txt
 
 test_diffusion_SOURCES = test_diffusion.cc
 

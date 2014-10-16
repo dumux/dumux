@@ -6,7 +6,7 @@ check_PROGRAMS = test_impes \
                  test_3d2p
 
 noinst_HEADERS := $(wildcard *.hh)
-EXTRA_DIST:=$(wildcard *.input) grids/$(wildcard *.dgf) CMakeLists.txt
+EXTRA_DIST:=$(wildcard *.input) $(wildcard grids/*.dgf) CMakeLists.txt
 
 test_impes_SOURCES = test_impes.cc
 
