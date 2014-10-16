@@ -35,6 +35,7 @@ endif
 dumux-handbook.pdf:
 	$(MAKE) $(AM_MAKEFLAGS) doc
 
-EXTRA_DIST= dumux-handbook.pdf
+EXTRA_DIST= dumux-handbook.pdf \
+		CMakeLists.txt	
 
 include $(top_srcdir)/am/global-rules
