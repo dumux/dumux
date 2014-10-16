@@ -338,7 +338,7 @@ public:
                     ReferenceElements::general(eIt->geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
-                const DimMatrix& jacobianT = eIt->geometry().jacobianTransposed(localPos);
+                const DimMatrix jacobianT = eIt->geometry().jacobianTransposed(localPos);
 
                 // calculate the element velocity by the Piola transformation
                 DimVector elementVelocity(0);
