@@ -3,3 +3,13 @@
   patch istl-2.3.0.patch in your directory containing
   DUNE-ISTL 2.3.0, e.g.:
   patch -p1 <../dumux/patches/istl-2.3.0.patch
+
+- If UG has been installed for parallel usage, and you want to run a Dumux
+  multidomain model, you have to patch dune-grid. The patch will introduce
+  geometries for edges and faces in UG, which need to be present, otherwise the
+  compiler will complain. Apply the patch grid-2.3.1.patch in your directory
+  containing dune-grid 2.3.1 by, e.g.:
+  patch -p1 <../dumux/patches/grid-2.3.1.patch
+  If you want to use Dune 2.4, it is most likely that the missing functionality
+  will be included in dune-grid by 10/2014, so the patch will not be needed.
+
