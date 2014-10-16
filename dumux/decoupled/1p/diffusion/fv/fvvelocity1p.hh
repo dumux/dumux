@@ -141,19 +141,20 @@ public:
             for (int i = 0; i < dim; i++)
                 refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
 
-            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+            const typename Element::Geometry& geometry = eIt->geometry();
 
-            const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElements::general(eIt->geometry().type()).position(0,
-                    0);
+            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+            const Dune::FieldVector<Scalar, dim>& localPos 
+              = ReferenceElements::general(geometry.type()).position(0, 0);
 
             // get the transposed Jacobian of the element mapping
             const typename Element::Geometry::JacobianTransposed& jacobianT = 
-                eIt->geometry().jacobianTransposed(localPos);
+                geometry.jacobianTransposed(localPos);
 
             // calculate the element velocity by the Piola transformation
             Dune::FieldVector<Scalar, dim> elementVelocity(0);
             jacobianT.umtv(refVelocity, elementVelocity);
-            elementVelocity /= eIt->geometry().integrationElement(localPos);
+            elementVelocity /= geometry.integrationElement(localPos);
 
             velocity[globalIdx] = elementVelocity;
         }
