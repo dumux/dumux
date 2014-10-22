@@ -31,6 +31,7 @@
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/geomechanics/el2p/el2pmodel.hh>
+#include <dumux/linear/amgbackend.hh>
 
 #include "el2pco2tables.hh"
 #include "el2pspatialparams.hh"
@@ -132,6 +133,9 @@ SET_BOOL_PROP(El2P_TestProblem, ImplicitEnableJacobianRecycling, false);
 SET_BOOL_PROP(El2P_TestProblem, ImplicitEnablePartialReassemble, false);
 // Enable gravity
 SET_BOOL_PROP(El2P_TestProblem, ProblemEnableGravity, true);
+
+// use the algebraic multigrid
+SET_TYPE_PROP(El2P_TestProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
 
 // central differences to calculate the jacobian by default
 SET_INT_PROP(El2P_TestProblem, ImplicitNumericDifferenceMethod, 0);

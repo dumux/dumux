@@ -503,9 +503,22 @@ public:
     { return *matrix_; }
 
     /*!
+     * \brief Return reference to global Jacobian matrix.
+     */
+    JacobianMatrix& matrix()
+    { return *matrix_; }
+
+    /*!
      * \brief Return constant reference to global residual vector.
      */
     const SolutionVector& residual() const
+    { return *residual_; }
+
+
+    /*!
+     * \brief Return reference to global residual vector.
+     */
+    SolutionVector& residual()
     { return *residual_; }
 
 
