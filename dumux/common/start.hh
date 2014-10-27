@@ -69,97 +69,17 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
             return oss.str();
         }
 
-        std::string paramName, paramValue;
+        // read a -MyOpt VALUE option
+        std::string paramName = argv[i] + 1;
 
-        // read a --my-opt=VALUE option. This gets transformed
-        // into the parameter "MyOpt" with the value being "VALUE"
-        if (argv[i][1] == '-') {
-            // the syntax --my-opt=VALUE is deprecated and will be removed after DuMuX 2.6
-            std::cout << std::endl
-              << "Warning: the syntax --my-opt=VALUE is deprecated and will be removed after DuMuX 2.6"
-              << std::endl << std::endl;
-
-            std::string s(argv[i] + 2);
-            // There is nothing after the '='
-            if (s.size() == 0 || s[0] == '=')
-            {
-                std::ostringstream oss;
-                oss << "\n -> Parameter name of argument " << i << " (='" << argv[i] << "')"
-                    << " is empty. <- \n\n\n\n";
-                return oss.str();
-            }
-
-            // capitalize the first character 
-            s[0] = toupper(s[0]);
-
-            // parse argument
-            unsigned int j = 0;
-            while (true) {
-                if (j >= s.size()) {
-                    // encountered the end of the string, i.e. we
-                    // have a parameter where the argument is empty
-                    paramName = s;
-                    paramValue = "";
-                    break;
-                }
-                else if (s[j] == '=') {
-                    // we encountered a '=' character. everything
-                    // before is the name of the parameter,
-                    // everything after is the value.
-                    paramName = s.substr(0, j);
-                    paramValue = s.substr(j+1);
-                    break;
-                }
-                else if (s[j] == '.') {
-                    // we encountered a '.' character, indicating
-                    // the end of a group name, and need 
-                    // to captitalize the following character
-                    if (s.size() == j)
-                    {
-                        std::ostringstream oss;
-                        oss << "\n -> Parameter name of argument " << i << " ('" << argv[i] << "')"
-                            << " is invalid (ends with a '.' character). <- \n\n\n\n";
-                        return oss.str();
-                    }
-                    s[j+1] = toupper(s[j+1]);
-                }
-                else if (s[j] == '-') {
-                    // remove all "-" characters and capitalize the
-                    // character after them
-                    s.erase(j, 1);
-                    if (s.size() == j)
-                    {
-                        std::ostringstream oss;
-                        oss << "\n -> Parameter name of argument " << i << " ('" << argv[i] << "')"
-                            << " is invalid (ends with a '-' character). <- \n\n\n\n";
-                        return oss.str();
-                    }
-                    else if (s[j] == '-')
-                    {
-                        std::ostringstream oss;
-                        oss << "\n -> Malformed parameter name name in argument " << i << " ('" << argv[i] << "'): "
-                            << "'--' in parameter name. <- \n\n\n\n";
-                        return oss.str();
-                    }
-                    s[j] = toupper(s[j]);
-                }
-
-                ++j;
-            }
+        if (argc == i + 1 || argv[i+1][0] == '-') {
+            std::ostringstream oss;
+            oss << "\n -> No argument given for parameter '" << argv[i] << "'! <- \n\n\n\n";
+            return oss.str();
         }
-        else {
-            // read a -MyOpt VALUE option
-            paramName = argv[i] + 1;
 
-            if (argc == i + 1 || argv[i+1][0] == '-') {
-                std::ostringstream oss;
-                oss << "\n -> No argument given for parameter '" << argv[i] << "'! <- \n\n\n\n";
-                return oss.str();
-            }
-
-            paramValue = argv[i+1];
-            ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
-        }
+        std::string paramValue = argv[i+1];
+        ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
 
         // Put the key=value pair into the parameter tree
         paramTree[paramName] = paramValue;
