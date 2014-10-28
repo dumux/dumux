@@ -393,7 +393,7 @@ public:
 
         if(globalPos[0] < eps_)
         {
-            values[pressureIdx] = -darcyVelocity_*elemVolVars[scvIdx].molarDensity()*elemVolVars[scvIdx].moleFraction(pressureIdx);
+            values[pressureIdx] = -darcyVelocity_*elemVolVars[scvIdx].molarDensity();
             values[massOrMoleFracIdx] = -darcyVelocity_*elemVolVars[scvIdx].molarDensity()*elemVolVars[scvIdx].moleFraction(massOrMoleFracIdx);
             values[temperatureIdx] = -darcyVelocity_*elemVolVars[scvIdx].density()
                                      *IapwsH2O::liquidEnthalpy(temperatureHigh_, elemVolVars[scvIdx].pressure());
