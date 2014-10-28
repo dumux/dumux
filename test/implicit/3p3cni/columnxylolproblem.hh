@@ -139,6 +139,7 @@ class ColumnProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
@@ -148,7 +149,8 @@ class ColumnProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    
+    enum { dofCodim = isBox ? dim : 0 };
+
 public:
     /*!
      * \brief The constructor
@@ -293,6 +295,38 @@ public:
                              const GlobalPosition &globalPos) const
     {
         return threePhases;
+    }
+
+       /*!
+     * \brief Append all quantities of interest which can be derived
+     *        from the solution of the current time step to the VTK
+     *        writer. Adjust this in case of anisotropic permeabilities.
+     */
+    void addOutputVtkFields()
+    {
+        // get the number of degrees of freedom
+        unsigned numDofs = this->model().numDofs();
+
+        // create the scalar field required for the permeabilities
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        ScalarField *Kxx = this->resultWriter().allocateManagedBuffer(numDofs);
+
+        FVElementGeometry fvGeometry;
+
+        ElementIterator eIt = this->gridView().template begin<0>();
+        ElementIterator eEndIt = this->gridView().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
+        {
+            fvGeometry.update(this->gridView(), *eIt);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            {
+                int globalIdx = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
+                (*Kxx)[globalIdx] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, scvIdx);
+            }
+        }
+
+        this->resultWriter().attachDofData(*Kxx, "permeability", isBox);
     }
 
 private:

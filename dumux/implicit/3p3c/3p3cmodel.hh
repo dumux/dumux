@@ -311,7 +311,6 @@ public:
                 moleFraction[i][j] = writer.allocateManagedBuffer (numDofs);
         ScalarField *temperature = writer.allocateManagedBuffer (numDofs);
         ScalarField *poro = writer.allocateManagedBuffer(numDofs);
-        ScalarField *perm = writer.allocateManagedBuffer(numDofs);
         VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numDofs);
         VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numDofs);
         VectorField *velocityG = writer.template allocateManagedBuffer<double, dim>(numDofs);
@@ -371,7 +370,6 @@ public:
                     }
 
                     (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();
-                    (*perm)[globalIdx] = elemVolVars[scvIdx].permeability();
                     (*temperature)[globalIdx] = elemVolVars[scvIdx].temperature();
                     (*phasePresence)[globalIdx] = staticDat_[globalIdx].phasePresence;
                 }
@@ -406,7 +404,6 @@ public:
             }
         }
         writer.attachDofData(*poro, "porosity", isBox);
-        writer.attachDofData(*perm, "permeability", isBox);
         writer.attachDofData(*temperature, "temperature", isBox);
         writer.attachDofData(*phasePresence, "phase presence", isBox);
 

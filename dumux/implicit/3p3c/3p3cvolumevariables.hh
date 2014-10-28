@@ -574,12 +574,6 @@ public:
                                                          scvIdx);
         Valgrind::CheckDefined(porosity_);
 
-        // permeability
-        permeability_ = problem.spatialParams().intrinsicPermeability(element,
-                                                                          fvGeometry,
-                                                                          scvIdx);
-        Valgrind::CheckDefined(permeability_);
-
         // energy related quantities not contained in the fluid state
         asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
         // compute and set the enthalpy
@@ -686,12 +680,6 @@ public:
     { return porosity_; }
 
     /*!
-     * \brief Returns the permeability within the control volume.
-     */
-    Scalar permeability() const
-    { return permeability_; }
-
-    /*!
      * \brief Returns the diffusivity coefficient matrix.
      */
     Dune::FieldMatrix<Scalar, numPhases, numComponents> diffusionCoefficient() const
@@ -740,7 +728,6 @@ protected:
     Scalar massFrac_[numPhases][numComponents];
 
     Scalar porosity_;        //!< Effective porosity within the control volume
-    Scalar permeability_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     /* We need a tensor here !! */
