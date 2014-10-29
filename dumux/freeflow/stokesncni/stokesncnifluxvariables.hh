@@ -96,13 +96,6 @@ public:
     { return temperatureGrad_; }
 
     /*!
-     * \brief Return the eddy conductivity (if implemented) \f$\mathrm{[W/(m*K)]}\f$.
-     */
-    DUNE_DEPRECATED_MSG("Function eddyConductivity() is deprecated, use thermalEddyConductivity() instead.")
-    const Scalar eddyConductivity() const
-    { return thermalEddyConductivity(); }
-
-    /*!
      * \brief Return the thermal eddy conductivity \f$\mathrm{[W/(m*K)]}\f$ (if implemented).
      */
     const Scalar thermalEddyConductivity() const

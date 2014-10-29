@@ -233,14 +233,6 @@ public:
      * \brief Return the dynamic eddy viscosity 
      *        \f$\mathrm{[Pa \cdot s]} = \mathrm{[N \cdot s/m^2]}\f$ (if implemented).
      */
-    DUNE_DEPRECATED_MSG("Function eddyViscosity() is deprecated, use dynamicEddyViscosity() instead.")
-    const Scalar eddyViscosity() const
-    { return dynamicEddyViscosity(); }
-
-    /*!
-     * \brief Return the dynamic eddy viscosity 
-     *        \f$\mathrm{[Pa \cdot s]} = \mathrm{[N \cdot s/m^2]}\f$ (if implemented).
-     */
     const Scalar dynamicEddyViscosity() const
     { return kinematicEddyViscosity() * density(); }
 
