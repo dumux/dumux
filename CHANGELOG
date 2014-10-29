@@ -1,3 +1,11 @@
+Differences Between DuMuX 2.6 and DuMuX 2.7
+===================================================
+
+* DELETED classes/files, property names, constants/enums, 
+  member functions, which have been deprecated in DuMuX 2.6:
+  Everything listed as deprecated below has been removed.
+
+
 Differences Between DuMuX 2.5 and DuMuX 2.6
 ===================================================
 
