@@ -49,12 +49,10 @@ NEW_TYPE_TAG(ThreePThreeC);
 NEW_TYPE_TAG(BoxThreePThreeC, INHERITS_FROM(BoxModel, ThreePThreeC));
 NEW_TYPE_TAG(CCThreePThreeC, INHERITS_FROM(CCModel, ThreePThreeC));
 
-#ifndef DUMUX_3P3CNI_PROPERTIES_HH
 //! The type tags for the corresponding non-isothermal problems
 NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC, NonIsothermal));
 NEW_TYPE_TAG(BoxThreePThreeCNI, INHERITS_FROM(BoxModel, ThreePThreeCNI));
 NEW_TYPE_TAG(CCThreePThreeCNI, INHERITS_FROM(CCModel, ThreePThreeCNI));
-#endif
 
 //////////////////////////////////////////////////////////////////
 // Property tags
