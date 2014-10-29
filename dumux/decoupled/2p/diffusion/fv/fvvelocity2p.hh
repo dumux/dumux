@@ -198,8 +198,16 @@ public:
 
                 CellData& cellData = problem_.variables().cellData(globalIdx);
 
-                Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
-                Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
+                const typename Element::Geometry& geometry = eIt->geometry();
+                // get corresponding reference element
+                typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+                const Dune::ReferenceElement< Scalar , dim > & refElement =
+                        ReferenceElements::general( geometry.type() );
+                const int numberOfFaces=refElement.size(1);
+
+                std::vector<Scalar> fluxW(numberOfFaces,0);
+                std::vector<Scalar> fluxNw(numberOfFaces,0);
+
                 // run through all intersections with neighbors and boundary
                 IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
                 for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
@@ -213,31 +221,61 @@ public:
                 }
 
                 Dune::FieldVector < Scalar, dim > refVelocity(0);
-                for (int i = 0; i < dim; i++)
-                refVelocity[i] = 0.5 * (fluxW[2*i + 1] - fluxW[2*i]);
-
+                //2D simplices
+                if ( dim==2 && geometry.corners() == 3 ) {
+                    refVelocity[0] = 1.0/3.0*(2.0*fluxW[1] - fluxW[2]);
+                    refVelocity[1] = 1.0/3.0*(2.0*fluxW[0] - fluxW[2]);
+                }
+                //3D tetrahedra
+                else if ( dim==3 && geometry.corners() == 4 ){
+                    DUNE_THROW(Dune::NotImplemented, "velocity output for tetrahedra not implemented");
+                }
+                //2D and 3D cubes
+                else if ( refElement.type().isCube() ){
+                    for (int i = 0; i < dim; i++)
+                        refVelocity[i] = 0.5 * (fluxW[2*i + 1] - fluxW[2*i]);
+                }
+                //3D prism and pyramids
+                else {
+                    DUNE_THROW(Dune::NotImplemented, "velocity output for prism/pyramid not implemented");
+                }
                 const Dune::FieldVector<Scalar, dim> localPos =
-                ReferenceElements::general(eIt->geometry().type()).position(0, 0);
+                        refElement.position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
                 const JacobianTransposed jacobianT =
-                    eIt->geometry().jacobianTransposed(localPos);
+                        geometry.jacobianTransposed(localPos);
 
                 // calculate the element velocity by the Piola transformation
                 Dune::FieldVector < Scalar, dim > elementVelocity(0);
                 jacobianT.umtv(refVelocity, elementVelocity);
-                elementVelocity /= eIt->geometry().integrationElement(localPos);
+                elementVelocity /= geometry.integrationElement(localPos);
 
                 velocity[globalIdx] = elementVelocity;
 
                 refVelocity = 0;
-                for (int i = 0; i < dim; i++)
-                refVelocity[i] = 0.5 * (fluxNw[2*i + 1] - fluxNw[2*i]);
-
+                //2D simplices
+                if ( dim==2 && geometry.corners() == 3 ) {
+                    refVelocity[0] = 1.0/3.0*(2.0*fluxNw[1] - fluxNw[2]);
+                    refVelocity[1] = 1.0/3.0*(2.0*fluxNw[0] - fluxNw[2]);
+                }
+                //3D tetrahedra
+                else if ( dim==3 && geometry.corners() == 4 ){
+                    DUNE_THROW(Dune::NotImplemented, "velocity output for tetrahedra not implemented");
+                }
+                //2D and 3D cubes
+                else if ( refElement.type().isCube() ){
+                    for (int i = 0; i < dim; i++)
+                        refVelocity[i] = 0.5 * (fluxNw[2*i + 1] - fluxNw[2*i]);
+                }
+                //3D prism and pyramids
+                else {
+                    DUNE_THROW(Dune::NotImplemented, "velocity output for prism/pyramid not implemented");
+                }
                 // calculate the element velocity by the Piola transformation
                 elementVelocity = 0;
                 jacobianT.umtv(refVelocity, elementVelocity);
-                elementVelocity /= eIt->geometry().integrationElement(localPos);
+                elementVelocity /= geometry.integrationElement(localPos);
 
                 velocitySecondPhase[globalIdx] = elementVelocity;
             }

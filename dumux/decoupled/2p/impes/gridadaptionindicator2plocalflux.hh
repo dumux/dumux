@@ -211,8 +211,16 @@ public:
                 break;
             }
 
-            Dune::FieldVector < Scalar, 2 * dim > flux(0);
-            // Berechne Verfeinerungsindikator an allen Zellen
+            const typename Element::Geometry& geometry = eIt->geometry();
+            // get corresponding reference element
+            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+            const Dune::ReferenceElement< Scalar , dim > & refElement =
+                    ReferenceElements::general( geometry.type() );
+            const int numberOfFaces=refElement.size(1);
+
+            std::vector<Scalar> flux(numberOfFaces,0);
+
+            // Calculate refinement indicator on all cells
             IntersectionIterator isItend = problem_.gridView().iend(*eIt);
             for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
             {
@@ -331,19 +339,34 @@ public:
             if (useFluxInd_ || usePercentileFlux_)
             {
                 DimVector refVelocity(0);
-                for (int i = 0; i < dim; i++)
-                    refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
+                //2D simplices
+                if ( dim==2 && geometry.corners() == 3 ) {
+                    refVelocity[0] = 1.0/3.0*(2.0*flux[1] - flux[2]);
+                    refVelocity[1] = 1.0/3.0*(2.0*flux[0] - flux[2]);
+                }
+                //3D tetrahedra
+                else if ( dim==3 && geometry.corners() == 4 ){
+                    DUNE_THROW(Dune::NotImplemented, "velocity output for tetrahedra not implemented");
+                }
+                //2D and 3D cubes
+                else if ( refElement.typ().isCube() ){
+                    for (int i = 0; i < dim; i++)
+                        refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
+                }
+                //3D prism and pyramids
+                else {
+                    DUNE_THROW(Dune::NotImplemented, "velocity output for prism/pyramid not implemented");
+                }
 
-                const DimVector& localPos =
-                    ReferenceElements::general(eIt->geometry().type()).position(0, 0);
+                const DimVector& localPos = refElement.position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
-                const DimMatrix jacobianT = eIt->geometry().jacobianTransposed(localPos);
+                const DimMatrix jacobianT = geometry.jacobianTransposed(localPos);
 
                 // calculate the element velocity by the Piola transformation
                 DimVector elementVelocity(0);
                 jacobianT.umtv(refVelocity, elementVelocity);
-                elementVelocity /= eIt->geometry().integrationElement(localPos);
+                elementVelocity /= geometry.integrationElement(localPos);
 
                 Scalar velNorm = elementVelocity.two_norm();
                 indicatorVectorFlux_[globalIdxI] = std::max(velNorm, indicatorVectorFlux_[globalIdxI]);

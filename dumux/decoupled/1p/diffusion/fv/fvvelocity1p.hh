@@ -123,7 +123,15 @@ public:
 
             CellData& cellData = problem_.variables().cellData(globalIdx);
 
-            Dune::FieldVector<Scalar, 2*dim> flux(0);
+            const typename Element::Geometry& geometry = eIt->geometry();
+            // get corresponding reference element
+            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+            const Dune::ReferenceElement< Scalar , dim > & refElement =
+                    ReferenceElements::general( geometry.type() );
+            const int numberOfFaces=refElement.size(1);
+
+            std::vector<Scalar> flux(numberOfFaces,0);
+
             // run through all intersections with neighbors and boundary
             IntersectionIterator
             isEndIt = problem_.gridView().iend(*eIt);
@@ -136,19 +144,31 @@ public:
                 flux[isIndex] = isIt->geometry().volume()
                         * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(isIndex));
             }
-
             Dune::FieldVector<Scalar, dim> refVelocity(0);
-            for (int i = 0; i < dim; i++)
-                refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
+            //2D simplices
+            if ( dim==2 && geometry.corners() == 3 ) {
+                refVelocity[0] = 1.0/3.0*(2.0*flux[1] - flux[2]);
+                refVelocity[1] = 1.0/3.0*(2.0*flux[0] - flux[2]);
+            }
+            //3D tetrahedra
+            else if ( dim==3 && geometry.corners() == 4 ){
+                DUNE_THROW(Dune::NotImplemented, "velocity output for tetrahedra not implemented");
+            }
+            //2D and 3D cubes
+            else if ( refElement.type().isCube() ){
+                for (int i = 0; i < dim; i++)
+                    refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
+            }
+            //3D prism and pyramids
+            else {
+                DUNE_THROW(Dune::NotImplemented, "velocity output for prism/pyramid not implemented");
+            }
 
-            const typename Element::Geometry& geometry = eIt->geometry();
-
-            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-            const Dune::FieldVector<Scalar, dim>& localPos 
-              = ReferenceElements::general(geometry.type()).position(0, 0);
+            const Dune::FieldVector<Scalar, dim>& localPos
+              = refElement.position(0, 0);
 
             // get the transposed Jacobian of the element mapping
-            const typename Element::Geometry::JacobianTransposed& jacobianT = 
+            const typename Element::Geometry::JacobianTransposed& jacobianT =
                 geometry.jacobianTransposed(localPos);
 
             // calculate the element velocity by the Piola transformation
