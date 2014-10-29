@@ -49,17 +49,13 @@ AC_CONFIG_FILES([dumux.pc
     dumux/implicit/1p2c/Makefile 
     dumux/implicit/2p/Makefile 
     dumux/implicit/2p2c/Makefile 
-    dumux/implicit/2p2cni/Makefile 
-    dumux/implicit/2pni/Makefile
     dumux/implicit/2pdfm/Makefile 
     dumux/implicit/3p/Makefile 
     dumux/implicit/3p3c/Makefile 
-    dumux/implicit/3p3cni/Makefile 
     dumux/implicit/box/Makefile 
     dumux/implicit/cellcentered/Makefile 
     dumux/implicit/common/Makefile 
     dumux/implicit/co2/Makefile
-    dumux/implicit/co2ni/Makefile
     dumux/implicit/nonisothermal/Makefile
     dumux/implicit/mpnc/Makefile 
     dumux/implicit/mpnc/diffusion/Makefile
