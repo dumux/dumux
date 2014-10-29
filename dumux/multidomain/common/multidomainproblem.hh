@@ -406,30 +406,6 @@ public:
     const SubDomainGrid& sdGrid2() const
     { return sdGrid2_; }
 
-    DUNE_DEPRECATED_MSG("use sdID1 instead")
-    const typename MultiDomainGrid::SubDomainType subID1() const
-    { return sdID1(); }
-
-    DUNE_DEPRECATED_MSG("use sdID2 instead")
-    const typename MultiDomainGrid::SubDomainType subID2() const
-    { return sdID2(); }
-
-    DUNE_DEPRECATED_MSG("use sdProblem1 instead")
-    SubDomainProblem1& subProblem1()
-    { return sdProblem1(); }
-
-    DUNE_DEPRECATED_MSG("use sdProblem2 instead")
-    SubDomainProblem2& subProblem2()
-    { return sdProblem2(); }
-
-    DUNE_DEPRECATED_MSG("use sdGridView1 instead")
-    const SubDomainGridView1 gridView1() const
-    { return mdGrid().subDomain(sdID1_).leafView(); }
-
-    DUNE_DEPRECATED_MSG("use sdGridView2 instead")
-    const SubDomainGridView2 gridView2() const
-    { return mdGrid().subDomain(sdID2_).leafView(); }
-
     /*!
      * \brief Returns the gridview of subdomain1
      */

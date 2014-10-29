@@ -210,38 +210,6 @@ public:
     const SubDomainModel2 &sdModel2() const
     { return sdProblem2().model(); }
 
-    DUNE_DEPRECATED_MSG("use sdProblem1 instead")
-    SubDomainProblem1 &subProblem1()
-    { return sdProblem1(); }
-
-    DUNE_DEPRECATED_MSG("use sdProblem1 instead")
-    const SubDomainProblem1 &subProblem1() const
-    { return sdProblem1(); }
-
-    DUNE_DEPRECATED_MSG("use sdProblem2 instead")
-    SubDomainProblem2 &subProblem2()
-    { return sdProblem2(); }
-
-    DUNE_DEPRECATED_MSG("use sdProblem2 instead")
-    const SubDomainProblem2 &subProblem2() const
-    { return sdProblem2(); }
-
-    DUNE_DEPRECATED_MSG("use sdModel1 instead")
-    SubDomainModel1 &subModel1()
-    { return sdModel1(); }
-
-    DUNE_DEPRECATED_MSG("use sdModel1 instead")
-    const SubDomainModel1 &subModel1() const
-    { return sdModel1(); }
-
-    DUNE_DEPRECATED_MSG("use sdModel2 instead")
-    SubDomainModel2 &subModel2()
-    { return sdModel2(); }
-
-    DUNE_DEPRECATED_MSG("use sdModel2 instead")
-    const SubDomainModel2 &subModel2() const
-    { return sdModel2(); }
-
     //! \copydoc Dumux::ImplicitModel::update()
     bool update(NewtonMethod &solver,
                 NewtonController &controller)
