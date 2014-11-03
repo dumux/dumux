@@ -53,7 +53,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) PressureModel;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
@@ -135,7 +134,7 @@ public:
                 bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().center()[i]);
             }
         }
-
+        
         timeManager_ = Dune::stackobject_to_shared_ptr<TimeManager>(timeManager);
 
         model_ = Dune::make_shared<Model>(asImp_()) ;
@@ -569,17 +568,8 @@ public:
      */
     const Model &model() const
     { return *model_; }
-
-    /*!
-     * \brief Returns the pressure model used for the problem.
-     */
-    PressureModel &pressureModel()
-    { return *pressModel_; }
-
-    //! \copydoc Dumux::IMPETProblem::pressureModel()
-    const PressureModel &pressureModel() const
-    { return *pressModel_; }
     // \}
+
 
     /*!
      * \name Restart mechanism
@@ -669,7 +659,6 @@ private:
 
     Variables variables_;
 
-    Dune::shared_ptr<PressureModel> pressModel_;//!< object including the pressure model
     Dune::shared_ptr<Model> model_;
 
     Dune::shared_ptr<VtkMultiWriter> resultWriter_;
