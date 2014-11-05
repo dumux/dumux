@@ -144,22 +144,27 @@ public:
                 flux[isIndex] = isIt->geometry().volume()
                         * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(isIndex));
             }
-            Dune::FieldVector<Scalar, dim> refVelocity(0);
-            //2D simplices
-            if ( dim==2 && geometry.corners() == 3 ) {
-                refVelocity[0] = 1.0/3.0*(2.0*flux[1] - flux[2]);
-                refVelocity[1] = 1.0/3.0*(2.0*flux[0] - flux[2]);
+
+            // calculate velocity on reference element as the Raviart-Thomas-0
+            // interpolant of the fluxes
+            Dune::FieldVector<Scalar, dim> refVelocity;
+            // simplices
+            if (refElement.type().isSimplex()) {
+                for (int dimIdx = 0; dimIdx < dim; dimIdx++)
+                {
+                    refVelocity[dimIdx] = -flux[dim - 1 - dimIdx];
+                    for (int faceIdx = 0; faceIdx < dim + 1; faceIdx++)
+                    {
+                        refVelocity[dimIdx] += flux[faceIdx]/(dim + 1);
+                    }
+                }
             }
-            //3D tetrahedra
-            else if ( dim==3 && geometry.corners() == 4 ){
-                DUNE_THROW(Dune::NotImplemented, "velocity output for tetrahedra not implemented");
-            }
-            //2D and 3D cubes
-            else if ( refElement.type().isCube() ){
+            // cubes
+            else if (refElement.type().isCube()){
                 for (int i = 0; i < dim; i++)
                     refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
             }
-            //3D prism and pyramids
+            // 3D prism and pyramids
             else {
                 DUNE_THROW(Dune::NotImplemented, "velocity output for prism/pyramid not implemented");
             }

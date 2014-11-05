@@ -200,15 +200,28 @@ public:
                 }
             }
 
-            // calculate velocity on reference element
-            Dune::FieldVector<Scalar,dim> refVelocity;
-            if (geometry.corners() == 3) {
-                refVelocity[0] = 1.0/3.0*(fluxVector[0] + fluxVector[2] - 2.0*fluxVector[1]);
-                refVelocity[1] = 1.0/3.0*(fluxVector[0] + fluxVector[1] - 2.0*fluxVector[2]);
+            // calculate velocity on reference element as the Raviart-Thomas-0
+            // interpolant of the fluxes
+            Dune::FieldVector<Scalar, dim> refVelocity;
+            // simplices
+            if (geometry.type().isSimplex()) {
+                for (int dimIdx = 0; dimIdx < dim; dimIdx++)
+                {
+                    refVelocity[dimIdx] = -fluxVector[dim - 1 - dimIdx];
+                    for (int faceIdx = 0; faceIdx < dim + 1; faceIdx++)
+                    {
+                        refVelocity[dimIdx] += fluxVector[faceIdx]/(dim + 1);
+                    }
+                }
             }
+            // cubes
+            else if (geometry.type().isCube()){
+                for (int i = 0; i < dim; i++)
+                    refVelocity[i] = 0.5 * (fluxVector[2*i + 1] - fluxVector[2*i]);
+            }
+            // 3D prism and pyramids
             else {
-                refVelocity[0] = 0.5*(fluxVector[1] - fluxVector[0]);
-                refVelocity[1] = 0.5*(fluxVector[3] - fluxVector[2]);
+                DUNE_THROW(Dune::NotImplemented, "velocity output for prism/pyramid not implemented");
             }
 
             // get the transposed Jacobian of the element mapping
