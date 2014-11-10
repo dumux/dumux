@@ -379,7 +379,7 @@ namespace Dumux
 
         private:
             Scalar upwindWeight_;
-            Scalar withStabilization_;
+            bool withStabilization_;
     };
 
 }
