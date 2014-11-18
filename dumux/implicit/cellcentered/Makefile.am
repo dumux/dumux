@@ -1,4 +1,4 @@
-commondir = $(includedir)/dumux/ccmodels/common
-common_HEADERS := $(wildcard *.hh)
+cellcentereddir = $(includedir)/dumux/implicit/cellcentered
+cellcentered_HEADERS := $(wildcard *.hh)
 
 include $(top_srcdir)/am/global-rules
