@@ -184,7 +184,11 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
     enum {
         // indices of the primary variables
             pressureIdx = Indices::pwIdx,
-            saturationIdx = Indices::snIdx
+            saturationIdx = Indices::snIdx,
+            uxIdx = Indices::uxIdx,
+            uyIdx = Indices::uyIdx,
+            uzIdx = Indices::uzIdx
+
     };
     enum {
         // indices of the equations+
@@ -488,7 +492,7 @@ public:
         // The solid displacement normal to the lateral boundaries is fixed.
         if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0]-eps_)
         {
-            values.setDirichlet(Indices::u(0));
+            values.setDirichlet(uxIdx);
             if(initializationRun_ == false)
             {
                 values.setDirichlet(pressureIdx, contiWEqIdx);
@@ -498,7 +502,7 @@ public:
         // The solid displacement normal to the lateral boundaries is fixed.
         if(globalPos[1] < eps_ || globalPos[1] > this->bBoxMax()[1]-eps_)
         {
-            values.setDirichlet(Indices::u(1));
+            values.setDirichlet(uyIdx);
             if(initializationRun_ == false)
             {
                 values.setDirichlet(pressureIdx, contiWEqIdx);
@@ -509,7 +513,7 @@ public:
         // Lower boundary closed for brine and CO2 flux, uz is fixed.
         if(globalPos[2] < eps_)
         {
-            values.setDirichlet(Indices::u(2));
+            values.setDirichlet(uzIdx);
         }
 
         // for the initialization run the pressure and saturation
