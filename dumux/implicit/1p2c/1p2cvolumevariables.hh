@@ -91,13 +91,6 @@ public:
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
 
         porosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
-        tortuosity_ = problem.spatialParams().tortuosity(element, fvGeometry, scvIdx);
-        if (tortuosity_ > 0)
-        {
-        	std::cerr << "ERROR: You are still using the tortuosity method in your spatialParams, which is not used anymore.\n"
-        			  << "Please remove it, the calculation is done within the effective diffusivity model.\n";
-        	exit(1);
-        }
 
         dispersivity_ = problem.spatialParams().dispersivity(element, fvGeometry, scvIdx);
 
@@ -281,7 +274,6 @@ protected:
     { }
 
     Scalar porosity_;    //!< Effective porosity within the control volume
-    Scalar tortuosity_;
     GlobalPosition dispersivity_;
     Scalar diffCoeff_;
     FluidState fluidState_;

@@ -38,7 +38,7 @@ namespace Dumux
  * @tparam TypeTag The Type Tag
  */
 template<class TypeTag>
-class CellData2P2CAdaptive: public CellData2P2Cmultiphysics<TypeTag>
+class CellData2P2CAdaptive: public CellData2P2CMultiPhysics<TypeTag>
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -106,7 +106,7 @@ public:
 
 
     //! Constructs an adaptive CellData object
-    CellData2P2CAdaptive() : CellData2P2Cmultiphysics<TypeTag>()
+    CellData2P2CAdaptive() : CellData2P2CMultiPhysics<TypeTag>()
     {
         for (int i = 0; i < numPhases;i++)
             upwindError_[i] = 0;

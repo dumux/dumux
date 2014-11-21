@@ -31,6 +31,7 @@
 
 #include <dumux/common/basicproperties.hh>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux
@@ -199,8 +200,7 @@ public:
                    "a porosityAtPos() method.");
     }
 
-    // PRELIMINARY FUNCTION! DEPRECATED WHEN CREATED
-    double tortuosity(const Element &element) const
+    double DUNE_DEPRECATED tortuosity(const Element &element) const
     {
             return -1;
     }

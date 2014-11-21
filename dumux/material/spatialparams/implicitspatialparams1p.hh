@@ -31,6 +31,7 @@
 
 #include <dumux/implicit/common/implicitproperties.hh>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux {
@@ -198,8 +199,7 @@ public:
         }
     }
 
-    // PRELIMINARY FUNCTION! DEPRECATED WHEN CREATED
-    double tortuosity(const Element &element,
+    double DUNE_DEPRECATED tortuosity(const Element &element,
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
     {

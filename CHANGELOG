@@ -1,5 +1,13 @@
 Differences Between DuMuX 2.6 and DuMuX 2.7
 ===================================================
+* Deprecated CLASSES/FILES, to be removed after 2.6:
+  - CellData2P2Cmultiphysics, replaced by CellData2P2CMultiPhysics
+
+* Deprecated MEMBER FUNCTIONS, to be removed after 2.6:
+  - The 1p2c volume variables no longer use the method tortuosity() from
+    spatial params class, the value is now calculated within the effective
+    diffusivity model. Thus the method is deprecated in the spacial params
+    classes FVSpatialParamsOneP and ImplicitSpatialParamsOneP.
 
 * DELETED classes/files, property names, constants/enums, 
   member functions, which have been deprecated in DuMuX 2.6:

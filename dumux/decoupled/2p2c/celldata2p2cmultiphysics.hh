@@ -19,6 +19,8 @@
 #ifndef DUMUX_ELEMENTDATA2P2C_MULTYPHYSICS_HH
 #define DUMUX_ELEMENTDATA2P2C_MULTYPHYSICS_HH
 
+#include <dune/common/deprecated.hh>
+
 #include "2p2cproperties.hh"
 #include "celldata2p2c.hh"
 #include <dumux/decoupled/2p2c/pseudo1p2cfluidstate.hh>
@@ -317,10 +319,11 @@ public:
 };
 
 template<class TypeTag>
-class CellData2P2Cmultiphysics : public CellData2P2CMultiPhysics<TypeTag>
+class DUNE_DEPRECATED_MSG("Use CellData2P2CMultiPhysics instead")
+CellData2P2Cmultiphysics : public CellData2P2CMultiPhysics<TypeTag>
 {
 public:
-    //! DEPRECATED!! Constructor for a local storage object
+    //! Constructor for a local storage object
     CellData2P2Cmultiphysics() : CellData2P2CMultiPhysics<TypeTag>()
     {}
 };
