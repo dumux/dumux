@@ -27,21 +27,18 @@ set(TEX_INPUTS
   ModelDescriptions/2p2cdecoupledpressuremodel.tex
   ModelDescriptions/2p2cdecoupledtransportmodel.tex
   ModelDescriptions/2p2cimplicitmodel.tex
-  ModelDescriptions/2p2cniimplicitmodel.tex
   ModelDescriptions/2pdecoupledpressuremodel.tex
   ModelDescriptions/2pdecoupledsaturationmodel.tex
   ModelDescriptions/2pdfmimplicitmodel.tex
   ModelDescriptions/2pimplicitmodel.tex
-  ModelDescriptions/2pniimplicitmodel.tex
   ModelDescriptions/3p3cimplicitmodel.tex
-  ModelDescriptions/3p3cniimplicitmodel.tex
   ModelDescriptions/3pimplicitmodel.tex
   ModelDescriptions/co2implicitmodel.tex
-  ModelDescriptions/co2niimplicitmodel.tex
   ModelDescriptions/el1p2cmodel.tex
   ModelDescriptions/el2pmodel.tex
   ModelDescriptions/elasticmodel.tex
   ModelDescriptions/mpncimplicitmodel.tex
+  ModelDescriptions/nonisothermalimplicitmodel.tex
   ModelDescriptions/richardsimplicitmodel.tex
   ModelDescriptions/stokesimplicitmodel.tex
   ModelDescriptions/stokesncimplicitmodel.tex
