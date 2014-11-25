@@ -25,5 +25,3 @@ add_dumux_test(test_cc1pwithamg test_cc1pwithamg test_cc1pwithamg.cc
   ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/1ptestccwithamg-00002.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_cc1pwithamg)
-
-add_dune_alugrid_flags(test_cc1pwithamg test_box1pwithamg)

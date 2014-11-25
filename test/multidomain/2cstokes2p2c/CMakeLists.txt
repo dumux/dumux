@@ -7,8 +7,6 @@ add_dumux_test(test_2cstokes2p2c_1ff test_2cstokes2p2c test_2cstokes2p2c.cc
   ${CMAKE_CURRENT_BINARY_DIR}/test_2cstokes2p2c
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2cstokes2p2c_reference.input  
   )
-add_dune_superlu_flags(test_2cstokes2p2c)
-add_dune_ug_flags(test_2cstokes2p2c)
 
 # test: test_2cstokes2p2c_2pm
 add_dumux_test(test_2cstokes2p2c_2pm test_2cstokes2p2c test_2cstokes2p2c.cc

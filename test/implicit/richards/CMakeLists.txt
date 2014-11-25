@@ -5,7 +5,6 @@ if(MPI_CXX_FOUND)
     ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference-parallel.vtu
     ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-richardslensbox-00008.vtu
     "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards")
-  add_dune_mpi_flags(test_boxrichards)
 else()
   add_dumux_test(test_boxrichards test_boxrichards test_boxrichards.cc
     ${CMAKE_SOURCE_DIR}/bin/runTest.sh

@@ -7,8 +7,6 @@ add_dumux_test(test_2cnistokes2p2cni_1ff test_2cnistokes2p2cni test_2cnistokes2p
   ${CMAKE_CURRENT_BINARY_DIR}/test_2cnistokes2p2cni
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_2cnistokes2p2cni_reference.input
   )
-add_dune_superlu_flags(test_2cnistokes2p2cni)
-add_dune_ug_flags(test_2cnistokes2p2cni)
 
 # test: test_2cnistokes2p2cni_2pm
 add_dumux_test(test_2cnistokes2p2cni_2pm test_2cnistokes2p2cni test_2cnistokes2p2cni.cc

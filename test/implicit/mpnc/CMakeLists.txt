@@ -43,8 +43,3 @@ add_dumux_test(test_boxmpncthermalnonequil test_boxmpncthermalnonequil test_boxm
   ${CMAKE_SOURCE_DIR}/test/references/combustion-reference.vtp
   ${CMAKE_CURRENT_BINARY_DIR}/combustion-00078.vtp
   ${CMAKE_CURRENT_BINARY_DIR}/test_boxmpncthermalnonequil)
-add_dune_superlu_flags(test_boxmpncthermalnonequil)
-
-target_link_libraries(test_boxmpnckinetic ${DUNE_LIBS}  ${MPI_LIBRARIES})
-add_dune_alugrid_flags(test_boxmpnckinetic)
-add_dune_ug_flags(test_boxmpnckinetic)

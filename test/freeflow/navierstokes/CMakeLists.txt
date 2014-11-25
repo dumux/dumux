@@ -4,6 +4,3 @@ add_dumux_test(test_navierstokes test_navierstokes test_navierstokes.cc
   ${CMAKE_SOURCE_DIR}/test/references/navierstokes-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/navierstokes-00008.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_navierstokes)
-add_dune_superlu_flags(test_navierstokes)
-add_dune_alugrid_flags(test_navierstokes)
-add_dune_ug_flags(test_navierstokes)
