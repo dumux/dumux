@@ -51,57 +51,21 @@ namespace Properties
 NEW_TYPE_TAG(Adaptive2p2c3d, INHERITS_FROM(DecoupledTwoPTwoCAdaptive,Test2P2CSpatialParams, MPFAProperties));
 
 // Set the grid type
-SET_PROP(Adaptive2p2c3d, Grid)
-{
-    typedef  Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming> type;
-};
+SET_TYPE_PROP(Adaptive2p2c3d, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+
 // set the GridCreator property
 SET_TYPE_PROP(Adaptive2p2c3d, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the problem property
-SET_PROP(Adaptive2p2c3d, Problem)
-{
-    typedef Dumux::Adaptive2p2c3d<TTAG(Adaptive2p2c3d)> type;
-};
+SET_TYPE_PROP(Adaptive2p2c3d, Problem, Dumux::Adaptive2p2c3d<TTAG(Adaptive2p2c3d)>);
 
 // Set the model properties
-SET_PROP(Adaptive2p2c3d, TransportModel)
-{
-    typedef Dumux::FV3dTransport2P2CAdaptive<TTAG(Adaptive2p2c3d)> type;
-};
+SET_TYPE_PROP(Adaptive2p2c3d, TransportModel, Dumux::FV3dTransport2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
 
-SET_PROP(Adaptive2p2c3d, PressureModel)
-{
-    typedef Dumux::FV3dPressure2P2CAdaptive<TTAG(Adaptive2p2c3d)> type;
-};
-//// Set the default material law
-//SET_PROP(Adaptive2p2c3d, MaterialLaw)
-//{
-//private:
-//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//    typedef LinearMaterial<Scalar> RawMaterialLaw;
-//public:
-//    typedef EffToAbsLaw<RawMaterialLaw> type;
-//
-//    typedef typename type::Params MaterialLawParams;
-//    static MaterialLawParams *create(Dune::ParameterTree inputParameters)
-//    {
-//        static MaterialLawParams materialLawParams_;
-//        // residual saturations
-//        materialLawParams_.setSwr(inputParameters.template get<Scalar>("SpatialParameters.Swr", 0.));
-//        materialLawParams_.setSnr(inputParameters.template get<Scalar>("SpatialParameters.Snr", 0.));
-//
-//        materialLawParams_.setEntryPc(inputParameters.template get<Scalar>("SpatialParameters.EntryPC", 0.));
-//        materialLawParams_.setMaxPc(inputParameters.template get<Scalar>("SpatialParameters.MaxPC", 10000.));
-//        return &materialLawParams_;
-//    }
-//};
+SET_TYPE_PROP(Adaptive2p2c3d, PressureModel, Dumux::FV3dPressure2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
 
 // Select fluid system
-SET_PROP(Adaptive2p2c3d, FluidSystem)
-{
-    typedef Dumux::H2OAirFluidSystem<TypeTag> type;
-};
+SET_TYPE_PROP(Adaptive2p2c3d, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
 
 SET_BOOL_PROP(Adaptive2p2c3d, EnableComplicatedFluidSystem, false);
 
@@ -109,8 +73,7 @@ SET_BOOL_PROP(Adaptive2p2c3d, EnableComplicatedFluidSystem, false);
 SET_PROP(Adaptive2p2c3d, Components) : public GET_PROP(TypeTag, DefaultComponents)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
-        typedef Dumux::H2O<Scalar> H2O;
+    typedef Dumux::H2O<Scalar> H2O;
 };
 
 // Specify indicator
@@ -120,8 +83,8 @@ SET_TYPE_PROP(Adaptive2p2c3d, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag
 SET_BOOL_PROP(Adaptive2p2c3d, ProblemEnableGravity, true);
 SET_BOOL_PROP(Adaptive2p2c3d, EnableCapillarity, true);
 SET_BOOL_PROP(Adaptive2p2c3d, AdaptiveGrid, true);
-SET_INT_PROP(Adaptive2p2c3d, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureN);
+SET_INT_PROP(Adaptive2p2c3d, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
+
 }
 
 /*!
@@ -184,50 +147,13 @@ Adaptive2p2c3d(TimeManager &timeManager, const GridView& gridView) :
     GridCreator::grid().globalRefine(GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel));
     this->setGrid(GridCreator::grid());
 
-    /*** Process parameter file ********/
-
-    // b) Simulation Control
+    //Process parameter file 
+    //Simulation Control
     const int outputInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
     this->setOutputInterval(outputInterval);
 
     injectionrate_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, double, BoundaryConditions, Injectionrate);
-
-    // initialize the tables of the fluid system
-//    WaterFormulation::init(273.15, 623.15, 100,
-//                            -10,   20e6, 200);
-//    FluidSystem::init();
 }
-
-//void preTimeStep()
-//{
-//    ParentType::preTimeStep();
-//            // use second writer
-//            debugWriter_.gridChanged();
-//            // write
-//            debugWriter_.beginWrite(this->timeManager().time());
-//            //write stuff out
-//            typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
-//            typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
-//            int size = this->gridView().size(0);
-//            ScalarSolutionType *pressureW = debugWriter_.allocateManagedBuffer (size);
-//            ScalarSolutionType *pressureN = debugWriter_.allocateManagedBuffer (size);
-//            ScalarSolutionType *totalConcentration1 = debugWriter_.allocateManagedBuffer (size);
-//            ScalarSolutionType *totalConcentration2 = debugWriter_.allocateManagedBuffer (size);
-//            for (int i = 0; i < size; i++)
-//            {
-//                CellData& cellData = this->variables().cellData(i);
-//                (*pressureW)[i] = cellData.pressure(wPhaseIdx);
-//                (*pressureN)[i] = cellData.pressure(nPhaseIdx);
-//                (*totalConcentration1)[i] = cellData.massConcentration(wPhaseIdx);
-//                (*totalConcentration2)[i] = cellData.massConcentration(nPhaseIdx);
-//            }
-//            debugWriter_.attachCellData(*pressureW, "wetting pressure");
-//            debugWriter_.attachCellData(*pressureN, "nonwetting pressure");
-//            debugWriter_.attachCellData(*totalConcentration1, "C^w from cellData");
-//            debugWriter_.attachCellData(*totalConcentration2, "C^n from cellData");
-//            debugWriter_.endWrite();
-//            return;
-//}
 
 /*!
  * \name Problem parameters

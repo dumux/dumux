@@ -24,10 +24,6 @@
 #ifndef DUMUX_TEST_1P_PROBLEM_HH
 #define DUMUX_TEST_1P_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/io/cubegridcreator.hh>
 
@@ -57,10 +53,7 @@ NEW_TYPE_TAG(TestProblemOneP, INHERITS_FROM(FVPressureOneP));
 SET_TYPE_PROP(TestProblemOneP, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the grid type
-SET_PROP(TestProblemOneP, Grid)
-{
-        typedef Dune::YaspGrid<2> type;
-};
+SET_TYPE_PROP(TestProblemOneP, Grid, Dune::YaspGrid<2>);
 
 // Set the wetting phase
 SET_PROP(TestProblemOneP, Fluid)
@@ -187,11 +180,10 @@ public:
 
     //!source term [kg/(m^3 s)]
     void source(PrimaryVariables &values, const Element& element) const
-        {
+    {
         values = 0;
-
         values = integratedSource_(element, 4);
-        }
+    }
 
     /*!
     * \brief Returns the type of boundary condition.
@@ -214,9 +206,9 @@ public:
 
     //! return neumann condition  (flux, [kg/(m^2 s)])
     void neumann(PrimaryVariables &values, const Intersection& intersection) const
-        {
+    {
         values = 0;
-        }
+    }
 
 private:
     Scalar exact (const GlobalPosition& globalPos) const
@@ -227,14 +219,14 @@ private:
     }
 
     Dune::FieldVector<Scalar,dim> exactGrad (const GlobalPosition& globalPos) const
-        {
+    {
         Dune::FieldVector<Scalar,dim> grad(0);
         double pi = 4.0*atan(1.0);
         grad[0] = pi*cos(pi*globalPos[0])*sin(pi*globalPos[1]);
         grad[1] = pi*cos(pi*globalPos[1])*sin(pi*globalPos[0]);
 
         return grad;
-        }
+    }
 
     Scalar integratedSource_(const Element& element, int integrationPoints) const
     {

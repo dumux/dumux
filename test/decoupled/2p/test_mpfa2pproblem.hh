@@ -45,8 +45,8 @@
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 
 
-#include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
-#include<dumux/decoupled/2p/impes/gridadaptionindicator2plocal.hh>
+#include <dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
+#include <dumux/decoupled/2p/impes/gridadaptionindicator2plocal.hh>
 
 #include "test_mpfa2pspatialparams.hh"
 #include "buckleyleverettanalyticsolution.hh"
@@ -67,10 +67,7 @@ namespace Properties
 NEW_TYPE_TAG(MPFATwoPTestProblem, INHERITS_FROM(Test2PSpatialParams));
 
 // Set the grid type
-SET_PROP(MPFATwoPTestProblem, Grid)
-{
-    typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
-};
+SET_TYPE_PROP(MPFATwoPTestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 #if PROBLEM == 2
 //set the GridCreator property
@@ -79,11 +76,7 @@ SET_TYPE_PROP(MPFATwoPTestProblem, GridCreator, CubeGridCreator<TypeTag>);
 
 
 // Set the problem property
-SET_PROP(MPFATwoPTestProblem, Problem)
-{
-public:
-    typedef Dumux::MPFATwoPTestProblem<TypeTag> type;
-};
+SET_TYPE_PROP(MPFATwoPTestProblem, Problem, Dumux::MPFATwoPTestProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(MPFATwoPTestProblem, WettingPhase)

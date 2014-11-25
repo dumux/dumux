@@ -28,9 +28,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include<iostream>
+#include <iostream>
 
-
+#include <dune/grid/yaspgrid.hh>
 #include <dumux/geomechanics/el1p2c/el1p2cmodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 
@@ -48,17 +48,11 @@ namespace Dumux
     NEW_TYPE_TAG(El1P2CProblem, INHERITS_FROM(BoxElasticOnePTwoC));
 
     // Set the grid type
-    SET_PROP(El1P2CProblem, Grid)
-    {
-	typedef Dune::YaspGrid<3> type;
-    };
+    SET_TYPE_PROP(El1P2CProblem, Grid, Dune::YaspGrid<3>);
 
     // Set the problem property
-    SET_PROP(El1P2CProblem, Problem)
-    {
-        typedef Dumux::El1P2CProblem<TTAG(El1P2CProblem)> type;
-    };
-
+    SET_TYPE_PROP(El1P2CProblem, Problem, Dumux::El1P2CProblem<TTAG(El1P2CProblem)>);
+ 
     // Set fluid configuration
     SET_PROP(El1P2CProblem, FluidSystem)
     { private:
@@ -68,10 +62,7 @@ namespace Dumux
     };
 
     // Set the soil properties
-    SET_PROP(El1P2CProblem, SpatialParams)
-    {
-        typedef Dumux::El1P2CSpatialParams<TypeTag> type;
-    };
+    SET_TYPE_PROP(El1P2CProblem, SpatialParams, Dumux::El1P2CSpatialParams<TypeTag>);
 
     //Define whether mole(true) or mass (false) fractions are used
     SET_BOOL_PROP(El1P2CProblem, UseMoles, false);
@@ -216,13 +207,9 @@ class El1P2CProblem: public ImplicitPorousMediaProblem<TypeTag>
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void source(PrimaryVariables &values,
-                    const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+    void sourceAtPos(PrimaryVariables &values,
+                     const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos
-        = element.geometry().corner(scvIdx);
         values = Scalar(0.0);
 
             if(globalPos[0] < 6 && globalPos[0] > 4

@@ -31,7 +31,6 @@
 #include <dumux/decoupled/2p2c/fvtransport2p2cmultiphysics.hh>
 #include <dumux/decoupled/2p2c/celldata2p2cmultiphysics.hh>
 // fluid properties
-//#include <dumux/material/fluidsystems/brine_co2_system.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
@@ -51,42 +50,21 @@ NEW_TYPE_TAG(TestMultTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC, Test2P2CS
 SET_TYPE_PROP(TestMultTwoPTwoCProblem, CellData, Dumux::CellData2P2Cmultiphysics<TypeTag>);
 
 // Set the grid type
-SET_PROP(TestMultTwoPTwoCProblem, Grid)
-{
-    typedef Dune::YaspGrid<3> type;
-};
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, Grid, Dune::YaspGrid<3>);
 
 // Set the problem property
-SET_PROP(TestMultTwoPTwoCProblem, Problem)
-{
-    typedef Dumux::TestMultTwoPTwoCProblem<TypeTag> type;
-};
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, Problem, Dumux::TestMultTwoPTwoCProblem<TypeTag>);
 
 // Set the model properties
-SET_PROP(TestMultTwoPTwoCProblem, TransportModel)
-{
-    typedef Dumux::FVTransport2P2CMultiPhysics<TypeTag> type;
-};
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, TransportModel,Dumux::FVTransport2P2CMultiPhysics<TypeTag>);
 
-SET_PROP(TestMultTwoPTwoCProblem, PressureModel)
-{
-    typedef Dumux::FVPressure2P2CMultiPhysics<TypeTag> type;
-};
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, PressureModel, Dumux::FVPressure2P2CMultiPhysics<TypeTag>);
 
-SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
+SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
 
-
-//// Select fluid system
-//SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
-//{
-//    typedef Dumux::Brine_CO2_System<TypeTag, Dumux::Benchmark3::CO2Tables> type;
-//};
 // Select fluid system
-SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
-{
-    typedef Dumux::H2OAirFluidSystem<TypeTag> type;
-};
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
+
 // Select fluid system
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
 
@@ -94,18 +72,14 @@ SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
 SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultComponents)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
-        typedef Dumux::H2O<Scalar> H2O;
+    typedef Dumux::H2O<Scalar> H2O;
 };
 
 // Enable gravity
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableCapillarity, true);
-SET_INT_PROP(TestMultTwoPTwoCProblem,
-             BoundaryMobility,
-             GET_PROP_TYPE(TypeTag, Indices)::satDependent);
+SET_INT_PROP(TestMultTwoPTwoCProblem, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);
 SET_SCALAR_PROP(TestMultTwoPTwoCProblem, ImpetCFLFactor, 0.8);
-//SET_SCALAR_PROP(TestMultTwoPTwoCProblem, ImpetSubCFLFactor, 0.8);//can be defined to use sub-time-stepping for the transport
 }
 
 /*!
@@ -153,18 +127,7 @@ typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 public:
 TestMultTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition upperRight = 0) :
 ParentType(timeManager, gridView), lowerLeft_(0), upperRight_(upperRight), eps_(1e-6), depthBOR_(1000.0)
-{
-    // Specifies how many time-steps are done before output will be written.
-//    this->setOutputInterval(20);
-
-//    // initialize the tables of the fluid system
-//    FluidSystem::init(/*tempMin=*/280,
-//            /*tempMax=*/290,
-//            /*numTemp=*/10,
-//            /*pMin=*/190000,
-//            /*pMax=*/280000,
-//            /*numP=*/400);
-}
+{}
 
 /*!
  * \name Problem parameters
@@ -246,10 +209,6 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 {
     neumannValues[Indices::contiNEqIdx] = 0.;
     neumannValues[Indices::contiWEqIdx] = 0.;
-//    if (globalPos[1] < 15 && globalPos[1]> 5)
-//    {
-//        neumannValues[Indices::contiNEqIdx] = -0.015;
-//    }
 }
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::sourceAtPos()

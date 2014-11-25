@@ -32,7 +32,6 @@
 #include <dumux/decoupled/2p2c/fvtransport2p2c.hh>
 
 // fluid properties
-//#include <dumux/material/old_fluidsystems/simple_h2o_n2_system.hh>
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
@@ -52,46 +51,30 @@ NEW_TYPE_TAG(TestDecTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC, Test2P2CSp
 SET_TYPE_PROP(TestDecTwoPTwoCProblem, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the grid type
-SET_PROP(TestDecTwoPTwoCProblem, Grid)
-{
-    typedef Dune::YaspGrid<3> type;
-};
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, Grid, Dune::YaspGrid<3>);
 
 // Set the problem property
-SET_PROP(TestDecTwoPTwoCProblem, Problem)
-{
-    typedef Dumux::TestDecTwoPTwoCProblem<TypeTag> type;
-};
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, Problem, Dumux::TestDecTwoPTwoCProblem<TypeTag>);
 
 // Set the model properties
-SET_PROP(TestDecTwoPTwoCProblem, TransportModel)
-{
-    typedef Dumux::FVTransport2P2C<TypeTag> type;
-};
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, TransportModel, Dumux::FVTransport2P2C<TypeTag>);
 
-SET_PROP(TestDecTwoPTwoCProblem, PressureModel)
-{
-    typedef Dumux::FVPressure2P2C<TypeTag> type;
-};
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, PressureModel,Dumux::FVPressure2P2C<TypeTag>);
 
-SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureN);
+
+SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
 // Select fluid system
-SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
-{
-    typedef Dumux::H2OAirFluidSystem<TypeTag> type;
-};
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
+
 // Select fluid system
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
-
 
 // Select water formulation
 SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultComponents)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
-        typedef Dumux::H2O<Scalar> H2O;
+    typedef Dumux::H2O<Scalar> H2O;
 };
 
 //SET_TYPE_PROP(TestDecTwoPTwoCProblem, LinearSolver, IMPETBiCGStabILU0Solver<TypeTag> );
@@ -99,9 +82,7 @@ SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultC
 // Enable gravity
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableCapillarity, true);
-SET_INT_PROP(TestDecTwoPTwoCProblem,
-        BoundaryMobility,
-        GET_PROP_TYPE(TypeTag, Indices)::satDependent);
+SET_INT_PROP(TestDecTwoPTwoCProblem, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);
 SET_SCALAR_PROP(TestDecTwoPTwoCProblem, ImpetCFLFactor, 0.8);
 }
 
@@ -145,16 +126,7 @@ typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 public:
 TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView) :
 ParentType(timeManager, gridView), eps_(1e-6), depthBOR_(1000.0)
-{
-//    this->setOutputInterval(20);
-    // initialize the tables of the fluid system
-//    FluidSystem::init(/*tempMin=*/280,
-//            /*tempMax=*/290,
-//            /*numTemp=*/10,
-//            /*pMin=*/190000,
-//            /*pMax=*/280000,
-//            /*numP=*/400);
-}
+{}
 
 /*!
  * \name Problem parameters
@@ -263,10 +235,6 @@ void dirichletAtPos(PrimaryVariables &bcValues ,const GlobalPosition& globalPos)
 void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalPos) const
 {
     this->setZero(neumannValues);
-//    if (globalPos[1] < 15 && globalPos[1]> 5)
-//    {
-//        neumannValues[Indices::contiNEqIdx] = -0.015;
-//    }
 }
 //! Source of mass \f$ [\frac{kg}{m^3 \cdot s}] \f$
 /*! Evaluate the source term for all phases within a given

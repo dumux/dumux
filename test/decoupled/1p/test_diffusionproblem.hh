@@ -52,11 +52,9 @@ namespace Properties
 //// set the types for the 2PFA FV method
 NEW_TYPE_TAG(FVVelocity2PTestProblem, INHERITS_FROM(FVPressureTwoP, TestDiffusionSpatialParams));
 SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
+
 // Set the grid type
-SET_PROP(FVVelocity2PTestProblem, Grid)
-{
-    typedef Dune::YaspGrid<2> type;
-};
+SET_TYPE_PROP(FVVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the wetting phase
 SET_PROP(FVVelocity2PTestProblem, WettingPhase)
@@ -87,10 +85,7 @@ SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::SSORBiCGSTABBac
 SET_INT_PROP(FVMPFAOVelocity2PTestProblem, LinearSolverPreconditionerIterations, 2);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
 // Set the grid type
-SET_PROP(FVMPFAOVelocity2PTestProblem, Grid)
-{
-    typedef Dune::YaspGrid<2> type;
-};
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the wetting phase
 SET_PROP(FVMPFAOVelocity2PTestProblem, WettingPhase)
@@ -118,10 +113,7 @@ NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(MimeticPressureTwoP, Te
 SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
 
 // Set the grid type
-SET_PROP(MimeticPressure2PTestProblem, Grid)
-{
-    typedef Dune::YaspGrid<2> type;
-};
+SET_TYPE_PROP(MimeticPressure2PTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the wetting phase
 SET_PROP(MimeticPressure2PTestProblem, WettingPhase)

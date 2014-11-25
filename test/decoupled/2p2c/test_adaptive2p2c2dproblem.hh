@@ -53,31 +53,16 @@ namespace Properties
 NEW_TYPE_TAG(Adaptive2p2c2d, INHERITS_FROM(DecoupledTwoPTwoCAdaptive,Test2P2CSpatialParams));
 
 // Set the grid type
-SET_PROP(Adaptive2p2c2d, Grid)
-{
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
-    typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
-// #elseif HAVE_UG
-//     typedef Dune::UGGrid<2> type; //would need a DGF file to specify closure
-#endif
-    
-};
+SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+
 // set the GridCreator property
 SET_TYPE_PROP(Adaptive2p2c2d, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the problem property
-SET_PROP(Adaptive2p2c2d, Problem)
-{
-    typedef Dumux::Adaptive2p2c2d<TTAG(Adaptive2p2c2d)> type;
-};
+SET_TYPE_PROP(Adaptive2p2c2d, Problem, Dumux::Adaptive2p2c2d<TTAG(Adaptive2p2c2d)>);
 
 // Select fluid system
-SET_PROP(Adaptive2p2c2d, FluidSystem)
-{
-    typedef Dumux::H2OAirFluidSystem<TypeTag> type;
-//    typedef Dumux::H2ON2FluidSystem<TypeTag> type;
-//    typedef Dumux::Brine_CO2_System<TypeTag, Dumux::Benchmark3::CO2Tables> type;
-};
+SET_TYPE_PROP(Adaptive2p2c2d, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
 
 // Set the 2d Transport and Pressure model (already set as default in properties file)
 SET_TYPE_PROP(Adaptive2p2c2d, TransportModel, FV2dTransport2P2CAdaptive<TypeTag>);
@@ -89,17 +74,16 @@ SET_BOOL_PROP(Adaptive2p2c2d, EnableComplicatedFluidSystem, true);
 SET_PROP(Adaptive2p2c2d, Components) : public GET_PROP(TypeTag, DefaultComponents)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
-        typedef Dumux::H2O<Scalar> H2O;
+    typedef Dumux::H2O<Scalar> H2O;
 };
+
 // Specify indicator
 SET_TYPE_PROP(Adaptive2p2c2d, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(Adaptive2p2c2d, ProblemEnableGravity, true);
 SET_BOOL_PROP(Adaptive2p2c2d, EnableCapillarity, true);
-SET_INT_PROP(Adaptive2p2c2d, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureN);
+SET_INT_PROP(Adaptive2p2c2d, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 
 }
 
@@ -165,42 +149,7 @@ Adaptive2p2c2d(TimeManager &timeManager, const GridView& gridView) :
     std::string s = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, SimulationName);
     this->setName(s.c_str());
     this->setOutputInterval(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval));
-    // initialize the tables of the fluid system
-//    WaterFormulation::init(273.15, 623.15, 100,
-//                            -10,   20e6, 200);
-//    FluidSystem::init();
 }
-
-//void preTimeStep()
-//{
-//    ParentType::preTimeStep();
-//            // use second writer
-//            debugWriter_.gridChanged();
-//            // write
-//            debugWriter_.beginWrite(this->timeManager().time());
-//            //write stuff out
-//            typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
-//            typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
-//            int size = this->gridView().size(0);
-//            ScalarSolutionType *pressureW = debugWriter_.allocateManagedBuffer (size);
-//            ScalarSolutionType *pressureN = debugWriter_.allocateManagedBuffer (size);
-//            ScalarSolutionType *totalConcentration1 = debugWriter_.allocateManagedBuffer (size);
-//            ScalarSolutionType *totalConcentration2 = debugWriter_.allocateManagedBuffer (size);
-//            for (int i = 0; i < size; i++)
-//            {
-//                CellData& cellData = this->variables().cellData(i);
-//                (*pressureW)[i] = cellData.pressure(wPhaseIdx);
-//                (*pressureN)[i] = cellData.pressure(nPhaseIdx);
-//                (*totalConcentration1)[i] = cellData.massConcentration(wPhaseIdx);
-//                (*totalConcentration2)[i] = cellData.massConcentration(nPhaseIdx);
-//            }
-//            debugWriter_.attachCellData(*pressureW, "wetting pressure");
-//            debugWriter_.attachCellData(*pressureN, "nonwetting pressure");
-//            debugWriter_.attachCellData(*totalConcentration1, "C^w from cellData");
-//            debugWriter_.attachCellData(*totalConcentration2, "C^n from cellData");
-//            debugWriter_.endWrite();
-//            return;
-//}
 
 /*!
  * \name Problem parameters

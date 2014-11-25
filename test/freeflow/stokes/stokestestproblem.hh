@@ -58,7 +58,6 @@ public:
 };
 //! Scalar is set to type long double for higher accuracy
 SET_TYPE_PROP(BoxStokes, Scalar, double);
-//SET_TYPE_PROP(BoxStokes, Scalar, long double);
 
 //! A stabilization factor. Set negative for stabilization and to zero for no stabilization
 SET_SCALAR_PROP(StokesTestProblem, StokesStabilizationAlpha, -1.0);
@@ -164,10 +163,9 @@ public:
     // \{
 
     //! \copydoc ImplicitProblem::boundaryTypes()
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
+    void boundaryTypesAtPos(BoundaryTypes &values,
+                            const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         values.setAllDirichlet();
 
         // the mass balance has to be of type outflow
@@ -185,9 +183,9 @@ public:
     }
 
     //! \copydoc ImplicitProblem::dirichlet()
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichletAtPos(PrimaryVariables &values,
+                        const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
         const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
         const Scalar velocityVariation = 0.2;
 
@@ -249,13 +247,9 @@ public:
     }
 
     //! \copydoc ImplicitProblem::initial()
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 int scvIdx) const
+    void initialAtPos(PrimaryVariables &values,
+                      const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
         initial_(values, globalPos);
     }
     // \}

@@ -260,7 +260,7 @@ public:
     }
 
     Dune::FieldVector<Scalar,dim> exactGrad (const GlobalPosition& globalPos) const
-        {
+    {
         Dune::FieldVector<Scalar,dim> grad(0);
         double pi = 4.0*atan(1.0);
         grad[0] = pi*cos(pi*globalPos[0])*sin(pi*(globalPos[1]+1.0/2.0))*sin(pi*(globalPos[2]+1.0/3.0));
@@ -268,7 +268,8 @@ public:
         grad[2] = pi*sin(pi*globalPos[0])*sin(pi*(globalPos[1]+1.0/2.0))*cos(pi*(globalPos[2]+1.0/3.0));
 
         return grad;
-        }
+    }
+    
 private:
     Dumux::FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
     static constexpr Scalar eps_ = 1e-4;

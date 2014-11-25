@@ -33,10 +33,7 @@
 #warning UG or ALUGrid necessary for this test.
 #endif
 
-#if !HAVE_SUPERLU
-#warning SuperLU necessary for this test.
-#endif
-
+#include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
@@ -185,10 +182,9 @@ namespace Dumux
        * \param vertex The vertex on the boundary for which the
        *               conditions needs to be specified
        */
-      void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
-      {
-        const GlobalPosition globalPos = vertex.geometry().center();
-        
+      void boundaryTypesAtPos(BoundaryTypes &values,
+                            const GlobalPosition &globalPos) const
+      {        
         values.setOutflow(massBalanceIdx);
         values.setDirichlet(momentumXIdx);
         values.setDirichlet(momentumYIdx);
@@ -209,9 +205,9 @@ namespace Dumux
        *
        * For this method, the \a values parameter stores primary variables.
        */
-      void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
-    {
-        const GlobalPosition globalPos = vertex.geometry().center();
+      void dirichletAtPos(PrimaryVariables &values,
+                        const GlobalPosition &globalPos) const
+      {
         initial_(values, globalPos);
 
         // lid moves from left to right
@@ -272,12 +268,9 @@ namespace Dumux
        * For this method, the \a values parameter stores primary
        * variables.
        */
-      void initial(PrimaryVariables &values,
-                  const Element &element,
-                  const FVElementGeometry &fvGeometry,
-                  const int scvIdx) const
+      void initialAtPos(PrimaryVariables &values,
+                      const GlobalPosition &globalPos) const
       {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         initial_(values, globalPos);
       }
       // \}

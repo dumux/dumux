@@ -56,6 +56,7 @@ class GeneralLensProblem;
 //////////
 namespace Properties
 {
+    
 //Set the general problem TypeTag which does not depend on the model
 NEW_TYPE_TAG(GeneralLensProblem, INHERITS_FROM(GeneralLensSpatialParams));
 
@@ -63,19 +64,13 @@ NEW_TYPE_TAG(GeneralLensProblem, INHERITS_FROM(GeneralLensSpatialParams));
 NEW_PROP_TAG(ProblemBaseClass);
 
 // Set the grid type
-SET_PROP(GeneralLensProblem, Grid)
-{
-    typedef Dune::YaspGrid<2> type;
-};
+SET_TYPE_PROP(GeneralLensProblem, Grid, Dune::YaspGrid<2>);
 
 // set the GridCreator property
 SET_TYPE_PROP(GeneralLensProblem, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the problem property
-SET_PROP(GeneralLensProblem, Problem)
-{
-    typedef Dumux::GeneralLensProblem<TypeTag> type;
-};
+SET_TYPE_PROP(GeneralLensProblem, Problem, Dumux::GeneralLensProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(GeneralLensProblem, WettingPhase)
@@ -104,18 +99,11 @@ SET_BOOL_PROP(GeneralLensProblem, ProblemEnableGravity, true);
 
 NEW_TYPE_TAG(BoxGeneralLensProblem, INHERITS_FROM(BoxTwoP, GeneralLensProblem));
 
+// Set the problem property
+SET_TYPE_PROP(BoxGeneralLensProblem, ProblemBaseClass, Dumux::ImplicitPorousMediaProblem<TypeTag>);
 
 // Set the problem property
-SET_PROP(BoxGeneralLensProblem, ProblemBaseClass)
-{
-    typedef Dumux::ImplicitPorousMediaProblem<TypeTag> type;
-};
-
-// Set the problem property
-SET_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass)
-{
-    typedef Dumux::ImplicitSpatialParams<TypeTag> type;
-};
+SET_TYPE_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass,Dumux::ImplicitSpatialParams<TypeTag>);
 
 
 ///////////////////////////////////////////////////
@@ -124,18 +112,11 @@ SET_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass)
 
 NEW_TYPE_TAG(DecoupledGeneralLensProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, GeneralLensProblem));
 
+// Set the problem property
+SET_TYPE_PROP(DecoupledGeneralLensProblem, ProblemBaseClass, Dumux::IMPESProblem2P<TypeTag>);
 
 // Set the problem property
-SET_PROP(DecoupledGeneralLensProblem, ProblemBaseClass)
-{
-    typedef Dumux::IMPESProblem2P<TypeTag> type;
-};
-
-// Set the problem property
-SET_PROP(DecoupledGeneralLensProblem, SpatialParamsBaseClass)
-{
-    typedef Dumux::FVSpatialParams<TypeTag> type;
-};
+SET_TYPE_PROP(DecoupledGeneralLensProblem, SpatialParamsBaseClass, Dumux::FVSpatialParams<TypeTag>);
 
 SET_INT_PROP(DecoupledGeneralLensProblem, Formulation,
         DecoupledTwoPCommonIndices::pwsn);

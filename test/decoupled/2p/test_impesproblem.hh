@@ -24,10 +24,6 @@
 #ifndef DUMUX_TEST_IMPES_PROBLEM_HH
 #define DUMUX_TEST_IMPES_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
-
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/io/cubegridcreator.hh>
 
@@ -68,14 +64,7 @@ NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IM
 SET_TYPE_PROP(IMPESTestProblem, GridCreator, Dumux::CubeGridCreator<TypeTag>);
 
 // Set the grid type
-SET_PROP(IMPESTestProblem, Grid)
-{
-#if 0//HAVE_UG
-    typedef Dune::UGGrid<2> type;
-#else
-    typedef Dune::YaspGrid<2> type;
-#endif
-};
+SET_TYPE_PROP(IMPESTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(IMPESTestProblem, Problem, Dumux::IMPESTestProblem<TypeTag>);

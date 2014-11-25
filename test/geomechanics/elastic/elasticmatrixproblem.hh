@@ -42,15 +42,10 @@ namespace Properties
 NEW_TYPE_TAG(ElasticMatrixProblem, INHERITS_FROM(BoxElastic,ElSpatialParams));
 
 // Set the grid type
-SET_PROP(ElasticMatrixProblem, Grid)
-{
-    typedef Dune::YaspGrid<3> type;
-};
+SET_TYPE_PROP(ElasticMatrixProblem, Grid, Dune::YaspGrid<3>);
 
 // Set the problem property
-SET_PROP(ElasticMatrixProblem, Problem) {
-    typedef Dumux::ElasticMatrixProblem<TypeTag> type;
-};
+SET_TYPE_PROP(ElasticMatrixProblem, Problem, Dumux::ElasticMatrixProblem<TypeTag>); 
 
 // Enable gravity
 SET_BOOL_PROP(ElasticMatrixProblem, ProblemEnableGravity, false);
@@ -153,10 +148,9 @@ public:
      * \param values The boundary types for the conservation equations
      * \param vertex The vertex for which the boundary type is set
      */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
+    void boundaryTypesAtPos(BoundaryTypes &values,
+                            const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         values.setAllNeumann();
         values.setDirichlet(uyIdx, momentumYEqIdx);
 

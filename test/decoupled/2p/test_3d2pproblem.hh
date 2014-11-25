@@ -47,8 +47,8 @@
 
 #include "test_3d2pspatialparams.hh"
 
-#include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
-#include<dumux/decoupled/2p/impes/gridadaptionindicator2plocal.hh>
+#include <dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
+#include <dumux/decoupled/2p/impes/gridadaptionindicator2plocal.hh>
 
 
 namespace Dumux
@@ -64,18 +64,10 @@ namespace Properties
 NEW_TYPE_TAG(ThreeDTwoPTestProblem, INHERITS_FROM(Test3d2pSpatialParams));
 
 // Set the grid type
-SET_PROP(ThreeDTwoPTestProblem, Grid)
-{
-//     typedef Dune::UGGrid<3> type;
-    typedef Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming> type;
-};
+SET_TYPE_PROP(ThreeDTwoPTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
-SET_PROP(ThreeDTwoPTestProblem, Problem)
-{
-public:
-    typedef Dumux::Test3D2PProblem<TypeTag> type;
-};
+SET_TYPE_PROP(ThreeDTwoPTestProblem, Problem, Dumux::Test3D2PProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(ThreeDTwoPTestProblem, WettingPhase)

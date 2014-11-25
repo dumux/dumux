@@ -172,10 +172,9 @@ public:
     // \{
 
     //! \copydoc ImplicitProblem::boundaryTypes()
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
+    void boundaryTypesAtPos(BoundaryTypes &values,
+                            const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         values.setAllDirichlet();
 
         // the mass balance has to be of type outflow
@@ -192,10 +191,9 @@ public:
     }
 
     //! \copydoc ImplicitProblem::dirichlet()
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichletAtPos(PrimaryVariables &values,
+                        const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         initial_(values, globalPos);
     }
 
@@ -229,14 +227,9 @@ public:
     }
 
     //! \copydoc ImplicitProblem::initial()
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 int scvIdx) const
+    void initialAtPos(PrimaryVariables &values,
+                      const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
-
         initial_(values, globalPos);
     }
    // \}

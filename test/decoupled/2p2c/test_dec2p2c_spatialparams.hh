@@ -27,7 +27,6 @@
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
 #include <dumux/material/spatialparams/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-//#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux
@@ -49,7 +48,6 @@ SET_PROP(Test2P2CSpatialParams, MaterialLaw)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    //    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;
     typedef LinearMaterial<Scalar>         RawMaterialLaw;
 public:
     typedef EffToAbsLaw<RawMaterialLaw> type;
@@ -101,16 +99,6 @@ public:
         // residual saturations
         materialLawParams_.setSwr(0);
         materialLawParams_.setSnr(0);
-
-//        // parameters for the Brooks-Corey Law
-//        // entry pressures
-//        materialLawParams_.setPe(10000);
-//
-//        // Brooks-Corey shape parameters
-//        materialLawParams_.setLambda(2);
-
-        // parameters for the linear
-        // entry pressures function
 
         materialLawParams_.setEntryPc(0);
         materialLawParams_.setMaxPc(10000);

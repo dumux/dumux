@@ -24,6 +24,7 @@
 #ifndef DUMUX_TEST_TRANSPORT_PROBLEM_HH
 #define DUMUX_TEST_TRANSPORT_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -49,17 +50,10 @@ NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(FVTransportTwoP, TestTransportS
 
 
 // Set the grid type
-SET_PROP(TransportTestProblem, Grid)
-{
-    typedef Dune::YaspGrid<2> type;
-};
+SET_TYPE_PROP(TransportTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_PROP(TransportTestProblem, Problem)
-{
-public:
-    typedef Dumux::TestTransportProblem<TypeTag> type;
-};
+SET_TYPE_PROP(TransportTestProblem, Problem, Dumux::TestTransportProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(TransportTestProblem, WettingPhase)
