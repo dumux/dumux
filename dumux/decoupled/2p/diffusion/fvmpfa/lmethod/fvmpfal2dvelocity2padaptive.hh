@@ -98,7 +98,7 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
         {
             pw = Indices::pressureW,
             pn = Indices::pressureNw,
-            pglobal = Indices::pressureGlobal,
+            pGlobal = Indices::pressureGlobal,
             sw = Indices::saturationW,
             sn = Indices::saturationNw,
             vw = Indices::velocityW,

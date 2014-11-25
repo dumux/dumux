@@ -126,17 +126,17 @@ protected:
                 // face
                 int fIdx = isIt->indexInInside();
                 int numFaceVerts = refElement.size(fIdx, 1, dim);
-                for (int faceVertIdx = 0;
-                    faceVertIdx < numFaceVerts;
-                    ++faceVertIdx)
+                for (int faceVertexIdx = 0;
+                    faceVertexIdx < numFaceVerts;
+                    ++faceVertexIdx)
                 {
                     int scvIdx = refElement.subEntity(fIdx,
                                                         1,
-                                                        faceVertIdx,
+                                                        faceVertexIdx,
                                                         dim);
 
                     int boundaryFaceIdx =
-                        this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertIdx);
+                        this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertexIdx);
 
                     // add the residual of all vertices of the boundary
                     // segment

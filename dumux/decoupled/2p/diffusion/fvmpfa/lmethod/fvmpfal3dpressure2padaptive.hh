@@ -108,7 +108,7 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
         {
             pw = Indices::pressureW,
             pn = Indices::pressureNw,
-            pglobal = Indices::pressureGlobal,
+            pGlobal = Indices::pressureGlobal,
             sw = Indices::saturationW,
             sn = Indices::saturationNw,
             vw = Indices::velocityW,

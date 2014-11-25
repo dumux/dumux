@@ -86,7 +86,7 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
+        pGlobal = Indices::pressureGlobal,
         Sw = Indices::saturationW,
         Sn = Indices::saturationNw,
         vw = Indices::velocityW,

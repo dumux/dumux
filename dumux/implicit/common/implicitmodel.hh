@@ -972,15 +972,15 @@ protected:
                         // boundary vertices
                         int fIdx = isIt->indexInInside();
                         int numFaceVerts = refElement.size(fIdx, 1, dim);
-                        for (int faceVertIdx = 0;
-                             faceVertIdx < numFaceVerts;
-                             ++faceVertIdx)
+                        for (int faceVertexIdx = 0;
+                             faceVertexIdx < numFaceVerts;
+                             ++faceVertexIdx)
                         {
-                            int elemVertIdx = refElement.subEntity(fIdx,
+                            int vIdx = refElement.subEntity(fIdx,
                                                                    1,
-                                                                   faceVertIdx,
+                                                                   faceVertexIdx,
                                                                    dim);
-                            int vIdxGlobal = vertexMapper().map(*eIt, elemVertIdx, dim);
+                            int vIdxGlobal = vertexMapper().map(*eIt, vIdx, dim);
                             boundaryIndices_[vIdxGlobal] = true;
                         }
                     }

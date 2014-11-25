@@ -136,15 +136,15 @@ public:
                 const int numFaceVertices = refElement.size(fIdx, 1, dim);
 
                 // loop over the single vertices on the current face
-                for (int faceVertIdx = 0; faceVertIdx < numFaceVertices; ++faceVertIdx)
+                for (int faceVertexIdx = 0; faceVertexIdx < numFaceVertices; ++faceVertexIdx)
                 {
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
-                    if (refElement.subEntity(fIdx, 1, faceVertIdx, dim)
+                    if (refElement.subEntity(fIdx, 1, faceVertexIdx, dim)
                             != idx)
                         continue;
 
-                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertIdx);
+                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertexIdx);
                     const FluxVariables boundaryVars(this->problem_(),
                                                      this->element_(),
                                                      this->fvGeometry_(),

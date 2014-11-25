@@ -80,10 +80,10 @@ public:
 
                 int fIdx = isIt->indexInInside();
                 int numFaceVerts = refElement.size(fIdx, 1, dim);
-                for (int faceVertIdx = 0; faceVertIdx < numFaceVerts; ++faceVertIdx)
+                for (int faceVertexIdx = 0; faceVertexIdx < numFaceVerts; ++faceVertexIdx)
                 {
-                    int elemVertIdx = refElement.subEntity(fIdx, 1, faceVertIdx, dim);
-                    int vIdxGlobal = problem.vertexMapper().map(*eIt, elemVertIdx, dim);
+                    int vIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
+                    int vIdxGlobal = problem.vertexMapper().map(*eIt, vIdx, dim);
 
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                       if (bcTypes.isDirichlet(eqIdx))

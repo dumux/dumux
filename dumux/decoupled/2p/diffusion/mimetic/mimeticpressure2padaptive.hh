@@ -83,7 +83,7 @@ template<class TypeTag> class MimeticPressure2PAdaptive
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNw,
-        pglobal = Indices::pressureGlobal,
+        pGlobal = Indices::pressureGlobal,
         Sw = Indices::saturationW,
         Sn = Indices::saturationNw,
         vw = Indices::velocityW,

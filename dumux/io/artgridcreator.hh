@@ -274,7 +274,7 @@ public:
 
         for (int i=0; i<faceNumber_; i++)
         {
-            std::vector<unsigned int> nodeIdx(3);
+            std::vector<unsigned int> vIdxGlobal(3);
             Dune::FieldVector<double,3> point(0);
 #if PLOT
             std::cout << "=====================================" << std::endl;
@@ -283,15 +283,15 @@ public:
 #endif
             int edgeIdx = 0;
             //first node of the element - from first edge Node 1
-            nodeIdx[0] = edges_[faces_[i][edgeIdx+1]][1];
+            vIdxGlobal[0] = edges_[faces_[i][edgeIdx+1]][1];
             //second node of the element- from first edge Node 2
-            nodeIdx[1] = edges_[faces_[i][edgeIdx+1]][2];
+            vIdxGlobal[1] = edges_[faces_[i][edgeIdx+1]][2];
             //third node of the element - from the second edge
-            nodeIdx[2] = edges_[faces_[i][edgeIdx+2]][1];
+            vIdxGlobal[2] = edges_[faces_[i][edgeIdx+2]][1];
             // if the nodes of the edges are identical swap
-            if (nodeIdx[1] == nodeIdx[2] || nodeIdx[0] == nodeIdx[2])
+            if (vIdxGlobal[1] == vIdxGlobal[2] || vIdxGlobal[0] == vIdxGlobal[2])
             {
-                nodeIdx[2] = edges_[faces_[i][edgeIdx+2]][2];
+                vIdxGlobal[2] = edges_[faces_[i][edgeIdx+2]][2];
             }
 
             /* Check if the order of the nodes is trigonometric
@@ -300,36 +300,36 @@ public:
             Dune::FieldVector<double, 2> v(0);
             Dune::FieldVector<double, 2> w(0);
             double cross1;
-            v[0] = vertices_[nodeIdx[0]][0] - vertices_[nodeIdx[1]][0];
-            v[1] = vertices_[nodeIdx[0]][1] - vertices_[nodeIdx[1]][1];
-            w[0] = vertices_[nodeIdx[0]][0] - vertices_[nodeIdx[2]][0];
-            w[1] = vertices_[nodeIdx[0]][1] - vertices_[nodeIdx[2]][1];
+            v[0] = vertices_[vIdxGlobal[0]][0] - vertices_[vIdxGlobal[1]][0];
+            v[1] = vertices_[vIdxGlobal[0]][1] - vertices_[vIdxGlobal[1]][1];
+            w[0] = vertices_[vIdxGlobal[0]][0] - vertices_[vIdxGlobal[2]][0];
+            w[1] = vertices_[vIdxGlobal[0]][1] - vertices_[vIdxGlobal[2]][1];
             cross1 = v[0]*w[1]-v[1]*w[0];
             //If the cross product is negative switch the order of the vertices
             if (cross1 < 0)
             {
-                nodeIdx[0] = edges_[faces_[i][edgeIdx+1]][2]; //node 0 is node 1
-                nodeIdx[1] = edges_[faces_[i][edgeIdx+1]][1]; //node 1 is node 0
+                vIdxGlobal[0] = edges_[faces_[i][edgeIdx+1]][2]; //node 0 is node 1
+                vIdxGlobal[1] = edges_[faces_[i][edgeIdx+1]][1]; //node 1 is node 0
             }
-            v[0] = vertices_[nodeIdx[0]][0] - vertices_[nodeIdx[1]][0];
-            v[1] = vertices_[nodeIdx[0]][1] - vertices_[nodeIdx[1]][1];
-            w[0] = vertices_[nodeIdx[0]][0] - vertices_[nodeIdx[2]][0];
-            w[1] = vertices_[nodeIdx[0]][1] - vertices_[nodeIdx[2]][1];
+            v[0] = vertices_[vIdxGlobal[0]][0] - vertices_[vIdxGlobal[1]][0];
+            v[1] = vertices_[vIdxGlobal[0]][1] - vertices_[vIdxGlobal[1]][1];
+            w[0] = vertices_[vIdxGlobal[0]][0] - vertices_[vIdxGlobal[2]][0];
+            w[1] = vertices_[vIdxGlobal[0]][1] - vertices_[vIdxGlobal[2]][1];
 
             factory.insertElement(Dune::GeometryType(Dune::GeometryType::simplex,2),
-                    nodeIdx);
+                    vIdxGlobal);
 #if PLOT
             std::cout << "edges of the element "<< faces_[i] << std::endl;
-            std::cout << "nodes of the element " << nodeIdx[0]
-                      << ", " << nodeIdx[1] << ", "
-                      << nodeIdx[2] << std::endl;
-            std::cout << "1st " << nodeIdx[0] 
-                      << "\t" << "2nd " << nodeIdx[1]
-                      << "\t" << "3rd " << nodeIdx[2]
+            std::cout << "nodes of the element " << vIdxGlobal[0]
+                      << ", " << vIdxGlobal[1] << ", "
+                      << vIdxGlobal[2] << std::endl;
+            std::cout << "1st " << vIdxGlobal[0] 
+                      << "\t" << "2nd " << vIdxGlobal[1]
+                      << "\t" << "3rd " << vIdxGlobal[2]
                       << std::endl;
 #endif
-            if (nodeIdx[0] == nodeIdx[1] || nodeIdx[1] == nodeIdx[2]
-                                         || nodeIdx[0] == nodeIdx[2])
+            if (vIdxGlobal[0] == vIdxGlobal[1] || vIdxGlobal[1] == vIdxGlobal[2]
+                                         || vIdxGlobal[0] == vIdxGlobal[2])
             {
                 std::cout << "Error. The node index is identical in the element"
                           << std::endl;

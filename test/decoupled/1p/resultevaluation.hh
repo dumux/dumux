@@ -110,14 +110,14 @@ public:
             Dune::GeometryType geomType = geometry.type();
             typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
             const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
-            Dune::FieldVector<Scalar,dim> global = geometry.global(local);
+            Dune::FieldVector<Scalar,dim> globalPos = geometry.global(local);
 
             Scalar volume = geometry.volume();
 
             int elemIdx = problem.variables().index(element);
 
             Scalar approxPressure = problem.variables().cellData(elemIdx).globalPressure();
-            Scalar exactPressure = problem.exact(global);
+            Scalar exactPressure = problem.exact(globalPos);
 
             numerator += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
             denominator += volume*exactPressure*exactPressure;
@@ -239,7 +239,7 @@ public:
             K.solve(approximateGradient, elementVelocity);
 
             // get the exact gradient
-            exactGradient = problem.exactGrad(global);
+            exactGradient = problem.exactGrad(globalPos);
 
             // the difference between exact and approximate gradient
             Dune::FieldVector<Scalar,dim> gradDiff(exactGradient);

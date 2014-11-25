@@ -94,7 +94,7 @@ template<class TypeTag> class FVPressure2P2C
     {
         pw = Indices::pressureW,
         pn = Indices::pressureN,
-        pglobal = Indices::pressureGlobal
+        pGlobal = Indices::pressureGlobal
     };
     enum
     {

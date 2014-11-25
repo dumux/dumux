@@ -99,7 +99,7 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
         {
             pw = Indices::pressureW,
             pn = Indices::pressureNw,
-            pglobal = Indices::pressureGlobal,
+            pGlobal = Indices::pressureGlobal,
             sw = Indices::saturationW,
             sn = Indices::saturationNw,
             vw = Indices::velocityW,

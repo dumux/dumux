@@ -192,7 +192,7 @@ public:
             {
                 Dune::FieldVector<Scalar, 2*dim> scvVelocities(0.0);
 
-                int innerFaceIdx = 0;
+                int fIdxInner = 0;
                 IntersectionIterator isEndIt = problem_.gridView().iend(element);
                 for (IntersectionIterator isIt = problem_.gridView().ibegin(element); 
                      isIt != isEndIt; ++isIt)
@@ -204,13 +204,13 @@ public:
                         FluxVariables fluxVars(problem_,
                                                element,
                                                fvGeometry,
-                                               innerFaceIdx,
+                                               fIdxInner,
                                                elemVolVars);
 
                         Scalar flux = fluxVars.volumeFlux(phaseIdx);
                         scvVelocities[fIdx] = flux;
 
-                        innerFaceIdx++;
+                        fIdxInner++;
                     }
                     else if (isIt->boundary())
                     {

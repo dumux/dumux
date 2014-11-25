@@ -186,10 +186,10 @@ public:
                 local = ReferenceElements::general(gt).position(0,0);
 
             // get global coordinate of cell center
-            Dune::FieldVector<ct,dim> global = geometry.global(local);
+            Dune::FieldVector<ct,dim> globalPos = geometry.global(local);
 
             // get exact solution value
-            double exactValue = problem.exact(global);
+            double exactValue = problem.exact(globalPos);
 
             // cell index
             int indexi = elementmapper.map(element);
@@ -212,10 +212,10 @@ public:
             double volume = geometry.volume();
 
             // update sumf
-            sumf += volume*(problem.source(global, element, local)[0]);
+            sumf += volume*(problem.source(globalPos, element, local)[0]);
 
             // get the absolute permeability
-            Dune::FieldMatrix<double,dim,dim> K = problem.spatialParams().K(global, element, local);
+            Dune::FieldMatrix<double,dim,dim> K = problem.spatialParams().K(globalPos, element, local);
 
             numerator += volume*(exactValue - approximateValue)*(exactValue - approximateValue);
             denominator += volume*exactValue*exactValue;
@@ -342,7 +342,7 @@ public:
             K.solve(approximateGradient, elementVelocity);
 
             // get the exact gradient
-            exactGradient = problem.exactGrad(global);
+            exactGradient = problem.exactGrad(globalPos);
 
             // the difference between exact and approximate gradient
             Dune::FieldVector<ct,dim> gradDiff(exactGradient);
@@ -501,7 +501,7 @@ public:
             Dune::GeometryType geomType = geometry.type();
 
             const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
-            Dune::FieldVector<Scalar,dim> global = geometry.global(local);
+            Dune::FieldVector<Scalar,dim> globalPos = geometry.global(local);
 
             Scalar volume = geometry.volume();
 
@@ -509,7 +509,7 @@ public:
             int eIdx = problem.variables().index(element);
 
             Scalar approxPressure = problem.variables().cellData(eIdx).globalPressure();
-            Scalar exactPressure = problem.exact(global);
+            Scalar exactPressure = problem.exact(globalPos);
 
             // evaluate exact solution vector
             exactSol[eIdx] = exactPressure;
@@ -666,7 +666,7 @@ public:
             K.solve(approximateGradient, elementVelocity);
 
             // get the exact gradient
-            exactGradient = problem.exactGrad(global);
+            exactGradient = problem.exactGrad(globalPos);
 
             // the difference between exact and approximate gradient
             Dune::FieldVector<Scalar,dim> gradDiff(exactGradient);
@@ -763,7 +763,7 @@ public:
             Dune::GeometryType geomType = geometry.type();
 
             const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
-            Dune::FieldVector<Scalar,dim> global = geometry.global(local);
+            Dune::FieldVector<Scalar,dim> globalPos = geometry.global(local);
 
             Scalar volume = geometry.integrationElement(local)
                     *ReferenceElements::general(geomType).volume();
@@ -771,7 +771,7 @@ public:
             int eIdx = elementMapper.map(element);
 
             Scalar approxPressure = solution[eIdx];
-            Scalar exactPressure = problem.exact(global);
+            Scalar exactPressure = problem.exact(globalPos);
             //std::cout << global << ": p =" << exactPressure << ", p_h = " << approxPressure << std::endl;
             numerator += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
             denominator += volume*exactPressure*exactPressure;
@@ -784,10 +784,10 @@ public:
             uMin = std::min(uMin, approxPressure);
             uMax = std::max(uMax, approxPressure);
 
-            sumf += volume*problem.source(global, element, local)[0];
+            sumf += volume*problem.source(globalPos, element, local)[0];
 
             // get the absolute permeability
-            Dune::FieldMatrix<Scalar,dim,dim> K = problem.spatialParams().K(global, element, local);
+            Dune::FieldMatrix<Scalar,dim,dim> K = problem.spatialParams().K(globalPos, element, local);
 
             int i = -1;
             Dune::FieldVector<Scalar,dim> exactGradient;

@@ -107,7 +107,7 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
     {
         pw = Indices::pressureW,
         pn = Indices::pressureN,
-        pglobal = Indices::pressureGlobal,
+        pGlobal = Indices::pressureGlobal,
         Sw = Indices::saturationW,
         Sn = Indices::saturationN
     };

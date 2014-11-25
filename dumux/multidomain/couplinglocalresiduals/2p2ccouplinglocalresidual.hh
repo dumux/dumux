@@ -111,13 +111,13 @@ public:
                 const int numFaceVertices = refElement.size(fIdx, 1, dim);
 
                 // loop over the single vertices on the current face
-                for (int faceVertIdx = 0; faceVertIdx < numFaceVertices; ++faceVertIdx)
+                for (int faceVertexIdx = 0; faceVertexIdx < numFaceVertices; ++faceVertexIdx)
                 {
-                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertIdx);
-                    const int elemVertIdx = refElement.subEntity(fIdx, 1, faceVertIdx, dim);
+                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertexIdx);
+                    const int vIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
-                    if (elemVertIdx != idx)
+                    if (vIdx != idx)
                         continue;
 
                     //for the corner points, the boundary flux across the vertical non-coupling boundary faces
@@ -138,7 +138,7 @@ public:
                                 for(int i= 0; i < numVertices; i++)
                                 {
                                     //if vertex is on boundary and not the coupling vertex: check whether an outflow condition is set
-                                    if(this->model_().onBoundary(this->element_(), i) && i!=elemVertIdx)
+                                    if(this->model_().onBoundary(this->element_(), i) && i!=vIdx)
                                         if (!this->bcTypes_(i).isOutflow(equationIdx))
                                             evalBoundaryFlux = true;
                                 }
