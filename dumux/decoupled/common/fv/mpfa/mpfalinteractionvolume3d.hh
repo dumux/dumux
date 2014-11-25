@@ -218,11 +218,11 @@ public:
     //! Store the position of a flux face
     /*!
      *  \param pos Position of face center
-     *  \param faceIdx The interaction volume face index
+     *  \param fIdx The interaction volume face index
      */
-    void setFacePosition(const DimVector& pos, int faceIdx)
+    void setFacePosition(const DimVector& pos, int fIdx)
     {
-        facePos_[faceIdx] = pos;
+        facePos_[fIdx] = pos;
     }
 
     //! Store the center of the edges
@@ -238,11 +238,11 @@ public:
     //! Store the flux face areas
     /*!
      *  \param faceArea The flux face area
-     *  \param faceIdx The interaction volume face index
+     *  \param fIdx The interaction volume face index
      */
-    void setFaceArea(Scalar faceArea, int faceIdx)
+    void setFaceArea(Scalar faceArea, int fIdx)
     {
-        faceArea_[faceIdx] = faceArea;
+        faceArea_[fIdx] = faceArea;
     }
 
     //! Store the normals
@@ -537,13 +537,13 @@ public:
 
     //! The position of the face center
     /*!
-     *  \param faceIdx The local face index in the interaction volume
+     *  \param fIdx The local face index in the interaction volume
      *
      *  \return Position of face center
      */
-    DimVector& getFacePosition(int faceIdx)
+    DimVector& getFacePosition(int fIdx)
     {
-        return facePos_[faceIdx];
+        return facePos_[fIdx];
     }
 
     //! The position of the edge center
@@ -559,13 +559,13 @@ public:
 
     //! The interaction volume flux face area
     /*!
-     *  \param faceIdx The local face index in the interaction volume
+     *  \param fIdx The local face index in the interaction volume
      *
      *  \return Area of the flux face
      */
-    Scalar& getFaceArea(int faceIdx)
+    Scalar& getFaceArea(int fIdx)
     {
-        return faceArea_[faceIdx];
+        return faceArea_[fIdx];
     }
 
     //! Print the stored interaction volume data

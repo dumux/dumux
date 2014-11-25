@@ -2269,9 +2269,9 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
             continue;
         }
         bool isOutside = false;
-        for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+        for (int fIdx = 0; fIdx < dim; fIdx++)
         {
-            int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
+            int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, fIdx);
             if (interactionVolume.isOutsideFace(intVolFaceIdx))
             {
                 isOutside = true;
@@ -2319,21 +2319,21 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
 
         pc += gravityDiff; //minus because of gravity definition!
 
-        for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+        for (int fIdx = 0; fIdx < dim; fIdx++)
         {
-            int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
+            int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, fIdx);
 
             if (interactionVolume.isBoundaryFace(intVolFaceIdx))
             {
                 if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressureEqIdx))
                 {
-                    const GlobalPosition& globalPosFace = interactionVolume.getFacePosition(elemIdx, faceIdx);
+                    const GlobalPosition& globalPosFace = interactionVolume.getFacePosition(elemIdx, fIdx);
 
                     DimVector distVec(globalPosFace - globalPos);
                     Scalar dist = distVec.two_norm();
-                    DimVector& normal = interactionVolume.getNormal(elemIdx, faceIdx);
+                    DimVector& normal = interactionVolume.getNormal(elemIdx, fIdx);
 
-                    Scalar faceArea = interactionVolume.getFaceArea(elemIdx, faceIdx);
+                    Scalar faceArea = interactionVolume.getFaceArea(elemIdx, fIdx);
 
                     // get pc and lambda at the boundary
                     Scalar satWBound = cellData.saturation(wPhaseIdx);

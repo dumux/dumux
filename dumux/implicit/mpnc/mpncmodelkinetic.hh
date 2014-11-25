@@ -155,21 +155,21 @@ public:
                                false);
 
             this->updateCurHints(*eIt, elemVolVars);
-            for (int faceIdx = 0; faceIdx < fvGeometry.numScvf; ++ faceIdx) {
-                int i = fvGeometry.subContVolFace[faceIdx].i;
+            for (int fIdx = 0; fIdx < fvGeometry.numScvf; ++ fIdx) {
+                int i = fvGeometry.subContVolFace[fIdx].i;
                 int I = this->vertexMapper().map(*eIt, i, dim);
 
-                int j = fvGeometry.subContVolFace[faceIdx].j;
+                int j = fvGeometry.subContVolFace[fIdx].j;
                 int J = this->vertexMapper().map(*eIt, j, dim);
 
-                const Scalar scvfArea     = fvGeometry.subContVolFace[faceIdx].normal.two_norm();
+                const Scalar scvfArea     = fvGeometry.subContVolFace[fIdx].normal.two_norm();
                 boxSurface_[I]      += scvfArea;
                 boxSurface_[J]      += scvfArea;
 
                 FluxVariables fluxVars(this->problem_(),
                             *eIt,
                             fvGeometry,
-                            faceIdx,
+                            fIdx,
                             elemVolVars);
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {

@@ -190,15 +190,15 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *        over a face of a sub-control volume.
      *
      * \param flux The flux over the sub-control-volume face for each component
-     * \param faceIdx The index of the sub-control-volume face
+     * \param fIdx The index of the sub-control-volume face
      * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
      */
-    void computeFlux(PrimaryVariables &flux, const int faceIdx, bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int fIdx, bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                                this->element_(),
                                this->fvGeometry_(),
-                               faceIdx,
+                               fIdx,
                                this->curVolVars_(),
                                onBoundary);
 

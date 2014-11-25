@@ -153,9 +153,9 @@ public:
                 for (int dimIdx = 0; dimIdx < dim; dimIdx++)
                 {
                     refVelocity[dimIdx] = -flux[dim - 1 - dimIdx];
-                    for (int faceIdx = 0; faceIdx < dim + 1; faceIdx++)
+                    for (int fIdx = 0; fIdx < dim + 1; fIdx++)
                     {
-                        refVelocity[dimIdx] += flux[faceIdx]/(dim + 1);
+                        refVelocity[dimIdx] += flux[fIdx]/(dim + 1);
                     }
                 }
             }

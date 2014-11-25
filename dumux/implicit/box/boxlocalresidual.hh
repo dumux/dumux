@@ -124,19 +124,19 @@ protected:
             if (isIt->boundary()) {
                 // Assemble the boundary for all vertices of the current
                 // face
-                int faceIdx = isIt->indexInInside();
-                int numFaceVerts = refElement.size(faceIdx, 1, dim);
+                int fIdx = isIt->indexInInside();
+                int numFaceVerts = refElement.size(fIdx, 1, dim);
                 for (int faceVertIdx = 0;
                     faceVertIdx < numFaceVerts;
                     ++faceVertIdx)
                 {
-                    int scvIdx = refElement.subEntity(faceIdx,
+                    int scvIdx = refElement.subEntity(fIdx,
                                                         1,
                                                         faceVertIdx,
                                                         dim);
 
                     int boundaryFaceIdx =
-                        this->fvGeometry_().boundaryFaceIndex(faceIdx, faceVertIdx);
+                        this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertIdx);
 
                     // add the residual of all vertices of the boundary
                     // segment

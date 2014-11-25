@@ -585,15 +585,15 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
         Dune::FieldVector < Scalar, numPhases > lambda(cellData.mobility(wPhaseIdx));
         lambda[nPhaseIdx] = cellData.mobility(nPhaseIdx);
 
-        for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+        for (int fIdx = 0; fIdx < dim; fIdx++)
         {
-            int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
+            int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, fIdx);
 
             if (interactionVolume.isBoundaryFace(intVolFaceIdx))
             {
                 if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressureEqIdx))
                 {
-                    int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
+                    int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
                     const ReferenceElement& referenceElement = ReferenceElements::general(
                             elementPointer->geometry().type());
@@ -703,7 +703,7 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 }
                 else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx))
                 {
-                    int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
+                    int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
                     const ReferenceElement& referenceElement = ReferenceElements::general(
                             elementPointer->geometry().type());
@@ -726,9 +726,9 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                     DimVector velocityW(unitDistVec);
                     DimVector velocityNw(unitDistVec);
 
-                    velocityW *= boundValues[wPhaseIdx] / (2 * interactionVolume.getFaceArea(elemIdx, faceIdx));
+                    velocityW *= boundValues[wPhaseIdx] / (2 * interactionVolume.getFaceArea(elemIdx, fIdx));
                     velocityNw *= boundValues[nPhaseIdx]
-                            / (2 * interactionVolume.getFaceArea(elemIdx, faceIdx));
+                            / (2 * interactionVolume.getFaceArea(elemIdx, fIdx));
 
                     //store potentials for further calculations (saturation, ...)
                     cellData.fluxData().addUpwindPotential(wPhaseIdx, boundaryFaceIdx, boundValues[wPhaseIdx]);

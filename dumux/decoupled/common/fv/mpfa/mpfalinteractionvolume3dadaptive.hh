@@ -54,14 +54,14 @@ public:
         return newElemIdxFromOldFaceIdxto0_[zeroFaceIdx][elementIdx];
     }
 
-    static int getOldFaceIdxFromNewIdxto0(int zeroFaceIdx, int faceIdx)
+    static int getOldFaceIdxFromNewIdxto0(int zeroFaceIdx, int fIdx)
     {
-        return oldFaceIdxFromNewIdxto0_[zeroFaceIdx][faceIdx];
+        return oldFaceIdxFromNewIdxto0_[zeroFaceIdx][fIdx];
     }
 
-    static int getNewFaceIdxFromOldIdxto0(int zeroFaceIdx, int faceIdx)
+    static int getNewFaceIdxFromOldIdxto0(int zeroFaceIdx, int fIdx)
     {
-        return newFaceIdxFromOldIdxto0_[zeroFaceIdx][faceIdx];
+        return newFaceIdxFromOldIdxto0_[zeroFaceIdx][fIdx];
     }
 
     static int getOldEdgeIdxFromNewFaceIdxto0(int zeroFaceIdx, int edgeIdx)

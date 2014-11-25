@@ -156,7 +156,7 @@ protected:
         for (int nIdx = 0; nIdx < fvGeometry.numNeighbors-1; nIdx++)
         {
             // check whether the two faces are opposite of each other
-            if (fvGeometry.subContVolFace[nIdx].faceIdx == oppositeIdx)
+            if (fvGeometry.subContVolFace[nIdx].fIdx == oppositeIdx)
             {
                 boundaryFace.j = nIdx+1;
                 break;
@@ -236,18 +236,18 @@ protected:
     {
         // calculate the mass flux over the faces and subtract
         // it from the local rates
-        int faceIdx = -1;
+        int fIdx = -1;
         IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
         IntersectionIterator isEndIt = this->gridView_().iend(this->element_());
         for (; isIt != isEndIt; ++isIt) {
             if (!isIt->neighbor())
                 continue;
 
-            faceIdx++;
+            fIdx++;
 	    PrimaryVariables flux;
 
             Valgrind::SetUndefined(flux);
-            this->asImp_().computeFlux(flux, faceIdx);
+            this->asImp_().computeFlux(flux, fIdx);
             Valgrind::CheckDefined(flux);
 
             flux *= this->curVolVars_(0).extrusionFactor();

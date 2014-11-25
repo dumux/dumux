@@ -61,16 +61,16 @@ public:
     {
         ElementIterator eIt = gridView_.template begin<0>();
 
-        int faceIdx = 0;
+        int fIdx = 0;
 
         IntersectionIterator isEndIt = gridView_.iend(*eIt);
         for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
         {
             int idxInInside = isIt->indexInInside();
 
-            standardLocalIdxMap_[idxInInside] = faceIdx;
+            standardLocalIdxMap_[idxInInside] = fIdx;
 
-            faceIdx++;
+            fIdx++;
         }
     }
 
@@ -84,45 +84,45 @@ public:
         return elementMapper_.map(element);
     }
 
-    int map(int elemIdx, int faceIdx)
+    int map(int elemIdx, int fIdx)
     {
-        return intersectionMapGlobal_[elemIdx][faceIdx];
+        return intersectionMapGlobal_[elemIdx][fIdx];
     }
 
-    int map(int elemIdx, int faceIdx) const
+    int map(int elemIdx, int fIdx) const
     {
-        return (intersectionMapGlobal_[elemIdx].find(faceIdx))->second;//use find() for const function!
+        return (intersectionMapGlobal_[elemIdx].find(fIdx))->second;//use find() for const function!
     }
 
-    int map(const Element& element, int faceIdx)
+    int map(const Element& element, int fIdx)
     {
-        return intersectionMapGlobal_[map(element)][faceIdx];
+        return intersectionMapGlobal_[map(element)][fIdx];
     }
 
-    int map(const Element& element, int faceIdx) const
+    int map(const Element& element, int fIdx) const
     {
-        return intersectionMapGlobal_[map(element)].find(faceIdx)->second;//use find() for const function!
+        return intersectionMapGlobal_[map(element)].find(fIdx)->second;//use find() for const function!
     }
 
-    int maplocal(int elemIdx, int faceIdx)
+    int maplocal(int elemIdx, int fIdx)
     {
-        return intersectionMapLocal_[elemIdx][faceIdx];
+        return intersectionMapLocal_[elemIdx][fIdx];
     }
 
-    int maplocal(int elemIdx, int faceIdx) const
+    int maplocal(int elemIdx, int fIdx) const
     {
-        return (intersectionMapLocal_[elemIdx].find(faceIdx))->second;//use find() for const function!
+        return (intersectionMapLocal_[elemIdx].find(fIdx))->second;//use find() for const function!
     }
 
 
-    int maplocal(const Element& element, int faceIdx)
+    int maplocal(const Element& element, int fIdx)
     {
-        return intersectionMapLocal_[map(element)][faceIdx];
+        return intersectionMapLocal_[map(element)][fIdx];
     }
 
-    int maplocal(const Element& element, int faceIdx) const
+    int maplocal(const Element& element, int fIdx) const
     {
-        return (intersectionMapLocal_[map(element)].find(faceIdx))->second;//use find() for const function!
+        return (intersectionMapLocal_[map(element)].find(fIdx))->second;//use find() for const function!
     }
 
     // return number intersections
@@ -155,15 +155,15 @@ public:
         {
             int globalIdx = map(*eIt);
 
-            int faceIdx = 0;
+            int fIdx = 0;
             // run through all intersections with neighbors
             IntersectionIterator isEndIt = gridView_.iend(*eIt);
             for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 int indexInInside = isIt->indexInInside();
-                intersectionMapLocal_[globalIdx][faceIdx] = indexInInside;
+                intersectionMapLocal_[globalIdx][fIdx] = indexInInside;
 
-                faceIdx++;
+                fIdx++;
             }
         }
 
@@ -172,7 +172,7 @@ public:
         {
             int globalIdx = map(*eIt);
 
-            int faceIdx = 0;
+            int fIdx = 0;
             // run through all intersections with neighbors
             IntersectionIterator isEndIt = gridView_.iend(*eIt);
             for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
@@ -206,17 +206,17 @@ public:
                             }
                         }
 
-                        intersectionMapGlobal_[globalIdx][faceIdx] = globalIntersectionIdx;
+                        intersectionMapGlobal_[globalIdx][fIdx] = globalIntersectionIdx;
                         intersectionMapGlobal_[globalIdxNeighbor][faceIdxNeighbor] = globalIntersectionIdx;
                         globalIntersectionIdx ++;
                     }
                 }
                 else
                 {
-                    intersectionMapGlobal_[globalIdx][faceIdx] = globalIntersectionIdx;
+                    intersectionMapGlobal_[globalIdx][fIdx] = globalIntersectionIdx;
                     globalIntersectionIdx ++;
                 }
-                faceIdx++;
+                fIdx++;
             }
         }
         size_ = globalIntersectionIdx;

@@ -1762,9 +1762,9 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
             for (int elemIdx = 0; elemIdx < 2 * dim; elemIdx++)
             {
                 bool isOutside = false;
-                for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+                for (int fIdx = 0; fIdx < dim; fIdx++)
                 {
-                    int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
+                    int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, fIdx);
                     if (interactionVolume.isOutsideFace(intVolFaceIdx))
                     {
                         isOutside = true;
@@ -1812,16 +1812,16 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
 
                 pc += gravityDiff; //minus because of gravity definition!
 
-                for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+                for (int fIdx = 0; fIdx < dim; fIdx++)
                 {
-                    int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
+                    int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, fIdx);
 
                     if (interactionVolume.isBoundaryFace(intVolFaceIdx))
                     {
 
                         if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressEqIdx))
                         {
-                            int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
+                            int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
                             const ReferenceElement& referenceElement = ReferenceElements::general(
                                     elementPointer->geometry().type());
@@ -1835,7 +1835,7 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
                             DimVector unitDistVec(distVec);
                             unitDistVec /= dist;
 
-                            Scalar faceArea = interactionVolume.getFaceArea(elemIdx, faceIdx);
+                            Scalar faceArea = interactionVolume.getFaceArea(elemIdx, fIdx);
 
                             // get pc and lambda at the boundary
                             Scalar satWBound = cellData.saturation(wPhaseIdx);

@@ -74,7 +74,7 @@ public:
      * \param problem The problem
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param fIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
@@ -82,10 +82,10 @@ public:
     ElasticFluxVariablesBase(const Problem &problem,
             const Element &element,
             const FVElementGeometry &fvGeometry,
-            int faceIdx,
+            int fIdx,
             const ElementVolumeVariables &elemVolVars,
             const bool onBoundary = false)
-    : fvElemGeom_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
+    : fvElemGeom_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
     {
         gradU_ = Scalar(0);
         gradUTransposed_ = Scalar(0);

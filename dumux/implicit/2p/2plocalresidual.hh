@@ -108,15 +108,15 @@ public:
      *        over a face of a sub-control volume.
      *
      * \param flux The flux over the sub-control-volume face for each component
-     * \param faceIdx The index of the sub-control-volume face
+     * \param fIdx The index of the sub-control-volume face
      * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx, const bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, int fIdx, const bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                            this->element_(),
                            this->fvGeometry_(),
-                           faceIdx,
+                           fIdx,
                            this->curVolVars_(),
                            onBoundary);
         flux = 0;

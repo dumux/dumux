@@ -79,7 +79,7 @@ public:
      * \param problem The problem
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param fIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
@@ -87,10 +87,10 @@ public:
     ImplicitDarcyFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
-                 const int faceIdx,
+                 const int fIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-    : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
+    : fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
     {
         mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
         calculateGradients_(problem, element, elemVolVars);

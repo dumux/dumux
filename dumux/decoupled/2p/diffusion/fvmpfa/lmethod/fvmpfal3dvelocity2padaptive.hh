@@ -164,7 +164,7 @@ public:
     //calculate velocities for flux faces of a hanging node interaction volume
     void calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume,
             CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
-            CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8, int faceIdx = -1);
+            CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8, int fIdx = -1);
 
     //!Initializes the velocity model
     void initialize()
@@ -217,13 +217,13 @@ private:
  * \param cellData6  <tt>CellData</tt> object of an IMPES model for sub-volume 6
  * \param cellData7  <tt>CellData</tt> object of an IMPES model for sub-volume 7
  * \param cellData8  <tt>CellData</tt> object of an IMPES model for sub-volume 8
- * \param faceIdx Index of the flux face for which the velocity has to be calculated. If no face index is given, <tt>faceIdx</tt> = -1
+ * \param fIdx Index of the flux face for which the velocity has to be calculated. If no face index is given, <tt>fIdx</tt> = -1
  * and velocities for all flux faces in the interaction volume are calculated!
  */
 template<class TypeTag>
 void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume,
         CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
-        CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8, int faceIdx)
+        CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8, int fIdx)
         {
     ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
     ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
@@ -388,7 +388,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
 
 
 
-    if (faceIdx < 0 || faceIdx == 0)
+    if (fIdx < 0 || fIdx == 0)
     {
         // calculate the flux through the subvolumeface 1 (subVolumeFaceIdx = 0)
         int caseL = transmissibilityCalculator_().transmissibility(T, interactionVolume, lambda, 0, 1, 2, 3,
@@ -484,7 +484,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 1)
+    if (fIdx < 0 || fIdx == 1)
     {
         // calculate the flux through the subvolumeface 2 (subVolumeFaceIdx = 1)
         T = 0;
@@ -595,7 +595,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 2)
+    if (fIdx < 0 || fIdx == 2)
     {
         // calculate the flux through the subvolumeface 3 (subVolumeFaceIdx = 2)
         T = 0;
@@ -697,7 +697,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 3)
+    if (fIdx < 0 || fIdx == 3)
     {
         // calculate the flux through the subvolumeface 4 (subVolumeFaceIdx = 3)
         T = 0;
@@ -808,7 +808,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 4)
+    if (fIdx < 0 || fIdx == 4)
     {
 
         // calculate the flux through the subvolumeface 5 (subVolumeFaceIdx = 4)
@@ -973,7 +973,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 5)
+    if (fIdx < 0 || fIdx == 5)
     {
         // calculate the flux through the subvolumeface 6 (subVolumeFaceIdx = 5)
         T = 0;
@@ -1152,7 +1152,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 6)
+    if (fIdx < 0 || fIdx == 6)
     {
         // calculate the flux through the subvolumeface 7 (subVolumeFaceIdx = 6)
         T = 0;
@@ -1316,7 +1316,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 7)
+    if (fIdx < 0 || fIdx == 7)
     {
         // calculate the flux through the subvolumeface 8 (subVolumeFaceIdx = 7)
         T = 0;
@@ -1499,7 +1499,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 8)
+    if (fIdx < 0 || fIdx == 8)
     {
         // calculate the flux through the subvolumeface 9 (subVolumeFaceIdx = 8)
         T = 0;
@@ -1627,7 +1627,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 9)
+    if (fIdx < 0 || fIdx == 9)
     {
         // calculate the flux through the subvolumeface 10 (subVolumeFaceIdx = 9)
         T = 0;
@@ -1755,7 +1755,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 10)
+    if (fIdx < 0 || fIdx == 10)
     {
         // calculate the flux through the subvolumeface 11 (subVolumeFaceIdx = 10)
         T = 0;
@@ -1890,7 +1890,7 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 11)
+    if (fIdx < 0 || fIdx == 11)
     {
         // calculate the flux through the subvolumeface 12 (subVolumeFaceIdx = 11)
         T = 0;

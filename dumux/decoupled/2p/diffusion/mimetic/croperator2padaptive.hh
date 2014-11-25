@@ -199,9 +199,9 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::updateMatrix()
     for (int elemIdx = 0; elemIdx < numElem; elemIdx++)
     {
         int numFaces = intersectionMapper_.size(elemIdx);
-        for (int faceIdx = 0; faceIdx < numFaces; faceIdx++)
+        for (int fIdx = 0; fIdx < numFaces; fIdx++)
         {
-            int faceIdxGlobal = intersectionMapper_.map(elemIdx, faceIdx);
+            int faceIdxGlobal = intersectionMapper_.map(elemIdx, fIdx);
             if (!visited[faceIdxGlobal])
             {
                 A_.incrementrowsize(faceIdxGlobal);
@@ -224,16 +224,16 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::updateMatrix()
     for (int elemIdx = 0; elemIdx < numElem; elemIdx++)
     {
         int numFaces = intersectionMapper_.size(elemIdx);
-        for (int faceIdx = 0; faceIdx < numFaces; faceIdx++)
+        for (int fIdx = 0; fIdx < numFaces; fIdx++)
         {
-            int faceIdxGlobalI = intersectionMapper_.map(elemIdx, faceIdx);
+            int faceIdxGlobalI = intersectionMapper_.map(elemIdx, fIdx);
             if (!visited[faceIdxGlobalI])
             {
                 A_.addindex(faceIdxGlobalI,faceIdxGlobalI);
                 visited[faceIdxGlobalI] = true;
             }
             for (int k = 0; k < numFaces; k++)
-                if (k != faceIdx) {
+                if (k != fIdx) {
                     int faceIdxGlobalJ = intersectionMapper_.map(elemIdx, k);
                     A_.addindex(faceIdxGlobalI, faceIdxGlobalJ);
                 }

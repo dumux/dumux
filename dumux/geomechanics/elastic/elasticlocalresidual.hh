@@ -77,22 +77,22 @@ public:
      *        volume.
      *
      *        \param flux The stress over the SCV (sub-control-volume) face
-     *        \param faceIdx The index of the considered face of the sub control volume
+     *        \param fIdx The index of the considered face of the sub control volume
      *        \param onBoundary A boolean variable to specify whether the flux variables
      *               are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, const int faceIdx, const bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int fIdx, const bool onBoundary=false) const
     {
         flux = 0;
         FluxVariables fluxVars(this->problem_(),
                                    this->element_(),
                                    this->fvGeometry_(),
-                                   faceIdx,
+                                   fIdx,
                                    this->curVolVars_(),
                                    onBoundary);
 
         // get normal vector of current face
-        const DimVector &normal(this->fvGeometry_().subContVolFace[faceIdx].normal);
+        const DimVector &normal(this->fvGeometry_().subContVolFace[fIdx].normal);
         DimVector tmp(0.0);
 
         // multiply stress tensor with normal vector of current face

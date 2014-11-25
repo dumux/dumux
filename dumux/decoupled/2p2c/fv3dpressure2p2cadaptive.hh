@@ -1768,7 +1768,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
                         if(hangingNodeType != InteractionVolume::fourSmallCellsFace)
                         {
                             diagonal.push_back(problem().variables().index(*vPtrSmall));
-                            // a) take interaction volume and determine faceIdx
+                            // a) take interaction volume and determine fIdx
                             if(hangingNodeType == InteractionVolume::noHangingNode)
                             {
                                 //TODO determine current localIdxLarge!!!!

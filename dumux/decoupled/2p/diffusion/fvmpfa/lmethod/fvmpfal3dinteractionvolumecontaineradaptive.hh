@@ -107,9 +107,9 @@ public:
      * have to be updated in an implicit treatment of the transport equation, it is necessary to get
      * the complete set of vertices on a face: 4 corners + all hanging nodes.
      */
-    std::set<int>& faceVerticeIndices(int eIdxGlobal, int faceIdx)
+    std::set<int>& faceVerticeIndices(int eIdxGlobal, int fIdx)
     {
-        return faceVertices_[eIdxGlobal][faceIdx];
+        return faceVertices_[eIdxGlobal][fIdx];
     }
 
     //! Constructs a FvMpfaL3dInteractionVolumeContainerAdaptive object
@@ -674,9 +674,9 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    int faceIdx = IndexTranslator::getFaceIndexFromElements(elemIdxOld[i], elemIdxOld[j]);
-                    if (faceIdx >= 0)
-                        zeroFaceIdxVec.insert(faceIdx);
+                    int fIdx = IndexTranslator::getFaceIndexFromElements(elemIdxOld[i], elemIdxOld[j]);
+                    if (fIdx >= 0)
+                        zeroFaceIdxVec.insert(fIdx);
                 }
             }
 
@@ -1431,9 +1431,9 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
             {
                 for (int j = 0; j < 6; j++)
                 {
-                    int faceIdx = IndexTranslator::getFaceIndexFromElements(elemIdxOld[i], elemIdxOld[j]);
-                    if (faceIdx >= 0)
-                        zeroFaceIdxVec.insert(faceIdx);
+                    int fIdx = IndexTranslator::getFaceIndexFromElements(elemIdxOld[i], elemIdxOld[j]);
+                    if (fIdx >= 0)
+                        zeroFaceIdxVec.insert(fIdx);
                 }
             }
 

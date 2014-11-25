@@ -92,10 +92,10 @@ public:
     OnePTwoCFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &fvGeometry,
-                          const int faceIdx,
+                          const int fIdx,
                           const ElementVolumeVariables &elemVolVars,
                           const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
+        : fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
     {
         mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
 

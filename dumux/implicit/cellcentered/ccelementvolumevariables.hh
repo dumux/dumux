@@ -121,8 +121,8 @@ public:
                     BoundaryTypes bcTypes;
                     problem.boundaryTypes(bcTypes, *isIt);
 
-                    int faceIdx = isIt->indexInInside();
-                    int indexInVariables = numNeighbors + faceIdx;
+                    int fIdx = isIt->indexInInside();
+                    int indexInVariables = numNeighbors + fIdx;
 
                     if (bcTypes.hasDirichlet())
                     {

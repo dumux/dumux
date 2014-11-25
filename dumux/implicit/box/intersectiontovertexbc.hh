@@ -78,11 +78,11 @@ public:
 		if (!bcTypes.hasDirichlet())
                     continue;
 
-                int faceIdx = isIt->indexInInside();
-                int numFaceVerts = refElement.size(faceIdx, 1, dim);
+                int fIdx = isIt->indexInInside();
+                int numFaceVerts = refElement.size(fIdx, 1, dim);
                 for (int faceVertIdx = 0; faceVertIdx < numFaceVerts; ++faceVertIdx)
                 {
-                    int elemVertIdx = refElement.subEntity(faceIdx, 1, faceVertIdx, dim);
+                    int elemVertIdx = refElement.subEntity(fIdx, 1, faceVertIdx, dim);
                     int vIdxGlobal = problem.vertexMapper().map(*eIt, elemVertIdx, dim);
 
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)

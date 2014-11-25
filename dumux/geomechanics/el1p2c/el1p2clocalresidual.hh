@@ -132,22 +132,22 @@ namespace Dumux
              *        volume.
              *
              *        \param flux The flux over the SCV (sub-control-volume) face for each component
-             *        \param faceIdx The index of the considered face of the sub control volume
+             *        \param fIdx The index of the considered face of the sub control volume
              *        \param onBoundary A boolean variable to specify whether the flux variables
              *               are calculated for interior SCV faces or boundary faces, default=false
              */
-            void computeFlux(PrimaryVariables &flux, int faceIdx, const bool onBoundary=false) const
+            void computeFlux(PrimaryVariables &flux, int fIdx, const bool onBoundary=false) const
             {
                 flux = 0;
                 FluxVariables fluxVars(this->problem_(),
                                 this->element_(),
                                 this->fvGeometry_(),
-                                faceIdx,
+                                fIdx,
                                 this->curVolVars_());
 
                 this->computeAdvectiveFlux(flux, fluxVars);
                 this->computeDiffusiveFlux(flux, fluxVars);
-                this->computeStresses(flux, fluxVars, faceIdx);
+                this->computeStresses(flux, fluxVars, fIdx);
             }
 
             /*!
@@ -306,14 +306,14 @@ namespace Dumux
              * pressure in the solid fluid mixture.
              * \param stress The stress over the sub-control-volume face for each component
              * \param fluxVars The variables at the current sub-control-volume face
-             * \param faceIdx The index of the current sub-control-volume face
+             * \param fIdx The index of the current sub-control-volume face
              */
             void computeStresses(PrimaryVariables &stress,
-                    const FluxVariables &fluxVars, const int faceIdx) const
+                    const FluxVariables &fluxVars, const int fIdx) const
             {
                 DimMatrix pressure(0.0), sigma(0.0);
                 // the normal vector corresponding to the current sub-control-volume face
-                const DimVector &normal(this->fvGeometry_().subContVolFace[faceIdx].normal);
+                const DimVector &normal(this->fvGeometry_().subContVolFace[fIdx].normal);
 
                 // the pressure term of the momentum balance
                 for (int i = 0; i < dim; ++i)

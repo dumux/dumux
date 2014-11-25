@@ -970,13 +970,13 @@ protected:
                     {
                         // add all vertices on the intersection to the set of
                         // boundary vertices
-                        int faceIdx = isIt->indexInInside();
-                        int numFaceVerts = refElement.size(faceIdx, 1, dim);
+                        int fIdx = isIt->indexInInside();
+                        int numFaceVerts = refElement.size(fIdx, 1, dim);
                         for (int faceVertIdx = 0;
                              faceVertIdx < numFaceVerts;
                              ++faceVertIdx)
                         {
-                            int elemVertIdx = refElement.subEntity(faceIdx,
+                            int elemVertIdx = refElement.subEntity(fIdx,
                                                                    1,
                                                                    faceVertIdx,
                                                                    dim);

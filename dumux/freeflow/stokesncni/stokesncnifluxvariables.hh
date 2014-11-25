@@ -69,10 +69,10 @@ public:
     StokesncniFluxVariables(const Problem &problem,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,
-                            const int faceIdx,
+                            const int fIdx,
                             const ElementVolumeVariables &elemVolVars,
                             const bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
     {
         calculateValues_(problem, element, elemVolVars);
     }

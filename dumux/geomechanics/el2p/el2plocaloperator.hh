@@ -386,7 +386,7 @@ public:
             const Dune::QuadratureRule<DF,dim-1>& rule = Dune::QuadratureRules<DF,dim-1>::rule(gtface,qorder);
 
             // get face index of this intersection
-            int faceIdx = isIt->indexInInside();
+            int fIdx = isIt->indexInInside();
             // get dimension of face
             const int dimIs = Dune::PDELab::IntersectionGeometry<Intersection>::Entity::Geometry::dimension;
 
@@ -460,14 +460,14 @@ public:
                     if (codim==0) continue;
 
                     // iterate over number of degrees of freedom with the given codim which are attached to the current intersection face
-                    for (int j = 0; j <  refElement.size(faceIdx,1,codim); j++)
+                    for (int j = 0; j <  refElement.size(fIdx,1,codim); j++)
                     {   // check if degree of freedom is located on a vertex of the current intersection (boundary face)
                         if (displacementLFS.child(0).finiteElement().localCoefficients().localKey(i).subEntity() ==
-                                        refElement.subEntity(faceIdx,1,j,codim))
+                                        refElement.subEntity(fIdx,1,j,codim))
                         {
                             // get local coordinate for this degree of freedom
 //                             this doesn't work: DimVector local = isIt->geometryInInside().global(face_refElement.position(j,codim-1));
-                            DimVector local = refElement.template geometry<1>(faceIdx).global(face_refElement.position(j, codim-1));
+                            DimVector local = refElement.template geometry<1>(fIdx).global(face_refElement.position(j, codim-1));
 
                             GlobalPosition globalPos = eg.geometry().global(local);
 

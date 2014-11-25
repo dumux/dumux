@@ -142,17 +142,17 @@ protected:
      *        the diffusive fluxes are computed.
      *
      * \param flux The flux over the SCV (sub-control-volume) face
-     * \param faceIdx The index of the SCV face (may also be a boundary face)
+     * \param fIdx The index of the SCV face (may also be a boundary face)
      * \param onBoundary Indicates, if the flux is evaluated on a boundary face. If it is true,
      *        the created fluxVars object contains boundary variables evaluated at the IP of the
      *        boundary face
      */
-    void computeFlux(PrimaryVariables &flux, const int faceIdx, const bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int fIdx, const bool onBoundary=false) const
     {
         const FluxVariables fluxVars(this->problem_(),
                                      this->element_(),
                                      this->fvGeometry_(),
-                                     faceIdx,
+                                     fIdx,
                                      this->curVolVars_(),
                                      onBoundary);
         flux = 0.0;
@@ -370,19 +370,19 @@ protected:
                     continue;
 
                 // assemble the boundary for all vertices of the current face
-                const int faceIdx = isIt->indexInInside();
-                const int numFaceVertices = refElement.size(faceIdx, 1, dim);
+                const int fIdx = isIt->indexInInside();
+                const int numFaceVertices = refElement.size(fIdx, 1, dim);
 
                 // loop over the single vertices on the current face
                 for (int faceVertIdx = 0; faceVertIdx < numFaceVertices; ++faceVertIdx)
                 {
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
-                    if (refElement.subEntity(faceIdx, 1, faceVertIdx, dim)
+                    if (refElement.subEntity(fIdx, 1, faceVertIdx, dim)
                         != scvIdx)
                         continue;
 
-                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(faceIdx, faceVertIdx);
+                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertIdx);
                     const FluxVariables boundaryVars(this->problem_(),
                                                      this->element_(),
                                                      this->fvGeometry_(),
@@ -606,16 +606,16 @@ protected:
         if (stabilizationAlpha_ != 0)
         {
             // loop over the edges of the element
-            for (int faceIdx = 0; faceIdx < this->fvGeometry_().numScvf; faceIdx++)
+            for (int fIdx = 0; fIdx < this->fvGeometry_().numScvf; fIdx++)
             {
                 const FluxVariables fluxVars(this->problem_(),
                                              this->element_(),
                                              this->fvGeometry_(),
-                                             faceIdx,
+                                             fIdx,
                                              this->curVolVars_());
 
-                const int i = this->fvGeometry_().subContVolFace[faceIdx].i;
-                const int j = this->fvGeometry_().subContVolFace[faceIdx].j;
+                const int i = this->fvGeometry_().subContVolFace[fIdx].i;
+                const int j = this->fvGeometry_().subContVolFace[fIdx].j;
 
                 if (i != scvIdx && j != scvIdx)
                     continue;
@@ -623,7 +623,7 @@ protected:
                 const Scalar alphaH2 = stabilizationAlpha_*
                     fluxVars.averageSCVVolume();
                 Scalar stabilizationTerm = fluxVars.pressureGrad() *
-                    this->fvGeometry_().subContVolFace[faceIdx].normal;
+                    this->fvGeometry_().subContVolFace[fIdx].normal;
 
                 stabilizationTerm *= alphaH2;
 

@@ -275,12 +275,12 @@ public:
                 (*faceUpwindW)[i] = 0;
                 (*faceUpwindN)[i] = 0;
                 // run thorugh all local face idx and collect upwind information
-                for(int faceIdx = 0; faceIdx<cellData.fluxData().size(); faceIdx++)
+                for(int fIdx = 0; fIdx<cellData.fluxData().size(); fIdx++)
                 {
-                    if(cellData.isUpwindCell(faceIdx, contiWEqIdx))
-                        (*faceUpwindW)[i] += pow(10,static_cast<double>(3-faceIdx));
-                    if(cellData.isUpwindCell(faceIdx, contiNEqIdx))
-                        (*faceUpwindN)[i] += pow(10,static_cast<double>(3-faceIdx));
+                    if(cellData.isUpwindCell(fIdx, contiWEqIdx))
+                        (*faceUpwindW)[i] += pow(10,static_cast<double>(3-fIdx));
+                    if(cellData.isUpwindCell(fIdx, contiNEqIdx))
+                        (*faceUpwindN)[i] += pow(10,static_cast<double>(3-fIdx));
                 }
             }
             //  writer.attachCellData(*nun, "phase mass fraction n-phase");

@@ -118,18 +118,18 @@ public:
      *        volume.
      *
      * \param flux The flux over the SCV (sub-control-volume) face for each phase
-     * \param faceIdx The index of the SCV face
+     * \param fIdx The index of the SCV face
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx,
+    void computeFlux(PrimaryVariables &flux, int fIdx,
             const bool onBoundary = false) const {
         //TODO: delete this if not required
         //      adapts the effective porosity node-wise for evaluation of derivatives.
         //      At the moment computeFlux is called before computeStorage so effPorosity in
         //      computeStorage should also be correct.
 
-//        if (faceIdx == 0)
+//        if (fIdx == 0)
 //        {
 //           int numScv = this->element_().template count<dim> ();
 //
@@ -200,7 +200,7 @@ public:
 //        }
 
         FluxVariables fluxVars(this->problem_(), this->element_(),
-                this->fvGeometry_(), faceIdx, this->curVolVars_());
+                this->fvGeometry_(), fIdx, this->curVolVars_());
 
         flux = 0;
         this->computeAdvectiveFlux(flux, fluxVars);

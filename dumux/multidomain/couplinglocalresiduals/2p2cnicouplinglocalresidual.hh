@@ -121,14 +121,14 @@ public:
                     continue;
 
                 // assemble the boundary for all vertices of the current face
-                const int faceIdx = isIt->indexInInside();
-                const int numFaceVertices = refElement.size(faceIdx, 1, dim);
+                const int fIdx = isIt->indexInInside();
+                const int numFaceVertices = refElement.size(fIdx, 1, dim);
 
                 // loop over the single vertices on the current face
                 for (int faceVertIdx = 0; faceVertIdx < numFaceVertices; ++faceVertIdx)
                 {
-                    const int elemVertIdx = refElement.subEntity(faceIdx, 1, faceVertIdx, dim);
-                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(faceIdx, faceVertIdx);
+                    const int elemVertIdx = refElement.subEntity(fIdx, 1, faceVertIdx, dim);
+                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertIdx);
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
                     if (elemVertIdx != idx)
@@ -225,16 +225,16 @@ public:
 
         // calculate the mass flux over the faces and subtract
         // it from the local rates
-        for (int faceIdx = 0; faceIdx < this->fvGeometry_().numScvf; faceIdx++)
+        for (int fIdx = 0; fIdx < this->fvGeometry_().numScvf; fIdx++)
         {
             FluxVariables vars(this->problem_(),
                                this->element_(),
                                this->fvGeometry_(),
-                               faceIdx,
+                               fIdx,
                                this->curVolVars_());
 
-            int i = this->fvGeometry_().subContVolFace[faceIdx].i;
-            int j = this->fvGeometry_().subContVolFace[faceIdx].j;
+            int i = this->fvGeometry_().subContVolFace[fIdx].i;
+            int j = this->fvGeometry_().subContVolFace[fIdx].j;
 
             const Scalar extrusionFactor =
                 (this->curVolVars_(i).extrusionFactor()

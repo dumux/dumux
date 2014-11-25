@@ -70,7 +70,7 @@ public:
      * \param problem The problem
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param fIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
@@ -78,11 +78,11 @@ public:
     TwoPDFMFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
-                 int faceIdx,
+                 int fIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary), 
-          fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
+        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary), 
+          fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
     {
         faceSCV_ = &this->face();
 
@@ -91,8 +91,8 @@ public:
             potentialGradFracture_[phaseIdx] = 0.0;
         }
 
-        calculateGradientsInFractures_(problem, element, elemVolVars, faceIdx);
-        calculateVelocitiesFracture_(problem, element, elemVolVars, faceIdx);
+        calculateGradientsInFractures_(problem, element, elemVolVars, fIdx);
+        calculateVelocitiesFracture_(problem, element, elemVolVars, fIdx);
     };
 
 public:
@@ -102,15 +102,15 @@ public:
      * \param problem The problem
      * \param element The finite element
      * \param elemVolVars The volume variables of the current element
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param fIdx The local index of the SCV (sub-control-volume) face
      */
     void calculateVelocitiesFracture_(const Problem &problem,
                                       const Element &element,
                                       const ElementVolumeVariables &elemVolVars,
-                                      int faceIdx)
+                                      int fIdx)
     {
-        isFracture_ = problem.spatialParams().isEdgeFracture(element, faceIdx);
-        fractureWidth_ = problem.spatialParams().fractureWidth(element, faceIdx);
+        isFracture_ = problem.spatialParams().isEdgeFracture(element, fIdx);
+        fractureWidth_ = problem.spatialParams().fractureWidth(element, fIdx);
 
         Scalar KFracture, KFi, KFj; //permeabilities of the fracture
         if (isFracture_)
@@ -186,12 +186,12 @@ private:
      * \param problem The problem
      * \param element The finite element
      * \param elemVolVars The volume variables of the current element
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param fIdx The local index of the SCV (sub-control-volume) face
      */
     void calculateGradientsInFractures_(const Problem &problem,
                                         const Element &element,
                                         const ElementVolumeVariables &elemVolVars,
-                                        int faceIdx)
+                                        int fIdx)
     {
         // calculate gradients, loop over adjacent vertices
         for (unsigned int idx = 0; idx < this->face().numFap; idx++)
@@ -205,7 +205,7 @@ private:
                 const GlobalPosition localIdx_i = element.geometry().corner(i);
                 const GlobalPosition localIdx_j = element.geometry().corner(j);
 
-                isFracture_ = problem.spatialParams().isEdgeFracture(element, faceIdx);
+                isFracture_ = problem.spatialParams().isEdgeFracture(element, fIdx);
 
                 if (isFracture_)
                 {

@@ -140,12 +140,12 @@ public:
             for (IntersectionIterator is = gridView.ibegin(element); is!=endis; ++is)
             {
                 // local number of facet
-                int faceIdx = is->indexInInside();
+                int fIdx = is->indexInInside();
 
                 if (consecutiveNumbering)
                     isIdx++;
                 else
-                    isIdx = faceIdx;
+                    isIdx = fIdx;
 
                 Dune::FieldVector<double,dim> faceGlobal = is->geometry().center();
                 double faceVol = is->geometry().volume();
@@ -178,7 +178,7 @@ public:
                 // calculate the fluxes through the element faces
                 exactFlux *= faceVol;
                 approximateFlux *= faceVol;
-                fluxVector[faceIdx] = approximateFlux;
+                fluxVector[fIdx] = approximateFlux;
 
                 if (!is->neighbor()) {
                     if (fabs(faceGlobal[1]) < 1e-6) {
@@ -208,9 +208,9 @@ public:
                 for (int dimIdx = 0; dimIdx < dim; dimIdx++)
                 {
                     refVelocity[dimIdx] = -fluxVector[dim - 1 - dimIdx];
-                    for (int faceIdx = 0; faceIdx < dim + 1; faceIdx++)
+                    for (int fIdx = 0; fIdx < dim + 1; fIdx++)
                     {
-                        refVelocity[dimIdx] += fluxVector[faceIdx]/(dim + 1);
+                        refVelocity[dimIdx] += fluxVector[fIdx]/(dim + 1);
                     }
                 }
             }

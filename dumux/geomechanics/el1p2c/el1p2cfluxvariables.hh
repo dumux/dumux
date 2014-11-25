@@ -84,7 +84,7 @@ namespace Dumux
          * \param problem The problem
          * \param element The finite element
          * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-         * \param faceIdx The local index of the SCV (sub-control-volume) face
+         * \param fIdx The local index of the SCV (sub-control-volume) face
          * \param elemVolVars The volume variables of the current element
          * \param onBoundary A boolean variable to specify whether the flux variables
          * are calculated for interior SCV faces or boundary faces, default=false
@@ -92,12 +92,12 @@ namespace Dumux
             ElOnePTwoCFluxVariables(const Problem &problem,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,
-                            int faceIdx,
+                            int fIdx,
                             const ElementVolumeVariables &elemVolVars,
                             const bool onBoundary = false)
-                : ElasticBase(problem, element, fvGeometry, faceIdx, elemVolVars),
-                  OnePTwoCBase(problem, element, fvGeometry, faceIdx, elemVolVars),
-                  fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
+                : ElasticBase(problem, element, fvGeometry, fIdx, elemVolVars),
+                  OnePTwoCBase(problem, element, fvGeometry, fIdx, elemVolVars),
+                  fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
             {
                 dU_ = Scalar(0);
                 dGradP_ = Scalar(0);

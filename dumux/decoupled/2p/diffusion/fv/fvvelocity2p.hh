@@ -228,9 +228,9 @@ public:
                     for (int dimIdx = 0; dimIdx < dim; dimIdx++)
                     {
                         refVelocity[dimIdx] = -fluxW[dim - 1 - dimIdx];
-                        for (int faceIdx = 0; faceIdx < dim + 1; faceIdx++)
+                        for (int fIdx = 0; fIdx < dim + 1; fIdx++)
                         {
-                            refVelocity[dimIdx] += fluxW[faceIdx]/(dim + 1);
+                            refVelocity[dimIdx] += fluxW[fIdx]/(dim + 1);
                         }
                     }
                 }
@@ -265,9 +265,9 @@ public:
                     for (int dimIdx = 0; dimIdx < dim; dimIdx++)
                     {
                         refVelocity[dimIdx] = -fluxNw[dim - 1 - dimIdx];
-                        for (int faceIdx = 0; faceIdx < dim + 1; faceIdx++)
+                        for (int fIdx = 0; fIdx < dim + 1; fIdx++)
                         {
-                            refVelocity[dimIdx] += fluxNw[faceIdx]/(dim + 1);
+                            refVelocity[dimIdx] += fluxNw[fIdx]/(dim + 1);
                         }
                     }
                 }

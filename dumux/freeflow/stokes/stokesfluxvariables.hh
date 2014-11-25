@@ -66,10 +66,10 @@ public:
     StokesFluxVariables(const Problem &problem,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
-                        const int faceIdx,
+                        const int fIdx,
                         const ElementVolumeVariables &elemVolVars,
                         const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), onBoundary_(onBoundary), faceIdx_(faceIdx)
+        : fvGeometry_(fvGeometry), onBoundary_(onBoundary), faceIdx_(fIdx)
     {
         calculateValues_(problem, element, elemVolVars);
         determineUpwindDirection_(elemVolVars);

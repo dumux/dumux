@@ -79,17 +79,17 @@ class TwoPTwoCFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
      * \param problem The problem
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the fully implicit scheme
-     * \param faceIdx The local index of the sub-control-volume face
+     * \param fIdx The local index of the sub-control-volume face
      * \param elemVolVars The volume variables of the current element
      * \param onBoundary Evaluate flux at inner sub-control-volume face or on a boundary face
      */
     TwoPTwoCFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &fvGeometry,
-                          const int faceIdx,
+                          const int fIdx,
                           const ElementVolumeVariables &elemVolVars,
                           const bool onBoundary = false)
-        : BaseFluxVariables(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+        : BaseFluxVariables(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             density_[phaseIdx] = Scalar(0);

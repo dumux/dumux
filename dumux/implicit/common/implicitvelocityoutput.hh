@@ -139,10 +139,10 @@ public:
                 SCVVelocities scvVelocities(pow(2,dim));
                 scvVelocities = 0;
 
-                for (int faceIdx = 0; faceIdx < fvGeometry.numScvf; faceIdx++)
+                for (int fIdx = 0; fIdx < fvGeometry.numScvf; fIdx++)
                 {
                     // local position of integration point
-                    const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[faceIdx].ipLocal;
+                    const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[fIdx].ipLocal;
 
                     // Transformation of the global normal vector to normal vector in the reference element
                     const typename Element::Geometry::JacobianTransposed jacobianT1 =
@@ -151,7 +151,7 @@ public:
                     FluxVariables fluxVars(problem_,
                                            element,
                                            fvGeometry,
-                                           faceIdx,
+                                           fIdx,
                                            elemVolVars);
 
                     const GlobalPosition globalNormal = fluxVars.face().normal;
@@ -197,7 +197,7 @@ public:
                 for (IntersectionIterator isIt = problem_.gridView().ibegin(element); 
                      isIt != isEndIt; ++isIt)
                 {
-                    int faceIdx = isIt->indexInInside();
+                    int fIdx = isIt->indexInInside();
 
                     if (isIt->neighbor())
                     {
@@ -208,7 +208,7 @@ public:
                                                elemVolVars);
 
                         Scalar flux = fluxVars.volumeFlux(phaseIdx);
-                        scvVelocities[faceIdx] = flux;
+                        scvVelocities[fIdx] = flux;
 
                         innerFaceIdx++;
                     }
@@ -217,11 +217,11 @@ public:
                         FluxVariables fluxVars(problem_,
                                                element,
                                                fvGeometry,
-                                               faceIdx,
+                                               fIdx,
                                                elemVolVars,true);
 
                         Scalar flux = fluxVars.volumeFlux(phaseIdx);
-                        scvVelocities[faceIdx] = flux;
+                        scvVelocities[fIdx] = flux;
                     }
                 }
 

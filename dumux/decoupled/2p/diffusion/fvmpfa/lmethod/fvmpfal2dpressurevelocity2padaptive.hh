@@ -293,9 +293,9 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
             for (int elemIdx = 0; elemIdx < 2 * dim; elemIdx++)
             {
                 bool isOutside = false;
-                for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+                for (int fIdx = 0; fIdx < dim; fIdx++)
                 {
-                    int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
+                    int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, fIdx);
                     if (interactionVolume.isOutsideFace(intVolFaceIdx))
                     {
                         isOutside = true;
@@ -350,10 +350,10 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();
 
-    int faceIdx = indexInInside;
+    int fIdx = indexInInside;
 
     if (levelI < levelJ)
-        faceIdx = indexInOutside;
+        fIdx = indexInOutside;
 
     std::vector<CellData> cellDataTemp(0);
 
@@ -373,7 +373,7 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
 
     for (int vIdx = 0; vIdx < numVertices; vIdx++)
     {
-        int localVertIdx = referenceElement.subEntity(faceIdx, dim - 1, vIdx, dim);
+        int localVertIdx = referenceElement.subEntity(fIdx, dim - 1, vIdx, dim);
 
         int vIdxGlobal = 0;
                 if (levelI >= levelJ)

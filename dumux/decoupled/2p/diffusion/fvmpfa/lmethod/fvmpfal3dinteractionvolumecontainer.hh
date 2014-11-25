@@ -281,13 +281,13 @@ public:
     }
 
 protected:
-    void addRealFluxFaceArea_(Scalar faceArea, int globalIdx, int faceIdx)
+    void addRealFluxFaceArea_(Scalar faceArea, int globalIdx, int fIdx)
     {
-        realFluxFaceArea_[globalIdx][faceIdx][fluxFaceArea] += faceArea;
+        realFluxFaceArea_[globalIdx][fIdx][fluxFaceArea] += faceArea;
     }
-    void addRealFaceArea_(Scalar faceArea, int globalIdx, int faceIdx)
+    void addRealFaceArea_(Scalar faceArea, int globalIdx, int fIdx)
     {
-        realFluxFaceArea_[globalIdx][faceIdx][realFaceArea] += faceArea;
+        realFluxFaceArea_[globalIdx][fIdx][realFaceArea] += faceArea;
     }
 
     Problem& problem_;

@@ -158,7 +158,7 @@ public:
             CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
             CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8,
             InteractionVolumeContainer& interactionVolumes,
-            TransmissibilityCalculator& transmissibilityCalculator, int faceIdx = -1);
+            TransmissibilityCalculator& transmissibilityCalculator, int fIdx = -1);
     void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume,
                                                     CellData& cellData, int elemIdx);
 
@@ -296,14 +296,14 @@ private:
  * \param cellData8  <tt>CellData</tt> object of an IMPES model for sub-volume 8
  * \param interactionVolumes Container including the interaction volume information for the complete grid
  * \param transmissibilityCalculator Object including the methods for calculating the transmissibilities
- * \param faceIdx Index of the flux face for which the velocity has to be calculated. If no face index is given, <tt>faceIdx</tt> = -1
+ * \param fIdx Index of the flux face for which the velocity has to be calculated. If no face index is given, <tt>fIdx</tt> = -1
  * and velocities for all flux faces in the interaction volume are calculated!
  */
 template<class TypeTag>
 void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume,
         CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
         CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8,
-        InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator, int faceIdx)
+        InteractionVolumeContainer& interactionVolumes, TransmissibilityCalculator& transmissibilityCalculator, int fIdx)
         {
     ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
     ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
@@ -462,7 +462,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     Dune::FieldVector<Scalar, 2 * dim - dim + 1> u(0);
     TransmissibilityType T(0);
 
-    if (faceIdx < 0 || faceIdx == 0)
+    if (fIdx < 0 || fIdx == 0)
     {
         // calculate the flux through the subvolumeface 1 (subVolumeFaceIdx = 0)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 0, 1, 2, 3,
@@ -558,7 +558,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 1)
+    if (fIdx < 0 || fIdx == 1)
     {
         // calculate the flux through the subvolumeface 2 (subVolumeFaceIdx = 1)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 1, 3, 0, 2, 5,
@@ -654,7 +654,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 2)
+    if (fIdx < 0 || fIdx == 2)
     {
         // calculate the flux through the subvolumeface 3 (subVolumeFaceIdx = 2)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 3, 2, 1, 0, 7,
@@ -750,7 +750,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 3)
+    if (fIdx < 0 || fIdx == 3)
     {
         // calculate the flux through the subvolumeface 4 (subVolumeFaceIdx = 3)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 2, 0, 3, 1, 6,
@@ -846,7 +846,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 4)
+    if (fIdx < 0 || fIdx == 4)
     {
         // calculate the flux through the subvolumeface 5 (subVolumeFaceIdx = 4)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 5, 4, 7, 6, 1,
@@ -942,7 +942,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 5)
+    if (fIdx < 0 || fIdx == 5)
     {
         // calculate the flux through the subvolumeface 6 (subVolumeFaceIdx = 5)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 7, 5, 6, 4, 3,
@@ -1038,7 +1038,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 6)
+    if (fIdx < 0 || fIdx == 6)
     {
         // calculate the flux through the subvolumeface 7 (subVolumeFaceIdx = 6)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 6, 7, 4, 5, 2,
@@ -1134,7 +1134,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 7)
+    if (fIdx < 0 || fIdx == 7)
     {
         // calculate the flux through the subvolumeface 8 (subVolumeFaceIdx = 7)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 4, 6, 5, 7, 0,
@@ -1230,7 +1230,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 8)
+    if (fIdx < 0 || fIdx == 8)
     {
         // calculate the flux through the subvolumeface 9 (subVolumeFaceIdx = 8)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 4, 0, 6, 2, 5,
@@ -1326,7 +1326,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 9)
+    if (fIdx < 0 || fIdx == 9)
     {
         // calculate the flux through the subvolumeface 10 (subVolumeFaceIdx = 9)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 1, 5, 3, 7, 0,
@@ -1422,7 +1422,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 10)
+    if (fIdx < 0 || fIdx == 10)
     {
         // calculate the flux through the subvolumeface 11 (subVolumeFaceIdx = 10)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6,
@@ -1518,7 +1518,7 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
     }
 
-    if (faceIdx < 0 || faceIdx == 11)
+    if (fIdx < 0 || fIdx == 11)
     {
         // calculate the flux through the subvolumeface 12 (subVolumeFaceIdx = 11)
         int caseL = transmissibilityCalculator.transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3,
@@ -1941,21 +1941,21 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
     Scalar potW = cellData.potential(wPhaseIdx);
     Scalar potNw = cellData.potential(nPhaseIdx);
 
-    for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+    for (int fIdx = 0; fIdx < dim; fIdx++)
     {
-        int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
+        int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, fIdx);
 
         if (interactionVolume.isBoundaryFace(intVolFaceIdx))
         {
             if (interactionVolume.getBoundaryType(intVolFaceIdx).isDirichlet(pressureEqIdx))
             {
-                int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
+                int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                const GlobalPosition& globalPosFace = interactionVolume.getFacePosition(elemIdx, faceIdx);
+                const GlobalPosition& globalPosFace = interactionVolume.getFacePosition(elemIdx, fIdx);
 
                 DimVector distVec(globalPosFace - globalPos);
                 Scalar dist = distVec.two_norm();
-                DimVector& normal = interactionVolume.getNormal(elemIdx, faceIdx);
+                DimVector& normal = interactionVolume.getNormal(elemIdx, fIdx);
 
                 // get pc and lambda at the boundary
                 Scalar satWBound = cellData.saturation(wPhaseIdx);
@@ -2049,9 +2049,9 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
             }
             else if (interactionVolume.getBoundaryType(intVolFaceIdx).isNeumann(pressureEqIdx))
             {
-                int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, faceIdx);
+                int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                DimVector& normal = interactionVolume.getNormal(elemIdx, faceIdx);
+                DimVector& normal = interactionVolume.getNormal(elemIdx, fIdx);
 
                 // get neumann boundary value
                 PrimaryVariables boundValues(interactionVolume.getNeumannValues(intVolFaceIdx));
@@ -2062,9 +2062,9 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 DimVector velocityW(normal);
                 DimVector velocityNw(normal);
 
-                velocityW *= boundValues[wPhaseIdx] / (4.0*interactionVolume.getFaceArea(elemIdx, faceIdx));
+                velocityW *= boundValues[wPhaseIdx] / (4.0*interactionVolume.getFaceArea(elemIdx, fIdx));
                 velocityNw *= boundValues[nPhaseIdx]
-                                          / (4.0*interactionVolume.getFaceArea(elemIdx, faceIdx));
+                                          / (4.0*interactionVolume.getFaceArea(elemIdx, fIdx));
 
                 //store potentials for further calculations (saturation, ...)
                 cellData.fluxData().addUpwindPotential(wPhaseIdx, boundaryFaceIdx, boundValues[wPhaseIdx]);

@@ -99,17 +99,17 @@ public:
      *
      * \param flux Stores the total mass fluxes over a sub-control volume face
      *             of the current element \f$\mathrm{[kg/s]}\f$
-     * \param faceIdx The sub control volume face index inside the current
+     * \param fIdx The sub control volume face index inside the current
      *                element
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, const int faceIdx, bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int fIdx, bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                                this->element_(),
                                this->fvGeometry_(),
-                               faceIdx,
+                               fIdx,
                                this->curVolVars_(),
                                onBoundary);
 

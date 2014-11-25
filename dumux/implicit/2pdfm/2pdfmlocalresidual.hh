@@ -136,16 +136,16 @@ public:
         Scalar vol; //subcontrol volume
         FVElementGeometry fvelem = this->fvGeometry_();
         vol = fvelem.subContVol[scvIdx].volume;
-        for (int faceIdx=0; faceIdx<refElement.size(1); faceIdx++)
+        for (int fIdx=0; fIdx<refElement.size(1); fIdx++)
         {
-            SCVFace face = fvelem.subContVolFace[faceIdx];
+            SCVFace face = fvelem.subContVolFace[fIdx];
             int i=face.i;
             int j=face.j;
 
-            if (this->problem_().spatialParams().isEdgeFracture(elem, faceIdx)
+            if (this->problem_().spatialParams().isEdgeFracture(elem, fIdx)
                     && (i == scvIdx || j == scvIdx))
             {
-                Scalar fracture_width = this->problem_().spatialParams().fractureWidth(elem, faceIdx);
+                Scalar fracture_width = this->problem_().spatialParams().fractureWidth(elem, fIdx);
 
                 const GlobalPosition global_i = elem.geometry().corner(i);
                 const GlobalPosition global_j = elem.geometry().corner(j);
@@ -213,16 +213,16 @@ public:
      *        volume.
      *
      * \param flux The flux over the SCV (sub-control-volume) face for each phase
-     * \param faceIdx The index of the SCV face
+     * \param fIdx The index of the SCV face
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx, const bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, int fIdx, const bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                            this->element_(),
                            this->fvGeometry_(),
-                           faceIdx,
+                           fIdx,
                            this->curVolVars_(),
                            onBoundary);
         flux = 0;

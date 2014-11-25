@@ -261,13 +261,13 @@ public:
         Dune::GeometryType geomType = element.geometry().type();
         const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
-        for (int faceIdx=0; faceIdx<refElement.size(1); faceIdx++)
+        for (int fIdx=0; fIdx<refElement.size(1); fIdx++)
         {
-            SCVFace face = fvGeometry.subContVolFace[faceIdx];
+            SCVFace face = fvGeometry.subContVolFace[fIdx];
             int i=face.i;
             int j=face.j;
 
-            if (problem.spatialParams().isEdgeFracture(element, faceIdx)
+            if (problem.spatialParams().isEdgeFracture(element, fIdx)
                 && (i == scvIdx || j == scvIdx))
             {
                 Scalar fracture_width = problem.spatialParams().fractureWidth();

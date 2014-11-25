@@ -195,17 +195,17 @@ public:
      *        over a face of a subcontrol volume.
      *
      * \param flux The flux over the SCV (sub-control-volume) face for each component
-     * \param faceIdx The index of the SCV face
+     * \param fIdx The index of the SCV face
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
     void computeFlux(PrimaryVariables &flux,
-                     const unsigned int faceIdx, const bool onBoundary=false) const
+                     const unsigned int fIdx, const bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                                this->element_(),
                                this->fvGeometry_(),
-                               faceIdx,
+                               fIdx,
                                this->curVolVars_(),
                                onBoundary);
 

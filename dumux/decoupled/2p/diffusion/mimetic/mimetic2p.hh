@@ -295,7 +295,7 @@ public:
                 vel[i] += W_[globalIdx][i][j]*faceVol[j]*(press - pressTrace[j]);
     }
 
-    void constructVelocity(const Element& element, int faceIdx, Scalar& vel,
+    void constructVelocity(const Element& element, int fIdx, Scalar& vel,
                            Dune::FieldVector<Scalar,2*dim>& pressTrace, Scalar press)
     {
         int globalIdx = problem_.variables().index(element);
@@ -309,7 +309,7 @@ public:
 
         vel = 0;
             for (int j = 0; j < 2*dim; j++)
-                vel += W_[globalIdx][faceIdx][j]*faceVol[j]*(press - pressTrace[j]);
+                vel += W_[globalIdx][fIdx][j]*faceVol[j]*(press - pressTrace[j]);
     }
 
     void computeReconstructionMatrices(const Element& element, 

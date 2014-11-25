@@ -245,7 +245,7 @@ public:
      * \param tempGrad The temperature gradient
      * \param element The current finite element
      * \param fvGeometry The finite volume geometry of the current element
-     * \param faceIdx The local index of the sub-control volume face where
+     * \param fIdx The local index of the sub-control volume face where
      *                    the matrix heat flux should be calculated
      */
     void matrixHeatFlux(DimVector &heatFlux,
@@ -254,7 +254,7 @@ public:
                         const DimVector &tempGrad,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
-                        const int faceIdx) const
+                        const int fIdx) const
     {
         static const Scalar lDry = 0.35;
         static const Scalar lsw1 = 1.8;

@@ -256,9 +256,9 @@ void FvMpfaL2dPressureVelocity2p<TypeTag>::calculateVelocity()
             for (int elemIdx = 0; elemIdx < 2 * dim; elemIdx++)
             {
                 bool isOutside = false;
-                for (int faceIdx = 0; faceIdx < dim; faceIdx++)
+                for (int fIdx = 0; fIdx < dim; fIdx++)
                 {
-                    int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, faceIdx);
+                    int intVolFaceIdx = interactionVolume.getFaceIndexFromSubVolume(elemIdx, fIdx);
                     if (interactionVolume.isOutsideFace(intVolFaceIdx))
                     {
                         isOutside = true;

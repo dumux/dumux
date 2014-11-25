@@ -309,12 +309,12 @@ public:
                 tmpEffPoro = Scalar(0);
 
                 // loop over all scv-faces of the cell
-                for (int faceIdx = 0; faceIdx < fvGeometry.numScvf; faceIdx++) {
+                for (int fIdx = 0; fIdx < fvGeometry.numScvf; fIdx++) {
 
                     //prepare the flux calculations (set up and prepare geometry, FE gradients)
                     FluxVariables fluxVars(this->problem_(),
                                         *eIt, fvGeometry,
-                                        faceIdx,
+                                        fIdx,
                                         elemVolVars);
 
                     // divide by number of scv-faces and sum up edge values

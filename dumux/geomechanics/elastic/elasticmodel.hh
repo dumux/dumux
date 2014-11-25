@@ -161,14 +161,14 @@ public:
                             false /* isOldSol? */);
 
             // loop over the faces
-            for (int faceIdx = 0; faceIdx < fvGeometry.numScvf; faceIdx++)
+            for (int fIdx = 0; fIdx < fvGeometry.numScvf; fIdx++)
             {
                 stress = 0.0;
                 //prepare the flux calculations (set up and prepare geometry, FE gradients)
                 FluxVariables fluxVars(this->problem_(),
                               *eIt,
                               fvGeometry,
-                              faceIdx,
+                              fIdx,
                               elemVolVars);
 
                 stress = fluxVars.sigma();

@@ -85,7 +85,7 @@ public:
         Dune::FieldVector<Scalar, maxNFAP> shapeValue; //!< value of shape functions at ip
         Dune::FieldVector<int, maxNFAP> fapIndices; //!< indices w.r.t.neighbors of the flux approximation points
         unsigned numFap; //!< number of flux approximation points
-        unsigned faceIdx; //!< the index (w.r.t. the element) of the face (codim 1 entity) that the scvf is part of
+        unsigned fIdx; //!< the index (w.r.t. the element) of the face (codim 1 entity) that the scvf is part of
     };
 
     typedef SubControlVolumeFace BoundaryFace; //!< compatibility typedef
@@ -171,7 +171,7 @@ public:
                 subContVolFace[k].fapIndices[0] = subContVolFace[k].i;
                 subContVolFace[k].fapIndices[1] = subContVolFace[k].j;
                 
-                subContVolFace[k].faceIdx = isIt->indexInInside();
+                subContVolFace[k].fIdx = isIt->indexInInside();
             }
 
             // boundary cvf data
