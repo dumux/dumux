@@ -238,14 +238,14 @@ public:
      */
     void storePressureSolution(const Element& element)
     {
-        int globalIdx = problem_.variables().index(element);
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        int eIdxGlobal = problem_.variables().index(element);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         switch (pressureType_)
         {
         case pw:
         {
-            Scalar potW = this->pressure()[globalIdx];
+            Scalar potW = this->pressure()[eIdxGlobal];
 
             Scalar gravityDiff = (problem_.bBoxMax() - element.geometry().center()) * gravity_;
             Scalar potPc = cellData.capillaryPressure()
@@ -263,7 +263,7 @@ public:
         }
         case pn:
         {
-            Scalar potNw = this->pressure()[globalIdx];
+            Scalar potNw = this->pressure()[eIdxGlobal];
 
             Scalar gravityDiff = (problem_.bBoxMax() - element.geometry().center()) * gravity_;
             Scalar potPc = cellData.capillaryPressure()
@@ -533,7 +533,7 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
     for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(*eIt);
 
         // initialize row size
         int rowSize = 1;
@@ -617,8 +617,8 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
 
         } // end of 'for' IntersectionIterator
 
-        // set number of indices in row globalIdxI to rowSize
-        this->A_.setrowsize(globalIdxI, rowSize);
+        // set number of indices in row eIdxGlobalI to rowSize
+        this->A_.setrowsize(eIdxGlobalI, rowSize);
 
     } // end of 'for' ElementIterator
 
@@ -629,10 +629,10 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
     for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(*eIt);
 
         // add diagonal index
-        this->A_.addindex(globalIdxI, globalIdxI);
+        this->A_.addindex(eIdxGlobalI, eIdxGlobalI);
 
         // run through all intersections with neighbors
         IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
@@ -688,11 +688,11 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
             {
                 // access neighbor
                 ElementPointer outside = isIt->outside();
-                int globalIdxJ = problem_.variables().index(*outside);
+                int eIdxGlobalJ = problem_.variables().index(*outside);
 
                 // add off diagonal index
                 // add index (row,col) to the matrix
-                this->A_.addindex(globalIdxI, globalIdxJ);
+                this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
             }
 
             if (isIt->neighbor() && nextIsIt->neighbor())
@@ -716,9 +716,9 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
 
                             if (innerisItoutside == innernextisItoutside && innerisItoutside != isIt->inside())
                             {
-                                int globalIdxJ = problem_.variables().index(*innerisItoutside);
+                                int eIdxGlobalJ = problem_.variables().index(*innerisItoutside);
 
-                                this->A_.addindex(globalIdxI, globalIdxJ);
+                                this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
                             }
                         }
                     }
@@ -764,7 +764,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
     {
         // get common geometry information for the following computation
 
-        int globalIdx1 = problem_.variables().index(*eIt);
+        int eIdxGlobal1 = problem_.variables().index(*eIt);
 
         IntersectionIterator isIt12Begin = problem_.gridView().ibegin(*eIt);
         IntersectionIterator isIt12End = problem_.gridView().iend(*eIt);
@@ -858,7 +858,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                     {
                         corner1234 = eIt->geometry().corner(localVertIdx12corner);
 //                        std::cout<<"corner1234 = "<<corner1234<<"\n";
-//                        std::cout<<"globalIdx = "<<globalIdx1<<"\n";
+//                        std::cout<<"eIdxGlobal = "<<eIdxGlobal1<<"\n";
 
                         globalVertIdx1234 = globalVertIdx12corner;
 
@@ -924,7 +924,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                 // access neighbor cell 2 of 'isIt12'
                 ElementPointer elementPointer2 = isIt12->outside();
 
-                int globalIdx2 = problem_.variables().index(*elementPointer2);
+                int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
 
                 //store pointer 2
                 interactionVolumes_[globalVertIdx1234].setSubVolumeElement(elementPointer2, 1);
@@ -1106,8 +1106,8 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
                                     interactionVolumes_[globalVertIdx1234].setOutsideFace(2);
 
-                                    innerBoundaryVolumeFaces_[globalIdx1][isIt12->indexInInside()] = true;
-                                    innerBoundaryVolumeFaces_[globalIdx2][isIt12->indexInOutside()] = true;
+                                    innerBoundaryVolumeFaces_[eIdxGlobal1][isIt12->indexInInside()] = true;
+                                    innerBoundaryVolumeFaces_[eIdxGlobal2][isIt12->indexInOutside()] = true;
 
                                     finished = true;
 
@@ -1186,7 +1186,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                     interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol41, 3, 0);
                     interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace41, 3, 0);
 
-                    int globalIdx4 = problem_.variables().index(*elementPointer4);
+                    int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
 
                     bool finished = false;
 
@@ -1238,8 +1238,8 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
                                     interactionVolumes_[globalVertIdx1234].setOutsideFace(1);
 
-                                    innerBoundaryVolumeFaces_[globalIdx1][isIt14->indexInInside()] = true;
-                                    innerBoundaryVolumeFaces_[globalIdx4][isIt14->indexInOutside()] = true;
+                                    innerBoundaryVolumeFaces_[eIdxGlobal1][isIt14->indexInInside()] = true;
+                                    innerBoundaryVolumeFaces_[eIdxGlobal4][isIt14->indexInOutside()] = true;
 
                                     // get absolute permeability of neighbor cell 2
                                     DimMatrix K4(
@@ -1308,32 +1308,32 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
             Scalar volume4 = elementPointer4->geometry().volume();
 
             // cell index
-            int globalIdx1 = problem_.variables().index(*elementPointer1);
-            int globalIdx2 = problem_.variables().index(*elementPointer2);
-            int globalIdx3 = problem_.variables().index(*elementPointer3);
-            int globalIdx4 = problem_.variables().index(*elementPointer4);
+            int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
+            int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
+            int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
+            int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
 
             //get the cell Data
-            CellData& cellData1 = problem_.variables().cellData(globalIdx1);
-            CellData& cellData2 = problem_.variables().cellData(globalIdx2);
-            CellData& cellData3 = problem_.variables().cellData(globalIdx3);
-            CellData& cellData4 = problem_.variables().cellData(globalIdx4);
+            CellData& cellData1 = problem_.variables().cellData(eIdxGlobal1);
+            CellData& cellData2 = problem_.variables().cellData(eIdxGlobal2);
+            CellData& cellData3 = problem_.variables().cellData(eIdxGlobal3);
+            CellData& cellData4 = problem_.variables().cellData(eIdxGlobal4);
 
             // evaluate right hand side
             PrimaryVariables source(0.0);
             problem_.source(source, *elementPointer1);
-            this->f_[globalIdx1] += volume1 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
+            this->f_[eIdxGlobal1] += volume1 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
             problem_.source(source, *elementPointer2);
-            this->f_[globalIdx2] += volume2 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
+            this->f_[eIdxGlobal2] += volume2 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
             problem_.source(source, *elementPointer3);
-            this->f_[globalIdx3] += volume3 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
+            this->f_[eIdxGlobal3] += volume3 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
             problem_.source(source, *elementPointer4);
-            this->f_[globalIdx4] += volume4 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
+            this->f_[eIdxGlobal4] += volume4 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
-            this->f_[globalIdx1] += evaluateErrorTerm_(cellData1) * volume1 / (4.0);
-            this->f_[globalIdx2] += evaluateErrorTerm_(cellData2) * volume2 / (4.0);
-            this->f_[globalIdx3] += evaluateErrorTerm_(cellData3) * volume3 / (4.0);
-            this->f_[globalIdx4] += evaluateErrorTerm_(cellData4) * volume4 / (4.0);
+            this->f_[eIdxGlobal1] += evaluateErrorTerm_(cellData1) * volume1 / (4.0);
+            this->f_[eIdxGlobal2] += evaluateErrorTerm_(cellData2) * volume2 / (4.0);
+            this->f_[eIdxGlobal3] += evaluateErrorTerm_(cellData3) * volume3 / (4.0);
+            this->f_[eIdxGlobal4] += evaluateErrorTerm_(cellData4) * volume4 / (4.0);
 
             //get mobilities of the phases
             Dune::FieldVector<Scalar, numPhases> lambda1(cellData1.mobility(wPhaseIdx));
@@ -1408,17 +1408,17 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
 
             if (lType == TransmissibilityCalculator::rightTriangle)
             {
-                if (innerBoundaryVolumeFaces_[globalIdx1][interactionVolume.getIndexOnElement(0, 0)])
+                if (innerBoundaryVolumeFaces_[eIdxGlobal1][interactionVolume.getIndexOnElement(0, 0)])
                 {
                     T *= 2;
                 }
-                this->A_[globalIdx1][globalIdx2] += T[1][0];
-                this->A_[globalIdx1][globalIdx3] += T[1][1];
-                this->A_[globalIdx1][globalIdx1] += T[1][2];
+                this->A_[eIdxGlobal1][eIdxGlobal2] += T[1][0];
+                this->A_[eIdxGlobal1][eIdxGlobal3] += T[1][1];
+                this->A_[eIdxGlobal1][eIdxGlobal1] += T[1][2];
 
-                this->A_[globalIdx2][globalIdx2] -= T[1][0];
-                this->A_[globalIdx2][globalIdx3] -= T[1][1];
-                this->A_[globalIdx2][globalIdx1] -= T[1][2];
+                this->A_[eIdxGlobal2][eIdxGlobal2] -= T[1][0];
+                this->A_[eIdxGlobal2][eIdxGlobal3] -= T[1][1];
+                this->A_[eIdxGlobal2][eIdxGlobal1] -= T[1][2];
 
                 u[0] = pc[1];
                 u[1] = pc[2];
@@ -1431,17 +1431,17 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
             }
             else
             {
-                if (innerBoundaryVolumeFaces_[globalIdx1][interactionVolume.getIndexOnElement(0, 0)])
+                if (innerBoundaryVolumeFaces_[eIdxGlobal1][interactionVolume.getIndexOnElement(0, 0)])
                 {
                     T *= 2;
                 }
-                this->A_[globalIdx1][globalIdx1] += T[1][0];
-                this->A_[globalIdx1][globalIdx4] += T[1][1];
-                this->A_[globalIdx1][globalIdx2] += T[1][2];
+                this->A_[eIdxGlobal1][eIdxGlobal1] += T[1][0];
+                this->A_[eIdxGlobal1][eIdxGlobal4] += T[1][1];
+                this->A_[eIdxGlobal1][eIdxGlobal2] += T[1][2];
 
-                this->A_[globalIdx2][globalIdx1] -= T[1][0];
-                this->A_[globalIdx2][globalIdx4] -= T[1][1];
-                this->A_[globalIdx2][globalIdx2] -= T[1][2];
+                this->A_[eIdxGlobal2][eIdxGlobal1] -= T[1][0];
+                this->A_[eIdxGlobal2][eIdxGlobal4] -= T[1][1];
+                this->A_[eIdxGlobal2][eIdxGlobal2] -= T[1][2];
 
                 u[0] = pc[0];
                 u[1] = pc[3];
@@ -1457,17 +1457,17 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
 
             if (lType == TransmissibilityCalculator::rightTriangle)
             {
-                if (innerBoundaryVolumeFaces_[globalIdx2][interactionVolume.getIndexOnElement(1, 0)])
+                if (innerBoundaryVolumeFaces_[eIdxGlobal2][interactionVolume.getIndexOnElement(1, 0)])
                 {
                     T *= 2;
                 }
-                this->A_[globalIdx2][globalIdx3] += T[1][0];
-                this->A_[globalIdx2][globalIdx4] += T[1][1];
-                this->A_[globalIdx2][globalIdx2] += T[1][2];
+                this->A_[eIdxGlobal2][eIdxGlobal3] += T[1][0];
+                this->A_[eIdxGlobal2][eIdxGlobal4] += T[1][1];
+                this->A_[eIdxGlobal2][eIdxGlobal2] += T[1][2];
 
-                this->A_[globalIdx3][globalIdx3] -= T[1][0];
-                this->A_[globalIdx3][globalIdx4] -= T[1][1];
-                this->A_[globalIdx3][globalIdx2] -= T[1][2];
+                this->A_[eIdxGlobal3][eIdxGlobal3] -= T[1][0];
+                this->A_[eIdxGlobal3][eIdxGlobal4] -= T[1][1];
+                this->A_[eIdxGlobal3][eIdxGlobal2] -= T[1][2];
 
                 u[0] = pc[2];
                 u[1] = pc[3];
@@ -1480,17 +1480,17 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
             }
             else
             {
-                if (innerBoundaryVolumeFaces_[globalIdx2][interactionVolume.getIndexOnElement(1, 0)])
+                if (innerBoundaryVolumeFaces_[eIdxGlobal2][interactionVolume.getIndexOnElement(1, 0)])
                 {
                     T *= 2;
                 }
-                this->A_[globalIdx2][globalIdx2] += T[1][0];
-                this->A_[globalIdx2][globalIdx1] += T[1][1];
-                this->A_[globalIdx2][globalIdx3] += T[1][2];
+                this->A_[eIdxGlobal2][eIdxGlobal2] += T[1][0];
+                this->A_[eIdxGlobal2][eIdxGlobal1] += T[1][1];
+                this->A_[eIdxGlobal2][eIdxGlobal3] += T[1][2];
 
-                this->A_[globalIdx3][globalIdx2] -= T[1][0];
-                this->A_[globalIdx3][globalIdx1] -= T[1][1];
-                this->A_[globalIdx3][globalIdx3] -= T[1][2];
+                this->A_[eIdxGlobal3][eIdxGlobal2] -= T[1][0];
+                this->A_[eIdxGlobal3][eIdxGlobal1] -= T[1][1];
+                this->A_[eIdxGlobal3][eIdxGlobal3] -= T[1][2];
 
                 u[0] = pc[1];
                 u[1] = pc[0];
@@ -1506,17 +1506,17 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
 
             if (lType == TransmissibilityCalculator::rightTriangle)
             {
-                if (innerBoundaryVolumeFaces_[globalIdx3][interactionVolume.getIndexOnElement(2, 0)])
+                if (innerBoundaryVolumeFaces_[eIdxGlobal3][interactionVolume.getIndexOnElement(2, 0)])
                 {
                     T *= 2;
                 }
-                this->A_[globalIdx3][globalIdx4] += T[1][0];
-                this->A_[globalIdx3][globalIdx1] += T[1][1];
-                this->A_[globalIdx3][globalIdx3] += T[1][2];
+                this->A_[eIdxGlobal3][eIdxGlobal4] += T[1][0];
+                this->A_[eIdxGlobal3][eIdxGlobal1] += T[1][1];
+                this->A_[eIdxGlobal3][eIdxGlobal3] += T[1][2];
 
-                this->A_[globalIdx4][globalIdx4] -= T[1][0];
-                this->A_[globalIdx4][globalIdx1] -= T[1][1];
-                this->A_[globalIdx4][globalIdx3] -= T[1][2];
+                this->A_[eIdxGlobal4][eIdxGlobal4] -= T[1][0];
+                this->A_[eIdxGlobal4][eIdxGlobal1] -= T[1][1];
+                this->A_[eIdxGlobal4][eIdxGlobal3] -= T[1][2];
 
                 u[0] = pc[3];
                 u[1] = pc[0];
@@ -1529,17 +1529,17 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
             }
             else
             {
-                if (innerBoundaryVolumeFaces_[globalIdx3][interactionVolume.getIndexOnElement(2, 0)])
+                if (innerBoundaryVolumeFaces_[eIdxGlobal3][interactionVolume.getIndexOnElement(2, 0)])
                 {
                     T *= 2;
                 }
-                this->A_[globalIdx3][globalIdx3] += T[1][0];
-                this->A_[globalIdx3][globalIdx2] += T[1][1];
-                this->A_[globalIdx3][globalIdx4] += T[1][2];
+                this->A_[eIdxGlobal3][eIdxGlobal3] += T[1][0];
+                this->A_[eIdxGlobal3][eIdxGlobal2] += T[1][1];
+                this->A_[eIdxGlobal3][eIdxGlobal4] += T[1][2];
 
-                this->A_[globalIdx4][globalIdx3] -= T[1][0];
-                this->A_[globalIdx4][globalIdx2] -= T[1][1];
-                this->A_[globalIdx4][globalIdx4] -= T[1][2];
+                this->A_[eIdxGlobal4][eIdxGlobal3] -= T[1][0];
+                this->A_[eIdxGlobal4][eIdxGlobal2] -= T[1][1];
+                this->A_[eIdxGlobal4][eIdxGlobal4] -= T[1][2];
 
                 u[0] = pc[2];
                 u[1] = pc[1];
@@ -1555,17 +1555,17 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
 
             if (lType == TransmissibilityCalculator::rightTriangle)
             {
-                if (innerBoundaryVolumeFaces_[globalIdx4][interactionVolume.getIndexOnElement(3, 0)])
+                if (innerBoundaryVolumeFaces_[eIdxGlobal4][interactionVolume.getIndexOnElement(3, 0)])
                 {
                     T *= 2;
                 }
-                this->A_[globalIdx4][globalIdx1] += T[1][0];
-                this->A_[globalIdx4][globalIdx2] += T[1][1];
-                this->A_[globalIdx4][globalIdx4] += T[1][2];
+                this->A_[eIdxGlobal4][eIdxGlobal1] += T[1][0];
+                this->A_[eIdxGlobal4][eIdxGlobal2] += T[1][1];
+                this->A_[eIdxGlobal4][eIdxGlobal4] += T[1][2];
 
-                this->A_[globalIdx1][globalIdx1] -= T[1][0];
-                this->A_[globalIdx1][globalIdx2] -= T[1][1];
-                this->A_[globalIdx1][globalIdx4] -= T[1][2];
+                this->A_[eIdxGlobal1][eIdxGlobal1] -= T[1][0];
+                this->A_[eIdxGlobal1][eIdxGlobal2] -= T[1][1];
+                this->A_[eIdxGlobal1][eIdxGlobal4] -= T[1][2];
 
                 u[0] = pc[0];
                 u[1] = pc[1];
@@ -1578,17 +1578,17 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
             }
             else
             {
-                if (innerBoundaryVolumeFaces_[globalIdx4][interactionVolume.getIndexOnElement(3, 0)])
+                if (innerBoundaryVolumeFaces_[eIdxGlobal4][interactionVolume.getIndexOnElement(3, 0)])
                 {
                     T *= 2;
                 }
-                this->A_[globalIdx4][globalIdx4] += T[1][0];
-                this->A_[globalIdx4][globalIdx3] += T[1][1];
-                this->A_[globalIdx4][globalIdx1] += T[1][2];
+                this->A_[eIdxGlobal4][eIdxGlobal4] += T[1][0];
+                this->A_[eIdxGlobal4][eIdxGlobal3] += T[1][1];
+                this->A_[eIdxGlobal4][eIdxGlobal1] += T[1][2];
 
-                this->A_[globalIdx1][globalIdx4] -= T[1][0];
-                this->A_[globalIdx1][globalIdx3] -= T[1][1];
-                this->A_[globalIdx1][globalIdx1] -= T[1][2];
+                this->A_[eIdxGlobal1][eIdxGlobal4] -= T[1][0];
+                this->A_[eIdxGlobal1][eIdxGlobal3] -= T[1][1];
+                this->A_[eIdxGlobal1][eIdxGlobal1] -= T[1][2];
 
                 u[0] = pc[3];
                 u[1] = pc[2];
@@ -1653,10 +1653,10 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                     if (i == nPhaseIdx)
                     {
                         //add capillary pressure term to right hand side
-                        this->f_[globalIdx1] -= (pcFluxReal[0] - pcFluxReal[3]);
-                        this->f_[globalIdx2] -= (pcFluxReal[1] - pcFluxReal[0]);
-                        this->f_[globalIdx3] -= (pcFluxReal[2] - pcFluxReal[1]);
-                        this->f_[globalIdx4] -= (pcFluxReal[3] - pcFluxReal[2]);
+                        this->f_[eIdxGlobal1] -= (pcFluxReal[0] - pcFluxReal[3]);
+                        this->f_[eIdxGlobal2] -= (pcFluxReal[1] - pcFluxReal[0]);
+                        this->f_[eIdxGlobal3] -= (pcFluxReal[2] - pcFluxReal[1]);
+                        this->f_[eIdxGlobal4] -= (pcFluxReal[3] - pcFluxReal[2]);
 
                     }
                     break;
@@ -1666,10 +1666,10 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                     if (i == wPhaseIdx)
                     {
                         //add capillary pressure term to right hand side
-                        this->f_[globalIdx1] += (pcFluxReal[0] - pcFluxReal[3]);
-                        this->f_[globalIdx2] += (pcFluxReal[1] - pcFluxReal[0]);
-                        this->f_[globalIdx3] += (pcFluxReal[2] - pcFluxReal[1]);
-                        this->f_[globalIdx4] += (pcFluxReal[3] - pcFluxReal[2]);
+                        this->f_[eIdxGlobal1] += (pcFluxReal[0] - pcFluxReal[3]);
+                        this->f_[eIdxGlobal2] += (pcFluxReal[1] - pcFluxReal[0]);
+                        this->f_[eIdxGlobal3] += (pcFluxReal[2] - pcFluxReal[1]);
+                        this->f_[eIdxGlobal4] += (pcFluxReal[3] - pcFluxReal[2]);
                     }
                     break;
                 }
@@ -1706,10 +1706,10 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                 Scalar volume = elementPointer->geometry().volume();
 
                 // cell index
-                int globalIdx = problem_.variables().index(*elementPointer);
+                int eIdxGlobal = problem_.variables().index(*elementPointer);
 
                 //get the cell Data
-                CellData& cellData = problem_.variables().cellData(globalIdx);
+                CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
                 //permeability vector at boundary
                 DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(*elementPointer));
@@ -1717,9 +1717,9 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                 // evaluate right hand side
                 PrimaryVariables source(0);
                 problem_.source(source, *elementPointer);
-                this->f_[globalIdx] += volume / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
+                this->f_[eIdxGlobal] += volume / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
-                this->f_[globalIdx] += evaluateErrorTerm_(cellData) * volume / (4.0);
+                this->f_[eIdxGlobal] += evaluateErrorTerm_(cellData) * volume / (4.0);
 
                 //get mobilities of the phases
                 Dune::FieldVector<Scalar, numPhases> lambda(cellData.mobility(wPhaseIdx));
@@ -1860,8 +1860,8 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                             }
 
                             // set diagonal entry and right hand side entry
-                            this->A_[globalIdx][globalIdx] += entry;
-                            this->f_[globalIdx] += entry * potentialBound;
+                            this->A_[eIdxGlobal][eIdxGlobal] += entry;
+                            this->f_[eIdxGlobal] += entry * potentialBound;
 
                             if (pc == 0 && pcBound == 0)
                             {
@@ -1877,7 +1877,7 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                                     if (i == nPhaseIdx)
                                     {
                                         //add capillary pressure term to right hand side
-                                        this->f_[globalIdx] -= pcFlux;
+                                        this->f_[eIdxGlobal] -= pcFlux;
                                     }
                                     break;
                                 }
@@ -1886,7 +1886,7 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                                     if (i == wPhaseIdx)
                                     {
                                         //add capillary pressure term to right hand side
-                                        this->f_[globalIdx] += pcFlux;
+                                        this->f_[eIdxGlobal] += pcFlux;
                                     }
                                     break;
                                 }
@@ -1899,7 +1899,7 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                             Scalar J = interactionVolume.getNeumannValues(intVolFaceIdx)[wPhaseIdx] / density_[wPhaseIdx];
                             J += interactionVolume.getNeumannValues(intVolFaceIdx)[nPhaseIdx] / density_[nPhaseIdx];
 
-                            this->f_[globalIdx] -= J;
+                            this->f_[eIdxGlobal] -= J;
                         }
                         else
                         {
@@ -1927,11 +1927,11 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                 continue;
             
             // get the global index of the cell
-            int globalIdxI = problem_.variables().index(*eIt);
+            int eIdxGlobalI = problem_.variables().index(*eIt);
 
-            this->A_[globalIdxI] = 0.0;
-            this->A_[globalIdxI][globalIdxI] = 1.0;
-            this->f_[globalIdxI] = this->pressure()[globalIdxI];
+            this->A_[eIdxGlobalI] = 0.0;
+            this->A_[eIdxGlobalI][eIdxGlobalI] = 1.0;
+            this->f_[eIdxGlobalI] = this->pressure()[eIdxGlobalI];
         }
     }
     
@@ -1949,9 +1949,9 @@ void FvMpfaL2dPressure2p<TypeTag>::updateMaterialLaws()
     ElementIterator eEndIt = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
-        int globalIdx = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(*eIt);
 
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 

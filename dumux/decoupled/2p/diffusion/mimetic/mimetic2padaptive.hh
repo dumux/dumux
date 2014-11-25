@@ -181,9 +181,9 @@ public:
         timeStep_ = dt;
     }
 
-    int numberOfFaces(int globalIdx)
+    int numberOfFaces(int eIdxGlobal)
     {
-        return W_[globalIdx].N();
+        return W_[eIdxGlobal].N();
     }
 
     //! assemble local stiffness matrix for given element and order
@@ -250,37 +250,37 @@ public:
     template<class Vector>
     void completeRHS(const Element& element, std::vector<int>& local2Global, Vector& f)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
 
-        int numFaces = numberOfFaces(globalIdx);
+        int numFaces = numberOfFaces(eIdxGlobal);
 
         Dune::DynamicVector<Scalar> F(numFaces);
         Scalar dInv = 0.;
-        computeReconstructionMatrices(element, W_[globalIdx], F, dInv);
+        computeReconstructionMatrices(element, W_[eIdxGlobal], F, dInv);
 
         for (int i = 0; i < numFaces; i++)
         {
 //            if (!this->bctype[i].isSet())
-                f[local2Global[i]][0] += (dInv * F[i] * rhs_[globalIdx]);
+                f[local2Global[i]][0] += (dInv * F[i] * rhs_[eIdxGlobal]);
         }
     }
 
     Scalar constructPressure(const Element& element, Dune::DynamicVector<Scalar>& pressTrace)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
 
-        int numFaces = numberOfFaces(globalIdx);
+        int numFaces = numberOfFaces(eIdxGlobal);
 
         Scalar volume = element.geometry().volume();
 
         PrimaryVariables sourceVec(0.0);
         problem_.source(sourceVec, element);
         Scalar qmean = volume * (sourceVec[wPhaseIdx]/density_[wPhaseIdx] + sourceVec[nPhaseIdx]/density_[nPhaseIdx]);
-        qmean += rhs_[globalIdx];
+        qmean += rhs_[eIdxGlobal];
 
         Dune::DynamicVector<Scalar> F(numFaces, 0.);
         Scalar dInv = 0.;
-        computeReconstructionMatrices(element, W_[globalIdx], F, dInv);
+        computeReconstructionMatrices(element, W_[eIdxGlobal], F, dInv);
 
         return (dInv*(qmean + (F*pressTrace)));
     }
@@ -288,9 +288,9 @@ public:
     void constructVelocity(const Element& element, Dune::DynamicVector<Scalar>& vel,
                            Dune::DynamicVector<Scalar>& pressTrace, Scalar press)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
 
-        int numFaces = numberOfFaces(globalIdx);
+        int numFaces = numberOfFaces(eIdxGlobal);
 
         Dune::DynamicVector<Scalar> faceVol(numFaces);
 
@@ -310,11 +310,11 @@ public:
         vel = 0;
         for (int i = 0; i < numFaces; i++)
             for (int j = 0; j < numFaces; j++)
-                vel[i] += W_[globalIdx][i][j]*faceVol[j]*(press - pressTrace[j]);
+                vel[i] += W_[eIdxGlobal][i][j]*faceVol[j]*(press - pressTrace[j]);
 
         for (int i = 0; i < numFaces; i++)
         {
-                vel[i] *= faceVol[i]/faceVolumeReal[intersectionMapper_.maplocal(globalIdx, i)];
+                vel[i] *= faceVol[i]/faceVolumeReal[intersectionMapper_.maplocal(eIdxGlobal, i)];
         }
 
     }
@@ -322,9 +322,9 @@ public:
     void computeReconstructionMatrices(const Element& element, const Dune::DynamicMatrix<Scalar>& W,
                                        Dune::DynamicVector<Scalar>& F, Scalar& dInv)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
 
-        int numFaces = numberOfFaces(globalIdx);
+        int numFaces = numberOfFaces(eIdxGlobal);
 
         Dune::DynamicVector<Scalar> c(numFaces);
         Dune::DynamicMatrix<Scalar> Pi(numFaces, numFaces);
@@ -425,12 +425,12 @@ private:
 template<class TypeTag>
 void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleV(const Element& element, int numFaces, int k)
 {
-    int globalIdx = problem_.variables().index(element);
+    int eIdxGlobal = problem_.variables().index(element);
 
     // The notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4.
     // The matrix W developed here corresponds to one element-associated
     // block of the matrix B^{-1} there.
-    W_[globalIdx].resize(numFaces, numFaces);
+    W_[eIdxGlobal].resize(numFaces, numFaces);
     Dune::DynamicVector<Scalar> faceVol(numFaces);
     Dune::DynamicMatrix<Scalar> Pi(numFaces, numFaces);
     Dune::DynamicVector<Scalar> F(numFaces);
@@ -439,7 +439,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleV(const Element& elemen
     this->assembleElementMatrices(element, faceVol, F, Pi, dInv, qmean);
 
     // Calculate the element part of the matrix Pi W Pi^T.
-    Dune::DynamicMatrix<Scalar> PiWPiT(W_[globalIdx]);
+    Dune::DynamicMatrix<Scalar> PiWPiT(W_[eIdxGlobal]);
     PiWPiT.rightmultiply(Pi);
     PiWPiT.leftmultiply(Pi);
 
@@ -478,11 +478,11 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
     // get global coordinate of cell center
     const Dune::FieldVector<Scalar, dim>& centerGlobal = element.geometry().center();
 
-    int globalIdx = problem_.variables().index(element);
+    int eIdxGlobal = problem_.variables().index(element);
 
-    CellData& cellData = problem_.variables().cellData(globalIdx);
+    CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
-    int numFaces = intersectionMapper_.size(globalIdx);
+    int numFaces = intersectionMapper_.size(eIdxGlobal);
 
     // cell volume
     Scalar volume = element.geometry().volume();
@@ -601,14 +601,14 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
     {
         for (int j = 0; j < numFaces; j++)
         {
-            W_[globalIdx][i][j] = NK[i][0] * N[j][0];
+            W_[eIdxGlobal][i][j] = NK[i][0] * N[j][0];
             for (int k = 1; k < dim; k++)
-                W_[globalIdx][i][j] += NK[i][k] * N[j][k];
+                W_[eIdxGlobal][i][j] += NK[i][k] * N[j][k];
         }
     }
 
-    W_[globalIdx] /= volume;
-    W_[globalIdx] += D;
+    W_[eIdxGlobal] /= volume;
+    W_[eIdxGlobal] += D;
 
     //       std::cout << "W = \dim" << W;
 
@@ -631,7 +631,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
 
     // Calculate the element part of the matrix D^{-1} = (c W c^T)^{-1} which is just a scalar value.
     Dune::DynamicVector<Scalar> Wc(numFaces);
-    W_[globalIdx].umv(c, Wc);
+    W_[eIdxGlobal].umv(c, Wc);
     dInv = 1.0 / (c * Wc);
 
     // Calculate the element part of the matrix F = Pi W c^T which is a column vector.
@@ -647,13 +647,13 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
 
             Scalar flux = 0;
             for (int j = 0; j < numFaces; j++)
-                flux += W_[globalIdx][idx][j] * faceVol[j] * (pcPot - pcPotFace[j]);
+                flux += W_[eIdxGlobal][idx][j] * faceVol[j] * (pcPot - pcPotFace[j]);
 
             if (isIt->neighbor())
             {
 
             ElementPointer neighbor = isIt->outside();
-            int globalIdxNeighbor = problem_.variables().index(*neighbor);
+            int eIdxGlobalNeighbor = problem_.variables().index(*neighbor);
             if (flux > 0.)
             {
                 switch (pressureType)
@@ -670,8 +670,8 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
                 }
                 }
 
-                rhs_[globalIdx] -= (faceVol[idx] * fracFlow * flux);
-                rhs_[globalIdxNeighbor] += (faceVol[idx] * fracFlow * flux);
+                rhs_[eIdxGlobal] -= (faceVol[idx] * fracFlow * flux);
+                rhs_[eIdxGlobalNeighbor] += (faceVol[idx] * fracFlow * flux);
             }
         }
         else if (isIt->boundary())
@@ -724,7 +724,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
                 }
             }
 
-            rhs_[globalIdx] -= (faceVol[idx] * fracFlow * flux);
+            rhs_[eIdxGlobal] -= (faceVol[idx] * fracFlow * flux);
         }
     }
         idx++;

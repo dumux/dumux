@@ -73,13 +73,13 @@ public:
     {
 
         ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
-        int globalIdx = problem.vertexMapper().map(element, scvIdx, dim);
+        int vIdxGlobal = problem.vertexMapper().map(element, scvIdx, dim);
 
         primaryVars_ = priVars;
-        prevPrimaryVars_ = problem.model().prevSol()[globalIdx];
+        prevPrimaryVars_ = problem.model().prevSol()[vIdxGlobal];
 
         ParentType prev1p2cVolVars;
-        prev1p2cVolVars.update(problem.model().prevSol()[globalIdx],
+        prev1p2cVolVars.update(problem.model().prevSol()[vIdxGlobal],
                                problem,
                                element,
                                fvGeometry,

@@ -205,9 +205,9 @@ public:
             for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
             {
                 // cell index
-                int globalIdx = problem_.variables().index(*eIt);
+                int eIdxGlobal = problem_.variables().index(*eIt);
 
-                CellData & cellData = problem_.variables().cellData(globalIdx);
+                CellData & cellData = problem_.variables().cellData(eIdxGlobal);
 
                 Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
                 Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
@@ -239,7 +239,7 @@ public:
                 jacobianT.umtv(refVelocity, elementVelocity);
                 elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-                velocityWetting[globalIdx] = elementVelocity;
+                velocityWetting[eIdxGlobal] = elementVelocity;
 
                 refVelocity = 0;
                 refVelocity[0] = 0.5 * (fluxNw[1] - fluxNw[0]);
@@ -251,7 +251,7 @@ public:
                 jacobianT.umtv(refVelocity, elementVelocity);
                 elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-                velocityNonwetting[globalIdx] = elementVelocity;
+                velocityNonwetting[eIdxGlobal] = elementVelocity;
             }
 
             writer.attachCellData(velocityWetting, "wetting-velocity", dim);
@@ -315,14 +315,14 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     ElementPointer& elementPointer8 = interactionVolume.getSubVolumeElement(7);
 
     // cell index
-    int globalIdx1 = problem_.variables().index(*elementPointer1);
-    int globalIdx2 = problem_.variables().index(*elementPointer2);
-    int globalIdx3 = problem_.variables().index(*elementPointer3);
-    int globalIdx4 = problem_.variables().index(*elementPointer4);
-    int globalIdx5 = problem_.variables().index(*elementPointer5);
-    int globalIdx6 = problem_.variables().index(*elementPointer6);
-    int globalIdx7 = problem_.variables().index(*elementPointer7);
-    int globalIdx8 = problem_.variables().index(*elementPointer8);
+    int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
+    int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
+    int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
+    int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
+    int eIdxGlobal5 = problem_.variables().index(*elementPointer5);
+    int eIdxGlobal6 = problem_.variables().index(*elementPointer6);
+    int eIdxGlobal7 = problem_.variables().index(*elementPointer7);
+    int eIdxGlobal8 = problem_.variables().index(*elementPointer8);
 
     // pressures flux calculation
     Dune::FieldVector<Scalar, 8> potW(0);
@@ -1786,30 +1786,30 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         }
         }
 
-        vel12 *= flux[0] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx1, 0, 0));
-        vel21 *= flux[0] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx2, 1, 1));
-        vel24 *= flux[1] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx2, 1, 0));
-        vel42 *= flux[1] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx4, 3, 1));
-        vel43 *= flux[2] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx4, 3, 0));
-        vel34 *= flux[2] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx3, 2, 1));
-        vel31 *= flux[3] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx3, 2, 0));
-        vel13 *= flux[3] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx1, 0, 1));
-        vel65 *= flux[4] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx6, 5, 2));
-        vel56 *= flux[4] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx5, 4, 1));
-        vel86 *= flux[5] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx8, 7, 2));
-        vel68 *= flux[5] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx6, 5, 1));
-        vel78 *= flux[6] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx7, 6, 2));
-        vel87 *= flux[6] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx8, 7, 1));
-        vel57 *= flux[7] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx5, 4, 2));
-        vel75 *= flux[7] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx7, 6, 1));
-        vel51 *= flux[8] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx5, 4, 0));
-        vel15 *= flux[8] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx1, 0, 2));
-        vel26 *= flux[9] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx2, 1, 2));
-        vel62 *= flux[9] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx6, 5, 0));
-        vel84 *= flux[10] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx8, 7, 0));
-        vel48 *= flux[10] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx4, 3, 2));
-        vel37 *= flux[11] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx3, 2, 2));
-        vel73 *= flux[11] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, globalIdx7, 6, 0));
+        vel12 *= flux[0] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal1, 0, 0));
+        vel21 *= flux[0] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal2, 1, 1));
+        vel24 *= flux[1] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal2, 1, 0));
+        vel42 *= flux[1] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal4, 3, 1));
+        vel43 *= flux[2] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal4, 3, 0));
+        vel34 *= flux[2] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal3, 2, 1));
+        vel31 *= flux[3] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal3, 2, 0));
+        vel13 *= flux[3] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal1, 0, 1));
+        vel65 *= flux[4] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal6, 5, 2));
+        vel56 *= flux[4] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal5, 4, 1));
+        vel86 *= flux[5] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal8, 7, 2));
+        vel68 *= flux[5] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal6, 5, 1));
+        vel78 *= flux[6] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal7, 6, 2));
+        vel87 *= flux[6] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal8, 7, 1));
+        vel57 *= flux[7] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal5, 4, 2));
+        vel75 *= flux[7] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal7, 6, 1));
+        vel51 *= flux[8] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal5, 4, 0));
+        vel15 *= flux[8] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal1, 0, 2));
+        vel26 *= flux[9] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal2, 1, 2));
+        vel62 *= flux[9] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal6, 5, 0));
+        vel84 *= flux[10] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal8, 7, 0));
+        vel48 *= flux[10] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal4, 3, 2));
+        vel37 *= flux[11] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal3, 2, 2));
+        vel73 *= flux[11] / (interactionVolumes.getRealFluxFaceArea(interactionVolume, eIdxGlobal7, 6, 0));
 
 
         Scalar lambdaT0 = lambda0Upw[wPhaseIdx] + lambda0Upw[nPhaseIdx];

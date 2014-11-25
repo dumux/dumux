@@ -154,9 +154,9 @@ public:
         for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eEndIt; ++eIt)
         {
             // cell index
-            int globalIdx = this->elementMapper().map(*eIt);
+            int eIdxGlobal = this->elementMapper().map(*eIt);
 
-            CellData& cellData = this->variables().cellData(globalIdx);
+            CellData& cellData = this->variables().cellData(eIdxGlobal);
 
             // run through all intersections with neighbors and boundary
             IntersectionIterator isEndIt = this->gridView().iend(*eIt);

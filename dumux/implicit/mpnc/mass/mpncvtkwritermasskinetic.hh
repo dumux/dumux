@@ -109,25 +109,25 @@ public:
     {
         int numLocalVertices = element.geometry().corners();
         for (int localVertexIdx = 0; localVertexIdx< numLocalVertices; ++localVertexIdx) {
-            const unsigned int globalIdx = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
+            const unsigned int vIdxGlobal = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
             for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 for (unsigned  int compIdx = 0; compIdx < numComponents; ++ compIdx) {
-                    moleFracEquil_[phaseIdx][compIdx][globalIdx]          = volVars.xEquil(phaseIdx, compIdx);
+                    moleFracEquil_[phaseIdx][compIdx][vIdxGlobal]          = volVars.xEquil(phaseIdx, compIdx);
                 }
             }
 
 //            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
 //                for (unsigned  int compIdx = 0; compIdx < numComponents; ++ compIdx) {
-//                    drivingThingyMole_[phaseIdx][compIdx][globalIdx]        = volVars.xEquil(phaseIdx, compIdx) - volVars.fluidState().moleFraction(phaseIdx, compIdx);
-//                    drivingThingyMu_[phaseIdx][compIdx][globalIdx]          = volVars.chemicalPotentialEquil(phaseIdx, compIdx) - volVars.chemicalPotential(phaseIdx, compIdx);
-////                    percentageEquilMoleFrac_[phaseIdx][compIdx][globalIdx]  = (volVars.fluidState().moleFraction(phaseIdx, compIdx)) /  volVars.xEquil(phaseIdx, compIdx);
+//                    drivingThingyMole_[phaseIdx][compIdx][vIdxGlobal]        = volVars.xEquil(phaseIdx, compIdx) - volVars.fluidState().moleFraction(phaseIdx, compIdx);
+//                    drivingThingyMu_[phaseIdx][compIdx][vIdxGlobal]          = volVars.chemicalPotentialEquil(phaseIdx, compIdx) - volVars.chemicalPotential(phaseIdx, compIdx);
+////                    percentageEquilMoleFrac_[phaseIdx][compIdx][vIdxGlobal]  = (volVars.fluidState().moleFraction(phaseIdx, compIdx)) /  volVars.xEquil(phaseIdx, compIdx);
 //                }
 //            }
 
             if (deltaPOutput_) {
-                deltaP_[globalIdx] = volVars.fluidState().pressure(nPhaseIdx) - 100000.;
+                deltaP_[vIdxGlobal] = volVars.fluidState().pressure(nPhaseIdx) - 100000.;
             }
         }
     }

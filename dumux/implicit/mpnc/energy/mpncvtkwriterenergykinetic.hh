@@ -131,33 +131,33 @@ public:
     {
         int numLocalVertices = element.geometry().corners();
         for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
-            const unsigned int globalIdx = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
+            const unsigned int vIdxGlobal = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                enthalpy_[phaseIdx][globalIdx]          = volVars.fluidState().enthalpy(phaseIdx);
-                internalEnergy_[phaseIdx][globalIdx]    = volVars.fluidState().internalEnergy(phaseIdx);
-                reynoldsNumber_[phaseIdx][globalIdx]    = volVars.reynoldsNumber(phaseIdx);
-                prandtlNumber_[phaseIdx][globalIdx]     = volVars.prandtlNumber(phaseIdx);
-                nusseltNumber_[phaseIdx][globalIdx]             = volVars.nusseltNumber(phaseIdx);
+                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.fluidState().enthalpy(phaseIdx);
+                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.fluidState().internalEnergy(phaseIdx);
+                reynoldsNumber_[phaseIdx][vIdxGlobal]    = volVars.reynoldsNumber(phaseIdx);
+                prandtlNumber_[phaseIdx][vIdxGlobal]     = volVars.prandtlNumber(phaseIdx);
+                nusseltNumber_[phaseIdx][vIdxGlobal]             = volVars.nusseltNumber(phaseIdx);
             }
 
             // because numPhases only counts liquid phases
             for (int phaseIdx = 0; phaseIdx < numEnergyEqs; ++ phaseIdx) {
-                temperature_[phaseIdx][globalIdx] = volVars.temperature(phaseIdx);
-                Valgrind::CheckDefined(temperature_[phaseIdx][globalIdx]);
+                temperature_[phaseIdx][vIdxGlobal] = volVars.temperature(phaseIdx);
+                Valgrind::CheckDefined(temperature_[phaseIdx][vIdxGlobal]);
             }
 
             const unsigned int wPhaseIdx = FluidSystem::wPhaseIdx;
             const unsigned int nPhaseIdx = FluidSystem::nPhaseIdx;
             const unsigned int sPhaseIdx = FluidSystem::sPhaseIdx;
 
-            TwMinusTn_[globalIdx]  = volVars.temperature(wPhaseIdx) - volVars.temperature(nPhaseIdx);
-            TnMinusTs_[globalIdx]  = volVars.temperature(nPhaseIdx) - volVars.temperature(sPhaseIdx);
+            TwMinusTn_[vIdxGlobal]  = volVars.temperature(wPhaseIdx) - volVars.temperature(nPhaseIdx);
+            TnMinusTs_[vIdxGlobal]  = volVars.temperature(nPhaseIdx) - volVars.temperature(sPhaseIdx);
 
-            awn_[globalIdx]          = volVars.interfacialArea(wPhaseIdx, nPhaseIdx);
-            aws_[globalIdx]          = volVars.interfacialArea(wPhaseIdx, sPhaseIdx);
-            ans_[globalIdx]          = volVars.interfacialArea(nPhaseIdx, sPhaseIdx);
+            awn_[vIdxGlobal]          = volVars.interfacialArea(wPhaseIdx, nPhaseIdx);
+            aws_[vIdxGlobal]          = volVars.interfacialArea(wPhaseIdx, sPhaseIdx);
+            ans_[vIdxGlobal]          = volVars.interfacialArea(nPhaseIdx, sPhaseIdx);
 
             /*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/
             if (velocityAveragingInModel and not velocityOutput){
@@ -368,25 +368,25 @@ public:
     {
         int numLocalVertices = element.geometry().corners();
         for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
-            const unsigned int globalIdx = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
+            const unsigned int vIdxGlobal = this->problem_.vertexMapper().map(element, localVertexIdx, dim);
 
             const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
-        	qBoil_[globalIdx] = LocalResidual::QBoilFunc(volVars, volVars.fluidState().saturation(wPhaseIdx));
-        	qsf_[globalIdx] = LocalResidual::qsf(volVars);
+        	qBoil_[vIdxGlobal] = LocalResidual::QBoilFunc(volVars, volVars.fluidState().saturation(wPhaseIdx));
+        	qsf_[vIdxGlobal] = LocalResidual::qsf(volVars);
 
         	for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                enthalpy_[phaseIdx][globalIdx]          = volVars.fluidState().enthalpy(phaseIdx);
-                internalEnergy_[phaseIdx][globalIdx]    = volVars.fluidState().internalEnergy(phaseIdx);
-                reynoldsNumber_[phaseIdx][globalIdx]    = volVars.reynoldsNumber(phaseIdx);
-                prandtlNumber_[phaseIdx][globalIdx]     = volVars.prandtlNumber(phaseIdx);
-                nusseltNumber_[phaseIdx][globalIdx]             = volVars.nusseltNumber(phaseIdx);
+                enthalpy_[phaseIdx][vIdxGlobal]          = volVars.fluidState().enthalpy(phaseIdx);
+                internalEnergy_[phaseIdx][vIdxGlobal]    = volVars.fluidState().internalEnergy(phaseIdx);
+                reynoldsNumber_[phaseIdx][vIdxGlobal]    = volVars.reynoldsNumber(phaseIdx);
+                prandtlNumber_[phaseIdx][vIdxGlobal]     = volVars.prandtlNumber(phaseIdx);
+                nusseltNumber_[phaseIdx][vIdxGlobal]             = volVars.nusseltNumber(phaseIdx);
             }
 
             // because numPhases only counts liquid phases
             for (int phaseIdx = 0; phaseIdx < numEnergyEqs; ++ phaseIdx) {
-                temperature_[phaseIdx][globalIdx] = volVars.temperature(phaseIdx);
-                Valgrind::CheckDefined(temperature_[phaseIdx][globalIdx]);
+                temperature_[phaseIdx][vIdxGlobal] = volVars.temperature(phaseIdx);
+                Valgrind::CheckDefined(temperature_[phaseIdx][vIdxGlobal]);
             }
 
             if (velocityAveragingInModel and not velocityOutput/*only one of the two output options, otherwise paraview segfaults due to two times the same field name*/){

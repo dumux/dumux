@@ -222,14 +222,14 @@ public:
      */
     void storePressureSolution(const Element& element)
     {
-        int globalIdx = problem_.variables().index(element);
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        int eIdxGlobal = problem_.variables().index(element);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         switch (pressureType_)
         {
         case pw:
         {
-            Scalar potW = this->pressure()[globalIdx];
+            Scalar potW = this->pressure()[eIdxGlobal];
 
             Scalar gravityDiff = (problem_.bBoxMax() - element.geometry().center()) * gravity_;
             Scalar potPc = cellData.capillaryPressure()
@@ -247,7 +247,7 @@ public:
         }
         case pn:
         {
-            Scalar potNw = this->pressure()[globalIdx];
+            Scalar potNw = this->pressure()[eIdxGlobal];
 
             Scalar gravityDiff = (problem_.bBoxMax() - element.geometry().center()) * gravity_;
             Scalar potPc = cellData.capillaryPressure()
@@ -560,7 +560,7 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(*eIt);
 
         std::set<int> neighborIndices;
 
@@ -577,14 +577,14 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
                 if (interactionVolume.hasSubVolumeElement(subVolumeIdx))
                 {
                     const ElementPointer& neighbor = interactionVolume.getSubVolumeElement(subVolumeIdx);
-                    int globalIdxJ = problem_.variables().index(*neighbor);
+                    int eIdxGlobalJ = problem_.variables().index(*neighbor);
 
-                    neighborIndices.insert(globalIdxJ);
+                    neighborIndices.insert(eIdxGlobalJ);
                 }
             }
         }
 
-        this->A_.setrowsize(globalIdxI, neighborIndices.size());
+        this->A_.setrowsize(eIdxGlobalI, neighborIndices.size());
     } // end of 'for' ElementIterator
 
     return;
@@ -600,10 +600,10 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(*eIt);
 
         // add diagonal index
-        this->A_.addindex(globalIdxI, globalIdxI);
+        this->A_.addindex(eIdxGlobalI, eIdxGlobalI);
 
         int numVertices = eIt->geometry().corners();
 
@@ -617,9 +617,9 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
                 if (interactionVolume.hasSubVolumeElement(subVolumeIdx))
                 {
                     ElementPointer neighbor = interactionVolume.getSubVolumeElement(subVolumeIdx);
-                    int globalIdxJ = problem_.variables().index(*neighbor);
+                    int eIdxGlobalJ = problem_.variables().index(*neighbor);
 
-                    this->A_.addindex(globalIdxI, globalIdxJ);
+                    this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
                 }
             }
         }
@@ -694,24 +694,24 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     Scalar volume8 = elementPointer8->geometry().volume();
 
     // cell index
-    int globalIdx1 = problem_.variables().index(*elementPointer1);
-    int globalIdx2 = problem_.variables().index(*elementPointer2);
-    int globalIdx3 = problem_.variables().index(*elementPointer3);
-    int globalIdx4 = problem_.variables().index(*elementPointer4);
-    int globalIdx5 = problem_.variables().index(*elementPointer5);
-    int globalIdx6 = problem_.variables().index(*elementPointer6);
-    int globalIdx7 = problem_.variables().index(*elementPointer7);
-    int globalIdx8 = problem_.variables().index(*elementPointer8);
+    int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
+    int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
+    int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
+    int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
+    int eIdxGlobal5 = problem_.variables().index(*elementPointer5);
+    int eIdxGlobal6 = problem_.variables().index(*elementPointer6);
+    int eIdxGlobal7 = problem_.variables().index(*elementPointer7);
+    int eIdxGlobal8 = problem_.variables().index(*elementPointer8);
 
     //get the cell Data
-    CellData& cellData1 = problem_.variables().cellData(globalIdx1);
-    CellData& cellData2 = problem_.variables().cellData(globalIdx2);
-    CellData& cellData3 = problem_.variables().cellData(globalIdx3);
-    CellData& cellData4 = problem_.variables().cellData(globalIdx4);
-    CellData& cellData5 = problem_.variables().cellData(globalIdx5);
-    CellData& cellData6 = problem_.variables().cellData(globalIdx6);
-    CellData& cellData7 = problem_.variables().cellData(globalIdx7);
-    CellData& cellData8 = problem_.variables().cellData(globalIdx8);
+    CellData& cellData1 = problem_.variables().cellData(eIdxGlobal1);
+    CellData& cellData2 = problem_.variables().cellData(eIdxGlobal2);
+    CellData& cellData3 = problem_.variables().cellData(eIdxGlobal3);
+    CellData& cellData4 = problem_.variables().cellData(eIdxGlobal4);
+    CellData& cellData5 = problem_.variables().cellData(eIdxGlobal5);
+    CellData& cellData6 = problem_.variables().cellData(eIdxGlobal6);
+    CellData& cellData7 = problem_.variables().cellData(eIdxGlobal7);
+    CellData& cellData8 = problem_.variables().cellData(eIdxGlobal8);
 
     // get mobilities of the phases
     Dune::FieldVector<Scalar, numPhases> lambda1(cellData1.mobility(wPhaseIdx));
@@ -839,38 +839,38 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     // evaluate right hand side
     PrimaryVariables source(0.0);
     problem_.source(source, *elementPointer1);
-    this->f_[globalIdx1] += volume1 / (8.0)
+    this->f_[eIdxGlobal1] += volume1 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
     problem_.source(source, *elementPointer2);
-    this->f_[globalIdx2] += volume2 / (8.0)
+    this->f_[eIdxGlobal2] += volume2 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
     problem_.source(source, *elementPointer3);
-    this->f_[globalIdx3] += volume3 / (8.0)
+    this->f_[eIdxGlobal3] += volume3 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
     problem_.source(source, *elementPointer4);
-    this->f_[globalIdx4] += volume4 / (8.0)
+    this->f_[eIdxGlobal4] += volume4 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
     problem_.source(source, *elementPointer5);
-    this->f_[globalIdx5] += volume5 / (8.0)
+    this->f_[eIdxGlobal5] += volume5 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
     problem_.source(source, *elementPointer6);
-    this->f_[globalIdx6] += volume6 / (8.0)
+    this->f_[eIdxGlobal6] += volume6 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
     problem_.source(source, *elementPointer7);
-    this->f_[globalIdx7] += volume7 / (8.0)
+    this->f_[eIdxGlobal7] += volume7 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
     problem_.source(source, *elementPointer8);
-    this->f_[globalIdx8] += volume8 / (8.0)
+    this->f_[eIdxGlobal8] += volume8 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
-    this->f_[globalIdx1] += evaluateErrorTerm(cellData1) * volume1 / (8.0);
-    this->f_[globalIdx2] += evaluateErrorTerm(cellData2) * volume2 / (8.0);
-    this->f_[globalIdx3] += evaluateErrorTerm(cellData3) * volume3 / (8.0);
-    this->f_[globalIdx4] += evaluateErrorTerm(cellData4) * volume4 / (8.0);
-    this->f_[globalIdx5] += evaluateErrorTerm(cellData5) * volume5 / (8.0);
-    this->f_[globalIdx6] += evaluateErrorTerm(cellData6) * volume6 / (8.0);
-    this->f_[globalIdx7] += evaluateErrorTerm(cellData7) * volume7 / (8.0);
-    this->f_[globalIdx8] += evaluateErrorTerm(cellData8) * volume8 / (8.0);
+    this->f_[eIdxGlobal1] += evaluateErrorTerm(cellData1) * volume1 / (8.0);
+    this->f_[eIdxGlobal2] += evaluateErrorTerm(cellData2) * volume2 / (8.0);
+    this->f_[eIdxGlobal3] += evaluateErrorTerm(cellData3) * volume3 / (8.0);
+    this->f_[eIdxGlobal4] += evaluateErrorTerm(cellData4) * volume4 / (8.0);
+    this->f_[eIdxGlobal5] += evaluateErrorTerm(cellData5) * volume5 / (8.0);
+    this->f_[eIdxGlobal6] += evaluateErrorTerm(cellData6) * volume6 / (8.0);
+    this->f_[eIdxGlobal7] += evaluateErrorTerm(cellData7) * volume7 / (8.0);
+    this->f_[eIdxGlobal8] += evaluateErrorTerm(cellData8) * volume8 / (8.0);
 
     DimVector Tu(0);
     Dune::FieldVector<Scalar, 2 * dim - dim + 1> u(0);
@@ -882,20 +882,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
                                                              5);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx1, 0, 0);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx2, 1, 1);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal1, 0, 0);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal2, 1, 1);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx1][globalIdx1] += T[0][0];
-        this->A_[globalIdx1][globalIdx2] += T[0][1];
-        this->A_[globalIdx1][globalIdx3] += T[0][2];
-        this->A_[globalIdx1][globalIdx5] += T[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal1] += T[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal2] += T[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal3] += T[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal5] += T[0][3];
 
-        this->A_[globalIdx2][globalIdx1] -= TSecond[0][0];
-        this->A_[globalIdx2][globalIdx2] -= TSecond[0][1];
-        this->A_[globalIdx2][globalIdx3] -= TSecond[0][2];
-        this->A_[globalIdx2][globalIdx5] -= TSecond[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal1] -= TSecond[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal2] -= TSecond[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal3] -= TSecond[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal5] -= TSecond[0][3];
 
         u[0] = pc[0];
         u[1] = pc[1];
@@ -912,15 +912,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx1][globalIdx1] += T[0][0];
-        this->A_[globalIdx1][globalIdx2] += T[0][1];
-        this->A_[globalIdx1][globalIdx4] += T[0][2];
-        this->A_[globalIdx1][globalIdx6] += T[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal1] += T[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal2] += T[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal4] += T[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal6] += T[0][3];
 
-        this->A_[globalIdx2][globalIdx1] -= TSecond[0][0];
-        this->A_[globalIdx2][globalIdx2] -= TSecond[0][1];
-        this->A_[globalIdx2][globalIdx4] -= TSecond[0][2];
-        this->A_[globalIdx2][globalIdx6] -= TSecond[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal1] -= TSecond[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal2] -= TSecond[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal4] -= TSecond[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal6] -= TSecond[0][3];
 
         u[0] = pc[0];
         u[1] = pc[1];
@@ -936,15 +936,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx1][globalIdx1] += T[0][0];
-        this->A_[globalIdx1][globalIdx2] += T[0][1];
-        this->A_[globalIdx1][globalIdx4] += T[0][2];
-        this->A_[globalIdx1][globalIdx5] += T[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal1] += T[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal2] += T[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal4] += T[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal5] += T[0][3];
 
-        this->A_[globalIdx2][globalIdx1] -= TSecond[0][0];
-        this->A_[globalIdx2][globalIdx2] -= TSecond[0][1];
-        this->A_[globalIdx2][globalIdx4] -= TSecond[0][2];
-        this->A_[globalIdx2][globalIdx5] -= TSecond[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal1] -= TSecond[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal2] -= TSecond[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal4] -= TSecond[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal5] -= TSecond[0][3];
 
         u[0] = pc[0];
         u[1] = pc[1];
@@ -960,15 +960,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx1][globalIdx1] += T[0][0];
-        this->A_[globalIdx1][globalIdx2] += T[0][1];
-        this->A_[globalIdx1][globalIdx3] += T[0][2];
-        this->A_[globalIdx1][globalIdx6] += T[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal1] += T[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal2] += T[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal3] += T[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal6] += T[0][3];
 
-        this->A_[globalIdx2][globalIdx1] -= TSecond[0][0];
-        this->A_[globalIdx2][globalIdx2] -= TSecond[0][1];
-        this->A_[globalIdx2][globalIdx3] -= TSecond[0][2];
-        this->A_[globalIdx2][globalIdx6] -= TSecond[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal1] -= TSecond[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal2] -= TSecond[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal3] -= TSecond[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal6] -= TSecond[0][3];
 
         u[0] = pc[0];
         u[1] = pc[1];
@@ -987,20 +987,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 1, 3, 0, 2, 5, 7);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx2, 1, 0);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx4, 3, 1);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal2, 1, 0);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal4, 3, 1);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx2][globalIdx2] += T[0][0];
-        this->A_[globalIdx2][globalIdx4] += T[0][1];
-        this->A_[globalIdx2][globalIdx1] += T[0][2];
-        this->A_[globalIdx2][globalIdx6] += T[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal2] += T[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal4] += T[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal1] += T[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal6] += T[0][3];
 
-        this->A_[globalIdx4][globalIdx2] -= TSecond[0][0];
-        this->A_[globalIdx4][globalIdx4] -= TSecond[0][1];
-        this->A_[globalIdx4][globalIdx1] -= TSecond[0][2];
-        this->A_[globalIdx4][globalIdx6] -= TSecond[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal2] -= TSecond[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal4] -= TSecond[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal1] -= TSecond[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal6] -= TSecond[0][3];
 
         u[0] = pc[1];
         u[1] = pc[3];
@@ -1016,15 +1016,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx2][globalIdx2] += T[0][0];
-        this->A_[globalIdx2][globalIdx4] += T[0][1];
-        this->A_[globalIdx2][globalIdx3] += T[0][2];
-        this->A_[globalIdx2][globalIdx8] += T[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal2] += T[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal4] += T[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal3] += T[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal8] += T[0][3];
 
-        this->A_[globalIdx4][globalIdx2] -= TSecond[0][0];
-        this->A_[globalIdx4][globalIdx4] -= TSecond[0][1];
-        this->A_[globalIdx4][globalIdx3] -= TSecond[0][2];
-        this->A_[globalIdx4][globalIdx8] -= TSecond[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal2] -= TSecond[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal4] -= TSecond[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal3] -= TSecond[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal8] -= TSecond[0][3];
 
         u[0] = pc[1];
         u[1] = pc[3];
@@ -1040,15 +1040,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx2][globalIdx2] += T[0][0];
-        this->A_[globalIdx2][globalIdx4] += T[0][1];
-        this->A_[globalIdx2][globalIdx3] += T[0][2];
-        this->A_[globalIdx2][globalIdx6] += T[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal2] += T[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal4] += T[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal3] += T[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal6] += T[0][3];
 
-        this->A_[globalIdx4][globalIdx2] -= TSecond[0][0];
-        this->A_[globalIdx4][globalIdx4] -= TSecond[0][1];
-        this->A_[globalIdx4][globalIdx3] -= TSecond[0][2];
-        this->A_[globalIdx4][globalIdx6] -= TSecond[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal2] -= TSecond[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal4] -= TSecond[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal3] -= TSecond[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal6] -= TSecond[0][3];
 
         u[0] = pc[1];
         u[1] = pc[3];
@@ -1064,15 +1064,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx2][globalIdx2] += T[0][0];
-        this->A_[globalIdx2][globalIdx4] += T[0][1];
-        this->A_[globalIdx2][globalIdx1] += T[0][2];
-        this->A_[globalIdx2][globalIdx8] += T[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal2] += T[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal4] += T[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal1] += T[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal8] += T[0][3];
 
-        this->A_[globalIdx4][globalIdx2] -= TSecond[0][0];
-        this->A_[globalIdx4][globalIdx4] -= TSecond[0][1];
-        this->A_[globalIdx4][globalIdx1] -= TSecond[0][2];
-        this->A_[globalIdx4][globalIdx8] -= TSecond[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal2] -= TSecond[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal4] -= TSecond[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal1] -= TSecond[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal8] -= TSecond[0][3];
 
         u[0] = pc[1];
         u[1] = pc[3];
@@ -1091,20 +1091,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 3, 2, 1, 0, 7, 6);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx4, 3, 0);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx3, 2, 1);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal4, 3, 0);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal3, 2, 1);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx4][globalIdx4] += T[0][0];
-        this->A_[globalIdx4][globalIdx3] += T[0][1];
-        this->A_[globalIdx4][globalIdx2] += T[0][2];
-        this->A_[globalIdx4][globalIdx8] += T[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal4] += T[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal3] += T[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal2] += T[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal8] += T[0][3];
 
-        this->A_[globalIdx3][globalIdx4] -= TSecond[0][0];
-        this->A_[globalIdx3][globalIdx3] -= TSecond[0][1];
-        this->A_[globalIdx3][globalIdx2] -= TSecond[0][2];
-        this->A_[globalIdx3][globalIdx8] -= TSecond[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal4] -= TSecond[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal3] -= TSecond[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal2] -= TSecond[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal8] -= TSecond[0][3];
 
         u[0] = pc[3];
         u[1] = pc[2];
@@ -1120,15 +1120,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx4][globalIdx4] += T[0][0];
-        this->A_[globalIdx4][globalIdx3] += T[0][1];
-        this->A_[globalIdx4][globalIdx1] += T[0][2];
-        this->A_[globalIdx4][globalIdx7] += T[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal4] += T[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal3] += T[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal1] += T[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal7] += T[0][3];
 
-        this->A_[globalIdx3][globalIdx4] -= TSecond[0][0];
-        this->A_[globalIdx3][globalIdx3] -= TSecond[0][1];
-        this->A_[globalIdx3][globalIdx1] -= TSecond[0][2];
-        this->A_[globalIdx3][globalIdx7] -= TSecond[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal4] -= TSecond[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal3] -= TSecond[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal1] -= TSecond[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal7] -= TSecond[0][3];
 
         u[0] = pc[3];
         u[1] = pc[2];
@@ -1144,15 +1144,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx4][globalIdx4] += T[0][0];
-        this->A_[globalIdx4][globalIdx3] += T[0][1];
-        this->A_[globalIdx4][globalIdx1] += T[0][2];
-        this->A_[globalIdx4][globalIdx8] += T[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal4] += T[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal3] += T[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal1] += T[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal8] += T[0][3];
 
-        this->A_[globalIdx3][globalIdx4] -= TSecond[0][0];
-        this->A_[globalIdx3][globalIdx3] -= TSecond[0][1];
-        this->A_[globalIdx3][globalIdx1] -= TSecond[0][2];
-        this->A_[globalIdx3][globalIdx8] -= TSecond[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal4] -= TSecond[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal3] -= TSecond[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal1] -= TSecond[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal8] -= TSecond[0][3];
 
         u[0] = pc[3];
         u[1] = pc[2];
@@ -1168,15 +1168,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx4][globalIdx4] += T[0][0];
-        this->A_[globalIdx4][globalIdx3] += T[0][1];
-        this->A_[globalIdx4][globalIdx2] += T[0][2];
-        this->A_[globalIdx4][globalIdx7] += T[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal4] += T[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal3] += T[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal2] += T[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal7] += T[0][3];
 
-        this->A_[globalIdx3][globalIdx4] -= TSecond[0][0];
-        this->A_[globalIdx3][globalIdx3] -= TSecond[0][1];
-        this->A_[globalIdx3][globalIdx2] -= TSecond[0][2];
-        this->A_[globalIdx3][globalIdx7] -= TSecond[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal4] -= TSecond[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal3] -= TSecond[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal2] -= TSecond[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal7] -= TSecond[0][3];
 
         u[0] = pc[3];
         u[1] = pc[2];
@@ -1195,20 +1195,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 2, 0, 3, 1, 6, 4);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx3, 2, 0);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx1, 0, 1);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal3, 2, 0);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal1, 0, 1);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx3][globalIdx3] += T[0][0];
-        this->A_[globalIdx3][globalIdx1] += T[0][1];
-        this->A_[globalIdx3][globalIdx4] += T[0][2];
-        this->A_[globalIdx3][globalIdx7] += T[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal3] += T[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal1] += T[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal4] += T[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal7] += T[0][3];
 
-        this->A_[globalIdx1][globalIdx3] -= TSecond[0][0];
-        this->A_[globalIdx1][globalIdx1] -= TSecond[0][1];
-        this->A_[globalIdx1][globalIdx4] -= TSecond[0][2];
-        this->A_[globalIdx1][globalIdx7] -= TSecond[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal3] -= TSecond[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal1] -= TSecond[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal4] -= TSecond[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal7] -= TSecond[0][3];
 
         u[0] = pc[2];
         u[1] = pc[0];
@@ -1224,15 +1224,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx3][globalIdx3] += T[0][0];
-        this->A_[globalIdx3][globalIdx1] += T[0][1];
-        this->A_[globalIdx3][globalIdx2] += T[0][2];
-        this->A_[globalIdx3][globalIdx5] += T[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal3] += T[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal1] += T[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal2] += T[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal5] += T[0][3];
 
-        this->A_[globalIdx1][globalIdx3] -= TSecond[0][0];
-        this->A_[globalIdx1][globalIdx1] -= TSecond[0][1];
-        this->A_[globalIdx1][globalIdx2] -= TSecond[0][2];
-        this->A_[globalIdx1][globalIdx5] -= TSecond[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal3] -= TSecond[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal1] -= TSecond[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal2] -= TSecond[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal5] -= TSecond[0][3];
 
         u[0] = pc[2];
         u[1] = pc[0];
@@ -1248,15 +1248,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx3][globalIdx3] += T[0][0];
-        this->A_[globalIdx3][globalIdx1] += T[0][1];
-        this->A_[globalIdx3][globalIdx2] += T[0][2];
-        this->A_[globalIdx3][globalIdx7] += T[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal3] += T[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal1] += T[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal2] += T[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal7] += T[0][3];
 
-        this->A_[globalIdx1][globalIdx3] -= TSecond[0][0];
-        this->A_[globalIdx1][globalIdx1] -= TSecond[0][1];
-        this->A_[globalIdx1][globalIdx2] -= TSecond[0][2];
-        this->A_[globalIdx1][globalIdx7] -= TSecond[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal3] -= TSecond[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal1] -= TSecond[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal2] -= TSecond[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal7] -= TSecond[0][3];
 
         u[0] = pc[2];
         u[1] = pc[0];
@@ -1272,15 +1272,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx3][globalIdx3] += T[0][0];
-        this->A_[globalIdx3][globalIdx1] += T[0][1];
-        this->A_[globalIdx3][globalIdx4] += T[0][2];
-        this->A_[globalIdx3][globalIdx5] += T[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal3] += T[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal1] += T[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal4] += T[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal5] += T[0][3];
 
-        this->A_[globalIdx1][globalIdx3] -= TSecond[0][0];
-        this->A_[globalIdx1][globalIdx1] -= TSecond[0][1];
-        this->A_[globalIdx1][globalIdx4] -= TSecond[0][2];
-        this->A_[globalIdx1][globalIdx5] -= TSecond[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal3] -= TSecond[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal1] -= TSecond[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal4] -= TSecond[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal5] -= TSecond[0][3];
 
         u[0] = pc[2];
         u[1] = pc[0];
@@ -1299,20 +1299,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 5, 4, 7, 6, 1, 0);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx6, 5, 2);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx5, 4, 1);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal6, 5, 2);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal5, 4, 1);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx6][globalIdx6] += T[0][0];
-        this->A_[globalIdx6][globalIdx5] += T[0][1];
-        this->A_[globalIdx6][globalIdx8] += T[0][2];
-        this->A_[globalIdx6][globalIdx2] += T[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal6] += T[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal5] += T[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal8] += T[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal2] += T[0][3];
 
-        this->A_[globalIdx5][globalIdx6] -= TSecond[0][0];
-        this->A_[globalIdx5][globalIdx5] -= TSecond[0][1];
-        this->A_[globalIdx5][globalIdx8] -= TSecond[0][2];
-        this->A_[globalIdx5][globalIdx2] -= TSecond[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal6] -= TSecond[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal5] -= TSecond[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal8] -= TSecond[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal2] -= TSecond[0][3];
 
         u[0] = pc[5];
         u[1] = pc[4];
@@ -1328,15 +1328,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx6][globalIdx6] += T[0][0];
-        this->A_[globalIdx6][globalIdx5] += T[0][1];
-        this->A_[globalIdx6][globalIdx7] += T[0][2];
-        this->A_[globalIdx6][globalIdx1] += T[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal6] += T[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal5] += T[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal7] += T[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal1] += T[0][3];
 
-        this->A_[globalIdx5][globalIdx6] -= TSecond[0][0];
-        this->A_[globalIdx5][globalIdx5] -= TSecond[0][1];
-        this->A_[globalIdx5][globalIdx7] -= TSecond[0][2];
-        this->A_[globalIdx5][globalIdx1] -= TSecond[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal6] -= TSecond[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal5] -= TSecond[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal7] -= TSecond[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal1] -= TSecond[0][3];
 
         u[0] = pc[5];
         u[1] = pc[4];
@@ -1352,15 +1352,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx6][globalIdx6] += T[0][0];
-        this->A_[globalIdx6][globalIdx5] += T[0][1];
-        this->A_[globalIdx6][globalIdx7] += T[0][2];
-        this->A_[globalIdx6][globalIdx2] += T[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal6] += T[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal5] += T[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal7] += T[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal2] += T[0][3];
 
-        this->A_[globalIdx5][globalIdx6] -= TSecond[0][0];
-        this->A_[globalIdx5][globalIdx5] -= TSecond[0][1];
-        this->A_[globalIdx5][globalIdx7] -= TSecond[0][2];
-        this->A_[globalIdx5][globalIdx2] -= TSecond[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal6] -= TSecond[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal5] -= TSecond[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal7] -= TSecond[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal2] -= TSecond[0][3];
 
         u[0] = pc[5];
         u[1] = pc[4];
@@ -1376,15 +1376,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx6][globalIdx6] += T[0][0];
-        this->A_[globalIdx6][globalIdx5] += T[0][1];
-        this->A_[globalIdx6][globalIdx8] += T[0][2];
-        this->A_[globalIdx6][globalIdx1] += T[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal6] += T[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal5] += T[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal8] += T[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal1] += T[0][3];
 
-        this->A_[globalIdx5][globalIdx6] -= TSecond[0][0];
-        this->A_[globalIdx5][globalIdx5] -= TSecond[0][1];
-        this->A_[globalIdx5][globalIdx8] -= TSecond[0][2];
-        this->A_[globalIdx5][globalIdx1] -= TSecond[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal6] -= TSecond[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal5] -= TSecond[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal8] -= TSecond[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal1] -= TSecond[0][3];
 
         u[0] = pc[5];
         u[1] = pc[4];
@@ -1403,21 +1403,21 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 7, 5, 6, 4, 3, 1);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx8, 7, 2);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx6, 5, 1);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal8, 7, 2);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal6, 5, 1);
 
 
     if (caseL == 1)
     {
-        this->A_[globalIdx8][globalIdx8] += T[0][0];
-        this->A_[globalIdx8][globalIdx6] += T[0][1];
-        this->A_[globalIdx8][globalIdx7] += T[0][2];
-        this->A_[globalIdx8][globalIdx4] += T[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal8] += T[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal6] += T[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal7] += T[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal4] += T[0][3];
 
-        this->A_[globalIdx6][globalIdx8] -= TSecond[0][0];
-        this->A_[globalIdx6][globalIdx6] -= TSecond[0][1];
-        this->A_[globalIdx6][globalIdx7] -= TSecond[0][2];
-        this->A_[globalIdx6][globalIdx4] -= TSecond[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal8] -= TSecond[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal6] -= TSecond[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal7] -= TSecond[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal4] -= TSecond[0][3];
 
         u[0] = pc[7];
         u[1] = pc[5];
@@ -1433,15 +1433,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx8][globalIdx8] += T[0][0];
-        this->A_[globalIdx8][globalIdx6] += T[0][1];
-        this->A_[globalIdx8][globalIdx5] += T[0][2];
-        this->A_[globalIdx8][globalIdx2] += T[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal8] += T[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal6] += T[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal5] += T[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal2] += T[0][3];
 
-        this->A_[globalIdx6][globalIdx8] -= TSecond[0][0];
-        this->A_[globalIdx6][globalIdx6] -= TSecond[0][1];
-        this->A_[globalIdx6][globalIdx5] -= TSecond[0][2];
-        this->A_[globalIdx6][globalIdx2] -= TSecond[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal8] -= TSecond[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal6] -= TSecond[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal5] -= TSecond[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal2] -= TSecond[0][3];
 
         u[0] = pc[7];
         u[1] = pc[5];
@@ -1457,15 +1457,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx8][globalIdx8] += T[0][0];
-        this->A_[globalIdx8][globalIdx6] += T[0][1];
-        this->A_[globalIdx8][globalIdx5] += T[0][2];
-        this->A_[globalIdx8][globalIdx4] += T[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal8] += T[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal6] += T[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal5] += T[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal4] += T[0][3];
 
-        this->A_[globalIdx6][globalIdx8] -= TSecond[0][0];
-        this->A_[globalIdx6][globalIdx6] -= TSecond[0][1];
-        this->A_[globalIdx6][globalIdx5] -= TSecond[0][2];
-        this->A_[globalIdx6][globalIdx4] -= TSecond[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal8] -= TSecond[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal6] -= TSecond[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal5] -= TSecond[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal4] -= TSecond[0][3];
 
         u[0] = pc[7];
         u[1] = pc[5];
@@ -1481,15 +1481,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx8][globalIdx8] += T[0][0];
-        this->A_[globalIdx8][globalIdx6] += T[0][1];
-        this->A_[globalIdx8][globalIdx7] += T[0][2];
-        this->A_[globalIdx8][globalIdx2] += T[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal8] += T[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal6] += T[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal7] += T[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal2] += T[0][3];
 
-        this->A_[globalIdx6][globalIdx8] -= TSecond[0][0];
-        this->A_[globalIdx6][globalIdx6] -= TSecond[0][1];
-        this->A_[globalIdx6][globalIdx7] -= TSecond[0][2];
-        this->A_[globalIdx6][globalIdx2] -= TSecond[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal8] -= TSecond[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal6] -= TSecond[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal7] -= TSecond[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal2] -= TSecond[0][3];
 
         u[0] = pc[7];
         u[1] = pc[5];
@@ -1508,20 +1508,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 6, 7, 4, 5, 2, 3);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx7, 6, 2);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx8, 7, 1);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal7, 6, 2);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal8, 7, 1);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx7][globalIdx7] += T[0][0];
-        this->A_[globalIdx7][globalIdx8] += T[0][1];
-        this->A_[globalIdx7][globalIdx5] += T[0][2];
-        this->A_[globalIdx7][globalIdx3] += T[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal7] += T[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal8] += T[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal5] += T[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal3] += T[0][3];
 
-        this->A_[globalIdx8][globalIdx7] -= TSecond[0][0];
-        this->A_[globalIdx8][globalIdx8] -= TSecond[0][1];
-        this->A_[globalIdx8][globalIdx5] -= TSecond[0][2];
-        this->A_[globalIdx8][globalIdx3] -= TSecond[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal7] -= TSecond[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal8] -= TSecond[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal5] -= TSecond[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal3] -= TSecond[0][3];
 
         u[0] = pc[6];
         u[1] = pc[7];
@@ -1537,15 +1537,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx7][globalIdx7] += T[0][0];
-        this->A_[globalIdx7][globalIdx8] += T[0][1];
-        this->A_[globalIdx7][globalIdx6] += T[0][2];
-        this->A_[globalIdx7][globalIdx4] += T[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal7] += T[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal8] += T[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal6] += T[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal4] += T[0][3];
 
-        this->A_[globalIdx8][globalIdx7] -= TSecond[0][0];
-        this->A_[globalIdx8][globalIdx8] -= TSecond[0][1];
-        this->A_[globalIdx8][globalIdx6] -= TSecond[0][2];
-        this->A_[globalIdx8][globalIdx4] -= TSecond[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal7] -= TSecond[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal8] -= TSecond[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal6] -= TSecond[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal4] -= TSecond[0][3];
 
         u[0] = pc[6];
         u[1] = pc[7];
@@ -1561,15 +1561,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx7][globalIdx7] += T[0][0];
-        this->A_[globalIdx7][globalIdx8] += T[0][1];
-        this->A_[globalIdx7][globalIdx6] += T[0][2];
-        this->A_[globalIdx7][globalIdx3] += T[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal7] += T[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal8] += T[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal6] += T[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal3] += T[0][3];
 
-        this->A_[globalIdx8][globalIdx7] -= TSecond[0][0];
-        this->A_[globalIdx8][globalIdx8] -= TSecond[0][1];
-        this->A_[globalIdx8][globalIdx6] -= TSecond[0][2];
-        this->A_[globalIdx8][globalIdx3] -= TSecond[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal7] -= TSecond[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal8] -= TSecond[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal6] -= TSecond[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal3] -= TSecond[0][3];
 
         u[0] = pc[6];
         u[1] = pc[7];
@@ -1585,15 +1585,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx7][globalIdx7] += T[0][0];
-        this->A_[globalIdx7][globalIdx8] += T[0][1];
-        this->A_[globalIdx7][globalIdx5] += T[0][2];
-        this->A_[globalIdx7][globalIdx4] += T[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal7] += T[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal8] += T[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal5] += T[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal4] += T[0][3];
 
-        this->A_[globalIdx8][globalIdx7] -= TSecond[0][0];
-        this->A_[globalIdx8][globalIdx8] -= TSecond[0][1];
-        this->A_[globalIdx8][globalIdx5] -= TSecond[0][2];
-        this->A_[globalIdx8][globalIdx4] -= TSecond[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal7] -= TSecond[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal8] -= TSecond[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal5] -= TSecond[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal4] -= TSecond[0][3];
 
         u[0] = pc[6];
         u[1] = pc[7];
@@ -1612,20 +1612,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 4, 6, 5, 7, 0, 2);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx5, 4, 2);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx7, 6, 1);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal5, 4, 2);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal7, 6, 1);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx5][globalIdx5] += T[0][0];
-        this->A_[globalIdx5][globalIdx7] += T[0][1];
-        this->A_[globalIdx5][globalIdx6] += T[0][2];
-        this->A_[globalIdx5][globalIdx1] += T[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal5] += T[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal7] += T[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal6] += T[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal1] += T[0][3];
 
-        this->A_[globalIdx7][globalIdx5] -= TSecond[0][0];
-        this->A_[globalIdx7][globalIdx7] -= TSecond[0][1];
-        this->A_[globalIdx7][globalIdx6] -= TSecond[0][2];
-        this->A_[globalIdx7][globalIdx1] -= TSecond[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal5] -= TSecond[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal7] -= TSecond[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal6] -= TSecond[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal1] -= TSecond[0][3];
 
         u[0] = pc[4];
         u[1] = pc[6];
@@ -1641,15 +1641,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx5][globalIdx5] += T[0][0];
-        this->A_[globalIdx5][globalIdx7] += T[0][1];
-        this->A_[globalIdx5][globalIdx8] += T[0][2];
-        this->A_[globalIdx5][globalIdx3] += T[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal5] += T[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal7] += T[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal8] += T[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal3] += T[0][3];
 
-        this->A_[globalIdx7][globalIdx5] -= TSecond[0][0];
-        this->A_[globalIdx7][globalIdx7] -= TSecond[0][1];
-        this->A_[globalIdx7][globalIdx8] -= TSecond[0][2];
-        this->A_[globalIdx7][globalIdx3] -= TSecond[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal5] -= TSecond[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal7] -= TSecond[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal8] -= TSecond[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal3] -= TSecond[0][3];
 
         u[0] = pc[4];
         u[1] = pc[6];
@@ -1665,15 +1665,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx5][globalIdx5] += T[0][0];
-        this->A_[globalIdx5][globalIdx7] += T[0][1];
-        this->A_[globalIdx5][globalIdx8] += T[0][2];
-        this->A_[globalIdx5][globalIdx1] += T[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal5] += T[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal7] += T[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal8] += T[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal1] += T[0][3];
 
-        this->A_[globalIdx7][globalIdx5] -= TSecond[0][0];
-        this->A_[globalIdx7][globalIdx7] -= TSecond[0][1];
-        this->A_[globalIdx7][globalIdx8] -= TSecond[0][2];
-        this->A_[globalIdx7][globalIdx1] -= TSecond[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal5] -= TSecond[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal7] -= TSecond[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal8] -= TSecond[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal1] -= TSecond[0][3];
 
         u[0] = pc[4];
         u[1] = pc[6];
@@ -1689,15 +1689,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx5][globalIdx5] += T[0][0];
-        this->A_[globalIdx5][globalIdx7] += T[0][1];
-        this->A_[globalIdx5][globalIdx6] += T[0][2];
-        this->A_[globalIdx5][globalIdx3] += T[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal5] += T[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal7] += T[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal6] += T[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal3] += T[0][3];
 
-        this->A_[globalIdx7][globalIdx5] -= TSecond[0][0];
-        this->A_[globalIdx7][globalIdx7] -= TSecond[0][1];
-        this->A_[globalIdx7][globalIdx6] -= TSecond[0][2];
-        this->A_[globalIdx7][globalIdx3] -= TSecond[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal5] -= TSecond[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal7] -= TSecond[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal6] -= TSecond[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal3] -= TSecond[0][3];
 
         u[0] = pc[4];
         u[1] = pc[6];
@@ -1716,20 +1716,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 4, 0, 6, 2, 5, 1);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx5, 4, 0);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx1, 0, 2);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal5, 4, 0);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal1, 0, 2);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx5][globalIdx5] += T[0][0];
-        this->A_[globalIdx5][globalIdx1] += T[0][1];
-        this->A_[globalIdx5][globalIdx7] += T[0][2];
-        this->A_[globalIdx5][globalIdx6] += T[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal5] += T[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal1] += T[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal7] += T[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal6] += T[0][3];
 
-        this->A_[globalIdx1][globalIdx5] -= TSecond[0][0];
-        this->A_[globalIdx1][globalIdx1] -= TSecond[0][1];
-        this->A_[globalIdx1][globalIdx7] -= TSecond[0][2];
-        this->A_[globalIdx1][globalIdx6] -= TSecond[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal5] -= TSecond[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal1] -= TSecond[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal7] -= TSecond[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal6] -= TSecond[0][3];
 
         u[0] = pc[4];
         u[1] = pc[0];
@@ -1745,15 +1745,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx5][globalIdx5] += T[0][0];
-        this->A_[globalIdx5][globalIdx1] += T[0][1];
-        this->A_[globalIdx5][globalIdx3] += T[0][2];
-        this->A_[globalIdx5][globalIdx2] += T[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal5] += T[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal1] += T[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal3] += T[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal2] += T[0][3];
 
-        this->A_[globalIdx1][globalIdx5] -= TSecond[0][0];
-        this->A_[globalIdx1][globalIdx1] -= TSecond[0][1];
-        this->A_[globalIdx1][globalIdx3] -= TSecond[0][2];
-        this->A_[globalIdx1][globalIdx2] -= TSecond[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal5] -= TSecond[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal1] -= TSecond[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal3] -= TSecond[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal2] -= TSecond[0][3];
 
         u[0] = pc[4];
         u[1] = pc[0];
@@ -1769,15 +1769,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx5][globalIdx5] += T[0][0];
-        this->A_[globalIdx5][globalIdx1] += T[0][1];
-        this->A_[globalIdx5][globalIdx3] += T[0][2];
-        this->A_[globalIdx5][globalIdx6] += T[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal5] += T[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal1] += T[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal3] += T[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal6] += T[0][3];
 
-        this->A_[globalIdx1][globalIdx5] -= TSecond[0][0];
-        this->A_[globalIdx1][globalIdx1] -= TSecond[0][1];
-        this->A_[globalIdx1][globalIdx3] -= TSecond[0][2];
-        this->A_[globalIdx1][globalIdx6] -= TSecond[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal5] -= TSecond[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal1] -= TSecond[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal3] -= TSecond[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal6] -= TSecond[0][3];
 
         u[0] = pc[4];
         u[1] = pc[0];
@@ -1793,15 +1793,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx5][globalIdx5] += T[0][0];
-        this->A_[globalIdx5][globalIdx1] += T[0][1];
-        this->A_[globalIdx5][globalIdx7] += T[0][2];
-        this->A_[globalIdx5][globalIdx2] += T[0][3];
+        this->A_[eIdxGlobal5][eIdxGlobal5] += T[0][0];
+        this->A_[eIdxGlobal5][eIdxGlobal1] += T[0][1];
+        this->A_[eIdxGlobal5][eIdxGlobal7] += T[0][2];
+        this->A_[eIdxGlobal5][eIdxGlobal2] += T[0][3];
 
-        this->A_[globalIdx1][globalIdx5] -= TSecond[0][0];
-        this->A_[globalIdx1][globalIdx1] -= TSecond[0][1];
-        this->A_[globalIdx1][globalIdx7] -= TSecond[0][2];
-        this->A_[globalIdx1][globalIdx2] -= TSecond[0][3];
+        this->A_[eIdxGlobal1][eIdxGlobal5] -= TSecond[0][0];
+        this->A_[eIdxGlobal1][eIdxGlobal1] -= TSecond[0][1];
+        this->A_[eIdxGlobal1][eIdxGlobal7] -= TSecond[0][2];
+        this->A_[eIdxGlobal1][eIdxGlobal2] -= TSecond[0][3];
 
         u[0] = pc[4];
         u[1] = pc[0];
@@ -1820,20 +1820,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 1, 5, 3, 7, 0, 4);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx2, 1, 2);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx6, 5, 0);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal2, 1, 2);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal6, 5, 0);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx2][globalIdx2] += T[0][0];
-        this->A_[globalIdx2][globalIdx6] += T[0][1];
-        this->A_[globalIdx2][globalIdx4] += T[0][2];
-        this->A_[globalIdx2][globalIdx1] += T[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal2] += T[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal6] += T[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal4] += T[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal1] += T[0][3];
 
-        this->A_[globalIdx6][globalIdx2] -= TSecond[0][0];
-        this->A_[globalIdx6][globalIdx6] -= TSecond[0][1];
-        this->A_[globalIdx6][globalIdx4] -= TSecond[0][2];
-        this->A_[globalIdx6][globalIdx1] -= TSecond[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal2] -= TSecond[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal6] -= TSecond[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal4] -= TSecond[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal1] -= TSecond[0][3];
 
         u[0] = pc[1];
         u[1] = pc[5];
@@ -1849,15 +1849,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx2][globalIdx2] += T[0][0];
-        this->A_[globalIdx2][globalIdx6] += T[0][1];
-        this->A_[globalIdx2][globalIdx8] += T[0][2];
-        this->A_[globalIdx2][globalIdx5] += T[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal2] += T[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal6] += T[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal8] += T[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal5] += T[0][3];
 
-        this->A_[globalIdx6][globalIdx2] -= TSecond[0][0];
-        this->A_[globalIdx6][globalIdx6] -= TSecond[0][1];
-        this->A_[globalIdx6][globalIdx8] -= TSecond[0][2];
-        this->A_[globalIdx6][globalIdx5] -= TSecond[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal2] -= TSecond[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal6] -= TSecond[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal8] -= TSecond[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal5] -= TSecond[0][3];
 
         u[0] = pc[1];
         u[1] = pc[5];
@@ -1873,15 +1873,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx2][globalIdx2] += T[0][0];
-        this->A_[globalIdx2][globalIdx6] += T[0][1];
-        this->A_[globalIdx2][globalIdx8] += T[0][2];
-        this->A_[globalIdx2][globalIdx1] += T[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal2] += T[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal6] += T[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal8] += T[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal1] += T[0][3];
 
-        this->A_[globalIdx6][globalIdx2] -= TSecond[0][0];
-        this->A_[globalIdx6][globalIdx6] -= TSecond[0][1];
-        this->A_[globalIdx6][globalIdx8] -= TSecond[0][2];
-        this->A_[globalIdx6][globalIdx1] -= TSecond[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal2] -= TSecond[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal6] -= TSecond[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal8] -= TSecond[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal1] -= TSecond[0][3];
 
         u[0] = pc[1];
         u[1] = pc[5];
@@ -1897,15 +1897,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx2][globalIdx2] += T[0][0];
-        this->A_[globalIdx2][globalIdx6] += T[0][1];
-        this->A_[globalIdx2][globalIdx4] += T[0][2];
-        this->A_[globalIdx2][globalIdx5] += T[0][3];
+        this->A_[eIdxGlobal2][eIdxGlobal2] += T[0][0];
+        this->A_[eIdxGlobal2][eIdxGlobal6] += T[0][1];
+        this->A_[eIdxGlobal2][eIdxGlobal4] += T[0][2];
+        this->A_[eIdxGlobal2][eIdxGlobal5] += T[0][3];
 
-        this->A_[globalIdx6][globalIdx2] -= TSecond[0][0];
-        this->A_[globalIdx6][globalIdx6] -= TSecond[0][1];
-        this->A_[globalIdx6][globalIdx4] -= TSecond[0][2];
-        this->A_[globalIdx6][globalIdx5] -= TSecond[0][3];
+        this->A_[eIdxGlobal6][eIdxGlobal2] -= TSecond[0][0];
+        this->A_[eIdxGlobal6][eIdxGlobal6] -= TSecond[0][1];
+        this->A_[eIdxGlobal6][eIdxGlobal4] -= TSecond[0][2];
+        this->A_[eIdxGlobal6][eIdxGlobal5] -= TSecond[0][3];
 
         u[0] = pc[1];
         u[1] = pc[5];
@@ -1924,20 +1924,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 7, 3, 5, 1, 6, 2);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx8, 7, 0);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx4, 3, 2);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal8, 7, 0);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal4, 3, 2);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx8][globalIdx8] += T[0][0];
-        this->A_[globalIdx8][globalIdx4] += T[0][1];
-        this->A_[globalIdx8][globalIdx6] += T[0][2];
-        this->A_[globalIdx8][globalIdx7] += T[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal8] += T[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal4] += T[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal6] += T[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal7] += T[0][3];
 
-        this->A_[globalIdx4][globalIdx8] -= TSecond[0][0];
-        this->A_[globalIdx4][globalIdx4] -= TSecond[0][1];
-        this->A_[globalIdx4][globalIdx6] -= TSecond[0][2];
-        this->A_[globalIdx4][globalIdx7] -= TSecond[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal8] -= TSecond[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal4] -= TSecond[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal6] -= TSecond[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal7] -= TSecond[0][3];
 
         u[0] = pc[7];
         u[1] = pc[3];
@@ -1953,15 +1953,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx8][globalIdx8] += T[0][0];
-        this->A_[globalIdx8][globalIdx4] += T[0][1];
-        this->A_[globalIdx8][globalIdx2] += T[0][2];
-        this->A_[globalIdx8][globalIdx3] += T[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal8] += T[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal4] += T[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal2] += T[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal3] += T[0][3];
 
-        this->A_[globalIdx4][globalIdx8] -= TSecond[0][0];
-        this->A_[globalIdx4][globalIdx4] -= TSecond[0][1];
-        this->A_[globalIdx4][globalIdx2] -= TSecond[0][2];
-        this->A_[globalIdx4][globalIdx3] -= TSecond[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal8] -= TSecond[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal4] -= TSecond[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal2] -= TSecond[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal3] -= TSecond[0][3];
 
         u[0] = pc[7];
         u[1] = pc[3];
@@ -1977,15 +1977,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx8][globalIdx8] += T[0][0];
-        this->A_[globalIdx8][globalIdx4] += T[0][1];
-        this->A_[globalIdx8][globalIdx2] += T[0][2];
-        this->A_[globalIdx8][globalIdx7] += T[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal8] += T[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal4] += T[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal2] += T[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal7] += T[0][3];
 
-        this->A_[globalIdx4][globalIdx8] -= TSecond[0][0];
-        this->A_[globalIdx4][globalIdx4] -= TSecond[0][1];
-        this->A_[globalIdx4][globalIdx2] -= TSecond[0][2];
-        this->A_[globalIdx4][globalIdx7] -= TSecond[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal8] -= TSecond[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal4] -= TSecond[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal2] -= TSecond[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal7] -= TSecond[0][3];
 
         u[0] = pc[7];
         u[1] = pc[3];
@@ -2001,15 +2001,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx8][globalIdx8] += T[0][0];
-        this->A_[globalIdx8][globalIdx4] += T[0][1];
-        this->A_[globalIdx8][globalIdx6] += T[0][2];
-        this->A_[globalIdx8][globalIdx3] += T[0][3];
+        this->A_[eIdxGlobal8][eIdxGlobal8] += T[0][0];
+        this->A_[eIdxGlobal8][eIdxGlobal4] += T[0][1];
+        this->A_[eIdxGlobal8][eIdxGlobal6] += T[0][2];
+        this->A_[eIdxGlobal8][eIdxGlobal3] += T[0][3];
 
-        this->A_[globalIdx4][globalIdx8] -= TSecond[0][0];
-        this->A_[globalIdx4][globalIdx4] -= TSecond[0][1];
-        this->A_[globalIdx4][globalIdx6] -= TSecond[0][2];
-        this->A_[globalIdx4][globalIdx3] -= TSecond[0][3];
+        this->A_[eIdxGlobal4][eIdxGlobal8] -= TSecond[0][0];
+        this->A_[eIdxGlobal4][eIdxGlobal4] -= TSecond[0][1];
+        this->A_[eIdxGlobal4][eIdxGlobal6] -= TSecond[0][2];
+        this->A_[eIdxGlobal4][eIdxGlobal3] -= TSecond[0][3];
 
         u[0] = pc[7];
         u[1] = pc[3];
@@ -2028,20 +2028,20 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     caseL = transmissibilityCalculator_.transmissibility(T, interactionVolume, lambda, 2, 6, 0, 4, 3, 7);
 
     TSecond = T;
-    T *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx3, 2, 2);
-    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, globalIdx7, 6, 0);
+    T *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal3, 2, 2);
+    TSecond *= interactionVolumes_.faceAreaFactor(interactionVolume, eIdxGlobal7, 6, 0);
 
     if (caseL == 1)
     {
-        this->A_[globalIdx3][globalIdx3] += T[0][0];
-        this->A_[globalIdx3][globalIdx7] += T[0][1];
-        this->A_[globalIdx3][globalIdx1] += T[0][2];
-        this->A_[globalIdx3][globalIdx4] += T[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal3] += T[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal7] += T[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal1] += T[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal4] += T[0][3];
 
-        this->A_[globalIdx7][globalIdx3] -= TSecond[0][0];
-        this->A_[globalIdx7][globalIdx7] -= TSecond[0][1];
-        this->A_[globalIdx7][globalIdx1] -= TSecond[0][2];
-        this->A_[globalIdx7][globalIdx4] -= TSecond[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal3] -= TSecond[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal7] -= TSecond[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal1] -= TSecond[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal4] -= TSecond[0][3];
 
         u[0] = pc[2];
         u[1] = pc[6];
@@ -2057,15 +2057,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 2)
     {
-        this->A_[globalIdx3][globalIdx3] += T[0][0];
-        this->A_[globalIdx3][globalIdx7] += T[0][1];
-        this->A_[globalIdx3][globalIdx5] += T[0][2];
-        this->A_[globalIdx3][globalIdx8] += T[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal3] += T[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal7] += T[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal5] += T[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal8] += T[0][3];
 
-        this->A_[globalIdx7][globalIdx3] -= TSecond[0][0];
-        this->A_[globalIdx7][globalIdx7] -= TSecond[0][1];
-        this->A_[globalIdx7][globalIdx5] -= TSecond[0][2];
-        this->A_[globalIdx7][globalIdx8] -= TSecond[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal3] -= TSecond[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal7] -= TSecond[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal5] -= TSecond[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal8] -= TSecond[0][3];
 
         u[0] = pc[2];
         u[1] = pc[6];
@@ -2081,15 +2081,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else if (caseL == 3)
     {
-        this->A_[globalIdx3][globalIdx3] += T[0][0];
-        this->A_[globalIdx3][globalIdx7] += T[0][1];
-        this->A_[globalIdx3][globalIdx5] += T[0][2];
-        this->A_[globalIdx3][globalIdx4] += T[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal3] += T[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal7] += T[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal5] += T[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal4] += T[0][3];
 
-        this->A_[globalIdx7][globalIdx3] -= TSecond[0][0];
-        this->A_[globalIdx7][globalIdx7] -= TSecond[0][1];
-        this->A_[globalIdx7][globalIdx5] -= TSecond[0][2];
-        this->A_[globalIdx7][globalIdx4] -= TSecond[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal3] -= TSecond[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal7] -= TSecond[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal5] -= TSecond[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal4] -= TSecond[0][3];
 
         u[0] = pc[2];
         u[1] = pc[6];
@@ -2105,15 +2105,15 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
     else
     {
-        this->A_[globalIdx3][globalIdx3] += T[0][0];
-        this->A_[globalIdx3][globalIdx7] += T[0][1];
-        this->A_[globalIdx3][globalIdx1] += T[0][2];
-        this->A_[globalIdx3][globalIdx8] += T[0][3];
+        this->A_[eIdxGlobal3][eIdxGlobal3] += T[0][0];
+        this->A_[eIdxGlobal3][eIdxGlobal7] += T[0][1];
+        this->A_[eIdxGlobal3][eIdxGlobal1] += T[0][2];
+        this->A_[eIdxGlobal3][eIdxGlobal8] += T[0][3];
 
-        this->A_[globalIdx7][globalIdx3] -= TSecond[0][0];
-        this->A_[globalIdx7][globalIdx7] -= TSecond[0][1];
-        this->A_[globalIdx7][globalIdx1] -= TSecond[0][2];
-        this->A_[globalIdx7][globalIdx8] -= TSecond[0][3];
+        this->A_[eIdxGlobal7][eIdxGlobal3] -= TSecond[0][0];
+        this->A_[eIdxGlobal7][eIdxGlobal7] -= TSecond[0][1];
+        this->A_[eIdxGlobal7][eIdxGlobal1] -= TSecond[0][2];
+        this->A_[eIdxGlobal7][eIdxGlobal8] -= TSecond[0][3];
 
         u[0] = pc[2];
         u[1] = pc[6];
@@ -2228,14 +2228,14 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
                 if (i == nPhaseIdx)
                 {
                     // add capillary pressure term to right hand side
-                    this->f_[globalIdx1] -= (fracFlow0 * pcFlux[0][0] - fracFlow3 * pcFlux[0][1] - fracFlow8 * pcFlux[0][2]);
-                    this->f_[globalIdx2] -= (fracFlow1 * pcFlux[1][0] - fracFlow0 * pcFlux[1][1] + fracFlow9 * pcFlux[1][2]);
-                    this->f_[globalIdx3] -= (fracFlow3 * pcFlux[2][0] - fracFlow2 * pcFlux[2][1] + fracFlow11 * pcFlux[2][2]);
-                    this->f_[globalIdx4] -= (fracFlow2 * pcFlux[3][0] - fracFlow1 * pcFlux[3][1] - fracFlow10 * pcFlux[3][2]);
-                    this->f_[globalIdx5] -= (fracFlow8 * pcFlux[4][0] - fracFlow4 * pcFlux[4][1] + fracFlow7 * pcFlux[4][2]);
-                    this->f_[globalIdx6] -= (-fracFlow9 * pcFlux[5][0] - fracFlow5 * pcFlux[5][1] + fracFlow4 * pcFlux[5][2]);
-                    this->f_[globalIdx7] -= (-fracFlow11 * pcFlux[6][0] - fracFlow7 * pcFlux[6][1] + fracFlow6 * pcFlux[6][2]);
-                    this->f_[globalIdx8] -= (fracFlow10 * pcFlux[7][0] - fracFlow6 * pcFlux[7][1] + fracFlow5 * pcFlux[7][2]);
+                    this->f_[eIdxGlobal1] -= (fracFlow0 * pcFlux[0][0] - fracFlow3 * pcFlux[0][1] - fracFlow8 * pcFlux[0][2]);
+                    this->f_[eIdxGlobal2] -= (fracFlow1 * pcFlux[1][0] - fracFlow0 * pcFlux[1][1] + fracFlow9 * pcFlux[1][2]);
+                    this->f_[eIdxGlobal3] -= (fracFlow3 * pcFlux[2][0] - fracFlow2 * pcFlux[2][1] + fracFlow11 * pcFlux[2][2]);
+                    this->f_[eIdxGlobal4] -= (fracFlow2 * pcFlux[3][0] - fracFlow1 * pcFlux[3][1] - fracFlow10 * pcFlux[3][2]);
+                    this->f_[eIdxGlobal5] -= (fracFlow8 * pcFlux[4][0] - fracFlow4 * pcFlux[4][1] + fracFlow7 * pcFlux[4][2]);
+                    this->f_[eIdxGlobal6] -= (-fracFlow9 * pcFlux[5][0] - fracFlow5 * pcFlux[5][1] + fracFlow4 * pcFlux[5][2]);
+                    this->f_[eIdxGlobal7] -= (-fracFlow11 * pcFlux[6][0] - fracFlow7 * pcFlux[6][1] + fracFlow6 * pcFlux[6][2]);
+                    this->f_[eIdxGlobal8] -= (fracFlow10 * pcFlux[7][0] - fracFlow6 * pcFlux[7][1] + fracFlow5 * pcFlux[7][2]);
                 }
                 break;
             }
@@ -2244,14 +2244,14 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
                 if (i == wPhaseIdx)
                 {
                     // add capillary pressure term to right hand side
-                    this->f_[globalIdx1] += (fracFlow0 * pcFlux[0][0] - fracFlow3 * pcFlux[0][1] - fracFlow8 * pcFlux[0][2]);
-                    this->f_[globalIdx2] += (fracFlow1 * pcFlux[1][0] - fracFlow0 * pcFlux[1][1] + fracFlow9 * pcFlux[1][2]);
-                    this->f_[globalIdx3] += (fracFlow3 * pcFlux[2][0] - fracFlow2 * pcFlux[2][1] + fracFlow11 * pcFlux[2][2]);
-                    this->f_[globalIdx4] += (fracFlow2 * pcFlux[3][0] - fracFlow1 * pcFlux[3][1] - fracFlow10 * pcFlux[3][2]);
-                    this->f_[globalIdx5] += (fracFlow8 * pcFlux[4][0] - fracFlow4 * pcFlux[4][1] + fracFlow7 * pcFlux[4][2]);
-                    this->f_[globalIdx6] += (-fracFlow9 * pcFlux[5][0] - fracFlow5 * pcFlux[5][1] + fracFlow4 * pcFlux[5][2]);
-                    this->f_[globalIdx7] += (-fracFlow11 * pcFlux[6][0] - fracFlow7 * pcFlux[6][1] + fracFlow6 * pcFlux[6][2]);
-                    this->f_[globalIdx8] += (fracFlow10 * pcFlux[7][0] - fracFlow6 * pcFlux[7][1] + fracFlow5 * pcFlux[7][2]);
+                    this->f_[eIdxGlobal1] += (fracFlow0 * pcFlux[0][0] - fracFlow3 * pcFlux[0][1] - fracFlow8 * pcFlux[0][2]);
+                    this->f_[eIdxGlobal2] += (fracFlow1 * pcFlux[1][0] - fracFlow0 * pcFlux[1][1] + fracFlow9 * pcFlux[1][2]);
+                    this->f_[eIdxGlobal3] += (fracFlow3 * pcFlux[2][0] - fracFlow2 * pcFlux[2][1] + fracFlow11 * pcFlux[2][2]);
+                    this->f_[eIdxGlobal4] += (fracFlow2 * pcFlux[3][0] - fracFlow1 * pcFlux[3][1] - fracFlow10 * pcFlux[3][2]);
+                    this->f_[eIdxGlobal5] += (fracFlow8 * pcFlux[4][0] - fracFlow4 * pcFlux[4][1] + fracFlow7 * pcFlux[4][2]);
+                    this->f_[eIdxGlobal6] += (-fracFlow9 * pcFlux[5][0] - fracFlow5 * pcFlux[5][1] + fracFlow4 * pcFlux[5][2]);
+                    this->f_[eIdxGlobal7] += (-fracFlow11 * pcFlux[6][0] - fracFlow7 * pcFlux[6][1] + fracFlow6 * pcFlux[6][2]);
+                    this->f_[eIdxGlobal8] += (fracFlow10 * pcFlux[7][0] - fracFlow6 * pcFlux[7][1] + fracFlow5 * pcFlux[7][2]);
                 }
                 break;
             }
@@ -2292,10 +2292,10 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
         Scalar volume = elementPointer->geometry().volume();
 
         // cell index
-        int globalIdx = problem_.variables().index(*elementPointer);
+        int eIdxGlobal = problem_.variables().index(*elementPointer);
 
         //get the cell Data
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         // permeability vector at boundary
         DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(*elementPointer));
@@ -2303,10 +2303,10 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
         // evaluate right hand side
         PrimaryVariables source(0);
         problem_.source(source, *elementPointer);
-        this->f_[globalIdx] += volume / (8.0)
+        this->f_[eIdxGlobal] += volume / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
-        this->f_[globalIdx] += evaluateErrorTerm(cellData) * volume / (8.0);
+        this->f_[eIdxGlobal] += evaluateErrorTerm(cellData) * volume / (8.0);
 
         //get mobilities of the phases
         Dune::FieldVector<Scalar, numPhases> lambda(cellData.mobility(wPhaseIdx));
@@ -2407,8 +2407,8 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
                     Scalar entry = lambdaTotal * scalarPerm / dist * faceArea;
 
                     // set diagonal entry and right hand side entry
-                    this->A_[globalIdx][globalIdx] += entry;
-                    this->f_[globalIdx] += entry * potentialBound;
+                    this->A_[eIdxGlobal][eIdxGlobal] += entry;
+                    this->f_[eIdxGlobal] += entry * potentialBound;
 
                     if (pc == 0 && pcBound == 0)
                     {
@@ -2447,7 +2447,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
                                 if (i == nPhaseIdx)
                                 {
                                     //add capillary pressure term to right hand side
-                                    this->f_[globalIdx] -= pcFlux;
+                                    this->f_[eIdxGlobal] -= pcFlux;
                                 }
                                 break;
                             }
@@ -2456,7 +2456,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
                                 if (i == wPhaseIdx)
                                 {
                                     //add capillary pressure term to right hand side
-                                    this->f_[globalIdx] += pcFlux;
+                                    this->f_[eIdxGlobal] += pcFlux;
                                 }
                                 break;
                             }
@@ -2468,7 +2468,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
                     Scalar J = interactionVolume.getNeumannValues(intVolFaceIdx)[wPhaseIdx]
                         / density_[wPhaseIdx];
                     J += interactionVolume.getNeumannValues(intVolFaceIdx)[nPhaseIdx] / density_[nPhaseIdx];
-                    this->f_[globalIdx] -= J;
+                    this->f_[eIdxGlobal] -= J;
                 }
                 else
                 {
@@ -2490,9 +2490,9 @@ void FvMpfaL3dPressure2p<TypeTag>::updateMaterialLaws()
     ElementIterator eEndIt = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
-        int globalIdx = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(*eIt);
 
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 

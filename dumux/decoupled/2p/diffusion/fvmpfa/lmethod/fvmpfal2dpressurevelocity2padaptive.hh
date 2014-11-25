@@ -246,16 +246,16 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
                 ElementPointer & elementPointer4 = interactionVolume.getSubVolumeElement(3);
 
                 // cell index
-                int globalIdx1 = problem_.variables().index(*elementPointer1);
-                int globalIdx2 = problem_.variables().index(*elementPointer2);
-                int globalIdx3 = problem_.variables().index(*elementPointer3);
-                int globalIdx4 = problem_.variables().index(*elementPointer4);
+                int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
+                int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
+                int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
+                int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
 
                 //get the cell Data
-                CellData& cellData1 = problem_.variables().cellData(globalIdx1);
-                CellData& cellData2 = problem_.variables().cellData(globalIdx2);
-                CellData& cellData3 = problem_.variables().cellData(globalIdx3);
-                CellData& cellData4 = problem_.variables().cellData(globalIdx4);
+                CellData& cellData1 = problem_.variables().cellData(eIdxGlobal1);
+                CellData& cellData2 = problem_.variables().cellData(eIdxGlobal2);
+                CellData& cellData3 = problem_.variables().cellData(eIdxGlobal3);
+                CellData& cellData4 = problem_.variables().cellData(eIdxGlobal4);
 
                 velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume, cellData1, cellData2, cellData3,
                                                                   cellData4, this->innerBoundaryVolumeFaces_);
@@ -268,14 +268,14 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
                   ElementPointer & elementPointer4 = interactionVolume.getSubVolumeElement(3);
 
                   // cell index
-                  int globalIdx1 = problem_.variables().index(*elementPointer1);
-                  int globalIdx2 = problem_.variables().index(*elementPointer2);
-                  int globalIdx4 = problem_.variables().index(*elementPointer4);
+                  int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
+                  int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
+                  int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
 
                   //get the cell Data
-                  CellData& cellData1 = problem_.variables().cellData(globalIdx1);
-                  CellData& cellData2 = problem_.variables().cellData(globalIdx2);
-                  CellData& cellData4 = problem_.variables().cellData(globalIdx4);
+                  CellData& cellData1 = problem_.variables().cellData(eIdxGlobal1);
+                  CellData& cellData2 = problem_.variables().cellData(eIdxGlobal2);
+                  CellData& cellData4 = problem_.variables().cellData(eIdxGlobal4);
 
                   velocity_.calculateHangingNodeInteractionVolumeVelocity(interactionVolume, cellData1, cellData2,
                                                                           cellData4, this->innerBoundaryVolumeFaces_);
@@ -309,9 +309,9 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
                 ElementPointer & elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
 
                 // cell index
-                int globalIdx = problem_.variables().index(*elementPointer);
+                int eIdxGlobal = problem_.variables().index(*elementPointer);
                 //get the cell Data
-                CellData& cellData = problem_.variables().cellData(globalIdx);
+                CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
                 velocity_.calculateBoundaryInteractionVolumeVelocity(interactionVolume, cellData, elemIdx);
             }
@@ -340,10 +340,10 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
     int levelI = elementPtrI->level();
     int levelJ = elementPtrJ->level();
 
-    int globalIdxI = problem_.variables().index(*elementPtrI);
-    int globalIdxJ = problem_.variables().index(*elementPtrJ);
+    int eIdxGlobalI = problem_.variables().index(*elementPtrI);
+    int eIdxGlobalJ = problem_.variables().index(*elementPtrJ);
 
-    CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
+    CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
     const ReferenceElement& referenceElement = ReferenceElements::general(elementPtrI->geometry().type());
 
@@ -392,7 +392,7 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
         if (interactionVolume.isInnerVolume())
         {
             // cell index vector
-            std::vector<int> globalIdx(0);
+            std::vector<int> eIdxGlobal(0);
 
             if (interactionVolume.getElementNumber() == 4)
             {
@@ -401,20 +401,20 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
                 ElementPointer & elementPointer3 = interactionVolume.getSubVolumeElement(2);
                 ElementPointer & elementPointer4 = interactionVolume.getSubVolumeElement(3);
 
-                globalIdx.resize(4);
+                eIdxGlobal.resize(4);
 
-                globalIdx[0] = problem_.variables().index(*elementPointer1);
-                globalIdx[1] = problem_.variables().index(*elementPointer2);
-                globalIdx[2] = problem_.variables().index(*elementPointer3);
-                globalIdx[3] = problem_.variables().index(*elementPointer4);
+                eIdxGlobal[0] = problem_.variables().index(*elementPointer1);
+                eIdxGlobal[1] = problem_.variables().index(*elementPointer2);
+                eIdxGlobal[2] = problem_.variables().index(*elementPointer3);
+                eIdxGlobal[3] = problem_.variables().index(*elementPointer4);
 
                 //cell Data vector
                 cellDataTemp.resize(4);
 
-                cellDataTemp[0] = problem_.variables().cellData(globalIdx[0]);
-                cellDataTemp[1] = problem_.variables().cellData(globalIdx[1]);
-                cellDataTemp[2] = problem_.variables().cellData(globalIdx[2]);
-                cellDataTemp[3] = problem_.variables().cellData(globalIdx[3]);
+                cellDataTemp[0] = problem_.variables().cellData(eIdxGlobal[0]);
+                cellDataTemp[1] = problem_.variables().cellData(eIdxGlobal[1]);
+                cellDataTemp[2] = problem_.variables().cellData(eIdxGlobal[2]);
+                cellDataTemp[3] = problem_.variables().cellData(eIdxGlobal[3]);
 
                 velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume, cellDataTemp[0], cellDataTemp[1],
                                                                   cellDataTemp[2], cellDataTemp[3], this->innerBoundaryVolumeFaces_);
@@ -425,18 +425,18 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
                 ElementPointer & elementPointer2 = interactionVolume.getSubVolumeElement(1);
                 ElementPointer & elementPointer4 = interactionVolume.getSubVolumeElement(3);
 
-                globalIdx.resize(3);
+                eIdxGlobal.resize(3);
 
-                globalIdx[0] = problem_.variables().index(*elementPointer1);
-                globalIdx[1] = problem_.variables().index(*elementPointer2);
-                globalIdx[2] = problem_.variables().index(*elementPointer4);
+                eIdxGlobal[0] = problem_.variables().index(*elementPointer1);
+                eIdxGlobal[1] = problem_.variables().index(*elementPointer2);
+                eIdxGlobal[2] = problem_.variables().index(*elementPointer4);
 
                 //cell Data vector
                 cellDataTemp.resize(3);
 
-                cellDataTemp[0] = problem_.variables().cellData(globalIdx[0]);
-                cellDataTemp[1] = problem_.variables().cellData(globalIdx[1]);
-                cellDataTemp[2] = problem_.variables().cellData(globalIdx[2]);
+                cellDataTemp[0] = problem_.variables().cellData(eIdxGlobal[0]);
+                cellDataTemp[1] = problem_.variables().cellData(eIdxGlobal[1]);
+                cellDataTemp[2] = problem_.variables().cellData(eIdxGlobal[2]);
 
 
                 velocity_.calculateHangingNodeInteractionVolumeVelocity(interactionVolume, cellDataTemp[0], cellDataTemp[1],
@@ -450,7 +450,7 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
             int size = cellDataTemp.size();
         for (int i = 0; i < size; i++)
         {
-            if (globalIdx[i] == globalIdxI)
+            if (eIdxGlobal[i] == eIdxGlobalI)
             {
                 if (levelI >= levelJ)
                 {
@@ -478,7 +478,7 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
                 }
 
             }
-            else if (globalIdx[i] == globalIdxJ)
+            else if (eIdxGlobal[i] == eIdxGlobalJ)
             {
                 if (levelJ >= levelI)
                 {

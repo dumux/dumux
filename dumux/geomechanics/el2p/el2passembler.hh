@@ -435,8 +435,8 @@ public:
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!
 
-        int globalIdx = vertexMapper_().map(element, vIdx, dim);
-        return vertexColor_[globalIdx];
+        int vIdxGlobal = vertexMapper_().map(element, vIdx, dim);
+        return vertexColor_[vIdxGlobal];
     }
 
     /*!
@@ -461,8 +461,8 @@ public:
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!
 
-        int globalIdx = elementMapper_().map(element);
-        return elementColor_[globalIdx];
+        int eIdxGlobal = elementMapper_().map(element);
+        return elementColor_[eIdxGlobal];
     }
 
     /*!

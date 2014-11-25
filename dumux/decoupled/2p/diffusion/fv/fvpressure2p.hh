@@ -320,8 +320,8 @@ public:
      */
     void storePressureSolution(const Element& element)
     {
-        int globalIdx = problem_.variables().index(element);
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        int eIdxGlobal = problem_.variables().index(element);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         if (compressibility_)
         {
@@ -333,7 +333,7 @@ public:
         {
         case pw:
         {
-            Scalar pressW = this->pressure()[globalIdx];
+            Scalar pressW = this->pressure()[eIdxGlobal];
             Scalar pc = cellData.capillaryPressure();
 
             cellData.setPressure(wPhaseIdx, pressW);
@@ -350,7 +350,7 @@ public:
         }
         case pn:
         {
-            Scalar pressNw = this->pressure()[globalIdx];
+            Scalar pressNw = this->pressure()[eIdxGlobal];
             Scalar pc = cellData.capillaryPressure();
 
             cellData.setPressure(nPhaseIdx, pressNw);
@@ -367,7 +367,7 @@ public:
         }
         case pGlobal:
         {
-            Scalar press = this->pressure()[globalIdx];
+            Scalar press = this->pressure()[eIdxGlobal];
             cellData.setGlobalPressure(press);
 
             Scalar pc = cellData.capillaryPressure();
@@ -1057,9 +1057,9 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
     ElementIterator eEndIt = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
-        int globalIdx = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(*eIt);
 
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         Scalar temperature = problem_.temperature(*eIt);
 

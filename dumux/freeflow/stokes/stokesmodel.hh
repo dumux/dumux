@@ -180,19 +180,19 @@ public:
 #endif
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*eIt, i, dim);
-                volVars.update(sol[globalIdx],
+                int vIdxGlobal = this->vertexMapper().map(*eIt, i, dim);
+                volVars.update(sol[vIdxGlobal],
                                this->problem_(),
                                *eIt,
                                fvGeometry,
                                i,
                                false);
 
-                pn[globalIdx] = volVars.pressure();
-                delP[globalIdx] = volVars.pressure() - 1e5;
-                rho[globalIdx] = volVars.density();
-                mu[globalIdx] = volVars.dynamicViscosity();
-                velocity[globalIdx] = volVars.velocity();
+                pn[vIdxGlobal] = volVars.pressure();
+                delP[vIdxGlobal] = volVars.pressure() - 1e5;
+                rho[vIdxGlobal] = volVars.density();
+                mu[vIdxGlobal] = volVars.dynamicViscosity();
+                velocity[vIdxGlobal] = volVars.velocity();
             }
         }
         writer.attachVertexData(pn, "P");

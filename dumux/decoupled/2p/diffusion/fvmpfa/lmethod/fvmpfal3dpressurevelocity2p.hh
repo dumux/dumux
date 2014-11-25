@@ -226,21 +226,21 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity()
         if (interactionVolume.isInnerVolume())
         {
             // cell index
-            int globalIdx[8];
+            int eIdxGlobal[8];
             for (int i = 0; i < 8; i++)
             {
-                globalIdx[i] = problem_.variables().index(*(interactionVolume.getSubVolumeElement(i)));
+                eIdxGlobal[i] = problem_.variables().index(*(interactionVolume.getSubVolumeElement(i)));
             }
 
             //get the cell Data
-            CellData & cellData1 = problem_.variables().cellData(globalIdx[0]);
-            CellData & cellData2 = problem_.variables().cellData(globalIdx[1]);
-            CellData & cellData3 = problem_.variables().cellData(globalIdx[2]);
-            CellData & cellData4 = problem_.variables().cellData(globalIdx[3]);
-            CellData & cellData5 = problem_.variables().cellData(globalIdx[4]);
-            CellData & cellData6 = problem_.variables().cellData(globalIdx[5]);
-            CellData & cellData7 = problem_.variables().cellData(globalIdx[6]);
-            CellData & cellData8 = problem_.variables().cellData(globalIdx[7]);
+            CellData & cellData1 = problem_.variables().cellData(eIdxGlobal[0]);
+            CellData & cellData2 = problem_.variables().cellData(eIdxGlobal[1]);
+            CellData & cellData3 = problem_.variables().cellData(eIdxGlobal[2]);
+            CellData & cellData4 = problem_.variables().cellData(eIdxGlobal[3]);
+            CellData & cellData5 = problem_.variables().cellData(eIdxGlobal[4]);
+            CellData & cellData6 = problem_.variables().cellData(eIdxGlobal[5]);
+            CellData & cellData7 = problem_.variables().cellData(eIdxGlobal[6]);
+            CellData & cellData8 = problem_.variables().cellData(eIdxGlobal[7]);
 
             velocity_.calculateInnerInteractionVolumeVelocity(interactionVolume,
                     cellData1, cellData2, cellData3, cellData4,
@@ -274,9 +274,9 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity()
                 ElementPointer & elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
 
                 // cell index
-                int globalIdx = problem_.variables().index(*elementPointer);
+                int eIdxGlobal = problem_.variables().index(*elementPointer);
                 //get the cell Data
-                CellData& cellData = problem_.variables().cellData(globalIdx);
+                CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
                 velocity_.calculateBoundaryInteractionVolumeVelocity(interactionVolume, cellData, elemIdx);
             }
@@ -302,10 +302,10 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
     ElementPointer elementPtrI = intersection.inside();
     ElementPointer elementPtrJ = intersection.outside();
 
-    int globalIdxI DUNE_UNUSED = problem_.variables().index(*elementPtrI);
-    int globalIdxJ = problem_.variables().index(*elementPtrJ);
+    int eIdxGlobalI DUNE_UNUSED = problem_.variables().index(*elementPtrI);
+    int eIdxGlobalJ = problem_.variables().index(*elementPtrJ);
 
-    CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
+    CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
     const ReferenceElement& referenceElement = ReferenceElements::general(elementPtrI->geometry().type());
 
@@ -329,7 +329,7 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
         int localMpfaElemIdxI = 0;
         int localMpfaElemIdxJ = 0;
 
-        int globalIdx[8];
+        int eIdxGlobal[8];
         for (int i = 0; i < 8; i++)
         {
             ElementPointer elem = *(interactionVolume.getSubVolumeElement(i));
@@ -339,8 +339,8 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
             else if (elem == elementPtrJ)
                 localMpfaElemIdxJ = i;
 
-            globalIdx[i] = problem_.variables().index(*elem);
-            cellDataTemp[i] = problem_.variables().cellData(globalIdx[i]);
+            eIdxGlobal[i] = problem_.variables().index(*elem);
+            cellDataTemp[i] = problem_.variables().cellData(eIdxGlobal[i]);
         }
 
         int mpfaFaceIdx = IndexTranslator::getFaceIndexFromElements(localMpfaElemIdxI, localMpfaElemIdxJ);

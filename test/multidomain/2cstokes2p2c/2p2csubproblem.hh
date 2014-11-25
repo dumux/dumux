@@ -369,11 +369,11 @@ public:
      * \brief Return the initial phase state inside a control volume.
      *
      * \param vertex The vertex
-     * \param globalIdx The index of the global vertex
+     * \param dofIdxGlobal The global index of the degree of freedom
      * \param globalPos The global position
      */
     int initialPhasePresence(const Vertex &vertex,
-                             const int &globalIdx,
+                             const int &dofIdxGlobal,
                              const GlobalPosition &globalPos) const
     {
         return bothPhases;

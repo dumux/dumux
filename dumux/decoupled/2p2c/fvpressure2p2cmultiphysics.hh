@@ -154,8 +154,8 @@ public:
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
         ParentType::serializeEntity(outstream,element);
-        int globalIdx = problem().variables().index(element);
-        CellData& cellData = problem().variables().cellData(globalIdx);
+        int eIdxGlobal = problem().variables().index(element);
+        CellData& cellData = problem().variables().cellData(eIdxGlobal);
         outstream <<"  "<< cellData.subdomain();
     }
 
@@ -170,8 +170,8 @@ public:
     {
         ParentType::deserializeEntity(instream,element);
 
-        int globalIdx = problem().variables().index(element);
-        CellData& cellData = problem().variables().cellData(globalIdx);
+        int eIdxGlobal = problem().variables().index(element);
+        CellData& cellData = problem().variables().cellData(eIdxGlobal);
         int subdomainIdx;
         instream >> subdomainIdx;
         cellData.setSubdomainAndFluidStateType(subdomainIdx);
@@ -267,13 +267,13 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         // get the global index of the cell
-        int globalIdxI = problem().variables().index(*eIt);
+        int eIdxGlobalI = problem().variables().index(*eIt);
 
         // assemble interior element contributions
         if (eIt->partitionType() == Dune::InteriorEntity)
         {
             // get the cell data
-            CellData& cellDataI = problem().variables().cellData(globalIdxI);
+            CellData& cellDataI = problem().variables().cellData(eIdxGlobalI);
 
             Dune::FieldVector<Scalar, 2> entries(0.);
 
@@ -283,7 +283,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
             else
                 problem().pressureModel().getSource(entries,*eIt, cellDataI, first);
 
-            this->f_[globalIdxI] = entries[rhs];
+            this->f_[eIdxGlobalI] = entries[rhs];
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
@@ -293,20 +293,20 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 /************* handle interior face *****************/
                 if (isIt->neighbor())
                 {
-                    int globalIdxJ = problem().variables().index(*(isIt->outside()));
+                    int eIdxGlobalJ = problem().variables().index(*(isIt->outside()));
 
                     if (cellDataI.subdomain() != 2
-                            or problem().variables().cellData(globalIdxJ).subdomain() != 2) // cell in the 1p domain
+                            or problem().variables().cellData(eIdxGlobalJ).subdomain() != 2) // cell in the 1p domain
                         get1pFlux(entries, *isIt, cellDataI);
                     else
                         problem().pressureModel().getFlux(entries, *isIt, cellDataI, first);
 
                     //set right hand side
-                    this->f_[globalIdxI] -= entries[rhs];
+                    this->f_[eIdxGlobalI] -= entries[rhs];
                     // set diagonal entry
-                    this->A_[globalIdxI][globalIdxI] += entries[matrix];
+                    this->A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
                     // set off-diagonal entry
-                    this->A_[globalIdxI][globalIdxJ] = -entries[matrix];
+                    this->A_[eIdxGlobalI][eIdxGlobalJ] = -entries[matrix];
                 }   // end neighbor
 
 
@@ -319,9 +319,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                         problem().pressureModel().getFluxOnBoundary(entries, *isIt, cellDataI, first);
 
                     //set right hand side
-                    this->f_[globalIdxI] += entries[rhs];
+                    this->f_[eIdxGlobalI] += entries[rhs];
                     // set diagonal entry
-                    this->A_[globalIdxI][globalIdxI] += entries[matrix];
+                    this->A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
                 }
             } //end interfaces loop
     //        printmatrix(std::cout, this->A_, "global stiffness matrix", "row", 11, 3);
@@ -332,16 +332,16 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
             else
                 problem().pressureModel().getStorage(entries, *eIt, cellDataI, first);
 
-            this->f_[globalIdxI] += entries[rhs];
+            this->f_[eIdxGlobalI] += entries[rhs];
             // set diagonal entry
-            this->A_[globalIdxI][globalIdxI] += entries[matrix];
+            this->A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
         }
         // assemble overlap and ghost element contributions
         else 
         {
-            this->A_[globalIdxI] = 0.0;
-            this->A_[globalIdxI][globalIdxI] = 1.0;
-            this->f_[globalIdxI] = this->pressure()[globalIdxI];
+            this->A_[eIdxGlobalI] = 0.0;
+            this->A_[eIdxGlobalI][eIdxGlobalI] = 1.0;
+            this->f_[eIdxGlobalI] = this->pressure()[eIdxGlobalI];
         }
     } // end grid traversal
 //        printmatrix(std::cout, this->A_, "global stiffness matrix after assempling", "row", 11,3);
@@ -396,7 +396,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
 {
     storageEntry = 0.;
     // cell index
-    int globalIdxI = problem().variables().index(elementI);
+    int eIdxGlobalI = problem().variables().index(elementI);
     int presentPhaseIdx = cellDataI.subdomain();
     Scalar volume = elementI.geometry().volume();
 
@@ -427,7 +427,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         if (cellDataI.dv_dp()>0)
         {
             // dV_dp > 0 is unphysical: Try inverse increment for secant
-            Dune::dinfo << "dv_dp larger 0 at Idx " << globalIdxI << " , try and invert secant"<< std::endl;
+            Dune::dinfo << "dv_dp larger 0 at Idx " << eIdxGlobalI << " , try and invert secant"<< std::endl;
 
             p_ -= 2*incp;
             flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, p_, cellDataI.subdomain(),
@@ -449,7 +449,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         storageEntry[rhs] -= cellDataI.pressure(pressureType) * compress_term * volume;
 
         if (std::isnan(compress_term) || std::isinf(compress_term))
-            DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << globalIdxI);
+            DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << eIdxGlobalI);
 
         if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))
             DUNE_THROW(Dune::NotImplemented, "Compressibility is switched off???");
@@ -460,13 +460,13 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
     if( problem().timeManager().episodeWillBeOver()
             || problem().timeManager().willBeFinished())
     {
-        problem().variables().cellData(globalIdxI).errorCorrection() = 0.;
+        problem().variables().cellData(eIdxGlobalI).errorCorrection() = 0.;
         return;
     }
 
     // error reduction routine: volumetric error is damped and inserted to right hand side
     // if damping is not done, the solution method gets unstable!
-    problem().variables().cellData(globalIdxI).volumeError() /= timestep_;
+    problem().variables().cellData(eIdxGlobalI).volumeError() /= timestep_;
     Scalar maxError = this->maxError_;
     Scalar erri = fabs(cellDataI.volumeError());
     Scalar x_lo = this->ErrorTermLowerBound_;
@@ -481,17 +481,17 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
     {
         if (erri <= x_mi * maxError)
             storageEntry[rhs] +=
-                    problem().variables().cellData(globalIdxI).errorCorrection() =
+                    problem().variables().cellData(eIdxGlobalI).errorCorrection() =
                             fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/maxError)
                                 * cellDataI.volumeError() * volume;
         else
             storageEntry[rhs] +=
-                    problem().variables().cellData(globalIdxI).errorCorrection() =
+                    problem().variables().cellData(eIdxGlobalI).errorCorrection() =
                             fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxError)
                                 * cellDataI.volumeError() * volume;
     }
     else
-        problem().variables().cellData(globalIdxI).errorCorrection()=0 ;
+        problem().variables().cellData(eIdxGlobalI).errorCorrection()=0 ;
 
     return;
 }
@@ -520,7 +520,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
     const GlobalPosition& globalPos = elementPointerI->geometry().center();
 
     // cell index
-//    int globalIdxI = problem().variables().index(*elementPointerI);
+//    int eIdxGlobalI = problem().variables().index(*elementPointerI);
 
     // get absolute permeability
     DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPointerI));
@@ -533,8 +533,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
 
         // access neighbor
         ElementPointer neighborPointer = intersection.outside();
-        int globalIdxJ = problem().variables().index(*neighborPointer);
-        CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
+        int eIdxGlobalJ = problem().variables().index(*neighborPointer);
+        CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
         // gemotry info of neighbor
         const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
@@ -625,7 +625,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
     // get global coordinate of cell center
     ElementPointer elementPointerI = intersection.inside();
     const GlobalPosition& globalPos = elementPointerI->geometry().center();
-//    int globalIdxI = problem().variables().index(*elementPointerI);
+//    int eIdxGlobalI = problem().variables().index(*elementPointerI);
     int phaseIdx = cellDataI.subdomain();
 
     // get normal vector
@@ -794,8 +794,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         // get global coordinate of cell center
-        int globalIdx = problem().variables().index(*eIt);
-        CellData& cellData = problem().variables().cellData(globalIdx);
+        int eIdxGlobal = problem().variables().index(*eIt);
+        CellData& cellData = problem().variables().cellData(eIdxGlobal);
 
         if(cellData.subdomain() == 2)    // complex
         {
@@ -811,7 +811,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
             if (cellData.saturation(wPhaseIdx) != (1. || 0.) or source.one_norm()!= 0.) // cell still 2p
             {
                 // mark this element
-                nextSubdomain[globalIdx] = 2;
+                nextSubdomain[eIdxGlobal] = 2;
 
                 // mark neighbors
                 IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
@@ -819,24 +819,24 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
                 {
                     if (isIt->neighbor())
                     {
-                        int globalIdxJ = problem().variables().index(*(isIt->outside()));
+                        int eIdxGlobalJ = problem().variables().index(*(isIt->outside()));
                         // mark neighbor Element
-                        nextSubdomain[globalIdxJ] = 2;
+                        nextSubdomain[eIdxGlobalJ] = 2;
                     }
                 }
             }
-            else if(nextSubdomain[globalIdx] != 2)// update next subdomain if possible
+            else if(nextSubdomain[eIdxGlobal] != 2)// update next subdomain if possible
             {
                 if(cellData.saturation(wPhaseIdx) != 0.)
-                    nextSubdomain[globalIdx] = wPhaseIdx;
+                    nextSubdomain[eIdxGlobal] = wPhaseIdx;
                 else if (cellData.saturation(nPhaseIdx) != 0.)
-                    nextSubdomain[globalIdx] = nPhaseIdx;
+                    nextSubdomain[eIdxGlobal] = nPhaseIdx;
             }
             timer_.stop();
             // end subdomain check
         }// end complex domain
-        else if (nextSubdomain[globalIdx] != 2) //check if cell remains in simple subdomain
-            nextSubdomain[globalIdx] = cellData.subdomain();
+        else if (nextSubdomain[eIdxGlobal] != 2) //check if cell remains in simple subdomain
+            nextSubdomain[eIdxGlobal] = cellData.subdomain();
 
     } //end define complex area of next subdomain
 
@@ -854,16 +854,16 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
     // investigate cells that were "simple" in current TS
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
-        int globalIdx = problem().variables().index(*eIt);
-        CellData& cellData = problem().variables().cellData(globalIdx);
+        int eIdxGlobal = problem().variables().index(*eIt);
+        CellData& cellData = problem().variables().cellData(eIdxGlobal);
 
         // store old subdomain information and assign new info
         int oldSubdomainI = cellData.subdomain();
-        cellData.subdomain() = nextSubdomain[globalIdx];
+        cellData.subdomain() = nextSubdomain[eIdxGlobal];
 
         //first check if simple will become complicated
         if(oldSubdomainI != 2
-                    && nextSubdomain[globalIdx] == 2)
+                    && nextSubdomain[eIdxGlobal] == 2)
         {
             // use complex update of the fluidstate
             timer_.stop();
@@ -871,7 +871,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
             timer_.start();
         }
         else if(oldSubdomainI != 2
-                    && nextSubdomain[globalIdx] != 2)    // will be simple and was simple
+                    && nextSubdomain[eIdxGlobal] != 2)    // will be simple and was simple
         {
 			// perform simple update
             this->update1pMaterialLawsInElement(*eIt, cellData, postTimeStep);
@@ -906,7 +906,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
 {
     // get global coordinate of cell center
     GlobalPosition globalPos = elementI.geometry().center();
-    int globalIdx = problem().variables().index(elementI);
+    int eIdxGlobal = problem().variables().index(elementI);
 
     // determine which phase should be present
     int presentPhaseIdx = cellData.subdomain(); // this is already =nextSubomainIdx
@@ -929,13 +929,13 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
             ((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign sw = 1 if wPhase present, else 0
     if(pressureType == wPhaseIdx)
     {
-        pressure[wPhaseIdx] = this->pressure(globalIdx);
-        pressure[nPhaseIdx] = this->pressure(globalIdx)+pc;
+        pressure[wPhaseIdx] = this->pressure(eIdxGlobal);
+        pressure[nPhaseIdx] = this->pressure(eIdxGlobal)+pc;
     }
     else
     {
-        pressure[wPhaseIdx] = this->pressure(globalIdx)-pc;
-        pressure[nPhaseIdx] = this->pressure(globalIdx);
+        pressure[wPhaseIdx] = this->pressure(eIdxGlobal)-pc;
+        pressure[nPhaseIdx] = this->pressure(eIdxGlobal);
     }
 
     // get the overall mass of component 1:  Z1 = C^k / (C^1+C^2) [-]

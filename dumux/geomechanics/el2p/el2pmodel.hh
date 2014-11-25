@@ -371,17 +371,17 @@ public:
 
             for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
             {
-                unsigned int globalIdx = this->dofMapper().map(*eIt, scvIdx, dim);
+                unsigned int vIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dim);
 
 
-                Te[globalIdx] = elemVolVars[scvIdx].temperature();
-                pw[globalIdx] = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                pn[globalIdx] = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                pc[globalIdx] = elemVolVars[scvIdx].capillaryPressure();
-                sw[globalIdx] = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                sn[globalIdx] = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                rhoW[globalIdx] = elemVolVars[scvIdx].density(wPhaseIdx);
-                rhoN[globalIdx] = elemVolVars[scvIdx].density(nPhaseIdx);
+                Te[vIdxGlobal] = elemVolVars[scvIdx].temperature();
+                pw[vIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                pn[vIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                pc[vIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
+                sw[vIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                sn[vIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                rhoW[vIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
+                rhoN[vIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
                 // the following lines are correct for rock mechanics sign convention
                 // but lead to a very counter-intuitive output therefore, they are commented.
                 // in case of rock mechanics sign convention solid displacement is
@@ -390,11 +390,11 @@ public:
 //                    DimVector tmpDispl;
 //                    tmpDispl = Scalar(0);
 //                    tmpDispl -= elemVolVars[scvIdx].displacement();
-//                    displacement[globalIdx] = tmpDispl;
+//                    displacement[vIdxGlobal] = tmpDispl;
 //                    }
 //
 //                else
-                    displacement[globalIdx] = elemVolVars[scvIdx].displacement();
+                    displacement[vIdxGlobal] = elemVolVars[scvIdx].displacement();
 
                 double Keff;
                 double exponent;
@@ -403,8 +403,8 @@ public:
                 Keff =    this->problem_().spatialParams().intrinsicPermeability(    *eIt, fvGeometry, scvIdx)[0][0];
                 Keff *= exp(exponent);
                 effKx[eIdx] += Keff/ numScv;
-                effectivePressure[eIdx] += (pn[globalIdx] * sn[globalIdx]
-                                            + pw[globalIdx] * sw[globalIdx])
+                effectivePressure[eIdx] += (pn[vIdxGlobal] * sn[vIdxGlobal]
+                                            + pw[vIdxGlobal] * sw[vIdxGlobal])
                                             / numScv;
                 effPorosity[eIdx] +=elemVolVars[scvIdx].effPorosity / numScv;
             };

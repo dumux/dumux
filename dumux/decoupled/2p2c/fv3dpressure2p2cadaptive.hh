@@ -225,13 +225,13 @@ public:
         for (ElementIterator eIt = problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
         {
             // get the global index of the cell
-            int globalIdxI = problem().variables().index(*eIt);
+            int eIdxGlobalI = problem().variables().index(*eIt);
 
             // assemble interior element contributions
             if (eIt->partitionType() == Dune::InteriorEntity)
             {
-                this->pressure()[globalIdxI]
-                      = problem().variables().cellData(globalIdxI).pressure(this->pressureType);
+                this->pressure()[eIdxGlobalI]
+                      = problem().variables().cellData(eIdxGlobalI).pressure(this->pressureType);
             }
         }
 #if HAVE_MPI
@@ -348,8 +348,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
         // cell index
-        int globalIdxI = problem().variables().index(*eIt);
-        CellData& cellDataI = problem().variables().cellData(globalIdxI);
+        int eIdxGlobalI = problem().variables().index(*eIt);
+        CellData& cellDataI = problem().variables().cellData(eIdxGlobalI);
 
         // initialize row size
         int rowSize = 1;
@@ -380,15 +380,15 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                     int intersectionID = problem().grid().localIdSet().subId(*eIt,
                             isIt->indexInInside(), 1);
                     //index outside
-                    int globalIdxJ = problem().variables().index(*isIt->outside());
+                    int eIdxGlobalJ = problem().variables().index(*isIt->outside());
 
                     // add Entry of current neighbor cell to the IS seen from large cell
-                    irregularCellMap_[intersectionID].push_back(globalIdxJ);
+                    irregularCellMap_[intersectionID].push_back(eIdxGlobalJ);
                 }
             }
         }
         cellDataI.fluxData().resize(numberOfIntersections);
-        this->A_.incrementrowsize(globalIdxI, rowSize);
+        this->A_.incrementrowsize(eIdxGlobalI, rowSize);
     } //end first loop (that already reserved enough space for the MPFA connections on hanging nodes)
 
     // second loop to determine which matrix entries will be occupied
@@ -405,7 +405,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
         for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
         {
             // cell index
-            int globalIdxI = problem().variables().index(*eIt);
+            int eIdxGlobalI = problem().variables().index(*eIt);
             // run through all intersections with neighbors
             IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
             for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
@@ -413,7 +413,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                 if (isIt->neighbor())
                 {
                     //index outside
-                    int globalIdxJ = problem().variables().index(*isIt->outside());
+                    int eIdxGlobalJ = problem().variables().index(*isIt->outside());
 
                     // if mpfa is used, more entries might be needed if all interactionRegions are regarded
                     if (isIt->outside()->level() > eIt->level()) //look from larger cell
@@ -426,19 +426,19 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                         // Prepare MPFA
                         /** get geometric Info, transmissibility matrix */
                         GlobalPosition globalPos3(0.);
-                        int globalIdx3=-1;
+                        int eIdxGlobal3=-1;
                         GlobalPosition globalPos4(0.);
-                        int globalIdx4=-1;
+                        int eIdxGlobal4=-1;
                         TransmissivityMatrix T(0.);
 
                         int interactionRegions
                             = problem().variables().getMpfaData3D(*isIt, T,
-                                                    globalPos3, globalIdx3, globalPos4, globalIdx4  );
+                                                    globalPos3, eIdxGlobal3, globalPos4, eIdxGlobal4  );
                         if (interactionRegions == 0)
                             interactionRegions = problem().pressureModel().computeTransmissibilities(isIt,T,
-                                    globalPos3, globalIdx3,  globalPos4, globalIdx4  );
+                                    globalPos3, eIdxGlobal3,  globalPos4, eIdxGlobal4  );
                         if(!interactionRegions)
-                            Dune::dgrave << "something went wrong getting mpfa data on cell " << globalIdxI << std::endl;
+                            Dune::dgrave << "something went wrong getting mpfa data on cell " << eIdxGlobalI << std::endl;
                         if (interactionRegions == 1) // no second subface
                             continue;
 
@@ -446,10 +446,10 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                         for (int cocumber=1; cocumber<interactionRegions; cocumber++ )
                         {
                             problem().variables().getMpfaData3D(*isIt, T,
-                                   globalPos3, globalIdx3, globalPos4, globalIdx4, cocumber);
+                                   globalPos3, eIdxGlobal3, globalPos4, eIdxGlobal4, cocumber);
                             // indices
-                            int additionalIdx2 = globalIdx3;
-                            int additionalIdx3 = globalIdx4;
+                            int additionalIdx2 = eIdxGlobal3;
+                            int additionalIdx3 = eIdxGlobal4;
 
                             bool addIndex = true;
 
@@ -472,8 +472,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             if(!additional2isNeighbor)
                             {
                                 // check if relation not already added
-                                IntPair intPair(globalIdxI,additionalIdx2);
-                                if(globalIdxI > additionalIdx2)
+                                IntPair intPair(eIdxGlobalI,additionalIdx2);
+                                if(eIdxGlobalI > additionalIdx2)
                                     std::swap(intPair.first, intPair.second);
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
@@ -482,7 +482,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                         addIndex = false;
                                 if(addIndex)
                                 {
-                                    this->A_.incrementrowsize(globalIdxI);
+                                    this->A_.incrementrowsize(eIdxGlobalI);
                                     // add space for additional itsself
                                     this->A_.incrementrowsize(additionalIdx2);
                                     // mark relation as added
@@ -495,8 +495,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             {
                                 addIndex = true;
                                 // check if relation not already added
-                                IntPair intPair(globalIdxI,additionalIdx3);
-                                if(globalIdxI > additionalIdx3)
+                                IntPair intPair(eIdxGlobalI,additionalIdx3);
+                                if(eIdxGlobalI > additionalIdx3)
                                     std::swap(intPair.first, intPair.second);
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
@@ -505,7 +505,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                         addIndex = false;
                                 if(addIndex)
                                 {
-                                    this->A_.incrementrowsize(globalIdxI);
+                                    this->A_.incrementrowsize(eIdxGlobalI);
                                     // add space for additional itsself
                                     this->A_.incrementrowsize(additionalIdx3);
                                     // mark relation as added
@@ -533,8 +533,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             {
                                 addIndex = true;
                                 // check if relation not already added
-                                IntPair intPair(globalIdxJ,additionalIdx2);
-                                if(globalIdxJ > additionalIdx2)
+                                IntPair intPair(eIdxGlobalJ,additionalIdx2);
+                                if(eIdxGlobalJ > additionalIdx2)
                                     std::swap(intPair.first, intPair.second);
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
@@ -543,7 +543,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                         addIndex = false;
                                 if(addIndex)
                                 {
-                                    this->A_.incrementrowsize(globalIdxJ);
+                                    this->A_.incrementrowsize(eIdxGlobalJ);
                                     // add space for additional itsself
                                     this->A_.incrementrowsize(additionalIdx2);
                                     // mark relation as added
@@ -556,8 +556,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             {
                                 addIndex = true;
                                 // check if relation not already added
-                                IntPair intPair(globalIdxJ,additionalIdx3);
-                                if(globalIdxJ > additionalIdx3)
+                                IntPair intPair(eIdxGlobalJ,additionalIdx3);
+                                if(eIdxGlobalJ > additionalIdx3)
                                     std::swap(intPair.first, intPair.second);
                                 range = addionalRelations.equal_range(intPair.first);
                                 for (rangeIt=range.first; range.first!=range.second
@@ -566,7 +566,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                                         addIndex = false;
                                 if(addIndex)
                                 {
-                                    this->A_.incrementrowsize(globalIdxJ);
+                                    this->A_.incrementrowsize(eIdxGlobalJ);
                                     // add space for additional itsself
                                     this->A_.incrementrowsize(additionalIdx3);
                                     // mark relation as added
@@ -593,10 +593,10 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixIndices()
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
         // cell index
-        int globalIdxI = problem().variables().index(*eIt);
+        int eIdxGlobalI = problem().variables().index(*eIt);
 
         // add diagonal index
-        this->A_.addindex(globalIdxI, globalIdxI);
+        this->A_.addindex(eIdxGlobalI, eIdxGlobalI);
 
         // run through all intersections with neighbors
         IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
@@ -605,42 +605,42 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixIndices()
             {
                 // access neighbor
                 ElementPointer outside = isIt->outside();
-                int globalIdxJ = problem().variables().index(*outside);
+                int eIdxGlobalJ = problem().variables().index(*outside);
 
                 // add off diagonal index
-                this->A_.addindex(globalIdxI, globalIdxJ);
+                this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
 
                 // special treatment for hanging nodes in the mpfa case
                 if (enableMPFA && (eIt->level() < isIt->outside()->level()))
                 {
                     // prepare stuff to enter transmissibility calculation
                     GlobalPosition globalPos3(0.);
-                    int globalIdx3=-1;
+                    int eIdxGlobal3=-1;
                     GlobalPosition globalPos4(0.);
-                    int globalIdx4=-1;
+                    int eIdxGlobal4=-1;
                     TransmissivityMatrix T(0.);
                     TransmissivityMatrix additionalT(0.);
 
                     int interactionRegions
-                        = problem().variables().getMpfaData3D(*isIt, T, globalPos3, globalIdx3, globalPos4, globalIdx4  );
+                        = problem().variables().getMpfaData3D(*isIt, T, globalPos3, eIdxGlobal3, globalPos4, eIdxGlobal4  );
                     if (interactionRegions == 0)
                         interactionRegions = problem().pressureModel().computeTransmissibilities(isIt,T,
-                                globalPos3, globalIdx3,  globalPos4, globalIdx4  );
+                                globalPos3, eIdxGlobal3,  globalPos4, eIdxGlobal4  );
 
                     for (int cocumber=1; cocumber<interactionRegions; cocumber++ )
                     {
                         problem().variables().getMpfaData3D(*isIt, T,
-                               globalPos3, globalIdx3, globalPos4, globalIdx4, cocumber);
+                               globalPos3, eIdxGlobal3, globalPos4, eIdxGlobal4, cocumber);
 
                         // add off diagonal index in both directions!!
-                        this->A_.addindex(globalIdxI, globalIdx3);
-                        this->A_.addindex(globalIdx3, globalIdxI);
-                        this->A_.addindex(globalIdxI, globalIdx4);
-                        this->A_.addindex(globalIdx4, globalIdxI);
-                        this->A_.addindex(globalIdxJ, globalIdx3);
-                        this->A_.addindex(globalIdx3, globalIdxJ);
-                        this->A_.addindex(globalIdxJ, globalIdx4);
-                        this->A_.addindex(globalIdx4, globalIdxJ);
+                        this->A_.addindex(eIdxGlobalI, eIdxGlobal3);
+                        this->A_.addindex(eIdxGlobal3, eIdxGlobalI);
+                        this->A_.addindex(eIdxGlobalI, eIdxGlobal4);
+                        this->A_.addindex(eIdxGlobal4, eIdxGlobalI);
+                        this->A_.addindex(eIdxGlobalJ, eIdxGlobal3);
+                        this->A_.addindex(eIdxGlobal3, eIdxGlobalJ);
+                        this->A_.addindex(eIdxGlobalJ, eIdxGlobal4);
+                        this->A_.addindex(eIdxGlobal4, eIdxGlobalJ);
                     }
                 }
             }
@@ -666,13 +666,13 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
     for (ElementIterator eIt = problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // get the global index of the cell
-        int globalIdxI = problem().variables().index(*eIt);
+        int eIdxGlobalI = problem().variables().index(*eIt);
 
         // assemble interior element contributions
         if (eIt->partitionType() == Dune::InteriorEntity)
         {
                 // get the cell data
-            CellData& cellDataI = problem().variables().cellData(globalIdxI);
+            CellData& cellDataI = problem().variables().cellData(eIdxGlobalI);
 
             Dune::FieldVector<Scalar, 2> entries(0.);
 
@@ -684,7 +684,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 #endif
                 problem().pressureModel().getSource(entries,*eIt, cellDataI, first);
 
-            this->f_[globalIdxI] += entries[rhs];
+            this->f_[eIdxGlobalI] += entries[rhs];
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
@@ -696,7 +696,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                 {
 
                     ElementPointer elementNeighbor = isIt->outside();
-                    int globalIdxJ = problem().variables().index(*elementNeighbor);
+                    int eIdxGlobalJ = problem().variables().index(*elementNeighbor);
                     //check for hanging nodes
                     //take a hanging node never from the element with smaller level!
                     bool haveSameLevel = (eIt->level() == elementNeighbor->level());
@@ -704,7 +704,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                     // the last condition is needed to properly assemble in the presence 
                     // of ghost elements
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
-                        && (globalIdxI > globalIdxJ) && haveSameLevel
+                        && (eIdxGlobalI > eIdxGlobalJ) && haveSameLevel
                         && elementNeighbor->partitionType() == Dune::InteriorEntity)
                         continue;
 
@@ -713,37 +713,37 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                     if(!haveSameLevel && enableMPFA)
                     {
                         if (cellDataI.subdomain() != 2
-                                or problem().variables().cellData(globalIdxJ).subdomain() != 2) // cell in the 1p domain
+                                or problem().variables().cellData(eIdxGlobalJ).subdomain() != 2) // cell in the 1p domain
                             asImp_().get1pMpfaFlux(isIt, cellDataI);
                         else
                             asImp_().getMpfaFlux(isIt, cellDataI);
                     }
                     else
                     {
-                        CellData cellDataJ = problem().variables().cellData(globalIdxJ);
+                        CellData cellDataJ = problem().variables().cellData(eIdxGlobalJ);
                         if (cellDataI.subdomain() != 2
-                                or problem().variables().cellData(globalIdxJ).subdomain() != 2) // cell in the 1p domain
+                                or problem().variables().cellData(eIdxGlobalJ).subdomain() != 2) // cell in the 1p domain
                             asImp_().get1pFlux(entries, *isIt, cellDataI);
                         else
                             asImp_().getFlux(entries, *isIt, cellDataI, first);
 
 
                         //set right hand side
-                        this->f_[globalIdxI] -= entries[rhs];
+                        this->f_[eIdxGlobalI] -= entries[rhs];
 
                         // set diagonal entry
-                        this->A_[globalIdxI][globalIdxI] += entries[matrix];
+                        this->A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
 
                             // set off-diagonal entry
-                        this->A_[globalIdxI][globalIdxJ] -= entries[matrix];
+                        this->A_[eIdxGlobalI][eIdxGlobalJ] -= entries[matrix];
 
                         // The second condition is needed to not spoil the ghost element entries
                         if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
                             && elementNeighbor->partitionType() == Dune::InteriorEntity)
                         {
-                            this->f_[globalIdxJ] += entries[rhs];
-                            this->A_[globalIdxJ][globalIdxJ] += entries[matrix];
-                            this->A_[globalIdxJ][globalIdxI] -= entries[matrix];
+                            this->f_[eIdxGlobalJ] += entries[rhs];
+                            this->A_[eIdxGlobalJ][eIdxGlobalJ] += entries[matrix];
+                            this->A_[eIdxGlobalJ][eIdxGlobalI] -= entries[matrix];
                         }
                     }
                 } // end neighbor
@@ -758,9 +758,9 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                         asImp_().getFluxOnBoundary(entries, *isIt, cellDataI, first);
 
                     //set right hand side
-                    this->f_[globalIdxI] += entries[rhs];
+                    this->f_[eIdxGlobalI] += entries[rhs];
                     // set diagonal entry
-                    this->A_[globalIdxI][globalIdxI] += entries[matrix];
+                    this->A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
                 }
             } //end interfaces loop
 
@@ -770,16 +770,16 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
             else
                 asImp_().getStorage(entries, *eIt, cellDataI, first);
 
-            this->f_[globalIdxI] += entries[rhs];
+            this->f_[eIdxGlobalI] += entries[rhs];
             // set diagonal entry
-            this->A_[globalIdxI][globalIdxI] += entries[matrix];
+            this->A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
         }
         // assemble overlap and ghost element contributions
         else
         {
-            this->A_[globalIdxI] = 0.0;
-            this->A_[globalIdxI][globalIdxI] = 1.0;
-            this->f_[globalIdxI] = this->pressure()[globalIdxI];
+            this->A_[eIdxGlobalI] = 0.0;
+            this->A_[eIdxGlobalI][eIdxGlobalI] = 1.0;
+            this->f_[eIdxGlobalI] = this->pressure()[eIdxGlobalI];
         }
     } // end grid traversal
 
@@ -811,7 +811,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
 {
     // acess Cell I
     ElementPointer elementPointerI = isIt->inside();
-    int globalIdxI = problem().variables().index(*elementPointerI);
+    int eIdxGlobalI = problem().variables().index(*elementPointerI);
 
     // get global coordinate of cell center
     const GlobalPosition& globalPos = elementPointerI->geometry().center();
@@ -825,8 +825,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
 
     // access neighbor
     ElementPointer neighborPointer = isIt->outside();
-    int globalIdxJ = problem().variables().index(*neighborPointer);
-    CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
+    int eIdxGlobalJ = problem().variables().index(*neighborPointer);
+    CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
     // gemotry info of neighbor
     const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
@@ -870,8 +870,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
         graddv_dC[compIdx] = (cellDataJ.dv(compIdx)
                                 - cellDataI.dv(compIdx)) / dist;
     }
-//                    potentialW = problem().variables().potentialWetting(globalIdxI, isIndex);
-//                    potentialNW = problem().variables().potentialNonwetting(globalIdxI, isIndex);
+//                    potentialW = problem().variables().potentialWetting(eIdxGlobalI, isIndex);
+//                    potentialNW = problem().variables().potentialNonwetting(eIdxGlobalI, isIndex);
 //
 //                    densityW = (potentialW > 0.) ? densityWI : densityWJ;
 //                    densityNW = (potentialNW > 0.) ? densityNWI : densityNWJ;
@@ -883,31 +883,31 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
         // Prepare MPFA
         /* get geometrical Info, transmissibility matrix */
         GlobalPosition globalPos3(0.);
-        int globalIdx3=-1;
+        int eIdxGlobal3=-1;
         GlobalPosition globalPos4(0.);
-        int globalIdx4=-1;
+        int eIdxGlobal4=-1;
         TransmissivityMatrix T(0.);
 
             // prepare second interaction region
             GlobalPosition globalPosAdditional3(0.);
-            int globalIdxAdditional3=-1;
+            int eIdxGlobalAdditional3=-1;
             GlobalPosition globalPosAdditional4(0.);
-            int globalIdxAdditional4=-1;
+            int eIdxGlobalAdditional4=-1;
 
             TransmissivityMatrix additionalT(0.);
 
         int interactionRegions
             = problem().variables().getMpfaData3D(*isIt, T,
-                                    globalPos3, globalIdx3, globalPos4, globalIdx4  );
+                                    globalPos3, eIdxGlobal3, globalPos4, eIdxGlobal4  );
         if (interactionRegions == 0)
             interactionRegions = problem().pressureModel().computeTransmissibilities(isIt,T,
-                    globalPos3, globalIdx3,  globalPos4, globalIdx4  );
+                    globalPos3, eIdxGlobal3,  globalPos4, eIdxGlobal4  );
         if(!interactionRegions)
-            Dune::dgrave << "something went wrong getting mpfa data on cell " << globalIdxI << std::endl;
+            Dune::dgrave << "something went wrong getting mpfa data on cell " << eIdxGlobalI << std::endl;
 
         // shortcurts mpfa case
-        CellData& cellData3 = problem().variables().cellData(globalIdx3);
-        CellData& cellData4 = problem().variables().cellData(globalIdx4);
+        CellData& cellData3 = problem().variables().cellData(eIdxGlobal3);
+        CellData& cellData4 = problem().variables().cellData(eIdxGlobal4);
         Scalar temp1 = globalPos * this->gravity_;
         Scalar temp2 = globalPosNeighbor * this->gravity_;
         Scalar temp3 = globalPos3 * this->gravity_;
@@ -928,16 +928,16 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
             {
                 // get data for second interaction region
                 problem().variables().getMpfaData3D(*isIt, additionalT,
-                                globalPosAdditional3, globalIdxAdditional3,
-                                globalPosAdditional4, globalIdxAdditional4 ,
+                                globalPosAdditional3, eIdxGlobalAdditional3,
+                                globalPosAdditional4, eIdxGlobalAdditional4 ,
                                 banana); // offset for second interaction region
 
                 Scalar gravityContributionAdditonal
                     = temp1 * additionalT[0] + temp2 * additionalT[1]
                         + globalPosAdditional3*this->gravity_ * additionalT[2]
                         + globalPosAdditional4*this->gravity_ * additionalT[3];
-                CellData& cellDataA3 = problem().variables().cellData(globalIdxAdditional3);
-                CellData& cellDataA4 = problem().variables().cellData(globalIdxAdditional4);
+                CellData& cellDataA3 = problem().variables().cellData(eIdxGlobalAdditional3);
+                CellData& cellDataA4 = problem().variables().cellData(eIdxGlobalAdditional4);
 
                 for (int phaseIdx = 0; phaseIdx < NumPhases; ++phaseIdx)
                 {
@@ -1006,15 +1006,15 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
 
     /* compute matrix entry: advective fluxes */
     /* extend T with other matrix entries and assemble to A_    */
-    this->A_[globalIdxI][globalIdxI] += (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * T[0];
-    this->A_[globalIdxI][globalIdxJ] += (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * T[1];
-    this->A_[globalIdxI][globalIdx3] += (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * T[2];
-    this->A_[globalIdxI][globalIdx4] += (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * T[3];
+    this->A_[eIdxGlobalI][eIdxGlobalI] += (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * T[0];
+    this->A_[eIdxGlobalI][eIdxGlobalJ] += (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * T[1];
+    this->A_[eIdxGlobalI][eIdxGlobal3] += (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * T[2];
+    this->A_[eIdxGlobalI][eIdxGlobal4] += (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * T[3];
 
 
     // add gravity to RHS vector
     Scalar gravityContribution = temp1 * T[0] + temp2 * T[1] + temp3 * T[2] + temp4 * T[3];
-    this->f_[globalIdxI] += (rhoMean[wPhaseIdx] * lambda[wPhaseIdx] * dV[wPhaseIdx]
+    this->f_[eIdxGlobalI] += (rhoMean[wPhaseIdx] * lambda[wPhaseIdx] * dV[wPhaseIdx]
                               + rhoMean[nPhaseIdx] * lambda[nPhaseIdx] * dV[nPhaseIdx]) * gravityContribution;
 
     // weithing accounts for the fraction of the subcontrol volume
@@ -1022,17 +1022,17 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
     if(enableVolumeIntegral_) // switch off volume integral for mpfa case
     {
         // correct for area integral
-        this->A_[globalIdxI][globalIdxI] -=
+        this->A_[eIdxGlobalI][eIdxGlobalI] -=
                 weightingFactor * (lambda[wPhaseIdx] * gV[wPhaseIdx] + lambda[nPhaseIdx] * gV[nPhaseIdx]) * T[0];
-        this->A_[globalIdxI][globalIdxJ] -=
+        this->A_[eIdxGlobalI][eIdxGlobalJ] -=
                 weightingFactor * (lambda[wPhaseIdx] * gV[wPhaseIdx] + lambda[nPhaseIdx] * gV[nPhaseIdx]) * T[1];
-        this->A_[globalIdxI][globalIdx3] -=
+        this->A_[eIdxGlobalI][eIdxGlobal3] -=
                 weightingFactor * (lambda[wPhaseIdx] * gV[wPhaseIdx] + lambda[nPhaseIdx] * gV[nPhaseIdx]) * T[2];
-        this->A_[globalIdxI][globalIdx4] -=
+        this->A_[eIdxGlobalI][eIdxGlobal4] -=
                 weightingFactor * (lambda[wPhaseIdx] * gV[wPhaseIdx] + lambda[nPhaseIdx] * gV[nPhaseIdx]) * T[3];
 
         // add gravity to RHS vector
-        this->f_[globalIdxI] -= weightingFactor * gravityContribution *
+        this->f_[eIdxGlobalI] -= weightingFactor * gravityContribution *
                 (rhoMean[wPhaseIdx] * lambda[wPhaseIdx] * gV[wPhaseIdx] + rhoMean[nPhaseIdx] * lambda[nPhaseIdx] * gV[nPhaseIdx]);
     }
 
@@ -1049,7 +1049,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
         pcGradient *= - lambda[wPhaseIdx] * dV[wPhaseIdx]
                         + enableVolumeIntegral_ * weightingFactor * lambda[wPhaseIdx] * gV[wPhaseIdx];
 
-    this->f_[globalIdxI] += pcGradient;
+    this->f_[eIdxGlobalI] += pcGradient;
 
     // regard more interaction regions, if there are more
     if(interactionRegions != 1)
@@ -1058,31 +1058,31 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
         {
             // get data for second interaction region
             problem().variables().getMpfaData3D(*isIt, additionalT,
-                            globalPosAdditional3, globalIdxAdditional3,
-                            globalPosAdditional4, globalIdxAdditional4 ,
+                            globalPosAdditional3, eIdxGlobalAdditional3,
+                            globalPosAdditional4, eIdxGlobalAdditional4 ,
                             banana); // offset for second interaction region
 
             Scalar gravityContributionAdditonal
                 = temp1 * additionalT[0] + temp2 * additionalT[1]
                     + globalPosAdditional3*this->gravity_ * additionalT[2]
                     + globalPosAdditional4*this->gravity_ * additionalT[3];
-            CellData& cellDataA3 = problem().variables().cellData(globalIdxAdditional3);
-            CellData& cellDataA4 = problem().variables().cellData(globalIdxAdditional4);
+            CellData& cellDataA3 = problem().variables().cellData(eIdxGlobalAdditional3);
+            CellData& cellDataA4 = problem().variables().cellData(eIdxGlobalAdditional4);
 
             /* compute matrix entry: advective fluxes */
             /* extend T with other matrix entries and assemble to A_    */
-            this->A_[globalIdxI][globalIdxI] +=
+            this->A_[eIdxGlobalI][eIdxGlobalI] +=
                     (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * additionalT[0];
-            this->A_[globalIdxI][globalIdxJ] +=
+            this->A_[eIdxGlobalI][eIdxGlobalJ] +=
                     (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * additionalT[1];
-            this->A_[globalIdxI][globalIdxAdditional3] +=
+            this->A_[eIdxGlobalI][eIdxGlobalAdditional3] +=
                     (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * additionalT[2];
-            this->A_[globalIdxI][globalIdxAdditional4] +=
+            this->A_[eIdxGlobalI][eIdxGlobalAdditional4] +=
                     (lambda[wPhaseIdx] * dV[wPhaseIdx] + lambda[nPhaseIdx] * dV[nPhaseIdx]) * additionalT[3];
 
 
             // add gravity to RHS vector
-            this->f_[globalIdxI] += (rhoMean[wPhaseIdx] * lambda[wPhaseIdx] * dV[wPhaseIdx]
+            this->f_[eIdxGlobalI] += (rhoMean[wPhaseIdx] * lambda[wPhaseIdx] * dV[wPhaseIdx]
                                      + rhoMean[nPhaseIdx] * lambda[nPhaseIdx] * dV[nPhaseIdx]) * gravityContributionAdditonal;
 
             // weithing accounts for the fraction of the subcontrol volume
@@ -1090,17 +1090,17 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
             if(enableVolumeIntegral_) // switch off volume integral for mpfa case
             {
                 // correct for area integral
-                this->A_[globalIdxI][globalIdxI] -=
+                this->A_[eIdxGlobalI][eIdxGlobalI] -=
                         weightingFactor * (lambda[wPhaseIdx] * gV[wPhaseIdx] + lambda[nPhaseIdx] * gV[nPhaseIdx]) * additionalT[0];
-                this->A_[globalIdxI][globalIdxJ] -=
+                this->A_[eIdxGlobalI][eIdxGlobalJ] -=
                         weightingFactor * (lambda[wPhaseIdx] * gV[wPhaseIdx] + lambda[nPhaseIdx] * gV[nPhaseIdx]) * additionalT[1];
-                this->A_[globalIdxI][globalIdxAdditional3] -=
+                this->A_[eIdxGlobalI][eIdxGlobalAdditional3] -=
                         weightingFactor * (lambda[wPhaseIdx] * gV[wPhaseIdx] + lambda[nPhaseIdx] * gV[nPhaseIdx]) * additionalT[2];
-                this->A_[globalIdxI][globalIdxAdditional4] -=
+                this->A_[eIdxGlobalI][eIdxGlobalAdditional4] -=
                         weightingFactor * (lambda[wPhaseIdx] * gV[wPhaseIdx] + lambda[nPhaseIdx] * gV[nPhaseIdx]) * additionalT[3];
 
                 // add gravity to RHS vector
-                this->f_[globalIdxI] -= weightingFactor * gravityContribution *
+                this->f_[eIdxGlobalI] -= weightingFactor * gravityContribution *
                         (rhoMean[wPhaseIdx] * lambda[wPhaseIdx] * gV[wPhaseIdx] + rhoMean[nPhaseIdx] * lambda[nPhaseIdx] * gV[nPhaseIdx]);
             }
 
@@ -1117,7 +1117,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
                 pcGradient *= - lambda[wPhaseIdx] * dV[wPhaseIdx]
                                + enableVolumeIntegral_ * weightingFactor * lambda[wPhaseIdx] * gV[wPhaseIdx];
 
-            this->f_[globalIdxI] += pcGradient;
+            this->f_[eIdxGlobalI] += pcGradient;
         }
     }
 }
@@ -1144,15 +1144,15 @@ void FV3dPressure2P2CAdaptive<TypeTag>::get1pMpfaFlux(const IntersectionIterator
 {
     // acess Cell I
     ElementPointer elementPointerI = isIt->inside();
-    int globalIdxI = problem().variables().index(*elementPointerI);
+    int eIdxGlobalI = problem().variables().index(*elementPointerI);
 
     // get global coordinate of cell center
     const GlobalPosition& globalPos = elementPointerI->geometry().center();
 
     // access neighbor
     ElementPointer neighborPointer = isIt->outside();
-    int globalIdxJ = problem().variables().index(*neighborPointer);
-    CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
+    int eIdxGlobalJ = problem().variables().index(*neighborPointer);
+    CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
     // gemotry info of neighbor
     const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
@@ -1170,31 +1170,31 @@ void FV3dPressure2P2CAdaptive<TypeTag>::get1pMpfaFlux(const IntersectionIterator
         // Prepare MPFA
         /** get geometrical Info, transmissibility matrix */
         GlobalPosition globalPos3(0.);
-        int globalIdx3=-1;
+        int eIdxGlobal3=-1;
         GlobalPosition globalPos4(0.);
-        int globalIdx4=-1;
+        int eIdxGlobal4=-1;
         TransmissivityMatrix T(0.);
 
             // prepare second interaction region
             GlobalPosition globalPosAdditional3(0.);
-            int globalIdxAdditional3=-1;
+            int eIdxGlobalAdditional3=-1;
             GlobalPosition globalPosAdditional4(0.);
-            int globalIdxAdditional4=-1;
+            int eIdxGlobalAdditional4=-1;
 
             TransmissivityMatrix additionalT(0.);
 
         int interactionRegions
             = problem().variables().getMpfaData3D(*isIt, T,
-                                    globalPos3, globalIdx3, globalPos4, globalIdx4  );
+                                    globalPos3, eIdxGlobal3, globalPos4, eIdxGlobal4  );
         if (interactionRegions == 0)
             interactionRegions = problem().pressureModel().computeTransmissibilities(isIt,T,
-                    globalPos3, globalIdx3,  globalPos4, globalIdx4  );
+                    globalPos3, eIdxGlobal3,  globalPos4, eIdxGlobal4  );
         if(!interactionRegions)
-            Dune::dgrave << "something went wrong getting mpfa data on cell " << globalIdxI << std::endl;
+            Dune::dgrave << "something went wrong getting mpfa data on cell " << eIdxGlobalI << std::endl;
 
         // shortcurts mpfa case
-        CellData& cellData3 = problem().variables().cellData(globalIdx3);
-        CellData& cellData4 = problem().variables().cellData(globalIdx4);
+        CellData& cellData3 = problem().variables().cellData(eIdxGlobal3);
+        CellData& cellData4 = problem().variables().cellData(eIdxGlobal4);
         Scalar temp1 = globalPos * this->gravity_;
         Scalar temp2 = globalPosNeighbor * this->gravity_;
         Scalar temp3 = globalPos3 * this->gravity_;
@@ -1212,16 +1212,16 @@ void FV3dPressure2P2CAdaptive<TypeTag>::get1pMpfaFlux(const IntersectionIterator
             {
                 // get data for second interaction region
                 problem().variables().getMpfaData3D(*isIt, additionalT,
-                                globalPosAdditional3, globalIdxAdditional3,
-                                globalPosAdditional4, globalIdxAdditional4 ,
+                                globalPosAdditional3, eIdxGlobalAdditional3,
+                                globalPosAdditional4, eIdxGlobalAdditional4 ,
                                 banana); // offset for second interaction region
 
                 Scalar gravityContributionAdditonal
                     = temp1 * additionalT[0] + temp2 * additionalT[1]
                         + globalPosAdditional3*this->gravity_ * additionalT[2]
                         + globalPosAdditional4*this->gravity_ * additionalT[3];
-                CellData& cellDataA3 = problem().variables().cellData(globalIdxAdditional3);
-                CellData& cellDataA4 = problem().variables().cellData(globalIdxAdditional4);
+                CellData& cellDataA3 = problem().variables().cellData(eIdxGlobalAdditional3);
+                CellData& cellDataA4 = problem().variables().cellData(eIdxGlobalAdditional4);
 
                 potential += cellDataI.pressure(phaseIdx) * additionalT[0]
                              + cellDataJ.pressure(phaseIdx) * additionalT[1]
@@ -1242,14 +1242,14 @@ void FV3dPressure2P2CAdaptive<TypeTag>::get1pMpfaFlux(const IntersectionIterator
 
     /** compute matrix entry: advective fluxes */
     /* extend T with other matrix entries and assemble to A_    */
-    this->A_[globalIdxI][globalIdxI] += lambda * T[0];
-    this->A_[globalIdxI][globalIdxJ] += lambda * T[1];
-    this->A_[globalIdxI][globalIdx3] += lambda * T[2];
-    this->A_[globalIdxI][globalIdx4] += lambda * T[3];
+    this->A_[eIdxGlobalI][eIdxGlobalI] += lambda * T[0];
+    this->A_[eIdxGlobalI][eIdxGlobalJ] += lambda * T[1];
+    this->A_[eIdxGlobalI][eIdxGlobal3] += lambda * T[2];
+    this->A_[eIdxGlobalI][eIdxGlobal4] += lambda * T[3];
 
     // add gravity to RHS vector
     Scalar gravityContribution = temp1 * T[0] + temp2 * T[1] + temp3 * T[2] + temp4 * T[3];
-    this->f_[globalIdxI] += lambda * rhoMean * gravityContribution;
+    this->f_[eIdxGlobalI] += lambda * rhoMean * gravityContribution;
 
     // regard more interaction regions, if there are more
     if(interactionRegions != 1)
@@ -1258,8 +1258,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::get1pMpfaFlux(const IntersectionIterator
         {
             // get data for second interaction region
             problem().variables().getMpfaData3D(*isIt, additionalT,
-                            globalPosAdditional3, globalIdxAdditional3,
-                            globalPosAdditional4, globalIdxAdditional4 ,
+                            globalPosAdditional3, eIdxGlobalAdditional3,
+                            globalPosAdditional4, eIdxGlobalAdditional4 ,
                             banana); // offset for second interaction region
 
             Scalar gravityContributionAdditonal
@@ -1269,13 +1269,13 @@ void FV3dPressure2P2CAdaptive<TypeTag>::get1pMpfaFlux(const IntersectionIterator
 
             /** compute matrix entry: advective fluxes */
             /* extend T with other matrix entries and assemble to A_    */
-            this->A_[globalIdxI][globalIdxI] += lambda * additionalT[0];
-            this->A_[globalIdxI][globalIdxJ] += lambda * additionalT[1];
-            this->A_[globalIdxI][globalIdxAdditional3] += lambda * additionalT[2];
-            this->A_[globalIdxI][globalIdxAdditional4] += lambda * additionalT[3];
+            this->A_[eIdxGlobalI][eIdxGlobalI] += lambda * additionalT[0];
+            this->A_[eIdxGlobalI][eIdxGlobalJ] += lambda * additionalT[1];
+            this->A_[eIdxGlobalI][eIdxGlobalAdditional3] += lambda * additionalT[2];
+            this->A_[eIdxGlobalI][eIdxGlobalAdditional4] += lambda * additionalT[3];
 
             // add gravity to RHS vector
-            this->f_[globalIdxI] += lambda * rhoMean* gravityContributionAdditonal;
+            this->f_[eIdxGlobalI] += lambda * rhoMean* gravityContributionAdditonal;
         }
     }
 }
@@ -1304,8 +1304,8 @@ void FV3dPressure2P2CAdaptive<TypeTag>::updateMaterialLaws(bool fromPostTimestep
         ElementIterator eItEnd = problem().gridView().template end<0> ();
         for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
         {
-            int globalIdx = problem().variables().index(*eIt);
-            CellData& cellData = problem().variables().cellData(globalIdx);
+            int eIdxGlobal = problem().variables().index(*eIt);
+            CellData& cellData = problem().variables().cellData(eIdxGlobal);
 
             if(cellData.fluidStateType() == 0) // i.e. it is complex
                 problem().pressureModel().updateMaterialLawsInElement(*eIt, fromPostTimestep);
@@ -1338,27 +1338,27 @@ void FV3dPressure2P2CAdaptive<TypeTag>::updateMaterialLaws(bool fromPostTimestep
 * \param isIt Iterator to the current intersection
 * \param T Transmissitivity matrix of the first unique interaction volume
 * \param globalPos4 Position of the 3rd cell (with local Idx 4) of the unique interaction volume
-* \param globalIdx4 Index of the 3rd cell (with local Idx 4) of the unique interaction volume
+* \param eIdxGlobal4 Index of the 3rd cell (with local Idx 4) of the unique interaction volume
 * \param globalPos6 Position of the 4th cell (with local Idx 6) of the unique interaction volume
-* \param globalIdx6 Index of the 4th cell (with local Idx 6) of the unique interaction volume
+* \param eIdxGlobal6 Index of the 4th cell (with local Idx 6) of the unique interaction volume
 */
 template <class TypeTag>
 int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const IntersectionIterator& isIt,
         TransmissivityMatrix& T,
         GlobalPosition& globalPos4,
-        int& globalIdx4,
+        int& eIdxGlobal4,
         GlobalPosition& globalPos6,
-        int& globalIdx6)
+        int& eIdxGlobal6)
 {
     // get geometry information of cellI = cell1, cellJ = cell2
     ElementPointer eIt = isIt->inside();
-//    int globalIdxI =  problem().variables().index(*eIt);
+//    int eIdxGlobalI =  problem().variables().index(*eIt);
     ElementPointer neighborPointer = isIt->outside();
     GlobalPosition globalPos1 = eIt->geometry().center();
     GlobalPosition globalPos2 = neighborPointer->geometry().center();
     DimMatrix K1(problem().spatialParams().intrinsicPermeability(*eIt));
     DimMatrix K2(problem().spatialParams().intrinsicPermeability(*neighborPointer));
-//    int globalIdxJ =  problem().variables().index(*isIt->outside());
+//    int eIdxGlobalJ =  problem().variables().index(*isIt->outside());
 
     // determine ID of intersection seen from larger cell
     int intersectionID = 0;
@@ -1413,14 +1413,14 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 
     // get information of cell4
     globalPos4 = face24->outside()->geometry().center();
-    globalIdx4 = problem().variables().index(*(face24->outside()));
+    eIdxGlobal4 = problem().variables().index(*(face24->outside()));
     GlobalPosition outerNormaln24 = face24->centerUnitOuterNormal();
     // get absolute permeability of neighbor cell 3
     DimMatrix K4(problem().spatialParams().intrinsicPermeability(*(face24->outside())));
 
     // get information of cell6
     globalPos6 = face26->outside()->geometry().center();
-    globalIdx6 = problem().variables().index(*(face26->outside()));
+    eIdxGlobal6 = problem().variables().index(*(face26->outside()));
     GlobalPosition outerNormaln26 = face26->centerUnitOuterNormal();
     // get absolute permeability of neighbor cell 3
     DimMatrix K6(problem().spatialParams().intrinsicPermeability(*(face26->outside())));
@@ -1657,7 +1657,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     	T *= isIt->geometry().volume()/subFaceArea12 ;
 
         // set your map entry
-        problem().variables().storeMpfaData3D(*isIt, T, globalPos4, globalIdx4, globalPos6, globalIdx6);
+        problem().variables().storeMpfaData3D(*isIt, T, globalPos4, eIdxGlobal4, globalPos6, eIdxGlobal6);
         return 1; // indicates that only 1 interaction region was regarded
     }
     else
@@ -1782,7 +1782,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
                                 subVolumeFaceIdx = interactionVolumesContainer_->getMpfaCase2or4cells(isIt,
                                                                         interactionVolume, properFluxDirection);
 
-                            // b) calculate T, globalIdx3+4
+                            // b) calculate T, eIdxGlobal3+4
                             caseL = this->transmissibilityAdapter_(isIt, interactionVolume, subVolumeFaceIdx,
                                                         properFluxDirection, additional2, additional3, additionalT);
 
@@ -1804,7 +1804,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         }
 
         // set your map entry
-        problem().variables().storeMpfaData3D(*isIt, T, globalPos4, globalIdx4, globalPos6, globalIdx6);
+        problem().variables().storeMpfaData3D(*isIt, T, globalPos4, eIdxGlobal4, globalPos6, eIdxGlobal6);
 
         // determine weights
         Scalar weight = isIt->geometry().volume()/subFaceArea12; // =4 for 1 interaction region

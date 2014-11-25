@@ -135,9 +135,9 @@ protected:
             PrimaryVariables initValues;
             problem_.initial(initValues, *eIt);
 
-            int globalIdx = problem_.variables().index(*eIt);
+            int eIdxGlobal = problem_.variables().index(*eIt);
 
-            pressure_[globalIdx] = initValues[pressEqIdx];
+            pressure_[eIdxGlobal] = initValues[pressEqIdx];
         }
     }
 
@@ -189,12 +189,12 @@ public:
 
     /*! \brief Public access function for the primary pressure variable
      *
-     * Function returns the cell pressure value at index <tt>globalIdx</tt>
+     * Function returns the cell pressure value at index <tt>eIdxGlobal</tt>
      *
-     * \param globalIdx Global index of a grid cell
+     * \param eIdxGlobal Global index of a grid cell
      */
-    const Scalar pressure(const int globalIdx) const
-    {   return pressure_[globalIdx];}
+    const Scalar pressure(const int eIdxGlobal) const
+    {   return pressure_[eIdxGlobal];}
 
     //!Returns the global matrix of the last pressure solution step.
     const Matrix& globalMatrix()
@@ -252,8 +252,8 @@ public:
      */
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
-        int globalIdx = problem_.variables().index(element);
-        outstream << pressure_[globalIdx][0];
+        int eIdxGlobal = problem_.variables().index(element);
+        outstream << pressure_[eIdxGlobal][0];
     }
 
     /*! \brief  Function for deserialization of the pressure field.
@@ -265,8 +265,8 @@ public:
      */
     void deserializeEntity(std::istream &instream, const Element &element)
     {
-        int globalIdx = problem_.variables().index(element);
-        instream >> pressure_[globalIdx][0];
+        int eIdxGlobal = problem_.variables().index(element);
+        instream >> pressure_[eIdxGlobal][0];
     }
 
     /*! \brief Set a pressure to be fixed at a certain cell.
@@ -275,23 +275,23 @@ public:
      *This can be necessary e.g. if only Neumann boundary conditions are defined.
      *The pressure is fixed until the <tt>unsetFixPressureAtIndex()</tt> function is called
      *
-     * \param pressure Pressure value at globalIdx
-     * \param globalIdx Global index of a grid cell
+     * \param pressure Pressure value at eIdxGlobal
+     * \param eIdxGlobal Global index of a grid cell
      */
-    void setFixPressureAtIndex(Scalar pressure, int globalIdx)
+    void setFixPressureAtIndex(Scalar pressure, int eIdxGlobal)
     {
-        fixPressure_.insert(std::make_pair(globalIdx, pressure));
+        fixPressure_.insert(std::make_pair(eIdxGlobal, pressure));
     }
 
     /*! \brief Reset the fixed pressure state
      *
      * No pressure is fixed inside the domain until <tt>setFixPressureAtIndex()</tt> function is called again.
      *
-     * \param globalIdx Global index of a grid cell
+     * \param eIdxGlobal Global index of a grid cell
      */
-    void unsetFixPressureAtIndex(int globalIdx)
+    void unsetFixPressureAtIndex(int eIdxGlobal)
     {
-    	fixPressure_.erase(globalIdx);
+    	fixPressure_.erase(eIdxGlobal);
     }
 
     void resetFixPressureAtIndex()
@@ -348,7 +348,7 @@ void FVPressure<TypeTag>::initializeMatrixRowSize()
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(*eIt);
 
         // initialize row size
         int rowSize = 1;
@@ -360,7 +360,7 @@ void FVPressure<TypeTag>::initializeMatrixRowSize()
             if (isIt->neighbor())
                 rowSize++;
         }
-        A_.setrowsize(globalIdxI, rowSize);
+        A_.setrowsize(eIdxGlobalI, rowSize);
     }
 
     return;
@@ -375,10 +375,10 @@ void FVPressure<TypeTag>::initializeMatrixIndices()
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(*eIt);
 
         // add diagonal index
-        A_.addindex(globalIdxI, globalIdxI);
+        A_.addindex(eIdxGlobalI, eIdxGlobalI);
 
         // run through all intersections with neighbors
         IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
@@ -387,10 +387,10 @@ void FVPressure<TypeTag>::initializeMatrixIndices()
             {
                 // access neighbor
                 ElementPointer outside = isIt->outside();
-                int globalIdxJ = problem_.variables().index(*outside);
+                int eIdxGlobalJ = problem_.variables().index(*outside);
 
                 // add off diagonal index
-                A_.addindex(globalIdxI, globalIdxJ);
+                A_.addindex(eIdxGlobalI, eIdxGlobalJ);
             }
     }
 
@@ -419,19 +419,19 @@ void FVPressure<TypeTag>::assemble(bool first)
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
     {
         // get the global index of the cell
-        int globalIdxI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(*eIt);
 
         // assemble interior element contributions
         if (eIt->partitionType() == Dune::InteriorEntity)
         {
             // get the cell data
-            CellData& cellDataI = problem_.variables().cellData(globalIdxI);
+            CellData& cellDataI = problem_.variables().cellData(eIdxGlobalI);
 
             EntryType entries(0.);
 
             /*****  source term ***********/
             asImp_().getSource(entries, *eIt, cellDataI, first);
-            f_[globalIdxI] += entries[rhs];
+            f_[eIdxGlobalI] += entries[rhs];
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
@@ -443,7 +443,7 @@ void FVPressure<TypeTag>::assemble(bool first)
                 {
                     ElementPointer elementNeighbor = isIt->outside();
 
-                    int globalIdxJ = problem_.variables().index(*elementNeighbor);
+                    int eIdxGlobalJ = problem_.variables().index(*elementNeighbor);
 
                     // check for hanging nodes
                     // take a hanging node never from the element with smaller level!
@@ -452,7 +452,7 @@ void FVPressure<TypeTag>::assemble(bool first)
                     // the last condition is needed to properly assemble in the presence 
                     // of ghost elements
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
-                        && (globalIdxI > globalIdxJ) && haveSameLevel
+                        && (eIdxGlobalI > eIdxGlobalJ) && haveSameLevel
                         && elementNeighbor->partitionType() == Dune::InteriorEntity)
                         continue;
 
@@ -461,21 +461,21 @@ void FVPressure<TypeTag>::assemble(bool first)
                     asImp_().getFlux(entries, *isIt, cellDataI, first);
 
                     //set right hand side
-                    f_[globalIdxI] -= entries[rhs];
+                    f_[eIdxGlobalI] -= entries[rhs];
 
                     // set diagonal entry
-                    A_[globalIdxI][globalIdxI] += entries[matrix];
+                    A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
 
                     // set off-diagonal entry
-                    A_[globalIdxI][globalIdxJ] -= entries[matrix];
+                    A_[eIdxGlobalI][eIdxGlobalJ] -= entries[matrix];
 
                     // The second condition is needed to not spoil the ghost element entries
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
                         && elementNeighbor->partitionType() == Dune::InteriorEntity)
                     {
-                        f_[globalIdxJ] += entries[rhs];
-                        A_[globalIdxJ][globalIdxJ] += entries[matrix];
-                        A_[globalIdxJ][globalIdxI] -= entries[matrix];
+                        f_[eIdxGlobalJ] += entries[rhs];
+                        A_[eIdxGlobalJ][eIdxGlobalJ] += entries[matrix];
+                        A_[eIdxGlobalJ][eIdxGlobalI] -= entries[matrix];
                     }
 
                 } // end neighbor
@@ -487,9 +487,9 @@ void FVPressure<TypeTag>::assemble(bool first)
                     asImp_().getFluxOnBoundary(entries, *isIt, cellDataI, first);
 
                     //set right hand side
-                    f_[globalIdxI] += entries[rhs];
+                    f_[eIdxGlobalI] += entries[rhs];
                     // set diagonal entry
-                    A_[globalIdxI][globalIdxI] += entries[matrix];
+                    A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
                 }
             } //end interfaces loop
     //        printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
@@ -497,16 +497,16 @@ void FVPressure<TypeTag>::assemble(bool first)
             /*****  storage term ***********/
             entries = 0;
             asImp_().getStorage(entries, *eIt, cellDataI, first);
-            f_[globalIdxI] += entries[rhs];
+            f_[eIdxGlobalI] += entries[rhs];
     //         set diagonal entry
-            A_[globalIdxI][globalIdxI] += entries[matrix];
+            A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
         }
         // assemble overlap and ghost element contributions
         else 
         {
-            A_[globalIdxI] = 0.0;
-            A_[globalIdxI][globalIdxI] = 1.0;
-            f_[globalIdxI] = pressure_[globalIdxI];
+            A_[eIdxGlobalI] = 0.0;
+            A_[eIdxGlobalI][eIdxGlobalI] = 1.0;
+            f_[eIdxGlobalI] = pressure_[eIdxGlobalI];
         }
     } // end grid traversal
 //    printmatrix(std::cout, A_, "global stiffness matrix after assempling", "row", 11,3);

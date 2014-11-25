@@ -309,13 +309,13 @@ public:
      *
      * Calculates secondary saturation variables and stores saturations.
      *
-     * \param globalIdx Global cell index
+     * \param eIdxGlobal Global cell index
      * \param update Cell saturation update
      * \param dt Current time step
      */
-    void updateSaturationSolution(int globalIdx, Scalar update, Scalar dt)
+    void updateSaturationSolution(int eIdxGlobal, Scalar update, Scalar dt)
     {
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         switch (saturationType_)
         {
@@ -414,16 +414,16 @@ public:
      */
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
 
         Scalar sat = 0.0;
         switch (saturationType_)
         {
         case sw:
-            sat = problem_.variables().cellData(globalIdx).saturation(wPhaseIdx);
+            sat = problem_.variables().cellData(eIdxGlobal).saturation(wPhaseIdx);
         break;
         case sn:
-            sat = problem_.variables().cellData(globalIdx).saturation(nPhaseIdx);
+            sat = problem_.variables().cellData(eIdxGlobal).saturation(nPhaseIdx);
             break;
         }
 
@@ -437,7 +437,7 @@ public:
      */
     void deserializeEntity(std::istream &instream, const Element &element)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
 
         Scalar sat = 0.;
         instream >> sat;
@@ -445,12 +445,12 @@ public:
         switch (saturationType_)
         {
         case sw:
-            problem_.variables().cellData(globalIdx).setSaturation(wPhaseIdx, sat);
-            problem_.variables().cellData(globalIdx).setSaturation(nPhaseIdx, 1-sat);
+            problem_.variables().cellData(eIdxGlobal).setSaturation(wPhaseIdx, sat);
+            problem_.variables().cellData(eIdxGlobal).setSaturation(nPhaseIdx, 1-sat);
         break;
         case sn:
-            problem_.variables().cellData(globalIdx).setSaturation(nPhaseIdx, sat);
-            problem_.variables().cellData(globalIdx).setSaturation(wPhaseIdx, 1-sat);
+            problem_.variables().cellData(eIdxGlobal).setSaturation(nPhaseIdx, sat);
+            problem_.variables().cellData(eIdxGlobal).setSaturation(wPhaseIdx, 1-sat);
             break;
         }
     }
@@ -1137,9 +1137,9 @@ void FVSaturation2P<TypeTag>::initialize()
         PrimaryVariables initSol(0.0);
         problem_.initial(initSol, *eIt);
 
-        int globalIdx = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(*eIt);
 
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         switch (saturationType_)
         {
@@ -1179,9 +1179,9 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws()
     ElementIterator eEndIt = problem_.gridView().template end<0>();
     for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
     {
-        int globalIdx = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(*eIt);
 
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         //determine phase saturations from primary saturation variable
         Scalar satW = cellData.saturation(wPhaseIdx);

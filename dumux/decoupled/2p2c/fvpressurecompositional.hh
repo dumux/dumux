@@ -321,9 +321,9 @@ public:
                 eIt != problem_.gridView().template end<0>(); ++eIt)
         {
             // get index
-            int globalIdx = problem_.variables().index(*eIt);
-            poro_[globalIdx] = problem_.spatialParams().porosity(*eIt);
-            perm_[globalIdx] = problem_.spatialParams().intrinsicPermeability(*eIt)[0][0];
+            int eIdxGlobal = problem_.variables().index(*eIt);
+            poro_[eIdxGlobal] = problem_.spatialParams().porosity(*eIt);
+            perm_[eIdxGlobal] = problem_.spatialParams().intrinsicPermeability(*eIt)[0][0];
         }
         *poroPtr = poro_;
         *permPtr = perm_;
@@ -341,11 +341,11 @@ public:
                     eIt != problem_.gridView().template end<0>(); ++eIt)
             {
                 // get index
-                int globalIdx = problem_.variables().index(*eIt);
+                int eIdxGlobal = problem_.variables().index(*eIt);
                 if(dim >=2)
-                    permY_[globalIdx] = problem_.spatialParams().intrinsicPermeability(*eIt)[1][1];
+                    permY_[eIdxGlobal] = problem_.spatialParams().intrinsicPermeability(*eIt)[1][1];
                 if(dim >=3)
-                    permZ_[globalIdx] = problem_.spatialParams().intrinsicPermeability(*eIt)[2][2];
+                    permZ_[eIdxGlobal] = problem_.spatialParams().intrinsicPermeability(*eIt)[2][2];
             }
             if(dim >=2)
             {
@@ -539,11 +539,11 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         GlobalPosition globalPos = eIt->geometry().center();
 
         // assign an Index for convenience
-        int globalIdx = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(*eIt);
 
         // get the temperature
         Scalar temperature_ = problem_.temperatureAtPos(globalPos);
-        CellData& cellData = problem_.variables().cellData(globalIdx);
+        CellData& cellData = problem_.variables().cellData(eIdxGlobal);
         // acess the fluid state and prepare for manipulation
         FluidState& fluidState = cellData.manipulateFluidState();
         CompositionalFlash<TypeTag> flashSolver;
@@ -559,7 +559,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         {
             // phase pressures are unknown, so start with an exemplary
             Scalar exemplaryPressure = problem_.referencePressure(*eIt);
-            pressure[wPhaseIdx] = pressure[nPhaseIdx] = this->pressure()[globalIdx] = exemplaryPressure;
+            pressure[wPhaseIdx] = pressure[nPhaseIdx] = this->pressure()[eIdxGlobal] = exemplaryPressure;
             if (icFormulation == Indices::saturation)  // saturation initial condition
             {
                 sat_0 = problem_.initSat(*eIt);
@@ -592,14 +592,14 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 {
                     case pw:
                     {
-                        pressure[wPhaseIdx] = this->pressure()[globalIdx];
-                        pressure[nPhaseIdx] = this->pressure()[globalIdx] +pc;
+                        pressure[wPhaseIdx] = this->pressure()[eIdxGlobal];
+                        pressure[nPhaseIdx] = this->pressure()[eIdxGlobal] +pc;
                         break;
                     }
                     case pn:
                     {
-                        pressure[wPhaseIdx] = this->pressure()[globalIdx]-pc;
-                        pressure[nPhaseIdx] = this->pressure()[globalIdx];
+                        pressure[wPhaseIdx] = this->pressure()[eIdxGlobal]-pc;
+                        pressure[nPhaseIdx] = this->pressure()[eIdxGlobal];
                         break;
                     }
                 }
@@ -627,14 +627,14 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                         {
                             case pw:
                             {
-                                pressure[wPhaseIdx] = this->pressure()[globalIdx];
-                                pressure[nPhaseIdx] = this->pressure()[globalIdx] + pc;
+                                pressure[wPhaseIdx] = this->pressure()[eIdxGlobal];
+                                pressure[nPhaseIdx] = this->pressure()[eIdxGlobal] + pc;
                                 break;
                             }
                             case pn:
                             {
-                                pressure[wPhaseIdx] = this->pressure()[globalIdx] - pc;
-                                pressure[nPhaseIdx] = this->pressure()[globalIdx];
+                                pressure[wPhaseIdx] = this->pressure()[eIdxGlobal] - pc;
+                                pressure[nPhaseIdx] = this->pressure()[eIdxGlobal];
                                 break;
                             }
                         }
@@ -658,7 +658,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 else  // capillary pressure neglected
                 {
                     pressure[wPhaseIdx] = pressure[nPhaseIdx]
-                        = this->pressure()[globalIdx];
+                        = this->pressure()[eIdxGlobal];
                     flashSolver.concentrationFlash2p2c(fluidState, Z1_0,
                             pressure, problem_.spatialParams().porosity(*eIt), temperature_);
                 }
@@ -667,8 +667,8 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
 
         cellData.calculateMassConcentration(problem_.spatialParams().porosity(*eIt));
 
-        problem_.transportModel().totalConcentration(wCompIdx,globalIdx) = cellData.massConcentration(wCompIdx);
-        problem_.transportModel().totalConcentration(nCompIdx,globalIdx) = cellData.massConcentration(nCompIdx);
+        problem_.transportModel().totalConcentration(wCompIdx,eIdxGlobal) = cellData.massConcentration(wCompIdx);
+        problem_.transportModel().totalConcentration(nCompIdx,eIdxGlobal) = cellData.massConcentration(nCompIdx);
 
         // initialize phase properties not stored in fluidstate
         cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
@@ -692,7 +692,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 cellData.perimeter()
                         += isIt->geometry().volume();
             }
-            cellData.globalIdx() = globalIdx;
+            cellData.globalIdx() = eIdxGlobal;
 
             // set dv to zero to prevent output errors
             cellData.dv_dp() = 0.;
@@ -719,9 +719,9 @@ void FVPressureCompositional<TypeTag>::updateMaterialLaws(bool postTimeStep)
     ElementIterator eEndIt = problem().gridView().template end<0> ();
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
-        int globalIdx = problem().variables().index(*eIt);
+        int eIdxGlobal = problem().variables().index(*eIt);
 
-        CellData& cellData = problem().variables().cellData(globalIdx);
+        CellData& cellData = problem().variables().cellData(eIdxGlobal);
 
         asImp_().updateMaterialLawsInElement(*eIt, postTimeStep);
 
@@ -749,9 +749,9 @@ template<class TypeTag>
 void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& globalPos, const Element& element)
 {
     // cell index
-    int globalIdx = problem_.variables().index(element);
+    int eIdxGlobal = problem_.variables().index(element);
 
-    CellData& cellData = problem_.variables().cellData(globalIdx);
+    CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
     // get cell temperature
     Scalar temperature_ = cellData.temperature(wPhaseIdx);
@@ -789,7 +789,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     ComponentVector massIncrement(0.);
     for(int compIdx = 0; compIdx< numComponents; compIdx++)
     {
-        massIncrement[compIdx] = updateEstimate_[compIdx][globalIdx];
+        massIncrement[compIdx] = updateEstimate_[compIdx][eIdxGlobal];
         if(fabs(massIncrement[compIdx]) < 1e-8 * cellData.density(compIdx))
             massIncrement[compIdx] = 1e-8* cellData.density(compIdx);   // as phaseIdx = compIdx
     }
@@ -814,7 +814,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     if (dv_dp>0)
     {
         // dV_dp > 0 is unphysical: Try inverse increment for secant
-        Dune::dinfo << "dv_dp larger 0 at Idx " << globalIdx << " , try and invert secant"<< std::endl;
+        Dune::dinfo << "dv_dp larger 0 at Idx " << eIdxGlobal << " , try and invert secant"<< std::endl;
 
         p_ -= 2*incp;
         flashSolver.concentrationFlash2p2c(updFluidState, Z1,
@@ -828,7 +828,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
         // dV_dp > 0 is unphysical: Try inverse increment for secant
         if (dv_dp>0)
         {
-            Dune::dwarn << "dv_dp still larger 0 after inverting secant at idx"<< globalIdx<< std::endl;
+            Dune::dwarn << "dv_dp still larger 0 after inverting secant at idx"<< eIdxGlobal<< std::endl;
             p_ += 2*incp;
             flashSolver.concentrationFlash2p2c(updFluidState, Z1,
                         p_, problem_.spatialParams().porosity(element), temperature_);
@@ -839,7 +839,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
             dv_dp = ((mass.one_norm() * specificVolume) - volalt) /incp;
             if (dv_dp>0)
             {
-                std::cout << "dv_dp still larger 0 after both inverts at idx " << globalIdx << std::endl;
+                std::cout << "dv_dp still larger 0 after both inverts at idx " << eIdxGlobal << std::endl;
                 dv_dp = cellData.dv_dp();
             }
         }

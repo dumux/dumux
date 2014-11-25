@@ -123,9 +123,9 @@ public:
 
         for (; eIt != eEndIt; ++eIt)
         {
-            int globalIdx = problem.variables().index(*eIt);
+            int eIdxGlobal = problem.variables().index(*eIt);
 
-            unsigned int numFaces = this->intersectionMapper_.size(globalIdx);
+            unsigned int numFaces = this->intersectionMapper_.size(eIdxGlobal);
 
             // get local to global id map and pressure traces
             velocityW.resize(numFaces);
@@ -133,7 +133,7 @@ public:
             pressTraceW.resize(numFaces);
             pressTraceNw.resize(numFaces);
 
-            CellData& cellData = problem.variables().cellData(globalIdx);
+            CellData& cellData = problem.variables().cellData(eIdxGlobal);
             FieldVector globalPos = eIt->geometry().center();
 
             int intersectionIdx = -1;
@@ -144,7 +144,7 @@ public:
             {
                 ++intersectionIdx;
 
-                int globalIdxFace = this->intersectionMapper_.map(*eIt, intersectionIdx);
+                int fIdxGlobal = this->intersectionMapper_.map(*eIt, intersectionIdx);
 
                 Scalar pcPotFace = (problem.bBoxMax() - isIt->geometry().center()) * problem.gravity() * densityDiff;
 
@@ -152,14 +152,14 @@ public:
                 {
                 case pw:
                 {
-                    pressTraceW[intersectionIdx] = u[globalIdxFace];
-                    pressTraceNw[intersectionIdx] = u[globalIdxFace] + pcPotFace;
+                    pressTraceW[intersectionIdx] = u[fIdxGlobal];
+                    pressTraceNw[intersectionIdx] = u[fIdxGlobal] + pcPotFace;
                     break;
                 }
                 case pn:
                 {
-                    pressTraceNw[intersectionIdx] = u[globalIdxFace];
-                    pressTraceW[intersectionIdx] = u[globalIdxFace] - pcPotFace;
+                    pressTraceNw[intersectionIdx] = u[fIdxGlobal];
+                    pressTraceW[intersectionIdx] = u[fIdxGlobal] - pcPotFace;
 
                     break;
                 }

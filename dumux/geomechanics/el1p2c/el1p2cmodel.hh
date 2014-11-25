@@ -271,29 +271,29 @@ public:
 
                 for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
                 {
-                    unsigned int globalIdx = this->dofMapper().map(*eIt, scvIdx, dim);
+                    unsigned int vIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dim);
 
-                    pressure[globalIdx] = elemVolVars[scvIdx].pressure();
-                    moleFraction0[globalIdx] = elemVolVars[scvIdx].moleFraction(0);
-                    moleFraction1[globalIdx] = elemVolVars[scvIdx].moleFraction(1);
-                    massFraction0[globalIdx] = elemVolVars[scvIdx].massFraction(0);
-                    massFraction1[globalIdx] = elemVolVars[scvIdx].massFraction(1);
+                    pressure[vIdxGlobal] = elemVolVars[scvIdx].pressure();
+                    moleFraction0[vIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
+                    moleFraction1[vIdxGlobal] = elemVolVars[scvIdx].moleFraction(1);
+                    massFraction0[vIdxGlobal] = elemVolVars[scvIdx].massFraction(0);
+                    massFraction1[vIdxGlobal] = elemVolVars[scvIdx].massFraction(1);
                     // in case of rock mechanics sign convention solid displacement is
                     // defined to be negative if it points in positive coordinate direction
                     if(rockMechanicsSignConvention_){
                         DimVector tmpDispl;
                         tmpDispl = Scalar(0);
                         tmpDispl -= elemVolVars[scvIdx].displacement();
-                        displacement[globalIdx] = tmpDispl;
+                        displacement[vIdxGlobal] = tmpDispl;
                         }
 
                     else
-                        displacement[globalIdx] = elemVolVars[scvIdx].displacement();
+                        displacement[vIdxGlobal] = elemVolVars[scvIdx].displacement();
 
-                    density[globalIdx] = elemVolVars[scvIdx].density();
-                    viscosity[globalIdx] = elemVolVars[scvIdx].viscosity();
-                    porosity[globalIdx] = elemVolVars[scvIdx].porosity();
-                    Kx[globalIdx] =    this->problem_().spatialParams().intrinsicPermeability(
+                    density[vIdxGlobal] = elemVolVars[scvIdx].density();
+                    viscosity[vIdxGlobal] = elemVolVars[scvIdx].viscosity();
+                    porosity[vIdxGlobal] = elemVolVars[scvIdx].porosity();
+                    Kx[vIdxGlobal] =    this->problem_().spatialParams().intrinsicPermeability(
                                     *eIt, fvGeometry, scvIdx)[0][0];
                     // calculate cell quantities by adding up scv quantities and dividing through numScv
                     cellPorosity[eIdx] += elemVolVars[scvIdx].porosity()    / numScv;

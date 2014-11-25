@@ -273,9 +273,9 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
         // inludes rhs and boundary condition information
         loc.assemble(*eIt, 1); // assemble local stiffness matrix
 
-        int globalIdx = intersectionMapper_.map(*eIt);
+        int eIdxGlobal = intersectionMapper_.map(*eIt);
 
-        unsigned int numFaces = intersectionMapper_.size(globalIdx);
+        unsigned int numFaces = intersectionMapper_.size(eIdxGlobal);
         local2Global.resize(numFaces);
 
         for (unsigned int i = 0; i < numFaces; i++)
@@ -308,9 +308,9 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
     // run over all leaf elements
     for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eendit; ++eIt)
     {
-        int globalIdx = intersectionMapper_.map(*eIt);
+        int eIdxGlobal = intersectionMapper_.map(*eIt);
 
-        unsigned int numFaces = intersectionMapper_.size(globalIdx);
+        unsigned int numFaces = intersectionMapper_.size(eIdxGlobal);
         local2Global.resize(numFaces);
 
         for (unsigned int i = 0; i < numFaces; i++)

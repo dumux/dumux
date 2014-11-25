@@ -190,9 +190,9 @@ public:
             for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
             {
                 // cell index
-                int globalIdx = problem_.variables().index(*eIt);
+                int eIdxGlobal = problem_.variables().index(*eIt);
 
-                CellData & cellData = problem_.variables().cellData(globalIdx);
+                CellData & cellData = problem_.variables().cellData(eIdxGlobal);
 
                 Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
                 Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
@@ -223,7 +223,7 @@ public:
                 jacobianT.umtv(refVelocity, elementVelocity);
                 elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-                velocityWetting[globalIdx] = elementVelocity;
+                velocityWetting[eIdxGlobal] = elementVelocity;
 
                 refVelocity = 0;
                 refVelocity[0] = 0.5 * (fluxNw[1] - fluxNw[0]);
@@ -234,7 +234,7 @@ public:
                 jacobianT.umtv(refVelocity, elementVelocity);
                 elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-                velocityNonwetting[globalIdx] = elementVelocity;
+                velocityNonwetting[eIdxGlobal] = elementVelocity;
             }
 
             writer.attachCellData(velocityWetting, "wetting-velocity", dim);
@@ -295,10 +295,10 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     int level4 = elementPointer4->level();
 
     // cell index
-    int globalIdx1 = problem_.variables().index(*elementPointer1);
-    int globalIdx2 = problem_.variables().index(*elementPointer2);
-    int globalIdx3 = problem_.variables().index(*elementPointer3);
-    int globalIdx4 = problem_.variables().index(*elementPointer4);
+    int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
+    int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
+    int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
+    int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
 
     // get pressure values
     Dune::FieldVector < Scalar, 2 * dim > potW(0);
@@ -669,35 +669,35 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
         vel41 *= fracFlow14;
         vel43 *= fracFlow34;
 
-        if (innerBoundaryVolumeFaces[globalIdx1][interactionVolume.getIndexOnElement(0, 0)])
+        if (innerBoundaryVolumeFaces[eIdxGlobal1][interactionVolume.getIndexOnElement(0, 0)])
         {
             vel12 *= 2;
         }
-        if (innerBoundaryVolumeFaces[globalIdx1][interactionVolume.getIndexOnElement(0, 1)])
+        if (innerBoundaryVolumeFaces[eIdxGlobal1][interactionVolume.getIndexOnElement(0, 1)])
         {
             vel14 *= 2;
         }
-        if (innerBoundaryVolumeFaces[globalIdx2][interactionVolume.getIndexOnElement(1, 0)])
+        if (innerBoundaryVolumeFaces[eIdxGlobal2][interactionVolume.getIndexOnElement(1, 0)])
         {
             vel23 *= 2;
         }
-        if (innerBoundaryVolumeFaces[globalIdx2][interactionVolume.getIndexOnElement(1, 1)])
+        if (innerBoundaryVolumeFaces[eIdxGlobal2][interactionVolume.getIndexOnElement(1, 1)])
         {
             vel21 *= 2;
         }
-        if (innerBoundaryVolumeFaces[globalIdx3][interactionVolume.getIndexOnElement(2, 0)])
+        if (innerBoundaryVolumeFaces[eIdxGlobal3][interactionVolume.getIndexOnElement(2, 0)])
         {
             vel34 *= 2;
         }
-        if (innerBoundaryVolumeFaces[globalIdx3][interactionVolume.getIndexOnElement(2, 1)])
+        if (innerBoundaryVolumeFaces[eIdxGlobal3][interactionVolume.getIndexOnElement(2, 1)])
         {
             vel32 *= 2;
         }
-        if (innerBoundaryVolumeFaces[globalIdx4][interactionVolume.getIndexOnElement(3, 0)])
+        if (innerBoundaryVolumeFaces[eIdxGlobal4][interactionVolume.getIndexOnElement(3, 0)])
         {
             vel41 *= 2;
         }
-        if (innerBoundaryVolumeFaces[globalIdx4][interactionVolume.getIndexOnElement(3, 1)])
+        if (innerBoundaryVolumeFaces[eIdxGlobal4][interactionVolume.getIndexOnElement(3, 1)])
         {
             vel43 *= 2;
         }

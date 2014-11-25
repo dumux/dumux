@@ -163,17 +163,17 @@ public:
             const VertexIterator &vEndIt = this->gridView_().template end<dim> ();
             for (; vIt != vEndIt; ++vIt)
             {
-                int globalIdx = this->dofMapper().map(*vIt);
+                int vIdxGlobal = this->dofMapper().map(*vIt);
                 const GlobalPosition &globalPos = vIt->geometry().corner(0);
 
                 // initialize phase presence
-                staticDat_[globalIdx].phasePresence
-                    = this->problem_().initialPhasePresence(*vIt, globalIdx,
+                staticDat_[vIdxGlobal].phasePresence
+                    = this->problem_().initialPhasePresence(*vIt, vIdxGlobal,
                                                         globalPos);
-                staticDat_[globalIdx].wasSwitched = false;
+                staticDat_[vIdxGlobal].wasSwitched = false;
 
-                staticDat_[globalIdx].oldPhasePresence
-                    = staticDat_[globalIdx].phasePresence;
+                staticDat_[vIdxGlobal].oldPhasePresence
+                    = staticDat_[vIdxGlobal].phasePresence;
             }
         }
         else
@@ -182,17 +182,17 @@ public:
             const ElementIterator &eEndIt = this->gridView_().template end<0> ();
             for (; eIt != eEndIt; ++eIt)
             {
-                int globalIdx = this->dofMapper().map(*eIt);
+                int eIdxGlobal = this->dofMapper().map(*eIt);
                 const GlobalPosition &globalPos = eIt->geometry().center();
 
                 // initialize phase presence
-                staticDat_[globalIdx].phasePresence
+                staticDat_[eIdxGlobal].phasePresence
                     = this->problem_().initialPhasePresence(*this->gridView_().template begin<dim> (), 
-                                                            globalIdx, globalPos);
-                staticDat_[globalIdx].wasSwitched = false;
+                                                            eIdxGlobal, globalPos);
+                staticDat_[eIdxGlobal].wasSwitched = false;
 
-                staticDat_[globalIdx].oldPhasePresence
-                    = staticDat_[globalIdx].phasePresence;  
+                staticDat_[eIdxGlobal].oldPhasePresence
+                    = staticDat_[eIdxGlobal].phasePresence;  
             }
         }
     }
@@ -264,15 +264,15 @@ public:
     /*!
      * \brief Returns the phase presence of the current or the old solution of a degree of freedom.
      *
-     * \param globalIdx The global index of the degree of freedom
+     * \param dofIdxGlobal The global index of the degree of freedom
      * \param oldSol Evaluate function with solution of current or previous time step
      */
-    int phasePresence(int globalIdx, bool oldSol) const
+    int phasePresence(int dofIdxGlobal, bool oldSol) const
     {
         return
             oldSol
-            ? staticDat_[globalIdx].oldPhasePresence
-            : staticDat_[globalIdx].phasePresence;
+            ? staticDat_[dofIdxGlobal].oldPhasePresence
+            : staticDat_[dofIdxGlobal].phasePresence;
     }
 
     /*!
@@ -351,27 +351,27 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                        (*saturation[phaseIdx])[globalIdx] = elemVolVars[scvIdx].saturation(phaseIdx);
-                        (*pressure[phaseIdx])[globalIdx] = elemVolVars[scvIdx].pressure(phaseIdx);
-                        (*density[phaseIdx])[globalIdx] = elemVolVars[scvIdx].density(phaseIdx);
+                        (*saturation[phaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].saturation(phaseIdx);
+                        (*pressure[phaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].pressure(phaseIdx);
+                        (*density[phaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].density(phaseIdx);
                     }
 
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                            (*moleFraction[phaseIdx][compIdx])[globalIdx] =
+                            (*moleFraction[phaseIdx][compIdx])[dofIdxGlobal] =
                                 elemVolVars[scvIdx].moleFraction(phaseIdx,
                                                                   compIdx);
 
-                            Valgrind::CheckDefined((*moleFraction[phaseIdx][compIdx])[globalIdx]);
+                            Valgrind::CheckDefined((*moleFraction[phaseIdx][compIdx])[dofIdxGlobal]);
                         }
                     }
 
-                    (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();
-                    (*temperature)[globalIdx] = elemVolVars[scvIdx].temperature();
-                    (*phasePresence)[globalIdx] = staticDat_[globalIdx].phasePresence;
+                    (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
+                    (*temperature)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
+                    (*phasePresence)[dofIdxGlobal] = staticDat_[dofIdxGlobal].phasePresence;
                 }
 
                 // velocity output
@@ -429,11 +429,11 @@ public:
         // write primary variables
         ParentType::serializeEntity(outStream, entity);
 
-        int globalIdx = this->dofMapper().map(entity);
+        int dofIdxGlobal = this->dofMapper().map(entity);
         if (!outStream.good())
-            DUNE_THROW(Dune::IOError, "Could not serialize entity " << globalIdx);
+            DUNE_THROW(Dune::IOError, "Could not serialize entity " << dofIdxGlobal);
 
-        outStream << staticDat_[globalIdx].phasePresence << " ";
+        outStream << staticDat_[dofIdxGlobal].phasePresence << " ";
     }
 
     /*!
@@ -449,14 +449,14 @@ public:
         ParentType::deserializeEntity(inStream, entity);
 
         // read phase presence
-        int globalIdx = this->dofMapper().map(entity);
+        int dofIdxGlobal = this->dofMapper().map(entity);
         if (!inStream.good())
             DUNE_THROW(Dune::IOError,
-                       "Could not deserialize entity " << globalIdx);
+                       "Could not deserialize entity " << dofIdxGlobal);
 
-        inStream >> staticDat_[globalIdx].phasePresence;
-        staticDat_[globalIdx].oldPhasePresence
-            = staticDat_[globalIdx].phasePresence;
+        inStream >> staticDat_[dofIdxGlobal].phasePresence;
+        staticDat_[dofIdxGlobal].oldPhasePresence
+            = staticDat_[dofIdxGlobal].phasePresence;
 
     }
 
@@ -483,13 +483,13 @@ public:
             fvGeometry.update(this->gridView_(), *eIt);
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
-                if (staticDat_[globalIdx].visited)
+                if (staticDat_[dofIdxGlobal].visited)
                     continue;
 
-                staticDat_[globalIdx].visited = true;
-                volVars.update(curGlobalSol[globalIdx],
+                staticDat_[dofIdxGlobal].visited = true;
+                volVars.update(curGlobalSol[dofIdxGlobal],
                                this->problem_(),
                                *eIt,
                                fvGeometry,
@@ -498,10 +498,10 @@ public:
                 const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
                 if (primaryVarSwitch_(curGlobalSol,
                                       volVars,
-                                      globalIdx,
+                                      dofIdxGlobal,
                                       globalPos))
                 {
-                    this->jacobianAssembler().markDofRed(globalIdx);
+                    this->jacobianAssembler().markDofRed(dofIdxGlobal);
                     wasSwitched = true;
                 }
             }
@@ -571,55 +571,55 @@ protected:
     //  variable switch was performed.
     bool primaryVarSwitch_(SolutionVector &globalSol,
                            const VolumeVariables &volVars,
-                           int globalIdx,
+                           int dofIdxGlobal,
                            const GlobalPosition &globalPos)
     {
         // evaluate primary variable switch
         bool wouldSwitch = false;
-        int phasePresence = staticDat_[globalIdx].phasePresence;
+        int phasePresence = staticDat_[dofIdxGlobal].phasePresence;
         int newPhasePresence = phasePresence;
 
         // check if a primary var switch is necessary
         if (phasePresence == threePhases)
         {
             Scalar Smin = 0;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 Smin = -0.01;
 
             if (volVars.saturation(gPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // gas phase disappears
-                std::cout << "Gas phase disappears at vertex " << globalIdx
+                std::cout << "Gas phase disappears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", sg: "
                           << volVars.saturation(gPhaseIdx) << std::endl;
                 newPhasePresence = wnPhaseOnly;
 
-                globalSol[globalIdx][switch1Idx]
+                globalSol[dofIdxGlobal][switch1Idx]
                     = volVars.moleFraction(wPhaseIdx, gCompIdx);
             }
             else if (volVars.saturation(wPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // water phase disappears
-                std::cout << "Water phase disappears at vertex " << globalIdx
+                std::cout << "Water phase disappears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", sw: "
                           << volVars.saturation(wPhaseIdx) << std::endl;
                 newPhasePresence = gnPhaseOnly;
 
-                globalSol[globalIdx][switch1Idx]
+                globalSol[dofIdxGlobal][switch1Idx]
                     = volVars.moleFraction(gPhaseIdx, wCompIdx);
             }
             else if (volVars.saturation(nPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // NAPL phase disappears
-                std::cout << "NAPL phase disappears at vertex " << globalIdx
+                std::cout << "NAPL phase disappears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", sn: "
                           << volVars.saturation(nPhaseIdx) << std::endl;
                 newPhasePresence = wgPhaseOnly;
 
-                globalSol[globalIdx][switch2Idx]
+                globalSol[dofIdxGlobal][switch2Idx]
                     = volVars.moleFraction(gPhaseIdx, nCompIdx);
             }
         }
@@ -641,7 +641,7 @@ protected:
             Scalar xgMax = 1.0;
             if (xwg + xgg + xng > xgMax)
                 wouldSwitch = true;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 xgMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
@@ -649,7 +649,7 @@ protected:
             if (xwg + xgg + xng > xgMax)
             {
                 // gas phase appears
-                std::cout << "gas phase appears at vertex " << globalIdx
+                std::cout << "gas phase appears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", xwg + xgg + xng: "
                           << xwg + xgg + xng << std::endl;
                 gasFlag = 1;
@@ -667,7 +667,7 @@ protected:
             Scalar xnMax = 1.0;
             if (xnn > xnMax)
                 wouldSwitch = true;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 xnMax *= 1.02;
 
             // if the sum of the hypothetical mole fractions would be larger than
@@ -675,7 +675,7 @@ protected:
             if (xnn > xnMax)
             {
                 // NAPL phase appears
-                std::cout << "NAPL phase appears at vertex " << globalIdx
+                std::cout << "NAPL phase appears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", xnn: "
                           << xnn << std::endl;
                 nonwettingFlag = 1;
@@ -684,21 +684,21 @@ protected:
             if ((gasFlag == 1) && (nonwettingFlag == 0))
             {
                 newPhasePresence = wgPhaseOnly;
-                globalSol[globalIdx][switch1Idx] = 0.9999;
-                globalSol[globalIdx][switch2Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch1Idx] = 0.9999;
+                globalSol[dofIdxGlobal][switch2Idx] = 0.0001;
             }
             else if ((gasFlag == 1) && (nonwettingFlag == 1))
             {
                 newPhasePresence = threePhases;
-                globalSol[globalIdx][switch1Idx] = 0.9999;
-                globalSol[globalIdx][switch2Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch1Idx] = 0.9999;
+                globalSol[dofIdxGlobal][switch2Idx] = 0.0001;
             }
             else if ((gasFlag == 0) && (nonwettingFlag == 1))
             {
                 newPhasePresence = wnPhaseOnly;
-                globalSol[globalIdx][switch1Idx]
+                globalSol[dofIdxGlobal][switch1Idx]
                     = volVars.moleFraction(wPhaseIdx, gCompIdx);
-                globalSol[globalIdx][switch2Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch2Idx] = 0.0001;
             }
         }
         else if (phasePresence == gnPhaseOnly)
@@ -707,14 +707,14 @@ protected:
             bool wettingFlag = 0;
 
             Scalar Smin = 0.0;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 Smin = -0.01;
 
             if (volVars.saturation(nPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // NAPL phase disappears
-                std::cout << "NAPL phase disappears at vertex " << globalIdx
+                std::cout << "NAPL phase disappears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", sn: "
                           << volVars.saturation(nPhaseIdx) << std::endl;
                 nonwettingFlag = 1;
@@ -730,7 +730,7 @@ protected:
             Scalar xwMax = 1.0;
             if (xww > xwMax)
                 wouldSwitch = true;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 xwMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
@@ -738,7 +738,7 @@ protected:
             if (xww > xwMax)
             {
                 // water phase appears
-                std::cout << "water phase appears at vertex " << globalIdx
+                std::cout << "water phase appears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
                           << xww << std::endl;
                 wettingFlag = 1;
@@ -747,22 +747,22 @@ protected:
             if ((wettingFlag == 1) && (nonwettingFlag == 0))
             {
                 newPhasePresence = threePhases;
-                globalSol[globalIdx][switch1Idx] = 0.0001;
-                globalSol[globalIdx][switch2Idx] = volVars.saturation(nPhaseIdx);
+                globalSol[dofIdxGlobal][switch1Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch2Idx] = volVars.saturation(nPhaseIdx);
             }
             else if ((wettingFlag == 1) && (nonwettingFlag == 1))
             {
                 newPhasePresence = wgPhaseOnly;
-                globalSol[globalIdx][switch1Idx] = 0.0001;
-                globalSol[globalIdx][switch2Idx]
+                globalSol[dofIdxGlobal][switch1Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch2Idx]
                     = volVars.moleFraction(gPhaseIdx, nCompIdx);
             }
             else if ((wettingFlag == 0) && (nonwettingFlag == 1))
             {
                 newPhasePresence = gPhaseOnly;
-                globalSol[globalIdx][switch1Idx]
+                globalSol[dofIdxGlobal][switch1Idx]
                     = volVars.moleFraction(gPhaseIdx, wCompIdx);
-                globalSol[globalIdx][switch2Idx]
+                globalSol[dofIdxGlobal][switch2Idx]
                     = volVars.moleFraction(gPhaseIdx, nCompIdx);
             }
         }
@@ -772,14 +772,14 @@ protected:
             bool gasFlag = 0;
 
             Scalar Smin = 0.0;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 Smin = -0.01;
 
             if (volVars.saturation(nPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // NAPL phase disappears
-                std::cout << "NAPL phase disappears at vertex " << globalIdx
+                std::cout << "NAPL phase disappears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", sn: "
                           << volVars.saturation(nPhaseIdx) << std::endl;
                 nonwettingFlag = 1;
@@ -798,7 +798,7 @@ protected:
             Scalar xgMax = 1.0;
             if (xwg + xgg + xng > xgMax)
                 wouldSwitch = true;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 xgMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
@@ -806,7 +806,7 @@ protected:
             if (xwg + xgg + xng > xgMax)
             {
                 // gas phase appears
-                std::cout << "gas phase appears at vertex " << globalIdx
+                std::cout << "gas phase appears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", xwg + xgg + xng: "
                           << xwg + xgg + xng << std::endl;
                 gasFlag = 1;
@@ -815,22 +815,22 @@ protected:
             if ((gasFlag == 1) && (nonwettingFlag == 0))
             {
                 newPhasePresence = threePhases;
-                globalSol[globalIdx][switch1Idx] = volVars.saturation(wPhaseIdx);
-                globalSol[globalIdx][switch2Idx] = volVars.saturation(nPhaseIdx);
+                globalSol[dofIdxGlobal][switch1Idx] = volVars.saturation(wPhaseIdx);
+                globalSol[dofIdxGlobal][switch2Idx] = volVars.saturation(nPhaseIdx);
             }
             else if ((gasFlag == 1) && (nonwettingFlag == 1))
             {
                 newPhasePresence = wgPhaseOnly;
-                globalSol[globalIdx][switch1Idx] = volVars.saturation(wPhaseIdx);
-                globalSol[globalIdx][switch2Idx]
+                globalSol[dofIdxGlobal][switch1Idx] = volVars.saturation(wPhaseIdx);
+                globalSol[dofIdxGlobal][switch2Idx]
                     = volVars.moleFraction(gPhaseIdx, nCompIdx);
             }
             else if ((gasFlag == 0) && (nonwettingFlag == 1))
             {
                 newPhasePresence = wPhaseOnly;
-                globalSol[globalIdx][switch1Idx]
+                globalSol[dofIdxGlobal][switch1Idx]
                     = volVars.moleFraction(wPhaseIdx, gCompIdx);
-                globalSol[globalIdx][switch2Idx]
+                globalSol[dofIdxGlobal][switch2Idx]
                     = volVars.moleFraction(wPhaseIdx, nCompIdx);
             }
         }
@@ -849,7 +849,7 @@ protected:
             Scalar xnMax = 1.0;
             if (xnn > xnMax)
                 wouldSwitch = true;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 xnMax *= 1.02;
 
             // if the sum of the hypothetical mole fraction would be larger than
@@ -857,7 +857,7 @@ protected:
             if (xnn > xnMax)
             {
                 // NAPL phase appears
-                std::cout << "NAPL phase appears at vertex " << globalIdx
+                std::cout << "NAPL phase appears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", xnn: "
                           << xnn << std::endl;
                 nonwettingFlag = 1;
@@ -871,7 +871,7 @@ protected:
             Scalar xwMax = 1.0;
             if (xww > xwMax)
                 wouldSwitch = true;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 xwMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
@@ -879,7 +879,7 @@ protected:
             if (xww > xwMax)
             {
                 // water phase appears
-                std::cout << "water phase appears at vertex " << globalIdx
+                std::cout << "water phase appears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
                           << xww << std::endl;
                 wettingFlag = 1;
@@ -887,22 +887,22 @@ protected:
             if ((wettingFlag == 1) && (nonwettingFlag == 0))
             {
                 newPhasePresence = wgPhaseOnly;
-                globalSol[globalIdx][switch1Idx] = 0.0001;
-                globalSol[globalIdx][switch2Idx]
+                globalSol[dofIdxGlobal][switch1Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch2Idx]
                     = volVars.moleFraction(gPhaseIdx, nCompIdx);
             }
             else if ((wettingFlag == 1) && (nonwettingFlag == 1))
             {
                 newPhasePresence = threePhases;
-                globalSol[globalIdx][switch1Idx] = 0.0001;
-                globalSol[globalIdx][switch2Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch1Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch2Idx] = 0.0001;
             }
             else if ((wettingFlag == 0) && (nonwettingFlag == 1))
             {
                 newPhasePresence = gnPhaseOnly;
-                globalSol[globalIdx][switch1Idx]
+                globalSol[dofIdxGlobal][switch1Idx]
                     = volVars.moleFraction(gPhaseIdx, wCompIdx);
-                globalSol[globalIdx][switch2Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch2Idx] = 0.0001;
             }
         }
         else if (phasePresence == wgPhaseOnly)
@@ -920,7 +920,7 @@ protected:
             Scalar xnMax = 1.0;
             if (xnn > xnMax)
                 wouldSwitch = true;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 xnMax *= 1.02;
 
             // if the sum of the hypothetical mole fraction would be larger than
@@ -928,35 +928,35 @@ protected:
             if (xnn > xnMax)
             {
                 // NAPL phase appears
-                std::cout << "NAPL phase appears at vertex " << globalIdx
+                std::cout << "NAPL phase appears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", xnn: "
                           << xnn << std::endl;
                 nonwettingFlag = 1;
             }
 
             Scalar Smin = -1.e-6;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 Smin = -0.01;
 
             if (volVars.saturation(gPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // gas phase disappears
-                std::cout << "Gas phase disappears at vertex " << globalIdx
+                std::cout << "Gas phase disappears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", sg: "
                           << volVars.saturation(gPhaseIdx) << std::endl;
                 gasFlag = 1;
             }
 
             Smin = 0.0;
-            if (staticDat_[globalIdx].wasSwitched)
+            if (staticDat_[dofIdxGlobal].wasSwitched)
                 Smin = -0.01;
 
             if (volVars.saturation(wPhaseIdx) <= Smin)
             {
                 wouldSwitch = true;
                 // gas phase disappears
-                std::cout << "Water phase disappears at vertex " << globalIdx
+                std::cout << "Water phase disappears at vertex " << dofIdxGlobal
                           << ", coordinates: " << globalPos << ", sw: "
                           << volVars.saturation(wPhaseIdx) << std::endl;
                 wettingFlag = 1;
@@ -965,36 +965,36 @@ protected:
             if ((gasFlag == 0) && (nonwettingFlag == 1) && (wettingFlag == 1))
             {
                 newPhasePresence = gnPhaseOnly;
-                globalSol[globalIdx][switch1Idx]
+                globalSol[dofIdxGlobal][switch1Idx]
                     = volVars.moleFraction(gPhaseIdx, wCompIdx);
-                globalSol[globalIdx][switch2Idx] = 0.0001;
+                globalSol[dofIdxGlobal][switch2Idx] = 0.0001;
             }
             else if ((gasFlag == 0) && (nonwettingFlag == 1) && (wettingFlag == 0))
             {
                 newPhasePresence = threePhases;
-                globalSol[globalIdx][switch1Idx] = volVars.saturation(wPhaseIdx);
-                globalSol[globalIdx][switch2Idx] = 0.0;
+                globalSol[dofIdxGlobal][switch1Idx] = volVars.saturation(wPhaseIdx);
+                globalSol[dofIdxGlobal][switch2Idx] = 0.0;
             }
             else if ((gasFlag == 1) && (nonwettingFlag == 0) && (wettingFlag == 0))
             {
                 newPhasePresence = wPhaseOnly;
-                globalSol[globalIdx][switch1Idx]
+                globalSol[dofIdxGlobal][switch1Idx]
                     = volVars.moleFraction(wPhaseIdx, gCompIdx);
-                globalSol[globalIdx][switch2Idx]
+                globalSol[dofIdxGlobal][switch2Idx]
                     = volVars.moleFraction(wPhaseIdx, nCompIdx);
             }
             else if ((gasFlag == 0) && (nonwettingFlag == 0) && (wettingFlag == 1))
             {
                 newPhasePresence = gPhaseOnly;
-                globalSol[globalIdx][switch1Idx]
+                globalSol[dofIdxGlobal][switch1Idx]
                     = volVars.moleFraction(gPhaseIdx, wCompIdx);
-                globalSol[globalIdx][switch2Idx]
+                globalSol[dofIdxGlobal][switch2Idx]
                     = volVars.moleFraction(gPhaseIdx, nCompIdx);
             }
         }
 
-        staticDat_[globalIdx].phasePresence = newPhasePresence;
-        staticDat_[globalIdx].wasSwitched = wouldSwitch;
+        staticDat_[dofIdxGlobal].phasePresence = newPhasePresence;
+        staticDat_[dofIdxGlobal].wasSwitched = wouldSwitch;
         return phasePresence != newPhasePresence;
     }
 

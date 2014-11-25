@@ -125,10 +125,10 @@ public:
         ElementIterator eEndIt = gridView_.template end<0>();
         for(;eIt != eEndIt; ++eIt)
         {
-            int globalIdx = indexSet_.index(*eIt);
-            (*permXX)[globalIdx][0] = permeability_[globalIdx][0][0];
-            (*permXY)[globalIdx][0] = permeability_[globalIdx][0][1];
-            (*permYY)[globalIdx][0] = permeability_[globalIdx][1][1];
+            int eIdxGlobal = indexSet_.index(*eIt);
+            (*permXX)[eIdxGlobal][0] = permeability_[eIdxGlobal][0][0];
+            (*permXY)[eIdxGlobal][0] = permeability_[eIdxGlobal][0][1];
+            (*permYY)[eIdxGlobal][0] = permeability_[eIdxGlobal][1][1];
         }
 
         writer.attachCellData(*permXX, "permeability-X");

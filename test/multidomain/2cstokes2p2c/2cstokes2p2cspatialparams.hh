@@ -433,15 +433,15 @@ public:
 //        for (VertexIterator vIt = gridView.template begin<dim> (); vIt
 //                != vItEnd; ++vIt)
 //        {
-//            int globalIdx = indexSet_.index(*vIt);
+//            int vIdxGlobal = indexSet_.index(*vIt);
 //
 //            Scalar elementEntryPressure = 1./GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, VgAlpha2);
-//            elementEntryPressure *= sqrt(meanPermeability / permeability_[globalIdx]);
+//            elementEntryPressure *= sqrt(meanPermeability / permeability_[vIdxGlobal]);
 //
-//            materialLawParams_[globalIdx].setVgAlpha(1./elementEntryPressure);
-//            materialLawParams_[globalIdx].setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, VgN2));
-//            materialLawParams_[globalIdx].setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2));
-//            materialLawParams_[globalIdx].setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2));
+//            materialLawParams_[vIdxGlobal].setVgAlpha(1./elementEntryPressure);
+//            materialLawParams_[vIdxGlobal].setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, VgN2));
+//            materialLawParams_[vIdxGlobal].setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2));
+//            materialLawParams_[vIdxGlobal].setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2));
 //        }
 //
 //        //        if (create)

@@ -261,7 +261,7 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
 {
     storageEntry = 0.;
     // cell index
-    int globalIdxI = problem().variables().index(elementI);
+    int eIdxGlobalI = problem().variables().index(elementI);
     Scalar volume = elementI.geometry().volume();
 
     // determine maximum error to scale error-term
@@ -278,7 +278,7 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
         storageEntry[rhs] -= cellDataI.pressure(pressureType) * compress_term * volume;
 
         if (std::isnan(compress_term) || std::isinf(compress_term))
-            DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << globalIdxI);
+            DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << eIdxGlobalI);
 
         if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))
             DUNE_THROW(Dune::NotImplemented, "Compressibility is switched off???");
@@ -289,13 +289,13 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     if( problem().timeManager().episodeWillBeOver()
             || problem().timeManager().willBeFinished())
     {
-        problem().variables().cellData(globalIdxI).errorCorrection() = 0.;
+        problem().variables().cellData(eIdxGlobalI).errorCorrection() = 0.;
         return;
     }
 
     // error reduction routine: volumetric error is damped and inserted to right hand side
     // if damping is not done, the solution method gets unstable!
-    problem().variables().cellData(globalIdxI).volumeError() /= timestep_;
+    problem().variables().cellData(eIdxGlobalI).volumeError() /= timestep_;
     Scalar erri = fabs(cellDataI.volumeError());
     Scalar x_lo = ErrorTermLowerBound_;
     Scalar x_mi = ErrorTermUpperBound_;
@@ -307,17 +307,17 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     {
         if (erri <= x_mi * this->maxError_)
             storageEntry[rhs] +=
-                    problem().variables().cellData(globalIdxI).errorCorrection() =
+                    problem().variables().cellData(eIdxGlobalI).errorCorrection() =
                             fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/this->maxError_)
                                 * cellDataI.volumeError() * volume;
         else
             storageEntry[rhs] +=
-                    problem().variables().cellData(globalIdxI).errorCorrection() =
+                    problem().variables().cellData(eIdxGlobalI).errorCorrection() =
                             fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/this->maxError_)
                                 * cellDataI.volumeError() * volume;
     }
     else
-        problem().variables().cellData(globalIdxI).errorCorrection() = 0.;
+        problem().variables().cellData(eIdxGlobalI).errorCorrection() = 0.;
 
     return;
 }
@@ -348,7 +348,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
 {
     entries = 0.;
     ElementPtr elementPtrI = intersection.inside();
-    int globalIdxI = problem().variables().index(*elementPtrI);
+    int eIdxGlobalI = problem().variables().index(*elementPtrI);
 
     // get global coordinate of cell center
     const GlobalPosition& globalPos = elementPtrI->geometry().center();
@@ -382,8 +382,8 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
 
     // access neighbor
     ElementPtr neighborPtr = intersection.outside();
-    int globalIdxJ = problem().variables().index(*neighborPtr);
-    CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
+    int eIdxGlobalJ = problem().variables().index(*neighborPtr);
+    CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
     // gemotry info of neighbor
     const GlobalPosition& globalPosNeighbor = neighborPtr->geometry().center();
@@ -450,8 +450,8 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         Scalar graddv_dC2 = (cellDataJ.dv(nPhaseIdx)
                                 - cellDataI.dv(nPhaseIdx)) / dist;
 
-//                    potentialW = problem().variables().potentialWetting(globalIdxI, isIndex);
-//                    potentialNW = problem().variables().potentialNonwetting(globalIdxI, isIndex);
+//                    potentialW = problem().variables().potentialWetting(eIdxGlobalI, isIndex);
+//                    potentialNW = problem().variables().potentialNonwetting(eIdxGlobalI, isIndex);
 //
 //                    densityW = (potentialW > 0.) ? densityWI : densityWJ;
 //                    densityNW = (potentialNW > 0.) ? densityNWI : densityNWJ;
@@ -510,7 +510,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         {
             if (cellDataI.wasRefined() && cellDataJ.wasRefined())
             {
-                problem().variables().cellData(globalIdxI).setUpwindCell(intersection.indexInInside(), contiWEqIdx, false);
+                problem().variables().cellData(eIdxGlobalI).setUpwindCell(intersection.indexInInside(), contiWEqIdx, false);
                 cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);
             }
 
@@ -543,7 +543,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         {
             if (cellDataI.wasRefined() && cellDataJ.wasRefined())
             {
-                problem().variables().cellData(globalIdxI).setUpwindCell(intersection.indexInInside(), contiNEqIdx, false);
+                problem().variables().cellData(eIdxGlobalI).setUpwindCell(intersection.indexInInside(), contiNEqIdx, false);
                 cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);
             }
             Scalar averagedMassFraction[2];
@@ -755,8 +755,8 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
             Scalar potentialNW = 0;
             if (!first)
             {
-//                            potentialW = problem().variables().potentialWetting(globalIdxI, isIndex);
-//                            potentialNW = problem().variables().potentialNonwetting(globalIdxI, isIndex);
+//                            potentialW = problem().variables().potentialWetting(eIdxGlobalI, isIndex);
+//                            potentialNW = problem().variables().potentialNonwetting(eIdxGlobalI, isIndex);
 //
 //                            // do potential upwinding according to last potGradient vs Jochen: central weighting
 //                            densityW = (potentialW > 0.) ? cellDataI.density(wPhaseIdx) : densityWBound;
@@ -892,8 +892,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     GlobalPosition globalPos = elementI.geometry().center();
 
     // cell Index and cell data
-    int globalIdx = problem().variables().index(elementI);
-    CellData& cellData = problem().variables().cellData(globalIdx);
+    int eIdxGlobal = problem().variables().index(elementI);
+    CellData& cellData = problem().variables().cellData(eIdxGlobal);
 
     // acess the fluid state and prepare for manipulation
     FluidState& fluidState = cellData.manipulateFluidState();
@@ -913,7 +913,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     if(Z1<0. || Z1 > 1.)
     {
         Dune::dgrave << "Feed mass fraction unphysical: Z1 = " << Z1
-               << " at global Idx " << globalIdx
+               << " at global Idx " << eIdxGlobal
                << " , because totalConcentration(wCompIdx) = "
                << cellData.totalConcentration(wCompIdx)
                << " and totalConcentration(nCompIdx) = "
@@ -922,7 +922,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             {
             Z1 = 0.;
             cellData.setTotalConcentration(wCompIdx, 0.);
-            problem().transportModel().totalConcentration(wCompIdx, globalIdx) = 0.;
+            problem().transportModel().totalConcentration(wCompIdx, eIdxGlobal) = 0.;
             Dune::dgrave << "Regularize totalConcentration(wCompIdx) = "
                 << cellData.totalConcentration(wCompIdx)<< std::endl;
             }
@@ -930,8 +930,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             {
             Z1 = 1.;
             cellData.setTotalConcentration(nCompIdx, 0.);
-            problem().transportModel().totalConcentration(nCompIdx,globalIdx) = 0.;
-            Dune::dgrave << "Regularize totalConcentration(globalIdx, nCompIdx) = "
+            problem().transportModel().totalConcentration(nCompIdx,eIdxGlobal) = 0.;
+            Dune::dgrave << "Regularize totalConcentration(eIdxGlobal, nCompIdx) = "
                 << cellData.totalConcentration(nCompIdx)<< std::endl;
             }
     }
@@ -942,16 +942,16 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     {
     case pw:
     {
-        pressure[wPhaseIdx] = asImp_().pressure(globalIdx);
-        pressure[nPhaseIdx] = asImp_().pressure(globalIdx)
+        pressure[wPhaseIdx] = asImp_().pressure(eIdxGlobal);
+        pressure[nPhaseIdx] = asImp_().pressure(eIdxGlobal)
                   + cellData.capillaryPressure();
         break;
     }
     case pn:
     {
-        pressure[wPhaseIdx] = asImp_().pressure(globalIdx)
+        pressure[wPhaseIdx] = asImp_().pressure(eIdxGlobal)
                  - cellData.capillaryPressure();
-        pressure[nPhaseIdx] = asImp_().pressure(globalIdx);
+        pressure[nPhaseIdx] = asImp_().pressure(eIdxGlobal);
         break;
     }
     }
@@ -1002,7 +1002,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             iterout = iter;
         }
         if (iterout != 0)
-          Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << globalIdx
+          Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << eIdxGlobal
                       << ", pc delta still " << fabs(oldPc-pc) << std::endl;
     }
     // initialize phase properties not stored in fluidstate
@@ -1033,7 +1033,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
         if (std::isnan(cellData.volumeError()))
         {
             DUNE_THROW(Dune::MathError, "Decoupled2p2c::postProcessUpdate:\n"
-                    << "volErr[" << globalIdx << "] isnan: vol = " << vol
+                    << "volErr[" << eIdxGlobal << "] isnan: vol = " << vol
                     << ", massw = " << massw << ", rho_l = " << cellData.density(wPhaseIdx)
                     << ", massn = " << massn << ", rho_g = " << cellData.density(nPhaseIdx)
                     << ", poro = " << problem().spatialParams().porosity(elementI)

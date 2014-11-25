@@ -188,19 +188,19 @@ public:
     //! Function needed for restart option of the transport model: Write out
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
-        int globalIdx = problem().variables().index(element);
-        outstream << totalConcentration_[wCompIdx][globalIdx]
-                  << "  " << totalConcentration_[nCompIdx][globalIdx];
+        int eIdxGlobal = problem().variables().index(element);
+        outstream << totalConcentration_[wCompIdx][eIdxGlobal]
+                  << "  " << totalConcentration_[nCompIdx][eIdxGlobal];
     }
     //! Function needed for restart option of the transport model: Read in
     void deserializeEntity(std::istream &instream, const Element &element)
     {
-        int globalIdx = problem().variables().index(element);
-        CellData& cellData = problem().variables().cellData(globalIdx);
-        instream >>  totalConcentration_[wCompIdx][globalIdx]
-                 >> totalConcentration_[nCompIdx][globalIdx];
-        cellData.setMassConcentration(wCompIdx, totalConcentration_[wCompIdx][globalIdx]);
-        cellData.setMassConcentration(nCompIdx, totalConcentration_[nCompIdx][globalIdx]);
+        int eIdxGlobal = problem().variables().index(element);
+        CellData& cellData = problem().variables().cellData(eIdxGlobal);
+        instream >>  totalConcentration_[wCompIdx][eIdxGlobal]
+                 >> totalConcentration_[nCompIdx][eIdxGlobal];
+        cellData.setMassConcentration(wCompIdx, totalConcentration_[wCompIdx][eIdxGlobal]);
+        cellData.setMassConcentration(nCompIdx, totalConcentration_[nCompIdx][eIdxGlobal]);
     }
 
     /*! \name Access functions for protected variables  */
@@ -226,11 +226,11 @@ public:
     /*! To get real cell values, do not acess this method, but rather
      * call the respective function in the cell data object.
      * @param compIdx The index of the component
-     * @param globalIdx The global index of the current cell.
+     * @param eIdxGlobal The global index of the current cell.
      */
-    Scalar& totalConcentration(int compIdx, int globalIdx)
+    Scalar& totalConcentration(int compIdx, int eIdxGlobal)
     {
-        return totalConcentration_[compIdx][globalIdx][0];
+        return totalConcentration_[compIdx][eIdxGlobal][0];
     }
 
     void getSource(Scalar& update, const Element& element, CellData& cellDataI)
@@ -390,8 +390,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
     {
         // get cell infos
-        int globalIdxI = problem().variables().index(*eIt);
-        CellData& cellDataI = problem().variables().cellData(globalIdxI);
+        int eIdxGlobalI = problem().variables().index(*eIt);
+        CellData& cellDataI = problem().variables().cellData(eIdxGlobalI);
 
         // some variables for time step calculation
         double sumfactorin = 0;
@@ -414,7 +414,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 
             if (localTimeStepping_)
             {
-                LocalTimesteppingData& localData = timeStepData_[globalIdxI];
+                LocalTimesteppingData& localData = timeStepData_[eIdxGlobalI];
                 if (localData.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
                 {
                     localData.faceFluxes[indexInInside] = entries;
@@ -423,8 +423,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
             else
             {
             // add to update vector
-                updateVec[wCompIdx][globalIdxI] += entries[wCompIdx];
-                updateVec[nCompIdx][globalIdxI] += entries[nCompIdx];
+                updateVec[wCompIdx][eIdxGlobalI] += entries[wCompIdx];
+                updateVec[nCompIdx][eIdxGlobalI] += entries[nCompIdx];
             }
 
             // for time step calculation
@@ -435,19 +435,19 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 
         if (localTimeStepping_)
         {
-            LocalTimesteppingData& localData = timeStepData_[globalIdxI];
+            LocalTimesteppingData& localData = timeStepData_[eIdxGlobalI];
             for (int i=0; i < 2*dim; i++)
             {
-                updateVec[wCompIdx][globalIdxI] += localData.faceFluxes[i][wCompIdx];
-                updateVec[nCompIdx][globalIdxI] += localData.faceFluxes[i][nCompIdx];
+                updateVec[wCompIdx][eIdxGlobalI] += localData.faceFluxes[i][wCompIdx];
+                updateVec[nCompIdx][eIdxGlobalI] += localData.faceFluxes[i][nCompIdx];
             }
         }
 
         /***********     Handle source term     ***************/
         PrimaryVariables q(NAN);
         problem().source(q, *eIt);
-        updateVec[wCompIdx][globalIdxI] += q[contiWEqIdx];
-        updateVec[nCompIdx][globalIdxI] += q[contiNEqIdx];
+        updateVec[wCompIdx][eIdxGlobalI] += q[contiWEqIdx];
+        updateVec[nCompIdx][eIdxGlobalI] += q[contiNEqIdx];
 
         // account for porosity in fluxes for time-step
         sumfactorin = std::max(sumfactorin,sumfactorout)
@@ -456,11 +456,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         //calculate time step
         if (localTimeStepping_)
         {
-            timeStepData_[globalIdxI].dt = 1./sumfactorin;
+            timeStepData_[eIdxGlobalI].dt = 1./sumfactorin;
             if ( 1./sumfactorin < dt)
             {
                 dt = 1./sumfactorin;
-                restrictingCell= globalIdxI;
+                restrictingCell= eIdxGlobalI;
             }
         }
         else
@@ -468,7 +468,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
             if ( 1./sumfactorin < dt)
             {
                 dt = 1./sumfactorin;
-                restrictingCell= globalIdxI;
+                restrictingCell= eIdxGlobalI;
             }
         }
     } // end grid traversal
@@ -578,7 +578,7 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     timestepFlux = 0.;
     // cell information
     ElementPointer elementPtrI= intersection.inside();
-    int globalIdxI = problem().variables().index(*elementPtrI);
+    int eIdxGlobalI = problem().variables().index(*elementPtrI);
 
     // get position
     const GlobalPosition globalPos = elementPtrI->geometry().center();
@@ -587,7 +587,7 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     Scalar volume = elementPtrI->geometry().volume();
 
     // get values of cell I
-    Scalar pressI = problem().pressureModel().pressure(globalIdxI);
+    Scalar pressI = problem().pressureModel().pressure(eIdxGlobalI);
     Scalar pcI = cellDataI.capillaryPressure();
     DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementPtrI));
 
@@ -621,8 +621,8 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
 
     // access neighbor
     ElementPointer neighborPtr = intersection.outside();
-    int globalIdxJ = problem().variables().index(*neighborPtr);
-    CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
+    int eIdxGlobalJ = problem().variables().index(*neighborPtr);
+    CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
     // neighbor cell center in global coordinates
     const GlobalPosition& globalPosNeighbor = neighborPtr->geometry().center();
@@ -644,7 +644,7 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     double densityW_mean = (densityWI + densityWJ) * 0.5;
     double densityNW_mean = (densityNWI + densityNWJ) * 0.5;
 
-    double pressJ = problem().pressureModel().pressure(globalIdxJ);
+    double pressJ = problem().pressureModel().pressure(eIdxGlobalJ);
     Scalar pcJ = cellDataJ.capillaryPressure();
 
     // compute mean permeability
@@ -764,13 +764,13 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
 
             //d) output
             if(!(cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())
-                    && globalIdxI > globalIdxJ) //(only for one side)
+                    && eIdxGlobalI > eIdxGlobalJ) //(only for one side)
             {
                 averagedFaces_++;
                 #if DUNE_MINIMAL_DEBUG_LEVEL < 3
                 // verbose (only for one side)
-                if(globalIdxI > globalIdxJ)
-                    Dune::dinfo << "harmonicMean flux of phase" << phaseIdx <<" used from cell" << globalIdxI<< " into " << globalIdxJ
+                if(eIdxGlobalI > eIdxGlobalJ)
+                    Dune::dinfo << "harmonicMean flux of phase" << phaseIdx <<" used from cell" << eIdxGlobalI<< " into " << eIdxGlobalJ
                     << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx)
                     << " but pot = "<< potential[phaseIdx] <<  std::endl;
                 #endif
@@ -873,7 +873,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
 {
     // cell information
     ElementPointer elementPtrI= intersection.inside();
-    int globalIdxI = problem().variables().index(*elementPtrI);
+    int eIdxGlobalI = problem().variables().index(*elementPtrI);
 
     // get position
     const GlobalPosition globalPos = elementPtrI->geometry().center();
@@ -882,7 +882,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
     Scalar volume = elementPtrI->geometry().volume();
     const GlobalPosition& gravity_ = problem().gravity();
     // get values of cell I
-    Scalar pressI = problem().pressureModel().pressure(globalIdxI);
+    Scalar pressI = problem().pressureModel().pressure(eIdxGlobalI);
     Scalar pcI = cellDataI.capillaryPressure();
     DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementPtrI));
 
@@ -1198,9 +1198,9 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
 #endif
 
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(*eIt);
 
-        LocalTimesteppingData& localDataI = timeStepData_[globalIdxI];
+        LocalTimesteppingData& localDataI = timeStepData_[eIdxGlobalI];
 
 
         typedef std::unordered_map<int, Scalar > FaceDt;
@@ -1215,14 +1215,14 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
             if (isIt->neighbor())
             {
                 ElementPointer neighbor = isIt->outside();
-                int globalIdxJ = problem_.variables().index(*neighbor);
+                int eIdxGlobalJ = problem_.variables().index(*neighbor);
 
                 int levelI = eIt->level();
                 int levelJ = neighbor->level();
 
-                if (globalIdxI < globalIdxJ && levelI <= levelJ)
+                if (eIdxGlobalI < eIdxGlobalJ && levelI <= levelJ)
                 {
-                    LocalTimesteppingData& localDataJ = timeStepData_[globalIdxJ];
+                    LocalTimesteppingData& localDataJ = timeStepData_[eIdxGlobalJ];
 
                     int indexInOutside = isIt->indexInOutside();
 
@@ -1281,9 +1281,9 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                     if (it != faceDt.end())
                     {
                         ElementPointer neighbor = isIt->outside();
-                        int globalIdxJ = problem_.variables().index(*neighbor);
+                        int eIdxGlobalJ = problem_.variables().index(*neighbor);
 
-                        LocalTimesteppingData& localDataJ = timeStepData_[globalIdxJ];
+                        LocalTimesteppingData& localDataJ = timeStepData_[eIdxGlobalJ];
 
                         int indexInOutside = isIt->indexInOutside();
 

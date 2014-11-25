@@ -124,9 +124,9 @@ public:
 
         for (; eIt != eEndIt; ++eIt)
         {
-            int globalIdx = problem.variables().index(*eIt);
+            int eIdxGlobal = problem.variables().index(*eIt);
 
-            CellData& cellData = problem.variables().cellData(globalIdx);
+            CellData& cellData = problem.variables().cellData(eIdxGlobal);
             FieldVector globalPos = eIt->geometry().center();
 
             // get local to global id map and pressure traces
@@ -136,9 +136,9 @@ public:
             {
                 int indexInInside = isIt->indexInInside();
 
-                int globalIdxFace = this->faceMapper_.map(*eIt, indexInInside, 1);
+                int fIdxGlobal = this->faceMapper_.map(*eIt, indexInInside, 1);
 
-                pressTrace[indexInInside] = u[globalIdxFace];
+                pressTrace[indexInInside] = u[fIdxGlobal];
 
                 gravPotTrace[indexInInside] = (problem.bBoxMax() - isIt->geometry().center()) * problem.gravity() * densityDiff;
             }

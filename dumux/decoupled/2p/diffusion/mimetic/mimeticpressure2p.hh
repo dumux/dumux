@@ -250,17 +250,17 @@ public:
             ElementIterator eEndIt = problem_.gridView().template end<0>();
             for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
             {
-                int globalIdx = problem_.variables().index(*eIt);
-                CellData& cellData = problem_.variables().cellData(globalIdx);
+                int eIdxGlobal = problem_.variables().index(*eIt);
+                CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
                 if (pressureType == pw)
                 {
-                    (*potential)[globalIdx] = cellData.potential(wPhaseIdx);
+                    (*potential)[eIdxGlobal] = cellData.potential(wPhaseIdx);
                 }
 
                 if (pressureType == pn)
                 {
-                    (*potential)[globalIdx] = cellData.potential(nPhaseIdx);
+                    (*potential)[eIdxGlobal] = cellData.potential(nPhaseIdx);
                 }
 
                 if (vtkOutputLevel_ > 0)
@@ -268,16 +268,16 @@ public:
 
                 if (pressureType == pw)
                 {
-                    (*pressure)[globalIdx] = cellData.pressure(wPhaseIdx);
-                    (*potentialSecond)[globalIdx] = cellData.potential(nPhaseIdx);
-                    (*pressureSecond)[globalIdx] = cellData.pressure(nPhaseIdx);
+                    (*pressure)[eIdxGlobal] = cellData.pressure(wPhaseIdx);
+                    (*potentialSecond)[eIdxGlobal] = cellData.potential(nPhaseIdx);
+                    (*pressureSecond)[eIdxGlobal] = cellData.pressure(nPhaseIdx);
                 }
 
                 if (pressureType == pn)
                 {
-                    (*pressure)[globalIdx] = cellData.pressure(nPhaseIdx);
-                    (*potentialSecond)[globalIdx] = cellData.potential(wPhaseIdx);
-                    (*pressureSecond)[globalIdx] = cellData.pressure(wPhaseIdx);
+                    (*pressure)[eIdxGlobal] = cellData.pressure(nPhaseIdx);
+                    (*potentialSecond)[eIdxGlobal] = cellData.potential(wPhaseIdx);
+                    (*pressureSecond)[eIdxGlobal] = cellData.pressure(wPhaseIdx);
                 }
 
                 const typename Element::Geometry& geometry = eIt->geometry();
@@ -336,7 +336,7 @@ public:
                 jacobianT.umtv(refVelocity, elementVelocity);
                 elementVelocity /= geometry.integrationElement(localPos);
 
-                (*velocityWetting)[globalIdx] = elementVelocity;
+                (*velocityWetting)[eIdxGlobal] = elementVelocity;
 
                 // calculate velocity on reference element as the Raviart-Thomas-0
                 // interpolant of the fluxes
@@ -366,7 +366,7 @@ public:
                 jacobianT.umtv(refVelocity, elementVelocity);
                 elementVelocity /= geometry.integrationElement(localPos);
 
-                (*velocityNonwetting)[globalIdx] = elementVelocity;
+                (*velocityNonwetting)[eIdxGlobal] = elementVelocity;
                 }
             }
 
@@ -414,8 +414,8 @@ public:
 #endif
         for (int i=0; i < numFaces; i++)
         {
-            int globalIdx = A_.faceMapper().map(element, i, 1);
-            outstream << pressTrace_[globalIdx][0];
+            int fIdxGlobal = A_.faceMapper().map(element, i, 1);
+            outstream << pressTrace_[fIdxGlobal][0];
         }
     }
 
@@ -428,8 +428,8 @@ public:
 #endif
         for (int i=0; i < numFaces; i++)
         {
-            int globalIdx = A_.faceMapper().map(element, i, 1);
-            instream >> pressTrace_[globalIdx][0];
+            int fIdxGlobal = A_.faceMapper().map(element, i, 1);
+            instream >> pressTrace_[fIdxGlobal][0];
         }
     }
     //@}
@@ -504,9 +504,9 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
         ElementIterator eEndIt = problem_.gridView().template end<0>();
         for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
         {
-            int globalIdx = problem_.variables().index(*eIt);
+            int eIdxGlobal = problem_.variables().index(*eIt);
 
-            CellData& cellData = problem_.variables().cellData(globalIdx);
+            CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
             Scalar satW = cellData.saturation(wPhaseIdx);
 

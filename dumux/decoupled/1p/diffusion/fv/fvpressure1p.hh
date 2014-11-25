@@ -157,12 +157,12 @@ public:
 
     /*! \brief Stores the pressure solution of a cell
      *
-     * \param globalIdx Global cell index
+     * \param eIdxGlobal Global cell index
      * \param cellData A CellData object
      */
-    void storePressureSolution(int globalIdx, CellData& cellData)
+    void storePressureSolution(int eIdxGlobal, CellData& cellData)
     {
-            Scalar press = this->pressure()[globalIdx];
+            Scalar press = this->pressure()[eIdxGlobal];
 
             cellData.setPressure(press);
     }

@@ -194,9 +194,9 @@ public:
             for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
             {
                 // cell index
-                int globalIdx = problem_.variables().index(*eIt);
+                int eIdxGlobal = problem_.variables().index(*eIt);
 
-                CellData& cellData = problem_.variables().cellData(globalIdx);
+                CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
                 const typename Element::Geometry& geometry = eIt->geometry();
                 // get corresponding reference element
@@ -256,7 +256,7 @@ public:
                 jacobianT.umtv(refVelocity, elementVelocity);
                 elementVelocity /= geometry.integrationElement(localPos);
 
-                velocity[globalIdx] = elementVelocity;
+                velocity[eIdxGlobal] = elementVelocity;
 
                 // calculate velocity on reference element as the Raviart-Thomas-0
                 // interpolant of the fluxes
@@ -286,7 +286,7 @@ public:
                 jacobianT.umtv(refVelocity, elementVelocity);
                 elementVelocity /= geometry.integrationElement(localPos);
 
-                velocitySecondPhase[globalIdx] = elementVelocity;
+                velocitySecondPhase[eIdxGlobal] = elementVelocity;
             }
 
             //switch velocities
@@ -334,9 +334,9 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     ElementPointer elementI = intersection.inside();
     ElementPointer elementJ = intersection.outside();
 
-    int globalIdxJ = problem_.variables().index(*elementJ);
+    int eIdxGlobalJ = problem_.variables().index(*elementJ);
 
-    CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
+    CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
     // get global coordinates of cell centers
     const GlobalPosition& globalPosI = (*elementI).geometry().center();

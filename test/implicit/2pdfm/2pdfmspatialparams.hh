@@ -216,10 +216,10 @@ public:
                                                     const FVElementGeometry &fvGeometry,
                                                     int scvIdx) const
     {
-        DUNE_UNUSED int globalIdx = vertexMapper_.map(element, scvIdx, dim);
+        DUNE_UNUSED int vIdxGlobal = vertexMapper_.map(element, scvIdx, dim);
 
         // be picky if called for non-fracture vertices
-        assert(isVertexFracture(globalIdx));
+        assert(isVertexFracture(vIdxGlobal));
 
         return fractureMaterialParams_;
     }
@@ -236,22 +236,22 @@ public:
         {
             return false;
         }
-        int globalIdx = vertexMapper_.map(element, localVertexIdx, dim);
-        return fractureMapper_.isDuneFractureVertex(globalIdx);
+        int vIdxGlobal = vertexMapper_.map(element, localVertexIdx, dim);
+        return fractureMapper_.isDuneFractureVertex(vIdxGlobal);
     }
 
     /*!
      * \brief Checks whether vertex is a fracture.
      * 
-     * \param globalIdx Vertex index to be checked
+     * \param vIdxGlobal Vertex index to be checked
      */
-    bool isVertexFracture(int globalIdx) const
+    bool isVertexFracture(int vIdxGlobal) const
     {
         if (inactivateFractures_)
         {
             return false;
         }
-        return fractureMapper_.isDuneFractureVertex(globalIdx);
+        return fractureMapper_.isDuneFractureVertex(vIdxGlobal);
     }
 
     /*!
@@ -262,8 +262,8 @@ public:
      */
     bool isEdgeFracture(const Element &element, int localFaceIdx) const
     {
-        int globalIdx = faceMapper_.map(element, localFaceIdx, 1);
-        return fractureMapper_.isDuneFractureEdge(globalIdx);
+        int fIdxGlobal = faceMapper_.map(element, localFaceIdx, 1);
+        return fractureMapper_.isDuneFractureEdge(fIdxGlobal);
     }
 
     /*!

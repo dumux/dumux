@@ -470,7 +470,7 @@ public:
                 bool existing = false;
                 for (int interfaceVertex=0; interfaceVertex < numInterfaceVertices; ++interfaceVertex)
                 {
-                    if (firstGlobalIdx == outputVector[interfaceVertex].globalIdx)
+                    if (firstGlobalIdx == outputVector[interfaceVertex].vIdxGlobal)
                     {
                         existing = true;
                         interfaceVertIdx = interfaceVertex;
@@ -484,7 +484,7 @@ public:
                 if (shouldWriteFluxFile()) // compute only if required
                 {
                     outputVector[interfaceVertIdx].interfaceVertex = interfaceVertIdx;
-                    outputVector[interfaceVertIdx].globalIdx = firstGlobalIdx;
+                    outputVector[interfaceVertIdx].vIdxGlobal = firstGlobalIdx;
                     outputVector[interfaceVertIdx].xCoord = vertexGlobal[0];
                     outputVector[interfaceVertIdx].yCoord = vertexGlobal[1];
                     outputVector[interfaceVertIdx].count += 1;
@@ -607,7 +607,7 @@ public:
                 // loop over all interface vertices to check if vertex id is already in stack
                 for (int interfaceVertex=0; interfaceVertex < numInterfaceVertices; ++interfaceVertex)
                 {
-                    if (secondGlobalIdx == outputVector[interfaceVertex].globalIdx)
+                    if (secondGlobalIdx == outputVector[interfaceVertex].vIdxGlobal)
                     {
                         existing = true;
                         interfaceVertIdx = interfaceVertex;
@@ -621,7 +621,7 @@ public:
                 if (shouldWriteFluxFile())
                 {
                     outputVector[interfaceVertIdx].interfaceVertex = interfaceVertIdx;
-                    outputVector[interfaceVertIdx].globalIdx = secondGlobalIdx;
+                    outputVector[interfaceVertIdx].vIdxGlobal = secondGlobalIdx;
                     outputVector[interfaceVertIdx].xCoord = vertexGlobal[0];
                     outputVector[interfaceVertIdx].yCoord = vertexGlobal[1];
                     for (int eqIdx=0; eqIdx < numEq2; ++eqIdx)
@@ -821,7 +821,7 @@ private:
     {
         unsigned count;
         unsigned interfaceVertex;
-        unsigned globalIdx;
+        unsigned vIdxGlobal;
         Scalar xCoord;
         Scalar yCoord;
         Dune::FieldVector<Scalar, numEq> residual;
@@ -830,7 +830,7 @@ private:
         {
             count = 0;
             interfaceVertex = 0;
-            globalIdx = 0;
+            vIdxGlobal = 0;
             xCoord = 0.0;
             yCoord = 0.0;
             residual = 0.0;

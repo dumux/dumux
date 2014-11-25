@@ -134,20 +134,20 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dim);
+                int vIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dim);
 
-                volVars.update(sol[globalIdx],
+                volVars.update(sol[vIdxGlobal],
                                this->problem_(),
                                *eIt,
                                fvGeometry,
                                scvIdx,
                                false);
 
-                ux[globalIdx] = volVars.displacement(0);
+                ux[vIdxGlobal] = volVars.displacement(0);
                 if (dim >= 2)
-                    uy[globalIdx] = volVars.displacement(1);
+                    uy[vIdxGlobal] = volVars.displacement(1);
                 if (dim >= 3)
-                    uz[globalIdx] = volVars.displacement(2);
+                    uz[vIdxGlobal] = volVars.displacement(2);
               };
 
             // In the box method, the stress is evaluated on the FE-Grid. However, to get an

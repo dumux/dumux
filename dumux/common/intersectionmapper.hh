@@ -153,7 +153,7 @@ public:
         ElementIterator eEndIt = gridView_.template end<0>();
         for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
-            int globalIdx = map(*eIt);
+            int eIdxGlobal = map(*eIt);
 
             int fIdx = 0;
             // run through all intersections with neighbors
@@ -161,7 +161,7 @@ public:
             for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
                 int indexInInside = isIt->indexInInside();
-                intersectionMapLocal_[globalIdx][fIdx] = indexInInside;
+                intersectionMapLocal_[eIdxGlobal][fIdx] = indexInInside;
 
                 fIdx++;
             }
@@ -170,7 +170,7 @@ public:
         int globalIntersectionIdx = 0;
         for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
         {
-            int globalIdx = map(*eIt);
+            int eIdxGlobal = map(*eIt);
 
             int fIdx = 0;
             // run through all intersections with neighbors
@@ -182,7 +182,7 @@ public:
                     ElementPointer neighbor = isIt->outside();
                     int globalIdxNeighbor = map(*neighbor);
 
-                    if (eIt->level() > neighbor->level() || (eIt->level() == neighbor->level() && globalIdx < globalIdxNeighbor))
+                    if (eIt->level() > neighbor->level() || (eIt->level() == neighbor->level() && eIdxGlobal < globalIdxNeighbor))
                     {
 
                         int faceIdxNeighbor = 0;
@@ -206,14 +206,14 @@ public:
                             }
                         }
 
-                        intersectionMapGlobal_[globalIdx][fIdx] = globalIntersectionIdx;
+                        intersectionMapGlobal_[eIdxGlobal][fIdx] = globalIntersectionIdx;
                         intersectionMapGlobal_[globalIdxNeighbor][faceIdxNeighbor] = globalIntersectionIdx;
                         globalIntersectionIdx ++;
                     }
                 }
                 else
                 {
-                    intersectionMapGlobal_[globalIdx][fIdx] = globalIntersectionIdx;
+                    intersectionMapGlobal_[eIdxGlobal][fIdx] = globalIntersectionIdx;
                     globalIntersectionIdx ++;
                 }
                 fIdx++;

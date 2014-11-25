@@ -144,15 +144,15 @@ public:
         prevVolVars.resize(n);
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
-            int globalIdx = vertexMapper().map(element, i, dim);
+            int vIdxGlobal = vertexMapper().map(element, i, dim);
 
-            if (!hintsUsable_[globalIdx]) {
+            if (!hintsUsable_[vIdxGlobal]) {
                 curVolVars[i].setHint(NULL);
                 prevVolVars[i].setHint(NULL);
             }
             else {
-                curVolVars[i].setHint(&curHints_[globalIdx]);
-                prevVolVars[i].setHint(&prevHints_[globalIdx]);
+                curVolVars[i].setHint(&curHints_[vIdxGlobal]);
+                prevVolVars[i].setHint(&prevHints_[vIdxGlobal]);
             }
         }
     }
@@ -170,12 +170,12 @@ public:
 #endif
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
-            int globalIdx = vertexMapper().map(element, i, dim);
+            int vIdxGlobal = vertexMapper().map(element, i, dim);
 
-            if (!hintsUsable_[globalIdx])
+            if (!hintsUsable_[vIdxGlobal])
                 curVolVars[i].setHint(NULL);
             else
-                curVolVars[i].setHint(&curHints_[globalIdx]);
+                curVolVars[i].setHint(&curHints_[vIdxGlobal]);
         }
     }
 
@@ -194,11 +194,11 @@ public:
             return;
 
         for (unsigned int i = 0; i < elemVolVars.size(); ++i) {
-            int globalIdx = vertexMapper().map(element, i, dim);
-            curHints_[globalIdx] = elemVolVars[i];
-            if (!hintsUsable_[globalIdx])
-                prevHints_[globalIdx] = elemVolVars[i];
-            hintsUsable_[globalIdx] = true;
+            int vIdxGlobal = vertexMapper().map(element, i, dim);
+            curHints_[vIdxGlobal] = elemVolVars[i];
+            if (!hintsUsable_[vIdxGlobal])
+                prevHints_[vIdxGlobal] = elemVolVars[i];
+            hintsUsable_[vIdxGlobal] = true;
         }
     }
 
@@ -313,14 +313,14 @@ public:
     /*!
      * \brief Returns the volume \f$\mathrm{[m^3]}\f$ of a given control volume.
      *
-     * \param globalIdx The global index of the control volume's
+     * \param vIdxGlobal The global index of the control volume's
      *                  associated vertex
      */
-    Scalar boxVolume(const int globalIdx) const
+    Scalar boxVolume(const int vIdxGlobal) const
     {
         if (isBox)
         {
-            return boxVolume_[globalIdx][0];
+            return boxVolume_[vIdxGlobal][0];
         }
         else
         {
@@ -695,13 +695,13 @@ public:
             def[eqIdx] = writer.allocateManagedBuffer(numDofs);
         }
 
-        for (unsigned int globalIdx = 0; globalIdx < u.size(); globalIdx++)
+        for (unsigned int dofIdxGlobal = 0; dofIdxGlobal < u.size(); dofIdxGlobal++)
         {
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) 
             {
-                (*x[eqIdx])[globalIdx] = u[globalIdx][eqIdx];
-                (*delta[eqIdx])[globalIdx] = - deltaU[globalIdx][eqIdx];
-                (*def[eqIdx])[globalIdx] = residual[globalIdx][eqIdx];
+                (*x[eqIdx])[dofIdxGlobal] = u[dofIdxGlobal][eqIdx];
+                (*delta[eqIdx])[dofIdxGlobal] = - deltaU[dofIdxGlobal][eqIdx];
+                (*def[eqIdx])[dofIdxGlobal] = residual[dofIdxGlobal][eqIdx];
             }
         }
         
@@ -754,10 +754,10 @@ public:
             x[eqIdx] = writer.allocateManagedBuffer(numDofs);
         }
 
-        for (int globalIdx = 0; globalIdx < sol.size(); globalIdx++)
+        for (int dofIdxGlobal = 0; dofIdxGlobal < sol.size(); dofIdxGlobal++)
         {
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-                (*x[eqIdx])[globalIdx] = sol[globalIdx][eqIdx];
+                (*x[eqIdx])[dofIdxGlobal] = sol[dofIdxGlobal][eqIdx];
             }
         }
 
@@ -778,13 +778,13 @@ public:
     { return problem_().gridView(); }
 
     /*!
-     * \brief Returns true if the entity indicated by 'globalIdx' 
+     * \brief Returns true if the entity indicated by 'dofIdxGlobal' 
      * is located on / touches the grid's boundary.
      *
-     * \param globalIdx The global index of the entity
+     * \param dofIdxGlobal The global index of the entity
      */
-    bool onBoundary(const int globalIdx) const
-    { return boundaryIndices_[globalIdx]; }
+    bool onBoundary(const int dofIdxGlobal) const
+    { return boundaryIndices_[dofIdxGlobal]; }
 
     /*!
      * \brief Returns true if a vertex is located on the grid's
@@ -895,7 +895,7 @@ protected:
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
             {
                 // get the global index of the degree of freedom
-                int globalIdx = dofMapper().map(*eIt, scvIdx, dofCodim);
+                int dofIdxGlobal = dofMapper().map(*eIt, scvIdx, dofCodim);
 
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
@@ -914,11 +914,11 @@ protected:
                     // different sub control volumes, the initial value
                     // will be the arithmetic mean.
                     initPriVars *= fvGeometry.subContVol[scvIdx].volume;
-                    boxVolume_[globalIdx] += fvGeometry.subContVol[scvIdx].volume;
+                    boxVolume_[dofIdxGlobal] += fvGeometry.subContVol[scvIdx].volume;
                 }
                 
-                uCur_[globalIdx] += initPriVars;
-                Valgrind::CheckDefined(uCur_[globalIdx]);
+                uCur_[dofIdxGlobal] += initPriVars;
+                Valgrind::CheckDefined(uCur_[dofIdxGlobal]);
             }
         }
 
@@ -986,8 +986,8 @@ protected:
                     }
                     else 
                     {
-                        int globalIdx = elementMapper().map(*eIt);
-                        boundaryIndices_[globalIdx] = true;
+                        int eIdxGlobal = elementMapper().map(*eIt);
+                        boundaryIndices_[eIdxGlobal] = true;
                     }
                 }
             }

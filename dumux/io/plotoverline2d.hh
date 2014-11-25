@@ -110,13 +110,13 @@ public:
             for (unsigned int scvIdx=0; scvIdx < numScv; ++scvIdx)
             {
                 // find some global identification
-                const unsigned int globalIdx = problem.vertexMapper().map(*eIt, scvIdx, dim);
+                const unsigned int vIdxGlobal = problem.vertexMapper().map(*eIt, scvIdx, dim);
 
                 // only write out if the vertex was not already visited
-                if (isVisited[globalIdx])
+                if (isVisited[vIdxGlobal])
                     continue;
 
-                isVisited[globalIdx] = true ;
+                isVisited[vIdxGlobal] = true ;
 
                 // Getting the spatial coordinate
                 const GlobalPosition & globalPosCurrent

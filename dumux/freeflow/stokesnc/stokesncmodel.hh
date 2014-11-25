@@ -145,30 +145,30 @@ public:
 #endif
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                volVars.update(sol[globalIdx],
+                int vIdxGlobal = this->vertexMapper().map(*elemIt, i, dim);
+                volVars.update(sol[vIdxGlobal],
                                this->problem_(),
                                *elemIt,
                                fvGeometry,
                                i,
                                false);
 
-                pN[globalIdx] = volVars.pressure()*scale_;
-                delP[globalIdx] = volVars.pressure()*scale_ - 1e5;
+                pN[vIdxGlobal] = volVars.pressure()*scale_;
+                delP[vIdxGlobal] = volVars.pressure()*scale_ - 1e5;
 				for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
-                        (*moleFraction[compIdx])[globalIdx]= volVars.moleFraction(compIdx);
-						(*massFraction[compIdx])[globalIdx]= volVars.massFraction(compIdx);
-                        Valgrind::CheckDefined((*moleFraction[compIdx])[globalIdx]);
-						Valgrind::CheckDefined((*massFraction[compIdx])[globalIdx]);
+                        (*moleFraction[compIdx])[vIdxGlobal]= volVars.moleFraction(compIdx);
+						(*massFraction[compIdx])[vIdxGlobal]= volVars.massFraction(compIdx);
+                        Valgrind::CheckDefined((*moleFraction[compIdx])[vIdxGlobal]);
+						Valgrind::CheckDefined((*massFraction[compIdx])[vIdxGlobal]);
 					}
 				
-				T   [globalIdx] = volVars.temperature();
+				T   [vIdxGlobal] = volVars.temperature();
                 
-				rho[globalIdx] = volVars.density()*scale_*scale_*scale_;
-                mu[globalIdx] = volVars.dynamicViscosity()*scale_;
-                velocity[globalIdx] = volVars.velocity();
-                velocity[globalIdx] *= 1/scale_;
+				rho[vIdxGlobal] = volVars.density()*scale_*scale_*scale_;
+                mu[vIdxGlobal] = volVars.dynamicViscosity()*scale_;
+                velocity[vIdxGlobal] = volVars.velocity();
+                velocity[vIdxGlobal] *= 1/scale_;
             }
         }
 		writer.attachVertexData(T, "temperature");

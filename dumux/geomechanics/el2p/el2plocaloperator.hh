@@ -550,7 +550,7 @@ public:
             // assemble entries for mass balance equations
             for (size_type i = 0; i < (numEq-dim)*numScv; i++)
             {
-                // local jacobian value of location globalIdx=i%numScv, globalIdx=j%numScv for equation i/numScv and unknown j/numScv
+                // local jacobian value of location idxI=i%numScv, idxJ=j%numScv for equation i/numScv and unknown j/numScv
                 Scalar tmp = (model_.localJacobian().mat(i%numScv,j%numScv))[i/numScv][j/numScv];
                 // mass balance entries for pressure
                 if (j < numScv){

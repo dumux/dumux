@@ -242,7 +242,7 @@ public:
     template<class Vector>
     void completeRHS(const Element& element, Dune::FieldVector<int, 2*dim>& local2Global, Vector& f)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         unsigned int numFaces = element.subEntities(1);
 #else
@@ -251,28 +251,28 @@ public:
 
         Dune::FieldVector<Scalar, 2 * dim> F(0.);
         Scalar dInv = 0.;
-        computeReconstructionMatrices(element, W_[globalIdx], F, dInv);
+        computeReconstructionMatrices(element, W_[eIdxGlobal], F, dInv);
 
         for (unsigned int i = 0; i < numFaces; i++)
         {
             if (!this->bc(i).isDirichlet(pressureEqIdx))
-                f[local2Global[i]][0] += (dInv * F[i] * rhs_[globalIdx]);
+                f[local2Global[i]][0] += (dInv * F[i] * rhs_[eIdxGlobal]);
         }
     }
 
     Scalar constructPressure(const Element& element, Dune::FieldVector<Scalar,2*dim>& pressTrace)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
         Scalar volume = element.geometry().volume();
 
         PrimaryVariables sourceVec(0.0);
         problem_.source(sourceVec, element);
         Scalar qmean = volume * (sourceVec[wPhaseIdx]/density_[wPhaseIdx] + sourceVec[nPhaseIdx]/density_[nPhaseIdx]);
-        qmean += rhs_[globalIdx];
+        qmean += rhs_[eIdxGlobal];
 
         Dune::FieldVector<Scalar, 2 * dim> F(0.);
         Scalar dInv = 0.;
-        computeReconstructionMatrices(element, W_[globalIdx], F, dInv);
+        computeReconstructionMatrices(element, W_[eIdxGlobal], F, dInv);
 
         return (dInv*(qmean + (F*pressTrace)));
     }
@@ -280,7 +280,7 @@ public:
     void constructVelocity(const Element& element, Dune::FieldVector<Scalar,2*dim>& vel,
                            Dune::FieldVector<Scalar,2*dim>& pressTrace, Scalar press)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
 
         Dune::FieldVector<Scalar, 2 * dim> faceVol(0);
         IntersectionIterator isEndIt = gridView_.iend(element);
@@ -292,13 +292,13 @@ public:
         vel = 0;
         for (int i = 0; i < 2*dim; i++)
             for (int j = 0; j < 2*dim; j++)
-                vel[i] += W_[globalIdx][i][j]*faceVol[j]*(press - pressTrace[j]);
+                vel[i] += W_[eIdxGlobal][i][j]*faceVol[j]*(press - pressTrace[j]);
     }
 
     void constructVelocity(const Element& element, int fIdx, Scalar& vel,
                            Dune::FieldVector<Scalar,2*dim>& pressTrace, Scalar press)
     {
-        int globalIdx = problem_.variables().index(element);
+        int eIdxGlobal = problem_.variables().index(element);
 
         Dune::FieldVector<Scalar, 2 * dim> faceVol(0);
         IntersectionIterator isEndIt = gridView_.iend(element);
@@ -309,7 +309,7 @@ public:
 
         vel = 0;
             for (int j = 0; j < 2*dim; j++)
-                vel += W_[globalIdx][fIdx][j]*faceVol[j]*(press - pressTrace[j]);
+                vel += W_[eIdxGlobal][fIdx][j]*faceVol[j]*(press - pressTrace[j]);
     }
 
     void computeReconstructionMatrices(const Element& element, 
@@ -421,7 +421,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleV(const Element& element, int)
 #endif
     this->setcurrentsize(numFaces);
 
-    int globalIdx = problem_.variables().index(element);
+    int eIdxGlobal = problem_.variables().index(element);
 
     // The notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4.
     // The matrix W developed here corresponds to one element-associated
@@ -434,7 +434,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleV(const Element& element, int)
     this->assembleElementMatrices(element, faceVol, F, Pi, dInv, qmean);
 
     // Calculate the element part of the matrix Pi W Pi^T.
-    Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim> PiWPiT(W_[globalIdx]);
+    Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim> PiWPiT(W_[eIdxGlobal]);
     PiWPiT.rightmultiply(Pi);
     PiWPiT.leftmultiply(Pi);
 
@@ -480,9 +480,9 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
     // get global coordinate of cell center
     Dune::FieldVector<Scalar, dim> centerGlobal = element.geometry().center();
 
-    int globalIdx = problem_.variables().index(element);
+    int eIdxGlobal = problem_.variables().index(element);
 
-    CellData& cellData = problem_.variables().cellData(globalIdx);
+    CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
     // cell volume
     Scalar volume = element.geometry().volume();
@@ -595,14 +595,14 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
     {
         for (unsigned int j = 0; j < numFaces; j++)
         {
-            W_[globalIdx][i][j] = NK[i][0] * N[j][0];
+            W_[eIdxGlobal][i][j] = NK[i][0] * N[j][0];
             for (unsigned int k = 1; k < dim; k++)
-                W_[globalIdx][i][j] += NK[i][k] * N[j][k];
+                W_[eIdxGlobal][i][j] += NK[i][k] * N[j][k];
         }
     }
 
-    W_[globalIdx] /= volume;
-    W_[globalIdx] += D;
+    W_[eIdxGlobal] /= volume;
+    W_[eIdxGlobal] += D;
 
     //       std::cout << "W = \dim" << W;
 
@@ -625,7 +625,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
 
     // Calculate the element part of the matrix D^{-1} = (c W c^T)^{-1} which is just a scalar value.
     Dune::FieldVector<Scalar, 2 * dim> Wc(0);
-    W_[globalIdx].umv(c, Wc);
+    W_[eIdxGlobal].umv(c, Wc);
     dInv = 1.0 / (c * Wc);
 
     // Calculate the element part of the matrix F = Pi W c^T which is a column vector.
@@ -642,13 +642,13 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
 
         Scalar flux = 0;
         for (int j = 0; j < 2 * dim; j++)
-            flux += W_[globalIdx][idx][j] * faceVol[j] * (gravPot - gravPotFace[j]);
+            flux += W_[eIdxGlobal][idx][j] * faceVol[j] * (gravPot - gravPotFace[j]);
 
         //it is enough to evaluate the capillary/gravity flux for neighbors -> not needed anyway at the boundaries!
         if (isIt->neighbor())
         {
             ElementPointer neighbor = isIt->outside();
-            int globalIdxNeighbor = problem_.variables().index(*neighbor);
+            int eIdxGlobalNeighbor = problem_.variables().index(*neighbor);
             if (flux >= 0.)
             {
                 switch (pressureType)
@@ -666,8 +666,8 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
                 }
 
 
-                rhs_[globalIdx] -= (faceVol[idx] * fracFlow * flux);
-                rhs_[globalIdxNeighbor] += (faceVol[idx] * fracFlow * flux);
+                rhs_[eIdxGlobal] -= (faceVol[idx] * fracFlow * flux);
+                rhs_[eIdxGlobalNeighbor] += (faceVol[idx] * fracFlow * flux);
             }
         }
         else if (isIt->boundary())
@@ -720,7 +720,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
                     }
                 }
 
-                rhs_[globalIdx] -= (faceVol[idx] * fracFlow * flux);
+                rhs_[eIdxGlobal] -= (faceVol[idx] * fracFlow * flux);
             }
         }
     }

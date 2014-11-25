@@ -107,21 +107,21 @@ public:
                                 const int col,
                                 const int pvIdx)
     {
-        int globalIdx;
+        int dofIdxGlobal;
         FVElementGeometry neighborFVGeom;
         ElementPointer neighbor(this->element_());
         if (isBox)
         {
-            globalIdx = this->vertexMapper_().map(this->element_(), col, dim);
+            dofIdxGlobal = this->vertexMapper_().map(this->element_(), col, dim);
         }
         else
         {
             neighbor = this->fvElemGeom_.neighbors[col];
             neighborFVGeom.updateInner(*neighbor);
-            globalIdx = this->problemPtr_->elementMapper().map(*neighbor);
+            dofIdxGlobal = this->problemPtr_->elementMapper().map(*neighbor);
         }
 
-        PrimaryVariables priVars(this->model_().curSol()[globalIdx]);
+        PrimaryVariables priVars(this->model_().curSol()[dofIdxGlobal]);
         VolumeVariables origVolVars(this->curVolVars_[col]);
 
         this->curVolVars_[col].setEvalPoint(&origVolVars);

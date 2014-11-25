@@ -277,11 +277,11 @@ public:
         VertexIterator vEndIt = gridView_.template end<dim>();
         for(; vIt != vEndIt; ++vIt)
         {
-            int globalIdx = vertexMapper_.map(*vIt);
+            int vIdxGlobal = vertexMapper_.map(*vIt);
             GlobalPosition globalPos = (*vIt).geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
-            pInit_[globalIdx] = -(1.013e5 + (depthBOR_ - globalPos[2]) * brineDensity_ * 9.81);
+            pInit_[vIdxGlobal] = -(1.013e5 + (depthBOR_ - globalPos[2]) * brineDensity_ * 9.81);
         }
     }
 
@@ -319,9 +319,9 @@ public:
         VertexIterator vEndIt = gridView_.template end<dim>();
         for(; vIt != vEndIt; ++vIt)
         {
-            int globalIdx = vertexMapper_.map(*vIt);
+            int vIdxGlobal = vertexMapper_.map(*vIt);
             //
-            pInit_[globalIdx] = -this->model().curSol().base()[globalIdx*2][0];
+            pInit_[vIdxGlobal] = -this->model().curSol().base()[vIdxGlobal*2][0];
         }
     }
 
@@ -339,7 +339,7 @@ public:
 
     // function which returns an in-situ stress field that needs to be provided
     // for the principal stress calculation
-    GlobalPosition initialStress(const GlobalPosition globalPos, const int globalIdx) const
+    GlobalPosition initialStress(const GlobalPosition globalPos, const int dofIdxGlobal) const
     {
       GlobalPosition stress;
       Scalar porosity, rockDensity, gravity;
@@ -415,8 +415,8 @@ public:
         for (int i = 0; i < element.template count<dim>(); i++)
 #endif
         {
-            int globalIdx = this->vertexMapper().map(element, i, dim);
-            pValue += pInit_[globalIdx] * shapeVal[i];
+            int vIdxGlobal = this->vertexMapper().map(element, i, dim);
+            pValue += pInit_[vIdxGlobal] * shapeVal[i];
         }
 
         return pValue;
@@ -847,7 +847,7 @@ public:
             for (; vIt != vEndIt; ++vIt)
             {
                 // get global index of current vertex
-                int globalIdx = vertexMapper_.map(*vIt);
+                int vIdxGlobal = vertexMapper_.map(*vIt);
                 Dune::FieldVector<double, 3> globalPos =
                                 (*vIt).geometry().corner(0);
 
@@ -858,8 +858,8 @@ public:
                                 && globalPos[2] <= position[2] + eps_)
                 {
                     // if coordinates are identical write the pressure value for this
-                    // vertex (with index globalIdx) into the values vector
-                    values[pressureIdx] = pInit_[globalIdx];
+                    // vertex (with index vIdxGlobal) into the values vector
+                    values[pressureIdx] = pInit_[vIdxGlobal];
                     // the value of this vertex is set
                     valueSet = true;
                 }
@@ -892,8 +892,8 @@ public:
                             gridView_.template end<GridView::dimension> ();
             for (; vIt != vEndIt; ++vIt)
             {
-                int globalIdx = vertexMapper_.map(*vIt);
-                pInit_[globalIdx] = -pInit[globalIdx];
+                int vIdxGlobal = vertexMapper_.map(*vIt);
+                pInit_[vIdxGlobal] = -pInit[vIdxGlobal];
             }
         }
 
