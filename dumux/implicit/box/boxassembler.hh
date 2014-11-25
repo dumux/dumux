@@ -119,11 +119,11 @@ private:
 
             // if yes, the element color is also red, else it is not
             // red, i.e. green for the mean time
-            int globalElemIdx = this->elementMapper_().map(*eIt);
+            int eIdxGlobal = this->elementMapper_().map(*eIt);
             if (isRed)
-                this->elementColor_[globalElemIdx] = ParentType::Red;
+                this->elementColor_[eIdxGlobal] = ParentType::Red;
             else
-                this->elementColor_[globalElemIdx] = ParentType::Green;
+                this->elementColor_[eIdxGlobal] = ParentType::Green;
         }
 
         // Mark yellow vertices (as orange for the mean time)
@@ -309,8 +309,8 @@ private:
     void assembleElement_(const Element &element)
     {
         if (this->enablePartialReassemble_()) {
-            int globalElemIdx = this->model_().elementMapper().map(element);
-            if (this->elementColor_[globalElemIdx] == ParentType::Green) {
+            int eIdxGlobal = this->model_().elementMapper().map(element);
+            if (this->elementColor_[eIdxGlobal] == ParentType::Green) {
                 ++this->greenElems_;
 
                 assembleGreenElement_(element);

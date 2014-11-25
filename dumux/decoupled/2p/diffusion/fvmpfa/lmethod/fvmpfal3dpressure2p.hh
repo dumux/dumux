@@ -568,9 +568,9 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int globalVertIdx = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
+            int vIdxGlobal = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
 
-            InteractionVolume& interactionVolume = interactionVolumes_.interactionVolume(globalVertIdx);
+            InteractionVolume& interactionVolume = interactionVolumes_.interactionVolume(vIdxGlobal);
 
             for (int subVolumeIdx = 0; subVolumeIdx < InteractionVolume::subVolumeTotalNum; subVolumeIdx++)
             {
@@ -609,9 +609,9 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int globalVertIdx = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
+            int vIdxGlobal = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
 
-            InteractionVolume& interactionVolume = interactionVolumes_.interactionVolume(globalVertIdx);
+            InteractionVolume& interactionVolume = interactionVolumes_.interactionVolume(vIdxGlobal);
             for (int subVolumeIdx = 0; subVolumeIdx < InteractionVolume::subVolumeTotalNum; subVolumeIdx++)
             {
                 if (interactionVolume.hasSubVolumeElement(subVolumeIdx))
@@ -639,9 +639,9 @@ void FvMpfaL3dPressure2p<TypeTag>::assemble()
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
-        int globalVertIdx = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = interactionVolumes_.interactionVolume(globalVertIdx);
+        InteractionVolume& interactionVolume = interactionVolumes_.interactionVolume(vIdxGlobal);
 
         // inner interactionvolume
         if (interactionVolume.isInnerVolume())

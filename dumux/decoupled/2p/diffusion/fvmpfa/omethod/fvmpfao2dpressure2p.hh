@@ -1355,9 +1355,9 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
-        int globalVertIdx = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = interactionVolumes_[globalVertIdx];
+        InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.isInnerVolume())
         {

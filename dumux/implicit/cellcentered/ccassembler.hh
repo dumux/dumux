@@ -182,8 +182,8 @@ private:
     void assembleElement_(const Element &element)
     {
         if (this->enablePartialReassemble_()) {
-            int globalElemIdx = this->model_().elementMapper().map(element);
-            if (this->elementColor_[globalElemIdx] == ParentType::Green) {
+            int eIdxGlobal = this->model_().elementMapper().map(element);
+            if (this->elementColor_[eIdxGlobal] == ParentType::Green) {
                 ++this->greenElems_;
 
                 assembleGreenElement_(element);

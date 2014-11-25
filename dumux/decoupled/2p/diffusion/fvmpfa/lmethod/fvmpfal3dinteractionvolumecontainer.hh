@@ -320,37 +320,37 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const 
 {
     int globalIdx = problem_.variables().index(element);
 
-    int globalVertIdx = problem_.variables().vertexMapper().map(element, 0, dim);
-    interactionVolumes_[globalVertIdx].setSubVolumeElement(element, 7);
-    elemVertMap[globalVertIdx][7] = globalIdx;
+    int vIdxGlobal = problem_.variables().vertexMapper().map(element, 0, dim);
+    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 7);
+    elemVertMap[vIdxGlobal][7] = globalIdx;
 
-    globalVertIdx = problem_.variables().vertexMapper().map(element, 1, dim);
-    interactionVolumes_[globalVertIdx].setSubVolumeElement(element, 6);
-    elemVertMap[globalVertIdx][6] = globalIdx;
+    vIdxGlobal = problem_.variables().vertexMapper().map(element, 1, dim);
+    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 6);
+    elemVertMap[vIdxGlobal][6] = globalIdx;
 
-    globalVertIdx = problem_.variables().vertexMapper().map(element, 2, dim);
-    interactionVolumes_[globalVertIdx].setSubVolumeElement(element, 5);
-    elemVertMap[globalVertIdx][5] = globalIdx;
+    vIdxGlobal = problem_.variables().vertexMapper().map(element, 2, dim);
+    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 5);
+    elemVertMap[vIdxGlobal][5] = globalIdx;
 
-    globalVertIdx = problem_.variables().vertexMapper().map(element, 3, dim);
-    interactionVolumes_[globalVertIdx].setSubVolumeElement(element, 4);
-    elemVertMap[globalVertIdx][4] = globalIdx;
+    vIdxGlobal = problem_.variables().vertexMapper().map(element, 3, dim);
+    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 4);
+    elemVertMap[vIdxGlobal][4] = globalIdx;
 
-    globalVertIdx = problem_.variables().vertexMapper().map(element, 4, dim);
-    interactionVolumes_[globalVertIdx].setSubVolumeElement(element, 3);
-    elemVertMap[globalVertIdx][3] = globalIdx;
+    vIdxGlobal = problem_.variables().vertexMapper().map(element, 4, dim);
+    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 3);
+    elemVertMap[vIdxGlobal][3] = globalIdx;
 
-    globalVertIdx = problem_.variables().vertexMapper().map(element, 5, dim);
-    interactionVolumes_[globalVertIdx].setSubVolumeElement(element, 2);
-    elemVertMap[globalVertIdx][2] = globalIdx;
+    vIdxGlobal = problem_.variables().vertexMapper().map(element, 5, dim);
+    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 2);
+    elemVertMap[vIdxGlobal][2] = globalIdx;
 
-    globalVertIdx = problem_.variables().vertexMapper().map(element, 6, dim);
-    interactionVolumes_[globalVertIdx].setSubVolumeElement(element, 1);
-    elemVertMap[globalVertIdx][1] = globalIdx;
+    vIdxGlobal = problem_.variables().vertexMapper().map(element, 6, dim);
+    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 1);
+    elemVertMap[vIdxGlobal][1] = globalIdx;
 
-    globalVertIdx = problem_.variables().vertexMapper().map(element, 7, dim);
-    interactionVolumes_[globalVertIdx].setSubVolumeElement(element, 0);
-    elemVertMap[globalVertIdx][0] = globalIdx;
+    vIdxGlobal = problem_.variables().vertexMapper().map(element, 7, dim);
+    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 0);
+    elemVertMap[vIdxGlobal][0] = globalIdx;
 }
 
 /*! \brief Stores information with respect to DUNE intersections in the interaction volumes
@@ -418,11 +418,11 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
             {
                 int localVertIdx = referenceElement.subEntity(indexInInside, 1, i, dim);
 
-                int globalVertIdx = problem_.variables().vertexMapper().map(element, localVertIdx, dim);
+                int vIdxGlobal = problem_.variables().vertexMapper().map(element, localVertIdx, dim);
 
-                InteractionVolume& interactionVolume = interactionVolumes_[globalVertIdx];
+                InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
-                if (elemVertMap[globalVertIdx][0] == globalIdx)
+                if (elemVertMap[vIdxGlobal][0] == globalIdx)
                 {
                     if (indexInInside == 1)
                     {
@@ -476,7 +476,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         }
                     }
                 }
-                if (elemVertMap[globalVertIdx][1] == globalIdx)
+                if (elemVertMap[vIdxGlobal][1] == globalIdx)
                 {
                     if (indexInInside == 3)
                     {
@@ -530,7 +530,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         }
                     }
                 }
-                if (elemVertMap[globalVertIdx][2] == globalIdx)
+                if (elemVertMap[vIdxGlobal][2] == globalIdx)
                 {
                     if (indexInInside == 2)
                     {
@@ -584,7 +584,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         }
                     }
                 }
-                if (elemVertMap[globalVertIdx][3] == globalIdx)
+                if (elemVertMap[vIdxGlobal][3] == globalIdx)
                 {
                     if (indexInInside == 0)
                     {
@@ -638,7 +638,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         }
                     }
                 }
-                if (elemVertMap[globalVertIdx][4] == globalIdx)
+                if (elemVertMap[vIdxGlobal][4] == globalIdx)
                 {
                     if (indexInInside == 4)
                     {
@@ -692,7 +692,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         }
                     }
                 }
-                if (elemVertMap[globalVertIdx][5] == globalIdx)
+                if (elemVertMap[vIdxGlobal][5] == globalIdx)
                 {
                     if (indexInInside == 4)
                     {
@@ -747,7 +747,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         }
                     }
                 }
-                if (elemVertMap[globalVertIdx][6] == globalIdx)
+                if (elemVertMap[vIdxGlobal][6] == globalIdx)
                 {
                     if (indexInInside == 4)
                     {
@@ -801,7 +801,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         }
                     }
                 }
-                if (elemVertMap[globalVertIdx][7] == globalIdx)
+                if (elemVertMap[vIdxGlobal][7] == globalIdx)
                 {
                     if (indexInInside == 4)
                     {
@@ -857,7 +857,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                 }
                 if (isIt->boundary())
                 {
-                    if (elemVertMap[globalVertIdx][0] == globalIdx)
+                    if (elemVertMap[vIdxGlobal][0] == globalIdx)
                     {
                         if (indexInInside == 1)
                         {
@@ -914,7 +914,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             }
                         }
                     }
-                    if (elemVertMap[globalVertIdx][1] == globalIdx)
+                    if (elemVertMap[vIdxGlobal][1] == globalIdx)
                     {
                         if (indexInInside == 3)
                         {
@@ -971,7 +971,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             }
                         }
                     }
-                    if (elemVertMap[globalVertIdx][2] == globalIdx)
+                    if (elemVertMap[vIdxGlobal][2] == globalIdx)
                     {
                         if (indexInInside == 2)
                         {
@@ -1028,7 +1028,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             }
                         }
                     }
-                    if (elemVertMap[globalVertIdx][3] == globalIdx)
+                    if (elemVertMap[vIdxGlobal][3] == globalIdx)
                     {
                         if (indexInInside == 0)
                         {
@@ -1085,7 +1085,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             }
                         }
                     }
-                    if (elemVertMap[globalVertIdx][4] == globalIdx)
+                    if (elemVertMap[vIdxGlobal][4] == globalIdx)
                     {
                         if (indexInInside == 4)
                         {
@@ -1142,7 +1142,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             }
                         }
                     }
-                    if (elemVertMap[globalVertIdx][5] == globalIdx)
+                    if (elemVertMap[vIdxGlobal][5] == globalIdx)
                     {
                         if (indexInInside == 4)
                         {
@@ -1199,7 +1199,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             }
                         }
                     }
-                    if (elemVertMap[globalVertIdx][6] == globalIdx)
+                    if (elemVertMap[vIdxGlobal][6] == globalIdx)
                     {
                         if (indexInInside == 4)
                         {
@@ -1256,7 +1256,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                             }
                         }
                     }
-                    if (elemVertMap[globalVertIdx][7] == globalIdx)
+                    if (elemVertMap[vIdxGlobal][7] == globalIdx)
                     {
                         if (indexInInside == 4)
                         {
@@ -2064,9 +2064,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
-        int globalVertIdx = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = interactionVolumes_[globalVertIdx];
+        InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.getElementNumber() == 8)
         {

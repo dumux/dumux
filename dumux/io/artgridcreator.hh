@@ -278,7 +278,7 @@ public:
             Dune::FieldVector<double,3> point(0);
 #if PLOT
             std::cout << "=====================================" << std::endl;
-            std::cout << "globalElemIdx " << i << std::endl;
+            std::cout << "eIdxGlobal " << i << std::endl;
             std::cout << "=====================================" << std::endl;
 #endif
             int edgeIdx = 0;

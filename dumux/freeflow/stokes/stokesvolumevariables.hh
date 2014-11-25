@@ -126,7 +126,7 @@ public:
         Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
         fluidState.setEnthalpy(phaseIdx, h);
 
-//        int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
+//        int vIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dim);
     }
 
     /*!

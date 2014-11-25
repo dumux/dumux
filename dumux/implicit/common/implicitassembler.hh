@@ -340,13 +340,13 @@ public:
     /*!
      * \brief Returns the reassemble color of a vertex
      *
-     * \param globalVertIdx The global index of the vertex.
+     * \param vIdxGlobal The global index of the vertex.
      */
-    int vertexColor(const int globalVertIdx) const
+    int vertexColor(const int vIdxGlobal) const
     {
         if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
-        return vertexColor_[globalVertIdx];
+        return vertexColor_[vIdxGlobal];
     }
 
     /*!

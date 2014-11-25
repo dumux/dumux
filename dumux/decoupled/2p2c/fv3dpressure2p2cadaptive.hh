@@ -1684,9 +1684,9 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         #endif
 
         // get Interaction Volume object
-        int globalVertIdx = problem().variables().index(*outerCornerPtr);
+        int vIdxGlobal = problem().variables().index(*outerCornerPtr);
         InteractionVolume& interactionVolume
-                        = interactionVolumesContainer_->interactionVolume(globalVertIdx);
+                        = interactionVolumesContainer_->interactionVolume(vIdxGlobal);
 
         // abort if we are on boundary
         if(interactionVolume.isBoundaryInteractionVolume())
@@ -1754,10 +1754,10 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
                     if(vPtrSmall != outerCornerPtr
                             && ((vertexOnInterface - vertexOnElement).two_norm()<1e-5))
                     {
-                        int globalVertIdx = problem().variables().index(*vPtrSmall);
+                        int vIdxGlobal = problem().variables().index(*vPtrSmall);
                         // acess interactionVolume
                         InteractionVolume& interactionVolume
-                            = interactionVolumesContainer_->interactionVolume(globalVertIdx);
+                            = interactionVolumesContainer_->interactionVolume(vIdxGlobal);
                         if(interactionVolume.isBoundaryInteractionVolume())
                             continue;
 

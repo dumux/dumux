@@ -232,9 +232,9 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
-        int globalVertIdx = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = this->interactionVolumes_[globalVertIdx];
+        InteractionVolume& interactionVolume = this->interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.isInnerVolume())
         {
@@ -375,19 +375,19 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
     {
         int localVertIdx = referenceElement.subEntity(faceIdx, dim - 1, vIdx, dim);
 
-        int globalVertIdx = 0;
+        int vIdxGlobal = 0;
                 if (levelI >= levelJ)
                 {
-                    globalVertIdx = problem_.variables().index(
+                    vIdxGlobal = problem_.variables().index(
                             *((*elementPtrI).template subEntity < dim > (localVertIdx)));
                 }
                 else
                 {
-                    globalVertIdx = problem_.variables().index(
+                    vIdxGlobal = problem_.variables().index(
                             *((*elementPtrJ).template subEntity < dim > (localVertIdx)));
                 }
 
-        InteractionVolume& interactionVolume = this->interactionVolumes_[globalVertIdx];
+        InteractionVolume& interactionVolume = this->interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.isInnerVolume())
         {

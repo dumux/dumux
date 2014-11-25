@@ -1655,14 +1655,14 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::printInteractionVolumes()
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
-        int globalVertIdx = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = interactionVolumes_[globalVertIdx];
+        InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.getElementNumber() > 2)
         {
             interactionVolume.printInteractionVolumeInfo();
-            std::cout << "global vertex index: " << globalVertIdx << "\n";
+            std::cout << "global vertex index: " << vIdxGlobal << "\n";
             if (interactionVolume.getElementNumber() == 3)
             {
                 ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
@@ -1710,9 +1710,9 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
-        int globalVertIdx = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = interactionVolumes_[globalVertIdx];
+        InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.isInnerVolume())
         {

@@ -107,9 +107,9 @@ public:
      * have to be updated in an implicit treatment of the transport equation, it is necessary to get
      * the complete set of vertices on a face: 4 corners + all hanging nodes.
      */
-    std::set<int>& faceVerticeIndices(int globalElemIdx, int faceIdx)
+    std::set<int>& faceVerticeIndices(int eIdxGlobal, int faceIdx)
     {
-        return faceVertices_[globalElemIdx][faceIdx];
+        return faceVertices_[eIdxGlobal][faceIdx];
     }
 
     //! Constructs a FvMpfaL3dInteractionVolumeContainerAdaptive object
@@ -1651,9 +1651,9 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
-        int globalVertIdx = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = asImp_().interactionVolumes_[globalVertIdx];
+        InteractionVolume& interactionVolume = asImp_().interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.getElementNumber() == 8)
         {
@@ -1700,16 +1700,16 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
             asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(4, 0), globalIdx5, interactionVolume.getIndexOnElement(4, 0));
             asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(5, 0), globalIdx6, interactionVolume.getIndexOnElement(5, 0));
 
-            faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 0)].insert(globalVertIdx);
-            faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 1)].insert(globalVertIdx);
-            faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 2)].insert(globalVertIdx);
-            faceVertices_[globalIdx2][interactionVolume.getIndexOnElement(1, 0)].insert(globalVertIdx);
-            faceVertices_[globalIdx2][interactionVolume.getIndexOnElement(1, 1)].insert(globalVertIdx);
-            faceVertices_[globalIdx2][interactionVolume.getIndexOnElement(1, 2)].insert(globalVertIdx);
-            faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 0)].insert(globalVertIdx);
-            faceVertices_[globalIdx4][interactionVolume.getIndexOnElement(3, 1)].insert(globalVertIdx);
-            faceVertices_[globalIdx5][interactionVolume.getIndexOnElement(4, 0)].insert(globalVertIdx);
-            faceVertices_[globalIdx6][interactionVolume.getIndexOnElement(5, 0)].insert(globalVertIdx);
+            faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 0)].insert(vIdxGlobal);
+            faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 1)].insert(vIdxGlobal);
+            faceVertices_[globalIdx1][interactionVolume.getIndexOnElement(0, 2)].insert(vIdxGlobal);
+            faceVertices_[globalIdx2][interactionVolume.getIndexOnElement(1, 0)].insert(vIdxGlobal);
+            faceVertices_[globalIdx2][interactionVolume.getIndexOnElement(1, 1)].insert(vIdxGlobal);
+            faceVertices_[globalIdx2][interactionVolume.getIndexOnElement(1, 2)].insert(vIdxGlobal);
+            faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 0)].insert(vIdxGlobal);
+            faceVertices_[globalIdx4][interactionVolume.getIndexOnElement(3, 1)].insert(vIdxGlobal);
+            faceVertices_[globalIdx5][interactionVolume.getIndexOnElement(4, 0)].insert(vIdxGlobal);
+            faceVertices_[globalIdx6][interactionVolume.getIndexOnElement(5, 0)].insert(vIdxGlobal);
 
             if (interactionVolume.getHangingNodeType() != InteractionVolume::twoSmallCells)
             {
@@ -1728,20 +1728,20 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
                 asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 1), globalIdx8, interactionVolume.getIndexOnElement(7, 1));
                 asImp_().addRealFluxFaceArea_(interactionVolume.getFaceArea(7, 2), globalIdx8, interactionVolume.getIndexOnElement(7, 2));
 
-                faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 1)].insert(globalVertIdx);
-                faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 2)].insert(globalVertIdx);
-                faceVertices_[globalIdx4][interactionVolume.getIndexOnElement(3, 0)].insert(globalVertIdx);
-                faceVertices_[globalIdx4][interactionVolume.getIndexOnElement(3, 2)].insert(globalVertIdx);
-                faceVertices_[globalIdx5][interactionVolume.getIndexOnElement(4, 1)].insert(globalVertIdx);
-                faceVertices_[globalIdx5][interactionVolume.getIndexOnElement(4, 2)].insert(globalVertIdx);
-                faceVertices_[globalIdx6][interactionVolume.getIndexOnElement(5, 1)].insert(globalVertIdx);
-                faceVertices_[globalIdx6][interactionVolume.getIndexOnElement(5, 2)].insert(globalVertIdx);
-                faceVertices_[globalIdx7][interactionVolume.getIndexOnElement(6, 0)].insert(globalVertIdx);
-                faceVertices_[globalIdx7][interactionVolume.getIndexOnElement(6, 1)].insert(globalVertIdx);
-                faceVertices_[globalIdx7][interactionVolume.getIndexOnElement(6, 2)].insert(globalVertIdx);
-                faceVertices_[globalIdx8][interactionVolume.getIndexOnElement(7, 0)].insert(globalVertIdx);
-                faceVertices_[globalIdx8][interactionVolume.getIndexOnElement(7, 1)].insert(globalVertIdx);
-                faceVertices_[globalIdx8][interactionVolume.getIndexOnElement(7, 2)].insert(globalVertIdx);
+                faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 1)].insert(vIdxGlobal);
+                faceVertices_[globalIdx3][interactionVolume.getIndexOnElement(2, 2)].insert(vIdxGlobal);
+                faceVertices_[globalIdx4][interactionVolume.getIndexOnElement(3, 0)].insert(vIdxGlobal);
+                faceVertices_[globalIdx4][interactionVolume.getIndexOnElement(3, 2)].insert(vIdxGlobal);
+                faceVertices_[globalIdx5][interactionVolume.getIndexOnElement(4, 1)].insert(vIdxGlobal);
+                faceVertices_[globalIdx5][interactionVolume.getIndexOnElement(4, 2)].insert(vIdxGlobal);
+                faceVertices_[globalIdx6][interactionVolume.getIndexOnElement(5, 1)].insert(vIdxGlobal);
+                faceVertices_[globalIdx6][interactionVolume.getIndexOnElement(5, 2)].insert(vIdxGlobal);
+                faceVertices_[globalIdx7][interactionVolume.getIndexOnElement(6, 0)].insert(vIdxGlobal);
+                faceVertices_[globalIdx7][interactionVolume.getIndexOnElement(6, 1)].insert(vIdxGlobal);
+                faceVertices_[globalIdx7][interactionVolume.getIndexOnElement(6, 2)].insert(vIdxGlobal);
+                faceVertices_[globalIdx8][interactionVolume.getIndexOnElement(7, 0)].insert(vIdxGlobal);
+                faceVertices_[globalIdx8][interactionVolume.getIndexOnElement(7, 1)].insert(vIdxGlobal);
+                faceVertices_[globalIdx8][interactionVolume.getIndexOnElement(7, 2)].insert(vIdxGlobal);
             }
         }
 

@@ -396,12 +396,12 @@ public:
      * \brief Returns the relative error between two vectors of
      *        primary variables.
      *
-     * \param dofIdx The global index of the control volume's
-     *               associated degree of freedom
+     * \param dofIdxGlobal The global index of the control volume's
+     *                     associated degree of freedom
      * \param priVars1 The first vector of primary variables
      * \param priVars2 The second vector of primary variables
      */
-    Scalar relativeErrorDof(const int dofIdx,
+    Scalar relativeErrorDof(const int dofIdxGlobal,
                             const PrimaryVariables &priVars1,
                             const PrimaryVariables &priVars2)
     {
@@ -558,17 +558,17 @@ public:
     void serializeEntity(std::ostream &outstream,
                          const Entity &entity)
     {
-        int dofIdx = dofMapper().map(entity);
+        int dofIdxGlobal = dofMapper().map(entity);
 
         // write phase state
         if (!outstream.good()) {
             DUNE_THROW(Dune::IOError,
                        "Could not serialize vertex "
-                       << dofIdx);
+                       << dofIdxGlobal);
         }
 
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-            outstream << curSol()[dofIdx][eqIdx] << " ";
+            outstream << curSol()[dofIdxGlobal][eqIdx] << " ";
         }
     }
 
@@ -586,14 +586,14 @@ public:
     void deserializeEntity(std::istream &instream,
                            const Entity &entity)
     {
-        int dofIdx = dofMapper().map(entity);
+        int dofIdxGlobal = dofMapper().map(entity);
 
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             if (!instream.good())
                 DUNE_THROW(Dune::IOError,
                            "Could not deserialize vertex "
-                           << dofIdx);
-            instream >> curSol()[dofIdx][eqIdx];
+                           << dofIdxGlobal);
+            instream >> curSol()[dofIdxGlobal][eqIdx];
         }
     }
 
@@ -979,8 +979,8 @@ protected:
                                                                    1,
                                                                    faceVertIdx,
                                                                    dim);
-                            int globalVertIdx = vertexMapper().map(*eIt, elemVertIdx, dim);
-                            boundaryIndices_[globalVertIdx] = true;
+                            int vIdxGlobal = vertexMapper().map(*eIt, elemVertIdx, dim);
+                            boundaryIndices_[vIdxGlobal] = true;
                         }
                     }
                     else 

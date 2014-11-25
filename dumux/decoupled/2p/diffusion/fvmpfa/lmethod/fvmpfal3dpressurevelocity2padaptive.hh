@@ -219,9 +219,9 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
-        int globalVertIdx = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(globalVertIdx);
+        InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
 
         // inner interactionvolume
         if (interactionVolume.isInnerVolume())
@@ -337,20 +337,20 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
         cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, indexInOutside, 0);
     }
 
-    std::set<int> globalVertIdx;
+    std::set<int> vIdxGlobal;
 
     if (levelI >= levelJ)
     {
-        globalVertIdx = this->interactionVolumes_.faceVerticeIndices(globalIdxI, indexInInside);
+        vIdxGlobal = this->interactionVolumes_.faceVerticeIndices(globalIdxI, indexInInside);
     }
     else
     {
-        globalVertIdx = this->interactionVolumes_.faceVerticeIndices(globalIdxJ, indexInOutside);
+        vIdxGlobal = this->interactionVolumes_.faceVerticeIndices(globalIdxJ, indexInOutside);
     }
 
-    std::set<int>::iterator itEnd = globalVertIdx.end();
+    std::set<int>::iterator itEnd = vIdxGlobal.end();
 
-    for (std::set<int>::iterator vIdxIt = globalVertIdx.begin(); vIdxIt != itEnd; ++vIdxIt)
+    for (std::set<int>::iterator vIdxIt = vIdxGlobal.begin(); vIdxIt != itEnd; ++vIdxIt)
     {
         InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(*vIdxIt);
 

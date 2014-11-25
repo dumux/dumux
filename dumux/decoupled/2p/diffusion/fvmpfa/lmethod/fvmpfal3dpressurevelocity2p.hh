@@ -218,9 +218,9 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity()
     VertexIterator vEndIt = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
     {
-        int globalVertIdx = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(*vIt);
 
-        InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(globalVertIdx);
+        InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
 
         // inner interactionvolume
         if (interactionVolume.isInnerVolume())
@@ -318,10 +318,10 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
     {
         int localVertIdx = referenceElement.subEntity(indexInInside, 1, vIdx, dim);
 
-        int globalVertIdx = problem_.variables().index(
+        int vIdxGlobal = problem_.variables().index(
                 *((*elementPtrI).template subEntity < dim > (localVertIdx)));
 
-        InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(globalVertIdx);
+        InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
 
         if (interactionVolume.isInnerVolume())
         {

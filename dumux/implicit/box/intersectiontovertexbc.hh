@@ -83,11 +83,11 @@ public:
                 for (int faceVertIdx = 0; faceVertIdx < numFaceVerts; ++faceVertIdx)
                 {
                     int elemVertIdx = refElement.subEntity(faceIdx, 1, faceVertIdx, dim);
-                    int globalVertIdx = problem.vertexMapper().map(*eIt, elemVertIdx, dim);
+                    int vIdxGlobal = problem.vertexMapper().map(*eIt, elemVertIdx, dim);
 
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                       if (bcTypes.isDirichlet(eqIdx))
-                          vertexBC[globalVertIdx].setDirichlet(eqIdx);
+                          vertexBC[vIdxGlobal].setDirichlet(eqIdx);
                 }
             }
         }

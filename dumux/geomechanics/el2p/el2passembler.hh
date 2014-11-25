@@ -341,11 +341,11 @@ public:
 
             // if yes, the element color is also red, else it is not
             // red, i.e. green for the mean time
-            int globalElemIdx = elementMapper_().map(*eIt);
+            int eIdxGlobal = elementMapper_().map(*eIt);
             if (isRed)
-                elementColor_[globalElemIdx] = Red;
+                elementColor_[eIdxGlobal] = Red;
             else
-                elementColor_[globalElemIdx] = Green;
+                elementColor_[eIdxGlobal] = Green;
         }
 
         // Mark yellow vertices (as orange for the mean time)
@@ -442,13 +442,13 @@ public:
     /*!
      * \brief Returns the reassemble color of a vertex
      *
-     * \param globalVertIdx The global index of the vertex.
+     * \param vIdxGlobal The global index of the vertex.
      */
-    int vertexColor(int globalVertIdx) const
+    int vertexColor(int vIdxGlobal) const
     {
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!
-        return vertexColor_[globalVertIdx];
+        return vertexColor_[vIdxGlobal];
     }
 
     /*!
