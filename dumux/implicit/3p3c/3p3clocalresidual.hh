@@ -157,7 +157,7 @@ public:
             {
                 // add advective flux of current component in current
                 // phase
-                // if alpha > 0 und alpha < 1 then both upstream and downstream
+                // if alpha > 0 and alpha < 1 then both upstream and downstream
                 // nodes need their contribution
                 // if alpha == 1 (which is mostly the case) then, the downstream
                 // node is not evaluated

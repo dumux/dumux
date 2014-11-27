@@ -342,8 +342,8 @@ public:
 		// Calculate storage terms of the individual phases
 		for (int phaseIdx = 0; phaseIdx < numEnergyEqs; ++phaseIdx) {
 			PrimaryVariables phaseStorage;
-			/* wieviel Erhaltungsgröße im System ist (in Einheit der Bilanzgleichung)
-			 * Aufssummierte Storage term für das ganze System.
+			/* how much of the conserved quantity is in the system (in units of the balance eq.)
+			 * summed up storage term over the whole system
 			 */
 			this->model().globalPhaseStorage(phaseStorage, phaseIdx);
 

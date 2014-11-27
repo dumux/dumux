@@ -85,12 +85,12 @@ public:
 
         ElementIterator eEndIt = problem_.gridView().template end<0>();
         // 1) calculate Indicator -> min, maxvalues
-        // Schleife über alle Leaf-Elemente
+        // loop over all leaf-elements
         for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt;
                 ++eIt)
         {
-            // Bestimme maximale und minimale Sättigung
-            // Index des aktuellen Leaf-Elements
+            // calculate minimum and maximum saturation
+            // index of the current leaf-elements
             int globalIdxI = problem_.variables().index(*eIt);
 
             if (refineAtSource_)
@@ -126,7 +126,7 @@ public:
             globalMin = std::min(satI, globalMin);
             globalMax = std::max(satI, globalMax);
 
-            // Berechne Verfeinerungsindikator an allen Zellen
+            // calculate refinement indicator in all cells
             IntersectionIterator isItend = problem_.gridView().iend(*eIt);
             for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
             {
@@ -136,7 +136,7 @@ public:
                 }
 
                 const typename IntersectionIterator::Intersection &intersection = *isIt;
-                // Steige aus, falls es sich nicht um einen Nachbarn handelt
+                // exit, if it is not a neighbor
                 if (isIt->boundary())
                 {
                     BoundaryTypes bcTypes;
@@ -177,11 +177,11 @@ public:
                 }
                 else
                 {
-                    // Greife auf Nachbarn zu
+                    // get element pointer from neighbor
                     ElementPointer outside = intersection.outside();
                     int globalIdxJ = problem_.variables().index(*outside);
 
-                    // Jede Intersection nur von einer Seite betrachten
+                    // treat each intersection only from one side
                     if (eIt->level() > outside->level()
                             || (eIt->level() == outside->level() && globalIdxI < globalIdxJ))
                     {

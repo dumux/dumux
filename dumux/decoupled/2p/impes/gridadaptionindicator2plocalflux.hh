@@ -253,7 +253,7 @@ public:
                 }
 
                 const typename IntersectionIterator::Intersection &intersection = *isIt;
-                // Steige aus, falls es sich nicht um einen Nachbarn handelt
+                // exit, if it is not a neighbor
                 if (isIt->boundary())
                 {
                     BoundaryTypes bcTypes;

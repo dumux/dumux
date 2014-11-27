@@ -82,12 +82,12 @@ public:
 
         ElementIterator eEndIt = problem_.gridView().template end<0>();
         // 1) calculate Indicator -> min, maxvalues
-        // Schleife über alle Leaf-Elemente
+        // loop over all leaf-elements
         for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt;
                 ++eIt)
         {
-            // Bestimme maximale und minimale Sättigung
-            // Index des aktuellen Leaf-Elements
+            // calculate minimum and maximum saturation
+            // index of the current leaf-elements
             int globalIdxI = problem_.variables().index(*eIt);
 
             Scalar satI = 0.0;
@@ -104,7 +104,7 @@ public:
             globalMin = std::min(satI, globalMin);
             globalMax = std::max(satI, globalMax);
 
-            // Berechne Verfeinerungsindikator an allen Zellen
+            // calculate refinement indicator in all cells
             IntersectionIterator isItend = problem_.gridView().iend(*eIt);
             for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
             {
