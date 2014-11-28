@@ -13,6 +13,10 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
   member functions, which have been deprecated in DuMuX 2.6:
   Everything listed as deprecated below has been removed.
 
+* DELETED non-isothermal folders in dumux/implicit and test/implicit. A
+  non-isothermal test case can now be set up with the generic non-isothermal model,
+  see changes between (2.5 and 2.6)
+
 
 Differences Between DuMuX 2.5 and DuMuX 2.6
 ===================================================

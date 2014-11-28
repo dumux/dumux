@@ -30,7 +30,6 @@
 #define DUMUX_1P2C_PROPERTY_DEFAULTS_HH
 
 #include "1p2cproperties.hh"
-
 #include "1p2cmodel.hh"
 #include "1p2clocalresidual.hh"
 #include "1p2cvolumevariables.hh"

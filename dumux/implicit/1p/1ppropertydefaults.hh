@@ -27,19 +27,21 @@
 #ifndef DUMUX_1P_PROPERTY_DEFAULTS_HH
 #define DUMUX_1P_PROPERTY_DEFAULTS_HH
 
-#include <dumux/implicit/box/boxproperties.hh>
+#include "1pproperties.hh"
 
 #include "1pmodel.hh"
 #include "1plocalresidual.hh"
 #include "1pvolumevariables.hh"
 #include "1pindices.hh"
 
+#include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/1pfluidsystem.hh>
 #include <dumux/material/spatialparams/implicitspatialparams1p.hh>
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
+#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 namespace Dumux
 {
@@ -49,25 +51,23 @@ namespace Dumux
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
-SET_INT_PROP(OneP, NumEq, 1); //!< set the number of equations to 1
+SET_INT_PROP(OneP, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq)); //!< set the number of equations to 1
 SET_INT_PROP(OneP, NumPhases, 1); //!< The number of phases in the 1p model is 1
 
 //! The local residual function
-SET_TYPE_PROP(OneP,
-              LocalResidual,
-              OnePLocalResidual<TypeTag>);
+SET_TYPE_PROP(OneP, LocalResidual, typename GET_PROP_TYPE(TypeTag, IsothermalLocalResidual));
 
 //! the Model property
-SET_TYPE_PROP(OneP, Model, OnePModel<TypeTag>);
+SET_TYPE_PROP(OneP, Model, typename GET_PROP_TYPE(TypeTag, IsothermalModel));
 
 //! the VolumeVariables property
-SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
+SET_TYPE_PROP(OneP, VolumeVariables, typename GET_PROP_TYPE(TypeTag, IsothermalVolumeVariables));
 
 //! the FluxVariables property
-SET_TYPE_PROP(OneP, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(OneP, FluxVariables, typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables));
 
 //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(OneP, Indices, OnePIndices);
+SET_TYPE_PROP(OneP, Indices, typename GET_PROP_TYPE(TypeTag, IsothermalIndices));
 
 //! The spatial parameters to be employed. 
 //! Use ImplicitSpatialParamsOneP by default.
@@ -103,6 +103,36 @@ SET_BOOL_PROP(OneP, ProblemEnableGravity, true);
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+
+//! average is used as default model to compute the effective thermal heat conductivity
+SET_PROP(NonIsothermal, ThermalConductivityModel)
+{ private :
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+  public:
+    typedef ThermalConductivityAverage<Scalar> type;
+};
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+
+// set isothermal Model
+SET_TYPE_PROP(OneP, IsothermalModel, OnePModel<TypeTag>);
+
+//set isothermal FluxVariables
+SET_TYPE_PROP(OneP, IsothermalFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
+
+//set isothermal VolumeVariables
+SET_TYPE_PROP(OneP, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);
+
+//set isothermal LocalResidual
+SET_TYPE_PROP(OneP, IsothermalLocalResidual, OnePLocalResidual<TypeTag>);
+
+//set isothermal Indices
+SET_TYPE_PROP(OneP, IsothermalIndices, OnePIndices);
+
+//set isothermal NumEq
+SET_INT_PROP(OneP, IsothermalNumEq, 1);
 
 // \}
 } // end namespace Properties

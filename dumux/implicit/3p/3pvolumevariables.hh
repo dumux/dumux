@@ -170,7 +170,13 @@ public:
         Valgrind::CheckDefined(permeability_);
 
         // energy related quantities not contained in the fluid state
+        typename FluidSystem::ParameterCache paramCache;
         asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            // compute and set the enthalpy
+            Scalar h = asImp_().enthalpy_(fluidState_, paramCache, phaseIdx);
+            fluidState_.setEnthalpy(phaseIdx, h);
+        }
     }
 
     /*!
@@ -254,6 +260,14 @@ protected:
                                const int scvIdx)
     {
         return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
+    }
+
+    template<class ParameterCache>
+    static Scalar enthalpy_(const FluidState& fluidState,
+                            const ParameterCache& paramCache,
+                            const int phaseIdx)
+    {
+        return 0;
     }
 
     /*!

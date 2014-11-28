@@ -47,14 +47,7 @@ NEW_TYPE_TAG(InfiltrationSpatialParams);
 SET_TYPE_PROP(InfiltrationSpatialParams, SpatialParams, Dumux::InfiltrationSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(InfiltrationSpatialParams, MaterialLaw)
-{
- private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- public:
-    // define the material law
-    typedef ParkerVanGen3P<Scalar> type;
-};
+SET_TYPE_PROP(InfiltrationSpatialParams, MaterialLaw, ParkerVanGen3P<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 }
 
 /*!

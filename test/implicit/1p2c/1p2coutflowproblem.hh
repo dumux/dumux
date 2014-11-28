@@ -57,29 +57,19 @@ NEW_TYPE_TAG(OnePTwoCOutflowCCProblem, INHERITS_FROM(CCModel, OnePTwoCOutflowPro
 #endif
 
 // Set the grid type
-SET_PROP(OnePTwoCOutflowProblem, Grid)
-{
 #if HAVE_UG
-    typedef Dune::UGGrid<2> type;
+SET_TYPE_PROP(OnePTwoCOutflowProblem, Grid, Dune::UGGrid<2>);
 #else
-//    typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
-    typedef Dune::YaspGrid<2> type;
+SET_TYPE_PROP(OnePTwoCOutflowProblem, Grid, Dune::YaspGrid<2>);
 #endif
-};
 
 // Set the problem property
-SET_PROP(OnePTwoCOutflowProblem, Problem)
-{
-    typedef Dumux::OnePTwoCOutflowProblem<TypeTag> type;
-};
+SET_TYPE_PROP(OnePTwoCOutflowProblem, Problem, Dumux::OnePTwoCOutflowProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(OnePTwoCOutflowProblem, FluidSystem)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef Dumux::FluidSystems::H2ON2LiquidPhase<Scalar, false> type;
-};
+SET_TYPE_PROP(OnePTwoCOutflowProblem,
+              FluidSystem,
+              Dumux::FluidSystems::H2ON2LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCOutflowProblem,

@@ -1,0 +1,34 @@
+###############################################################
+# Parameter file for test_cc3pniconvection.input.
+# Everything behind a '#' is a comment.
+# Type "./test_cc3pniconvection --help" for more information.
+###############################################################
+
+###############################################################
+# Mandatory arguments
+###############################################################
+
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 3e4 # [s]
+MaxTimeStepSize = 1e3
+
+[Grid]
+File = ./grids/test_3pniconvection.dgf
+
+[Problem]
+Name = test_cc3pniconvection # name passed to the output routines
+OutputInterval = 5 # every 5th timestep an output file is written
+DarcyVelocity = 1e-4 # [m/s] inflow at the left boundary
+
+###############################################################
+# Simulation restart
+#
+# DuMux simulations can be restarted from *.drs files
+# Set Restart to the value of a specific file, 
+# e.g.:  'Restart = 27184.1' for the restart file
+# name_time=27184.1_rank=0.drs
+# Please comment in the two lines below, if restart is desired.
+###############################################################
+# [TimeManager]
+# Restart = ... 

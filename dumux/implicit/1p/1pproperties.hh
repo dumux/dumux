@@ -24,11 +24,12 @@
  *
  * \brief Defines the properties required for the one-phase fully implicit model.
  */
-#ifndef DUMUX_1P_PROPERTIES_DATA_HH
-#define DUMUX_1P_PROPERTIES_DATA_HH
+#ifndef DUMUX_1P_PROPERTIES_HH
+#define DUMUX_1P_PROPERTIES_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
+#include <dumux/implicit/nonisothermal/niproperties.hh>
 
 namespace Dumux
 {
@@ -46,6 +47,11 @@ namespace Properties {
 NEW_TYPE_TAG(OneP);
 NEW_TYPE_TAG(BoxOneP, INHERITS_FROM(BoxModel, OneP));
 NEW_TYPE_TAG(CCOneP, INHERITS_FROM(CCModel, OneP));
+
+//! The type tags for the corresponding non-isothermal problems
+NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP, NonIsothermal));
+NEW_TYPE_TAG(BoxOnePNI, INHERITS_FROM(BoxModel, OnePNI));
+NEW_TYPE_TAG(CCOnePNI, INHERITS_FROM(CCModel, OnePNI));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

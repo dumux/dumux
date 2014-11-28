@@ -22,17 +22,7 @@
  * \brief test for the 1p2c box model
  */
 #include "config.h"
-
-#define PROBLEM 0 // 0 = 1p2coutflowproblem 1 = 1p2cconductionproblem 2 = 1p2cconvectionproblem
-
-#if PROBLEM == 0
 #include "1p2coutflowproblem.hh"
-#elif PROBLEM == 1
-#include "1p2cconductionproblem.hh"
-#else
-#include "1p2cconvectionproblem.hh"
-#endif
-
 #include <dumux/common/start.hh>
 
 /*!
@@ -62,12 +52,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if PROBLEM == 0
     typedef TTAG(OnePTwoCOutflowBoxProblem) ProblemTypeTag;
-#elif PROBLEM == 1
-    typedef TTAG(OnePTwoCConductionBoxProblem) ProblemTypeTag;
-#else
-    typedef TTAG(OnePTwoCConvectionBoxProblem) ProblemTypeTag;
-#endif
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

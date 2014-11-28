@@ -29,6 +29,7 @@
 
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
+#include <dumux/implicit/nonisothermal/niproperties.hh>
 
 namespace Dumux
 {
@@ -38,11 +39,16 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-
-//! The type tags for the implicit three-phase problems
+//! The type tags for the implicit isothermal one-phase two-component problems
 NEW_TYPE_TAG(ThreeP);
 NEW_TYPE_TAG(BoxThreeP, INHERITS_FROM(BoxModel, ThreeP));
 NEW_TYPE_TAG(CCThreeP, INHERITS_FROM(CCModel, ThreeP));
+
+//! The type tags for the corresponding non-isothermal problems
+NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP, NonIsothermal));
+NEW_TYPE_TAG(BoxThreePNI, INHERITS_FROM(BoxModel, ThreePNI));
+NEW_TYPE_TAG(CCThreePNI, INHERITS_FROM(CCModel, ThreePNI));
+
 
 //////////////////////////////////////////////////////////////////
 // Property tags

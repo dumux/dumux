@@ -45,25 +45,15 @@ NEW_TYPE_TAG(InjectionBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
 NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCModel, InjectionProblem));
     
 // Set the grid type
-SET_PROP(InjectionProblem, Grid)
-{
-    typedef Dune::YaspGrid<2> type;
-};
+SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_PROP(InjectionProblem, Problem)
-{
-    typedef Dumux::InjectionProblem<TypeTag> type;
-};
+SET_TYPE_PROP(InjectionProblem, Problem, Dumux::InjectionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(InjectionProblem, FluidSystem)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    static const bool useComplexRelations = false;
- public:
-    typedef Dumux::FluidSystems::H2ON2<Scalar, useComplexRelations> type;
-};
+SET_TYPE_PROP(InjectionProblem,
+              FluidSystem,
+              Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
 
 // Enable gravity
 SET_BOOL_PROP(InjectionProblem, ProblemEnableGravity, true);

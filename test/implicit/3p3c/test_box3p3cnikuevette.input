@@ -1,0 +1,31 @@
+###############################################################
+# Parameter file for test_box3p3cnikuevette.
+# Everything behind a '#' is a comment.
+# Type "./test_box3p3cnikuevette --help" for more information.
+###############################################################
+
+###############################################################
+# Mandatory arguments
+###############################################################
+
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 200 # [s]
+
+[Grid]
+File = ./grids/column.dgf
+
+[Problem]
+Name = kuevettebox # name passed to the output routines
+
+###############################################################
+# Simulation restart
+#
+# DuMux simulations can be restarted from *.drs files
+# Set Restart to the value of a specific file, 
+# e.g.:  'Restart = 27184.1' for the restart file
+# name_time=27184.1_rank=0.drs
+# Please comment in the two lines below, if restart is desired.
+###############################################################
+# [TimeManager]
+# Restart = ... 

@@ -38,7 +38,7 @@ namespace Dumux
 template<class TypeTag>
 class OnePLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
-    typedef OnePLocalResidual<TypeTag> ThisType;
+    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -109,6 +109,19 @@ public:
                                this->curVolVars_(),
                                onBoundary);
 
+        asImp_()->computeAdvectiveFlux(flux, fluxVars);
+        asImp_()->computeDiffusiveFlux(flux, fluxVars);
+    }
+
+    /*!
+     * \brief Evaluate the advective mass flux of all components over
+     *        a face of a sub-control volume.
+     *
+     * \param flux The advective flux over the sub-control-volume face for each component
+     * \param fluxVars The flux variables at the current SCV
+     */
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    {
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(/*phaseIdx=*/0));
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(/*phaseIdx=*/0));
         flux[conti0EqIdx] =
@@ -117,6 +130,19 @@ public:
              (1 - upwindWeight_)*dn.density())
             *
             fluxVars.volumeFlux(/*phaseIdx=*/0);
+    }
+
+    /*!
+     * \brief Adds the diffusive mass flux of all components over
+     *        a face of a sub-control volume.
+     *
+     * \param flux The diffusive flux over the sub-control-volume face for each component
+     * \param fluxVars The flux variables at the current SCV
+     */
+    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    {
+        // diffusive fluxes
+        flux += 0.0;
     }
 
     /*!
@@ -144,11 +170,11 @@ public:
     { return this->problem_.temperature(); /* constant temperature */ }
 
 private:
-    ThisType &asImp_()
-    { return *static_cast<ThisType *>(this); }
+    Implementation *asImp_()
+    { return static_cast<Implementation *> (this); }
 
-    const ThisType &asImp_() const
-    { return *static_cast<const ThisType *>(this); }
+    const Implementation *asImp_() const
+    { return static_cast<const Implementation *> (this); }
 
     Scalar upwindWeight_;
 };

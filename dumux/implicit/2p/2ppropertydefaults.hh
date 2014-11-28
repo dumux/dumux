@@ -32,7 +32,6 @@
 #include "2pmodel.hh"
 #include "2pindices.hh"
 #include "2pvolumevariables.hh"
-#include "2pproperties.hh"
 #include "2plocalresidual.hh"
 
 #include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
