@@ -94,7 +94,7 @@ protected:
 
             // evaluate the pure Dirichlet conditions at the boundary face
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann()) 
-                this->asImp_().evalDirichletSegmentPure_(isIt, bcTypes);
+                this->asImp_().evalDirichletSegment_(isIt, bcTypes);
         }
     }
 
@@ -211,7 +211,7 @@ protected:
      * \brief Treat Dirichlet boundary conditions in a weak sense for a single
      *        intersection that only has Dirichlet boundary conditions
      */
-    void evalDirichletSegmentPure_(const IntersectionIterator &isIt, 
+    void evalDirichletSegment_(const IntersectionIterator &isIt, 
                                    const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the Dirichlet boundary fluxes
@@ -242,8 +242,6 @@ protected:
         // temporary vector to store the Dirichlet boundary fluxes
         PrimaryVariables values;
         Valgrind::SetUndefined(values);
-
-        unsigned bfIdx = isIt->indexInInside();
 
         this->problem_().dirichlet(values, *isIt);
         Valgrind::CheckDefined(values);
