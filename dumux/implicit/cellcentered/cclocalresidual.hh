@@ -68,8 +68,8 @@ public:
 protected:
 
     /*!
-     * \brief Add all Neumann and outflow boundary conditions to the local
-     *        residual.
+     * \brief Add all fluxes resulting from Neumann, outflow and pure Dirichlet
+     *        boundary conditions to the local residual.
      */
     void evalBoundaryFluxes_()
     {
@@ -92,9 +92,31 @@ protected:
             if (bcTypes.hasOutflow()) 
                 this->asImp_().evalOutflowSegment_(isIt, bcTypes);
 
-            // evaluate the Dirichlet conditions at the boundary face
-            if (bcTypes.hasDirichlet()) 
-                this->asImp_().evalDirichletSegment_(isIt, bcTypes);
+            // evaluate the pure Dirichlet conditions at the boundary face
+            if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann()) 
+                this->asImp_().evalDirichletSegmentPure_(isIt, bcTypes);
+        }
+    }
+
+    /*!
+     * \brief Evaluate Dirichlet conditions on faces that have mixed
+     *        Dirichlet/Neumann boundary conditions.
+     */
+    void evalDirichlet_()
+    {
+        IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
+        const IntersectionIterator &isEndIt = this->gridView_().iend(this->element_());
+        for (; isIt != isEndIt; ++isIt)
+        {
+            // handle only faces on the boundary
+            if (!isIt->boundary())
+                continue;
+
+            BoundaryTypes bcTypes;
+            this->problem_().boundaryTypes(bcTypes, *isIt);
+
+            if (bcTypes.hasDirichlet() && bcTypes.hasNeumann()) 
+                this->asImp_().evalDirichletSegmentMixed_(isIt, bcTypes);
         }
     }
 
@@ -151,7 +173,7 @@ protected:
 
         // manipulate the corresponding subcontrolvolume face
         SCVFace& boundaryFace = fvGeometry.boundaryFace[bfIdx];
-        
+
         // set the second flux approximation index for the boundary face 
         for (int nIdx = 0; nIdx < fvGeometry.numNeighbors-1; nIdx++)
         {
@@ -186,45 +208,54 @@ protected:
     }
 
     /*!
-     * \brief Add Dirichlet boundary conditions for a single intersection
+     * \brief Treat Dirichlet boundary conditions in a weak sense for a single
+     *        intersection that only has Dirichlet boundary conditions
      */
-    void evalDirichletSegment_(const IntersectionIterator &isIt, 
-                               const BoundaryTypes &bcTypes)
+    void evalDirichletSegmentPure_(const IntersectionIterator &isIt, 
+                                   const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the Dirichlet boundary fluxes
         PrimaryVariables values;
         Valgrind::SetUndefined(values);
 
         unsigned bfIdx = isIt->indexInInside();
-        
-        // check for mixed Dirichlet/Neumann conditions
-        if (bcTypes.hasNeumann())
-        {
-            this->problem_().dirichlet(values, *isIt);
-            Valgrind::CheckDefined(values);
-            
-            // set Dirichlet conditions in a strong sense
-            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            {
-                if (bcTypes.isDirichlet(eqIdx))
-                {
-                    int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                    this->residual_[0][eqIdx] 
-                      = this->curPriVar_(0, pvIdx) - values[pvIdx];
-                }
-            }
-        }
-        else // pure Dirichlet conditions
-        {
-            this->asImp_().computeFlux(values, bfIdx, true);
-            values *= this->curVolVars_(0).extrusionFactor();
 
-            // add fluxes to the residual
-            Valgrind::CheckDefined(values);
-            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        this->asImp_().computeFlux(values, bfIdx, true);
+        values *= this->curVolVars_(0).extrusionFactor();
+
+        // add fluxes to the residual
+        Valgrind::CheckDefined(values);
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            if (bcTypes.isDirichlet(eqIdx))
+                this->residual_[0][eqIdx] += values[eqIdx];
+        }
+    }
+
+    /*!
+     * \brief Treat Dirichlet boundary conditions in a strong sense for a
+     *        single intersection that has mixed D/N boundary conditions
+     */
+    void evalDirichletSegmentMixed_(const IntersectionIterator &isIt, 
+                                    const BoundaryTypes &bcTypes)
+    {
+        // temporary vector to store the Dirichlet boundary fluxes
+        PrimaryVariables values;
+        Valgrind::SetUndefined(values);
+
+        unsigned bfIdx = isIt->indexInInside();
+
+        this->problem_().dirichlet(values, *isIt);
+        Valgrind::CheckDefined(values);
+
+        // set Dirichlet conditions in a strong sense
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            if (bcTypes.isDirichlet(eqIdx))
             {
-                if (bcTypes.isDirichlet(eqIdx))
-                    this->residual_[0][eqIdx] += values[eqIdx];
+                int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                this->residual_[0][eqIdx] 
+                  = this->curPriVar_(0, pvIdx) - values[pvIdx];
             }
         }
     }
@@ -244,7 +275,7 @@ protected:
                 continue;
 
             fIdx++;
-	    PrimaryVariables flux;
+            PrimaryVariables flux;
 
             Valgrind::SetUndefined(flux);
             this->asImp_().computeFlux(flux, fIdx);

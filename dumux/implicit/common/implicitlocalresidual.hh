@@ -311,6 +311,10 @@ protected:
         else 
         {
             asImp_().evalBoundaryFluxes_();
+
+            // additionally treat mixed D/N conditions in a strong sense
+            if (bcTypes_().hasDirichlet())
+                asImp_().evalDirichlet_();
         }
 
 #if !defined NDEBUG && HAVE_VALGRIND
