@@ -214,6 +214,38 @@ private:
                     potentialGradFracture_[phaseIdx] =
                         (elemVolVars[j].pressure(phaseIdx) - elemVolVars[i].pressure(phaseIdx))
                         / diff_ij.two_norm();
+
+                    // correct the pressure gradient by the gravitational acceleration
+                    if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+                    {
+                        // ask for the gravitational acceleration at the given SCV face
+                        GlobalPosition g(problem.gravityAtPos(this->face().ipGlobal));
+
+                        // calculate the phase density at the integration point. we
+                        // only do this if the wetting phase is present in both cells
+                        Scalar SI = elemVolVars[this->face().i].fluidState().saturation(phaseIdx);
+                        Scalar SJ = elemVolVars[this->face().j].fluidState().saturation(phaseIdx);
+                        Scalar rhoI = elemVolVars[this->face().i].fluidState().density(phaseIdx);
+                        Scalar rhoJ = elemVolVars[this->face().j].fluidState().density(phaseIdx);
+                        Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
+                        Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+                        if (fI + fJ == 0)
+                            // doesn't matter because no wetting phase is present in
+                            // both cells!
+                            fI = fJ = 0.5;
+                        const Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
+
+                        // make gravity acceleration a force
+                        GlobalPosition f(g);
+                        f *= density;
+
+                        //transform into fracture local coordinates
+                        diff_ij/=diff_ij.two_norm();
+                        Scalar fractureLocalGravityForce=diff_ij*f;
+
+                        // calculate the final potential gradient
+                        potentialGradFracture_[phaseIdx] -= fractureLocalGravityForce;
+                    }// gravity
                 }
                 else
                 {
