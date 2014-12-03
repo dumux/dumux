@@ -1,4 +1,4 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+r// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   See the file COPYING for full copying permissions.                      *
@@ -47,13 +47,20 @@ class DgfGridCreator
 
 public:
     /*!
-     * \brief Load the grid from the file.
+     * \brief Load the grid from the dgf file.
+     */
+    static void makeGrid(const std::string& dgfFileName)
+    {
+        gridPtr_ = GridPointer(dgfFileName.c_str(), Dune::MPIHelper::getCommunicator());
+    };
+
+    /*!
+     * \brief Load the grid from the dgf file given in the input file.
      */
     static void makeGrid()
     {
         const std::string dgfFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
-
-        gridPtr_ = GridPointer(dgfFileName.c_str(), Dune::MPIHelper::getCommunicator());
+        makeGrid(dgfFileName);
     }
 
     /*!
