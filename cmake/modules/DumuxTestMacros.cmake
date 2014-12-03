@@ -69,7 +69,6 @@ function(add_dumux_all_flags)
   foreach(_target ${ADD_DUMUX_ALL_FLAGS_UNPARSED_ARGUMENTS})
     # add flags
     add_dune_mpi_flags(${_target})
-    add_dune_alberta_flags(${_target})
     add_dune_alugrid_flags(${_target})
     add_dune_parmetis_flags(${_target})
     add_dune_ug_flags(${_target})
