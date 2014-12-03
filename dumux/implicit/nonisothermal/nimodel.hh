@@ -113,8 +113,8 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-                    temperature[globalIdx] = elemVolVars[scvIdx].temperature();
+                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                    temperature[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
                 }
             }
         }

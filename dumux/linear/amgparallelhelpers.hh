@@ -521,12 +521,12 @@ public:
             if (entityIt->partitionType() == Dune::BorderEntity)
             {
                 int localIdx = problem_.model().dofMapper().map(*entityIt);
-                IdType globalIdx = gridView.grid().globalIdSet().id(*entityIt);
+                IdType dofIdxGlobal = gridView.grid().globalIdSet().id(*entityIt);
 
-                std::pair<IdType,int> g2iPair(globalIdx, localIdx);
+                std::pair<IdType,int> g2iPair(dofIdxGlobal, localIdx);
                 gid2Index_.insert(g2iPair);
 
-                std::pair<int,IdType> i2gPair(localIdx, globalIdx);
+                std::pair<int,IdType> i2gPair(localIdx, dofIdxGlobal);
                 index2GID_.insert(i2gPair);
 
             }

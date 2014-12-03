@@ -96,11 +96,11 @@ public:
                         const ElementBoundaryTypes &elemBcTypes)
     {
         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx) {
-            const unsigned int globalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
+            const unsigned int dofIdxGlobal = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (temperatureOutput_)
-                temperature_[globalIdx] = volVars.fluidState().temperature(/*phaseIdx=*/0);
+                temperature_[dofIdxGlobal] = volVars.fluidState().temperature(/*phaseIdx=*/0);
         }
     }
 

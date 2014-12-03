@@ -119,9 +119,9 @@ public:
                 scvIdx,
                 isOldSol);
 
-        int globalIdx = problem.model().dofMapper().map(element, scvIdx, dofCodim);
+        int dofIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dofCodim);
 
-        int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
+        int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
 
          Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);
          ParentType::fluidState_.setTemperature(temp);
@@ -371,8 +371,8 @@ public:
           Valgrind::CheckDefined(ParentType::porosity_);
 //          if(phasePresence == bothPhases)
 //          {
-//              std::cout<<"globalIdx = "<<globalIdx<<std::endl;
-//              std::cout<<"scvIdx = "<<globalIdx<<std::endl;
+//              std::cout<<"dofIdxGlobal = "<<dofIdxGlobal<<std::endl;
+//              std::cout<<"scvIdx = "<<scvIdx<<std::endl;
 //              std::cout<<"sn = "<<ParentType::fluidState_.saturation(nPhaseIdx)<<std::endl;
 //              std::cout<<"sw = "<<ParentType::fluidState_.saturation(wPhaseIdx)<<std::endl;
 //              std::cout<<"mobilityN = "<<ParentType::mobility(nPhaseIdx)<<std::endl;

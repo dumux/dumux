@@ -294,17 +294,17 @@ public:
      * \brief Force to reassemble a given degree of freedom
      * next time the assemble() method is called.
      *
-     * \param globalIdx The global index of the degree of freedom
+     * \param dofIdxGlobal The global index of the degree of freedom
      */
-    void markDofRed(const int globalIdx)
+    void markDofRed(const int dofIdxGlobal)
     {
         if (!enablePartialReassemble_())
             return;
 
         if (isBox)
-            vertexColor_[globalIdx] = Red;
+            vertexColor_[dofIdxGlobal] = Red;
         else 
-            elementColor_[globalIdx] = Red;
+            elementColor_[dofIdxGlobal] = Red;
     }
 
     /*!
@@ -333,8 +333,8 @@ public:
         if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
 
-        int globalIdx = vertexMapper_().map(element, vIdx, dim);
-        return vertexColor_[globalIdx];
+        int vIdxGlobal = vertexMapper_().map(element, vIdx, dim);
+        return vertexColor_[vIdxGlobal];
     }
 
     /*!
@@ -359,8 +359,8 @@ public:
         if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
 
-        int globalIdx = elementMapper_().map(element);
-        return elementColor_[globalIdx];
+        int eIdxGlobal = elementMapper_().map(element);
+        return elementColor_[eIdxGlobal];
     }
 
     /*!

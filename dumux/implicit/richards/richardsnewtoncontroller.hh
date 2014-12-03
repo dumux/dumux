@@ -97,13 +97,13 @@ public:
                 fvGeometry.update(gridView, *eIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->model_().dofMapper().map(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->model_().dofMapper().map(*eIt, scvIdx, dofCodim);
 
                     // calculate the old wetting phase saturation
                     const SpatialParams &spatialParams = this->problem_().spatialParams();
                     const MaterialLawParams &mp = spatialParams.materialLawParams(*eIt, fvGeometry, scvIdx);
                     Scalar pcMin = MaterialLaw::pc(mp, 1.0);
-                    Scalar pw = uLastIter[globalIdx][pwIdx];
+                    Scalar pw = uLastIter[dofIdxGlobal][pwIdx];
                     Scalar pn = std::max(this->problem_().referencePressure(*eIt, fvGeometry, scvIdx),
                                          pw + pcMin);
                     Scalar pcOld = pn - pw;
@@ -115,9 +115,9 @@ public:
                     Scalar pwMax = pn - MaterialLaw::pc(mp, SwOld + 0.2);
 
                     // clamp the result
-                    pw = uCurrentIter[globalIdx][pwIdx];
+                    pw = uCurrentIter[dofIdxGlobal][pwIdx];
                     pw = std::max(pwMin, std::min(pw, pwMax));
-                    uCurrentIter[globalIdx][pwIdx] = pw;
+                    uCurrentIter[dofIdxGlobal][pwIdx] = pw;
 
                 }
             }

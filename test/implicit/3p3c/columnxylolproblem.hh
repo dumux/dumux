@@ -281,11 +281,11 @@ public:
      * \brief Return the initial phase state inside a control volume.
      *
      * \param vertex The vertex
-     * \param globalIdx The index of the global vertex
+     * \param vIdxGlobal The global index of the vertex
      * \param globalPos The global position
      */
     int initialPhasePresence(const Vertex &vertex,
-                             int &globalIdx,
+                             int &vIdxGlobal,
                              const GlobalPosition &globalPos) const
     {
         return threePhases;
@@ -315,8 +315,8 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
-                (*Kxx)[globalIdx] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, scvIdx);
+                int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
+                (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, scvIdx);
             }
         }
 

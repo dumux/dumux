@@ -319,22 +319,22 @@ public:
      * \brief Access to the averaged (magnitude of) velocity for each vertex.
      *
      * \param phaseIdx The index of the fluid phase
-     * \param globalIdx The global index of the degree of freedom
+     * \param dofIdxGlobal The global index of the degree of freedom
      *
      */
     const Scalar volumeDarcyMagVelocity(const unsigned int phaseIdx,
-                                        const unsigned int globalIdx) const
-    { return volumeDarcyMagVelocity_[phaseIdx][globalIdx]; }
+                                        const unsigned int dofIdxGlobal) const
+    { return volumeDarcyMagVelocity_[phaseIdx][dofIdxGlobal]; }
 
     /*!
      * \brief Access to the averaged velocity for each vertex.
      *
      * \param phaseIdx The index of the fluid phase
-     * \param globalIdx The global index of the degree of freedom
+     * \param dofIdxGlobal The global index of the degree of freedom
      */
     const GlobalPosition volumeDarcyVelocity(const unsigned int phaseIdx,
-                                        const unsigned int globalIdx) const
-    { return volumeDarcyVelocity_[phaseIdx][globalIdx]; }
+                                        const unsigned int dofIdxGlobal) const
+    { return volumeDarcyVelocity_[phaseIdx][dofIdxGlobal]; }
 
 private:
     PhaseGlobalPositionField volumeDarcyVelocity_;

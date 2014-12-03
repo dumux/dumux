@@ -398,21 +398,21 @@ protected:
                                 const int col,
                                 const int pvIdx)
     {
-        int globalIdx;
+        int dofIdxGlobal;
         FVElementGeometry neighborFVGeom;
         ElementPointer neighbor(element_());
         if (isBox)
         {
-            globalIdx = vertexMapper_().map(element_(), col, dim);
+            dofIdxGlobal = vertexMapper_().map(element_(), col, dim);
         }
         else
         {
             neighbor = fvElemGeom_.neighbors[col];
             neighborFVGeom.updateInner(*neighbor);
-            globalIdx = problemPtr_->elementMapper().map(*neighbor);
+            dofIdxGlobal = problemPtr_->elementMapper().map(*neighbor);
         }
 
-        PrimaryVariables priVars(model_().curSol()[globalIdx]);
+        PrimaryVariables priVars(model_().curSol()[dofIdxGlobal]);
         VolumeVariables origVolVars(curVolVars_[col]);
 
         curVolVars_[col].setEvalPoint(&origVolVars);

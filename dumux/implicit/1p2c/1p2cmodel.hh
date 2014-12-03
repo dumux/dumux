@@ -151,16 +151,16 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
-                    pressure[globalIdx] = elemVolVars[scvIdx].pressure();
-                    delp[globalIdx] = elemVolVars[scvIdx].pressure() - 1e5;
-                    moleFraction0[globalIdx] = elemVolVars[scvIdx].moleFraction(0);
-                    moleFraction1[globalIdx] = elemVolVars[scvIdx].moleFraction(1);
-                    massFraction0[globalIdx] = elemVolVars[scvIdx].massFraction(0);
-                    massFraction1[globalIdx] = elemVolVars[scvIdx].massFraction(1);
-                    rho[globalIdx] = elemVolVars[scvIdx].density();
-                    mu[globalIdx] = elemVolVars[scvIdx].viscosity();
+                    pressure[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
+                    delp[dofIdxGlobal] = elemVolVars[scvIdx].pressure() - 1e5;
+                    moleFraction0[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
+                    moleFraction1[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(1);
+                    massFraction0[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(0);
+                    massFraction1[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(1);
+                    rho[dofIdxGlobal] = elemVolVars[scvIdx].density();
+                    mu[dofIdxGlobal] = elemVolVars[scvIdx].viscosity();
                 }
 
                 // velocity output

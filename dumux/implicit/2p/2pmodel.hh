@@ -160,19 +160,19 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
-                    (*pw)[globalIdx] = elemVolVars[scvIdx].pressure(wPhaseIdx);
-                    (*pn)[globalIdx] = elemVolVars[scvIdx].pressure(nPhaseIdx);
-                    (*pc)[globalIdx] = elemVolVars[scvIdx].capillaryPressure();
-                    (*sw)[globalIdx] = elemVolVars[scvIdx].saturation(wPhaseIdx);
-                    (*sn)[globalIdx] = elemVolVars[scvIdx].saturation(nPhaseIdx);
-                    (*rhoW)[globalIdx] = elemVolVars[scvIdx].density(wPhaseIdx);
-                    (*rhoN)[globalIdx] = elemVolVars[scvIdx].density(nPhaseIdx);
-                    (*mobW)[globalIdx] = elemVolVars[scvIdx].mobility(wPhaseIdx);
-                    (*mobN)[globalIdx] = elemVolVars[scvIdx].mobility(nPhaseIdx);
-                    (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();
-                    (*Te)[globalIdx] = elemVolVars[scvIdx].temperature();
+                    (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                    (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
+                    (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
+                    (*sw)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(wPhaseIdx);
+                    (*sn)[dofIdxGlobal] = elemVolVars[scvIdx].saturation(nPhaseIdx);
+                    (*rhoW)[dofIdxGlobal] = elemVolVars[scvIdx].density(wPhaseIdx);
+                    (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
+                    (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
+                    (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
+                    (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
+                    (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
                 }
 
                 // velocity output

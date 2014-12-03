@@ -121,12 +121,12 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
                     const SpatialParams &spatialParams = this->problem_().spatialParams();
 
-                    (*p)[globalIdx] = elemVolVars[scvIdx].pressure();
-                    (*K)[globalIdx] = spatialParams.intrinsicPermeability(*eIt,
+                    (*p)[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
+                    (*K)[dofIdxGlobal] = spatialParams.intrinsicPermeability(*eIt,
                                                                          fvGeometry,
                                                                          scvIdx);
                 }

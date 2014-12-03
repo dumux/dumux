@@ -113,13 +113,13 @@ public:
              fvGeometry.update(this->gridView_(), *eIt);
              for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
              {
-                 int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                 int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
-                 if (ParentType::staticDat_[globalIdx].visited)
+                 if (ParentType::staticDat_[dofIdxGlobal].visited)
                      continue;
 
-                 ParentType::staticDat_[globalIdx].visited = true;
-                 volVars.update(curGlobalSol[globalIdx],
+                 ParentType::staticDat_[dofIdxGlobal].visited = true;
+                 volVars.update(curGlobalSol[dofIdxGlobal],
                                 this->problem_(),
                                 *eIt,
                                 fvGeometry,
@@ -128,10 +128,10 @@ public:
                  const GlobalPosition &globalPos = eIt->geometry().corner(scvIdx);
                  if (primaryVarSwitch_(curGlobalSol,
                                        volVars,
-                                       globalIdx,
+                                       dofIdxGlobal,
                                        globalPos))
                  {
-                     this->jacobianAssembler().markDofRed(globalIdx);
+                     this->jacobianAssembler().markDofRed(dofIdxGlobal);
                      wasSwitched = true;
                  }
              }
@@ -154,13 +154,13 @@ public:
       *        variable switch was performed.
       */
      bool primaryVarSwitch_(SolutionVector &globalSol,
-                              const VolumeVariables &volVars, int globalIdx,
+                              const VolumeVariables &volVars, int dofIdxGlobal,
                               const GlobalPosition &globalPos)
        {
          typename FluidSystem::ParameterCache paramCache;
            // evaluate primary variable switch
            bool wouldSwitch = false;
-           int phasePresence = ParentType::staticDat_[globalIdx].phasePresence;
+           int phasePresence = ParentType::staticDat_[dofIdxGlobal].phasePresence;
            int newPhasePresence = phasePresence;
 
            // check if a primary var switch is necessary
@@ -173,21 +173,21 @@ public:
                if(xnw > xnwMax)
                    wouldSwitch = true;
 
-               if (ParentType::staticDat_[globalIdx].wasSwitched)
+               if (ParentType::staticDat_[dofIdxGlobal].wasSwitched)
                    xnwMax *= 1.02;
 
                //If mole fraction is higher than the equilibrium mole fraction make a phase switch
                if(xnw > xnwMax)
                {
                    // wetting phase appears
-                   std::cout << "wetting phase appears at vertex " << globalIdx
+                   std::cout << "wetting phase appears at vertex " << dofIdxGlobal
                              << ", coordinates: " << globalPos << ", xnw > xnwMax: "
                              << xnw << " > "<< xnwMax << std::endl;
                    newPhasePresence = bothPhases;
                    if (formulation == pnsw)
-                       globalSol[globalIdx][switchIdx] = 0.0;
+                       globalSol[dofIdxGlobal][switchIdx] = 0.0;
                    else if (formulation == pwsn)
-                       globalSol[globalIdx][switchIdx] = 1.0;
+                       globalSol[dofIdxGlobal][switchIdx] = 1.0;
                }
            }
            else if (phasePresence == wPhaseOnly)
@@ -199,47 +199,47 @@ public:
                //If mole fraction is higher than the equilibrium mole fraction make a phase switch
                if(xwn > xwnMax)
                    wouldSwitch = true;
-               if (ParentType::staticDat_[globalIdx].wasSwitched)
+               if (ParentType::staticDat_[dofIdxGlobal].wasSwitched)
                    xwnMax *= 1.02;
 
 
                if(xwn > xwnMax)
                {
                    // non-wetting phase appears
-                   std::cout << "non-wetting phase appears at vertex " << globalIdx
+                   std::cout << "non-wetting phase appears at vertex " << dofIdxGlobal
                              << ", coordinates: " << globalPos << ", xwn > xwnMax: "
                              << xwn << " > "<< xwnMax << std::endl;
 
                    newPhasePresence = bothPhases;
                    if (formulation == pnsw)
-                       globalSol[globalIdx][switchIdx] = 0.999;
+                       globalSol[dofIdxGlobal][switchIdx] = 0.999;
                    else if (formulation == pwsn)
-                       globalSol[globalIdx][switchIdx] = 0.001;
+                       globalSol[dofIdxGlobal][switchIdx] = 0.001;
                }
            }
            else if (phasePresence == bothPhases)
            {
                Scalar Smin = 0.0;
-               if (ParentType::staticDat_[globalIdx].wasSwitched)
+               if (ParentType::staticDat_[dofIdxGlobal].wasSwitched)
                    Smin = -0.01;
 
                if (volVars.saturation(nPhaseIdx) <= Smin)
                {
                    wouldSwitch = true;
                    // nonwetting phase disappears
-                   std::cout << "Nonwetting phase disappears at vertex " << globalIdx
+                   std::cout << "Nonwetting phase disappears at vertex " << dofIdxGlobal
                              << ", coordinates: " << globalPos << ", sn: "
                              << volVars.saturation(nPhaseIdx) << std::endl;
                    newPhasePresence = wPhaseOnly;
 
                    if(!useMoles) //mass-fraction formulation
                    {
-					   globalSol[globalIdx][switchIdx]
+					   globalSol[dofIdxGlobal][switchIdx]
 						   = volVars.massFraction(wPhaseIdx, nCompIdx);
                    }
                    else //mole-fraction formulation
                    {
-					   globalSol[globalIdx][switchIdx]
+					   globalSol[dofIdxGlobal][switchIdx]
 					       = volVars.moleFraction(wPhaseIdx, nCompIdx);
                    }
                }
@@ -247,26 +247,26 @@ public:
                {
                    wouldSwitch = true;
                    // wetting phase disappears
-                   std::cout << "Wetting phase disappears at vertex " << globalIdx
+                   std::cout << "Wetting phase disappears at vertex " << dofIdxGlobal
                              << ", coordinates: " << globalPos << ", sw: "
                              << volVars.saturation(wPhaseIdx) << std::endl;
                    newPhasePresence = nPhaseOnly;
 
                    if(!useMoles) //mass-fraction formulation
                    {
-					   globalSol[globalIdx][switchIdx]
+					   globalSol[dofIdxGlobal][switchIdx]
 						   = volVars.massFraction(nPhaseIdx, wCompIdx);
                    }
                    else //mole-fraction formulation
                    {
-						globalSol[globalIdx][switchIdx]
+						globalSol[dofIdxGlobal][switchIdx]
 						= volVars.moleFraction(nPhaseIdx, wCompIdx);
                    }
                }
            }
 
-           ParentType::staticDat_[globalIdx].phasePresence = newPhasePresence;
-           ParentType::staticDat_[globalIdx].wasSwitched = wouldSwitch;
+           ParentType::staticDat_[dofIdxGlobal].phasePresence = newPhasePresence;
+           ParentType::staticDat_[dofIdxGlobal].wasSwitched = wouldSwitch;
            return phasePresence != newPhasePresence;
        }
 

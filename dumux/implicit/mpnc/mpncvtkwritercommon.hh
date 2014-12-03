@@ -130,14 +130,14 @@ public:
     {
         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
         {
-            int globalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
+            int dofIdxGlobal = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
 
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 
-            if (porosityOutput_) porosity_[globalIdx] = volVars.porosity();
+            if (porosityOutput_) porosity_[dofIdxGlobal] = volVars.porosity();
 
             // works for scalar permeability in spatialparameters
-            if (permeabilityOutput_) permeability_[globalIdx] = this->problem_.spatialParams().intrinsicPermeability(element,fvGeometry,scvIdx);
+            if (permeabilityOutput_) permeability_[dofIdxGlobal] = this->problem_.spatialParams().intrinsicPermeability(element,fvGeometry,scvIdx);
 
             // calculate a single value for the boundary type: use one
             // bit for each equation and set it to 1 if the equation
@@ -147,18 +147,18 @@ public:
                 if (elemBcTypes[scvIdx].isDirichlet(eqIdx))
                     tmp += (1 << eqIdx);
             }
-            if (boundaryTypesOutput_) boundaryTypes_[globalIdx] = tmp;
+            if (boundaryTypesOutput_) boundaryTypes_[dofIdxGlobal] = tmp;
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                if (saturationOutput_) saturation_[phaseIdx][globalIdx] = volVars.fluidState().saturation(phaseIdx);
-                if (pressureOutput_) pressure_[phaseIdx][globalIdx] = volVars.fluidState().pressure(phaseIdx);
-                if (densityOutput_) density_[phaseIdx][globalIdx] = volVars.fluidState().density(phaseIdx);
-                if (mobilityOutput_) mobility_[phaseIdx][globalIdx] = volVars.mobility(phaseIdx);
-                if (averageMolarMassOutput_) averageMolarMass_[phaseIdx][globalIdx] = volVars.fluidState().averageMolarMass(phaseIdx);
+                if (saturationOutput_) saturation_[phaseIdx][dofIdxGlobal] = volVars.fluidState().saturation(phaseIdx);
+                if (pressureOutput_) pressure_[phaseIdx][dofIdxGlobal] = volVars.fluidState().pressure(phaseIdx);
+                if (densityOutput_) density_[phaseIdx][dofIdxGlobal] = volVars.fluidState().density(phaseIdx);
+                if (mobilityOutput_) mobility_[phaseIdx][dofIdxGlobal] = volVars.mobility(phaseIdx);
+                if (averageMolarMassOutput_) averageMolarMass_[phaseIdx][dofIdxGlobal] = volVars.fluidState().averageMolarMass(phaseIdx);
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    if (moleFracOutput_) moleFrac_[phaseIdx][compIdx][globalIdx] = volVars.fluidState().moleFraction(phaseIdx, compIdx);
-                    if (massFracOutput_) massFrac_[phaseIdx][compIdx][globalIdx] = volVars.fluidState().massFraction(phaseIdx, compIdx);
-                    if (molarityOutput_) molarity_[phaseIdx][compIdx][globalIdx] = volVars.fluidState().molarity(phaseIdx, compIdx);
+                    if (moleFracOutput_) moleFrac_[phaseIdx][compIdx][dofIdxGlobal] = volVars.fluidState().moleFraction(phaseIdx, compIdx);
+                    if (massFracOutput_) massFrac_[phaseIdx][compIdx][dofIdxGlobal] = volVars.fluidState().massFraction(phaseIdx, compIdx);
+                    if (molarityOutput_) molarity_[phaseIdx][compIdx][dofIdxGlobal] = volVars.fluidState().molarity(phaseIdx, compIdx);
                 }
             }
         }

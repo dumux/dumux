@@ -94,12 +94,12 @@ public:
                         const ElementBoundaryTypes &elemBcTypes)
     {
         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx) {
-            const unsigned int globalIdx = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
+            const unsigned int dofIdxGlobal = this->problem_.model().dofMapper().map(element, scvIdx, dofCodim);
             const VolumeVariables &volVars = elemVolVars[scvIdx];
 
             if (fugacityOutput_) {
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    fugacity_[compIdx][globalIdx] = volVars.fluidState().fugacity(compIdx);
+                    fugacity_[compIdx][dofIdxGlobal] = volVars.fluidState().fugacity(compIdx);
                 }
             }
         }

@@ -157,17 +157,17 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                        (*saturation[phaseIdx])[globalIdx] = elemVolVars[scvIdx].saturation(phaseIdx);
-                        (*pressure[phaseIdx])[globalIdx] = elemVolVars[scvIdx].pressure(phaseIdx);
-                        (*density[phaseIdx])[globalIdx] = elemVolVars[scvIdx].density(phaseIdx);
+                        (*saturation[phaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].saturation(phaseIdx);
+                        (*pressure[phaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].pressure(phaseIdx);
+                        (*density[phaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].density(phaseIdx);
                     }
 
-                    (*poro)[globalIdx] = elemVolVars[scvIdx].porosity();
-                    (*perm)[globalIdx] = elemVolVars[scvIdx].permeability();
-                    (*temperature)[globalIdx] = elemVolVars[scvIdx].temperature();
+                    (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
+                    (*perm)[dofIdxGlobal] = elemVolVars[scvIdx].permeability();
+                    (*temperature)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
                 }
 
                 // velocity output

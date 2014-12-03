@@ -306,16 +306,16 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
-                    volVars.update(this->model().curSol()[globalIdx],
+                    int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
+                    volVars.update(this->model().curSol()[dofIdxGlobal],
                                    *this,
                                    *eIt,
                                    fvGeometry,
                                    scvIdx,
                                    false);
-                    (*boxVolume)[globalIdx] += fvGeometry.subContVol[scvIdx].volume;
-                    (*enthalpyW)[globalIdx] = volVars.enthalpy(lPhaseIdx);
-                    (*enthalpyN)[globalIdx] = volVars.enthalpy(gPhaseIdx);
+                    (*boxVolume)[dofIdxGlobal] += fvGeometry.subContVol[scvIdx].volume;
+                    (*enthalpyW)[dofIdxGlobal] = volVars.enthalpy(lPhaseIdx);
+                    (*enthalpyN)[dofIdxGlobal] = volVars.enthalpy(gPhaseIdx);
                 }
                 (*Kxx)[eIdx] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, /*element data*/ 0);
                 (*cellPorosity)[eIdx] = this->spatialParams().porosity(*eIt, fvGeometry, /*element data*/ 0);
@@ -486,11 +486,11 @@ public:
      * \brief Returns the initial phase state for a control volume.
      *
      * \param vertex The vertex
-     * \param globalIdx The global index of the vertex
+     * \param vIdxGlobal The global index of the vertex
      * \param globalPos The global position
      */
     int initialPhasePresence(const Vertex &vertex,
-                             int &globalIdx,
+                             int &vIdxGlobal,
                              const GlobalPosition &globalPos) const
     { return Indices::wPhaseOnly; }
 

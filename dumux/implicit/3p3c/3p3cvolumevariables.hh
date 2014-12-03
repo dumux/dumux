@@ -125,9 +125,9 @@ public:
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
-        int globalIdx = problem.model().dofMapper().map(element, scvIdx, dofCodim);
+        int dofIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dofCodim);
 
-        int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
+        int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
 
         Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);
         fluidState_.setTemperature(temp);

@@ -222,13 +222,13 @@ public:
                 fvGeometry.update(this->gridView(), *eIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
                     if (isBox)
                         globalPos = eIt->geometry().corner(scvIdx);
                     else
                         globalPos = eIt->geometry().center();
 
-                    (*temperatureExact)[globalIdx] = temperatureHigh_ + (initialPriVars[temperatureIdx] - temperatureHigh_)
+                    (*temperatureExact)[dofIdxGlobal] = temperatureHigh_ + (initialPriVars[temperatureIdx] - temperatureHigh_)
                                                      *std::erf(0.5*std::sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
                 }
             }

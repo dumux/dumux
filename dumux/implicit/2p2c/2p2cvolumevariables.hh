@@ -179,9 +179,9 @@ public:
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
-        int globalIdx = problem.model().dofMapper().map(element, scvIdx, dofCodim);
+        int dofIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dofCodim);
 
-        int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
+        int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
 
         /////////////
         // set the saturations

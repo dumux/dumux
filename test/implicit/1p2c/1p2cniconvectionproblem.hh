@@ -231,13 +231,13 @@ public:
                 fvGeometry.update(this->gridView(), *eIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
                     if (isBox)
                         globalPos = eIt->geometry().corner(scvIdx);
                     else
                         globalPos = eIt->geometry().center();
 
-                    (*temperatureExact)[globalIdx] = globalPos[0] < retardedFrontVelocity*time ? temperatureHigh_ : temperatureLow_;
+                    (*temperatureExact)[dofIdxGlobal] = globalPos[0] < retardedFrontVelocity*time ? temperatureHigh_ : temperatureLow_;
                 }
             }
             this->resultWriter().attachDofData(*temperatureExact, "temperatureExact", isBox);

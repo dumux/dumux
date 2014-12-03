@@ -98,9 +98,9 @@ public:
                 // transform vertex velocities from local to global coordinates
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = problem_.vertexMapper().map(*eIt, scvIdx, dofCodim);
+                    int vIdxGlobal = problem_.vertexMapper().map(*eIt, scvIdx, dofCodim);
 
-                    cellNum_[globalIdx] += 1;
+                    cellNum_[vIdxGlobal] += 1;
                 }
             }
         }
@@ -178,14 +178,14 @@ public:
                 // transform vertex velocities from local to global coordinates
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = problem_.vertexMapper().map(element, scvIdx, dofCodim);
+                    int vIdxGlobal = problem_.vertexMapper().map(element, scvIdx, dofCodim);
                     // calculate the subcontrolvolume velocity by the Piola transformation
                     Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
 
                     jacobianT2.mtv(scvVelocities[scvIdx], scvVelocity);
-                    scvVelocity /= element.geometry().integrationElement(localPos)*cellNum_[globalIdx];
+                    scvVelocity /= element.geometry().integrationElement(localPos)*cellNum_[vIdxGlobal];
                     // add up the wetting phase subcontrolvolume velocities for each vertex
-                    velocity[globalIdx] += scvVelocity;
+                    velocity[vIdxGlobal] += scvVelocity;
                 }
             }
             else
@@ -234,9 +234,9 @@ public:
 
                 scvVelocity /= element.geometry().integrationElement(localPos);
 
-                int globalIdx = problem_.elementMapper().map(element);
+                int eIdxGlobal = problem_.elementMapper().map(element);
 
-                velocity[globalIdx]= scvVelocity;
+                velocity[eIdxGlobal]= scvVelocity;
             }
         } // velocity output
     }
