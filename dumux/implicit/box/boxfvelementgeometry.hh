@@ -433,8 +433,8 @@ class BoxFVElementGeometry
             {0, 0, 0, 0, 3, 2, 1, 4}
         };
         static const int edgeToFacePrism[2][9] = {
-            {1, 0, 2, 0, 1, 2, 4, 4, 4},
-            {0, 2, 1, 3, 3, 3, 0, 1, 2}
+            {1, 0, 2, 0, 3, 2, 4, 1, 4},
+            {0, 2, 1, 3, 1, 3, 0, 4, 2}
         };
         static const int edgeToFaceHex[2][12] = {
             {0, 2, 3, 1, 4, 1, 2, 4, 0, 5, 5, 3},
