@@ -250,7 +250,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/kg]}\f$.
+     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/(kg*K)}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -483,7 +483,7 @@ public:
     }
 
     /*!
-     * \brief Specific isochoric heat capacity of steam and water vapor \f$\mathrm{[J/kg]}\f$.
+     * \brief Specific isochoric heat capacity of steam and water vapor \f$\mathrm{[J/(kg*K)}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$

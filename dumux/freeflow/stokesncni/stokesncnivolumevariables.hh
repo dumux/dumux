@@ -93,21 +93,24 @@ public:
     { return this->fluidState_.enthalpy(phaseIdx); }
 
     /*!
-     * \brief Returns the component enthalpy in the sub-control volume.
+     * \brief Return the specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$
+     *        in the sub-control volume.
+     */
+    Scalar heatCapacity() const
+    { return FluidSystem::heatCapacity(this->fluidState_, phaseIdx); }
+
+    /*!
+     * \brief Returns the component enthalpy \f$\mathrm{[J/(kg*K)]}\f$ in the sub-control volume.
      */
     Scalar componentEnthalpy(unsigned int componentIdx) const
-    {
-        return FluidSystem::componentEnthalpy(this->fluidState_, phaseIdx, componentIdx);
-    }
+    { return FluidSystem::componentEnthalpy(this->fluidState_, phaseIdx, componentIdx); }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the fluid phase in the sub-control volume.
      */
     Scalar thermalConductivity() const
-    {
-        return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); 
-    }
+    { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); }
 
 
 protected:

@@ -88,12 +88,18 @@ public:
      */
     const Scalar molarDensity() const
     { return molarDensity_; }
-	
-	/*!
+
+    /*!
      * \brief Return the mass fraction of a transported component at the integration point.
      */
     const Scalar massFraction(int compIdx) const
     { return massFraction_[compIdx]; }
+
+    /*!
+     * \brief Return the mole fraction of a transported component at the integration point.
+     */
+    const Scalar moleFraction(int compIdx) const
+    { return moleFraction_[compIdx]; }
 
     /*!
      * \brief Return the molar diffusion coefficient of a transported component at the integration point.
@@ -122,6 +128,7 @@ protected:
 		// loop over all components
 		for (int compIdx=0; compIdx<numComponents; compIdx++){
             massFraction_[compIdx] = Scalar(0.0);
+            moleFraction_[compIdx] = Scalar(0.0);
             diffusionCoeff_[compIdx] = Scalar(0.0);
             moleFractionGrad_[compIdx] = Scalar(0.0);
                 
@@ -139,6 +146,8 @@ protected:
 						this->face().shapeValue[scvIdx];
 					massFraction_[compIdx] += elemVolVars[scvIdx].massFraction(compIdx) *
 						this->face().shapeValue[scvIdx];
+          moleFraction_[compIdx] += elemVolVars[scvIdx].moleFraction(compIdx) *
+                                    this->face().shapeValue[scvIdx];
 					diffusionCoeff_[compIdx] += elemVolVars[scvIdx].diffusionCoeff(compIdx) *
 						this->face().shapeValue[scvIdx];
 
@@ -152,7 +161,8 @@ protected:
 				}
 							
 				Valgrind::CheckDefined(molarDensity_);
-				Valgrind::CheckDefined(massFraction_[compIdx]);
+        Valgrind::CheckDefined(massFraction_[compIdx]);
+        Valgrind::CheckDefined(moleFraction_[compIdx]);
 				Valgrind::CheckDefined(diffusionCoeff_[compIdx]);
 				Valgrind::CheckDefined(moleFractionGrad_[compIdx]);
 			}
@@ -160,7 +170,8 @@ protected:
     }
 	
 	Scalar molarDensity_;  
-	Scalar massFraction_[numComponents];
+    Scalar massFraction_[numComponents];
+    Scalar moleFraction_[numComponents];
     Scalar diffusionCoeff_[numComponents];
     DimVector moleFractionGrad_[numComponents];
 };

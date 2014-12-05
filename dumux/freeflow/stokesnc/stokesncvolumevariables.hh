@@ -181,8 +181,8 @@ public:
     { return this->fluidState_.massFraction(phaseIdx, compIdx); }
 
     /*!
-     * \brief Returns the mass fraction of a given component in the
-     * 		  given fluid phase within the control volume.
+     * \brief Returns the mole fraction of a given component in the
+     *        given fluid phase within the control volume.
      *
      * \param compIdx The component index
      */

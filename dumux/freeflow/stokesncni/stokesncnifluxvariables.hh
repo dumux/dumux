@@ -78,10 +78,23 @@ public:
     }
 
     /*!
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at the integration point.
+     */
+    const Scalar temperature() const
+    { return temperature_; }
+
+    /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ at the integration point.
      */
     const Scalar thermalConductivity() const
     { return thermalConductivity_; }
+
+    /*!
+     * \brief Returns the specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$
+     *        at the integration point.
+     */
+    Scalar heatCapacity() const
+    { return heatCapacity_; }
 
     /*!
      * \brief Return the enthalpy of a component \f$\mathrm{[J/kg]}\f$ at the integration point.
@@ -90,7 +103,7 @@ public:
     { return componentEnthalpy_[componentIdx]; }
 
     /*!
-     * \brief Returns the temperature gradient at the integration point.
+     * \brief Returns the temperature gradient \f$\mathrm{[K/m]}\f$ at the integration point.
      */
     const DimVector &temperatureGrad() const
     { return temperatureGrad_; }
@@ -107,7 +120,9 @@ protected:
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
     {
+        temperature_ = Scalar(0);
         thermalConductivity_ = Scalar(0);
+        heatCapacity_ = Scalar(0);
         temperatureGrad_ = Scalar(0);
 
         // calculate gradients and secondary variables at IPs
@@ -116,7 +131,13 @@ protected:
              idx < this->fvGeometry_.numScv;
              idx++) // loop over vertices of the element
         {
+            temperature_ += elemVolVars[idx].temperature() *
+                this->face().shapeValue[idx];
+
             thermalConductivity_ += elemVolVars[idx].thermalConductivity() *
+                this->face().shapeValue[idx];
+
+            heatCapacity_ += elemVolVars[idx].heatCapacity() *
                 this->face().shapeValue[idx];
 
             // the gradient of the temperature at the IP
@@ -125,7 +146,9 @@ protected:
                     this->face().grad[idx][dimIdx]*
                     elemVolVars[idx].temperature();
         }
+        Valgrind::CheckDefined(temperature_);
         Valgrind::CheckDefined(thermalConductivity_);
+        Valgrind::CheckDefined(heatCapacity_);
         Valgrind::CheckDefined(temperatureGrad_);
 
         for (unsigned int i = 0; i < numComponents; ++i)
@@ -140,7 +163,9 @@ protected:
         }
     }
 
+    Scalar temperature_; 
     Scalar thermalConductivity_;
+    Scalar heatCapacity_;
     Scalar componentEnthalpy_[numComponents];
     DimVector temperatureGrad_;
 };

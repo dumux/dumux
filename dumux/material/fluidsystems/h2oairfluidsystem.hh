@@ -725,7 +725,7 @@ public:
 
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
-     *        \f$\mathrm{[J/kg]}\f$.
+     *        \f$\mathrm{[J/(kg*K)}\f$.
      *
      * \param params    mutable parameters
      * \param phaseIdx  for which phase to give back the heat capacity
@@ -735,7 +735,21 @@ public:
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
     {
-        DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAir::heatCapacity()");
+        const Scalar temperature  = fluidState.temperature(phaseIdx);
+        const Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == wPhaseIdx)
+        {
+            // influence of air is neglected
+            return H2O::liquidHeatCapacity(temperature, pressure);
+        }
+        else if (phaseIdx == nPhaseIdx)
+        {
+            //! \todo PRELIMINARY, right way to deal with solutes?
+            return Air::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, AirIdx)
+                   + H2O::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, H2OIdx);
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 };
 
