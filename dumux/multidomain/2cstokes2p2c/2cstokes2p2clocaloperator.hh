@@ -133,21 +133,19 @@ class TwoCStokesTwoPTwoCLocalOperator :
         {
             blModel_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, UseBoundaryLayerModel);
             massTransferModel_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, MassTransferModel);
-
-            if (massTransferModel_ == 1)
-                std::cout << "Using power law for mass transfer coefficient\n";
-            if (massTransferModel_ == 2){
-                std::cout << "Using Schluender model\n";
-            }
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
         }
         catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
+            blModel_ = 0;
+            massTransferModel_ = 1;
+            std::cout << "For using the mass transfer model, the following paremeters have to be set:\n";
+            std::cout << "FreeFlow.UseBoundaryLayerModel\n";
+            std::cout << "FreeFlow.MassTransferModel\n";
         }
+
+        if (massTransferModel_ == 1)
+            std::cout << "Using power law for mass transfer coefficient\n";
+        else if (massTransferModel_ == 2)
+            std::cout << "Using Schluender model for mass transfer\n";
     }
 
     // multidomain flags
