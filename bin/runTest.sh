@@ -35,14 +35,16 @@ if ! test -r "$REFERENCE_RESULT"; then
     usage
     exit 1
 fi
-    
+
 #run the test
 echo "######################"
 echo "# Running test"
 echo "######################"
-if ! $TEST_BINARY $TEST_ARGS; then
-    echo "Executing the binary failed!"
-    exit 1
+$TEST_BINARY $TEST_ARGS
+RETURN_CODE_TEST_BINARY=$?
+if test "$RETURN_CODE_TEST_BINARY" != "0"; then
+    echo "Return code: $RETURN_CODE_TEST_BINARY"
+    exit $RETURN_CODE_TEST_BINARY
 fi
 
 # compare the results

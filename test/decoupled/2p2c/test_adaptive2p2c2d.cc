@@ -61,5 +61,6 @@ int main(int argc, char** argv)
 #else
 #warning ALUGrid needed for this test.
     std::cout << "ALUGrid needed for this test. Aborting." << std::endl;
+    return 77;
 #endif
 }

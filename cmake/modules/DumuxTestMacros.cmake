@@ -59,6 +59,9 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
   # add test
   add_test(${dumux_test} ${dumux_test_args})
   add_dependencies(${_test_target} ${dumux_test_executable})
+
+  # return code 77 should be interpreted as skipped test
+  set_tests_properties(${dumux_test} PROPERTIES SKIP_RETURN_CODE 77)
 endmacro()
 
 ###
