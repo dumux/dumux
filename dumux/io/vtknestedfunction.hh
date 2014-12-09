@@ -75,7 +75,11 @@ public:
         int idx;
         if (codim_ == 0) {
             // cells. map element to the index
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            idx = mapper_.index(element);
+#else
             idx = mapper_.map(element);
+#endif
         }
         else if (codim_ == dim) {
             // find vertex which is closest to xi in local
@@ -101,7 +105,11 @@ public:
             }
 
             // map vertex to an index
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            idx = mapper_.subIndex(element, imin, codim_);
+#else
             idx = mapper_.map(element, imin, codim_);
+#endif
         }
         else
             DUNE_THROW(Dune::InvalidStateException,
