@@ -26,8 +26,10 @@
 
 #include "implicitproperties.hh"
 #include <unordered_map>
-#include <dune/istl/bvector.hh>
+
 #include <dune/common/fvector.hh>
+#include <dune/common/version.hh>
+#include <dune/istl/bvector.hh>
 
 namespace Dumux
 {
@@ -98,7 +100,11 @@ public:
                 // transform vertex velocities from local to global coordinates
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                    int vIdxGlobal = problem_.vertexMapper().subIndex(*eIt, scvIdx, dofCodim);
+#else
                     int vIdxGlobal = problem_.vertexMapper().map(*eIt, scvIdx, dofCodim);
+#endif
 
                     cellNum_[vIdxGlobal] += 1;
                 }
@@ -178,7 +184,11 @@ public:
                 // transform vertex velocities from local to global coordinates
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                    int vIdxGlobal = problem_.vertexMapper().subIndex(element, scvIdx, dofCodim);
+#else
                     int vIdxGlobal = problem_.vertexMapper().map(element, scvIdx, dofCodim);
+#endif
                     // calculate the subcontrolvolume velocity by the Piola transformation
                     Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
 
@@ -234,7 +244,11 @@ public:
 
                 scvVelocity /= element.geometry().integrationElement(localPos);
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int eIdxGlobal = problem_.elementMapper().index(element);
+#else
                 int eIdxGlobal = problem_.elementMapper().map(element);
+#endif
 
                 velocity[eIdxGlobal]= scvVelocity;
             }

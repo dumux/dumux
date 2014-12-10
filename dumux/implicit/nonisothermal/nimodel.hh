@@ -24,6 +24,8 @@
 #ifndef DUMUX_NI_MODEL_HH
 #define DUMUX_NI_MODEL_HH
 
+#include <dune/common/version.hh>
+
 #include "niproperties.hh"
 
 namespace Dumux {
@@ -113,7 +115,11 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                    int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+#else
                     int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+#endif
                     temperature[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
                 }
             }

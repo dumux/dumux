@@ -80,9 +80,14 @@ public:
         for (int i = 0; i < numNeighbors; i++)
         {
             const Element& neighbor = *(fvGeometry.neighbors[i]);
-            
+
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            const PrimaryVariables &solI
+                    = globalSol[problem.elementMapper().index(neighbor)];
+#else
             const PrimaryVariables &solI
                     = globalSol[problem.elementMapper().map(neighbor)];
+#endif
 
             FVElementGeometry neighborFVGeom;
             neighborFVGeom.updateInner(neighbor);

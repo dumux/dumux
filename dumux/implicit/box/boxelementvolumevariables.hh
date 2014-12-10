@@ -85,8 +85,13 @@ public:
 #endif
         this->resize(numVertices);
         for (int scvIdx = 0; scvIdx < numVertices; scvIdx++) {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            const PrimaryVariables &priVars
+                = globalSol[vertexMapper.subIndex(element, scvIdx, dim)];
+#else
             const PrimaryVariables &priVars
                 = globalSol[vertexMapper.map(element, scvIdx, dim)];
+#endif
 
             // reset evaluation point to zero
             (*this)[scvIdx].setEvalPoint(0);

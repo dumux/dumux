@@ -23,7 +23,9 @@
 #ifndef DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
 #define DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
 
+#include <dune/common/version.hh>
 #include <dune/istl/matrix.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/common/valgrind.hh>
 
@@ -403,13 +405,21 @@ protected:
         ElementPointer neighbor(element_());
         if (isBox)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            dofIdxGlobal = vertexMapper_().subIndex(element_(), col, dim);
+#else
             dofIdxGlobal = vertexMapper_().map(element_(), col, dim);
+#endif
         }
         else
         {
             neighbor = fvElemGeom_.neighbors[col];
             neighborFVGeom.updateInner(*neighbor);
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            dofIdxGlobal = problemPtr_->elementMapper().index(*neighbor);
+#else
             dofIdxGlobal = problemPtr_->elementMapper().map(*neighbor);
+#endif
         }
 
         PrimaryVariables priVars(model_().curSol()[dofIdxGlobal]);
