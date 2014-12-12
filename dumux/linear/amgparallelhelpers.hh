@@ -25,6 +25,8 @@
 #ifndef DUMUX_AMGPARALLELHELPERS_HH
 #define DUMUX_AMGPARALLELHELPERS_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
 #include <dumux/decoupled/common/pressureproperties.hh>
@@ -57,7 +59,11 @@ class ParallelISTLHelper
         template<class EntityType>
         int map(const EntityType& e) const
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            return problem_.model().dofMapper().index(e);
+#else
             return problem_.model().dofMapper().map(e);
+#endif
         }
 
     private:
@@ -520,7 +526,11 @@ public:
         {
             if (entityIt->partitionType() == Dune::BorderEntity)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int localIdx = problem_.model().dofMapper().index(*entityIt);
+#else
                 int localIdx = problem_.model().dofMapper().map(*entityIt);
+#endif
                 IdType dofIdxGlobal = gridView.grid().globalIdSet().id(*entityIt);
 
                 std::pair<IdType,int> g2iPair(dofIdxGlobal, localIdx);
@@ -581,7 +591,11 @@ public:
         template<class EntityType>
         size_t size (EntityType& e) const
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int i = problem_.model().dofMapper().index(e);
+#else
             int i = problem_.model().dofMapper().map(e);
+#endif
             int n = 0;
             for (ColIterator j = A_[i].begin(); j != A_[i].end(); ++j)
             {
@@ -598,7 +612,11 @@ public:
         template<class MessageBuffer, class EntityType>
         void gather (MessageBuffer& buff, const EntityType& e) const
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int i = problem_.model().dofMapper().index(e);
+#else
             int i = problem_.model().dofMapper().map(e);
+#endif
             for (ColIterator j = A_[i].begin(); j != A_[i].end(); ++j)
             {
                 typename std::map<int,IdType>::const_iterator it=index2GID_.find(j.index());
@@ -613,7 +631,11 @@ public:
         template<class MessageBuffer, class EntityType>
         void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int i = problem_.model().dofMapper().index(e);
+#else
             int i = problem_.model().dofMapper().map(e);
+#endif
             for (size_t k = 0; k < n; k++)
             {
                 IdType id;
@@ -697,7 +719,11 @@ public:
         template<class EntityType>
         size_t size (EntityType& e) const
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int i = problem_.model().dofMapper().index(e);
+#else
             int i = problem_.model().dofMapper().map(e);
+#endif
             int n = 0;
             for (ColIterator j = A_[i].begin(); j != A_[i].end(); ++j)
             {
@@ -714,7 +740,11 @@ public:
         template<class MessageBuffer, class EntityType>
         void gather (MessageBuffer& buff, const EntityType& e) const
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int i = problem_.model().dofMapper().index(e);
+#else
             int i = problem_.model().dofMapper().map(e);
+#endif
             for (ColIterator j = A_[i].begin(); j != A_[i].end(); ++j)
             {
                 typename std::map<int,IdType>::const_iterator it=index2GID_.find(j.index());
@@ -729,7 +759,11 @@ public:
         template<class MessageBuffer, class EntityType>
         void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int i = problem_.model().dofMapper().index(e);
+#else
             int i = problem_.model().dofMapper().map(e);
+#endif
             for (size_t k = 0; k < n; k++)
             {
                 MatEntry m;
