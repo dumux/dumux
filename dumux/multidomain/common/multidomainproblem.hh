@@ -45,13 +45,6 @@ namespace Dumux
 template<class TypeTag>
 class MultiDomainProblem
 {
-    template<int dim>
-    struct VertexLayout
-    {
-        bool contains(Dune::GeometryType gt) {
-            return gt.dim() == 0;
-        }
-    };
 
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
@@ -82,7 +75,7 @@ private:
     typedef typename MultiDomainGrid::SubDomainGrid SubDomainGrid;
     typedef typename SubDomainGrid::template Codim<0>::EntityPointer SubDomainElementPointer;
 
-    typedef Dune::MultiDomainMCMGMapper<MultiDomainGridView, VertexLayout> VertexMapper;
+    typedef Dune::MultiDomainMCMGMapper<MultiDomainGridView, Dune::MCMGVertexLayout> VertexMapper;
 
 public:
     /*!
@@ -106,7 +99,7 @@ public:
 		, sdGrid2_(mdGrid.subDomain(sdID2_))
 		, sdProblem1_(timeManager, sdGrid1_.leafGridView())
 		, sdProblem2_(timeManager, sdGrid2_.leafGridView())
-    {  };
+    {}
 
     //! \copydoc Dumux::ImplicitProblem::init()
     void init()
@@ -180,7 +173,7 @@ public:
         timeManager_.setTimeStepSize(dtInitial);
         timeManager_.runSimulation(asImp_());
         return true;
-    };
+    }
 
     /*!
      * \brief Called by the time manager before the time integration. Calls preTimeStep()
@@ -234,7 +227,7 @@ public:
     Scalar nextTimeStepSize(const Scalar dt)
     {
         return newtonCtl_.suggestTimeStepSize(dt);
-    };
+    }
 
     /*!
      * \brief This method is called by the model if the update to the
@@ -243,7 +236,7 @@ public:
     void updateSuccessful()
     {
     	model_.updateSuccessful();
-    };
+    }
 
     //! \copydoc Dumux::ImplicitProblem::shouldWriteOutput()
     bool shouldWriteOutput() const
@@ -356,13 +349,13 @@ public:
      * \brief Returns a reference to the localresidual1
      */
     LocalResidual1& localResidual1()
-    { return sdProblem1().model().localResidual(); };
+    { return sdProblem1().model().localResidual(); }
 
     /*!
      * \brief Returns a reference to the localresidual2
      */
     LocalResidual2& localResidual2()
-    { return sdProblem2().model().localResidual(); };
+    { return sdProblem2().model().localResidual(); }
 
     /*!
      * \brief Returns a reference to the multidomain grid
