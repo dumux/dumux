@@ -86,7 +86,7 @@ public:
       *
       */
     MultiDomainProblem(MultiDomainGrid &mdGrid,
-            		   TimeManager &timeManager)
+                       TimeManager &timeManager)
         : timeManager_(timeManager)
 		, newtonMethod_(asImp_())
 		, newtonCtl_(asImp_())
@@ -257,8 +257,8 @@ public:
     //! \copydoc Dumux::ImplicitProblem::advanceTimeLevel()
     void advanceTimeLevel()
     {
-    	asImp_().sdProblem1().advanceTimeLevel();
-    	asImp_().sdProblem2().advanceTimeLevel();
+        asImp_().sdProblem1().advanceTimeLevel();
+        asImp_().sdProblem2().advanceTimeLevel();
 
         model_.advanceTimeLevel();
     }
@@ -451,7 +451,7 @@ private:
 
     Model model_;
 
-	MultiDomainGrid &mdGrid_;
+    MultiDomainGrid &mdGrid_;
     const MultiDomainGridView mdGridView_;
     VertexMapper mdVertexMapper_;
 

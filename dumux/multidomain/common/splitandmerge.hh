@@ -74,7 +74,7 @@ public:
         for (int i = 0; i < nDofs1; ++i)
             for (int j = 0; j < numEq1; j++)
             {
-				dest.base()[i*numEq1 + j][0] = vec1[i][j];
+                dest.base()[i*numEq1 + j][0] = vec1[i][j];
 
                 Valgrind::CheckDefined(dest.base()[i*numEq1 + j][0]);
             }
@@ -82,7 +82,7 @@ public:
         for (int i = 0; i < nDofs2; ++i)
             for (int j = 0; j < numEq2; j++)
             {
-				dest.base()[nDofs1*numEq1 + i*numEq2 + j][0] = vec2[i][j];
+                dest.base()[nDofs1*numEq1 + i*numEq2 + j][0] = vec2[i][j];
 
                 Valgrind::CheckDefined(dest.base()[nDofs1*numEq1 + i*numEq2 + j][0]);
             }
@@ -109,11 +109,11 @@ public:
 
         for (int i = 0; i < nDofs1; ++i)
             for (int j = 0; j < numEq1; j++)
-				dest1[i][j] = vec.base()[i*numEq1 + j][0];
+                dest1[i][j] = vec.base()[i*numEq1 + j][0];
 
         for (int i = 0; i < nDofs2; ++i)
             for (int j = 0; j < numEq2; j++)
-				dest2[i][j] = vec.base()[nDofs1*numEq1 + i*numEq2 + j][0];
+                dest2[i][j] = vec.base()[nDofs1*numEq1 + i*numEq2 + j][0];
 
 //         printvector(std::cout, dest1, "dest1", "row", 200, 1, 3);
 //         printvector(std::cout, dest2, "dest2", "row", 200, 1, 3);
@@ -203,7 +203,7 @@ public:
                               const JacobianMatrix2 &M2,
                               JacobianMatrix &M)
     {
-    	DUNE_THROW(Dune::NotImplemented, "mergeMatrices in coupled common");
+        DUNE_THROW(Dune::NotImplemented, "mergeMatrices in coupled common");
     }
 
     /*!

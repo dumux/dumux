@@ -106,8 +106,8 @@ private:
 public:
     typedef Dune::PDELab::MultiDomain::SubProblem<MDGridFunctionSpace,
                                                   MDGridFunctionSpace,
-    										      LocalOperator1, MDCondition,
-    											  0> type;
+                                                  LocalOperator1, MDCondition,
+                                                  0> type;
 };
 
 SET_PROP(MultiDomain, MultiDomainSubProblem2)
@@ -121,9 +121,9 @@ private:
     typedef typename GET_PROP_TYPE(SubTypeTag2, GridFunctionSpace) GridFunctionSpace2;
 public:
     typedef Dune::PDELab::MultiDomain::SubProblem<MDGridFunctionSpace,
-    											  MDGridFunctionSpace,
-    											  LocalOperator2, MDCondition,
-    											  1> type;
+                                                  MDGridFunctionSpace,
+                                                  LocalOperator2, MDCondition,
+                                                  1> type;
 };
 
 SET_PROP(MultiDomain, MultiDomainCoupling)
@@ -134,8 +134,8 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainCouplingLocalOperator) MDCouplingLocalOperator;
 public:
     typedef Dune::PDELab::MultiDomain::Coupling<MDSubProblem1,
-        										MDSubProblem2,
-        										MDCouplingLocalOperator> type;
+                                                MDSubProblem2,
+                                                MDCouplingLocalOperator> type;
 };
 
 // set trivial constraints transformation by default
@@ -161,10 +161,10 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dune::PDELab::MultiDomain::GridOperator<
-        			MDGridFunctionSpace, MDGridFunctionSpace,
-        			MBE, Scalar, Scalar, Scalar,
-        			MDConstraintsTrafo, MDConstraintsTrafo,
-        			MDSubProblem1, MDSubProblem2, MDCoupling> type;
+                    MDGridFunctionSpace, MDGridFunctionSpace,
+                    MBE, Scalar, Scalar, Scalar,
+                    MDConstraintsTrafo, MDConstraintsTrafo,
+                    MDSubProblem1, MDSubProblem2, MDCoupling> type;
 };
 
 SET_PROP(MultiDomain, JacobianMatrix)
