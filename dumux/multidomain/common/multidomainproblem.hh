@@ -312,13 +312,13 @@ public:
     /*!
      * \brief Returns the ID of the first domain
      */
-    const typename MultiDomainGrid::SubDomainType sdID1() const
+    const typename MultiDomainGrid::SubDomainIndex sdID1() const
     { return sdID1_; }
 
     /*!
      * \brief Returns the ID of the second domain
      */
-    const typename MultiDomainGrid::SubDomainType sdID2() const
+    const typename MultiDomainGrid::SubDomainIndex sdID2() const
     { return sdID2_; }
 
     /*!
@@ -455,8 +455,8 @@ private:
     const MultiDomainGridView mdGridView_;
     VertexMapper mdVertexMapper_;
 
-    typename MultiDomainGrid::SubDomainType sdID1_;
-    typename MultiDomainGrid::SubDomainType sdID2_;
+    typename MultiDomainGrid::SubDomainIndex sdID1_;
+    typename MultiDomainGrid::SubDomainIndex sdID2_;
 
     const SubDomainGrid& sdGrid1_;
     const SubDomainGrid& sdGrid2_;

@@ -68,7 +68,7 @@ SET_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid)
 #elif HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 #else
-#error Required UG or ALUGrid.
+    typedef typename Dune::YaspGrid<2> type;
 #endif
 };
 
@@ -801,8 +801,8 @@ public:
     { return this->sdProblem2(); }
 
 private:
-    typename MDGrid::SubDomainType stokes2cni_;
-    typename MDGrid::SubDomainType twoPtwoCNI_;
+    typename MDGrid::SubDomainIndex stokes2cni_;
+    typename MDGrid::SubDomainIndex twoPtwoCNI_;
 
     unsigned counter_;
     unsigned freqRestart_;

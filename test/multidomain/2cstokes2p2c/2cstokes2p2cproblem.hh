@@ -66,7 +66,7 @@ SET_PROP(TwoCStokesTwoPTwoCProblem, Grid)
 #elif HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 #else
-#error Required UG or ALUGrid.
+    typedef typename Dune::YaspGrid<2> type;
 #endif
 };
 
@@ -774,8 +774,8 @@ public:
     { return this->sdProblem2(); }
 
 private:
-    typename MDGrid::SubDomainType stokes2c_;
-    typename MDGrid::SubDomainType twoPtwoC_;
+    typename MDGrid::SubDomainIndex stokes2c_;
+    typename MDGrid::SubDomainIndex twoPtwoC_;
 
     unsigned counter_;
     unsigned freqRestart_;
