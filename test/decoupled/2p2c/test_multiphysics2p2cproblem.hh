@@ -47,7 +47,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(TestMultTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC, Test2P2CSpatialParams));
 
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, CellData, Dumux::CellData2P2Cmultiphysics<TypeTag>);
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, CellData, Dumux::CellData2P2CMultiPhysics<TypeTag>);
 
 // Set the grid type
 SET_TYPE_PROP(TestMultTwoPTwoCProblem, Grid, Dune::YaspGrid<3>);

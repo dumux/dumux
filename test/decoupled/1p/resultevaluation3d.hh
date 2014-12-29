@@ -736,7 +736,6 @@ public:
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
-        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
         typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
         typedef typename Dune::ReferenceElements<Scalar, dim-1> ReferenceFaces;
 
