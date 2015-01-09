@@ -134,12 +134,11 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
     for (unsigned int i = 0; i < keys.size(); ++i) {
         std::string canonicalName = prefix + keys[i];
 
-        // check whether the key was accessed
-        if (rt.hasKey(canonicalName))
-            continue;
-        else if (drt.hasKey(canonicalName))
-            continue;
-        unusedParams.push_back(canonicalName);
+        // store keys which were not accessed
+        if (!rt.hasKey(canonicalName) && !drt.hasKey(canonicalName))
+        {
+            unusedParams.push_back(canonicalName);
+        }
     }
 
     // loop over all subtrees
