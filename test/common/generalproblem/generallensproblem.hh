@@ -236,7 +236,7 @@ public:
     {
         if (!this->timeManager().willBeFinished())
         this->timeManager().startNextEpisode(500);
-    };
+    }
 
     /*!
      * \brief The problem name.
@@ -266,7 +266,7 @@ public:
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         return temperature_;
-    };
+    }
 
     //! Returns the reference pressure for evaluation of constitutive relations
     /*!

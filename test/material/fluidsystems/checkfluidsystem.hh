@@ -383,19 +383,19 @@ void checkFluidSystem()
         paramCache.updateAll(fs);
     } catch (...)
     {
-    };
+    }
     try
     {
         paramCache.updateAll(fs, /*except=*/PC::None);
     } catch (...)
     {
-    };
+    }
     try
     {
         paramCache.updateAll(fs, /*except=*/PC::Temperature | PC::Pressure | PC::Composition);
     } catch (...)
     {
-    };
+    }
     try
     {
         paramCache.updateAllPressures(fs);
@@ -411,43 +411,43 @@ void checkFluidSystem()
             paramCache.updatePhase(fs, phaseIdx);
         } catch (...)
         {
-        };
+        }
         try
         {
             paramCache.updatePhase(fs, phaseIdx, /*except=*/PC::None);
         } catch (...)
         {
-        };
+        }
         try
         {
             paramCache.updatePhase(fs, phaseIdx, /*except=*/PC::Temperature | PC::Pressure | PC::Composition);
         } catch (...)
         {
-        };
+        }
         try
         {
             paramCache.updateTemperature(fs, phaseIdx);
         } catch (...)
         {
-        };
+        }
         try
         {
             paramCache.updatePressure(fs, phaseIdx);
         } catch (...)
         {
-        };
+        }
         try
         {
             paramCache.updateComposition(fs, phaseIdx);
         } catch (...)
         {
-        };
+        }
         try
         {
             paramCache.updateSingleMoleFraction(fs, phaseIdx, /*compIdx=*/0);
         } catch (...)
         {
-        };
+        }
     }
 
     // some value to make sure the return values of the fluid system
@@ -468,7 +468,7 @@ void checkFluidSystem()
         } catch (Dune::Exception e)
         {
             std::cout << "\ndensity calculation throws exception:\n" << e.what();
-        };
+        }
 
         fs.allowPressure(true);
         fs.allowDensity(true);
@@ -477,25 +477,25 @@ void checkFluidSystem()
             val = FluidSystem::viscosity(fs, paramCache, phaseIdx);
         } catch (...)
         {
-        };
+        }
         try
         {
             val = FluidSystem::enthalpy(fs, paramCache, phaseIdx);
         } catch (...)
         {
-        };
+        }
         try
         {
             val = FluidSystem::heatCapacity(fs, paramCache, phaseIdx);
         } catch (...)
         {
-        };
+        }
         try
         {
             val = FluidSystem::thermalConductivity(fs, paramCache, phaseIdx);
         } catch (...)
         {
-        };
+        }
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
@@ -505,14 +505,14 @@ void checkFluidSystem()
                 val = FluidSystem::fugacityCoefficient(fs, paramCache, phaseIdx, compIdx);
             } catch (...)
             {
-            };
+            }
             fs.allowComposition(true);
             try
             {
                 val = FluidSystem::diffusionCoefficient(fs, paramCache, phaseIdx, compIdx);
             } catch (...)
             {
-            };
+            }
             for (int comp2Idx = 0; comp2Idx < numComponents; ++comp2Idx)
             {
                 try
@@ -520,7 +520,7 @@ void checkFluidSystem()
                     val = FluidSystem::binaryDiffusionCoefficient(fs, paramCache, phaseIdx, compIdx, comp2Idx);
                 } catch (...)
                 {
-                };
+                }
             }
         }
     }

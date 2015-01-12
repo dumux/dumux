@@ -468,7 +468,7 @@ private:
 // definition of the static class member simname_,
 // which is necessary because it is of type string.
 template <class TypeTag>
-std::string MultiDomainProblem<TypeTag>::simname_="simCoupled"; //initialized with default "sim"
+std::string MultiDomainProblem<TypeTag>::simname_ = "simCoupled";
 
 } // namespace Dumux
 

@@ -41,10 +41,6 @@ gnuplot> plot "spline.csv" using 1:2 w l ti "Curve", \
 
 #include <dune/common/fvector.hh>
 
-#define GCC_VERSION (__GNUC__ * 10000 \
-               + __GNUC_MINOR__ * 100 \
-               + __GNUC_PATCHLEVEL__)
-
 template <class Spline>
 void testCommon(const Spline &sp,
                 const double *x,
@@ -149,7 +145,6 @@ void testAll()
         };
 
 
-#if GCC_VERSION >= 40500
     std::initializer_list<const std::pair<double, double> > pointsInitList =
         {
             {x[0], y[0]},
@@ -158,7 +153,6 @@ void testAll()
             {x[3], y[3]},
             {x[4], y[4]},
         };
-#endif
 
     std::vector<double> xVec;
     std::vector<double> yVec;
@@ -174,9 +168,9 @@ void testAll()
     /////////
 
     // full spline
-    { Dumux::Spline<double, 2> sp(x[0], x[1], y[0], y[1], m0, m1); sp.set(x[0],x[1],y[0],y[1],m0, m1); testFull(sp, x, y, m0, m1); };
-    { Dumux::Spline<double, 2> sp(x, y, m0, m1); sp.setXYArrays(2, x, y, m0, m1); testFull(sp, x, y, m0, m1);  };
-    { Dumux::Spline<double, 2> sp(points, m0, m1); sp.setArrayOfPoints(2, points, m0, m1); testFull(sp, x, y, m0, m1); };
+    { Dumux::Spline<double, 2> sp(x[0], x[1], y[0], y[1], m0, m1); sp.set(x[0],x[1],y[0],y[1],m0, m1); testFull(sp, x, y, m0, m1); }
+    { Dumux::Spline<double, 2> sp(x, y, m0, m1); sp.setXYArrays(2, x, y, m0, m1); testFull(sp, x, y, m0, m1);  }
+    { Dumux::Spline<double, 2> sp(points, m0, m1); sp.setArrayOfPoints(2, points, m0, m1); testFull(sp, x, y, m0, m1); }
 
 
     /////////
@@ -184,41 +178,33 @@ void testAll()
     /////////
 
     // full spline
-    { Dumux::Spline<double, 5> sp(x, y, m0, m1); sp.setXYArrays(5, x, y, m0, m1); testFull(sp, x, y, m0, m1);  };
-    { Dumux::Spline<double, 5> sp; sp.setArrayOfPoints(5, points, m0, m1); testFull(sp, x, y, m0, m1); };
-    { Dumux::Spline<double, 5> sp; sp.setContainerOfPoints(pointVec,m0, m1); testFull(sp, x, y, m0, m1); };
-#if GCC_VERSION >= 40500
-    { Dumux::Spline<double, 5> sp; sp.setContainerOfTuples(pointsInitList, m0, m1); testFull(sp, x, y, m0, m1); };
-#endif
+    { Dumux::Spline<double, 5> sp(x, y, m0, m1); sp.setXYArrays(5, x, y, m0, m1); testFull(sp, x, y, m0, m1);  }
+    { Dumux::Spline<double, 5> sp; sp.setArrayOfPoints(5, points, m0, m1); testFull(sp, x, y, m0, m1); }
+    { Dumux::Spline<double, 5> sp; sp.setContainerOfPoints(pointVec,m0, m1); testFull(sp, x, y, m0, m1); }
+    { Dumux::Spline<double, 5> sp; sp.setContainerOfTuples(pointsInitList, m0, m1); testFull(sp, x, y, m0, m1); }
 
     // natural spline
-    { Dumux::Spline<double, 5> sp(x, y); sp.setXYArrays(5, x, y); testNatural(sp, x, y); };
-    { Dumux::Spline<double, 5> sp; sp.setContainerOfPoints(pointVec); testNatural(sp, x, y); };
-#if GCC_VERSION >= 40500
-    { Dumux::Spline<double, 5> sp; sp.setContainerOfTuples(pointsInitList); testNatural(sp, x, y); };
-#endif
+    { Dumux::Spline<double, 5> sp(x, y); sp.setXYArrays(5, x, y); testNatural(sp, x, y); }
+    { Dumux::Spline<double, 5> sp; sp.setContainerOfPoints(pointVec); testNatural(sp, x, y); }
+    { Dumux::Spline<double, 5> sp; sp.setContainerOfTuples(pointsInitList); testNatural(sp, x, y); }
 
     /////////
     // test variable length splines
     /////////
 
     // full spline
-    { Dumux::Spline<double, -1> sp(5, x, y, m0, m1); sp.setXYArrays(5,x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
-    { Dumux::Spline<double, -1> sp(xVec, yVec, m0, m1); sp.setXYContainers(xVec,yVec,m0, m1); testFull(sp, x, y, m0, m1);  };
-    { Dumux::Spline<double, -1> sp; sp.setArrayOfPoints(5,points,m0, m1); testFull(sp, x, y, m0, m1); };
-    { Dumux::Spline<double, -1> sp; sp.setContainerOfPoints(pointVec,m0, m1); testFull(sp, x, y, m0, m1);  };
-#if GCC_VERSION >= 40500
-    { Dumux::Spline<double, -1> sp; sp.setContainerOfTuples(pointsInitList,m0, m1); testFull(sp, x, y, m0, m1); };
-#endif
+    { Dumux::Spline<double, -1> sp(5, x, y, m0, m1); sp.setXYArrays(5,x,y,m0, m1); testFull(sp, x, y, m0, m1);  }
+    { Dumux::Spline<double, -1> sp(xVec, yVec, m0, m1); sp.setXYContainers(xVec,yVec,m0, m1); testFull(sp, x, y, m0, m1);  }
+    { Dumux::Spline<double, -1> sp; sp.setArrayOfPoints(5,points,m0, m1); testFull(sp, x, y, m0, m1); }
+    { Dumux::Spline<double, -1> sp; sp.setContainerOfPoints(pointVec,m0, m1); testFull(sp, x, y, m0, m1);  }
+    { Dumux::Spline<double, -1> sp; sp.setContainerOfTuples(pointsInitList,m0, m1); testFull(sp, x, y, m0, m1); }
 
     // natural spline
-    { Dumux::Spline<double, -1> sp(5, x, y); sp.setXYArrays(5,x,y); testNatural(sp, x, y);  };
-    { Dumux::Spline<double, -1> sp(xVec, yVec); sp.setXYContainers(xVec,yVec); testNatural(sp, x, y); };
-    { Dumux::Spline<double, -1> sp; sp.setArrayOfPoints(5,points); testNatural(sp, x, y); };
-    { Dumux::Spline<double, -1> sp; sp.setContainerOfPoints(pointVec); testNatural(sp, x, y); };
-#if GCC_VERSION >= 40500
-    { Dumux::Spline<double, -1> sp; sp.setContainerOfTuples(pointsInitList); testNatural(sp, x, y); };
-#endif
+    { Dumux::Spline<double, -1> sp(5, x, y); sp.setXYArrays(5,x,y); testNatural(sp, x, y);  }
+    { Dumux::Spline<double, -1> sp(xVec, yVec); sp.setXYContainers(xVec,yVec); testNatural(sp, x, y); }
+    { Dumux::Spline<double, -1> sp; sp.setArrayOfPoints(5,points); testNatural(sp, x, y); }
+    { Dumux::Spline<double, -1> sp; sp.setContainerOfPoints(pointVec); testNatural(sp, x, y); }
+    { Dumux::Spline<double, -1> sp; sp.setContainerOfTuples(pointsInitList); testNatural(sp, x, y); }
 }
 
 void plot()
