@@ -188,45 +188,29 @@ void print(std::ostream &os = std::cout)
     const Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
     const Dune::ParameterTree &unrt = Params::unusedNewRunTimeParams();
 
-    os << "###############################\n";
-    os << "# Run-time specified parameters:\n";
-    os << "###############################\n";
+    os << "# Run-time specified parameters:" << std::endl;
     rt.report(os);
 
-    if (hasDeprecatedKeys_<TypeTag>(tree))
+    if (hasDeprecatedKeys_<TypeTag>(tree)) 
     {
-    os << "###############################\n";
-    os << "# DEPRECATED Run-time specified parameters:\n";
-    os << "###############################\n";
-    drt.report(os);
-    os << "# Replace by:\n";
-    unrt.report(os);
+        os << "# DEPRECATED Run-time specified parameters:" << std::endl;
+        drt.report(os);
+        os << "# Replace by:" << std::endl;
+        unrt.report(os);
     }
 
-    os << "###############################\n";
-    os << "# Compile-time specified parameters:\n";
-    os << "###############################\n";
+    os << "# Compile-time specified parameters:" << std::endl;
     ct.report(os);
-/*
-    printParamTree_(ct);
-    typename Dune::ParameterTree::KeyVector::const_iterator it = ct.begin();
-    for (; it != ct.end(); ++it) {
-        os << *it << " = \"" << ct.get(*it, "") << "\""
-            // << " # Taken From Property: " <<
-           << "\n";
-    };
-*/
 
     std::list<std::string> unusedParams;
     findUnusedKeys_<TypeTag>(unusedParams, tree);
 
-    if (unusedParams.size() > 0) {
-        os << "###############################\n";
-        os << "# UNUSED PARAMETERS:\n";
-        os << "###############################\n";
-        std::list<std::string>::const_iterator it = unusedParams.begin();
-        for (; it != unusedParams.end(); ++it) {
-            os << *it << " = \"" << tree.get(*it, "") << "\"\n";
+    if (unusedParams.size() > 0)
+    {
+        os << "# UNUSED PARAMETERS:" << std::endl;
+        for (auto it = unusedParams.begin(); it != unusedParams.end(); ++it)
+        {
+            os << *it << " = \"" << tree.get(*it, "") << "\"" << std::endl;
         }
     }
 }
