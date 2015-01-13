@@ -25,6 +25,7 @@
 #ifndef DUMUX_RICHARDS_MODEL_HH
 #define DUMUX_RICHARDS_MODEL_HH
 
+#include <dune/common/version.hh>
 #include <dumux/implicit/common/implicitmodel.hh>
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 
@@ -174,7 +175,11 @@ public:
         {
             if(eIt->partitionType() == Dune::InteriorEntity)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int eIdx = this->problem_().model().elementMapper().index(*eIt);
+#else
                 int eIdx = this->problem_().model().elementMapper().map(*eIt);
+#endif
                 (*rank)[eIdx] = this->gridView_().comm().rank();
 
                 FVElementGeometry fvGeometry;
@@ -188,7 +193,11 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                    int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+#else
                     int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+#endif
 
                     (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
                     (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);

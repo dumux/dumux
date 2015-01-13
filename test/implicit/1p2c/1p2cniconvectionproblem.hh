@@ -26,6 +26,7 @@
 #ifndef DUMUX_1P2CNI_CONVECTION_PROBLEM_HH
 #define DUMUX_1P2CNI_CONVECTION_PROBLEM_HH
 
+#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/1p2c/1p2cmodel.hh>
@@ -230,7 +231,11 @@ public:
                 fvGeometry.update(this->gridView(), *eIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                    int dofIdxGlobal = this->model().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+#else
                     int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
+#endif
                     if (isBox)
                         globalPos = eIt->geometry().corner(scvIdx);
                     else

@@ -26,6 +26,7 @@
 #ifndef DUMUX_ELASTIC2P_MODEL_HH
 #define DUMUX_ELASTIC2P_MODEL_HH
 
+#include <dune/common/version.hh>
 #include <dune/pdelab/gridfunctionspace/interpolate.hh>
 #include <dumux/common/eigenvalues.hh>
 #include "el2pproperties.hh"
@@ -152,7 +153,11 @@ public:
                          const Entity &entity)
     {
         // vertex index
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int dofIdxGlobal = this->dofMapper().index(entity);
+#else
         int dofIdxGlobal = this->dofMapper().map(entity);
+#endif
 
         // write phase state
         if (!outStream.good()) {
@@ -169,7 +174,11 @@ public:
         for (int j = 0; j< dim; ++j)
             outStream << this->curSol().base()[numScv*(numEq-dim) + dofIdxGlobal*dim + j][0] <<" ";
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int vIdxGlobal = this->dofMapper().index(entity);
+#else
         int vIdxGlobal = this->dofMapper().map(entity);
+#endif
         if (!outStream.good())
             DUNE_THROW(Dune::IOError, "Could not serialize vertex " << vIdxGlobal);
     }
@@ -192,7 +201,11 @@ public:
     template<class Entity>
     void deserializeEntity(std::istream &inStream, const Entity &entity)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int dofIdxGlobal = this->dofMapper().index(entity);
+#else
         int dofIdxGlobal = this->dofMapper().map(entity);
+#endif
 
         if (!inStream.good()){
                 DUNE_THROW(Dune::IOError,
@@ -356,7 +369,11 @@ public:
             typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::JacobianType JacobianType_V;
             typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::RangeFieldType RF;
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            unsigned int eIdx = this->problem_().model().elementMapper().index(*eIt);
+#else
             unsigned int eIdx = this->problem_().model().elementMapper().map(*eIt);
+#endif
             rank[eIdx] = this->gridView_().comm().rank();
 
             fvGeometry.update(this->gridView_(), *eIt);
@@ -371,8 +388,11 @@ public:
 
             for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                unsigned int vIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dim);
+#else
                 unsigned int vIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dim);
-
+#endif
 
                 Te[vIdxGlobal] = elemVolVars[scvIdx].temperature();
                 pw[vIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);

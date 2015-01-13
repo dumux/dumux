@@ -144,7 +144,11 @@ public:
 
             for (int i = 0; i < numFaces; i++)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int index = faceMapper_.subIndex(*eIt, i,1);
+#else
                 int index = faceMapper_.map(*eIt, i,1);
+#endif
 
                 if (!visited[index])
                 {
@@ -175,7 +179,11 @@ public:
 
             for (int i = 0; i < numFaces; i++)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int indexI = faceMapper_.subIndex(*eIt, i, 1);
+#else
                 int indexI = faceMapper_.map(*eIt, i, 1);
+#endif
                 if (!visited[indexI])
                 {
                     A_.addindex(indexI,indexI);
@@ -183,7 +191,11 @@ public:
                 }
                 for (int k = 0; k < numFaces; k++)
                     if (k != i) {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                        int indexJ = faceMapper_.subIndex(*eIt, k, 1);
+#else
                         int indexJ = faceMapper_.map(*eIt, k, 1);
+#endif
                         A_.addindex(indexI, indexJ);
                         //std::cout << "indexI = " << indexI << ", added indexJ = " << indexJ << std::endl;
                     }
@@ -268,7 +280,11 @@ public:
             // get local to global id map
             for (unsigned int k = 0; k < numFaces; k++)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int alpha = faceMapper_.subIndex(*eIt, k, 1);
+#else
                 int alpha = faceMapper_.map(*eIt, k, 1);
+#endif
                 local2Global[k] = alpha;
             }
 
@@ -309,7 +325,11 @@ public:
             // get local to global id map
             for (unsigned int k = 0; k < numFaces; k++)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int alpha = faceMapper_.subIndex(*eIt, k, 1);
+#else
                 int alpha = faceMapper_.map(*eIt, k, 1);
+#endif 
                 local2Global[k] = alpha;
             }
             loc.completeRHS(*eIt, local2Global, f);

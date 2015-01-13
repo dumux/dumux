@@ -126,7 +126,11 @@ public:
         {
             if(eIt->partitionType() == Dune::InteriorEntity)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int eIdx = this->problem_().model().elementMapper().index(*eIt);
+#else
             int eIdx = this->problem_().model().elementMapper().map(*eIt);
+#endif
             rank[eIdx] = this->gridView_().comm().rank();
 
             fvGeometry.update(this->gridView_(), *eIt);
@@ -134,7 +138,11 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int vIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dim);
+#else
                 int vIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dim);
+#endif
 
                 volVars.update(sol[vIdxGlobal],
                                this->problem_(),

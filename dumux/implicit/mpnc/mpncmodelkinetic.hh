@@ -23,6 +23,7 @@
 #ifndef DUMUX_MPNC_MODEL_KINETIC_HH
 #define DUMUX_MPNC_MODEL_KINETIC_HH
 
+#include <dune/common/version.hh>
 // equilibrium model
 #include <dumux/implicit/mpnc/mpncmodel.hh>
 
@@ -157,10 +158,18 @@ public:
             this->updateCurHints(*eIt, elemVolVars);
             for (int fIdx = 0; fIdx < fvGeometry.numScvf; ++ fIdx) {
                 int i = fvGeometry.subContVolFace[fIdx].i;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int I = this->vertexMapper().subIndex(*eIt, i, dim);
+#else 
                 int I = this->vertexMapper().map(*eIt, i, dim);
+#endif
 
                 int j = fvGeometry.subContVolFace[fIdx].j;
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int J = this->vertexMapper().subIndex(*eIt, j, dim);
+#else 
                 int J = this->vertexMapper().map(*eIt, j, dim);
+#endif 
 
                 const Scalar scvfArea     = fvGeometry.subContVolFace[fIdx].normal.two_norm();
                 boxSurface_[I]      += scvfArea;

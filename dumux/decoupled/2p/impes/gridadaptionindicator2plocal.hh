@@ -19,6 +19,7 @@
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2PLOCAL_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2PLOCAL_HH
 
+#include <dune/common/version.hh>
 #include <dumux/decoupled/common/impetproperties.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
 
@@ -229,7 +230,11 @@ public:
      */
     bool refine(const Element& element)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        return (indicatorVector_[problem_.elementMapper().index(element)] > refineBound_);
+#else
         return (indicatorVector_[problem_.elementMapper().map(element)] > refineBound_);
+#endif
     }
 
     /*! \brief Indicator function for marking of grid cells for coarsening
@@ -240,7 +245,11 @@ public:
      */
     bool coarsen(const Element& element)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        return (indicatorVector_[problem_.elementMapper().index(element)] < coarsenBound_);
+#else
         return (indicatorVector_[problem_.elementMapper().map(element)] < coarsenBound_);
+#endif
     }
 
     /*! \brief Initializes the adaption indicator class*/

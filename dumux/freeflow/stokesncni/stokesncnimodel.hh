@@ -138,7 +138,11 @@ public:
         ElementIterator endit = this->gridView_().template end<0>();
         for (; elemIt != endit; ++elemIt)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int idx = this->elementMapper().index(*elemIt);
+#else
             int idx = this->elementMapper().map(*elemIt);
+#endif
             rank[idx] = this->gridView_().comm().rank();
 			
             fvGeometry.update(this->gridView_(), *elemIt);
@@ -151,7 +155,11 @@ public:
 #endif
             for (int i = 0; i < numLocalVerts; ++i)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int vIdxGlobal = this->vertexMapper().subIndex(*elemIt, i, dim);
+#else
                 int vIdxGlobal = this->vertexMapper().map(*elemIt, i, dim);
+#endif
                 volVars.update(sol[vIdxGlobal],
                                this->problem_(),
                                *elemIt,

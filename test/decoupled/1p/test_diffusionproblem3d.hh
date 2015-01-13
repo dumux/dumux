@@ -29,6 +29,7 @@
 #elif HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
+#include <dune/common/version.hh>
 #include <dune/grid/uggrid.hh>
 #include <dumux/material/components/unit.hh>
 
@@ -182,7 +183,11 @@ public:
         ElementIterator eEndIt = this->gridView().template end<0>();
         for(;eIt != eEndIt; ++eIt)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            (*exactPressure)[this->elementMapper().index(*eIt)][0] = exact(eIt->geometry().center());
+#else
             (*exactPressure)[this->elementMapper().map(*eIt)][0] = exact(eIt->geometry().center());
+#endif
         }
 
         this->resultWriter().attachCellData(*exactPressure, "exact pressure");

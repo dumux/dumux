@@ -30,6 +30,7 @@
 #include <sstream>
 #include <iomanip>
 
+#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/gridfactory.hh>
 
@@ -532,7 +533,11 @@ public:
               // Loop over element faces
               for (int i = 0; i < refElement.size(1); i++)
               {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                  int indexFace = faceMapper_.subIndex(*eIt, i, 1);
+#else 
                   int indexFace = faceMapper_.map(*eIt, i, 1);
+#endif
                   /*
                   * it maps the local element vertices "localV1Idx" -> indexVertex1
                   * then it gets the coordinates of the nodes in the ART file and
@@ -540,8 +545,17 @@ public:
                   */
                   int localV1Idx = refElement.subEntity(i, 1, 0, dim);
                   int localV2Idx = refElement.subEntity(i, 1, 1, dim);
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                  int indexVertex1 = vertexMapper_.subIndex(*eIt, localV1Idx, dim);
+#else 
                   int indexVertex1 = vertexMapper_.map(*eIt, localV1Idx, dim);
+#endif
+
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                  int indexVertex2 = vertexMapper_.subIndex(*eIt, localV2Idx, dim);
+#else 
                   int indexVertex2 = vertexMapper_.map(*eIt, localV2Idx, dim);
+#endif
                   Dune::FieldVector<DT, dim> nodeART_from;
                   Dune::FieldVector<DT, dim> nodeART_to;
                   Dune::FieldVector<DT, dim> nodeDune_from;

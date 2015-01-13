@@ -25,6 +25,8 @@
 #ifndef DUMUX_3P3C_VOLUME_VARIABLES_HH
 #define DUMUX_3P3C_VOLUME_VARIABLES_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/implicit/common/implicitmodel.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
@@ -125,8 +127,11 @@ public:
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
+#else
         int dofIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dofCodim);
-
+#endif
         int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
 
         Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);

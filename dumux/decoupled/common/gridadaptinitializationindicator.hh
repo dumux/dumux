@@ -22,6 +22,7 @@
 #include "decoupledproperties.hh"
 
 #include <dune/common/dynvector.hh>
+#include <dune/common/version.hh>
 
 /**
  * @file
@@ -317,7 +318,11 @@ public:
      */
     bool refine(const Element& element)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int idx = problem_.elementMapper().index(element);
+#else
         int idx = problem_.elementMapper().map(element);
+#endif
         if (indicatorVector_[idx] == refineCell)
             return true;
         else if (maxLevel_ == maxAllowedLevel_)
@@ -334,7 +339,11 @@ public:
      */
     bool coarsen(const Element& element)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int idx = problem_.elementMapper().index(element);
+#else
         int idx = problem_.elementMapper().map(element);
+#endif
         if (indicatorVector_[idx] == coarsenCell && maxLevel_ < maxAllowedLevel_)
             return true;
         else if (indicatorVector_[idx] == coarsenCell && !adaptionIndicator_.refine(element))

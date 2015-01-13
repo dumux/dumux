@@ -19,6 +19,7 @@
 #ifndef DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_HH
 
+#include <dune/common/version.hh>
 // dumux environment
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 #include <dumux/decoupled/common/fv/fvpressure.hh>
@@ -568,7 +569,11 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(*eIt, vIdx, dim);
+#else
             int vIdxGlobal = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
+#endif
 
             InteractionVolume& interactionVolume = interactionVolumes_.interactionVolume(vIdxGlobal);
 
@@ -609,7 +614,11 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(*eIt, vIdx, dim);
+#else
             int vIdxGlobal = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
+#endif
 
             InteractionVolume& interactionVolume = interactionVolumes_.interactionVolume(vIdxGlobal);
             for (int subVolumeIdx = 0; subVolumeIdx < InteractionVolume::subVolumeTotalNum; subVolumeIdx++)

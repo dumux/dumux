@@ -24,6 +24,7 @@
 #ifndef DUMUX_EL1P2C_LOCAL_JACOBIAN_HH
 #define DUMUX_EL1P2C_LOCAL_JACOBIAN_HH
 
+#include <dune/common/version.hh>
 #include <dumux/implicit/common/implicitlocaljacobian.hh>
 
 namespace Dumux
@@ -112,13 +113,23 @@ public:
         ElementPointer neighbor(this->element_());
         if (isBox)
         {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            dofIdxGlobal = this->vertexMapper_().subIndex(this->element_(), col, dim);
+#else
             dofIdxGlobal = this->vertexMapper_().map(this->element_(), col, dim);
+#endif
+
         }
         else
         {
             neighbor = this->fvElemGeom_.neighbors[col];
             neighborFVGeom.updateInner(*neighbor);
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+            dofIdxGlobal = this->problemPtr_->elementMapper().index(*neighbor);
+#else
             dofIdxGlobal = this->problemPtr_->elementMapper().map(*neighbor);
+#endif
+
         }
 
         PrimaryVariables priVars(this->model_().curSol()[dofIdxGlobal]);

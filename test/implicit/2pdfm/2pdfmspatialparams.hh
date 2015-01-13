@@ -23,6 +23,8 @@
 #ifndef DUMUX_TEST_2PDFM_SPATIAL_PARAMETERS_HH
 #define DUMUX_TEST_2PDFM_SPATIAL_PARAMETERS_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/implicit/2pdfm/2pdfmmodel.hh>
 #include <dumux/io/artgridcreator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -216,7 +218,11 @@ public:
                                                     const FVElementGeometry &fvGeometry,
                                                     int scvIdx) const
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        DUNE_UNUSED int vIdxGlobal = vertexMapper_.subIndex(element, scvIdx, dim);
+#else
         DUNE_UNUSED int vIdxGlobal = vertexMapper_.map(element, scvIdx, dim);
+#endif
 
         // be picky if called for non-fracture vertices
         assert(isVertexFracture(vIdxGlobal));
@@ -236,7 +242,11 @@ public:
         {
             return false;
         }
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int vIdxGlobal = vertexMapper_.subIndex(element, localVertexIdx, dim);
+#else
         int vIdxGlobal = vertexMapper_.map(element, localVertexIdx, dim);
+#endif
         return fractureMapper_.isDuneFractureVertex(vIdxGlobal);
     }
 
@@ -262,7 +272,11 @@ public:
      */
     bool isEdgeFracture(const Element &element, int localFaceIdx) const
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int fIdxGlobal = faceMapper_.subIndex(element, localFaceIdx, 1);
+#else
         int fIdxGlobal = faceMapper_.map(element, localFaceIdx, 1);
+#endif
         return fractureMapper_.isDuneFractureEdge(fIdxGlobal);
     }
 

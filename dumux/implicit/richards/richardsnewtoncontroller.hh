@@ -23,6 +23,8 @@
 #ifndef DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 #define DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 
+#include <dune/common/version.hh>
+
 #include "richardsproperties.hh"
 
 #include <dumux/nonlinear/newtoncontroller.hh>
@@ -97,7 +99,11 @@ public:
                 fvGeometry.update(gridView, *eIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                    int dofIdxGlobal = this->model_().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+#else
                     int dofIdxGlobal = this->model_().dofMapper().map(*eIt, scvIdx, dofCodim);
+#endif
 
                     // calculate the old wetting phase saturation
                     const SpatialParams &spatialParams = this->problem_().spatialParams();
