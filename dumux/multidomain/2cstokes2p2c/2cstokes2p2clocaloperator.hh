@@ -33,6 +33,7 @@
 #include <dune/pdelab/localoperator/idefault.hh>
 
 #include <dumux/multidomain/common/multidomainproperties.hh>
+#include <dumux/multidomain/2cstokes2p2c/2cstokes2p2cpropertydefaults.hh>
 #include <dumux/freeflow/stokesnc/stokesncmodel.hh>
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
 
@@ -129,23 +130,13 @@ class TwoCStokesTwoPTwoCLocalOperator :
     TwoCStokesTwoPTwoCLocalOperator(GlobalProblem& globalProblem)
         : globalProblem_(globalProblem)
     {
-        try
-        {
-            blModel_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, UseBoundaryLayerModel);
-            massTransferModel_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, MassTransferModel);
-        }
-        catch (...) {
-            blModel_ = 0;
-            massTransferModel_ = 1;
-            std::cout << "For using the mass transfer model, the following paremeters have to be set:\n";
-            std::cout << "FreeFlow.UseBoundaryLayerModel\n";
-            std::cout << "FreeFlow.MassTransferModel\n";
-        }
+        blModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, BoundaryLayerModel);
+        massTransferModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, MassTransferModel);
 
-        if (massTransferModel_ == 1)
-            std::cout << "Using power law for mass transfer coefficient\n";
-        else if (massTransferModel_ == 2)
-            std::cout << "Using Schluender model for mass transfer\n";
+        if (blModel_ > 0)
+            std::cout << "Using boundary layer model " << blModel_ << std::endl;
+        if (massTransferModel_ > 0)
+            std::cout << "Using mass transfer model " << massTransferModel_ << std::endl;
     }
 
     // multidomain flags

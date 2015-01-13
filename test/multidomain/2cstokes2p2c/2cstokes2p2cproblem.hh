@@ -36,10 +36,10 @@
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
+#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/multidomain/common/multidomainproblem.hh>
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2clocaloperator.hh>
-#include <dumux/multidomain/2cstokes2p2c/2cstokes2p2cnewtoncontroller.hh>
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+#include <dumux/multidomain/2cstokes2p2c/2cstokes2p2cpropertydefaults.hh>
 #ifdef HAVE_PARDISO
 #include <dumux/linear/pardisobackend.hh>
 #endif // HAVE_PARDISO
@@ -55,7 +55,7 @@ class TwoCStokesTwoPTwoCProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TwoCStokesTwoPTwoCProblem, INHERITS_FROM(MultiDomain));
+NEW_TYPE_TAG(TwoCStokesTwoPTwoCProblem, INHERITS_FROM(TwoCStokesTwoPTwoC));
 
 // Set the grid type
 SET_PROP(TwoCStokesTwoPTwoCProblem, Grid)
@@ -70,16 +70,12 @@ SET_PROP(TwoCStokesTwoPTwoCProblem, Grid)
 #endif
 };
 
-// Specify the multidomain gridview
-SET_PROP(TwoCStokesTwoPTwoCProblem, GridView)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
- public:
-    typedef typename MDGrid::LeafGridView type;
-};
-
 // Set the global problem
 SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, Problem, Dumux::TwoCStokesTwoPTwoCProblem<TypeTag>);
+
+// Set the local coupling operator
+SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, MultiDomainCouplingLocalOperator,
+              Dumux::TwoCStokesTwoPTwoCLocalOperator<TypeTag>);
 
 // Set the two sub-problems of the global problem
 SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, SubDomain1TypeTag, TTAG(Stokes2cSubProblem));
@@ -107,34 +103,12 @@ SET_PROP(TwoCStokesTwoPTwoCProblem, FluidSystem)
         /*useComplexrelations=*/false> type;
 };
 
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, JacobianAssembler, Dumux::MultiDomainAssembler<TypeTag>);
-
-// Set the local coupling operator
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, MultiDomainCouplingLocalOperator, Dumux::TwoCStokesTwoPTwoCLocalOperator<TypeTag>);
-
-SET_PROP(TwoCStokesTwoPTwoCProblem, SolutionVector)
-{
- private:
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGridOperator) MDGridOperator;
- public:
-    typedef typename MDGridOperator::Traits::Domain type;
-};
-
-// newton controller
-SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, NewtonController, Dumux::TwoCStokesTwoPTwoCNewtonController<TypeTag>);
-
 // if you do not have PARDISO, the SuperLU solver is used:
 #ifdef HAVE_PARDISO
 SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, LinearSolver, PardisoBackend<TypeTag>);
 #else
 SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, LinearSolver, SuperLUBackend<TypeTag>);
 #endif // HAVE_PARDISO
-
-// set this to one here (must fit to the structure of the coupled matrix which has block length 1)
-SET_INT_PROP(TwoCStokesTwoPTwoCProblem, NumEq, 1);
-
-// Write the solutions of individual newton iterations?
-SET_BOOL_PROP(TwoCStokesTwoPTwoCProblem, NewtonWriteConvergence, false);
 }
 
 /*!
@@ -164,7 +138,6 @@ class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
     typedef MultiDomainProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) Stokes2cTypeTag;

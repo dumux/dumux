@@ -93,10 +93,8 @@ SinusTemperatureAmplitude = 0.0   # 0.5
 SinusTemperaturePeriod = 3600     # in seconds
 BeaversJosephSlipVel = 0.00134
 ExponentMTC = 0.0           # 1./6., Mass transfer coefficient for S^MTC
-UseBoundaryLayerModel = 0   # 0 for no boundary layer model, 1 for Blasius, 2 and 3 for turbulent BL, 9 for constant thickness
 BoundaryLayerOffset = 0.0   # for BL model like Blasius, determines a virtual run-up distance for the flow
 ConstThickness = 0.0016     # for a constant BL thickness, use BL model 9
-MassTransferModel = 0       # 0 for none, 1 for power law, 2 for Schluender model
 
 #############################################################
 [PorousMedium]

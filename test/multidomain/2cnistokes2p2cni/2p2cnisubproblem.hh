@@ -259,9 +259,6 @@ public:
         ParentType::init();
 
         this->model().globalStorage(storageLastTimestep_);
-
-        const int blModel = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, UseBoundaryLayerModel);
-        std::cout << "Using boundary layer model " << blModel << std::endl;
     }
 
     // \}
