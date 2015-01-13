@@ -663,15 +663,27 @@ public:
     { return bBoxMax_; }
 
     /*!
-     * \brief Returns the mapper for vertices to indices.
+     * \brief Returns the mapper for vertices to indices for constant grids.
      */
     const VertexMapper &vertexMapper() const
     { return vertexMapper_; }
 
     /*!
-     * \brief Returns the mapper for elements to indices.
+     * \brief Returns the mapper for elements to indices for constant grids.
      */
     const ElementMapper &elementMapper() const
+    { return elementMapper_; }
+
+    /*!
+     * \brief Returns the mapper for vertices to indices for possibly adaptive grids.
+     */
+    VertexMapper &vertexMapper() 
+    { return vertexMapper_; }
+
+    /*!
+     * \brief Returns the mapper for elements to indices for possibly adaptive grids.
+     */
+    ElementMapper &elementMapper() 
     { return elementMapper_; }
 
     /*!
