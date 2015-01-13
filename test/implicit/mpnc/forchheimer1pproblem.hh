@@ -27,7 +27,6 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/mpnc/mpncmodel.hh>
@@ -283,10 +282,9 @@ public:
      * \param values The boundary types for the conservation equations
      * \param vertex The vertex for which the boundary type is set
      */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
+    void boundaryTypesAtPos(BoundaryTypes &values,
+                            const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos = vertex.geometry().center();
-
         if (onLeftBoundary_(globalPos) or onRightBoundary_(globalPos))
             values.setAllDirichlet();
         else
@@ -303,10 +301,9 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichletAtPos(PrimaryVariables &values,
+                        const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos = vertex.geometry().center();
-
         initial_(values, globalPos);
     }
 
@@ -368,13 +365,9 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const unsigned int scvIdx) const
+    void initialAtPos(PrimaryVariables &values,
+                      const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
         initial_(values, globalPos);
         Valgrind::CheckDefined(values);
     }

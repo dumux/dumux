@@ -65,20 +65,15 @@ public:
 };
 
 // Set the grid type
-SET_PROP(OnePTestProblem, Grid)
-{
-  typedef Dune::YaspGrid<2> type;
-  //typedef Dune::UGGrid<2> type;
-  //typedef Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming> type;
-};
+SET_TYPE_PROP(OnePTestProblem, Grid, Dune::YaspGrid<2>);
+//SET_TYPE_PROP(OnePTestProblem, Grid, Dune::UGGrid<2>);
+//SET_TYPE_PROP(OnePTestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
-SET_PROP(OnePTestProblem, Problem)
-{ typedef Dumux::OnePTestProblem<TypeTag> type; };
+SET_TYPE_PROP(OnePTestProblem, Problem, Dumux::OnePTestProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_PROP(OnePTestProblem, SpatialParams)
-{ typedef Dumux::OnePTestSpatialParams<TypeTag> type; };
+SET_TYPE_PROP(OnePTestProblem, SpatialParams, Dumux::OnePTestSpatialParams<TypeTag> );
 
 // Linear solver settings
 SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );

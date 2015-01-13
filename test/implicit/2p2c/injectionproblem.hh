@@ -184,7 +184,6 @@ public:
         eps_ = 1e-6;
 
         // initialize the tables of the fluid system
-        //FluidSystem::init();
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
                           /*nT=*/nTemperature_,

@@ -26,9 +26,7 @@
 #define DUMUX_OBSTACLE_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 #include <dumux/implicit/mpnc/mpncmodel.hh>
@@ -58,9 +56,8 @@ private:
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     // define the material law
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    //    typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
-        typedef RegularizedLinearMaterial<Scalar> EffMaterialLaw;
-        typedef EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
+    typedef RegularizedLinearMaterial<Scalar> EffMaterialLaw;
+    typedef EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
 public:
     typedef TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> type;
 };
@@ -116,16 +113,6 @@ public:
         coarseMaterialParams_.setEntryPc(0.0);
         fineMaterialParams_.setMaxPc(0.0);
         coarseMaterialParams_.setMaxPc(0.0);
-
-        /*
-        // entry pressures for Brooks-Corey
-        fineMaterialParams_.setPe(5e3);
-        coarseMaterialParams_.setPe(1e3);
-
-        // Brooks-Corey shape parameters
-        fineMaterialParams_.setLambda(2);
-        coarseMaterialParams_.setLambda(2);
-        */
     }
 
     ~ObstacleSpatialParams()

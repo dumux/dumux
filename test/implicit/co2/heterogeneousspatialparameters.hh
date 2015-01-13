@@ -28,7 +28,6 @@
 #define DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -102,9 +101,6 @@ public:
     {
         /*
          * Layer Index Setup:
-         * barrierTop = 1
-         * barrierMiddle = 2
-         * reservoir = 3
          */
         barrierTop_ = 1;
         barrierMiddle_ = 2;
@@ -113,25 +109,15 @@ public:
         // heat conductivity of granite
         lambdaSolid_ = 2.8;
 
-        //Set the permeability tensor for the layers
-        //Scalar anisotropy = 0.1;
-        //for (int i = 0; i < dim; i++)
-            barrierTopK_ = 1e-17; //sqm
-        //barrierTopK_[dim-1][dim-1] = barrierTopK_[0][0]*anisotropy;
-
-        //for (int i = 0; i < dim; i++)
-            barrierMiddleK_ = 1e-15; //sqm
-        //barrierMiddleK_[dim-1][dim-1] = barrierMiddleK_[0][0]*anisotropy;
-
-     //   for (int i = 0; i < dim; i++)
-            reservoirK_ = 1e-14; //sqm
-        //reservoirK_[dim-1][dim-1] = reservoirK_[0][0]*anisotropy;
+        //Set the permeability for the layers
+        barrierTopK_ = 1e-17; //sqm
+        barrierMiddleK_ = 1e-15; //sqm
+        reservoirK_ = 1e-14; //sqm
 
         //Set the effective porosity of the layers
         barrierTopPorosity_ = 0.001;
         barrierMiddlePorosity_ = 0.05;
         reservoirPorosity_ = 0.2;
-
 
         // Same material parameters for every layer
         materialParams_.setSwr(0.2);
@@ -220,7 +206,6 @@ public:
                                                 const FVElementGeometry &fvGeometry,
                                                 int scvIdx) const
     {
-
         return materialParams_;
     }
 
@@ -264,7 +249,6 @@ public:
 
 
 private:
-
 
     int barrierTop_;
     int barrierMiddle_;

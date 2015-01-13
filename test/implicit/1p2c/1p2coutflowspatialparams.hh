@@ -26,9 +26,6 @@
 #define DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicitspatialparams1p.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux
 {
@@ -54,7 +51,6 @@ class OnePTwoCOutflowSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    //typedef LinearMaterial<Scalar> EffMaterialLaw;
 public:
     OnePTwoCOutflowSpatialParams(const GridView &gridView)
         : ParentType(gridView)

@@ -27,9 +27,7 @@
 #define DUMUX_FORCHHEIMER_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 #include <dumux/implicit/mpnc/mpncmodel.hh>
@@ -59,9 +57,8 @@ private:
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     // define the material law
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//        typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
-        typedef RegularizedLinearMaterial<Scalar> EffMaterialLaw;
-        typedef EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
+    typedef RegularizedLinearMaterial<Scalar> EffMaterialLaw;
+    typedef EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
 public:
     typedef TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> type;
 };
@@ -104,7 +101,6 @@ public:
         // the porosity
         porosity_ = 0.3;
 
-
         // residual saturations
         materialParams_.setSwr(0.0);
         materialParams_.setSnr(0.0);
@@ -113,16 +109,6 @@ public:
         // pressures
         materialParams_.setEntryPc(0.0);
         materialParams_.setMaxPc(0.0);
-
-
-        /*
-        // entry pressures for Brooks-Corey
-        materialParams_.setPe(1e3);
-
-        // Brooks-Corey shape parameters
-        materialParams_.setLambda(2);
-        */
-
     }
 
     ~ForchheimerSpatialParams()

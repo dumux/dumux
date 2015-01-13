@@ -329,7 +329,6 @@ public:
             values[pressureIdx] = -darcyVelocity_*elemVolVars[scvIdx].density(swIdx);
             values[temperatureIdx] = -darcyVelocity_*elemVolVars[scvIdx].density(swIdx)
                                      *IapwsH2O::liquidEnthalpy(temperatureHigh_, elemVolVars[scvIdx].pressure(swIdx));
-//            std::cout<<"values[temperatureIdx]: "<<values[temperatureIdx]<<std::endl;
         }
 
     }

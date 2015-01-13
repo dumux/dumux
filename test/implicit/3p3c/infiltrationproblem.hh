@@ -25,7 +25,6 @@
 #ifndef DUMUX_INFILTRATIONPROBLEM_HH
 #define DUMUX_INFILTRATIONPROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
@@ -267,10 +266,6 @@ public:
             values[switch1Idx] = 1.-sgr;
             values[switch2Idx] = 1.e-6;
         }
-
-        //initial_(values, globalPos, element);
-        //const MaterialLawParams& materialParams = this->spatialParams().materialLawParams();
-        //MaterialLaw::pcgw(materialParams, 1.0);
     }
 
     /*!
@@ -306,7 +301,7 @@ public:
         if ((globalPos[0] <= 75.+eps_) && (globalPos[0] >= 50.+eps_) && (globalPos[1] >= 10.-eps_))
         {
             values[contiWEqIdx] = -0.0;
-            values[contiNEqIdx] = -0.001, // /*Molfluss, umr. über M(Mesit.)=0,120 kg/mol --> 1.2e-4  kg/(sm)
+            values[contiNEqIdx] = -0.001, //mole flow, convertion to mass flow with molar mass M(Mesit.)=0,120 kg/mol --> 1.2e-4 kg/(sm)
             values[contiAEqIdx] = -0.0;
         }
     }
@@ -343,7 +338,6 @@ public:
                              int &vIdxGlobal,
                              const GlobalPosition &globalPos) const
     {
-        // return threePhases;
         return wgPhaseOnly;
     }
 
@@ -380,8 +374,7 @@ public:
     }
 
 private:
-    // internal method for the initial condition (reused for the
-    // dirichlet conditions!)
+    // internal method for the initial condition 
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {

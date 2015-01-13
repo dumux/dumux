@@ -30,6 +30,7 @@
 #include <dune/alugrid/grid.hh>
 #else
 #warning ALUGrid is necessary for this test.
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #endif
 
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
@@ -65,19 +66,14 @@ SET_TYPE_PROP(HeterogeneousNIProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_PROP(HeterogeneousNIProblem, Problem)
-{
-    typedef Dumux::HeterogeneousNIProblem<TypeTag> type;
-};
+SET_TYPE_PROP(HeterogeneousNIProblem, Problem, Dumux::HeterogeneousNIProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(HeterogeneousNIProblem, FluidSystem)
-{
-    typedef Dumux::BrineCO2FluidSystem<TypeTag> type;
-};
+SET_TYPE_PROP(HeterogeneousNIProblem, FluidSystem, Dumux::BrineCO2FluidSystem<TypeTag>);
 
 // Set the CO2 table to be used; in this case not the the default table
 SET_TYPE_PROP(HeterogeneousNIProblem, CO2Table, Dumux::Heterogeneous::CO2Tables);
+
 // Set the salinity mass fraction of the brine in the reservoir
 SET_SCALAR_PROP(HeterogeneousNIProblem, ProblemSalinity, 1e-1);
 
@@ -229,7 +225,6 @@ public:
         eps_ = 1e-6;
 
         // initialize the tables of the fluid system
-        //FluidSystem::init();
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
                           /*nT=*/nTemperature_,
@@ -440,7 +435,7 @@ public:
      * Negative values indicate an inflow.
      *
      * Depending on whether useMoles is set on true or false, the flux has to be given either in
-     * kg/(m^2*s) or mole/(m^2*s) in the input file!!
+     * kg/(m^2*s) or mole/(m^2*s) in the input file!! Convert dividing by molar mass from the fluid system FluidSystem::molarMass(CO2Idx)
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -454,7 +449,7 @@ public:
         values = 0;
         if (boundaryId == injectionBottom_)
         {
-            values[contiCO2EqIdx] = -injectionRate_; ///FluidSystem::molarMass(CO2Idx); // kg/(s*m^2) or mole/(m^2*s) !!
+            values[contiCO2EqIdx] = -injectionRate_; // see above comment: kg/(s*m^2) or mole/(m^2*s) depending on useMoles!!
 #if !ISOTHERMAL
             values[energyEqIdx] = -injectionRate_/*kg/(m^2 s)*/*CO2::gasEnthalpy(
                                     injectionTemperature_, injectionPressure_)/*J/kg*/; // W/(m^2)

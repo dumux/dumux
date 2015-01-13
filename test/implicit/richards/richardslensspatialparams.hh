@@ -26,7 +26,6 @@
 
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 #include <dumux/implicit/richards/richardsmodel.hh>
@@ -111,13 +110,6 @@ public:
         lensMaterialParams_.setVgn(7.3);
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgn(4.7);
-
-        // parameters for the linear law
-        // minimum and maximum pressures
-//        lensMaterialParams_.setEntryPc(0);
-//        outerMaterialParams_.setEntryPc(0);
-//        lensMaterialParams_.setMaxPc(0);
-//        outerMaterialParams_.setMaxPc(0);
 
         lensK_ = 1e-12;
         outerK_ = 5e-12;

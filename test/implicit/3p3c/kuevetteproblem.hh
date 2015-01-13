@@ -26,7 +26,6 @@
 #ifndef DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 #define DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
@@ -65,9 +64,6 @@ SET_BOOL_PROP(KuevetteProblem, ProblemEnableGravity, true);
 
 // Use central differences (backward -1, forward +1)
 SET_INT_PROP(KuevetteProblem, ImplicitNumericDifferenceMethod, 0);
-
-// Write newton convergence
-//SET_BOOL_PROP(KuevetteProblem, NewtonWriteConvergence, true);
 
 // Set the maximum time step
 SET_SCALAR_PROP(KuevetteProblem, TimeManagerMaxTimeStepSize, 60.);

@@ -30,6 +30,7 @@
 #include <dune/alugrid/grid.hh>
 #else
 #warning ALUGrid is necessary for this test.
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #endif
 
 #include <dumux/implicit/co2/co2model.hh>
@@ -54,20 +55,6 @@ NEW_TYPE_TAG(HeterogeneousProblem, INHERITS_FROM(TwoPTwoC, HeterogeneousSpatialP
 NEW_TYPE_TAG(HeterogeneousBoxProblem, INHERITS_FROM(BoxModel, HeterogeneousProblem));
 NEW_TYPE_TAG(HeterogeneousCCProblem, INHERITS_FROM(CCModel, HeterogeneousProblem));
 
-//NEW_PROP_TAG(BaseProblem);
-//SET_TYPE_PROP(HeterogeneousBoxProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
-//SET_TYPE_PROP(HeterogeneousCCProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
-//// Set the grid type
-//SET_PROP(HeterogeneousProblem, Grid)
-//{
-//    //typedef Dune::UGGrid<2> type;
-//#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
-//    typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
-//#else
-//#warning If you want to run this problem, install and use ALUGrid.
-//#endif
-//};
-
 // Set the grid type
 #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
@@ -76,19 +63,14 @@ SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_PROP(HeterogeneousProblem, Problem)
-{
-    typedef Dumux::HeterogeneousProblem<TypeTag> type;
-};
+SET_TYPE_PROP(HeterogeneousProblem, Problem, Dumux::HeterogeneousProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(HeterogeneousProblem, FluidSystem)
-{
-    typedef Dumux::BrineCO2FluidSystem<TypeTag> type;
-};
+SET_TYPE_PROP(HeterogeneousProblem, FluidSystem, Dumux::BrineCO2FluidSystem<TypeTag>);
 
 // Set the CO2 table to be used; in this case not the the default table
 SET_TYPE_PROP(HeterogeneousProblem, CO2Table, Dumux::HeterogeneousCO2Tables::CO2Tables);
+
 // Set the salinity mass fraction of the brine in the reservoir
 SET_SCALAR_PROP(HeterogeneousProblem, ProblemSalinity, 1e-1);
 
@@ -233,7 +215,6 @@ public:
         eps_ = 1e-6;
 
         // initialize the tables of the fluid system
-        //FluidSystem::init();
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
                           /*nT=*/nTemperature_,
@@ -434,7 +415,7 @@ public:
      * Negative values indicate an inflow.
      *
      * Depending on whether useMoles is set on true or false, the flux has to be given either in
-     * kg/(m^2*s) or mole/(m^2*s) in the input file!!
+     * kg/(m^2*s) or mole/(m^2*s) in the input file!! Convertion with molar mass obtained from fluid system FluidSystem::molarMass(nCompIdx)
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -448,7 +429,7 @@ public:
         values = 0;
         if (boundaryId == injectionBottom_)
         {
-            values[contiCO2EqIdx] = -injectionRate_; ///FluidSystem::molarMass(nCompIdx); // kg/(s*m^2) or mole/(m^2*s) !!
+            values[contiCO2EqIdx] = -injectionRate_; //see above: either give in kg/(m^2*s) or mole/(m^2*s) depending on useMoles
         }
     }
 

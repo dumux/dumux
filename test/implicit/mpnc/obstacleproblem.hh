@@ -27,7 +27,6 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/mpnc/mpncmodel.hh>
@@ -173,7 +172,7 @@ public:
         : ParentType(timeManager, gridView)
     {
         eps_ = 1e-6;
-        temperature_ = 273.15 + 25; // -> 25DegC
+        temperature_ = 273.15 + 25; // -> 25°C
 
         // initialize the tables of the fluid system
         Scalar Tmin = temperature_ - 1.0;

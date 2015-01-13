@@ -70,7 +70,6 @@ class ThreePNISpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    //typedef LinearMaterial<Scalar> EffMaterialLaw;
 public:
   
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -87,7 +86,6 @@ public:
 	
 	
         // residual saturations
-
         materialParams_.setSwr(0.12);
         materialParams_.setSwrx(0.12);
         materialParams_.setSnr(0.10);
@@ -129,7 +127,7 @@ public:
                                        const FVElementGeometry &fvGeometry,
                                        const int scvIdx) const
     {
-            return permeability_;
+        return permeability_;
     }
 
     /*!
@@ -143,7 +141,7 @@ public:
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
     {
-            return porosity_;
+        return porosity_;
     }
     
         /*!
@@ -157,7 +155,7 @@ public:
                                                const FVElementGeometry &fvGeometry,
                                                const int scvIdx) const
     {
-	return materialParams_;
+		return materialParams_;
     }
 
 

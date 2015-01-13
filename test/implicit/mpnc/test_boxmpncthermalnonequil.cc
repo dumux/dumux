@@ -21,9 +21,7 @@
  */
 #include "config.h"
 
-//#include "combustionproblem.hh"
 #include "combustionproblem1c.hh"
-
 
 #include <dumux/common/start.hh>
 
@@ -59,8 +57,13 @@ void usage(const char *progName, const std::string &errorMsg)
 }
 
 int main(int argc, char** argv)
-{
-//    typedef TTAG(CombustionProblem) ProblemTypeTag;
-    typedef TTAG(CombustionProblemOneComponent) ProblemTypeTag;
-    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+{   
+#if HAVE_SUPERLU
+  typedef TTAG(CombustionProblemOneComponent) ProblemTypeTag;
+  return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+#else
+#warning CombustionProblemOneComponent skipped, needs Super LU!
+  return 77;
+#endif
+    
 }

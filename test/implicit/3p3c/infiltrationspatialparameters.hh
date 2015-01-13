@@ -168,11 +168,6 @@ public:
                     const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
-        //const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        // if (isFineMaterial_(globalPos))
-        //     return finePorosity_;
-        // else
-        //     return coarsePorosity_;
         return Porosity_;
     }
 
@@ -188,11 +183,6 @@ public:
                                                const FVElementGeometry &fvGeometry,
                                                int scvIdx) const
     {
-        //const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        //if (isFineMaterial_(globalPos))
-        //return fineMaterialParams_;
-        //else
-        //return coarseMaterialParams_;
         return MaterialParams_;
     }
 

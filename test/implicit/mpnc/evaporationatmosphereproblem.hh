@@ -94,15 +94,6 @@ SET_PROP(EvaporationAtmosphereProblem, Grid)
 #endif
 };
 
-//#if HAVE_SUPERLU
-//SET_TYPE_PROP(EvaporationAtmosphereProblem, LinearSolver, SuperLUBackend<TypeTag>);
-//#else
-//#warning  "Evaporation Atmosphere skipped, needs Super LU." << std::endl;
-//return 77;
-//#endif
-
-//SET_TYPE_PROP(EvaporationAtmosphereProblem, LinearSolver, Dumux::BoxCGGSSolver<TypeTag> );
-
 // Set the problem property
 SET_TYPE_PROP(EvaporationAtmosphereProblem,
               Problem,
@@ -452,11 +443,9 @@ public:
      * \param bTypes The boundarytypes types for the conservation equations
      * \param vertex The vertex for which the boundary type is set
      */
-    void boundaryTypes(BoundaryTypes & bTypes,
-                        const Vertex & vertex) const
+    void boundaryTypesAtPos(BoundaryTypes &bTypes,
+                            const GlobalPosition &globalPos) const
     {
-        const GlobalPosition & globalPos = vertex.geometry().center();
-
         // Default: Neumann
         bTypes.setAllNeumann();
 
@@ -464,9 +453,6 @@ public:
         if(onRightBoundary_(globalPos) and this->spatialParams().inFF_(globalPos) )
         {
             bTypes.setAllOutflow();
-//            values.setDirichlet(S0Idx);
-//            values.setDirichlet(p0Idx);
-//            values.setAllDirichlet();
         }
 
         // Put a dirichlet somewhere: we need this for convergence
@@ -495,10 +481,9 @@ public:
      * \param vertex The vertex for which the boundary type is set
      *
      */
-    void dirichlet(PrimaryVariables & priVars,
-                   const Vertex & vertex) const
+    void dirichletAtPos(PrimaryVariables &priVars,
+                        const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
     	initial_(priVars, globalPos);
     }
 
@@ -530,8 +515,8 @@ public:
         // distinction via vertex works better in this case, because this is also how the
         // permeabilities & co are defined. This way there is only injection in the free flow and
         // not also in the last porous medium node.
-        const GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-
+        const GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global;
+    
         priVars = 0.0;
 
         const Scalar massFluxInjectedPhase = massFluxInjectedPhase_ ;
@@ -613,13 +598,9 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    void initial(PrimaryVariables & priVars,
-                 const Element & element,
-                 const FVElementGeometry & fvGeometry,
-                 const unsigned int scvIdx) const
+    void initialAtPos(PrimaryVariables &priVars,
+                      const GlobalPosition &globalPos) const
     {
-        const GlobalPosition & globalPos = element.geometry().corner(scvIdx);
-
         initial_(priVars, globalPos);
     }
 
@@ -692,15 +673,7 @@ private:
 
         Scalar p[numPhases];
         if (this->spatialParams().inPM_(globalPos)){
-            // hydrostatic distribution for initial water pressure distribution
-            // This should work better. Alas: it doesn't.
-            // The same pressure distribution arises, but with initially no hydrostatics prescribed
-            // much better convergence is achieved.
-//             const Scalar densityW = 998.23; // from first timestep result
-//             p[wPhaseIdx] = pnInitial_  + densityW*(-1)*this->gravity()[dim-1]*(this->spatialParams().heightPM()
-//                                                                                - globalPos[dim-1]) - std::abs(capPress[wPhaseIdx]);
-
-            // Therefore: use homogenous pressure in the domain and let the newton find the pressure distribution
+            // Use homogenous pressure in the domain and let the newton find the pressure distribution
             p[wPhaseIdx] = pnInitial_  - std::abs(capPress[wPhaseIdx]);
             p[nPhaseIdx] = p[wPhaseIdx] + std::abs(capPress[wPhaseIdx]);
         }
@@ -710,13 +683,7 @@ private:
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
-
-//        // In case we wanted to have elevated pressure on inflow for a dirichlet BC
-//        if(onLeftBoundary_(globalPos) and (this->spatialParams().inFF_(globalPos)))
-//        {
-//            p[nPhaseIdx]    = pnInjection_ ;
-//        }
-
+        
         if(pressureFormulation == mostWettingFirst){
             // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pw

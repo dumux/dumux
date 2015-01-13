@@ -127,13 +127,6 @@ public:
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgn(4.7);
 
-        // parameters for the linear law
-        // minimum and maximum pressures
- //        lensMaterialParams_.setEntryPc(0);
-//        outerMaterialParams_.setEntryPc(0);
-//        lensMaterialParams_.setMaxPc(0);
-//        outerMaterialParams_.setMaxPc(0);
-
         lensK_ = 9.05e-12;
         outerK_ = 4.6e-10;
     }

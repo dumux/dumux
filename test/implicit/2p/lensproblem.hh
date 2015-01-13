@@ -38,8 +38,6 @@
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/cellcentered/ccpropertydefaults.hh>
 
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
-
 #include "lensspatialparams.hh"
 
 namespace Dumux
@@ -67,8 +65,6 @@ SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(LensProblem, Problem, Dumux::LensProblem<TypeTag>);
 
-// TODO: remove this macro switch
-#if 1
 // Set the wetting phase
 SET_PROP(LensProblem, WettingPhase)
 {
@@ -86,10 +82,6 @@ private:
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
 };
-#else
-// OR: set the fluid system
-SET_TYPE_PROP(LensProblem, FluidSystem, H2ON2FluidSystem<TypeTag>);
-#endif
 
 // Enable partial reassembly of the jacobian matrix?
 SET_BOOL_PROP(LensProblem, ImplicitEnablePartialReassemble, true);

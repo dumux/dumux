@@ -40,9 +40,8 @@ namespace Dumux
 template <class TypeTag>
 class RichardsLensProblem;
 
-//////////
+
 // Specify the properties for the lens problem
-//////////
 namespace Properties
 {
 NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(Richards, RichardsLensSpatialParams));
@@ -53,8 +52,7 @@ NEW_TYPE_TAG(RichardsLensCCProblem, INHERITS_FROM(CCModel, RichardsLensProblem))
 SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_PROP(RichardsLensProblem, Problem)
-{ typedef Dumux::RichardsLensProblem<TypeTag> type; };
+SET_TYPE_PROP(RichardsLensProblem, Problem, Dumux::RichardsLensProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(RichardsLensProblem, WettingPhase)
@@ -203,6 +201,12 @@ public:
                              const int scvIdx) const
     { return pnRef_; };
 
+    /*!
+     * \brief Return the sources within the domain.
+     *
+     * \param values Stores the source values, acts as return value
+     * \param globalPos The global position
+     */
     void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
     {
@@ -267,7 +271,7 @@ public:
         values = 0.0;
         if (onInlet_(globalPos)) {
             // inflow of water
-            values[contiEqIdx] = -0.04; // kg / (m * s)
+            values[contiEqIdx] = -0.04; // kg/(m*s)
         }
     }
 

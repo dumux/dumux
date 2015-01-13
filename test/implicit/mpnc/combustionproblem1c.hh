@@ -68,22 +68,23 @@ NEW_TYPE_TAG(CombustionProblemOneComponent,
 		INHERITS_FROM(BoxMPNCKinetic, CombustionSpatialParams));
 
 // Set the grid type
-SET_PROP(CombustionProblemOneComponent, Grid){
-typedef typename Dune::OneDGrid type;
-};
+SET_TYPE_PROP(CombustionProblemOneComponent, Grid, Dune::OneDGrid);
 
-SET_TYPE_PROP(CombustionProblemOneComponent, LinearSolver,
-		SuperLUBackend<TypeTag>);
+#if HAVE_SUPERLU
+SET_TYPE_PROP(CombustionProblemOneComponent, LinearSolver, SuperLUBackend<TypeTag>);
+#endif
 
 // Set the problem property
-SET_TYPE_PROP		(CombustionProblemOneComponent,
+SET_TYPE_PROP(CombustionProblemOneComponent,
 				Problem,
 				Dumux::CombustionProblemOneComponent<TTAG(CombustionProblemOneComponent)>);
 
 // Set fluid configuration
 SET_PROP(CombustionProblemOneComponent, FluidSystem){
-private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*useComplexRelations=*/false> type;
+private: 
+	typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public: 
+	typedef Dumux::FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*useComplexRelations=*/false> type;
 };
 
 // Set the newton controller
@@ -125,16 +126,14 @@ SET_BOOL_PROP(CombustionProblemOneComponent, ImplicitEnableJacobianRecycling, tr
 SET_BOOL_PROP(CombustionProblemOneComponent, NewtonWriteConvergence, false);
 
 //! Franz Lindners simple lumping
-SET_PROP(CombustionProblemOneComponent, ThermalConductivityModel){
-public: typedef ThermalConductivitySimpleFluidLumping<TypeTag> type;
-};
+SET_TYPE_PROP(CombustionProblemOneComponent, ThermalConductivityModel, ThermalConductivitySimpleFluidLumping<TypeTag>);
 
 //#################
 // Which Code to compile
 // Specify whether there is any energy equation
 SET_BOOL_PROP(CombustionProblemOneComponent, EnableEnergy, true);
 // Specify whether the kinetic energy module is used
-SET_INT_PROP(CombustionProblemOneComponent, NumEnergyEquations, 2 );
+SET_INT_PROP(CombustionProblemOneComponent, NumEnergyEquations, 2);
 // Specify whether the kinetic mass module is use
 SET_BOOL_PROP(CombustionProblemOneComponent, EnableKinetic, false);
 //#################
@@ -144,10 +143,14 @@ SET_BOOL_PROP(CombustionProblemOneComponent, EnableKinetic, false);
  *        store the thermodynamic state. This has to be chosen
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  */
-SET_PROP(CombustionProblemOneComponent, FluidState){
-private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-private: typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-public: typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+SET_PROP(CombustionProblemOneComponent, FluidState)
+{
+private: 
+	typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+private: 
+	typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+public: 
+	typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
 SET_BOOL_PROP(CombustionProblemOneComponent, UseMaxwellDiffusion, false);
@@ -441,10 +444,9 @@ public:
 	 * \param bTypes The bounentraldary types for the conservation equations
 	 * \param vertex The vertex for which the boundary type is set
 	 */
-	void boundaryTypes(BoundaryTypes & bTypes, const Vertex &vertex) const
+	void boundaryTypesAtPos(BoundaryTypes &bTypes,
+                            const GlobalPosition &globalPos) const
 	{
-		const GlobalPosition & globalPos = vertex.geometry().center();
-
 		// Default: Neumann
 		bTypes.setAllNeumann();
 
@@ -463,9 +465,9 @@ public:
 	 *
 	 * For this method, the \a values parameter stores primary variables.
 	 */
-	void dirichlet(PrimaryVariables &priVars, const Vertex &vertex) const
+	void dirichletAtPos(PrimaryVariables &priVars,
+                        const GlobalPosition &globalPos) const
 	{
-		const GlobalPosition globalPos = vertex.geometry().center();
 		initial_(priVars, globalPos);
 	}
 
@@ -584,13 +586,9 @@ public:
 	 * \param scvIdx The local index of the sub-control volume
 	 *
 	 */
-	void initial(PrimaryVariables &values,
-			const Element &element,
-			const FVElementGeometry &fvGeometry,
-			const unsigned int scvIdx) const
+	void initialAtPos(PrimaryVariables &values,
+                      const GlobalPosition &globalPos) const
 	{
-		const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
 		initial_(values, globalPos);
 	}
 
