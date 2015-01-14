@@ -1,13 +1,3 @@
-###############################################################
-# Parameter file for test_navierstokes.
-# Everything behind a '#' is a comment.
-# Type "./test_navierstokes --help" for more information.
-###############################################################
-
-###############################################################
-# Mandatory arguments
-###############################################################
-
 [TimeManager]
 DtInitial = 1.0 # [s]
 MaxTimeStepSize = 10.0 # [s]
@@ -16,14 +6,3 @@ TEnd = 30.0 # [s]
 [Grid]
 File = ./grids/test_navierstokes.dgf
 
-###############################################################
-# Simulation restart
-#
-# DuMux simulations can be restarted from *.drs files
-# Set Restart to the value of a specific file, 
-# e.g.:  'Restart = 27184.1' for the restart file
-# name_time=27184.1_rank=0.drs
-# Please comment in the two lines below, if restart is desired.
-###############################################################
-# [TimeManager]
-# Restart = ... 

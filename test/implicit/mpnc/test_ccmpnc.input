@@ -1,19 +1,9 @@
-###############################################################
-# Parameter file for test_mpnc.
-# Everything behind a '#' is a comment.
-# Type "./test_mpnc --help" for more information.
-###############################################################
-
-###############################################################
-# Mandatory arguments
-###############################################################
-
 [TimeManager]
 DtInitial = 250 # [s]
 TEnd = 1e4 # [s]
 
 [Grid]
-File = ./grids/obstacle_24x16.dgf 
+File = ./grids/obstacle_24x16.dgf
 
 [LinearSolver]
 ResidualReduction = 1e-12
@@ -21,14 +11,3 @@ ResidualReduction = 1e-12
 [Problem]
 Name = obstaclecc
 
-###############################################################
-# Simulation restart
-#
-# DuMux simulations can be restarted from *.drs files
-# Set Restart to the value of a specific file, 
-# e.g.:  'Restart = 27184.1' for the restart file
-# name_time=27184.1_rank=0.drs
-# Please comment in the two lines below, if restart is desired.
-###############################################################
-# [TimeManager]
-# Restart = ... 

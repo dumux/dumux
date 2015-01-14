@@ -1,12 +1,3 @@
-############################################################
-# Parameter file for test_mpfa2p.cc
-# Everything behind a '#' is a comment.
-# Type "./test_mpfa2p --help" for more information.
-############################################################
-
-############################################################
-# Mandatory arguments
-############################################################
 [TimeManager]
 TEnd = 5e4# [s]
 DtInitial = 5e5# [s]
@@ -15,34 +6,26 @@ SubTimestepVerbosity = 0
 [Grid]
 File = grids/test_mpfa2p.dgf#grid for buckley-leverett or mcwhorter problem
 
-#For 2d-lense-problem
 NumberOfCellsX = 10# [-] level 0 resolution in x-direction
 NumberOfCellsY = 10# [-] level 0 resolution in y-direction
 
 UpperRightX = 20# [m] dimension of the grid
 UpperRightY = 10# [m] dimension of the grid # 2D
 
-#RefinementFactor = 1 
-
-############################################################
-# Optional arguments
-############################################################
 [Problem]
 OutputInterval =0
 OutputTimeInterval = 1e4
 
-#For 2d-lense-problem
 InletWidth = 2
 InjectionFlux = 0.1
 
 [Impet]
-#CFLFactor = 10.0 # Use larger time steps and 
+#CFLFactor = 10.0 # Use larger time steps and
 #SubCFLFactor = 0.95 # enable local time-stepping
 
 [Vtk]
 OutputLevel = 1 # 0 -> only primary variables (default), 1 -> also secondary variables
 
-#For 2d-lense-problem
 [SpatialParams]
 BackgroundPermeabilityXX = 1e-10
 BackgroundPermeabilityXY = 0
@@ -73,7 +56,7 @@ BackgroundEntryPressure = 500
 LenseEntryPressure = 5000
 
 [GridAdapt]
-MinLevel = 0# [-] minimum level of refinement 
+MinLevel = 0# [-] minimum level of refinement
 MaxLevel = 1# [-] maximum level of refinement
 RefineTolerance = 0.2 # threshold for refinement criterion
 CoarsenTolerance = 0.01 # threshold for coarsening criterion

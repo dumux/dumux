@@ -1,13 +1,3 @@
-###############################################################
-# Parameter file for test_impesadaptive.
-# Everything behind a '#' is a comment.
-# Type "./test_impesadaptive --help" for more information.
-###############################################################
-
-###############################################################
-# Mandatory arguments
-###############################################################
-
 [TimeManager]
 TEnd = 2e7 # [s]
 DtInitial = 0 # [s]
@@ -19,24 +9,9 @@ NumberOfCellsY = 1 # [-] level 0 resolution in y-direction
 UpperRightX = 300 # [m] length of the domain
 UpperRightY = 100 # [m] height of the domain
 
-############################################################
-# Parameters for grid adaption
-############################################################
-
 [GridAdapt]
-MinLevel = 0 # [-] minimum level of refinement 
+MinLevel = 0 # [-] minimum level of refinement
 MaxLevel = 5 # [-] maximum level of refinement
 RefineTolerance = 0.05 # threshold for refinement criterion
 CoarsenTolerance = 0.001 # threshold for coarsening criterion
 
-###############################################################
-# Simulation restart
-#
-# DuMux simulations can be restarted from *.drs files
-# Set Restart to the value of a specific file, 
-# e.g.:  'Restart = 27184.1' for the restart file
-# name_time=27184.1_rank=0.drs
-# Please comment in the two lines below, if restart is desired.
-###############################################################
-# [TimeManager]
-# Restart = ... 

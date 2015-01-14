@@ -1,22 +1,12 @@
-###############################################################
-# Parameter file for test_2p.
-# Everything behind a '#' is a comment.
-# Type "./test_2p --help" for more information.
-###############################################################
-
-###############################################################
-# Mandatory arguments
-###############################################################
-
 [TimeManager]
 DtInitial = 250 # [s]
 TEnd = 3000 # [s]
 
 [Grid]
-File = ./grids/test_2p.dgf 
+File = ./grids/test_2p.dgf
 
 [SpatialParams]
-LensLowerLeftX = 1.0 # [m] x-coordinate of the lower left lens corner 
+LensLowerLeftX = 1.0 # [m] x-coordinate of the lower left lens corner
 LensLowerLeftY = 2.0 # [m] y-coordinate of the lower left lens corner
 LensUpperRightX = 4.0 # [m] x-coordinate of the upper right lens corner
 LensUpperRightY = 3.0 # [m] y-coordinate of the upper right lens corner
@@ -24,14 +14,3 @@ LensUpperRightY = 3.0 # [m] y-coordinate of the upper right lens corner
 [Problem]
 Name = lensbox # name passed to the output routines
 
-###############################################################
-# Simulation restart
-#
-# DuMux simulations can be restarted from *.drs files
-# Set Restart to the value of a specific file, 
-# e.g.:  'Restart = 27184.1' for the restart file
-# name_time=27184.1_rank=0.drs
-# Please comment in the two lines below, if restart is desired.
-###############################################################
-# [TimeManager]
-# Restart = ... 

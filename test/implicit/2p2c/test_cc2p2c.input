@@ -1,27 +1,16 @@
-###############################################################
-# Parameter file for test_2p2c.
-# Everything behind a '#' is a comment.
-# Type "./test_2p2c --help" for more information.
-###############################################################
-
-###############################################################
-# Mandatory arguments
-###############################################################
-
 [TimeManager]
 DtInitial = 250 # [s]
 TEnd = 1e4 # [s]
 
 [Grid]
-File = ./grids/test_2p2c.dgf 
+File = ./grids/test_2p2c.dgf
 
 [Problem]
 Name = injectioncc # [-] the name of the output files
 
 InitialTemperature = 313.15 # [K] 40°C initial temperature in the reservoir
-DepthBOR = 2700 # [m] depth below ground surface 
+DepthBOR = 2700 # [m] depth below ground surface
 
-# tabularization 
 NTemperature = 3 # [-] number of temperature table entries
 NPressure = 200 # [-] number of pressure table entries
 PressureLow = 1e5 # [Pa] lower pressure limit for tabularization
@@ -29,14 +18,3 @@ PressureHigh = 3e7 # [Pa] upper pressure limit for tabularization
 TemperatureLow = 312.15 # [Pa] lower temperature limit for tabularization
 TemperatureHigh = 314.15 # [Pa] upper temperature limit for tabularization
 
-###############################################################
-# Simulation restart
-#
-# DuMux simulations can be restarted from *.drs files
-# Set Restart to the value of a specific file, 
-# e.g.:  'Restart = 27184.1' for the restart file
-# name_time=27184.1_rank=0.drs
-# Please comment in the two lines below, if restart is desired.
-###############################################################
-# [TimeManager]
-# Restart = ... 

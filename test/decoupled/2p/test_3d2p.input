@@ -1,42 +1,12 @@
-############################################################
-# Parameter file for test_impes
-# Everything behind a '#' is a comment
-# Groups can be ordered e.g. : [BoundaryConditions],
-# see ../boxmodels/2p2c/ for a more detailed example
-############################################################
-
-############################################################
-# Mandatory arguments
-############################################################
 [TimeManager]
 TEnd = 1e4# [s]
 DtInitial = 0# [s]
 
 [Grid]
-############################################################
-#For nine-spot problem
-#
 #File = ./grids/test_3d2p_3_sg.dgf #structured grid
 File = ./grids/test_3d2p_3_ug1.dgf #unstructured grid
 #File = ./grids/test_3d2p_3_ug2.dgf #unstructured grid
-#
-#############
-#
 RefinementFactor = 2
-#
-############################################################
-
-############################################################
-#For buckley-leverett/mcwhorter problem
-#
-#File = ./grids/test_3d2p_12_sg.dgf #structured grid
-#File = ./grids/test_3d2p_12_ug.dgf #unstructured grid
-#
-#############
-#
-#RefinementFactor = 0
-#
-############################################################
 
 [MPFA]
 TransmissibilityCriterion = 1
@@ -45,7 +15,6 @@ EnableSimpleLStencil = true
 EnableComplexLStencil =true
 
 [Problem]
-#OutputName = 
 OutputInterval =0
 OutputTimeInterval = 1e3
 
@@ -53,11 +22,8 @@ OutputTimeInterval = 1e3
 #CFLFactor = 5.0
 #SubCFLFactor = 0.8
 
-############################################################
-#parameters for grid adaption
-############################################################
 [GridAdapt]
-MinLevel = 0# [-] minimum level of refinement 
+MinLevel = 0# [-] minimum level of refinement
 MaxLevel = 2# [-] maximum level of refinement
 RefineTolerance = 0.1 # threshold for refinement criterion
 CoarsenTolerance = 0.5 # threshold for coarsening criterion

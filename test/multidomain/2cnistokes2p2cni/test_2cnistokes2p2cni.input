@@ -1,19 +1,11 @@
-#############################################################
-#Configuration file for test_2cnistokes2p2cni
-#############################################################
-
-#############################################################
 [Problem]
-#############################################################
 #First part of the interface, where it is not coupled;
 #set to zero or negative if not desired
 RunUpDistanceX = 0.0
 NoDarcyX = 0.0
 UseDirichletFF = true
 
-#############################################################
 [TimeManager]
-#############################################################
 #Initial and maximum time-step size
 DtInitial = 5e-1 
 MaxTimeStepSize = 360
@@ -22,26 +14,20 @@ MaxTimeStepSize = 360
 #set to zero or negative if not desired
 InitTime = 864 
 
-#Simulation end
 TEnd = 0.864e6
 
 #Define the length of an episode (for output)
 EpisodeLength = 43200
 
-#############################################################
 [Vtk]
-#############################################################
 #Names for VTK output
 NameFF = stokes2cni
 NamePM = 2p2cni
 AddVelocity = 1 
 
-#############################################################
 [Grid]
-#############################################################
 UseInterfaceMeshCreator = true
 
-#Name of the dgf file (grid)
 File = grids/interfacedomain.dgf
 Refinement = 0
 
@@ -61,24 +47,17 @@ YMax = 0.5
 #Vertical position of coupling interface
 InterfacePos = 0.25
 
-#############################################################
 [Output]
-#############################################################
-#Frequency of restart file, flux and VTK output
 FreqRestart = 1000      # how often restart files are written out 
 FreqOutput = 10         # frequency of VTK output
 FreqMassOutput = 2      # frequency of mass and evaporation rate output (Darcy)
 FreqFluxOutput = 1000   # frequency of detailed flux output
 FreqVaporFluxOutput = 2 # frequency of summarized flux output
 
-#############################################################
 [Stokes]
-#############################################################
 StabilizationAlpha = -1.0
 
-#############################################################
 [FreeFlow]
-#############################################################
 RefVelocity = 3.5
 RefPressure = 1e5
 RefMassfrac = 0.008          # 0.01
@@ -96,9 +75,7 @@ ExponentMTC = 0.0           # 1./6., Mass transfer coefficient for S^MTC
 BoundaryLayerOffset = 0.0   # for BL model like Blasius, determines a virtual run-up distance for the flow
 ConstThickness = 0.0016     # for a constant BL thickness, use BL model 9
 
-#############################################################
 [PorousMedium]
-#############################################################
 RefPressurePM = 1e5
 RefTemperaturePM = 298.15
 InitialSw1 = 0.98
@@ -106,9 +83,7 @@ InitialSw2 = 0.98
 CharPoreRadius = 1e-4       # for Schluender mass-transfer model
 PlotFluidProperties = false
 
-#############################################################
 [SpatialParams]
-#############################################################
 MaterialInterfaceX = -100.0
 AlphaBJ = 1.0
 
@@ -170,20 +145,14 @@ LambdaSolid3 = 5.26
 Pentry3 = 1012
 BCLambda3 = 3.277
 
-#############################################################
 [Newton]
-#############################################################
 RelTolerance = 1e-5
 TargetSteps = 8
 MaxSteps = 12
 WriteConvergence = false 
 MaxTimeStepDivisions = 20
 
-#############################################################
 [LinearSolver]
-#############################################################
 ResidualReduction = 1e-9
 Verbosity = 0
 MaxIterations = 200
-#GMResRestart = 100
-#PreconditionerIterations = 2

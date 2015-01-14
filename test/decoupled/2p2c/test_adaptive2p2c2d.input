@@ -1,38 +1,24 @@
-#############################################################
-#Configuration file for test_adaptive2p2c.cc
-#############################################################
 [Impet]
 CFLFactor = 0.8
-#SubCFLFactor = 0.8# for sub-time-stepping of the transport
 ErrorTermLowerBound = 0.2
 ErrorTermUpperBound = 0.9
 ErrorTermFactor = 0.5
 EnableVolumeIntegral = 1
 RestrictFluxInTransport = 1
 
-#############################################################
-#Refinement control
-#############################################################
 [GridAdapt]
 MinLevel = 0
 MaxLevel = 1
-# CoarsenTolerance = 0.1
-# RefineTolerance = 0.15
 EnableMultiPointFluxApproximation = 1
 MaxInteractionVolumes = 2
 
-#############################################################
-#Problem parameters
-#############################################################
 [Problem]
 
 SimulationName  = test_adaptive2p2c2d     # name of the output files
 OutputInterval = 5
 
 [TimeManager]
-#Simulated time
 TEnd= 3e3
-#Initial time step 
 DtInitial = 200
 
 [Grid]

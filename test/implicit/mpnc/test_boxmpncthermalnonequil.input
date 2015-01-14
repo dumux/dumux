@@ -1,30 +1,13 @@
-
-#############################################################
-#Configuration file for test_inputfile
-#############################################################
-                  
-                  
-#############################################################
-# Mandatory arguments											#
-#############################################################
 [TimeManager]
 DtInitial			= 5e-1	# [s]
 TEnd 			= 1e3 	# [s] 
 MaxTimeStepSize	= 2e20 	# maximum allowed timestep size
-#
 
-#############################################################
 [Grid]
-#############################################################
-#Name of the dgf file (grid)
- File =   ./grids/combustionOutflowGridLinNX100LogNx100.dgf
+File =   ./grids/combustionOutflowGridLinNX100LogNx100.dgf
 # File =   ./grids/combustionGrid.dgf
-
 lengthPM = 0.1
 
-#############################################################
-#Define initial conditions
-#############################################################
 [InitialConditions]
 pnInitial		= 1e5 # 6.8e6 # 1e5 # 101475 	# Pa
 TInitial		=  372 # 373.15 #
@@ -36,13 +19,10 @@ SwBoundary 			= 1e-3 #
 SwOneComponentSys 	= 1	 #
 
 massFluxInjectedPhase =   0.5 #
-# heatFluxFromRight 	=      2e6  	# fluid  temperature on boundary: analytical approx 1080 K
+# heatFluxFromRight    =      2e6      # fluid  temperature on boundary: analytical approx 1080 K
 heatFluxFromRight 	=      1.5e6 	# fluid  temperature on boundary: analytical approx 587.3 K
 coldTime = 1
 
-############################################################
-#Define spatial parameters
-############################################################
 [SpatialParams.PorousMedium]
 porosity			= 0.35 	#
 meanPoreSize		= 5e-4 	# characteristic length of the system
@@ -54,9 +34,6 @@ permeabilityOutFlow			= 1e-6 	# m^2
 porosityOutFlow				= 0.35 	#
 soilThermalConductivityOutFlow	= 0.01# 
 
-###############################
-#Define soil parameters
-###############################
 [SpatialParams.soil]
 density 					= 2600. 	# kg/m^3
 soilThermalConductivity 		= 30 	# W / (m K) soil:3, metal:30
@@ -65,9 +42,6 @@ heatCapacity				= 466 	# J / (kg K) steel:466 granite:800
 Swr =  0.0 #  5e-3
 Snr = 0 #  
 
-############################################################
-#Define constants: tabulation etc
-#############################################################
 [Constants]
 outputName =  combustion # 
 
@@ -75,9 +49,7 @@ interfacialTension = 0.0589 # interfacial tension of water at 100 ° C
 
 nRestart		= 10000  	 	# after so many timesteps a restart file should be written      
          
-#
 [Implicit]
 MassUpwindWeight=1
 MobilityUpwindWeight=1
-#
 

@@ -1,22 +1,10 @@
-##########################################################################
-# Parameter file for test_boxco2
-# Everything behind a '#' is a comment
-# Groups can be ordered e.g. : [BoundaryConditions]
-# Parameters in groups have to be accessed hierarchically e.g.: FluidSystem.pressureLow
-##########################################################################
-
-####################################################################
-# Mandatory arguments
-####################################################################
 [TimeManager]
 DtInitial = 23452.1# [s]
 TEnd = 1e6# [s]
 
-####################################################################
 [Grid]
 File = ./grids/heterogeneousSmall.dgf # relative path to the grid file
 
-####################################################################
 [FluidSystem]
 NTemperature =  100 # [-]            number of tabularization entries
 NPressure = 100 # [-]        number of tabularization entries
@@ -25,29 +13,17 @@ PressureHigh = 3e7# [Pa]         high end for tabularization of fluid properties
 TemperatureLow = 290.00 # [Pa]     low end for tabularization of fluid properties
 TemperatureHigh = 331.00 # [Pa]     high end for tabularization of fluid properties
 
-####################################################################
 [Problem]
 Name = heterogeneousbox # [-]            the name of the output files
 EnableGravity = TRUE
-DepthBOR = 1200# [m]             depth below ground surface 
+DepthBOR = 1200# [m]             depth below ground surface
 InjectionRate = 1e-4 # [kg/sq/s]
 
-###################################################################
 [Vtk]
 AddVelocity = FALSE
 
-####################################################################
 [LinearSolver]
 ResidualReduction = 1e-10
 
-###############################################################
-# Simulation restart
-#
-# DuMux simulations can be restarted from *.drs files
-# Set Restart to the value of a specific file, 
-# e.g.:  'Restart = 27184.1' for the restart file
-# name_time=27184.1_rank=0.drs
-# Please comment in the two lines below, if restart is desired.
-###############################################################
 [TimeManager]
 Restart = 42008.6
