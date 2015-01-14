@@ -36,6 +36,7 @@ namespace Dumux
 template<class TypeTag>
 class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
+    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
@@ -113,18 +114,51 @@ public:
                                this->curVolVars_(),
                                onBoundary);
 
+        flux = 0;
+        asImp_()->computeAdvectiveFlux(flux, fluxVars);
+        asImp_()->computeDiffusiveFlux(flux, fluxVars);
+    }
+
+    /*!
+     * \brief Evaluates the advective mass flux of all components over
+     *        a face of a sub-control volume.
+     *
+     * \param flux The advective flux over the sub-control-volume face for each component
+     * \param fluxVars The flux variables at the current SCV
+     */
+
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    {
         // data attached to upstream and the downstream vertices
         // of the current phase
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(wPhaseIdx));
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(wPhaseIdx));
 
-        flux[contiEqIdx] =
+        flux[contiEqIdx] +=
             fluxVars.volumeFlux(wPhaseIdx)
             *
             ((    massUpwindWeight_)*up.density(wPhaseIdx)
              +
              (1 - massUpwindWeight_)*dn.density(wPhaseIdx));
     }
+
+    /*!
+     * \brief Adds the diffusive flux to the flux vector over
+     *        the face of a sub-control volume.
+     *
+     * \param flux The diffusive flux over the sub-control-volume face for each phase
+     * \param fluxVars The flux variables at the current SCV
+     *
+     * This function doesn't do anything but may be used by the
+     * non-isothermal three-phase models to calculate diffusive heat
+     * fluxes
+     */
+    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    {
+        // diffusive fluxes
+        flux += 0.0;
+    }
+
 
     /*!
      * \brief Calculate the source term of the equation
@@ -143,8 +177,21 @@ public:
                                      this->curVolVars_());
     }
 
+protected:
+    Implementation *asImp_()
+    {
+        return static_cast<Implementation *> (this);
+    }
+
+    const Implementation *asImp_() const
+    {
+        return static_cast<const Implementation *> (this);
+    }
+
 private:
     Scalar massUpwindWeight_;
+
+
 };
 
 }

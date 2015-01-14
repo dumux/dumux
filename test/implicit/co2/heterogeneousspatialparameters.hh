@@ -231,7 +231,7 @@ public:
     }
 
     /*!
-     * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the solid
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the solid
      *
      * This is only required for non-isothermal models.
      *

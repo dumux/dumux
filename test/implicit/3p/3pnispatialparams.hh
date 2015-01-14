@@ -187,7 +187,7 @@ public:
     }
 
     /*!
-     * \brief Returns the thermal conductivity \f$[W/m^2]\f$ of the porous material.
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry

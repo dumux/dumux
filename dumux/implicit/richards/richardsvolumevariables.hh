@@ -140,6 +140,11 @@ public:
 
         fluidState.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
         fluidState.setViscosity(nPhaseIdx, 1e-10);
+	
+	// compute and set the enthalpy
+        fluidState.setEnthalpy(wPhaseIdx, Implementation::enthalpy_(fluidState, paramCache, wPhaseIdx));
+        fluidState.setEnthalpy(nPhaseIdx, Implementation::enthalpy_(fluidState, paramCache, nPhaseIdx));
+
     }
 
     /*!
@@ -250,6 +255,14 @@ protected:
                             const int scvIdx)
     {
         return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
+    }
+    
+    template<class ParameterCache>
+    static Scalar enthalpy_(const FluidState& fluidState,
+                            const ParameterCache& paramCache,
+                            int phaseIdx)
+    {
+        return 0;
     }
 
     /*!

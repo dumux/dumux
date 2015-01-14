@@ -28,6 +28,7 @@
 #ifndef DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH
 #define DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH
 
+#include "richardsfluxvariables.hh"
 #include "richardsmodel.hh"
 #include "richardsproblem.hh"
 #include "richardsindices.hh"
@@ -36,10 +37,12 @@
 #include "richardsnewtoncontroller.hh"
 #include "richardslocalresidual.hh"
 
+#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
+#include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
 #include <dumux/material/components/nullcomponent.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
-#include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 
 namespace Dumux
 {
@@ -50,23 +53,23 @@ namespace Properties {
 // Properties values
 //////////////////////////////////////////////////////////////////
 //! Number of equations required by the model
-SET_INT_PROP(Richards, NumEq, 1);
+SET_INT_PROP(Richards, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq));
 //! Number of fluid phases considered
 SET_INT_PROP(Richards, NumPhases, 2);
 
 //! The local residual operator
 SET_TYPE_PROP(Richards,
               LocalResidual,
-              RichardsLocalResidual<TypeTag>);
+              typename GET_PROP_TYPE(TypeTag, IsothermalLocalResidual));
 
 //! The global model used
-SET_TYPE_PROP(Richards, Model, RichardsModel<TypeTag>);
+SET_TYPE_PROP(Richards, Model, typename GET_PROP_TYPE(TypeTag, IsothermalModel));
 
 //! The class for the volume averaged quantities
-SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
+SET_TYPE_PROP(Richards, VolumeVariables, typename GET_PROP_TYPE(TypeTag, IsothermalVolumeVariables));
 
 //! The class for the quantities required for the flux calculation
-SET_TYPE_PROP(Richards, FluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(Richards, FluxVariables, typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables));
 
 //! The class of the newton controller
 SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);
@@ -78,7 +81,7 @@ SET_SCALAR_PROP(Richards, ImplicitMassUpwindWeight, 1.0);
 SET_SCALAR_PROP(Richards, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The class with all index definitions for the model
-SET_TYPE_PROP(Richards, Indices, RichardsIndices<TypeTag>);
+SET_TYPE_PROP(Richards, Indices, typename GET_PROP_TYPE(TypeTag, IsothermalIndices));
 
 //! The spatial parameters to be employed. 
 //! Use ImplicitSpatialParams by default.
@@ -163,6 +166,41 @@ SET_BOOL_PROP(Richards, ProblemEnableGravity, true);
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
 SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(NonIsothermal, ThermalConductivityModel)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+public:
+    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+};
+
+//! temperature is already written by the isothermal model
+SET_BOOL_PROP(RichardsNI, NiOutputLevel, 0);
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+
+// set isothermal Model
+SET_TYPE_PROP(Richards, IsothermalModel, RichardsModel<TypeTag>);
+
+// set isothermal FluxVariables
+SET_TYPE_PROP(Richards, IsothermalFluxVariables, RichardsFluxVariables<TypeTag>);
+
+//set isothermal VolumeVariables
+SET_TYPE_PROP(Richards, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
+
+//set isothermal LocalResidual
+SET_TYPE_PROP(Richards, IsothermalLocalResidual, RichardsLocalResidual<TypeTag>);
+
+//set isothermal Indices
+SET_TYPE_PROP(Richards, IsothermalIndices, RichardsIndices<TypeTag>);
+
+//set isothermal NumEq
+SET_INT_PROP(Richards, IsothermalNumEq, 1);
 
 // \}
 }
