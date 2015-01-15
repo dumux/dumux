@@ -218,7 +218,7 @@ public:
                                                elemVolVars);
 
                         Scalar flux = fluxVars.volumeFlux(phaseIdx);
-                        scvVelocities[fIdx] = flux;
+                        scvVelocities[fIdx] += flux;
 
                         fIdxInner++;
                     }
@@ -239,7 +239,7 @@ public:
                 for (int i = 0; i < dim; i++)
                     refVelocity[i] = 0.5 * (scvVelocities[2*i + 1] - scvVelocities[2*i]);
 
-                Dune::FieldVector<Scalar, dim> scvVelocity(0);
+                Dune::FieldVector<Scalar, dimWorld> scvVelocity(0);
                 jacobianT2.mtv(refVelocity, scvVelocity);
 
                 scvVelocity /= element.geometry().integrationElement(localPos);
