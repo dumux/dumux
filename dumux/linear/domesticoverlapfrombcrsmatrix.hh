@@ -31,8 +31,10 @@
 #include <list>
 #include <set>
 #include <map>
+#include <memory>
+#include <tuple>
 
-#include <dune/common/tuples.hh>
+#include <dune/common/shared_ptr.hh>
 
 #include <dumux/parallel/mpibuffer.hh>
 
@@ -62,7 +64,7 @@ public:
     typedef int BorderDistance;
     typedef int Index;
     typedef Index LocalIndex;
-    typedef Dune::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
+    typedef std::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
 
     typedef std::set<ProcessRank> PeerSet;
 
@@ -383,8 +385,8 @@ protected:
         ForeignOverlapWithPeer::const_iterator overlapIt = foreignOverlap.begin();
         ForeignOverlapWithPeer::const_iterator overlapEndIt = foreignOverlap.end();
         for (int i = 0; overlapIt != overlapEndIt; ++overlapIt, ++i) {
-            int localIdx = Dune::get<0>(*overlapIt);
-            int borderDistance = Dune::get<1>(*overlapIt);
+            int localIdx = std::get<0>(*overlapIt);
+            int borderDistance = std::get<1>(*overlapIt);
 
             const std::map<ProcessRank, BorderDistance> &foreignIndexOverlap
                 = foreignOverlap_.foreignOverlapByIndex(localIdx);
@@ -447,9 +449,9 @@ protected:
         MpiBuffer<IndexDistanceNpeers> recvBuff(numIndices);
         recvBuff.receive(peerRank);
         for (int i = 0; i < numIndices; ++i) {
-            int globalIdx = Dune::get<0>(recvBuff[i]);
-            int borderDistance = Dune::get<1>(recvBuff[i]);
-            int numPeers = Dune::get<2>(recvBuff[i]);
+            int globalIdx = std::get<0>(recvBuff[i]);
+            int borderDistance = std::get<1>(recvBuff[i]);
+            int numPeers = std::get<2>(recvBuff[i]);
 
             int domesticIdx;
             if (borderDistance > 0) {
@@ -498,9 +500,9 @@ protected:
     DomesticOverlapByIndex domesticOverlapByIndex_;
     std::vector<int> borderDistance_;
 
-    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<int> > > numIndicesSendBuff_;
-    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<IndexDistanceNpeers> > > indicesSendBuff_;
-    std::map<ProcessRank, std::vector<Dune::shared_ptr<MpiBuffer<int> > > > peersSendBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<int> > > numIndicesSendBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<IndexDistanceNpeers> > > indicesSendBuff_;
+    std::map<ProcessRank, std::vector<std::shared_ptr<MpiBuffer<int> > > > peersSendBuff_;
     GlobalIndices globalIndices_;
     PeerSet peerSet_;
 };
