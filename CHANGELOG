@@ -1,9 +1,38 @@
 Differences Between DuMuX 2.6 and DuMuX 2.7
 ===================================================
-* Deprecated CLASSES/FILES, to be removed after 2.6:
+
+* IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
+  - Before, the "heatCapacity" function in the spatial parameters and volume
+    variables of the implicit nonisothermal models was a misnomer, since it
+    returned an effective quantity, namely,
+    heatCapacity*density*(1 - porosity) in [J/(K m^3)].
+    Except for mpnc, which resulted in an additional inconsistency.
+
+    Corresponding to the decision documented in FS#216, the function has been
+    renamed to "solidHeatCapacity" and returns always the "true" (non-effective)
+    heat capacity in [J/(kg K)]. This requires an additional function
+    "solidDensity" which returns the mass density of the porous matrix.
+    Moreover, the functions "thermalConductivitySolid/Fluid" are renamed to
+    "solid/fluidThermalConductivity". The decision to prepend with "solid/fluid"
+    rather than to append is motivated by consistency with components and fluid
+    systems, where "gas" and "liquid" are always prepended to the corresponding
+    function names.
+
+    Therefore, it might be necessary to adapt your thermal solid parameters in
+    the spatialparams file such that they offer functions "solidHeatCapacity",
+    "solidDensity" and "solidThermalConductivity". See
+    test/implicit/2p2c/injectionspatialparams.hh for an example.
+
+* Deprecated CLASSES/FILES, to be removed after 2.7:
   - CellData2P2Cmultiphysics, replaced by CellData2P2CMultiPhysics
 
-* Deprecated MEMBER FUNCTIONS, to be removed after 2.6:
+* Deprecated MEMBER FUNCTIONS, to be removed after 2.7:
+  - The functions "heatCapacity", "densitySolid" (mpnc only) and
+    "thermalConductivitySolid/Fluid" in the VolumeVariables of the nonisothermal
+    implicit porous-media models: use "solidHeatCapacity", "solidDensity" and
+    "solid/fluidThermalConductivity" instead. See also the immediate interface
+    changes above.
+
   - The 1p2c volume variables no longer use the method tortuosity() from
     spatial params class, the value is now calculated within the effective
     diffusivity model. Thus the method is deprecated in the spacial params
