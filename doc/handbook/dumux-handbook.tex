@@ -45,7 +45,6 @@
 \usepackage{makeidx}
 \usepackage{graphicx}
 \usepackage{xspace}
-\usepackage{relsize}
 \usepackage[htt]{hyphenat}
 \usepackage{lscape}
 \usepackage{enumerate}
@@ -80,7 +79,7 @@
 \definecolor{dumuxYellow}{HTML}{E19417}
 \definecolor{dumuxBlue}{HTML}{0C73CF}
 % beautify C++
-\DeclareRobustCommand\Cplusplus{\texorpdfstring{C\raisebox{2pt}{{\relsize{-3}++}}\xspace}{C++}}
+\DeclareRobustCommand\Cplusplus{\texorpdfstring{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}\xspace}{C++}}
 
 \newcommand{\porosity}{\phi}
 \newcommand{\saturation}{S}
