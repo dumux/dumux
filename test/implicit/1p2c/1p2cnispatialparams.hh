@@ -124,23 +124,35 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
+     * \param scvIdx The local index of the sub-control volume
      */
-    Scalar heatCapacity(const Element &element,
+    Scalar solidHeatCapacity(const Element &element,
+                             const FVElementGeometry &fvGeometry,
+                             const int scvIdx) const
+    {
+        return 790; // specific heat capacity of granite [J / (kg K)]
+    }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume
+     */
+    Scalar solidDensity(const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const int scvIdx) const
     {
-        return
-            790 // specific heat capacity of granite [J / (kg K)]
-            * 2700 // density of granite [kg/m^3]
-            * (1 - porosity(element, fvGeometry, scvIdx));
+        return 2700; // density of granite [kg/m^3]
     }
 
     /*!
@@ -151,7 +163,7 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
-    Scalar thermalConductivitySolid(const Element &element,
+    Scalar solidThermalConductivity(const Element &element,
                                     const FVElementGeometry &fvGeometry,
                                     const int scvIdx) const
     {

@@ -92,7 +92,8 @@ public:
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
         storage[energyEqIdx] = 0;
-        // compute the energy storage
+
+        // add the contribution from the fluid phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             storage[energyEqIdx] +=
@@ -102,11 +103,11 @@ public:
 
         }
 
-
-            // heat capacity is already multiplied by the density
-            // of the porous material and the porosity in the problem file
-        storage[energyEqIdx] += volVars.temperature()*volVars.heatCapacity();
-
+        // add the contribution from the solid phase
+        storage[energyEqIdx] += volVars.temperature()
+                               *volVars.solidHeatCapacity()
+                               *volVars.solidDensity()
+                               *(1 - volVars.porosity());
     }
 
     /*!

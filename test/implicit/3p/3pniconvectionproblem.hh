@@ -211,9 +211,10 @@ public:
             Scalar porosity = this->spatialParams().porosity(*eIt, fvGeometry, 0);
             Scalar densityW = volVars.density(swIdx);
             Scalar heatCapacityW = IapwsH2O::liquidHeatCapacity(initialPriVars[temperatureIdx], initialPriVars[pressureIdx]);
-            Scalar effectiveHeatCapacityS = this->spatialParams().heatCapacity(*eIt, fvGeometry, 0);
             Scalar storageW =  densityW*heatCapacityW*porosity;
-            Scalar storageTotal = storageW + effectiveHeatCapacityS;
+            Scalar densityS = this->spatialParams().solidDensity(*eIt, fvGeometry, 0);
+            Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(*eIt, fvGeometry, 0);
+            Scalar storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
             std::cout<<"storage: "<<storageTotal<<std::endl;
             Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
             Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;

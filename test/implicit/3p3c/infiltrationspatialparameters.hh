@@ -187,23 +187,35 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
+     * \param scvIdx The local index of the sub-control volume
      */
-    double heatCapacity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        int scvIdx) const
+    Scalar solidHeatCapacity(const Element &element,
+                             const FVElementGeometry &fvGeometry,
+                             const int scvIdx) const
     {
-        return
-            850. // specific heat capacity [J / (kg K)]
-            * 2650. // density of sand [kg/m^3]
-            * (1 - porosity(element, fvGeometry, scvIdx));
+        return 850; // specific heat capacity of sand [J / (kg K)]
+    }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume
+     */
+    Scalar solidDensity(const Element &element,
+                        const FVElementGeometry &fvGeometry,
+                        const int scvIdx) const
+    {
+        return 2650; // density of sand [kg/m^3]
     }
 
     const MaterialLawParams& materialLawParams() const

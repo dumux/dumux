@@ -210,29 +210,40 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
+     * \param scvIdx The local index of the sub-control volume
      */
-    double heatCapacity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
+    Scalar solidHeatCapacity(const Element &element,
+                             const FVElementGeometry &fvGeometry,
+                             const int scvIdx) const
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(globalPos))
-            return fineHeatCap_ * 2650 // density of sand [kg/m^3]
-                * (1 - porosity(element, fvGeometry, scvIdx));
+            return fineHeatCap_;
         else
-            return coarseHeatCap_ * 2650 // density of sand [kg/m^3]
-                * (1 - porosity(element, fvGeometry, scvIdx));
+            return coarseHeatCap_;
     }
 
-
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume
+     */
+    Scalar solidDensity(const Element &element,
+                        const FVElementGeometry &fvGeometry,
+                        const int scvIdx) const
+    {
+        return 2650; // density of sand [kg/m^3]
+    }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
@@ -242,7 +253,7 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
-    Scalar thermalConductivitySolid(const Element &element,
+    Scalar solidThermalConductivity(const Element &element,
                                     const FVElementGeometry &fvGeometry,
                                     const int scvIdx) const
     {

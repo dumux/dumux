@@ -210,24 +210,35 @@ public:
     }
 
     /*!
-     * \brief Returns the effective heat capacity \f$[J/m^3 K]\f$
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *
-     * This is only required for non-isothermal models. This function does not
-     * return the specific heat capacity, but an effective heat capacity, which is
-     * \f$c_\textrm{p,eff,s} = c_\textrm{p,s} \varrho_\textrm{s} \left(1 - \phi\right)\f$
+     * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume
      */
-    double heatCapacity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        int scvIdx) const
+    Scalar solidHeatCapacity(const Element &element,
+                             const FVElementGeometry &fvGeometry,
+                             const int scvIdx) const
     {
-        return
-            790 // specific heat capacity of granite [J / (kg K)]
-            * 2700 // density of granite [kg/m^3]
-            * (1 - porosity(element, fvGeometry, scvIdx));
+        return 790; // specific heat capacity of granite [J / (kg K)]
+    }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume
+     */
+    Scalar solidDensity(const Element &element,
+                        const FVElementGeometry &fvGeometry,
+                        const int scvIdx) const
+    {
+        return 2700; // density of granite [kg/m^3]
     }
 
     /*!
@@ -239,7 +250,7 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar thermalConductivitySolid(const Element &element,
+    Scalar solidThermalConductivity(const Element &element,
                                     const FVElementGeometry &fvGeometry,
                                     const int scvIdx) const
     {

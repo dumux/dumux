@@ -125,11 +125,11 @@ public:
 
                 intrinsicPermeabilityOutFlow_ 	= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.permeabilityOutFlow);
                 porosityOutFlow_ 				= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.porosityOutFlow);
-                thermalConductivitySolidOutflow_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.soilThermalConductivityOutFlow);
+                solidThermalConductivityOutflow_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.soilThermalConductivityOutFlow);
 
-                densitySolid_                		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.density);
-                thermalConductivitySolid_    		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.soilThermalConductivity);
-                heatCapacity_               		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.heatCapacity);
+                solidDensity_                		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.density);
+                solidThermalConductivity_    		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.thermalConductivity);
+                solidHeatCapacity_               		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.heatCapacity);
 
                 interfacialTension_               	= GET_RUNTIME_PARAM(TypeTag, Scalar, Constants.interfacialTension);
 
@@ -289,33 +289,33 @@ public:
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume where
      *                    the heat capacity needs to be defined */
-    const Scalar heatCapacity(const Element &element,
+    const Scalar solidHeatCapacity(const Element &element,
                                const FVElementGeometry &fvGeometry,
                                const unsigned int scvIdx) const
-    {  return heatCapacity_ ;}  // specific heat capacity of solid  [J / (kg K)]
+    {  return solidHeatCapacity_ ;}  // specific heat capacity of solid  [J / (kg K)]
 
     /*!\brief Returns the density \f$[kg/m^3]\f$ of the rock matrix.
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
-    const Scalar densitySolid(const Element & element,
+    const Scalar solidDensity(const Element & element,
                               const FVElementGeometry & fvGeometry,
                               const unsigned int scvIdx) const
-    { return densitySolid_ ;} // density of solid [kg/m^3]
+    { return solidDensity_ ;} // density of solid [kg/m^3]
 
     /*!\brief Returns the thermal conductivity \f$[W/(m K)]\f$ of the rock matrix.
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
-    const Scalar  thermalConductivitySolid(const Element &element,
+    const Scalar  solidThermalConductivity(const Element &element,
                                     const FVElementGeometry &fvGeometry,
                                     const unsigned int scvIdx)const
     {
         const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
     	if ( inOutFlow(globalPos) )
-    		return thermalConductivitySolidOutflow_ ;
+    		return solidThermalConductivityOutflow_ ;
     	else
-    		return thermalConductivitySolid_ ;
+    		return solidThermalConductivity_ ;
     } // conductivity of solid  [W / (m K ) ]
 
     /*!
@@ -357,10 +357,10 @@ private:
     Scalar porosityOutFlow_ ;
 
     // solid parameters
-    Scalar densitySolid_ ;
-    Scalar thermalConductivitySolid_ ;
-    Scalar thermalConductivitySolidOutflow_ ;
-    Scalar heatCapacity_ ;
+    Scalar solidDensity_ ;
+    Scalar solidThermalConductivity_ ;
+    Scalar solidThermalConductivityOutflow_ ;
+    Scalar solidHeatCapacity_ ;
     Scalar interfacialTension_ ;
 
 

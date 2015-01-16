@@ -190,13 +190,13 @@ public:
         Valgrind::SetUndefined(*this);
 
         // heat capacities of the fluids plus the porous medium
-        heatCapacity_ =
-            problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
-        Valgrind::CheckDefined(heatCapacity_);
+        solidHeatCapacity_ =
+            problem.spatialParams().solidHeatCapacity(element, fvGeometry, scvIdx);
+        Valgrind::CheckDefined(solidHeatCapacity_);
 
-        densitySolid_ =
-            problem.spatialParams().densitySolid(element, fvGeometry, scvIdx);
-        Valgrind::CheckDefined(densitySolid_);
+        solidDensity_ =
+            problem.spatialParams().solidDensity(element, fvGeometry, scvIdx);
+        Valgrind::CheckDefined(solidDensity_);
 
         // set the enthalpies
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -207,11 +207,15 @@ public:
     }
 
     /*!
-     * \brief Returns the total heat capacity [J/(K m^3)] of the rock matrix in
+     * \brief Returns the total heat capacity [J/(kg K)] of the rock matrix in
      *        the sub-control volume.
      */
+    Scalar solidHeatCapacity() const
+    { return solidHeatCapacity_; }
+
     Scalar heatCapacity() const
-    { return heatCapacity_; }
+    DUNE_DEPRECATED_MSG("use solidHeatCapacity() instead")
+    { return solidHeatCapacity(); }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the fluid phase in
@@ -224,9 +228,12 @@ public:
      * \brief Returns the total density of the given solid phase [kg / m^3] in
      *        the sub-control volume.
      */
-    Scalar densitySolid() const
-    { return densitySolid_; }
+    Scalar solidDensity() const
+    { return solidDensity_; }
 
+    Scalar densitySolid() const
+    DUNE_DEPRECATED_MSG("use solidDensity() instead")
+    { return solidDensity(); }
 
     /*!
      * \brief If running under valgrind this produces an error message
@@ -234,13 +241,13 @@ public:
      */
     void checkDefined() const
     {
-        Valgrind::CheckDefined(heatCapacity_);
-        Valgrind::CheckDefined(densitySolid_);
+        Valgrind::CheckDefined(solidHeatCapacity_);
+        Valgrind::CheckDefined(solidDensity_);
     }
 
 protected:
-    Scalar heatCapacity_;
-    Scalar densitySolid_;
+    Scalar solidHeatCapacity_;
+    Scalar solidDensity_;
     Scalar thermalConductivity_[numPhases] ;
 };
 

@@ -62,9 +62,9 @@ public:
                                                int scvIdx)
     {
         Scalar sw = volVars.saturation(Indices::wPhaseIdx);
-        Scalar lambdaW = volVars.thermalConductivityFluid(Indices::wPhaseIdx);
-        Scalar lambdaN = volVars.thermalConductivityFluid(Indices::nPhaseIdx);
-        Scalar lambdaSolid = volVars.thermalConductivitySolid();
+        Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
+        Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
+        Scalar lambdaSolid = volVars.solidThermalConductivity();
         Scalar porosity = volVars.porosity();
 
         return effectiveThermalConductivity(sw, lambdaW, lambdaN, lambdaSolid, porosity);

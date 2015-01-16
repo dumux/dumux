@@ -210,8 +210,9 @@ public:
             Scalar porosity = this->spatialParams().porosity(*eIt, fvGeometry, 0);
             Scalar densityW = volVars.density();
             Scalar heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
-            Scalar effectiveHeatCapacityS = this->spatialParams().heatCapacity(*eIt, fvGeometry, 0);
-            Scalar storage = densityW*heatCapacityW*porosity + effectiveHeatCapacityS;
+            Scalar densityS = this->spatialParams().solidDensity(*eIt, fvGeometry, 0);
+            Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(*eIt, fvGeometry, 0);
+            Scalar storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
             Scalar effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          *eIt, fvGeometry, 0);
             Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);

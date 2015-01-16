@@ -79,26 +79,44 @@ public:
     { return this->fluidState_.enthalpy(phaseIdx); };
 
     /*!
-     * \brief Returns the total heat capacity \f$\mathrm{[J/(K*m^3]}\f$ of the rock matrix in
+     * \brief Returns the total heat capacity \f$\mathrm{[J/(kg K)]}\f$ of the rock matrix in
      *        the sub-control volume.
      */
+    Scalar solidHeatCapacity() const
+    { return solidHeatCapacity_; };
+
     Scalar heatCapacity() const
-    { return heatCapacity_; };
+    DUNE_DEPRECATED_MSG("use solidHeatCapacity()*solidDensity()*(1 - porosity()) instead")
+    { return solidHeatCapacity()*solidDensity()*(1 - this->porosity()); }
+
+    /*!
+     * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the rock matrix in
+     *        the sub-control volume.
+     */
+    Scalar solidDensity() const
+    { return solidDensity_; };
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of a fluid phase in
      *        the sub-control volume.
      */
-    Scalar thermalConductivityFluid(const int phaseIdx) const
+    Scalar fluidThermalConductivity(const int phaseIdx) const
     { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); };
+
+    Scalar thermalConductivityFluid(const int phaseIdx) const
+    DUNE_DEPRECATED_MSG("use fluidThermalConductivity() instead")
+    { return fluidThermalConductivity(phaseIdx); }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the solid phase in
      *        the sub-control volume.
      */
-    Scalar thermalConductivitySolid() const
-    { return thermalConductivitySolid_; };
+    Scalar solidThermalConductivity() const
+    { return solidThermalConductivity_; };
 
+    Scalar thermalConductivitySolid() const
+    DUNE_DEPRECATED_MSG("use solidThermalConductivity() instead")
+    { return solidThermalConductivity(); }
 
 protected:
     // The methods below get called by the parent class. Since they
@@ -143,16 +161,20 @@ protected:
                        const int scvIdx,
                        bool isOldSol)
     {
-        heatCapacity_ = problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
-        Valgrind::CheckDefined(heatCapacity_);
+        solidHeatCapacity_ = problem.spatialParams().solidHeatCapacity(element, fvGeometry, scvIdx);
+        Valgrind::CheckDefined(solidHeatCapacity_);
 
-        thermalConductivitySolid_
-            = problem.spatialParams().thermalConductivitySolid(element, fvGeometry, scvIdx);
-        Valgrind::CheckDefined(thermalConductivitySolid_);
+        solidDensity_ = problem.spatialParams().solidDensity(element, fvGeometry, scvIdx);
+        Valgrind::CheckDefined(solidDensity_);
+
+        solidThermalConductivity_
+            = problem.spatialParams().solidThermalConductivity(element, fvGeometry, scvIdx);
+        Valgrind::CheckDefined(solidThermalConductivity_);
     };
 
-    Scalar heatCapacity_;
-    Scalar thermalConductivitySolid_;
+    Scalar solidHeatCapacity_;
+    Scalar solidDensity_;
+    Scalar solidThermalConductivity_;
 };
 
 } // end namespace

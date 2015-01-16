@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX scheme to the two-phase two-component flow model.
+ * \brief velocity output for implicit (porous media) models
  */
 #ifndef DUMUX_IMPLICIT_VELOCITYOUTPUT_HH
 #define DUMUX_IMPLICIT_VELOCITYOUTPUT_HH
@@ -47,6 +47,7 @@ class ImplicitVelocityOutput
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::ctype CoordScalar;
@@ -63,6 +64,7 @@ class ImplicitVelocityOutput
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
+    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -78,41 +80,31 @@ public:
     {
         // check, if velocity output can be used (works only for cubes so far)
         velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity);
-        if (velocityOutput_ && isBox)
+        if (velocityOutput_)
         {
-            cellNum_.assign(problem_.gridView().size(dofCodim), 0);
-        }
-
-        ElementIterator eIt = problem_.gridView().template begin<0>();
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
-        {
-            if (eIt->geometry().type().isCube() == false)
+            if (isBox)
             {
-                velocityOutput_ = false;
-            }
+                cellNum_.assign(problem_.gridView().size(dofCodim), 0);
 
-            if (velocityOutput_ && isBox)
-            {
-                FVElementGeometry fvGeometry;
-                fvGeometry.update(problem_.gridView(), *eIt);
-
-                // transform vertex velocities from local to global coordinates
-                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                ElementIterator eIt = problem_.gridView().template begin<0>();
+                ElementIterator eEndIt = problem_.gridView().template end<0>();
+                for (; eIt != eEndIt; ++eIt)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int vIdxGlobal = problem_.vertexMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                    int vIdxGlobal = problem_.vertexMapper().map(*eIt, scvIdx, dofCodim);
-#endif
+                    FVElementGeometry fvGeometry;
+                    fvGeometry.update(problem_.gridView(), *eIt);
 
-                    cellNum_[vIdxGlobal] += 1;
+                    for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                    {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                        int vIdxGlobal = problem_.vertexMapper().subIndex(*eIt, scvIdx, dofCodim);
+#else
+                        int vIdxGlobal = problem_.vertexMapper().map(*eIt, scvIdx, dofCodim);
+#endif
+                        cellNum_[vIdxGlobal] += 1;
+                    }
                 }
             }
         }
-
-        if (velocityOutput_ != GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity))
-            std::cout << "ATTENTION: Velocity output only works for cubes and is set to false for simplices\n";
     }
 
     bool enableOutput()
@@ -124,16 +116,17 @@ public:
     void calculateVelocity(VelocityVector& velocity,
                            const ElementVolumeVariables& elemVolVars,
                            const FVElementGeometry& fvGeometry,
-                           const Element& element, 
+                           const Element& element,
                            int phaseIdx)
     {
         if (velocityOutput_)
         {
-            // calculate vertex velocities
-            GlobalPosition tmpVelocity(0.0);
+            Dune::GeometryType geomType = element.geometry().type();
+            const ReferenceElement &referenceElement
+                = ReferenceElements::general(geomType);
 
-            const Dune::FieldVector<Scalar, dim>& localPos =
-                ReferenceElements::general(element.geometry().type()).position(0, 0);
+            const Dune::FieldVector<Scalar, dim>& localPos
+                = referenceElement.position(0, 0);
 
             // get the transposed Jacobian of the element mapping
             const typename Element::Geometry::JacobianTransposed jacobianT2 =
@@ -141,8 +134,8 @@ public:
 
             if (isBox)
             {
-                typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > SCVVelocities;
-                SCVVelocities scvVelocities(pow(2,dim));
+                typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > ScvVelocities;
+                ScvVelocities scvVelocities(fvGeometry.numScv);
                 scvVelocities = 0;
 
                 for (int fIdx = 0; fIdx < fvGeometry.numScvf; fIdx++)
@@ -164,17 +157,17 @@ public:
 
                     GlobalPosition localNormal(0);
                     jacobianT1.mv(globalNormal, localNormal);
-                    // note only works for cubes
-                    const Scalar localArea = pow(2,-(dim-1));
-
                     localNormal /= localNormal.two_norm();
 
-                    // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolume
-                    // face in the reference element.
+                    // area of the subcontrolvolume face in the reference element
+                    Scalar localArea = scvfReferenceArea_(geomType, fIdx);
+
+                    // get the volume flux divided by the area of the
+                    // subcontrolvolume face in the reference element
                     Scalar flux = fluxVars.volumeFlux(phaseIdx) / localArea;
 
-                    // transform the normal Darcy velocity into a vector
-                    tmpVelocity = localNormal;
+                    // transform the volume flux into a velocity vector
+                    GlobalPosition tmpVelocity = localNormal;
                     tmpVelocity *= flux;
 
                     scvVelocities[fluxVars.face().i] += tmpVelocity;
@@ -200,7 +193,11 @@ public:
             }
             else
             {
-                Dune::FieldVector<Scalar, 2*dim> scvVelocities(0.0);
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                std::vector<Scalar> scvfFluxes(element.subEntities(1), 0);
+#else
+                std::vector<Scalar> scvfFluxes(element.template count<1>(), 0);
+#endif
 
                 int fIdxInner = 0;
                 IntersectionIterator isEndIt = problem_.gridView().iend(element);
@@ -217,8 +214,7 @@ public:
                                                fIdxInner,
                                                elemVolVars);
 
-                        Scalar flux = fluxVars.volumeFlux(phaseIdx);
-                        scvVelocities[fIdx] += flux;
+                        scvfFluxes[fIdx] += fluxVars.volumeFlux(phaseIdx);
 
                         fIdxInner++;
                     }
@@ -230,14 +226,68 @@ public:
                                                fIdx,
                                                elemVolVars,true);
 
-                        Scalar flux = fluxVars.volumeFlux(phaseIdx);
-                        scvVelocities[fIdx] = flux;
+                        scvfFluxes[fIdx] = fluxVars.volumeFlux(phaseIdx);
                     }
                 }
 
-                Dune::FieldVector < Scalar, dim > refVelocity(0);
-                for (int i = 0; i < dim; i++)
-                    refVelocity[i] = 0.5 * (scvVelocities[2*i + 1] - scvVelocities[2*i]);
+                // Correct boundary fluxes in case of Neumann conditions.
+                // They are simply set to an average of the inner fluxes. In
+                // this general setting, it would be very difficult to
+                // calculate correct phase, i.e., volume, fluxes from arbitrary
+                // Neumann conditions.
+                if (element.hasBoundaryIntersections())
+                {
+                    IntersectionIterator isEndIt = problem_.gridView().iend(element);
+                    for (IntersectionIterator isIt = problem_.gridView().ibegin(element); 
+                         isIt != isEndIt; ++isIt)
+                    {
+                        if (isIt->boundary())
+                        {
+                            BoundaryTypes bcTypes;
+                            problem_.boundaryTypes(bcTypes, *isIt);
+
+                            if (bcTypes.hasNeumann())
+                            {
+                                int fIdx = isIt->indexInInside();
+
+                                // cubes
+                                if (dim == 1 || geomType.isCube()){
+                                    int fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
+                                    scvfFluxes[fIdx] = -scvfFluxes[fIdxOpposite];
+                                }
+                                // simplices
+                                else if (geomType.isSimplex()) {
+                                    scvfFluxes[fIdx] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Dune::FieldVector < Scalar, dim > refVelocity;
+                // cubes
+                if (dim == 1 || geomType.isCube()){
+                    for (int i = 0; i < dim; i++)
+                    {
+                        refVelocity[i] = 0.5 * (scvfFluxes[2*i + 1] - scvfFluxes[2*i]);
+                    }
+                }
+                // simplices
+                else if (geomType.isSimplex()) {
+                    for (int dimIdx = 0; dimIdx < dim; dimIdx++)
+                    {
+                        refVelocity[dimIdx] = -scvfFluxes[dim - 1 - dimIdx];
+                         for (int fIdx = 0; fIdx < dim + 1; fIdx++)
+                         {
+                             refVelocity[dimIdx] += scvfFluxes[fIdx]/(dim + 1);
+                         }
+                    }
+                }
+                // 3D prism and pyramids
+                else {
+                    DUNE_THROW(Dune::NotImplemented, 
+                               "velocity output for cell-centered and prism/pyramid");
+                }
 
                 Dune::FieldVector<Scalar, dimWorld> scvVelocity(0);
                 jacobianT2.mtv(refVelocity, scvVelocity);
@@ -253,6 +303,63 @@ public:
                 velocity[eIdxGlobal]= scvVelocity;
             }
         } // velocity output
+    }
+
+private:
+    // The area of a subcontrolvolume face in a reference element.
+    // The 3d non-cube values have been calculated with quadrilateralArea3D
+    // of boxfvelementgeometry.hh.
+    static Scalar scvfReferenceArea_(Dune::GeometryType geomType, int fIdx)
+    {
+        if (dim == 1 || geomType.isCube())
+        {
+            return 1.0/(1 << (dim-1));
+        }
+        else if (geomType.isTriangle())
+        {
+            static const Scalar faceToArea[] = {0.372677996249965,
+                                                0.372677996249965,
+                                                0.235702260395516};
+            return faceToArea[fIdx];
+        }
+        else if (geomType.isTetrahedron())
+        {
+            static const Scalar faceToArea[] = {0.102062072615966,
+                                                0.102062072615966,
+                                                0.058925565098879,
+                                                0.102062072615966,
+                                                0.058925565098879,
+                                                0.058925565098879};
+            return faceToArea[fIdx];
+        }
+        else if (geomType.isPyramid())
+        {
+            static const Scalar faceToArea[] = {0.130437298687488,
+                                                0.130437298687488,
+                                                0.130437298687488,
+                                                0.130437298687488,
+                                                0.150923085635624,
+                                                0.1092906420717,
+                                                0.1092906420717,
+                                                0.0781735959970571};
+            return faceToArea[fIdx];
+        }
+        else if (geomType.isPrism())
+        {
+            static const Scalar faceToArea[] = {0.166666666666667,
+                                                0.166666666666667,
+                                                0.166666666666667,
+                                                0.186338998124982,
+                                                0.186338998124982,
+                                                0.117851130197758,
+                                                0.186338998124982,
+                                                0.186338998124982,
+                                                0.117851130197758};
+            return faceToArea[fIdx];
+        }
+        else {
+            DUNE_THROW(Dune::NotImplemented, "scvf area for unknown GeometryType");
+        }
     }
 
 protected:

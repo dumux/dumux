@@ -57,8 +57,8 @@ public:
                                                int scvIdx)
     {
         //Get the thermal conductivities and the porosity from the volume variables
-        Scalar lambdaW = volVars.thermalConductivityFluid(0);
-        Scalar lambdaSolid = volVars.thermalConductivitySolid();
+        Scalar lambdaW = volVars.fluidThermalConductivity(0);
+        Scalar lambdaSolid = volVars.solidThermalConductivity();
         Scalar porosity = volVars.porosity();
 
         return lambdaSolid*(1-porosity) + lambdaW*porosity;

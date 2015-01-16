@@ -195,13 +195,13 @@ protected:
                 ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].fluidState().saturation(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(nPhaseIdx),
-                                                                   problem.spatialParams().thermalConductivitySolid(element, fvGeometry, i),
+                                                                   problem.spatialParams().solidThermalConductivity(element, fvGeometry, i),
                                                                    problem.spatialParams().porosity(element, fvGeometry, i));
             lambdaJ =
                 ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].fluidState().saturation(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(nPhaseIdx),
-                                                                   problem.spatialParams().thermalConductivitySolid(element, fvGeometry, j),
+                                                                   problem.spatialParams().solidThermalConductivity(element, fvGeometry, j),
                                                                    problem.spatialParams().porosity(element, fvGeometry, j));
         }
         else
@@ -214,7 +214,7 @@ protected:
                 ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[i].fluidState().saturation(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[i].thermalConductivity(nPhaseIdx),
-                                                                   problem.spatialParams().thermalConductivitySolid(elementI, fvGeometryI, 0),
+                                                                   problem.spatialParams().solidThermalConductivity(elementI, fvGeometryI, 0),
                                                                    problem.spatialParams().porosity(elementI, fvGeometryI, 0));
 
             const Element & elementJ = *fvGeometry.neighbors[j];
@@ -225,7 +225,7 @@ protected:
                 ThermalConductivityModel::effectiveThermalConductivity(elemVolVars[j].fluidState().saturation(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(wPhaseIdx),
                                                                    elemVolVars[j].thermalConductivity(nPhaseIdx),
-                                                                   problem.spatialParams().thermalConductivitySolid(elementJ, fvGeometryJ, 0),
+                                                                   problem.spatialParams().solidThermalConductivity(elementJ, fvGeometryJ, 0),
                                                                    problem.spatialParams().porosity(elementJ, fvGeometryJ, 0));
         }
 

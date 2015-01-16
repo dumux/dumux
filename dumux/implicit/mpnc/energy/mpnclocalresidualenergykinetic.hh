@@ -121,9 +121,9 @@ public:
         else if(phaseIdx == sPhaseIdx) {
             // heat stored in the rock matrix
             storage[energyEq0Idx+phaseIdx] += volVars.temperature(phaseIdx) *
-                                               volVars.densitySolid() *
+                                               volVars.solidDensity() *
                                                (1.-volVars.porosity()) *
-                                               volVars.heatCapacity();
+                                               volVars.solidHeatCapacity();
         }
         else
             DUNE_THROW(Dune::NotImplemented,
@@ -463,9 +463,9 @@ public:
         // heat stored in the rock matrix
         storage[energyEqSolidIdx] +=
             volVars.temperature(temperatureSolidIdx)
-            * volVars.densitySolid()
+            * volVars.solidDensity()
             * (1.0 - volVars.porosity())
-            * volVars.heatCapacity();
+            * volVars.solidHeatCapacity();
 
         if (!std::isfinite(storage[energyEqSolidIdx]))
         	DUNE_THROW(NumericalProblem, "Calculated non-finite storage");
