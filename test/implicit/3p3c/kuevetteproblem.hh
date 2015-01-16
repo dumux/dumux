@@ -26,6 +26,7 @@
 #ifndef DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 #define DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 
+#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
@@ -333,7 +334,11 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int dofIdxGlobal = this->model().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+#else
                 int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
+#endif
                 (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, scvIdx);
             }
         }
