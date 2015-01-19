@@ -999,7 +999,6 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
     //std::cout<<gv.comm().rank()<<": "<<c.indexSet()<<std::endl;
 
     // Compute neighbours using communication
-    typedef NeighbourGatherScatter NeighbourGS;
     std::set<int> neighbours;
     NeighbourGatherScatter ngs(problem_, gridview.comm().rank(),
                                neighbours);
@@ -1014,7 +1013,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
     //std::cout<<c.remoteIndices()<<std::endl;
 
 }
-#endif
+#endif // HAVE_MPI
 } // end namespace Dumux
 
-#endif
+#endif // DUMUX_AMGPARALLELHELPERS_HH
