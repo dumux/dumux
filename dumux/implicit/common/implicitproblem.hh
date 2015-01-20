@@ -549,7 +549,7 @@ public:
     Scalar nextTimeStepSize(const Scalar dt)
     {
         return newtonCtl_.suggestTimeStepSize(dt);
-    };
+    }
 
     /*!
      * \brief Returns true if a restart file should be written to
@@ -603,7 +603,7 @@ public:
         std::cerr << "The end of an episode is reached, but the problem "
                   << "does not override the episodeEnd() method. "
                   << "Doing nothing!\n";
-    };
+    }
     // \}
 
     /*!

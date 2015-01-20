@@ -402,13 +402,13 @@ protected:
      * \brief Returns a reference to the problem.
      */
     const Problem &problem_() const
-    { return *problemPtr_; };
+    { return *problemPtr_; }
 
     /*!
      * \brief Returns a reference to the model.
      */
     const Model &model_() const
-    { return problem_().model(); };
+    { return problem_().model(); }
 
     /*!
      * \brief Returns a reference to the grid view.

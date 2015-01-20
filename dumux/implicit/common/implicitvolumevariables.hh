@@ -52,7 +52,7 @@ class ImplicitVolumeVariables
 public:
     // default constructor
     ImplicitVolumeVariables()
-    { evalPoint_ = 0; };
+    { evalPoint_ = 0; }
 
     // copy constructor
     ImplicitVolumeVariables(const ImplicitVolumeVariables &v)
@@ -60,7 +60,7 @@ public:
         evalPoint_ = 0;
         priVars_ = v.priVars_;
         extrusionFactor_ = v.extrusionFactor_;
-    };
+    }
 
     /*!
      * \brief Assignment operator
@@ -72,7 +72,7 @@ public:
         extrusionFactor_ = v.extrusionFactor_;
 
         return *this;
-    };
+    }
 
     /*!
      * \brief Sets the evaluation point used by the local jacobian.
@@ -98,7 +98,7 @@ public:
      *        conditions for complex calculations.
      */
     void setHint(const Implementation *hint)
-    {};
+    {}
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -168,7 +168,7 @@ public:
         if (evalPoint_ && evalPoint_ != this)
             evalPoint_->checkDefined();
 #endif
-    };
+    }
 
 protected:
     const Implementation &asImp_() const

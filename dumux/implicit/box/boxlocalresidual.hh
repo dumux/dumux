@@ -264,7 +264,7 @@ protected:
     }
     
     const VertexMapper &vertexMapper_() const
-    { return this->problem_().vertexMapper(); };
+    { return this->problem_().vertexMapper(); }
 };
 
 }

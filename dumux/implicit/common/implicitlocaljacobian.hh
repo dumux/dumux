@@ -303,7 +303,7 @@ protected:
     {
         Valgrind::CheckDefined(problemPtr_);
         return *problemPtr_;
-    };
+    }
 
     /*!
      * \brief Returns a reference to the grid view.
@@ -318,13 +318,13 @@ protected:
     {
         Valgrind::CheckDefined(elemPtr_);
         return *elemPtr_;
-    };
+    }
 
     /*!
      * \brief Returns a reference to the model.
      */
     const Model &model_() const
-    { return problem_().model(); };
+    { return problem_().model(); }
 
     /*!
      * \brief Returns a reference to the jacobian assembler.
@@ -336,7 +336,7 @@ protected:
      * \brief Returns a reference to the vertex mapper.
      */
     const VertexMapper &vertexMapper_() const
-    { return problem_().vertexMapper(); };
+    { return problem_().vertexMapper(); }
 
     /*!
      * \brief Reset the local jacobian matrix to 0

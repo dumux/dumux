@@ -107,7 +107,7 @@ public:
      * no energy equation is used.
      */
     Scalar temperature() const
-    { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); };
+    { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); }
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
