@@ -755,7 +755,8 @@ public:
     	const Scalar deltaRho = fs.density(wPhaseIdx) - fs.density(nPhaseIdx) ;
 	const Scalar firstBracket = std::pow(g * deltaRho / gamma, 0.5);
 	const Scalar cp = FluidSystem::heatCapacity(fs, wPhaseIdx) ;
-	const Scalar TFluid		= volVars.temperature(temperatureFluidIdx);
+    // This use of Tsat is only justified if the fluid is always boiling (tsat equals boiling conditions)
+    // If a different state is to be simulated, please use the actual fluid temperature instead.
 	const Scalar Tsat = FluidSystem::vaporTemperature(fs, nPhaseIdx ) ;
 	const Scalar deltaT = TSolid - Tsat ;
 	const Scalar secondBracket = std::pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 ) ;
