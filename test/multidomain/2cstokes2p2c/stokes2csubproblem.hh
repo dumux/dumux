@@ -325,10 +325,7 @@ public:
      */
     Scalar beaversJosephCoeffAtPos(const GlobalPosition &globalPos) const
     {
-        if (onLowerBoundary_(globalPos))
-            return alphaBJ_;
-        else
-            return 0.0;
+        return alphaBJ_;
     }
 
     /*!

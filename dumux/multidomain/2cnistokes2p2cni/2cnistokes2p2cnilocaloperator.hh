@@ -176,9 +176,7 @@ public:
                                    cParams,
                                    couplingRes1, couplingRes2);
 
-        // TODO: this should be done only once
         const DimVector& globalPos2 = cParams.fvGeometry2.subContVol[vertInElem2].global;
-        //        const DimVector& bfNormal2 = boundaryVars2.face().normal;
         DimVector normalMassFlux2(0.);
 
         // velocity*normal*area*rho

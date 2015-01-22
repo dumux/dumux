@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Calculates the residual of models based on the box scheme element-wise.
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the coupled box model.
  */
 #ifndef DUMUX_BOX_COUPLING_LOCAL_RESIDUAL_HH
 #define DUMUX_BOX_COUPLING_LOCAL_RESIDUAL_HH
@@ -30,10 +31,8 @@ namespace Dumux
 /*!
  * \ingroup ImplicitLocalResidual
  * \ingroup TwoPTwoCNIStokesTwoCNIModel
- * \brief Element-wise calculation of the residual matrix for models
- *        based on the box scheme .
- *
- * \todo Please doc me more!
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the coupled box model.
  */
 template<class TypeTag>
 class BoxCouplingLocalResidual : public BoxLocalResidual<TypeTag>

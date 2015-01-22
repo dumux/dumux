@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the stokes box model.
+ *        using the coupled compositional Stokes box model.
  */
 
 #ifndef DUMUX_STOKESNC_COUPLING_LOCAL_RESIDUAL_HH
@@ -34,13 +34,8 @@ namespace Dumux
  * \ingroup ImplicitLocalResidual
  * \ingroup TwoPTwoCStokesTwoCModel
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the Stokes box model.
- *
- * This class is also used for the stokes transport
- * model, which means that it uses static polymorphism.
- * 
- * \todo Please doc me more!
- * This file should contain a more detailed description of the coupling conditions.
+ *        using the coupled compositional Stokes box model.
+ *        It is derived from the compositional Stokes box model.
  */
 template<class TypeTag>
 class StokesncCouplingLocalResidual : public StokesncLocalResidual<TypeTag>
@@ -272,17 +267,8 @@ protected:
         const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
         const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
 
-        // TODO: beaversJosephCoeff is used to determine, if we are on a coupling face
-        // this is important at the corners. However, a better way should be found.
-
-        // check if BJ-coeff is not zero to decide, if coupling condition
-        // for the momentum balance (Dirichlet vor v.n) has to be set;
-        // may be important at corners
-        const GlobalPosition &globalPos = this->fvGeometry_().boundaryFace[boundaryFaceIdx].ipGlobal;
-        Scalar beaversJosephCoeff = this->problem_().beaversJosephCoeffAtPos(globalPos);
-
         // set velocity normal to the interface
-        if (bcTypes.isCouplingInflow(momentumYIdx) && beaversJosephCoeff)
+        if (bcTypes.isCouplingInflow(momentumYIdx))
             this->residual_[scvIdx][momentumYIdx] =
                     volVars.velocity() *
                     boundaryVars.face().normal /
@@ -291,10 +277,10 @@ protected:
 
         // add pressure correction - required for pressure coupling,
         // if p.n comes from the pm
-        if ((bcTypes.isCouplingOutflow(momentumYIdx) && beaversJosephCoeff) || bcTypes.isMortarCoupling(momentumYIdx))
+        if (bcTypes.isCouplingOutflow(momentumYIdx) || bcTypes.isMortarCoupling(momentumYIdx))
         {
             DimVector pressureCorrection(isIt->centerUnitOuterNormal());
-            pressureCorrection *= volVars.pressure(); // TODO: 3D
+            pressureCorrection *= volVars.pressure();
             this->residual_[scvIdx][momentumYIdx] += pressureCorrection[momentumYIdx]*
                     boundaryVars.face().area;
         }
@@ -319,69 +305,65 @@ protected:
     void evalBeaversJoseph_(const IntersectionIterator &isIt,
                             const int scvIdx,
                             const int boundaryFaceIdx,
-                            const FluxVariables &boundaryVars) //TODO: required
+                            const FluxVariables &boundaryVars)
     {
         const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
 
         const GlobalPosition &globalPos = this->fvGeometry_().boundaryFace[boundaryFaceIdx].ipGlobal;
         Scalar beaversJosephCoeff = this->problem_().beaversJosephCoeffAtPos(globalPos);
 
-        // only enter here, if we are on a coupling boundary (see top)
-        // and the BJ coefficient is not zero
-        if (beaversJosephCoeff)
+        const Scalar Kxx = this->problem_().permeability(this->element_(),
+                                                         this->fvGeometry_(),
+                                                         scvIdx);
+        beaversJosephCoeff /= std::sqrt(Kxx);
+        const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
+
+        // implementation as NEUMANN condition /////////////////////////////////////////////
+        // (v.n)n
+        if (bcTypes.isCouplingOutflow(momentumXIdx))
         {
-            const Scalar Kxx = this->problem_().permeability(this->element_(),
-                                                            this->fvGeometry_(),
-                                                            scvIdx);
-            beaversJosephCoeff /= sqrt(Kxx);
-            const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
+            const Scalar normalComp = boundaryVars.velocity()*elementUnitNormal;
+            DimVector normalV = elementUnitNormal;
+            normalV *= normalComp; // v*n*n
 
-            // implementation as NEUMANN condition /////////////////////////////////////////////
-            // (v.n)n
-            if (bcTypes.isCouplingOutflow(momentumXIdx))
-            {
-                const Scalar normalComp = boundaryVars.velocity()*elementUnitNormal;
-                DimVector normalV = elementUnitNormal;
-                normalV *= normalComp; // v*n*n
+            // v_tau = v - (v.n)n
+            const DimVector tangentialV = boundaryVars.velocity() - normalV;
+            const Scalar boundaryFaceArea = boundaryVars.face().area;
 
-                // v_tau = v - (v.n)n
-                const DimVector tangentialV = boundaryVars.velocity() - normalV;
-                const Scalar boundaryFaceArea = boundaryVars.face().area;
+            for (int dimIdx=0; dimIdx < dim; ++dimIdx)
+                this->residual_[scvIdx][dimIdx] += beaversJosephCoeff *
+                                        boundaryFaceArea *
+                                        tangentialV[dimIdx] *
+                                        (boundaryVars.dynamicViscosity()
+                                          + boundaryVars.dynamicEddyViscosity());
 
-                for (int dimIdx=0; dimIdx < dim; ++dimIdx)
-                    this->residual_[scvIdx][dimIdx] += beaversJosephCoeff *
-                                            boundaryFaceArea *
-                                            tangentialV[dimIdx] *
-                                            (boundaryVars.dynamicViscosity()
-                                             + boundaryVars.dynamicEddyViscosity());
+            ////////////////////////////////////////////////////////////////////////////////////
+            //normal component has only to be set if no coupling conditions are defined
+            //set NEUMANN flux (set equal to pressure in problem)
+//             PrimaryVariables priVars(0.0);
+//             this->problem_().neumann(priVars, this->element_(), this->fvGeometry_(),
+//                             *isIt, scvIdx, boundaryFaceIdx);
+//             for (int dimIdx=0; dimIdx < dim; ++dimIdx)
+//                 this->residual_[scvIdx][dimIdx] += priVars[dimIdx]*
+//                                                    boundaryFaceArea;
+        }
+        if (bcTypes.isCouplingInflow(momentumXIdx))
+        {
+            assert(beaversJosephCoeff > 0);
+            ///////////////////////////////////////////////////////////////////////////////////////////
+            //IMPLEMENTATION AS DIRICHLET CONDITION
+            //tangential componment: vx = sqrt K /alpha * (grad v n(unity))t
+            DimVector tangentialVelGrad(0);
+            boundaryVars.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
+            tangentialVelGrad /= -beaversJosephCoeff; // was - before
+            this->residual_[scvIdx][momentumXIdx] =
+                    tangentialVelGrad[momentumXIdx] - this->curPriVars_(scvIdx)[momentumXIdx];
 
-                ////////////////////////////////////////////////////////////////////////////////////
-                //normal component has only to be set if no coupling conditions are defined
-                //set NEUMANN flux (set equal to pressure in problem)
-//                PrimaryVariables priVars(0.0);
-//                this->problem_().neumann(priVars, this->element_(), this->fvGeometry_(),
-//                                  *isIt, scvIdx, boundaryFaceIdx);
-//                for (int dimIdx=0; dimIdx < dim; ++dimIdx)
-//                    this->residual_[scvIdx][dimIdx] += priVars[dimIdx]*
-//                                                       boundaryFaceArea;
-            }
-            if (bcTypes.isCouplingInflow(momentumXIdx)) //TODO: 3D
-            {
-                ///////////////////////////////////////////////////////////////////////////////////////////
-                //IMPLEMENTATION AS DIRICHLET CONDITION
-                //tangential componment: vx = sqrt K /alpha * (grad v n(unity))t
-                DimVector tangentialVelGrad(0);
-                boundaryVars.velocityGrad().umv(elementUnitNormal, tangentialVelGrad);
-                tangentialVelGrad /= -beaversJosephCoeff; // was - before
-                this->residual_[scvIdx][momentumXIdx] =
-                        tangentialVelGrad[momentumXIdx] - this->curPriVars_(scvIdx)[momentumXIdx];
-
-                ////////////////////////////////////////////////////////////////////////////////////
-                //for testing Beavers and Joseph without adjacent porous medium set vy to 0
+            ////////////////////////////////////////////////////////////////////////////////////
+            //for testing Beavers and Joseph without adjacent porous medium set vy to 0
 //                Scalar normalVel(0);
 //                this->residual_[scvIdx][momentumYIdx] = this->curPrimaryVars_(scvIdx)[momentumYIdx] - normalVel;
-                ////////////////////////////////////////////////////////////////////////////////////
-            }
+            ////////////////////////////////////////////////////////////////////////////////////
         }
     }
 

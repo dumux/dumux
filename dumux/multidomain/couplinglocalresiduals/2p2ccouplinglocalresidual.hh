@@ -292,7 +292,7 @@ public:
         if (this->bcTypes_(scvIdx).isCouplingOutflow(massBalanceIdx))
             this->residual_[scvIdx][massBalanceIdx] = volVars.pressure(nPhaseIdx);
 
-        // set mass fraction; TODO: this is fixed to contiWEqIdx so far!
+        // set mass fraction;
         if (this->bcTypes_(scvIdx).isCouplingOutflow(contiWEqIdx))
             this->residual_[scvIdx][contiWEqIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
     }

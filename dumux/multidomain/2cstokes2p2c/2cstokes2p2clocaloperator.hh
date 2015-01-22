@@ -196,7 +196,6 @@ class TwoCStokesTwoPTwoCLocalOperator :
         const Dune::ReferenceElement<typename MDGrid::ctype,dim>& referenceElement2 =
             Dune::ReferenceElements<typename MDGrid::ctype,dim>::general(mdElement2.type());
 
-        // TODO: assumes same number of vertices on a coupling face
         for (int vertexInFace = 0; vertexInFace < numVerticesOfFace; ++vertexInFace)
         {
             const int vertInElem1 = referenceElement1.subEntity(faceIdx1, 1, vertexInFace, dim);
@@ -343,17 +342,6 @@ class TwoCStokesTwoPTwoCLocalOperator :
         }
         if (cParams.boundaryTypes2.isCouplingOutflow(massBalanceIdx2))
         {
-
-            //TODO what happens at the corners? Idea: set only pressure in corners, so that residual is not needed there
-            //pi-tau
-            //        if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
-            //        {
-            //            couplingRes2[getIndex_<LFSU2,massBalanceIdx2> (lfsu_n,vertInElem2)] -= cParams.elemVolVarsCur1[vertInElem1].pressure;
-            //        }
-            //        else
-            //        {
-            //            // n.(pI-tau)n as dirichlet condition for Darcy p (set, if B&J defined as Dirichlet condition)
-            // set residualDarcy[massBalance] = p in 2p2clocalresidual.hh
             couplingRes2.accumulate(lfsu_n.child(massBalanceIdx2), vertInElem2,
                                     globalProblem_.localResidual1().residual(vertInElem1)[momentumYIdx1]
                                     -cParams.elemVolVarsCur1[vertInElem1].pressure());
@@ -513,13 +501,11 @@ class TwoCStokesTwoPTwoCLocalOperator :
                 couplingRes1.accumulate(lfsu_s.child(momentumYIdx1), vertInElem1,
                                         globalProblem_.localResidual2().residual(vertInElem2)[massBalanceIdx2]
                                         / cParams.elemVolVarsCur1[vertInElem1].density());
-                // TODO: * bfNormal2.two_norm());
             }
         }
 
         //coupling residual is added to "real" residual
         //here each node is passed twice, hence only half of the dirichlet condition has to be set
-        //TODO what to do at boundary nodes which appear only once?
         if (cParams.boundaryTypes1.isCouplingOutflow(transportEqIdx1))
         {
             // set residualStokes[transportEqIdx1] = x in stokes2clocalresidual.hh

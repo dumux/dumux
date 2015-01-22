@@ -115,7 +115,7 @@ NEW_PROP_TAG(MultiDomainCoupling);
 
 //! Property tag for the multidomain constraints transformation
 NEW_PROP_TAG(MultiDomainConstraintsTrafo);
-NEW_PROP_TAG(ConstraintsTrafo); // TODO: required?
+NEW_PROP_TAG(ConstraintsTrafo);
 
 //! Specifies the type of the jacobian matrix as used for the linear solver
 NEW_PROP_TAG(JacobianMatrix);
