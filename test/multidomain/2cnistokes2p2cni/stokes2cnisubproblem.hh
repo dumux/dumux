@@ -155,10 +155,10 @@ public:
         : ParentType(timeManager, gridView),
           spatialParams_(gridView)
     {
-        bboxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMin);
-        bboxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
-        bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
-        bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMax);
+        bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMin);
+        bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
+        bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+        bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMax);
         runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RunUpDistanceX); // first part of the interface without coupling
 
         refVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
@@ -202,14 +202,14 @@ public:
 
     /*!
      * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given vertex
+     *        used for which equation on a given boundary segment
      *
      * \param values Stores the value of the boundary type
-     * \param vertex The vertex
+     * \param globalPos The global position
      */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
+    void boundaryTypesAtPos(BoundaryTypes &values,
+                            const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos = vertex.geometry().center();
         const Scalar time = this->timeManager().time();
 
         values.setAllDirichlet();
@@ -294,16 +294,15 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet vertex
+     * \brief Evaluates the boundary conditions for a Dirichlet
+     *        boundary segment
      *
      * \param values Stores the Dirichlet values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
-     * \param vertex The vertex
+     * \param globalPos The global position
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         values = 0.0;
 
         FluidState fluidState;
@@ -315,34 +314,21 @@ public:
         values[velocityXIdx] = xVelocity_(globalPos);
         values[velocityYIdx] = 0.0;
         values[pressureIdx] = refPressure()  +
-                density*this->gravity()[1]*(globalPos[1] - bboxMin_[1]);
+                density*this->gravity()[1]*(globalPos[1] - bBoxMin_[1]);
         values[massOrMoleFracIdx] = refMassfrac();
         values[temperatureIdx] = refTemperature();
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann intersection
+     * \brief Evaluate the boundary conditions for a Neumann
+     *        boundary segment.
      *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param is The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
-     *
-     * Negative values indicate an inflow.
+     * \param values The Neumann values for the conservation equations in units of
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^{\textrm{dim}-1} \cdot s )] \f$
+     * \param globalPos The global position
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &is,
-                 const int scvIdx,
-                 const int boundaryFaceIdx) const
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos =
-                fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
-
         values = 0.;
 
         FluidState fluidState;
@@ -355,7 +341,7 @@ public:
         const Scalar xVelocity = xVelocity_(globalPos);
 
         if (onLeftBoundary_(globalPos)
-                && globalPos[1] > bboxMin_[1] && globalPos[1] < bboxMax_[1])
+                && globalPos[1] > bBoxMin_[1] && globalPos[1] < bBoxMax_[1])
         {
             values[transportEqIdx] = -xVelocity*density*refMassfrac();
             values[energyEqIdx] = -xVelocity*density*enthalpy;
@@ -363,26 +349,14 @@ public:
     }
 
     /*!
-     * \brief Evaluate the Beavers-Joseph coefficient
-     *        at the center of a given intersection
+     * \brief Evaluate the Beavers-Joseph coefficient at given position
      *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param is The intersection between element and boundary
-     * \param scvIdx The local subcontrolvolume index
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param globalPos The global position
      *
      * \return Beavers-Joseph coefficient
      */
-    Scalar beaversJosephCoeff(const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &is,
-                 const int scvIdx,
-                 const int boundaryFaceIdx) const
+    Scalar beaversJosephCoeffAtPos(const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos =
-                fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
-
         if (onLowerBoundary_(globalPos))
             return alphaBJ_;
         else
@@ -408,23 +382,14 @@ public:
     // \}
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Returns the source term
      *
-     * \param values The source and sink values for the conservation equations in units of
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^\textrm{dim} \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores the rate mass
-     * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * \param values Stores the source values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
+     * \param globalPos The global position
      */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx) const
+    void sourceAtPos(PrimaryVariables &values,
+                     const GlobalPosition &globalPos) const
     {
         // ATTENTION: The source term of the mass balance has to be chosen as
         // div (q_momentum) in the problem file
@@ -434,22 +399,12 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
+     * \param values Stores the initial values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variables} ] \f$
+     * \param globalPos The global position
      */
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const int scvIdx) const
+    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
-
         initial_(values, globalPos);
     }
     // \}
@@ -521,7 +476,7 @@ private:
         values[velocityYIdx] = 0.;
 
         values[pressureIdx] = refPressure()
-                + density*this->gravity()[1]*(globalPos[1] - bboxMin_[1]);
+                + density*this->gravity()[1]*(globalPos[1] - bBoxMin_[1]);
         values[massOrMoleFracIdx] = refMassfrac();
         values[temperatureIdx] = refTemperature();
     }
@@ -530,7 +485,7 @@ private:
     const Scalar xVelocity_(const GlobalPosition &globalPos) const
     {
         const Scalar vmax = refVelocity();
-        return  4*vmax*(globalPos[1] - bboxMin_[1])*(bboxMax_[1] - globalPos[1])
+        return  4*vmax*(globalPos[1] - bBoxMin_[1])*(bBoxMax_[1] - globalPos[1])
                 / (height_()*height_()) + 0.00134;
     }
 
@@ -559,16 +514,16 @@ private:
     { return sin(2*M_PI*this->timeManager().time()/period) * amplitude; }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < bboxMin_[0] + eps_; }
+    { return globalPos[0] < bBoxMin_[0] + eps_; }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > bboxMax_[0] - eps_; }
+    { return globalPos[0] > bBoxMax_[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < bboxMin_[1] + eps_; }
+    { return globalPos[1] < bBoxMin_[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > bboxMax_[1] - eps_; }
+    { return globalPos[1] > bBoxMax_[1] - eps_; }
 
     bool onBoundary_(const GlobalPosition &globalPos) const
     {
@@ -577,15 +532,15 @@ private:
     }
 
     const Scalar height_() const
-    { return bboxMax_[1] - bboxMin_[1]; }
+    { return bBoxMax_[1] - bBoxMin_[1]; }
 
     // spatial parameters
     SpatialParams spatialParams_;
 
     static constexpr Scalar eps_ = 1e-8;
 
-    GlobalPosition bboxMin_;
-    GlobalPosition bboxMax_;
+    GlobalPosition bBoxMin_;
+    GlobalPosition bBoxMax_;
 
     Scalar refVelocity_;
     Scalar refPressure_;

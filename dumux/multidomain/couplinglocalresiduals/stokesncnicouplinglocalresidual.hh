@@ -284,11 +284,9 @@ namespace Dumux
 			// check if BJ-coeff is not zero to decide, if coupling condition
 			// for the momentum balance (Dirichlet vor v.n) has to be set;
 			// may be important at corners
-			const Scalar beaversJosephCoeff = this->problem_().beaversJosephCoeff(this->element_(),
-																				  this->fvGeometry_(),
-																				  *isIt,
-																				  scvIdx,
-																				  boundaryFaceIdx);
+      const GlobalPosition &globalPos = this->fvGeometry_().boundaryFace[boundaryFaceIdx].ipGlobal;
+      Scalar beaversJosephCoeff = this->problem_().beaversJosephCoeffAtPos(globalPos);
+
 			// set velocity normal to the interface
 			if (bcTypes.isCouplingInflow(momentumYIdx) && beaversJosephCoeff)
 				this->residual_[scvIdx][momentumYIdx] =
@@ -336,12 +334,9 @@ namespace Dumux
 								const FluxVariables &boundaryVars) //TODO: required
 		{
 			const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-			
-			Scalar beaversJosephCoeff = this->problem_().beaversJosephCoeff(this->element_(),
-																			this->fvGeometry_(),
-																			*isIt,
-																			scvIdx,
-																			boundaryFaceIdx);
+
+      const GlobalPosition &globalPos = this->fvGeometry_().boundaryFace[boundaryFaceIdx].ipGlobal;
+      Scalar beaversJosephCoeff = this->problem_().beaversJosephCoeffAtPos(globalPos);
 			
 			// only enter here, if we are on a coupling boundary (see top)
 			// and the BJ coefficient is not zero

@@ -167,11 +167,11 @@ public:
         Scalar noDarcyX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX);
         Scalar xMin = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMin);
 
-        bboxMin_[0] = std::max(xMin,noDarcyX);
-        bboxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
+        bBoxMin_[0] = std::max(xMin,noDarcyX);
+        bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
 
-        bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMin);
-        bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+        bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMin);
+        bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
 
         runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RunUpDistanceX); // first part of the interface without coupling
         initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
@@ -234,14 +234,14 @@ public:
 
     /*!
      * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given vertex
+     *        used for which equation on a given boundary segment
      *
      * \param values Stores the value of the boundary type
-     * \param vertex The vertex
-     */ 
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
+     * \param globalPos The global position
+     */
+    void boundaryTypesAtPos(BoundaryTypes &values,
+                            const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
         Scalar time = this->timeManager().time();
 
         values.setAllNeumann();
@@ -273,18 +273,15 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluate the boundary conditions for a Dirichlet
+     *        boundary segment
      *
-     * \param values The Dirichlet values for the primary variables
-     * \param vertex The vertex representing the "half volume on the boundary"
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param values Stores the Dirichlet values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} ] \f$
+     * \param globalPos The global position
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         initial_(values, globalPos);
     }
 
@@ -294,21 +291,9 @@ public:
      *
      * \param values The Neumann values for the conservation equations in units of
      *                 \f$ [ \textnormal{unit of conserved quantity} / (m^{\textrm{dim}-1} \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param is The intersection between element and boundary
-     * \param scvIdx The local subcontrolvolume index
-     * \param boundaryFaceIdx The index of the boundary face
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
+     * \param globalPos The global position
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &is,
-                 const int scvIdx,
-                 const int boundaryFaceIdx) const
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         values = 0.;
     }
@@ -321,45 +306,27 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Returns the source term
      *
-     * \param values The source and sink values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^\textrm{dim} \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores the rate mass
-     * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * \param values Stores the source values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
+     * \param globalPos The global position
      */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx) const
+    void sourceAtPos(PrimaryVariables &values,
+                     const GlobalPosition &globalPos) const
     {
         values = Scalar(0);
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial values for a control volume
      *
-     * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
+     * \param values Stores the initial values for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variables} ] \f$
+     * \param globalPos The global position
      */
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const int scvIdx) const
+    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
         values = 0.;
 
         initial_(values, globalPos);
@@ -404,7 +371,7 @@ public:
                 storageChange /= (time - lastMassOutputTime_);
                 // 2d: interface length has to be accounted for
                 // in order to obtain kg/m²s
-                storageChange /= (bboxMax_[0]-bboxMin_[0]);
+                storageChange /= (bBoxMax_[0]-bBoxMin_[0]);
 
                 std::cout << "Time: " << time
                           << " TotalMass: " << storage[contiTotalMassIdx]
@@ -461,23 +428,23 @@ private:
     {
         //TODO: call density from fluidsystem
         values[pNIdx] = refPressure_
-                + 1000.*this->gravity()[1]*(globalPos[1]-bboxMax_[1]);
+                + 1000.*this->gravity()[1]*(globalPos[1]-bBoxMax_[1]);
 
         values[sWIdx] = initialSw_;
         values[temperatureIdx] = refTemperature_;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < bboxMin_[0] + eps_; }
+    { return globalPos[0] < bBoxMin_[0] + eps_; }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > bboxMax_[0] - eps_; }
+    { return globalPos[0] > bBoxMax_[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < bboxMin_[1] + eps_; }
+    { return globalPos[1] < bBoxMin_[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > bboxMax_[1] - eps_; }
+    { return globalPos[1] > bBoxMax_[1] - eps_; }
 
     bool onBoundary_(const GlobalPosition &globalPos) const
     {
@@ -486,8 +453,8 @@ private:
     }
 
     static constexpr Scalar eps_ = 1e-8;
-    GlobalPosition bboxMin_;
-    GlobalPosition bboxMax_;
+    GlobalPosition bBoxMin_;
+    GlobalPosition bBoxMax_;
 
     int freqMassOutput_;
 
