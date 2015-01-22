@@ -40,7 +40,7 @@
 #include <dumux/multidomain/common/multidomainproblem.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/2cnistokes2p2cnilocaloperator.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/2cnistokes2p2cnipropertydefaults.hh>
-//#include <dumux/linear/amgbackend.hh>
+
 #include <dumux/linear/seqsolverbackend.hh>
 #ifdef HAVE_PARDISO
 #include <dumux/linear/pardisobackend.hh>
@@ -60,17 +60,13 @@ namespace Properties
 NEW_TYPE_TAG(TwoCNIStokesTwoPTwoCNIProblem, INHERITS_FROM(TwoCNIStokesTwoPTwoCNI));
 
 // Set the grid type
-SET_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid)
-{
- public:
 #ifdef HAVE_UG
-    typedef typename Dune::UGGrid<2> type;
+SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid, Dune::UGGrid<2>);
 #elif HAVE_ALUGRID || HAVE_DUNE_ALUGRID
-    typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
+SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>;
 #else
-    typedef typename Dune::YaspGrid<2> type;
+SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid, Dune::YaspGrid<2>);
 #endif
-};
 
 // Set the global problem
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Problem, TwoCNIStokesTwoPTwoCNIProblem<TypeTag>);
@@ -91,11 +87,9 @@ SET_TYPE_PROP(TwoPTwoCNISubProblem, MultiDomainTypeTag, TTAG(TwoCNIStokesTwoPTwo
 SET_TYPE_PROP(Stokes2cniSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCNISubProblem));
 SET_TYPE_PROP(TwoPTwoCNISubProblem, OtherSubDomainTypeTag, TTAG(Stokes2cniSubProblem));
 
-// Set the same spatial parameters for both sub-problems
-SET_PROP(Stokes2cniSubProblem, SpatialParams)
-{ typedef Dumux::TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag> type; };
-SET_PROP(TwoPTwoCNISubProblem, SpatialParams)
-{ typedef Dumux::TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag> type; };
+// Set the spatial parameters used for the problems
+SET_TYPE_PROP(Stokes2cniSubProblem, SpatialParams, Dumux::TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCNISubProblem, SpatialParams, Dumux::TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
 
 // Set the fluid system
 SET_PROP(TwoCNIStokesTwoPTwoCNIProblem, FluidSystem)
@@ -228,29 +222,17 @@ public:
     							  TimeManager &timeManager)
         : ParentType(mdGrid, timeManager)
     {
-        try
-        {
-            // define location of the interface
-            interface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
-            noDarcyX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, NoDarcyX);
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLength);
-            initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
-            dtInit_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
+        interfacePosY_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+        noDarcyX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX);
+        episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLength);
+        initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
+        dtInit_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
 
-            // define output options
-            freqRestart_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqRestart);
-            freqOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqOutput);
-            freqFluxOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqFluxOutput);
-            freqVaporFluxOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqVaporFluxOutput);
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
+        // define output options
+        freqRestart_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqRestart);
+        freqOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqOutput);
+        freqFluxOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqFluxOutput);
+        freqVaporFluxOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqVaporFluxOutput);
 
         stokes2cni_ = this->sdID1();
         twoPtwoCNI_ = this->sdID2();
@@ -285,9 +267,6 @@ public:
     void init()
     {
         ParentType::init();
-
-        // plot the Pc-Sw curves, if requested
-        this->sdProblem2().spatialParams().plotMaterialLaw();
 
         std::cout << "Writing flux data at interface\n";
         if (this->timeManager().time() == 0)
@@ -332,7 +311,7 @@ public:
 
             GlobalPosition globalPos = elementIt->geometry().center();
 
-            if (globalPos[1] > interface_)
+            if (globalPos[1] > interfacePosY_)
                 mdGrid.addToSubDomain(stokes2cni_,*elementIt);
             else
                 if(globalPos[0] > noDarcyX_)
@@ -708,7 +687,6 @@ public:
         return false;
     }
 
-
     /*!
      * \brief Returns true if the current solution should be written to
      *        disk (i.e. as a VTK file)
@@ -750,7 +728,6 @@ public:
             || this->timeManager().episodeWillBeOver())
             return true;
         return false;
-
     }
 
     /*!
@@ -779,7 +756,7 @@ private:
     unsigned freqFluxOutput_;
     unsigned freqVaporFluxOutput_;
 
-    Scalar interface_;
+    Scalar interfacePosY_;
     Scalar noDarcyX_;
     Scalar episodeLength_;
     Scalar initializationTime_;
@@ -808,6 +785,6 @@ private:
     std::ofstream fluxFile_;
 };
 
-} //end namespace
+} // namespace Dumux
 
 #endif // DUMUX_2CNISTOKES2P2CNIPROBLEM_HH

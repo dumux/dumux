@@ -1,53 +1,31 @@
-[Problem]
-#First part of the interface, where it is not coupled;
-#set to zero or negative if not desired
-RunUpDistanceX = 0.0
-NoDarcyX = 0.0
-UseDirichletFF = true
-
 [TimeManager]
-#Initial and maximum time-step size
-DtInitial = 5e-1 
-MaxTimeStepSize = 360
-
-#Initialization time without coupling
-#set to zero or negative if not desired
-InitTime = 0 
-
-TEnd = 3600
-
-#Define the length of an episode (for output)
-EpisodeLength = 43200
-
-[Vtk]
-#Names for VTK output
-NameFF = stokes2cni
-NamePM = 2p2cni
-AddVelocity = 1 
+DtInitial = 5e-1 # [s]
+MaxTimeStepSize = 360 # [s]
+InitTime = 0 # [s] Initialization time without coupling
+TEnd= 3600 # [s]
+EpisodeLength = 43200 # [s]
 
 [Grid]
 UseInterfaceMeshCreator = true
-
+# Grid details
 File = grids/interfacedomain.dgf
-Refinement = 0
-
-#Number of elements in x-, y-, z-direction
+XMin = 0.0 # [m]
+XMax = 0.25 # [m]
+YMin = 0.0 # [m]
+YMax = 0.5 # [m]
+RunUpDistanceX = 0.0 # [m] Horizontal position without coupling to PM
+NoDarcyX = 0.0 # [m] Horizontal position without PM below
+InterfacePosY = 0.25 # [m] Vertical position of coupling interface
+# Number of elements in x-, y-, z-direction
 CellsX = 15
 CellsY = 20
-CellsZ = 1
-#Grading and refinement of the mesh in y direction
-Grading = 1.1
-
-#Extend of the entire domain
-XMin = 0.0
-XMax = 0.25
-YMin = 0.0
-YMax = 0.5
-
-#Vertical position of coupling interface
-InterfacePos = 0.25
+# Grading and refinement of the mesh in y direction
+GradingFactorY = 1.1
+Refinement = 0
 
 [Output]
+NameFF = stokes2cni
+NamePM = 2p2cni
 #Frequency of restart file, flux and VTK output
 FreqRestart = 1000      # how often restart files are written out 
 FreqOutput = 10         # frequency of VTK output
@@ -58,102 +36,49 @@ FreqVaporFluxOutput = 2 # frequency of summarized flux output
 [Stokes]
 StabilizationAlpha = -1.0
 
-
 [FreeFlow]
-RefVelocity = 3.5
-RefPressure = 1e5
-RefMassfrac = 0.008          # 0.01
-RefTemperature = 298.15
-SinusVelAmplitude = 0.0           # 0.1
-SinusVelPeriod = 3600             # in seconds
-SinusPressureAmplitude = 0.0      # 0.5
-SinusPressurePeriod = 3600        # in seconds
-SinusConcentrationAmplitude = 0.0 # 0.5
-SinusConcentrationPeriod = 3600   # in seconds
-SinusTemperatureAmplitude = 0.0   # 0.5
-SinusTemperaturePeriod = 3600     # in seconds
-BeaversJosephSlipVel = 0.00134
-ExponentMTC = 0.0           # 1./6., Mass transfer coefficient for S^MTC
-# UseBoundaryLayerModel = 0   # 0 for no boundary layer model, 1 for Blasius, 2 and 3 for turbulent BL, 9 for constant thickness
-BoundaryLayerOffset = 0.0   # for BL model like Blasius, determines a virtual run-up distance for the flow
-ConstThickness = 0.0016     # for a constant BL thickness, use BL model 9
-# MassTransferModel = 0       # 0 for none, 1 for power law, 2 for Schluender model
+UseDirichletBC = true # dirichlet values are set at the inflow boundary
+RefVelocity = 3.5 # [m/s]
+RefPressure = 1e5 # [Pa]
+RefMassfrac = 0.008 # [-]
+RefTemperature = 298.15 # [K]
+SinusVelAmplitude = 0.0 # [m/s]
+SinusVelPeriod = 3600 # [s]
+SinusPressureAmplitude = 0.0 # [Pa]
+SinusPressurePeriod = 3600 # [s]
+SinusConcentrationAmplitude = 0.0 # [-]
+SinusConcentrationPeriod = 3600 # [s]
+SinusTemperatureAmplitude = 0.0 # [K]
+SinusTemperaturePeriod = 3600 # [s]
+BoundaryLayerModel = 0    # 0 for none, 1 Blasius, 2 and 3 turbulent BL, 9 constant thickness
+MassTransferModel = 0     # 0 for none, 1 power law, 2 Schluender model
+ExponentMTC = 0.0         # 1./6., Mass transfer coefficient for S^MTC
+BoundaryLayerOffset = 0.0 # [m] virtual run-up distance for BL models
+ConstThickness = 0.0016   # [m] constant BL thickness (BL model 9)
 
 [PorousMedium]
-RefPressurePM = 1e5
-RefTemperaturePM = 298.15
-InitialSw1 = 0.98
-InitialSw2 = 0.98
-CharPoreRadius = 1e-4       # for Schluender mass-transfer model
-PlotFluidProperties = false
+RefPressure = 1e5 # [Pa]
+RefTemperature = 298.15 # [K]
+InitialSw = 0.98 # [-]
+CharPoreDiameter = 1e-4   # [m] for Schluender mass-transfer model
 
 [SpatialParams]
-MaterialInterfaceX = -100.0
-AlphaBJ = 1.0
-
-# for homogeneous setups (0 for heterogeneous):
-SoilType = 2
-RegularizationThreshold = 1e-2 # linearization threshold for pc-Sw
-
-# GStat stuff, only required for SoilType=0
-GenerateNewPermeability = true
-GStatControlFileName = gstatControl_2D.txt
-GStatInputFileName = gstatInput.txt
-PermeabilityInputFileName = permeab.dat
-
-### SoilType = 1 ### (Zurich coarse, MUSIS sand)
-[SpatialParams.Coarse]
-Permeability1 = 7.0e-10 #Kozeny-Carman; 1.387e-11 measured?
-Porosity1 = 0.44
-Swr1 = 0.005
-Snr1 = 0.01
-VgAlpha1 = 8.74e-4 
-VgN1 = 3.35
-PlotMaterialLaw1 = false
-LambdaSolid1 = 5.26
-
-Pentry1 = 1012
-BCLambda1 = 3.277
-
-### SoilType = 2 ### (Zurich fine)
-[SpatialParams.Medium]
-Permeability2 = 2.65e-10
-Porosity2 = 0.41
-Swr2 = 0.005
-Snr2 = 0.01
-VgAlpha2 = 6.371e-4
-VgN2 = 8.0 # before: 6.9
-PlotMaterialLaw2 = false
-LambdaSolid2 = 5.26
-
-Pentry2 = 1357
-BCLambda2 = 6.960
-
-### SoilType = 4 ### (Zurich fine)
-[SpatialParams.LeverettJ]
-PermeabilityJ = 1.0e-09
-PorosityJ = 0.41
-PlotMaterialLawJ = false
-
-### SoilType = 3 ### (Colorado)
-[SpatialParams.Fine]
-Permeability3 = 1.06e-10
-Porosity3 = 0.334
-Swr3 = 0.028
-Snr3 = 0.01
-VgAlpha3 = 5.81e-4
-VgN3 = 17.8
-PlotMaterialLaw3 = false
-LambdaSolid3 = 5.26
-
-Pentry3 = 1012
-BCLambda3 = 3.277
+AlphaBJ = 1.0 # [-]
+Permeability = 2.65e-10 # [m^2]
+Porosity = 0.41 # [-]
+Swr = 0.005 # [-]
+Snr = 0.01 # [-]
+VgAlpha = 6.371e-4 # [1/Pa]
+VgN = 8.0 # [-]
+Pentry = 1357
+BCLambda = 6.960
+LambdaSolid = 5.26 # [W/(m*K)]
 
 [Newton]
 RelTolerance = 1e-5
 TargetSteps = 8
 MaxSteps = 12
-WriteConvergence = false 
+WriteConvergence = false
 MaxTimeStepDivisions = 20
 
 [LinearSolver]

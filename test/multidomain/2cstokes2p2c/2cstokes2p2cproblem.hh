@@ -40,6 +40,7 @@
 #include <dumux/multidomain/common/multidomainproblem.hh>
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2clocaloperator.hh>
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2cpropertydefaults.hh>
+
 #ifdef HAVE_PARDISO
 #include <dumux/linear/pardisobackend.hh>
 #endif // HAVE_PARDISO
@@ -58,17 +59,13 @@ namespace Properties
 NEW_TYPE_TAG(TwoCStokesTwoPTwoCProblem, INHERITS_FROM(TwoCStokesTwoPTwoC));
 
 // Set the grid type
-SET_PROP(TwoCStokesTwoPTwoCProblem, Grid)
-{
- public:
 #ifdef HAVE_UG
-    typedef typename Dune::UGGrid<2> type;
+SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, Grid, Dune::UGGrid<2>);
 #elif HAVE_ALUGRID || HAVE_DUNE_ALUGRID
-    typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
+SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>;
 #else
-    typedef typename Dune::YaspGrid<2> type;
+SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, Grid, Dune::YaspGrid<2>);
 #endif
-};
 
 // Set the global problem
 SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, Problem, Dumux::TwoCStokesTwoPTwoCProblem<TypeTag>);
@@ -89,10 +86,9 @@ SET_TYPE_PROP(TwoPTwoCSubProblem, MultiDomainTypeTag, TTAG(TwoCStokesTwoPTwoCPro
 SET_TYPE_PROP(Stokes2cSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCSubProblem));
 SET_TYPE_PROP(TwoPTwoCSubProblem, OtherSubDomainTypeTag, TTAG(Stokes2cSubProblem));
 
-SET_PROP(Stokes2cSubProblem, SpatialParams)
-{ typedef Dumux::TwoCStokesTwoPTwoCSpatialParams<TypeTag> type; };
-SET_PROP(TwoPTwoCSubProblem, SpatialParams)
-{ typedef Dumux::TwoCStokesTwoPTwoCSpatialParams<TypeTag> type; };
+// Set the spatial parameters used for the problems
+SET_TYPE_PROP(Stokes2cSubProblem, SpatialParams, Dumux::TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCSubProblem, SpatialParams, Dumux::TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
 
 // Set the fluid system
 SET_PROP(TwoCStokesTwoPTwoCProblem, FluidSystem)
@@ -204,7 +200,6 @@ class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
 
         wPhaseIdx2 = TwoPTwoCIndices::wPhaseIdx,
         nPhaseIdx2 = TwoPTwoCIndices::nPhaseIdx
-
     };
 	enum { phaseIdx = GET_PROP_VALUE(Stokes2cTypeTag, PhaseIdx) };
     enum { transportCompIdx1 = Stokes2cIndices::transportCompIdx };
@@ -221,28 +216,16 @@ public:
                               TimeManager &timeManager)
         : ParentType(mdGrid, timeManager)
     {
-        try
-        {
-            // define location of the interface
-            interface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
-            noDarcyX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, NoDarcyX);
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLength);
-            initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
+        interfacePosY_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+        noDarcyX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX);
+        episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLength);
+        initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
 
-            // define output options
-            freqRestart_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqRestart);
-            freqOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqOutput);
-            freqFluxOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqFluxOutput);
-            freqVaporFluxOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqVaporFluxOutput);
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
+        // define output options
+        freqRestart_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqRestart);
+        freqOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqOutput);
+        freqFluxOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqFluxOutput);
+        freqVaporFluxOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqVaporFluxOutput);
 
         stokes2c_ = this->sdID1();
         twoPtwoC_ = this->sdID2();
@@ -277,9 +260,6 @@ public:
     void init()
     {
         ParentType::init();
-
-        // plot the Pc-Sw curves, if requested
-        this->sdProblem2().spatialParams().plotMaterialLaw();
 
         std::cout << "Writing flux data at interface\n";
         if (this->timeManager().time() == 0)
@@ -322,7 +302,7 @@ public:
 
             GlobalPosition globalPos = elementIt->geometry().center();
 
-            if (globalPos[1] > interface_)
+            if (globalPos[1] > interfacePosY_)
                 mdGrid.addToSubDomain(stokes2c_,*elementIt);
             else
                 if(globalPos[0] > noDarcyX_)
@@ -334,9 +314,6 @@ public:
 
         gridinfo(this->sdGrid1());
         gridinfo(this->sdGrid2());
-
-        this->sdProblem1().spatialParams().loadIntrinsicPermeability(this->sdGridView1());
-        this->sdProblem2().spatialParams().loadIntrinsicPermeability(this->sdGridView2());
     }
 
     /*!
@@ -443,7 +420,7 @@ public:
                     outputVector[interfaceVertIdx].yCoord = vertexGlobal[1];
                     outputVector[interfaceVertIdx].count += 1;
                     for (int eqIdx=0; eqIdx < numEq1; ++eqIdx)
-                        outputVector[interfaceVertIdx].defect[eqIdx] +=
+                        outputVector[interfaceVertIdx].residual[eqIdx] +=
                             firstVertexDefect[vertInElem1][eqIdx];
                 }
 
@@ -485,8 +462,8 @@ public:
 
                 if (outputVector[interfaceVertIdx].count==2)
                     outfile << outputVector[interfaceVertIdx].xCoord << ";"
-                            << outputVector[interfaceVertIdx].defect[massBalanceIdx1] << ";" // total mass flux
-                            << outputVector[interfaceVertIdx].defect[transportEqIdx1] << ";" // total flux of component
+                            << outputVector[interfaceVertIdx].residual[massBalanceIdx1] << ";" // total mass flux
+                            << outputVector[interfaceVertIdx].residual[transportEqIdx1] << ";" // total flux of component
                             << outputVector[interfaceVertIdx].count
                             << std::endl;
             }
@@ -576,7 +553,7 @@ public:
                     outputVector[interfaceVertIdx].xCoord = vertexGlobal[0];
                     outputVector[interfaceVertIdx].yCoord = vertexGlobal[1];
                     for (int eqIdx=0; eqIdx < numEq2; ++eqIdx)
-                        outputVector[interfaceVertIdx].defect[eqIdx] += secondVertexDefect[vertInElem2][eqIdx];
+                        outputVector[interfaceVertIdx].residual[eqIdx] += secondVertexDefect[vertInElem2][eqIdx];
                     outputVector[interfaceVertIdx].count += 1;
                 }
                 if (shouldWriteVaporFlux())
@@ -609,8 +586,8 @@ public:
 
                 if (outputVector[interfaceVertIdx].count==2)
                     outfile << outputVector[interfaceVertIdx].xCoord << ";"
-                            << outputVector[interfaceVertIdx].defect[contiTotalMassIdx2] << ";" // total mass flux
-                            << outputVector[interfaceVertIdx].defect[contiWEqIdx2] // total flux of component
+                            << outputVector[interfaceVertIdx].residual[contiTotalMassIdx2] << ";" // total mass flux
+                            << outputVector[interfaceVertIdx].residual[contiWEqIdx2] // total flux of component
                             << std::endl;
             }
             outfile.close();
@@ -727,7 +704,6 @@ public:
             || this->timeManager().episodeWillBeOver())
             return true;
         return false;
-
     }
 
     /*!
@@ -756,7 +732,7 @@ private:
     unsigned freqFluxOutput_;
     unsigned freqVaporFluxOutput_;
 
-    Scalar interface_;
+    Scalar interfacePosY_;
     Scalar noDarcyX_;
     Scalar episodeLength_;
     Scalar initializationTime_;
@@ -769,7 +745,7 @@ private:
         unsigned vIdxGlobal;
         Scalar xCoord;
         Scalar yCoord;
-        Dune::FieldVector<Scalar, numEq> defect;
+        Dune::FieldVector<Scalar, numEq> residual;
 
         InterfaceFluxes()
         {
@@ -778,7 +754,7 @@ private:
             vIdxGlobal = 0;
             xCoord = 0.0;
             yCoord = 0.0;
-            defect = 0.0;
+            residual = 0.0;
         }
     };
     std::ofstream fluxFile_;

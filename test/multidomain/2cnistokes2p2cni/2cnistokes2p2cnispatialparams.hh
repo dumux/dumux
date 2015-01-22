@@ -33,11 +33,9 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-//#include <dumux/io/plotfluidmatrixlaw.hh>
 
 namespace Dumux
 {
-
 //forward declaration
 template<class TypeTag>
 class TwoCNIStokesTwoPTwoCNISpatialParams;
@@ -49,27 +47,19 @@ NEW_TYPE_TAG(TwoCNIStokesTwoPTwoCNISpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNISpatialParams, SpatialParams,
-        TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
+              TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
 
-// Set the material Law
-SET_PROP(TwoCNIStokesTwoPTwoCNISpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedVanGenuchten<Scalar> EffMaterialLaw;
-public:
-    // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffMaterialLaw> type;
-};
+// Set the material law parametrized by absolute saturations
+SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNISpatialParams,
+              MaterialLaw,
+              EffToAbsLaw<RegularizedVanGenuchten<typename GET_PROP_TYPE(TypeTag, Scalar)>>);
+//               EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 }
 
 
 /*!
- * \ingroup TwoPTwoCNiModel
- * \ingroup StokesniModel
  * \ingroup ImplicitTestProblems
+ * \ingroup MultidomainProblems
  * \brief Definition of the spatial parameters for
  *        the coupling of an non-isothermal two-component Stokes
  *        and an non-isothermal two-phase two-component Darcy model.
@@ -116,58 +106,18 @@ public:
      * \param gridView The GridView which is used by the problem
      */
     TwoCNIStokesTwoPTwoCNISpatialParams(const GridView& gridView)
-        : ParentType(gridView),
-          permeability_(gridView.size(dim), 0.0),
-          vanGenuchtenAlpha_(gridView.size(dim), 0.0),
-          indexSet_(gridView.indexSet())
+        : ParentType(gridView)
     {
-        try
-        {
-            soilType_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, SpatialParams, SoilType);
-            xMaterialInterface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MaterialInterfaceX);
+        porosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Porosity);
+        permeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Permeability);
+        lambdaSolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LambdaSolid);
 
-            // porosities
-            coarsePorosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Porosity1);
-            mediumPorosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Porosity2);
-            finePorosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Porosity3);
-
-            // intrinsic permeabilities
-            coarsePermeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Permeability1);
-            mediumPermeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Permeability2);
-            finePermeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Permeability3);
-
-            // thermal conductivity of the solid material
-            coarseLambdaSolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, LambdaSolid1);
-            mediumLambdaSolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, LambdaSolid2);
-            fineLambdaSolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, LambdaSolid3);
-
-            if (soilType_ != 0)
-            {
-                // residual saturations
-                coarseParams_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Swr1));
-                coarseParams_.setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Snr1));
-                mediumParams_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2));
-                mediumParams_.setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2));
-                fineParams_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Swr3));
-                fineParams_.setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Snr3));
-
-                // parameters for the vanGenuchten law
-                coarseParams_.setVgAlpha(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, VgAlpha1));
-                coarseParams_.setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, VgN1));
-                mediumParams_.setVgAlpha(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, VgAlpha2));
-                mediumParams_.setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, VgN2));
-                fineParams_.setVgAlpha(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, VgAlpha3));
-                fineParams_.setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, VgN3));
-            }
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
+        // residual saturations
+        params_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Swr));
+        params_.setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Snr));
+        // parameters for the vanGenuchten law
+        params_.setVgAlpha(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, VgAlpha));
+        params_.setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, VgN));
     }
 
     /*!
@@ -187,18 +137,7 @@ public:
                                  	   const FVElementGeometry &fvGeometry,
                                  	   const int scvIdx) const
     {
-		const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
-		if (checkSoilType(globalPos) == 1)
-			return coarsePermeability_;
-		if (checkSoilType(globalPos) == 2)
-			return mediumPermeability_;
-		if (checkSoilType(globalPos) == 3)
-			return finePermeability_;
-		if (checkSoilType(globalPos) == 4)
-			return finePermeability_;
-		else
-			return mediumPermeability_;
+        return permeability_;
     }
 
     /*!
@@ -212,18 +151,8 @@ public:
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
-        if (checkSoilType(globalPos) == 1)
-            return coarsePorosity_;
-        if (checkSoilType(globalPos) == 2)
-            return mediumPorosity_;
-        if (checkSoilType(globalPos) == 3)
-            return finePorosity_;
-        else
-            return mediumPorosity_;
+        return porosity_;
     }
-
 
     /*!
      * \brief Returns the parameter object for the material law
@@ -236,19 +165,8 @@ public:
                                                const FVElementGeometry &fvGeometry,
                                                const int scvIdx) const
     {
-		const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-		if (checkSoilType(globalPos)==1)
-			return coarseParams_;
-		if (checkSoilType(globalPos)==2)
-			return mediumParams_;
-		if (checkSoilType(globalPos)==3)
-			return fineParams_;
-//            if (checkSoilType(globalPos)==4)
-//                return leverettJParams_;
-		else
-			return mediumParams_;
+        return params_;
     }
-
 
     /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
@@ -263,7 +181,7 @@ public:
                              const FVElementGeometry &fvGeometry,
                              const int scvIdx) const
     {
-        return 790; // specific heat capacity of granite [J / (kg K)]
+        return 790;
     }
 
     /*!
@@ -295,117 +213,16 @@ public:
                                     const FVElementGeometry &fvGeometry,
                                     const int scvIdx) const
     {
-        const GlobalPosition &pos = element.geometry().corner(scvIdx);
-
-        if (checkSoilType(pos) == 1)
-            return coarseLambdaSolid_;
-        if (checkSoilType(pos) == 2)
-            return mediumLambdaSolid_;
-        if (checkSoilType(pos) == 3)
-            return fineLambdaSolid_;
-        else
-            return mediumLambdaSolid_;
-    }
-
-    /*!
-     * \brief Returns the index of the used soil type
-     *
-     * The soil, can be chosen as runtime parameter:
-     * 1: coarse,
-     * 2: medium,
-     * 3: fine,
-     * 4: LeverettJ (x < xMaterialInterface)
-     *
-     * \param pos The global position
-     */
-    const unsigned checkSoilType(const GlobalPosition &pos) const
-    {
-		return soilType_;
-    }
-
-    /*!
-     * \brief This is called from the coupled problem and creates
-     *        a gnuplot output of the Pc-Sw curve
-     *
-     * If this function should be used, uncomment the lines between
-     * the curly brackets.
-     */
-    void plotMaterialLaw()
-    {
-//        if (soilType_ == 0)
-//        {
-//            std::cout << "Material law plot not possible for heterogeneous media!\n";
-//            return;
-//        }
-//        if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams.Coarse, PlotMaterialLaw1))
-//        {
-//            PlotFluidMatrixLaw<MaterialLaw> coarseFluidMatrixLaw_;
-//            coarseFluidMatrixLaw_.plotpC(coarseParams_,
-//                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Swr1),
-//                    1.0 - GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Snr1),
-//                    "pcSw_coarse");
-//        }
-//        if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams.Medium, PlotMaterialLaw2))
-//        {
-//            PlotFluidMatrixLaw<MaterialLaw> mediumFluidMatrixLaw_;
-//            mediumFluidMatrixLaw_.plotpC(mediumParams_,
-//                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2),
-//                    1.0 - GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2),
-//                    "pcSw_medium");
-//            PlotFluidMatrixLaw<MaterialLaw> mediumFluidMatrixLaw2_;
-//            mediumFluidMatrixLaw_.plotkrw(mediumParams_,
-//                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2),
-//                    1.0 - GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2));
-//            PlotFluidMatrixLaw<MaterialLaw> mediumFluidMatrixLaw3_;
-//            mediumFluidMatrixLaw_.plotkrn(mediumParams_,
-//                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2),
-//                    1.0 - GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2));
-//        }
-//        if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams.Fine, PlotMaterialLaw3))
-//        {
-//            PlotFluidMatrixLaw<MaterialLaw> fineFluidMatrixLaw_;
-//            fineFluidMatrixLaw_.plotpC(fineParams_,
-//                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Swr3),
-//                    1.0 - GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Snr3),
-//                    "pcSw_fine");
-//        }
-//        if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams.LeverettJ, PlotMaterialLawJ))
-//        {
-//            PlotFluidMatrixLaw<MaterialLaw> leverettJFluidMatrixLaw_;
-//            leverettJFluidMatrixLaw_.plotpC(leverettJParams_,
-//                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2),
-//                    1.0 - GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2),
-//                    "pcSw_leverett");
-//        }
+        return lambdaSolid_;
     }
 
 private:
-
-    unsigned soilType_;
-
-    Scalar coarsePermeability_;
-    Scalar mediumPermeability_;
-    Scalar finePermeability_;
-
-    Scalar coarsePorosity_;
-    Scalar mediumPorosity_;
-    Scalar finePorosity_;
-
-    Scalar coarseLambdaSolid_;
-    Scalar mediumLambdaSolid_;
-    Scalar fineLambdaSolid_;
-
-    Scalar xMaterialInterface_;
-    MaterialLawParamsVector materialLawParams_;
-    PermeabilityType permeability_;
-    PermeabilityType vanGenuchtenAlpha_;
-    const IndexSet& indexSet_;
-
-    MaterialLawParams coarseParams_;
-    MaterialLawParams mediumParams_;
-    MaterialLawParams fineParams_;
+    Scalar permeability_;
+    Scalar porosity_;
+    Scalar lambdaSolid_;
+    MaterialLawParams params_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif // DUMUX_TWOCNISTOKES2P2CNISPATIALPARAMS_HH

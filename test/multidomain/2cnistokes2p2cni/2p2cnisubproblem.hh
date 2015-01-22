@@ -24,10 +24,6 @@
 #ifndef DUMUX_2P2CNISUB_PROBLEM_HH
 #define DUMUX_2P2CNISUB_PROBLEM_HH
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/multidomain/couplinglocalresiduals/2p2cnicouplinglocalresidual.hh>
@@ -50,7 +46,7 @@ NEW_TYPE_TAG(TwoPTwoCNISubProblem,
 // Set the problem property
 SET_TYPE_PROP(TwoPTwoCNISubProblem, Problem, TwoPTwoCNISubProblem<TTAG(TwoPTwoCNISubProblem)>);
 
-//! Use the 2p2cni local jacobian operator for the 2p2cniCoupling model
+// Use the 2p2cni local jacobian operator for the 2p2cniCoupling model
 SET_TYPE_PROP(TwoPTwoCNISubProblem, LocalResidual, TwoPTwoCNICouplingLocalResidual<TypeTag>);
 
 // choose pn and Sw as primary variables
@@ -63,24 +59,14 @@ SET_PROP(TwoPTwoCNISubProblem, ReplaceCompEqIdx)
     static const int value = Indices::contiNEqIdx;
 };
 
-// the fluidsystem is set in the coupled problem
-SET_PROP(TwoPTwoCNISubProblem, FluidSystem)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag) CoupledTypeTag;
-    typedef typename GET_PROP_TYPE(CoupledTypeTag, FluidSystem) FluidSystem;
-public:
-    typedef FluidSystem type;
-};
+// Used the fluid system from the coupled problem
+SET_TYPE_PROP(TwoPTwoCNISubProblem,
+              FluidSystem,
+              typename GET_PROP_TYPE(typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag), FluidSystem));
 
-
-//! Somerton is used as model to compute the effective thermal heat conductivity
-SET_PROP(TwoPTwoCNISubProblem, ThermalConductivityModel)
-{ private :
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-  public:
-    typedef ThermalConductivitySomerton<Scalar> type;
-};
+// Somerton is used as model to compute the effective thermal heat conductivity
+SET_TYPE_PROP(TwoPTwoCNISubProblem, ThermalConductivityModel,
+              ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // use formulation based on mass fractions
 SET_BOOL_PROP(TwoPTwoCNISubProblem, UseMoles, false);
@@ -165,67 +151,47 @@ class TwoPTwoCNISubProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
-//    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-
-    // only required for radiation
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    //////////////
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+public:
     /*!
      * \brief The sub-problem for the porous-medium subdomain
      *
      * \param timeManager The TimeManager which is used by the simulation
      * \param gridView The simulation's idea about physical space
      */
-public:
     TwoPTwoCNISubProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        try
-        {
-            Scalar noDarcyX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, NoDarcyX);
-            Scalar xMin = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMin);
+        Scalar noDarcyX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX);
+        Scalar xMin = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMin);
 
-            bboxMin_[0] = std::max(xMin,noDarcyX);
-    		bboxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
+        bboxMin_[0] = std::max(xMin,noDarcyX);
+        bboxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
 
-    		bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMin);
-    		bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
+        bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMin);
+        bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
 
-    		runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, RunUpDistanceX); // first part of the interface without coupling
-            xMaterialInterface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MaterialInterfaceX);
-    		initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
+        runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RunUpDistanceX); // first part of the interface without coupling
+        initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
 
-            refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, RefTemperaturePM);
-            refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, RefPressurePM);
-            initialSw1_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, InitialSw1);
-            initialSw2_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, InitialSw2);
+        refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, RefTemperature);
+        refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, RefPressure);
+        initialSw_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, InitialSw);
 
-//            porosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Porosity2);
+        freqMassOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
 
-            freqMassOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
+        storageLastTimestep_ = Scalar(0);
+        lastMassOutputTime_ = Scalar(0);
 
-            storageLastTimestep_ = Scalar(0);
-            lastMassOutputTime_ = Scalar(0);
-
-            outfile.open("storage.out");
-            outfile << "Time;"
-                    << "TotalMassChange;"
-                    << "WaterMassChange;"
-                    << "IntEnergyChange;"
-                    << "WaterMass"
-                    << std::endl;
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
+        outfile.open("storage.out");
+        outfile << "Time;"
+                << "TotalMassChange;"
+                << "WaterMassChange;"
+                << "IntEnergyChange;"
+                << "WaterMass"
+                << std::endl;
     }
 
     ~TwoPTwoCNISubProblem()
@@ -244,7 +210,7 @@ public:
      * This is used as a prefix for files generated by the simulation.
      */
     const std::string &name() const
-    { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Vtk, NamePM); }
+    { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Output, NamePM); }
 
     /*!
      * \brief Called by the Dumux::TimeManager in order to
@@ -255,12 +221,10 @@ public:
      */
     void init()
     {
-        // set the initial condition of the model
         ParentType::init();
 
         this->model().globalStorage(storageLastTimestep_);
     }
-
     // \}
 
     /*!
@@ -360,53 +324,23 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
-     * This is the method for the case where the source term is
-     * potentially solution dependent and requires some quantities that
-     * are specific to the fully-implicit method.
-     *
      * \param values The source and sink values for the conservation equations in units of
      *                 \f$ [ \textnormal{unit of conserved quantity} / (m^\textrm{dim} \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param scvIdx The local subcontrolvolume index
-     * \param elemVolVars All volume variables for the element
      *
      * For this method, the \a values parameter stores the rate mass
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void solDependentSource(PrimaryVariables &values,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            const int scvIdx,
-                            const ElementVolumeVariables &elemVolVars) const
+    void source(PrimaryVariables &values,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int scvIdx) const
     {
-        values = 0;
-//        const Scalar time = this->timeManager().time();
-//        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-//
-//		const Scalar temperatureOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
-//
-////		const Scalar S = variationSun_(0);                       //Solar irradiance (Yamanaka 1998)
-//		const Scalar sigma = 5.671e-8;                             //Boltzmann-Constant
-//		const Scalar e_a = atmosphericEmissivity();                //atmosphere emissivity (Brutsaert 1982)
-//		const Scalar e_s = surfaceEmissivity_(elemVolVars, scvIdx);
-//		const Scalar a = albedo_(elemVolVars, scvIdx);
-//		const Scalar T_a = 298.15;//variationT_a_(6);                       //atmosphere Temperature (Yamanaka 1998)
-//		const Scalar T_s = elemVolVars[scvIdx].temperature();      //surface Temperature
-//
-//		const Scalar vertexPosition = 0.249248;//1.0; //GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InterfacePos);
-//
-//          //For d depth with b cells!!
-////		Scalar radiation = S*(1.0-a)+
-//		Scalar radiation = sigma*e_s*(e_a*std::pow(T_a,4.0)-(std::pow(T_s,4.0)));  //Equation from Novak 2010
-//
-//		if (time > initializationTime_
-//				&& globalPos[1] > (vertexPosition - 0.00002)
-//				&& globalPos[1] < (vertexPosition + 0.00002))
-//		  values[energyEqIdx] += radiation/cellHeight_();
+        values = Scalar(0);
     }
-
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -444,52 +378,6 @@ public:
     {
         return bothPhases;
     }
-
-
-//    /*!
-//     * \brief docme
-//     */
-//    Scalar globalRadiation()
-//    {
-//        FVElementGeometry fvGeometry;
-//        ElementVolumeVariables elemVolVars;
-//        Scalar source = 0;
-//        PrimaryVariables values(0);
-//
-//        ElementIterator elemIt = this->gridView().template begin<0>();
-//        const ElementIterator elemEndIt = this->gridView().template end<0>();
-//        for (elemIt = this->gridView().template begin<0>(); elemIt != elemEndIt; ++elemIt)
-//        {
-//            if(elemIt->partitionType() == Dune::InteriorEntity)
-//            {
-//                fvGeometry.update(this->gridView(), *elemIt);
-//                elemVolVars.update(*this, *elemIt, fvGeometry, false);
-//
-//                for (int scvIdx = 0; scvIdx < elemIt->template count<dim>(); ++scvIdx)
-//
-//                {
-//                    boxSDSource(values,
-//                                 *elemIt,
-//                                 fvGeometry,
-//                                 scvIdx,
-//                                 elemVolVars);
-//                    Valgrind::CheckDefined(values);
-//
-//                    // thickness of the domain, for 2D usually 1m
-//                    Scalar extrusionFactor =
-//                        elemVolVars[scvIdx].extrusionFactor();
-//                    values[energyEqIdx] *= fvGeometry.subContVol[scvIdx].volume * extrusionFactor;
-//
-//                    source += values[energyEqIdx];
-//                }
-//            }
-//        }
-//
-//        if (this->gridView().comm().size() > 1)
-//            source = this->gridView().comm().sum(source);
-//
-//        return source;
-//    }
 
     /*!
      * \brief Called by the time manager after the time integration to
@@ -572,118 +460,12 @@ private:
                   const GlobalPosition &globalPos) const
     {
         //TODO: call density from fluidsystem
-//        const MaterialLawParams &materialParams =
-//            this->spatialParams().materialLawParams(globalPos);
-//        Scalar pC = MaterialLaw::pC(materialParams, initialSw1_);
-
         values[pNIdx] = refPressure_
                 + 1000.*this->gravity()[1]*(globalPos[1]-bboxMax_[1]);
-//                + pC;
 
-        if (globalPos[0] < xMaterialInterface_)
-		     values[sWIdx] = initialSw1_;
-	     else
-	         values[sWIdx] = initialSw2_;
+        values[sWIdx] = initialSw_;
         values[temperatureIdx] = refTemperature_;
-        //        if (onUpperBoundary_(globalPos) && onLeftBoundary_(globalPos))
-//        {
-//            values[sWIdx] = 0.99e-4;
-//            values[temperatureIdx] = 283.55;
-//        }
-
-//    	values[pNIdx] = 1e5*(2.0 - globalPos[0]);
-//    	if (onLeftBoundary_(globalPos))
-//    		values[sWIdx] = 0.9e-4;
-//    	else
-//    		values[sWIdx] = 1e-4;
-//        values[temperatureIdx] = 283.15;
     }
-
-    /// RADIATION stuff
-//    const Scalar albedo_(const ElementVolumeVariables &elemVolVars, const int scvIdx) const                                     //albedo
-//    {
-//  	  if (elemVolVars[scvIdx].saturation(wPhaseIdx)*porosity_ > 0.3)
-//  		  return 0.075;
-//  	  if (0.04 <= elemVolVars[scvIdx].saturation(wPhaseIdx)*porosity_ &&
-//  			elemVolVars[scvIdx].saturation(wPhaseIdx)*porosity_ <= 0.3)
-//  		  return 0.1846-0.3654*elemVolVars[scvIdx].saturation(wPhaseIdx)*porosity_;
-//  	  if (elemVolVars[scvIdx].saturation(wPhaseIdx)*porosity_ > 0.4)
-//  		  return 0.17;
-//	  return 0.17;
-//    }
-//
-//    const Scalar surfaceEmissivity_(const ElementVolumeVariables &elemVolVars, const int scvIdx) const                                    //surface emissivity
-//    {
-//  	  if (elemVolVars[scvIdx].saturation(wPhaseIdx)*porosity_ < 0.3)
-//  			return 0.93+0.1333*elemVolVars[scvIdx].saturation(wPhaseIdx)*porosity_;
-//  	  if (elemVolVars[scvIdx].saturation(wPhaseIdx)*porosity_ >= 0.3)
-//  		    return 0.97;
-//  	  return 0.;
-//    }
-//
-//    //to simulate the Solar irradiance for a number of days (definable in the input file)
-//    const Scalar variationSun_(const Scalar value) const
-//    {
-//	  const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-//	  const Scalar days = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, days);
-//
-//	  Scalar solar = 0;
-//	  for (int n=0; n<days; ++n)
-//	  {
-//		  if (time > 21600 + n*86400 && time < 64800 + n*86400)
-//			  solar = cos(2*M_PI*((time+43200)/(86400))) * value;
-//	  }
-//	  return solar;
-//	}
-//
-//    //to simulate the atmospheric Temperature for a number of days (definable in the input file)
-//    const Scalar variationT_a_(const Scalar value) const
-//	{
-//    	const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-//    	const Scalar T = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
-//    	{
-//			  return T+cos(2*M_PI*((time+36000)/(86400))) * value;
-//    	}
-//    	std::cerr << "error with T_a at time " << time << std::endl;
-//	}
-//
-//    //to calculate the atmospheric Emissivity depending on the Temperature near the Surface
-//    const Scalar atmosphericEmissivity() const
-//    {
-//    	const Scalar T_a = variationT_a_(6);
-//
-//      	return 1.24*std::pow((((Dumux::H2O<Scalar>::vaporPressure(T_a)/100)/T_a)),(1.0/7.0));
-//    }
-//
-//    const Scalar cellHeight_() const
-//    {
-//    	return 0.0004575;
-//    }
-    /////////
-
-// TODO: what should be used as reference mass fraction??
-//	void updateFluidStateForBC_(FluidState& fluidState) const
-//	{
-//		for (unsigned phaseIdx=0; phaseIdx<numPhases; ++phaseIdx)
-//		{
-//			fluidState.setTemperature(refTemperature_);
-//			fluidState.setPressure(phaseIdx, refPressure_);
-//
-//			Scalar massFraction[numComponents];
-//			massFraction[wCompIdx] = refMassfrac_;
-//			massFraction[nCompIdx] = 1 - massFraction[wCompIdx];
-//
-//			// calculate average molar mass of the gas phase
-//			Scalar M1 = FluidSystem::molarMass(wCompIdx);
-//			Scalar M2 = FluidSystem::molarMass(nCompIdx);
-//			Scalar X2 = massFraction[nCompIdx];
-//			Scalar massToMoleDenominator = M2 + X2*(M1 - M2);
-//
-//			fluidState.setMoleFraction(phaseIdx, wCompIdx, massFraction[wCompIdx]*M2/massToMoleDenominator);
-//			fluidState.setMoleFraction(phaseIdx, nCompIdx, massFraction[nCompIdx]*M1/massToMoleDenominator);
-//		}
-//	}
-
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < bboxMin_[0] + eps_; }
@@ -706,7 +488,6 @@ private:
     static constexpr Scalar eps_ = 1e-8;
     GlobalPosition bboxMin_;
     GlobalPosition bboxMax_;
-    Scalar xMaterialInterface_;
 
     int freqMassOutput_;
 
@@ -715,14 +496,12 @@ private:
 
     Scalar refTemperature_;
     Scalar refPressure_;
-    Scalar initialSw1_;
-    Scalar initialSw2_;
+    Scalar initialSw_;
 
-//    Scalar porosity_;
     Scalar runUpDistanceX_;
     Scalar initializationTime_;
     std::ofstream outfile;
 };
-} //end namespace
+} //end namespace Dumux
 
 #endif

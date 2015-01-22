@@ -25,14 +25,12 @@
 
 #include "config.h"
 #include <iostream>
-#include <boost/format.hpp>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertreeparser.hh>
 #include <dumux/io/interfacemeshcreator.hh>
 
 #include "2cnistokes2p2cniproblem.hh"
-
 
 /*!
  * \brief Print a usage string for simulations.
@@ -122,7 +120,7 @@ int start_(int argc,
     std::string dgfFileName;
     Scalar dt, tEnd;
     Dune::FieldVector<int, dim> nElements;
-    Scalar interfacePos, gradingFactor;
+    Scalar interfacePosY, gradingFactorY;
     int gridRefinement;
     bool useInterfaceMeshCreator;
 
@@ -132,10 +130,9 @@ int start_(int argc,
     	dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
     	tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd);
 	    nElements[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsX);
-    	if (dim>1) nElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
-    	if (dim==3) nElements[2] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsZ);
-    	interfacePos = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
-    	gradingFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Grading);
+    	nElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
+    	interfacePosY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+    	gradingFactorY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, GradingFactorY);
     	gridRefinement = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Refinement);
     	useInterfaceMeshCreator = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, UseInterfaceMeshCreator);
     }
@@ -152,7 +149,7 @@ int start_(int argc,
     if (useInterfaceMeshCreator)
     {
         Dumux::InterfaceMeshCreator<Grid> interfaceMeshCreator;
-        GridCreator::gridPtr() = interfaceMeshCreator.create(dgfFileName, nElements, interfacePos, gradingFactor);
+        GridCreator::gridPtr() = interfaceMeshCreator.create(dgfFileName, nElements, interfacePosY, gradingFactorY);
     }
     else
     {
@@ -183,6 +180,7 @@ int start_(int argc,
     // instantiate coupled problem
     Dune::shared_ptr<MDGrid> mdGrid_ = Dune::make_shared<MDGrid> (GridCreator::grid());
 
+    // instantiate coupled problem
     Problem problem(*mdGrid_,
                     timeManager);
 
@@ -238,35 +236,8 @@ int start(int argc,
     }
 }
 
-//
-//*!
-// * \brief Print a usage string for simulations using
-// *        Dumux::startFromDGF() as their main() function.
-// *
-// * \param progname The name of the executable
-// */
-//void printUsage(const char *progname)
-//{
-//    std::cout << boost::format(
-//        "usage: %s [options]\n"
-//        "\n"
-//        "Options starting with a lowercase letter must be specified somewhere,\n"
-//        "options beginning with an uppercase letter do have fallback values.\n"
-//        "Some important options include:\n"
-//        "  -Help                         Print this usage message and quit\n"
-//        "  -tEnd time                    Time [s] of the simulation's end\n"
-//        "  -dtInitial time               Initial time step size [s]\n"
-//        "  -parameterFile parameter file A INI file with options\n"
-//        "  -Restart time                 Restart a previous run from a DRS file\n"
-//        "  -PrintParams (true|false)     Print the parameters used at the end of the simulation\n"
-//        "  -CellsX n                     Number of cells in x direction\n"
-//        "  -CellsY n                     Number of cells in y direction\n"
-//        "  -Newton.RelTolerance value    Tolerated relative error for the Newton solver\n"
-//        )%progname;
-//}
-
 int main(int argc, char** argv)
 {
     typedef TTAG(TwoCNIStokesTwoPTwoCNIProblem) ProblemTypeTag;
-    return start<ProblemTypeTag>(argc, argv);//, usage);
+    return start<ProblemTypeTag>(argc, argv);
 }

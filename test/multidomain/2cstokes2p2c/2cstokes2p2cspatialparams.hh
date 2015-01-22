@@ -29,18 +29,14 @@
 
 #include <dune/grid/io/file/vtk/common.hh>
 
-//#include <dumux/material/spatialparameters/gstatrandompermeability.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-//#include <dumux/material/fluidmatrixinteractions/2p/linearizedregvangenuchtenparams.hh>
-//#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-//#include <dumux/io/plotfluidmatrixlaw.hh>
 
 namespace Dumux
 {
-
 //forward declaration
 template<class TypeTag>
 class TwoCStokesTwoPTwoCSpatialParams;
@@ -52,22 +48,13 @@ NEW_TYPE_TAG(TwoCStokesTwoPTwoCSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(TwoCStokesTwoPTwoCSpatialParams, SpatialParams,
-        TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
+              TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
 
-// Set the material Law
-SET_PROP(TwoCStokesTwoPTwoCSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    // typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
-    // typedef RegularizedVanGenuchten<Scalar, LinearizedRegVanGenuchtenParams<Scalar, TypeTag> > EffMaterialLaw;
-    typedef RegularizedVanGenuchten<Scalar> EffMaterialLaw;
-public:
-    // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffMaterialLaw> type;
-};
+// Set the material law parameterized by absolute saturations
+SET_TYPE_PROP(TwoCStokesTwoPTwoCSpatialParams,
+              MaterialLaw,
+              EffToAbsLaw<RegularizedVanGenuchten<typename GET_PROP_TYPE(TypeTag, Scalar)>>);
+//               EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 }
 
 
@@ -120,57 +107,18 @@ public:
      * \param gridView The GridView which is used by the problem
      */
     TwoCStokesTwoPTwoCSpatialParams(const GridView& gridView)
-        : ParentType(gridView),
-//          permeability_(gridView.size(dim), 0.0),
-          indexSet_(gridView.indexSet())
+        : ParentType(gridView)
     {
-        try
-        {
-            soilType_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, SpatialParams, SoilType);
-            xMaterialInterface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MaterialInterfaceX);
+        porosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Porosity);
+        permeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Permeability);
+        lambdaSolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LambdaSolid);
 
-            // porosities
-            coarsePorosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Porosity1);
-            mediumPorosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Porosity2);
-            finePorosity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Porosity3);
-
-            // intrinsic permeabilities
-            coarsePermeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Permeability1);
-            mediumPermeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Permeability2);
-            finePermeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Permeability3);
-
-            // thermal conductivity of the solid material
-            coarseLambdaSolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, LambdaSolid1);
-            mediumLambdaSolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, LambdaSolid2);
-            fineLambdaSolid_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, LambdaSolid3);
-
-            if (soilType_ != 0)
-            {
-                // residual saturations
-                coarseParams_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Swr1));
-                coarseParams_.setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Snr1));
-                mediumParams_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2));
-                mediumParams_.setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2));
-                fineParams_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Swr3));
-                fineParams_.setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Snr3));
-
-                // parameters for the vanGenuchten law
-                coarseParams_.setVgAlpha(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, VgAlpha1));
-                coarseParams_.setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, VgN1));
-                mediumParams_.setVgAlpha(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, VgAlpha2));
-                mediumParams_.setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, VgN2));
-                fineParams_.setVgAlpha(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, VgAlpha3));
-                fineParams_.setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, VgN3));
-            }
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
+        // residual saturations
+        params_.setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Swr));
+        params_.setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Snr));
+        // parameters for the vanGenuchten law
+        params_.setVgAlpha(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, VgAlpha));
+        params_.setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, VgN));
     }
 
     /*!
@@ -190,22 +138,7 @@ public:
                                        const FVElementGeometry &fvGeometry,
                                        const int scvIdx) const
     {
-//        // heterogeneous parameter field computed with GSTAT
-//        if (soilType_ == 0)
-//            return permeability_[indexSet_.index(
-//                *(element.template subEntity<dim> (scvIdx)))];
-//        // soil can be chosen by setting the parameter soiltype accordingly
-//        else
-//        {
-            const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
-            if (checkSoilType(globalPos) == 1)
-                return coarsePermeability_;
-            if (checkSoilType(globalPos) == 3)
-                return finePermeability_;
-            else
-                return mediumPermeability_;
-//        }
+        return permeability_;
     }
 
     /*!
@@ -219,16 +152,8 @@ public:
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
-        if (checkSoilType(globalPos) == 1)
-            return coarsePorosity_;
-        if (checkSoilType(globalPos) == 3)
-            return finePorosity_;
-        else
-            return mediumPorosity_;
+        return porosity_;
     }
-
 
     /*!
      * \brief Returns the parameter object for the material law
@@ -241,21 +166,8 @@ public:
                                                const FVElementGeometry &fvGeometry,
                                                const int scvIdx) const
     {
-//        if (soilType_ == 0)
-//            return materialLawParams_[indexSet_.index(
-//                *(element.template subEntity<dim> (scvIdx)))];
-//        else
-//        {
-            const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-            if (checkSoilType(globalPos)==1)
-                return coarseParams_;
-            if (checkSoilType(globalPos)==3)
-                return fineParams_;
-            else
-                return mediumParams_;
-//        }
+        return params_;
     }
-
 
     /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
@@ -270,7 +182,7 @@ public:
                              const FVElementGeometry &fvGeometry,
                              const int scvIdx) const
     {
-        return 790; // specific heat capacity of granite [J / (kg K)]
+        return 790;
     }
 
     /*!
@@ -302,230 +214,14 @@ public:
                                     const FVElementGeometry &fvGeometry,
                                     const int scvIdx) const
     {
-        const GlobalPosition &pos = element.geometry().corner(scvIdx);
-
-        if (checkSoilType(pos) == 1)
-            return coarseLambdaSolid_;
-        if (checkSoilType(pos) == 3)
-            return fineLambdaSolid_;
-        else
-            return mediumLambdaSolid_;
-    }
-
-    /*!
-     * \brief Returns the index of the used soil type
-     *
-     * The soil, can be chosen as runtime parameter:
-     * 1: coarse,
-     * 2: medium,
-     * 3: fine
-     *
-     * \param globalPos The global position
-     */
-    const unsigned checkSoilType(const GlobalPosition &globalPos) const
-    {
-        return soilType_;
-    }
-
-    /*!
-     * \brief This method allows the generation of a statistical field
-     *        for the intrinsic permeability using GStat
-     *
-     * Because gstat is not open source and has to be installed manually,
-     * the content of this function is deactivated (commented) by
-     * default. If you have gstat installed, please uncomment
-     * the lines between the curly brackets.
-     *
-     * \param gridView The GridView which is used by the problem
-     */
-    void loadIntrinsicPermeability(const GridView& gridView)
-    {
-//        // only load random field, if soilType is set to 0
-//        if (soilType_ != 0)
-//            return;
-//
-//        const unsigned size = gridView.size(dim);
-//        permeability_.resize(size, 0.0);
-//        materialLawParams_.resize(size);
-//
-//        bool create = true;
-//        if (ParameterTree::tree().hasKey("SpatialParams.GenerateNewPermeability"))
-//            create = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool , SpatialParams, GenerateNewPermeability);
-//
-//        std::string gStatControlFileName("gstatControl_2D.txt");
-//        if (ParameterTree::tree().hasKey("SpatialParams.GStatControlFileName"))
-//        gStatControlFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, SpatialParams,
-//                        GStatControlFileName);
-//
-//
-//        std::string gStatInputFileName("gstatInput.txt");
-//        if (ParameterTree::tree().hasKey("SpatialParams.GStatInputFileName"))
-//                gStatInputFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, SpatialParams,
-//                        GStatInputFileName);
-//
-//        std::string permeabilityFileName("permeab.dat");
-//        if (ParameterTree::tree().hasKey("SpatialParams.PermeabilityInputFileName"))
-//            permeabilityFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, SpatialParams,
-//                        PermeabilityInputFileName);
-//
-//        // create random permeability object
-//        GstatRandomPermeability<GridView, Scalar> randomPermeability(gridView,
-//                                                                     create,
-//                                                                     permeabilityFileName.c_str(),
-//                                                                     gStatControlFileName.c_str(),
-//                                                                     gStatInputFileName.c_str());
-//
-//        Scalar totalVolume = 0;
-//        Scalar meanPermeability = 0;
-//
-////        for (unsigned n=0; n<numVertices; ++n)
-////        {
-////            //TODO the following can be done in a loop
-////        }
-//        // iterate over elements
-//        ElementIterator eItEnd = gridView.template end<0> ();
-//        for (ElementIterator eIt = gridView.template begin<0> (); eIt
-//                != eItEnd; ++eIt)
-//        {
-//            Scalar perm = randomPermeability.K(*eIt)[0][0];
-//            permeability_[indexSet_.index(*(eIt->template subEntity<dim> (3)))]
-//                          = perm;
-//
-//            Scalar volume = eIt->geometry().volume();
-//            totalVolume += volume;
-//
-//            meanPermeability += volume / perm;
-//        }
-//
-//        for (ElementIterator eIt = gridView.template begin<0> (); eIt
-//                != eItEnd; ++eIt)
-//        {
-//            Scalar perm = randomPermeability.K(*eIt)[0][0];
-//            permeability_[indexSet_.index(*(eIt->template subEntity<dim> (1)))]
-//                          = perm;
-//
-//            Scalar volume = eIt->geometry().volume();
-//            totalVolume += volume;
-//
-//            meanPermeability += volume / perm;
-//        }
-//
-//        for (ElementIterator eIt = gridView.template begin<0> (); eIt
-//                != eItEnd; ++eIt)
-//        {
-//            Scalar perm = randomPermeability.K(*eIt)[0][0];
-//            permeability_[indexSet_.index(*(eIt->template subEntity<dim> (2)))]
-//                          = perm;
-//
-//            Scalar volume = eIt->geometry().volume();
-//            totalVolume += volume;
-//
-//            meanPermeability += volume / perm;
-//        }
-//
-//        for (ElementIterator eIt = gridView.template begin<0> (); eIt
-//                != eItEnd; ++eIt)
-//        {
-//            Scalar perm = randomPermeability.K(*eIt)[0][0];
-//            permeability_[indexSet_.index(*(eIt->template subEntity<dim> (0)))]
-//                          = perm;
-//
-//            Scalar volume = eIt->geometry().volume();
-//            totalVolume += volume;
-//
-//            meanPermeability += volume / perm;
-//        }
-//
-//        meanPermeability /= totalVolume;
-//        meanPermeability = 1.0 / meanPermeability;
-//
-//        //Iterate over elements
-//        VertexIterator vItEnd = gridView.template end<dim> ();
-//        for (VertexIterator vIt = gridView.template begin<dim> (); vIt
-//                != vItEnd; ++vIt)
-//        {
-//            int vIdxGlobal = indexSet_.index(*vIt);
-//
-//            Scalar elementEntryPressure = 1./GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, VgAlpha2);
-//            elementEntryPressure *= sqrt(meanPermeability / permeability_[vIdxGlobal]);
-//
-//            materialLawParams_[vIdxGlobal].setVgAlpha(1./elementEntryPressure);
-//            materialLawParams_[vIdxGlobal].setVgn(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, VgN2));
-//            materialLawParams_[vIdxGlobal].setSwr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2));
-//            materialLawParams_[vIdxGlobal].setSnr(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2));
-//        }
-//
-//        //        if (create)
-//        //        {
-//        Dune::VTKWriter<GridView> vtkwriter(gridView);
-//        vtkwriter.addVertexData(permeability_, "absolute permeability");
-//        PermeabilityType logPerm(size);
-//        for (unsigned i = 0; i < size; i++)
-//            logPerm[i] = log10(permeability_[i]);
-//        vtkwriter.addVertexData(logPerm, "logarithm of permeability");
-//        vtkwriter.write("permeability", Dune::VTK::OutputType::ascii);
-    }
-
-    /*!
-     * \brief This is called from the coupled problem and creates
-     *        a gnuplot output of the Pc-Sw curve
-     *
-     * If this function should be used, uncomment the lines between
-     * the curly brackets.
-     */
-    void plotMaterialLaw()
-    {
-//        if (soilType_ == 0)
-//        {
-//            std::cout << "Material law plot not possible for heterogeneous media!\n";
-//            return;
-//        }
-//        if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams.Coarse, PlotMaterialLaw1))
-//        {
-//            PlotFluidMatrixLaw<MaterialLaw> coarseFluidMatrixLaw_;
-//            coarseFluidMatrixLaw_.plotpC(coarseParams_,
-//                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Swr1),
-//                    1.0 - GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Coarse, Snr1));
-//        }
-//        if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams.Medium, PlotMaterialLaw2))
-//        {
-//            PlotFluidMatrixLaw<MaterialLaw> mediumFluidMatrixLaw_;
-//            mediumFluidMatrixLaw_.plotpC(mediumParams_,
-//                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Swr2),
-//                    1.0 - GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Medium, Snr2));
-//        }
-//        if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams.Fine, PlotMaterialLaw3))
-//        {
-//            PlotFluidMatrixLaw<MaterialLaw> fineFluidMatrixLaw_;
-//            fineFluidMatrixLaw_.plotpC(fineParams_,
-//                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Swr3),
-//                    1.0 - GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams.Fine, Snr3));
-//        }
+        return lambdaSolid_;
     }
 
 private:
-    unsigned soilType_;
-
-    Scalar coarsePermeability_;
-    Scalar mediumPermeability_;
-    Scalar finePermeability_;
-
-    Scalar coarsePorosity_;
-    Scalar mediumPorosity_;
-    Scalar finePorosity_;
-
-    Scalar coarseLambdaSolid_;
-    Scalar mediumLambdaSolid_;
-    Scalar fineLambdaSolid_;
-
-    Scalar xMaterialInterface_;
-//    MaterialLawParamsVector materialLawParams_;
-//    PermeabilityType permeability_;
-    const IndexSet& indexSet_;
-
-    MaterialLawParams coarseParams_;
-    MaterialLawParams mediumParams_;
-    MaterialLawParams fineParams_;
+    Scalar permeability_;
+    Scalar porosity_;
+    Scalar lambdaSolid_;
+    MaterialLawParams params_;
 };
 
 } // end namespace Dumux

@@ -44,32 +44,21 @@ namespace Properties
 NEW_TYPE_TAG(Stokes2cniSubProblem, 
 	INHERITS_FROM(BoxStokesncni, SubDomain, TwoCNIStokesTwoPTwoCNISpatialParams));
 
-//SET_PROP(Stokes2cniSubProblem, ModelParameterGroup)
-//{ static const char *value() { return "FF"; }; };
-
 // Set the problem property
 SET_TYPE_PROP(Stokes2cniSubProblem, Problem, Dumux::Stokes2cniSubProblem<TypeTag>);
 
-//! Use the Stokes2cniCouplingLocalResidual for the computation of the local residual in the Stokes domain
+// Use the Stokes2cniCouplingLocalResidual for the computation of the local residual in the Stokes domain
 SET_TYPE_PROP(Stokes2cniSubProblem, LocalResidual, StokesncniCouplingLocalResidual<TypeTag>);
 
-//! Set the property for the material parameters by extracting it from the material law
-SET_PROP(Stokes2cniSubProblem, MaterialLawParams)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-public:
-    typedef typename MaterialLaw::Params type;
-};
+// Set the property for the material parameters by extracting it from the material law.
+SET_TYPE_PROP(Stokes2cniSubProblem,
+              MaterialLawParams,
+              typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
-SET_PROP(Stokes2cniSubProblem, FluidSystem)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag) CoupledTypeTag;
-    typedef typename GET_PROP_TYPE(CoupledTypeTag, FluidSystem) FluidSystem;
-public:
-    typedef FluidSystem type;
-};
+// Used the fluid system from the coupled problem
+SET_TYPE_PROP(Stokes2cniSubProblem,
+              FluidSystem,
+              typename GET_PROP_TYPE(typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag), FluidSystem));
 
 // use formulation based on mass fractions
 SET_BOOL_PROP(Stokes2cniSubProblem, UseMoles, false);
@@ -155,54 +144,40 @@ class Stokes2cniSubProblem : public StokesProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<CoordScalar, dim> GlobalPosition;
 
+public:
     /*!
      * \brief The sub-problem for the Stokes subdomain
      *
      * \param timeManager The TimeManager which is used by the simulation
      * \param gridView The simulation's idea about physical space
      */
-public:
     Stokes2cniSubProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView),
           spatialParams_(gridView)
     {
-        try
-        {
-            bboxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMin);
-            bboxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
-            bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
-            bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMax);
+        bboxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMin);
+        bboxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
+        bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+        bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMax);
+        runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RunUpDistanceX); // first part of the interface without coupling
 
-            refVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
-            refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefPressure);
-            refMassfrac_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
-            refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
+        refVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
+        refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefPressure);
+        refMassfrac_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
+        refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
 
-            sinusVAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelAmplitude);
-            sinusVPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelPeriod);
-            sinusPAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusPressureAmplitude);
-            sinusPPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusPressurePeriod);
-            sinusXAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusConcentrationAmplitude);
-            sinusXPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusConcentrationPeriod);
-            sinusTAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperatureAmplitude);
-            sinusTPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperaturePeriod);
+        sinusVAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelAmplitude);
+        sinusVPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusVelPeriod);
+        sinusPAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusPressureAmplitude);
+        sinusPPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusPressurePeriod);
+        sinusXAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusConcentrationAmplitude);
+        sinusXPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusConcentrationPeriod);
+        sinusTAmplitude_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperatureAmplitude);
+        sinusTPeriod_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, SinusTemperaturePeriod);
+        useDirichletBC_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, FreeFlow, UseDirichletBC);
 
-            useDirichletFF_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, UseDirichletFF);
-            bjSlipVel_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BeaversJosephSlipVel);
-            alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
-            xMaterialInterface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MaterialInterfaceX);
-
-            runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, RunUpDistanceX); // first part of the interface without coupling
-            initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
+        alphaBJ_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, AlphaBJ);
+        initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
     }
 
     /*!
@@ -216,7 +191,7 @@ public:
      * This is used as a prefix for files generated by the simulation.
      */
     const std::string &name() const
-    { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Vtk, NameFF); }
+    { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Output, NameFF); }
 
     // \}
 
@@ -241,7 +216,7 @@ public:
 
         if (onUpperBoundary_(globalPos))
         {
-            if (useDirichletFF_)
+            if (useDirichletBC_)
             {
                 values.setNeumann(transportEqIdx);
                 values.setDirichlet(temperatureIdx, energyEqIdx);
@@ -257,7 +232,7 @@ public:
         // evaporative fluxes are much more grid dependent
         if (onLeftBoundary_(globalPos))
         {
-            if (useDirichletFF_)
+            if (useDirichletBC_)
             {
                 values.setDirichlet(massOrMoleFracIdx, transportEqIdx);
                 values.setDirichlet(temperatureIdx, energyEqIdx);
@@ -282,7 +257,7 @@ public:
         if (onLowerBoundary_(globalPos))
         {
             values.setAllDirichlet();
-            if (useDirichletFF_)
+            if (useDirichletBC_)
             {
                 values.setNeumann(transportEqIdx);
                 values.setDirichlet(temperatureIdx, energyEqIdx);
@@ -329,7 +304,6 @@ public:
     {
         const GlobalPosition globalPos = vertex.geometry().center();
 
-//        initial_(values, globalPos);
         values = 0.0;
 
         FluidState fluidState;
@@ -556,16 +530,8 @@ private:
     const Scalar xVelocity_(const GlobalPosition &globalPos) const
     {
         const Scalar vmax = refVelocity();
-//        const Scalar relativeHeight = (globalPos[1]-bboxMin_[1])/height_();
-        // linear profile
-//        return vmax*relativeHeight + bjSlipVel_; // BJ slip velocity is added as sqrt(Kxx)
-	      // parabolic profile
         return  4*vmax*(globalPos[1] - bboxMin_[1])*(bboxMax_[1] - globalPos[1])
-                / (height_()*height_()) + bjSlipVel_;
-//        Scalar tempVel = (globalPos[1] - bboxMin_[1])/height_();
-//        return vmax*tempVel*tempVel + bjSlipVel_;
-        // logarithmic profile
-//        return 0.1*vmax*log((relativeHeight+1e-3)/1e-3) + bjSlipVel_;
+                / (height_()*height_()) + 0.00134;
     }
 
     //! \brief updates the fluid state to obtain required quantities for IC/BC
@@ -635,11 +601,9 @@ private:
     Scalar sinusTAmplitude_;
     Scalar sinusTPeriod_;
 
-    bool useDirichletFF_;
-    Scalar bjSlipVel_;
+    bool useDirichletBC_;
     Scalar alphaBJ_;
 
-    Scalar xMaterialInterface_;
     Scalar runUpDistanceX_;
     Scalar initializationTime_;
 };

@@ -45,34 +45,28 @@ NEW_TYPE_TAG(TwoPTwoCSubProblem,
 // Set the problem property
 SET_TYPE_PROP(TwoPTwoCSubProblem, Problem, TwoPTwoCSubProblem<TTAG(TwoPTwoCSubProblem)>);
 
-// Set the local residual extended for the coupling
+// Use the local residual extended for the coupling
 SET_TYPE_PROP(TwoPTwoCSubProblem, LocalResidual, TwoPTwoCCouplingLocalResidual<TypeTag>);
 
-// choose pn and Sw as primary variables
+// Choose pn and Sw as primary variables
 SET_INT_PROP(TwoPTwoCSubProblem, Formulation, TwoPTwoCFormulation::pnsw);
 
-
-// the gas component balance (air) is replaced by the total mass balance
+// The gas component balance (air) is replaced by the total mass balance
 SET_PROP(TwoPTwoCSubProblem, ReplaceCompEqIdx)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     static const int value = Indices::contiNEqIdx;
 };
 
-// the fluidsystem is set in the coupled problem
-SET_PROP(TwoPTwoCSubProblem, FluidSystem)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag) CoupledTypeTag;
-    typedef typename GET_PROP_TYPE(CoupledTypeTag, FluidSystem) FluidSystem;
-public:
-    typedef FluidSystem type;
-};
+// Used the fluid system from the coupled problem
+SET_TYPE_PROP(TwoPTwoCSubProblem,
+              FluidSystem,
+              typename GET_PROP_TYPE(typename GET_PROP_TYPE(TypeTag, MultiDomainTypeTag), FluidSystem));
 
-// use formulation based on mass fractions
+// Use formulation based on mass fractions
 SET_BOOL_PROP(TwoPTwoCSubProblem, UseMoles, false);
 
-// enable/disable velocity output
+// Enable velocity output
 SET_BOOL_PROP(TwoPTwoCSubProblem, VtkAddVelocity, true);
 
 // Enable gravity
@@ -150,47 +144,33 @@ public:
     TwoPTwoCSubProblem(TimeManager &timeManager, const GridView gridView)
         : ParentType(timeManager, gridView)
     {
-        try
-        {
-            Scalar noDarcyX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, NoDarcyX);
-            Scalar xMin = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMin);
+        Scalar noDarcyX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX);
+        Scalar xMin = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMin);
 
-            bboxMin_[0] = std::max(xMin,noDarcyX);
-            bboxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
+        bboxMin_[0] = std::max(xMin,noDarcyX);
+        bboxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, XMax);
 
-            bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMin);
-            bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
+        bboxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, YMin);
+        bboxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
 
-            runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, RunUpDistanceX); // first part of the interface without coupling
-            xMaterialInterface_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MaterialInterfaceX);
-            initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
+        runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RunUpDistanceX); // first part of the interface without coupling
+        initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
 
-            refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, RefTemperaturePM);
-            refTemperatureFF_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
-            refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, RefPressurePM);
-            initialSw1_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, InitialSw1);
-            initialSw2_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, InitialSw2);
+        refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, RefTemperature);
+        refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, RefPressure);
+        initialSw_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, InitialSw);
 
-            freqMassOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
+        freqMassOutput_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
 
-            storageLastTimestep_ = Scalar(0);
-            lastMassOutputTime_ = Scalar(0);
+        storageLastTimestep_ = Scalar(0);
+        lastMassOutputTime_ = Scalar(0);
 
-            outfile.open("storage.out");
-            outfile << "Time;"
-                    << "TotalMassChange;"
-                    << "WaterMassChange;"
-                    << "WaterMass"
-                    << std::endl;
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-             std::cerr << "Unknown exception thrown!\n";
-             exit(1);
-        }
+        outfile.open("storage.out");
+        outfile << "Time;"
+                << "TotalMassChange;"
+                << "WaterMassChange;"
+                << "WaterMass"
+                << std::endl;
     }
 
     ~TwoPTwoCSubProblem()
@@ -209,7 +189,7 @@ public:
      * This is used as a prefix for files generated by the simulation.
      */
     const std::string &name() const
-    { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Vtk, NamePM); }
+    { return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Output, NamePM); }
 
     /*!
      * \brief Called by the Dumux::TimeManager in order to
@@ -220,7 +200,6 @@ public:
      */
     void init()
     {
-        // set the initial condition of the model
         ParentType::init();
 
         this->model().globalStorage(storageLastTimestep_);
@@ -235,8 +214,12 @@ public:
     {
         return refTemperature_;
     };
-
     // \}
+
+    /*!
+     * \name Boundary conditions
+     */
+    // \{
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -421,7 +404,6 @@ public:
         }
     }
 
-
     /*!
      * \brief Determines if globalPos is a corner of the grid
      *
@@ -434,7 +416,6 @@ public:
             (onRightBoundary_(globalPos) && onLowerBoundary_(globalPos)) ||
             (onRightBoundary_(globalPos) && onUpperBoundary_(globalPos)));
     }
-
 
     /*!
      * \brief Returns whether the position is an interface corner point
@@ -457,21 +438,7 @@ private:
     {
         values[pressureIdx] = refPressure_
                 + 1000.*this->gravity()[1]*(globalPos[1]-bboxMax_[1]);
-        if (globalPos[0] < xMaterialInterface_)
-            values[switchIdx] = initialSw1_;
-        else
-            values[switchIdx] = initialSw2_;
-
-//        if (onUpperBoundary_(globalPos) && onLeftBoundary_(globalPos))
-//        {
-            //            values[switchIdx] = 0.99e-4;
-//        }
-
-        //        values[pressureIdx] = 1e5*(2.0 - globalPos[0]);
-        //        if (onLeftBoundary_(globalPos))
-        //            values[switchIdx] = 0.9e-4;
-        //        else
-        //            values[switchIdx] = 1e-4;
+        values[switchIdx] = initialSw_;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
@@ -495,7 +462,6 @@ private:
     static constexpr Scalar eps_ = 1e-8;
     GlobalPosition bboxMin_;
     GlobalPosition bboxMax_;
-    Scalar xMaterialInterface_;
 
     int freqMassOutput_;
 
@@ -503,10 +469,8 @@ private:
     Scalar lastMassOutputTime_;
 
     Scalar refTemperature_;
-    Scalar refTemperatureFF_;
     Scalar refPressure_;
-    Scalar initialSw1_;
-    Scalar initialSw2_;
+    Scalar initialSw_;
 
     Scalar runUpDistanceX_;
     Scalar initializationTime_;

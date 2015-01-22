@@ -133,9 +133,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
         blModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, BoundaryLayerModel);
         massTransferModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, MassTransferModel);
 
-        if (blModel_ > 0)
+        if (blModel_ != 0)
             std::cout << "Using boundary layer model " << blModel_ << std::endl;
-        if (massTransferModel_ > 0)
+        if (massTransferModel_ != 0)
             std::cout << "Using mass transfer model " << massTransferModel_ << std::endl;
     }
 
@@ -551,7 +551,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
             const Scalar boundaryLayerOffset =
                 GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BoundaryLayerOffset);
 
-            return 5*(globalPos[0]+boundaryLayerOffset) / sqrt(reynoldsX);
+            return 5*(globalPos[0]+boundaryLayerOffset) / std::sqrt(reynoldsX);
         }
         if (blModel_ == 2)
         {
@@ -562,7 +562,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
             const Scalar boundaryLayerOffset =
                 GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BoundaryLayerOffset);
 
-            return 0.37*(globalPos[0]+boundaryLayerOffset) / pow(reynoldsX, 0.2);
+            return 0.37*(globalPos[0]+boundaryLayerOffset) / std::pow(reynoldsX, 0.2);
         }
         if (blModel_ == 3)
         {
@@ -573,9 +573,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
             const Scalar boundaryLayerOffset =
                 GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BoundaryLayerOffset);
 
-            const Scalar cf = 2*pow(0.41*1.5/log(reynoldsX),2);
+            const Scalar cf = 2*std::pow(0.41*1.5/std::log(reynoldsX),2);
 
-            return 50*(globalPos[0]+boundaryLayerOffset)/(reynoldsX*sqrt(cf/2));
+            return 50*(globalPos[0]+boundaryLayerOffset)/(reynoldsX*std::sqrt(cf/2));
         }
         if (blModel_ == 9)
         {
@@ -603,33 +603,28 @@ class TwoCStokesTwoPTwoCLocalOperator :
                                              const DimVector& globalPos,
                                              const int vertInElem1, const int vertInElem2) const
     {
-        if (massTransferModel_ == 1){
-            Scalar exponentMTC = 0;
-            if (ParameterTree::tree().hasKey("FreeFlow.ExponentMTC"))
-                exponentMTC = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, ExponentMTC);
-            else
-                std::cerr << "FreeFlow.ExponentMTC not defined\n";
-            return pow(cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2), exponentMTC);
+        if (massTransferModel_ == 1)
+        {
+            Scalar exponentMTC = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, ExponentMTC);
+            return std::pow(cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2), exponentMTC);
         }
         // Schlünder model (Schlünder, CES 1988)
-        if (massTransferModel_ == 2){
-            Scalar charPoreRadius = 0;
-            if (ParameterTree::tree().hasKey("PorousMedium.CharPoreDiameter"))
-                charPoreRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, CharPoreDiameter);
-            else
-                std::cerr << "PorousMedium.PoreDiameter not defined\n";
+        else if (massTransferModel_ == 2)
+        {
+            Scalar charPoreRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, CharPoreDiameter);
 
             const Scalar blThickness = computeBoundaryLayerThickness(cParams, globalPos, vertInElem1);
             const Scalar moistureContent = cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2) *
                 globalProblem_.sdProblem2().spatialParams().porosity(sdElement2, cParams.fvGeometry2, vertInElem2);
 
             Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius/blThickness
-                * sqrt(M_PI/(4*moistureContent)) * (sqrt(M_PI/(4*moistureContent)) - 1.);
+                * std::sqrt(M_PI/(4*moistureContent)) * (std::sqrt(M_PI/(4*moistureContent)) - 1.);
 
             return 1./massTransferCoeff;
         }
         // Schlünder model (Schlünder, CES 1988) with variable char. pore diameter depending on Pc
-        if (massTransferModel_ == 3){
+        else if (massTransferModel_ == 3)
+        {
             const Scalar surfaceTension = 72.85e-3; // source: Wikipedia
             const Scalar charPoreRadius = 2*surfaceTension/cParams.elemVolVarsCur2[vertInElem2].capillaryPressure();
 
@@ -638,19 +633,14 @@ class TwoCStokesTwoPTwoCLocalOperator :
                 globalProblem_.sdProblem2().spatialParams().porosity(sdElement2, cParams.fvGeometry2, vertInElem2);
 
             Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius/blThickness
-                * sqrt(M_PI/(4*moistureContent)) * (sqrt(M_PI/(4*moistureContent)) - 1.);
+                * std::sqrt(M_PI/(4*moistureContent)) * (std::sqrt(M_PI/(4*moistureContent)) - 1.);
 
             return 1./massTransferCoeff;
         }
         // modified Schlünder model
-        if (massTransferModel_ == 4){
-            //            const Scalar surfaceTension = 72.85e-3; // source: Wikipedia
-            //            const Scalar charPoreRadius = 2*surfaceTension/cParams.elemVolVarsCur2[vertInElem2].capillaryPressure();
-            Scalar charPoreRadius = 0;
-            if (ParameterTree::tree().hasKey("PorousMedium.CharPoreRadius"))
-                charPoreRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, CharPoreDiameter);
-            else
-                std::cerr << "PorousMedium.CharPoreRadius not defined\n";
+        else if (massTransferModel_ == 4)
+        {
+            Scalar charPoreRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, CharPoreDiameter);
 
             const Scalar blThickness = computeBoundaryLayerThickness(cParams, globalPos, vertInElem1);
             const Scalar moistureContent = cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2) *

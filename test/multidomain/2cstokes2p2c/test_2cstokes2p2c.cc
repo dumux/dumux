@@ -118,8 +118,7 @@ int start_(int argc,
     std::string dgfFileName;
     Scalar dt, tEnd;
     Dune::FieldVector<int, dim> nElements;
-    Scalar interfacePos, gradingFactor;
-    int gridRefinement;
+    Scalar interfacePosY, gradingFactorY;
     bool useInterfaceMeshCreator;
 
     try
@@ -128,11 +127,9 @@ int start_(int argc,
         dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
         tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd);
         nElements[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsX);
-        if (dim>1) nElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
-        if (dim==3) nElements[2] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsZ);
-        interfacePos = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
-        gradingFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Grading);
-        gridRefinement = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Refinement);
+        nElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
+        interfacePosY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+        gradingFactorY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, GradingFactorY);
         useInterfaceMeshCreator = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, UseInterfaceMeshCreator);
     }
     catch (Dumux::ParameterException &e) {
@@ -148,7 +145,7 @@ int start_(int argc,
     if (useInterfaceMeshCreator)
     {
         Dumux::InterfaceMeshCreator<Grid> interfaceMeshCreator;
-        GridCreator::gridPtr() = interfaceMeshCreator.create(dgfFileName, nElements, interfacePos, gradingFactor);
+        GridCreator::gridPtr() = interfaceMeshCreator.create(dgfFileName, nElements, interfacePosY, gradingFactorY);
     }
     else
     {
@@ -161,9 +158,6 @@ int start_(int argc,
             throw;
         }
     }
-
-    if (gridRefinement)
-    	GridCreator::grid().globalRefine(gridRefinement);
 
     if (mpiHelper.size() > 1) {
         if (!Dune::Capabilities::isParallel<Grid>::v) {

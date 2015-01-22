@@ -56,7 +56,6 @@ namespace Dumux
 		typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 		typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 		
-		
 		enum {
 			dim = GridView::dimension,
 			dimWorld = GridView::dimensionworld,

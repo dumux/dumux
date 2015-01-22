@@ -62,16 +62,16 @@ SET_TYPE_PROP(TwoCStokesTwoPTwoC, JacobianAssembler, Dumux::MultiDomainAssembler
 // Specif the used Newton controller
 SET_TYPE_PROP(TwoCStokesTwoPTwoC, NewtonController, Dumux::TwoCStokesTwoPTwoCNewtonController<TypeTag>);
 
-// set this to one here (must fit to the structure of the coupled matrix which has block length 1)
+// Set this to one here (must fit to the structure of the coupled matrix which has block length 1)
 SET_INT_PROP(TwoCStokesTwoPTwoC, NumEq, 1);
 
-// Write the solutions of individual newton iterations?
+// Specitfy if the solutions of individual newton iterations should be written
 SET_BOOL_PROP(TwoCStokesTwoPTwoC, NewtonWriteConvergence, false);
 
-//! 0 = none, 1 = Blasius, 2 and 3 = turbulent BL, 9 = constant thickness
+// 0 = none, 1 = Blasius, 2 and 3 = turbulent BL, 9 = constant thickness
 SET_INT_PROP(TwoCStokesTwoPTwoC, FreeFlowBoundaryLayerModel, 0);
 
-//! 0 = none, 1 = power law, 2 = Schluender model mass transfer model
+// 0 = none, 1 = power law, 2 = Schluender model mass transfer model
 SET_INT_PROP(TwoCStokesTwoPTwoC, FreeFlowMassTransferModel, 0);
 
 } // end namespace properties

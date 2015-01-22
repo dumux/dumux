@@ -86,16 +86,6 @@ public:
     TwoPTwoCNICouplingLocalResidual()
     { };
 
-//    void evalBoundary_()
-//    {
-//        ParentType::evalBoundary_();
-//
-//        // evaluate Dirichlet-like coupling conditions
-//        for (int idx = 0; idx < this->fvGeometry_().numVertices; idx++)
-//            if (boundaryHasCoupling_(this->bcTypes_(idx)))
-//                evalCouplingVertex_(idx);
-//    }
-
     /*!
      * \brief Implementation of the boundary evaluation
      */
