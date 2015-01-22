@@ -63,7 +63,7 @@ NEW_TYPE_TAG(TwoCNIStokesTwoPTwoCNIProblem, INHERITS_FROM(TwoCNIStokesTwoPTwoCNI
 #ifdef HAVE_UG
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid, Dune::UGGrid<2>);
 #elif HAVE_ALUGRID || HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>;
+SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #else
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid, Dune::YaspGrid<2>);
 #endif
