@@ -542,40 +542,24 @@ class TwoCStokesTwoPTwoCLocalOperator :
                                                    const DimVector& globalPos,
                                                    const int vertexIdx) const
     {
+        const Scalar vxmax = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, VxMax);
+        const Scalar boundaryLayerOffset = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BoundaryLayerOffset);
+        const Scalar distance = globalPos[0]+boundaryLayerOffset;
+        Scalar reynoldsX = vxmax * distance * cParams.elemVolVarsCur1[vertexIdx].fluidState().density(nPhaseIdx1)
+                           / cParams.elemVolVarsCur1[vertexIdx].fluidState().viscosity(nPhaseIdx1);
+
         if (blModel_ == 1)
         {
-            const Scalar vxmax = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, VxMax);
-            Scalar reynoldsX = vxmax * globalPos[0] *
-                cParams.elemVolVarsCur1[vertexIdx].fluidState().density(nPhaseIdx1);
-            reynoldsX /= cParams.elemVolVarsCur1[vertexIdx].fluidState().viscosity(nPhaseIdx1);
-            const Scalar boundaryLayerOffset =
-                GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BoundaryLayerOffset);
-
-            return 5*(globalPos[0]+boundaryLayerOffset) / std::sqrt(reynoldsX);
+            return 5.0 * distance / std::sqrt(reynoldsX);
         }
         if (blModel_ == 2)
         {
-            const Scalar vxmax = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, VxMax);
-            Scalar reynoldsX = vxmax * globalPos[0] *
-                cParams.elemVolVarsCur1[vertexIdx].fluidState().density(nPhaseIdx1);
-            reynoldsX /= cParams.elemVolVarsCur1[vertexIdx].fluidState().viscosity(nPhaseIdx1);
-            const Scalar boundaryLayerOffset =
-                GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BoundaryLayerOffset);
-
-            return 0.37*(globalPos[0]+boundaryLayerOffset) / std::pow(reynoldsX, 0.2);
+            return 0.37 * distance / std::pow(reynoldsX, 0.2);
         }
         if (blModel_ == 3)
         {
-            const Scalar vxmax = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, VxMax);
-            Scalar reynoldsX = vxmax * globalPos[0] *
-                cParams.elemVolVarsCur1[vertexIdx].fluidState().density(nPhaseIdx1);
-            reynoldsX /= cParams.elemVolVarsCur1[vertexIdx].fluidState().viscosity(nPhaseIdx1);
-            const Scalar boundaryLayerOffset =
-                GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BoundaryLayerOffset);
-
             const Scalar cf = 2*std::pow(0.41*1.5/std::log(reynoldsX),2);
-
-            return 50*(globalPos[0]+boundaryLayerOffset)/(reynoldsX*std::sqrt(cf/2));
+            return 50.0 * distance / (reynoldsX * std::sqrt(cf/2.0));
         }
         if (blModel_ == 9)
         {
