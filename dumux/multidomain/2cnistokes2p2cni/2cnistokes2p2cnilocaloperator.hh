@@ -63,6 +63,7 @@ public:
         energyEqIdx1 = Stokes2cniIndices::energyEqIdx          //!< Index of the energy balance equation
     };
     enum {  numComponents = Stokes2cniIndices::numComponents };
+    enum { phaseCompIdx = Stokes2cniIndices::phaseCompIdx};
     enum { // indices in the Darcy domain
         numPhases2 = GET_PROP_VALUE(TwoPTwoCNITypeTag, NumPhases),
 
@@ -120,18 +121,26 @@ public:
                     bfNormal1 *
                     boundaryVars1.temperatureGrad() *
                     (boundaryVars1.thermalConductivity() + boundaryVars1.thermalEddyConductivity());
-                Scalar diffusiveFlux = 0.0;
+                Scalar sumDiffusiveFluxes = 0.0;
+                Scalar sumDiffusiveEnergyFlux = 0.0;
                 for (int compIdx=0; compIdx < numComponents; compIdx++)
                 {
-                    diffusiveFlux += boundaryVars1.moleFractionGrad(compIdx)
-                                     * boundaryVars1.face().normal
-                                     *(boundaryVars1.diffusionCoeff(compIdx) + boundaryVars1.eddyDiffusivity())
-                                     * boundaryVars1.molarDensity()
-                                     * FluidSystem::molarMass(compIdx) // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s]
-                                     * boundaryVars1.componentEnthalpy(compIdx);
+                    if (compIdx != phaseCompIdx)
+                    {
+                        Scalar diffusiveFlux = boundaryVars1.moleFractionGrad(compIdx)
+                                               * boundaryVars1.face().normal
+                                               *(boundaryVars1.diffusionCoeff(compIdx) + boundaryVars1.eddyDiffusivity())
+                                               * boundaryVars1.molarDensity();
+                        sumDiffusiveFluxes += diffusiveFlux;
+                        sumDiffusiveEnergyFlux += diffusiveFlux
+                                                  * boundaryVars1.componentEnthalpy(compIdx)
+                                                  * FluidSystem::molarMass(compIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s]
+                    }
                 }
+                sumDiffusiveEnergyFlux -= sumDiffusiveFluxes * boundaryVars1.componentEnthalpy(phaseCompIdx)
+                                          * FluidSystem::molarMass(phaseCompIdx);
                 couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
-                                        -(convectiveFlux - diffusiveFlux - conductiveFlux));
+                                        -(convectiveFlux - sumDiffusiveEnergyFlux - conductiveFlux));
             }
             else
             {
