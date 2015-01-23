@@ -41,24 +41,25 @@ NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(ImplicitUseTwoPointFlux);
 }
 
-/////////////////////
-// HACK: Functions to initialize the subcontrol volume data
-// structures of BoxFVElementGeomerty.
-//
-// this is a work around to be able to to use specialization for
-// doing this.  it is required since it is not possible to
-// specialize member functions of template classes because of some
-// weird reason I didn't really get...
-
 //! \cond INTERNAL
 
+// Functions to initialize the subcontrol volume data
+// structures of BoxFVElementGeometry.
+// This is a workaround to be able to use template specialization.
+// It is required since it is apparently not possible to
+// specialize member functions of template classes in this case.
 template <typename BoxFVElementGeometry, int dim>
 class _BoxFVElemGeomHelper
 {
 public:
-    static void fillSubContVolData(BoxFVElementGeometry &eg, int numVertices)
+    template<class GlobalPosition>
+    static void fillSubContVolData(BoxFVElementGeometry &fvGeometry,
+                                   int numVertices,
+                                   GlobalPosition *edgeCoord,
+                                   GlobalPosition *faceCoord)
     {
-        DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim);
+        DUNE_THROW(Dune::NotImplemented,
+                   "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim);
     }
 };
 
@@ -66,13 +67,16 @@ template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 1>
 {
 public:
-    enum { dim = 1 };
+    static const int dim = 1;
+
     template<class GlobalPosition>
-    static void fillSubContVolData(BoxFVElementGeometry &eg, int numVertices, GlobalPosition *edgeCoord, GlobalPosition *faceCoord)
+    static void fillSubContVolData(BoxFVElementGeometry &fvGeometry,
+                                   int numVertices,
+                                   GlobalPosition *edgeCoord,
+                                   GlobalPosition *faceCoord)
     {
-        // 1D
-        eg.subContVol[0].volume = 0.5*eg.elementVolume;
-        eg.subContVol[1].volume = 0.5*eg.elementVolume;
+        fvGeometry.subContVol[0].volume = 0.5*fvGeometry.elementVolume;
+        fvGeometry.subContVol[1].volume = 0.5*fvGeometry.elementVolume;
     }
 };
 
@@ -80,33 +84,69 @@ template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 2>
 {
 public:
-    enum { dim = 2 };
+    static const int dim = 2;
 
     template<class GlobalPosition>
-    static void fillSubContVolData(BoxFVElementGeometry &eg, int numVertices, GlobalPosition *edgeCoord, GlobalPosition *faceCoord)
+    static void fillSubContVolData(BoxFVElementGeometry &fvGeometry,
+                                   int numVertices,
+                                   GlobalPosition *edgeCoord,
+                                   GlobalPosition *faceCoord)
     {
         switch (numVertices) {
-        case 3: // 2D, triangle
-            eg.subContVol[0].volume = eg.elementVolume/3;
-            eg.subContVol[1].volume = eg.elementVolume/3;
-            eg.subContVol[2].volume = eg.elementVolume/3;
+        case 3: // triangle
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
+                fvGeometry.subContVol[scvIdx].volume = fvGeometry.elementVolume/3.0;
             break;
-        case 4: // 2D, quadrilinear
+        case 4: // quadrilateral
             if (GlobalPosition::dimension == dim) {
-                eg.subContVol[0].volume = eg.quadrilateralArea(eg.subContVol[0].global, edgeCoord[2], eg.elementGlobal, edgeCoord[0]);
-                eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, edgeCoord[1], eg.elementGlobal, edgeCoord[2]);
-                eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, edgeCoord[0], eg.elementGlobal, edgeCoord[3]);
-                eg.subContVol[3].volume = eg.quadrilateralArea(eg.subContVol[3].global, edgeCoord[3], eg.elementGlobal, edgeCoord[1]);
+                fvGeometry.subContVol[0].volume
+                  = fvGeometry.quadrilateralArea(fvGeometry.subContVol[0].global,
+                                                 edgeCoord[2],
+                                                 fvGeometry.elementGlobal,
+                                                 edgeCoord[0]);
+                fvGeometry.subContVol[1].volume
+                  = fvGeometry.quadrilateralArea(fvGeometry.subContVol[1].global,
+                                                 edgeCoord[1],
+                                                 fvGeometry.elementGlobal,
+                                                 edgeCoord[2]);
+                fvGeometry.subContVol[2].volume
+                  = fvGeometry.quadrilateralArea(fvGeometry.subContVol[2].global,
+                                                 edgeCoord[0],
+                                                 fvGeometry.elementGlobal,
+                                                 edgeCoord[3]);
+                fvGeometry.subContVol[3].volume
+                  = fvGeometry.quadrilateralArea(fvGeometry.subContVol[3].global,
+                                                 edgeCoord[3],
+                                                 fvGeometry.elementGlobal,
+                                                 edgeCoord[1]);
             }
             else {
-                eg.subContVol[0].volume = eg.quadrilateralArea3D(eg.subContVol[0].global, edgeCoord[2], eg.elementGlobal, edgeCoord[0]);
-                eg.subContVol[1].volume = eg.quadrilateralArea3D(eg.subContVol[1].global, edgeCoord[1], eg.elementGlobal, edgeCoord[2]);
-                eg.subContVol[2].volume = eg.quadrilateralArea3D(eg.subContVol[2].global, edgeCoord[0], eg.elementGlobal, edgeCoord[3]);
-                eg.subContVol[3].volume = eg.quadrilateralArea3D(eg.subContVol[3].global, edgeCoord[3], eg.elementGlobal, edgeCoord[1]);
+                fvGeometry.subContVol[0].volume
+                  = fvGeometry.quadrilateralArea3D(fvGeometry.subContVol[0].global,
+                                                   edgeCoord[2],
+                                                   fvGeometry.elementGlobal,
+                                                   edgeCoord[0]);
+                fvGeometry.subContVol[1].volume
+                  = fvGeometry.quadrilateralArea3D(fvGeometry.subContVol[1].global,
+                                                   edgeCoord[1],
+                                                   fvGeometry.elementGlobal,
+                                                   edgeCoord[2]);
+                fvGeometry.subContVol[2].volume
+                  = fvGeometry.quadrilateralArea3D(fvGeometry.subContVol[2].global,
+                                                   edgeCoord[0],
+                                                   fvGeometry.elementGlobal,
+                                                   edgeCoord[3]);
+                fvGeometry.subContVol[3].volume
+                  = fvGeometry.quadrilateralArea3D(fvGeometry.subContVol[3].global,
+                                                   edgeCoord[3],
+                                                   fvGeometry.elementGlobal,
+                                                   edgeCoord[1]);
             }
             break;
         default:
-            DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim << ", numVertices = " << numVertices);
+            DUNE_THROW(Dune::NotImplemented,
+                       "_BoxFVElemGeomHelper::fillSubContVolData dim = "
+                       << dim << ", numVertices = " << numVertices);
         }
     }
 };
@@ -115,181 +155,202 @@ template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 3>
 {
 public:
-    enum { dim = 3 };
+    static const int dim = 3;
 
     template<class GlobalPosition>
-    static void fillSubContVolData(BoxFVElementGeometry &eg, int numVertices, GlobalPosition *edgeCoord, GlobalPosition *faceCoord)
+    static void fillSubContVolData(BoxFVElementGeometry &fvGeometry,
+                                   int numVertices,
+                                   GlobalPosition *edgeCoord,
+                                   GlobalPosition *faceCoord)
     {
         switch (numVertices) {
-        case 4: // 3D, tetrahedron
-            for (int k = 0; k < eg.numScv; k++)
-                eg.subContVol[k].volume = eg.elementVolume / 4.0;
+        case 4: // tetrahedron
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
+                fvGeometry.subContVol[scvIdx].volume = fvGeometry.elementVolume/4.0;
             break;
-        case 5: // 3D, pyramid
-            eg.subContVol[0].volume = eg.hexahedronVolume(eg.subContVol[0].global,
-                                                          edgeCoord[2],
-                                                          faceCoord[0],
-                                                          edgeCoord[0],
-                                                          edgeCoord[4],
-                                                          faceCoord[3],
-                                                          eg.elementGlobal,
-                                                          faceCoord[1]);
-            eg.subContVol[1].volume = eg.hexahedronVolume(eg.subContVol[1].global,
-                                                          edgeCoord[1],
-                                                          faceCoord[0],
-                                                          edgeCoord[2],
-                                                          edgeCoord[5],
-                                                          faceCoord[2],
-                                                          eg.elementGlobal,
-                                                          faceCoord[3]);
-            eg.subContVol[2].volume = eg.hexahedronVolume(eg.subContVol[2].global,
-                                                          edgeCoord[0],
-                                                          faceCoord[0],
-                                                          edgeCoord[3],
-                                                          edgeCoord[6],
-                                                          faceCoord[1],
-                                                          eg.elementGlobal,
-                                                          faceCoord[4]);
-            eg.subContVol[3].volume = eg.hexahedronVolume(eg.subContVol[3].global,
-                                                          edgeCoord[3],
-                                                          faceCoord[0],
-                                                          edgeCoord[1],
-                                                          edgeCoord[7],
-                                                          faceCoord[4],
-                                                          eg.elementGlobal,
-                                                          faceCoord[2]);
-            eg.subContVol[4].volume = eg.elementVolume -
-                eg.subContVol[0].volume -
-                eg.subContVol[1].volume -
-                eg.subContVol[2].volume -
-                eg.subContVol[3].volume;
+        case 5: // pyramid
+            fvGeometry.subContVol[0].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[0].global,
+                                            edgeCoord[2],
+                                            faceCoord[0],
+                                            edgeCoord[0],
+                                            edgeCoord[4],
+                                            faceCoord[3],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[1]);
+              fvGeometry.subContVol[1].volume
+                = fvGeometry.hexahedronVolume(fvGeometry.subContVol[1].global,
+                                              edgeCoord[1],
+                                              faceCoord[0],
+                                              edgeCoord[2],
+                                              edgeCoord[5],
+                                              faceCoord[2],
+                                              fvGeometry.elementGlobal,
+                                              faceCoord[3]);
+            fvGeometry.subContVol[2].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[2].global,
+                                            edgeCoord[0],
+                                            faceCoord[0],
+                                            edgeCoord[3],
+                                            edgeCoord[6],
+                                            faceCoord[1],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[4]);
+            fvGeometry.subContVol[3].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[3].global,
+                                            edgeCoord[3],
+                                            faceCoord[0],
+                                            edgeCoord[1],
+                                            edgeCoord[7],
+                                            faceCoord[4],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[2]);
+            fvGeometry.subContVol[4].volume
+              = fvGeometry.elementVolume
+              - fvGeometry.subContVol[0].volume
+              - fvGeometry.subContVol[1].volume
+              - fvGeometry.subContVol[2].volume
+              - fvGeometry.subContVol[3].volume;
             break;
-        case 6: // 3D, prism
-            eg.subContVol[0].volume = eg.hexahedronVolume(eg.subContVol[0].global,
-                                                          edgeCoord[3],
-                                                          faceCoord[3],
-                                                          edgeCoord[4],
-                                                          edgeCoord[0],
-                                                          faceCoord[0],
-                                                          eg.elementGlobal,
-                                                          faceCoord[1]);
-            eg.subContVol[1].volume = eg.hexahedronVolume(eg.subContVol[1].global,
-                                                          edgeCoord[5],
-                                                          faceCoord[3],
-                                                          edgeCoord[3],
-                                                          edgeCoord[1],
-                                                          faceCoord[2],
-                                                          eg.elementGlobal,
-                                                          faceCoord[0]);
-            eg.subContVol[2].volume = eg.hexahedronVolume(eg.subContVol[2].global,
-                                                          edgeCoord[4],
-                                                          faceCoord[3],
-                                                          edgeCoord[5],
-                                                          edgeCoord[2],
-                                                          faceCoord[1],
-                                                          eg.elementGlobal,
-                                                          faceCoord[2]);
-            eg.subContVol[3].volume = eg.hexahedronVolume(edgeCoord[0],
-                                                          faceCoord[0],
-                                                          eg.elementGlobal,
-                                                          faceCoord[1],
-                                                          eg.subContVol[3].global,
-                                                          edgeCoord[6],
-                                                          faceCoord[4],
-                                                          edgeCoord[7]);
-            eg.subContVol[4].volume = eg.hexahedronVolume(edgeCoord[1],
-                                                          faceCoord[2],
-                                                          eg.elementGlobal,
-                                                          faceCoord[0],
-                                                          eg.subContVol[4].global,
-                                                          edgeCoord[8],
-                                                          faceCoord[4],
-                                                          edgeCoord[6]);
-            eg.subContVol[5].volume = eg.hexahedronVolume(edgeCoord[2],
-                                                          faceCoord[1],
-                                                          eg.elementGlobal,
-                                                          faceCoord[2],
-                                                          eg.subContVol[5].global,
-                                                          edgeCoord[7],
-                                                          faceCoord[4],
-                                                          edgeCoord[8]);
+        case 6: // prism
+            fvGeometry.subContVol[0].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[0].global,
+                                            edgeCoord[3],
+                                            faceCoord[3],
+                                            edgeCoord[4],
+                                            edgeCoord[0],
+                                            faceCoord[0],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[1]);
+            fvGeometry.subContVol[1].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[1].global,
+                                            edgeCoord[5],
+                                            faceCoord[3],
+                                            edgeCoord[3],
+                                            edgeCoord[1],
+                                            faceCoord[2],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[0]);
+            fvGeometry.subContVol[2].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[2].global,
+                                            edgeCoord[4],
+                                            faceCoord[3],
+                                            edgeCoord[5],
+                                            edgeCoord[2],
+                                            faceCoord[1],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[2]);
+            fvGeometry.subContVol[3].volume
+              = fvGeometry.hexahedronVolume(edgeCoord[0],
+                                            faceCoord[0],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[1],
+                                            fvGeometry.subContVol[3].global,
+                                            edgeCoord[6],
+                                            faceCoord[4],
+                                            edgeCoord[7]);
+            fvGeometry.subContVol[4].volume
+              = fvGeometry.hexahedronVolume(edgeCoord[1],
+                                            faceCoord[2],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[0],
+                                            fvGeometry.subContVol[4].global,
+                                            edgeCoord[8],
+                                            faceCoord[4],
+                                            edgeCoord[6]);
+            fvGeometry.subContVol[5].volume
+              = fvGeometry.hexahedronVolume(edgeCoord[2],
+                                            faceCoord[1],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[2],
+                                            fvGeometry.subContVol[5].global,
+                                            edgeCoord[7],
+                                            faceCoord[4],
+                                            edgeCoord[8]);
             break;
-        case 8: // 3D, hexahedron
-            eg.subContVol[0].volume = eg.hexahedronVolume(eg.subContVol[0].global,
-                                                          edgeCoord[6],
-                                                          faceCoord[4],
-                                                          edgeCoord[4],
-                                                          edgeCoord[0],
-                                                          faceCoord[2],
-                                                          eg.elementGlobal,
-                                                          faceCoord[0]);
-            eg.subContVol[1].volume = eg.hexahedronVolume(eg.subContVol[1].global,
-                                                          edgeCoord[5],
-                                                          faceCoord[4],
-                                                          edgeCoord[6],
-                                                          edgeCoord[1],
-                                                          faceCoord[1],
-                                                          eg.elementGlobal,
-                                                          faceCoord[2]);
-            eg.subContVol[2].volume = eg.hexahedronVolume(eg.subContVol[2].global,
-                                                          edgeCoord[4],
-                                                          faceCoord[4],
-                                                          edgeCoord[7],
-                                                          edgeCoord[2],
-                                                          faceCoord[0],
-                                                          eg.elementGlobal,
-                                                          faceCoord[3]);
-            eg.subContVol[3].volume = eg.hexahedronVolume(eg.subContVol[3].global,
-                                                          edgeCoord[7],
-                                                          faceCoord[4],
-                                                          edgeCoord[5],
-                                                          edgeCoord[3],
-                                                          faceCoord[3],
-                                                          eg.elementGlobal,
-                                                          faceCoord[1]);
-            eg.subContVol[4].volume = eg.hexahedronVolume(edgeCoord[0],
-                                                          faceCoord[2],
-                                                          eg.elementGlobal,
-                                                          faceCoord[0],
-                                                          eg.subContVol[4].global,
-                                                          edgeCoord[10],
-                                                          faceCoord[5],
-                                                          edgeCoord[8]);
-            eg.subContVol[5].volume = eg.hexahedronVolume(edgeCoord[1],
-                                                          faceCoord[1],
-                                                          eg.elementGlobal,
-                                                          faceCoord[2],
-                                                          eg.subContVol[5].global,
-                                                          edgeCoord[9],
-                                                          faceCoord[5],
-                                                          edgeCoord[10]);
-            eg.subContVol[6].volume = eg.hexahedronVolume(edgeCoord[2],
-                                                          faceCoord[0],
-                                                          eg.elementGlobal,
-                                                          faceCoord[3],
-                                                          eg.subContVol[6].global,
-                                                          edgeCoord[8],
-                                                          faceCoord[5],
-                                                          edgeCoord[11]);
-            eg.subContVol[7].volume = eg.hexahedronVolume(edgeCoord[3],
-                                                          faceCoord[3],
-                                                          eg.elementGlobal,
-                                                          faceCoord[1],
-                                                          eg.subContVol[7].global,
-                                                          edgeCoord[11],
-                                                          faceCoord[5],
-                                                          edgeCoord[9]);
+        case 8: // hexahedron
+            fvGeometry.subContVol[0].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[0].global,
+                                            edgeCoord[6],
+                                            faceCoord[4],
+                                            edgeCoord[4],
+                                            edgeCoord[0],
+                                            faceCoord[2],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[0]);
+            fvGeometry.subContVol[1].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[1].global,
+                                            edgeCoord[5],
+                                            faceCoord[4],
+                                            edgeCoord[6],
+                                            edgeCoord[1],
+                                            faceCoord[1],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[2]);
+            fvGeometry.subContVol[2].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[2].global,
+                                            edgeCoord[4],
+                                            faceCoord[4],
+                                            edgeCoord[7],
+                                            edgeCoord[2],
+                                            faceCoord[0],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[3]);
+            fvGeometry.subContVol[3].volume
+              = fvGeometry.hexahedronVolume(fvGeometry.subContVol[3].global,
+                                            edgeCoord[7],
+                                            faceCoord[4],
+                                            edgeCoord[5],
+                                            edgeCoord[3],
+                                            faceCoord[3],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[1]);
+            fvGeometry.subContVol[4].volume
+              = fvGeometry.hexahedronVolume(edgeCoord[0],
+                                            faceCoord[2],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[0],
+                                            fvGeometry.subContVol[4].global,
+                                            edgeCoord[10],
+                                            faceCoord[5],
+                                            edgeCoord[8]);
+            fvGeometry.subContVol[5].volume
+              = fvGeometry.hexahedronVolume(edgeCoord[1],
+                                            faceCoord[1],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[2],
+                                            fvGeometry.subContVol[5].global,
+                                            edgeCoord[9],
+                                            faceCoord[5],
+                                            edgeCoord[10]);
+            fvGeometry.subContVol[6].volume
+              = fvGeometry.hexahedronVolume(edgeCoord[2],
+                                            faceCoord[0],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[3],
+                                            fvGeometry.subContVol[6].global,
+                                            edgeCoord[8],
+                                            faceCoord[5],
+                                            edgeCoord[11]);
+            fvGeometry.subContVol[7].volume
+              = fvGeometry.hexahedronVolume(edgeCoord[3],
+                                            faceCoord[3],
+                                            fvGeometry.elementGlobal,
+                                            faceCoord[1],
+                                            fvGeometry.subContVol[7].global,
+                                            edgeCoord[11],
+                                            faceCoord[5],
+                                            edgeCoord[9]);
             break;
         default:
-            DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim << ", numVertices = " << numVertices);
+            DUNE_THROW(Dune::NotImplemented,
+                       "_BoxFVElemGeomHelper::fillSubContVolData dim = "
+                       << dim << ", numVertices = " << numVertices);
         }
     }
 };
 
 //! \endcond
-
-// END HACK
-/////////////////////
 
 /*!
  * \ingroup BoxModel
@@ -345,10 +406,10 @@ class BoxFVElementGeometry
     typedef typename LocalFiniteElement::Traits::LocalBasisType::Traits LocalBasisTraits;
     typedef typename LocalBasisTraits::JacobianType ShapeJacobian;
 
-    Scalar quadrilateralArea(const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2,
-                             const GlobalPosition& p3)
+    Scalar quadrilateralArea(const GlobalPosition& p0, const GlobalPosition& p1,
+                             const GlobalPosition& p2, const GlobalPosition& p3)
     {
-        return 0.5*fabs((p3[0] - p1[0])*(p2[1] - p0[1]) - (p3[1] - p1[1])*(p2[0] - p0[0]));
+        return 0.5*std::abs((p3[0] - p1[0])*(p2[1] - p0[1]) - (p3[1] - p1[1])*(p2[0] - p0[0]));
     }
 
     void crossProduct(GlobalPosition& c, const GlobalPosition& a, const GlobalPosition& b)
@@ -358,79 +419,70 @@ class BoxFVElementGeometry
         c[2] = a[0]*b[1] - a[1]*b[0];
     }
 
-    Scalar pyramidVolume (const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2,
-                          const GlobalPosition& p3, const GlobalPosition& p4)
+    Scalar pyramidVolume (const GlobalPosition& p0, const GlobalPosition& p1,
+                          const GlobalPosition& p2, const GlobalPosition& p3,
+                          const GlobalPosition& p4)
     {
-        GlobalPosition a(p2); a -= p0;
-        GlobalPosition b(p3); b -= p1;
-
+        GlobalPosition a = p2 - p0;
+        GlobalPosition b = p3 - p1;
         GlobalPosition n;
         crossProduct(n, a, b);
 
-        a = p4; a -= p0;
+        a = p4 - p0;
 
         return 1.0/6.0*(n*a);
     }
 
-    Scalar prismVolume (const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2,
-                        const GlobalPosition& p3, const GlobalPosition& p4, const GlobalPosition& p5)
+    Scalar prismVolume (const GlobalPosition& p0, const GlobalPosition& p1,
+                        const GlobalPosition& p2, const GlobalPosition& p3,
+                        const GlobalPosition& p4, const GlobalPosition& p5)
     {
-        GlobalPosition a(p4);
-        for (int k = 0; k < dimWorld; ++k)
-            a[k] -= p0[k];
-        GlobalPosition b(p1);
-        for (int k = 0; k < dimWorld; ++k)
-            b[k] -= p3[k];
+        GlobalPosition a = p4 - p0;
+        GlobalPosition b = p1 - p3;
         GlobalPosition m;
         crossProduct(m, a, b);
 
-        a = p1;
-        for (int k = 0; k < dimWorld; ++k)
-            a[k] -= p0[k];
-        b = p2;
-        for (int k = 0; k < dimWorld; ++k)
-            b[k] -= p0[k];
+        a = p1 - p0;
+        b = p2 - p0;
         GlobalPosition n;
         crossProduct(n, a, b);
+
         n += m;
 
-        a = p5;
-        for (int k = 0; k < dimWorld; ++k)
-            a[k] -= p0[k];
+        a = p5 - p0;
 
-        return fabs(1.0/6.0*(n*a));
+        return std::abs(1.0/6.0*(n*a));
     }
 
-    Scalar hexahedronVolume (const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2, const GlobalPosition& p3,
-                             const GlobalPosition& p4, const GlobalPosition& p5, const GlobalPosition& p6, const GlobalPosition& p7)
+    Scalar hexahedronVolume (const GlobalPosition& p0, const GlobalPosition& p1,
+                             const GlobalPosition& p2, const GlobalPosition& p3,
+                             const GlobalPosition& p4, const GlobalPosition& p5,
+                             const GlobalPosition& p6, const GlobalPosition& p7)
     {
         return
             prismVolume(p0,p1,p2,p4,p5,p6)
             + prismVolume(p0,p2,p3,p4,p6,p7);
     }
 
-    void normalOfQuadrilateral3D(GlobalPosition &normal, const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2,
-                                 const GlobalPosition& p3)
+    void normalOfQuadrilateral3D(GlobalPosition &normal,
+                                 const GlobalPosition& p0, const GlobalPosition& p1,
+                                 const GlobalPosition& p2, const GlobalPosition& p3)
     {
-        GlobalPosition a(p2);
-        for (int k = 0; k < dimWorld; ++k)
-            a[k] -= p0[k];
-        GlobalPosition b(p3);
-        for (int k = 0; k < dimWorld; ++k)
-            b[k] -= p1[k];
-
+        GlobalPosition a = p2 - p0;
+        GlobalPosition b = p3 - p1;
         crossProduct(normal, a, b);
         normal *= 0.5;
     }
 
-    Scalar quadrilateralArea3D(const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2, const GlobalPosition& p3)
+    Scalar quadrilateralArea3D(const GlobalPosition& p0, const GlobalPosition& p1,
+                               const GlobalPosition& p2, const GlobalPosition& p3)
     {
         GlobalPosition normal;
         normalOfQuadrilateral3D(normal, p0, p1, p2, p3);
         return normal.two_norm();
     }
 
-    void getFaceIndices(int numVertices, int k, int& leftFace, int& rightFace)
+    void getFaceIndices(int numVertices, int scvfIdx, int& leftFace, int& rightFace)
     {
         static const int edgeToFaceTet[2][6] = {
             {1, 0, 3, 2, 1, 3},
@@ -451,28 +503,30 @@ class BoxFVElementGeometry
 
         switch (numVertices) {
         case 4:
-            leftFace = edgeToFaceTet[0][k];
-            rightFace = edgeToFaceTet[1][k];
+            leftFace = edgeToFaceTet[0][scvfIdx];
+            rightFace = edgeToFaceTet[1][scvfIdx];
             break;
         case 5:
-            leftFace = edgeToFacePyramid[0][k];
-            rightFace = edgeToFacePyramid[1][k];
+            leftFace = edgeToFacePyramid[0][scvfIdx];
+            rightFace = edgeToFacePyramid[1][scvfIdx];
             break;
         case 6:
-            leftFace = edgeToFacePrism[0][k];
-            rightFace = edgeToFacePrism[1][k];
+            leftFace = edgeToFacePrism[0][scvfIdx];
+            rightFace = edgeToFacePrism[1][scvfIdx];
             break;
         case 8:
-            leftFace = edgeToFaceHex[0][k];
-            rightFace = edgeToFaceHex[1][k];
+            leftFace = edgeToFaceHex[0][scvfIdx];
+            rightFace = edgeToFaceHex[1][scvfIdx];
             break;
         default:
-            DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
+            DUNE_THROW(Dune::NotImplemented,
+                       "BoxFVElementGeometry :: getFaceIndices for numVertices = "
+                       << numVertices);
             break;
         }
     }
 
-    void getEdgeIndices(int numVertices, int fIdx, int vIdx, int& leftEdge, int& rightEdge)
+    void getEdgeIndices(int numVertices, int scvfIdx, int vIdx, int& leftEdge, int& rightEdge)
     {
         static const int faceAndVertexToLeftEdgeTet[4][4] = {
             { 0, 0, 2, -1},
@@ -533,31 +587,33 @@ class BoxFVElementGeometry
 
         switch (numVertices) {
         case 4:
-            leftEdge = faceAndVertexToLeftEdgeTet[fIdx][vIdx];
-            rightEdge = faceAndVertexToRightEdgeTet[fIdx][vIdx];
+            leftEdge = faceAndVertexToLeftEdgeTet[scvfIdx][vIdx];
+            rightEdge = faceAndVertexToRightEdgeTet[scvfIdx][vIdx];
             break;
         case 5:
-            leftEdge = faceAndVertexToLeftEdgePyramid[fIdx][vIdx];
-            rightEdge = faceAndVertexToRightEdgePyramid[fIdx][vIdx];
+            leftEdge = faceAndVertexToLeftEdgePyramid[scvfIdx][vIdx];
+            rightEdge = faceAndVertexToRightEdgePyramid[scvfIdx][vIdx];
             break;
         case 6:
-            leftEdge = faceAndVertexToLeftEdgePrism[fIdx][vIdx];
-            rightEdge = faceAndVertexToRightEdgePrism[fIdx][vIdx];
+            leftEdge = faceAndVertexToLeftEdgePrism[scvfIdx][vIdx];
+            rightEdge = faceAndVertexToRightEdgePrism[scvfIdx][vIdx];
             break;
         case 8:
-            leftEdge = faceAndVertexToLeftEdgeHex[fIdx][vIdx];
-            rightEdge = faceAndVertexToRightEdgeHex[fIdx][vIdx];
+            leftEdge = faceAndVertexToLeftEdgeHex[scvfIdx][vIdx];
+            rightEdge = faceAndVertexToRightEdgeHex[scvfIdx][vIdx];
             break;
         default:
-            DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
+            DUNE_THROW(Dune::NotImplemented,
+                       "BoxFVElementGeometry :: getFaceIndices for numVertices = "
+                       << numVertices);
             break;
         }
     }
 
 public:
-    int boundaryFaceIndex(const int fIdx, const int vertInFace) const
+    int boundaryFaceIndex(const int fIdx, const int vIdxInFace) const
     {
-        return (fIdx*maxCOS + vertInFace);
+        return (fIdx*maxCOS + vIdxInFace);
     }
 
     struct SubControlVolume //! FV intersected with element
@@ -630,8 +686,8 @@ public:
 
         // edges:
         GlobalPosition *edgeCoordinates = new GlobalPosition[numScvf];
-        for (int edge = 0; edge < numScvf; edge++) {
-            edgeCoordinates[edge] = geometry.global(referenceElement.position(edge, dim-1));
+        for (int scvfIdx = 0; scvfIdx < numScvf; scvfIdx++) {
+            edgeCoordinates[scvfIdx] = geometry.global(referenceElement.position(scvfIdx, dim-1));
         }
 
         // faces:
@@ -649,13 +705,15 @@ public:
         BoxFVElemGeomHelper::fillSubContVolData(*this, numScv, edgeCoordinates, faceCoordinates);
 
         // fill sub control volume face data:
-        for (int k = 0; k < numScvf; k++) { // begin loop over edges / sub control volume faces
-            int i = referenceElement.subEntity(k, dim-1, 0, dim);
-            int j = referenceElement.subEntity(k, dim-1, 1, dim);
+        for (int scvfIdx = 0; scvfIdx < numScvf; scvfIdx++) { // begin loop over edges / sub control volume faces
+            SubControlVolumeFace& scvFace = subContVolFace[scvfIdx];
+
+            int i = referenceElement.subEntity(scvfIdx, dim-1, 0, dim);
+            int j = referenceElement.subEntity(scvfIdx, dim-1, 1, dim);
             if (numScvf == 4 && (i == 2 || j == 2))
                 std::swap(i, j);
-            subContVolFace[k].i = i;
-            subContVolFace[k].j = j;
+            scvFace.i = i;
+            scvFace.j = j;
 
             // calculate the local integration point and
             // the face normal. note that since dim is a
@@ -665,40 +723,38 @@ public:
             LocalPosition ipLocal;
             if (dim==1) {
                 ipLocal = 0.5;
-                subContVolFace[k].ipLocal = ipLocal;
-                subContVolFace[k].normal = subContVol[j].global - subContVol[i].global;
-                subContVolFace[k].normal /= subContVolFace[k].normal.two_norm();
+                scvFace.ipLocal = ipLocal;
+                scvFace.normal = subContVol[j].global - subContVol[i].global;
+                scvFace.normal /= scvFace.normal.two_norm();
             }
             else if (dim==2) {
-                ipLocal = referenceElement.position(k, dim-1) + elementLocal;
+                ipLocal = referenceElement.position(scvfIdx, dim-1) + elementLocal;
                 ipLocal *= 0.5;
-                subContVolFace[k].ipLocal = ipLocal;
-                GlobalPosition diffVec = elementGlobal - edgeCoordinates[k];
-                subContVolFace[k].normal[0] = diffVec[1];
-                subContVolFace[k].normal[1] = -diffVec[0];
+                scvFace.ipLocal = ipLocal;
+                GlobalPosition diffVec = elementGlobal - edgeCoordinates[scvfIdx];
+                scvFace.normal[0] = diffVec[1];
+                scvFace.normal[1] = -diffVec[0];
 
-                diffVec = subContVol[j].global;
-                for (int m = 0; m < dimWorld; ++m)
-                    diffVec[m] -= subContVol[i].global[m];
+                diffVec = subContVol[j].global - subContVol[i].global;
                 // make sure the normal points to the right direction
-                if (subContVolFace[k].normal * diffVec < 0)
-                    subContVolFace[k].normal *= -1.0;
+                if (scvFace.normal * diffVec < 0)
+                    scvFace.normal *= -1.0;
             }
             else if (dim==3) {
                 int leftFace;
                 int rightFace;
-                getFaceIndices(numScv, k, leftFace, rightFace);
-                ipLocal = referenceElement.position(k, dim-1) + elementLocal
+                getFaceIndices(numScv, scvfIdx, leftFace, rightFace);
+                ipLocal = referenceElement.position(scvfIdx, dim-1) + elementLocal
                     + referenceElement.position(leftFace, 1)
                     + referenceElement.position(rightFace, 1);
                 ipLocal *= 0.25;
-                subContVolFace[k].ipLocal = ipLocal;
-                normalOfQuadrilateral3D(subContVolFace[k].normal,
-                                        edgeCoordinates[k], faceCoordinates[rightFace],
+                scvFace.ipLocal = ipLocal;
+                normalOfQuadrilateral3D(scvFace.normal,
+                                        edgeCoordinates[scvfIdx], faceCoordinates[rightFace],
                                         elementGlobal, faceCoordinates[leftFace]);
             }
 
-            subContVolFace[k].area = subContVolFace[k].normal.two_norm();
+            scvFace.area = scvFace.normal.two_norm();
 
             bool useTwoPointFlux
                 = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseTwoPointFlux);
@@ -710,21 +766,21 @@ public:
                 distVec /= distVec.two_norm2();
 
                 // gradients using a two-point flux approximation
-                subContVolFace[k].numFap = 2;
-                for (unsigned int idx = 0; idx < subContVolFace[k].numFap; idx++)
+                scvFace.numFap = 2;
+                for (unsigned int fapIdx = 0; fapIdx < scvFace.numFap; fapIdx++)
                 {
-                    subContVolFace[k].grad[idx] = distVec;
-                    subContVolFace[k].shapeValue[idx] = 0.5;
+                    scvFace.grad[fapIdx] = distVec;
+                    scvFace.shapeValue[fapIdx] = 0.5;
                 }
-                subContVolFace[k].grad[1] *= -1.0;
+                scvFace.grad[1] *= -1.0;
 
-                subContVolFace[k].fapIndices[0] = subContVolFace[k].i;
-                subContVolFace[k].fapIndices[1] = subContVolFace[k].j;
+                scvFace.fapIndices[0] = scvFace.i;
+                scvFace.fapIndices[1] = scvFace.j;
             }
             else
             {
                 // get the global integration point and the Jacobian inverse
-                subContVolFace[k].ipGlobal = geometry.global(ipLocal);
+                scvFace.ipGlobal = geometry.global(ipLocal);
                 JacobianInverseTransposed jacInvT = 
                     geometry.jacobianInverseTransposed(ipLocal);
 
@@ -733,13 +789,13 @@ public:
                 typedef Dune::FieldVector< Scalar, 1 > ShapeValue;
                 std::vector<ShapeJacobian> localJac;
                 std::vector<ShapeValue>    shapeVal;
-                localFiniteElement.localBasis().evaluateJacobian(subContVolFace[k].ipLocal, localJac);
-                localFiniteElement.localBasis().evaluateFunction(subContVolFace[k].ipLocal, shapeVal);
-                subContVolFace[k].numFap = numScv;
+                localFiniteElement.localBasis().evaluateJacobian(scvFace.ipLocal, localJac);
+                localFiniteElement.localBasis().evaluateFunction(scvFace.ipLocal, shapeVal);
+                scvFace.numFap = numScv;
                 for (int scvIdx = 0; scvIdx < numScv; scvIdx++) {
-                    jacInvT.mv(localJac[scvIdx][0], subContVolFace[k].grad[scvIdx]);
-                    subContVolFace[k].shapeValue[scvIdx] = Scalar(shapeVal[scvIdx]);
-                    subContVolFace[k].fapIndices[scvIdx] = scvIdx;
+                    jacInvT.mv(localJac[scvIdx][0], scvFace.grad[scvIdx]);
+                    scvFace.shapeValue[scvIdx] = Scalar(shapeVal[scvIdx]);
+                    scvFace.fapIndices[scvIdx] = scvIdx;
                 }
             }
         } // end loop over edges / sub control volume faces
@@ -751,61 +807,66 @@ public:
             {
                 int fIdx = isIt->indexInInside();
                 int numVerticesOfFace = referenceElement.size(fIdx, 1, dim);
-                for (int vertInFace = 0; vertInFace < numVerticesOfFace; vertInFace++)
+                for (int vIdxInFace = 0; vIdxInFace < numVerticesOfFace; vIdxInFace++)
                 {
-                    int vertInElement = referenceElement.subEntity(fIdx, 1, vertInFace, dim);
-                    int bfIdx = boundaryFaceIndex(fIdx, vertInFace);
-                    subContVol[vertInElement].inner = false;
+                    int scvIdx = referenceElement.subEntity(fIdx, 1, vIdxInFace, dim);
+                    SubControlVolume& subControlVolume = subContVol[scvIdx];
+
+                    int bfIdx = boundaryFaceIndex(fIdx, vIdxInFace);
+                    SubControlVolumeFace& bFace = boundaryFace[bfIdx];
+
+                    subControlVolume.inner = false;
                     switch ((short) dim) {
                     case 1:
-                        boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim);
-                        boundaryFace[bfIdx].area = 1.0;
+                        bFace.ipLocal = referenceElement.position(scvIdx, dim);
+                        bFace.area = 1.0;
                         break;
                     case 2:
-                        boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
-                            + referenceElement.position(fIdx, 1);
-                        boundaryFace[bfIdx].ipLocal *= 0.5;
-                        boundaryFace[bfIdx].area = 0.5*isIt->geometry().volume();
+                        bFace.ipLocal = referenceElement.position(scvIdx, dim)
+                                      + referenceElement.position(fIdx, 1);
+                        bFace.ipLocal *= 0.5;
+                        bFace.area = 0.5*isIt->geometry().volume();
                         break;
                     case 3:
                         int leftEdge;
                         int rightEdge;
-                        getEdgeIndices(numScv, fIdx, vertInElement, leftEdge, rightEdge);
-                        boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
-                            + referenceElement.position(fIdx, 1)
-                            + referenceElement.position(leftEdge, dim-1)
-                            + referenceElement.position(rightEdge, dim-1);
-                        boundaryFace[bfIdx].ipLocal *= 0.25;
-                        boundaryFace[bfIdx].area = quadrilateralArea3D(subContVol[vertInElement].global,
-                                                                       edgeCoordinates[rightEdge], faceCoordinates[fIdx],
-                                                                       edgeCoordinates[leftEdge]);
+                        getEdgeIndices(numScv, fIdx, scvIdx, leftEdge, rightEdge);
+                        bFace.ipLocal = referenceElement.position(scvIdx, dim)
+                                      + referenceElement.position(fIdx, 1)
+                                      + referenceElement.position(leftEdge, dim-1)
+                                      + referenceElement.position(rightEdge, dim-1);
+                        bFace.ipLocal *= 0.25;
+                        bFace.area = quadrilateralArea3D(subControlVolume.global,
+                                                         edgeCoordinates[rightEdge],
+                                                         faceCoordinates[fIdx],
+                                                         edgeCoordinates[leftEdge]);
                         break;
                     default:
                         DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry for dim = " << dim);
                     }
-                    boundaryFace[bfIdx].ipGlobal = geometry.global(boundaryFace[bfIdx].ipLocal);
-                    boundaryFace[bfIdx].i = vertInElement;
-                    boundaryFace[bfIdx].j = vertInElement;
+                    bFace.ipGlobal = geometry.global(bFace.ipLocal);
+                    bFace.i = scvIdx;
+                    bFace.j = scvIdx;
 
                     // ASSUME constant normal
                     Dune::FieldVector<CoordScalar, dim-1> localDimM1(0);
-                    boundaryFace[bfIdx].normal = isIt->unitOuterNormal(localDimM1);
-                    boundaryFace[bfIdx].normal *= boundaryFace[bfIdx].area;
+                    bFace.normal = isIt->unitOuterNormal(localDimM1);
+                    bFace.normal *= bFace.area;
 
                     typedef Dune::FieldVector< Scalar, 1 > ShapeValue;
                     std::vector<ShapeJacobian> localJac;
                     std::vector<ShapeValue>    shapeVal;
-                    localFiniteElement.localBasis().evaluateJacobian(boundaryFace[bfIdx].ipLocal, localJac);
-                    localFiniteElement.localBasis().evaluateFunction(boundaryFace[bfIdx].ipLocal, shapeVal);
+                    localFiniteElement.localBasis().evaluateJacobian(bFace.ipLocal, localJac);
+                    localFiniteElement.localBasis().evaluateFunction(bFace.ipLocal, shapeVal);
 
                     JacobianInverseTransposed jacInvT = 
-                        geometry.jacobianInverseTransposed(boundaryFace[bfIdx].ipLocal);
-                    boundaryFace[bfIdx].numFap = numScv;
+                        geometry.jacobianInverseTransposed(bFace.ipLocal);
+                    bFace.numFap = numScv;
                     for (int scvIdx = 0; scvIdx < numScv; scvIdx++)
                     {
-                        jacInvT.mv(localJac[scvIdx][0], boundaryFace[bfIdx].grad[scvIdx]);
-                        boundaryFace[bfIdx].shapeValue[scvIdx] = Scalar(shapeVal[scvIdx]);
-                        boundaryFace[bfIdx].fapIndices[scvIdx] = scvIdx;
+                        jacInvT.mv(localJac[scvIdx][0], bFace.grad[scvIdx]);
+                        bFace.shapeValue[scvIdx] = Scalar(shapeVal[scvIdx]);
+                        bFace.fapIndices[scvIdx] = scvIdx;
                     }
                 }
             }
@@ -815,43 +876,45 @@ public:
         {
             // calculate gradients at the center of the scv
             for (int scvIdx = 0; scvIdx < numScv; scvIdx++){
+                SubControlVolume& subControlVolume = subContVol[scvIdx];
+
                 if (dim == 2)
                 {
                     switch (scvIdx)
                     {
                     case 0:
                         if (numScv == 4) {
-                            subContVol[scvIdx].localCenter[0] = 0.25;
-                            subContVol[scvIdx].localCenter[1] = 0.25;
+                            subControlVolume.localCenter[0] = 0.25;
+                            subControlVolume.localCenter[1] = 0.25;
                         }
                         else {
-                            subContVol[scvIdx].localCenter[0] = 1.0/6.0;
-                            subContVol[scvIdx].localCenter[1] = 1.0/6.0;
+                            subControlVolume.localCenter[0] = 1.0/6.0;
+                            subControlVolume.localCenter[1] = 1.0/6.0;
                         }
                         break;
                     case 1:
                         if (numScv == 4) {
-                            subContVol[scvIdx].localCenter[0] = 0.75;
-                            subContVol[scvIdx].localCenter[1] = 0.25;
+                            subControlVolume.localCenter[0] = 0.75;
+                            subControlVolume.localCenter[1] = 0.25;
                         }
                         else {
-                            subContVol[scvIdx].localCenter[0] = 4.0/6.0;
-                            subContVol[scvIdx].localCenter[1] = 1.0/6.0;
+                            subControlVolume.localCenter[0] = 4.0/6.0;
+                            subControlVolume.localCenter[1] = 1.0/6.0;
                         }
                         break;
                     case 2:
                         if (numScv == 4) {
-                            subContVol[scvIdx].localCenter[0] = 0.25;
-                            subContVol[scvIdx].localCenter[1] = 0.75;
+                            subControlVolume.localCenter[0] = 0.25;
+                            subControlVolume.localCenter[1] = 0.75;
                         }
                         else {
-                            subContVol[scvIdx].localCenter[0] = 1.0/6.0;
-                            subContVol[scvIdx].localCenter[1] = 4.0/6.0;
+                            subControlVolume.localCenter[0] = 1.0/6.0;
+                            subControlVolume.localCenter[1] = 4.0/6.0;
                         }
                         break;
                     case 3:
-                        subContVol[scvIdx].localCenter[0] = 0.75;
-                        subContVol[scvIdx].localCenter[1] = 0.75;
+                        subControlVolume.localCenter[0] = 0.75;
+                        subControlVolume.localCenter[1] = 0.75;
                         break;
                     }
                 }
@@ -862,81 +925,81 @@ public:
                     {
                     case 0:
                         if (numScv == 8) {
-                            subContVol[scvIdx].localCenter[0] = 0.25;
-                            subContVol[scvIdx].localCenter[1] = 0.25;
-                            subContVol[scvIdx].localCenter[2] = 0.25;
+                            subControlVolume.localCenter[0] = 0.25;
+                            subControlVolume.localCenter[1] = 0.25;
+                            subControlVolume.localCenter[2] = 0.25;
                         }
                         else if (numScv == 4) {
-                            subContVol[scvIdx].localCenter[0] = 3.0/16.0;
-                            subContVol[scvIdx].localCenter[1] = 3.0/16.0;
-                            subContVol[scvIdx].localCenter[2] = 3.0/16.0;
+                            subControlVolume.localCenter[0] = 3.0/16.0;
+                            subControlVolume.localCenter[1] = 3.0/16.0;
+                            subControlVolume.localCenter[2] = 3.0/16.0;
                         }
                         break;
                     case 1:
                         if (numScv == 8) {
-                            subContVol[scvIdx].localCenter[0] = 0.75;
-                            subContVol[scvIdx].localCenter[1] = 0.25;
-                            subContVol[scvIdx].localCenter[2] = 0.25;
+                            subControlVolume.localCenter[0] = 0.75;
+                            subControlVolume.localCenter[1] = 0.25;
+                            subControlVolume.localCenter[2] = 0.25;
                         }
                         else if (numScv == 4) {
-                            subContVol[scvIdx].localCenter[0] = 7.0/16.0;
-                            subContVol[scvIdx].localCenter[1] = 3.0/16.0;
-                            subContVol[scvIdx].localCenter[2] = 3.0/16.0;
+                            subControlVolume.localCenter[0] = 7.0/16.0;
+                            subControlVolume.localCenter[1] = 3.0/16.0;
+                            subControlVolume.localCenter[2] = 3.0/16.0;
                         }
                         break;
                     case 2:
                         if (numScv == 8) {
-                            subContVol[scvIdx].localCenter[0] = 0.25;
-                            subContVol[scvIdx].localCenter[1] = 0.75;
-                            subContVol[scvIdx].localCenter[2] = 0.25;
+                            subControlVolume.localCenter[0] = 0.25;
+                            subControlVolume.localCenter[1] = 0.75;
+                            subControlVolume.localCenter[2] = 0.25;
                         }
                         else if (numScv == 4) {
-                            subContVol[scvIdx].localCenter[0] = 3.0/16.0;
-                            subContVol[scvIdx].localCenter[1] = 7.0/16.0;
-                            subContVol[scvIdx].localCenter[2] = 3.0/16.0;
+                            subControlVolume.localCenter[0] = 3.0/16.0;
+                            subControlVolume.localCenter[1] = 7.0/16.0;
+                            subControlVolume.localCenter[2] = 3.0/16.0;
                         }
                         break;
                     case 3:
                         if (numScv == 8) {
-                            subContVol[scvIdx].localCenter[0] = 0.75;
-                            subContVol[scvIdx].localCenter[1] = 0.75;
-                            subContVol[scvIdx].localCenter[2] = 0.25;
+                            subControlVolume.localCenter[0] = 0.75;
+                            subControlVolume.localCenter[1] = 0.75;
+                            subControlVolume.localCenter[2] = 0.25;
                         }
                         else if (numScv == 4) {
-                            subContVol[scvIdx].localCenter[0] = 3.0/16.0;
-                            subContVol[scvIdx].localCenter[1] = 3.0/16.0;
-                            subContVol[scvIdx].localCenter[2] = 7.0/16.0;
+                            subControlVolume.localCenter[0] = 3.0/16.0;
+                            subControlVolume.localCenter[1] = 3.0/16.0;
+                            subControlVolume.localCenter[2] = 7.0/16.0;
                         }
                         break;
                     case 4:
-                        subContVol[scvIdx].localCenter[0] = 0.25;
-                        subContVol[scvIdx].localCenter[1] = 0.25;
-                        subContVol[scvIdx].localCenter[2] = 0.75;
+                        subControlVolume.localCenter[0] = 0.25;
+                        subControlVolume.localCenter[1] = 0.25;
+                        subControlVolume.localCenter[2] = 0.75;
                         break;
                     case 5:
-                        subContVol[scvIdx].localCenter[0] = 0.75;
-                        subContVol[scvIdx].localCenter[1] = 0.25;
-                        subContVol[scvIdx].localCenter[2] = 0.75;
+                        subControlVolume.localCenter[0] = 0.75;
+                        subControlVolume.localCenter[1] = 0.25;
+                        subControlVolume.localCenter[2] = 0.75;
                         break;
                     case 6:
-                        subContVol[scvIdx].localCenter[0] = 0.25;
-                        subContVol[scvIdx].localCenter[1] = 0.75;
-                        subContVol[scvIdx].localCenter[2] = 0.75;
+                        subControlVolume.localCenter[0] = 0.25;
+                        subControlVolume.localCenter[1] = 0.75;
+                        subControlVolume.localCenter[2] = 0.75;
                         break;
                     case 7:
-                        subContVol[scvIdx].localCenter[0] = 0.75;
-                        subContVol[scvIdx].localCenter[1] = 0.75;
-                        subContVol[scvIdx].localCenter[2] = 0.75;
+                        subControlVolume.localCenter[0] = 0.75;
+                        subControlVolume.localCenter[1] = 0.75;
+                        subControlVolume.localCenter[2] = 0.75;
                         break;
                     }
                 }
                 std::vector<ShapeJacobian> localJac;
-                localFiniteElement.localBasis().evaluateJacobian(subContVol[scvIdx].localCenter, localJac);
+                localFiniteElement.localBasis().evaluateJacobian(subControlVolume.localCenter, localJac);
 
                 JacobianInverseTransposed jacInvT =
-                    geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
+                    geometry.jacobianInverseTransposed(subControlVolume.localCenter);
                 for (int vIdx = 0; vIdx < numScv; vIdx++)
-                    jacInvT.mv(localJac[vIdx][0], subContVol[scvIdx].gradCenter[vIdx]);
+                    jacInvT.mv(localJac[vIdx][0], subControlVolume.gradCenter[vIdx]);
             }
         }
 

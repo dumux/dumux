@@ -100,7 +100,7 @@ public:
     int numScvf; //!< number of inner-domain subcontrolvolume faces 
     int numNeighbors; //!< number of neighboring elements including the element itself
     std::vector<ElementPointer> neighbors; //!< stores pointers for the neighboring elements
-    
+
     void updateInner(const Element& element)
     {
         const Geometry& geometry = element.geometry();
@@ -124,11 +124,11 @@ public:
         ElementPointer elementPointer(element);
         neighbors.push_back(elementPointer);
     }
-    
+
     void update(const GridView& gridView, const Element& element)
     {
         updateInner(element);
-        
+
         const Geometry& geometry = element.geometry();
 
         bool onBoundary = false;
@@ -143,35 +143,36 @@ public:
                 numNeighbors++;
                 ElementPointer elementPointer(isIt->outside());
                 neighbors.push_back(elementPointer);
-                
-                int k = numNeighbors - 2;
-                
-                subContVolFace[k].i = 0;
-                subContVolFace[k].j = k+1;
-                
-                subContVolFace[k].ipGlobal = isIt->geometry().center();
-                subContVolFace[k].ipLocal =  geometry.local(subContVolFace[k].ipGlobal);
-                subContVolFace[k].normal = isIt->centerUnitOuterNormal();
-                subContVolFace[k].normal *= isIt->geometry().volume();
-                subContVolFace[k].area = isIt->geometry().volume();
 
-                GlobalPosition distVec = elementGlobal;
-                distVec -= neighbors[k+1]->geometry().center();
+                int scvfIdx = numNeighbors - 2;
+                SubControlVolumeFace& scvFace = subContVolFace[scvfIdx];
+
+                scvFace.i = 0;
+                scvFace.j = scvfIdx + 1;
+
+                scvFace.ipGlobal = isIt->geometry().center();
+                scvFace.ipLocal =  geometry.local(scvFace.ipGlobal);
+                scvFace.normal = isIt->centerUnitOuterNormal();
+                scvFace.normal *= isIt->geometry().volume();
+                scvFace.area = isIt->geometry().volume();
+
+                GlobalPosition distVec = elementGlobal
+                                       - neighbors[scvfIdx+1]->geometry().center();
                 distVec /= distVec.two_norm2();
-                
+
                 // gradients using a two-point flux approximation
-                subContVolFace[k].numFap = 2;
-                for (unsigned int idx = 0; idx < subContVolFace[k].numFap; idx++)
+                scvFace.numFap = 2;
+                for (unsigned int fapIdx = 0; fapIdx < scvFace.numFap; fapIdx++)
                 {
-                    subContVolFace[k].grad[idx] = distVec;
-                    subContVolFace[k].shapeValue[idx] = 0.5;
+                    scvFace.grad[fapIdx] = distVec;
+                    scvFace.shapeValue[fapIdx] = 0.5;
                 }
-                subContVolFace[k].grad[1] *= -1.0;
-                
-                subContVolFace[k].fapIndices[0] = subContVolFace[k].i;
-                subContVolFace[k].fapIndices[1] = subContVolFace[k].j;
-                
-                subContVolFace[k].fIdx = isIt->indexInInside();
+                scvFace.grad[1] *= -1.0;
+
+                scvFace.fapIndices[0] = scvFace.i;
+                scvFace.fapIndices[1] = scvFace.j;
+
+                scvFace.fIdx = isIt->indexInInside();
             }
 
             // boundary cvf data
@@ -179,29 +180,30 @@ public:
             {
                 onBoundary = true;
                 int bfIdx = isIt->indexInInside();
-                boundaryFace[bfIdx].ipGlobal = isIt->geometry().center();
-                boundaryFace[bfIdx].ipLocal =  geometry.local(boundaryFace[bfIdx].ipGlobal);
-                boundaryFace[bfIdx].normal = isIt->centerUnitOuterNormal();
-                boundaryFace[bfIdx].normal *= isIt->geometry().volume();
-                boundaryFace[bfIdx].area = isIt->geometry().volume();
-                boundaryFace[bfIdx].i = 0;
-                boundaryFace[bfIdx].j = 0;
+                SubControlVolumeFace& bFace = boundaryFace[bfIdx];
 
-                GlobalPosition distVec = elementGlobal;
-                distVec -= boundaryFace[bfIdx].ipGlobal;
+                bFace.ipGlobal = isIt->geometry().center();
+                bFace.ipLocal =  geometry.local(bFace.ipGlobal);
+                bFace.normal = isIt->centerUnitOuterNormal();
+                bFace.normal *= isIt->geometry().volume();
+                bFace.area = isIt->geometry().volume();
+                bFace.i = 0;
+                bFace.j = 0;
+
+                GlobalPosition distVec = elementGlobal - bFace.ipGlobal;
                 distVec /= distVec.two_norm2();
-                
+
                 // gradients using a two-point flux approximation
-                boundaryFace[bfIdx].numFap = 2;
-                for (unsigned int idx = 0; idx < boundaryFace[bfIdx].numFap; idx++)
+                bFace.numFap = 2;
+                for (unsigned int fapIdx = 0; fapIdx < bFace.numFap; fapIdx++)
                 {
-                    boundaryFace[bfIdx].grad[idx] = distVec;
-                    boundaryFace[bfIdx].shapeValue[idx] = 0.5;
+                    bFace.grad[fapIdx] = distVec;
+                    bFace.shapeValue[fapIdx] = 0.5;
                 }
-                boundaryFace[bfIdx].grad[1] *= -1.0;
-                
-                boundaryFace[bfIdx].fapIndices[0] = boundaryFace[bfIdx].i;
-                boundaryFace[bfIdx].fapIndices[1] = boundaryFace[bfIdx].j;
+                bFace.grad[1] *= -1.0;
+
+                bFace.fapIndices[0] = bFace.i;
+                bFace.fapIndices[1] = bFace.j;
             }
         }
 
@@ -218,8 +220,9 @@ public:
             for (int bfIdx = 0; bfIdx < element.template count<1>(); bfIdx++)
 #endif
             {
-                boundaryFace[bfIdx].j = numNeighbors + bfIdx;
-                boundaryFace[bfIdx].fapIndices[1] = boundaryFace[bfIdx].j;
+                SubControlVolumeFace& bFace = boundaryFace[bfIdx];
+                bFace.j = numNeighbors + bfIdx;
+                bFace.fapIndices[1] = bFace.j;
                 neighbors.push_back(elementPointer);
             }
         }
