@@ -93,6 +93,9 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static const bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+    static_assert(useMoles || (!useMoles && useConstraintSolver),
+                  "if UseMoles is set false, UseConstraintSolver has to be set to true");
     typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -118,47 +121,49 @@ public:
                            fvGeometry,
                            scvIdx,
                            isOldSol);
-
+        
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_, isOldSol);
-
+        
         /////////////
         // calculate the remaining quantities
         /////////////
         const MaterialLawParams &materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-
+        problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            
+            
             // relative permeabilities
             Scalar kr;
             if (phaseIdx == wPhaseIdx)
                 kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
             else // ATTENTION: krn requires the wetting phase saturation
-                 // as parameter!
+                // as parameter!
                 kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
             relativePermeability_[phaseIdx] = kr;
             Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
-
+            
             // binary diffusion coefficients
             diffCoeff_[phaseIdx] =
-                FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                        paramCache,
-                                                        phaseIdx,
-                                                        wCompIdx,
-                                                        nCompIdx);
+            FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                    paramCache,
+                                                    phaseIdx,
+                                                    wCompIdx,
+                                                    nCompIdx);
             Valgrind::CheckDefined(diffCoeff_[phaseIdx]);
         }
-
+        
         // porosity
         porosity_ = problem.spatialParams().porosity(element,
                                                      fvGeometry,
                                                      scvIdx);
         Valgrind::CheckDefined(porosity_);
-
+        
         // energy related quantities not contained in the fluid state
         asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
@@ -178,15 +183,11 @@ public:
         Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
-
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-#else
+        
         int dofIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dofCodim);
-#endif
-
+        
         int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
-
+        
         /////////////
         // set the saturations
         /////////////
@@ -206,16 +207,16 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         fluidState.setSaturation(wPhaseIdx, 1 - sn);
         fluidState.setSaturation(nPhaseIdx, sn);
-
+        
         /////////////
         // set the pressures of the fluid phases
         /////////////
-
+        
         // calculate capillary pressure
         const MaterialLawParams &materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
-
+        
         if (formulation == pwsn) {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
@@ -225,113 +226,264 @@ public:
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
         }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
-
+        
         /////////////
         // calculate the phase compositions
         /////////////
         typename FluidSystem::ParameterCache paramCache;
-
+        
+        //get the phase pressures and set the fugacity coefficients here if constraintsolver is not used
+        Scalar pn = 0;
+        Scalar pw = 0;
+        
+        if(!useConstraintSolver) {
+            if (formulation == pwsn) {
+                pw = priVars[pressureIdx];
+                pn = pw + pc;
+            }
+            else {
+                pn = priVars[pressureIdx];
+                pw = pn - pc;
+            }
+            
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+                assert(FluidSystem::isIdealMixture(phaseIdx));
+                
+                for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
+                    Scalar phi = FluidSystem::fugacityCoefficient(fluidState, paramCache, phaseIdx, compIdx);
+                    fluidState.setFugacityCoefficient(phaseIdx, compIdx, phi);
+                }
+            }
+        }
+        
         // now comes the tricky part: calculate phase compositions
         if (phasePresence == bothPhases) {
             // both phases are present, phase compositions are a
             // result of the the nonwetting <-> wetting equilibrium. This is
             // the job of the "MiscibleMultiPhaseComposition"
             // constraint solver
-            MiscibleMultiPhaseComposition::solve(fluidState,
-                                                 paramCache,
-                                                 /*setViscosity=*/true,
-                                                 /*setInternalEnergy=*/false);
-
+            if(useConstraintSolver) {
+                MiscibleMultiPhaseComposition::solve(fluidState,
+                                                     paramCache,
+                                                     /*setViscosity=*/true,
+                                                     /*setInternalEnergy=*/false);
+            }  
+            // ... or calculated explicitly this way ...
+            else {  
+                //get the partial pressure of the main component of the the wetting phase ("H20") within the nonwetting (gas) phase == vapor pressure due to equilibrium
+                //note that in this case the fugacityCoefficient * pw is the vapor pressure (see implementation in respective fluidsystem)
+                Scalar partPressH2O = FluidSystem::fugacityCoefficient(fluidState, 
+                                                                       wPhaseIdx, 
+                                                                       wCompIdx) * pw;
+                                                                       
+                // get the partial pressure of the main component of the the nonwetting (gas) phase ("Air") 
+                Scalar partPressAir = pn - partPressH2O;
+                
+                //calculate the mole fractions of the components within the nonwetting phase
+                Scalar xnn = partPressAir/pn;
+                Scalar xnw = partPressH2O/pn;
+                
+                // calculate the mole fractions of the components within the wetting phase
+                //note that in this case the fugacityCoefficient * pw is the Henry Coefficient (see implementation in respective fluidsystem)
+                Scalar xwn = partPressAir
+                  / (FluidSystem::fugacityCoefficient(fluidState,
+                                                      wPhaseIdx,nCompIdx) 
+                  * pw);
+                
+                Scalar xww = 1.0 -xwn;
+                
+                //set all mole fractions
+                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, xww);
+                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwn);
+                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
+                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xnn);
+                
+                paramCache.updateComposition(fluidState, wPhaseIdx); 
+                paramCache.updateComposition(fluidState, nPhaseIdx);
+                
+                //set the phase densities
+                Scalar rhoW = FluidSystem::density(fluidState, paramCache, wPhaseIdx);
+                Scalar rhoN = FluidSystem::density(fluidState, paramCache, nPhaseIdx);
+                
+                fluidState.setDensity(wPhaseIdx, rhoW);
+                fluidState.setDensity(nPhaseIdx, rhoN);     
+            }  
         }
         else if (phasePresence == nPhaseOnly) {
             // only the nonwetting phase is present, i.e. nonwetting phase
             // composition is stored explicitly.
-
-
-        	if(!useMoles) //mass-fraction formulation
-        	{
-				// extract _mass_ fractions in the nonwetting phase
-				Scalar massFractionN[numComponents];
-				massFractionN[wCompIdx] = priVars[switchIdx];
-				massFractionN[nCompIdx] = 1 - massFractionN[wCompIdx];
-
-				// calculate average molar mass of the nonwetting phase
-				Scalar M1 = FluidSystem::molarMass(wCompIdx);
-				Scalar M2 = FluidSystem::molarMass(nCompIdx);
-				Scalar X2 = massFractionN[nCompIdx];
-				Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
-
-				// convert mass to mole fractions and set the fluid state
-				fluidState.setMoleFraction(nPhaseIdx, wCompIdx, massFractionN[wCompIdx]*avgMolarMass/M1);
-				fluidState.setMoleFraction(nPhaseIdx, nCompIdx, massFractionN[nCompIdx]*avgMolarMass/M2);
-        	}
-        	else //mole-fraction formulation
-        	{
+            
+            if(!useMoles) //mass-fraction formulation
+            {
+                // extract _mass_ fractions in the nonwetting phase
+                Scalar massFractionN[numComponents];
+                massFractionN[wCompIdx] = priVars[switchIdx];
+                massFractionN[nCompIdx] = 1 - massFractionN[wCompIdx];
+                
+                // calculate average molar mass of the nonwetting phase
+                Scalar M1 = FluidSystem::molarMass(wCompIdx);
+                Scalar M2 = FluidSystem::molarMass(nCompIdx);
+                Scalar X2 = massFractionN[nCompIdx];
+                Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
+                
+                // convert mass to mole fractions and set the fluid state
+                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, massFractionN[wCompIdx]*avgMolarMass/M1);
+                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, massFractionN[nCompIdx]*avgMolarMass/M2);
+            }
+            else //mole-fraction formulation
+            {
                 Scalar moleFractionN[numComponents];
                 moleFractionN[wCompIdx] = priVars[switchIdx];
                 moleFractionN[nCompIdx] = 1 - moleFractionN[wCompIdx];
-
+                
                 // set the fluid state
                 fluidState.setMoleFraction(nPhaseIdx, wCompIdx, moleFractionN[wCompIdx]);
                 fluidState.setMoleFraction(nPhaseIdx, nCompIdx, moleFractionN[nCompIdx]);
-        	}
+            }
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). This is the job
             // of the "ComputeFromReferencePhase" constraint solver
-            ComputeFromReferencePhase::solve(fluidState,
-                                             paramCache,
-                                             nPhaseIdx,
-                                             /*setViscosity=*/true,
-                                             /*setInternalEnergy=*/false);
+            if (useConstraintSolver) {
+                ComputeFromReferencePhase::solve(fluidState,
+                                                 paramCache,
+                                                 nPhaseIdx,
+                                                 /*setViscosity=*/true,
+                                                 /*setInternalEnergy=*/false);
+            }
+            // ... or calculated explicitly this way ...
+            else {    
+                // note that the water phase is actually not existing!
+                // thus, this is used as phase switch criterion
+                Scalar xnw = priVars[switchIdx];
+                Scalar xnn = 1.0 -xnw;
+                
+                //first, xww: 
+                // xnw * pn = "actual" (hypothetical) vapor pressure 
+                // fugacityCoefficient * pw = vapor pressure given by thermodynamic conditions
+                // Here, xww is not actually the mole fraction of water in the wetting phase
+                // xww is only the ratio of "actual" vapor pressure / "thermodynamic" vapor pressure  
+                // If xww > 1 : gas is over-saturated with water vapor, 
+                // condensation takes place (see switch criterion in model) 
+                Scalar xww = xnw * pn 
+                  / (FluidSystem::fugacityCoefficient(fluidState,
+                                                      wPhaseIdx,wCompIdx)
+                     * pw);
+                
+                // now, xwn: 	     
+                //partialPressure / xwn = Henry
+                //partialPressure = xnn * pn	
+                //xwn = xnn * pn / Henry
+                // Henry = fugacityCoefficient * pw
+                Scalar xwn = xnn * pn / (FluidSystem::fugacityCoefficient(fluidState,
+                                                                          wPhaseIdx,nCompIdx)
+                                         * pw); 
+                
+                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, xww);
+                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwn);
+                
+                paramCache.updateComposition(fluidState, wPhaseIdx); 
+                paramCache.updateComposition(fluidState, nPhaseIdx);
+                
+                Scalar rhoW = FluidSystem::density(fluidState, paramCache, wPhaseIdx);
+                Scalar rhoN = FluidSystem::density(fluidState, paramCache, nPhaseIdx);
+                
+                fluidState.setDensity(wPhaseIdx, rhoW);
+                fluidState.setDensity(nPhaseIdx, rhoN);
+            } 
         }
         else if (phasePresence == wPhaseOnly) {
             // only the wetting phase is present, i.e. wetting phase
             // composition is stored explicitly.
-
-
-        	if(!useMoles) //mass-fraction formulation
-        	{
-				// extract _mass_ fractions in the nonwetting phase
-				Scalar massFractionW[numComponents];
-				massFractionW[nCompIdx] = priVars[switchIdx];
-				massFractionW[wCompIdx] = 1 - massFractionW[nCompIdx];
-
-				// calculate average molar mass of the nonwetting phase
-				Scalar M1 = FluidSystem::molarMass(wCompIdx);
-				Scalar M2 = FluidSystem::molarMass(nCompIdx);
-				Scalar X2 = massFractionW[nCompIdx];
-				Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
-
-				// convert mass to mole fractions and set the fluid state
-				fluidState.setMoleFraction(wPhaseIdx, wCompIdx, massFractionW[wCompIdx]*avgMolarMass/M1);
-				fluidState.setMoleFraction(wPhaseIdx, nCompIdx, massFractionW[nCompIdx]*avgMolarMass/M2);
-        	}
-        	else //mole-fraction formulation
-        	{
+            if(!useMoles) //mass-fraction formulation
+            {
+                // extract _mass_ fractions in the nonwetting phase
+                Scalar massFractionW[numComponents];
+                massFractionW[nCompIdx] = priVars[switchIdx];
+                massFractionW[wCompIdx] = 1 - massFractionW[nCompIdx];
+                
+                // calculate average molar mass of the nonwetting phase
+                Scalar M1 = FluidSystem::molarMass(wCompIdx);
+                Scalar M2 = FluidSystem::molarMass(nCompIdx);
+                Scalar X2 = massFractionW[nCompIdx];
+                Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
+                
+                // convert mass to mole fractions and set the fluid state
+                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, massFractionW[wCompIdx]*avgMolarMass/M1);
+                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, massFractionW[nCompIdx]*avgMolarMass/M2);
+            }
+            else //mole-fraction formulation
+            {
                 Scalar moleFractionW[numComponents];
                 moleFractionW[nCompIdx] = priVars[switchIdx];
                 moleFractionW[wCompIdx] = 1 - moleFractionW[nCompIdx];
-
+                
                 // set the fluid state
                 fluidState.setMoleFraction(wPhaseIdx, wCompIdx, moleFractionW[wCompIdx]);
                 fluidState.setMoleFraction(wPhaseIdx, nCompIdx, moleFractionW[nCompIdx]);
-        	}
+            }
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). This is the job
             // of the "ComputeFromReferencePhase" constraint solver
-            ComputeFromReferencePhase::solve(fluidState,
-                                             paramCache,
-                                             wPhaseIdx,
-                                             /*setViscosity=*/true,
-                                             /*setInternalEnergy=*/false);
+            if (useConstraintSolver) {
+                ComputeFromReferencePhase::solve(fluidState,
+                                                 paramCache,
+                                                 wPhaseIdx,
+                                                 /*setViscosity=*/true,
+                                                 /*setInternalEnergy=*/false);
+            }
+            // ... or calculated explicitly this way ...
+            else {    
+                // note that the gas phase is actually not existing!
+                // thus, this is used as phase switch criterion
+                Scalar xwn = priVars[switchIdx]; 
+                Scalar xww = 1 - xwn;
+                
+                //first, xnw:
+                //psteam = xnw * pn = partial pressure of water in gas phase
+                //psteam = fugacityCoefficient * pw
+                Scalar xnw = (FluidSystem::fugacityCoefficient(fluidState,
+                                                               wPhaseIdx,wCompIdx)
+                              * pw) / pn ;
+                
+                //now, xnn: 	     
+                // xwn = partialPressure / Henry
+                // partialPressure = pn * xnn
+                // xwn = pn * xnn / Henry
+                // xnn = xwn * Henry / pn
+                // Henry = fugacityCoefficient * pw
+                Scalar xnn = xwn * (FluidSystem::fugacityCoefficient(fluidState,
+                                                                     wPhaseIdx,nCompIdx)
+                                    * pw) / pn ;
+                
+                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xnn);
+                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
+                
+                paramCache.updateComposition(fluidState, wPhaseIdx); 
+                paramCache.updateComposition(fluidState, nPhaseIdx);
+                
+                Scalar rhoW = FluidSystem::density(fluidState, paramCache, wPhaseIdx);
+                Scalar rhoN = FluidSystem::density(fluidState, paramCache, nPhaseIdx);
+                
+                fluidState.setDensity(wPhaseIdx, rhoW);
+                fluidState.setDensity(nPhaseIdx, rhoN);
+            }
         }
-
+        
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            //set the viscosity here if constraintsolver is not used
+            if(!useConstraintSolver) {
+                const Scalar mu =
+                FluidSystem::viscosity(fluidState,
+                                       paramCache,
+                                       phaseIdx);
+                fluidState.setViscosity(phaseIdx,mu);
+            }	  
             // compute and set the enthalpy
             Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }
-    }
+   }
+    
 
     /*!
      * \brief Returns the phase state within the control volume.
