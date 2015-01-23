@@ -123,13 +123,6 @@ SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, LinearSolver, SuperLUBackend<TypeTag>);
 template <class TypeTag = TTAG(TwoCStokesTwoPTwoCProblem) >
 class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
 {
-    template<int dim>
-    struct VertexLayout
-    {
-        bool contains(Dune::GeometryType geomtype)
-        { return geomtype.dim() == 0; }
-    };
-
     typedef TwoCStokesTwoPTwoCProblem<TypeTag> ThisType;
     typedef MultiDomainProblem<TypeTag> ParentType;
 

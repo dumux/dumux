@@ -134,30 +134,16 @@ SET_PROP(DecoupledModel, SolutionTypes)
         maxIntersections = GET_PROP_VALUE(TypeTag, MaxIntersections)
     };
 
-    template<int dim>
-    struct VertexLayout
-    {
-        bool contains (Dune::GeometryType gt) const
-        {   return gt.dim() == 0;}
-    };
-
-    template<int dim>
-    struct ElementLayout
-    {
-        bool contains (Dune::GeometryType gt) const
-        {   return gt.dim() == dim;}
-    };
-
 public:
     /*!
      * \brief Mapper for the grid view's vertices.
      */
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, VertexLayout> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
 
     /*!
      * \brief Mapper for the grid view's elements.
      */
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
 
     /*!
      * \brief The type of a solution at a fixed time.

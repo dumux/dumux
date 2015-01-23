@@ -814,16 +814,8 @@ public:
             saturationIdx = 1
     };
 
-    template<int dim>
-    struct VertexLayout
-    {
-        bool contains(Dune::GeometryType geomType) const
-        {
-           return geomType.dim() == 0;
-        }
-    };
     typedef typename Dune::MultipleCodimMultipleGeomTypeMapper<GridView,
-                        VertexLayout> VertexMapper;
+                        Dune::MCMGVertexLayout> VertexMapper;
 
     typedef typename GridView::template Codim<GridView::dimension>::Iterator
                         VertexIterator;
