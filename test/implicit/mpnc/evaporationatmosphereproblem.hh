@@ -645,7 +645,7 @@ private:
         }
         else
             DUNE_THROW(Dune::InvalidStateException,
-                       "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+                       "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
 
         for (int i = 0; i < numPhases - 1; ++i)
             priVars[S0Idx + i] = S[i];
@@ -682,7 +682,7 @@ private:
             p[wPhaseIdx] = pnInitial_  ;
         }
         else
-            DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+            DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
         
         if(pressureFormulation == mostWettingFirst){
             // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
@@ -729,7 +729,7 @@ private:
                         priVars[conti00EqIdx + offset] = dryFluidState.moleFraction(phaseIdx,compIdx) ;
                     }
                     else
-                        DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+                        DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
                 }
             }
         }
@@ -772,13 +772,13 @@ private:
      * \brief Give back whether the tested position (input) is a specific region (down, (gravityDir)) in the domain
      */
     bool onLowerBoundary_(const GlobalPosition & globalPos) const
-    {        return globalPos[dim-1] < this->bBoxMin()[dim-1] + eps_;    }
+    {        return globalPos[dimWorld-1] < this->bBoxMin()[dimWorld-1] + eps_;    }
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (up, (gravityDir)) in the domain
      */
     bool onUpperBoundary_(const GlobalPosition & globalPos) const
-    {        return globalPos[dim-1] > this->bBoxMax()[dim-1] - eps_;    }
+    {        return globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_;    }
 
 private:
     Scalar eps_;

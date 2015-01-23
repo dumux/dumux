@@ -81,9 +81,8 @@ class OnePTwoCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum {
-        dim = GridView::dimension
-    };
+    enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -106,7 +105,7 @@ public:
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
 
         // create the required scalar fields
         unsigned numDofs = this->numDofs();
@@ -118,7 +117,7 @@ public:
         ScalarField &massFraction1 = *writer.allocateManagedBuffer(numDofs);
         ScalarField &rho = *writer.allocateManagedBuffer(numDofs);
         ScalarField &mu = *writer.allocateManagedBuffer(numDofs);
-        VectorField *velocity = writer.template allocateManagedBuffer<double, dim>(numDofs);
+        VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
         if (velocityOutput.enableOutput())

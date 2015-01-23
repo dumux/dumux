@@ -210,7 +210,7 @@ public:
                     int vIdxGlobal = problem_.vertexMapper().map(element, scvIdx, dofCodim);
 #endif
                     // calculate the subcontrolvolume velocity by the Piola transformation
-                    Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
+                    Dune::FieldVector<CoordScalar, dimWorld> scvVelocity(0);
 
                     jacobianT2.mtv(scvVelocities[scvIdx], scvVelocity);
                     scvVelocity /= element.geometry().integrationElement(localPos)*cellNum_[vIdxGlobal];

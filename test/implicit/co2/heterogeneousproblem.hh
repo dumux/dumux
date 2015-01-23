@@ -483,7 +483,7 @@ private:
         Scalar temp = temperature_(globalPos);
         Scalar densityW = FluidSystem::Brine::liquidDensity(temp, 1e7);
 
-        Scalar pl =  1e5 - densityW*this->gravity()[dim-1]*(depthBOR_ - globalPos[dim-1]);
+        Scalar pl =  1e5 - densityW*this->gravity()[dimWorld-1]*(depthBOR_ - globalPos[dimWorld-1]);
         Scalar moleFracLiquidCO2 = 0.00;
         Scalar moleFracLiquidBrine = 1.0 - moleFracLiquidCO2;
 
@@ -504,7 +504,7 @@ private:
 
     Scalar temperature_(const GlobalPosition globalPos) const
     {
-        Scalar T = 283.0 + (depthBOR_ - globalPos[dim-1])*0.03; 
+        Scalar T = 283.0 + (depthBOR_ - globalPos[dimWorld-1])*0.03; 
         return T;
     }
 

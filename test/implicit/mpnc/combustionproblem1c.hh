@@ -240,7 +240,7 @@ class CombustionProblemOneComponent: public ImplicitPorousMediaProblem<TypeTag> 
 
 	typedef std::vector<Dune::FieldVector<Scalar, 1> > ScalarBuffer;
 	typedef std::array<ScalarBuffer, numPhases> PhaseBuffer;
-	typedef Dune::FieldVector<Scalar, dim> VelocityVector;
+	typedef Dune::FieldVector<Scalar, dimWorld> VelocityVector;
 	typedef Dune::BlockVector<VelocityVector> VelocityField;
 	typedef std::array<VelocityField, numPhases> PhaseVelocityField;
 
@@ -745,13 +745,13 @@ private:
 	 * \brief Give back whether the tested position (input) is a specific region (down, (gravityDir)) in the domain
 	 */
 	bool onLowerBoundary_(const GlobalPosition & globalPos) const
-	{	return globalPos[dim-1] < this->bBoxMin()[dim-1] + eps_;}
+	{	return globalPos[dimWorld-1] < this->bBoxMin()[dimWorld-1] + eps_;}
 
 	/*!
 	 * \brief Give back whether the tested position (input) is a specific region (up, (gravityDir)) in the domain
 	 */
 	bool onUpperBoundary_(const GlobalPosition & globalPos) const
-	{	return globalPos[dim-1] > this->bBoxMax()[dim-1] - eps_;}
+	{	return globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_;}
 
 private:
 	Scalar eps_;

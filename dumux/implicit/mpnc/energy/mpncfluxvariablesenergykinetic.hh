@@ -138,12 +138,13 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquatio
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum {dim = GridView::dimension};
+    enum {dimWorld = GridView::dimensionworld};
     enum {numEnergyEqs          = Indices::numPrimaryEnergyVars};
     enum {wPhaseIdx             = FluidSystem::wPhaseIdx};
     enum {nPhaseIdx             = FluidSystem::nPhaseIdx};
 
 
-    typedef Dune::FieldVector<CoordScalar, dim>  GlobalPosition;
+    typedef Dune::FieldVector<CoordScalar, dimWorld>  GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;

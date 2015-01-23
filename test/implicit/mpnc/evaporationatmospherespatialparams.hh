@@ -335,7 +335,7 @@ public:
         else if (inPM_(globalPos))
             return intrinsicPermeabilityPM_ ;
         else
-            DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+            DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*! \brief Return the porosity \f$[-]\f$ of the soil
@@ -358,7 +358,7 @@ public:
         else if (inPM_(globalPos))
             return porosityPM_ ;
         else
-            DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+            DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*!
@@ -389,7 +389,7 @@ public:
             return materialParamsFF_ ;
         else if (inPM_(globalPos))
             return materialParamsPM_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*!\brief Return a reference to the container object for the
@@ -409,7 +409,7 @@ public:
             return aWettingNonWettingSurfaceParamsFreeFlow_  ;
         else if (inPM_(globalPos))
             return aWettingNonWettingSurfaceParams_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
      }
 
     /*!\brief Return a reference to the container object for the
@@ -429,7 +429,7 @@ public:
             return aNonWettingSolidSurfaceParamsFreeFlow_  ;
         else if (inPM_(globalPos))
             return aNonWettingSolidSurfaceParams_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
      }
 
     /*!\brief Return the maximum capillary pressure for the given pc-Sw curve
@@ -469,7 +469,7 @@ public:
             return characteristicLengthFF_ ;
         else if (inPM_(globalPos))
             return characteristicLengthPM_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*!\brief Return the pre factor the the energy transfer
@@ -492,7 +492,7 @@ public:
             return factorEnergyTransfer_ ;
         else if (inPM_(globalPos))
             return factorEnergyTransfer_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*!\brief Return the pre factor for the mass transfer
@@ -515,7 +515,7 @@ public:
             return factorMassTransfer_ ;
         else if (inPM_(globalPos))
             return factorMassTransfer_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dim-1]);
+        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
 
@@ -558,7 +558,7 @@ public:
      * -> be careful with neumannAtPos
      */
     const bool inPM_(const GlobalPosition & globalPos) const
-    {       return ( (globalPos[dim-1] > 0. - 1e-6) and (globalPos[dim-1] < (heightPM_ + 1e-6 ) ) );   }
+    {       return ( (globalPos[dimWorld-1] > 0. - 1e-6) and (globalPos[dimWorld-1] < (heightPM_ + 1e-6 ) ) );   }
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (above PM / "free flow") in the domain
@@ -572,7 +572,7 @@ public:
      * -> be careful with neumannAtPos
      */
     const bool inFF_(const GlobalPosition & globalPos) const
-    {       return ( (globalPos[dim-1] < heightDomain_ + 1e-6) and (globalPos[dim-1] > (heightPM_ + 1e-6) ) );   }
+    {       return ( (globalPos[dimWorld-1] < heightDomain_ + 1e-6) and (globalPos[dimWorld-1] > (heightPM_ + 1e-6) ) );   }
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (above PM / "free flow") in the domain
@@ -586,7 +586,7 @@ public:
      * -> be careful with neumannAtPos
      */
     const bool inInjection_(const GlobalPosition & globalPos) const
-    {       return ( (globalPos[dim-1] < heightDomain_ - 0.25*heightDomain_  + 1e-6) and (globalPos[dim-1] > (heightPM_ + 1e-6) ) );   }
+    {       return ( (globalPos[dimWorld-1] < heightDomain_ - 0.25*heightDomain_  + 1e-6) and (globalPos[dimWorld-1] > (heightPM_ + 1e-6) ) );   }
 
     /*! \brief access function for the depth / height of the porous medium */
     const Scalar heightPM() const

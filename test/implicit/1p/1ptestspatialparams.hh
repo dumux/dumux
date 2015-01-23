@@ -61,15 +61,15 @@ public:
         try
         {
             lensLowerLeft_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftX);
-            if (dim > 1)
+            if (dimWorld > 1)
                 lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftY);
-            if (dim > 2)
+            if (dimWorld > 2)
                 lensLowerLeft_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftZ);
 
             lensUpperRight_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightX);
-            if (dim > 1)
+            if (dimWorld > 1)
                 lensUpperRight_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightY);
-            if (dim > 2)
+            if (dimWorld > 2)
                 lensUpperRight_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightZ);
 
             permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
@@ -119,7 +119,7 @@ public:
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
-        for (int i = 0; i < dim; ++i) {
+        for (int i = 0; i < dimWorld; ++i) {
             if (globalPos[i] < lensLowerLeft_[i] || globalPos[i] > lensUpperRight_[i])
                 return false;
         }

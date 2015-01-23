@@ -87,6 +87,19 @@ NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
 SET_TYPE_PROP(OnePTestBoxProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
 SET_TYPE_PROP(OnePTestCCProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag> );
 
+// if AlbertaGrid is available, test for dim < dimWorld
+#if HAVE_ALBERTA
+NEW_TYPE_TAG(OnePOneDThreeDTestProblem, INHERITS_FROM(OnePTestProblem));
+NEW_TYPE_TAG(OnePOneDThreeDTestBoxProblem, INHERITS_FROM(BoxModel, OnePOneDThreeDTestProblem));
+NEW_TYPE_TAG(OnePOneDThreeDTestCCProblem, INHERITS_FROM(CCModel, OnePOneDThreeDTestProblem));
+SET_TYPE_PROP(OnePOneDThreeDTestProblem, Grid, Dune::AlbertaGrid<1, 3>);
+
+NEW_TYPE_TAG(OnePTwoDThreeDTestProblem, INHERITS_FROM(OnePTestProblem));
+NEW_TYPE_TAG(OnePTwoDThreeDTestBoxProblem, INHERITS_FROM(BoxModel, OnePTwoDThreeDTestProblem));
+NEW_TYPE_TAG(OnePTwoDThreeDTestCCProblem, INHERITS_FROM(CCModel, OnePTwoDThreeDTestProblem));
+SET_TYPE_PROP(OnePTwoDThreeDTestProblem, Grid, Dune::AlbertaGrid<2, 3>);
+#endif
+
 // Enable gravity
 SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
 }
@@ -206,7 +219,7 @@ public:
             const GlobalPosition &globalPos) const
     {
         double eps = 1.0e-3;
-        if (globalPos[dim-1] < eps || globalPos[dim-1] > this->bBoxMax()[dim-1] - eps)
+        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -224,7 +237,7 @@ public:
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &globalPos) const
     {
-        values[pressureIdx] = 1.0e+5*(2.0 - globalPos[dim-1]);
+        values[pressureIdx] = 1.0e+5*(2.0 - globalPos[dimWorld-1]);
     }
 
     /*!

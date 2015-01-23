@@ -58,6 +58,7 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
     enum { velocityAveragingInModel = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel) };
@@ -76,9 +77,9 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     typedef typename ParentType::ComponentVector ComponentVector;
     typedef Dune::array<ScalarVector, numEnergyEqs> EnergyEqVector;
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
-    typedef Dune::BlockVector<DimVector> DimField;
-    typedef Dune::array<DimField, numPhases> PhaseDimField;
+    typedef Dune::FieldVector<Scalar, dimWorld> DimWorldVector;
+    typedef Dune::BlockVector<DimWorldVector> DimWorldField;
+    typedef Dune::array<DimWorldField, numPhases> PhaseDimWorldField;
 
 
 public:
@@ -266,7 +267,7 @@ private:
     PhaseVector prandtlNumber_ ;
     PhaseVector nusseltNumber_ ;
 
-    PhaseDimField  velocity_;
+    PhaseDimWorldField  velocity_;
 
     ScalarVector awn_;
     ScalarVector aws_;
@@ -300,6 +301,7 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { wPhaseIdx        = FluidSystem::wPhaseIdx};
 
@@ -320,9 +322,9 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     typedef typename ParentType::ComponentVector ComponentVector;
     typedef Dune::array<ScalarVector, numEnergyEqs> EnergyEqVector;
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
-    typedef Dune::BlockVector<DimVector> DimField;
-    typedef Dune::array<DimField, numPhases> PhaseDimField;
+    typedef Dune::FieldVector<Scalar, dimWorld> DimWorldVector;
+    typedef Dune::BlockVector<DimWorldVector> DimWorldField;
+    typedef Dune::array<DimWorldField, numPhases> PhaseDimWorldField;
 
 
 public:
@@ -508,7 +510,7 @@ private:
     PhaseVector nusseltNumber_ ;
     ScalarVector qBoil_ ;
     ScalarVector qsf_ ;
-    PhaseDimField  velocity_;
+    PhaseDimWorldField  velocity_;
 };
 
 

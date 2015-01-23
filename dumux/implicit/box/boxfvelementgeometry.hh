@@ -92,10 +92,18 @@ public:
             eg.subContVol[2].volume = eg.elementVolume/3;
             break;
         case 4: // 2D, quadrilinear
-            eg.subContVol[0].volume = eg.quadrilateralArea(eg.subContVol[0].global, edgeCoord[2], eg.elementGlobal, edgeCoord[0]);
-            eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, edgeCoord[1], eg.elementGlobal, edgeCoord[2]);
-            eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, edgeCoord[0], eg.elementGlobal, edgeCoord[3]);
-            eg.subContVol[3].volume = eg.quadrilateralArea(eg.subContVol[3].global, edgeCoord[3], eg.elementGlobal, edgeCoord[1]);
+            if (GlobalPosition::dimension == dim) {
+                eg.subContVol[0].volume = eg.quadrilateralArea(eg.subContVol[0].global, edgeCoord[2], eg.elementGlobal, edgeCoord[0]);
+                eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, edgeCoord[1], eg.elementGlobal, edgeCoord[2]);
+                eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, edgeCoord[0], eg.elementGlobal, edgeCoord[3]);
+                eg.subContVol[3].volume = eg.quadrilateralArea(eg.subContVol[3].global, edgeCoord[3], eg.elementGlobal, edgeCoord[1]);
+            }
+            else {
+                eg.subContVol[0].volume = eg.quadrilateralArea3D(eg.subContVol[0].global, edgeCoord[2], eg.elementGlobal, edgeCoord[0]);
+                eg.subContVol[1].volume = eg.quadrilateralArea3D(eg.subContVol[1].global, edgeCoord[1], eg.elementGlobal, edgeCoord[2]);
+                eg.subContVol[2].volume = eg.quadrilateralArea3D(eg.subContVol[2].global, edgeCoord[0], eg.elementGlobal, edgeCoord[3]);
+                eg.subContVol[3].volume = eg.quadrilateralArea3D(eg.subContVol[3].global, edgeCoord[3], eg.elementGlobal, edgeCoord[1]);
+            }
             break;
         default:
             DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim << ", numVertices = " << numVertices);
@@ -655,17 +663,17 @@ public:
             // the compiler can optimize away all if
             // cases which don't apply.
             LocalPosition ipLocal;
-            GlobalPosition diffVec;
             if (dim==1) {
-                subContVolFace[k].ipLocal = 0.5;
-                subContVolFace[k].normal = 1.0;
-                ipLocal = subContVolFace[k].ipLocal;
+                ipLocal = 0.5;
+                subContVolFace[k].ipLocal = ipLocal;
+                subContVolFace[k].normal = subContVol[j].global - subContVol[i].global;
+                subContVolFace[k].normal /= subContVolFace[k].normal.two_norm();
             }
             else if (dim==2) {
                 ipLocal = referenceElement.position(k, dim-1) + elementLocal;
                 ipLocal *= 0.5;
                 subContVolFace[k].ipLocal = ipLocal;
-                diffVec = elementGlobal - edgeCoordinates[k];
+                GlobalPosition diffVec = elementGlobal - edgeCoordinates[k];
                 subContVolFace[k].normal[0] = diffVec[1];
                 subContVolFace[k].normal[1] = -diffVec[0];
 

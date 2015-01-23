@@ -193,7 +193,7 @@ public:
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
-        for (int i = 0; i < dim; ++i) {
+        for (int i = 0; i < dimWorld; ++i) {
             if (globalPos[i] < lensLowerLeft_[i] || globalPos[i] > lensUpperRight_[i])
                 return false;
         }

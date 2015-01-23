@@ -103,7 +103,7 @@ public:
         VertexIterator vIt = gridView.template begin<dim>();
         const VertexIterator vEndIt = gridView.template end<dim>();
         for (; vIt!=vEndIt; ++vIt) {
-            for (int i=0; i<dim; i++) {
+            for (int i=0; i<dimWorld; i++) {
                 bBoxMin_[i] = std::min(bBoxMin_[i], vIt->geometry().corner(0)[i]);
                 bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().corner(0)[i]);
             }
@@ -111,7 +111,7 @@ public:
 
         // communicate to get the bounding box of the whole domain
         if (gridView.comm().size() > 1)
-            for (int i = 0; i < dim; ++i) {
+            for (int i = 0; i < dimWorld; ++i) {
                 bBoxMin_[i] = gridView.comm().min(bBoxMin_[i]);
                 bBoxMax_[i] = gridView.comm().max(bBoxMax_[i]);
             }

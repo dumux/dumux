@@ -1,0 +1,26 @@
+DGF
+Vertex
+0 0 0
+0.5 0 0
+1 0 0
+0 0.5 0.5
+0.5 0.5 0.5
+1 0.5 0.5
+0 1 1
+0.5 1 1
+1 1 1
+#
+Simplex
+0 1 4
+0 4 3
+1 2 4
+2 5 4
+3 4 6
+4 7 6
+4 5 8
+4 8 7
+#
+Boundarydomain
+default 1    % all boundaries have id 1
+#
+# unitcube.dgf

@@ -56,13 +56,14 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
     typedef typename ParentType::PhaseComponentMatrix PhaseComponentMatrix;
 
     enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
-    typedef Dune::BlockVector<DimVector> DimField;
-    typedef Dune::array<DimField, numPhases> PhaseDimField;
+    typedef Dune::FieldVector<Scalar, dimWorld> DimWorldVector;
+    typedef Dune::BlockVector<DimWorldVector> DimWorldField;
+    typedef Dune::array<DimWorldField, numPhases> PhaseDimWorldField;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
@@ -239,7 +240,7 @@ private:
     PhaseVector mobility_;
     PhaseVector averageMolarMass_;
 
-    PhaseDimField velocity_;
+    PhaseDimWorldField velocity_;
 
     ScalarVector porosity_;
     ScalarVector permeability_;
