@@ -85,28 +85,6 @@ namespace Properties
     int PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::foo =   \
     PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::init();
 
-#define PROP_INFO_DEPRECATED_(DeprecationMsg, EffTypeTagName, PropKind, PropTagName, ...) \
-    template <>                                                         \
-    struct PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>       \
-    {                                                                   \
-    static int init() {                                                 \
-        PropertyRegistryKey key(                                        \
-            /*effTypeTagName=*/ Dune::className<TTAG(EffTypeTagName)>(), \
-            /*kind=*/PropKind,                                          \
-            /*name=*/#PropTagName,                                      \
-            /*value=*/#__VA_ARGS__,                                     \
-            /*file=*/__FILE__,                                          \
-            /*line=*/__LINE__);                                         \
-        PropertyRegistry::addKey(key);                                  \
-        int blubb = foo; /* <- trigger deprecation message */           \
-        blubb = blubb;                                                  \
-        return 0;                                                       \
-    };                                                                  \
-    static DUNE_DEPRECATED_MSG(DeprecationMsg) int foo;                \
-    };                                                                  \
-    int PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::foo =   \
-    PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::init();
-
 //! Internal macro which is only required if the property introspection is enabled
 #define TTAG_INFO_(...)                                                 \
     template <>                                                         \
@@ -196,34 +174,6 @@ namespace Properties
 #define NEW_PROP_TAG(PTagName)                             \
     namespace PTag {                                       \
     struct PTagName; } extern int semicolonHack_
-
-/*!
- * \brief Set the default for a property.
- *
- * SET_PROP_DEFAULT works exactly like SET_PROP, except that it does
- * not require an effective type tag. Defaults are used whenever a
- * property was not explicitly set or explicitly unset for a type tag.
- *
- * Example:
- *
- * \code
- * // set a default for the blabbPropTag property tag
- * SET_PROP_DEFAULT(blabbPropTag)
- * {
- *    static const int value = 3;
- * };
- * \endcode
- */
-#define SET_PROP_DEFAULT(PropTagName) \
-    template <class TypeTag>                                            \
-    struct DefaultProperty<TypeTag, PTAG_(PropTagName)>;                \
-    PROP_INFO_DEPRECATED_("Default properties are deprecated and will be removed in the future", \
-                          __Default,                                    \
-                          /*kind=*/"<opaque>",                          \
-                          PropTagName,                                  \
-                          /*value=*/"<opaque>")                         \
-    template <class TypeTag>                                            \
-    struct DefaultProperty<TypeTag, PTAG_(PropTagName) >
 
 //! Internal macro
 #define SET_PROP_(EffTypeTagName, PropKind, PropTagName, ...)       \
