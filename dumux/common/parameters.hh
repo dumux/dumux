@@ -101,9 +101,9 @@
  * Example:
  *
  * \code 
- * // -> retrieves global integer value NumberOfCellsX which is
- * // located int the parameter group "Geometry"
- * GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Geometry, NumberOfCellsX);
+ * // -> retrieves global integer value "NumberOfCellsX" which is
+ * // located in the parameter group "Grid"
+ * GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumberOfCellsX);
  * \endcode
  */
 #define GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName) \
