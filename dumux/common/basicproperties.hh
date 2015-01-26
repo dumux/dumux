@@ -121,32 +121,31 @@ SET_PROP(NumericModel, ParameterTree)
     {
         static Dune::ParameterTree obj_;
         return obj_;
-    };
+    }
 
     static Dune::ParameterTree &compileTimeParams()
     {
         static Dune::ParameterTree obj_;
         return obj_;
-    };
-
+    }
 
     static Dune::ParameterTree &runTimeParams()
     {
         static Dune::ParameterTree obj_;
         return obj_;
-    };
+    }
 
     static Dune::ParameterTree &deprecatedRunTimeParams()
     {
         static Dune::ParameterTree obj_;
         return obj_;
-    };
+    }
 
     static Dune::ParameterTree &unusedNewRunTimeParams()
     {
         static Dune::ParameterTree obj_;
         return obj_;
-    };
+    }
 };
 
 //! use the global group as default for the model's parameter group
@@ -160,13 +159,12 @@ SET_INT_PROP(NumericModel, VtkOutputLevel, 0);
 
 //! set the VtkMultiWriter such that it uses the ascii format by default
 SET_PROP(NumericModel, VtkMultiWriter)
-        {
-        private:
-            typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-        public:
-            typedef typename Dumux::VtkMultiWriter<GridView> type;
-        };
-
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+public:
+    typedef typename Dumux::VtkMultiWriter<GridView> type;
+};
 
 } // namespace Properties
 } // namespace Dumux
