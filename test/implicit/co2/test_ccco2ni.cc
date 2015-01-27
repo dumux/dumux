@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the 2p2c box model.
+ * \brief Test for the CO2 non-isothermal CC model.
  */
 #include "config.h"
 #include "heterogeneousproblemni.hh"
@@ -74,8 +74,9 @@ int main(int argc, char** argv)
     std::cout << "Test skipped, it needs ALUGrid, see optim.opts or debug.opts." << std::endl;
     return 77;
 #else
-    typedef TTAG(HeterogeneousNIBoxProblem) ProblemTypeTag;
+    typedef TTAG(HeterogeneousNICCProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #endif
+
 
 }

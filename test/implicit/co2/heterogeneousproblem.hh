@@ -103,8 +103,6 @@ SET_BOOL_PROP(HeterogeneousProblem, UseMoles, false);
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is false.
  *
- * This problem uses the \ref OnePTwoCModel model.
- * 
  * To run the simulation execute the following line in shell (works with the box and cell centered spatial discretization method):
  * <tt>./test_ccco2 </tt> or <tt>./test_boxco2 </tt>
  */

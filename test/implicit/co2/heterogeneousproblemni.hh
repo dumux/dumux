@@ -21,8 +21,8 @@
  *
  * \brief Definition of a problem, where CO2 is injected in a reservoir.
  */
-#ifndef DUMUX_HETEROGENEOUS_NI_PROBLEM_NI_HH
-#define DUMUX_HETEROGENEOUS_NI_PROBLEM_NI_HH
+#ifndef DUMUX_HETEROGENEOUS_PROBLEM_NI_HH
+#define DUMUX_HETEROGENEOUS_PROBLEM_NI_HH
 
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid/2d/alugrid.hh>
@@ -33,17 +33,14 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #endif
 
-#include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/implicit/co2/co2volumevariables.hh>
 #include <dumux/implicit/co2/co2model.hh>
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/box/intersectiontovertexbc.hh>
-#include <test/implicit/co2/heterogeneousspatialparameters.hh>
 
+#include "heterogeneousspatialparameters.hh"
 #include "heterogeneousco2tables.hh"
-
-#define ISOTHERMAL 0
 
 namespace Dumux
 {
@@ -72,7 +69,7 @@ SET_TYPE_PROP(HeterogeneousNIProblem, Problem, Dumux::HeterogeneousNIProblem<Typ
 SET_TYPE_PROP(HeterogeneousNIProblem, FluidSystem, Dumux::BrineCO2FluidSystem<TypeTag>);
 
 // Set the CO2 table to be used; in this case not the the default table
-SET_TYPE_PROP(HeterogeneousNIProblem, CO2Table, Dumux::Heterogeneous::CO2Tables);
+SET_TYPE_PROP(HeterogeneousNIProblem, CO2Table, Dumux::HeterogeneousCO2Tables::CO2Tables);
 
 // Set the salinity mass fraction of the brine in the reservoir
 SET_SCALAR_PROP(HeterogeneousNIProblem, ProblemSalinity, 1e-1);
@@ -142,8 +139,8 @@ class HeterogeneousNIProblem : public ImplicitPorousMediaProblem<TypeTag>
         conti0EqIdx = Indices::conti0EqIdx,
         contiCO2EqIdx = conti0EqIdx + CO2Idx,
 #if !ISOTHERMAL
-        temperatureIdx = CO2Idx +1,
-        energyEqIdx = contiCO2EqIdx +1,
+        temperatureIdx = Indices::temperatureIdx,
+        energyEqIdx = Indices::energyEqIdx,
 #endif
 
     };
@@ -178,7 +175,7 @@ public:
                      const GridView &gridView)
         : ParentType(timeManager, GridCreator::grid().leafGridView()),
           //Boundary Id Setup:
-          injectionTop_ (1),
+          injectionTop_(1),
           injectionBottom_(2),
           dirichletBoundary_(3),
           noFlowBoundary_(4),
@@ -507,7 +504,7 @@ private:
         Scalar temp = temperature_(globalPos);
         Scalar densityW = FluidSystem::Brine::liquidDensity(temp, 1e7);
 
-        Scalar pl =  1e5 - densityW*this->gravity()[dimWorld-1]*(depthBOR_ - globalPos[dimWorld-1]);
+        Scalar pl =  1e5 - densityW*this->gravity()[dim-1]*(depthBOR_ - globalPos[dim-1]);
         Scalar moleFracLiquidCO2 = 0.00;
         Scalar moleFracLiquidBrine = 1.0 - moleFracLiquidCO2;
 
@@ -528,7 +525,7 @@ private:
 
     Scalar temperature_(const GlobalPosition globalPos) const
     {
-        Scalar T = 283.0 + (depthBOR_ - globalPos[dimWorld-1])*0.03; 
+        Scalar T = 283.0 + (depthBOR_ - globalPos[dim-1])*0.03; 
         return T;
     }
 

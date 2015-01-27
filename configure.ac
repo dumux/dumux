@@ -98,7 +98,6 @@ AC_CONFIG_FILES([dumux.pc
     test/implicit/3p/Makefile
     test/implicit/3p3c/Makefile
     test/implicit/co2/Makefile
-    test/implicit/co2ni/Makefile
     test/implicit/mpnc/Makefile
     test/implicit/richards/Makefile
     test/common/Makefile

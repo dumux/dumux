@@ -7,7 +7,6 @@ SUBDIRS = \
   3p \
   3p3c \
   co2 \
-  co2ni \
   mpnc \
   richards
 
