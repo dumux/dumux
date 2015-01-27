@@ -193,7 +193,7 @@ void print(std::ostream &os = std::cout)
 
     if (hasDeprecatedKeys_<TypeTag>(tree)) 
     {
-        os << "# DEPRECATED Run-time specified parameters:" << std::endl;
+        os << "# DEPRECATED run-time specified parameters:" << std::endl;
         drt.report(os);
         os << "# Replace by:" << std::endl;
         unrt.report(os);
@@ -207,7 +207,7 @@ void print(std::ostream &os = std::cout)
 
     if (unusedParams.size() > 0)
     {
-        os << "# UNUSED PARAMETERS:" << std::endl;
+        os << "# UNUSED parameters:" << std::endl;
         for (auto it = unusedParams.begin(); it != unusedParams.end(); ++it)
         {
             os << *it << " = \"" << tree.get(*it, "") << "\"" << std::endl;
@@ -294,21 +294,7 @@ private:
         else
             b = &(it->second);
 
-        if (b->groupName != groupName) {
-            DUNE_THROW(Dune::InvalidStateException,
-                       "GET_*_PARAM for parameter '" << paramName
-                       << "' called for at least two different groups ('"
-                       << b->groupName << "' and '" << groupName << "')");
-        }
-
-        if (b->propertyName != propertyName) {
-            DUNE_THROW(Dune::InvalidStateException,
-                       "GET_*_PARAM for parameter '" << paramName
-                       << "' called for at least two different properties ('"
-                       << b->propertyName << "' and '" << propertyName << "')");
-        }
-
-        if (b->paramTypeName != paramTypeName) {
+        if (b->paramTypeName != paramTypeName && b->groupName == groupName) {
             DUNE_THROW(Dune::InvalidStateException,
                        "GET_*_PARAM for parameter '" << paramName << "' in group '"
                        << groupName << "' called with at least two different types ("
