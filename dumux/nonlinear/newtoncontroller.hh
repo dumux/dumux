@@ -79,20 +79,25 @@ NEW_PROP_TAG(ImplicitEnablePartialReassemble);
  */
 NEW_PROP_TAG(NewtonUseLineSearch);
 
-//! indicate whether the relative error should be used
-NEW_PROP_TAG(NewtonEnableRelativeCriterion);
+//! indicate whether the shift criterion should be used
+NEW_PROP_TAG(NewtonEnableShiftCriterion);
+NEW_PROP_TAG(NewtonEnableRelativeCriterion);// DEPRECATED
 
-//! the value for the relative error below which convergence is declared
-NEW_PROP_TAG(NewtonRelTolerance);
+//! the value for the maximum relative shift below which convergence is declared
+NEW_PROP_TAG(NewtonMaxRelativeShift);
+NEW_PROP_TAG(NewtonRelTolerance);// DEPRECATED
 
-//! indicate whether the absolute error should be used
-NEW_PROP_TAG(NewtonEnableAbsoluteCriterion);
+//! indicate whether the residual criterion should be used
+NEW_PROP_TAG(NewtonEnableResidualCriterion);
+NEW_PROP_TAG(NewtonEnableAbsoluteCriterion);// DEPRECATED
 
-//! the value for the absolute error reduction below which convergence is declared
-NEW_PROP_TAG(NewtonAbsTolerance);
+//! the value for the residual reduction below which convergence is declared
+NEW_PROP_TAG(NewtonResidualReduction);
+NEW_PROP_TAG(NewtonAbsTolerance);// DEPRECATED
 
 //! indicate whether both of the criteria should be satisfied to declare convergence
-NEW_PROP_TAG(NewtonSatisfyAbsAndRel);
+NEW_PROP_TAG(NewtonSatisfyResidualAndShiftCriterion);
+NEW_PROP_TAG(NewtonSatisfyAbsAndRel);// DEPRECATED
 
 /*!
  * \brief The number of iterations at which the Newton method
@@ -114,11 +119,32 @@ NEW_PROP_TAG(JacobianAssembler);
 SET_TYPE_PROP(NewtonMethod, NewtonController, Dumux::NewtonController<TypeTag>);
 SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
 SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableRelativeCriterion, true);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableAbsoluteCriterion, false);
-SET_BOOL_PROP(NewtonMethod, NewtonSatisfyAbsAndRel, false);
-SET_SCALAR_PROP(NewtonMethod, NewtonRelTolerance, 1e-8);
-SET_SCALAR_PROP(NewtonMethod, NewtonAbsTolerance, 1e-5);
+
+// Renaming: EnableRelativeCriterion -> EnableShiftCriterion
+SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion,
+              GET_PROP_VALUE(TypeTag, NewtonEnableRelativeCriterion));
+SET_BOOL_PROP(NewtonMethod, NewtonEnableRelativeCriterion, true);// DEPRECATED
+
+// Renaming: EnableAbsoluteCriterion -> EnableResidualCriterion
+SET_BOOL_PROP(NewtonMethod, NewtonEnableResidualCriterion,
+              GET_PROP_VALUE(TypeTag, NewtonEnableAbsoluteCriterion));
+SET_BOOL_PROP(NewtonMethod, NewtonEnableAbsoluteCriterion, false);// DEPRECATED
+
+// Renaming: SatisfyAbsAndRel -> SatisfyResidualAndShiftCriterion
+SET_BOOL_PROP(NewtonMethod, NewtonSatisfyResidualAndShiftCriterion,
+              GET_PROP_VALUE(TypeTag, NewtonSatisfyAbsAndRel));
+SET_BOOL_PROP(NewtonMethod, NewtonSatisfyAbsAndRel, false);// DEPRECATED
+
+// Renaming: RelTolerance -> MaxRelativeShift
+SET_SCALAR_PROP(NewtonMethod, NewtonMaxRelativeShift,
+              GET_PROP_VALUE(TypeTag, NewtonRelTolerance));
+SET_SCALAR_PROP(NewtonMethod, NewtonRelTolerance, 1e-8);// DEPRECATED
+
+// Renaming: AbsTolerance -> ResidualReduction
+SET_SCALAR_PROP(NewtonMethod, NewtonResidualReduction,
+              GET_PROP_VALUE(TypeTag, NewtonAbsTolerance));
+SET_SCALAR_PROP(NewtonMethod, NewtonAbsTolerance, 1e-5);// DEPRECATED
+
 SET_INT_PROP(NewtonMethod, NewtonTargetSteps, 10);
 SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
 
@@ -158,6 +184,9 @@ public:
     /*!
      * \brief
      */
+// Avoid warnings when deprecated member variables are default-initialized
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     NewtonController(const Problem &problem)
         : endIterMsgStream_(std::ostringstream::out)
         , convergenceWriter_(asImp_())
@@ -167,41 +196,113 @@ public:
         enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
 
         useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
-        enableRelativeCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableRelativeCriterion);
-        enableAbsoluteCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteCriterion);
-        satisfyAbsAndRel_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyAbsAndRel);
-        if (!enableRelativeCriterion_ && !enableAbsoluteCriterion_)
+        enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableShiftCriterion);
+        enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableResidualCriterion);
+        satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyResidualAndShiftCriterion);
+        if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
-            DUNE_THROW(Dune::NotImplemented, "at least one of NewtonEnableRelativeCriterion or "
-                    << "NewtonEnableAbsoluteCriterion has to be set to true");
+            DUNE_THROW(Dune::NotImplemented, "at least one of NewtonEnableShiftCriterion or "
+                    << "NewtonEnableResidualCriterion has to be set to true");
         }
 
-        setRelTolerance(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, RelTolerance));
-        setAbsTolerance(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, AbsTolerance));
+        setMaxRelativeShift(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxRelativeShift));
+        setResidualReduction(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, ResidualReduction));
         setTargetSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, TargetSteps));
         setMaxSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxSteps));
 
         verbose_ = true;
         numSteps_ = 0;
     }
+#pragma GCC diagnostic pop
 
     /*!
      * \brief Destructor
      */
     ~NewtonController()
     {
+        typedef typename GET_PROP(TypeTag, ParameterTree) Params;
+        const Dune::ParameterTree &tree = Params::tree();
+
+        // check if deprecated parameter names have been set run-time:
+        if (tree.hasKey("Newton.EnableRelativeCriterion")
+            || tree.hasKey("Newton.RelTolerance")
+            || tree.hasKey("Newton.EnableAbsoluteCriterion")
+            || tree.hasKey("Newton.AbsTolerance")
+            || tree.hasKey("Newton.SatisfyAbsAndRel"))
+        {
+            std::cout << std::endl << "[Newton] The following DEPRECATED parameters"
+                      << "are set run-time and are therefore not used:" << std::endl;
+
+            if (tree.hasKey("Newton.EnableRelativeCriterion"))
+            {
+                std::cout << "EnableRelativeCriterion: use EnableShiftCriterion instead" << std::endl;
+            }
+            if (tree.hasKey("Newton.RelTolerance"))
+            {
+                std::cout << "RelTolerance: use MaxRelativeShift instead" << std::endl;
+            }
+            if (tree.hasKey("Newton.EnableAbsoluteCriterion"))
+            {
+                std::cout << "EnableAbsoluteCriterion: use EnableResidualCriterion instead" << std::endl;
+            }
+            if (tree.hasKey("Newton.AbsTolerance"))
+            {
+                std::cout << "AbsTolerance: use ResidualReduction instead" << std::endl;
+            }
+            if (tree.hasKey("Newton.SatisfyAbsAndRel"))
+            {
+                std::cout << "SatisfyAbsAndRel: use SatisfyResidualAndShiftCriterion instead" << std::endl;
+            }
+        }
+
+        // check if deprecated property names have been set compile-time to
+        // a non-default value:
+        if (GET_PROP_VALUE(TypeTag, NewtonEnableRelativeCriterion) != true
+            || GET_PROP_VALUE(TypeTag, NewtonRelTolerance) != 1e-8
+            || GET_PROP_VALUE(TypeTag, NewtonEnableAbsoluteCriterion) != false
+            || GET_PROP_VALUE(TypeTag, NewtonAbsTolerance) != 1e-5
+            || GET_PROP_VALUE(TypeTag, NewtonSatisfyAbsAndRel) != false)
+        {
+            std::cout << std::endl << "[Newton] The following DEPRECATED properties"
+                      << " are set compile-time and the corresponding new properties are used:"
+                      << std::endl;
+
+            if (GET_PROP_VALUE(TypeTag, NewtonEnableRelativeCriterion) != true)
+            {
+                std::cout << "NewtonEnableRelativeCriterion: use NewtonEnableShiftCriterion instead" << std::endl;
+            }
+            if (GET_PROP_VALUE(TypeTag, NewtonRelTolerance) != 1e-8)
+            {
+                std::cout << "NewtonRelTolerance: use NewtonMaxRelativeShift instead" << std::endl;
+            }
+            if (GET_PROP_VALUE(TypeTag, NewtonEnableAbsoluteCriterion) != false)
+            {
+                std::cout << "NewtonEnableAbsoluteCriterion: use NewtonEnableResidualCriterion instead" << std::endl;
+            }
+            if (GET_PROP_VALUE(TypeTag, NewtonAbsTolerance) != 1e-5)
+            {
+                std::cout << "NewtonAbsTolerance: use NewtonResidualReduction instead" << std::endl;
+            }
+            if (GET_PROP_VALUE(TypeTag, NewtonSatisfyAbsAndRel) != false)
+            {
+                std::cout << "NewtonSatisfyAbsAndRel: use NewtonSatisfyResidualAndShiftCriterion instead" << std::endl;
+            }
+        }
     }
 
     /*!
-     * \brief Set the maximum acceptable difference for convergence of
-     *        any primary variable between two iterations.
+     * \brief Set the maximum acceptable difference of any primary variable
+     * between two iterations for declaring convergence.
      *
-     * \param tolerance The maximum relative error between two Newton
-     *                  iterations at which the scheme is considered
-     *                  finished
+     * \param tolerance The maximum relative shift between two Newton
+     *                  iterations at which the scheme is considered finished
      */
+    void setMaxRelativeShift(Scalar tolerance)
+    { shiftTolerance_ = tolerance; }
+
     void setRelTolerance(Scalar tolerance)
-    { tolerance_ = tolerance; }
+    DUNE_DEPRECATED_MSG("use setMaxRelativeShift instead")
+    { setMaxRelativeShift(tolerance); }
 
     /*!
      * \brief Set the maximum acceptable residual norm reduction.
@@ -209,8 +310,12 @@ public:
      * \param tolerance The maximum reduction of the residual norm
      *                  at which the scheme is considered finished
      */
+    void setResidualReduction(Scalar tolerance)
+    { reductionTolerance_ = tolerance; }
+
     void setAbsTolerance(Scalar tolerance)
-    { absoluteTolerance_ = tolerance; }
+    DUNE_DEPRECATED_MSG("use setResidualReduction instead")
+    { setResidualReduction(tolerance); }
 
     /*!
      * \brief Set the number of iterations at which the Newton method
@@ -247,14 +352,13 @@ public:
             return false; // we are below the desired tolerance
         }
         else if (numSteps_ >= maxSteps_) {
-            // we have exceeded the allowed number of steps.  if the
-            // relative error was reduced by a factor of at least 4,
-            // we proceed even if we are above the maximum number of
-            // steps
-            if (enableRelativeCriterion_)
-                return error_*4.0 < lastError_;
+            // We have exceeded the allowed number of steps. If the
+            // maximum relative shift was reduced by a factor of at least 4,
+            // we proceed even if we are above the maximum number of steps.
+            if (enableShiftCriterion_)
+                return shift_*4.0 < lastShift_;
             else
-                return absoluteError_*4.0 < lastAbsoluteError_;
+                return reduction_*4.0 < lastReduction_;
         }
 
         return true;
@@ -266,23 +370,23 @@ public:
      */
     bool newtonConverged() const
     {
-        if (enableRelativeCriterion_ && !enableAbsoluteCriterion_)
+        if (enableShiftCriterion_ && !enableResidualCriterion_)
         {
-            return error_ <= tolerance_;
+            return shift_ <= shiftTolerance_;
         }
-        else if (!enableRelativeCriterion_ && enableAbsoluteCriterion_)
+        else if (!enableShiftCriterion_ && enableResidualCriterion_)
         {
-            return absoluteError_ <= absoluteTolerance_;
+            return reduction_ <= reductionTolerance_;
         }
-        else if (satisfyAbsAndRel_)
+        else if (satisfyResidualAndShiftCriterion_)
         {
-            return error_ <= tolerance_
-                    && absoluteError_ <= absoluteTolerance_;
+            return shift_ <= shiftTolerance_
+                    && reduction_ <= reductionTolerance_;
         }
         else
         {
-            return error_ <= tolerance_
-                    || absoluteError_ <= absoluteTolerance_;
+            return shift_ <= shiftTolerance_
+                    || reduction_ <= reductionTolerance_;
         }
 
         return false;
@@ -309,8 +413,8 @@ public:
      */
     void newtonBeginStep()
     {
-        lastError_ = error_;
-        lastAbsoluteError_ = absoluteError_;
+        lastShift_ = shift_;
+        lastReduction_ = reduction_;
     }
 
     /*!
@@ -321,36 +425,34 @@ public:
     { return numSteps_; }
 
     /*!
-     * \brief Update the relative error of the solution compared to
+     * \brief Update the maximum relative shift of the solution compared to
      *        the previous iteration.
-     *
-     * The relative error can be seen as a norm of the difference
-     * between the current and the next iteration.
      *
      * \param uLastIter The current iterative solution
      * \param deltaU The difference between the current and the next solution
      */
-    void newtonUpdateRelError(const SolutionVector &uLastIter,
-                              const SolutionVector &deltaU)
+    void newtonUpdateShift(const SolutionVector &uLastIter,
+                           const SolutionVector &deltaU)
     {
-        // calculate the relative error as the maximum relative
-        // deflection in any degree of freedom.
-        error_ = 0;
+        shift_ = 0;
 
         for (int i = 0; i < int(uLastIter.size()); ++i) {
             typename SolutionVector::block_type uNewI = uLastIter[i];
             uNewI -= deltaU[i];
 
-            Scalar dofError = model_().relativeErrorDof(i,
-                                                        uLastIter[i],
-                                                        uNewI);
-            error_ = std::max(error_, dofError);
-
+            Scalar shiftAtDof = model_().relativeShiftAtDof(uLastIter[i],
+                                                            uNewI);
+            shift_ = std::max(shift_, shiftAtDof);
         }
 
         if (gridView_().comm().size() > 1)
-            error_ = gridView_().comm().max(error_);
+            shift_ = gridView_().comm().max(shift_);
     }
+
+    void newtonUpdateRelError(const SolutionVector &uLastIter,
+                              const SolutionVector &deltaU)
+    DUNE_DEPRECATED_MSG("use newtonUpdateShift instead")
+    { newtonUpdateShift(uLastIter, deltaU); }
 
     /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
@@ -373,8 +475,8 @@ public:
                 if (gridView_().comm().size() > 1)
                     norm2 = gridView_().comm().sum(norm2);
 
-                initialAbsoluteError_ = std::sqrt(norm2);
-                lastAbsoluteError_ = initialAbsoluteError_;
+                initialResidual_ = std::sqrt(norm2);
+                lastReduction_ = initialResidual_;
             }
 
             int converged = linearSolver_.solve(A, x, b);
@@ -439,14 +541,14 @@ public:
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
     {
-        if (enableRelativeCriterion_ || enablePartialReassemble_)
-            newtonUpdateRelError(uLastIter, deltaU);
+        if (enableShiftCriterion_ || enablePartialReassemble_)
+            newtonUpdateShift(uLastIter, deltaU);
 
         // compute the vertex and element colors for partial reassembly
         if (enablePartialReassemble_) {
-            const Scalar minReasmTol = 1e-2*tolerance_;
-            const Scalar maxReasmTol = 1e1*tolerance_;
-            Scalar reassembleTol = std::max(minReasmTol, std::min(maxReasmTol, this->error_/1e4));
+            const Scalar minReasmTol = 1e-2*shiftTolerance_;
+            const Scalar maxReasmTol = 1e1*shiftTolerance_;
+            Scalar reassembleTol = std::max(minReasmTol, std::min(maxReasmTol, this->shift_/1e4));
             //Scalar reassembleTol = minReasmTol;
 
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
@@ -465,11 +567,11 @@ public:
                 uCurrentIter[i] -= deltaU[i];
             }
 
-            if (enableAbsoluteCriterion_)
+            if (enableResidualCriterion_)
             {
                 SolutionVector tmp(uLastIter);
-                absoluteError_ = this->method().model().globalResidual(tmp, uCurrentIter);
-                absoluteError_ /= initialAbsoluteError_;
+                reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                reduction_ /= initialResidual_;
             }
         }
 
@@ -489,10 +591,10 @@ public:
         if (verbose())
         {
             std::cout << "\rNewton iteration " << numSteps_ << " done";
-            if (enableRelativeCriterion_)
-                std::cout << ", relative error = " << error_;
-            if (enableAbsoluteCriterion_)
-                std::cout << ", absolute error = " << absoluteError_;
+            if (enableShiftCriterion_)
+                std::cout << ", maximum relative shift = " << shift_;
+            if (enableResidualCriterion_)
+                std::cout << ", residual reduction = " << reduction_;
             std::cout << endIterMsg().str() << "\n";
         }
         endIterMsgStream_.str("");
@@ -669,11 +771,11 @@ protected:
            uCurrentIter += uLastIter;
 
            // calculate the residual of the current solution
-           absoluteError_ = this->method().model().globalResidual(tmp, uCurrentIter);
-           absoluteError_ /= initialAbsoluteError_;
+           reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
+           reduction_ /= initialResidual_;
 
-           if (absoluteError_ < lastAbsoluteError_ || lambda <= 0.125) {
-               this->endIterMsg() << ", defect " << lastAbsoluteError_ << "->"  << absoluteError_ << "@lambda=" << lambda;
+           if (reduction_ < lastReduction_ || lambda <= 0.125) {
+               this->endIterMsg() << ", residual reduction " << lastReduction_ << "->"  << reduction_ << "@lambda=" << lambda;
                return;
            }
 
@@ -689,16 +791,16 @@ protected:
 
     ConvergenceWriter convergenceWriter_;
 
-    // relative errors and tolerance
-    Scalar error_;
-    Scalar lastError_;
-    Scalar tolerance_;
+    // shift criterion variables
+    Scalar shift_;
+    Scalar lastShift_;
+    Scalar shiftTolerance_;
 
-    // absolute errors and tolerance
-    Scalar absoluteError_;
-    Scalar lastAbsoluteError_;
-    Scalar initialAbsoluteError_;
-    Scalar absoluteTolerance_;
+    // residual criterion variables
+    Scalar reduction_;
+    Scalar lastReduction_;
+    Scalar initialResidual_;
+    Scalar reductionTolerance_;
 
     // optimal number of iterations we want to achieve
     int targetSteps_;
@@ -713,9 +815,21 @@ protected:
     bool enablePartialReassemble_;
     bool enableJacobianRecycling_;
     bool useLineSearch_;
-    bool enableRelativeCriterion_;
-    bool enableAbsoluteCriterion_;
-    bool satisfyAbsAndRel_;
+    bool enableShiftCriterion_;
+    bool enableResidualCriterion_;
+    bool satisfyResidualAndShiftCriterion_;
+
+    // deprecated member variables
+    Scalar error_ DUNE_DEPRECATED_MSG("use shift_ instead");
+    Scalar lastError_ DUNE_DEPRECATED_MSG("use lastShift_ instead");
+    Scalar tolerance_ DUNE_DEPRECATED_MSG("use shiftTolerance_ instead");
+    Scalar absoluteError_ DUNE_DEPRECATED_MSG("use reduction_ instead");
+    Scalar lastAbsoluteError_ DUNE_DEPRECATED_MSG("use lastReduction_ instead");
+    Scalar initialAbsoluteError_ DUNE_DEPRECATED_MSG("use initialResidual_ instead");
+    Scalar absoluteTolerance_ DUNE_DEPRECATED_MSG("use reductionTolerance_ instead");
+    bool enableRelativeCriterion_ DUNE_DEPRECATED_MSG("use enableShiftCriterion_ instead");
+    bool enableAbsoluteCriterion_ DUNE_DEPRECATED_MSG("use enableResidualCriterion_ instead");
+    bool satisfyAbsAndRel_ DUNE_DEPRECATED_MSG("use satisfyResidualAndShiftCriterion_ instead");
 };
 } // namespace Dumux
 

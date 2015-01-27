@@ -405,17 +405,14 @@ public:
     { return localJacobian().localResidual(); }
 
     /*!
-     * \brief Returns the relative error between two vectors of
+     * \brief Returns the maximum relative shift between two vectors of
      *        primary variables.
      *
-     * \param dofIdxGlobal The global index of the control volume's
-     *                     associated degree of freedom
      * \param priVars1 The first vector of primary variables
      * \param priVars2 The second vector of primary variables
      */
-    Scalar relativeErrorDof(const int dofIdxGlobal,
-                            const PrimaryVariables &priVars1,
-                            const PrimaryVariables &priVars2)
+    Scalar relativeShiftAtDof(const PrimaryVariables &priVars1,
+                              const PrimaryVariables &priVars2)
     {
         Scalar result = 0.0;
         for (int j = 0; j < numEq; ++j) {
@@ -425,6 +422,14 @@ public:
             result = std::max(result, eqErr);
         }
         return result;
+    }
+
+    Scalar relativeErrorDof(const int dofIdxGlobal,
+                            const PrimaryVariables &priVars1,
+                            const PrimaryVariables &priVars2)
+    DUNE_DEPRECATED_MSG("use relativeShiftAtDof(priVars1, priVars2) instead")
+    {
+        return relativeShiftAtDof(priVars1, priVars2);
     }
 
     /*!
