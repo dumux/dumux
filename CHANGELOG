@@ -2,11 +2,30 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS:
+  - Since 2.6, all isothermal implicit porous-media models (except 2pdfm) can be
+    easily enhanced with the energy equation. For 2.7, this has been also
+    carried out for the models that were only isothermal before, namely, 1p, 3p
+    and richards. Tests have been written and are provided in test/implicit. In
+    order to keep the number of subfolders bearable, isothermal as well as
+    thermal tests are gathered in the model folders "1p", "1p2c", ..., "3p3c",
+    "mpnc", "richards" (without the "ni") and the corresponding "ni"-folders
+    have been deleted.
+
+  - All implicit porous-media models (except 2pdfm) are now able to run on grids
+    with dim < dimWorld. In implicit/1p, four new tests are added that run the
+    1p test problem on 1d-3d and 2d-3d Alberta grids with box and cell-centered,
+    respectively. Compilation has been tested also for all other models, but no
+    runtime testing has been performed.
+
   - The terminology for the Newton method has been improved according to FS#238.
     In particular, what has been referred to as "relative error" is now termed
     "maximum relative shift", while "absolute error" has been renamed to
     "residual reduction". This is particularly important, if corresponding
     parameters or properties are set, see below.
+
+  - Before, velocity output for the implicit porous-media models only worked for
+    cube grids. This has been generalized to simplices (box and cc) and prisms/
+    pyramids (box only).
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - Before, the "heatCapacity" function in the spatial parameters and volume
@@ -90,13 +109,9 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
     "enableAbsoluteCriterion_" -> "enableResidualCriterion_"
     "satisfyAbsAndRel_" -> "satisfyResidualAndShiftCriterion_"
 
-* DELETED classes/files, property names, constants/enums, 
+* DELETED classes/files, property names, constants/enums,
   member functions, which have been deprecated in DuMuX 2.6:
   Everything listed as deprecated below has been removed.
-
-* DELETED non-isothermal folders in dumux/implicit and test/implicit. A
-  non-isothermal test case can now be set up with the generic non-isothermal model,
-  see changes between (2.5 and 2.6)
 
 
 Differences Between DuMuX 2.5 and DuMuX 2.6
