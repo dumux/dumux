@@ -1,8 +1,8 @@
 check_PROGRAMS = \
 	test_boxrichards \
 	test_ccrichards \
-	test_boxrichardsniconvection \ 
-	test_ccrichardsniconvection \ 
+	test_boxrichardsniconvection \
+	test_ccrichardsniconvection \
 	test_boxrichardsniconduction \
 	test_ccrichardsniconduction
 
