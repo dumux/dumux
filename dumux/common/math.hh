@@ -123,7 +123,7 @@ int invertLinearPolynomial(SolContainer &sol,
  * The polynomial is defined as
  * \f[ p(x) = a\; x^2 + + b\;x + c \f]
  *
- * This method teturns the number of solutions which are in the real
+ * This method returns the number of solutions which are in the real
  * numbers. The "sol" argument contains the real roots of the parabola
  * in order with the smallest root first.
  *

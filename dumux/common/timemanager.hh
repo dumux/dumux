@@ -23,6 +23,7 @@
 #ifndef DUMUX_TIME_MANAGER_HH
 #define DUMUX_TIME_MANAGER_HH
 
+#include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
@@ -410,7 +411,7 @@ public:
                 problem_->episodeEnd();
 
                 //check if a time step size was explicitly defined in problem->episodeEnd()
-                if (dt == timeStepSize())
+                if (Dune::FloatCmp::eq<Scalar>(dt, timeStepSize()))
                 {
                     // set the initial time step size of a an episode to the last real time step size before the episode
                     Scalar nextDt = std::max(previousTimeStepSize_, timeStepSize());

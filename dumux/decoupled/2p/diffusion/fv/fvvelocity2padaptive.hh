@@ -24,6 +24,7 @@
  * @brief  Velocity Field from a finite volume solution of a pressure equation.
  */
 
+#include <dune/common/float_cmp.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
 
 namespace Dumux
@@ -315,10 +316,10 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
             densityWIK = (potentialDiffWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
             densityNwIK = (potentialDiffNwIK > 0.) ? cellData.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
 
-            densityWIJ = (potentialDiffWIJ == 0.) ? rhoMeanWIJ : densityWIJ;
-            densityNwIJ = (potentialDiffNwIJ == 0.) ? rhoMeanNwIJ : densityNwIJ;
-            densityWIK = (potentialDiffWIK == 0.) ? rhoMeanWIK : densityWIK;
-            densityNwIK = (potentialDiffNwIK == 0.) ? rhoMeanNwIK : densityNwIK;
+            densityWIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffWIJ, 0.0, 1.0e-30)) ? rhoMeanWIJ : densityWIJ;
+            densityNwIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNwIJ, 0.0, 1.0e-30)) ? rhoMeanNwIJ : densityNwIJ;
+            densityWIK = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffWIK, 0.0, 1.0e-30)) ? rhoMeanWIK : densityWIK;
+            densityNwIK = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNwIK, 0.0, 1.0e-30)) ? rhoMeanNwIK : densityNwIK;
         }
 
         Scalar fractionalWIJ = (potentialDiffWIJ > 0.) ? fractionalWI : fractionalWJ;
@@ -326,10 +327,10 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         Scalar fractionalWIK = (potentialDiffWIK > 0.) ? fractionalWI : fractionalWK;
         Scalar fractionalNwIK = (potentialDiffNwIK > 0.) ? fractionalNwI : fractionalNwK;
 
-        fractionalWIJ = (potentialDiffWIJ == 0.) ? fMeanWIJ : fractionalWIJ;
-        fractionalNwIJ = (potentialDiffNwIJ == 0.) ? fMeanNwIJ : fractionalNwIJ;
-        fractionalWIK = (potentialDiffWIK == 0.) ? fMeanWIK : fractionalWIK;
-        fractionalNwIK = (potentialDiffNwIK == 0.) ? fMeanNwIK : fractionalNwIK;
+        fractionalWIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffWIJ, 0.0, 1.0e-30)) ? fMeanWIJ : fractionalWIJ;
+        fractionalNwIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNwIJ, 0.0, 1.0e-30)) ? fMeanNwIJ : fractionalNwIJ;
+        fractionalWIK = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffWIK, 0.0, 1.0e-30)) ? fMeanWIK : fractionalWIK;
+        fractionalNwIK = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNwIK, 0.0, 1.0e-30)) ? fMeanNwIK : fractionalNwIK;
 
         switch (pressureType_)
         {
@@ -375,20 +376,20 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
         //do the upwinding of the mobility depending on the phase potentials
         Scalar lambdaWIJ = (potentialDiffWIJ > 0.) ? lambdaWI : lambdaWJ;
-        lambdaWIJ = (potentialDiffWIJ == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaWIJ;
+        lambdaWIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffWIJ, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaWIJ;
         Scalar lambdaNwIJ = (potentialDiffNwIJ > 0.) ? lambdaNwI : lambdaNwJ;
-        lambdaNwIJ = (potentialDiffNwIJ == 0) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNwIJ;
+        lambdaNwIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNwIJ, 0.0, 1.0e-30)) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNwIJ;
 
         if (compressibility_)
         {
             densityWIJ = (potentialDiffWIJ > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
             densityNwIJ = (potentialDiffNwIJ > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
-            densityWIJ = (potentialDiffWIJ == 0) ? rhoMeanWIJ : densityWIJ;
-            densityNwIJ = (potentialDiffNwIJ == 0) ? rhoMeanNwIJ : densityNwIJ;
+            densityWIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffWIJ, 0.0, 1.0e-30)) ? rhoMeanWIJ : densityWIJ;
+            densityNwIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNwIJ, 0.0, 1.0e-30)) ? rhoMeanNwIJ : densityNwIJ;
             densityWIK = (potentialDiffWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
             densityNwIK = (potentialDiffNwIK > 0.) ? cellData.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
-            densityWIK = (potentialDiffWIK == 0) ? rhoMeanWIK : densityWIK;
-            densityNwIK = (potentialDiffNwIK == 0) ? rhoMeanNwIK : densityNwIK;
+            densityWIK = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffWIK, 0.0, 1.0e-30)) ? rhoMeanWIK : densityWIK;
+            densityNwIK = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNwIK, 0.0, 1.0e-30)) ? rhoMeanNwIK : densityNwIK;
         }
 
         //calculate velocities and the gravity term
@@ -503,10 +504,10 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
             density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
 
             density_[wPhaseIdx] =
-                    (potentialDiffW == 0) ? 0.5 * (cellData.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx)) :
+                    (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx)) :
                             density_[wPhaseIdx];
             density_[nPhaseIdx] =
-                    (potentialDiffNw == 0) ? 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx)) :
+                    (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx)) :
                             density_[nPhaseIdx];
 
             potentialDiffW = (cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx));
@@ -526,9 +527,9 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
         //do the upwinding of the mobility depending on the phase potentials
         Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWJ;
-        lambdaW = (potentialDiffW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
+        lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30 )) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
         Scalar lambdaNw = (potentialDiffNw > 0.) ? lambdaNwI : lambdaNwJ;
-        lambdaNw = (potentialDiffNw == 0) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNw;
+        lambdaNw = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNw;
 
         if (compressibility_)
         {
@@ -536,10 +537,10 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
             density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
 
             density_[wPhaseIdx] =
-                    (potentialDiffW == 0) ? 0.5 * (cellData.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx)) :
+                    (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx)) :
                             density_[wPhaseIdx];
             density_[nPhaseIdx] =
-                    (potentialDiffNw == 0) ? 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx)) :
+                    (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx)) :
                             density_[nPhaseIdx];
         }
 

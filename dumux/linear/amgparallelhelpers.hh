@@ -932,7 +932,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
     auto owned=owner_.begin();
     
     for(auto v=sharedDofs.begin(), vend=sharedDofs.end(); v != vend; ++v, ++owned)
-        if(*v && *owned==1.0)
+        if(*v && *owned==1)
             ++count;
 
     Dune::dverb<<gridview.comm().rank()<<": shared count is "<< count.touint()
@@ -956,7 +956,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
     auto index=scalarIndices.begin();
 
     for(auto i=owner_.begin(), iend=owner_.end(); i!=iend; ++i, ++shared, ++index)
-        if(*i==1.0 && *shared){
+        if(*i==1 && *shared){
             *index=start;
             ++start;
         }

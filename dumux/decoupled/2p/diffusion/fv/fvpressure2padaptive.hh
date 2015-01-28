@@ -19,6 +19,8 @@
 #ifndef DUMUX_FVPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVPRESSURE2P_ADAPTIVE_HH
 
+#include <dune/common/float_cmp.hh>
+
 // dumux environment
 #include <dumux/decoupled/2p/2pproperties.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
@@ -453,20 +455,20 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
 
         //do the upwinding of the mobility depending on the phase potentials
         Scalar lambdaWIJ = (potentialWIJ > 0.) ? lambdaWI : lambdaWJ;
-        lambdaWIJ = (potentialWIJ == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaWIJ;
+        lambdaWIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialWIJ, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaWIJ;
         Scalar lambdaNwIJ = (potentialNwIJ > 0) ? lambdaNwI : lambdaNwJ;
-        lambdaNwIJ = (potentialNwIJ == 0) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNwIJ;
+        lambdaNwIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialNwIJ, 0.0, 1.0e-30)) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNwIJ;
 
         if (compressibility_)
         {
             densityWIJ = (potentialWIJ > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
             densityNwIJ = (potentialNwIJ > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
-            densityWIJ = (potentialWIJ == 0) ? rhoMeanWIJ : densityWIJ;
-            densityNwIJ = (potentialNwIJ == 0) ? rhoMeanNwIJ : densityNwIJ;
+            densityWIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialWIJ, 0.0, 1.0e-30)) ? rhoMeanWIJ : densityWIJ;
+            densityNwIJ = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialNwIJ, 0.0, 1.0e-30)) ? rhoMeanNwIJ : densityNwIJ;
             densityWIK = (potentialWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
             densityNwIK = (potentialNwIK > 0.) ? cellData.density(nPhaseIdx) : densityNwIK;
-            densityWIK = (potentialWIK == 0) ? rhoMeanWIK : densityWIK;
-            densityNwIK = (potentialNwIK == 0) ? rhoMeanNwIK : densityNwIK;
+            densityWIK = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialWIK, 0.0, 1.0e-30)) ? rhoMeanWIK : densityWIK;
+            densityNwIK = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialNwIK, 0.0, 1.0e-30)) ? rhoMeanNwIK : densityNwIK;
         }
 
         // update diagonal entry and right hand side

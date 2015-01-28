@@ -19,6 +19,8 @@
 #ifndef DUMUX_FVPRESSURE2P_HH
 #define DUMUX_FVPRESSURE2P_HH
 
+#include <dune/common/float_cmp.hh>
+
 // dumux environment
 #include <dumux/decoupled/common/fv/fvpressure.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
@@ -748,8 +750,8 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
             density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
             density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
 
-            density_[wPhaseIdx] = (potentialDiffW == 0.) ? rhoMeanW : density_[wPhaseIdx];
-            density_[nPhaseIdx] = (potentialDiffNw == 0.) ? rhoMeanNw : density_[nPhaseIdx];
+            density_[wPhaseIdx] = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? rhoMeanW : density_[wPhaseIdx];
+            density_[nPhaseIdx] = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? rhoMeanNw : density_[nPhaseIdx];
 
             potentialDiffW = cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx);
             potentialDiffNw = cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx);
@@ -761,17 +763,17 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
 
     //do the upwinding of the mobility depending on the phase potentials
     Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWJ;
-    lambdaW = (potentialDiffW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
+    lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
     Scalar lambdaNw = (potentialDiffNw > 0) ? lambdaNwI : lambdaNwJ;
-    lambdaNw = (potentialDiffNw == 0) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNw;
+    lambdaNw = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNw;
 
     if (compressibility_)
     {
         density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
         density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
 
-        density_[wPhaseIdx] = (potentialDiffW == 0) ? rhoMeanW : density_[wPhaseIdx];
-        density_[nPhaseIdx] = (potentialDiffNw == 0) ? rhoMeanNw : density_[nPhaseIdx];
+        density_[wPhaseIdx] = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? rhoMeanW : density_[wPhaseIdx];
+        density_[nPhaseIdx] = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? rhoMeanNw : density_[nPhaseIdx];
     }
 
     Scalar scalarPerm = permeability.two_norm();
@@ -957,8 +959,8 @@ const Intersection& intersection, const CellData& cellData, const bool first)
                 density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : densityWBound;
                 density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : densityNwBound;
 
-                density_[wPhaseIdx] = (potentialDiffW == 0.) ? rhoMeanW : density_[wPhaseIdx];
-                density_[nPhaseIdx] = (potentialDiffNw == 0.) ? rhoMeanNw : density_[nPhaseIdx];
+                density_[wPhaseIdx] = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? rhoMeanW : density_[wPhaseIdx];
+                density_[nPhaseIdx] = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? rhoMeanNw : density_[nPhaseIdx];
             }
 
             //calculate potential gradient
@@ -990,16 +992,16 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 
         //do the upwinding of the mobility depending on the phase potentials
         Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWBound;
-        lambdaW = (potentialDiffW == 0) ? 0.5 * (lambdaWI + lambdaWBound) : lambdaW;
+        lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWBound) : lambdaW;
         Scalar lambdaNw = (potentialDiffNw > 0.) ? lambdaNwI : lambdaNwBound;
-        lambdaNw = (potentialDiffNw == 0) ? 0.5 * (lambdaNwI + lambdaNwBound) : lambdaNw;
+        lambdaNw = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (lambdaNwI + lambdaNwBound) : lambdaNw;
 
         if (compressibility_)
         {
             density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : densityWBound;
-            density_[wPhaseIdx] = (potentialDiffW == 0) ? rhoMeanW : density_[wPhaseIdx];
+            density_[wPhaseIdx] = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? rhoMeanW : density_[wPhaseIdx];
             density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : densityNwBound;
-            density_[nPhaseIdx] = (potentialDiffNw == 0) ? rhoMeanNw : density_[nPhaseIdx];
+            density_[nPhaseIdx] = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? rhoMeanNw : density_[nPhaseIdx];
         }
 
         Scalar scalarPerm = permeability.two_norm();

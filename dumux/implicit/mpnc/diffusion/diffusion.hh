@@ -25,8 +25,10 @@
 #ifndef DUMUX_MPNC_DIFFUSION_HH
 #define DUMUX_MPNC_DIFFUSION_HH
 
+#include <dune/common/float_cmp.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+
 
 #include <dumux/implicit/mpnc/mpncproperties.hh>
 
@@ -130,7 +132,7 @@ protected:
             for (int compIIdx = 0; compIIdx < numComponents - 1; ++compIIdx) {
                 for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
                     Scalar Dij = fluxVars.porousDiffCoeffG(compIIdx, compJIdx);
-                    if (Dij) {
+                    if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(Dij, 0.0, 1.0e-30)) {
                         M[compIIdx][compJIdx] += fluxVars.moleFraction(nPhaseIdx, compIIdx) / Dij;
                         M[compIIdx][compIIdx] -= fluxVars.moleFraction(nPhaseIdx, compJIdx) / Dij;
                     }

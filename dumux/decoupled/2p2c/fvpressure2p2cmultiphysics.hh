@@ -19,6 +19,8 @@
 #ifndef DUMUX_FVPRESSURE2P2C_MULTIPHYSICS_HH
 #define DUMUX_FVPRESSURE2P2C_MULTIPHYSICS_HH
 
+#include <dune/common/float_cmp.hh>
+
 // dumux environment
 #include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
 #include <dumux/decoupled/2p2c/pseudo1p2cfluidstate.hh>
@@ -724,8 +726,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
 
                         if (potential >= 0.)
                         {
-                            density = (potential == 0) ? rhoMean : cellDataI.density(phaseIdx);
-                            lambda = (potential == 0) ? 0.5 * (lambdaI + lambdaBound) : lambdaI;
+                            density = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potential, 0.0, 1.0e-30)) ? rhoMean : cellDataI.density(phaseIdx);
+                            lambda = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potential, 0.0, 1.0e-30)) ? 0.5 * (lambdaI + lambdaBound) : lambdaI;
                         }
                         else
                         {
@@ -784,7 +786,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
     Scalar maxError = 0.;
 
     // next subdomain map
-    if (problem().timeManager().time() == 0.)
+    if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(problem().timeManager().time(), 0.0, 1.0e-30))
         nextSubdomain = 2;  // start with complicated sub in initialization
     else
         nextSubdomain = -1;  // reduce complexity after first TS
@@ -808,7 +810,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
             PrimaryVariables source(NAN);
             problem().source(source, *eIt);
 
-            if (cellData.saturation(wPhaseIdx) != (1. || 0.) or source.one_norm()!= 0.) // cell still 2p
+            if ((cellData.saturation(wPhaseIdx) > 0.0 && cellData.saturation(wPhaseIdx) < 1.0)
+            		|| Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(source.one_norm(), 0.0, 1.0e-30)) // cell still 2p
             {
                 // mark this element
                 nextSubdomain[eIdxGlobal] = 2;
@@ -827,9 +830,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
             }
             else if(nextSubdomain[eIdxGlobal] != 2)// update next subdomain if possible
             {
-                if(cellData.saturation(wPhaseIdx) != 0.)
+                if(Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellData.saturation(wPhaseIdx), 0.0, 1.0e-30))
                     nextSubdomain[eIdxGlobal] = wPhaseIdx;
-                else if (cellData.saturation(nPhaseIdx) != 0.)
+                else if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellData.saturation(nPhaseIdx), 0.0, 1.0e-30))
                     nextSubdomain[eIdxGlobal] = nPhaseIdx;
             }
             timer_.stop();
@@ -974,7 +977,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
     Scalar vol(0.);
     vol = sumConc / pseudoFluidState.density(presentPhaseIdx);
 
-    if (problem().timeManager().timeStepSize() != 0)
+    if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(problem().timeManager().timeStepSize(), 0.0, 1.0e-30))
         cellData.volumeError() = (vol - problem().spatialParams().porosity(elementI));
     return;
 }

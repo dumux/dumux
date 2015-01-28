@@ -24,6 +24,8 @@
 #ifndef DUMUX_2P2CNISUB_PROBLEM_HH
 #define DUMUX_2P2CNISUB_PROBLEM_HH
 
+#include <dune/common/float_cmp.hh>
+
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
 #include <dumux/multidomain/couplinglocalresiduals/2p2cnicouplinglocalresidual.hh>
@@ -367,7 +369,7 @@ public:
                 PrimaryVariables storageChange(0.);
                 storageChange = storageLastTimestep_ - storage;
 
-                assert(time - lastMassOutputTime_ != 0);
+                assert( (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(time - lastMassOutputTime_, 0.0, 1.0e-30)) );
                 storageChange /= (time - lastMassOutputTime_);
                 // 2d: interface length has to be accounted for
                 // in order to obtain kg/m²s
@@ -379,7 +381,7 @@ public:
                           << " IntEnergy: " << storage[energyEqIdx]
                           << " WaterMassChange: " << storageChange[contiWEqIdx]
                           << std::endl;
-                if (this->timeManager().time() != 0.)
+                if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(this->timeManager().time(), 0.0, 1.0e-30))
                     outfile << time << ";"
                             << storageChange[contiTotalMassIdx] << ";"
                             << storageChange[contiWEqIdx] << ";"

@@ -28,6 +28,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/tuples.hh>
+#include <dune/common/float_cmp.hh>
 
 #include "valgrind.hh"
 #include "math.hh"
@@ -236,7 +237,7 @@ public:
     {
         assert(applies(x0));
         assert(applies(x1));
-        assert(x0 != x1);
+        assert(Dune::FloatCmp::ne<Scalar>(x0, x1));
 
         // make sure that x0 is smaller than x1
         if (x0 > x1)

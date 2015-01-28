@@ -23,6 +23,8 @@
 #ifndef DUMUX_MODELS_2PDFM_FLUX_VARIABLES_HH
 #define DUMUX_MODELS_2PDFM_FLUX_VARIABLES_HH
 
+#include <dune/common/float_cmp.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
@@ -229,7 +231,7 @@ private:
                         Scalar rhoJ = elemVolVars[this->face().j].fluidState().density(phaseIdx);
                         Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
                         Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
-                        if (fI + fJ == 0)
+                        if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(fI + fJ, 0.0, 1.0e-30))
                             // doesn't matter because no wetting phase is present in
                             // both cells!
                             fI = fJ = 0.5;

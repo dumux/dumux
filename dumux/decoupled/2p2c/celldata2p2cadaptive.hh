@@ -19,6 +19,8 @@
 #ifndef DUMUX_ELEMENTDATA2P2C_ADAPTIVE_HH
 #define DUMUX_ELEMENTDATA2P2C_ADAPTIVE_HH
 
+#include <dune/common/float_cmp.hh>
+
 #include <dumux/decoupled/2p2c/celldata2p2c.hh>
 #include <dumux/decoupled/2p2c/celldata2p2cmultiphysics.hh>
 /**
@@ -154,7 +156,7 @@ public:
                 += adaptedValues.cellVolume* adaptedValues.totalConcentration_[nCompIdx];
         // if all cells are summed up, re-convert mass into total concentrations
         Scalar fatherVolume = fatherElement.geometry().volume();
-        if(adaptedValuesFather.count == (pow(2,dim)))
+        if(adaptedValuesFather.count == 1 << dim)
         {
             adaptedValuesFather.totalConcentration_[wCompIdx] /= fatherVolume;
             adaptedValuesFather.totalConcentration_[nCompIdx] /= fatherVolume;

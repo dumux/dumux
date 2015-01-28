@@ -24,6 +24,7 @@
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/common/float_cmp.hh>
 
 // dumux environment
 #include <dumux/decoupled/2p2c/fvpressurecompositional.hh>
@@ -268,7 +269,7 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     Scalar timestep_ = problem().timeManager().timeStepSize();
 
     // compressibility term
-    if (!first && timestep_ != 0)
+    if (!first && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(timestep_, 0.0, 1.0e-30))
     {
         Scalar compress_term = cellDataI.dv_dp() / timestep_;
 
@@ -783,11 +784,11 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
 
             if (potentialW >= 0.)
             {
-                densityW = (potentialW == 0) ? rhoMeanW : cellDataI.density(wPhaseIdx);
+                densityW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialW, 0.0, 1.0e-30)) ? rhoMeanW : cellDataI.density(wPhaseIdx);
                 dV_w = (dv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
                                    + dv_dC2 * cellDataI.massFraction(wPhaseIdx, nCompIdx));
                 dV_w *= densityW;
-                lambdaW = (potentialW == 0) ? 0.5 * (cellDataI.mobility(wPhaseIdx) + lambdaWBound)
+                lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialW, 0.0, 1.0e-30)) ? 0.5 * (cellDataI.mobility(wPhaseIdx) + lambdaWBound)
                                             : cellDataI.mobility(wPhaseIdx);
             }
             else
@@ -800,11 +801,11 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
             }
             if (potentialNW >= 0.)
             {
-                densityNW = (potentialNW == 0) ? rhoMeanNW : cellDataI.density(nPhaseIdx);
+                densityNW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialNW, 0.0, 1.0e-30)) ? rhoMeanNW : cellDataI.density(nPhaseIdx);
                 dV_n = (dv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
                         + dv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
                 dV_n *= densityNW;
-                lambdaNW = (potentialNW == 0) ? 0.5 * (cellDataI.mobility(nPhaseIdx) + lambdaNWBound)
+                lambdaNW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialNW, 0.0, 1.0e-30)) ? 0.5 * (cellDataI.mobility(nPhaseIdx) + lambdaNWBound)
                                               : cellDataI.mobility(nPhaseIdx);
             }
             else
@@ -910,7 +911,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
                     + cellData.massConcentration(nCompIdx));
 
     // make shure only physical quantities enter flash calculation
-    if(Z1<0. || Z1 > 1.)
+    if(Z1 < 0. || Z1 > 1.)
     {
         Dune::dgrave << "Feed mass fraction unphysical: Z1 = " << Z1
                << " at global Idx " << eIdxGlobal
@@ -918,7 +919,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
                << cellData.totalConcentration(wCompIdx)
                << " and totalConcentration(nCompIdx) = "
                << cellData.totalConcentration(nCompIdx)<< std::endl;
-        if(Z1<0.)
+        if(Z1 < 0.)
             {
             Z1 = 0.;
             cellData.setTotalConcentration(wCompIdx, 0.);
@@ -1026,7 +1027,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     if ((cellData.density(wPhaseIdx)*cellData.density(nPhaseIdx)) == 0)
         DUNE_THROW(Dune::MathError, "Decoupled2p2c::postProcessUpdate: try to divide by 0 density");
     Scalar vol = massw / cellData.density(wPhaseIdx) + massn / cellData.density(nPhaseIdx);
-    if (problem().timeManager().timeStepSize() != 0)
+    if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(problem().timeManager().timeStepSize(), 0.0, 1.0e-30))
     {
         cellData.volumeError()=(vol - problem().spatialParams().porosity(elementI));
 

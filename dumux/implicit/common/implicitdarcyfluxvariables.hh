@@ -27,6 +27,7 @@
 #define DUMUX_IMPLICIT_DARCY_FLUX_VARIABLES_HH
 
 #include "implicitproperties.hh"
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
@@ -210,7 +211,7 @@ protected:
                 Scalar rhoJ = elemVolVars[face().j].fluidState().density(phaseIdx);
                 Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
                 Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
-                if (fI + fJ == 0)
+                if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(fI + fJ, 0.0, 1.0e-30))
                     // doesn't matter because no wetting phase is present in
                     // both cells!
                     fI = fJ = 0.5;

@@ -20,6 +20,7 @@
 #define DUMUX_FVPRESSURECOMPOSITIONAL_HH
 
 #include <cmath>
+#include <dune/common/float_cmp.hh>
 
 // dumux environment
 #include <dumux/common/math.hh>
@@ -137,7 +138,7 @@ public:
 
         // if we just started a new episode, the TS size of the update Estimate is a better
         // estimate then the size of the last time step
-        if(problem_.timeManager().time() == problem_.timeManager().episodeStartTime()
+        if(Dune::FloatCmp::eq<Scalar>(problem_.timeManager().time(), problem_.timeManager().episodeStartTime())
                 && problem_.timeManager().episodeIndex() > 1)
             problem_.timeManager().setTimeStepSize(dt_estimate*GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor));
 

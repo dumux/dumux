@@ -19,6 +19,7 @@
 #ifndef DUMUX_IMPETPROBLEM_HH
 #define DUMUX_IMPETPROBLEM_HH
 
+#include <dune/common/float_cmp.hh>
 #include "impetproperties.hh"
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
@@ -371,7 +372,8 @@ public:
         dt = std::min(dt, timeManager().episodeMaxTimeStepSize());
 
         // check if we are in first TS and an initialDt was assigned
-        if (t==0. && timeManager().timeStepSize()!=0.)
+        if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(t, 0.0, 1.0e-30) 
+        	&& Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(timeManager().timeStepSize(), 0.0, 1.0e-30))
         {
             if (this->gridView().comm().size() > 1)
                 dt = this->gridView().comm().min(dt);

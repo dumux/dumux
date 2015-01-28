@@ -24,6 +24,7 @@
  * @brief  Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003
  */
 
+#include <dune/common/float_cmp.hh>
 #include <dumux/decoupled/common/impetproperties.hh> 
 #include "evalcflflux.hh"
 
@@ -575,13 +576,13 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
         	    bcValues[nPhaseIdx] *= faceArea;
 	
     	        bool hasPotWBound = false;
-        	    if (lambdaW != 0 && bcValues[wPhaseIdx] != 0)
+        	    if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(lambdaW, 0.0, 1.0e-30) && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(bcValues[wPhaseIdx], 0.0, 1.0e-30))
             	{
         	        potWBound -= bcValues[wPhaseIdx] / (transmissibility * lambdaW);
         	        hasPotWBound = true;
         	    }
       	     	bool hasPotNwBound = false;
-        	    if (lambdaNw != 0 && bcValues[nPhaseIdx] != 0)
+        	    if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(lambdaNw, 0.0, 1.0e-30) && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(bcValues[nPhaseIdx], 0.0, 1.0e-30))
             	{
       	          	potNwBound -= bcValues[nPhaseIdx] / (transmissibility * lambdaNw);
         	        hasPotNwBound = true;

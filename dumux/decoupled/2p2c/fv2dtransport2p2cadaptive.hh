@@ -20,6 +20,7 @@
 #define DUMUX_FV2DTRANSPORT2P2C_ADAPTIVE_HH
 
 #include <dune/grid/common/gridenums.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/linear/vectorexchange.hh>
@@ -537,10 +538,10 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
             {
                 //check if harmonic weighting is necessary
                 // check if outflow induce neglected (i.e. mob=0) phase flux
-                if (potential[phaseIdx] > 0. && cellDataJ.mobility(phaseIdx) != 0.)
+                if (potential[phaseIdx] > 0. && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellDataJ.mobility(phaseIdx), 0.0, 1.0e-30))
                     lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
                 // check if inflow induce neglected phase flux
-                else if (potential[phaseIdx] < 0. && cellDataI.mobility(phaseIdx) != 0.) 
+                else if (potential[phaseIdx] < 0. && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellDataI.mobility(phaseIdx), 0.0, 1.0e-30))
                     lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
                 else
                     doUpwinding[phaseIdx] = false;

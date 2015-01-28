@@ -26,6 +26,7 @@
 #ifndef DUMUX_STOKES_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_STOKES_LOCAL_RESIDUAL_BASE_HH
 
+#include <dune/common/float_cmp.hh>
 #include <dune/grid/common/grid.hh>
 
 #include <dumux/implicit/common/implicitmodel.hh>
@@ -190,7 +191,7 @@ protected:
         if(!useMoles)
         {
             // mass balance with upwinded density
-            if (massUpwindWeight_ == 1.0) // fully upwind
+            if (Dune::FloatCmp::eq<Scalar>(massUpwindWeight_, 1.0)) // fully upwind
                 massBalanceResidual *= up.density();
             else
                 massBalanceResidual *= massUpwindWeight_ * up.density() +
@@ -199,7 +200,7 @@ protected:
         else
         {
             // mass balance with upwinded molarDensity
-            if (massUpwindWeight_ == 1.0) // fully upwind
+            if (Dune::FloatCmp::eq<Scalar>(massUpwindWeight_, 1.0)) // fully upwind
                 massBalanceResidual *= up.molarDensity();
             else
                 massBalanceResidual *= massUpwindWeight_ * up.molarDensity() +
@@ -493,7 +494,7 @@ protected:
                 // calculate  mu grad v t t
                 // center in the face of the reference element
                 DimVector tangent;
-                if (stabilizationBeta_ != 0)
+                if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(stabilizationBeta_, 0.0, 1.0e-30))
                 {
                     const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
                     tangent[0] = elementUnitNormal[1];  //TODO: 3D
@@ -564,7 +565,7 @@ protected:
 
             // beta-stabilization at the boundary in case of outflow condition
             // for the momentum balance
-            if(momentumBalanceOutflow_(bcTypes) && stabilizationBeta_ != 0)
+            if(momentumBalanceOutflow_(bcTypes) && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(stabilizationBeta_, 0.0, 1.0e-30))
             {
                 // calculate  mu grad v t t for beta-stabilization
                 // center in the face of the reference element
@@ -603,7 +604,7 @@ protected:
      */
     void removeStabilizationAtBoundary_(const int scvIdx)
     {
-        if (stabilizationAlpha_ != 0)
+        if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(stabilizationAlpha_, 0.0, 1.0e-30))
         {
             // loop over the edges of the element
             for (int fIdx = 0; fIdx < this->fvGeometry_().numScvf; fIdx++)
@@ -679,7 +680,7 @@ protected:
                                      DimVector& averagedNormal,
                                      const int scvIdx)
     {
-        assert(averagedNormal.two_norm() != 0.0);
+        assert( (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(averagedNormal.two_norm(), 0.0, 1.0e-30)) );
 
         // divide averagedNormal by its length
         averagedNormal /= averagedNormal.two_norm();

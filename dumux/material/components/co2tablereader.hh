@@ -25,6 +25,7 @@
 #ifndef DUMUX_TABULATED_CO2_HH
 #define DUMUX_TABULATED_CO2_HH
 
+#include <dune/common/float_cmp.hh>
 #include <dumux/common/exceptions.hh>
 
 #include <assert.h>
@@ -119,7 +120,7 @@ public:
 protected:
     int findTempIdx_(Scalar temperature) const
     {
-        if (temperature == maxTemp())
+        if (Dune::FloatCmp::eq<Scalar>(temperature, maxTemp()))
             return numTempSteps - 2;
         const int result = static_cast<int>((temperature - minTemp())/(maxTemp() - minTemp())*(numTempSteps - 1));
         return std::max(0, std::min(result, numTempSteps - 2));
@@ -127,7 +128,7 @@ protected:
 
     int findPressIdx_(Scalar pressure) const
     {
-        if (pressure == maxPress())
+        if (Dune::FloatCmp::eq<Scalar>(pressure, maxPress()))
             return numPressSteps - 2;
         const int result = static_cast<int>((pressure - minPress())/(maxPress() - minPress())*(numPressSteps - 1));
         return std::max(0, std::min(result, numPressSteps - 2));

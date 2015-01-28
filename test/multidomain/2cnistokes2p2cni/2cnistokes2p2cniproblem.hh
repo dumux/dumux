@@ -32,6 +32,7 @@
 #ifndef DUMUX_2CNISTOKES2P2CNIPROBLEM_HH
 #define DUMUX_2CNISTOKES2P2CNIPROBLEM_HH
 
+#include <dune/common/float_cmp.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/io/file/dgfparser.hh>
@@ -262,7 +263,7 @@ public:
         ParentType::init();
 
         std::cout << "Writing flux data at interface\n";
-        if (this->timeManager().time() == 0)
+        if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(this->timeManager().time(), 0.0, 1.0e-30))
         {
             fluxFile_.open("fluxes.out");
             fluxFile_ << "Time;"

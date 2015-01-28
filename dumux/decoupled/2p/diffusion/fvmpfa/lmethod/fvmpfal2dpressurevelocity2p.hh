@@ -18,6 +18,8 @@
 #ifndef DUMUX_MPFAL2DPRESSUREVELOCITY2P_HH
 #define DUMUX_MPFAL2DPRESSUREVELOCITY2P_HH
 
+#include <dune/common/float_cmp.hh>
+
 #include "fvmpfal2dpressure2p.hh"
 #include "fvmpfal2dvelocity2p.hh"
 
@@ -498,9 +500,9 @@ void FvMpfaL2dPressureVelocity2p<TypeTag>::calculateVelocityOnBoundary(const Int
 
         //do the upwinding of the mobility depending on the phase potentials
         Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWBound;
-        lambdaW = (potentialDiffW == 0) ? 0.5 * (lambdaWI + lambdaWBound) : lambdaW;
+        lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWBound) : lambdaW;
         Scalar lambdaNw = (potentialDiffNw > 0.) ? lambdaNwI : lambdaNwBound;
-        lambdaNw = (potentialDiffNw == 0) ? 0.5 * (lambdaNwI + lambdaNwBound) : lambdaNw;
+        lambdaNw = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (lambdaNwI + lambdaNwBound) : lambdaNw;
 
 
         Scalar scalarPerm = permeability.two_norm();
