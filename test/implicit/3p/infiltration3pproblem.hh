@@ -63,7 +63,7 @@ SET_BOOL_PROP(InfiltrationThreePProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(InfiltrationThreePProblem, NewtonWriteConvergence, false);
 
 // Maximum tolerated relative error in the Newton method
-SET_SCALAR_PROP(InfiltrationThreePProblem, NewtonRelTolerance, 1e-4);
+SET_SCALAR_PROP(InfiltrationThreePProblem, NewtonMaxRelativeShift, 1e-4);
 
 // -1 backward differences, 0: central differences, +1: forward differences
 SET_INT_PROP(InfiltrationThreePProblem, ImplicitNumericDifferenceMethod, 1);

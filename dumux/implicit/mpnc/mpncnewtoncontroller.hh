@@ -198,7 +198,7 @@ public:
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
     {
-        if (this->enableRelativeCriterion_ || this->enablePartialReassemble_)
+        if (this->enableShiftCriterion_ || this->enablePartialReassemble_)
             this->newtonUpdateRelError(uLastIter, deltaU);
 
         // compute the vertex and element colors for partial
@@ -229,7 +229,7 @@ public:
                 NewtonChop::chop(uCurrentIter, uLastIter);
             }
 
-            if (this->enableAbsoluteCriterion_)
+            if (this->enableResidualCriterion_)
             {
                 SolutionVector tmp(uLastIter);
                 this->absoluteError_ = this->method().model().globalResidual(tmp, uCurrentIter);

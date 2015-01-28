@@ -70,7 +70,7 @@ SET_INT_PROP(KuevetteProblem, ImplicitNumericDifferenceMethod, 0);
 SET_SCALAR_PROP(KuevetteProblem, TimeManagerMaxTimeStepSize, 60.);
 
 // set newton relative tolerance
-SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
+SET_SCALAR_PROP(KuevetteProblem, NewtonMaxRelativeShift, 1e-6);
 }
 
 

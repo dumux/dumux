@@ -44,7 +44,7 @@ public:
     {
         Dune::FMatrixPrecision<>::set_singular_limit(1e-35);
 
-        this->setRelTolerance(1e-6);
+        this->setMaxRelativeShift(1e-6);
         this->setTargetSteps(10);
         this->setMaxSteps(18);
     }

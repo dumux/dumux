@@ -132,7 +132,7 @@ Pentry3 = 1012
 BCLambda3 = 3.277
 
 [Newton]
-RelTolerance = 1e-5
+MaxRelativeShift = 1e-5
 TargetSteps = 8
 MaxSteps = 12
 WriteConvergence = false 

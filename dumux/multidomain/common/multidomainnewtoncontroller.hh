@@ -40,7 +40,7 @@ namespace Properties
 // they can be overwritten in the parameter file
 SET_INT_PROP(MultiDomain, NewtonTargetSteps, 8);
 SET_INT_PROP(MultiDomain, NewtonMaxSteps, 15);
-SET_SCALAR_PROP(MultiDomain, NewtonRelTolerance, 1e-5);
+SET_SCALAR_PROP(MultiDomain, NewtonMaxRelativeShift, 1e-5);
 }
 
 
@@ -89,9 +89,9 @@ public:
     {
 //		  Writes out, where the relative tolerance is defined
         std::cout << "ParameterNewtonRelTol= "
-        		<< PROP_DIAGNOSTIC(TypeTag, NewtonRelTolerance)
+        		<< PROP_DIAGNOSTIC(TypeTag, NewtonMaxRelativeShift)
         		<< ", "
-        		<< GET_PROP_VALUE(TypeTag, NewtonRelTolerance)
+        		<< GET_PROP_VALUE(TypeTag, NewtonMaxRelativeShift)
         		<< std::endl;
     };
 

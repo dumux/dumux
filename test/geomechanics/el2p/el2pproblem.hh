@@ -125,7 +125,7 @@ public:
 
 SET_INT_PROP(El2P_TestProblem, LinearSolverVerbosity, 0);
 
-SET_SCALAR_PROP(El2P_TestProblem, NewtonRelTolerance, 1e-5);
+SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-5);
 
 // disable jacobian matrix recycling
 SET_BOOL_PROP(El2P_TestProblem, ImplicitEnableJacobianRecycling, false);

@@ -75,7 +75,7 @@ BCLambda = 6.960
 LambdaSolid = 5.26 # [W/(m*K)]
 
 [Newton]
-RelTolerance = 1e-5
+MaxRelativeShift = 1e-5
 TargetSteps = 8
 MaxSteps = 12
 WriteConvergence = false

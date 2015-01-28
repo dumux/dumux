@@ -27,11 +27,11 @@ NumberOfCellsX = 20 # x-resolution of the grid
 NumberOfCellsY = 10 # y-resolution of the grid
 
 [Newton]
-EnableRelativeCriterion = true # activate relative criterion for convergence 
-RelTolerance = 1e-8 # set relative tolerance 
-EnableAbsoluteCriterion = false # activate absolute criterion
-AbsTolerance = 1e-5 # set absolute tolerance
-SatisfyAbsAndRel = false # use absolute and relative criteria
+EnableShiftCriterion = true # activate relative criterion for convergence 
+MaxRelativeShift = 1e-8 # set relative tolerance 
+EnableResidualCriterion = false # activate absolute criterion
+ResidualReduction = 1e-5 # set absolute tolerance
+SatisfyResidualAndShiftCriterion = false # use absolute and relative criteria
 TargetSteps = 10 
 MaxSteps = 18 # if maximum number of steps are reached, the newton solver will not converge
 
