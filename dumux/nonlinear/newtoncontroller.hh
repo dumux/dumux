@@ -181,16 +181,26 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
 
 public:
-    /*!
-     * \brief
-     */
 // Avoid warnings when deprecated member variables are default-initialized
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    /*!
+     * \brief Constructor
+     */
     NewtonController(const Problem &problem)
-        : endIterMsgStream_(std::ostringstream::out)
-        , convergenceWriter_(asImp_())
-        , linearSolver_(problem)
+    : endIterMsgStream_(std::ostringstream::out)
+    , convergenceWriter_(asImp_())
+    , linearSolver_(problem)
+    , error_(shift_)
+    , lastError_(lastShift_)
+    , tolerance_(shiftTolerance_)
+    , absoluteError_(reduction_)
+    , lastAbsoluteError_(lastReduction_)
+    , initialAbsoluteError_(initialResidual_)
+    , absoluteTolerance_(reductionTolerance_)
+    , enableRelativeCriterion_(enableShiftCriterion_)
+    , enableAbsoluteCriterion_(enableResidualCriterion_)
+    , satisfyAbsAndRel_(satisfyResidualAndShiftCriterion_)
     {
         enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
@@ -201,14 +211,41 @@ public:
         satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyResidualAndShiftCriterion);
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
-            DUNE_THROW(Dune::NotImplemented, "at least one of NewtonEnableShiftCriterion or "
-                    << "NewtonEnableResidualCriterion has to be set to true");
+            DUNE_THROW(Dune::NotImplemented,
+                       "at least one of NewtonEnableShiftCriterion or "
+                       << "NewtonEnableResidualCriterion has to be set to true");
         }
 
         setMaxRelativeShift(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxRelativeShift));
         setResidualReduction(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, ResidualReduction));
         setTargetSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, TargetSteps));
         setMaxSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxSteps));
+
+        // Check if deprecated parameters are set run-time and use them.
+        // Otherwise, the default values would be used.
+        // A warning will be printed during destruction of the controller.
+        typedef typename GET_PROP(TypeTag, ParameterTree) Params;
+        const Dune::ParameterTree &tree = Params::tree();
+        if (tree.hasKey("Newton.EnableRelativeCriterion"))
+        {
+            enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableRelativeCriterion);
+        }
+        if (tree.hasKey("Newton.RelTolerance"))
+        {
+            setMaxRelativeShift(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, RelTolerance));
+        }
+        if (tree.hasKey("Newton.EnableAbsoluteCriterion"))
+        {
+            enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteCriterion);
+        }
+        if (tree.hasKey("Newton.AbsTolerance"))
+        {
+            setResidualReduction(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, AbsTolerance));
+        }
+        if (tree.hasKey("Newton.SatisfyAbsAndRel"))
+        {
+            satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyAbsAndRel);
+        }
 
         verbose_ = true;
         numSteps_ = 0;
@@ -231,7 +268,7 @@ public:
             || tree.hasKey("Newton.SatisfyAbsAndRel"))
         {
             std::cout << std::endl << "[Newton] The following DEPRECATED parameters"
-                      << "are set run-time and are therefore not used:" << std::endl;
+                      << " are set run-time:" << std::endl;
 
             if (tree.hasKey("Newton.EnableRelativeCriterion"))
             {
@@ -264,7 +301,7 @@ public:
             || GET_PROP_VALUE(TypeTag, NewtonSatisfyAbsAndRel) != false)
         {
             std::cout << std::endl << "[Newton] The following DEPRECATED properties"
-                      << " are set compile-time and the corresponding new properties are used:"
+                      << " are set compile-time:"
                       << std::endl;
 
             if (GET_PROP_VALUE(TypeTag, NewtonEnableRelativeCriterion) != true)
@@ -820,16 +857,16 @@ protected:
     bool satisfyResidualAndShiftCriterion_;
 
     // deprecated member variables
-    Scalar error_ DUNE_DEPRECATED_MSG("use shift_ instead");
-    Scalar lastError_ DUNE_DEPRECATED_MSG("use lastShift_ instead");
-    Scalar tolerance_ DUNE_DEPRECATED_MSG("use shiftTolerance_ instead");
-    Scalar absoluteError_ DUNE_DEPRECATED_MSG("use reduction_ instead");
-    Scalar lastAbsoluteError_ DUNE_DEPRECATED_MSG("use lastReduction_ instead");
-    Scalar initialAbsoluteError_ DUNE_DEPRECATED_MSG("use initialResidual_ instead");
-    Scalar absoluteTolerance_ DUNE_DEPRECATED_MSG("use reductionTolerance_ instead");
-    bool enableRelativeCriterion_ DUNE_DEPRECATED_MSG("use enableShiftCriterion_ instead");
-    bool enableAbsoluteCriterion_ DUNE_DEPRECATED_MSG("use enableResidualCriterion_ instead");
-    bool satisfyAbsAndRel_ DUNE_DEPRECATED_MSG("use satisfyResidualAndShiftCriterion_ instead");
+    Scalar& error_ DUNE_DEPRECATED_MSG("use shift_ instead");
+    Scalar& lastError_ DUNE_DEPRECATED_MSG("use lastShift_ instead");
+    Scalar& tolerance_ DUNE_DEPRECATED_MSG("use shiftTolerance_ instead");
+    Scalar& absoluteError_ DUNE_DEPRECATED_MSG("use reduction_ instead");
+    Scalar& lastAbsoluteError_ DUNE_DEPRECATED_MSG("use lastReduction_ instead");
+    Scalar& initialAbsoluteError_ DUNE_DEPRECATED_MSG("use initialResidual_ instead");
+    Scalar& absoluteTolerance_ DUNE_DEPRECATED_MSG("use reductionTolerance_ instead");
+    bool& enableRelativeCriterion_ DUNE_DEPRECATED_MSG("use enableShiftCriterion_ instead");
+    bool& enableAbsoluteCriterion_ DUNE_DEPRECATED_MSG("use enableResidualCriterion_ instead");
+    bool& satisfyAbsAndRel_ DUNE_DEPRECATED_MSG("use satisfyResidualAndShiftCriterion_ instead");
 };
 } // namespace Dumux
 
