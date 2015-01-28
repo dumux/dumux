@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Additional properties required for the coupled Newton controller.
+ * \brief Newton controller for multidomain problems
  */
 #ifndef DUMUX_MULTIDOMAIN_NEWTON_CONTROLLER_HH
 #define DUMUX_MULTIDOMAIN_NEWTON_CONTROLLER_HH
@@ -102,21 +102,13 @@ public:
     { };
 
 
-    /*!
-    * \brief Update the error of the solution compared to the
-    *        previous iteration.
-    *
-    * \param uLastIter The solution of the last iteration
-    * \param deltaU The delta as calculated from solving the linear
-    *               system of equations. This parameter also stores
-    *               the updated solution.
-    */
-    void newtonUpdateRelError(const SolutionVector &uLastIter,
-                              const SolutionVector &deltaU)
+    //! \copydoc ParentType::newtonUpdateShift()
+    void newtonUpdateShift(const SolutionVector &uLastIter,
+                           const SolutionVector &deltaU)
     {
         // calculate the relative error as the maximum relative
         // deflection in any degree of freedom.
-        this->error_ = 0;
+        this->shift_ = 0;
 
         SolutionVector uNewI = uLastIter;
         uNewI -= deltaU;
@@ -126,10 +118,15 @@ public:
                 Scalar vertexError = std::abs(deltaU.base()[i][j]);
                 vertexError /= std::max<Scalar>(1.0, std::abs(uLastIter.base()[i][j] + uNewI.base()[i][j])/2);
 
-                this->error_ = std::max(this->error_, vertexError);
+                this->shift_ = std::max(this->shift_, vertexError);
             }
         }
     }
+
+    void newtonUpdateRelError(const SolutionVector &uLastIter,
+                              const SolutionVector &deltaU)
+    DUNE_DEPRECATED_MSG("use newtonUpdateShift instead")
+    { newtonUpdateShift(uLastIter, deltaU); }
 
     /*!
      * \brief Solve the linear system of equations
@@ -236,7 +233,7 @@ public:
             writeConvergence_(uLastIter, deltaU);
         }
 
-        newtonUpdateRelError(uLastIter, deltaU);
+        newtonUpdateShift(uLastIter, deltaU);
 
         uCurrentIter = uLastIter;
         uCurrentIter -= deltaU;
