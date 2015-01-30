@@ -119,6 +119,7 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
+        this->model().serialize(res);
     }
 
     //! \copydoc Dumux::ImplicitProblem::serialize()

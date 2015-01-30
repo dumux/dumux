@@ -20,7 +20,7 @@ InterfacePosY = 0.25 # [m] Vertical position of coupling interface
 CellsX = 30
 CellsY = 62
 # Grading and refinement of the mesh in y direction
-Grading = 1.13
+GradingFactorY = 1.13
 Refinement = 0
 
 [Output]

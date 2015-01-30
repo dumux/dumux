@@ -40,7 +40,7 @@
 void printUsage(const char *progName)
 {
     std::cout << "usage: " << progName
-            << " [--restart restartTime] -ParameterFile test_2cnistokes2p2cni.input\n";
+              << " -ParameterFile FILENAME\n";
     exit(1);
 }
 
@@ -104,18 +104,6 @@ int start_(int argc,
 
     // define the problem dimensions
     const int dim=2;
-
-    // deal with the restart stuff
-    int argIdx = 1;
-    bool restart = false;
-    double tStart = 0.0;
-    if (argc > 1 && std::string("--restart") == argv[argIdx])
-    {
-        restart = true;
-        ++argIdx;
-
-        std::istringstream(argv[argIdx++]) >> tStart;
-    }
 
     std::string dgfFileName;
     Scalar dt, tEnd;
@@ -186,9 +174,18 @@ int start_(int argc,
 
     Dumux::Parameters::print<TypeTag>();
 
+    // deal with the restart stuff
+    bool restart = false;
+    Scalar restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
+    if (ParameterTree::tree().hasKey("Restart") 
+        || ParameterTree::tree().hasKey("TimeManager.Restart")) {
+        restart = true;
+        restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
+    }
+
     // run the simulation
     timeManager.init(problem,
-                     tStart, // initial time
+                     restartTime, // initial time
                      dt, // initial time step
                      tEnd, // final time
                      restart);
