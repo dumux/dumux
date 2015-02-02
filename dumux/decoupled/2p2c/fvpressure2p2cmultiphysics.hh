@@ -565,7 +565,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         int phaseIdx = std::min(cellDataI.subdomain(), cellDataJ.subdomain());
 
         Scalar rhoMean = 0.5 * (cellDataI.density(phaseIdx) + cellDataJ.density(phaseIdx));
-        //Scalar density = 0;
 
         // 1p => no pc => only 1 pressure, potential
         Scalar potential = (cellDataI.pressure(phaseIdx) - cellDataJ.pressure(phaseIdx)) / dist;
@@ -579,21 +578,18 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
             lambda = cellDataI.mobility(phaseIdx);
             cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);  // store in cellJ since cellI is const
             cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);  // store in cellJ since cellI is const
-            //density = cellDataI.density(phaseIdx);
         }
         else if (potential < 0.)
         {
             lambda = cellDataJ.mobility(phaseIdx);
             cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, true);
             cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, true);
-            //density = cellDataJ.density(phaseIdx);
         }
         else
         {
             lambda = harmonicMean(cellDataI.mobility(phaseIdx) , cellDataJ.mobility(phaseIdx));
             cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);
             cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);
-            //density = cellDataJ.density(phaseIdx);
         }
 
         entries[0]  = lambda * faceArea * fabs(permeability * unitOuterNormal) / (dist);
@@ -721,17 +717,18 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
 
                         potential += rhoMean * (unitDistVec * gravity_);
 
-                        Scalar density = 0;
                         Scalar lambda(0.);
 
-                        if (potential >= 0.)
+                        if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potential, 0.0, 1.0e-30))
                         {
-                            density = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potential, 0.0, 1.0e-30)) ? rhoMean : cellDataI.density(phaseIdx);
-                            lambda = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potential, 0.0, 1.0e-30)) ? 0.5 * (lambdaI + lambdaBound) : lambdaI;
+                            lambda = 0.5*(lambdaI + lambdaBound);
+                        }
+                        else if (potential > 0.)
+                        {
+                            lambda = lambdaI;
                         }
                         else
                         {
-                            density = densityBound;
                             lambda = lambdaBound;
                         }
 

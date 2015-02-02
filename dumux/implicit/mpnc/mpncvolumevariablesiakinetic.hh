@@ -137,13 +137,6 @@ public:
         }
         else
 #endif
-
-
-
-if (AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc ) < 0)
-{
-    Scalar dummy = 0 ;
-}
         awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc ); // 10.; //
 
         interfacialArea_[wPhaseIdx][nPhaseIdx] = awn ; //10. ;//

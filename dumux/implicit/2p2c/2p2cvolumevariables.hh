@@ -436,7 +436,6 @@ public:
                 // note that the gas phase is actually not existing!
                 // thus, this is used as phase switch criterion
                 Scalar xwn = priVars[switchIdx]; 
-                Scalar xww = 1 - xwn;
                 
                 //first, xnw:
                 //psteam = xnw * pn = partial pressure of water in gas phase

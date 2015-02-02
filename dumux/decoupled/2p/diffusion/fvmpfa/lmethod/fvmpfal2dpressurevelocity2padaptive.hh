@@ -574,7 +574,6 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
 
         //determine saturation at the boundary -> if no saturation is known directly at the boundary use the cell saturation
         Scalar satW = 0;
-        Scalar satNw = 0;
         if (bcType.isDirichlet(satEqIdx))
         {
             switch (saturationType_)
@@ -582,13 +581,11 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
             case sw:
             {
                 satW = boundValues[saturationIdx];
-                satNw = 1 - boundValues[saturationIdx];
                 break;
             }
             case sn:
             {
                 satW = 1 - boundValues[saturationIdx];
-                satNw = boundValues[saturationIdx];
                 break;
             }
             }
@@ -596,7 +593,6 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocityOnBoundary(c
         else
         {
             satW = cellData.saturation(wPhaseIdx);
-            satNw = cellData.saturation(nPhaseIdx);
         }
 
         Scalar pressBound = boundValues[pressureIdx];
