@@ -93,14 +93,7 @@ public:
         		<< ", "
         		<< GET_PROP_VALUE(TypeTag, NewtonMaxRelativeShift)
         		<< std::endl;
-    };
-
-    /*!
-     * \brief Destructor
-     */
-    ~MultiDomainNewtonController()
-    { };
-
+    }
 
     //! \copydoc ParentType::newtonUpdateShift()
     void newtonUpdateShift(const SolutionVector &uLastIter,
@@ -282,8 +275,8 @@ public:
             convergenceWriter_.beginIteration(sdGridView1_(), sdGridView2_());
             convergenceWriter_.writeFields(uLastIter, deltaU);
             convergenceWriter_.endIteration();
-        };
-    };
+        }
+    }
 
     /*!
      * \brief the subdomain gridviews

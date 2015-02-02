@@ -63,7 +63,7 @@ public:
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
         upwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-    };
+    }
 
     /*!
      * \brief Evaluate the rate of change of all conservation

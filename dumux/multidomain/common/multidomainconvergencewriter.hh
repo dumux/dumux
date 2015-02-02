@@ -89,7 +89,7 @@ struct MultiDomainConvergenceWriter
 
         if (!vtkMultiWriter2_)
             vtkMultiWriter2_ = new VtkMultiWriter2(problem_().sdProblem2().gridView(), "convergence2");
-    };
+    }
 
     /*!
      * \brief Start and advance one iteration
@@ -103,7 +103,7 @@ struct MultiDomainConvergenceWriter
         ++ iteration_;
         vtkMultiWriter1_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
         vtkMultiWriter2_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
-    };
+    }
 
     /*!
      * \brief Start and advance one iteration
@@ -135,21 +135,21 @@ struct MultiDomainConvergenceWriter
             std::cout << "\n writing convergence file of current Newton iteration \n";
             ctl_.method().model().sdModel1().addConvergenceVtkFields(*vtkMultiWriter1_, uLastIter1, deltaU1);
             ctl_.method().model().sdModel2().addConvergenceVtkFields(*vtkMultiWriter2_, uLastIter2, deltaU2);
-    };
+    }
 
     //! \brief End of iteration
     void endIteration()
     {
         vtkMultiWriter1_->endWrite();
         vtkMultiWriter2_->endWrite();
-    };
+    }
 
     //! \brief End of time step
     void endTimestep()
     {
         ++timeStepIndex_;
         iteration_ = 0;
-    };
+    }
 
 private:
     const Problem &problem_() const

@@ -120,7 +120,7 @@ public:
         uCur_ = tmpU;
         return result;
 #endif
-    };
+    }
 
     /*!
      * \brief Reference to the current solution as a block vector.
@@ -271,7 +271,7 @@ public:
         // merge the two sub-vectors together
         SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), *uCur_);
         SplitAndMerge::mergeSolVectors(sdModel1().prevSol(), sdModel2().prevSol(), *uPrev_);
-    };
+    }
 
     //! \copydoc Dumux::ImplicitModel::updateFailed()
     void updateFailed()
@@ -281,7 +281,7 @@ public:
 
         // merge the two sub-vectors together
         SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), *uCur_);
-    };
+    }
 
      /*!
       * \brief Called by the update() method if a try was
@@ -295,7 +295,7 @@ public:
 
         // merge the two sub-vectors together
         SplitAndMerge::mergeSolVectors(sdModel1().curSol(), sdModel2().curSol(), *uCur_);
-    };
+    }
 
     /*!
      * \brief Calculate the global residual.

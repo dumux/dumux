@@ -82,10 +82,6 @@ class TwoPTwoCNICouplingLocalResidual : public NILocalResidual<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
-    //! \brief Constructor
-    TwoPTwoCNICouplingLocalResidual()
-    { };
-
     /*!
      * \brief Implementation of the boundary evaluation
      */
