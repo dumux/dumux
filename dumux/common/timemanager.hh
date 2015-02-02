@@ -105,6 +105,8 @@ public:
               Scalar tEnd,
               bool restart = false)
     {
+        timer_.reset();
+
         problem_ = &problem;
         time_ = tStart;
         timeStepSize_ = dtInitial;
@@ -127,6 +129,13 @@ public:
             if (problem_->shouldWriteOutput())
                 problem_->writeOutput();
             time_ += timeStepSize_;
+        }
+
+        if (verbose_) {
+            int numProcesses = Dune::MPIHelper::getCollectiveCommunication().size();
+            std::cout << "Initialization took " << timer_.elapsed() <<" seconds on "
+                      << numProcesses << " processes.\n"
+                      << "The cumulative CPU time was " << timer_.elapsed()*numProcesses << " seconds.\n";
         }
 
     }
