@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Provides a helper class for nonoverlapping
- *        decomposition using the PDELab AMG.
+ *        decomposition using the ISTL AMG.
  */
 #ifndef DUMUX_AMGPARALLELHELPERS_HH
 #define DUMUX_AMGPARALLELHELPERS_HH
@@ -44,10 +44,10 @@ template<class TypeTag>
 class ParallelISTLHelper
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP(TypeTag, AMGLocalFemMap) LocalFemMap;
+    typedef typename GET_PROP(TypeTag, AmgTraits) AmgTraits;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    enum { dofCodim = LocalFemMap::dofCodim };
+    enum { dofCodim = AmgTraits::dofCodim };
 
     class BaseGatherScatter
     {
@@ -490,23 +490,21 @@ private:
 template<class TypeTag>
 class EntityExchanger
 {
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP(TypeTag, AMGLocalFemMap) LocalFemMap;
-    enum { numEq = JacobianMatrix::block_type::rows};
+    typedef typename GET_PROP(TypeTag, AmgTraits) AmgTraits;
+    enum { numEq = AmgTraits::numEq };
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum {dim = GridView::dimension};
+    enum { dim = GridView::dimension };
+    enum { dofCodim = AmgTraits::dofCodim };
     typedef typename GridView::Traits::Grid Grid;
     typedef typename Matrix::block_type BlockType;
-    typedef typename GridView::template Codim<LocalFemMap::dofCodim>::Iterator EntityIterator;
+    typedef typename GridView::template Codim<dofCodim>::Iterator EntityIterator;
     typedef typename Grid::Traits::GlobalIdSet IDS;
     typedef typename IDS::IdType IdType;
     typedef typename Matrix::RowIterator RowIterator;
     typedef typename Matrix::ColIterator ColIterator;
-
-    enum { dofCodim = LocalFemMap::dofCodim };
 
 public:
     /*! \brief Constructor. Sets up the local to global relations.
@@ -520,8 +518,8 @@ public:
 
         const GridView& gridView = problem.gridView();
 
-        EntityIterator entityEndIt = gridView.template end<LocalFemMap::dofCodim>();
-        for (EntityIterator entityIt = gridView.template begin<LocalFemMap::dofCodim>();
+        EntityIterator entityEndIt = gridView.template end<dofCodim>();
+        for (EntityIterator entityIt = gridView.template begin<dofCodim>();
              entityIt != entityEndIt; ++entityIt)
         {
             if (entityIt->partitionType() == Dune::BorderEntity)

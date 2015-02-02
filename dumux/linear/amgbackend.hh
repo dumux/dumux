@@ -20,7 +20,7 @@
  * \file
  * \ingroup Linear
  *
- * \brief Provides linear solvers using the PDELab AMG backends.
+ * \brief Provides a linear solver based on the ISTL AMG.
  */
 #ifndef DUMUX_AMGBACKEND_HH
 #define DUMUX_AMGBACKEND_HH
@@ -34,7 +34,6 @@
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/amgproperties.hh>
 #include <dumux/linear/amgparallelhelpers.hh>
-#include <dumux/linear/p0fem.hh>
 
 namespace Dumux {
 
@@ -69,7 +68,7 @@ void scaleLinearSystem(Matrix& matrix, Vector& rhs)
 }
 
 /*!
- * \brief Provides a linear solver using the parallel PDELab AMG backend.
+ * \brief Provides a linear solver using the ISTL AMG.
  */
 template <class TypeTag>
 class AMGBackend
@@ -77,17 +76,15 @@ class AMGBackend
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    enum { numEq = JacobianMatrix::block_type::rows};
-
-    typedef typename GET_PROP(TypeTag, AMGPDELabBackend) PDELabBackend;
-    typedef typename PDELabBackend::LinearOperator LinearOperator;
-    typedef typename PDELabBackend::VType VType;
-    typedef typename PDELabBackend::Comm Comm;
-    typedef typename PDELabBackend::Smoother Smoother;
-    typedef Dune::Amg::AMG<typename PDELabBackend::LinearOperator, VType,
+    typedef typename GET_PROP(TypeTag, AmgTraits) AmgTraits;
+    enum { numEq = AmgTraits::numEq };
+    typedef typename AmgTraits::LinearOperator LinearOperator;
+    typedef typename AmgTraits::VType VType;
+    typedef typename AmgTraits::Comm Comm;
+    typedef typename AmgTraits::Smoother Smoother;
+    typedef Dune::Amg::AMG<typename AmgTraits::LinearOperator, VType,
                            Smoother,Comm> AMGType;
-    typedef typename PDELabBackend::LinearOperator::matrix_type BCRSMat;
+    typedef typename AmgTraits::LinearOperator::matrix_type BCRSMat;
 
 public:    
     /*!
@@ -115,17 +112,17 @@ public:
         static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
         
 #if HAVE_MPI
-        Dune::SolverCategory::Category category = PDELabBackend::isNonOverlapping?
+        Dune::SolverCategory::Category category = AmgTraits::isNonOverlapping?
             Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
 
-        if(PDELabBackend::isNonOverlapping && firstCall_)
+        if(AmgTraits::isNonOverlapping && firstCall_)
         {
             phelper_.initGhostsAndOwners();
         }
 
-        typename PDELabBackend::Comm comm(problem_.gridView().comm(), category);
+        typename AmgTraits::Comm comm(problem_.gridView().comm(), category);
         
-        if(PDELabBackend::isNonOverlapping)
+        if(AmgTraits::isNonOverlapping)
         {
             // extend the matrix pattern such that it is usable for AMG
             EntityExchanger<TypeTag> exchanger(problem_);
@@ -134,19 +131,19 @@ public:
         }
         phelper_.createIndexSetAndProjectForAMG(A, comm);
 
-        typename PDELabBackend::LinearOperator fop(A, comm);
-        typename PDELabBackend::ScalarProduct sp(comm);
+        typename AmgTraits::LinearOperator fop(A, comm);
+        typename AmgTraits::ScalarProduct sp(comm);
         int rank = comm.communicator().rank();
 
         // Make rhs consistent
-        if(PDELabBackend::isNonOverlapping)
+        if(AmgTraits::isNonOverlapping)
         {
             phelper_.makeNonOverlappingConsistent(b);
         }
 #else
-        typename PDELabBackend::Comm  comm;
-        typename PDELabBackend::LinearOperator fop(A);
-        typename PDELabBackend::ScalarProduct sp;
+        typename AmgTraits::Comm  comm;
+        typename AmgTraits::LinearOperator fop(A);
+        typename AmgTraits::ScalarProduct sp;
         int rank=0;
 #endif
         typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments
@@ -164,7 +161,7 @@ public:
         smootherArgs.relaxationFactor = 1;
 
         AMGType amg(fop, criterion, smootherArgs, comm);        
-        Dune::BiCGSTABSolver<typename PDELabBackend::VType> solver(fop, sp, amg, residReduction, maxIt, 
+        Dune::BiCGSTABSolver<typename AmgTraits::VType> solver(fop, sp, amg, residReduction, maxIt, 
                                                                  rank==0?verbosity: 0);
 
 
@@ -189,7 +186,7 @@ private:
 };
 
 /*!
- * \brief Provides a linear solver using the sequential PDELab AMG backend.
+ * \brief Provides a linear solver using the sequential ISTL AMG.
  */
 template <class TypeTag>
 class SeqAMGBackend
@@ -212,6 +209,7 @@ public:
      * \param problem the problem at hand
      */
     SeqAMGBackend(const Problem& problem)
+    DUNE_DEPRECATED_MSG("use the AMGBackend (without 'Seq') instead")
     : problem_(problem)
     {}
 
@@ -260,7 +258,7 @@ private:
 };
 
 /*!
- * \brief Provides a linear solver using the sequential PDELab AMG backend.
+ * \brief Provides a linear solver using the sequential ISTL AMG.
  * 
  * The linear system is scaled beforehand, possibly improving the 
  * convergence behavior of the iterative solver.
@@ -286,6 +284,7 @@ public:
      * \param problem the problem at hand
      */
     ScaledSeqAMGBackend(const Problem& problem)
+    DUNE_DEPRECATED_MSG("use the AMGBackend (without 'ScaledSeq') instead")
     : problem_(problem)
     {}
 

@@ -44,8 +44,9 @@ class P0LocalFiniteElementMap
     typedef Dune::PDELab::SimpleLocalFiniteElementMap< Dune::P0LocalFiniteElement<D,R,d> > ParentType;
 public:
       P0LocalFiniteElementMap ()
-        : ParentType (Dune::P0LocalFiniteElement<D,R,d>(isCube ? Dune::GeometryType(Dune::GeometryType::cube, d)
-                                                               : Dune::GeometryType(Dune::GeometryType::simplex, d)))
+      : ParentType (Dune::P0LocalFiniteElement<D,R,d>(isCube ? Dune::GeometryType(Dune::GeometryType::cube, d)
+                                                             : Dune::GeometryType(Dune::GeometryType::simplex, d)))
+      DUNE_DEPRECATED_MSG("should not be needed anymore")
       {}
 };
 

@@ -21,7 +21,7 @@
  * \ingroup Properties
  * \ingroup Linear
  *
- * \brief Defines some fundamental properties for the PDELab AMG solver.
+ * \brief Defines some fundamental properties for the AMG backend.
  */
 #ifndef DUMUXAMGPROPERTIES_HH
 #define DUMUXAMGPROPERTIES_HH
@@ -47,63 +47,18 @@ template <class TypeTag> class AMGBackend;
 
 namespace Properties
 {
-//! the PDELab finite element map used for the gridfunctionspace
-NEW_PROP_TAG(AMGLocalFemMap);
+//! the type traits required for using the AMG backend
+NEW_PROP_TAG(AmgTraits);
 
-//! box: use the (multi-)linear local FEM space associated with cubes by default
-SET_PROP(BoxModel, AMGLocalFemMap)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum{dim = GridView::dimension};
- public:
-    enum{
-        //! \brief The codimension that the degrees of freedom are attached to.
-        dofCodim = GridView::dimension
-    };
-};
-
-//! cell-centered: use the element-wise constant local FEM space by default
-SET_PROP(CCModel, AMGLocalFemMap)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum{dim = GridView::dimension};
- public:
-    enum{
-        //! \brief The codimension that the degrees of freedom are attached to.
-        dofCodim = 0
-    };
-};
-
-//! decoupled models: use the element-wise constant local FEM space by default
-SET_PROP(DecoupledModel, AMGLocalFemMap)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum{dim = GridView::dimension};
- public:
-    enum{
-        //! \brief The codimension that the degrees of freedom are attached to.
-        dofCodim = 0
-    };
-};
-
-//! set a property JacobianMatrix also for the decoupled models
-SET_PROP(DecoupledModel, JacobianMatrix)
+//! box: use the non-overlapping AMG
+SET_PROP(BoxModel, AmgTraits)
 {
 public:
-typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) type;
-};
-
- //! the type of the employed PDELab backend
-NEW_PROP_TAG(AMGPDELabBackend);
-
-//! box: use the non-overlapping AMG backend
-SET_PROP(BoxModel, AMGPDELabBackend)
-{
- public:
-    //typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_AMG_SSOR<GridOperator> type;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum {
         numEq = JacobianMatrix::block_type::rows,
+        dofCodim = GridView::dimension,
         isNonOverlapping = true
     };
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -122,13 +77,14 @@ SET_PROP(BoxModel, AMGPDELabBackend)
 #endif
 };
 
-//! cell-centered: use the overlapping PDELab AMG backend
-SET_PROP(CCModel, AMGPDELabBackend)
+//! cell-centered: use the overlapping AMG
+SET_PROP(CCModel, AmgTraits)
 {
- public:
+public:
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     enum {
         numEq = JacobianMatrix::block_type::rows,
+        dofCodim = 0,
         isNonOverlapping = false
     };
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -147,14 +103,14 @@ SET_PROP(CCModel, AMGPDELabBackend)
 #endif
 };
 
-//! decoupled model: use the overlapping PDELab AMG backend
-SET_PROP(DecoupledModel, AMGPDELabBackend)
+//! decoupled model: use the overlapping AMG
+SET_PROP(DecoupledModel, AmgTraits)
 {
-    //typedef typename Dumux::AMGBackend<TypeTag>::GridOperator GridOperator;
- public:
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+public:
+    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) JacobianMatrix;
     enum {
         numEq = JacobianMatrix::block_type::rows,
+        dofCodim = 0,
         isNonOverlapping = false
     };
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -171,47 +127,6 @@ SET_PROP(DecoupledModel, AMGPDELabBackend)
     typedef Dune::SeqScalarProduct<VType> ScalarProduct;
     typedef Dune::SeqSSOR<MType,VType, VType> Smoother;
 #endif
-};
-
-//! box: reset the type of solution vector to be PDELab conforming
-SET_PROP(BoxModel, SolutionVector)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    enum { numEq = JacobianMatrix::block_type::rows};
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- public:
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > type;
-};
-
-//! cell-centered: reset the type of solution vector to be PDELab conforming
-SET_PROP(CCModel, SolutionVector)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    enum { numEq = JacobianMatrix::block_type::rows};
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- public:
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > type;
-};
-
-
-//! decoupled model: reset the type of solution vector to be PDELab conforming
-SET_PROP(DecoupledModel, PressureSolutionVector)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    enum { numEq = JacobianMatrix::block_type::rows};
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- public:
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > type;
-};
-
-//! decoupled model: reset the type of solution vector to be PDELab conforming
-SET_PROP(DecoupledModel, PressureRHSVector)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    enum { numEq = JacobianMatrix::block_type::rows};
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- public:
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > type;
 };
 
 } // namespace Properties
