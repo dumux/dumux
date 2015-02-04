@@ -206,7 +206,7 @@ public:
         if (this->enablePartialReassemble_) {
             const Scalar minReasmTol = 1e-2*this->tolerance_;
             const Scalar maxReasmTol = 1e1*this->tolerance_;
-            Scalar reassembleTol = std::max(minReasmTol, std::min(maxReasmTol, this->error_/1e4));
+            Scalar reassembleTol = std::max(minReasmTol, std::min(maxReasmTol, this->shift_/1e4));
 
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
@@ -232,8 +232,8 @@ public:
             if (this->enableResidualCriterion_)
             {
                 SolutionVector tmp(uLastIter);
-                this->absoluteError_ = this->method().model().globalResidual(tmp, uCurrentIter);
-                this->absoluteError_ /= this->initialAbsoluteError_;
+                this->reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                this->reduction_ /= this->initialResidual_;
             }
         }
     }
