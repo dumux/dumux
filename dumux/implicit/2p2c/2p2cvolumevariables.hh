@@ -25,6 +25,8 @@
 #ifndef DUMUX_2P2C_VOLUME_VARIABLES_HH
 #define DUMUX_2P2C_VOLUME_VARIABLES_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/implicit/common/implicitmodel.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
@@ -183,9 +185,11 @@ public:
         Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
-        
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
+#else
         int dofIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dofCodim);
-        
+#endif
         int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
         
         /////////////

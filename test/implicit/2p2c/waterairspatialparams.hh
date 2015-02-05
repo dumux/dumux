@@ -114,9 +114,6 @@ public:
         coarseMaterialParams_.setLambda(2.0);
     }
 
-    ~WaterAirSpatialParams()
-    {}
-
     /*!
      * \brief Apply the intrinsic permeability tensor to a pressure
      *        potential gradient.

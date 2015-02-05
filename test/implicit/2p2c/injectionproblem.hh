@@ -86,8 +86,8 @@ SET_BOOL_PROP(InjectionProblem, VtkAddVelocity, false);
  * This problem uses the \ref TwoPTwoCModel.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box2p2c -parameterFile ./test_box2p2c.input</tt> or
- * <tt>./test_cc2p2c -parameterFile ./test_cc2p2c.input</tt>
+ * <tt>./test_box2p2c</tt> or
+ * <tt>./test_cc2p2c</tt>
  */
 template <class TypeTag>
 class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
@@ -192,13 +192,13 @@ public:
                           /*np=*/nPressure_);
 
         //stateing in the console whether mole or mass fractions are used
-        if(!useMoles)
+        if(useMoles)
         {
-        	std::cout<<"problem uses mass-fractions"<<std::endl;
+            std::cout<<"problem uses mole-fractions"<<std::endl;
         }
         else
         {
-        	std::cout<<"problem uses mole-fractions"<<std::endl;
+            std::cout<<"problem uses mass-fractions"<<std::endl;
         }
     }
 
@@ -387,14 +387,16 @@ private:
         Scalar meanM =
             FluidSystem::molarMass(wCompIdx)*moleFracLiquidH2O +
             FluidSystem::molarMass(nCompIdx)*moleFracLiquidN2;
-        if(!useMoles) //mass fraction formulation
+        if(useMoles)
         {
-        	Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
-        	values[Indices::switchIdx] = massFracLiquidN2;
+            //mole-fraction formulation
+            values[Indices::switchIdx] = moleFracLiquidN2;
         }
-        else //mole-fraction formulation
+        else
         {
-        	values[Indices::switchIdx] = moleFracLiquidN2;
+            //mass fraction formulation
+            Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
+            values[Indices::switchIdx] = massFracLiquidN2;
         }
         values[Indices::pressureIdx] = pl;
     }
@@ -410,8 +412,6 @@ private:
 
     Scalar pressureLow_, pressureHigh_;
     Scalar temperatureLow_, temperatureHigh_;
-
-
 };
 } //end namespace
 

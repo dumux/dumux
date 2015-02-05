@@ -101,8 +101,8 @@ SET_BOOL_PROP(WaterAirProblem, UseMoles, true);
  * This problem uses the \ref TwoPTwoCModel and \ref NIModel model.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box2p2cni -parameterFile test_box2p2cni.input</tt> or
- * <tt>./test_cc2p2cni -parameterFile test_cc2p2cni.input</tt>
+ * <tt>./test_box2p2cni</tt> or
+ * <tt>./test_cc2p2cni</tt>
  *  */
 template <class TypeTag >
 class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
@@ -117,7 +117,6 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
 
@@ -138,9 +137,7 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
 
         conti0EqIdx = Indices::conti0EqIdx,
         contiNEqIdx = conti0EqIdx + Indices::nCompIdx
-
     };
-
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -177,13 +174,13 @@ public:
         name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
 
         //stating in the console whether mole or mass fractions are used
-        if(!useMoles)
+        if(useMoles)
         {
-        	std::cout<<"problem uses mass-fractions"<<std::endl;
+            std::cout<<"problem uses mole-fractions"<<std::endl;
         }
         else
         {
-        	std::cout<<"problem uses mole-fractions"<<std::endl;
+            std::cout<<"problem uses mass-fractions"<<std::endl;
         }
     }
 

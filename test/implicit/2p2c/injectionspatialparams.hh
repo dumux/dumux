@@ -120,12 +120,6 @@ public:
     }
 
     /*!
-     * \brief The destructor
-     */
-    ~InjectionSpatialParams()
-    {}
-
-    /*!
      * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
      *
      * \param element The finite element
