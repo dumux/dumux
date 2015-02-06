@@ -225,10 +225,10 @@ public:
     Scalar globalResidual(SolutionVector &residual,
                           const SolutionVector &u)
     {
-        jacAsm_.gridOperator().residual(u, residual);
+        jacAsm_->gridOperator().residual(u, residual);
 
         // calculate the square norm of the residual
-        Scalar result2 = residual.two_norm2();
+        Scalar result2 = residual.base().two_norm2();
         if (gridView_().comm().size() > 1)
             result2 = gridView_().comm().sum(result2);
 
