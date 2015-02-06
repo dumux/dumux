@@ -120,6 +120,9 @@ NEW_PROP_TAG(ConstraintsTrafo);
 //! Specifies the type of the jacobian matrix as used for the linear solver
 NEW_PROP_TAG(JacobianMatrix);
 
+//! the routines that are used to split and merge solution vectors
+NEW_PROP_TAG(SplitAndMerge);
+
 } // namespace Properties
 } // namespace Dumux
 

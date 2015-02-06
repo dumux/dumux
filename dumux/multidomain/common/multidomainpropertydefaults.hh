@@ -240,6 +240,9 @@ SET_INT_PROP(MultiDomain, LinearSolverMaxIterations, 250);
 // set the maximum time step divisions
 SET_INT_PROP(MultiDomain, NewtonMaxTimeStepDivisions, 10);
 
+// set the routines for splitting and merging solution vectors
+SET_TYPE_PROP(MultiDomain, SplitAndMerge, SplitAndMerge<TypeTag>);
+
 } // namespace Properties
 } // namespace Dumux
 

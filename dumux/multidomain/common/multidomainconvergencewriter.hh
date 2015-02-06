@@ -44,6 +44,7 @@ struct MultiDomainConvergenceWriter
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, SplitAndMerge) SplitAndMerge;
 
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubDomain1TypeTag;
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubDomain2TypeTag;
@@ -121,8 +122,8 @@ struct MultiDomainConvergenceWriter
             SolutionVector1 deltaU1(uLastIter1);
             SolutionVector2 deltaU2(uLastIter2);
 
-            SplitAndMerge<TypeTag>::splitSolVector(uLastIter, uLastIter1, uLastIter2);
-            SplitAndMerge<TypeTag>::splitSolVector(deltaU, deltaU1, deltaU2);
+            SplitAndMerge::splitSolVector(uLastIter, uLastIter1, uLastIter2);
+            SplitAndMerge::splitSolVector(deltaU, deltaU1, deltaU2);
 
             std::cout << "\n writing convergence file of current Newton iteration \n";
             ctl_.method().model().sdModel1().addConvergenceVtkFields(*vtkMultiWriter1_, uLastIter1, deltaU1);

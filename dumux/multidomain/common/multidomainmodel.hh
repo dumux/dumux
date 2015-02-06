@@ -58,7 +58,7 @@ class MultiDomainModel
     typedef typename GET_PROP_TYPE(SubDomain1TypeTag, Model) SubDomainModel1;
     typedef typename GET_PROP_TYPE(SubDomain2TypeTag, Model) SubDomainModel2;
 
-    typedef Dumux::SplitAndMerge<TypeTag> SplitAndMerge;
+    typedef typename GET_PROP_TYPE(TypeTag, SplitAndMerge) SplitAndMerge;
 
     enum {
         numEq1 = GET_PROP_VALUE(TypeTag, NumEq1),

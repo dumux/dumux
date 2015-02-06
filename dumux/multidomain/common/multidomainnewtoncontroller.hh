@@ -63,6 +63,7 @@ class MultiDomainNewtonController : public NewtonController<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, SplitAndMerge) SplitAndMerge;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -241,11 +242,9 @@ public:
     */
     void newtonEndStep(SolutionVector &uCurrentIter, SolutionVector &uLastIter)
     {
-        typedef Dumux::SplitAndMerge<TypeTag> Common;
-
-        Common::splitSolVector(this->model_().curSol(),
-                               this->model_().sdModel1().curSol(),
-                               this->model_().sdModel2().curSol());
+        SplitAndMerge::splitSolVector(this->model_().curSol(),
+                                      this->model_().sdModel1().curSol(),
+                                      this->model_().sdModel2().curSol());
 
         ParentType::newtonEndStep(uCurrentIter, uLastIter);
     }
