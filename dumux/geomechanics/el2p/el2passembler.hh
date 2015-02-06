@@ -629,6 +629,8 @@ private:
     { return problem_().vertexMapper(); }
     const ElementMapper &elementMapper_() const
     { return problem_().elementMapper(); }
+    const GridOperator &gridOperator() const
+    { return *gridOperator_;}
 
     Problem *problemPtr_;
 

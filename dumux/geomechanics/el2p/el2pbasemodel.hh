@@ -225,46 +225,7 @@ public:
     Scalar globalResidual(SolutionVector &residual,
                           const SolutionVector &u)
     {
-        SolutionVector tmp(curSol());
-        curSol() = u;
-        Scalar res = globalResidual(residual);
-        curSol() = tmp;
-        return res;
-    }
-
-    /*!
-     * \brief Compute the global residual for the current solution
-     *        vector.
-     *
-     * \param residual Stores the result
-     */
-    Scalar globalResidual(SolutionVector &residual)
-    {
-        residual = 0;
-
-        ElementIterator eIt = gridView_().template begin<0>();
-        const ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            localResidual().eval(*eIt);
-
-            if (isBox)
-            {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                for (int i = 0; i < eIt->subEntities(dim); ++i)
-#else
-                for (int i = 0; i < eIt->template count<dim>(); ++i)
-#endif
-                {
-                    int globalI = vertexMapper().map(*eIt, i, dim);
-                    residual[globalI] += localResidual().residual(i);
-                }
-            }
-            else
-            {
-                int globalI = elementMapper().map(*eIt);
-                residual[globalI] = localResidual().residual(0);
-            }
-        }
+        jacAsm_.gridOperator().residual(u, residual);
 
         // calculate the square norm of the residual
         Scalar result2 = residual.two_norm2();
@@ -281,6 +242,17 @@ public:
         }
 
         return std::sqrt(result2);
+    }
+
+    /*!
+     * \brief Compute the global residual for the current solution
+     *        vector.
+     *
+     * \param residual Stores the result
+     */
+    Scalar globalResidual(SolutionVector &residual)
+    {
+        return globalResidual(residual, curSol());
     }
 
     /*!
@@ -711,13 +683,13 @@ public:
             def[eqIdx] = writer.allocateManagedBuffer(numDofs);
         }
 
-        for (unsigned int vIdxGlobal = 0; vIdxGlobal < u.size(); vIdxGlobal++)
+        for (unsigned int vIdxGlobal = 0; vIdxGlobal < u.base().size(); vIdxGlobal++)
         {
-            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) 
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
-                (*x[eqIdx])[vIdxGlobal] = u[vIdxGlobal][eqIdx];
-                (*delta[eqIdx])[vIdxGlobal] = - deltaU[vIdxGlobal][eqIdx];
-                (*def[eqIdx])[vIdxGlobal] = residual[vIdxGlobal][eqIdx];
+                (*x[eqIdx])[vIdxGlobal] = u.base()[vIdxGlobal][eqIdx];
+                (*delta[eqIdx])[vIdxGlobal] = - deltaU.base()[vIdxGlobal][eqIdx];
+                (*def[eqIdx])[vIdxGlobal] = residual.base()[vIdxGlobal][eqIdx];
             }
         }
 

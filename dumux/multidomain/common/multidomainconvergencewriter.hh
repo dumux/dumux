@@ -116,21 +116,13 @@ struct MultiDomainConvergenceWriter
     void writeFields(const SolutionVector &uLastIter,
                      const SolutionVector &deltaU)
     {
-            SolutionVector1 uLastIter1;
-            SolutionVector2 uLastIter2;
-            SolutionVector1 deltaU1;
-            SolutionVector2 deltaU2;
+            SolutionVector1 uLastIter1(ctl_.method().model().sdModel1().curSol());
+            SolutionVector2 uLastIter2(ctl_.method().model().sdModel2().curSol());
+            SolutionVector1 deltaU1(uLastIter1);
+            SolutionVector2 deltaU2(uLastIter2);
 
-            uLastIter1.resize(ctl_.method().model().sdModel1().numDofs());
-            uLastIter2.resize(ctl_.method().model().sdModel2().numDofs());
-            deltaU1.resize(ctl_.method().model().sdModel1().numDofs());
-            deltaU2.resize(ctl_.method().model().sdModel2().numDofs());
-
-            typedef Dumux::SplitAndMerge<TypeTag> Common;
-
-            Common::splitSolVector(uLastIter, uLastIter1, uLastIter2);
-            Common::splitSolVector(deltaU, deltaU1, deltaU2);
-
+            SplitAndMerge<TypeTag>::splitSolVector(uLastIter, uLastIter1, uLastIter2);
+            SplitAndMerge<TypeTag>::splitSolVector(deltaU, deltaU1, deltaU2);
 
             std::cout << "\n writing convergence file of current Newton iteration \n";
             ctl_.method().model().sdModel1().addConvergenceVtkFields(*vtkMultiWriter1_, uLastIter1, deltaU1);
