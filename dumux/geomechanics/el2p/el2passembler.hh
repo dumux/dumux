@@ -526,6 +526,8 @@ public:
     SolutionVector& residual()
     { return *residual_; }
 
+    const GridOperator &gridOperator() const
+    { return *gridOperator_;}
 
 private:
 #if !HAVE_DUNE_PDELAB
@@ -629,8 +631,6 @@ private:
     { return problem_().vertexMapper(); }
     const ElementMapper &elementMapper_() const
     { return problem_().elementMapper(); }
-    const GridOperator &gridOperator() const
-    { return *gridOperator_;}
 
     Problem *problemPtr_;
 
