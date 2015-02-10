@@ -65,10 +65,6 @@ class MPNCModelKinetic : public MPNCModel<TypeTag>
     enum { enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
     enum { enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum { numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
-    enum { enableSmoothUpwinding = GET_PROP_VALUE(TypeTag, ImplicitEnableSmoothUpwinding)};
-    enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, ImplicitEnablePartialReassemble)};
-    enum { enableJacobianRecycling = GET_PROP_VALUE(TypeTag, ImplicitEnableJacobianRecycling)};
-    enum { numDiffMethod = GET_PROP_VALUE(TypeTag, ImplicitNumericDifferenceMethod)};
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq)};

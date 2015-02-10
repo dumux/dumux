@@ -63,9 +63,6 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
     enum { velocityAveragingInModel = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel) };
 
-    enum { temperatureOutput    = GET_PROP_VALUE(TypeTag, VtkAddTemperatures) };
-    enum { enthalpyOutput       = GET_PROP_VALUE(TypeTag, VtkAddEnthalpies) };
-    enum { internalEnergyOutput = GET_PROP_VALUE(TypeTag, VtkAddInternalEnergies) };
     enum { reynoldsOutput       = GET_PROP_VALUE(TypeTag, VtkAddReynolds) };
     enum { prandtlOutput        = GET_PROP_VALUE(TypeTag, VtkAddPrandtl) };
     enum { nusseltOutput        = GET_PROP_VALUE(TypeTag, VtkAddNusselt) };
@@ -86,6 +83,9 @@ public:
     MPNCVtkWriterEnergy(const Problem &problem)
         : ParentType(problem)
     {
+        temperatureOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddTemperatures);
+        enthalpyOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddEnthalpies);
+        internalEnergyOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddInternalEnergies);
     }
 
     /*!
@@ -189,15 +189,15 @@ public:
             this->commitScalarBuffer_(writer, "ans" , ans_);
         }
 
-        if (temperatureOutput){
+        if (temperatureOutput_){
             this->commitTemperaturesBuffer_(writer, "T_%s", temperature_);
             this->commitScalarBuffer_(writer, "TwMinusTn" , TwMinusTn_);
             this->commitScalarBuffer_(writer, "TnMinusTs" , TnMinusTs_);
         }
 
-        if (enthalpyOutput)
+        if (enthalpyOutput_)
             this->commitPhaseBuffer_(writer, "h_%s", enthalpy_);
-        if (internalEnergyOutput)
+        if (internalEnergyOutput_)
             this->commitPhaseBuffer_(writer, "u_%s", internalEnergy_);
         if (reynoldsOutput)
             this->commitPhaseBuffer_(writer, "reynoldsNumber_%s", reynoldsNumber_);
@@ -272,6 +272,10 @@ private:
     ScalarVector awn_;
     ScalarVector aws_;
     ScalarVector ans_;
+
+    bool temperatureOutput_;
+    bool enthalpyOutput_;
+    bool internalEnergyOutput_;
 };
 
 /*!
@@ -308,9 +312,6 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
     enum { velocityAveragingInModel = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel) };
 
-    enum { temperatureOutput    = GET_PROP_VALUE(TypeTag, VtkAddTemperatures) };
-    enum { enthalpyOutput       = GET_PROP_VALUE(TypeTag, VtkAddEnthalpies) };
-    enum { internalEnergyOutput = GET_PROP_VALUE(TypeTag, VtkAddInternalEnergies) };
     enum { reynoldsOutput       = GET_PROP_VALUE(TypeTag, VtkAddReynolds) };
     enum { prandtlOutput        = GET_PROP_VALUE(TypeTag, VtkAddPrandtl) };
     enum { nusseltOutput        = GET_PROP_VALUE(TypeTag, VtkAddNusselt) };
@@ -331,6 +332,9 @@ public:
     MPNCVtkWriterEnergy(const Problem &problem)
         : ParentType(problem)
     {
+        temperatureOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddTemperatures);
+        enthalpyOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddEnthalpies);
+        internalEnergyOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddInternalEnergies);
     }
 
     /*!
@@ -416,7 +420,7 @@ public:
     void commitBuffers(MultiWriter & writer)
     {
 
-        if (temperatureOutput){
+        if (temperatureOutput_){
             this->commitTemperaturesBuffer_(writer, "T_%s", temperature_);
         }
 
@@ -424,9 +428,9 @@ public:
         this->commitScalarBuffer_(writer, "qsf", qsf_);
 
 
-        if (enthalpyOutput)
+        if (enthalpyOutput_)
             this->commitPhaseBuffer_(writer, "h_%s", enthalpy_);
-        if (internalEnergyOutput)
+        if (internalEnergyOutput_)
             this->commitPhaseBuffer_(writer, "u_%s", internalEnergy_);
         if (reynoldsOutput)
             this->commitPhaseBuffer_(writer, "reynoldsNumber_%s", reynoldsNumber_);
@@ -511,6 +515,10 @@ private:
     ScalarVector qBoil_ ;
     ScalarVector qsf_ ;
     PhaseDimWorldField  velocity_;
+
+    bool temperatureOutput_;
+    bool enthalpyOutput_;
+    bool internalEnergyOutput_;
 };
 
 

@@ -129,10 +129,6 @@ class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
-    enum {enableSmoothUpwinding = GET_PROP_VALUE(TypeTag, ImplicitEnableSmoothUpwinding)};
-    enum {enablePartialReassemble = GET_PROP_VALUE(TypeTag, ImplicitEnablePartialReassemble)};
-    enum {enableJacobianRecycling = GET_PROP_VALUE(TypeTag, ImplicitEnableJacobianRecycling)};
-    enum {numDiffMethod = GET_PROP_VALUE(TypeTag, ImplicitNumericDifferenceMethod)};
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
@@ -144,6 +140,14 @@ class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
 
 public:
+    MPNCModel()
+    {
+        enableSmoothUpwinding_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableSmoothUpwinding);
+        enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
+        enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
+        numDiffMethod_ = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
+    }
+
     void init(Problem &problem)
     {
         ParentType::init(problem);
@@ -159,10 +163,10 @@ public:
                 << "    number of energy equations: " << numEnergyEquations<< "\n"
                 << "    diffusion: " << enableDiffusion << "\n"
                 << "    energy equation: " << enableEnergy << "\n"
-                << "    smooth upwinding: " << enableSmoothUpwinding << "\n"
-                << "    partial jacobian reassembly: " << enablePartialReassemble << "\n"
-                << "    numeric differentiation method: " << numDiffMethod << " (-1: backward, 0: central, +1 forward)\n"
-                << "    jacobian recycling: " << enableJacobianRecycling << "\n";
+                << "    smooth upwinding: " << enableSmoothUpwinding_ << "\n"
+                << "    partial jacobian reassembly: " << enablePartialReassemble_ << "\n"
+                << "    numeric differentiation method: " << numDiffMethod_ << " (-1: backward, 0: central, +1 forward)\n"
+                << "    jacobian recycling: " << enableJacobianRecycling_ << "\n";
     }
 
     /*!
@@ -197,6 +201,12 @@ public:
     }
 
     Dune::shared_ptr<MPNCVtkWriter> vtkWriter_;
+
+private:
+    bool enableSmoothUpwinding_;
+    bool enablePartialReassemble_;
+    bool enableJacobianRecycling_;
+    int numDiffMethod_;
 };
 
 }
