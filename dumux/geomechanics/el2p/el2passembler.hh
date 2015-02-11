@@ -55,7 +55,6 @@ class El2PAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
-#if HAVE_DUNE_PDELAB
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureFEM)) PressureFEM;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureGridFunctionSpace)) PressureGFS;
     typedef typename PressureGFS::template Child<0>::Type PressureScalarGFS;
@@ -69,7 +68,6 @@ class El2PAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalOperator)) LocalOperator;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperator)) GridOperator;
-#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
@@ -482,7 +480,6 @@ public:
         return elementColor_[globalElementIdx];
     }
 
-#if HAVE_DUNE_PDELAB
     /*!
      * \brief Returns a pointer to the PDELab's grid function space.
      */
@@ -499,7 +496,6 @@ public:
     {
         return *constraintsTrafo_;
     }
-#endif // HAVE_DUNE_PDELAB
 
     /*!
      * \brief Return constant reference to global Jacobian matrix.
@@ -530,62 +526,6 @@ public:
     { return *gridOperator_;}
 
 private:
-#if !HAVE_DUNE_PDELAB
-    // Construct the BCRS matrix for the global jacobian
-    void createMatrix_()
-    {
-        int numVertices = gridView_().size(dim);
-
-        // allocate raw matrix
-        matrix_ = Dune::make_shared<JacobianMatrix>(numVertices, numVertices, JacobianMatrix::random);
-
-        // find out the global indices of the neighboring vertices of
-        // each vertex
-        typedef std::set<int> NeighborSet;
-        std::vector<NeighborSet> neighbors(numVertices);
-        ElementIterator eIt = gridView_().template begin<0>();
-        const ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            const Element &element = *eIt;
-
-            // loop over all element vertices
-            int n = element.template count<dim>();
-            for (int i = 0; i < n - 1; ++i) {
-                int globalI = vertexMapper_().map(*eIt, i, dim);
-                for (int j = i + 1; j < n; ++j) {
-                    int globalJ = vertexMapper_().map(*eIt, j, dim);
-                    // make sure that vertex j is in the neighbor set
-                    // of vertex i and vice-versa
-                    neighbors[globalI].insert(globalJ);
-                    neighbors[globalJ].insert(globalI);
-                }
-            }
-        };
-
-        // make vertices neighbors to themselfs
-        for (int i = 0; i < numVertices; ++i)
-            neighbors[i].insert(i);
-
-        // allocate space for the rows of the matrix
-        for (int i = 0; i < numVertices; ++i) {
-            matrix_->setrowsize(i, neighbors[i].size());
-        }
-        matrix_->endrowsizes();
-
-        // fill the rows with indices. each vertex talks to all of its
-        // neighbors. (it also talks to itself since vertices are
-        // sometimes quite egocentric.)
-        for (int i = 0; i < numVertices; ++i) {
-            typename NeighborSet::iterator nIt = neighbors[i].begin();
-            typename NeighborSet::iterator nEndIt = neighbors[i].end();
-            for (; nIt != nEndIt; ++nIt) {
-                matrix_->addindex(i, *nIt);
-            }
-        }
-        matrix_->endindices();
-    };
-#endif
-
     // reset the global linear system of equations. if partial
     // reassemble is enabled, this means that the jacobian matrix must
     // only be erased partially!

@@ -27,10 +27,6 @@
 #ifndef DUMUX_EL2P_LOCAL_OPERATOR_HH
 #define DUMUX_EL2P_LOCAL_OPERATOR_HH
 
-#if ! HAVE_DUNE_PDELAB
-#error "DUNE-PDELab must be available in order to include this file!"
-#endif
-
 #include<dune/common/version.hh>
 #include<dune/geometry/quadraturerules.hh>
 
