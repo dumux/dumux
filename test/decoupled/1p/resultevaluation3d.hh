@@ -38,15 +38,6 @@ struct BenchmarkResult
 {
 private:
     template<int dim>
-    struct ElementLayout
-    {
-        bool contains (Dune::GeometryType gt)
-        {
-            return gt.dim() == dim;
-        }
-    };
-
-    template<int dim>
     struct FaceLayout
     {
         bool contains (Dune::GeometryType gt)
@@ -97,7 +88,7 @@ public:
         typedef typename GV::IndexSet IS;
         typedef typename GV::template Codim<0>::Iterator Iterator;
         typedef typename GV::IntersectionIterator IntersectionIterator;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
+        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,Dune::MCMGElementLayout> EM;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,FaceLayout> FM;
         typedef typename Grid::ctype ct;
 
@@ -386,15 +377,6 @@ struct ResultEvaluation
 {
 private:
     template<int dim>
-    struct ElementLayout
-    {
-        bool contains (Dune::GeometryType gt)
-        {
-            return gt.dim() == dim;
-        }
-    };
-
-    template<int dim>
     struct FaceLayout
     {
         bool contains (Dune::GeometryType gt)
@@ -447,7 +429,7 @@ public:
         typedef typename Element::Geometry Geometry;
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
+        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > SolVector;
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
         typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
@@ -735,7 +717,7 @@ public:
         typedef typename Element::Geometry Geometry;
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
+        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
         typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
         typedef typename Dune::ReferenceElements<Scalar, dim-1> ReferenceFaces;
 

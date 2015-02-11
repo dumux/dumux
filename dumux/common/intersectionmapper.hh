@@ -33,16 +33,6 @@ namespace Dumux
 template<class GridView>
 class IntersectionMapper
 {
-    // mapper: one data element in every entity
-    template<int dim>
-    struct ElementLayout
-    {
-        bool contains (Dune::GeometryType geomType)
-        {
-            return geomType.dim() == dim;
-        }
-    };
-
     typedef typename GridView::Grid Grid;
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
@@ -50,9 +40,7 @@ class IntersectionMapper
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
-
-
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
 
 public:
     IntersectionMapper(const GridView& gridview)
