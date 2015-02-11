@@ -27,7 +27,6 @@
 #include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/propertysystem.hh>
 
@@ -51,11 +50,9 @@ class CCFVElementGeometry
     enum{dim = GridView::dimension};
     enum{dimWorld = GridView::dimensionworld};
 
-    enum{maxNFAP = 2};
-    enum{maxNE = (dim < 3 ? 4 : 12)};
-    enum{maxNF = (dim < 3 ? 1 : 6)};
-    enum{maxCOS = (dim < 3 ? 2 : 4)};
-    enum{maxBF = (dim < 3 ? 8 : 24)};
+    enum{maxNFAP = 2}; //! maximum number of flux approximation points (two-point flux)
+    enum{maxNE = dim << 1}; //! maximum number of neighbours 
+    enum{maxBF = dim << 1}; //! maximum number of boundary faces
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
