@@ -31,7 +31,7 @@
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/geomechanics/el2p/el2pmodel.hh>
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/geomechanics/el2p/el2pamgbackend.hh>
 
 #include "el2pco2tables.hh"
 #include "el2pspatialparams.hh"
@@ -55,11 +55,8 @@ NEW_TYPE_TAG(El2P_TestProblem, INHERITS_FROM(BoxModel, BoxElasticTwoP, El2PSpati
 NEW_PROP_TAG(InitialDisplacement); //!< The initial displacement function
 NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
 
-
 // Set the grid type
-SET_PROP(El2P_TestProblem, Grid) {
-    typedef Dune::YaspGrid<3> type;
-};
+SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::YaspGrid<3>);
 
 SET_PROP(El2P_TestProblem, PressureFEM)
 {
@@ -80,10 +77,7 @@ public:
 };
 
 // Set the problem property
-SET_PROP(El2P_TestProblem, Problem)
-{
-    typedef Dumux::El2P_TestProblem<TypeTag> type;
-};
+SET_TYPE_PROP(El2P_TestProblem, Problem, El2P_TestProblem<TypeTag>);
 
 // Set fluid configuration
 SET_PROP(El2P_TestProblem, FluidSystem)
@@ -97,10 +91,7 @@ SET_TYPE_PROP(El2P_TestProblem, CO2Table, Dumux::El2P::CO2Tables);
 SET_SCALAR_PROP(El2P_TestProblem, ProblemSalinity, 1e-1);
 
 // Set the soil properties
-SET_PROP(El2P_TestProblem, SpatialParams)
-{
-    typedef Dumux::El2PSpatialParams<TypeTag> type;
-};
+SET_TYPE_PROP(El2P_TestProblem, SpatialParams, El2PSpatialParams<TypeTag>);
 
 // Set the initial displacement function
 SET_PROP(El2P_TestProblem, InitialDisplacement)
@@ -135,7 +126,7 @@ SET_BOOL_PROP(El2P_TestProblem, ImplicitEnablePartialReassemble, false);
 SET_BOOL_PROP(El2P_TestProblem, ProblemEnableGravity, true);
 
 // use the algebraic multigrid
-SET_TYPE_PROP(El2P_TestProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
+SET_TYPE_PROP(El2P_TestProblem, LinearSolver, Dumux::El2PAMGBackend<TypeTag>);
 
 // central differences to calculate the jacobian by default
 SET_INT_PROP(El2P_TestProblem, ImplicitNumericDifferenceMethod, 0);

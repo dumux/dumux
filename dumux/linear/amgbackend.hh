@@ -177,7 +177,11 @@ public:
     {
         return result_;
     }
-    
+
+    const Problem& problem() const
+    {
+        return problem_;
+    }
 private:
     const Problem& problem_;
     ParallelISTLHelper<TypeTag> phelper_;

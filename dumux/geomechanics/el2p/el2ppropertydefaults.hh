@@ -28,6 +28,12 @@
 #ifndef DUMUX_ELASTIC2P_PROPERTY_DEFAULTS_HH
 #define DUMUX_ELASTIC2P_PROPERTY_DEFAULTS_HH
 
+#include <dune/istl/schwarz.hh>
+#include <dune/istl/novlpschwarz.hh>
+#include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/paamg/pinfo.hh>
+#include <dune/istl/preconditioners.hh>
+
 #include <dune/pdelab/backend/istlmatrixbackend.hh>
 #include <dune/pdelab/gridfunctionspace/gridfunctionspace.hh>
 #include <dune/pdelab/backend/istlvectorbackend.hh>
@@ -358,6 +364,38 @@ private:
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
 public:
     typedef Dune::FieldVector<Scalar, numEq> type;
+};
+
+//! the AMG backend will use the BCRS matrix directly
+SET_PROP(BoxElasticTwoP, AmgTraits)
+{
+public:
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    enum {
+        dofCodim = GridView::dimension,
+        isNonOverlapping = true
+    };
+#if HAVE_MPI
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+#else
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+    enum { numEq = JacobianMatrix::block_type::rows};
+#endif
+    typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
+#if HAVE_MPI
+    typedef MType JacobianMatrix;
+    typedef Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int> Comm;
+    typedef Dune::NonoverlappingSchwarzOperator<MType,VType, VType,Comm> LinearOperator;
+    typedef Dune::NonoverlappingSchwarzScalarProduct<VType,Comm> ScalarProduct;
+    typedef Dune::NonoverlappingBlockPreconditioner<Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
+#else
+    typedef Dune::Amg::SequentialInformation Comm;
+    typedef Dune::MatrixAdapter<MType,VType,VType> LinearOperator;
+    typedef Dune::SeqScalarProduct<VType> ScalarProduct;
+    typedef Dune::SeqSSOR<MType,VType, VType> Smoother;
+#endif
 };
 
 //! The local jacobian operator
