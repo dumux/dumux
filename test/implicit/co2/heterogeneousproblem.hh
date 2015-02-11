@@ -153,7 +153,7 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CO2Table)) CO2Table;
+    typedef typename GET_PROP_TYPE(TypeTag, CO2Table) CO2Table;
     typedef Dumux::CO2<Scalar, CO2Table> CO2;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };

@@ -41,8 +41,8 @@ template<class TypeTag>
 class ElTwoPLocalResidual: public BoxLocalResidual<TypeTag> {
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum {
         dim = GridView::dimension
@@ -58,7 +58,7 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
-        numFluidPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        numFluidPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
     enum {
         contiWEqIdx = Indices::contiWEqIdx,
@@ -68,7 +68,7 @@ protected:
     };
     //TODO: delete this if not required
     // only effective porosity update in element variables doesn't work
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
     typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
 
 public:

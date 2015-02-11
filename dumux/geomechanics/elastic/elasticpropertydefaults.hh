@@ -53,7 +53,7 @@ namespace Properties
 SET_PROP(BoxElastic, NumEq)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum{dim = GridView::dimension};
 public:
     static const int value = dim;

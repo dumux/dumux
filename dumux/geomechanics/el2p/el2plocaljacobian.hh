@@ -50,7 +50,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
         enum {
             pressureIdx = Indices::pressureIdx,
             saturationIdx = Indices::saturationIdx
@@ -110,7 +110,7 @@ public:
                                 int col,
                                 int pvIdx)
     {
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
+        typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
         typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
 
         // copy the values of the globalSol vector to the localFunctionSpace values of the current element

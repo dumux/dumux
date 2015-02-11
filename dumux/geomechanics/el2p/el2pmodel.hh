@@ -103,9 +103,9 @@ NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
 template<class TypeTag>
 class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -128,8 +128,8 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
     typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
 
 public:
@@ -704,12 +704,12 @@ public:
      * \brief Applies the initial solution for all vertices of the grid.
      */
     void applyInitialSolution_() {
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(InitialPressSat)) InitialPressSat;
+        typedef typename GET_PROP_TYPE(TypeTag, InitialPressSat) InitialPressSat;
         InitialPressSat initialPressSat(this->problem_().gridView());
         std::cout << "el2pmodel calls: initialPressSat" << std::endl;
         initialPressSat.setPressure(this->problem_().pInit());
 
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(InitialDisplacement)) InitialDisplacement;
+        typedef typename GET_PROP_TYPE(TypeTag, InitialDisplacement) InitialDisplacement;
         InitialDisplacement initialDisplacement(this->problem_().gridView());
 
         typedef Dune::PDELab::CompositeGridFunction<InitialPressSat,

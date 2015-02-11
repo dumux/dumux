@@ -123,7 +123,7 @@ SET_BOOL_PROP(BoxElasticTwoP, EvalGradientsAtSCVCenter, true);
 SET_PROP(BoxElasticTwoP, MaterialLawParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
 
 public:
     typedef typename MaterialLaw::Params type;
@@ -225,12 +225,12 @@ public:
 
 SET_PROP(BoxElasticTwoP, PressureGridFunctionSpace)
 {private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureFEM)) FEM;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureFEM) FEM;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename Dune::PDELab::EntityBlockedOrderingTag OrderingTag;
     typedef typename Dune::PDELab::ISTLVectorBackend<> VBE;
-    enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+    enum{numEq = GET_PROP_VALUE(TypeTag, NumEq),
          dim = GridView::dimension};
 public:
     typedef Dune::PDELab::NoConstraints Constraints;
@@ -247,9 +247,9 @@ public:
 
 SET_PROP(BoxElasticTwoP, DisplacementGridFunctionSpace)
 {private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(DisplacementFEM)) FEM;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, DisplacementFEM) FEM;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename Dune::PDELab::EntityBlockedOrderingTag OrderingTag;
     typedef typename Dune::PDELab::ISTLVectorBackend<> VBE;
     enum{dim = GridView::dimension};
@@ -268,9 +268,9 @@ public:
 
 SET_PROP(BoxElasticTwoP, GridFunctionSpace)
 {private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureGridFunctionSpace)) PressureGFS;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(DisplacementGridFunctionSpace)) DisplacementGFS;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureGridFunctionSpace) PressureGFS;
+    typedef typename GET_PROP_TYPE(TypeTag, DisplacementGridFunctionSpace) DisplacementGFS;
     typedef typename Dune::PDELab::LexicographicOrderingTag OrderingTag;
     typedef typename Dune::PDELab::ISTLVectorBackend<> VBE;
 public:
@@ -360,8 +360,8 @@ public:
 SET_PROP(BoxElasticTwoP, PrimaryVariables)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 public:
     typedef Dune::FieldVector<Scalar, numEq> type;
 };

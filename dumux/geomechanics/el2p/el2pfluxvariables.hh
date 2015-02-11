@@ -60,11 +60,11 @@ NEW_PROP_TAG(SpatialParams);
     {
             typedef ImplicitDarcyFluxVariables<TypeTag> TwoPBase;
 
-            typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+            typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
             typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-            typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+            typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-            typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+            typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
             typedef typename GridView::template Codim<0>::Entity Element;
                         enum
             {
@@ -73,7 +73,7 @@ NEW_PROP_TAG(SpatialParams);
             };
 
             typedef typename GridView::ctype CoordScalar;
-            typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
             typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
             typedef Dune::FieldVector<CoordScalar, dim> DimVector;
             typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimMatrix;
@@ -81,7 +81,7 @@ NEW_PROP_TAG(SpatialParams);
             typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
             typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-            enum {numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
+            enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
         public:
         /*
@@ -165,7 +165,7 @@ NEW_PROP_TAG(SpatialParams);
                             const Element &element,
                             const ElementVolumeVariables &elemVolVars)
             {
-                typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
+                typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
                 typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
                 const GridFunctionSpace& gridFunctionSpace = problem.model().jacobianAssembler().gridFunctionSpace();
                 const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();

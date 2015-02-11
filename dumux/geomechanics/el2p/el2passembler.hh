@@ -48,30 +48,30 @@ namespace PDELab {
 template<class TypeTag>
 class El2PAssembler
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementMapper) ElementMapper;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureFEM)) PressureFEM;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureGridFunctionSpace)) PressureGFS;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureFEM) PressureFEM;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureGridFunctionSpace) PressureGFS;
     typedef typename PressureGFS::template Child<0>::Type PressureScalarGFS;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(DisplacementFEM)) DisplacementFEM;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(DisplacementGridFunctionSpace)) DisplacementGFS;
+    typedef typename GET_PROP_TYPE(TypeTag, DisplacementFEM) DisplacementFEM;
+    typedef typename GET_PROP_TYPE(TypeTag, DisplacementGridFunctionSpace) DisplacementGFS;
     typedef typename DisplacementGFS::template Child<0>::Type DisplacementScalarGFS;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Constraints)) Constraints;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalOperator)) LocalOperator;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperator)) GridOperator;
+    typedef typename GET_PROP_TYPE(TypeTag, GridFunctionSpace) GridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, Constraints) Constraints;
+    typedef typename GET_PROP_TYPE(TypeTag, ConstraintsTrafo) ConstraintsTrafo;
+    typedef typename GET_PROP_TYPE(TypeTag, LocalOperator) LocalOperator;
+    typedef typename GET_PROP_TYPE(TypeTag, GridOperator) GridOperator;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     enum{dim = GridView::dimension};
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -80,8 +80,8 @@ class El2PAssembler
     typedef typename GridView::template Codim<dim>::Entity Vertex;
 
     enum {
-        enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(ImplicitEnablePartialReassemble)),
-        enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(ImplicitEnableJacobianRecycling)),
+        enablePartialReassemble = GET_PROP_VALUE(TypeTag, ImplicitEnablePartialReassemble),
+        enableJacobianRecycling = GET_PROP_VALUE(TypeTag, ImplicitEnableJacobianRecycling),
     };
 
     // copying the jacobian assembler is not a good idea

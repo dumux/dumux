@@ -779,15 +779,15 @@ SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
 
 template <class TypeTag, bool verbose=true>
 class BrineCO2FluidSystem
-: public FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
-                                typename GET_PROP_TYPE(TypeTag, PTAG(CO2Table)),
+: public FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                typename GET_PROP_TYPE(TypeTag, CO2Table),
                                 typename GET_PROP(TypeTag, Components)::H2O,
                                 typename GET_PROP(TypeTag, Components)::BrineRawComponent,
                                 typename GET_PROP(TypeTag, Components)::Brine>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
-            typename GET_PROP_TYPE(TypeTag, PTAG(CO2Table)),
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
+            typename GET_PROP_TYPE(TypeTag, CO2Table),
             typename GET_PROP(TypeTag, Components)::H2O,
             typename GET_PROP(TypeTag, Components)::BrineRawComponent,
             typename GET_PROP(TypeTag, Components)::Brine> ParentType;
