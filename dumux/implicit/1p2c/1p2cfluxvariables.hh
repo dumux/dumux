@@ -331,8 +331,9 @@ protected:
         }
         else {
             // use two-point gradients
-            const GlobalPosition &globalPosI = element.geometry().corner(face().i);
-            const GlobalPosition &globalPosJ = element.geometry().corner(face().j);
+            const auto geometry = element.geometry();
+            const GlobalPosition &globalPosI = geometry.corner(face().i);
+            const GlobalPosition &globalPosJ = geometry.corner(face().j);
             tmp = globalPosI;
             tmp -= globalPosJ;
             Scalar dist = tmp.two_norm();

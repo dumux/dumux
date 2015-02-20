@@ -258,7 +258,8 @@ public:
                                         int scvIdx)
     {
         Scalar volSCVFracture;
-        Dune::GeometryType geomType = element.geometry().type();
+        const auto geometry = element.geometry();
+        Dune::GeometryType geomType = geometry.type();
         const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
         for (int fIdx=0; fIdx<refElement.size(1); fIdx++)
@@ -272,8 +273,8 @@ public:
             {
                 Scalar fracture_width = problem.spatialParams().fractureWidth();
 
-                const GlobalPosition global_i = element.geometry().corner(i);
-                const GlobalPosition global_j = element.geometry().corner(j);
+                const GlobalPosition global_i = geometry.corner(i);
+                const GlobalPosition global_j = geometry.corner(j);
                 GlobalPosition diff_ij = global_j;
                 diff_ij -=global_i;
                 //fracture length in the subcontrol volume is half d_ij

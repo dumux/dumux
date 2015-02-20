@@ -429,8 +429,10 @@ public:
                 effPorosity[eIdx] +=elemVolVars[scvIdx].effPorosity / numScv;
             };
 
-            const GlobalPosition& cellCenter = eIt->geometry().center();
-            const GlobalPosition& cellCenterLocal = eIt->geometry().local(cellCenter);
+            const auto geometry = eIt->geometry();
+
+            const GlobalPosition& cellCenter = geometry.center();
+            const GlobalPosition& cellCenterLocal = geometry.local(cellCenter);
 
             deltaEffPressure[eIdx] = effectivePressure[eIdx] + this->problem().pInit(cellCenter, cellCenterLocal, *eIt);
             // determin changes in effective stress from current solution
@@ -439,7 +441,7 @@ public:
             displacementLFS.child(0).finiteElement().localBasis().evaluateJacobian(cellCenterLocal, vRefShapeGradient);
 
             // get jacobian to transform the gradient to physical element
-            const JacobianInverseTransposed jacInvT = eIt->geometry().jacobianInverseTransposed(cellCenterLocal);
+            const JacobianInverseTransposed jacInvT = geometry.jacobianInverseTransposed(cellCenterLocal);
             std::vector < Dune::FieldVector<RF, dim> > vShapeGradient(dispSize);
             for (size_t i = 0; i < dispSize; i++) {
                 vShapeGradient[i] = 0.0;

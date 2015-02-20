@@ -130,7 +130,8 @@ public:
         /*
          * Calculate the fracture volume fraction wf = 0.5 * Fwidth * 0.5 * Length
          */
-        Dune::GeometryType geomType = elem.geometry().type();
+        const auto geometry = elem.geometry();
+        Dune::GeometryType geomType = geometry.type();
         const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
         Scalar vol; //subcontrol volume
@@ -147,8 +148,8 @@ public:
             {
                 Scalar fracture_width = this->problem_().spatialParams().fractureWidth(elem, fIdx);
 
-                const GlobalPosition global_i = elem.geometry().corner(i);
-                const GlobalPosition global_j = elem.geometry().corner(j);
+                const GlobalPosition global_i = geometry.corner(i);
+                const GlobalPosition global_j = geometry.corner(j);
                 GlobalPosition diff_ij = global_j;
                 diff_ij -=global_i;
                 Scalar fracture_length = 0.5*diff_ij.two_norm();
@@ -165,7 +166,7 @@ public:
         storageFracture[nPhaseIdx]    = 0.0;
         storageMatrix[wPhaseIdx]    = 0.0;
         storageMatrix[nPhaseIdx]    = 0.0;
-        //        const GlobalPosition &globalPos = elem.geometry().corner(scvIdx);
+        //        const GlobalPosition &globalPos = geometry.corner(scvIdx);
 
         Scalar dsm_dsf = volVars.dsm_dsf();
         if (!this->problem_().useInterfaceCondition())

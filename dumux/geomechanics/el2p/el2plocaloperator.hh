@@ -219,7 +219,8 @@ public:
                         Traits::LocalBasisType::Traits::RangeType RT_P;
 
         // select quadrature rule for the element geometry type and with the order=qorder
-        Dune::GeometryType geomType = eg.geometry().type();
+        const auto geometry = eg.geometry();
+        Dune::GeometryType geomType = geometry.type();
         const Dune::QuadratureRule<DF,dim>& rule = Dune::QuadratureRules<DF,dim>::rule(geomType,qorder);
 
         // loop over quadrature points
@@ -232,7 +233,7 @@ public:
 
 
              // get inverse transposed jacobian for quadrature point
-             const JacobianInverseTransposed jacobian = eg.geometry().jacobianInverseTransposed(it->position());
+             const JacobianInverseTransposed jacobian = geometry.jacobianInverseTransposed(it->position());
 
              // calculate shape function gradients at the quadrature point in global coordinates. This is done
              // by multiplying the reference element shape functions with the inverse transposed jacobian
@@ -297,7 +298,7 @@ public:
              RT_P pn = pw + MaterialLaw::pc(materialParams, sw);
              RT_P pEff;
 
-             const GlobalPosition& globalPos = eg.geometry().global(it->position());
+             const GlobalPosition& globalPos = geometry.global(it->position());
 
              // calculate change in effective pressure with respect to initial conditions pInit (pInit is negativ)
              pEff = pw*sw + pn*sn + model_.problem().pInit(globalPos, it->position(), eg.entity());
@@ -339,7 +340,7 @@ public:
              RF rhoDiff = volVars.density(nPhaseIdx) - volVars.density(wPhaseIdx);
 
              // geometric weight need for quadrature rule evaluation (numerical integration)
-             RF qWeight = it->weight() * eg.geometry().integrationElement(it->position());
+             RF qWeight = it->weight() * geometry.integrationElement(it->position());
 
              // evaluate basis functions
              std::vector<RT_V> vBasis(dispSize);
@@ -399,7 +400,7 @@ public:
                 // position of quadrature point in local coordinates of element
                 DimVector local = isIt->geometryInInside().global(it->position());
 
-                GlobalPosition globalPos = eg.geometry().global(local);
+                GlobalPosition globalPos = geometry.global(local);
 
                 // evaluate boundary condition type
                 BoundaryTypes boundaryTypes;
@@ -465,7 +466,7 @@ public:
 //                             this doesn't work: DimVector local = isIt->geometryInInside().global(face_refElement.position(j,codim-1));
                             DimVector local = refElement.template geometry<1>(fIdx).global(face_refElement.position(j, codim-1));
 
-                            GlobalPosition globalPos = eg.geometry().global(local);
+                            GlobalPosition globalPos = geometry.global(local);
 
                             // evaluate boundary condition type
                             BoundaryTypes boundaryTypes;

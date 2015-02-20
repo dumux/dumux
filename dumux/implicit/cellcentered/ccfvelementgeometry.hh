@@ -100,7 +100,7 @@ public:
 
     void updateInner(const Element& element)
     {
-        const Geometry& geometry = element.geometry();
+        const Geometry geometry = element.geometry();
 
         elementVolume = geometry.volume();
         elementGlobal = geometry.center();
@@ -126,7 +126,7 @@ public:
     {
         updateInner(element);
 
-        const Geometry& geometry = element.geometry();
+        const Geometry geometry = element.geometry();
 
         bool onBoundary = false;
 
@@ -134,6 +134,8 @@ public:
         IntersectionIterator isEndIt = gridView.iend(element);
         for (IntersectionIterator isIt = gridView.ibegin(element); isIt != isEndIt; ++isIt)
         {
+            const auto isGeometry = isIt->geometry();
+
             // neighbor information and inner cvf data:
             if (isIt->neighbor())
             {
@@ -147,11 +149,12 @@ public:
                 scvFace.i = 0;
                 scvFace.j = scvfIdx + 1;
 
-                scvFace.ipGlobal = isIt->geometry().center();
+                scvFace.ipGlobal = isGeometry.center();
                 scvFace.ipLocal =  geometry.local(scvFace.ipGlobal);
                 scvFace.normal = isIt->centerUnitOuterNormal();
-                scvFace.normal *= isIt->geometry().volume();
-                scvFace.area = isIt->geometry().volume();
+                Scalar volume = isGeometry.volume();
+                scvFace.normal *= volume;
+                scvFace.area = volume;
 
                 GlobalPosition distVec = elementGlobal
                                        - neighbors[scvfIdx+1]->geometry().center();
@@ -179,11 +182,12 @@ public:
                 int bfIdx = isIt->indexInInside();
                 SubControlVolumeFace& bFace = boundaryFace[bfIdx];
 
-                bFace.ipGlobal = isIt->geometry().center();
+                bFace.ipGlobal = isGeometry.center();
                 bFace.ipLocal =  geometry.local(bFace.ipGlobal);
                 bFace.normal = isIt->centerUnitOuterNormal();
-                bFace.normal *= isIt->geometry().volume();
-                bFace.area = isIt->geometry().volume();
+                Scalar volume = isGeometry.volume();
+                bFace.normal *= volume;
+                bFace.area = volume;
                 bFace.i = 0;
                 bFace.j = 0;
 

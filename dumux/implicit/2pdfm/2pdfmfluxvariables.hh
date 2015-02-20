@@ -201,11 +201,13 @@ private:
             int i = this->face().i;
             int j = this->face().j;
 
+            const auto geometry = element.geometry();
+
             // compute sum of pressure gradients for each phase
             for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
             {
-                const GlobalPosition localIdx_i = element.geometry().corner(i);
-                const GlobalPosition localIdx_j = element.geometry().corner(j);
+                const GlobalPosition localIdx_i = geometry.corner(i);
+                const GlobalPosition localIdx_j = geometry.corner(j);
 
                 isFracture_ = problem.spatialParams().isEdgeFracture(element, fIdx);
 

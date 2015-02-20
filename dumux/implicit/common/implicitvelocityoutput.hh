@@ -148,7 +148,9 @@ public:
     {
         if (velocityOutput_)
         {
-            Dune::GeometryType geomType = element.geometry().type();
+            const auto geometry = element.geometry();
+
+            Dune::GeometryType geomType = geometry.type();
             const ReferenceElement &referenceElement
                 = ReferenceElements::general(geomType);
 
@@ -157,7 +159,7 @@ public:
 
             // get the transposed Jacobian of the element mapping
             const typename Element::Geometry::JacobianTransposed jacobianT2 =
-                element.geometry().jacobianTransposed(localPos);
+                geometry.jacobianTransposed(localPos);
 
             if (isBox)
             {
@@ -172,7 +174,7 @@ public:
 
                     // Transformation of the global normal vector to normal vector in the reference element
                     const typename Element::Geometry::JacobianTransposed jacobianT1 =
-                        element.geometry().jacobianTransposed(localPosIP);
+                        geometry.jacobianTransposed(localPosIP);
 
                     FluxVariables fluxVars(problem_,
                                            element,
@@ -213,7 +215,7 @@ public:
                     Dune::FieldVector<CoordScalar, dimWorld> scvVelocity(0);
 
                     jacobianT2.mtv(scvVelocities[scvIdx], scvVelocity);
-                    scvVelocity /= element.geometry().integrationElement(localPos)*cellNum_[vIdxGlobal];
+                    scvVelocity /= geometry.integrationElement(localPos)*cellNum_[vIdxGlobal];
                     // add up the wetting phase subcontrolvolume velocities for each vertex
                     velocity[vIdxGlobal] += scvVelocity;
                 }
@@ -319,7 +321,7 @@ public:
                 Dune::FieldVector<Scalar, dimWorld> scvVelocity(0);
                 jacobianT2.mtv(refVelocity, scvVelocity);
 
-                scvVelocity /= element.geometry().integrationElement(localPos);
+                scvVelocity /= geometry.integrationElement(localPos);
 
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int eIdxGlobal = problem_.elementMapper().index(element);

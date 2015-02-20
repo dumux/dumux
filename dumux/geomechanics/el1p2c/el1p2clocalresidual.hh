@@ -177,8 +177,9 @@ namespace Dumux
                 Scalar stabilizationTerm(0.0);
                 if(withStabilization_){
                 // calculate distance h between nodes i and j
-                DimVector hVec = this->element_().geometry().corner(fluxVars.face().j)
-                                      - this->element_().geometry().corner(fluxVars.face().i);
+                const auto geometry = this->element_().geometry();
+                DimVector hVec = geometry.corner(fluxVars.face().j)
+                               - geometry.corner(fluxVars.face().i);
                 Scalar h = hVec.two_norm();
                 stabilizationTerm = (h * h) /
                                     (4 * (fluxVars.lambda()
