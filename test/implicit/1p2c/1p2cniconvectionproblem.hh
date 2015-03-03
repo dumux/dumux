@@ -68,11 +68,6 @@ SET_TYPE_PROP(OnePTwoCNIConvectionProblem,
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(OnePTwoCNIConvectionProblem, UseMoles, true);
 
-// Enable velocity output
-SET_BOOL_PROP(OnePTwoCNIConvectionProblem, VtkAddVelocity, true);
-
-// Disable gravity
-SET_BOOL_PROP(OnePTwoCNIConvectionProblem, ProblemEnableGravity, false);
 }
 
 

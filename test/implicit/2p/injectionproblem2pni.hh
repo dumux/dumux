@@ -94,12 +94,6 @@ SET_TYPE_PROP(InjectionProblem2PNI,
               Dumux::GasPhase<GET_PROP_TYPE(TypeTag, Scalar) Scalar,
                                  Dumux::N2<GET_PROP_TYPE(TypeTag, Scalar) Scalar> >);
 #endif
-
-// Enable gravity
-SET_BOOL_PROP(InjectionProblem2PNI, ProblemEnableGravity, true);
-
-// write convergence behaviour to disk?
-SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
 }
 
 /*!

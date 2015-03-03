@@ -72,26 +72,11 @@ SET_BOOL_PROP(ObstacleProblem, ImplicitEnableSmoothUpwinding, true);
 // Enable molecular diffusion of the components?
 SET_BOOL_PROP(ObstacleProblem, EnableDiffusion, true);
 
-// Use the chopped Newton method?
-SET_BOOL_PROP(ObstacleProblem, NewtonEnableChop, true);
-
-// Enable gravity
-SET_BOOL_PROP(ObstacleProblem, ProblemEnableGravity, true);
-
-// Write Newton convergence to disk?
-SET_BOOL_PROP(ObstacleProblem, NewtonWriteConvergence, false);
-
-// Use the line search strategy for the Newton update?
-SET_BOOL_PROP(ObstacleProblem, NewtonUseLineSearch, false);
-
 // Enable the re-use of the jacobian matrix whenever possible?
 SET_BOOL_PROP(ObstacleProblem, ImplicitEnableJacobianRecycling, true);
 
 // Reassemble the jacobian matrix only where it changed?
 SET_BOOL_PROP(ObstacleProblem, ImplicitEnablePartialReassemble, true);
-
-// use forward diffferences to approximate the partial derivatives
-SET_INT_PROP(ObstacleProblem, ImplicitNumericDifferenceMethod, +1);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(ObstacleProblem, Scalar, double);

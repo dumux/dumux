@@ -63,26 +63,8 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
-// Enable gravity
-SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
-
-// Enable partial reassembly of the Jacobian matrix
-SET_BOOL_PROP(RichardsLensProblem, ImplicitEnablePartialReassemble, true);
-
-// Enable re-use of the Jacobian matrix for the first iteration of a time step
-SET_BOOL_PROP(RichardsLensProblem, ImplicitEnableJacobianRecycling, true);
-
-// Use forward differences to approximate the Jacobian matrix
-SET_INT_PROP(RichardsLensProblem, ImplicitNumericDifferenceMethod, +1);
-
 // Set the maximum number of newton iterations of a time step
 SET_INT_PROP(RichardsLensProblem, NewtonMaxSteps, 28);
-
-// Set the "desireable" number of newton iterations of a time step
-SET_INT_PROP(RichardsLensProblem, NewtonTargetSteps, 18);
-
-// Do not write the intermediate results of the newton method
-SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
 }
 
 /*!

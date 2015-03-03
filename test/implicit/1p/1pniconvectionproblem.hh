@@ -64,11 +64,6 @@ SET_TYPE_PROP(OnePNIConvectionProblem,
               SpatialParams,
               Dumux::OnePNISpatialParams<TypeTag>);
 
-// Enable velocity output
-SET_BOOL_PROP(OnePNIConvectionProblem, VtkAddVelocity, true);
-
-// Disable gravity
-SET_BOOL_PROP(OnePNIConvectionProblem, ProblemEnableGravity, false);
 }
 
 

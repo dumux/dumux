@@ -8,3 +8,8 @@ File = ./grids/column.dgf
 [Problem]
 Name = columnxylolcc # name passed to the output routines
 
+[Implicit]
+NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
+
+[TimeManager]
+MaxTimeStepSize= 4. # Set the maximum time step

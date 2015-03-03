@@ -8,3 +8,6 @@ File = ./grids/test_3p3c.dgf
 [Problem]
 Name = infiltrationcc
 
+[Implicit]
+NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
+

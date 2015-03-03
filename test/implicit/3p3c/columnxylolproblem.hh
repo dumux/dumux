@@ -58,18 +58,6 @@ SET_TYPE_PROP(ColumnProblem, Problem, Dumux::ColumnProblem<TypeTag>);
 SET_TYPE_PROP(ColumnProblem,
               FluidSystem,
               Dumux::FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-// Enable gravity
-SET_BOOL_PROP(ColumnProblem, ProblemEnableGravity, true);
-
-// Use forward differences instead of central differences
-SET_INT_PROP(ColumnProblem, ImplicitNumericDifferenceMethod, 0);
-
-// Write newton convergence
-SET_BOOL_PROP(ColumnProblem, NewtonWriteConvergence, false);
-
-// Set the maximum time step
-SET_SCALAR_PROP(ColumnProblem, TimeManagerMaxTimeStepSize, 4.);
 }
 
 

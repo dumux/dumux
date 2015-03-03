@@ -63,32 +63,15 @@ public:
     typedef Dumux::FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false> type;
 };
 
-// Enable smooth upwinding?
-SET_BOOL_PROP(Forchheimer2pProblem, ImplicitEnableSmoothUpwinding, false);
 
 // Enable molecular diffusion of the components?
 SET_BOOL_PROP(Forchheimer2pProblem, EnableDiffusion, false);
 
-// Use the chopped Newton method?
-SET_BOOL_PROP(Forchheimer2pProblem, NewtonEnableChop, true);
-
 // Enable gravity
 SET_BOOL_PROP(Forchheimer2pProblem, ProblemEnableGravity, true);
 
-// Write Newton convergence to disk?
-SET_BOOL_PROP(Forchheimer2pProblem, NewtonWriteConvergence, false);
-
-// Use the line search strategy for the Newton update?
-SET_BOOL_PROP(Forchheimer2pProblem, NewtonUseLineSearch, false);
-
 // Enable the re-use of the jacobian matrix whenever possible?
 SET_BOOL_PROP(Forchheimer2pProblem, ImplicitEnableJacobianRecycling, true);
-
-// Reassemble the jacobian matrix only where it changed?
-SET_BOOL_PROP(Forchheimer2pProblem, ImplicitEnablePartialReassemble, false);
-
-// use forward diffferences to approximate the partial derivatives
-SET_INT_PROP(Forchheimer2pProblem, ImplicitNumericDifferenceMethod, +1);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(Forchheimer2pProblem, Scalar, double);

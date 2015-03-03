@@ -8,3 +8,6 @@ File = ./grids/test_3p3c_coarse.dgf
 [Problem]
 Name = cc3p3c
 
+[Implicit]
+NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
+

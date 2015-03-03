@@ -14,3 +14,6 @@ LensUpperRightY = 3.0 # [m] y-coordinate of the upper right lens corner
 [Problem]
 Name = lenscc # name passed to the output routines
 
+[Implicit]
+EnablePartialReassemble = 1 # enable partial reassembly of the jacobian matrix?
+EnableJacobianRecycling = 1 # Enable reuse of jacobian matrices?

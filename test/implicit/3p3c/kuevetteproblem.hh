@@ -60,15 +60,6 @@ SET_TYPE_PROP(KuevetteProblem,
               FluidSystem,
               Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-// Enable gravity
-SET_BOOL_PROP(KuevetteProblem, ProblemEnableGravity, true);
-
-// Use central differences (backward -1, forward +1)
-SET_INT_PROP(KuevetteProblem, ImplicitNumericDifferenceMethod, 0);
-
-// Set the maximum time step
-SET_SCALAR_PROP(KuevetteProblem, TimeManagerMaxTimeStepSize, 60.);
-
 // set newton relative tolerance
 SET_SCALAR_PROP(KuevetteProblem, NewtonMaxRelativeShift, 1e-6);
 }

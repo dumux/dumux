@@ -7,4 +7,7 @@ File = ./grids/test_1p2c.dgf
 
 [Problem]
 Name = outflowbox # name passed to the output routines
+EnableGravity = 0 # disable gravity
 
+[Vtk]
+AddVelocity = 1 # enable velocity output

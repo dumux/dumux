@@ -67,12 +67,6 @@ SET_TYPE_PROP(ThreePNIConductionProblem,
               SpatialParams,
               Dumux::ThreePNISpatialParams<TypeTag>);
 
-
-// Enable velocity output
-SET_BOOL_PROP(ThreePNIConductionProblem, VtkAddVelocity, true);
-
-// Disable gravity
-SET_BOOL_PROP(ThreePNIConductionProblem, ProblemEnableGravity, false);
 }
 
 

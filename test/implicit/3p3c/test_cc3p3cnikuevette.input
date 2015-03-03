@@ -8,3 +8,8 @@ File = ./grids/column.dgf
 [Problem]
 Name = kuevettecc # name passed to the output routines
 
+[Implicit]
+NumericDifferenceMethod = 0 # use central differences (backward -1, forward +1)
+
+[TimeManager]
+MaxTimeStepSize = 60. # set the maximum time step

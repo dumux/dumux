@@ -55,14 +55,8 @@ SET_TYPE_PROP(InjectionProblem,
               FluidSystem,
               Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
 
-// Enable gravity
-SET_BOOL_PROP(InjectionProblem, ProblemEnableGravity, true);
-
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(InjectionProblem, UseMoles, true);
-
-SET_BOOL_PROP(InjectionProblem, ImplicitEnableJacobianRecycling, true);
-SET_BOOL_PROP(InjectionProblem, VtkAddVelocity, false);
 }
 
 

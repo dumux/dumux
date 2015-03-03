@@ -77,9 +77,6 @@ SET_TYPE_PROP(OnePTestProblem, SpatialParams, Dumux::OnePTestSpatialParams<TypeT
 
 // Linear solver settings
 SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
-SET_INT_PROP(OnePTestProblem, LinearSolverVerbosity, 0);
-SET_INT_PROP(OnePTestProblem, LinearSolverPreconditionerIterations, 1);
-SET_SCALAR_PROP(OnePTestProblem, LinearSolverPreconditionerRelaxation, 1.0);
 
 NEW_TYPE_TAG(OnePTestBoxProblemWithAMG, INHERITS_FROM(OnePTestBoxProblem));
 NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));

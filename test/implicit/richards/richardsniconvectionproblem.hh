@@ -63,12 +63,6 @@ SET_TYPE_PROP(RichardsNIConvectionProblem, FluidSystem, FluidSystems::H2ON2<type
 SET_TYPE_PROP(RichardsNIConvectionProblem,
               SpatialParams,
               Dumux::RichardsNISpatialParams<TypeTag>);
-
-// Enable velocity output
-SET_BOOL_PROP(RichardsNIConvectionProblem, VtkAddVelocity, true);
-
-// Disable gravity
-SET_BOOL_PROP(RichardsNIConvectionProblem, ProblemEnableGravity, false);
 }
 
 

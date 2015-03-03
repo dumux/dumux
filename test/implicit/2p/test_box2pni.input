@@ -12,3 +12,5 @@ UpperRightY = 40 # [m] height of the domain
 [Problem]
 Name = injection2pnibox
 
+[Newton]
+WriteConvergence = 1 # write convergence behaviour to disk?

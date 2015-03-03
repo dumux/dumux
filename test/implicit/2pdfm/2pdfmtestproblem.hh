@@ -81,26 +81,9 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
 };
 
-// Enable partial reassembly of the jacobian matrix?
-SET_BOOL_PROP(TwoPDFMTestProblem, ImplicitEnablePartialReassemble, true);
-
-// Enable reuse of jacobian matrices?
-SET_BOOL_PROP(TwoPDFMTestProblem, ImplicitEnableJacobianRecycling, true);
-
-// Write the solutions of individual newton iterations?
-SET_BOOL_PROP(TwoPDFMTestProblem, NewtonWriteConvergence, false);
-
-// Use forward differences instead of central differences
-SET_INT_PROP(TwoPDFMTestProblem, ImplicitNumericDifferenceMethod, +1);
-
 // Linear solver settings
 SET_TYPE_PROP(TwoPDFMTestProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag>);
-SET_INT_PROP(TwoPDFMTestProblem, LinearSolverVerbosity, 0);
-SET_INT_PROP(TwoPDFMTestProblem, LinearSolverPreconditionerIterations, 1);
-SET_SCALAR_PROP(TwoPDFMTestProblem, LinearSolverPreconditionerRelaxation, 1.0);
 
-// Enable gravity
-SET_BOOL_PROP(TwoPDFMTestProblem, ProblemEnableGravity, false);
 }
 
 /*!

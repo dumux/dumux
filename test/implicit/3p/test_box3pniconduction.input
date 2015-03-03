@@ -9,4 +9,7 @@ File = ./grids/test_3pniconduction.dgf
 [Problem]
 Name = test_box3pniconduction # name passed to the output routines
 OutputInterval = 5 # every 5th timestep an output file is written
+EnableGravity = 0 # disable gravity
 
+[Vtk]
+AddVelocity = 1 #Enable velocity output

@@ -100,23 +100,11 @@ SET_INT_PROP(CombustionProblemOneComponent,
 SET_TYPE_PROP(CombustionProblemOneComponent, Scalar, double );
 // quad / double
 
-// Enable gravity
-SET_BOOL_PROP(CombustionProblemOneComponent, ProblemEnableGravity, true);
-
 // Specify whether diffusion is enabled
 SET_BOOL_PROP(CombustionProblemOneComponent, EnableDiffusion, false);
 
-// do not use smooth upwinding
-SET_BOOL_PROP(CombustionProblemOneComponent, ImplicitEnableSmoothUpwinding, false);
-
 // do not use a chopped newton method in the beginning
 SET_BOOL_PROP(CombustionProblemOneComponent, NewtonEnableChop, false);
-
-// use forward differences instead of central ones
-SET_INT_PROP(CombustionProblemOneComponent, ImplicitNumericDifferenceMethod, +1);
-
-// disable partial jacobian matrix reassembly
-SET_BOOL_PROP(CombustionProblemOneComponent, ImplicitEnablePartialReassemble, false);
 
 // Enable the re-use of the jacobian matrix whenever possible?
 SET_BOOL_PROP(CombustionProblemOneComponent, ImplicitEnableJacobianRecycling, true);

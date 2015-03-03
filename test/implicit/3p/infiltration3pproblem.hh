@@ -56,17 +56,9 @@ SET_TYPE_PROP(InfiltrationThreePProblem,
               FluidSystem,
               Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-// Enable gravity?
-SET_BOOL_PROP(InfiltrationThreePProblem, ProblemEnableGravity, true);
-
-// Write newton convergence?
-SET_BOOL_PROP(InfiltrationThreePProblem, NewtonWriteConvergence, false);
 
 // Maximum tolerated relative error in the Newton method
 SET_SCALAR_PROP(InfiltrationThreePProblem, NewtonMaxRelativeShift, 1e-4);
-
-// -1 backward differences, 0: central differences, +1: forward differences
-SET_INT_PROP(InfiltrationThreePProblem, ImplicitNumericDifferenceMethod, 1);
 }
 
 /*!

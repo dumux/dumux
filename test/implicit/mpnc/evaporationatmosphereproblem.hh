@@ -120,34 +120,15 @@ SET_INT_PROP(EvaporationAtmosphereProblem,
 // Set the type used for scalar values
 SET_TYPE_PROP(EvaporationAtmosphereProblem, Scalar, double);
 
-// Enable gravity
-SET_BOOL_PROP(EvaporationAtmosphereProblem, ProblemEnableGravity, true);
 
 // Specify whether diffusion is enabled
 SET_BOOL_PROP(EvaporationAtmosphereProblem, EnableDiffusion, true);
 
-// do not use smooth upwinding
-SET_BOOL_PROP(EvaporationAtmosphereProblem, ImplicitEnableSmoothUpwinding, false);
-
 // do not use a chopped newton method in the beginning
 SET_BOOL_PROP(EvaporationAtmosphereProblem, NewtonEnableChop, false);
 
-// use forward differences instead of central ones
-SET_INT_PROP(EvaporationAtmosphereProblem, ImplicitNumericDifferenceMethod, +1 );
-
-// disable partial jacobian matrix reassembly
-SET_BOOL_PROP(EvaporationAtmosphereProblem, ImplicitEnablePartialReassemble, false);
-
-
-SET_SCALAR_PROP(EvaporationAtmosphereProblem,ImplicitMassUpwindWeight, 1);
-SET_SCALAR_PROP(EvaporationAtmosphereProblem,ImplicitMobilityUpwindWeight, 1);
-
 // Enable the re-use of the jacobian matrix whenever possible?
 SET_BOOL_PROP(EvaporationAtmosphereProblem, ImplicitEnableJacobianRecycling, true);
-
-// Specify whether the convergence rate ought to be written out by the
-// newton method
-SET_BOOL_PROP(EvaporationAtmosphereProblem, NewtonWriteConvergence, false);
 
 //#################
 // Which Code to compile
