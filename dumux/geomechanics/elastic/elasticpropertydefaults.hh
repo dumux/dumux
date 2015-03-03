@@ -75,6 +75,9 @@ SET_TYPE_PROP(BoxElastic, FluxVariables, ElasticFluxVariablesBase<TypeTag>);
 
 //! Set the indices used by the linear elasticity model
 SET_TYPE_PROP(BoxElastic, Indices, ElasticIndices<>);
+
+//! enable gravity by default
+SET_BOOL_PROP(BoxElastic, ProblemEnableGravity, true);
 }
 }
 
