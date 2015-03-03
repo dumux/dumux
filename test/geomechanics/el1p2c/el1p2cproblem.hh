@@ -67,9 +67,6 @@ namespace Dumux
     //Define whether mole(true) or mass (false) fractions are used
     SET_BOOL_PROP(El1P2CProblem, UseMoles, false);
 
-    // Disable gravity
-    SET_BOOL_PROP(El1P2CProblem, ProblemEnableGravity, false);
-
     // Include stabilization term to prevent pressure oscillations
     SET_BOOL_PROP(El1P2CProblem, ImplicitWithStabilization, true);
 

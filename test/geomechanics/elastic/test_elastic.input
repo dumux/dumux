@@ -2,6 +2,9 @@
 DtInitial = 1 # [s]
 TEnd = 1 # [s]
 
+[Problem]
+EnableGravity = 0
+
 [Grid]
 File = grids/test_elastic.dgf
 

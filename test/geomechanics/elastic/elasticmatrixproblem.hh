@@ -47,8 +47,6 @@ SET_TYPE_PROP(ElasticMatrixProblem, Grid, Dune::YaspGrid<3>);
 // Set the problem property
 SET_TYPE_PROP(ElasticMatrixProblem, Problem, Dumux::ElasticMatrixProblem<TypeTag>); 
 
-// Enable gravity
-SET_BOOL_PROP(ElasticMatrixProblem, ProblemEnableGravity, false);
 }
 
 /*!

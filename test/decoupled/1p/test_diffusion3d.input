@@ -1,3 +1,6 @@
+[Problem]
+EnableGravity = 0 #
+
 [Grid]
 #File = ./grids/test_diffusion3d_sg.dgf
 File = ./grids/test_diffusion3d_ug1.dgf

@@ -13,7 +13,6 @@ EnableMultiPointFluxApproximation = 1
 MaxInteractionVolumes = 2
 
 [Problem]
-
 SimulationName  = test_adaptive2p2c2d     # name of the output files
 OutputInterval = 5
 

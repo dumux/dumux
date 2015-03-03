@@ -109,12 +109,7 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
-// Enable gravity
-SET_BOOL_PROP(IMPESTestProblem, ProblemEnableGravity, false);
-
 SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
-
-SET_SCALAR_PROP(IMPESTestProblem, ImpetCFLFactor, 0.95);
 
 // set up an additional problem where the AMG backend is used
 NEW_TYPE_TAG(IMPESTestProblemWithAMG, INHERITS_FROM(IMPESTestProblem));

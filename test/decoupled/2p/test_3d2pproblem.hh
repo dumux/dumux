@@ -102,9 +102,6 @@ public:
     typedef Dumux::Test3d2pSpatialParams<TypeTag> type;
 };
 
-// Enable gravity
-SET_BOOL_PROP(ThreeDTwoPTestProblem, ProblemEnableGravity, false);
-
 #if PROBLEM == 1
 SET_TYPE_PROP(ThreeDTwoPTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 SET_SCALAR_PROP(ThreeDTwoPTestProblem, ImpetCFLFactor, 1.0);

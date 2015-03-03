@@ -86,8 +86,6 @@ SET_PROP(Adaptive2p2c2d, Components) : public GET_PROP(TypeTag, DefaultComponent
 // Specify indicator
 SET_TYPE_PROP(Adaptive2p2c2d, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 
-// Enable gravity
-SET_BOOL_PROP(Adaptive2p2c2d, ProblemEnableGravity, true);
 SET_BOOL_PROP(Adaptive2p2c2d, EnableCapillarity, true);
 SET_INT_PROP(Adaptive2p2c2d, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureN);
 

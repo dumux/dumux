@@ -84,9 +84,6 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
 };
 
-// Enable gravity
-SET_BOOL_PROP(DiffusionTestProblem, ProblemEnableGravity, false);
-
 #if HAVE_SUPERLU
 SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag>);
 #else

@@ -4,6 +4,10 @@ TEnd = 0 # [s]
 
 [Problem]
 #Delta = 1e-6 # [-] if this is commented in, it is used
+EnableGravity = 0 #
+
+[LinearSolver]
+Verbosity = 1 # 
 
 [Grid]
 NumberOfCellsX = 1 # [-] resolution in x-direction

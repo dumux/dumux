@@ -114,16 +114,7 @@ public:
     typedef Dumux::InitialPressSat<GridView, Scalar> type;
 };
 
-SET_INT_PROP(El2P_TestProblem, LinearSolverVerbosity, 0);
-
 SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-5);
-
-// disable jacobian matrix recycling
-SET_BOOL_PROP(El2P_TestProblem, ImplicitEnableJacobianRecycling, false);
-// disable partial reassembling
-SET_BOOL_PROP(El2P_TestProblem, ImplicitEnablePartialReassemble, false);
-// Enable gravity
-SET_BOOL_PROP(El2P_TestProblem, ProblemEnableGravity, true);
 
 // use the algebraic multigrid
 SET_TYPE_PROP(El2P_TestProblem, LinearSolver, Dumux::El2PAMGBackend<TypeTag>);

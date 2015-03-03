@@ -76,11 +76,6 @@ public:
 
 SET_INT_PROP(TransportTestProblem, VelocityFormulation,
         DecoupledTwoPCommonIndices::velocityTotal);
-
-// Disable gravity
-SET_BOOL_PROP(TransportTestProblem, ProblemEnableGravity, false);
-
-SET_SCALAR_PROP(TransportTestProblem, ImpetCFLFactor, 1.0);
 }
 
 /*!

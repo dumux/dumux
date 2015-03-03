@@ -15,7 +15,8 @@ EnableSimpleLStencil = true
 EnableComplexLStencil =true
 
 [Problem]
-OutputInterval =0
+EnableGravity = 0 #
+OutputInterval = 0
 OutputTimeInterval = 1e3
 
 [Impet]
