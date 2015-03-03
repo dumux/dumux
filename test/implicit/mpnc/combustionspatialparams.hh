@@ -115,10 +115,8 @@ public:
     //! load parameters from input file and initialize parameter values
         void setInputInitialize()
         {
-            try
-            {
                 eps_                    = 1e-6;
-                // BEWARE! First the input values have to be set, than the material parameters can be set
+                // BEWARE! First the input values have to be set, then the material parameters can be set
 
                 // this is the parameter value from file part
                 porosity_                 		= GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.porosity);
@@ -143,15 +141,6 @@ public:
                 factorMassTransfer_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorMassTransfer);
 
                 lengthPM_      			= GET_RUNTIME_PARAM(TypeTag, Scalar,Grid.lengthPM);
-            }
-            catch (Dumux::ParameterException &e) {
-                std::cerr << e << ". Abort!\n";
-                exit(1) ;
-            }
-            catch (...) {
-                std::cerr << "Unknown exception thrown!\n";
-                exit(1);
-            }
 
             // residual saturations
             materialParams_.setSwr(Swr_) ;

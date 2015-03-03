@@ -58,8 +58,6 @@ public:
     OnePTestSpatialParams(const GridView& gridView)
         : ParentType(gridView)
     {
-        try
-        {
             lensLowerLeft_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftX);
             if (dimWorld > 1)
                 lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftY);
@@ -74,15 +72,6 @@ public:
 
             permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
             permeabilityLens_=GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityLens);
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
     }
 
     /*!

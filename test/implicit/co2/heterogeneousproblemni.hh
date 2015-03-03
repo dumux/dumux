@@ -181,8 +181,6 @@ public:
           noFlowBoundary_(4),
           intersectionToVertexBC_(*this)
     {
-        try
-        {
             nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.NTemperature);
             nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.NPressure);
             pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.PressureLow);
@@ -194,15 +192,6 @@ public:
             injectionRate_      = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InjectionRate);
             injectionPressure_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InjectionPressure);
             injectionTemperature_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InjectionTemperature);
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
 
         /* Alternative syntax:
          * typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;

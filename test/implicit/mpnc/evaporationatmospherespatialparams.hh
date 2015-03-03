@@ -198,8 +198,6 @@ public:
         // load parameters from input file and initialize parameter values
         void setInputInitialize()
         {
-            try
-            {
                 eps_                    = 1e-6;
                 heightPM_               = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.InterfacePos);
                 heightDomain_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.YMax);
@@ -234,15 +232,6 @@ public:
                 characteristicLengthPM_         = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.meanPoreSize);
                 factorEnergyTransfer_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorEnergyTransfer);
                 factorMassTransfer_             = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorMassTransfer);
-            }
-            catch (Dumux::ParameterException &e) {
-                std::cerr << e << ". Abort!\n";
-                exit(1) ;
-            }
-            catch (...) {
-                std::cerr << "Unknown exception thrown!\n";
-                exit(1);
-            }
 
             // residual saturations
             materialParamsFF_.setSwr(0.0);

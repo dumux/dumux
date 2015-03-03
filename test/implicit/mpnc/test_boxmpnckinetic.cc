@@ -160,8 +160,6 @@ int start_(int argc,
     int gridRefinement;
     bool useInterfaceMeshCreator;
 
-    try
-    {
         dgfFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
         dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
         tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd);
@@ -172,15 +170,7 @@ int start_(int argc,
         gradingFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Grading);
         gridRefinement = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Refinement);
         useInterfaceMeshCreator = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, UseInterfaceMeshCreator);
-    }
-    catch (Dumux::ParameterException &e) {
-        std::cerr << e << ". Abort!\n";
-        exit(1) ;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        exit(1);
-    }
+
     std::cout << "Starting with timestep size = " << dt << "s, simulation end = " << tEnd << "s\n";
 
     GridPointer gridPtr;

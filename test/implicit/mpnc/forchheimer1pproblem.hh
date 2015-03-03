@@ -155,20 +155,9 @@ public:
     Forchheimer1pProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        try
-        {
             pMax_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.pMax);
             pMin_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.pMin);
             outputName_     = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.outputName);
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
 
         eps_ = 1e-6;
         temperature_ = 273.15 + 25; // -> 25°C

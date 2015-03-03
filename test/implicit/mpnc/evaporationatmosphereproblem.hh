@@ -260,8 +260,6 @@ public:
 
     void init()
     {
-        try
-        {
             eps_                    = 1e-6;
             percentOfEquil_         = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.percentOfEquil);
             nTemperature_           = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.nTemperature);
@@ -275,16 +273,6 @@ public:
             pnInjection_            = GET_RUNTIME_PARAM(TypeTag, Scalar,InitialConditions.pnInjection);
             TInject_                = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.TInject);
             massFluxInjectedPhase_  = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.massFluxInjectedPhase);
-        }
-
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
 
         this->spatialParams().setInputInitialize();
 

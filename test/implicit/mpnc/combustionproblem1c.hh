@@ -241,8 +241,6 @@ public:
 
 	void init()
 	{
-		try
-		{
 			eps_ = 1e-6;
 			outputName_ = GET_RUNTIME_PARAM(TypeTag, std::string, Constants.outputName);
 			nRestart_ = GET_RUNTIME_PARAM(TypeTag, int, Constants.nRestart);
@@ -255,16 +253,6 @@ public:
 			massFluxInjectedPhase_ = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.massFluxInjectedPhase);
 			heatFluxFromRight_ = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.heatFluxFromRight);
 			coldTime_ = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.coldTime);
-		}
-
-		catch (Dumux::ParameterException &e) {
-			std::cerr << e << ". Abort!\n";
-			exit(1);
-		}
-		catch (...) {
-			std::cerr << "Unknown exception thrown!\n";
-			exit(1);
-		}
 
 		this->spatialParams().setInputInitialize();
 
