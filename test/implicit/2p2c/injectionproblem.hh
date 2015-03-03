@@ -143,8 +143,6 @@ public:
                      const GridView &gridView)
         : ParentType(timeManager, GridCreator::grid().leafGridView())
     {
-        try
-        {
             nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, Problem.NTemperature);
             nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, Problem.NPressure);
             pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PressureLow);
@@ -154,15 +152,6 @@ public:
             temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InitialTemperature);
             depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.DepthBOR);
             name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
 
         /* Alternative syntax:
          * typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
