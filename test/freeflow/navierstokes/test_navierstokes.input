@@ -6,3 +6,6 @@ TEnd = 30.0 # [s]
 [Grid]
 File = ./grids/test_navierstokes.dgf
 
+[Problem]
+EnableGravity = 0 # Disable gravity
+

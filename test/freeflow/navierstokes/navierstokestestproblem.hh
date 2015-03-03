@@ -77,9 +77,6 @@ namespace Dumux
     };
     // Scalar is set to type double
     SET_TYPE_PROP(BoxStokes, Scalar, double);
-
-    // Disable gravity
-    SET_BOOL_PROP(NavierStokesTestProblem, ProblemEnableGravity, false);
   }
 
   /*!

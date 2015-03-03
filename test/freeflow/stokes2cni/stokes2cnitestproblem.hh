@@ -69,12 +69,6 @@ SET_TYPE_PROP(Stokes2cniTestProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #if HAVE_PARDISO
 SET_TYPE_PROP(Stokes2cniTestProblem, LinearSolver, PardisoBackend<TypeTag>);
 #endif
-
-//! a stabilization factor. Set to zero for no stabilization
-SET_SCALAR_PROP(Stokes2cniTestProblem, StokesStabilizationAlpha, -1.0);
-
-// Enable gravity
-SET_BOOL_PROP(Stokes2cniTestProblem, ProblemEnableGravity, true);
 }
 
 /*!

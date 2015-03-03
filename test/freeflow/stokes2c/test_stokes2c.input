@@ -5,3 +5,9 @@ TEnd = 2 # [s]
 [Grid]
 File = ./grids/test_stokes2c.dgf
 
+[Stokes]
+StabilizationAlpha = -1.0e3 # a stabilization factor. Set to zero for no stabilization
+
+[Problem]
+EnableGravity = 0 # disable gravity
+
