@@ -4,7 +4,7 @@ TEnd = 0 # [s]
 
 [Problem]
 #Delta = 1e-6 # [-] if this is commented in, it is used
-EnableGravity = 0 #
+EnableGravity = 0 # Disable Gravity
 
 [LinearSolver]
 Verbosity = 1 # 
