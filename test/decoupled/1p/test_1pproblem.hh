@@ -109,23 +109,12 @@ public:
         ParentType(gridView), velocity_(*this)
     {
         delta_ = 1e-3 ;
-
-        try
-        {
+      
             if (ParameterTree::tree().hasKey("Problem.Delta"))
-                delta_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Delta);
+            delta_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Delta);
             int numRefine;
             numRefine = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumRefine);
             GridCreator::grid().globalRefine(numRefine);
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
 
         this->spatialParams().initialize(delta_);
     }
