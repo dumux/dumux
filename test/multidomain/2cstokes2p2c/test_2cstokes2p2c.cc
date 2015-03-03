@@ -109,25 +109,15 @@ int start_(int argc,
     Scalar interfacePosY, gradingFactorY;
     bool useInterfaceMeshCreator;
 
-    try
-    {
-        dgfFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
-        dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
-        tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd);
-        nElements[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsX);
-        nElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
-        interfacePosY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
-        gradingFactorY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, GradingFactorY);
-        useInterfaceMeshCreator = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, UseInterfaceMeshCreator);
-    }
-    catch (Dumux::ParameterException &e) {
-        std::cerr << e << ". Abort!\n";
-        exit(1) ;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        exit(1);
-    }
+    dgfFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
+    dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
+    tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd);
+    nElements[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsX);
+    nElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
+    interfacePosY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+    gradingFactorY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, GradingFactorY);
+    useInterfaceMeshCreator = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, UseInterfaceMeshCreator);
+
     std::cout << "Starting with timestep size = " << dt << "s, simulation end = " << tEnd << "s\n";
 
     if (useInterfaceMeshCreator)

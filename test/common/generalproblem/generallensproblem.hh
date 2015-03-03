@@ -90,9 +90,6 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
 };
 
-// Enable gravity
-SET_BOOL_PROP(GeneralLensProblem, ProblemEnableGravity, true);
-
 ///////////////////////////////////////////////////
 // Box model TypeTag
 //////////////////////////////////////////////////
@@ -120,10 +117,6 @@ SET_TYPE_PROP(DecoupledGeneralLensProblem, SpatialParamsBaseClass, Dumux::FVSpat
 
 SET_INT_PROP(DecoupledGeneralLensProblem, Formulation,
         DecoupledTwoPCommonIndices::pwsn);
-
-SET_INT_PROP(DecoupledGeneralLensProblem, VtkOutputLevel, 1);
-
-SET_SCALAR_PROP(DecoupledGeneralLensProblem, ImpetCFLFactor, 0.95);
 }
 
 /*!
