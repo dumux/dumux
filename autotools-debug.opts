@@ -15,13 +15,15 @@ GXX_WARNING_OPTS=" \
 GXX_OPTS=" \
     -fno-strict-aliasing \
     -fstrict-overflow \
-    -g"
+    -g -O2"
 
-CMAKE_FLAGS="\
-  -DCMAKE_CXX_FLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
-  "
+CONFIGURE_FLAGS="\
+  CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
+  --disable-documentation \
+  --disable-parallel \
+  --disable-mpiruntest"
 
 # for CO2 and CO2ni tests
-# -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE \
+# --enable-experimental-grid-extensions \
+# --with-alugrid=PATH_TO_ALUGrid \
 # need to be set in the configure flags
-# and the module dune-alugrid must be present

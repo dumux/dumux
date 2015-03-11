@@ -25,14 +25,11 @@ GXX_OPTS=" \
 RESUME_FILE=/dev/null
 
 # configure flags 
-CONFIGURE_FLAGS=" \
-  CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
-  --enable-fieldvector-size-is-method \
-  --disable-documentation \
-  --disable-parallel \
-  --disable-mpiruntest"
+CMAKE_FLAGS=" \
+  -DCMAKE_CXX_FLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
+  "
 
 # for CO2 and CO2ni tests
-# --enable-experimental-grid-extensions \
-# --with-alugrid=PATH_TO_ALUGrid \
-# need to be set in the configure flags
+# -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE \
+# need to be set in the CMake flags
+# and the module dune-alugrid must be present
