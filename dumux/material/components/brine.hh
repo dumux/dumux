@@ -78,7 +78,7 @@ public:
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of brine.
      */
     static Scalar criticalPressure()
-    { return H2O::criticalPressure(); /* [N/m^2] */ }
+    { return H2O::criticalPressure(); /* [Pa] */ }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at brine's triple point.
@@ -90,7 +90,7 @@ public:
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at brine's triple point.
      */
     static Scalar triplePressure()
-    { return H2O::triplePressure(); /* [N/m^2] */ }
+    { return H2O::triplePressure(); /* [Pa] */ }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure brine
@@ -100,7 +100,7 @@ public:
 
      */
     static Scalar vaporPressure(Scalar T)
-    { return H2O::vaporPressure(T); /* [N/m^2] */ }
+    { return H2O::vaporPressure(T); /* [Pa] */ }
 
     /*!
      * \brief Specific enthalpy of gaseous brine \f$\mathrm{[J/kg]}\f$.

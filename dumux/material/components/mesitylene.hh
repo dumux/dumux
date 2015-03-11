@@ -189,7 +189,7 @@ public:
     }
 
     /*!
-     * \brief
+     * \brief The density of mesitylene at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$ .
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -274,7 +274,7 @@ public:
     }
 
     /*!
-     * \brief Specific heat cap of liquid mesitylene \f$\mathrm{[J/kg]}\f$.
+     * \brief Specific heat capacity of liquid mesitylene \f$\mathrm{[J/(kg*K)]}\f$.
      *
      * source : Reid et al. (fourth edition): Missenard group contrib. method (chap 5-7, Table 5-11, s. example 5-8)
      *

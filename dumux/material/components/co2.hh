@@ -59,61 +59,61 @@ public:
     { return "CO2"; }
 
     /*!
-     * \brief The mass in [kg] of one mole of CO2.
+     * \brief The mass in \f$\mathrm{[kg/mol]}\f$ of one mole of CO2.
      */
     static Scalar molarMass()
-    { return 44e-3; }
+    { return 44e-3; /* [kg/mol] */ }
 
     /*!
-     * \brief Returns the critical temperature [K] of CO2
+     * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of CO2
      */
     static Scalar criticalTemperature()
     { return 273.15 + 30.95; /* [K] */ }
 
     /*!
-     * \brief Returns the critical pressure [Pa] of CO2
+     * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of CO2
      */
     static Scalar criticalPressure()
-    { return 73.8e5; /* [N/m^2] */ }
+    { return 73.8e5; /* [Pa] */ }
 
     /*!
-     * \brief Returns the temperature [K]at CO2's triple point.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at CO2's triple point.
      */
     static Scalar tripleTemperature()
     { return 273.15 - 56.35; /* [K] */ }
 
     /*!
-     * \brief Returns the pressure [Pa] at CO2's triple point.
+     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at CO2's triple point.
      */
     static Scalar triplePressure()
     { return 5.11e5; /* [N/m^2] */ }
 
     /*!
-     * \brief Returns the pressure [Pa] at CO2's triple point.
+     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at CO2's triple point.
      */
     static Scalar minTabulatedPressure()
-    { return CO2Tables::tabulatedEnthalpy.minPress(); /* [N/m^2] */ }
+    { return CO2Tables::tabulatedEnthalpy.minPress(); /* [Pa] */ }
 
     /*!
-     * \brief Returns the pressure [Pa] at CO2's triple point.
+     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at CO2's triple point.
      */
     static Scalar maxTabulatedPressure()
-    { return CO2Tables::tabulatedEnthalpy.maxPress(); /* [N/m^2] */ }
+    { return CO2Tables::tabulatedEnthalpy.maxPress(); /* [Pa] */ }
 
     /*!
-     * \brief Returns the pressure [Pa] at CO2's triple point.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at CO2's triple point.
      */
     static Scalar minTabulatedTemperature()
-    { return CO2Tables::tabulatedEnthalpy.minTemp(); /* [N/m^2] */ }
+    { return CO2Tables::tabulatedEnthalpy.minTemp(); /* [K] */ }
 
     /*!
-     * \brief Returns the pressure [Pa] at CO2's triple point.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at CO2's triple point.
      */
     static Scalar maxTabulatedTemperature()
-    { return CO2Tables::tabulatedEnthalpy.maxTemp(); /* [N/m^2] */ }
+    { return CO2Tables::tabulatedEnthalpy.maxTemp(); /* [K] */ }
 
     /*!
-     * \brief The vapor pressure in [N/m^2] of pure CO2
+     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure CO2
      *        at a given temperature.
      *
      * See:
@@ -143,7 +143,7 @@ public:
     }
 
     /*!
-     * \brief Specific enthalpy of gaseous CO2 [J/kg].
+     * \brief Specific enthalpy of gaseous CO2 \f$\mathrm{[J/kg]}\f$.
      */
     static Scalar gasEnthalpy(Scalar temperature,
                               Scalar pressure)
@@ -159,7 +159,7 @@ public:
     }
 
     /*!
-     * \brief Specific enthalpy of liquid CO2 [J/kg].
+     * \brief Specific enthalpy of liquid CO2 \f$\mathrm{[J/kg]}\f$.
      */
     static Scalar liquidEnthalpy(Scalar temperature,
                                  Scalar pressure)
@@ -175,7 +175,7 @@ public:
     }
 
     /*!
-     * \brief Specific internal energy of CO2 [J/kg].
+     * \brief Specific internal energy of CO2 \f$\mathrm{[J/kg]}\f$.
      */
     static Scalar gasInternalEnergy(Scalar temperature,
                                     Scalar pressure)
@@ -187,7 +187,7 @@ public:
     }
 
     /*!
-     * \brief Specific internal energy of liquid CO2 [J/kg].
+     * \brief Specific internal energy of liquid CO2 \f$\mathrm{[J/kg]}\f$.
      */
     static Scalar liquidInternalEnergy(Scalar temperature,
                                        Scalar pressure)
@@ -199,7 +199,7 @@ public:
     }
 
     /*!
-     * \brief The density of CO2 at a given pressure and temperature [kg/m^3].
+     * \brief The density of CO2 at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
     */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
@@ -214,7 +214,7 @@ public:
     }
 
     /*!
-     * \brief The density of pure CO2 at a given pressure and temperature [kg/m^3].
+     * \brief The density of pure CO2 at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
@@ -230,7 +230,7 @@ public:
      * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param density denstiy of component in \f$\mathrm{[kg/m^3]}\f$
+     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
      */
     static Scalar gasPressure(Scalar temperature, Scalar density)
     {
@@ -250,7 +250,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of the component [J/kg] as a liquid.
+     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/kg*K]}\f$ as a liquid.
      * USE WITH CAUTION! Exploits enthalpy function with artificial increment
      * of the temperature!
      * Equation with which the specific heat capacity is calculated : \f$ c_p = \frac{dh}{dT}\f$
@@ -274,7 +274,7 @@ public:
 
 
     /*!
-     * \brief The dynamic viscosity [N/m^3*s] of CO2.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of CO2.
      * Equations given in: - Vesovic et al., 1990
      *                     - Fenhour et al., 1998
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
@@ -339,7 +339,9 @@ public:
     };
 
     /*!
-     * \brief The dynamic viscosity [N/m^3*s] of pure CO2.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure CO2.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {

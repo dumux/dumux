@@ -132,7 +132,7 @@ public:
     { return true; }
 
     /*!
-     * \brief The density of \f$CO_2\f$ at a given pressure and temperature [kg/m^3].
+     * \brief The density of \f$CO_2\f$ at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$

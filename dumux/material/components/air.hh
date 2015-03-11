@@ -72,7 +72,7 @@ public:
     { return 37.86e5; /* [Pa] */ }
 
     /*!
-     * \brief The density of \f$AIR\f$ at a given pressure and temperature [kg/m^3].
+     * \brief The density of \f$AIR\f$ at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of phase in \f$\mathrm{[Pa]}\f$
@@ -204,7 +204,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)}\f$ of pure
+     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure
      *        air.
      *
      *  This methods uses the formula for "zero-pressure" heat capacity that
@@ -220,7 +220,7 @@ public:
     static const Scalar gasHeatCapacity(Scalar temperature,
                                         Scalar pressure)
     {
-        // scale temperature with referenence temp of 100K
+        // scale temperature with reference temp of 100K
         Scalar phi = temperature/100;
 
         Scalar c_p = 0.661738E+01

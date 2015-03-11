@@ -244,7 +244,7 @@ public:
     }
 
     /*!
-     * \brief The density \f$\mathrm{[mol/m^3]}\f$ of xylene gas at a given pressure and temperature.
+     * \brief The molar gas density \f$\mathrm{[mol/m^3]}\f$ of xylene gas at a given pressure and temperature.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -255,7 +255,7 @@ public:
     }
 
     /*!
-     * \brief The molar density of pure xylene at a given pressure and temperature
+     * \brief The molar liquid density of pure xylene at a given pressure and temperature
      * \f$\mathrm{[mol/m^3]}\f$.
      *
      * source : Reid et al. (fourth edition): Modified Racket technique (chap. 3-11, eq. 3-11.9)

@@ -217,7 +217,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity \f$[J/(kg K)]\f$ of pure
+     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure
      *        nitrogen gas.
      *
      * This is equivalent to the partial derivative of the specific

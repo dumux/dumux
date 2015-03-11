@@ -133,7 +133,7 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * \todo density liquid oxygen
+     * \TODO: density liquid oxygen
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {

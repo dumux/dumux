@@ -58,7 +58,7 @@ public:
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular methane.
      */
     static Scalar molarMass()
-    { return 16.043e-3;}
+    { return 16.043e-3; /* [kg/mol] */}
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of molecular methane
@@ -70,7 +70,7 @@ public:
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of molecular methane
      */
     static Scalar criticalPressure()
-    { return 46e5; /* [N/m^2] */ }
+    { return 46e5; /* [Pa] */ }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at molecular methane's triple point.
@@ -82,7 +82,7 @@ public:
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at molecular methane's triple point.
      */
     static Scalar triplePressure()
-    { return 0; /* [N/m^2] */ }
+    { return 0; /* [Pa] */ }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure molecular methane

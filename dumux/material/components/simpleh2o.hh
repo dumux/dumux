@@ -269,7 +269,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of the component [J/(kg K)] as a liquid.
+     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
      *
      *        \param temperature temperature of component in \f$\mathrm{[K]}\f$
      *        \param pressure pressure of component in \f$\mathrm{[Pa]}\f$

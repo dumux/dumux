@@ -85,7 +85,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::name()"); }
 
     /*!
-     * \brief The molar mass in \f$\mathrm{[kg]}\f$ of the component.
+     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
      */
     static Scalar molarMass()
     { DUNE_THROW(Dune::NotImplemented, "Component::molarMass()"); }
@@ -199,25 +199,33 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::liquidViscosity()"); }
 
     /*!
-     * \brief Thermal conductivity of the component [W/(m^2 K/m)] as a gas.
+     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a gas.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
     { DUNE_THROW(Dune::NotImplemented, "Component::gasThermalConductivity()"); }
 
     /*!
-     * \brief Thermal conductivity of the component [W/(m^2 K/m)] as a liquid.
+     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a liquid.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
     { DUNE_THROW(Dune::NotImplemented, "Component::liquidThermalConductivity()"); }
 
     /*!
-     * \brief Specific isobaric heat capacity of the component [J/kg] as a gas.
+     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a gas.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
     { DUNE_THROW(Dune::NotImplemented, "Component::gasHeatCapacity()"); }
 
     /*!
-     * \brief Specific isobaric heat capacity of the component [J/kg] as a liquid.
+     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
     { DUNE_THROW(Dune::NotImplemented, "Component::liquidHeatCapacity()"); }

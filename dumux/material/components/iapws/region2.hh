@@ -82,7 +82,7 @@ public:
     /*!
      * \brief Returns the reduced temperature (dimensionless) for IAPWS region 2.
      *
-     * \param temperature temperature of component
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
     static Scalar tau(Scalar temperature)
     { return 540.0 / temperature; }
@@ -293,7 +293,7 @@ public:
     /*!
      * \brief The second partial derivative of the Gibbs free energy to the
      *        normalized temperature for IAPWS region 2 (i.e. sub-critical
-     *        steam) dimensionless).
+     *        steam) (dimensionless).
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$

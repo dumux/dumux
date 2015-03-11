@@ -90,7 +90,7 @@ public:
     static const Scalar triplePressure;
 
     /*!
-     * \brief The dynamic viscosity \f$\mathrm{[(N/m^2)*s]}\f$of pure water.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure water.
      *
      * This relation is valid for all regions of the IAPWS '97
      * formulation.
@@ -150,7 +150,7 @@ public:
     }
 
     /*!
-    * \brief Thermal conductivity \f$\mathrm{[[W/(m^2 K/m)]}\f$ water (IAPWS) .
+    * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ water (IAPWS) .
     *
     * Implementation taken from:
     * freesteam - IAPWS-IF97 steam tables library
@@ -159,8 +159,8 @@ public:
     * Appendix B: Recommended Interpolating equation for Industrial Use
     * see http://www.iapws.org/relguide/thcond.pdf
     *
-    * \param T absolute temperature in K
-    * \param rho density of water in kg/m^3
+    * \param T absolute temperature in \f$\mathrm{[K]}\f$
+    * \param rho density of water in \f$\mathrm{[kg/m^3]}\f$
     */
     static Scalar thermalConductivityIAPWS(const Scalar T, const Scalar rho)
     {

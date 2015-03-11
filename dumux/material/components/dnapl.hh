@@ -52,7 +52,7 @@ public:
      */
     static Scalar molarMass()
     {
-        return 131.39e-3; // kg/mol
+        return 131.39e-3; // [kg/mol]
     };
 
     /*!
@@ -148,7 +148,7 @@ public:
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
-        return 5.7e-4;// [Pa s]
+        return 5.7e-4;// [Pa*s]
     };
 };
 

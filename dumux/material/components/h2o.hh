@@ -137,7 +137,7 @@ public:
         return Region4::saturationPressure(T);
     }
     /*!
-     * \brief The vapor temperature in \f$\mathrm{[Ka]}\f$ of pure water
+     * \brief The vapor temperature in \f$\mathrm{[K]}\f$ of pure water
      *        at a given pressure.
      *
      *\param pressure pressure in \f$\mathrm{[Pa]}\f$
@@ -286,7 +286,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of liquid water \f$\mathrm{[J/kg]}\f$.
+     * \brief Specific isobaric heat capacity of liquid water \f$\mathrm{[J/(kg*K)]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -449,7 +449,7 @@ public:
     }
 
     /*!
-     * \brief Specific isochoric heat capacity of liquid water \f$\mathrm{[J/m^3]}\f$.
+     * \brief Specific isochoric heat capacity of liquid water \f$\mathrm{[J/(m^3*K)]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -798,7 +798,7 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity \f$\mathrm{[[W/(m K)]}\f$ of water (IAPWS) .
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of water (IAPWS) .
      *
      * Implementation taken from:
      * freesteam - IAPWS-IF97 steam tables library
@@ -807,8 +807,8 @@ public:
      * Appendix B: Recommended Interpolating equation for Industrial Use
      * see http://www.iapws.org/relguide/thcond.pdf
      *
-     * \param temperature absolute temperature in K
-     * \param pressure of the phase in Pa
+     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidThermalConductivity( Scalar temperature,  Scalar pressure)
     {
@@ -827,7 +827,7 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity \f$\mathrm{[[W/(m K)]}\f$ of water (IAPWS) .
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of water (IAPWS) .
      *
      * Implementation taken from:
      * freesteam - IAPWS-IF97 steam tables library
@@ -836,8 +836,8 @@ public:
      * Appendix B: Recommended Interpolating equation for Industrial Use
      * see http://www.iapws.org/relguide/thcond.pdf
      *
-     * \param temperature absolute temperature in K
-     * \param pressure of the phase in Pa
+     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasThermalConductivity(const Scalar temperature, const Scalar pressure)
     {

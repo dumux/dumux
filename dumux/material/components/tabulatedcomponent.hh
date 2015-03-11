@@ -325,7 +325,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of the gas \f$\mathrm{[J/(kg K)]}\f$.
+     * \brief Specific isobaric heat capacity of the gas \f$\mathrm{[J/(kg*K)]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -343,7 +343,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of the liquid \f$\mathrm{[J/(kg K)]}\f$.
+     * \brief Specific isobaric heat capacity of the liquid \f$\mathrm{[J/(kg*K)]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -518,7 +518,7 @@ public:
     };
 
     /*!
-     * \brief The thermal conductivity of gaseous water \f$\mathrm{[W / (m K)]}\f$.
+     * \brief The thermal conductivity of gaseous water \f$\mathrm{[W/(m*K)]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -536,7 +536,7 @@ public:
     };
 
     /*!
-     * \brief The thermal conductivity of liquid water \f$\mathrm{[W / (m K)]}\f$.
+     * \brief The thermal conductivity of liquid water \f$\mathrm{[W/(m*K)]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
