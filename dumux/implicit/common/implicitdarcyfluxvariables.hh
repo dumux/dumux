@@ -26,15 +26,17 @@
 #ifndef DUMUX_IMPLICIT_DARCY_FLUX_VARIABLES_HH
 #define DUMUX_IMPLICIT_DARCY_FLUX_VARIABLES_HH
 
-#include "implicitproperties.hh"
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/parameters.hh>
+
+#include "implicitproperties.hh"
+
 
 namespace Dumux
 {
-    
+
 namespace Properties
 {
 // forward declaration of properties 
@@ -74,7 +76,7 @@ class ImplicitDarcyFluxVariables
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
-    /*
+    /*!
      * \brief The constructor
      *
      * \param problem The problem
@@ -103,9 +105,8 @@ public:
      * \brief Return the volumetric flux over a face of a given phase.
      *
      *        This is the calculated velocity multiplied by the unit normal
-     *        and the area of the face.
-     *        face().normal
-     *        has already the magnitude of the area.
+     *        and the area of the face. face().normal has already the
+     *        magnitude of the area.
      *
      * \param phaseIdx index of the phase
      */
@@ -165,8 +166,8 @@ public:
     }
 
 protected:
-    
-    /*
+
+    /*!
      * \brief Calculation of the potential gradients
      *
      * \param problem The problem
@@ -180,7 +181,8 @@ protected:
         // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
-            potentialGrad_[phaseIdx]= 0.0 ;
+            potentialGrad_[phaseIdx]= 0.0;
+
             for (unsigned int idx = 0;
                  idx < face().numFap;
                  idx++) // loop over adjacent vertices
@@ -227,7 +229,7 @@ protected:
         } // loop over all phases
      }
 
-    /*
+    /*!
      * \brief Actual calculation of the normal Darcy velocities.
      *
      * \param problem The problem
@@ -307,7 +309,7 @@ protected:
                     + (1.0 - mobilityUpwindWeight_)*downVolVars.mobility(phaseIdx)) ;
 
             // set the volume flux
-            volumeFlux_[phaseIdx] = velocity_[phaseIdx] * face().normal ;
+            volumeFlux_[phaseIdx] = velocity_[phaseIdx] * face().normal;
         }// loop all phases
     }
 
@@ -325,4 +327,4 @@ protected:
 
 } // end namespace
 
-#endif
+#endif // DUMUX_IMPLICIT_DARCY_FLUX_VARIABLES_HH

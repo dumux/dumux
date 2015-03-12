@@ -70,10 +70,6 @@ public:
     BoxCouplingLocalResidual()
     { }
 
-    //! \brief The destructor
-    ~BoxCouplingLocalResidual()
-    { }
-
     /*!
      * \brief Compute the local residual, i.e. the deviation of the
      *        equations from zero. Gets a solution vector computed by PDELab

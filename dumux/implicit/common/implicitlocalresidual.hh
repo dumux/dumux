@@ -64,9 +64,6 @@ public:
     ImplicitLocalResidual()
     { }
 
-    ~ImplicitLocalResidual()
-    { }
-
     /*!
      * \brief Initialize the local residual.
      *
