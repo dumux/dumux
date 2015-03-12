@@ -294,8 +294,6 @@ protected:
         const VolumeVariables &volVarsJ = elemVolVars[face().j];
 
         GlobalPosition tmp;
-        //The decision of the if-statement depends on the function useTwoPointGradient(const Element &element,
-        //int vertexI,int vertexJ) defined in test/tissue_tumor_spatialparameters.hh
         if (!problem.spatialParams().useTwoPointGradient(element, face().i, face().j)) {
             // use finite-element gradients
             tmp = 0.0;
