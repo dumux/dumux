@@ -250,7 +250,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/kg*K]}\f$ as a liquid.
+     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
      * USE WITH CAUTION! Exploits enthalpy function with artificial increment
      * of the temperature!
      * Equation with which the specific heat capacity is calculated : \f$ c_p = \frac{dh}{dT}\f$
