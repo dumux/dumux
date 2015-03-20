@@ -24,7 +24,7 @@ def isFuzzyEqualNode(node1, node2, absolute, relative):
             return False
         if node1child.nodeType == node1child.TEXT_NODE and not isFuzzyEqualText(node1child.data, node2child.data, absolute, relative):
             print 'Data differs in parameter ', node2.attributes.items(), ' at node ', node2child.nodeType
-            return False
+            continue
         if node1child.nodeType == node1child.ELEMENT_NODE and not isFuzzyEqualNode(node1child, node2child, absolute, relative):
             return False
     return True
@@ -37,13 +37,19 @@ def isFuzzyEqualText(text1, text2, absolute, relative):
     if (list1 == list2):
         return True
     # compare number by number
+    maximum1 = 0.0
+    maximum2 = 0.0
     for number1, number2 in zip(list1, list2):
         number1 = float(number1)
         number2 = float(number2)
         if (abs(number1 - number2) > absolute 
             and (number2 == 0.0 or abs(abs(number1 / number2) - 1.0) > relative)):
-            print 'Difference is too large between', number1, ' and ', number2
-            return False
+            if (abs(number1 - number2) > abs(maximum1 - maximum2)):
+                maximum1 = float(number1)
+                maximum2 = float(number2)
+    if (abs(maximum1 - maximum2) > 0.0):
+        print 'Difference is too large between', maximum1, ' and ', maximum2
+        return False
     return True
 
 # main program
