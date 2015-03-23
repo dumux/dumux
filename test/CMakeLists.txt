@@ -3,6 +3,7 @@ add_subdirectory("decoupled")
 add_subdirectory("freeflow")
 add_subdirectory("geomechanics")
 add_subdirectory("implicit")
+add_subdirectory("io")
 add_subdirectory("material")
 add_subdirectory("multidomain")
 

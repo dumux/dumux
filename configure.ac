@@ -100,6 +100,8 @@ AC_CONFIG_FILES([dumux.pc
     test/implicit/co2/Makefile
     test/implicit/mpnc/Makefile
     test/implicit/richards/Makefile
+    test/io/Makefile
+    test/io/gnuplotinterface/Makefile
     test/common/Makefile
     test/common/generalproblem/Makefile
     test/common/propertysystem/Makefile

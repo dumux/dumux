@@ -1,0 +1,2 @@
+add_dumux_test(test_gnuplotinterface test_gnuplotinterface test_gnuplotinterface.cc
+  ${CMAKE_CURRENT_BINARY_DIR}/test_gnuplotinterface)

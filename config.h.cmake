@@ -34,10 +34,16 @@
 /* Define to 1 if constexpr is supported */
 #cmakedefine HAVE_CONSTEXPR @HAVE_CONSTEXPR@
 
-/* 'set 'constexpr' to 'const' if constexpr is not supported */
+/* Set 'constexpr' to 'const' if constexpr is not supported */
 #ifndef HAVE_CONSTEXPR
 #define constexpr const
 #endif
+
+/* Define to 1 if gnuplot was found */
+#define HAVE_GNUPLOT @GNUPLOT_FOUND@
+
+/* Define path to gnuplot executable */
+#cmakedefine GNUPLOT_EXECUTABLE "@GNUPLOT_EXECUTABLE@"
 
 /* end dumux
    Everything below here will be overwritten

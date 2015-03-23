@@ -3,6 +3,7 @@ SUBDIRS = common \
           freeflow \
           geomechanics \
           implicit \
+          io \
           material \
           multidomain \
           references
