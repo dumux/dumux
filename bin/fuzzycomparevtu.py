@@ -9,6 +9,7 @@ def isFuzzyEqualXml(xml1, xml2, absolute, relative):
 
 # fuzzy compare of XML nodes
 def isFuzzyEqualNode(node1, node2, absolute, relative):
+    noError = True
     if node1.tagName != node2.tagName:
         print 'The name of the node differs in ', node1.tagName, ' and ', node2.tagName
         return False
@@ -24,10 +25,12 @@ def isFuzzyEqualNode(node1, node2, absolute, relative):
             return False
         if node1child.nodeType == node1child.TEXT_NODE and not isFuzzyEqualText(node1child.data, node2child.data, absolute, relative):
             print 'Data differs in parameter ', node2.attributes.items(), ' at node ', node2child.nodeType
+            noError = False
             continue
         if node1child.nodeType == node1child.ELEMENT_NODE and not isFuzzyEqualNode(node1child, node2child, absolute, relative):
-            return False
-    return True
+            noError = False
+            continue
+    return noError
 
 # fuzzy compare of text consisting of whitespace separated numbers
 def isFuzzyEqualText(text1, text2, absolute, relative):
