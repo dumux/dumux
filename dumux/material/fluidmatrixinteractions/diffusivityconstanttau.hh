@@ -25,7 +25,7 @@
 #define DIFFUSIVITY_CONSTANT_TAU_HH
 
 #include <dumux/common/parameters.hh>
-#include <algorithm>
+#include <dumux/common/basicproperties.hh>
 
 namespace Dumux
 {
@@ -34,29 +34,24 @@ namespace Dumux
  *
  * \brief Relation for the saturation-dependent effective diffusion coefficient
  *
- *
  * The material law is:
  * \f[
- \lambda_\text{eff} = \phi * S_w * \tau * D
- \f]
+ *  D_\text{eff,pm} = \phi * S_w * \tau * D
+ * \f]
  *
- * with
- * \f[
- \tau = \frac{1}{\phi^2} * \left(\phi S_w\right)^{7/3}
- \f]
- *
+ * with a constant tau.
  */
-template<class TypeTag, class Scalar>
+template<class Scalar>
 class DiffusivityConstantTau
 {
 public:
     /*!
-     * \brief Returns the effective diffusion coefficient \f$[m/s]\f$ based on a constant tortuosity value
+     * \brief Returns the effective diffusion coefficient \f$[m^2/s]\f$ based
+     *        on a constant tortuosity value
      *
      * \param porosity The porosity
      * \param saturation The saturation of the phase
      * \param diffCoeff The diffusion coefficient of the phase
-     *
      */
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                                const Scalar saturation,

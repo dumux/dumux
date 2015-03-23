@@ -62,16 +62,14 @@ public:
      */
     Scalar thresholdSw() const
     {
-        // Some problems are very sensitive to this value
-        // (e.g. makeing it smaller might result in negative
-        // pressures), if you change it here, you will almost
-        // certainly break someone's code!
+        // Most problems are very sensitive to this value
+        // (e.g. making it smaller might result in negative
+        // pressures)
         //
         // If you want to use a different regularization threshold,
         // overload this class and supply the new class as second
         // template parameter for the RegularizedVanGenuchten law!
-        return /* PLEASE DO _NOT_ */ 1e-2; /* CHANGE THIS VALUE. READ
-                                            * COMMENT ABOVE! */
+        return 1e-2;
     }
 
 };

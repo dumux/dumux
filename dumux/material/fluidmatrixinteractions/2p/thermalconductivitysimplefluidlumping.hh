@@ -85,7 +85,8 @@ public:
                                                const Scalar lambdaW,
                                                const Scalar lambdaN,
                                                const Scalar lambdaSolid,
-                                               const Scalar porosity)
+                                               const Scalar porosity,
+                                               const Scalar rhoSolid = 0.0 /*unused*/)
     {
         assert(numEnergyEquations != 3) ;
 

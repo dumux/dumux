@@ -36,13 +36,13 @@ namespace Dumux
  *
  * The material law is:
  * \f[
- \lambda_\text{eff} = \phi * S_w * \tau * D
- \f]
+ *  D_\text{eff,pm} = \phi * S_w * \tau * D
+ * \f]
  *
  * with
  * \f[
- \tau = \frac{1}{\phi^2} * \left(\phi S_w\right)^{7/3}
- \f]
+ *  \tau = \frac{1}{\phi^2} * \left(\phi S_w\right)^{7/3}
+ * \f]
  *
  */
 template<class Scalar>
@@ -50,12 +50,11 @@ class DiffusivityMillingtonQuirk
 {
 public:
     /*!
-     * \brief Returns the effective diffusion coefficient \f$[m/s]\f$ after Millington Quirk.
+     * \brief Returns the effective diffusion coefficient \f$[m^2/s]\f$ after Millington Quirk.
      *
      * \param porosity The porosity
      * \param saturation The saturation of the phase
      * \param diffCoeff The diffusion coefficient of the phase
-     *
      */
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                                const Scalar saturation,

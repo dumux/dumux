@@ -29,7 +29,7 @@
 namespace Dumux
 {
 
-struct SimpleTwoPIndices
+struct SomertonIndices
 {
     static const int wPhaseIdx = 0;
     static const int nPhaseIdx = 1;
@@ -62,7 +62,7 @@ struct SimpleTwoPIndices
  \f]
  *
  */
-template<class Scalar, class Indices = SimpleTwoPIndices>
+template<class Scalar, class Indices = SomertonIndices>
 class ThermalConductivitySomerton
 {
 public:
@@ -114,7 +114,8 @@ public:
                                                const Scalar lambdaW,
                                                const Scalar lambdaN,
                                                const Scalar lambdaSolid,
-                                               const Scalar porosity)
+                                               const Scalar porosity,
+                                               const Scalar rhoSolid = 0.0 /*unused*/)
     {
         const Scalar satW = std::max<Scalar>(0.0, sw);
         // geometric mean
