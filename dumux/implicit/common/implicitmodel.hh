@@ -459,7 +459,12 @@ public:
 
         asImp_().updateBegin();
 
-        bool converged = solver.execute(controller);
+        int converged = solver.execute(controller);
+         
+        if (this->gridView_().comm().size() > 1)
+        {
+            converged = this->gridView_().comm().min(converged);
+        }
         if (converged) {
             asImp_().updateSuccessful();
         }
