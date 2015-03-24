@@ -27,8 +27,9 @@
  */
 
 #ifndef HAVE_GNUPLOT
-#warning Gnuplot has not been found or cmake has not been used.
-#else
+#warning Gnuplot has not been found by CMake. Defaulting to /usr/bin/gnuplot
+#define GNUPLOT_EXECUTABLE "/usr/bin/gnuplot"
+#endif
 
 #ifndef DUMUX_GNUPLOT_INTERFACE_HH
 #define DUMUX_GNUPLOT_INTERFACE_HH
@@ -293,5 +294,3 @@ private:
 };
 } // end of namespace
 #endif // DUMUX_GNUPLOT_INTERFACE_HH
-
-#endif // HAVE_GNUPLOT

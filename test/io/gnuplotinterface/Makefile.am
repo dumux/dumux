@@ -1,6 +1,6 @@
 check_PROGRAMS = test_gnuplotinterface
 
-test_fluidsystems_SOURCES = test_gnuplotinterface.cc
+test_gnuplotinterface_SOURCES = test_gnuplotinterface.cc
 
 EXTRA_DIST=CMakeLists.txt
 noinst_HEADERS:=$(wildcard *.hh)
