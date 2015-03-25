@@ -165,14 +165,6 @@ public:
         return materialParams_;
     }
 
-
-    bool useTwoPointGradient(const Element &element,
-                             const int vertexI,
-                             const int vertexJ) const
-    {
-        return false;
-    }
-
     /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *

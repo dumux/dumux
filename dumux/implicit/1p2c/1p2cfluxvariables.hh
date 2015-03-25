@@ -293,57 +293,36 @@ protected:
         const VolumeVariables &volVarsI = elemVolVars[face().i];
         const VolumeVariables &volVarsJ = elemVolVars[face().j];
 
-        GlobalPosition tmp;
-        if (!problem.spatialParams().useTwoPointGradient(element, face().i, face().j)) {
-            // use finite-element gradients
-            tmp = 0.0;
-            for (unsigned int idx = 0;
-                    idx < face().numFap;
-                    idx++) // loop over adjacent vertices
-            {
-                // FE gradient at vertex idx
-                const GlobalPosition &feGrad = face().grad[idx];
+        GlobalPosition tmp(0.0);
+        // use finite-element gradients
+        for (unsigned int idx = 0; idx < face().numFap; idx++) // loop over adjacent vertices
+        {
+            // FE gradient at vertex idx
+            const GlobalPosition &feGrad = face().grad[idx];
 
-                // index for the element volume variables 
-                int volVarsIdx = face().fapIndices[idx];
+            // index for the element volume variables 
+            int volVarsIdx = face().fapIndices[idx];
 
-                // the pressure gradient
-                tmp = feGrad;
-                tmp *= elemVolVars[volVarsIdx].pressure();
-                potentialGrad_ += tmp;
+            // the pressure gradient
+            tmp = feGrad;
+            tmp *= elemVolVars[volVarsIdx].pressure();
+            potentialGrad_ += tmp;
 
-                // the mole-fraction gradient
-                tmp = feGrad;
-                tmp *= elemVolVars[volVarsIdx].moleFraction(transportCompIdx);
-                moleFractionGrad_ += tmp;
+            // the mole-fraction gradient
+            tmp = feGrad;
+            tmp *= elemVolVars[volVarsIdx].moleFraction(transportCompIdx);
+            moleFractionGrad_ += tmp;
 
-                // phase viscosity
-                viscosity_ += elemVolVars[volVarsIdx].viscosity()*face().shapeValue[idx];
+            // phase viscosity
+            viscosity_ += elemVolVars[volVarsIdx].viscosity()*face().shapeValue[idx];
 
-                //phase molar density
-                molarDensity_ += elemVolVars[volVarsIdx].molarDensity()*face().shapeValue[idx];
+            //phase molar density
+            molarDensity_ += elemVolVars[volVarsIdx].molarDensity()*face().shapeValue[idx];
 
-                //phase density
-                density_ += elemVolVars[volVarsIdx].density()*face().shapeValue[idx];
-            }
+            //phase density
+            density_ += elemVolVars[volVarsIdx].density()*face().shapeValue[idx];
         }
-        else {
-            // use two-point gradients
-            const auto geometry = element.geometry();
-            const GlobalPosition &globalPosI = geometry.corner(face().i);
-            const GlobalPosition &globalPosJ = geometry.corner(face().j);
-            tmp = globalPosI;
-            tmp -= globalPosJ;
-            Scalar dist = tmp.two_norm();
 
-            tmp = face().normal;
-            tmp /= face().normal.two_norm()*dist;
-
-            potentialGrad_ = tmp;
-            potentialGrad_ *= volVarsJ.pressure() - volVarsI.pressure();
-            moleFractionGrad_ = tmp;
-            moleFractionGrad_ *= volVarsJ.moleFraction(transportCompIdx) - volVarsI.moleFraction(transportCompIdx);
-        }
 
         ///////////////
         // correct the pressure gradients by the gravitational acceleration
