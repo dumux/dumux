@@ -123,15 +123,15 @@ public:
         problemPtr_ = &problem;
         localResidual_.init(problem);
 
-        // assume quadrilinears as elements with most vertices
+        // assume cubes as elements with most vertices
         if (isBox)
         {
-            A_.setSize(2<<dim, 2<<dim);
-            storageJacobian_.resize(2<<dim);
+            A_.setSize(1<<dim, 1<<dim);
+            storageJacobian_.resize(1<<dim);
         }
-        else 
+        else // assume cubes as elements with most faces
         {
-            A_.setSize(1, 2<<dim);
+            A_.setSize(1, 2*dim + 1); 
             storageJacobian_.resize(1);
         }
     }
@@ -186,11 +186,17 @@ public:
         if (isBox)
         {
             numRows = numCols = fvElemGeom_.numScv;
+            // resize for hanging nodes or lower dimensional grids
+            if(numRows > 1<<dim || numCols > 1<<dim)
+                A_.setSize(numRows, numCols);
         }
         else 
         {
             numRows = 1;
             numCols = fvElemGeom_.numNeighbors;
+            // resize for hanging nodes or lower dimensional grids
+            if(numCols > 2*dim + 1)
+                A_.setSize(numRows, numCols);
         }
         ElementSolutionVector partialDeriv(numRows);
         PrimaryVariables storageDeriv(0.0);
