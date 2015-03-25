@@ -290,12 +290,8 @@ protected:
                              const Element &element,
                              const ElementVolumeVariables &elemVolVars)
     {
-        const VolumeVariables &volVarsI = elemVolVars[face().i];
-        const VolumeVariables &volVarsJ = elemVolVars[face().j];
-
-        GlobalPosition tmp(0.0);
-        // use finite-element gradients
-        for (unsigned int idx = 0; idx < face().numFap; idx++) // loop over adjacent vertices
+        // loop over flux approximation points
+        for (unsigned int idx = 0; idx < face().numFap; idx++)
         {
             // FE gradient at vertex idx
             const GlobalPosition &feGrad = face().grad[idx];
@@ -304,7 +300,7 @@ protected:
             int volVarsIdx = face().fapIndices[idx];
 
             // the pressure gradient
-            tmp = feGrad;
+            GlobalPosition tmp = feGrad;
             tmp *= elemVolVars[volVarsIdx].pressure();
             potentialGrad_ += tmp;
 
