@@ -100,41 +100,62 @@ public:
                            const SolutionVector &oldGlobalSol)
      {
          bool wasSwitched = false;
+         int succeeded;
+         try {
+             for (unsigned i = 0; i < ParentType::staticDat_.size(); ++i)
+                 ParentType::staticDat_[i].visited = false;
 
-         for (unsigned i = 0; i < ParentType::staticDat_.size(); ++i)
-             ParentType::staticDat_[i].visited = false;
-
-         FVElementGeometry fvGeometry;
-         static VolumeVariables volVars;
-         ElementIterator eIt = this->gridView_().template begin<0> ();
-         const ElementIterator &eEndIt = this->gridView_().template end<0> ();
-         for (; eIt != eEndIt; ++eIt)
-         {
-             fvGeometry.update(this->gridView_(), *eIt);
-             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+             FVElementGeometry fvGeometry;
+             static VolumeVariables volVars;
+             ElementIterator eIt = this->gridView_().template begin<0> ();
+             const ElementIterator &eEndIt = this->gridView_().template end<0> ();
+             for (; eIt != eEndIt; ++eIt)
              {
-                 int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-
-                 if (ParentType::staticDat_[globalIdx].visited)
-                     continue;
-
-                 ParentType::staticDat_[globalIdx].visited = true;
-                 volVars.update(curGlobalSol[globalIdx],
-                                this->problem_(),
-                                *eIt,
-                                fvGeometry,
-                                scvIdx,
-                                false);
-                 const GlobalPosition &globalPos = eIt->geometry().corner(scvIdx);
-                 if (primaryVarSwitch_(curGlobalSol,
-                                       volVars,
-                                       globalIdx,
-                                       globalPos))
+                 fvGeometry.update(this->gridView_(), *eIt);
+                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                  {
-                     this->jacobianAssembler().markDofRed(globalIdx);
-                     wasSwitched = true;
+                     int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+
+                     if (ParentType::staticDat_[globalIdx].visited)
+                         continue;
+
+                     ParentType::staticDat_[globalIdx].visited = true;
+                     volVars.update(curGlobalSol[globalIdx],
+                                    this->problem_(),
+                                    *eIt,
+                                    fvGeometry,
+                                    scvIdx,
+                                    false);
+                     const GlobalPosition &globalPos = eIt->geometry().corner(scvIdx);
+                     if (primaryVarSwitch_(curGlobalSol,
+                         volVars,
+                         globalIdx,
+                         globalPos))
+                     {
+                         this->jacobianAssembler().markDofRed(globalIdx);
+                         wasSwitched = true;
+                     }
                  }
              }
+             succeeded = 1;
+         }
+         catch (Dumux::NumericalProblem &e)
+         {
+             std::cout << "\n"
+             << "Rank " << this->problem_().gridView().comm().rank()
+             << " caught an exception while updating the static data." << e.what()
+             << "\n";
+             succeeded = 0;
+         }
+         //make sure that all processes succeeded. If not throw a NumericalProblem to decrease the time step size.
+         if (this->gridView_().comm().size() > 1)
+             succeeded = this->gridView_().comm().min(succeeded);
+
+         if (!succeeded) {
+             if(this->problem_().gridView().comm().rank() == 0)
+                 DUNE_THROW(NumericalProblem,
+                            "A process did not succeed in updating the static data.");
+                 return;
          }
 
          // make sure that if there was a variable switch in an
