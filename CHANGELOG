@@ -27,6 +27,17 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
     cube grids. This has been generalized to simplices (box and cc) and prisms/
     pyramids (box only).
 
+  - Revised and fixed restart capability for the multidomain models.
+
+  - A gnuplot interface has been added (works only with CMake). With
+    this interface it is possible to plot material laws (like in the 2p2cni test),
+    or to generate live-updating output (like in test_2cnistokes2p2cni).
+    The gnuplot interface reads analytical functions, data file or data arrays.
+
+  - The fuzzycompare script for automatic testing has been improved. Instead of
+    printing only the first deviation from the reference solution, it now
+    prints the maximum deviation in each field/variable.
+
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - Before, the "heatCapacity" function in the spatial parameters and volume
     variables of the implicit nonisothermal models was a misnomer, since it
