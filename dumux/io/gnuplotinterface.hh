@@ -27,7 +27,7 @@
  */
 
 #ifndef HAVE_GNUPLOT
-#warning Gnuplot has not been found by CMake. Defaulting to /usr/bin/gnuplot
+#warning Gnuplot has not been found by CMake, no output possible.
 #define GNUPLOT_EXECUTABLE "/usr/bin/gnuplot"
 #endif
 
@@ -94,7 +94,7 @@ public:
      * \param plottingWindowNumber The ID of the specific plot
      */
     void plot(const std::string &title,
-              int plottingWindowNumber,
+              const unsigned int plottingWindowNumber,
               bool interaction)
     {
         // setting correct terminal
@@ -114,17 +114,15 @@ public:
         plot += "set ylabel \"" + yLabel_[plottingWindowNumber] + "\"\n";
         
         // plot curves
-        plot += "plot \"" + fileName_[plottingWindowNumber][0]
-               + "\" title \"" + plotName_[plottingWindowNumber][0]
-               + "\" with " + plotStyle_;
-
-        for (unsigned int i = 1; i < fileName_[plottingWindowNumber].size(); ++i)
+        plot += "plot";
+        for (unsigned int i = 0; i < fileName_[plottingWindowNumber].size(); ++i)
         {
-            plot += ", \"" + fileName_[plottingWindowNumber][i]
-                    + "\" title \"" + plotName_[plottingWindowNumber][i]
-                    + "\" with " + plotStyle_;
+            plot += + " " + fileName_[plottingWindowNumber][i]
+                    + " title " + plotName_[plottingWindowNumber][i]
+                    + " with " + plotStyle_
+                    + ",";
         }
-        plot += "\n";
+        plot[plot.size()-1] = '\n'; // remove last ","
 
         if (!interaction)
         {
@@ -135,21 +133,64 @@ public:
             file.close();
         }
 
+#ifdef HAVE_GNUPLOT
         executeGnuplot(plot.c_str());
+#endif
     }
 
     /*!
-     * \brief Adds data set for specific window number and writes a data file
+     * \brief Deletes all plots from a plotting window
+     *
+     * \param plottingWindowNumber The ID of the specific plot
+     */
+    void reset(const unsigned int plottingWindowNumber)
+    {
+        fileName_[plottingWindowNumber].resize(0);
+        plotName_[plottingWindowNumber].resize(0);
+    }
+
+    /*!
+     * \brief Adds a function to list of plotted lines for specific window number
+     *
+     * \param function Function to be plotted
+     * \param plotName The name of the data set
+     * \param plottingWindowNumber The ID of the specific plot
+     */
+    void addFunctionToPlot(const std::string &function,
+                           const std::string &plotName,
+                           const unsigned int plottingWindowNumber)
+    {
+        fileName_[plottingWindowNumber].push_back(function);
+        plotName_[plottingWindowNumber].push_back("'" + plotName + "'");
+    }
+
+    /*!
+     * \brief Adds a file to list of plotted lines for specific window number
+     *
+     * \param addFile Function to be plotted
+     * \param plotName The name of the data set
+     * \param plottingWindowNumber The ID of the specific plot
+     */
+    void addFileToPlot(const std::string &file,
+                       const std::string &plotName,
+                       const unsigned int plottingWindowNumber)
+    {
+        fileName_[plottingWindowNumber].push_back("'" + file + "'");
+        plotName_[plottingWindowNumber].push_back("'" + plotName + "'");
+    }
+
+    /*!
+     * \brief Adds a data set for specific window number and writes a data file
      *
      * \param x Vector containing the x-axis data points
      * \param y Vector containing the y-axis data points
      * \param plotName The name of the data set
      * \param plottingWindowNumber The ID of the specific plot
      */
-    void addDataSet(const std::vector<Scalar>& x,
-                    const std::vector<Scalar>& y,
-                    const std::string &plotName,
-                    int plottingWindowNumber)
+    void addDataSetToPlot(const std::vector<Scalar>& x,
+                          const std::vector<Scalar>& y,
+                          const std::string &plotName,
+                          const unsigned int plottingWindowNumber)
     {
         assert(x.size() == y.size());
 
@@ -166,8 +207,8 @@ public:
         file.close();
 
         // adding file to list of plotted lines
-        fileName_[plottingWindowNumber].push_back(fileName);
-        plotName_[plottingWindowNumber].push_back(plotName);
+        fileName_[plottingWindowNumber].push_back("'" + fileName + "'");
+        plotName_[plottingWindowNumber].push_back("'" + fileName + "'");
     }
 
     /*!
@@ -177,7 +218,7 @@ public:
      * \param plottingWindowNumber The ID of the specific plot
      */
     void setXlabel(const std::string& label,
-                   unsigned int plottingWindowNumber)
+                   const unsigned int plottingWindowNumber)
     {
         xLabel_[plottingWindowNumber] = label;
     }
@@ -189,7 +230,7 @@ public:
      * \param plottingWindowNumber The ID of the specific plot
      */
     void setYlabel(const std::string& label,
-                   unsigned int plottingWindowNumber)
+                   const unsigned int plottingWindowNumber)
     {
         yLabel_[plottingWindowNumber] = label;
     }
@@ -203,7 +244,7 @@ public:
      */
     void setXRange(Scalar lowerEnd,
                    Scalar upperEnd,
-                   unsigned int plottingWindowNumber)
+                   const unsigned int plottingWindowNumber)
     {
         xRangeMin_[plottingWindowNumber] = std::min(xRangeMin_[plottingWindowNumber], lowerEnd);
         xRangeMax_[plottingWindowNumber] = std::max(xRangeMax_[plottingWindowNumber], upperEnd);
@@ -218,7 +259,7 @@ public:
      */
     void setYRange(Scalar lowerEnd,
                    Scalar upperEnd,
-                   unsigned int plottingWindowNumber)
+                   const unsigned int plottingWindowNumber)
     {
         yRangeMin_[plottingWindowNumber] = std::min(yRangeMin_[plottingWindowNumber], lowerEnd);
         yRangeMax_[plottingWindowNumber] = std::max(yRangeMax_[plottingWindowNumber], upperEnd);

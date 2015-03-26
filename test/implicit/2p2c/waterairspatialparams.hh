@@ -24,6 +24,9 @@
 #ifndef DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
 #define DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
 
+#include <dumux/io/ploteffectivediffusivitymodel.hh>
+#include <dumux/io/plotmateriallaw.hh>
+#include <dumux/io/plotthermalconductivitymodel.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -112,6 +115,29 @@ public:
         coarseMaterialParams_.setPe(1e4);
         fineMaterialParams_.setLambda(2.0);
         coarseMaterialParams_.setLambda(2.0);
+    }
+
+    /*!
+     * \brief This is called from the problem and creates a gnuplot output
+     *        of e.g the pc-Sw curve
+     */
+    void plotMaterialLaw()
+    {
+        PlotMaterialLaw<TypeTag> plotMaterialLaw;
+        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
+        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel;
+        plotMaterialLaw.plotpcsw(fineMaterialParams_, 0.1, 1.0, "fine");
+        plotMaterialLaw.plotpcsw(coarseMaterialParams_, 0.1, 1.0, "coarse");
+        plotMaterialLaw.plotkr(fineMaterialParams_, 0.1, 1.0, "fine", false/*interactive*/);
+        plotMaterialLaw.plotkr(coarseMaterialParams_, 0.1, 1.0, "coarse", false/*interactive*/);
+
+        plotEffectiveDiffusivityModel.plotdeff(finePorosity_, 0.0, 1.0, "fine");
+        plotEffectiveDiffusivityModel.plotdeff(coarsePorosity_, 0.0, 1.0, "coarse");
+
+        plotThermalConductivityModel.plotlambdaeff(finePorosity_, 2700.0, lambdaSolid_,
+                                                   0.0, 1.0, "fine");
+        plotThermalConductivityModel.plotlambdaeff(coarsePorosity_, 2700.0, lambdaSolid_,
+                                                   0.0, 1.0, "coarse");
     }
 
     /*!

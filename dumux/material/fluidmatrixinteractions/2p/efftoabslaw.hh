@@ -163,6 +163,19 @@ public:
     }
 
     /*!
+     * \brief Returns the partial derivative of the relative permeability
+     *        of the wetting phase with respect to the wetting saturation.
+     *
+     * \param sw        Absolute saturation of the wetting phase \f$\overline{S}_w\f$.
+     * \param params    A container object that is populated with the appropriate coefficients
+     *                  for the respective law.
+     */
+    static Scalar dkrw_dsw(const Params &params, Scalar sw)
+    {
+        return EffLaw::dkrw_dsw(params, swToSwe(params, sw));
+    }
+
+    /*!
      * \brief The relative permeability for the non-wetting phase.
      *
      * \param sw        Absolute saturation of the wetting phase \f${S}_w\f$. It is converted to effective saturation
@@ -176,6 +189,19 @@ public:
     static Scalar krn(const Params &params, Scalar sw)
     {
         return EffLaw::krn(params, swToSwe(params, sw));
+    }
+
+    /*!
+     * \brief Returns the partial derivative of the relative permeability
+     *        of the non-wetting phase with respect to the wetting saturation.
+     *
+     * \param sw        Absolute saturation of the wetting phase \f$\overline{S}_w\f$.
+     * \param params    A container object that is populated with the appropriate coefficients
+     *                  for the respective law.
+     */
+    static Scalar dkrn_dsw(const Params &params, Scalar sw)
+    {
+        return EffLaw::dkrn_dsw(params, swToSwe(params, sw));
     }
 
     /*!

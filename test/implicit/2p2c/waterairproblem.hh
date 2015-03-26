@@ -173,6 +173,8 @@ public:
         {
             std::cout<<"problem uses mass-fractions"<<std::endl;
         }
+
+        this->spatialParams().plotMaterialLaw();
     }
 
     /*!

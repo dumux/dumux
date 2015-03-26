@@ -32,6 +32,7 @@ FreqOutput = 10         # frequency of VTK output
 FreqMassOutput = 2      # frequency of mass and evaporation rate output (Darcy)
 FreqFluxOutput = 1000   # frequency of detailed flux output
 FreqVaporFluxOutput = 2 # frequency of summarized flux output
+LiveEvaporationRates = true # plot evaporation rates using gnuplot interface
 
 [Stokes]
 StabilizationAlpha = -1.0

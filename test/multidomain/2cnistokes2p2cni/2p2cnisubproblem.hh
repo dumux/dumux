@@ -28,6 +28,7 @@
 
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
+#include <dumux/io/gnuplotinterface.hh>
 #include <dumux/multidomain/couplinglocalresiduals/2p2cnicouplinglocalresidual.hh>
 #include <dumux/multidomain/common/subdomainpropertydefaults.hh>
 #include <dumux/multidomain/common/multidomainlocaloperator.hh>
@@ -187,6 +188,12 @@ public:
         storageLastTimestep_ = Scalar(0);
         lastMassOutputTime_ = Scalar(0);
 
+        evaporationFile.open("evaporation.out");
+        evaporationFile << "#Time[d]" << " "
+                        << "WaterMass[kg]"
+                        << std::endl;
+        liveEvaporationRates_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Output, LiveEvaporationRates);
+
         outfile.open("storage.out");
         outfile << "Time;"
                 << "TotalMassChange;"
@@ -198,6 +205,7 @@ public:
 
     ~TwoPTwoCNISubProblem()
     {
+        evaporationFile.close();
         outfile.close();
     }
 
@@ -382,12 +390,24 @@ public:
                           << " WaterMassChange: " << storageChange[contiWEqIdx]
                           << std::endl;
                 if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(this->timeManager().time(), 0.0, 1.0e-30))
+                {
                     outfile << time << ";"
                             << storageChange[contiTotalMassIdx] << ";"
                             << storageChange[contiWEqIdx] << ";"
                             << storageChange[energyEqIdx] << ";"
                             << storage[contiWEqIdx]
                             << std::endl;
+
+                    evaporationFile << time/86400.0 << " " << storageChange[contiWEqIdx]*86400.0 << std::endl;
+                    unsigned int windowNumber = 1;
+                    gnuplot_.reset(windowNumber);
+                    gnuplot_.setXRange(0.0, time/86400.0, windowNumber);
+                    gnuplot_.setYRange(0.0, 12.0, windowNumber);
+                    gnuplot_.setXlabel("time [d]", windowNumber);
+                    gnuplot_.setYlabel("evaporation rate [mm/d]", windowNumber);
+                    gnuplot_.addFileToPlot("evaporation.out", "evaporation.out", windowNumber);
+                    gnuplot_.plot("evaporation", windowNumber, liveEvaporationRates_);
+                }
 
                 storageLastTimestep_ = storage;
                 lastMassOutputTime_ = time;
@@ -470,6 +490,10 @@ private:
     Scalar runUpDistanceX_;
     Scalar initializationTime_;
     std::ofstream outfile;
+
+    Dumux::GnuplotInterface<Scalar> gnuplot_;
+    std::ofstream evaporationFile;
+    bool liveEvaporationRates_;
 };
 } //end namespace Dumux
 

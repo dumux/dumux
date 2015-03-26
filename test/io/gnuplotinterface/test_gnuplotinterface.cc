@@ -50,11 +50,14 @@ int main()
     }
 
     unsigned int windowNumber = 0;
-    gnuplot.setXRange(xMin, xMax, windowNumber);
+    gnuplot.reset(windowNumber);
+    gnuplot.setXRange(0, 5, windowNumber);
     gnuplot.setYRange(yMin, yMax, windowNumber);
     gnuplot.setXlabel("x [-]", windowNumber);
     gnuplot.setYlabel("f(x) [-]", windowNumber);
-    gnuplot.addDataSet(x, y, "f(x) = x^2", windowNumber);
-    gnuplot.plot("plot", windowNumber, false);
+    gnuplot.addDataSetToPlot(x, y, "f(x)=x^2", windowNumber);
+    gnuplot.addFunctionToPlot("x**3", "f(x)=x^3", windowNumber);
+    gnuplot.addFileToPlot("0_f(x)=x^2.dat", "0_f(x)=x^2.dat", windowNumber);
+    gnuplot.plot("plot", windowNumber, true);
     exit(0);
 }
