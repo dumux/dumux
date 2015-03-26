@@ -10,4 +10,4 @@ EnablePartialReassemble = 1 # enable partial reassembly of the jacobian matrix?
 EnableJacobianRecycling = 1 # enable reuse of jacobian matrices?
 
 [Problem]
- ProblemEnableGravity = 0 # enable gravity
+EnableGravity = 0 # enable gravity?
