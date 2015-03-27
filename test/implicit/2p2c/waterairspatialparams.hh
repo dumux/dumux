@@ -115,6 +115,9 @@ public:
         coarseMaterialParams_.setPe(1e4);
         fineMaterialParams_.setLambda(2.0);
         coarseMaterialParams_.setLambda(2.0);
+
+        plotFluidMatrixInteractions_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Output,
+                                                                    PlotFluidMatrixInteractions);
     }
 
     /*!
@@ -126,18 +129,18 @@ public:
         PlotMaterialLaw<TypeTag> plotMaterialLaw;
         PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
         PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel;
-        plotMaterialLaw.plotpcsw(fineMaterialParams_, 0.1, 1.0, "fine");
-        plotMaterialLaw.plotpcsw(coarseMaterialParams_, 0.1, 1.0, "coarse");
-        plotMaterialLaw.plotkr(fineMaterialParams_, 0.1, 1.0, "fine", false/*interactive*/);
-        plotMaterialLaw.plotkr(coarseMaterialParams_, 0.1, 1.0, "coarse", false/*interactive*/);
+        plotMaterialLaw.plotpcsw(fineMaterialParams_, 0.2, 1.0, "fine", plotFluidMatrixInteractions_);
+        plotMaterialLaw.plotpcsw(coarseMaterialParams_, 0.2, 1.0, "coarse", plotFluidMatrixInteractions_);
+        plotMaterialLaw.plotkr(fineMaterialParams_, 0.2, 1.0, "fine", plotFluidMatrixInteractions_);
+        plotMaterialLaw.plotkr(coarseMaterialParams_, 0.2, 1.0, "coarse", plotFluidMatrixInteractions_);
 
-        plotEffectiveDiffusivityModel.plotdeff(finePorosity_, 0.0, 1.0, "fine");
-        plotEffectiveDiffusivityModel.plotdeff(coarsePorosity_, 0.0, 1.0, "coarse");
+        plotEffectiveDiffusivityModel.plotdeff(finePorosity_, 0.0, 1.0, "fine", plotFluidMatrixInteractions_);
+        plotEffectiveDiffusivityModel.plotdeff(coarsePorosity_, 0.0, 1.0, "coarse", plotFluidMatrixInteractions_);
 
         plotThermalConductivityModel.plotlambdaeff(finePorosity_, 2700.0, lambdaSolid_,
-                                                   0.0, 1.0, "fine");
+                                                   0.0, 1.0, "fine", plotFluidMatrixInteractions_);
         plotThermalConductivityModel.plotlambdaeff(coarsePorosity_, 2700.0, lambdaSolid_,
-                                                   0.0, 1.0, "coarse");
+                                                   0.0, 1.0, "coarse", plotFluidMatrixInteractions_);
     }
 
     /*!
@@ -259,6 +262,8 @@ private:
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;
+
+    bool plotFluidMatrixInteractions_;
 };
 
 }

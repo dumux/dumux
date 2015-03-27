@@ -6,7 +6,7 @@ TEnd = 1e4 # [s]
 File = ./grids/test_2p2cni.dgf
 
 [Problem]
-Name = wateraircc
+Name = waterairbox
 
 [Output]
-PlotFluidMatrixInteractions = true
+PlotFluidMatrixInteractions = false

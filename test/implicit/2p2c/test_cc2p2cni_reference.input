@@ -9,4 +9,4 @@ File = ./grids/test_2p2cni.dgf
 Name = wateraircc
 
 [Output]
-PlotFluidMatrixInteractions = true
+PlotFluidMatrixInteractions = false

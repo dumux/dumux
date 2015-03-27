@@ -8,3 +8,5 @@ File = ./grids/test_2p2cni.dgf
 [Problem]
 Name = waterairbox
 
+[Output]
+PlotFluidMatrixInteractions = true

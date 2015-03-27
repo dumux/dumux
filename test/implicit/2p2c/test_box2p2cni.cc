@@ -44,7 +44,8 @@ void usage(const char *progName, const std::string &errorMsg)
                                         "\t-TimeManager.TEnd      End of the simulation [s] \n"
                                         "\t-TimeManager.DtInitial Initial timestep size [s] \n"
                                         "\t-Grid.File             Name of the file containing the grid \n"
-                                        "\t                       definition in DGF format\n";
+                                        "\t                       definition in DGF format\n"
+                                        "\t-Output.PlotFluidMatrixInteractions  Interactive output via gnuplot\n";
 
         std::cout << errorMessageOut
                   << "\n";
