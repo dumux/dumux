@@ -26,6 +26,8 @@ AC_DEFUN([DUMUX_CHECKS],
   if test "x$HAVE_CONSTEXPR" != "xyes"; then
       AC_DEFINE(constexpr, const, ['set 'constexpr' to 'const' if constexpr is not supported])
   fi
+
+  AC_REQUIRE([DUMUX_DEPRECATED_AUTOTOOLS])
 ])
 
 # checks only relevant for the dumux module itself but not for modules

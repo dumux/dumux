@@ -38,6 +38,12 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
     printing only the first deviation from the reference solution, it now
     prints the maximum deviation in each field/variable.
 
+* DEPRECATED BUILD SYSTEM: DuMuX 2.7 will be the last release which can be built
+    with the Autotools based build system. It is deprecated and will be removed
+    for DuMuX 2.8. We encourage the change towards CMake, especially with the
+    upcoming DUNE 2.4.
+    The warning can be suppressed with --disable-dumux-deprecated-autotools
+
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - Before, the "heatCapacity" function in the spatial parameters and volume
     variables of the implicit nonisothermal models was a misnomer, since it
