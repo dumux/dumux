@@ -41,7 +41,7 @@ namespace Dumux
  *
  * with a constant tau.
  */
-template<class Scalar>
+template<class TypeTag, class Scalar>
 class DiffusivityConstantTau
 {
 public:
