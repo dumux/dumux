@@ -23,6 +23,10 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
     "residual reduction". This is particularly important, if corresponding
     parameters or properties are set, see below.
 
+  - The geomechanics ElTwoPModel runs in parallel now. This is made possible by
+    a dedicated solver, the El2PAMGBackend which has to be set for the property
+    LinearSolver in the problem file. See test/geomechanics/el2p for details.
+
   - Before, velocity output for the implicit porous-media models only worked for
     cube grids. This has been generalized to simplices (box and cc) and prisms/
     pyramids (box only).
