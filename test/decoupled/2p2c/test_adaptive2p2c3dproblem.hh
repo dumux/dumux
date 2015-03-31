@@ -265,7 +265,6 @@ Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
 }
 
 private:
-Grid grid_;
 Dumux::VtkMultiWriter<GridView> debugWriter_;
 Scalar injectionrate_;
 };

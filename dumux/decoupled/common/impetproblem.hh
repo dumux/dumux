@@ -98,6 +98,7 @@ public:
      */
     IMPETProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),
+          grid_(nullptr),
           bBoxMin_(std::numeric_limits<double>::max()),
           bBoxMax_(-std::numeric_limits<double>::max()),
           timeManager_(&timeManager),
