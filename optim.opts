@@ -6,8 +6,7 @@ GXX_WARNING_OPTS=" \
     -Wno-sign-compare \
     -Wno-unused-parameter"
 
-# additional -W flags for g++ which will lead to many warnings in
-# other dune modules
+# additional -W flags for g++ which will lead to many warnings
 #    -Wextra \
 #    -Wfloat-equal \
 #    -Wstrict-overflow \
@@ -20,9 +19,6 @@ GXX_OPTS=" \
     -O3 \
     -march=native \
     -DNDEBUG=1"
-
-# do not write a file .dune.resume to the home directory
-RESUME_FILE=/dev/null
 
 # configure flags 
 CMAKE_FLAGS=" \

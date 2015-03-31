@@ -6,8 +6,7 @@ GXX_WARNING_OPTS=" \
     -Wno-sign-compare \
     -Wno-unused-parameter"
 
-# additional -W flags for g++ which will lead to many warnings in
-# other dune modules
+# additional -W flags for g++ which will lead to many warnings
 #    -Wextra \
 #    -Wfloat-equal \
 #    -Wstrict-overflow \
