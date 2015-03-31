@@ -158,7 +158,7 @@ int main(int argc, char** argv)
 int main()
 {
     std::cerr << "You need to have ALUGrid installed to run this test\n";
-    return 1;
+    return 77;
 }
 
 #endif
