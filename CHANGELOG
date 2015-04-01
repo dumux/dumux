@@ -1,6 +1,12 @@
 Differences Between DuMuX 2.6 and DuMuX 2.7
 ===================================================
 
+* IMPORTANT NOTES:
+  - DuMuX 2.7 should work with DUNE 2.3 as well as 2.4. However, at the time of
+    writing, DUNE-multidomain(grid) doesn't work with DUNE 2.4. Therefore, if a
+    DuMuX multidomain model should be used, DUNE 2.3 is required. See
+    test/multidomain/README for details.
+
 * IMPROVEMENTS and ENHANCEMENTS:
   - Since 2.6, all isothermal implicit porous-media models (except 2pdfm) can be
     easily enhanced with the energy equation. For 2.7, this has been also
