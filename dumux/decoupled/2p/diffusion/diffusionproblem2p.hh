@@ -28,10 +28,6 @@
 
 namespace Dumux
 {
-namespace Properties
-{
-SET_TYPE_PROP(PressureTwoP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel));
-}
 /*!
  * \ingroup IMPETproblems
  * \ingroup Pressure2p
@@ -49,6 +45,7 @@ class DiffusionProblem2P: public OneModelProblem<TypeTag>
     typedef typename GridView::Grid Grid;typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) PressureModel;
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -80,6 +77,8 @@ public:
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
+
+        pressModel_ = Dune::make_shared<PressureModel>(asImp_());
     }
     /*!
      * \brief Constructs a DiffusionProblem2P object
@@ -95,6 +94,8 @@ public:
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
+
+        pressModel_ = Dune::make_shared<PressureModel>(asImp_());
     }
 
     /*!
@@ -109,6 +110,8 @@ public:
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
+
+        pressModel_ = Dune::make_shared<PressureModel>(asImp_());
     }
     /*!
      * \brief Constructs a DiffusionProblem2P object
@@ -123,6 +126,8 @@ public:
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
+
+        pressModel_ = Dune::make_shared<PressureModel>(asImp_());
     }
 
     /*!
@@ -219,6 +224,16 @@ public:
         return *spatialParams_;
     }
 
+    /*!
+     * \brief Returns the pressure model used for the problem.
+     */
+    PressureModel &pressureModel()
+    { return *pressModel_; }
+
+    //! \copydoc Dumux::IMPETProblem::pressureModel()
+    const PressureModel &pressureModel() const
+    { return *pressModel_; }
+
     // \}
 
 private:
@@ -235,6 +250,7 @@ private:
     // fluids and material properties
     Dune::shared_ptr<SpatialParams> spatialParams_;
     bool newSpatialParams_;
+    Dune::shared_ptr<PressureModel> pressModel_;
 };
 
 }
