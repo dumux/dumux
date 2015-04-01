@@ -41,5 +41,5 @@ add_dumux_test(test_cc3p3cnikuevette test_cc3p3cnikuevette test_cc3p3cnikuevette
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/kuevette3p3cnicc-reference.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/kuevettecc-00014.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/kuevettecc-00012.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_cc3p3cnikuevette)
