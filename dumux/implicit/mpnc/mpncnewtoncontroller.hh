@@ -199,13 +199,13 @@ public:
                       const SolutionVector &deltaU)
     {
         if (this->enableShiftCriterion_ || this->enablePartialReassemble_)
-            this->newtonUpdateRelError(uLastIter, deltaU);
+            this->newtonUpdateShift(uLastIter, deltaU);
 
         // compute the vertex and element colors for partial
         // reassembly
         if (this->enablePartialReassemble_) {
-            const Scalar minReasmTol = 1e-2*this->tolerance_;
-            const Scalar maxReasmTol = 1e1*this->tolerance_;
+            const Scalar minReasmTol = 1e-2*this->shiftTolerance_;
+            const Scalar maxReasmTol = 1e1*this->shiftTolerance_;
             Scalar reassembleTol = std::max(minReasmTol, std::min(maxReasmTol, this->shift_/1e4));
 
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
