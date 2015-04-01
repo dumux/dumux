@@ -24,7 +24,7 @@ or running correctly. It is a useful tool to check the impacts of your commits
 and for quality management. The dashboard is available at 
 \url{http://www.dumux.org/dashboard.php}.
 
-\paragraph{The \Dumux-Mailing List:}
+\paragraph{The \Dumux Mailing List:}
 If you have questions concerning \Dumux, hints for the \Dumux-developers
 or specific problems, which you really struggle to solve on your own,
 you can contact the mailing list \url{dumux@iws.uni-stuttgart.de}.
@@ -32,7 +32,7 @@ You can also subscribed to the mailing list via
 \url{https://listserv.uni-stuttgart.de/mailman/listinfo/dumux}, then you
 will be informed about upcoming releases or events.
 
-\paragraph{The Commit-Mailing List:}
+\paragraph{The Commit Mailing List:}
 If you further want to be informed about commits to the dumux can subscribe
 to the commit mailing list:
 \url{https://listserv.uni-stuttgart.de/mailman/listinfo/dumux-commits}.
@@ -122,44 +122,35 @@ which translates into a line in the output file reading\\
 This can also be very useful, if you want to have information about where some warning or debug information was issued. 
 
 \paragraph{Option Files optim.opts and debug.opts}
-As explained on page \pageref{buildIt} \Dune and \Dumux are built with the help of the \texttt{dunecontrol}. 
-A lot of options need to be specified for that, which is done in the \texttt{debug.opts} resp. \texttt{optim.opts}
-(plus \texttt{.suse11.2} if applicable) in your \texttt{dumux-devel} directory. These two files differ in the way \Dune and \Dumux are compiled: either for debugging or for fast simulation. Switching between these two states is really 
-worth it: speedup of factor $\approx 2$. 
-
-If you want your \Dumux fast than simply build dunecontrol with the \texttt{optim.opts}. BUT: Programs that are compiled with optimization can hardly 
-be debugged because the debugger gets confused. But the cool thing is, that you do NOT need to run dunecontrol if you want to start debugging. You can simply remove the optimization options from your application's Makefile:
-\begin{itemize}
-\item open your application's Makefile with the text editor of your choice
-\item find the line including \texttt{CXXFLAGS =}
-\item these are the options given to the \Cplusplus compiler
-\item add \texttt{-g} (debugging symbols)
-\item remove \texttt{-O3} (third level optimization, i.\,e. do not care for anything but execution speed),  \texttt{-march=native} and \texttt{-DNDEBUG}.
-\item build your application again. 
-\item as long as you only debug your application (and no \Dune stuff) this works, otherwise recompile with dunecontrol and \texttt{debug.opts}
-\item compiling without optimization takes also shorter time
-\end{itemize}
-
-(The other possibility is to run \texttt{dunecontrol} with \texttt{debug.opts} and afterwards adding \texttt{-O3} into your application Makefile. The performance penalty does not make a big difference and so do the other options besides \texttt{-O3})
-
+\Dune and \Dumux are built with the help of \texttt{dunecontrol}, as explained on page \pageref{buildIt}.
+A lot of options need to be specified for that, which is done in option files. \Dumux provides two example files
+\texttt{debug.opts} and \texttt{optim.opts}. These two files differ in the way \Dune and \Dumux are compiled:
+either for debugging or for fast simulation. Switching between these two states can lead to a speedup of factor up to ten!
+Programs that are compiled with optimization can hardly be debugged because the debugger gets confused.
 Debugging with the optimization options active will lead to erratic behavior while debugging. 
 
-\paragraph{Faster Build with Dunecontrol}
-A complete build using \texttt{dunecontrol} takes some time. If there were just small changes in the folder structure, it is usually sufficient to run dunecontrol with option \texttt{autogen} instead of \texttt{all}, and afterwards creating the makefiles with option \texttt{configure}.
+You can modify the files and add third-party dependencies or additional compiler flags.
 
-An other possibility to speed up dunecontrol is caching of configure results. Add to the configure flags the line \texttt{--cache-file=/tmp/dune-config.cache} in you options file.
+\paragraph{Dunecontrol for selected modules}
+A complete build using \texttt{dunecontrol} takes some time. In many cases not all modules need to be re-built.
+Pass the flag \texttt{--only=dumux} to \texttt{dunecontrol} for configuring or building only \Dumux. A more
+complex example would be the use of an additional grid. Then you have to configure and build only \Dune{}-grid
+and \Dumux by adding \texttt{--only=dune-grid,dumux} to the \texttt{dunecontrol} call.
 
 \section{External Tools}
-\subsection{svn}
+\subsection{Subversion (svn)}
+
+Subversion is a software versioning and revision control system. We use Subversion to manage the source code
+of \Dumux, archive changes and central storage.
 
 \paragraph{Basic Commands}
 The basic svn commands are:
 \begin{itemize}
-  \item \texttt{svn checkout} checkout an repository
+  \item \texttt{svn checkout} checkout a repository
   \item \texttt{svn update} updates file/folder
-  \item \texttt{svn status} to check which files/folders have been changed.
+  \item \texttt{svn status} to check which files/folders have been changed
         \texttt{M}odified, \texttt{D}eleted, \texttt{A}dded, \texttt{?} not in repository
-  \item \texttt{svn diff} to see the changes of a file/folder
+  \item \texttt{svn diff} to see the actual changes of a file/folder
   \item \texttt{svn commit} upload changes to the repository (only with meaningful
         commit messages)
 \end{itemize}
@@ -176,7 +167,17 @@ How to set the SVN attributes:
  \item{\em SVN on shell}: \verb+svn propedit svn:ignore .+
 \end{itemize}
 
-\subsection{eclipse}
+\subsection{Git}
+Git plays a similar role as Subversion, some see Git as a successor of Subversion. Git is used by \Dune. The basic
+Git commands are:
+\begin{itemize}
+  \item \texttt{git clone} clone a repository (similar to svn checkout)
+  \item \texttt{git pull} pull changes from the repository (similar to svn update)
+  \item \texttt{git status} to check which files/folders have been changed
+  \item \texttt{git diff} to see the actual changes of a file/folder
+\end{itemize}
+
+\subsection{Eclipse}
 \paragraph{Using the \Dumux-Eclipse Profile}
 Everybody using the same profile has the advantage of resulting in less conflicts
 when different developing environments are used:
@@ -199,7 +200,7 @@ it via \texttt{Macros} $\rightarrow$ \texttt{Add new macro}.\\
 \texttt{pvd}: \url{http://markmail.org/message/exxynsgishbvtngg#query:+page:1+mid:rxlwxs7uqrfgibyv+state:results}.
 
 \paragraph{Guide:}
-Since ParaView 4.3.1 The ParaView-Guide is partly
+Since ParaView 4.3.1 The ParaView Guide is partly
 available for free download, see \url{http://www.paraview.org/documentation/}.
-It corresponds to the ParaView-book, only without three application chaptes.
+It corresponds to the ParaView book, only without three application chaptes.
 Attention its size is 180 MiB.
