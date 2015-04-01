@@ -9,7 +9,8 @@ the Doxygen documentation should be considered.
 It has a similar structure as other DUNE modules like \texttt{dune-grid}. 
 The following subdirectories are within the module's root directory, 
 from now on assumed to be \texttt{/}: 
-\begin{itemize} 
+\begin{itemize}
+\item \texttt{bin}: contains binaries, e.g. used for the automatic testing
 \item \texttt{CMake}: the configuration options 
 for building \Dumux using CMake. See the file \texttt{INSTALL.cmake} in 
 the root directory of \texttt{dumux} for details. Of course, 
@@ -62,7 +63,7 @@ and the \texttt{start.hh} file that includes the common routine for starting a m
 % employed by the box method to extract the dual mesh geometry information out of the 
 % primal one. 
 
-\item \texttt{io}: additional in-/output possibilities like restart files 
+\item \texttt{io}: additional in-/output possibilities like restart files, gnuplot-interface 
 and a VTKWriter extension. 
 
 \item \texttt{material}: everything related to material parameters and 
@@ -194,7 +195,7 @@ Doxygen documentation should be considered.
 \draw [->](c1)--(6.5,2) node [right,text width=12.5cm,align=left] 
   {Common functionality of cell centered and box formulation: assembling \\[-5pt]in implicitlocaljacobian.hh, evaluation of partial derivative in \\[-5pt]implicitlocalresidual.hh, base classes for model and problem definition.};
 \draw [->](io)--(6.5,1) node [right,text width=12.5cm,align=left] 
-  {Additional in-/output possibilities like restart files and a VTKWriter \\[-4pt]extension. Grid Creator files.};
+  {Additional in-/output possibilities like restart files, gnuplot-interface and a VTKWriter \\[-4pt]extension. Grid Creator files.};
 \draw [->](lin)--(6.5,0) node [right,text width=12.5cm,align=left] {Linear solver backend.};
 \draw [->](bin)--(6.5,-1) node [right,text width=12.5cm,align=left] 
   {Binary coefficients (like binary diffusion coefficients) and those needed for \\[-4pt]the constitutive relationships (e.g. Henry coefficient).};
@@ -232,5 +233,7 @@ Doxygen documentation should be considered.
 % \end{figure}
 % \end{landscape}
 
-\input{guidelines}
 \input{newFolder}
+\input{parameterfiles}
+\input{restartsimulations}
+\input{guidelines}

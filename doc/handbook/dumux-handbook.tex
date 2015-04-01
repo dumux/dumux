@@ -7,12 +7,51 @@
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{theorem}
-\usepackage{xcolor}
+\usepackage[usenames,dvipsnames]{xcolor}
 \usepackage{listings}
+\usepackage{makeidx}
+\usepackage{graphicx}
+\usepackage{xspace}
+\usepackage[htt]{hyphenat}
+\usepackage{lscape}
+\usepackage{enumerate}
+\usepackage{rotating}
+\usepackage{subfig}
+\usepackage{units}
+\usepackage{url}
+\usepackage{breakurl}
+\usepackage{tikz}
+\usepackage{pdflscape}
+\usepackage{rotating}
+\usetikzlibrary{arrows,backgrounds,decorations.pathmorphing,patterns,positioning,fit,shapes}
+\usepackage[normalem]{ulem}
+\usepackage{tabularx}
+\newcommand{\snakeline}{%
+% {\uwave{\makebox[\linewidth]{\mbox{}}}}
+\uwave{\mbox{}}
+}
+\usepackage{layout}
+
+\usepackage{hyperref}
+\hypersetup{bookmarksdepth=2}
+
+\DeclareGraphicsExtensions{.pdf, .jpg}
+
+% Dune logo
+\newcommand{\Dune}{{DUNE}\xspace}
+% DuMuX macro
+\newcommand{\Dumux}{\texorpdfstring{Du\-Mu$^\text{x}$\xspace}{DuMuX\xspace}}
+\newcommand{\DumuxVersion}{2.7}
+% DuMuX logo colors
+\definecolor{dumuxYellow}{HTML}{E19417}
+\definecolor{dumuxBlue}{HTML}{0C73CF}
+% beautify C++
+\DeclareRobustCommand\Cplusplus{\texorpdfstring{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}\xspace}{C++}}
+
+% for listings of C++ code
 \lstset{language=C++, basicstyle=\ttfamily, 
   keywordstyle=\color{black}\bfseries, tabsize=4, stringstyle=\ttfamily,
   commentstyle=\it, extendedchars=true, escapeinside={/*@}{@*/}}
-
 % for listings of bash code in install.tex
 \lstdefinestyle{Bash}
  {language=Bash,
@@ -37,49 +76,15 @@
  numbers=left,
  numberstyle=\tiny,
  numbersep=5pt,
- breaklines=true
+ breaklines=true,
+ keywordstyle=\color{dumuxBlue},
+ stringstyle=\color{Red},
+ commentstyle=\color{Gray},
+ morecomment=[l][\color{OliveGreen}]{\#}
 }
 \lstset{showstringspaces=false,
  breaklines=true}
 
-\usepackage{makeidx}
-\usepackage{graphicx}
-\usepackage{xspace}
-\usepackage[htt]{hyphenat}
-\usepackage{lscape}
-\usepackage{enumerate}
-\usepackage{rotating}
-\usepackage{subfig}
-\usepackage{units}
-\usepackage{url}
-\usepackage{breakurl}
-
-\usepackage{tikz}
-\usepackage{pdflscape}
-\usepackage{rotating}
-\usetikzlibrary{arrows,backgrounds,decorations.pathmorphing,patterns,positioning,fit,shapes}
-
-\usepackage[normalem]{ulem}
-\usepackage{tabularx}
-\newcommand{\snakeline}{%
-% {\uwave{\makebox[\linewidth]{\mbox{}}}}
-\uwave{\mbox{}}
-}
-\usepackage{layout}
-
-\usepackage{hyperref}
-
-\DeclareGraphicsExtensions{.pdf, .jpg}
-
-% Dune logo
-\newcommand{\Dune}{{DUNE}\xspace}
-% DuMuX logo
-\newcommand{\Dumux}{\texorpdfstring{Du\-Mu$^\text{x}$\xspace}{DuMuX}}
-% DuMuX logo colors
-\definecolor{dumuxYellow}{HTML}{E19417}
-\definecolor{dumuxBlue}{HTML}{0C73CF}
-% beautify C++
-\DeclareRobustCommand\Cplusplus{\texorpdfstring{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}\xspace}{C++}}
 
 \newcommand{\porosity}{\phi}
 \newcommand{\saturation}{S}
@@ -157,13 +162,14 @@ Universit\"at Stuttgart, Paffenwaldring 61, D-70569 Stuttgart, Germany}\\
 
 \maketitle
 
+\setcounter{tocdepth}{1}
+\pdfbookmark[0]{Table of Contents}{Table of Contents}
 \tableofcontents
 
 \input{intro}
 \input{getting-started}
 \input{tutorial}
 \input{structure}
-\input{designpatterns}
 \input{propertysystem}
 \input{fluidframework}
 \input{models}

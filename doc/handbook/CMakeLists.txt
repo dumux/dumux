@@ -1,5 +1,4 @@
 set(TEX_INPUTS
-  designpatterns.tex
   DumuxFlow.tex
   fluidframework.tex
   getting-started.tex
@@ -10,16 +9,16 @@ set(TEX_INPUTS
   newFolder.tex
   dumux-handbook.tex
   NewtonInANutshell.tex
-  parameterTree.tex
+  parameterfiles.tex
   propertysystem.tex
   quick-install.tex
   quickstart-guide.tex
   spatialdiscretization.tex
+  restartsimulations.tex
   structure.tex
   TipsNTricks.tex
   tutorial-coupled.tex
   tutorial-decoupled.tex
-  tutorial-newmodel.tex
   tutorial.tex
   ModelDescriptions/1p2cimplicitmodel.tex
   ModelDescriptions/1pdecoupledmodel.tex

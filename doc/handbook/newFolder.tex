@@ -1,56 +1,53 @@
-\section{Setup of a New Folder}
+\section{Setup of a New Folder and New Tests}
 
-In this section setting up a new folder is described. In fact it is easy to create a new folder, but getting the build system to know the new folder takes some steps:
+\paragraph{Setting up a New Folder}
+In this section it is described how to set up a new folder and how to tell
+the build system, that there is a new one.
 
 \begin{enumerate}[1)]
  \item create new folder with content
- \item adapt \verb+Makefile.am+
- \item insert new folder in \verb+Makefile.am+ of the directory above
- \item adapt \verb+configure.ac+ in the \verb+$DUMUX_ROOT+ (the directory you checked out, probably dumux)
- \item rerun dunecontrol / autogen for \Dumux
+ \item adapt the \verb+CMakeList.txt+ in the folder above and add a line with
+       \verb+add_subdirectory(NEW\_FOLDER)+
+ \item adapt the \verb+CMakeList.txt+ in the newly created folder and add your test
+       (see below for more information)
+ \item go to your \texttt{build}-directory and type \verb+make+ to
+       reconfigure the system
 \end{enumerate}
 
-\noindent In more detail:
-
-\textbf{First} of all, the new folder including all relevant files needs to be created (see Section \ref{tutorial-coupled} and \ref{tutorial-decoupled} for description of a problem). 
-
-\textbf{Second}, a new \verb+Makefile.am+ for the new Folder needs to be created. It is good practice to simply copy an existing file. For example the file \verb+$DUMUX_ROOT/test/2p/Makefile.am+ looks as follows:
+\paragraph{Adding a New Test Program}
+\noindent To simply add a new executable use the following macro. The test will \emph{not} be built
+automatically when running \texttt{ctest}. You have to compile it manually by
+\texttt{make test\_program}.
 \begin{verbatim}
-bin_PROGRAMS = test_2p
-
-test_2p_SOURCES = test_2p.cc
-test_2p_CXXFLAGS = $(MPI_CPPFLAGS) 
-test_2p_LDADD = $(MPI_LDFLAGS) 
-
-include $(top_srcdir)/am/global-rules
+add_executable_all(test\_program test\_program.cc)
 \end{verbatim}
 
-All occurrences of \verb+test_2p+ need to be replaced by the name of the new project, e.g. \verb+New_Project+. At least if the name of the source file as well as the name of the new project are \verb+New_Project+.
-
-\textbf{Third}: In the directory above your new Project there is also a \verb+Makefile.am+ . In this file the subdirectories are listed. As you introduced a new subdirectory, it needs to be included here. In this case the name of the new Folder is \verb+New_Project+ . Don't forget the trailing backslash.
-
+\noindent To add a test, which should be compiled when running \texttt{ctest}, use the
+\texttt{add\_dumux\_test} macro. You can decide whether, the program should be run
+after compiling or not.
+Please note that the name of the test (first argument) must be unique, whereas the name
+of the executable (second argument) can occur multiple times.
 \begin{verbatim}
- SUBDIRS = . \
-	  1p \
-	  1p2c \
-	  2p \
-	  2p2c \
-	  2p2cni \
-	  2pni \
-	New_Project \
-...
+add_dumux_test(test\_program test\_program test\_program.cc
+  test\_program # add this line, if the program should also be run
+  )
 \end{verbatim}
 
-\textbf{Fourth}: In \verb+$DUMUX_ROOT+ there is a file \verb+configure.ac+. In this file, the respective Makefiles are listed. After a line reading
+\noindent To add a test which should be run and compared to a reference solution when using
+\texttt{ctest}, please use the following structure. The macro \texttt{\${CMAKE\_SOURCE\_DIR}}
+gives the location of your source code. The macro \texttt{\${CMAKE\_CURRENT\_BINARY\_DIR}}
+gives the current folder with the executable.
+\begin{verbatim}
+add_dumux_test(test\_program test\_program test\_program.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  LOCATION_TO_THE_REFERNCE_SOLUTION/test\_program-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test\_program-00009.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test\_program)
+\end{verbatim}
 
- \verb+AC_CONFIG_FILES([Makefile+ 
-
- \noindent a line, declaring a new Makefile, needs to be included. The Makefile itself will be generated automatically during the autogen run which is triggered by dunecontrol. For keeping track of the included files, inserting in alphabetical order is good practice. The new line could read: \verb+test/New_Project/Makefile+ 
-
-\textbf{Fifth}: Recreate the build system by running dunecontrol as described in Section \ref{install}.
-
-\paragraph{Committing a new folder to the Subversion repository}
-For those who work with Subversion (svn) and want to commit a newly setup folder to the repository some basics are
+\paragraph{Committing a New older to SVN}
+For those who work with Subversion (\texttt{svn}) and want to commit a newly setup folder to the repository some basics are
 given in this paragraph. For further reading please check out the Subversion User Manual found at \cite{APACHE-SUBVERSION-HP}
 where you will also find a "High Speed Turorial" in the appendix. \\
 The four most important commands are \texttt{svn checkout}, \texttt{svn update},  \texttt{svn add} 
@@ -60,39 +57,15 @@ latest changes in the repository (commits from other users). In order to add a n
 steps have to be taken:
 
 \begin{enumerate}[1)]
- \item \texttt{svn update}: The first step is to update your \Dumux. You should execute this command in your
-dumux-stable or dumux-devel folder.
- \item \texttt{svn add --depth=empty YOURFOLDER}: This command adds the folder without its content.
- \item In your folder: use \texttt{svn add YOURFILES} to add your files. Generally, you should only add
-your header files (.hh), your source files (.cc), your input file (.input) and if required your grid file (.dgf).
+\item \texttt{svn update}: The first step is to update your \Dumux. You should execute this command in your
+      dumux-stable or dumux-devel folder.
+\item \texttt{svn add --depth=empty YOURFOLDER}: This command adds the folder without its content.
+\item In your folder: use \texttt{svn add YOURFILES} to add your files. Generally, you should only add
+      your header files (.hh), your source files (.cc), your input file (.input), if required your
+      grid file (.dgf) or if necessary other text-based files. Please do not upload (large) binary files.
+\item Type \texttt{svn status} in your \texttt{dumux}-root directory the see all the file changes.
+      \texttt{?} indicates possible forgotten files. Make sure that you include all necessary
+      files in your commit.
 \item Use \texttt{svn commit} from the directory level containing your folder. This uploads all your changes to the
-svn server. You will be asked to briefly explain the content of your commit in an editor.
+      svn server. You will be asked to briefly explain the content of your commit in an editor.
 \end{enumerate}
-
-The above shows you the necessary steps if you use the command line. There are also other tools providing a graphical 
-user interface for using svn like kdesvn or eclipse. The necessary steps for adding and committing stay the same.
-In the following some additional guidelines are shown which are not necessary but are good practice.
-Especially if you plan on committing to the stable part of \Dumux you must follow these steps.
-
-\begin{enumerate}[1)]
- \item use svn attributes to ignore files which are automatically created by a dunecontrol run
- \item test \texttt{make headercheck}
- \item test Doxygen
-\end{enumerate}
-
-\noindent In more detail:
-
-\textbf{First}: The command \verb+svn status+ marks all files which are not under version control with a question mark. Because dunecontrol creates a lot of files automatically this output becomes crowded and one might overlook ``real'' files which have to be added (they also will not be shown by a \verb+svn status -q+).
-For the stable part of \Dumux there is the rule to ignore and only to ignore the folder {\em .deps}, executables \texttt{test\_*}, and the files {\em Makefile} and {\em Makefile.in}.
-
-How to set the SVN attributes:
-\begin{itemize}
- \item{\em eclipse}: right click on the file/folder $\rightarrow$ ``team'' $\rightarrow$ ``add to svn:ignore\dots''
- \item{\em kdesvn}: right click on the file/folder $\rightarrow$ ``ignore/unignore current item''
- \item{\em SVN on shell}: \verb+svn propedit svn:ignore .+
-\end{itemize}
-Commit the changes for example in the command line with \verb+svn commit -m+ to the repository. It is also possible to use wildcards, e.\,g., if you want to ignore all vtu-files in your application folder in dumux-devel add \verb+'*.vtu'+ to the SVN ignore properties. Remember that such an ignore is only allowed in dumux-devel and not in the stable dumux.
-
-\textbf{Second}: It is good practice that every header includes everything it uses by itself and does not rely on the includes from headers that are included by themselves. This can be tested with \texttt{make headercheck} and should be done before committing to stable dumux. To test a specific header, use \texttt{make} \texttt{headercheck} \texttt{HEADER=} and add the header's path.
-
-\textbf{Third}: Run \texttt{make doc} in the \texttt{\$DUMUX\_ROOT} directory to generate the class documentation by Doxygen. Have a look into \texttt{\$DUMUX\_ROOT/doc/doxygen/doxyerror.log} whether one of your files have errors or are causing warnings. Please fix them.

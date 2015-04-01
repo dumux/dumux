@@ -1,6 +1,6 @@
-\chapter[Models]{Physical and numerical models}
+\chapter[The \Dumux Models]{Physical and Numerical Models Available in \Dumux}
 
-\section{Physical and mathematical description} 
+\section{Physical and Mathematical Description} 
 
 Characteristic of compositional multiphase models is that the phases
 are not only matter of a single chemical substance. Instead, their
@@ -111,7 +111,7 @@ $M$ & molar mass of a phase or component & $c_\text{s}$ & specific heat enthalpy
 $k_{\text{r}\alpha}$ & relative permeability & $\lambda_\text{pm}$ & heat conductivity \\
 $\mu_\alpha$ & phase viscosity & $q^h$ & heat source term \\
 $D_\alpha^\kappa$ & diffusivity of component $\kappa$ in phase $\alpha$ & $\boldsymbol{v}_{a,\alpha}$  & advective velocity \\
-$\boldsymbol{v}_\alpha$ & Darcy velocity & & \\
+$\boldsymbol{v}_\alpha$ & velocity (Darcy or free flow)& & \\
 \end{tabular}
 
 
@@ -196,70 +196,69 @@ fractions, temperature, pressures, etc.
 \input{spatialdiscretization}
 
 
-\section{Available models} 
+\section{Available Models} 
 The following description of the available models is automatically extracted 
 from the Doxygen documentation.
 % \textbf{TODO}: Unify notation. 
 
-\subsection{Fully-implicit models}
+\subsection{Fully-Implicit Models}
 
 The fully-implicit models described in this section are using the box or the cell centered finite volume method as described in section \ref{box} and \ref{cc} for spatial and the implicit Euler
 method as temporal discretization. The models themselves are located in
 subdirectories of \texttt{dumux/implicit} of the \Dumux distribution.
 
-\subsubsection{The single-phase model: OnePModel} 
+\subsubsection{The Single-Phase Model: OnePModel} 
 \input{ModelDescriptions/1pimplicitmodel}
 
-\subsubsection{The single-phase, two-component model:  OnePTwoCModel} 
+\subsubsection{The Single-Phase,Two-Component Model:  OnePTwoCModel} 
 \input{ModelDescriptions/1p2cimplicitmodel}
 
-\subsubsection{The two-phase model using the Richards assumption: RichardsModel} 
+\subsubsection{The Two-Phase Model Using the Richards Assumption: RichardsModel} 
 \input{ModelDescriptions/richardsimplicitmodel}
 
-\subsubsection{The two-phase model: TwoPModel}
+\subsubsection{The Two-Phase MOdel: TwoPModel}
 \input{ModelDescriptions/2pimplicitmodel}
 
-\subsubsection{The two-phase, two-component model: TwoPTwoCModel} 
+\subsubsection{The Two-Phase, Two-Component Model: TwoPTwoCModel} 
 \input{ModelDescriptions/2p2cimplicitmodel}
 
-\subsubsection{The CO2 model: CO2Model} 
+\subsubsection{The CO2 Model: CO2Model} 
 \input{ModelDescriptions/co2implicitmodel}
 
-
-\subsubsection{The three-phase model: ThreePModel} 
+\subsubsection{The Three-Phase Model: ThreePModel} 
 \input{ModelDescriptions/3pimplicitmodel}
 
-\subsubsection{The three-phase, three-component model: ThreePThreeCModel}
+\subsubsection{The three-Phase, Three-Component Model: ThreePThreeCModel}
 \input{ModelDescriptions/3p3cimplicitmodel}
 
-\subsubsection{The non-isothermal model: NIModel} 
+\subsubsection{The Non-Isothermal Model: NIModel} 
 \input{ModelDescriptions/nonisothermalimplicitmodel}
 
-\subsubsection{The $M$-phase, $N$-component model: MpNcModel} 
+\subsubsection{The $M$-Phase, $N$-Component Model: MpNcModel} 
 \input{ModelDescriptions/mpncimplicitmodel}
 
-\subsubsection{The two-phase, discrete fracture model: TwoPDFMModel} 
+\subsubsection{The Two-Phase, Discrete Fracture Model: TwoPDFMModel} 
 \input{ModelDescriptions/2pdfmimplicitmodel}
 
-\subsubsection{The Stokes model: StokesModel} 
+\subsubsection{The Stokes Model: StokesModel} 
 \input{ModelDescriptions/stokesimplicitmodel}
 
-\subsubsection{The isothermal $N$-component Stokes model: StokesNcModel} 
+\subsubsection{The Isothermal $N$-Component Stokes Model: StokesNcModel} 
 \input{ModelDescriptions/stokesncimplicitmodel}
 
-\subsubsection{The non-isothermal $N$-component Stokes model: StokesNcNIModel} 
+\subsubsection{The Non-Isothermal $N$-Component Stokes Model: StokesNcNIModel} 
 \input{ModelDescriptions/stokesncniimplicitmodel}
 
-\subsubsection{The linear elastic model: ElasticModel} 
+\subsubsection{The Linear Elastic Model: ElasticModel} 
 \input{ModelDescriptions/elasticmodel}
 
-\subsubsection{The linear elastic one-phase two-component model: ElOnePTwoCModel} 
+\subsubsection{The Linear Elastic One-Phase Two-Component Model: ElOnePTwoCModel} 
 \input{ModelDescriptions/el1p2cmodel}
 
-\subsubsection{The linear elastic two-phase model: ElTwoPModel} 
+\subsubsection{The Linear Elastic Two-Phase Model: ElTwoPModel} 
 \input{ModelDescriptions/el2pmodel}
 
-\subsection{Decoupled models}
+\subsection{Decoupled Models}
 %
 The basic idea the so-called decoupled models have in common is to reformulate the equations of multi-phase flow (e.g. Eq. \ref{A3:eqmass1}) into one equation for pressure and equations for phase-/component-/etc. transport. The pressure equation is the sum of the mass balance equations and thus considers the total flow of the fluid system. The new set of equations is considered as decoupled (or weakly coupled) and can thus be solved sequentially. The most popular decoupled model is the so-called fractional flow formulation for two-phase flow which is usually implemented applying an IMplicit Pressure Explicit Saturation algorithm (IMPES).
 In comparison to a fully implicit model, the decoupled structure allows the use of different discretization methods for the different equations. The standard method used in the decoupled models is a cell centered finite volume method. Further schemes, so far only available for the two-phase pressure equation, are cell centered finite volumes with multi-point flux approximation (MPFA O-method) and mimetic finite differences.
@@ -271,13 +270,13 @@ An $h$-adaptive implementation of both \nameref{ch:2p_decoupled} and \nameref{ch
 
 \subsubsection{The two-phase model}\label{ch:2p_decoupled}
 
-\paragraph{Pressure model}
+\paragraph{Pressure Model}
 \input{ModelDescriptions/2pdecoupledpressuremodel}
 
-\paragraph{Saturation model}
+\paragraph{Saturation Model}
 \input{ModelDescriptions/2pdecoupledsaturationmodel}
 
-\subsubsection{The two-phase, two-component model}\label{ch:2p2c_decoupled}
+\subsubsection{The Two-Phase, Two-Component Model}\label{ch:2p2c_decoupled}
 \input{ModelDescriptions/2p2cdecoupledpressuremodel}
 \input{ModelDescriptions/2p2cdecoupledtransportmodel}
 
