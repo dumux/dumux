@@ -11,8 +11,6 @@ RefinementFactor = 2
 [MPFA]
 TransmissibilityCriterion = 1
 #EnableTPFA = true
-EnableSimpleLStencil = true
-EnableComplexLStencil =true
 
 [Problem]
 EnableGravity = 0 # Disable Gravity

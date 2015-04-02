@@ -6,5 +6,8 @@ EnableGravity = 0 # Disable Gravity
 File = ./grids/test_diffusion3d_ug1.dgf
 #File = ./grids/test_diffusion3d_ug2.dgf
 
+[MPFA]
+TransmissibilityCriterion = 1 # 0 = default criterion, 1 = accumulative criterion
+
 RefinementRatio = 0
 

@@ -99,7 +99,6 @@ NEW_TYPE_TAG(FVTestProblem, INHERITS_FROM(FVPressureTwoP, DiffusionTestProblem))
 
 // set the types for the MPFA-L FV method
 NEW_TYPE_TAG(FVMPFAL3DTestProblem, INHERITS_FROM(FvMpfaL3dPressureTwoP, DiffusionTestProblem));
-SET_INT_PROP(FVMPFAL3DTestProblem, MPFATransmissibilityCriterion, 1);
 
 // set the types for the mimetic FD method
 NEW_TYPE_TAG(MimeticTestProblem, INHERITS_FROM(MimeticPressureTwoP, DiffusionTestProblem));
