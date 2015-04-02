@@ -24,6 +24,8 @@
 #ifndef DUMUX_PDELAB_LOCAL_OPERATOR_HH
 #define DUMUX_PDELAB_LOCAL_OPERATOR_HH
 
+#warning This header is deprecated and will be removed after DuMuX 2.7.
+
 #if ! HAVE_DUNE_PDELAB
 #error "DUNE-PDELab must be available in order to include this file!"
 #endif
