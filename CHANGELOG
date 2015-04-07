@@ -7,6 +7,10 @@ Differences Between DuMuX 2.6 and DuMuX 2.7
     DuMuX multidomain model should be used, DUNE 2.3 is required. See
     test/multidomain/README for details.
 
+  - The 2.3 branch of dune-alugrid has no CMake support. Use Autotools or use
+    legacy ALUGrid 1.52. The current master of dune-alugrid 2.4 has CMake
+    support.
+
 * IMPROVEMENTS and ENHANCEMENTS:
   - Since 2.6, all isothermal implicit porous-media models (except 2pdfm) can be
     easily enhanced with the energy equation. For 2.7, this has been also
