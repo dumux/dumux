@@ -37,9 +37,15 @@ add_dumux_test(test_box3p3cnikuevette test_box3p3cnikuevette test_box3p3cnikueve
   ${CMAKE_CURRENT_BINARY_DIR}/kuevettebox-00013.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_box3p3cnikuevette)
 
+# with Dune 2.3 we have 14 time steps, with Dune 2.4 we have 12
+# remove this code if support for Dune 2.3 is dropped
+set(REF_FILE_NUMBER "12")
+if(("${DUNE_COMMON_VERSION_MAJOR}" STREQUAL "2") AND ("${DUNE_COMMON_VERSION_MINOR}" STREQUAL "3"))
+  set(REF_FILE_NUMBER "14")
+endif()
 add_dumux_test(test_cc3p3cnikuevette test_cc3p3cnikuevette test_cc3p3cnikuevette.cc
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
   ${CMAKE_SOURCE_DIR}/test/references/kuevette3p3cnicc-reference.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/kuevettecc-00012.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/kuevettecc-000${REF_FILE_NUMBER}.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_cc3p3cnikuevette)
