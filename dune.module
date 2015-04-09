@@ -3,7 +3,7 @@
 ################################
 
 Module: dumux
-Version: 2.7.0
+Version: 2.7
 Maintainer: dumux@listserv.uni-stuttgart.de
 Depends: dune-grid (>= 2.3) dune-localfunctions (>= 2.3) dune-istl (>= 2.3)
 Suggests: dune-alugrid dune-pdelab (>=2.0) dune-multidomain
