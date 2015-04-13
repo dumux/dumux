@@ -120,6 +120,8 @@ AC_CONFIG_FILES([dumux.pc
     test/geomechanics/el1p2c/Makefile
     test/geomechanics/el2p/Makefile
     test/material/Makefile
+    test/material/fluidmatrixinteractions/Makefile
+    test/material/fluidmatrixinteractions/2p/Makefile
     test/material/fluidsystems/Makefile
     test/material/immiscibleflash/Makefile
     test/material/ncpflash/Makefile

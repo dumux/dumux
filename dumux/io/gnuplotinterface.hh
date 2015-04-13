@@ -42,6 +42,8 @@
 #include <string>
 #include <vector>
 
+#include <dune/common/stdstreams.hh>
+
 namespace Dumux
 {
 /*!
@@ -306,9 +308,9 @@ private:
     void checkNumber(Scalar number, std::string text = "") const
     {
         if (std::isnan(number))
-            std::cout << "warning: " << text << " is not a number, adjust your data range" << std::endl;
+            Dune::dwarn << "warning: " << text << " is not a number, adjust your data range" << std::endl;
         if (std::isinf(number))
-            std::cout << "warning: " << text << " is infinity, adjust your data range" << std::endl;
+            Dune::dwarn << "warning: " << text << " is infinity, adjust your data range" << std::endl;
     }
 
     // Convert number to string
