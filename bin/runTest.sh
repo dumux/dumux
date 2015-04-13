@@ -4,16 +4,20 @@
 #
 # Usage:
 #
-# runTest.sh FUZZY_COMPARE REFERENCE_RESULT_FILE TEST_RESULT_FILE TEST_BINARY TEST_ARGS
+# runTest.sh COMPAREFLAG/SCRIPT REFERENCE_RESULT_FILE TEST_RESULT_FILE TEST_BINARY TEST_ARGS
 #
 
 function usage() {
     echo "Usage:"
     echo
-    echo "runTest.sh FUZZY_COMPARE REFERENCE_RESULT_FILE TEST_RESULT_FILE TEST_BINARY [TEST_ARGS]"
+    echo "runTest.sh COMPAREFLAG/SCRIPT REFERENCE_RESULT_FILE TEST_RESULT_FILE TEST_BINARY [TEST_ARGS]"
+    echo "COMPAREFLAG: fuzzyvtu         - uses the fuzzycomparevtu.py script"
+    echo "             exact            - uses diff for exact compare of two files"
+    echo "             PATH_TO_SCRIPT   - tries to execute the custom script"
 };
 
-FUZZY_COMPARE="$1"
+CMAKE_SOURCE_DIR=$(dirname "$0")
+COMPARE_FLAG="$1"
 REFERENCE_RESULT="$2"
 TEST_RESULT="$3"
 TEST_BINARY="$4"
@@ -56,7 +60,31 @@ if ! test -r "$TEST_RESULT"; then
     exit 1
 fi
 
-if ! python "$FUZZY_COMPARE" "$REFERENCE_RESULT" "$TEST_RESULT"; then
+# running the compare script
+NOT_EQUAL=false
+if [ "$COMPARE_FLAG" = "fuzzyvtu" -o \
+     "$COMPARE_FLAG" = "$CMAKE_SOURCE_DIR/fuzzycomparevtu.py" ]; then
+    if ! python $CMAKE_SOURCE_DIR/fuzzycomparevtu.py "$REFERENCE_RESULT" "$TEST_RESULT"; then
+        NOT_EQUAL=true
+    fi
+elif [ "$COMPARE_FLAG" = "exact" ]; then
+    if ! diff "$REFERENCE_RESULT" "$TEST_RESULT"; then
+        NOT_EQUAL=true
+    fi
+elif [ -e "$COMPARE_FLAG" ]; then
+    if ! $COMPARE_FLAG "$REFERENCE_RESULT" "$TEST_RESULT"; then
+        NOT_EQUAL=true
+    fi
+else
+    echo
+    echo "ERROR: $0 was not able to run the compare script:"
+    echo "       $COMPARE_FLAG"
+    echo
+    exit 2
+fi
+
+# printing error message in case of failure
+if [ "$NOT_EQUAL" = "true" ]; then
     echo "The files \"$TEST_RESULT\" and \"$REFERENCE_RESULT\" are different."
     echo "Make sure the contents of \"$TEST_RESULT\" are still valid and "
     echo "make it the reference result if necessary."

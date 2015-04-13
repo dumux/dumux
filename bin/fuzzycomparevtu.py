@@ -68,7 +68,7 @@ parser.add_argument('vtu_file_2', type=open,
 parser.add_argument('-r', '--relative', type=float, default=1e-2,
     help='maximum relative error (default=1e-2)')
 parser.add_argument('-a', '--absolute', type=float, default=1e-9,
-    help='maximum relative error (default=1e-9)')
+    help='maximum absolute error (default=1e-9)')
 args = parser.parse_args()
 
 # fuzzy compare
