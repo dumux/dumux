@@ -24,5 +24,5 @@ RefineAtDirichletBC = 1
 RefineAtFluxBC = 1
 MinLevel = 0
 MaxLevel = 2
-CoarsenTolerance = 0.0
+CoarsenTolerance = 1.0e-4
 RefineTolerance = 1.0e-4
