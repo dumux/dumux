@@ -26,6 +26,12 @@
 #ifndef DUMUX_LENSPROBLEM_HH
 #define DUMUX_LENSPROBLEM_HH
 
+#if HAVE_ALUGRID
+#include <dune/grid/alugrid/2d/alugrid.hh>
+#elif HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
 #endif
@@ -37,6 +43,8 @@
 #include <dumux/implicit/2p/2pmodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/cellcentered/ccpropertydefaults.hh>
+#include <dumux/implicit/2p/gridadaptionindicator2p.hh>
+#include <dumux/implicit/common/gridadaptinitializationindicator.hh>
 
 #include "lensspatialparams.hh"
 
@@ -54,12 +62,18 @@ namespace Properties
 NEW_TYPE_TAG(LensProblem, INHERITS_FROM(TwoP, LensSpatialParams));
 NEW_TYPE_TAG(LensBoxProblem, INHERITS_FROM(BoxModel, LensProblem));
 NEW_TYPE_TAG(LensCCProblem, INHERITS_FROM(CCModel, LensProblem));
+NEW_TYPE_TAG(LensCCAdaptiveProblem, INHERITS_FROM(CCModel, LensProblem));
 
-// Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(LensProblem, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(LensCCProblem, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(LensBoxProblem, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(LensCCProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(LensBoxProblem, Grid, Dune::YaspGrid<2>);
+#endif
+
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+SET_TYPE_PROP(LensCCAdaptiveProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #endif
 
 // Set the problem property
@@ -84,11 +98,18 @@ public:
 };
 
 // Linear solver settings
-SET_TYPE_PROP(LensProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_TYPE_PROP(LensCCProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_TYPE_PROP(LensBoxProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
+
+SET_BOOL_PROP(LensCCAdaptiveProblem, AdaptiveGrid, true);
+SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptionIndicator, ImplicitGridAdaptionIndicator2P<TypeTag>);
+SET_TYPE_PROP(LensCCAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
 
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(LensBoxProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 SET_TYPE_PROP(LensCCProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(LensCCAdaptiveProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
 }
 

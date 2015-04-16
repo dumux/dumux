@@ -27,6 +27,7 @@
 #include "implicitmodel.hh"
 
 #include <dumux/io/restart.hh>
+#include <dumux/implicit/common/gridadapt.hh>
 
 namespace Dumux
 {
@@ -45,6 +46,8 @@ class ImplicitProblem
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
     typedef typename GET_PROP_TYPE(TypeTag, VtkMultiWriter) VtkMultiWriter;
 
@@ -78,6 +81,11 @@ private:
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
+    enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
+
+    typedef ImplicitGridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
+
 
     // copying a problem is not a good idea
     ImplicitProblem(const ImplicitProblem &);
@@ -118,6 +126,10 @@ public:
 
         // set a default name for the problem
         simName_ = "sim";
+
+        if (adaptiveGrid)
+            gridAdapt_ = Dune::make_shared<GridAdaptModel>(asImp_());
+
     }
 
     /*!
@@ -131,6 +143,8 @@ public:
     {
         // set the initial condition of the model
         model().init(asImp_());
+        if (adaptiveGrid)
+            gridAdapt().init();
     }
 
     /*!
@@ -485,7 +499,12 @@ public:
      * \brief Called by the time manager before the time integration.
      */
     void preTimeStep()
-    {}
+    {
+        // if adaptivity is used, this method adapts the grid.
+        // if it is not used, this method does nothing.
+        if (adaptiveGrid && timeManager().timeStepIndex() > 0)
+            this->gridAdapt().adaptGrid();
+    }
 
     /*!
      * \brief Called by Dumux::TimeManager in order to do a time
@@ -827,6 +846,47 @@ public:
         }
     }
 
+    Grid &grid()
+    {
+        return GridCreator::grid();
+    }
+
+    /*!
+     * \brief Returns adaptivity model used for the problem.
+     */
+    GridAdaptModel& gridAdapt()
+    {
+        if (!adaptiveGrid)
+            Dune::dgrave << "adaptivity module was called despite "
+                         << "adaptivity is disabled in property system \n;" << adaptiveGrid;
+
+        return *gridAdapt_;
+    }
+
+    /*!
+     * \brief Capability to introduce problem-specific routines at the
+     * beginning of the grid adaptation
+     *
+     * Function is called at the beginning of the standard grid
+     * modification routine, GridAdapt::adaptGrid() .
+     */
+    void preAdapt()
+    {
+
+    }
+
+    /*!
+     * \brief Capability to introduce problem-specific routines after grid adaptation
+     *
+     * Function is called at the end of the standard grid
+     * modification routine, GridAdapt::adaptGrid() , to allow
+     * for problem-specific output etc.
+     */
+    void postAdapt()
+    {
+
+    }
+
 protected:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -856,6 +916,8 @@ private:
     { 
         if (!resultWriter_) 
             resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+        if (adaptiveGrid)
+            resultWriter_->gridChanged();
     }
 
     std::string simName_;
@@ -875,8 +937,12 @@ private:
     NewtonController newtonCtl_;
 
     Dune::shared_ptr<VtkMultiWriter> resultWriter_;
+
+    Dune::shared_ptr<GridAdaptModel> gridAdapt_;
 };
 
 }
+
+#include <dumux/implicit/common/gridadaptpropertydefaults.hh>
 
 #endif
