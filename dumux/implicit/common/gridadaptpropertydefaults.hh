@@ -30,8 +30,7 @@
 #include <dumux/common/basicproperties.hh>
 #include "gridadaptproperties.hh"
 #include "gridadaptindicatordefault.hh"
-#include "gridadaptinitializationindicatordefault.hh"
-//#include "gridadaptinitializationindicator.hh"
+#include "gridadaptinitializationindicator.hh"
 
 namespace Dumux
 {
