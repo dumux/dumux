@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup IMPETProperties
- * \ingroup IMPET
+ * \ingroup ImplicitGridAdaptPropertyDefaults
+ * \ingroup ImplicitGridAdapt
  * \file
  *
  * \brief Defines a type tag and some fundamental properties for
@@ -63,6 +63,5 @@ SET_TYPE_PROP(GridAdapt,  AdaptionInitializationIndicator, ImplicitGridAdaptInit
 
 } // namespace Properties
 } // namespace Dumux
-
 
 #endif

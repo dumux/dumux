@@ -51,7 +51,7 @@ class CCFVElementGeometry
     enum{dimWorld = GridView::dimensionworld};
 
     enum{maxNFAP = 2}; //! maximum number of flux approximation points (two-point flux)
-    enum{maxNE = 2*dim*(1 << (dim - 1))}; //! maximum number of neighbors
+    enum{maxNE = 2*dim*(1 << (dim - 1))}; //! maximum number of neighbors (works for one hanging node per face)
     enum{maxBF = 2*dim}; //! maximum number of boundary faces
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::ctype CoordScalar;

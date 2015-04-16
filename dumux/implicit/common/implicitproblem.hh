@@ -51,7 +51,6 @@ private:
 
     typedef typename GET_PROP_TYPE(TypeTag, VtkMultiWriter) VtkMultiWriter;
 
-
     typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
 
@@ -85,7 +84,6 @@ private:
     enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
 
     typedef ImplicitGridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
-
 
     // copying a problem is not a good idea
     ImplicitProblem(const ImplicitProblem &);
@@ -127,9 +125,9 @@ public:
         // set a default name for the problem
         simName_ = "sim";
 
+        // if we are calculating on an adaptive grid get the grid adapt model
         if (adaptiveGrid)
             gridAdapt_ = Dune::make_shared<GridAdaptModel>(asImp_());
-
     }
 
     /*!
@@ -143,8 +141,11 @@ public:
     {
         // set the initial condition of the model
         model().init(asImp_());
+        
         if (adaptiveGrid)
+        {
             gridAdapt().init();
+        }
     }
 
     /*!
@@ -500,8 +501,9 @@ public:
      */
     void preTimeStep()
     {
-        // if adaptivity is used, this method adapts the grid.
-        // if it is not used, this method does nothing.
+        // If adaptivity is used, this method adapts the grid.
+        // Remeber to call the parent class function if this is overwritten
+        // on a lower problem level when using an adaptive grid 
         if (adaptiveGrid && timeManager().timeStepIndex() > 0)
             this->gridAdapt().adaptGrid();
     }
@@ -846,6 +848,9 @@ public:
         }
     }
 
+    /*!
+     * \brief Returns a reference to the grid
+     */
     Grid &grid()
     {
         return GridCreator::grid();
@@ -871,9 +876,7 @@ public:
      * modification routine, GridAdapt::adaptGrid() .
      */
     void preAdapt()
-    {
-
-    }
+    {}
 
     /*!
      * \brief Capability to introduce problem-specific routines after grid adaptation
@@ -883,9 +886,7 @@ public:
      * for problem-specific output etc.
      */
     void postAdapt()
-    {
-
-    }
+    {}
 
 protected:
     //! Returns the implementation of the problem (i.e. static polymorphism)
@@ -916,6 +917,8 @@ private:
     { 
         if (!resultWriter_) 
             resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+        
+        // Tell the result writer that the grid changes if we are adaptive
         if (adaptiveGrid)
             resultWriter_->gridChanged();
     }
@@ -940,8 +943,7 @@ private:
 
     Dune::shared_ptr<GridAdaptModel> gridAdapt_;
 };
-
-}
+} // namespace Dumux
 
 #include <dumux/implicit/common/gridadaptpropertydefaults.hh>
 

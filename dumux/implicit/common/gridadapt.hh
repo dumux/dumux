@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for h-adaptive sequential models.
+ * \brief Base class for h-adaptive implicit models.
  */
 #ifndef DUMUX_IMPLICIT_GRIDADAPT_HH
 #define DUMUX_IMPLICIT_GRIDADAPT_HH
@@ -27,10 +27,12 @@
 #include "adaptationhelper.hh"
 #include <unordered_map>
 
+#include <dune/common/exceptions.hh>
+
 namespace Dumux
 {
 
-/*!\ingroup IMPET
+/*!\ingroup ImplicitGridAdapt
  * @brief Standard Module for h-adaptive simulations
  *
  * This class is created by the problem class with the template
@@ -38,7 +40,7 @@ namespace Dumux
  * for adaptive methods:
  *
  * A standard implementation adaptGrid() will prepare everything
- * to calculate the next pressure field on the new grid.
+ * to calculate the next primary variables vector on the new grid.
  */
 template<class TypeTag, bool adaptive>
 class ImplicitGridAdapt
@@ -70,8 +72,9 @@ public:
         adaptationInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptionInterval);
 
         if (levelMin_ < 0)
-            Dune::dgrave <<  __FILE__<< ":" <<__LINE__
-                         << " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
+        {
+            DUNE_THROW(Dune::InvalidStateException, "Coarsening the level 0 entities is not possible! Choose MinLevel >= 0");
+        }
     }
 
     /*!
@@ -103,9 +106,11 @@ public:
 
             int shouldInitialize = adaptionInitIndicator.initializeModel();
             if (problem_.grid().comm().max(shouldInitialize))
+            {
                 problem_.model().init(problem_);
-
-            iter++;
+            }
+            
+            ++iter;
         }
     }
 
@@ -181,8 +186,6 @@ public:
         /****  4) Adapt Grid and size of variable vectors    *****/
         problem_.grid().adapt();
 
-        //        forceRefineRatio(1);
-
         // update mapper to new cell indices
         problem_.elementMapper().update();
 
@@ -203,7 +206,7 @@ public:
 
     /*!
      * Mark Elements for grid refinement according to applied Indicator
-     * @return Total ammount of marked cells
+     * @param indicator The refinement indicator that is applied
      */
     template<class Indicator>
     void markElements(Indicator& indicator)
@@ -306,8 +309,7 @@ public:
     void setLevels(int levMin, int levMax)
     {
         if (levMin < 0)
-            Dune::dgrave <<  __FILE__<< ":" <<__LINE__
-                         << " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
+            DUNE_THROW(Dune::InvalidStateException, "Coarsening the level 0 entities is not possible!");
         levelMin_ = levMin;
         levelMax_ = levMax;
     }
@@ -458,7 +460,7 @@ private:
 };
 
 /*!
- * @brief Class for NON-adaptive simulations
+ * @brief Class for non-adaptive simulations
  *
  * This class provides empty methods for non-adaptive simulations
  * for compilation reasons. If adaptivity is desired, create the
