@@ -16,7 +16,7 @@ add_dumux_test(test_cc2p test_cc2p test_cc2p.cc
 add_dumux_test(test_ccadaptive2p test_ccadaptive2p test_ccadaptive2p.cc
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
-  ${CMAKE_SOURCE_DIR}/test/references/lensadaptivecc-reference.vtu
+  ${CMAKE_SOURCE_DIR}/test/references/lensccadaptive-reference.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/lensccadaptive-00018.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_ccadaptive2p)  
 
