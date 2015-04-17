@@ -71,93 +71,33 @@ private:
     typedef Dune::FieldVector<Scalar, dim-1> LocalPositionFace;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-    /*! \brief Hierarchical search for a source term
+    /*! \brief Search for a source term
      *
-     *  For every element we do virtual refinement until maxAllowedLevel
-     *  and check if we have a source term at the element center. This
-     *  is necessary as an element can also be only partly in a source zone.
+     *  For every element we check if the element center or the element corners
+     *  are inside a source zone with source value > 0.
      *
-     *  \param source A primary variables vector that will return the source values
      *  \param element A grid element
      */
-    void virtualHierarchicSourceSearch_(PrimaryVariables &source, const Element& element)
+    bool hasSource_(const Element& element)
     {
-        int level = element.level();
         const auto geometry = element.geometry();
+        PrimaryVariables source(0.0);
+        const GlobalPosition &globalPos = geometry.center();
         
-        if (level == maxAllowedLevel_)
+        // Check if the midpoint is in a source zone
+        problem_.sourceAtPos(source, globalPos);
+        if (source.infinity_norm() > eps_)
+            return true;
+
+        // Check if a corner is on a source zone
+        for (int vIdx = 0; vIdx < geometry.corners(); ++vIdx)
         {
-            GlobalPosition globalPos = geometry.center();
-            problem_.sourceAtPos(source, globalPos);
-            return;
+            source = 0.0;
+            problem_.sourceAtPos(source, geometry.corner(vIdx));
+            if (source.infinity_norm() > eps_)
+                return true;
         }
-
-        // get the number of check points in each dimension
-        unsigned int numRefine = maxAllowedLevel_ - level;
-        int numCheckCoords = 1 << numRefine;
-
-        // the local position of the check point as we do this on the reference element
-        LocalPosition localPos(0.0);
-        GlobalPosition globalPosCheck(0.0);
-
-        // we check for a source in the midpoint
-        Scalar halfInterval = (1.0/double(numCheckCoords))/2.0;
-
-        // TODO this only works correctly for cubes!
-        
-        PrimaryVariables sourceCheck(0.0); 
-        // use a switch statement to let the compiler do easy optimization
-        switch(dim)
-        {
-        case 3:
-            for (int i = 1; i <= numCheckCoords; i++)
-                for (int j = 1; i <= numCheckCoords; i++)
-                    for (int k = 1; i <= numCheckCoords; i++)
-                    {
-                        localPos[0] = double(i)/double(numCheckCoords) - halfInterval;
-                        localPos[1] = double(j)/double(numCheckCoords) - halfInterval;
-                        localPos[2] = double(k)/double(numCheckCoords) - halfInterval;
-                        globalPosCheck = geometry.global(localPos);
-                        problem_.sourceAtPos(sourceCheck, globalPosCheck);
-
-                        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                        {
-                            if (std::abs(sourceCheck[eqIdx]) > std::abs(source[eqIdx]))
-                                source[eqIdx] = sourceCheck[eqIdx];
-                        }
-                    }
-            break;
-        case 2:
-            for (int i = 1; i <= numCheckCoords; i++)
-                for (int j = 1; i <= numCheckCoords; i++)
-                {
-                    localPos[0] = double(i)/double(numCheckCoords) - halfInterval;
-                    localPos[1] = double(j)/double(numCheckCoords) - halfInterval;
-                    globalPosCheck = geometry.global(localPos);
-                    problem_.sourceAtPos(sourceCheck, globalPosCheck);
-
-                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                    {
-                        if (std::abs(sourceCheck[eqIdx]) > std::abs(source[eqIdx]))
-                            source[eqIdx] = sourceCheck[eqIdx];
-                    }
-                }
-            break;
-        case 1:
-            for (int i = 1; i <= numCheckCoords; i++)
-            {
-                localPos[0] = double(i)/double(numCheckCoords) - halfInterval;
-                globalPosCheck = geometry.global(localPos);
-                problem_.sourceAtPos(sourceCheck, globalPosCheck);
-
-                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                {
-                    if (std::abs(sourceCheck[eqIdx]) > std::abs(source[eqIdx]))
-                        source[eqIdx] = sourceCheck[eqIdx];
-                }
-            }
-            break;
-        }
+        return false;
     }
 
     /*! \brief Hierarchical search for the value of Neumann boundary condition
@@ -171,94 +111,44 @@ private:
      *  \param element A grid element
      *  \param intersection The boundary intersection
      */
-    void virtualHierarchicBCSearch_(BoundaryTypes &bcTypes, PrimaryVariables &values, const Element& element, const Intersection& intersection)
+    bool hasRefineBC_(BoundaryTypes &bcTypes, const Element& element, const Intersection& intersection)
     {
-        int level = element.level();
         const auto isGeometry = intersection.geometry();
+        const GlobalPosition &globalPos = isGeometry.center();
 
-        if (level == maxAllowedLevel_ || dim==1)
+        // Check if the midpoint has matching boundary condition   
+        problem_.boundaryTypesAtPos(bcTypes, globalPos);
+        for (int i = 0; i < numEq; i++)
         {
-            GlobalPosition globalPos = isGeometry.center();
-            problem_.boundaryTypesAtPos(bcTypes, globalPos);
-
-            if (refineAtFluxBC_)
+            if(bcTypes.isDirichlet(i) && refineAtDirichletBC_)
+                return true;
+            if(bcTypes.isNeumann(i) && refineAtFluxBC_)
             {
-                for (int i = 0; i < numEq; i++)
-                {
-                    if (bcTypes.isNeumann(i))
-                    {
-                        PrimaryVariables fluxes;
-                        problem_.neumannAtPos(fluxes, globalPos);
-                        values[i] += std::abs(fluxes[i]);
-                    }
-                }
+                PrimaryVariables fluxes(0.0);
+                problem_.neumannAtPos(fluxes, globalPos);
+                if (fluxes.infinity_norm() > eps_)
+                    return true;
             }
-            return;
         }
 
-        // get the number of check points in each dimension
-        unsigned int numRefine = maxAllowedLevel_ - level;
-        int numCheckCoords = 1 << numRefine;
-
-        // the local position of the check point 
-        // as we do this on the reference codim 1 element
-        LocalPositionFace localPos(0.0);
-        GlobalPosition globalPosCheck(0.0);
-        
-        // we check for the boundary condition type in the midpoint
-        Scalar halfInterval = (1.0/double(numCheckCoords))/2.0;
-
-        // TODO this only works correctly for cubes!
-
-        PrimaryVariables fluxCheck(0.0);
-        // use a switch statement to let the compiler do easy optimization
-        switch(dim-1)
+        // Check if a corner has a matching boundary condition
+        for (int vIdx = 0; vIdx < isGeometry.corners(); ++vIdx)
         {
-        case 2:
-            for (int i = 1; i <= numCheckCoords; i++)
-                for (int j = 1; i <= numCheckCoords; i++)
-                {
-                    localPos[0] = double(i)/double(numCheckCoords) - halfInterval;
-                    localPos[1] = double(j)/double(numCheckCoords) - halfInterval;
-                    globalPosCheck = isGeometry.global(localPos);
-                    problem_.boundaryTypesAtPos(bcTypes, globalPosCheck);
-
-                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                    {
-                        if (refineAtDirichletBC_ && bcTypes.isDirichlet(eqIdx))
-                        {
-                            return;
-                        }
-                        else if (refineAtFluxBC_ && bcTypes.isNeumann(eqIdx))
-                        {
-                            problem_.neumannAtPos(fluxCheck, globalPosCheck);
-                            values[eqIdx] += std::abs(fluxCheck[eqIdx]);
-                        }
-                    }
-                }
-            break;
-        case 1:
-            for (int i = 1; i <= numCheckCoords; i++)
+            problem_.boundaryTypesAtPos(bcTypes, isGeometry.corner(vIdx));
+            for (int i = 0; i < numEq; i++)
             {
-                localPos[0] = double(i)/double(numCheckCoords) - halfInterval;
-                globalPosCheck = isGeometry.global(localPos);
-                    problem_.boundaryTypesAtPos(bcTypes, globalPosCheck);
-
-                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                if(bcTypes.isDirichlet(i) && refineAtDirichletBC_)
+                    return true;
+                if(bcTypes.isNeumann(i) && refineAtFluxBC_)
                 {
-                    if (refineAtDirichletBC_ && bcTypes.isDirichlet(eqIdx))
-                    {
-                        return;
-                    }
-                    else if (refineAtFluxBC_ && bcTypes.isNeumann(eqIdx))
-                    {
-                        problem_.neumannAtPos(fluxCheck, globalPosCheck);
-                        values[eqIdx] += std::abs(fluxCheck[eqIdx]);
-                    }
+                    PrimaryVariables fluxes(0.0);
+                    problem_.neumannAtPos(fluxes, isGeometry.corner(vIdx));
+                    if (fluxes.infinity_norm() > eps_)
+                        return true;
                 }
             }
-            break;
         }
+        return false;
     }
 
 
@@ -303,19 +193,13 @@ public:
             }
 
             // Check if we have to refine around a source term
-            if (refineAtSource_)
+            if (indicatorVector_[globalIdxI] != refineCell && refineAtSource_)
             {
-                PrimaryVariables source(0.0);
-                virtualHierarchicSourceSearch_(source, *eIt);
-                for (int i = 0; i < numEq; i++)
+                if(hasSource_(*eIt))
                 {
-                    // If source term was found mark cell for refinement
-                    if (std::abs(source[i]) > 1e-30)
-                    {
-                        nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
-                        indicatorVector_[globalIdxI] = refineCell;
-                        break;
-                    }
+                    nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
+                    indicatorVector_[globalIdxI] = refineCell;
+                    continue;
                 }
             }
 
@@ -326,26 +210,14 @@ public:
                 const IntersectionIterator isItend = problem_.gridView().iend(*eIt);
                 for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
                 {
-                    if (isIt->boundary() && indicatorVector_[globalIdxI] != refineCell)
+                    if (isIt->boundary())
                     {
                         BoundaryTypes bcTypes;
-                        PrimaryVariables values(0.0);
-                        virtualHierarchicBCSearch_(bcTypes, values, *eIt, *isIt);
-
-                        for (int i = 0; i < numEq; i++)
+                        if(hasRefineBC_(bcTypes, *eIt, *isIt))
                         {
-                            if (bcTypes.isDirichlet(i) && refineAtDirichletBC_)
-                            {
-                                nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
-                                indicatorVector_[globalIdxI] = refineCell;
-                                break;
-                            }
-                            if (std::abs(values[i]) > 1e-30)
-                            {
-                                nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
-                                indicatorVector_[globalIdxI] = refineCell;
-                                break;
-                            } 
+                            nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
+                            indicatorVector_[globalIdxI] = refineCell;
+                            break;
                         }
                     }
                 }
@@ -420,7 +292,7 @@ public:
      * \param adaptionIndicator Indicator whether a be adapted
      */
     ImplicitGridAdaptInitializationIndicator(Problem& problem, AdaptionIndicator& adaptionIndicator):
-        problem_(problem), adaptionIndicator_(adaptionIndicator), maxLevel_(0), nextMaxLevel_(0)
+        problem_(problem), adaptionIndicator_(adaptionIndicator), maxLevel_(0), nextMaxLevel_(0), eps_(1e-30)
     {
         minAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
         maxAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
@@ -448,6 +320,7 @@ private:
     bool refineAtDirichletBC_;
     bool refineAtFluxBC_;
     bool refineAtSource_;
+    Scalar eps_;
 };
 
 
