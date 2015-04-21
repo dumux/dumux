@@ -17,66 +17,49 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup ImplicitGridAdaptProperties
+ * \ingroup ImplicitGridAdaptPropertyDefaults
  * \ingroup ImplicitGridAdapt
  * \file
  *
  * \brief Defines a type tag and some fundamental properties for
  *        linear solvers
  */
-#ifndef DUMUX_IMPLICIT_GRIDADAPT_PROPERTIES_HH
-#define DUMUX_IMPLICIT_GRIDADAPT_PROPERTIES_HH
+#ifndef DUMUX_IMPLICIT_GRIDADAPT_PROPERTY_DEFAULTS_HH
+#define DUMUX_IMPLICIT_GRIDADAPT_PROPERTY_DEFAULTS_HH
 
 #include <dumux/common/basicproperties.hh>
+#include "gridadaptproperties.hh"
+#include "gridadaptindicatordefault.hh"
+#include "gridadaptinitializationindicator.hh"
 
 namespace Dumux
 {
 namespace Properties
 {
-//! Grid adaption type tag for all decoupled models.
-NEW_TYPE_TAG(GridAdapt);
 
-//! Defines if the grid is h-adaptive
-NEW_PROP_TAG(AdaptiveGrid);
+//no adaptive grid
+SET_BOOL_PROP(GridAdapt, AdaptiveGrid, false);
 
-//! Class defining the refinement/coarsening indicator
-NEW_PROP_TAG(AdaptionIndicator);
+//standard setting
+SET_INT_PROP(GridAdapt, GridAdaptMinLevel, 0);
+SET_INT_PROP(GridAdapt, GridAdaptMaxLevel, 1);
+SET_SCALAR_PROP(GridAdapt, GridAdaptRefineTolerance, 0.05);
+SET_SCALAR_PROP(GridAdapt, GridAdaptCoarsenTolerance, 0.001);
+SET_SCALAR_PROP(GridAdapt, GridAdaptRefineThreshold, 0.0);
+SET_SCALAR_PROP(GridAdapt, GridAdaptCoarsenThreshold, 0.0);
+SET_INT_PROP(GridAdapt, GridAdaptAdaptationInterval, 1);
+//Switch initial grid adaptation off per default
+SET_BOOL_PROP(GridAdapt, GridAdaptEnableInitializationIndicator, false);
 
-//! Class defining the refinement/coarsening indicator for grid initialization
-NEW_PROP_TAG(AdaptionInitializationIndicator);
+// Switch of extra refinement strategy at boundaries/sources
+SET_BOOL_PROP(GridAdapt, GridAdaptRefineAtDirichletBC, false);
+SET_BOOL_PROP(GridAdapt, GridAdaptRefineAtFluxBC, false);
+SET_BOOL_PROP(GridAdapt, GridAdaptRefineAtSource, false);
 
-//! Switch the use of initial grid adaption on/off
-NEW_PROP_TAG(GridAdaptEnableInitializationIndicator);
-
-//! Mimimum allowed level
-NEW_PROP_TAG(GridAdaptMinLevel);
-
-//! Maximum allowed level
-NEW_PROP_TAG(GridAdaptMaxLevel);
-
-//! Tolerance for refinement
-NEW_PROP_TAG(GridAdaptRefineTolerance);
-
-//! Tolerance for coarsening
-NEW_PROP_TAG(GridAdaptCoarsenTolerance);
-
-//! Tolerance for refinement
-NEW_PROP_TAG(GridAdaptRefineThreshold);
-
-//! Tolerance for coarsening
-NEW_PROP_TAG(GridAdaptCoarsenThreshold);
-
-//! Time step interval for adaption
-NEW_PROP_TAG(GridAdaptAdaptionInterval);
-
-//! Switch for refinement at Dirichlet BC's -> not used by all indicators!
-NEW_PROP_TAG(GridAdaptRefineAtDirichletBC);
-
-//! Switch for refinement at Neumann BC's -> not used by all indicators!
-NEW_PROP_TAG(GridAdaptRefineAtFluxBC);
-
-//! Switch for refinement at sources -> not used by all indicators!
-NEW_PROP_TAG(GridAdaptRefineAtSource);
+//! Set the default indicator class models for adaptation or coarsening
+SET_TYPE_PROP(GridAdapt, AdaptationIndicator, ImplicitGridAdaptIndicatorDefault<TypeTag>);
+//!Set default class for adaptation initialization indicator
+SET_TYPE_PROP(GridAdapt,  AdaptationInitializationIndicator, ImplicitGridAdaptInitializationIndicatorDefault<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux

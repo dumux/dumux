@@ -56,8 +56,8 @@ class ImplicitGridAdapt
     typedef typename Grid::template Codim<0>::Entity Element;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator) AdaptionInitializationIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptationIndicator) AdaptationIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptationInitializationIndicator) AdaptationInitializationIndicator;
 
 public:
     /*!
@@ -65,11 +65,11 @@ public:
      * @param problem The problem
      */
     ImplicitGridAdapt (Problem& problem)
-        : problem_(problem), adaptationHelper_(problem.gridView()), adaptionIndicator_(problem), marked_(0), coarsened_(0)
+        : problem_(problem), adaptationHelper_(problem.gridView()), adaptationIndicator_(problem), marked_(0), coarsened_(0)
     {
         levelMin_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
         levelMax_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
-        adaptationInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptionInterval);
+        adaptationInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptationInterval);
 
         if (levelMin_ < 0)
         {
@@ -82,29 +82,29 @@ public:
      *
      * Prepares the grid for simulation after the initialization of the
      * problem. The applied indicator is selectable via the property
-     * AdaptionInitializationIndicator
+     * AdaptationInitializationIndicator
      */
     void init()
     {
-        adaptionIndicator_.init();
+        adaptationIndicator_.init();
 
         if (!GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, EnableInitializationIndicator))
             return;
 
-        AdaptionInitializationIndicator adaptionInitIndicator(problem_, adaptionIndicator_);
+        AdaptationInitializationIndicator adaptationInitIndicator(problem_, adaptationIndicator_);
 
         int maxIter = 2*levelMax_;
         int iter = 0;
         while (iter <= maxIter)
         {
-            adaptGrid(adaptionInitIndicator);
+            adaptGrid(adaptationInitIndicator);
 
             if (!wasAdapted())
             {
                 break;
             }
 
-            int shouldInitialize = adaptionInitIndicator.initializeModel();
+            int shouldInitialize = adaptationInitIndicator.initializeModel();
             if (problem_.grid().comm().max(shouldInitialize))
             {
                 problem_.model().init(problem_);
@@ -119,7 +119,7 @@ public:
      *
      * This method is called from IMPETProblem::preTimeStep() if
      * adaptive grids are used in the simulation. It uses the standard
-     * indicator (selected by the property AdaptionIndicator) and forwards to
+     * indicator (selected by the property AdaptationIndicator) and forwards to
      * with it to the ultimate method adaptGrid(indicator), which
      * uses a standard procedure for adaptivity:
      * 1) Determine the refinement indicator
@@ -130,7 +130,7 @@ public:
      */
     void adaptGrid()
     {
-        adaptGrid(adaptionIndicator_) ;
+        adaptGrid(adaptationIndicator_) ;
     }
 
     /*!
@@ -155,7 +155,7 @@ public:
         // reset internal counter for marked elements
         marked_ = coarsened_ = 0;
 
-        // check for adaption interval: Adapt only at certain time step indices
+        // check for adaptation interval: Adapt only at certain time step indices
         if (problem_.timeManager().timeStepIndex() % adaptationInterval_ != 0)
             return;
 
@@ -176,7 +176,10 @@ public:
             Dune::dinfo << marked_ << " cells have been marked_ to be refined, "
                         << coarsened_ << " to be coarsened." << std::endl;
 
-        /****  2b) Do pre-adaption step    *****/
+       std::cout << marked_ << " cells have been marked_ to be refined, "
+                    << coarsened_ << " to be coarsened." << std::endl;
+
+        /****  2b) Do pre-adaptation step    *****/
         problem_.grid().preAdapt();
         problem_.preAdapt();
 
@@ -188,6 +191,7 @@ public:
 
         // update mapper to new cell indices
         problem_.elementMapper().update();
+        problem_.vertexMapper().update();
 
         // adapt size of vectors
         problem_.model().adaptVariableSize();
@@ -233,7 +237,9 @@ public:
             }
             if (indicator.coarsen(*eIt) && eIt->hasFather())
             {
-                int idx = idSet.id(*(eIt->father()));
+                problem_.grid().mark( -1, *eIt );
+                ++coarsened_;
+                /*int idx = idSet.id(*(eIt->father()));
                 typename CoarsenMarkerType::iterator it = coarsenMarker.find(idx);
                 if (it != coarsenMarker.end())
                 {
@@ -242,11 +248,11 @@ public:
                 else
                 {
                     coarsenMarker[idx] = 1;
-                }
+                }*/
             }
         }
         // coarsen
-        for (LeafIterator eIt = problem_.gridView().template begin<0>();
+        /*for (LeafIterator eIt = problem_.gridView().template begin<0>();
              eIt!=problem_.gridView().template end<0>(); ++eIt)
         {
             // only mark non-ghost elements
@@ -286,7 +292,7 @@ public:
                     }
                 }
             }
-        }
+        }*/
     }
 
     /*!
@@ -337,14 +343,14 @@ public:
         return levelMin_;
     }
 
-    AdaptionIndicator& adaptionIndicator()
+    AdaptationIndicator& adaptationIndicator()
     {
-        return adaptionIndicator_;
+        return adaptationIndicator_;
     }
 
-    AdaptionIndicator& adaptionIndicator() const
+    AdaptationIndicator& adaptationIndicator() const
     {
-        return adaptionIndicator_;
+        return adaptationIndicator_;
     }
 
 private:
@@ -448,7 +454,7 @@ private:
 
     // private Variables
     Problem& problem_;
-    AdaptionIndicator adaptionIndicator_;
+    AdaptationIndicator adaptationIndicator_;
 
     int marked_;
     int coarsened_;

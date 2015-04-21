@@ -24,7 +24,7 @@
 #include <dumux/common/basicproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/implicit/common/gridadaptproperties.hh>
+#include <dumux/implicit/adaptive/gridadaptproperties.hh>
 
 /*!
  * \ingroup Properties

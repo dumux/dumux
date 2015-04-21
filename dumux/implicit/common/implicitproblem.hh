@@ -27,7 +27,7 @@
 #include "implicitmodel.hh"
 
 #include <dumux/io/restart.hh>
-#include <dumux/implicit/common/gridadapt.hh>
+#include <dumux/implicit/adaptive/gridadapt.hh>
 
 namespace Dumux
 {
@@ -920,7 +920,9 @@ private:
         
         // Tell the result writer that the grid changes if we are adaptive
         if (adaptiveGrid)
+        {
             resultWriter_->gridChanged();
+        }
     }
 
     std::string simName_;
@@ -945,6 +947,6 @@ private:
 };
 } // namespace Dumux
 
-#include <dumux/implicit/common/gridadaptpropertydefaults.hh>
+#include <dumux/implicit/adaptive/gridadaptpropertydefaults.hh>
 
 #endif

@@ -28,7 +28,7 @@
 #include <dune/istl/bvector.hh>
 
 #include "implicitproperties.hh"
-#include "gridadaptproperties.hh"
+#include <dumux/implicit/adaptive/gridadaptproperties.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/parallel/vertexhandles.hh>
 

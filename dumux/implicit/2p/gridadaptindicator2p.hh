@@ -16,27 +16,28 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_IMPLICIT_GRIDADAPTIONINDICATOR2P_HH
-#define DUMUX_IMPLICIT_GRIDADAPTIONINDICATOR2P_HH
+#ifndef DUMUX_IMPLICIT_GRIDADAPTINDICATOR2P_HH
+#define DUMUX_IMPLICIT_GRIDADAPTINDICATOR2P_HH
 
 #include <dune/common/version.hh>
 
 #include "2pproperties.hh"
+#include <dune/localfunctions/lagrange/pqkfactory.hh>
 //#include <dumux/linear/vectorexchange.hh>
 
 /**
  * @file
- * @brief  Class defining a standard, saturation dependent indicator for grid adaption
+ * @brief  Class defining a standard, saturation dependent indicator for grid adaptation
  */
 namespace Dumux
 {
 /*!\ingroup IMPES
- * @brief  Class defining a standard, saturation dependent indicator for grid adaption
+ * @brief  Class defining a standard, saturation dependent indicator for grid adaptation
  *
  * \tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
-class ImplicitGridAdaptionIndicator2P
+class ImplicitGridAdaptIndicator2P
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -60,6 +61,21 @@ private:
         nPhaseIdx = Indices::nPhaseIdx
     };
 
+    enum {
+        // Grid and world dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
+    };
+
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
+
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GridView::ctype CoordScalar;
+
+    typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
+    typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
+
 public:
     /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
      *
@@ -68,9 +84,9 @@ public:
     void calculateIndicator()
     {
         // prepare an indicator for refinement
-        if(indicatorVector_.size() != problem_.model().numDofs())
+        if(indicatorVector_.size() != problem_.gridView().size(0))
         {
-            indicatorVector_.resize(problem_.model().numDofs());
+            indicatorVector_.resize(problem_.gridView().size(0));
         }
         indicatorVector_ = -1e100;
 
@@ -91,7 +107,31 @@ public:
         	int globalIdxI = problem_.elementMapper().map(*eIt);
 #endif
 
-            Scalar satI = problem_.model().curSol()[globalIdxI][saturationIdx];
+        	Scalar satI = 0.0;
+
+        	if(!isBox)
+        		satI = problem_.model().curSol()[globalIdxI][saturationIdx];
+        	else
+        	{
+                const LocalFiniteElementCache feCache;
+                const auto geometryI = eIt->geometry();
+            	Dune::GeometryType geomType = geometryI.type();
+
+            	GlobalPosition centerI = geometryI.local(geometryI.center());
+                const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
+                std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
+                localFiniteElement.localBasis().evaluateFunction(centerI, shapeVal);
+
+                for (int i = 0; i < shapeVal.size(); ++i)
+                  {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                     int dofIdxGlobal = problem_.model().dofMapper().subIndex(*eIt, i, dofCodim);
+#else
+                     int dofIdxGlobal = problem_.model().dofMapper().map(*eIt, i, dofCodim);
+#endif
+                      satI += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
+                  }
+        	}
 
             globalMin = std::min(satI, globalMin);
             globalMax = std::max(satI, globalMax);
@@ -115,7 +155,33 @@ public:
                     // Visit intersection only once
                     if (eIt->level() > outside->level() || (eIt->level() == outside->level() && globalIdxI < globalIdxJ))
                     {
-                        Scalar satJ = problem_.model().curSol()[globalIdxJ][saturationIdx];
+                    	Scalar satJ = 0.0;
+
+                    	if(!isBox)
+                    		satJ = problem_.model().curSol()[globalIdxJ][saturationIdx];
+                    	else
+                    	{
+                            const LocalFiniteElementCache feCache;
+                            const auto geometryJ = outside->geometry();
+                        	Dune::GeometryType geomType = geometryJ.type();
+
+                        	GlobalPosition centerJ = geometryJ.local(geometryJ.center());
+                            const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
+                            std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
+                            localFiniteElement.localBasis().evaluateFunction(centerJ, shapeVal);
+
+                            for (int i = 0; i < shapeVal.size(); ++i)
+                              {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                                  int dofIdxGlobal = problem_.model().dofMapper().subIndex(*outside, i, dofCodim);
+#else
+                                  int dofIdxGlobal = problem_.model().dofMapper().map(*outside, i, dofCodim);
+#endif
+                                  satJ += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
+                              }
+                    	}
+
+
 
                         Scalar localdelta = std::abs(satI - satJ);
                         indicatorVector_[globalIdxI][0] = std::max(indicatorVector_[globalIdxI][0], localdelta);
@@ -174,15 +240,15 @@ public:
 #endif
     }
 
-    /*! \brief Initializes the adaption indicator class*/
+    /*! \brief Initializes the adaptation indicator class*/
     void init()
     {
         refineBound_ = 0.;
         coarsenBound_ = 0.;
-        indicatorVector_.resize(problem_.model().numDofs());
+        indicatorVector_.resize(problem_.gridView().size(0));
     };
 
-    /*! @brief Constructs a GridAdaptionIndicator instance
+    /*! @brief Constructs a GridAdaptIndicator instance
      *
      *  This standard indicator is based on the saturation gradient.
      *  It checks the local gradient compared to the maximum global gradient.
@@ -191,7 +257,7 @@ public:
      *
      * \param problem The problem object
      */
-    ImplicitGridAdaptionIndicator2P (Problem& problem):
+    ImplicitGridAdaptIndicator2P (Problem& problem):
         problem_(problem)
     {
         refinetol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefineTolerance);

@@ -21,12 +21,12 @@
 
 /**
  * @file
- * @brief  Class defining a default indicator for grid adaption
+ * @brief  Class defining a default indicator for grid adaptation
  */
 namespace Dumux
 {
 /*!\ingroup ImplicitGridAdaptIndicator
- * @brief  Class defining a default indicator for grid adaption
+ * @brief  Class defining a default indicator for grid adaptation
  *
  *Default implementation
  *
@@ -69,16 +69,16 @@ public:
         return false;
     }
 
-    /*! \brief Initializes the adaption indicator class*/
+    /*! \brief Initializes the adaptation indicator class*/
     void init()
     {};
 
-    /*! \brief Constructs a GridAdaptionIndicator for initialization of an adaptive grid
+    /*! \brief Constructs a GridAdaptationIndicator for initialization of an adaptive grid
      *
      * Default implementation
      *
      * \param problem The problem object
-     * \param adaptionIndicator Indicator whether a be adapted
+     * \param adaptationIndicator Indicator whether a be adapted
      */
     ImplicitGridAdaptIndicatorDefault(Problem& problem)
     {}

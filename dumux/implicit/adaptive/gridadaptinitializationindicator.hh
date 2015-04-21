@@ -25,12 +25,12 @@
 
 /**
  * @file
- * @brief  Class defining an initialization indicator for grid adaption
+ * @brief  Class defining an initialization indicator for grid adaptation
  */
 namespace Dumux
 {
 /*!\ingroup ImplicitGridAdaptInitializationIndicator
- * @brief  Class defining an initialization indicator for grid adaption
+ * @brief  Class defining an initialization indicator for grid adaptation
  *
  *  Uses the defined grid adaptation indicator and further accounts for sources and boundaries.
  *  Only for grid initialization!
@@ -49,7 +49,7 @@ private:
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptationIndicator) AdaptationIndicator;
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -163,10 +163,10 @@ public:
 
         //First adapt for boundary conditions and sources to get a good initial solution
         if (nextMaxLevel_ == maxAllowedLevel_)
-            adaptionIndicator_.calculateIndicator();
+            adaptationIndicator_.calculateIndicator();
 
         // prepare an indicator for refinement
-        indicatorVector_.resize(problem_.model().numDofs());
+        indicatorVector_.resize(problem_.gridView().size(0));
 
         // set the default to coarsen
         indicatorVector_ = coarsenCell;
@@ -241,7 +241,7 @@ public:
         if (indicatorVector_[idx] == refineCell)
             return true;
         else if (maxLevel_ == maxAllowedLevel_)
-            return adaptionIndicator_.refine(element);
+            return adaptationIndicator_.refine(element);
         else
             return false;
     }
@@ -261,7 +261,7 @@ public:
 #endif
         if (indicatorVector_[idx] == coarsenCell && maxLevel_ < maxAllowedLevel_)
             return true;
-        else if (indicatorVector_[idx] == coarsenCell && !adaptionIndicator_.refine(element))
+        else if (indicatorVector_[idx] == coarsenCell && !adaptationIndicator_.refine(element))
             return true;
         else
             return false;
@@ -272,7 +272,7 @@ public:
         return maxLevel_;
     }
 
-    /*! \brief Initializes the adaption indicator class */
+    /*! \brief Initializes the adaptation indicator class */
     void init()
     {};
 
@@ -281,7 +281,7 @@ public:
         return nextMaxLevel_ == maxAllowedLevel_;
     }
 
-    /*! \brief Constructs a GridAdaptionIndicator instance
+    /*! \brief Constructs a GridAdaptationIndicator instance
      *
      * This standard indicator is based on the saturation gradient. It checks the local gradient
      * compared to the maximum global gradient. The indicator is compared locally to a
@@ -289,10 +289,10 @@ public:
      * or coarsening or should not be adapted.
      *
      * \param problem The problem object
-     * \param adaptionIndicator Indicator whether a be adapted
+     * \param adaptationIndicator Indicator whether a be adapted
      */
-    ImplicitGridAdaptInitializationIndicator(Problem& problem, AdaptionIndicator& adaptionIndicator):
-        problem_(problem), adaptionIndicator_(adaptionIndicator), maxLevel_(0), nextMaxLevel_(0), eps_(1e-30)
+    ImplicitGridAdaptInitializationIndicator(Problem& problem, AdaptationIndicator& adaptationIndicator):
+        problem_(problem), adaptationIndicator_(adaptationIndicator), maxLevel_(0), nextMaxLevel_(0), eps_(1e-30)
     {
         minAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
         maxAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
@@ -310,7 +310,7 @@ public:
 
 private:
     Problem& problem_;
-    AdaptionIndicator& adaptionIndicator_;
+    AdaptationIndicator& adaptationIndicator_;
     Dune::DynamicVector<int> indicatorVector_;
     int maxLevel_;
     int nextMaxLevel_;
@@ -325,7 +325,7 @@ private:
 
 
 /*!\ingroup IMPES
- * @brief  Class defining a start indicator for grid adaption
+ * @brief  Class defining a start indicator for grid adaptation
  *
  *Default implementation
  *
@@ -338,7 +338,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptationIndicator) AdaptationIndicator;
 
 public:
     /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
@@ -374,18 +374,18 @@ public:
         return false;
     }
 
-    /*! \brief Initializes the adaption indicator class*/
+    /*! \brief Initializes the adaptation indicator class*/
     void init()
     {};
 
-    /*! \brief Constructs a GridAdaptionIndicator for initialization of an adaptive grid
+    /*! \brief Constructs a GridAdaptationIndicator for initialization of an adaptive grid
      *
      * Default implementation
      *
      * \param problem The problem object
-     * \param adaptionIndicator Indicator whether a be adapted
+     * \param adaptationIndicator Indicator whether a be adapted
      */
-    ImplicitGridAdaptInitializationIndicatorDefault(Problem& problem, AdaptionIndicator& adaptionIndicator)
+    ImplicitGridAdaptInitializationIndicatorDefault(Problem& problem, AdaptationIndicator& adaptationIndicator)
     {}
 };
 
