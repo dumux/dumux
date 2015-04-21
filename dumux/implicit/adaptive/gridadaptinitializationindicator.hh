@@ -61,11 +61,7 @@ private:
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
     };
 
-    enum
-    {
-        refineCell = 1,
-        coarsenCell = -1
-    };
+    enum { refineCell = 1 };
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dim-1> LocalPositionFace;
@@ -167,9 +163,7 @@ public:
 
         // prepare an indicator for refinement
         indicatorVector_.resize(problem_.gridView().size(0));
-
-        // set the default to coarsen
-        indicatorVector_ = coarsenCell;
+        indicatorVector_ = 0;
 
         // 1) calculate Indicator -> min, maxvalues
         // loop over all leaf elements
@@ -254,17 +248,7 @@ public:
      */
     bool coarsen(const Element& element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-        int idx = problem_.elementMapper().index(element);
-#else
-        int idx = problem_.elementMapper().map(element);
-#endif
-        if (indicatorVector_[idx] == coarsenCell && maxLevel_ < maxAllowedLevel_)
-            return true;
-        else if (indicatorVector_[idx] == coarsenCell && !adaptationIndicator_.refine(element))
-            return true;
-        else
-            return false;
+        return false;
     }
 
     int maxLevel()
