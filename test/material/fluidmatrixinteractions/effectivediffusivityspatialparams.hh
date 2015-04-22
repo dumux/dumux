@@ -107,7 +107,8 @@ public:
     void plotMaterialLaw()
     {
         PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
-        plotEffectiveDiffusivityModel.plotdeff(porosity_, 0.0, 1.0, "deff", false);
+        std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Diffusivity, File);
+        plotEffectiveDiffusivityModel.plotdeff(porosity_, 0.0, 1.0, fileName, false);
     }
 
     /*!

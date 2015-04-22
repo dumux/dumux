@@ -107,8 +107,9 @@ public:
     void plotMaterialLaw()
     {
         PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel_;
+        std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Conductivity, File);
         plotThermalConductivityModel_.plotlambdaeff(porosity_, rhoSolid_, lambdaSolid_,
-                                                    0.0, 1.0, "lambda_eff", false);
+                                                    0.0, 1.0, fileName, false);
     }
 
     /*!
