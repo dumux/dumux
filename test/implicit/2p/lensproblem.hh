@@ -43,7 +43,7 @@
 #include <dumux/implicit/2p/2pmodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/implicit/cellcentered/ccpropertydefaults.hh>
-#include <dumux/implicit/2p/gridadaptindicator2p.hh>
+#include <dumux/implicit/2p/2pgridadaptindicator.hh>
 #include <dumux/implicit/adaptive/gridadaptinitializationindicator.hh>
 
 #include "lensspatialparams.hh"
@@ -106,11 +106,11 @@ SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag
 SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
 
 SET_BOOL_PROP(LensCCAdaptiveProblem, AdaptiveGrid, true);
-SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptationIndicator, ImplicitGridAdaptIndicator2P<TypeTag>);
+SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptationIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
 SET_TYPE_PROP(LensCCAdaptiveProblem,  AdaptationInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
 
 SET_BOOL_PROP(LensBoxAdaptiveProblem, AdaptiveGrid, true);
-SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptationIndicator, ImplicitGridAdaptIndicator2P<TypeTag>);
+SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptationIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
 SET_TYPE_PROP(LensBoxAdaptiveProblem,  AdaptationInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
 
 NEW_PROP_TAG(BaseProblem);

@@ -861,10 +861,14 @@ public:
      */
     GridAdaptModel& gridAdapt()
     {
-        if (!adaptiveGrid)
-            Dune::dgrave << "adaptivity module was called despite "
-                         << "adaptivity is disabled in property system \n;" << adaptiveGrid;
+        return *gridAdapt_;
+    }
 
+    /*!
+     * \brief Returns adaptivity model used for the problem.
+     */
+    const GridAdaptModel& gridAdapt() const
+    {
         return *gridAdapt_;
     }
 

@@ -251,6 +251,14 @@ public:
         return (sumMarked != 0 || sumCoarsened != 0);
     }
 
+    const bool wasAdapted() const
+    {
+        int sumMarked = problem_.grid().comm().sum(marked_);
+        int sumCoarsened = problem_.grid().comm().sum(coarsened_);
+
+        return (sumMarked != 0 || sumCoarsened != 0);
+    }
+
     /*!
      * Sets minimum and maximum refinement levels
      *

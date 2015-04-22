@@ -37,7 +37,7 @@ namespace Dumux
  * \tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
-class ImplicitGridAdaptIndicator2P
+class TwoPImplicitGridAdaptIndicator
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -257,7 +257,7 @@ public:
      *
      * \param problem The problem object
      */
-    ImplicitGridAdaptIndicator2P (Problem& problem):
+    TwoPImplicitGridAdaptIndicator(Problem& problem):
         problem_(problem)
     {
         refinetol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefineTolerance);
