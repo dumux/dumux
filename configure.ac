@@ -55,6 +55,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/implicit/box/Makefile
     dumux/implicit/cellcentered/Makefile
     dumux/implicit/common/Makefile
+    dumux/implicit/adaptive/Makefile
     dumux/implicit/co2/Makefile
     dumux/implicit/nonisothermal/Makefile
     dumux/implicit/mpnc/Makefile

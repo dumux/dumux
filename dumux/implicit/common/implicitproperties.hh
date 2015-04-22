@@ -24,6 +24,7 @@
 #include <dumux/common/basicproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
+#include <dumux/implicit/adaptive/gridadaptproperties.hh>
 
 /*!
  * \ingroup Properties
@@ -44,7 +45,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
     
 //! The type tag for fully-implicit models
-NEW_TYPE_TAG(ImplicitBase, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, ImplicitModel));
+NEW_TYPE_TAG(ImplicitBase, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, ImplicitModel, GridAdapt));
     
 //////////////////////////////////////////////////////////////////
 // Property tags

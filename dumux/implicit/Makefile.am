@@ -11,7 +11,8 @@ SUBDIRS = 1p \
           common \
           mpnc \
           nonisothermal \
-          richards
+          richards \
+          adaptive
 
 implicitdir = $(includedir)/dumux/implicit
 

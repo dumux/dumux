@@ -28,6 +28,7 @@
 #include <dune/istl/bvector.hh>
 
 #include "implicitproperties.hh"
+#include <dumux/implicit/adaptive/gridadaptproperties.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
@@ -350,6 +351,11 @@ public:
         }
     }
 
+    void adaptVariableSize()
+    {
+    	uCur_.resize(numDofs());
+    }
+
     /*!
      * \brief Reference to the current solution as a block vector.
      */
@@ -497,7 +503,34 @@ public:
      *        which the actual model can overload.
      */
     void updateBegin()
-    { }
+    {
+    	if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridAdapt().wasAdapted())
+    	{
+    		uPrev_ = uCur_;
+
+            updateBoundaryIndices_();
+
+            int numDofs = asImp_().numDofs();
+
+            if (isBox)
+                boxVolume_.resize(numDofs);
+
+            jacAsm_->init(problem_());
+
+            // resize the hint vectors
+            if (isBox && enableHints_) {
+                int numVertices = gridView_().size(dim);
+                curHints_.resize(numVertices);
+                prevHints_.resize(numVertices);
+                hintsUsable_.resize(numVertices);
+                std::fill(hintsUsable_.begin(),
+                          hintsUsable_.end(),
+                          false);
+            }
+
+    	}
+
+    }
 
 
     /*!
