@@ -176,9 +176,6 @@ public:
             Dune::dinfo << marked_ << " cells have been marked_ to be refined, "
                         << coarsened_ << " to be coarsened." << std::endl;
 
-       std::cout << marked_ << " cells have been marked_ to be refined, "
-                    << coarsened_ << " to be coarsened." << std::endl;
-
         /****  2b) Do pre-adaptation step    *****/
         problem_.grid().preAdapt();
         problem_.preAdapt();
@@ -239,60 +236,8 @@ public:
             {
                 problem_.grid().mark( -1, *eIt );
                 ++coarsened_;
-                /*int idx = idSet.id(*(eIt->father()));
-                typename CoarsenMarkerType::iterator it = coarsenMarker.find(idx);
-                if (it != coarsenMarker.end())
-                {
-                    it->second++;
-                }
-                else
-                {
-                    coarsenMarker[idx] = 1;
-                }*/
             }
         }
-        // coarsen
-        /*for (LeafIterator eIt = problem_.gridView().template begin<0>();
-             eIt!=problem_.gridView().template end<0>(); ++eIt)
-        {
-            // only mark non-ghost elements
-            if (eIt->partitionType() == Dune::GhostEntity)
-                continue;
-
-            if (indicator.coarsen(*eIt) && eIt->level() > levelMin_)
-            {
-                int idx = idSet.id(*(eIt->father()));
-                typename CoarsenMarkerType::iterator it = coarsenMarker.find(idx);
-                if (it != coarsenMarker.end())
-                {
-                    if (problem_.grid().getMark(*eIt) == 0
-                        && it->second == eIt->geometry().corners())
-                    {
-                        // check if coarsening is possible
-                        bool coarsenPossible = true;
-                        LeafIntersectionIterator isend = problem_.gridView().iend(*eIt);
-                        for(LeafIntersectionIterator is = problem_.gridView().ibegin(*eIt); is != isend; ++is)
-                        {
-                            if(is->neighbor())
-                            {
-                                ElementPointer outside = is->outside();
-                                if ((problem_.grid().getMark(*outside) > 0)
-                                    || outside->level() > eIt->level())
-                                {
-                                    coarsenPossible = false;
-                                }
-                            }
-                        }
-
-                        if(coarsenPossible)
-                        {
-                            problem_.grid().mark( -1, *eIt );
-                            ++coarsened_;
-                        }
-                    }
-                }
-            }
-        }*/
     }
 
     /*!
