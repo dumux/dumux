@@ -13,19 +13,11 @@
 # - further arguments:            are optional and are used as arguments for calling the test
 ###
 macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_source)
-  # create test target for directory, but only if not yet created
-  get_directory_test_target(potential_test_target "${CMAKE_CURRENT_BINARY_DIR}")
-  if(NOT TARGET ${potential_test_target})
-    add_directory_test_target(_test_target)
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      PROPERTY TEST_INCLUDE_FILE ${CMAKE_CURRENT_BINARY_DIR}/BuildTests.cmake)
-
-    # if present, copy grids folder
-    set(grids_directory ${CMAKE_CURRENT_SOURCE_DIR}/grids)
-    if(EXISTS ${grids_directory} AND IS_DIRECTORY ${grids_directory})
-      file(COPY ${grids_directory} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-    endif()
-  endif(NOT TARGET ${potential_test_target})
+  # if present, copy grids folder
+  set(grids_directory ${CMAKE_CURRENT_SOURCE_DIR}/grids)
+  if(EXISTS ${grids_directory} AND IS_DIRECTORY ${grids_directory})
+    file(COPY ${grids_directory} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
 
   # if present, copy input file
   set(input_file ${CMAKE_CURRENT_SOURCE_DIR}/${dumux_test_executable}.input)
@@ -40,12 +32,7 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
   # add executable
   # check whether executable already exists
   if(NOT TARGET ${dumux_test_executable})
-    #set property whether it has to be built with make or only with make test
-    if(${DUMUX_BUILD_ALL_TESTS})
-      add_executable(${dumux_test_executable} ${dumux_test_executable_source})
-    else()
-      add_executable(${dumux_test_executable} EXCLUDE_FROM_ALL ${dumux_test_executable_source})
-    endif(${DUMUX_BUILD_ALL_TESTS})
+    add_executable(${dumux_test_executable} ${dumux_test_executable_source})
   endif(NOT TARGET ${dumux_test_executable})
 
   # link all libraries to executable, add all flags
@@ -58,7 +45,6 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
 
   # add test
   add_test(${dumux_test} ${dumux_test_args})
-  add_dependencies(${_test_target} ${dumux_test_executable})
 
   # return code 77 should be interpreted as skipped test
   set_tests_properties(${dumux_test} PROPERTIES SKIP_RETURN_CODE 77)

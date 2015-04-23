@@ -6,5 +6,3 @@ add_subdirectory("implicit")
 add_subdirectory("io")
 add_subdirectory("material")
 add_subdirectory("multidomain")
-
-add_directory_test_target(_test_target)
