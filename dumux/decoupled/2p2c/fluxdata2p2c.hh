@@ -44,6 +44,8 @@ class FluxData2P2C
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
     {
@@ -55,7 +57,21 @@ private:
         numEquations = GET_PROP_VALUE(TypeTag, NumEq)
     };
 
+    enum
+    {
+        wPhaseIdx = Indices::wPhaseIdx, 
+        nPhaseIdx = Indices::nPhaseIdx
+    };
+
+    enum
+    {
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+    };
+
     typename Dune::BlockVector<typename Dune::FieldVector<bool, numEquations>> isUpwindCell_;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldVector<DimVector, 2 * dim> VelocityVector;
+    VelocityVector velocity_[numPhases];
 
 public:
 
@@ -63,11 +79,67 @@ public:
     FluxData2P2C()
     {
         isUpwindCell_.resize(2 * dim);
-        for (int i = 0; i<2*dim; i++)
+        for (int fIdx = 0; fIdx<2*dim; fIdx++)
         {
-            isUpwindCell_[i] = false;
+            isUpwindCell_[fIdx] = false;
+            for (int phaseIdx = 0; phaseIdx<numPhases; ++phaseIdx)
+                for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                    velocity_[phaseIdx][fIdx][dimIdx] = 0.0;
         }
+
     }
+
+        /*! \brief Returns the phase velocity vector at a cell-cell interface
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
+    const DimVector& velocity(int phaseIdx, int indexInInside)
+    {
+        return velocity_[phaseIdx][indexInInside];
+    }
+
+    /*! \brief Returns the phase velocity vector at a cell-cell interface
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
+    const DimVector& velocity(int phaseIdx, int indexInInside) const
+    {
+        return velocity_[phaseIdx][indexInInside];
+    }
+
+    /*! \brief Sets the phase velocity vector at a cell-cell interface
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     * \param velocity Phase velocity vector which is stored
+     */
+    void setVelocity(int phaseIdx, int indexInInside, const DimVector& velocity)
+    {
+        velocity_[phaseIdx][indexInInside] = velocity;
+    }
+
+    /*! \brief Returns the total velocity vector at a cell-cell interface
+     *
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
+    DimVector velocityTotal(int indexInInside)
+    {
+        return velocity_[wPhaseIdx][indexInInside]
+                + velocity_[nPhaseIdx][indexInInside];
+    }
+
+    /*! \brief Returns the total velocity vector at a cell-cell interface
+     *
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
+    DimVector velocityTotal(int indexInInside) const
+    {
+        return velocity_[wPhaseIdx][indexInInside]
+                + velocity_[nPhaseIdx][indexInInside];
+    }
+
     //! resizes the upwind vector for the case of hanging nodes
     void resize(int size)
     {
@@ -102,6 +174,8 @@ public:
         for(int banana=0; banana<isUpwindCell_.size(); banana++)
             printvector(std::cout, isUpwindCell_, "upwindInformation", "row", 3);
     }
+
+
 };
 }
 #endif
