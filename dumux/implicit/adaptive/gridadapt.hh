@@ -65,7 +65,11 @@ public:
      * @param problem The problem
      */
     ImplicitGridAdapt (Problem& problem)
-        : problem_(problem), adaptationHelper_(problem.gridView()), adaptationIndicator_(problem), marked_(0), coarsened_(0)
+        : adaptationHelper_(problem.gridView()),
+          problem_(problem),
+          adaptationIndicator_(problem),
+          marked_(0),
+          coarsened_(0)
     {
         levelMin_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
         levelMax_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
@@ -214,28 +218,27 @@ public:
     {
         typedef std::unordered_map<int, int> CoarsenMarkerType;
         CoarsenMarkerType coarsenMarker;
-        const typename Grid::Traits::LocalIdSet& idSet(problem_.grid().localIdSet());
 
         for (LeafIterator eIt = problem_.gridView().template begin<0>();
              eIt!=problem_.gridView().template end<0>(); ++eIt)
         {
             // only mark non-ghost elements
-            if (eIt->partitionType() == Dune::GhostEntity)
-                continue;
-
-            // refine?
-            if (indicator.refine(*eIt) && eIt->level() < levelMax_)
+            if (eIt->partitionType() != Dune::GhostEntity)
             {
-                problem_.grid().mark( 1,  *eIt);
-                ++marked_;
+                // refine?
+                if (indicator.refine(*eIt) && eIt->level() < levelMax_)
+                {
+                    problem_.grid().mark( 1,  *eIt);
+                    ++marked_;
 
-                // this also refines the neighbor elements
-                checkNeighborsRefine_(*eIt);
-            }
-            if (indicator.coarsen(*eIt) && eIt->hasFather())
-            {
-                problem_.grid().mark( -1, *eIt );
-                ++coarsened_;
+                    // this also refines the neighbor elements
+                    checkNeighborsRefine_(*eIt);
+                }
+                if (indicator.coarsen(*eIt) && eIt->hasFather())
+                {
+                    problem_.grid().mark( -1, *eIt );
+                    ++coarsened_;
+                }
             }
         }
     }
@@ -348,7 +351,7 @@ private:
             }
         }
         return true;
-    };
+    }
 
 
     /*!
@@ -434,20 +437,20 @@ class ImplicitGridAdapt<TypeTag, false>
 
 public:
     void init()
-    {};
+    {}
     void adaptGrid()
-    {};
+    {}
     bool wasAdapted()
     {
         return false;
     }
     void setLevels(int, int)
-    {};
+    {}
     void setTolerance(int, int)
-    {};
+    {}
     const void setIndicator(const SolutionVector&,
                             const Scalar&, const Scalar&)
-    {};
+    {}
     ImplicitGridAdapt (Problem& problem)
     {}
 };
