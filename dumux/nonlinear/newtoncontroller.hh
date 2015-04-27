@@ -81,23 +81,18 @@ NEW_PROP_TAG(NewtonUseLineSearch);
 
 //! indicate whether the shift criterion should be used
 NEW_PROP_TAG(NewtonEnableShiftCriterion);
-NEW_PROP_TAG(NewtonEnableRelativeCriterion);// DEPRECATED
 
 //! the value for the maximum relative shift below which convergence is declared
 NEW_PROP_TAG(NewtonMaxRelativeShift);
-NEW_PROP_TAG(NewtonRelTolerance);// DEPRECATED
 
 //! indicate whether the residual criterion should be used
 NEW_PROP_TAG(NewtonEnableResidualCriterion);
-NEW_PROP_TAG(NewtonEnableAbsoluteCriterion);// DEPRECATED
 
 //! the value for the residual reduction below which convergence is declared
 NEW_PROP_TAG(NewtonResidualReduction);
-NEW_PROP_TAG(NewtonAbsTolerance);// DEPRECATED
 
 //! indicate whether both of the criteria should be satisfied to declare convergence
 NEW_PROP_TAG(NewtonSatisfyResidualAndShiftCriterion);
-NEW_PROP_TAG(NewtonSatisfyAbsAndRel);// DEPRECATED
 
 /*!
  * \brief The number of iterations at which the Newton method
@@ -119,32 +114,11 @@ NEW_PROP_TAG(JacobianAssembler);
 SET_TYPE_PROP(NewtonMethod, NewtonController, Dumux::NewtonController<TypeTag>);
 SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
 SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
-
-// Renaming: EnableRelativeCriterion -> EnableShiftCriterion
-SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion,
-              GET_PROP_VALUE(TypeTag, NewtonEnableRelativeCriterion));
-SET_BOOL_PROP(NewtonMethod, NewtonEnableRelativeCriterion, true);// DEPRECATED
-
-// Renaming: EnableAbsoluteCriterion -> EnableResidualCriterion
-SET_BOOL_PROP(NewtonMethod, NewtonEnableResidualCriterion,
-              GET_PROP_VALUE(TypeTag, NewtonEnableAbsoluteCriterion));
-SET_BOOL_PROP(NewtonMethod, NewtonEnableAbsoluteCriterion, false);// DEPRECATED
-
-// Renaming: SatisfyAbsAndRel -> SatisfyResidualAndShiftCriterion
-SET_BOOL_PROP(NewtonMethod, NewtonSatisfyResidualAndShiftCriterion,
-              GET_PROP_VALUE(TypeTag, NewtonSatisfyAbsAndRel));
-SET_BOOL_PROP(NewtonMethod, NewtonSatisfyAbsAndRel, false);// DEPRECATED
-
-// Renaming: RelTolerance -> MaxRelativeShift
-SET_SCALAR_PROP(NewtonMethod, NewtonMaxRelativeShift,
-              GET_PROP_VALUE(TypeTag, NewtonRelTolerance));
-SET_SCALAR_PROP(NewtonMethod, NewtonRelTolerance, 1e-8);// DEPRECATED
-
-// Renaming: AbsTolerance -> ResidualReduction
-SET_SCALAR_PROP(NewtonMethod, NewtonResidualReduction,
-              GET_PROP_VALUE(TypeTag, NewtonAbsTolerance));
-SET_SCALAR_PROP(NewtonMethod, NewtonAbsTolerance, 1e-5);// DEPRECATED
-
+SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion, true);
+SET_BOOL_PROP(NewtonMethod, NewtonEnableResidualCriterion, false);
+SET_BOOL_PROP(NewtonMethod, NewtonSatisfyResidualAndShiftCriterion, false);
+SET_SCALAR_PROP(NewtonMethod, NewtonMaxRelativeShift, 1e-8);
+SET_SCALAR_PROP(NewtonMethod, NewtonResidualReduction, 1e-5);
 SET_INT_PROP(NewtonMethod, NewtonTargetSteps, 10);
 SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
 
@@ -181,9 +155,6 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
 
 public:
-// Avoid warnings when deprecated member variables are default-initialized
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     /*!
      * \brief Constructor
      */
@@ -191,16 +162,6 @@ public:
     : endIterMsgStream_(std::ostringstream::out)
     , convergenceWriter_(asImp_())
     , linearSolver_(problem)
-    , error_(shift_)
-    , lastError_(lastShift_)
-    , tolerance_(shiftTolerance_)
-    , absoluteError_(reduction_)
-    , lastAbsoluteError_(lastReduction_)
-    , initialAbsoluteError_(initialResidual_)
-    , absoluteTolerance_(reductionTolerance_)
-    , enableRelativeCriterion_(enableShiftCriterion_)
-    , enableAbsoluteCriterion_(enableResidualCriterion_)
-    , satisfyAbsAndRel_(satisfyResidualAndShiftCriterion_)
     {
         enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
@@ -221,110 +182,8 @@ public:
         setTargetSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, TargetSteps));
         setMaxSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxSteps));
 
-        // Check if deprecated parameters are set run-time and use them.
-        // Otherwise, the default values would be used.
-        // A warning will be printed during destruction of the controller.
-        typedef typename GET_PROP(TypeTag, ParameterTree) Params;
-        const Dune::ParameterTree &tree = Params::tree();
-        if (tree.hasKey("Newton.EnableRelativeCriterion"))
-        {
-            enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableRelativeCriterion);
-        }
-        if (tree.hasKey("Newton.RelTolerance"))
-        {
-            setMaxRelativeShift(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, RelTolerance));
-        }
-        if (tree.hasKey("Newton.EnableAbsoluteCriterion"))
-        {
-            enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteCriterion);
-        }
-        if (tree.hasKey("Newton.AbsTolerance"))
-        {
-            setResidualReduction(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, AbsTolerance));
-        }
-        if (tree.hasKey("Newton.SatisfyAbsAndRel"))
-        {
-            satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyAbsAndRel);
-        }
-
         verbose_ = true;
         numSteps_ = 0;
-    }
-#pragma GCC diagnostic pop
-
-    /*!
-     * \brief Destructor
-     */
-    ~NewtonController()
-    {
-        typedef typename GET_PROP(TypeTag, ParameterTree) Params;
-        const Dune::ParameterTree &tree = Params::tree();
-
-        // check if deprecated parameter names have been set run-time:
-        if (tree.hasKey("Newton.EnableRelativeCriterion")
-            || tree.hasKey("Newton.RelTolerance")
-            || tree.hasKey("Newton.EnableAbsoluteCriterion")
-            || tree.hasKey("Newton.AbsTolerance")
-            || tree.hasKey("Newton.SatisfyAbsAndRel"))
-        {
-            std::cout << std::endl << "[Newton] The following DEPRECATED parameters"
-                      << " are set run-time:" << std::endl;
-
-            if (tree.hasKey("Newton.EnableRelativeCriterion"))
-            {
-                std::cout << "EnableRelativeCriterion: use EnableShiftCriterion instead" << std::endl;
-            }
-            if (tree.hasKey("Newton.RelTolerance"))
-            {
-                std::cout << "RelTolerance: use MaxRelativeShift instead" << std::endl;
-            }
-            if (tree.hasKey("Newton.EnableAbsoluteCriterion"))
-            {
-                std::cout << "EnableAbsoluteCriterion: use EnableResidualCriterion instead" << std::endl;
-            }
-            if (tree.hasKey("Newton.AbsTolerance"))
-            {
-                std::cout << "AbsTolerance: use ResidualReduction instead" << std::endl;
-            }
-            if (tree.hasKey("Newton.SatisfyAbsAndRel"))
-            {
-                std::cout << "SatisfyAbsAndRel: use SatisfyResidualAndShiftCriterion instead" << std::endl;
-            }
-        }
-
-        // check if deprecated property names have been set compile-time to
-        // a non-default value:
-        if (GET_PROP_VALUE(TypeTag, NewtonEnableRelativeCriterion) != true
-            || GET_PROP_VALUE(TypeTag, NewtonRelTolerance) != 1e-8
-            || GET_PROP_VALUE(TypeTag, NewtonEnableAbsoluteCriterion) != false
-            || GET_PROP_VALUE(TypeTag, NewtonAbsTolerance) != 1e-5
-            || GET_PROP_VALUE(TypeTag, NewtonSatisfyAbsAndRel) != false)
-        {
-            std::cout << std::endl << "[Newton] The following DEPRECATED properties"
-                      << " are set compile-time:"
-                      << std::endl;
-
-            if (GET_PROP_VALUE(TypeTag, NewtonEnableRelativeCriterion) != true)
-            {
-                std::cout << "NewtonEnableRelativeCriterion: use NewtonEnableShiftCriterion instead" << std::endl;
-            }
-            if (GET_PROP_VALUE(TypeTag, NewtonRelTolerance) != 1e-8)
-            {
-                std::cout << "NewtonRelTolerance: use NewtonMaxRelativeShift instead" << std::endl;
-            }
-            if (GET_PROP_VALUE(TypeTag, NewtonEnableAbsoluteCriterion) != false)
-            {
-                std::cout << "NewtonEnableAbsoluteCriterion: use NewtonEnableResidualCriterion instead" << std::endl;
-            }
-            if (GET_PROP_VALUE(TypeTag, NewtonAbsTolerance) != 1e-5)
-            {
-                std::cout << "NewtonAbsTolerance: use NewtonResidualReduction instead" << std::endl;
-            }
-            if (GET_PROP_VALUE(TypeTag, NewtonSatisfyAbsAndRel) != false)
-            {
-                std::cout << "NewtonSatisfyAbsAndRel: use NewtonSatisfyResidualAndShiftCriterion instead" << std::endl;
-            }
-        }
     }
 
     /*!
@@ -337,10 +196,6 @@ public:
     void setMaxRelativeShift(Scalar tolerance)
     { shiftTolerance_ = tolerance; }
 
-    void setRelTolerance(Scalar tolerance)
-    DUNE_DEPRECATED_MSG("use setMaxRelativeShift instead")
-    { setMaxRelativeShift(tolerance); }
-
     /*!
      * \brief Set the maximum acceptable residual norm reduction.
      *
@@ -349,10 +204,6 @@ public:
      */
     void setResidualReduction(Scalar tolerance)
     { reductionTolerance_ = tolerance; }
-
-    void setAbsTolerance(Scalar tolerance)
-    DUNE_DEPRECATED_MSG("use setResidualReduction instead")
-    { setResidualReduction(tolerance); }
 
     /*!
      * \brief Set the number of iterations at which the Newton method
@@ -485,11 +336,6 @@ public:
         if (gridView_().comm().size() > 1)
             shift_ = gridView_().comm().max(shift_);
     }
-
-    void newtonUpdateRelError(const SolutionVector &uLastIter,
-                              const SolutionVector &deltaU)
-    DUNE_DEPRECATED_MSG("use newtonUpdateShift instead")
-    { newtonUpdateShift(uLastIter, deltaU); }
 
     /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
@@ -855,18 +701,6 @@ protected:
     bool enableShiftCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
-
-    // deprecated member variables
-    Scalar& error_ DUNE_DEPRECATED_MSG("use shift_ instead");
-    Scalar& lastError_ DUNE_DEPRECATED_MSG("use lastShift_ instead");
-    Scalar& tolerance_ DUNE_DEPRECATED_MSG("use shiftTolerance_ instead");
-    Scalar& absoluteError_ DUNE_DEPRECATED_MSG("use reduction_ instead");
-    Scalar& lastAbsoluteError_ DUNE_DEPRECATED_MSG("use lastReduction_ instead");
-    Scalar& initialAbsoluteError_ DUNE_DEPRECATED_MSG("use initialResidual_ instead");
-    Scalar& absoluteTolerance_ DUNE_DEPRECATED_MSG("use reductionTolerance_ instead");
-    bool& enableRelativeCriterion_ DUNE_DEPRECATED_MSG("use enableShiftCriterion_ instead");
-    bool& enableAbsoluteCriterion_ DUNE_DEPRECATED_MSG("use enableResidualCriterion_ instead");
-    bool& satisfyAbsAndRel_ DUNE_DEPRECATED_MSG("use satisfyResidualAndShiftCriterion_ instead");
 };
 } // namespace Dumux
 
