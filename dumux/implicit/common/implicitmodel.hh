@@ -440,14 +440,6 @@ public:
         return result;
     }
 
-    Scalar relativeErrorDof(const int dofIdxGlobal,
-                            const PrimaryVariables &priVars1,
-                            const PrimaryVariables &priVars2)
-    DUNE_DEPRECATED_MSG("use relativeShiftAtDof(priVars1, priVars2) instead")
-    {
-        return relativeShiftAtDof(priVars1, priVars2);
-    }
-
     /*!
      * \brief Try to progress the model to the next timestep.
      *

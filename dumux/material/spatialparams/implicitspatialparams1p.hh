@@ -31,7 +31,6 @@
 
 #include <dumux/implicit/common/implicitproperties.hh>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux {
@@ -197,13 +196,6 @@ public:
             std::cerr << "Unknown exception thrown!\n";
             exit(1) ;
         }
-    }
-
-    double DUNE_DEPRECATED tortuosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
-    {
-            return -1;
     }
 
 private:

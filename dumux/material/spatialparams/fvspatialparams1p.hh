@@ -31,7 +31,6 @@
 
 #include <dumux/common/basicproperties.hh>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux
@@ -198,11 +197,6 @@ public:
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
                    "a porosityAtPos() method.");
-    }
-
-    double DUNE_DEPRECATED tortuosity(const Element &element) const
-    {
-            return -1;
     }
 
 private:

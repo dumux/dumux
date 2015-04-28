@@ -117,11 +117,6 @@ public:
         }
     }
 
-    void newtonUpdateRelError(const SolutionVector &uLastIter,
-                              const SolutionVector &deltaU)
-    DUNE_DEPRECATED_MSG("use newtonUpdateShift instead")
-    { newtonUpdateShift(uLastIter, deltaU); }
-
     /*!
      * \brief Solve the linear system of equations
      *        \f$ \mathbf{A} x - b = 0\f$.
