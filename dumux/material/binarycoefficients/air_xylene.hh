@@ -34,6 +34,8 @@ namespace BinaryCoeff
 
 /*!
  * \brief Binary coefficients for water and xylene.
+ * \param temperature temperature in \f$\mathrm{[K]}\f$
+ *
  */
 class Air_Xylene
 {
@@ -48,10 +50,12 @@ public:
     }
 
     /*!
-     * \brief Binary diffusion coefficent [m^2/s] for air and xylene.
+     * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for air and xylene.
      * method according to Wilke and Lee
      * see Handbook of chem. property's Estimation Methods
      * W.J. Lyman, W.F. Reehl, D.H. Rosenblatt
+     * \param temperature temperature in \f$\mathrm{[K]}\f$
+     * \param pressure pressure in \f$\mathrm{[Pa]}\f$
      *
      */
     template <class Scalar>
@@ -90,7 +94,9 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficent [m^2/s] for molecular xylene in liquid water.
+     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular xylene in liquid water.
+     * \param temperature temperature in \f$\mathrm{[K]}\f$
+     * \param pressure pressure in \f$\mathrm{[Pa]}\f$
      *
      * \todo
      */

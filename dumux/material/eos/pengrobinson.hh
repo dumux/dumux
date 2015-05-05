@@ -91,9 +91,11 @@ public:
     };
 
     /*!
-     * \brief Predicts the vapor pressure for the temperature given in
+     * \brief Predicts the vapor pressure \f$\mathrm{[Pa]}\f$ for the temperature given in
      *        setTP().
-     *
+     * \param T temperature in \f$\mathrm{[K]}\f$
+     * \param params Parameters
+     * 
      * Initially, the vapor pressure is roughly estimated by using the
      * Ambrose-Walton method, then the Newton method is used to make
      * difference between the gas and liquid phase fugacity zero.
@@ -137,8 +139,12 @@ public:
     }
 
     /*!
-     * \brief Computes molar volumes where the Peng-Robinson EOS is
-     *        true.
+     * \brief Computes molar volumes \f$\mathrm{[m^3 / mol]}\f$ where the Peng-Robinson EOS is
+     *        true. 
+     * \param fs Thermodynamic state of the fluids
+     * \param params Parameters
+     * \param phaseIdx The phase index
+     * \param isGasPhase Specifies the phase state
      */
     template <class FluidState, class Params>
     static Scalar computeMolarVolume(const FluidState &fs,
@@ -217,7 +223,7 @@ public:
     }
 
     /*!
-     * \brief Returns the fugacity coefficient for a given pressure
+     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ for a given pressure
      *        and molar volume.
      *
      * This is the same value as computeFugacity() because the mole
@@ -249,7 +255,7 @@ public:
     }
 
     /*!
-     * \brief Returns the fugacity coefficient for a given pressure
+     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ for a given pressure
      *        and molar volume.
      *
      * This is the fugacity coefficient times the pressure. The mole

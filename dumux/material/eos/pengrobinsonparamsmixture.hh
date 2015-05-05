@@ -75,6 +75,8 @@ class PengRobinsonParamsMixture
 public:
     /*!
      * \brief Update Peng-Robinson parameters for the pure components.
+     * \param fluidState Thermodynamic state of the fluids
+     * 
      */
     template <class FluidState>
     void updatePure(const FluidState &fluidState)
@@ -85,7 +87,8 @@ public:
 
     /*!
      * \brief Peng-Robinson parameters for the pure components.
-     *
+     * \param temperature Temperature in \f$\mathrm{[K]}\f$
+     * \param pressure pressure in \f$\mathrm{[Pa]}\f$
      * This method is given by the SPE5 paper.
      */
     void updatePure(Scalar temperature, Scalar pressure)

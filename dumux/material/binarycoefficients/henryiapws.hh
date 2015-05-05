@@ -32,12 +32,18 @@ namespace Dumux
  * \ingroup Binarycoefficients
  * \brief The Henry constants in liquid water using the IAPWS 2004
  *        formulation.
+ * \param E Correlation parameter
+ * \param F Correlation parameter
+ * \param G Correlation parameter
+ * \param H Correlation parameter
+ * \param temperature the temperature \f$\mathrm{[K]}\f$
  *
- * This function calculates \f$K_D\f$, see:
+ * This function calculates \f$\mathrm{K_D}\f$, see:
  *
  * IAPWS: "Guideline on the Henry's Constant and Vapor-Liquid
  * Distribution Constant for Gases in H2O and D2O at High
  * Temperatures"
+ * Equation (5)
  * http://www.iapws.org/relguide/HenGuide.pdf
  *
  * Range of validity: T = {278.12 ; 636.46}

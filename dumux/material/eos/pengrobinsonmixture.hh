@@ -51,9 +51,12 @@ class PengRobinsonMixture
 
 public:
     /*!
-     * \brief Computes molar volumes where the Peng-Robinson EOS is
+     * \brief Computes molar volumes \f$\mathrm{[m^3 / mol]}\f$ where the Peng-Robinson EOS is
      *        true.
-     *
+     * \param Vm Molar Volume \f$\mathrm{[m^3 / mol]}\f$
+     * \param fs Thermodynamic state of the fluids
+     * \param params Parameters
+     * \param phaseIdx The phase index
      * \return Number of solutions.
      */
     template <class MutableParams, class FluidState>
@@ -66,9 +69,13 @@ public:
     }
 
     /*!
-     * \brief Returns the fugacity coefficient of an individual
+     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
      *        component in the phase.
-     *
+     * \param fs Thermodynamic state of the fluids
+     * \param params Parameters
+     * \param phaseIdx The phase index
+     * \param compIdx The index of the component
+     * 
      * The fugacity coefficient \f$\phi_i\f$ of a component \f$i\f$ is
      * defined as
      * \f[

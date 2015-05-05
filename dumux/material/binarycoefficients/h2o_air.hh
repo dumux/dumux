@@ -39,7 +39,7 @@ class H2O_Air
 public:
     /*!
      * \brief Henry coefficent \f$\mathrm{[N/m^2]}\f$  for air in liquid water.
-     *
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
      *
      * Henry coefficent See:
      * Stefan Finsterle, 1993
@@ -84,6 +84,9 @@ public:
      * Lacking better data on water-air diffusion in liquids, we use at the
      * moment the diffusion coefficient of the air's main component nitrogen!!
      * \brief Diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular nitrogen in liquid water.
+     *
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      *
      * The empirical equations for estimating the diffusion coefficient in
      * infinite solution which are presented in Reid, 1987 all show a

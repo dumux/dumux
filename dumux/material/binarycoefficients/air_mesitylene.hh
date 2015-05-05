@@ -34,6 +34,8 @@ namespace BinaryCoeff
 
 /*!
  * \brief Binary coefficients for water and mesitylene.
+ * \param temperature temperature in \f$\mathrm{[K]}\f$
+ *
  */
 class Air_Mesitylene
 {
@@ -48,10 +50,12 @@ public:
     }
 
     /*!
-     * \brief Binary diffusion coefficent [m^2/s] for air and mesitylene.
+     * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for air and mesitylene.
      * I used the method according to Wilke and Lee
      * see Handbook of chem. property's Estimation Methods
      * W.J. Lyman, W.F. Reehl, D.H. Rosenblatt
+     * \param temperature temperature in \f$\mathrm{[K]}\f$
+     * \param pressure pressure in \f$\mathrm{[Pa]}\f$
      *
      */
     template <class Scalar>
@@ -90,7 +94,9 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficent [m^2/s] for molecular mesitylene in liquid water.
+     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular mesitylene in liquid water.
+     * \param temperature temperature in \f$\mathrm{[K]}\f$
+     * \param pressure pressure in \f$\mathrm{[Pa]}\f$
      *
      * \todo
      */

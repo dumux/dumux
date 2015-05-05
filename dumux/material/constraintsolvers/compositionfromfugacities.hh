@@ -48,7 +48,11 @@ public:
     typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
 
     /*!
-     * \brief Guess an initial value for the composition of the phase.
+     * \brief Guess an initial value for the composition of the phase. 
+     * \param fluidState Thermodynamic state of the fluids
+     * \param paramCache  Container for cache parameters
+     * \param phaseIdx The phase index
+     * \param fugVec fugacity vector of the component
      */
     template <class FluidState>
     static void guessInitial(FluidState &fluidState,
@@ -70,7 +74,11 @@ public:
 
     /*!
      * \brief Calculates the chemical equilibrium from the component
-     *        fugacities in a phase.
+     *        fugacities in a phase. 
+     * \param fluidState Thermodynamic state of the fluids
+     * \param paramCache  Container for cache parameters
+     * \param phaseIdx The phase index
+     * \param targetFug target fugacity
      *
      * The phase's fugacities must already be set.
      */

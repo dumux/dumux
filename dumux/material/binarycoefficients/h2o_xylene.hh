@@ -39,7 +39,8 @@ class H2O_Xylene
 {
 public:
     /*!
-     * \brief Henry coefficent \f$[N/m^2]\f$  for xylene in liquid water.
+     * \brief Henry coefficent \f$\mathrm{[N/m^2]}\f$  for xylene in liquid water.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
      *
      * See:
      *
@@ -58,7 +59,9 @@ public:
     }
 
     /*!
-     * \brief Binary diffusion coefficent [m^2/s] for molecular water and xylene.
+     * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular water and xylene.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      *
      */
     template <class Scalar>
@@ -99,7 +102,9 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficent [m^2/s] for xylene in liquid water.
+     * \brief Diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for xylene in liquid water.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      *
      * \todo
      */
