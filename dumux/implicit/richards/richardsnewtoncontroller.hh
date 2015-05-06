@@ -58,6 +58,7 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     enum { dim = GridView::dimension };
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
+    static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
 
 public:
     /*!
@@ -84,7 +85,7 @@ public:
     {
         ParentType::newtonUpdate(uCurrentIter, uLastIter, deltaU);
 
-        if (!GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch))
+        if ( (!GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch)) && (!useHead) ) 
         {
             // do not clamp anything after 5 iterations
             if (this->numSteps_ > 4)

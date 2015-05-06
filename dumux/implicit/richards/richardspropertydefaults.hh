@@ -57,6 +57,9 @@ SET_INT_PROP(Richards, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq));
 //! Number of fluid phases considered
 SET_INT_PROP(Richards, NumPhases, 2);
 
+//! Use pressure [Pa] by default
+SET_BOOL_PROP(Richards, UseHead, false);
+
 //! The local residual operator
 SET_TYPE_PROP(Richards,
               LocalResidual,
@@ -71,9 +74,9 @@ SET_TYPE_PROP(Richards, VolumeVariables, typename GET_PROP_TYPE(TypeTag, Isother
 //! The class for the quantities required for the flux calculation
 SET_TYPE_PROP(Richards, FluxVariables, typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables));
 
-//! The class of the newton controller
-SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);
-
+//! The class of the newton controller                                                                
+SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);                         
+ 
 //! The upwind weight for the mass conservation equations
 SET_SCALAR_PROP(Richards, ImplicitMassUpwindWeight, 1.0);
 

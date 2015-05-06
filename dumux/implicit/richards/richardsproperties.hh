@@ -71,6 +71,7 @@ NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the weight of the upwi
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< The value of the weight for the upwind mobility in the velocity calculation
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
+NEW_PROP_TAG(UseHead); //!< Defines whether pressure [Pa] (false) or pressure head [cm] (true) is used
 
 // \}
 }

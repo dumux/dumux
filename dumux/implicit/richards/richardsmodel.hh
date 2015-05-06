@@ -111,6 +111,7 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -125,6 +126,8 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
+
+    static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
 
 public:
     /*!
@@ -155,6 +158,10 @@ public:
         ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
         ScalarField *poro = writer.allocateManagedBuffer(numDofs);
         ScalarField *Te = writer.allocateManagedBuffer(numDofs);
+        ScalarField *ph = writer.allocateManagedBuffer(numDofs);
+        ScalarField *wc = writer.allocateManagedBuffer(numDofs);
+        ScalarField *source = writer.allocateManagedBuffer(numDofs);
+        
         VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
@@ -199,7 +206,12 @@ public:
 #else
                     int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 #endif
-
+                    PrimaryVariables sourcevalues;
+                    this->problem_().solDependentSource(sourcevalues,
+                                                        *eIt,
+                                                        fvGeometry,
+                                                        scvIdx,
+                                                        elemVolVars);
                     (*pw)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
                     (*pn)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(nPhaseIdx);
                     (*pc)[dofIdxGlobal] = elemVolVars[scvIdx].capillaryPressure();
@@ -211,6 +223,9 @@ public:
                     (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
                     (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
                     (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
+                    (*ph)[dofIdxGlobal] = elemVolVars[scvIdx].pressureHead(wPhaseIdx);
+                    (*wc)[dofIdxGlobal] = elemVolVars[scvIdx].waterContent(wPhaseIdx);
+                    (*source)[dofIdxGlobal] = sourcevalues;
                 }
 
                 // velocity output
@@ -229,6 +244,10 @@ public:
         writer.attachDofData(*mobN, "mobN", isBox);
         writer.attachDofData(*poro, "porosity", isBox);
         writer.attachDofData(*Te, "temperature", isBox);
+        writer.attachDofData(*ph, "pressure head", isBox);
+        writer.attachDofData(*wc, "water content", isBox);
+        writer.attachDofData(*source, "source", isBox);
+
         if (velocityOutput.enableOutput())
         {
             writer.attachDofData(*velocity,  "velocity", isBox, dim);

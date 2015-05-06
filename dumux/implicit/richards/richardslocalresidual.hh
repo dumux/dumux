@@ -48,6 +48,7 @@ class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
 
 public:
     /*!
@@ -87,10 +88,13 @@ public:
             this->curVolVars_(scvIdx);
 
         // partial time derivative of the wetting phase mass
+        //pressure head formulation
         storage[contiEqIdx] =
-            volVars.density(wPhaseIdx)
-            * volVars.saturation(wPhaseIdx)
-            * volVars.porosity();
+                volVars.saturation(wPhaseIdx)
+                * volVars.porosity(); 
+        // pressure formulation
+        if (!useHead)
+            storage[contiEqIdx] *= volVars.density(wPhaseIdx);
     }
 
 
@@ -134,12 +138,14 @@ public:
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(wPhaseIdx));
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(wPhaseIdx));
 
-        flux[contiEqIdx] +=
-            fluxVars.volumeFlux(wPhaseIdx)
-            *
-            ((    massUpwindWeight_)*up.density(wPhaseIdx)
-             +
-             (1 - massUpwindWeight_)*dn.density(wPhaseIdx));
+        //pressure head formulation
+        flux[contiEqIdx] =
+            fluxVars.volumeFlux(wPhaseIdx);
+        //pressure formulation
+        if(!useHead)
+            flux[contiEqIdx] *=((    massUpwindWeight_)*up.density(wPhaseIdx)
+                                +
+                                (1 - massUpwindWeight_)*dn.density(wPhaseIdx));
     }
 
     /*!

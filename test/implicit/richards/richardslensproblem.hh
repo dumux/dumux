@@ -63,8 +63,11 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
-// Set the maximum number of newton iterations of a time step
-SET_INT_PROP(RichardsLensProblem, NewtonMaxSteps, 28);
+// Enable gravity
+SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
+
+//! Use pressure [Pa] or pressure head [cm] formulation
+SET_BOOL_PROP(RichardsLensProblem, UseHead, false);
 }
 
 /*!
@@ -73,7 +76,7 @@ SET_INT_PROP(RichardsLensProblem, NewtonMaxSteps, 28);
  *
  * \brief A water infiltration problem with a low-permeability lens
  *        embedded into a high-permeability domain which uses the
- *        Richards box model.
+ *        Richards model.
  *
  * The domain is box shaped. Left and right boundaries are Dirichlet
  * boundaries with fixed water pressure (fixed Saturation \f$S_w = 0\f$),
@@ -95,9 +98,9 @@ SET_INT_PROP(RichardsLensProblem, NewtonMaxSteps, 28);
  * simulation time is 10,000,000 seconds (115.7 days)
  */
 template <class TypeTag>
-class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
+class RichardsLensProblem : public RichardsProblem<TypeTag>
 {
-    typedef RichardsBoxProblem<TypeTag> ParentType;
+    typedef RichardsProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -106,19 +109,24 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         // copy some indices for convenience
         pwIdx = Indices::pwIdx,
+        hIdx = Indices::hIdx,
         contiEqIdx = Indices::contiEqIdx,
 
         // Grid and world dimension
         dimWorld = GridView::dimensionworld
     };
-
+   
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
 
 public:
     /*!
@@ -234,7 +242,11 @@ public:
                    const GlobalPosition &globalPos) const
     {
         // use initial values as boundary conditions
-        initial_(values, globalPos);
+        if (onInlet_(globalPos)) 
+            // inflow of water
+            values[contiEqIdx] = -0.; 
+        else
+            initial_(values, globalPos);
     }
 
     /*!
@@ -253,7 +265,10 @@ public:
         values = 0.0;
         if (onInlet_(globalPos)) {
             // inflow of water
-            values[contiEqIdx] = -0.04; // kg/(m*s)
+            if (useHead)
+                values[contiEqIdx] = -0.04/1000.; // kg/(m*s) / density
+            else
+                values[contiEqIdx] = -0.04; // kg/(m*s)
         }
     }
 
@@ -284,7 +299,12 @@ private:
         Scalar pc =
             MaterialLaw::pc(this->spatialParams().materialLawParams(globalPos),
                             sw);
-        values[pwIdx] = pnRef_ - pc;
+        Scalar g = this->gravity().two_norm();
+
+        if (useHead)
+            values[hIdx] = (-pc)/1000./ g *(100.);
+        else
+            values[pwIdx] = pnRef_ - pc;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const

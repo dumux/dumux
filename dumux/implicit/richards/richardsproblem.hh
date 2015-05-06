@@ -37,7 +37,7 @@ namespace Dumux
  * For a description of the Richards model, see Dumux::RichardsModel
  */
 template<class TypeTag>
-class RichardsBoxProblem : public ImplicitPorousMediaProblem<TypeTag>
+class RichardsProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
 
@@ -61,7 +61,7 @@ public:
      * \param timeManager The TimeManager which keeps track of time
      * \param gridView The GridView used by the problem.
      */
-    RichardsBoxProblem(TimeManager &timeManager, const GridView &gridView)
+    RichardsProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
     {}
 

@@ -55,14 +55,16 @@ class RichardsVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum {
-        pwIdx = Indices::pwIdx,
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
+
+    enum{hIdx = Indices::hIdx,
+         pwIdx = Indices::pwIdx,
+         wPhaseIdx = Indices::wPhaseIdx,
+         nPhaseIdx = Indices::nPhaseIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
+    static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
 
 public:
     //! The type returned by the fluidState() method
@@ -118,20 +120,35 @@ public:
         Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
-
-        // pressures
-        Scalar pnRef = problem.referencePressure(element, fvGeometry, scvIdx);
+        
         const MaterialLawParams &matParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-        Scalar minPc = MaterialLaw::pc(matParams, 1.0);
-        fluidState.setPressure(wPhaseIdx, priVars[pwIdx]);
-        fluidState.setPressure(nPhaseIdx, std::max(pnRef, priVars[pwIdx] + minPc));
+                problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
-        // saturations
-        Scalar sw = MaterialLaw::sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
-        fluidState.setSaturation(wPhaseIdx, sw);
-        fluidState.setSaturation(nPhaseIdx, 1 - sw);
+        pnRef_ = problem.referencePressure(element, fvGeometry, scvIdx);
+        gravity_ = problem.gravity().two_norm();
 
+        // pressure head formulation
+        if (useHead){
+            Scalar pw = (0.01*priVars[hIdx])*1000.0 * gravity_ ;
+            fluidState.setPressure(wPhaseIdx, pw);
+            fluidState.setPressure(nPhaseIdx, 0.0);
+
+            // saturations
+            Scalar sw = MaterialLaw::sw(matParams,-fluidState.pressure(wPhaseIdx));
+            fluidState.setSaturation(wPhaseIdx, sw);
+            fluidState.setSaturation(nPhaseIdx, 1 - sw);
+        }
+        else{ //pressure formulation
+           
+            Scalar minPc = MaterialLaw::pc(matParams, 1.0);
+            fluidState.setPressure(wPhaseIdx, priVars[pwIdx]);
+            fluidState.setPressure(nPhaseIdx, std::max(pnRef_, priVars[pwIdx] + minPc));
+            
+            // saturations
+            Scalar sw = MaterialLaw::sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
+            fluidState.setSaturation(wPhaseIdx, sw);
+            fluidState.setSaturation(nPhaseIdx, 1 - sw);
+        }
         // density and viscosity
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
@@ -141,7 +158,7 @@ public:
         fluidState.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
         fluidState.setViscosity(nPhaseIdx, 1e-10);
 	
-	// compute and set the enthalpy
+        // compute and set the enthalpy
         fluidState.setEnthalpy(wPhaseIdx, Implementation::enthalpy_(fluidState, paramCache, wPhaseIdx));
         fluidState.setEnthalpy(nPhaseIdx, Implementation::enthalpy_(fluidState, paramCache, nPhaseIdx));
 
@@ -245,7 +262,45 @@ public:
      * \f[ p_c = p_n - p_w \f]
      */
     Scalar capillaryPressure() const
-    { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
+    { 
+        // pressure head formulation
+        if (useHead)
+            return -fluidState_.pressure(wPhaseIdx);
+        else // pressure  formulation
+            return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); 
+    }
+    
+    /*!
+     * \brief Returns the pressureHead \f$\mathrm{[cm]}\f$ of a given phase within
+     *        the control volume.
+     *
+     * For the non-wetting phase (i.e. the gas phase), we assume
+     * infinite mobility, which implies that the non-wetting phase
+     * pressure is equal to the finite volume's reference pressure
+     * defined by the problem.
+     *
+     * \param phaseIdx The index of the fluid phase
+     */
+    Scalar pressureHead(const int phaseIdx) const
+    {  
+        // pressure head formulation
+        if (useHead)
+            return (100.) *(fluidState_.pressure(phaseIdx))/ fluidState_.density(phaseIdx)/ gravity_; 
+        else // pressure  formulation
+            return (100.) *(fluidState_.pressure(phaseIdx) - pnRef_)/ fluidState_.density(phaseIdx)/ gravity_;
+    } 
+    
+    /*!
+     * \brief Returns the water content
+     *        fluid phase within the finite volume.
+     *
+     * The water content is defined as the fraction of
+     * the saturation devided by the porosity 
+     
+     * \param phaseIdx The index of the fluid phase
+     */
+    Scalar waterContent (const int phaseIdx) const
+    { return fluidState_.saturation(phaseIdx)* porosity_; }        
 
 protected:
     static Scalar temperature_(const PrimaryVariables &primaryVariables,
@@ -279,6 +334,8 @@ protected:
     FluidState fluidState_;
     Scalar relativePermeabilityWetting_;
     Scalar porosity_;
+    static Scalar pnRef_;
+    static Scalar gravity_;
 
 private:
     Implementation &asImp_()
@@ -287,6 +344,11 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 };
+
+template <class TypeTag>
+typename RichardsVolumeVariables<TypeTag>::Scalar RichardsVolumeVariables<TypeTag>::pnRef_;
+template <class TypeTag>
+typename RichardsVolumeVariables<TypeTag>::Scalar RichardsVolumeVariables<TypeTag>::gravity_;
 
 }
 
