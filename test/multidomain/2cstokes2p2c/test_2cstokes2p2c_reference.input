@@ -49,15 +49,17 @@ SinusConcentrationAmplitude = 0.0 # [-]
 SinusConcentrationPeriod = 3600 # [s]
 SinusTemperatureAmplitude = 0.0 # [K]
 SinusTemperaturePeriod = 3600 # [s]
-ExponentMTC = 0.0         # 1./6., Mass transfer coefficient for S^MTC
-BoundaryLayerOffset = 0.0 # [m] virtual run-up distance for BL models
-ConstThickness = 0.0016   # [m] constant BL thickness (BL model 9)
+
+[BoundaryLayer]
+Model = 0
+
+[MassTransfer]
+Model = 0
 
 [PorousMedium]
 RefPressure = 1e5 # [Pa]
 RefTemperature = 298.15 # [K]
 InitialSw = 0.98 # [-]
-CharPoreDiameter = 1e-4   # [m] for Schluender mass-transfer model
 
 [SpatialParams]
 AlphaBJ = 1.0 # [-]

@@ -533,6 +533,15 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
+     * \brief Returns the dynamic viscosity of the fluid within the
+     *        control volume in \f$\mathrm{[Pa s]}\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar viscosity(const int phaseIdx) const
+    { return fluidState_.viscosity(phaseIdx); }
+
+    /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume in \f$[mol/m^3]\f$.
      *

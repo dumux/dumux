@@ -28,6 +28,8 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertreeparser.hh>
+
+#include <dumux/common/start.hh>
 #include <dumux/io/interfacemeshcreator.hh>
 
 #include "2cstokes2p2cproblem.hh"
@@ -35,18 +37,38 @@
 /*!
  * \brief Print a usage string for simulations.
  *
- * \param progName The name of the executable
+ * \param progName  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
  */
-void printUsage(const char *progName)
+void printUsage(const char *progName, const std::string &errorMsg)
 {
-    std::cout << "usage: " << progName
-              << " -ParameterFile FILENAME\n";
-    exit(1);
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+        errorMessageOut += progName;
+        errorMessageOut += " [options]\n";
+        errorMessageOut += errorMsg;
+        errorMessageOut += "\n\nThe list of optional options for this program is:\n"
+                           "[BoundaryLayer]\n"
+                           "Model               Number/ID of the used model\n"
+                           "Offset              Virtual run-up distance for BL models [m]\n"
+                           "ConstThickness      Constant BL thickness (model 1) [m]\n"
+                           "YPlus               Conversion value (model 4-6) [-]\n"
+                           "RoughnessLength     Characteristic roughness length (model 6)\n"
+                           "\n"
+                           "[MassTransferModel]\n"
+                           "Coefficient         Coeffient used for the exponential law (model 1) [-]\n"
+                           "CharPoreDiameter    Characteristic pore diameter for Schluender model (model 2+4) [m]\n"
+                           "\n";
+
+        std::cout << errorMessageOut
+                  << "\n";
+    }
 }
 
 template <class TypeTag>
-int start_(int argc,
-           char **argv)
+int startLocal_(int argc, char **argv,
+                void (*usage)(const char *, const std::string &))
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -54,6 +76,9 @@ int start_(int argc,
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+
+    // print dumux start message
+    Dumux::dumuxMessage_(true);
 
     ////////////////////////////////////////////////////////////
     // Load the input parameters
@@ -87,7 +112,7 @@ int start_(int argc,
             std::cout<< "\n\t -> Could not open file"
                      << inputFileName
                      << ". <- \n\n\n\n";
-            printUsage(argv[0]);
+            printUsage(argv[0], Dumux::usageTextBlock());
             return 1;
         }
         parameterFile.close();
@@ -131,8 +156,8 @@ int start_(int argc,
         try { GridCreator::makeGrid(); }
         catch (...) {
             std::string usageMessage = "\n\t -> Creation of the grid failed! <- \n\n\n\n";
-//            usageMessage += usageTextBlock();
-//            usage(argv[0], usageMessage);
+            usageMessage += Dumux::usageTextBlock();
+            printUsage(argv[0], usageMessage);
             throw;
         }
     }
@@ -155,7 +180,17 @@ int start_(int argc,
     Problem problem(*mdGrid_,
                     timeManager);
 
-    Dumux::Parameters::print<TypeTag>();
+    // print all properties and properties
+    bool printProps = false;
+    if (ParameterTree::tree().hasKey("PrintProperties")
+        || ParameterTree::tree().hasKey("TimeManager.PrintProperties"))
+        printProps = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintProperties);
+    if (printProps)
+    {
+        Dumux::Properties::print<TypeTag>();
+        Dumux::Parameters::print<TypeTag>();
+    }
+
 
     // deal with the restart stuff
     bool restart = false;
@@ -173,10 +208,18 @@ int start_(int argc,
                      tEnd, // final time
                      restart);
 
-    // print all properties
-    Dumux::Properties::print<TypeTag>();
-
     timeManager.run();
+
+    // print all parameters
+    bool printParams = true;
+    if (ParameterTree::tree().hasKey("PrintParameters") 
+        || ParameterTree::tree().hasKey("TimeManager.PrintParameters"))
+        printParams = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintParameters);
+    if (printParams)
+        Dumux::Parameters::print<TypeTag>();
+
+    // print dumux end message
+    Dumux::dumuxMessage_(false);
 
     return 0;
 }
@@ -194,16 +237,16 @@ int start_(int argc,
  * \param argv  The contents of the command line arguments of the program
  */
 template <class TypeTag>
-int start(int argc,
-          char **argv)
+int startLocal(int argc, char **argv,
+               void (*printUsage)(const char *, const std::string &))
 {
     try {
-        return start_<TypeTag>(argc, argv);
+        return startLocal_<TypeTag>(argc, argv, printUsage);
     }
     catch (Dumux::ParameterException &e)
     {
        std::cerr << e << ". Abort!\n";
-       printUsage(argv[0]);
+       printUsage(argv[0], Dumux::usageTextBlock());
        return 1;
     }
     catch (Dune::Exception &e) {
@@ -219,5 +262,5 @@ int start(int argc,
 int main(int argc, char** argv)
 {
     typedef TTAG(TwoCStokesTwoPTwoCProblem) ProblemTypeTag;
-    return start<ProblemTypeTag>(argc, argv);
+    return startLocal<ProblemTypeTag>(argc, argv, printUsage);
 }

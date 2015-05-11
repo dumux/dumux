@@ -49,9 +49,8 @@ NEW_TYPE_TAG(TwoCStokesTwoPTwoC, INHERITS_FROM(MultiDomain));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(FreeFlowBoundaryLayerModel); //!< Type of the used boundary layer model
-NEW_PROP_TAG(FreeFlowMassTransferModel); //!< Type of the used mass transfer model
+NEW_PROP_TAG(BoundaryLayerModel); //!< Type of the used boundary layer model
+NEW_PROP_TAG(MassTransferModel); //!< Type of the used mass transfer model
 
 } // end namespace properties
 

@@ -68,11 +68,11 @@ SET_INT_PROP(TwoCStokesTwoPTwoC, NumEq, 1);
 // Specitfy if the solutions of individual newton iterations should be written
 SET_BOOL_PROP(TwoCStokesTwoPTwoC, NewtonWriteConvergence, false);
 
-// 0 = none, 1 = Blasius, 2 and 3 = turbulent BL, 9 = constant thickness
-SET_INT_PROP(TwoCStokesTwoPTwoC, FreeFlowBoundaryLayerModel, 0);
+// Specify the used boundary layer model
+SET_INT_PROP(TwoCStokesTwoPTwoC, BoundaryLayerModel, 0);
 
-// 0 = none, 1 = power law, 2 = Schluender model mass transfer model
-SET_INT_PROP(TwoCStokesTwoPTwoC, FreeFlowMassTransferModel, 0);
+// Specify the used mass transfer model
+SET_INT_PROP(TwoCStokesTwoPTwoC, MassTransferModel, 0);
 
 } // end namespace properties
 

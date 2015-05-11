@@ -34,8 +34,11 @@
 
 #include <dumux/multidomain/common/multidomainproperties.hh>
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2cpropertydefaults.hh>
+#include <dumux/freeflow/boundarylayermodel.hh>
+#include <dumux/freeflow/masstransfermodel.hh>
 #include <dumux/freeflow/stokesnc/stokesncmodel.hh>
 #include <dumux/implicit/2p2c/2p2cmodel.hh>
+
 
 namespace Dumux {
 
@@ -130,8 +133,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
     TwoCStokesTwoPTwoCLocalOperator(GlobalProblem& globalProblem)
         : globalProblem_(globalProblem)
     {
-        blModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, BoundaryLayerModel);
-        massTransferModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, FreeFlow, MassTransferModel);
+        blModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, BoundaryLayer, Model);
+        massTransferModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, MassTransfer, Model);
 
         if (blModel_ != 0)
             std::cout << "Using boundary layer model " << blModel_ << std::endl;
@@ -366,9 +369,19 @@ class TwoCStokesTwoPTwoCLocalOperator :
                     cParams.elemVolVarsCur1[vertInElem1].moleFraction(transportCompIdx1) -
                     moleFractionOut;
 
-                // multiplied by the Schmidt number^(1/3)
-                const Scalar deltaMassBL = computeBoundaryLayerThickness(cParams, globalPos1, vertInElem1);
-                normalMoleFracGrad /= deltaMassBL;
+                const Scalar velocity = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
+                // current position + additional virtual runup distance
+                const Scalar distance = globalPos1[0] + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
+                const Scalar kinematicViscosity = cParams.elemVolVarsCur1[vertInElem2].kinematicViscosity();
+                BoundaryLayerModel<TypeTag> boundaryLayerModel(velocity, distance, kinematicViscosity, blModel_);
+                if (blModel_ == 1)
+                    boundaryLayerModel.setConstThickness(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, ConstThickness));
+                if (blModel_ >= 4)
+                    boundaryLayerModel.setYPlus(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, YPlus));
+                if (blModel_ >= 5)
+                    boundaryLayerModel.setRoughnessLength(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, RoughnessLength));
+
+                normalMoleFracGrad /= boundaryLayerModel.massBoundaryLayerThickness();
 
                 const Scalar diffusiveFlux =
                     bfNormal1.two_norm() *
@@ -386,11 +399,19 @@ class TwoCStokesTwoPTwoCLocalOperator :
                 // when saturations become small; only diffusive fluxes are scaled!
                 else
                 {
-                    const Scalar massTransferCoeff = massTransferCoefficient(cParams, sdElement1, sdElement2, globalPos1,
-                                                                             vertInElem1, vertInElem2);
+                    MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2),
+                                                    cParams.elemVolVarsCur2[vertInElem2].porosity(),
+                                                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreDiameter),
+                                                    boundaryLayerModel.massBoundaryLayerThickness(),
+                                                    massTransferModel_);
+                    if (massTransferModel_ == 1)
+                        massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
+                    if (massTransferModel_ == 3)
+                        massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[vertInElem2].capillaryPressure());
+                    const Scalar massTransferCoeff = massTransferModel.massTransferCoefficient();
+
                     if (massTransferCoeff > 1.0 || massTransferCoeff < 0.0)
                         std::cout << "MTC out of bounds, should be in between 0.0 and 1.0! >>> " << massTransferCoeff << std::endl;
-
 
                     if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
                     {
@@ -517,113 +538,6 @@ class TwoCStokesTwoPTwoCLocalOperator :
     }
 
  protected:
-    /*!
-     * \brief allows to choose the approximation of the boundary layer thickness:<br>
-     *        1) Blasius solution<br>
-     *        2) and 3) approximations of a turbulent boundary layer<br>
-     *        9) constant boundary layer thickness, which can be set in the parameter file
-     */
-    template<typename CParams>
-        const Scalar computeBoundaryLayerThickness(const CParams& cParams,
-                                                   const DimVector& globalPos,
-                                                   const int vertexIdx) const
-    {
-        const Scalar vxmax = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, VxMax);
-        const Scalar boundaryLayerOffset = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, BoundaryLayerOffset);
-        const Scalar distance = globalPos[0]+boundaryLayerOffset;
-        Scalar reynoldsX = vxmax * distance * cParams.elemVolVarsCur1[vertexIdx].fluidState().density(nPhaseIdx1)
-                           / cParams.elemVolVarsCur1[vertexIdx].fluidState().viscosity(nPhaseIdx1);
-
-        if (blModel_ == 1)
-        {
-            return 5.0 * distance / std::sqrt(reynoldsX);
-        }
-        if (blModel_ == 2)
-        {
-            return 0.37 * distance / std::pow(reynoldsX, 0.2);
-        }
-        if (blModel_ == 3)
-        {
-            const Scalar cf = 2*std::pow(0.41*1.5/std::log(reynoldsX),2);
-            return 50.0 * distance / (reynoldsX * std::sqrt(cf/2.0));
-        }
-        if (blModel_ == 9)
-        {
-            if (ParameterTree::tree().hasKey("FreeFlow.ConstThickness"))
-                return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, ConstThickness);
-            else
-                std::cerr << "FreeFlow.ConstThickness not defined\n";
-        }
-        else
-            std::cerr << "invalid boundary layer model\n";
-
-        return 0;
-    }
-
-    /*!
-     * \brief Provides different options for the computations of the mass transfer coefficient:<br>
-     *        1) exponential law with a saturation as base and a mass transfer coefficient as exponent<br>
-     *        2) the conventional Schlünder model with one characteristic pore size<br>
-     *        3) the Schlünder model with a variable characteristic pore size deduced from the
-     *           two-phase relations (Van Genuchten curve)
-     */
-    template<typename CParams>
-        const Scalar massTransferCoefficient(const CParams &cParams,
-                                             const SDElement1& sdElement1, const SDElement2& sdElement2,
-                                             const DimVector& globalPos,
-                                             const int vertInElem1, const int vertInElem2) const
-    {
-        if (massTransferModel_ == 1)
-        {
-            Scalar exponentMTC = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, ExponentMTC);
-            return std::pow(cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2), exponentMTC);
-        }
-        // Schlünder model (Schlünder, CES 1988)
-        else if (massTransferModel_ == 2)
-        {
-            Scalar charPoreRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, CharPoreDiameter);
-
-            const Scalar blThickness = computeBoundaryLayerThickness(cParams, globalPos, vertInElem1);
-            const Scalar moistureContent = cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2) *
-                globalProblem_.sdProblem2().spatialParams().porosity(sdElement2, cParams.fvGeometry2, vertInElem2);
-
-            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius/blThickness
-                * std::sqrt(M_PI/(4*moistureContent)) * (std::sqrt(M_PI/(4*moistureContent)) - 1.);
-
-            return 1./massTransferCoeff;
-        }
-        // Schlünder model (Schlünder, CES 1988) with variable char. pore diameter depending on Pc
-        else if (massTransferModel_ == 3)
-        {
-            const Scalar surfaceTension = 72.85e-3; // source: Wikipedia
-            const Scalar charPoreRadius = 2*surfaceTension/cParams.elemVolVarsCur2[vertInElem2].capillaryPressure();
-
-            const Scalar blThickness = computeBoundaryLayerThickness(cParams, globalPos, vertInElem1);
-            const Scalar moistureContent = cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2) *
-                globalProblem_.sdProblem2().spatialParams().porosity(sdElement2, cParams.fvGeometry2, vertInElem2);
-
-            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius/blThickness
-                * std::sqrt(M_PI/(4*moistureContent)) * (std::sqrt(M_PI/(4*moistureContent)) - 1.);
-
-            return 1./massTransferCoeff;
-        }
-        // modified Schlünder model
-        else if (massTransferModel_ == 4)
-        {
-            Scalar charPoreRadius = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, CharPoreDiameter);
-
-            const Scalar blThickness = computeBoundaryLayerThickness(cParams, globalPos, vertInElem1);
-            const Scalar moistureContent = cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2) *
-                globalProblem_.sdProblem2().spatialParams().porosity(sdElement2, cParams.fvGeometry2, vertInElem2);
-
-            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius/blThickness
-                * (1./moistureContent) * (1./moistureContent - 1.);
-
-            return 1./massTransferCoeff;
-        }
-        return 1.;
-    }
-
     GlobalProblem& globalProblem() const
     { return globalProblem_; }
 
@@ -649,9 +563,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
         FVElementGeometry2 fvGeometry2;
     };
 
-    unsigned blModel_;
-    unsigned massTransferModel_;
-    Scalar exponentMTC_;
+    unsigned int blModel_;
+    unsigned int massTransferModel_;
 
     GlobalProblem& globalProblem_;
 };
