@@ -563,7 +563,6 @@ public:
             succeeded = this->gridView_().comm().min(succeeded);
 
         if (!succeeded) {
-            if(this->problem_().gridView().comm().rank() == 0)
                 DUNE_THROW(NumericalProblem,
                         "A process did not succeed in updating the static data.");
             return;
