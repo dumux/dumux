@@ -58,7 +58,7 @@ void printUsage(const char *progName, const std::string &errorMsg)
                            "\n"
                            "[MassTransferModel]\n"
                            "Coefficient         Coeffient used for the exponential law (model 1) [-]\n"
-                           "CharPoreDiameter    Characteristic pore diameter for Schluender model (model 2+4) [m]\n"
+                           "CharPoreRadius      Characteristic pore radius for Schluender model (model 2+4) [m]\n"
                            "\n";
 
         std::cout << errorMessageOut

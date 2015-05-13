@@ -1,0 +1,91 @@
+[TimeManager]
+DtInitial = 5e-1 # [s]
+MaxTimeStepSize = 360 # [s]
+InitTime = 0 # [s] Initialization time without coupling
+TEnd= 3600 # [s]
+EpisodeLength = 43200 # [s]
+
+[Grid]
+UseInterfaceMeshCreator = true
+# Grid details
+File = grids/interfacedomain.dgf
+XMin = 0.0 # [m]
+XMax = 0.25 # [m]
+YMin = 0.0 # [m]
+YMax = 0.5 # [m]
+RunUpDistanceX = 0.0 # [m] Horizontal position without coupling to PM
+NoDarcyX = 0.0 # [m] Horizontal position without PM below
+InterfacePosY = 0.25 # [m] Vertical position of coupling interface
+# Number of elements in x-, y-, z-direction
+CellsX = 15
+CellsY = 20
+# Grading and refinement of the mesh in y direction
+GradingFactorY = 1.1
+Refinement = 0
+
+[Output]
+NameFF = stokes2cni
+NamePM = 2p2cni
+#Frequency of restart file, flux and VTK output
+FreqRestart = 1000      # how often restart files are written out 
+FreqOutput = 10         # frequency of VTK output
+FreqMassOutput = 2      # frequency of mass and evaporation rate output (Darcy)
+FreqFluxOutput = 1000   # frequency of detailed flux output
+FreqVaporFluxOutput = 2 # frequency of summarized flux output
+LiveEvaporationRates = false # plot evaporation rates using gnuplot interface
+
+[Stokes]
+StabilizationAlpha = -1.0
+
+[FreeFlow]
+UseDirichletBC = true # dirichlet values are set at the inflow boundary
+RefVelocity = 3.5 # [m/s]
+RefPressure = 1e5 # [Pa]
+RefMassfrac = 0.008 # [-]
+RefTemperature = 298.15 # [K]
+SinusVelAmplitude = 0.0 # [m/s]
+SinusVelPeriod = 3600 # [s]
+SinusPressureAmplitude = 0.0 # [Pa]
+SinusPressurePeriod = 3600 # [s]
+SinusConcentrationAmplitude = 0.0 # [-]
+SinusConcentrationPeriod = 3600 # [s]
+SinusTemperatureAmplitude = 0.0 # [K]
+SinusTemperaturePeriod = 3600 # [s]
+
+[BoundaryLayer]
+Model = 4 # Number/ID of the used model
+Offset = 0.25 # Virtual run-up distance for BL models [m]
+YPlus = 10 # Conversion value (model 4-6) [-]
+
+[MassTransfer]
+Model = 4
+CharPoreRadius = 0.001 # Characteristic pore radius for Schluender model (model 2+4) [m]
+
+[PorousMedium]
+RefPressure = 1e5 # [Pa]
+RefTemperature = 298.15 # [K]
+InitialSw = 0.98 # [-]
+
+[SpatialParams]
+AlphaBJ = 1.0 # [-]
+Permeability = 2.65e-10 # [m^2]
+Porosity = 0.41 # [-]
+Swr = 0.005 # [-]
+Snr = 0.01 # [-]
+VgAlpha = 6.371e-4 # [1/Pa]
+VgN = 8.0 # [-]
+Pentry = 1357
+BCLambda = 6.960
+LambdaSolid = 5.26 # [W/(m*K)]
+
+[Newton]
+MaxRelativeShift = 1e-5
+TargetSteps = 8
+MaxSteps = 12
+WriteConvergence = false
+MaxTimeStepDivisions = 20
+
+[LinearSolver]
+ResidualReduction = 1e-9
+Verbosity = 0
+MaxIterations = 200

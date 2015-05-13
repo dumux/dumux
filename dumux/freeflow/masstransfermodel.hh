@@ -44,25 +44,29 @@ class MassTransferModel
   *
   * \param saturation Saturation of the component's phase inside the porous medium
   * \param porosity Porosity of the porous medium
-  * \param charPoreRadius Characteristic pore radius of the porous medium
   * \param blThickness Free flow boundary layer thickness
   * \param massTransferModel The index of the chosen mass transfer model
   */
 public:
-    MassTransferModel(Scalar saturation, Scalar porosity, Scalar charPoreRadius,
+    MassTransferModel(Scalar saturation, Scalar porosity,
                       Scalar blThickness, unsigned int massTransferModel)
-        : saturation_(saturation), porosity_(porosity), charPoreRadius_(charPoreRadius),
+        : saturation_(saturation), porosity_(porosity),
           blThickness_(blThickness), massTransferModel_(massTransferModel)
     {
         moistureContent_ = saturation_ * porosity_;
 
         massTransferCoeff_ = 0.0; // dummy default
+        charPoreRadius_ = 1e10; // dummy default
         capillaryPressure_ = 1e10; // dummy default
     }
 
     //! \brief Sets a mass transfer coefficient \f$[-]\f$.
     void setMassTransferCoeff(Scalar massTransferCoeff)
     { massTransferCoeff_ = massTransferCoeff; }
+
+    //! \brief Sets the characteristic pore diameter \f$[m]\f$.
+    void setCharPoreRadius(Scalar charPoreRadius)
+    { charPoreRadius_ = charPoreRadius; }
 
     //! \brief Sets the capillary pressure \f$[Pa]\f$.
     void setCapillaryPressure(Scalar capillaryPressure)
@@ -98,8 +102,9 @@ public:
         // Schlünder model (Schlünder, CES 1988)
         else if (massTransferModel_ == 2)
         {
-            Scalar charPoreRadius = charPoreRadius_;
-            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius / blThickness_
+            // check if characteristic pore radius was set
+            assert (charPoreRadius_ < 9e9);
+            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius_ / blThickness_
                                             * std::sqrt(M_PI/(4.*moistureContent_))
                                             * (std::sqrt(M_PI/(4.*moistureContent_)) - 1.);
 
@@ -122,8 +127,9 @@ public:
         // modified Schlünder model
         else if (massTransferModel_ == 4)
         {
-            Scalar charPoreRadius = charPoreRadius_;
-            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius / blThickness_
+            // check if characteristic pore radius was set
+            assert (charPoreRadius_ < 9e9);
+            Scalar massTransferCoeff = 1. + 2./M_PI * charPoreRadius_ / blThickness_
                                             * (1./moistureContent_) * (1./moistureContent_ - 1.);
 
             return 1./massTransferCoeff;
@@ -138,11 +144,11 @@ private:
     Scalar saturation_;
     Scalar porosity_;
     Scalar moistureContent_;
-    Scalar charPoreRadius_;
     Scalar blThickness_;
     unsigned int massTransferModel_;
 
     Scalar massTransferCoeff_;
+    Scalar charPoreRadius_;
     Scalar capillaryPressure_;
 };
 

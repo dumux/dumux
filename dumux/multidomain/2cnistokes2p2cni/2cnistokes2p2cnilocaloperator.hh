@@ -73,6 +73,11 @@ public:
         wPhaseIdx2 = TwoPTwoCNIIndices::wPhaseIdx,          //!< Index for the liquid phase
         nPhaseIdx2 = TwoPTwoCNIIndices::nPhaseIdx           //!< Index for the gas phase
     };
+    enum { nPhaseIdx1 = Stokes2cniIndices::phaseIdx };            //!< Index of the free-flow phase of the fluidsystem
+    enum { // indices of the components
+        transportCompIdx1 = Stokes2cniIndices::transportCompIdx,  //!< Index of transported component
+        phaseCompIdx1 = Stokes2cniIndices::phaseCompIdx           //!< Index of main component of the phase
+    };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;       //!< A field vector with dim entries
@@ -112,7 +117,81 @@ public:
 
         if (cParams.boundaryTypes2.isCouplingInflow(energyEqIdx2))
         {
-            if (globalProblem.sdProblem1().isCornerPoint(globalPos1))
+            unsigned int blModel = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, BoundaryLayer, Model);
+            // only enter here, if a boundary layer model  is used for the computation of the diffusive fluxes
+            if (blModel)
+            {
+                // convective energy flux
+                const Scalar convectiveFlux =
+                    normalMassFlux1 *
+                    cParams.elemVolVarsCur1[vertInElem1].enthalpy();
+
+                // diffusive transported energy
+                const Scalar massFractionOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
+                const Scalar M1 = FluidSystem::molarMass(transportCompIdx1);
+                const Scalar M2 = FluidSystem::molarMass(phaseCompIdx1);
+                const Scalar X2 = 1.0 - massFractionOut;
+                const Scalar massToMoleDenominator = M2 + X2*(M1 - M2);
+                const Scalar moleFractionOut = massFractionOut * M2 /massToMoleDenominator;
+                Scalar normalMoleFracGrad =
+                    cParams.elemVolVarsCur1[vertInElem1].moleFraction(transportCompIdx1) -
+                    moleFractionOut;
+
+                const Scalar velocity = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
+                // current position + additional virtual runup distance
+                const Scalar distance = globalPos1[0] + GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, BoundaryLayer, Offset);
+                const Scalar kinematicViscosity = cParams.elemVolVarsCur1[vertInElem2].kinematicViscosity();
+                BoundaryLayerModel<TypeTag> boundaryLayerModel(velocity, distance, kinematicViscosity, blModel);
+                normalMoleFracGrad /= boundaryLayerModel.massBoundaryLayerThickness();
+
+                Scalar diffusiveFlux =
+                    bfNormal1.two_norm() *
+                    normalMoleFracGrad *
+                    (boundaryVars1.diffusionCoeff(transportCompIdx1) + boundaryVars1.eddyDiffusivity()) *
+                    boundaryVars1.molarDensity();
+
+                // multiply the diffusive flux with the mass transfer coefficient
+                unsigned int mtModel = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, MassTransfer, Model);
+                if (mtModel != 0)
+                {
+                    MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2),
+                                                                 cParams.elemVolVarsCur2[vertInElem2].porosity(),
+                                                                 boundaryLayerModel.massBoundaryLayerThickness(),
+                                                                 mtModel);
+                    if (mtModel == 1)
+                        massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
+                    if (mtModel == 2 || mtModel == 4)
+                        massTransferModel.setCharPoreRadius(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreRadius));
+                    if (mtModel == 3)
+                        massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[vertInElem2].capillaryPressure());
+                    diffusiveFlux *= massTransferModel.massTransferCoefficient();
+                }
+
+                // the boundary layer models only work for two components
+                assert(numComponents == 2);
+                Scalar diffusiveEnergyFlux = 0.0;
+                diffusiveEnergyFlux += diffusiveFlux * FluidSystem::molarMass(transportCompIdx1)
+                                       * boundaryVars1.componentEnthalpy(transportCompIdx1);
+                diffusiveEnergyFlux -= diffusiveFlux * FluidSystem::molarMass(phaseCompIdx1)
+                                       * boundaryVars1.componentEnthalpy(phaseCompIdx1);
+
+                // conductive transported energy
+                const Scalar temperatureOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefTemperature);
+                Scalar normalTemperatureGrad =
+                    cParams.elemVolVarsCur1[vertInElem1].temperature() -
+                    temperatureOut;
+
+                normalTemperatureGrad /= boundaryLayerModel.thermalBoundaryLayerThickness();
+
+                const Scalar conductiveFlux =
+                    bfNormal1.two_norm() *
+                    normalTemperatureGrad *
+                    (boundaryVars1.thermalConductivity() + boundaryVars1.thermalEddyConductivity());
+
+                couplingRes2.accumulate(lfsu_n.child(energyEqIdx2), vertInElem2,
+                                        -(convectiveFlux - diffusiveEnergyFlux - conductiveFlux));
+            }
+            else if (globalProblem.sdProblem1().isCornerPoint(globalPos1))
             {
                 const Scalar convectiveFlux =
                     normalMassFlux1 *

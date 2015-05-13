@@ -401,11 +401,12 @@ class TwoCStokesTwoPTwoCLocalOperator :
                 {
                     MassTransferModel<TypeTag> massTransferModel(cParams.elemVolVarsCur2[vertInElem2].saturation(wPhaseIdx2),
                                                     cParams.elemVolVarsCur2[vertInElem2].porosity(),
-                                                    GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreDiameter),
                                                     boundaryLayerModel.massBoundaryLayerThickness(),
                                                     massTransferModel_);
                     if (massTransferModel_ == 1)
                         massTransferModel.setMassTransferCoeff(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, Coefficient));
+                    if (massTransferModel_ == 2 || massTransferModel_ == 4)
+                        massTransferModel.setCharPoreRadius(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, MassTransfer, CharPoreRadius));
                     if (massTransferModel_ == 3)
                         massTransferModel.setCapillaryPressure(cParams.elemVolVarsCur2[vertInElem2].capillaryPressure());
                     const Scalar massTransferCoeff = massTransferModel.massTransferCoefficient();
