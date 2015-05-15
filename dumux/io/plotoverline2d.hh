@@ -89,7 +89,7 @@ class PlotOverLine2D
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    /*
+    /*!
      * \brief A function that writes results over a line (like paraview's plotOverline into a text file.)
      *
      *        The writer needs to be called in postTimeStep().

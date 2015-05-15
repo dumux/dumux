@@ -528,7 +528,7 @@ private:
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
-     * \param rhoCO2 the density of CO2 for the critical volume \f$\mathrm{[kg/m^3]\f$
+     * \param rhoCO2 the density of CO2 for the critical volume \f$\mathrm{[kg/m^3]}\f$
      */
 
     static Scalar fugacityCoeffCO2_(Scalar temperature,

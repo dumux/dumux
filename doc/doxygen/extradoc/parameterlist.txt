@@ -1,0 +1,11 @@
+/*!
+ *\file
+ *\ingroup Parameter
+ *
+ *\brief List of currently useable run-time parameters
+ *
+ * The listed run-time parameters are in general available, 
+ * but we point out that a certain model might not be able 
+ * to use every parameter! 
+ * \htmlinclude parameters.html
+ */

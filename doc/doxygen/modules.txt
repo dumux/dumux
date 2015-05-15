@@ -4,27 +4,27 @@
  * \brief This file contains all module definitions for the doxygen documentation.
  */
 
-/****************** Common ******************/ 
+/* ***************** Common ******************/
 /*!
  * \defgroup Common Common Infrastucture
  */
-    /*! 
+    /*!
      * \ingroup Common
      * \defgroup BC Boundary Conditions
      */
-    /*! 
+    /*!
      * \ingroup Common
      * \defgroup Math Elementary Math Functions
      */
-    /*! 
+    /*!
      * \ingroup Common
      * \defgroup Exception Exceptions
      */
-    /*! 
+    /*!
      * \ingroup Common
      * \defgroup Linear Linear Solver Backends
      */
-    /*! 
+    /*!
      * \ingroup Common
      * \defgroup Newton Newton Solver
      */
@@ -37,7 +37,7 @@
      * \ingroup Common
      * \defgroup Properties Property System
      */
-    /*! 
+    /*!
      * \ingroup Common
      * \defgroup Spline Splines
      */
@@ -45,16 +45,16 @@
      * \ingroup Common
      * \defgroup Start Starting the Simulation
      */
-    /*! 
+    /*!
      * \ingroup Common
      * \defgroup SimControl Time Manager
      */
-    /*! 
+    /*!
      * \ingroup Common
      * \defgroup Valgrind Valgrind
      */
 
-/****************** Material ******************/
+/* ***************** Material ******************/
 /*!
  * \defgroup Material Material Properties and Laws
  */
@@ -91,7 +91,7 @@
      * \defgroup SpatialParameters Spatial Parameters
      */
 
-/****************** Fully Implicit ******************/
+/* ***************** Fully Implicit ******************/
 /*!
  * \defgroup ImplicitModel Fully Implicit Scheme
  */
@@ -292,25 +292,25 @@
      * \defgroup ImplicitVolumeVariables Volume Variables
      */
 
-/****************** Sequential ******************/ 
+/* ***************** Sequential ******************/
 /*!
  * \defgroup Sequential Sequential Scheme: IMPET (Implicit Pressure Explicit Transport)
  */
- 
+
     /*!
      * \ingroup Sequential
      * \defgroup IMPET Models
-     */     
-	
-		/*!
-		* \ingroup IMPET
-		* \defgroup mpfa MPFA framework
-		*/
-	  
+     */
+
+       /*!
+        * \ingroup IMPET
+        * \defgroup mpfa MPFA framework
+        */
+
         /*!
          * \ingroup IMPET
          * \defgroup OnePhase Single Phase (FV)
-         */ 
+         */
             /*!
              * \ingroup OnePhase
              * \defgroup Pressure1p Pressure Equation
@@ -318,11 +318,11 @@
                 /*!
                  * \ingroup Pressure1p
                  * \defgroup FV1p Finite Volume
-                 */    
+                 */
         /*!
          * \ingroup IMPET
          * \defgroup IMPES Immiscible IMPES
-         */         
+         */
             /*!
              * \ingroup IMPES
              * \defgroup Pressure2p Immiscible Pressure Equation
@@ -330,11 +330,11 @@
                 /*!
                  * \ingroup Pressure2p
                  * \defgroup FVPressure2p Finite Volume
-                 */    
+                 */
                 /*!
                 * \ingroup Pressure2p
                 * \defgroup MimeticPressure2p Mimetic Finite Differences
-                */    
+                */
             /*!
              * \ingroup IMPES
              * \defgroup Saturation2p Immiscible Saturation Transport
@@ -342,7 +342,7 @@
                 /*!
                  * \ingroup Saturation2p
                  * \defgroup FVSaturation2p Finite Volume
-                 */    
+                 */
         /*!
          * \ingroup IMPET
          * \defgroup IMPEC Miscible (Compositional) IMPEC
