@@ -213,10 +213,6 @@ public:
     Scalar solidHeatCapacity() const
     { return solidHeatCapacity_; }
 
-    Scalar heatCapacity() const
-    DUNE_DEPRECATED_MSG("use solidHeatCapacity() instead")
-    { return solidHeatCapacity(); }
-
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the fluid phase in
      *        the sub-control volume.
@@ -230,10 +226,6 @@ public:
      */
     Scalar solidDensity() const
     { return solidDensity_; }
-
-    Scalar densitySolid() const
-    DUNE_DEPRECATED_MSG("use solidDensity() instead")
-    { return solidDensity(); }
 
     /*!
      * \brief If running under valgrind this produces an error message

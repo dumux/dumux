@@ -85,10 +85,6 @@ public:
     Scalar solidHeatCapacity() const
     { return solidHeatCapacity_; };
 
-    Scalar heatCapacity() const
-    DUNE_DEPRECATED_MSG("use solidHeatCapacity()*solidDensity()*(1 - porosity()) instead")
-    { return solidHeatCapacity()*solidDensity()*(1 - this->porosity()); }
-
     /*!
      * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the rock matrix in
      *        the sub-control volume.
@@ -103,20 +99,12 @@ public:
     Scalar fluidThermalConductivity(const int phaseIdx) const
     { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); };
 
-    Scalar thermalConductivityFluid(const int phaseIdx) const
-    DUNE_DEPRECATED_MSG("use fluidThermalConductivity() instead")
-    { return fluidThermalConductivity(phaseIdx); }
-
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of the solid phase in
      *        the sub-control volume.
      */
     Scalar solidThermalConductivity() const
     { return solidThermalConductivity_; };
-
-    Scalar thermalConductivitySolid() const
-    DUNE_DEPRECATED_MSG("use solidThermalConductivity() instead")
-    { return solidThermalConductivity(); }
 
 protected:
     // The methods below get called by the parent class. Since they

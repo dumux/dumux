@@ -169,10 +169,6 @@ public:
     Scalar solidHeatCapacity() const
     { return solidHeatCapacity_; }
 
-    Scalar heatCapacity() const
-    DUNE_DEPRECATED_MSG("use solidHeatCapacity() instead")
-    { return solidHeatCapacity(); }
-
     /*!
      * \brief Returns the temperature in fluid / solid phase(s)
      *        the sub-control volume.
@@ -188,20 +184,12 @@ public:
     Scalar solidDensity() const
     { return solidDensity_; }
 
-    Scalar densitySolid() const
-    DUNE_DEPRECATED_MSG("use solidDensity() instead")
-    { return solidDensity(); }
-
     /*!
      * \brief Returns the conductivity of the given solid phase [W/(m K)] in
      *        the sub-control volume.
      */
     Scalar solidThermalConductivity() const
     { return solidThermalConductivity_; }
-
-    Scalar thermalConductivitySolid() const
-    DUNE_DEPRECATED_MSG("use solidThermalConductivity() instead")
-    { return solidThermalConductivity(); }
 
     /*!
      * \brief Returns the conductivity of the given fluid [W//m K)] in
@@ -386,10 +374,6 @@ public:
     Scalar solidHeatCapacity() const
     { return solidHeatCapacity_; }
 
-    Scalar heatCapacity() const
-    DUNE_DEPRECATED_MSG("use solidHeatCapacity() instead")
-    { return solidHeatCapacity(); }
-
     /*!
      * \brief Returns the temperature in fluid / solid phase(s)
      *        the sub-control volume.
@@ -405,20 +389,12 @@ public:
     Scalar solidDensity() const
     { return solidDensity_; }
 
-    Scalar densitySolid() const
-    DUNE_DEPRECATED_MSG("use solidDensity() instead")
-    { return solidDensity(); }
-
     /*!
      * \brief Returns the conductivity of the given solid phase [W/(m K)] in
      *        the sub-control volume.
      */
     Scalar solidThermalConductivity() const
     { return solidThermalConductivity_; }
-
-    Scalar thermalConductivitySolid() const
-    DUNE_DEPRECATED_MSG("use solidThermalConductivity() instead")
-    { return solidThermalConductivity(); }
 
     /*!
      * \brief Returns the conductivity of the given fluid [W/(m K)] in
