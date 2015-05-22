@@ -64,3 +64,10 @@ add_dumux_test(test_mpfal2padaptive test_mpfa2p test_mpfa2p.cc
   ${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input
   -ModelType MPFALAdaptive)
+
+add_dumux_test(test_3d2p test_3d2p test_3d2p.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_3d2p-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2p-00012.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2p)
