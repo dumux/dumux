@@ -65,9 +65,63 @@ add_dumux_test(test_mpfal2padaptive test_mpfa2p test_mpfa2p.cc
   -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input
   -ModelType MPFALAdaptive)
 
-add_dumux_test(test_3d2p test_3d2p test_3d2p.cc
+add_dumux_test(test_3d2pfv test_3d2pfv test_3d2p.cc
   ${CMAKE_SOURCE_DIR}/bin/runTest.sh
   ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
-  ${CMAKE_SOURCE_DIR}/test/references/test_3d2p-reference.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2p-00012.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2p)
+  ${CMAKE_SOURCE_DIR}/test/references/test_3d2pfv-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfv-00012.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfv
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input
+  -Problem.OutputName test_3d2pfv
+  -ModelType FV)
+
+add_dumux_test(test_3d2pfvadaptive test_3d2pfvadaptive test_3d2p.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_3d2pfvadaptive-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfvadaptive-00012.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pfvadaptive
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input
+  -Problem.OutputName test_3d2pfvadaptive
+  -ModelType FVAdaptive)
+
+add_dumux_test(test_3d2pmimetic test_3d2pmimetic test_3d2p.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_3d2pmimetic-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimetic-00012.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimetic
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input
+  -Problem.OutputName test_3d2pmimetic
+  -ModelType Mimetic)
+
+add_dumux_test(test_3d2pmimeticadaptive test_3d2pmimeticadaptive test_3d2p.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_3d2pmimeticadaptive-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimeticadaptive-00012.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimeticadaptive
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input
+  -Problem.OutputName test_3d2pmimeticadaptive
+  -ModelType MimeticAdaptive)
+
+add_dumux_test(test_3d2pmpfal test_3d2pmpfal test_3d2p.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_3d2pmpfal-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfal-00012.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfal
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input
+  -Problem.OutputName test_3d2pmpfal
+  -ModelType MPFAL)
+
+add_dumux_test(test_3d2pmpfaladaptive test_3d2pmpfaladaptive test_3d2p.cc
+  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
+  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
+  ${CMAKE_SOURCE_DIR}/test/references/test_3d2pmpfaladaptive-reference.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfaladaptive-00012.vtu
+  ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfaladaptive
+  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input
+  -Problem.OutputName test_3d2pmpfaladaptive
+  -ModelType MPFALAdaptive)
+
