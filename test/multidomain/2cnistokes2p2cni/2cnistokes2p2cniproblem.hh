@@ -574,7 +574,7 @@ public:
                 {
                     if (!existing) // add phase storage only once per vertex
                         waterFluxGasPhase +=
-                            this->localResidual2().evalPhaseStorage(vertInElem2);
+                            this->localResidual2().evalPhaseStorageDerivative(vertInElem2);
 
                     totalWaterComponentFlux += secondVertexResidual[vertInElem2][contiWEqIdx2];
                     waterFluxGasPhase += this->localResidual2().elementFluxes(vertInElem2);

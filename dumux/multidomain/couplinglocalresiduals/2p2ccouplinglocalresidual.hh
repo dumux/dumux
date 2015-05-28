@@ -157,22 +157,28 @@ public:
     }
 
     /*!
-     * \brief Evaluates the phase storage
+     * \brief Evaluates the time derivative of the phase storage
      */
-    Scalar evalPhaseStorage(const int scvIdx) const
+    Scalar evalPhaseStorageDerivative(const int scvIdx) const
     {
-        Scalar phaseStorage = computePhaseStorage(scvIdx, false);
+        Scalar result = computePhaseStorage(scvIdx, false);
         Scalar oldPhaseStorage = computePhaseStorage(scvIdx, true);
-        Valgrind::CheckDefined(phaseStorage);
+        Valgrind::CheckDefined(result);
         Valgrind::CheckDefined(oldPhaseStorage);
 
-        phaseStorage -= oldPhaseStorage;
-        phaseStorage *= this->fvGeometry_().subContVol[scvIdx].volume
+        result -= oldPhaseStorage;
+        result *= this->fvGeometry_().subContVol[scvIdx].volume
             / this->problem_().timeManager().timeStepSize()
             * this->curVolVars_(scvIdx).extrusionFactor();
-        Valgrind::CheckDefined(phaseStorage);
+        Valgrind::CheckDefined(result);
 
-        return phaseStorage;
+        return result;
+    }
+
+    Scalar evalPhaseStorage(const int scvIdx) const
+    DUNE_DEPRECATED_MSG("use evalPhaseStorageDerivative instead")
+    {
+        return evalPhaseStorageDerivative(scvIdx);
     }
 
     /*!
