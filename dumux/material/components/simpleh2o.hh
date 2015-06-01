@@ -280,6 +280,24 @@ public:
     {
         return 4.2e3 ;
     }
+    
+     /*!
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of water.
+     */
+    static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
+    {
+       return 0.68 ; 
+    }
+    
+     /*!
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of steam.
+     */
+    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
+    {
+       return 0.0248 ; 
+    }
+    
+    
 };
 
 template <class Scalar>
