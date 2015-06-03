@@ -177,7 +177,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Enthalpy of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         // regularization
@@ -227,7 +227,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Enthalpy of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         // regularization
@@ -268,7 +268,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Heat capacity of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         // regularization
@@ -304,7 +304,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "heat Capacity of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         // regularization
@@ -337,7 +337,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Internal Energy of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
 
@@ -393,7 +393,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Internal Energy of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         // regularization
@@ -467,7 +467,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Heat capacity of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
 
@@ -500,7 +500,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Heat capacity of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         // regularization
@@ -546,7 +546,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Density of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         // regularization
@@ -667,7 +667,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Density of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         // regularization
@@ -766,7 +766,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Viscosity of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         Scalar rho = gasDensity(temperature, pressure);
@@ -790,7 +790,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Viscosity of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
         }
 
         Scalar rho = liquidDensity(temperature, pressure);
@@ -818,8 +818,9 @@ public:
                     or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
                     or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
                     or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
-            DUNE_THROW(NumericalProblem, "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability: p= "
-                       << pressure << "T= " << temperature);
+            DUNE_THROW(NumericalProblem,
+                       "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability."
+                       "(T=" << temperature << ", p=" << pressure << ")");
         }
 
         Scalar rho = liquidDensity(temperature, pressure);
@@ -827,7 +828,7 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of water (IAPWS) .
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of steam (IAPWS) .
      *
      * Implementation taken from:
      * freesteam - IAPWS-IF97 steam tables library
@@ -847,8 +848,9 @@ public:
                     or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
                     or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
                     or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
-            DUNE_THROW(NumericalProblem, "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability: p= "
-                       << pressure << " T= " << temperature);
+            DUNE_THROW(NumericalProblem,
+                       "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability."
+                       "(T=" << temperature << ", p=" << pressure << ")");
         }
 
         Scalar rho = gasDensity(temperature, pressure);

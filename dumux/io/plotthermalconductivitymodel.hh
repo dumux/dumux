@@ -59,11 +59,21 @@ class PlotThermalConductivityModel
     };
 
 public:
-    //! Constructor, initializes the fluid system
-    PlotThermalConductivityModel()
+    /*!
+     * \brief Constructor
+     *
+     * Initializes the fluid system.
+     *
+     * \param temperature temperature in \f$\mathrm{[K]}\f$
+     * \param pressure reference pressure in \f$\mathrm{[Pa]}\f$
+     */
+    PlotThermalConductivityModel(Scalar temperature, Scalar pressure)
     : numIntervals_(1000)
     {
         FluidState fluidstate;
+        fluidstate.setTemperature(temperature);
+        fluidstate.setPressure(wPhaseIdx, pressure);
+        fluidstate.setPressure(nPhaseIdx, pressure);
         lambdaW_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, wPhaseIdx);
         lambdaN_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, nPhaseIdx);
     }

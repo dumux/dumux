@@ -88,7 +88,7 @@ public:
         if (pclose(pipe_) == -1)
             assert("Could not close pipe to Gnuplot!");
     }
-    
+
     /*!
      * \brief Plots the files for a specific window number, writes a gnuplot and png file.
      *
@@ -114,7 +114,7 @@ public:
 
         plot += "set xlabel \"" + xLabel_[plottingWindowNumber] + "\"\n";
         plot += "set ylabel \"" + yLabel_[plottingWindowNumber] + "\"\n";
-        
+
         // plot curves
         plot += "plot";
         for (unsigned int i = 0; i < fileName_[plottingWindowNumber].size(); ++i)

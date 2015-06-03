@@ -100,7 +100,7 @@ public:
         // porosities
         finePorosity_ = 0.3;
         coarsePorosity_ = 0.3;
-        
+
         // heat conductivity of granite
         lambdaSolid_ = 2.8;
 
@@ -128,7 +128,7 @@ public:
     {
         PlotMaterialLaw<TypeTag> plotMaterialLaw;
         PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
-        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel;
+        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel(283.15/*temperature*/, 1e5/*pressure*/);
         plotMaterialLaw.plotpcsw(fineMaterialParams_, 0.2, 1.0, "fine", plotFluidMatrixInteractions_);
         plotMaterialLaw.plotpcsw(coarseMaterialParams_, 0.2, 1.0, "coarse", plotFluidMatrixInteractions_);
         plotMaterialLaw.plotkr(fineMaterialParams_, 0.2, 1.0, "fine", plotFluidMatrixInteractions_);
