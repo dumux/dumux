@@ -161,7 +161,7 @@ public:
         ScalarField *ph = writer.allocateManagedBuffer(numDofs);
         ScalarField *wc = writer.allocateManagedBuffer(numDofs);
         ScalarField *source = writer.allocateManagedBuffer(numDofs);
-        
+
         VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
@@ -225,7 +225,7 @@ public:
                     (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
                     (*ph)[dofIdxGlobal] = elemVolVars[scvIdx].pressureHead(wPhaseIdx);
                     (*wc)[dofIdxGlobal] = elemVolVars[scvIdx].waterContent(wPhaseIdx);
-                    (*source)[dofIdxGlobal] = sourcevalues;
+                    (*source)[dofIdxGlobal] = sourcevalues[0];
                 }
 
                 // velocity output

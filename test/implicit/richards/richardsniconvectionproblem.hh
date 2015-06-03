@@ -91,9 +91,9 @@ SET_TYPE_PROP(RichardsNIConvectionProblem,
  * <tt>./test_ccrichardsniconvection -ParameterFile ./test_ccrichardsniconvection.input</tt>
  */
 template <class TypeTag>
-class RichardsNIConvectionProblem : public RichardsBoxProblem<TypeTag>
+class RichardsNIConvectionProblem : public RichardsProblem<TypeTag>
 {
-    typedef RichardsBoxProblem<TypeTag> ParentType;
+    typedef RichardsProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
