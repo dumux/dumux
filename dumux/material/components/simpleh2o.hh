@@ -274,27 +274,31 @@ public:
      *        \param temperature temperature of component in \f$\mathrm{[K]}\f$
      *        \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     *        @ T= 281.15 (8°C) , p=0.1MPa)
+     *        @ T= 281.15K (8°C) , p=0.1MPa)
      */
     static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
     {
-        return 4.2e3 ;
+        return 4.2e3;
     }
     
      /*!
      * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of water.
+     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
+     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
      */
     static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
     {
-       return 0.68 ; 
+       return 0.679;
     }
     
      /*!
      * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of steam.
+     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
+     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
      */
     static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
     {
-       return 0.0248 ; 
+       return 0.025;
     }
     
     
