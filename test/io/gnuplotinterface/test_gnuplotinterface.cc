@@ -55,9 +55,9 @@ int main()
     gnuplot.setYRange(yMin, yMax, windowNumber);
     gnuplot.setXlabel("x [-]", windowNumber);
     gnuplot.setYlabel("f(x) [-]", windowNumber);
-    gnuplot.addDataSetToPlot(x, y, "f(x)=x^2", windowNumber);
-    gnuplot.addFunctionToPlot("x**3", "f(x)=x^3", windowNumber);
-    gnuplot.addFileToPlot("0_f(x)=x^2.dat", "0_f(x)=x^2.dat", windowNumber);
+    gnuplot.addDataSetToPlot(x, y, "dataSet_f(x)=x^2", windowNumber, "every 5 w lp ps 2");
+    gnuplot.addFunctionToPlot("x**3", "function_f(x)=x^3", windowNumber);
+    gnuplot.addFileToPlot("0_dataSet_f(x)=x^2.dat", "file_f(x)=x^2.dat", windowNumber);
     gnuplot.plot("plot", windowNumber, true);
     exit(0);
 }

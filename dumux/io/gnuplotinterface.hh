@@ -60,9 +60,10 @@ public:
         lines, points, linesPoints, impulses, dots
     };
 
+    //! \brief The constructor
     GnuplotInterface() :
         plotStyle_("lines"), pipe_(0),
-        fileName_(0), plotName_(0),
+        fileName_(0), plotOptions_(0), plotName_(0),
         xRangeMin_(0), xRangeMax_(0),
         yRangeMin_(0), yRangeMax_(0),
         xLabel_(0), yLabel_(0),
@@ -74,6 +75,7 @@ public:
             pipe_ = popen((gnuplotPath_ + " -persist").c_str(), "w"); // "w" - writing
         }
         fileName_.resize(numberOfGnuplotWindows_);
+        plotOptions_.resize(numberOfGnuplotWindows_);
         plotName_.resize(numberOfGnuplotWindows_);
         xRangeMin_.resize(numberOfGnuplotWindows_, 1e100);
         xRangeMax_.resize(numberOfGnuplotWindows_, -1e100);
@@ -83,6 +85,7 @@ public:
         yLabel_.resize(numberOfGnuplotWindows_, "");
     }
 
+    //! \brief The destructor
     ~GnuplotInterface()
     {
         if (pclose(pipe_) == -1)
@@ -105,7 +108,7 @@ public:
         if (interaction)
             plot += "wxt " + numberToString(plottingWindowNumber) + "\n";
         else
-            plot += " pngcairo size 800,600 \nset output \"" + title + ".png\"\n";
+            plot += " pngcairo size 800,600\nset output \"" + title + ".png\"\n";
 
         plot += "set yrange [" + numberToString(yRangeMin_[plottingWindowNumber])
                 + ":" + numberToString(yRangeMax_[plottingWindowNumber]) + "]" + "\n";
@@ -120,11 +123,12 @@ public:
         for (unsigned int i = 0; i < fileName_[plottingWindowNumber].size(); ++i)
         {
             plot += + " " + fileName_[plottingWindowNumber][i]
-                    + " title " + plotName_[plottingWindowNumber][i]
-                    + " with " + plotStyle_
-                    + ",";
+                    + " " + plotOptions_[plottingWindowNumber][i]
+                    + " title '" + plotName_[plottingWindowNumber][i] + "'";
+            if (i < fileName_[plottingWindowNumber].size()-1)
+                plot += ",\\";
+            plot += "\n";
         }
-        plot[plot.size()-1] = '\n'; // remove last ","
 
         if (!interaction)
         {
@@ -148,6 +152,7 @@ public:
     void reset(const unsigned int plottingWindowNumber)
     {
         fileName_[plottingWindowNumber].resize(0);
+        plotOptions_[plottingWindowNumber].resize(0);
         plotName_[plottingWindowNumber].resize(0);
     }
 
@@ -157,13 +162,16 @@ public:
      * \param function Function to be plotted
      * \param plotName The name of the data set
      * \param plottingWindowNumber The ID of the specific plot
+     * \param plotOptions Specific gnuplot options passed to this plot
      */
-    void addFunctionToPlot(const std::string &function,
-                           const std::string &plotName,
-                           const unsigned int plottingWindowNumber)
+    void addFunctionToPlot(const std::string function,
+                           const std::string plotName,
+                           const unsigned int plottingWindowNumber,
+                           const std::string plotOptions = "with lines")
     {
         fileName_[plottingWindowNumber].push_back(function);
-        plotName_[plottingWindowNumber].push_back("'" + plotName + "'");
+        plotOptions_[plottingWindowNumber].push_back(plotOptions);
+        plotName_[plottingWindowNumber].push_back(plotName);
     }
 
     /*!
@@ -172,13 +180,16 @@ public:
      * \param addFile Function to be plotted
      * \param plotName The name of the data set
      * \param plottingWindowNumber The ID of the specific plot
+     * \param plotOptions Specific gnuplot options passed to this plot
      */
-    void addFileToPlot(const std::string &file,
-                       const std::string &plotName,
-                       const unsigned int plottingWindowNumber)
+    void addFileToPlot(const std::string file,
+                       const std::string plotName,
+                       const unsigned int plottingWindowNumber,
+                       const std::string plotOptions = "with lines")
     {
         fileName_[plottingWindowNumber].push_back("'" + file + "'");
-        plotName_[plottingWindowNumber].push_back("'" + plotName + "'");
+        plotOptions_[plottingWindowNumber].push_back(plotOptions);
+        plotName_[plottingWindowNumber].push_back(plotName);
     }
 
     /*!
@@ -188,11 +199,13 @@ public:
      * \param y Vector containing the y-axis data points
      * \param plotName The name of the data set
      * \param plottingWindowNumber The ID of the specific plot
+     * \param plotOptions Specific gnuplot options passed to this plot
      */
     void addDataSetToPlot(const std::vector<Scalar>& x,
                           const std::vector<Scalar>& y,
-                          const std::string &plotName,
-                          const unsigned int plottingWindowNumber)
+                          const std::string plotName,
+                          const unsigned int plottingWindowNumber,
+                          const std::string plotOptions = "with lines")
     {
         assert(x.size() == y.size());
 
@@ -210,7 +223,8 @@ public:
 
         // adding file to list of plotted lines
         fileName_[plottingWindowNumber].push_back("'" + fileName + "'");
-        plotName_[plottingWindowNumber].push_back("'" + fileName + "'");
+        plotOptions_[plottingWindowNumber].push_back(plotOptions);
+        plotName_[plottingWindowNumber].push_back(plotName);
     }
 
     /*!
@@ -272,6 +286,7 @@ public:
      *
      * \param style Plot style of the data sets
      */
+    DUNE_DEPRECATED_MSG("setStyle() functionality has been replaced by directly passing gnuplot options to the add..ToPlot function")
     void setStyle(const PlotStyle& style)
     {
         switch (style)
@@ -324,6 +339,7 @@ private:
     std::string plotStyle_;
     std::FILE * pipe_;
     std::vector<StringVector> fileName_;
+    std::vector<StringVector> plotOptions_;
     std::vector<StringVector> plotName_;
     std::vector<Scalar> xRangeMin_;
     std::vector<Scalar> xRangeMax_;
