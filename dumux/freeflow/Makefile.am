@@ -1,4 +1,9 @@
-SUBDIRS = stokes stokesnc stokesncni
+SUBDIRS = stokes \
+          stokesnc \
+          stokesncni \
+          zeroeq \
+          zeroeqnc \
+          zeroeqncni
 
 freeflowdir = $(includedir)/dumux/freeflow
 

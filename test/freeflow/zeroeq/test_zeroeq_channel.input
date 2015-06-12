@@ -1,0 +1,19 @@
+[TimeManager]
+DtInitial = 0.001 # [s]
+TEnd = 10 # [s]
+
+[Grid]
+File = grids/channel.dgf
+
+[Problem]
+OutputName = "zeroeqchannel"
+InjectionVelocity = 2.5 # [m/s]
+
+[ZeroEq]
+# Eddy Viscosity Models
+# 0 = none
+# 1 = Prandtl
+# 2 = modified Van Driest
+# 3 = Baldwin Lomax
+EddyViscosityModel = 2
+BBoxMinSandGrainRoughness = 0.001 # [m]
