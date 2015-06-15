@@ -99,9 +99,29 @@ public:
      *        so they can be read in by another program like matlab.
      *        The file can be found by the extension: dat
      */
+    DUNE_DEPRECATED_MSG("write() method has changed signature")
     void write(const Problem & problem,
                const GlobalPosition & pointOne,
                const GlobalPosition & pointTwo,
+               const std::string appendOutputName = "")
+    {
+        write(problem, pointOne, pointTwo, true, appendOutputName);
+    }
+
+    /*!
+     * \brief A function that writes results over a line (like paraview's plotOverline into a text file.)
+     *
+     *        The writer needs to be called in postTimeStep().
+     *
+     *        This function puts output variables (TemperaturePhase, Saturation, t, tIndex, ...)
+     *        over space (1D, over a line) into a text file,
+     *        so they can be read in by another program like matlab.
+     *        The file can be found by the extension: dat
+     */
+    void write(const Problem & problem,
+               const GlobalPosition & pointOne,
+               const GlobalPosition & pointTwo,
+               const bool appendData,
                const std::string appendOutputName = "")
     {
         static_assert(dim==2, "this implements plot over Line: so far this works only for 2D");
@@ -115,6 +135,28 @@ public:
         // check whether a vertex was already visited by true / false vector
         std::vector<bool> isVisited(numGlobalVerts);
         std::fill(isVisited.begin(), isVisited.end(), false);
+
+
+        // filename of the output file
+        std::string fileName = problem.name();
+        fileName += appendOutputName;
+        fileName += ".dat";
+        std::ofstream dataFile;
+        const unsigned int timeStepIndex = problem.timeManager().timeStepIndex();
+
+        // Writing a header into the output
+        if (timeStepIndex == 0 || !appendData)
+        {
+            dataFile.open(fileName.c_str());
+            dataFile << "# This is a DuMuX output file for further processing with the preferred graphics program of your choice. \n";
+
+            dataFile << "# This output file was written from "<< __FILE__ << ", line " <<__LINE__ << "\n";
+            dataFile << "# This output file was generated from code compiled at " << __TIME__ <<", "<< __DATE__<< "\n";
+            dataFile << "\n";
+            dataFile << "# Header\n";
+            dataFile << "#timestep time x y Sw Tw Tn Ts xH2On xH2OnEquil xN2w xN2wEquil\n";
+            dataFile.close();
+        }
 
         // Looping over all elements of the domain
         ElementIterator eEndIt = problem.gridView().template end<0>();
@@ -145,31 +187,6 @@ public:
                 const GlobalPosition & globalPosCurrent
                     = fvGeometry.subContVol[scvIdx].global;
 
-                std::ofstream dataFile;
-                const unsigned int timeStepIndex = problem.timeManager().timeStepIndex() ;
-
-                // filename of the output file
-                std::string fileName = problem.name();
-
-                // filename consists of problem name + some function argument + .dat
-                // this way several plot overlines can be written from one simulation
-                fileName += appendOutputName;
-                fileName +=".dat";
-
-                // Writing a header into the output
-                if (timeStepIndex == 0)
-                {
-                    dataFile.open(fileName.c_str());
-                    dataFile << "# This is a DuMuX output file for further processing with the preferred graphics program of your choice. \n";
-
-                    dataFile << "# This output file was written from "<< __FILE__ << ", line " <<__LINE__ << "\n";
-                    dataFile << "# This output file was generated from code compiled at " << __TIME__ <<", "<< __DATE__<< "\n";
-                    dataFile << "\n";
-                    dataFile << "# Header\n";
-                    dataFile << "#timestep\t time\t\t \t\t x \t\t y  \t\tSw \t\t\t Tw\t\t Tn\t Ts \t xH2On \t xH2OnEquil \t xN2w \txN2wEquil\n";
-                    dataFile.close();
-                }
-
                 // write output if the current location is between two specified points
                 if (isBetween(globalPosCurrent, pointOne, pointTwo))
                 {
@@ -186,24 +203,24 @@ public:
                     // actual output into the text file
                     // This could be done much more efficiently
                     // if writing to the text file would be done all at once.
-                    dataFile.open(fileName.c_str() , std::ios::app);
+                    dataFile.open(fileName.c_str(), std::ios::app);
                     dataFile << timeStepIndex
-                            <<"\t\t\t"
+                            <<" "
                             << time
-                            << "\t\t\t"
+                            << " "
                             << globalPosCurrent[0]
-                            << "\t\t\t"
+                            << " "
                             << globalPosCurrent[1];
 
-                    dataFile <<"\t\t\t"
+                    dataFile <<" "
                                 << saturationW
-                                <<"\t\t" << Tw
-                                <<"\t\t" << Tn
-                                <<"\t\t" << Ts
-                                <<"\t\t" << xH2On
-                                <<"\t\t" << xH2OnEquil
-                                <<"\t\t" << xN2w
-                                <<"\t\t" << xN2wEquil
+                                <<" " << Tw
+                                <<" " << Tn
+                                <<" " << Ts
+                                <<" " << xH2On
+                                <<" " << xH2OnEquil
+                                <<" " << xN2w
+                                <<" " << xN2wEquil
                                 ;
                     dataFile <<"\n";
                     dataFile.close();

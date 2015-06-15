@@ -61,6 +61,7 @@
 #include <dumux/implicit/mpnc/velomodelnewtoncontroller.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystemkinetic.hh>
+#include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotoverline2d.hh>
 
 #include <dumux/material/fluidstates/nonequilibriumfluidstate.hh>
@@ -327,6 +328,7 @@ public:
         writerDepth.write(*this,
                           pointDepthOne,
                           pointDepthTwo,
+                          false, /* do not append data*/
                           "plotOverLineIntoDepth");
 
         // Calculate storage terms of the individual phases
@@ -358,6 +360,20 @@ public:
                 <<"Storage total: [" << storage << "]"
                 << "\n";
         }
+
+        // use gnuplot for plotting the line data
+        unsigned int windowNumber = 0;
+        gnuplot_.reset(windowNumber);
+        gnuplot_.setXlabel("xN2w [-]", windowNumber);
+        gnuplot_.setYlabel("y [m]", windowNumber);
+        std::ostringstream stream;
+        stream << this->timeManager().time();
+        gnuplot_.setOption("set label 'at time " + stream.str() + "' at screen 0.15,0.90 left", windowNumber);
+        gnuplot_.setDatafileSeparator(' ', windowNumber);
+        std::string fileName = outputName_ + "plotOverLineIntoDepth.dat";
+        gnuplot_.addFileToPlot(fileName, fileName,
+                              windowNumber, " u 11:4 w l");
+        gnuplot_.plot("plot", windowNumber, true);
     }
 
     /*!
@@ -765,6 +781,7 @@ private:
     Scalar pnInjection_;
     Dune::ParameterTree inputParameters_;
     Scalar x_[numPhases][numComponents] ;
+    Dumux::GnuplotInterface<Scalar> gnuplot_;
 
     Scalar TInject_;
 

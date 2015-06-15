@@ -55,6 +55,9 @@ int main()
     gnuplot.setYRange(yMin, yMax, windowNumber);
     gnuplot.setXlabel("x [-]", windowNumber);
     gnuplot.setYlabel("f(x) [-]", windowNumber);
+    gnuplot.setDatafileSeparator(',', windowNumber);
+    gnuplot.setOption("set arrow from 0,0 to 2,20 head filled lc rgb 'dark-gray'", windowNumber);
+    gnuplot.setOption("set label 'arrow' at 1,15 center tc rgb 'dark-gray'", windowNumber);
     gnuplot.addDataSetToPlot(x, y, "dataSet_f(x)=x^2", windowNumber, "every 5 w lp ps 2");
     gnuplot.addFunctionToPlot("x**3", "function_f(x)=x^3", windowNumber);
     gnuplot.addFileToPlot("0_dataSet_f(x)=x^2.dat", "file_f(x)=x^2.dat", windowNumber);

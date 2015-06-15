@@ -24,6 +24,9 @@
  *
  * The data sets for a specific window have to be passed by the addDataSet function
  * and then plotted by using the plot function.
+ *
+ * \todo the use of the plottingWindowNumber in each function could be replaced, but
+ *       a new GnuplotInterface object has to be created for each plot
  */
 
 #ifndef HAVE_GNUPLOT
@@ -67,6 +70,8 @@ public:
         xRangeMin_(0), xRangeMax_(0),
         yRangeMin_(0), yRangeMax_(0),
         xLabel_(0), yLabel_(0),
+        options_(0),
+        datafileSeparator_(0),
         gnuplotPath_(GNUPLOT_EXECUTABLE),
         terminalType_("wxt"),
         numberOfGnuplotWindows_(8+1)
@@ -83,6 +88,8 @@ public:
         yRangeMax_.resize(numberOfGnuplotWindows_, -1e100);
         xLabel_.resize(numberOfGnuplotWindows_, "");
         yLabel_.resize(numberOfGnuplotWindows_, "");
+        options_.resize(numberOfGnuplotWindows_, "");
+        datafileSeparator_.resize(numberOfGnuplotWindows_, ' ');
     }
 
     //! \brief The destructor
@@ -102,21 +109,25 @@ public:
               const unsigned int plottingWindowNumber,
               bool interaction)
     {
-        // setting correct terminal
-        std::string plot = "set term ";
-
-        if (interaction)
-            plot += "wxt " + numberToString(plottingWindowNumber) + "\n";
-        else
-            plot += " pngcairo size 800,600\nset output \"" + title + ".png\"\n";
-
-        plot += "set yrange [" + numberToString(yRangeMin_[plottingWindowNumber])
-                + ":" + numberToString(yRangeMax_[plottingWindowNumber]) + "]" + "\n";
-        plot += "set xrange [" + numberToString(xRangeMin_[plottingWindowNumber])
-                + ":" + numberToString(xRangeMax_[plottingWindowNumber]) + "]" + "\n";
-
+        // set correct terminal and general options
+        std::string plot = "reset\n";
+        plot += "set datafile separator \'" + convertToString(datafileSeparator_[plottingWindowNumber]) + "\'\n";
+        plot += "set term wxt " + convertToString(plottingWindowNumber) + "\n";
+        if (xRangeMin_[plottingWindowNumber] < 1e100 || xRangeMax_[plottingWindowNumber] > -1e100)
+        {
+            plot += "set xrange [" + convertToString(xRangeMin_[plottingWindowNumber])
+                    + ":" + convertToString(xRangeMax_[plottingWindowNumber]) + "]" + "\n";
+        }
+        if (yRangeMin_[plottingWindowNumber] < 1e100 || yRangeMax_[plottingWindowNumber] > -1e100)
+        {
+            plot += "set yrange [" + convertToString(yRangeMin_[plottingWindowNumber])
+                    + ":" + convertToString(yRangeMax_[plottingWindowNumber]) + "]" + "\n";
+        }
         plot += "set xlabel \"" + xLabel_[plottingWindowNumber] + "\"\n";
         plot += "set ylabel \"" + yLabel_[plottingWindowNumber] + "\"\n";
+
+        // set user defined options
+        plot += options_[plottingWindowNumber] + "\n";
 
         // plot curves
         plot += "plot";
@@ -130,22 +141,28 @@ public:
             plot += "\n";
         }
 
-        if (!interaction)
+        // live plot of the results if gnuplot is installed
+        if (interaction)
         {
-            std::string fileName = title + ".gp";
-            std::ofstream file;
-            file.open(fileName);
-            file << plot;
-            file.close();
+#ifdef HAVE_GNUPLOT
+            executeGnuplot(plot.c_str());
+#endif
         }
 
-#ifdef HAVE_GNUPLOT
-        executeGnuplot(plot.c_str());
-#endif
+        // create a gnuplot file for output a png
+        plot += "\n";
+        plot += "set term pngcairo size 800,600\n";
+        plot += "set output \"" + title + ".png\"\n";
+        plot += "replot\n";
+        std::string fileName = title + ".gp";
+        std::ofstream file;
+        file.open(fileName);
+        file << plot;
+        file.close();
     }
 
     /*!
-     * \brief Deletes all plots from a plotting window
+     * \brief Deletes all plots from a plotting window and resets user-defined options
      *
      * \param plottingWindowNumber The ID of the specific plot
      */
@@ -154,6 +171,7 @@ public:
         fileName_[plottingWindowNumber].resize(0);
         plotOptions_[plottingWindowNumber].resize(0);
         plotName_[plottingWindowNumber].resize(0);
+        options_[plottingWindowNumber].resize(0);
     }
 
     /*!
@@ -210,14 +228,14 @@ public:
         assert(x.size() == y.size());
 
         //write data to file
-        std::string fileName = numberToString(plottingWindowNumber) + "_" + plotName + ".dat";
+        std::string fileName = convertToString(plottingWindowNumber) + "_" + plotName + ".dat";
         std::ofstream file;
         file.open(fileName);
         for (unsigned int i = 0; i < x.size(); i++)
         {
-            checkNumber(x[i], "x[i] i=" + numberToString(i) + " in " + fileName);
-            checkNumber(y[i], "y[i] i=" + numberToString(i) + " in " + fileName);
-            file << x[i] << " " << y[i] << std::endl;
+            checkNumber(x[i], "x[i] i=" + convertToString(i) + " in " + fileName);
+            checkNumber(y[i], "y[i] i=" + convertToString(i) + " in " + fileName);
+            file << x[i] << datafileSeparator_[plottingWindowNumber] << y[i] << std::endl;
         }
         file.close();
 
@@ -282,6 +300,30 @@ public:
     }
 
     /*!
+     * \brief Sets additional user-defined options
+     *
+     * \param option Additional line of option in gnuplot language
+     * \param plottingWindowNumber The ID of the specific plot
+     */
+    void setOption(std::string option,
+                   const unsigned int plottingWindowNumber)
+    {
+        options_[plottingWindowNumber] += option + "\n";
+    }
+
+    /*!
+     * \brief Sets the datafile separator
+     *
+     * \param separator The separator sign between two data columns
+     * \param plottingWindowNumber The ID of the specific plot
+     */
+    void setDatafileSeparator(char separator,
+                              const unsigned int plottingWindowNumber)
+    {
+        datafileSeparator_[plottingWindowNumber] = separator;
+    }
+
+    /*!
      * \brief Sets the plotting style for the data sets
      *
      * \param style Plot style of the data sets
@@ -328,11 +370,12 @@ private:
             Dune::dwarn << "warning: " << text << " is infinity, adjust your data range" << std::endl;
     }
 
-    // Convert number to string
-    template<class T> std::string numberToString(const T number) const
+    // Convert number or character to string
+    template<class T>
+    std::string convertToString(const T input) const
     {
         std::ostringstream stream;
-        stream << number;
+        stream << input;
         return stream.str();
     }
 
@@ -347,6 +390,8 @@ private:
     std::vector<Scalar> yRangeMax_;
     StringVector xLabel_;
     StringVector yLabel_;
+    StringVector options_;
+    std::vector<char> datafileSeparator_;
     std::string gnuplotPath_;
     std::string terminalType_;
     const unsigned int numberOfGnuplotWindows_;
