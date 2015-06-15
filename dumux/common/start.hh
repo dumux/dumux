@@ -215,7 +215,7 @@ void dumuxMessage_(bool start)
             std::cout << "             ###   #                @   @         @@ @@          @ " << std::endl;
             std::cout << "           ##       #               @   @  @   @  @ @ @  @   @  @ @" << std::endl;
             std::cout << "         ##          #              @   @  @   @  @   @  @   @     " << std::endl;
-            std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.7" << std::endl;
+            std::cout << "        #             #             @@@@    @@@   @   @   @@@   2.8" << std::endl;
             std::cout << "       #               #                                           " << std::endl;
             std::cout << "      #                 #                                          " << std::endl;
             std::cout << "     #                   ##        %%%                             " << std::endl;
@@ -258,15 +258,12 @@ void dumuxMessage_(bool start)
             }
         break;
         case 12:
-            std::cout << " Join the (first)" << std::endl;
+            std::cout << " Thank you all for joining  and contributing to the first" << std::endl;
             std::cout << "" << std::endl;
             std::cout << "     ____        __  ___     __ __"  << std::endl;
             std::cout << "    / __ \\__  __/  |/  /_  _ \\ \\ /" << std::endl;
             std::cout << "   / / / / / / / /|_/ / / / /_\\_\\" << std::endl;
-            std::cout << "  /_____/\\__,_/_/  /_/\\__,_/        User Meeting 2015" << std::endl;
-            std::cout << "" << std::endl;
-            std::cout << "      11.-12.6.2015" << std::endl;
-            std::cout << "                      in Stuttgart, Germany." << std::endl;
+            std::cout << "  /_____/\\__,_/_/  /_/\\__,_/        User Meeting 2015 in Stuttgart" << std::endl;
             std::cout << "" << std::endl;
             std::cout << "For more information visit dumux.org or contact the mailing list." << std::endl;
         break;
