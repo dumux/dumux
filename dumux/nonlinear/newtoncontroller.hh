@@ -302,7 +302,14 @@ public:
     void newtonBeginStep()
     {
         lastShift_ = shift_;
-        lastReduction_ = reduction_;
+        if (numSteps_ == 0)
+        {
+            lastReduction_ = 1.0;
+        }
+        else
+        {
+            lastReduction_ = reduction_;
+        }
     }
 
     /*!
@@ -359,7 +366,6 @@ public:
                     norm2 = gridView_().comm().sum(norm2);
 
                 initialResidual_ = std::sqrt(norm2);
-                lastReduction_ = initialResidual_;
             }
 
             int converged = linearSolver_.solve(A, x, b);
