@@ -137,6 +137,8 @@ AC_CONFIG_FILES([dumux.pc
     test/multidomain/Makefile
     test/multidomain/2cstokes2p2c/Makefile
     test/multidomain/2cnistokes2p2cni/Makefile
+    test/multidomain/2czeroeq2p2c/Makefile
+    test/multidomain/2cnizeroeq2p2cni/Makefile
     test/references/Makefile
     tutorial/Makefile
 ])
