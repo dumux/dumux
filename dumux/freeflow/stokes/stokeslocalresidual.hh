@@ -97,7 +97,7 @@ protected:
         massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
         stabilizationAlpha_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Stokes, StabilizationAlpha);
         stabilizationBeta_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Stokes, StabilizationBeta);
-    };
+    }
 
     /*!
      * \brief Evaluates the amount of all conservation quantities

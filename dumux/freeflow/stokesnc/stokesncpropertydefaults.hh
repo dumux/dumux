@@ -49,50 +49,51 @@ namespace Properties
 // Properties
 //////////////////////////////////////////////////////////////////
 
-//!< Define that mole fractions are used in the balance equations
+//! Define that mole fractions are used in the balance equations
 SET_BOOL_PROP(BoxStokesnc, UseMoles, true);
-		
-SET_PROP(BoxStokesnc, NumEq) //!< set the number of equations
-{
-		typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-		typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-		static const int dim = Grid::dimension;
-	public:
-		static constexpr int value = FluidSystem::numComponents + dim;
+//! set the number of equations
+SET_PROP(BoxStokesnc, NumEq)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+
+    static const int dim = Grid::dimension;
+public:
+    static constexpr int value = FluidSystem::numComponents + dim;
 };
-	
+
+//! Use the Stokes nc local residual function for the Stokes model
 SET_TYPE_PROP(BoxStokesnc, LocalResidual, StokesncLocalResidual<TypeTag>);
-	
+
 //! the Model property
 SET_TYPE_PROP(BoxStokesnc, Model, StokesncModel<TypeTag>);
-	
+
 //! the VolumeVariables property
 SET_TYPE_PROP(BoxStokesnc, VolumeVariables, StokesncVolumeVariables<TypeTag>);
-		
+
 //! the FluxVariables property
 SET_TYPE_PROP(BoxStokesnc, FluxVariables, StokesncFluxVariables<TypeTag>);
-	
-//! Set the Indices for the Stokes2c model.
+
+//! Set the Indices for the Stokes nc model.
 SET_TYPE_PROP(BoxStokesnc, Indices, StokesncCommonIndices<TypeTag>);
 
 //! Choose the type of the employed fluid state
 SET_PROP(BoxStokesnc, FluidState)
 {
-		typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-		typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-	public:
-		typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+public:
+    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
 };
-	
+
 //! Choose the considered phase (single-phase system); the gas phase is used
 SET_PROP(BoxStokesnc, PhaseIdx)
 {
-		typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-	public:
-		static constexpr int value = FluidSystem::nPhaseIdx;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+public:
+    static constexpr int value = FluidSystem::nPhaseIdx;
 };
-	
 
 } // namespace Properties
 } // namespace Dumux

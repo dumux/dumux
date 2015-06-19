@@ -71,15 +71,10 @@ SET_PROP(BoxStokes, NumEq) //!< set the number of equations
 SET_SCALAR_PROP(BoxStokes, Scaling, 1); //!< set scaling to 1 by default
 
 //! Use the Stokes local residual function for the Stokes model
-SET_TYPE_PROP(BoxStokes,
-              LocalResidual,
-              StokesLocalResidual<TypeTag>);
+SET_TYPE_PROP(BoxStokes, LocalResidual, StokesLocalResidual<TypeTag>);
 
 //! Use the Stokes specific newton controller for the Stokes model
-SET_PROP(BoxStokes, NewtonController)
-{public:
-    typedef StokesNewtonController<TypeTag> type;
-};
+SET_TYPE_PROP(BoxStokes, NewtonController, StokesNewtonController<TypeTag>);
 
 #if HAVE_SUPERLU
 SET_TYPE_PROP(BoxStokes, LinearSolver, SuperLUBackend<TypeTag>);

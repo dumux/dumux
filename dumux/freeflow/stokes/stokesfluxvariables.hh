@@ -73,7 +73,7 @@ public:
     {
         calculateValues_(problem, element, elemVolVars);
         determineUpwindDirection_(elemVolVars);
-    };
+    }
 
 protected:
     void calculateValues_(const Problem &problem,
@@ -139,7 +139,7 @@ protected:
         Valgrind::CheckDefined(pressureGrad_);
         Valgrind::CheckDefined(velocityGrad_);
 //        Valgrind::CheckDefined(velocityDiv_);
-    };
+    }
 
     void determineUpwindDirection_(const ElementVolumeVariables &elemVolVars)
     {
@@ -150,7 +150,7 @@ protected:
 
         if (normalVelocity() < 0)
             std::swap(upstreamIdx_, downstreamIdx_);
-    };
+    }
 
 public:
     /*!

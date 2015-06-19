@@ -52,13 +52,10 @@ SET_PROP(BoxStokesncni, NumEq) //!< set the number of equations
     static const int dim = Grid::dimension;
  public:
     static constexpr int value = dim + FluidSystem::numComponents +/*energyequation*/1;
-
 };
 
 //! Use the stokesncni local jacobian operator for the compositional stokes model
-SET_TYPE_PROP(BoxStokesncni,
-              LocalResidual,
-              StokesncniLocalResidual<TypeTag>);
+SET_TYPE_PROP(BoxStokesncni, LocalResidual, StokesncniLocalResidual<TypeTag>);
 
 //! the Model property
 SET_TYPE_PROP(BoxStokesncni, Model, StokesncniModel<TypeTag>);
@@ -69,7 +66,7 @@ SET_TYPE_PROP(BoxStokesncni, VolumeVariables, StokesncniVolumeVariables<TypeTag>
 //! the FluxVariables property
 SET_TYPE_PROP(BoxStokesncni, FluxVariables, StokesncniFluxVariables<TypeTag>);
 
-// Set the indices for the Stokesncni model
+//! Set the indices for the Stokesncni model
 SET_TYPE_PROP(BoxStokesncni, Indices,  StokesncniCommonIndices<TypeTag>);
 }
 }
