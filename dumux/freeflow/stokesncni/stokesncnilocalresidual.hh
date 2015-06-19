@@ -109,11 +109,8 @@ public:
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
 
         Scalar tmp = fluxVars.normalVelocity();
-
-        tmp *=  this->massUpwindWeight_ *         // upwind data
-            up.density() * up.enthalpy() +
-            (1.0 - this->massUpwindWeight_) *     // rest
-            dn.density() * dn.enthalpy();
+        tmp *= (this->massUpwindWeight_ * up.density() * up.enthalpy()
+                + (1.0 - this->massUpwindWeight_) * dn.density() * dn.enthalpy());
 
         flux[energyEqIdx] += tmp;
         Valgrind::CheckDefined(flux[energyEqIdx]);

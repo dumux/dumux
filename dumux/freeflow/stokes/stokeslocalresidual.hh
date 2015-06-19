@@ -190,21 +190,13 @@ protected:
 
         if(!useMoles)
         {
-            // mass balance with upwinded density
-            if (Dune::FloatCmp::eq<Scalar>(massUpwindWeight_, 1.0)) // fully upwind
-                massBalanceResidual *= up.density();
-            else
-                massBalanceResidual *= massUpwindWeight_ * up.density() +
-                                       (1.-massUpwindWeight_) * dn.density();
+            massBalanceResidual *= (massUpwindWeight_ * up.density()
+                                    + (1.-massUpwindWeight_) * dn.density());
         }
         else
         {
-            // mass balance with upwinded molarDensity
-            if (Dune::FloatCmp::eq<Scalar>(massUpwindWeight_, 1.0)) // fully upwind
-                massBalanceResidual *= up.molarDensity();
-            else
-                massBalanceResidual *= massUpwindWeight_ * up.molarDensity() +
-                                       (1.-massUpwindWeight_) * dn.molarDensity();
+            massBalanceResidual *= (massUpwindWeight_ * up.molarDensity()
+                                    + (1.-massUpwindWeight_) * dn.molarDensity());
         }
 
         if (!fluxVars.onBoundary())

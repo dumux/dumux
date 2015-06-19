@@ -163,23 +163,15 @@ public:
 		const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
 		const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
 
-		Scalar tmp = fluxVars.normalVelocity();  
+        Scalar tmp = fluxVars.normalVelocity();
 		
 		if(!useMoles)
 		{
-			// for transport equations
-			if (this->massUpwindWeight_ > 0.0)
-				tmp *=  this->massUpwindWeight_          // upwind data
-					* up.density()
-                    * up.massFraction(transportCompIdx);
-			
-            if (this->massUpwindWeight_ < 1.0)
-				tmp += (1.0 - this->massUpwindWeight_)      // rest
-					* dn.density()
-                    * dn.massFraction(transportCompIdx);
-			
-			flux[transportEqIdx] += tmp;
-			Valgrind::CheckDefined(flux[transportEqIdx]);
+            tmp *= (this->massUpwindWeight_ * up.density() * up.massFraction(transportCompIdx)
+                    + (1.-this->massUpwindWeight_) * dn.density() * dn.massFraction(transportCompIdx));
+
+            flux[transportEqIdx] += tmp;
+            Valgrind::CheckDefined(flux[transportEqIdx]);
 		}
         else
 		{
@@ -188,14 +180,8 @@ public:
 			{
 				if (conti0EqIdx+compIdx != massBalanceIdx) //mass balance is calculated above
 				{
-					if (this->massUpwindWeight_ > 0.0)
-						tmp *=  this->massUpwindWeight_          // upwind data
-                            * up.molarDensity()
-                            * up.moleFraction(compIdx);
-					if (this->massUpwindWeight_ < 1.0)
-						tmp += (1.0 - this->massUpwindWeight_)      // rest
-                            * dn.molarDensity()
-                            * dn.moleFraction(compIdx);
+                    tmp *= (this->massUpwindWeight_ * up.molarDensity() * up.moleFraction(compIdx)
+                            + (1.-this->massUpwindWeight_) * dn.molarDensity() * dn.moleFraction(compIdx));
 				
 					flux[conti0EqIdx+compIdx] += tmp;
 					Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
