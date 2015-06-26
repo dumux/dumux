@@ -848,9 +848,7 @@ public:
                     bFace.i = scvIdx;
                     bFace.j = scvIdx;
 
-                    // ASSUME constant normal
-                    Dune::FieldVector<CoordScalar, dim-1> localDimM1(0);
-                    bFace.normal = isIt->unitOuterNormal(localDimM1);
+                    bFace.normal = isIt->centerUnitOuterNormal();
                     bFace.normal *= bFace.area;
 
                     typedef Dune::FieldVector< Scalar, 1 > ShapeValue;
