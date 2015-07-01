@@ -148,6 +148,14 @@ SET_SCALAR_PROP(BoxStokes, StokesStabilizationBeta, 0.0);
 //! Set gravity by default
 SET_BOOL_PROP(BoxStokes, ProblemEnableGravity, true);
 
+//! Set the value for the maximum relative shift
+SET_SCALAR_PROP(BoxStokes, NewtonMaxRelativeShift, 1e-6);
+
+//! Set the number of iterations at which the Newton method should aim at.
+SET_INT_PROP(BoxStokes, NewtonTargetSteps, 10);
+
+//! Set the number of maximum iterations for the Newton method.
+SET_INT_PROP(BoxStokes, NewtonMaxSteps, 18);
 }
 
 }

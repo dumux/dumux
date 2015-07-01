@@ -43,10 +43,6 @@ public:
         : ParentType(problem)
     {
         Dune::FMatrixPrecision<>::set_singular_limit(1e-35);
-
-        this->setMaxRelativeShift(1e-6);
-        this->setTargetSteps(10);
-        this->setMaxSteps(18);
     }
 };
 } // end namespace Dumux
