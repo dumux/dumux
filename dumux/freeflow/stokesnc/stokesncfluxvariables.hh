@@ -154,7 +154,7 @@ protected:
 					// the gradient of the mole fraction at the IP
 					for (int dimIdx=0; dimIdx<dim; ++dimIdx)
 					{
-						moleFractionGrad_[compIdx] +=
+						moleFractionGrad_[compIdx][dimIdx] +=
 							this->face().grad[scvIdx][dimIdx] *
 							elemVolVars[scvIdx].moleFraction(compIdx);
 					}

@@ -1,6 +1,6 @@
 [TimeManager]
 DtInitial = 0.1 # [s]
-TEnd = 2 # [s]
+TEnd = 2000 # [s]
 
 [Grid]
 File = ./grids/test_stokes2c.dgf
@@ -10,5 +10,5 @@ StabilizationAlpha = -1.0e3 # a stabilization factor. Set to zero for no stabili
 
 [Problem]
 EnableGravity = 0 # disable gravity
-Velocity = -0.5 # [m/s]
-Name = "stokes2c" # prefix of the vtk files
+Velocity = 0.0 # [m/s]
+Name = "stokes2c_diffusion" # prefix of the vtk files

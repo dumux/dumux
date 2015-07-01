@@ -142,7 +142,7 @@ protected:
 
             // the gradient of the temperature at the IP
             for (int dimIdx=0; dimIdx<dim; ++dimIdx)
-                temperatureGrad_ +=
+                temperatureGrad_[dimIdx] +=
                     this->face().grad[idx][dimIdx]*
                     elemVolVars[idx].temperature();
         }
