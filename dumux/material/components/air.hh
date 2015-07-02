@@ -241,6 +241,20 @@ public:
 
         return  c_p;
     }
+
+    /*!
+     * 	\brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of air.
+     * 	Isobaric Properties for Nitrogen in: NIST Standard
+     * 	see http://webbook.nist.gov/chemistry/fluid/
+     * 	evaluated at p=.1 MPa, T=20°C
+     * 	Nitrogen: 0.025398
+     * 	Oxygen: 0.026105
+     * 	lambda_air is approximately 0.78*lambda_N2+0.22*lambda_O2
+     */
+    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
+    {
+    	return 0.0255535; // conductivity of pure air [W/(m K)]
+    }
 };
 
 } // end namespace
