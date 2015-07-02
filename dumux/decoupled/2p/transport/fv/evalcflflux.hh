@@ -59,7 +59,8 @@ private:
 public:
 
     //! For initialization
-    void initialize(){};
+    void initialize()
+    {}
 
     /*! \brief adds a flux to the cfl-criterion evaluation
      *

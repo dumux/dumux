@@ -843,7 +843,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 //                        *((*eIt).template subEntity < dim > (localVertIdx12corner)));
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int globalVertIdx12corner = problem_.variables().vertexMapper().subIndex(*eIt, localVertIdx12corner, dim);
-#else 
+#else
                 int globalVertIdx12corner = problem_.variables().vertexMapper().map(*eIt, localVertIdx12corner, dim);
 #endif
 //                std::cout<<"globalVertIdx12corner = "<<globalVertIdx12corner<<"\n";
@@ -1934,7 +1934,7 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
         {
             if (eIt->partitionType() == Dune::InteriorEntity)
                 continue;
-            
+
             // get the global index of the cell
             int eIdxGlobalI = problem_.variables().index(*eIt);
 
@@ -1943,7 +1943,7 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
             this->f_[eIdxGlobalI] = this->pressure()[eIdxGlobalI];
         }
     }
-    
+
     return;
 }
 

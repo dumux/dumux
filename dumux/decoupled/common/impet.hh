@@ -200,7 +200,7 @@ public:
     const ElementMapper &dofMapper() const
     {
         return problem_.elementMapper();
-    }    
+    }
 
     //! Constructs an IMPET object
     /**

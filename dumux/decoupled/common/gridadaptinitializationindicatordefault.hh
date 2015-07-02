@@ -82,7 +82,7 @@ public:
 
     /*! \brief Initializes the adaption indicator class*/
     void init()
-    {};
+    {}
 
     /*! \brief Returns true if the IMPET-Model needs to be initialized*/
     bool initializeModel()

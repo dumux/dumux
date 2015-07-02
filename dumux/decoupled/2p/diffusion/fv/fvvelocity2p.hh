@@ -293,7 +293,7 @@ public:
             //switch velocities
             if (velocityType_ == vt)
             {
-            	 writer.attachCellData(velocity, "total velocity", dim);
+                 writer.attachCellData(velocity, "total velocity", dim);
             }
             else
             {

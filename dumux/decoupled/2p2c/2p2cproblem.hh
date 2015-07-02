@@ -127,7 +127,7 @@ public:
     {
         ParentType::postTimeStep();
         asImp_().pressureModel().updateMaterialLaws(true);
-    };
+    }
     /*!
      * \name Problem parameters
      */
@@ -171,9 +171,7 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented, "please specify initial Concentration in the problem"
                                             " using an initConcentrationAtPos() method!");
-        return NAN;
     }
-    // \}
     // \}
 
 private:
@@ -187,7 +185,6 @@ private:
 
 protected:
     //! Sets entries of the primary variable vector to zero
-    //
     void setZero(typename GET_PROP_TYPE(TypeTag, PrimaryVariables) &values, const int equation = -1) const
     {
         if (equation == Indices::pressureEqIdx)

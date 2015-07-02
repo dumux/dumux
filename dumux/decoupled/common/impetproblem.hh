@@ -373,8 +373,8 @@ public:
         dt = std::min(dt, timeManager().episodeMaxTimeStepSize());
 
         // check if we are in first TS and an initialDt was assigned
-        if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(t, 0.0, 1.0e-30) 
-        	&& Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(timeManager().timeStepSize(), 0.0, 1.0e-30))
+        if (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(t, 0.0, 1.0e-30)
+            && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(timeManager().timeStepSize(), 0.0, 1.0e-30))
         {
             if (this->gridView().comm().size() > 1)
                 dt = this->gridView().comm().min(dt);
@@ -411,7 +411,7 @@ public:
      * current solution to disk.
      */
     void postTimeStep()
-    {};
+    {}
 
     /*!
      * \brief Called by the time manager after everything which can be
@@ -533,7 +533,7 @@ public:
                       << "does not override the episodeEnd() method. "
                       << "Doing nothing!\n";
         }
-    };
+    }
 
     // \}
 
@@ -784,7 +784,7 @@ public:
         pressureModel().updateMaterialLaws();
 
         res.deserializeEnd();
-    };
+    }
 
     void addOutputVtkFields()
     {

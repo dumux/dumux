@@ -80,7 +80,7 @@ namespace Dumux
 
 template<class TypeTag>
 class GridAdaptInitializationIndicatorDefault;
-  
+
 template<class TypeTag>
 class VariableClass;
 

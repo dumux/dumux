@@ -59,7 +59,7 @@ private:
 
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, 
+        wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
 

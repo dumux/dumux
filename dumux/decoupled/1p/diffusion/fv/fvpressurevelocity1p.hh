@@ -89,8 +89,8 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-    	ParentType::addOutputVtkFields(writer);
-    	velocity_.addOutputVtkFields(writer);
+        ParentType::addOutputVtkFields(writer);
+        velocity_.addOutputVtkFields(writer);
     }
 
     //! Constructs a FVPressure1P object

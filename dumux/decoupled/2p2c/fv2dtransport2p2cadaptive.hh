@@ -94,7 +94,7 @@ class FV2dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
 
     //! Acess function for the current problem
     Problem& problem()
-    {return problem_;};
+    { return problem_; }
 
     typedef typename FVTransport2P2C<TypeTag>::LocalTimesteppingData LocalTimesteppingData;
 
@@ -301,7 +301,7 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
         }
     } // end grid traversal
 
-#if HAVE_MPI        
+#if HAVE_MPI
     // communicate updated values
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
@@ -309,8 +309,8 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem_.variables().elementMapper(), updateVec[i]);
-        problem_.gridView().template communicate<DataHandle>(dataHandle, 
-                                                            Dune::InteriorBorder_All_Interface, 
+        problem_.gridView().template communicate<DataHandle>(dataHandle,
+                                                            Dune::InteriorBorder_All_Interface,
                                                             Dune::ForwardCommunication);
     }
     dt = problem_.gridView().comm().min(dt);

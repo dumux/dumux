@@ -339,7 +339,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
             this->A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
         }
         // assemble overlap and ghost element contributions
-        else 
+        else
         {
             this->A_[eIdxGlobalI] = 0.0;
             this->A_[eIdxGlobalI][eIdxGlobalI] = 1.0;
@@ -808,7 +808,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
             problem().source(source, *eIt);
 
             if ((cellData.saturation(wPhaseIdx) > 0.0 && cellData.saturation(wPhaseIdx) < 1.0)
-            		|| Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(source.one_norm(), 0.0, 1.0e-30)) // cell still 2p
+                || Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(source.one_norm(), 0.0, 1.0e-30)) // cell still 2p
             {
                 // mark this element
                 nextSubdomain[eIdxGlobal] = 2;
@@ -873,7 +873,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
         else if(oldSubdomainI != 2
                     && nextSubdomain[eIdxGlobal] != 2)    // will be simple and was simple
         {
-			// perform simple update
+            // perform simple update
             this->update1pMaterialLawsInElement(*eIt, cellData, postTimeStep);
         }
         //else
@@ -886,9 +886,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
     this->maxError_ = maxError/problem().timeManager().timeStepSize();
 
     timer_.stop();
-    
+
     if(problem().timeManager().willBeFinished() or problem().timeManager().episodeWillBeOver())
-    	Dune::dinfo << "Subdomain routines took " << timer_.elapsed() << " seconds" << std::endl;
+        Dune::dinfo << "Subdomain routines took " << timer_.elapsed() << " seconds" << std::endl;
 
     return;
 }

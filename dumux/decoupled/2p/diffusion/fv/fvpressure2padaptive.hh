@@ -133,30 +133,30 @@ public:
         // update RHS vector, matrix
         if (problem_.gridAdapt().wasAdapted())
         {
-			this->A_.setSize(gridSize, gridSize); //
-			this->f_.resize(gridSize);
-			this->pressure().resize(gridSize);
+            this->A_.setSize(gridSize, gridSize); //
+            this->f_.resize(gridSize);
+            this->pressure().resize(gridSize);
 
 
-			for (int i = 0; i < gridSize; i++)
-			{
-				CellData& cellData = problem_.variables().cellData(i);
+            for (int i = 0; i < gridSize; i++)
+            {
+                CellData& cellData = problem_.variables().cellData(i);
 
-				switch (pressureType_)
-				{
-				case pw:
-					this->pressure()[i] = cellData.pressure(wPhaseIdx);
-					break;
-				case pn:
-					this->pressure()[i] = cellData.pressure(nPhaseIdx);
-					break;
-				case pGlobal:
-					this->pressure()[i] = cellData.globalPressure();
-					break;
-				}
-			}
+                switch (pressureType_)
+                {
+                case pw:
+                    this->pressure()[i] = cellData.pressure(wPhaseIdx);
+                    break;
+                case pn:
+                    this->pressure()[i] = cellData.pressure(nPhaseIdx);
+                    break;
+                case pGlobal:
+                    this->pressure()[i] = cellData.globalPressure();
+                    break;
+                }
+            }
 
-			ParentType::initializeMatrix();
+            ParentType::initializeMatrix();
         }
 
 
@@ -172,7 +172,7 @@ public:
      */
     void calculateVelocity()
     {
-    	velocity_.calculateVelocity();
+        velocity_.calculateVelocity();
     }
 
     /*! \brief Velocity update

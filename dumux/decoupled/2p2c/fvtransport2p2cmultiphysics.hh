@@ -82,7 +82,7 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
 
     //! Acess function for the current problem
     Problem& problem()
-    {return this->problem_;};
+    { return this->problem_; }
 
     typedef typename FVTransport2P2C<TypeTag>::LocalTimesteppingData LocalTimesteppingData;
 
@@ -97,7 +97,7 @@ public:
     {}
 
     virtual ~FVTransport2P2CMultiPhysics()
-    {     }
+    {}
 };
 
 //! \brief Calculate the update vector and determine timestep size
@@ -132,7 +132,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     // store if we do update Estimate for flux functions
     this->impet_ = impet;
     this->averagedFaces_ = 0.;
-    
+
     // resize update vector and set to zero
     updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
     updateVec[wCompIdx].resize(problem().gridView().size(0));
@@ -164,11 +164,11 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             {
                 int indexInInside = isIt->indexInInside();
 
-            	/****** interior face   *****************/
+                /****** interior face   *****************/
                 if (isIt->neighbor())
                     this->getFlux(entries, timestepFlux, *isIt, cellDataI);
 
-            	/******  Boundary Face   *****************/
+                /******  Boundary Face   *****************/
                 if (isIt->boundary())
                     this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
 
@@ -210,7 +210,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             updateVec[wCompIdx][globalIdxI] += q[Indices::contiWEqIdx];
             updateVec[nCompIdx][globalIdxI] += q[Indices::contiNEqIdx];
 
-        	// account for porosity in fluxes for time-step
+            // account for porosity in fluxes for time-step
             sumfactorin = std::max(sumfactorin,sumfactorout)
                             / problem().spatialParams().porosity(*eIt);
 
@@ -234,8 +234,8 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             }
         }
     } // end grid traversal
-    
-#if HAVE_MPI        
+
+#if HAVE_MPI
     // communicate updated values
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
@@ -243,13 +243,13 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem().variables().elementMapper(), updateVec[i]);
-        problem().gridView().template communicate<DataHandle>(dataHandle, 
-                                                            Dune::InteriorBorder_All_Interface, 
+        problem().gridView().template communicate<DataHandle>(dataHandle,
+                                                            Dune::InteriorBorder_All_Interface,
                                                             Dune::ForwardCommunication);
     }
     dt = problem().gridView().comm().min(dt);
 #endif
-    
+
     if(impet)
     {
         Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell <<

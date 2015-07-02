@@ -157,7 +157,7 @@ public:
                     // std::cout << "increment row " << index << std::endl;
                 }
                 A_.incrementrowsize(index, numFaces - 1);
-                // std::cout << "increment row " << index 
+                // std::cout << "increment row " << index
                 // << " by " << numFaces - 1 << std::endl;
             }
         }
@@ -329,7 +329,7 @@ public:
                 int alpha = faceMapper_.subIndex(*eIt, k, 1);
 #else
                 int alpha = faceMapper_.map(*eIt, k, 1);
-#endif 
+#endif
                 local2Global[k] = alpha;
             }
             loc.completeRHS(*eIt, local2Global, f);

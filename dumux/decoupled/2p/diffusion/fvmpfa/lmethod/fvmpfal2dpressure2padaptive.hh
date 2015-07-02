@@ -464,7 +464,7 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "Compressibility not supported!");
         }
-		#endif
+        #endif
         if (dim != 2)
         {
             DUNE_THROW(Dune::NotImplemented, "Dimension not supported!");
@@ -2620,7 +2620,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
         {
             if (eIt->partitionType() == Dune::InteriorEntity)
                 continue;
-            
+
             // get the global index of the cell
             int eIdxGlobalI = problem_.variables().index(*eIt);
 

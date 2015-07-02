@@ -33,7 +33,7 @@
 
 namespace Dumux
 {
-  
+
 /*!
  * \ingroup Sequential
  */

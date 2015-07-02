@@ -97,7 +97,7 @@ class FVTransport2P2C
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
         contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx,
-        NumPhases = GET_PROP_VALUE(TypeTag, NumPhases), 
+        NumPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         NumComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
@@ -130,7 +130,7 @@ protected:
 
     //! Acess function for the current problem
     Problem& problem()
-    {return problem_;};
+    { return problem_; }
 
     void innerUpdate(TransportSolutionType& updateVec);
 
@@ -167,7 +167,7 @@ public:
             totalConcentration_[eqNumber].resize(problem().gridView().size(0));
             totalConcentration_[eqNumber] = 0;
         }
-    };
+    }
 
     //! \brief Write transport variables into the output files
      /*  \param writer applied VTK-writer */
@@ -360,7 +360,7 @@ private:
  */
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
-		TransportSolutionType& updateVec, bool impet)
+        TransportSolutionType& updateVec, bool impet)
 {
     // initialize dt very large
     dt = 1E100;
@@ -474,7 +474,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
             }
         }
     } // end grid traversal
-    
+
 #if HAVE_MPI
     // communicate updated values
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
@@ -483,8 +483,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem_.variables().elementMapper(), updateVec[i]);
-        problem_.gridView().template communicate<DataHandle>(dataHandle, 
-                                                            Dune::InteriorBorder_All_Interface, 
+        problem_.gridView().template communicate<DataHandle>(dataHandle,
+                                                            Dune::InteriorBorder_All_Interface,
                                                             Dune::ForwardCommunication);
     }
 
@@ -500,17 +500,16 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 
     dt = problem_.gridView().comm().min(dt);
 #endif
-    
+
     if(impet)
     {
         Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "
                 <<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor)<< std::endl;
-    	if(averagedFaces_ != 0)
+        if (averagedFaces_ != 0)
             Dune::dinfo  << " Averageing done for " << averagedFaces_ << " faces. "<< std::endl;
     }
-    return;
 }
-/*	Updates the transported quantity once an update is calculated.
+/*  Updates the transported quantity once an update is calculated.
  *  This method updates both, the internal transport solution vector and the entries in the cellData.
  *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
  *
@@ -1136,7 +1135,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
         pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
         Scalar Z1Bound = primaryVariablesOnBoundary[contiWEqIdx];
         flashSolver.concentrationFlash2p2c(BCfluidState, Z1Bound, pressBound,
-        	problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
+            problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
 
         if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         {

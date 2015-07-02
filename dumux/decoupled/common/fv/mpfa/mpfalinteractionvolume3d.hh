@@ -120,7 +120,7 @@ private:
 
     enum
     {
-        dim = GridView::dimension, 
+        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
     };
 
@@ -521,7 +521,7 @@ public:
     DimVector& getEdgePosition(int subVolumeIdx, int subVolumeFaceIdx, int subVolumeEdgeIdx)
     {
         return edgePos_[IndexTranslator::getEdgeIndexFromSubVolumeFace(subVolumeIdx, subVolumeFaceIdx, subVolumeEdgeIdx)];
-    }    
+    }
 
     //! The interaction volume flux face area
     /*!

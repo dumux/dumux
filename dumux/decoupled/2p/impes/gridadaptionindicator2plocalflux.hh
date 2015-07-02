@@ -597,7 +597,7 @@ public:
             indicatorVectorSat_.resize(size, -1e100);
         if (useFluxInd_)
             indicatorVectorFlux_.resize(size, -1e100);
-    };
+    }
 
     /*! \brief Function for changing the indicatorVector values for refinement
      *

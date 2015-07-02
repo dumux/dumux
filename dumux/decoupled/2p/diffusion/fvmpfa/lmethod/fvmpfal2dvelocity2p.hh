@@ -141,8 +141,8 @@ public:
     }
 
     //calculate velocities for flux faces of an interaction volume
-    void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume, 
-    						CellData& cellData1, CellData& cellData2, CellData& cellData3, CellData& cellData4,
+    void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume,
+                            CellData& cellData1, CellData& cellData2, CellData& cellData3, CellData& cellData4,
                             InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces);
     void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume,
                             CellData& cellData, int elemIdx);
@@ -180,10 +180,10 @@ public:
     {
         if (vtkOutputLevel_ > 0)
         {
-            Dune::BlockVector < DimVector > &velocityWetting 
-            		= *(writer.template allocateManagedBuffer<Scalar,dim>(problem_.gridView().size(0)));
-            Dune::BlockVector < DimVector > &velocityNonwetting 
-            		= *(writer.template allocateManagedBuffer<Scalar,dim>(problem_.gridView().size(0)));
+            Dune::BlockVector < DimVector > &velocityWetting
+                    = *(writer.template allocateManagedBuffer<Scalar,dim>(problem_.gridView().size(0)));
+            Dune::BlockVector < DimVector > &velocityNonwetting
+                    = *(writer.template allocateManagedBuffer<Scalar,dim>(problem_.gridView().size(0)));
 
             // compute update vector
             ElementIterator eEndIt = problem_.gridView().template end<0>();

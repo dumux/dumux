@@ -385,7 +385,7 @@ private:
             }
         }
         return true;
-    };
+    }
 
 
     /*!
@@ -472,20 +472,20 @@ class GridAdapt<TypeTag, false>
 
 public:
     void init()
-    {};
+    {}
     void adaptGrid()
-    {};
+    {}
     bool wasAdapted()
     {
         return false;
     }
     void setLevels(int, int)
-    {};
+    {}
     void setTolerance(int, int)
-    {};
+    {}
     const void setIndicator(const ScalarSolutionType&,
                             const Scalar&, const Scalar&)
-    {};
+    {}
     GridAdapt (Problem& problem)
     {}
 };

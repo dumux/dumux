@@ -195,7 +195,7 @@ public:
             interactionVolumesContainer_->update();
         }
         ParentType::initialize(solveTwice);
-    };
+    }
 
     //function which assembles the system of equations to be solved
     void assemble(bool first);
@@ -701,9 +701,9 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                     //take a hanging node never from the element with smaller level!
                     bool haveSameLevel = (eIt->level() == elementNeighbor->level());
                     // calculate only from one side, but add matrix entries for both sides
-                    // the last condition is needed to properly assemble in the presence 
+                    // the last condition is needed to properly assemble in the presence
                     // of ghost elements
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
+                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
                         && (eIdxGlobalI > eIdxGlobalJ) && haveSameLevel
                         && elementNeighbor->partitionType() == Dune::InteriorEntity)
                         continue;
@@ -738,7 +738,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                         this->A_[eIdxGlobalI][eIdxGlobalJ] -= entries[matrix];
 
                         // The second condition is needed to not spoil the ghost element entries
-                        if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
+                        if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
                             && elementNeighbor->partitionType() == Dune::InteriorEntity)
                         {
                             this->f_[eIdxGlobalJ] += entries[rhs];
@@ -949,7 +949,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
                 }
             }
         }
-    
+
         // initialize convenience shortcuts
         PhaseVector lambda(0.), dV(0.), gV(0.);
 
@@ -1654,7 +1654,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     /** 4) Store and/or calculate additional half edges *******/
     if(maxInteractionVolumes ==1)
     {
-    	T *= isIt->geometry().volume()/subFaceArea12 ;
+        T *= isIt->geometry().volume()/subFaceArea12 ;
 
         // set your map entry
         problem().variables().storeMpfaData3D(*isIt, T, globalPos4, eIdxGlobal4, globalPos6, eIdxGlobal6);

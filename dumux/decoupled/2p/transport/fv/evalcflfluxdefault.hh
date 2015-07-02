@@ -24,7 +24,7 @@
  * @brief  Fluxes to evaluate a CFL-Condition
  */
 
-#include <dumux/decoupled/common/impetproperties.hh> 
+#include <dumux/decoupled/common/impetproperties.hh>
 #include "evalcflflux.hh"
 
 namespace Dumux

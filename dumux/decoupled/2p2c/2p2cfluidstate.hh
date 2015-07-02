@@ -76,7 +76,7 @@ public:
             return sw_;
         else
             return Scalar(1.0) - sw_;
-    };
+    }
 
     /*!
      * \brief Returns the mass fraction of a component in a phase.
@@ -156,7 +156,7 @@ public:
      * and the rock matrix exhibit the same temperature.
      */
     Scalar temperature(int phaseIdx = 0) const
-    { return temperature_; };
+    { return temperature_; }
 
     /*!
      * \brief Return the average molar mass of a phase.

@@ -312,9 +312,9 @@ public:
                 vel += W_[eIdxGlobal][fIdx][j]*faceVol[j]*(press - pressTrace[j]);
     }
 
-    void computeReconstructionMatrices(const Element& element, 
-    								   const Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim>& W, 
-    								   Dune::FieldVector<Scalar, 2 * dim>& F, Scalar& dInv)
+    void computeReconstructionMatrices(const Element& element,
+                                       const Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim>& W,
+                                       Dune::FieldVector<Scalar, 2 * dim>& F, Scalar& dInv)
     {
         Dune::FieldVector<Scalar, 2 * dim> c(0);
         Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim> Pi(0);

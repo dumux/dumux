@@ -25,7 +25,7 @@
  */
 
 #include <dune/common/float_cmp.hh>
-#include <dumux/decoupled/common/impetproperties.hh> 
+#include <dumux/decoupled/common/impetproperties.hh>
 #include "evalcflflux.hh"
 
 namespace Dumux
@@ -127,10 +127,10 @@ public:
      */
     Scalar getCflFluxFunction(const Element& element)
     {
-    	 Scalar cflFluxDefault = getCflFluxFunctionDefault();
+         Scalar cflFluxDefault = getCflFluxFunctionDefault();
 
         if (rejectForTimeStepping_)
-        	return 0.99 / cflFluxDefault;
+            return 0.99 / cflFluxDefault;
 
         if (std::isnan(cflFluxFunctionCoatsOut_) || std::isinf(cflFluxFunctionCoatsOut_)){cflFluxFunctionCoatsOut_ = 0.0;}
         if (std::isnan(cflFluxFunctionCoatsIn_) || std::isinf(cflFluxFunctionCoatsIn_)){cflFluxFunctionCoatsIn_ = 0.0;}
@@ -143,7 +143,7 @@ public:
         }
         else if (cflFluxDefault > cflFluxFunctionCoats)
         {
-        	return 0.99 / cflFluxDefault;
+            return 0.99 / cflFluxDefault;
         }
         else
         {
@@ -478,7 +478,7 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             }
             else
             {
-            	cflFluxFunctionCoatsIn_ += cflFlux;
+                cflFluxFunctionCoatsIn_ += cflFlux;
             }
     }
     else
@@ -502,11 +502,11 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             Dune::FieldVector<Scalar, dim> permeability(0);
             DimMatrix perm(0);
             problem_.spatialParams().meanK(perm, problem_.spatialParams().intrinsicPermeability(*element));
-            perm.mv(unitOuterNormal, permeability);          
-            
-        	Scalar faceArea = intersection.geometry().volume();
+            perm.mv(unitOuterNormal, permeability);
 
-        	Scalar transmissibility = (unitOuterNormal * permeability) * faceArea / dist;
+            Scalar faceArea = intersection.geometry().volume();
+
+            Scalar transmissibility = (unitOuterNormal * permeability) * faceArea / dist;
 
             Scalar satWBound =  cellDataI.saturation(wPhaseIdx);
             if (bcType.isDirichlet(eqIdxSat))
@@ -515,90 +515,88 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
                 problem_.dirichlet(bcValues, intersection);
                 switch (saturationType_)
                 {
-                case sw:
+                    case sw:
                     {
                         satWBound = bcValues[eqIdxSat];
                         break;
                     }
-                case sn:
+                    case sn:
                     {
                         satWBound = 1 - bcValues[eqIdxSat];
                         break;
                     }
-                default:
+                    default:
                     {
                         DUNE_THROW(Dune::RangeError, "saturation type not implemented");
-                        break;
                     }
                 }
 
             }
-            
+
             Scalar potWBound =  cellDataI.potential(wPhaseIdx);
-        	Scalar potNwBound =  cellDataI.potential(nPhaseIdx);
-        	Scalar gdeltaZ = (problem_.bBoxMax()-globalPosFace) * problem_.gravity();
-        	if (bcType.isDirichlet(eqIdxPress))
-        	{
-            	PrimaryVariables bcValues;
-            	problem_.dirichlet(bcValues, intersection);
-            	switch (pressureType_)
-            	{
-            	case pw:
-                	{
-                    	potWBound = bcValues[eqIdxPress] + density_[wPhaseIdx] * gdeltaZ;
-                       potNwBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound)
-                        								 + density_[nPhaseIdx] * gdeltaZ;
-                    	break;
-                	}
-            	case pn:
-                	{
-                           potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),satWBound)
-                           									+ density_[wPhaseIdx] * gdeltaZ;
-                    	potNwBound = bcValues[eqIdxPress] + density_[nPhaseIdx] * gdeltaZ;
-                   		break;
-                	}
-            	default:
-                	{
-                	    DUNE_THROW(Dune::RangeError, "pressure type not implemented");
-                    	break;
-                	}
-            	}
-        	}
-        	else if (bcType.isNeumann(eqIdxPress) && bcType.isDirichlet(eqIdxSat))
-        	{
-            	PrimaryVariables bcValues;
-            	problem_.neumann(bcValues, intersection);
+            Scalar potNwBound =  cellDataI.potential(nPhaseIdx);
+            Scalar gdeltaZ = (problem_.bBoxMax()-globalPosFace) * problem_.gravity();
+            if (bcType.isDirichlet(eqIdxPress))
+            {
+                PrimaryVariables bcValues;
+                problem_.dirichlet(bcValues, intersection);
+                switch (pressureType_)
+                {
+                    case pw:
+                    {
+                        potWBound = bcValues[eqIdxPress] + density_[wPhaseIdx] * gdeltaZ;
+                        potNwBound = bcValues[eqIdxPress] + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satWBound)
+                                                          + density_[nPhaseIdx] * gdeltaZ;
+                        break;
+                    }
+                    case pn:
+                    {
+                        potWBound = bcValues[eqIdxPress] - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),satWBound)
+                                                         + density_[wPhaseIdx] * gdeltaZ;
+                        potNwBound = bcValues[eqIdxPress] + density_[nPhaseIdx] * gdeltaZ;
+                        break;
+                    }
+                    default:
+                    {
+                        DUNE_THROW(Dune::RangeError, "pressure type not implemented");
+                    }
+                }
+            }
+            else if (bcType.isNeumann(eqIdxPress) && bcType.isDirichlet(eqIdxSat))
+            {
+                PrimaryVariables bcValues;
+                problem_.neumann(bcValues, intersection);
 
-	            bcValues[wPhaseIdx] /= density_[wPhaseIdx];
-    	        bcValues[nPhaseIdx] /= density_[nPhaseIdx];
-	
-    	        bcValues[wPhaseIdx] *= faceArea;
-        	    bcValues[nPhaseIdx] *= faceArea;
-	
-    	        bool hasPotWBound = false;
-        	    if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(lambdaW, 0.0, 1.0e-30) && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(bcValues[wPhaseIdx], 0.0, 1.0e-30))
-            	{
-        	        potWBound -= bcValues[wPhaseIdx] / (transmissibility * lambdaW);
-        	        hasPotWBound = true;
-        	    }
-      	     	bool hasPotNwBound = false;
-        	    if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(lambdaNw, 0.0, 1.0e-30) && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(bcValues[nPhaseIdx], 0.0, 1.0e-30))
-            	{
-      	          	potNwBound -= bcValues[nPhaseIdx] / (transmissibility * lambdaNw);
-        	        hasPotNwBound = true;
-            	}
+                bcValues[wPhaseIdx] /= density_[wPhaseIdx];
+                bcValues[nPhaseIdx] /= density_[nPhaseIdx];
 
-  	          	if (hasPotWBound && !hasPotNwBound)
-    	      	{
-                       potNwBound = potWBound + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),satWBound)
-                       						  + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
-   	          	}
-    	        else if (!hasPotWBound && hasPotNwBound)
-        	    {
+                bcValues[wPhaseIdx] *= faceArea;
+                bcValues[nPhaseIdx] *= faceArea;
+
+                bool hasPotWBound = false;
+                if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(lambdaW, 0.0, 1.0e-30) && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(bcValues[wPhaseIdx], 0.0, 1.0e-30))
+                {
+                    potWBound -= bcValues[wPhaseIdx] / (transmissibility * lambdaW);
+                    hasPotWBound = true;
+                }
+                   bool hasPotNwBound = false;
+                if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(lambdaNw, 0.0, 1.0e-30) && Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(bcValues[nPhaseIdx], 0.0, 1.0e-30))
+                {
+                        potNwBound -= bcValues[nPhaseIdx] / (transmissibility * lambdaNw);
+                    hasPotNwBound = true;
+                }
+
+                if (hasPotWBound && !hasPotNwBound)
+                {
+                    potNwBound = potWBound + MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),satWBound)
+                                           + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
+                }
+                else if (!hasPotWBound && hasPotNwBound)
+                {
                    potWBound = potNwBound - MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element),satWBound)
-                   						  + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
-            	}
-        	}
+                                          + (density_[nPhaseIdx] - density_[wPhaseIdx]) * gdeltaZ;
+                }
+            }
             else if (bcType.isNeumann(eqIdxPress))
             {
                 PrimaryVariables bcValues;
@@ -720,7 +718,7 @@ void EvalCflFluxCoats<TypeTag>::addCoatsFlux(Scalar& lambdaW, Scalar& lambdaNw,
             }
             else
             {
-            	cflFluxFunctionCoatsIn_ += cflFlux;
+                cflFluxFunctionCoatsIn_ += cflFlux;
             }
     }
 }

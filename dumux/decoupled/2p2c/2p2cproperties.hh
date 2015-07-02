@@ -158,7 +158,7 @@ SET_TYPE_PROP(DecoupledTwoPTwoC, CellData, CellData2P2C<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, TwoPTwoCFluidState<TypeTag>);
 
 
-//! The spatial parameters to be employed. 
+//! The spatial parameters to be employed.
 SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
 //! Switch off permeability regularization at Dirichlet boundaries by default.
 SET_BOOL_PROP(DecoupledTwoPTwoC, RegulateBoundaryPermeability, false);

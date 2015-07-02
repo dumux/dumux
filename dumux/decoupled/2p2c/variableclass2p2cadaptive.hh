@@ -112,12 +112,12 @@ protected:
         {
             secondHalfEdgeIntersection_.push_back(is23);
             interactionRegionsStored = 2;
-        };
+        }
         //! Acess method to the stored intersection (only 2D)
         const IntersectionIterator& getIntersection()
         {
             return secondHalfEdgeIntersection_[0];
-        };
+        }
     };
     std::map<IdType, mpfaData> irregularInterfaceMap_; //!< Storage container for mpfa information
     const Grid& grid_; //!< The grid
@@ -171,32 +171,30 @@ public:
      * \param globalIdx3 The index of the 3rd cell of the interaction region
      */
     void storeMpfaData(const typename GridView::Intersection & irregularIs,
-    					const TransmissivityMatrix& T1,
-    					const GlobalPosition& globalPos3,
-    					const int& globalIdx3)
+                       const TransmissivityMatrix& T1,
+                       const GlobalPosition& globalPos3,
+                       const int& globalIdx3)
     {
-    	IdType intersectionID
-				= grid_.localIdSet().subId(*irregularIs.inside(),
-											irregularIs.indexInInside(), 1);
-    	// mapping is only unique from smaller cell (if *inside and not *outside)
-    	if (irregularIs.inside()->level() < irregularIs.outside()->level())
-		{
-    		// IS is regarded from larger cell: get the unique number as seen from smaller
-    		intersectionID
-				= grid_.localIdSet().subId(*irregularIs.outside(),
-											irregularIs.indexInOutside(), 1);
+        IdType intersectionID = grid_.localIdSet().subId(
+            *irregularIs.inside(), irregularIs.indexInInside(), 1);
+        // mapping is only unique from smaller cell (if *inside and not *outside)
+        if (irregularIs.inside()->level() < irregularIs.outside()->level())
+        {
+            // IS is regarded from larger cell: get the unique number as seen from smaller
+            intersectionID = grid_.localIdSet().subId(
+                *irregularIs.outside(), irregularIs.indexInOutside(), 1);
 
-    		// store as if it was seen from smaller: change i & j
-        	irregularInterfaceMap_[intersectionID].T1_[first][2] = - T1[0];
-    		irregularInterfaceMap_[intersectionID].T1_[first][1] = - T1[1];
-    		irregularInterfaceMap_[intersectionID].T1_[first][0] = - T1[2];
-		}
+            // store as if it was seen from smaller: change i & j
+            irregularInterfaceMap_[intersectionID].T1_[first][2] = - T1[0];
+            irregularInterfaceMap_[intersectionID].T1_[first][1] = - T1[1];
+            irregularInterfaceMap_[intersectionID].T1_[first][0] = - T1[2];
+        }
         else // we look from smaller cell = unique interface
             // proceed with numbering according to Aavatsmark, seen from cell i
             irregularInterfaceMap_[intersectionID].T1_[first] = T1;
 
-		irregularInterfaceMap_[intersectionID].globalPos3_[0] = globalPos3;
-		irregularInterfaceMap_[intersectionID].globalIdx3_[0] = globalIdx3;
+        irregularInterfaceMap_[intersectionID].globalPos3_[0] = globalPos3;
+        irregularInterfaceMap_[intersectionID].globalIdx3_[0] = globalIdx3;
     }
 
 
@@ -254,9 +252,6 @@ public:
         irregularInterfaceMap_[intersectionID].globalIdx3_[0] = globalIdx3;
         // second half edge
         irregularInterfaceMap_[intersectionID].setIntersection(secondHalfEdgeIntersectionIt);
-
-
-        return;
     }
 
     //! Stores 3D Mpfa Data on an intersection
@@ -319,8 +314,6 @@ public:
 
         irregularInterfaceMap_[intersectionID].interactionRegionsStored
             = std::max(irregularInterfaceMap_[intersectionID].interactionRegionsStored, subFaceIdx+1);
-
-        return;
     }
 
     //! Weigths the transmissivity coefficient by the flux area (3D)
@@ -511,7 +504,7 @@ public:
 
         return irregularInterfaceMap_[intersectionID].interactionRegionsStored;
     }
-	//@}
+    //@}
 
 };
 }

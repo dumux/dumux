@@ -237,7 +237,7 @@ public:
 
     void calculateVelocity()
     {
-    	DUNE_THROW(Dune::NotImplemented,"Velocity calculation not implemented in pressure model!");
+        DUNE_THROW(Dune::NotImplemented,"Velocity calculation not implemented in pressure model!");
     }
 
     void updateVelocity()
@@ -291,12 +291,12 @@ public:
      */
     void unsetFixPressureAtIndex(int eIdxGlobal)
     {
-    	fixPressure_.erase(eIdxGlobal);
+        fixPressure_.erase(eIdxGlobal);
     }
 
     void resetFixPressureAtIndex()
     {
-    	fixPressure_.clear();
+        fixPressure_.clear();
     }
 
     /*! \brief Constructs a FVPressure object
@@ -333,9 +333,9 @@ private:
 template<class TypeTag>
 void FVPressure<TypeTag>::initializeMatrix()
 {
-	initializeMatrixRowSize();
+    initializeMatrixRowSize();
     A_.endrowsizes();
-	initializeMatrixIndices();
+    initializeMatrixIndices();
     A_.endindices();
 }
 
@@ -362,8 +362,6 @@ void FVPressure<TypeTag>::initializeMatrixRowSize()
         }
         A_.setrowsize(eIdxGlobalI, rowSize);
     }
-
-    return;
 }
 
 //!Initialize the global matrix of the system of equations to solve
@@ -393,8 +391,6 @@ void FVPressure<TypeTag>::initializeMatrixIndices()
                 A_.addindex(eIdxGlobalI, eIdxGlobalJ);
             }
     }
-
-    return;
 }
 
 
@@ -449,9 +445,9 @@ void FVPressure<TypeTag>::assemble(bool first)
                     // take a hanging node never from the element with smaller level!
                     bool haveSameLevel = (eIt->level() == elementNeighbor->level());
                     // calculate only from one side, but add matrix entries for both sides
-                    // the last condition is needed to properly assemble in the presence 
+                    // the last condition is needed to properly assemble in the presence
                     // of ghost elements
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
+                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
                         && (eIdxGlobalI > eIdxGlobalJ) && haveSameLevel
                         && elementNeighbor->partitionType() == Dune::InteriorEntity)
                         continue;
@@ -470,7 +466,7 @@ void FVPressure<TypeTag>::assemble(bool first)
                     A_[eIdxGlobalI][eIdxGlobalJ] -= entries[matrix];
 
                     // The second condition is needed to not spoil the ghost element entries
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
+                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
                         && elementNeighbor->partitionType() == Dune::InteriorEntity)
                     {
                         f_[eIdxGlobalJ] += entries[rhs];
@@ -502,7 +498,7 @@ void FVPressure<TypeTag>::assemble(bool first)
             A_[eIdxGlobalI][eIdxGlobalI] += entries[matrix];
         }
         // assemble overlap and ghost element contributions
-        else 
+        else
         {
             A_[eIdxGlobalI] = 0.0;
             A_[eIdxGlobalI][eIdxGlobalI] = 1.0;
@@ -511,7 +507,6 @@ void FVPressure<TypeTag>::assemble(bool first)
     } // end grid traversal
 //    printmatrix(std::cout, A_, "global stiffness matrix after assempling", "row", 11,3);
 //    printvector(std::cout, f_, "right hand side", "row", 10);
-    return;
 }
 
 //!Solves the global system of equations to get the spatial distribution of the pressure
@@ -528,13 +523,12 @@ void FVPressure<TypeTag>::solve()
     //set a fixed pressure for a certain cell
     if (fixPressure_.size() > 0)
     {
-    	typename std::map<int, Scalar>::iterator it = fixPressure_.begin();
-    	for (;it != fixPressure_.end();++it)
-    	{
-    		A_[it->first] = 0;
-        	A_[it->first][it->first] = 1;
-        	f_[it->first] = it->second;
-    	}
+        for (auto it = fixPressure_.begin(); it != fixPressure_.end(); ++it)
+        {
+            A_[it->first] = 0;
+            A_[it->first][it->first] = 1;
+            f_[it->first] = it->second;
+        }
     }
 
 //    printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
@@ -544,8 +538,6 @@ void FVPressure<TypeTag>::solve()
     solver.solve(A_, pressure_, f_);
 
 //    printvector(std::cout, pressure_, "pressure", "row", 200, 1, 3);
-
-    return;
 }
 
 } //end namespace Dumux

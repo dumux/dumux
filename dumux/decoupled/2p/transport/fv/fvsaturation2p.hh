@@ -64,7 +64,7 @@ namespace Dumux
  *  In the IMPES models the default setting is:
  *
  * formulation: \f$ p_w \f$ - \f$ S_w \f$ (Property: \a Formulation defined as \a DecoupledTwoPCommonIndices::pwsw)
- * 
+ *
  * compressibility: disabled (Property: \a EnableCompressibility set to \a false)
  *
  * \tparam TypeTag The Type Tag
@@ -251,7 +251,7 @@ public:
     template<class DataEntry>
     bool inPhysicalRange(DataEntry& entry)
     {
-    	return (entry > -1e-6 && entry < 1.0 + 1e-6);
+        return (entry > -1e-6 && entry < 1.0 + 1e-6);
     }
 
     /*! \brief Updates the primary transport variable.
@@ -260,10 +260,10 @@ public:
      */
     void updateTransportedQuantity(TransportSolutionType& updateVec)
     {
-    	if (this->enableLocalTimeStepping())
-    		this->innerUpdate(updateVec);
-    	else
-    		updateSaturationSolution(updateVec);
+        if (this->enableLocalTimeStepping())
+            this->innerUpdate(updateVec);
+        else
+            updateSaturationSolution(updateVec);
     }
 
     /*! \brief Updates the primary transport variable.

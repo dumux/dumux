@@ -47,7 +47,8 @@ private:
 public:
 
     //! For initialization
-    void initialize(){};
+    void initialize()
+    {}
 
     /*! \brief Returns diffusive term for current element face
      *
@@ -87,9 +88,8 @@ public:
                                     Scalar satI, Scalar satJ) const
     {}
 
-
-    //! Constructs a DiffusivePart object
-    /*
+    /*! Constructs a DiffusivePart object
+     *
      *  \param A problem class object
      */
     DiffusivePart(Problem& problem)

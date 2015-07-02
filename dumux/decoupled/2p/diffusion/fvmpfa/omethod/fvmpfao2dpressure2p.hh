@@ -2006,7 +2006,7 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
         {
             if (eIt->partitionType() == Dune::InteriorEntity)
                 continue;
-            
+
             // get the global index of the cell
             int eIdxGlobalI = problem_.variables().index(*eIt);
 

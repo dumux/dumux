@@ -70,7 +70,7 @@ public:
             return 1.;
         else
             return 0.;
-    };
+    }
 
     //! \brief Returns the index of the phase that is present in that cell.
     int presentPhaseIdx() const
@@ -196,7 +196,7 @@ public:
      * and the rock matrix exhibit the same temperature.
      */
     Scalar temperature(int phaseIdx) const
-    { return temperature_; };
+    { return temperature_; }
     //@}
 
     /*!
@@ -290,7 +290,7 @@ public:
     void setPressure(int phaseIdx, Scalar value)
     {
         pressure_[phaseIdx] = value;
-    };
+    }
 
     /*!
      * \brief Sets phase enthalpy

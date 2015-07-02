@@ -91,7 +91,7 @@ namespace Dumux
  *  In the IMPES models the default setting is:
  *
  *  - formulation: \f$ p_w-S_w \f$ (Property: \a Formulation defined as \a DecoupledTwoPCommonIndices::pwsw)
- *  
+ *
  *  - compressibility: disabled (Property: \a EnableCompressibility set to \a false)
  *
  * \tparam TypeTag The Type Tag
@@ -285,8 +285,7 @@ public:
 
     /*! \brief Velocity update
      *
-     *	Reset the velocities in the cellData
-     *
+     * Reset the velocities in the cellData
      */
     void updateVelocity()
     {
@@ -301,9 +300,7 @@ public:
         }
     }
 
-    /*! \brief Globally stores the pressure solution
-     *
-     */
+    //! \brief Globally stores the pressure solution
     void storePressureSolution()
     {
         // iterate through leaf grid

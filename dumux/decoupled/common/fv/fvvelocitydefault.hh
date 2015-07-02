@@ -56,7 +56,8 @@ public:
     {}
 
     //! For initialization
-    void initialize(){};
+    void initialize()
+    {}
 
     //! Local velocity calculation
     void calculateVelocity(const Intersection& intersection, CellData& cellData)

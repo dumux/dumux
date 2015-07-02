@@ -359,7 +359,7 @@ public:
 
     /*! \brief Initializes the adaption indicator class */
     void init()
-    {};
+    {}
 
     bool initializeModel()
     {

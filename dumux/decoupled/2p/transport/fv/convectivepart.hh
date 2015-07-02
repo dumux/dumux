@@ -48,7 +48,8 @@ private:
 
 public:
     //! For initialization
-    void initialize(){};
+    void initialize()
+    {}
 
     /*! \brief Returns convective term for current element face
      *  \param intersection  Intersection of two grid elements/global boundary
@@ -70,8 +71,8 @@ public:
     void getFlux(DimVector& flux, const Intersection& intersection, const Scalar satI, const Scalar satJ) const
     {}
 
-    //! Constructs a ConvectivePart object
-    /*
+    /*! Constructs a ConvectivePart object
+     *
      *  \param problem A problem class object
      */
     ConvectivePart(Problem& problem)

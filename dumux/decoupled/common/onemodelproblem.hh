@@ -134,7 +134,7 @@ public:
                 bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().center()[i]);
             }
         }
-        
+
         timeManager_ = Dune::stackobject_to_shared_ptr<TimeManager>(timeManager);
 
         model_ = Dune::make_shared<Model>(asImp_()) ;
@@ -332,14 +332,14 @@ public:
      *        integration.
      */
     void preTimeStep()
-    { };
+    {}
 
     /*!
      * \brief Called by Dumux::TimeManager in order to do a time
      *        integration on the model.
      */
     void timeIntegration()
-    { };
+    {}
 
     /*!
      * \brief Called by Dumux::TimeManager whenever a solution for a
@@ -350,7 +350,7 @@ public:
      * current solution to disk.
      */
     void postTimeStep()
-    { };
+    {}
 
     /*!
      * \brief Called by the time manager after everything which can be
@@ -473,7 +473,7 @@ public:
                       << "does not override the episodeEnd() method. "
                       << "Doing nothing!\n";
         }
-    };
+    }
 
     // \}
 
@@ -619,7 +619,7 @@ public:
         res.template deserializeEntities<0> (model(), gridView_);
 
         res.deserializeEnd();
-    };
+    }
 
     // \}
 
