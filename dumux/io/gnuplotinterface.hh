@@ -29,7 +29,7 @@
  *       a new GnuplotInterface object has to be created for each plot
  */
 
-#ifndef HAVE_GNUPLOT
+#if !HAVE_GNUPLOT
 #warning Gnuplot has not been found by CMake, no output possible.
 #define GNUPLOT_EXECUTABLE "/usr/bin/gnuplot"
 #endif
