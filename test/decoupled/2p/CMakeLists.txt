@@ -12,7 +12,6 @@ add_dumux_test(test_impesadaptive test_impesadaptive test_impesadaptive.cc
   ${CMAKE_CURRENT_BINARY_DIR}/test_2padaptive-00007.vtu
   ${CMAKE_CURRENT_BINARY_DIR}/test_impesadaptive)
 
-add_executable("test_impeswithamg" EXCLUDE_FROM_ALL test_impeswithamg.cc)
 if(MPI_FOUND)
   add_dumux_test(test_impeswithamg test_impeswithamg test_impeswithamg.cc
     ${CMAKE_SOURCE_DIR}/bin/runTest.sh
