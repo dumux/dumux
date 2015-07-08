@@ -29,6 +29,8 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertreeparser.hh>
 
+#if HAVE_DUNE_MULTIDOMAIN
+
 #include <dumux/common/start.hh>
 #include <dumux/io/interfacemeshcreator.hh>
 
@@ -341,3 +343,15 @@ int main(int argc, char** argv)
     typedef TTAG(TwoCNIZeroEqTwoPTwoCNIProblem) ProblemTypeTag;
     return startLocal<ProblemTypeTag>(argc, argv, printUsage);
 }
+
+#else
+
+#warning You need to have dune-multidomain installed to run this test
+
+int main()
+{
+    std::cerr << "You need to have dune-multidomain installed to run this test\n";
+    return 77;
+}
+
+#endif
