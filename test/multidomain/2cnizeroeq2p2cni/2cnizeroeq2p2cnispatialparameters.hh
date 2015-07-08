@@ -58,9 +58,8 @@ SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNISpatialParams,
 
 
 /*!
- * \ingroup TwoPTwoCNIModel
- * \ingroup ZeroEqTwoCNIModel
  * \ingroup ImplicitTestProblems
+ * \ingroup TwoPTwoCNIZeroEqTwoCNIModel
  * \brief Definition of the spatial parameters for
  *        the coupling of a non-isothermal two-component ZeroEq
  *        and a non-isothermal two-phase two-component Darcy model.

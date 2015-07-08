@@ -4,9 +4,9 @@
 % file instead!!                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-This model implements a one-\/phase flow of an incompressible fluid, that consists of two components. The deformation of the solid matrix is described with a quasi-\/stationary momentum balance equation. The influence of the pore fluid is accounted for through the effective stress concept (Biot 1941). The total stress acting on a rock is partially supported by the rock matrix and partially supported by the pore fluid. The effective stress represents the share of the total stress which is supported by the solid rock matrix and can be determined as a function of the strain according to Hooke's law.
+This model implements a one-\/phase flow of an incompressible fluid, that consists of two components. The deformation of the solid matrix is described with a quasi-\/stationary momentum balance equation. The influence of the pore fluid is accounted for through the effective stress concept (Biot 1941). The total stress acting on a rock is partially supported by the rock matrix and partially supported by the pore fluid. The effective stress represents the share of the total stress which is supported by the solid rock matrix and can be determined as a function of the strain according to Hooke\textquotesingle{}s law.
 
-As an equation for the conservation of momentum within the fluid phase Darcy's approach is used\-: \[ v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho_w {\textbf g} \right) \]
+As an equation for the conservation of momentum within the fluid phase Darcy\textquotesingle{}s approach is used\-: \[ v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho_w {\textbf g} \right) \]
 
 Gravity can be enabled or disabled via the property system. By inserting this into the volume balance of the solid-\/fluid mixture, one gets \[ \frac{\partial \text{div} \textbf{u}}{\partial t} - \text{div} \left\{ \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho_w {\textbf g} \right)\right\} = q \;, \]
 

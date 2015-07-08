@@ -69,12 +69,6 @@ NEW_PROP_TAG(Grid);
 //! Specifies the multidomain grid
 NEW_PROP_TAG(MultiDomainGrid);
 
-//! Specifies the time manager
-NEW_PROP_TAG(TimeManager);
-
-//! Specifies the number of equations in the coupled model
-NEW_PROP_TAG(NumEq);
-
 //! Specifies the number of equations in submodel 1
 NEW_PROP_TAG(NumEq1);
 
@@ -116,9 +110,6 @@ NEW_PROP_TAG(MultiDomainCoupling);
 //! Property tag for the multidomain constraints transformation
 NEW_PROP_TAG(MultiDomainConstraintsTrafo);
 NEW_PROP_TAG(ConstraintsTrafo);
-
-//! Specifies the type of the jacobian matrix as used for the linear solver
-NEW_PROP_TAG(JacobianMatrix);
 
 //! the routines that are used to split and merge solution vectors
 NEW_PROP_TAG(SplitAndMerge);

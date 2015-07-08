@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- * \brief The problem class for the coupling of an isothermal two-component ZeroEq
+ * \brief The problem which couples an isothermal two-component ZeroEq
  *        and an isothermal two-phase two-component Darcy model.
  */
 #ifndef DUMUX_TWOCZEROEQTWOPTWOCPROBLEM_HH
@@ -95,16 +95,16 @@ SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
 }
 
+
 /*!
- * \brief The problem class for the coupling of an isothermal two-component ZeroEq (zeroeq2c)
+ * \ingroup TwoPTwoCZeroEqTwoCModel
+ * \ingroup ImplicitTestProblems
+ * \brief The problem which couples an isothermal two-component ZeroEq (zeroeq2c)
  *        and an isothermal two-phase two-component Darcy model (2p2c).
  *
- *        The problem class for the coupling of a non-isothermal two-component ZeroEq (zeroeq2c)
- *        and an isothermal two-phase two-component Darcy model (2p2c).
- *        It uses the 2p2cCoupling model and the ZeroEq2ccoupling model and provides
- *        the problem specifications for common parameters of the two submodels.
- *        The initial and boundary conditions of the submodels are specified in the two subproblems,
- *        2p2csubproblem.hh and zeroeq2csubproblem.hh, which are accessible via the coupled problem.
+ * It uses the multidomain problem and specifies parameters for the two submodels.
+ * The initial and boundary conditions of the submodels are specified in the two subproblems,
+ * 2p2csubproblem.hh and zeroeq2csubproblem.hh, which are accessible via the coupled problem.
  */
 template <class TypeTag = TTAG(TwoCZeroEqTwoPTwoCProblem) >
 class TwoCZeroEqTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
@@ -169,22 +169,22 @@ public:
         mdGrid.startSubDomainMarking();
 
         // subdivide grid in two subdomains
-        ElementIterator eendit = mdGrid.template leafend<0>();
-        for (ElementIterator elementIt = mdGrid.template leafbegin<0>();
-             elementIt != eendit; ++elementIt)
+        ElementIterator eEndIt = mdGrid.template leafend<0>();
+        for (ElementIterator eIt = mdGrid.template leafbegin<0>();
+             eIt != eEndIt; ++eIt)
         {
             // this is required for parallelization
             // checks if element is within a partition
-            if (elementIt->partitionType() != Dune::InteriorEntity)
+            if (eIt->partitionType() != Dune::InteriorEntity)
                 continue;
 
-            GlobalPosition globalPos = elementIt->geometry().center();
+            GlobalPosition globalPos = eIt->geometry().center();
 
             if (globalPos[1] > interfacePos_)
-                mdGrid.addToSubDomain(zeroeq2c_,*elementIt);
+                mdGrid.addToSubDomain(zeroeq2c_,*eIt);
             else
                 if(globalPos[0] > noDarcyX_)
-                    mdGrid.addToSubDomain(twoPtwoC_,*elementIt);
+                    mdGrid.addToSubDomain(twoPtwoC_,*eIt);
         }
         mdGrid.preUpdateSubDomains();
         mdGrid.updateSubDomains();
@@ -202,7 +202,7 @@ public:
     void episodeEnd()
     { this->timeManager().startNextEpisode(episodeLength_); }
 
-    //! \copydoc Dumux::CoupledProblem::shouldWriteRestartFile()
+    //! \copydoc Dumux::ImplicitProblem::shouldWriteRestartFile()
     bool shouldWriteRestartFile() const
     {
         return ( ((this->timeManager().timeStepIndex() > 0)
@@ -211,7 +211,7 @@ public:
                 || this->timeManager().episodeWillBeOver());
     }
 
-    //! \copydoc Dumux::CoupledProblem::shouldWriteOutput()
+    //! \copydoc Dumux::ImplicitProblem::shouldWriteOutput()
     bool shouldWriteOutput() const
     {
         return ( ((this->timeManager().timeStepIndex() > 0)

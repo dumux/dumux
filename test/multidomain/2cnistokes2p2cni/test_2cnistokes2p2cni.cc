@@ -130,7 +130,7 @@ int startLocal_(int argc, char **argv,
 
     std::string dgfFileName;
     Scalar dt, tEnd;
-    Dune::FieldVector<int, dim> nElements;
+    Dune::FieldVector<int, dim> numElements;
     Scalar interfacePosY, gradingFactorY;
     int gridRefinement;
     bool useInterfaceMeshCreator;
@@ -138,8 +138,8 @@ int startLocal_(int argc, char **argv,
     dgfFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
     dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
     tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd);
-	nElements[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsX);
-    nElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
+    numElements[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsX);
+    numElements[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, CellsY);
     interfacePosY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
     gradingFactorY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, GradingFactorY);
     gridRefinement = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, Refinement);
@@ -150,7 +150,7 @@ int startLocal_(int argc, char **argv,
     if (useInterfaceMeshCreator)
     {
         Dumux::InterfaceMeshCreator<Grid> interfaceMeshCreator;
-        GridCreator::gridPtr() = interfaceMeshCreator.create(dgfFileName, nElements, interfacePosY, gradingFactorY);
+        GridCreator::gridPtr() = interfaceMeshCreator.create(dgfFileName, numElements, interfacePosY, gradingFactorY);
     }
     else
     {
@@ -240,6 +240,7 @@ int startLocal_(int argc, char **argv,
  *
  * \param argc  The number of command line arguments of the program
  * \param argv  The contents of the command line arguments of the program
+ * \param printUsage  Print a usage string for simulations.
  */
 template <class TypeTag>
 int startLocal(int argc, char **argv,

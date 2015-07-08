@@ -30,8 +30,113 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCNIStokesTwoCNIModel
+ * \ingroup TwoPTwoCNIZeroEqTwoCNIModel
  * \brief The extension of the local operator for the coupling of a two-component Stokes model
  *        and a two-phase two-component Darcy model for non-isothermal conditions.
+ *
+ * This model implements the coupling between a free-flow model
+ * and a porous-medium flow model under non-isothermal conditions.
+ * Here the coupling conditions for the individual balance are presented:
+ *
+ * The total mass balance equation:
+ * \f[
+ *  \left[
+ *    \left( \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} \right) \cdot \boldsymbol{n}
+ *  \right]^\textrm{ff}
+ *  = -\left[
+ *      \left( \varrho_\textrm{g} \boldsymbol{v}_\textrm{g}
+ *             + \varrho_\textrm{l} \boldsymbol{v}_\textrm{l} \right) \cdot \boldsymbol{n}
+ *    \right]^\textrm{pm}
+ * \f]
+ * in which \f$n\f$ represents a vector normal to the interface pointing outside of
+ * the specified subdomain.
+ *
+ * The momentum balance (tangential), which corresponds to the Beavers-Jospeh Saffman condition:
+ * \f[
+ *  \left[
+ *   \left( {\boldsymbol{v}}_\textrm{g}
+ *          + \frac{\sqrt{\left(\boldsymbol{K} \boldsymbol{t}_i \right) \cdot \boldsymbol{t}_i}}
+ *                 {\alpha_\textrm{BJ} \mu_\textrm{g}} \boldsymbol{{\tau}}_\textrm{t} \boldsymbol{n}
+ *          \right) \cdot \boldsymbol{t}_i
+ *  \right]^\textrm{ff}
+ *  = 0
+ * \f]
+ * with
+ * \f$
+ * \boldsymbol{{\tau}_\textrm{t}} = \left[ \mu_\textrm{g} + \mu_\textrm{g,t} \right]
+ *                                  \nabla \left( \boldsymbol{v}_\textrm{g}
+ *                                                + \boldsymbol{v}_\textrm{g}^\intercal \right)
+ * \f$
+ * in which the eddy viscosity \f$ \mu_\textrm{g,t} = 0 \f$ for the Stokes equation.
+ *
+ * The momentum balance (normal):
+ * \f[
+ *  \left[
+ *    \left(
+ *      \left\lbrace
+ *        \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} {\boldsymbol{v}}_\textrm{g}^\intercal
+ *        - \boldsymbol{{\tau}}_\textrm{t}
+ *        + {p}_\textrm{g} \boldsymbol{I}
+ *      \right\rbrace \boldsymbol{n}
+ *    \right) \cdot \boldsymbol{n}
+ *  \right]^\textrm{ff}
+ *  = p_\textrm{g}^\textrm{pm}
+ * \f]
+ *
+ * The component mass balance equation (continuity of fluxes):
+ * \f[
+ *  \left[
+ *    \left(
+ *      \varrho_\textrm{g} {X}^\kappa_\textrm{g} {\boldsymbol{v}}_\textrm{g}
+ *      - {\boldsymbol{j}}^\kappa_\textrm{g,ff,t,diff}
+ *    \right) \cdot \boldsymbol{n}
+ *  \right]^\textrm{ff}
+ *  = -\left[
+ *    \left(
+ *      \varrho_\textrm{g} X^\kappa_\textrm{g} \boldsymbol{v}_\textrm{g}
+ *      - \boldsymbol{j}^\kappa_\textrm{g,pm,diff}
+ *      + \varrho_\textrm{l} \boldsymbol{v}_\textrm{l} X^\kappa_\textrm{l}
+ *      - \boldsymbol{j}^\kappa_\textrm{l,pm,diff}
+ *    \right) \cdot \boldsymbol{n}
+ *  \right]^\textrm{pm}
+ *  = 0
+ * \f]
+ * in which the diffusive fluxes \f$ j_\textrm{diff} \f$ are the diffusive fluxes as
+ * they are implemented in the individual subdomain models.
+ *
+ * The component mass balance equation (continuity of mass/ mole fractions):
+ * \f[
+ *  \left[ {X}^{\kappa}_\textrm{g} \right]^\textrm{ff}
+ *  = \left[ X^{\kappa}_\textrm{g} \right]^\textrm{pm}
+ * \f]
+ *
+ * The energy balance equation (continuity of fluxes):
+ * \f[
+ *  \left[
+ *    \left(
+ *      \varrho_\textrm{g} {h}_\textrm{g} {\boldsymbol{v}}_\textrm{g}
+ *      - {h}^\textrm{a}_\textrm{g} {\boldsymbol{j}}^\textrm{a}_\textrm{g,ff,t,diff}
+ *      - {h}^\textrm{w}_\textrm{g} {\boldsymbol{j}}^\textrm{w}_\textrm{g,ff,t,diff}
+ *      - \left( \lambda_\textrm{g} + \lambda_\textrm{g,t} \right) \nabla {T}
+ *    \right) \cdot \boldsymbol{n}
+ *  \right]^\textrm{ff}
+ *  = -\left[
+ *       \left(
+ *         \varrho_\textrm{g} h_\textrm{g} \boldsymbol{v}_\textrm{g}
+ *         + \varrho_\textrm{l} h_\textrm{l} \boldsymbol{v}_\textrm{l}
+ *         - \lambda_\textrm{pm} \nabla T
+ *      \right) \cdot \boldsymbol{n}
+ *    \right]^\textrm{pm}
+ * \f]
+ *
+ * The energy balance equation (continuity of temperature):
+ * \f[
+ *  \left[ {T} \right]^\textrm{ff}
+ *  = \left[ T \right]^\textrm{pm}
+ * \f]
+ *
+ * This is discretized by a fully-coupled vertex-centered finite volume
+ * (box) scheme in space and by the implicit Euler method in time.
  */
 template<class TypeTag>
 class TwoCNIStokesTwoPTwoCNILocalOperator :

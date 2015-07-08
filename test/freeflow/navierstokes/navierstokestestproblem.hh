@@ -176,8 +176,8 @@ namespace Dumux
        *        used for which equation on a given boundary segment.
        *
        * \param values The boundary types for the conservation equations
-       * \param vertex The vertex on the boundary for which the
-       *               conditions needs to be specified
+       * \param globalPos The globalPos on the boundary for which the
+       *                  conditions needs to be specified
        */
       void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
@@ -198,7 +198,7 @@ namespace Dumux
        *        control volume.
        *
        * \param values The dirichlet values for the primary variables
-       * \param vertex The vertex representing the "half volume on the boundary"
+       * \param globalPos The globalPos representing the "half volume on the boundary"
        *
        * For this method, the \a values parameter stores primary variables.
        */

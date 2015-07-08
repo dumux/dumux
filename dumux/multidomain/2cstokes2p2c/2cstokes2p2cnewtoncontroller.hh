@@ -32,6 +32,7 @@ namespace Dumux
 /*!
  * \ingroup Newton
  * \ingroup TwoPTwoCStokesTwoCModel
+ * \ingroup TwoPTwoCZeroEqTwoCModel
  * \brief Implementation of a Newton controller for the coupling of a two-component Stokes model
  *        and a two-phase two-component porous-medium model under isothermal conditions.
  *

@@ -8,7 +8,7 @@ This model solves equations of the form \[ \phi \left( \rho_w \frac{\partial S_w
 
 \[ - \text{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_w + f_n \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q, \]
 
-a non-\/wetting ( $ n $) phase pressure yields \[ - \text{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q, \] and a global pressure leads to \[ - \text{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_{global} + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q. \] Here, $ p_\alpha $ is a phase pressure, $ p_ {global} $ the global pressure of a classical fractional flow formulation (see e.\-g. P. Binning and M. A. Celia, ''Practical implementation of the fractional flow approach to multi-\/phase flow simulation'', Advances in water resources, vol. 22, no. 5, pp. 461-\/478, 1999.), $ p_c = p_n - p_w $ is the capillary pressure, $ \boldsymbol K $ the absolute permeability, $ \lambda = \lambda_w + \lambda_n $ the total mobility depending on the saturation ( $ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha $), $ f_\alpha = \lambda_\alpha / \lambda $ the fractional flow function of a phase, $ \rho_\alpha $ a phase density, $ g $ the gravity constant and $ q $ the source term.
+a non-\/wetting ( $ n $) phase pressure yields \[ - \text{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q, \] and a global pressure leads to \[ - \text{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_{global} + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q. \] Here, $ p_\alpha $ is a phase pressure, $ p_ {global} $ the global pressure of a classical fractional flow formulation (see e.\-g. P. Binning and M. A. Celia, \textquotesingle{}\textquotesingle{}Practical implementation of the fractional flow approach to multi-\/phase flow simulation\textquotesingle{}\textquotesingle{}, Advances in water resources, vol. 22, no. 5, pp. 461-\/478, 1999.), $ p_c = p_n - p_w $ is the capillary pressure, $ \boldsymbol K $ the absolute permeability, $ \lambda = \lambda_w + \lambda_n $ the total mobility depending on the saturation ( $ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha $), $ f_\alpha = \lambda_\alpha / \lambda $ the fractional flow function of a phase, $ \rho_\alpha $ a phase density, $ g $ the gravity constant and $ q $ the source term.
 
 For all cases, $ p = p_D $ on $ \Gamma_{Dirichlet} $, and $ \boldsymbol v_{total} \cdot \boldsymbol n = q_N $ on $ \Gamma_{Neumann} $.
 
@@ -18,7 +18,7 @@ In the I\-M\-P\-E\-S models the default setting is\-:
 
 
 \begin{itemize}
-\item formulation\-: $ p_w-S_w $ (Property\-: {\itshape Formulation} defined as {\itshape \hyperlink{a00099_a601a847774d6e1b2e2a2b469f70c3f22}{Decoupled\-Two\-P\-Common\-Indices\-::pwsw}})
+\item formulation\-: $ p_w-S_w $ (Property\-: {\itshape Formulation} defined as {\itshape \hyperlink{a00095_a601a847774d6e1b2e2a2b469f70c3f22}{Decoupled\-Two\-P\-Common\-Indices\-::pwsw}})
 \item compressibility\-: disabled (Property\-: {\itshape Enable\-Compressibility} set to {\itshape false})
 \end{itemize}
 

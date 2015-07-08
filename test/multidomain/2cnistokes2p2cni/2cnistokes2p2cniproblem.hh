@@ -110,7 +110,7 @@ SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, LinearSolver, SuperLUBackend<TypeTa
 
 /*!
  * \ingroup ImplicitTestProblems
- * \ingroup MultidomainProblems
+ * \ingroup TwoPTwoCNIStokesTwoCNIModel
  * \brief The problem class for the coupling of a non-isothermal two-component Stokes
  *        and a non-isothermal two-phase two-component Darcy model.
  *
@@ -294,22 +294,22 @@ public:
         mdGrid.startSubDomainMarking();
 
         // subdivide grid in two subdomains
-        ElementIterator eendit = mdGrid.template leafend<0>();
-        for (ElementIterator elementIt = mdGrid.template leafbegin<0>();
-             elementIt != eendit; ++elementIt)
+        ElementIterator eEndIt = mdGrid.template leafend<0>();
+        for (ElementIterator eIt = mdGrid.template leafbegin<0>();
+             eIt != eEndIt; ++eIt)
         {
             // this is required for parallelization
             // checks if element is within a partition
-            if (elementIt->partitionType() != Dune::InteriorEntity)
+            if (eIt->partitionType() != Dune::InteriorEntity)
                 continue;
 
-            GlobalPosition globalPos = elementIt->geometry().center();
+            GlobalPosition globalPos = eIt->geometry().center();
 
             if (globalPos[1] > interfacePosY_)
-                mdGrid.addToSubDomain(stokes2cni_,*elementIt);
+                mdGrid.addToSubDomain(stokes2cni_,*eIt);
             else
                 if(globalPos[0] > noDarcyX_)
-                    mdGrid.addToSubDomain(twoPtwoCNI_,*elementIt);
+                    mdGrid.addToSubDomain(twoPtwoCNI_,*eIt);
         }
         mdGrid.preUpdateSubDomains();
         mdGrid.updateSubDomains();

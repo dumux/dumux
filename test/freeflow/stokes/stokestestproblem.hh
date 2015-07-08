@@ -156,7 +156,7 @@ public:
      */
     // \{
 
-    //! \copydoc ImplicitProblem::boundaryTypes()
+    //! \copydoc ImplicitProblem::boundaryTypesAtPos()
     void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
@@ -176,7 +176,7 @@ public:
             values.setDirichlet(massBalanceIdx);
     }
 
-    //! \copydoc ImplicitProblem::dirichlet()
+    //! \copydoc ImplicitProblem::dirichletAtPos()
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &globalPos) const
     {
@@ -240,7 +240,7 @@ public:
         values = Scalar(0.0);
     }
 
-    //! \copydoc ImplicitProblem::initial()
+    //! \copydoc ImplicitProblem::initialAtPos()
     void initialAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
     {

@@ -69,7 +69,7 @@ public:
                         const int fIdx,
                         const ElementVolumeVariables &elemVolVars,
                         const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), onBoundary_(onBoundary), faceIdx_(fIdx)
+        : fvGeometry_(fvGeometry), onBoundary_(onBoundary), fIdx_(fIdx)
     {
         calculateValues_(problem, element, elemVolVars);
         determineUpwindDirection_(elemVolVars);
@@ -160,9 +160,9 @@ public:
     const SCVFace &face() const
     {
         if (onBoundary_)
-            return fvGeometry_.boundaryFace[faceIdx_];
+            return fvGeometry_.boundaryFace[fIdx_];
         else
-            return fvGeometry_.subContVolFace[faceIdx_];
+            return fvGeometry_.subContVolFace[fIdx_];
     }
 
     /*!
@@ -291,7 +291,7 @@ protected:
     // local index of the downwind vertex
     int downstreamIdx_;
     // the index of the considered face
-    int faceIdx_;
+    int fIdx_;
 };
 
 } // end namespace

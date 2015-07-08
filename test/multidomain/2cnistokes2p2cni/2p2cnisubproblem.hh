@@ -83,7 +83,7 @@ SET_BOOL_PROP(TwoPTwoCNISubProblem, ProblemEnableGravity, true);
 
 /*!
  * \ingroup ImplicitTestProblems
- * \ingroup MultidomainProblems
+ * \ingroup TwoPTwoCNIStokesTwoCNIModel
  * \brief Non-isothermal two-phase two-component porous-medium subproblem
  *        with coupling at the top boundary.
  *
@@ -202,7 +202,7 @@ public:
                 << "WaterMass"
                 << std::endl;
     }
-
+   //! \brief The destructor
     ~TwoPTwoCNISubProblem()
     {
         evaporationFile.close();
@@ -345,12 +345,12 @@ public:
     /*!
      * \brief Return the initial phase state inside a control volume.
      *
-     * \param vert The vertex
-     * \param dofIdxGlobal The global index of the degree of freedom
+     * \param vertex The vertex
+     * \param vIdxGlobal The global index of the vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const Vertex &vert,
-                             const int &dofIdxGlobal,
+    int initialPhasePresence(const Vertex &vertex,
+                             const int &vIdxGlobal,
                              const GlobalPosition &globalPos) const
     {
         return bothPhases;

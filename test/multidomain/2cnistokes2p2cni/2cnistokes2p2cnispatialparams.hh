@@ -59,7 +59,7 @@ SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNISpatialParams,
 
 /*!
  * \ingroup ImplicitTestProblems
- * \ingroup MultidomainProblems
+ * \ingroup TwoPTwoCNIStokesTwoCNIModel
  * \brief Definition of the spatial parameters for
  *        the coupling of an non-isothermal two-component Stokes
  *        and an non-isothermal two-phase two-component Darcy model.

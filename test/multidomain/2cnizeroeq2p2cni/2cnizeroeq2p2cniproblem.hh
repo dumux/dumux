@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- * \brief The problem class for the coupling of a non-isothermal two-component ZeroEq
+ * \brief The problem which couples a non-isothermal two-component ZeroEq
  *        and a non-isothermal two-phase two-component Darcy model.
  */
 #ifndef DUMUX_TWOCNIZEROEQTWOPTWOCNIPROBLEM_HH
@@ -96,15 +96,15 @@ SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, LinearSolver, UMFPackBackend<TypeTa
 }
 
 /*!
- * \brief The problem class for the coupling of a non-isothermal two-component ZeroEq (zeroeq2cni)
+ * \ingroup ImplicitTestProblems
+ * \ingroup TwoPTwoCNIZeroEqTwoCNIModel
+ *
+ * \brief The problem which couples a non-isothermal two-component ZeroEq (zeroeq2cni)
  *        and a non-isothermal two-phase two-component Darcy model (2p2cni).
  *
- *        The problem class for the coupling of a non-isothermal two-component ZeroEq (zeroeq2cni)
- *        and a non-isothermal two-phase two-component Darcy model (2p2cni).
- *        It uses the 2p2cniCoupling model and the ZeroEq2cnicoupling model and provides
- *        the problem specifications for common parameters of the two submodels.
- *        The initial and boundary conditions of the submodels are specified in the two subproblems,
- *        2p2cnisubproblem.hh and zeroeq2cnisubproblem.hh, which are accessible via the coupled problem.
+ * It uses the multidomain problem and specifies parameters for the two submodels.
+ * The initial and boundary conditions of the submodels are specified in the two subproblems,
+ * 2p2csubproblem.hh and zeroeq2csubproblem.hh, which are accessible via the coupled problem.
  */
 template <class TypeTag = TTAG(TwoCNIZeroEqTwoPTwoCNIProblem) >
 class TwoCNIZeroEqTwoPTwoCNIProblem : public MultiDomainProblem<TypeTag>
@@ -125,9 +125,9 @@ class TwoCNIZeroEqTwoPTwoCNIProblem : public MultiDomainProblem<TypeTag>
 
 public:
     /*!
-     * \brief docme
+     * \brief The problem for the coupling of ZeroEq and Darcy flow
      *
-     * \param hostGrid docme
+     * \param mdGrid The multidomain grid
      * \param timeManager The TimeManager which is used by the simulation
      *
      */
@@ -172,21 +172,21 @@ public:
         mdGrid.startSubDomainMarking();
 
         // subdivide grid in two subdomains
-        ElementIterator eendit = mdGrid.template leafend<0>();
-        for (ElementIterator elementIt = mdGrid.template leafbegin<0>();
-             elementIt != eendit; ++elementIt)
+        ElementIterator eEndIt = mdGrid.template leafend<0>();
+        for (ElementIterator eIt = mdGrid.template leafbegin<0>();
+             eIt != eEndIt; ++eIt)
         {
             // this is required for parallelization checks if element is within a partition
-            if (elementIt->partitionType() != Dune::InteriorEntity)
+            if (eIt->partitionType() != Dune::InteriorEntity)
                 continue;
 
-            GlobalPosition globalPos = elementIt->geometry().center();
+            GlobalPosition globalPos = eIt->geometry().center();
 
             if (globalPos[1] > interfacePos_)
-                mdGrid.addToSubDomain(zeroeq2cni_,*elementIt);
+                mdGrid.addToSubDomain(zeroeq2cni_,*eIt);
             else
                 if(globalPos[0] > noDarcyX1_ && globalPos[0] < noDarcyX2_)
-                    mdGrid.addToSubDomain(twoPtwoCNI_,*elementIt);
+                    mdGrid.addToSubDomain(twoPtwoCNI_,*eIt);
         }
         mdGrid.preUpdateSubDomains();
         mdGrid.updateSubDomains();
@@ -196,11 +196,11 @@ public:
         gridinfo(this->sdGrid2());
     }
 
-    //! \copydoc Dumux::CoupledProblem::episodeEnd()
+    //! \copydoc Dumux::ImplicitProblem::episodeEnd()
     void episodeEnd()
     { this->timeManager().startNextEpisode(episodeLength_); }
 
-    //! \copydoc Dumux::CoupledProblem::shouldWriteRestartFile()
+    //! \copydoc Dumux::ImplicitProblem::shouldWriteRestartFile()
     bool shouldWriteRestartFile() const
     {
         return ( ((this->timeManager().timeStepIndex() > 0)
@@ -209,7 +209,7 @@ public:
                 || this->timeManager().episodeWillBeOver());
     }
 
-    //! \copydoc Dumux::CoupledProblem::shouldWriteOutput()
+    //! \copydoc Dumux::ImplicitProblem::shouldWriteOutput()
     bool shouldWriteOutput() const
     {
         return ( ((this->timeManager().timeStepIndex() > 0)

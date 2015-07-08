@@ -77,7 +77,7 @@ SET_BOOL_PROP(TwoPTwoCSubProblem, ProblemEnableGravity, true);
 
 /*!
  * \ingroup ImplicitTestProblems
- * \ingroup MultidomainProblems
+ * \ingroup TwoPTwoCStokesTwoCModel
  * \brief Isothermal two-phase two-component porous-medium subproblem
  *        with coupling at the top boundary.
  *
@@ -318,11 +318,11 @@ public:
      * \brief Return the initial phase state inside a control volume.
      *
      * \param vertex The vertex
-     * \param dofIdxGlobal The global index of the degree of freedom
+     * \param vIdxGlobal The global index of the vertex
      * \param globalPos The global position
      */
     int initialPhasePresence(const Vertex &vertex,
-                             const int &dofIdxGlobal,
+                             const int &vIdxGlobal,
                              const GlobalPosition &globalPos) const
     {
         return bothPhases;

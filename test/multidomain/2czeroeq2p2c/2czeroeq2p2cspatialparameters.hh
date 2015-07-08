@@ -58,8 +58,7 @@ SET_TYPE_PROP(TwoCZeroEqTwoPTwoCSpatialParams,
 
 
 /*!
- * \ingroup TwoPTwoCModel
- * \ingroup ZeroEqModel
+ * \ingroup TwoPTwoCZeroEqTwoCModel
  * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for
  *        the coupling of an isothermal two-component ZeroEq

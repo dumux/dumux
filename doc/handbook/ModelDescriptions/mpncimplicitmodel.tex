@@ -6,7 +6,7 @@
 
 This model implements a $M$-\/phase flow of a fluid mixture composed of $N$ chemical species. The phases are denoted by lower index $\alpha \in \{ 1, \dots, M \}$. All fluid phases are mixtures of $N \geq M - 1$ chemical species which are denoted by the upper index $\kappa \in \{ 1, \dots, N \} $.
 
-The momentum approximation can be selected via \char`\"{}\-Base\-Flux\-Variables\char`\"{}\-: Darcy (\hyperlink{a00278}{Implicit\-Darcy\-Flux\-Variables}) and Forchheimer (\hyperlink{a00279}{Implicit\-Forchheimer\-Flux\-Variables}) relations are available for all Box models.
+The momentum approximation can be selected via \char`\"{}\-Base\-Flux\-Variables\char`\"{}\-: Darcy (\hyperlink{a00280}{Implicit\-Darcy\-Flux\-Variables}) and Forchheimer (\hyperlink{a00281}{Implicit\-Forchheimer\-Flux\-Variables}) relations are available for all Box models.
 
 By inserting this into the equations for the conservation of the mass of each component, one gets one mass-\/continuity equation for each component $\kappa$ \[ \sum_{\kappa} \left( \phi \frac{\partial \left(\varrho_\alpha x_\alpha^\kappa S_\alpha\right)}{\partial t} + \mathrm{div}\; \left\{ v_\alpha \frac{\varrho_\alpha}{\overline M_\alpha} x_\alpha^\kappa \right\} \right) = q^\kappa \] with $\overline M_\alpha$ being the average molar mass of the phase $\alpha$\-: \[ \overline M_\alpha = \sum_\kappa M^\kappa \; x_\alpha^\kappa \]
 
@@ -20,7 +20,7 @@ These three equations constitute a non-\/linear complementarity problem, which c
 
 Several non-\/linear complementarity functions have been suggested, e.\-g. the Fischer-\/\-Burmeister function \[ \Phi(a,b) = a + b - \sqrt{a^2 + b^2} \;. \] This model uses \[ \Phi(a,b) = \min \{a, b \}\;, \] because of its piecewise linearity.
 
-These equations are then discretized using a fully-\/implicit vertex centered finite volume scheme (often known as 'box'-\/scheme) for spatial discretization and the implicit Euler method as temporal discretization.
+These equations are then discretized using a fully-\/implicit vertex centered finite volume scheme (often known as \textquotesingle{}box\textquotesingle{}-\/scheme) for spatial discretization and the implicit Euler method as temporal discretization.
 
 The model assumes local thermodynamic equilibrium and uses the following primary variables\-:
 \begin{itemize}

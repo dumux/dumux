@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \brief Non-isothermal two-phase two-component porous-medium subproblem
  *        with coupling at the top boundary.
  */
@@ -82,14 +81,18 @@ SET_BOOL_PROP(TwoPTwoCNISubProblem, ProblemEnableGravity, true);
 
 /*!
  * \ingroup ImplicitTestProblems
- * \ingroup MultidomainProblems
+ * \ingroup TwoPTwoCNIZeroEqTwoCNIModel
  * \brief Non-isothermal two-phase two-component porous-medium subproblem
  *        with coupling at the top boundary.
  *
- * \todo update description
+ * The porous-medium subdomain is sized 0.25m times 0.25m. The boundary conditions
+ * are Neumann no-flow everywhere, except at the top, where coupling conditions
+ * are applied to all balance equations. They handle the exchange to the free-flow
+ * subdomain. At the bottom of the porous-medium subdomain a constant temperature is
+ * set.
  *
- * This sub problem uses the \ref TwoPTwoCModel. It is part of the 2p2cni model and
- * is combined with the zeroeq2cnisubproblem for the free flow domain.
+ * This subproblem uses the \ref TwoPTwoCNIModel. It is part of a multidomain model and
+ * combined with the zeroeq2cnisubproblem for the free flow domain.
  */
 template <class TypeTag = TTAG(TwoPTwoCNISubProblem) >
 class TwoPTwoCNISubProblem : public ImplicitPorousMediaProblem<TypeTag>
@@ -275,11 +278,11 @@ public:
      * \brief Return the initial phase state inside a control volume.
      *
      * \param vertex The vertex
-     * \param globalIdx The index of the global vertex
+     * \param vIdxGlobal The global index of the vertex
      * \param globalPos The global position
      */
     int initialPhasePresence(const Vertex &vertex,
-                             const int &globalIdx,
+                             const int &vIdxGlobal,
                              const GlobalPosition &globalPos) const
     {
         return bothPhases;

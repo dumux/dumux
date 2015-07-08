@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- * \brief  Definition of an isothermal compositional ZeroEq problem
+ * \brief  Definition of an isothermal compositional ZeroEqnc problem
  */
 #ifndef DUMUX_ZEROEQTWOCTESTPROBLEM_HH
 #define DUMUX_ZEROEQTWOCTESTPROBLEM_HH
@@ -69,14 +69,19 @@ SET_BOOL_PROP(ZeroEq2cTestProblem, ProblemEnableGravity, false);
 }
 
 /*!
+ * \ingroup BoxZeroEqnCModel
  * \ingroup ImplicitTestProblems
- * \ingroup ZeroEqTwoCModel
- * \brief Compositional ZeroEq flow problem .
+ * \brief isothermal compositional ZeroEqnc flow problem with injection from the left.
  *
- * \todo This is just some arbitrary test problem, for which the description
- *       has to be added
+ * The domain is sized 3m times 1m. Air is flowing in a pipe from left to right.
+ * Thus the momentum balance has Dirichlet conditions (inflow) on the left and
+ * no-slip on top and on bottom, on the right outflow conditions are applied. The total
+ * mass balance has outflow boundary conditions everywhere, except at the right where
+ * Dirichlet values are set. Water vapor is injected in the middle of the left border
+ * and is mixed and transported in the air stream.
  *
- * This problem uses the \ref ZeroEqTwoCModel.
+ * This problem uses the \ref ZeroEqncModel with the Prandtl mixing length model for
+ * the eddy viscosity and the model by Meier and Rotta for the eddy diffusivity.
  *
  * To run the simulation execute the following line in shell:<br>
  * <tt>./test_zeroeq2c -ParameterFile ./test_zeroeq2c.input</tt>
@@ -157,17 +162,14 @@ public:
     // \{
 
     /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param values The boundary types for the conservation equations
-     * \param vertex The vertex on the boundary for which the
-     *               conditions needs to be specified
+     * \name Boundary conditions
      */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
-    {
-        const GlobalPosition globalPos = vertex.geometry().center();
+    // \{
 
+    //! \copydoc ImplicitProblem::boundaryTypesAtPos()
+    void boundaryTypesAtPos(BoundaryTypes &values,
+                            const GlobalPosition &globalPos) const
+    {
         values.setAllDirichlet();
 
         if (onRightBoundary_(globalPos)
@@ -190,19 +192,14 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     *
-     * A NEUMANN condition for the Stokes equation corresponds to:
-     * \f[ -\mu \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N \f]
+     * \copydoc ImplicitProblem::neumann()
+     * A neumann condition for the RANS momentum equation equation corresponds to:
+     * \f[ - \left[ \mu + \mu_\textrm{t} \right] \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N \f]
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
+                 const FVElementGeometry &fvGeometry,
+                 const Intersection &intersection,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {

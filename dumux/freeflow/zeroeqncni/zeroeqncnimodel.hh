@@ -35,39 +35,48 @@ namespace Dumux
  * \ingroup BoxZeroEqncniModel
  * \brief Adaptation of the box scheme to the non-isothermal compositional ZeroEq model.
  *
- * This model implements a non-isothermal compositional ZeroEq Navier Stokes flow (RANS)
- * of a fluid solving the momentum balance,the mass balance,
- * the conservation equation for one component and the energy balance.
+ * This model implements an single-phase non-isothermal compositional free flow
+ * solving the mass and the momentum balance. For the momentum balance
+ * the Reynolds-averaged Navier-Stokes (RANS) equation with zero equation
+ * (algebraic) turbulence model is used.
  *
- * \todo update balance equations
- * Momentum Balance (has to be updated):
+ * Mass balance:
  * \f[
- *   \frac{\partial \left(\varrho_g {\boldsymbol{v}}_g\right)}{\partial t}
- *   + \boldsymbol{\nabla} \boldsymbol{\cdot} \left(p_g {\bf {I}}
- *   - \mu_g \left(\boldsymbol{\nabla} \boldsymbol{v}_g
- *   + \boldsymbol{\nabla} \boldsymbol{v}_g^T\right)\right)
- *   - \varrho_g {\bf g} = 0,
+ *  \frac{\partial \varrho_\textrm{g}}{\partial t}
+ *  + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g}\right)
+ *  - q_\textrm{g} = 0
  * \f]
  *
- * \todo update balance equations
- * Mass balance (has to be updated):
+ * Momentum Balance:
  * \f[
- *  \frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
+ *   \frac{\partial \left(\varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g}\right)}{\partial t}
+ *   + \boldsymbol{\nabla} \boldsymbol{\cdot} \left(
+ *     \varrho_\textrm{g} {\boldsymbol{v}_\textrm{g} {\boldsymbol{v}}_\textrm{g}}
+ *     - \left[ \mu_\textrm{g} + \mu_\textrm{g,t} \right]
+ *       \left(\boldsymbol{\nabla} \boldsymbol{v}_\textrm{g}
+ *             + \boldsymbol{\nabla} \boldsymbol{v}_\textrm{g}^T \right)
+ *   \right)
+ *   + \left(p_\textrm{g} {\bf {I}} \right)
+ *   - \varrho_\textrm{g} {\bf g} = 0,
  * \f]
  *
- * \todo update balance equations
- * Component mass balance equation (has to be updated):
+ * Component mass balance equations:
  * \f[
- *  \frac{\partial \left(\varrho_g X_g^\kappa\right)}{\partial t}
- *   + \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_g {\boldsymbol{v}}_g X_g^\kappa
- *   - D^\kappa_g \varrho_g \boldsymbol{\nabla} X_g^\kappa \right)
- *   - q_g^\kappa = 0
+ *  \frac{\partial \left(\varrho_\textrm{g} X_\textrm{g}^\kappa\right)}{\partial t}
+ *  + \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} X_\textrm{g}^\kappa
+ *  - \left[ D^\kappa_\textrm{g} + D^\kappa_\textrm{g,t} \right]
+ *    \varrho_\textrm{g} \frac{M^\kappa}{M_\textrm{g}} \boldsymbol{\nabla} x_\textrm{g}^\kappa \right)
+ *  - q_\textrm{g}^\kappa = 0
  * \f]
  *
- * \todo update balance equations
- *  Energy balance equation (has to be updated):
+ * Energy balance equation:
  * \f[
- *  -
+ *  \frac{\partial (\varrho_\textrm{g}  u_\textrm{g})}{\partial t}
+ *  + \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_\textrm{g} h_\textrm{g} {\boldsymbol{v}}_\textrm{g}
+ *  - \sum_\kappa \left( h^\kappa_\textrm{g} \left[ D^\kappa_\textrm{g} + D^\kappa_\textrm{g,t} \right]
+ *                       \varrho_\textrm{g} \frac{M^\kappa}{M_\textrm{g}} \nabla x^\kappa_\textrm{g} \right)
+ *  - \left[ \lambda_\textrm{g} + \lambda_\textrm{g,t} \right] \boldsymbol{\nabla} T \right)
+ *  - q_\textrm{T} = 0
  * \f]
  *
  * This is discretized by a fully-coupled vertex-centered finite volume
@@ -132,7 +141,7 @@ public:
         }
     }
 
-    //! \copydoc BoxModel::addOutputVtkFields
+    //! \copydoc ImplicitModel::addOutputVtkFields
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
@@ -159,36 +168,36 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator endit = this->gridView_().template end<0>();
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
 
-        for (; elemIt != endit; ++elemIt)
+        for (; eIt != eEndIt; ++eIt)
         {
-            int idx = this->elementMapper().map(*elemIt);
+            int idx = this->elementMapper().map(*eIt);
             rank[idx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
-            int numLocalVerts = elemIt->template count<dim>();
+            int numLocalVerts = eIt->template count<dim>();
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                volVars.update(sol[globalIdx],
+                int vIdxGlobal = this->vertexMapper().map(*eIt, i, dim);
+                volVars.update(sol[vIdxGlobal],
                                this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                i,
                                false);
 
-                pN[globalIdx] = volVars.pressure()*scale_;
-                delP[globalIdx] = volVars.pressure()*scale_ - 1e5;
-                Xw[globalIdx] = volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
-                rho[globalIdx] = volVars.density()*scale_*scale_*scale_;
-                mu[globalIdx] = volVars.dynamicViscosity()*scale_;
-                velocity[globalIdx] = volVars.velocity();
-                velocity[globalIdx] *= 1/scale_;
-                T[globalIdx] = volVars.temperature();
+                pN[vIdxGlobal] = volVars.pressure()*scale_;
+                delP[vIdxGlobal] = volVars.pressure()*scale_ - 1e5;
+                Xw[vIdxGlobal] = volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
+                rho[vIdxGlobal] = volVars.density()*scale_*scale_*scale_;
+                mu[vIdxGlobal] = volVars.dynamicViscosity()*scale_;
+                velocity[vIdxGlobal] = volVars.velocity();
+                velocity[vIdxGlobal] *= 1/scale_;
+                T[vIdxGlobal] = volVars.temperature();
             }
         }
         writer.attachVertexData(pN, "P");
@@ -205,35 +214,35 @@ public:
         // just to have the actual values plotted
         asImp_().updateWallProperties();
 
-        elemIt = this->gridView_().template begin<0>();
-        endit = this->gridView_().template end<0>();
+        eIt = this->gridView_().template begin<0>();
+        eEndIt = this->gridView_().template end<0>();
 
-        for (; elemIt != endit; ++elemIt)
+        for (; eIt != eEndIt; ++eIt)
         {
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                false);
 
-            IntersectionIterator isIt = this->gridView_().ibegin(*elemIt);
-            const IntersectionIterator &endIt = this->gridView_().iend(*elemIt);
+            IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
+            const IntersectionIterator &endIt = this->gridView_().iend(*eIt);
 
             for (; isIt != endIt; ++isIt)
             {
-                int faceIdx = isIt->indexInInside();
+                int fIdx = isIt->indexInInside();
 
                 FluxVariables fluxVars(this->problem_(),
-                                                    *elemIt,
+                                                    *eIt,
                                                     fvGeometry,
-                                                    faceIdx,
+                                                    fIdx,
                                                     elemVolVars,
                                                     false);
 
-                GlobalPosition globalPos = fvGeometry.subContVolFace[faceIdx].ipGlobal;
+                GlobalPosition globalPos = fvGeometry.subContVolFace[fIdx].ipGlobal;
 
                 if (asImp_().shouldWriteSCVData(globalPos))
                 asImp_().writeSCVData(volVars, fluxVars, globalPos);

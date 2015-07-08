@@ -31,6 +31,7 @@ namespace Dumux
 /*!
  * \ingroup ImplicitLocalResidual
  * \ingroup TwoPTwoCNIStokesTwoCNIModel
+ * \ingroup TwoPTwoCNIZeroEqTwoCNIModel
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the coupled box model.
  */

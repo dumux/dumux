@@ -33,6 +33,7 @@ namespace Dumux
 /*!
  * \ingroup ImplicitLocalResidual
  * \ingroup TwoPTwoCStokesTwoCModel
+ * \ingroup TwoPTwoCZeroEqTwoCModel
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the coupled compositional Stokes box model.
  *        It is derived from the compositional Stokes box model.

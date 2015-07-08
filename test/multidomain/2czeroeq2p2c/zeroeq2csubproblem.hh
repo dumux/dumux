@@ -88,18 +88,17 @@ SET_SCALAR_PROP(ZeroEq2cSubProblem, FreeFlowSinusTemperaturePeriod, 3600.0);
 
 /*!
  * \ingroup ImplicitTestProblems
- * \ingroup MultidomainProblems
- * \brief ZeroEq2c problem with air flowing from the left to the right.
+ * \ingroup TwoPTwoCZeroEqTwoCModel
+ * \brief Isothermal two-component ZeroEq subproblem with air flowing
+ *        from the left to the right and coupling at the bottom.
  *
- * \todo update test description
- * The zeroeq subdomain is sized 1m times 1m. The boundary conditions for the momentum balances
- * are all set to Dirichlet. The mass balance receives
- * outflow bcs, which are replaced in the localresidual by the sum
- * of the two momentum balances. In the middle of the right boundary,
- * one vertex receives Dirichlet bcs, to set the pressure level.
+ * The free-flow subdomain is sized 0.5m times 0.5m. Dry air is flowing from left (Dirichlet)
+ * to right (outflow), at the right half of the bottom the coupling conditions
+ * are applied to all balance equations. They handle the exchange to the porous-medium
+ * subdomain.
  *
- * This sub problem uses the \ref ZeroEqTwoCModel. It is part of the 2czeroeq2p2c model and
- * is combined with the 2p2csubproblem for the Darcy domain.
+ * This subproblem uses the \ref ZeroEqncModel. It is part of a multidomain model and
+ * combined with the 2p2csubproblem for the porous-medium domain.
  */
 template <class TypeTag>
 class ZeroEq2cSubProblem : public ZeroEqProblem<TypeTag>
@@ -178,11 +177,11 @@ public:
     }
 
     // functions have to be overwritten, otherwise they remain uninitialised
-    //! \copydoc BoxProblem::&bBoxMin()
+    //! \copydoc ImplicitProblem::bBoxMin()
     const GlobalPosition &bBoxMin() const
     { return bBoxMin_; }
 
-    //! \copydoc BoxProblem::&bBoxMax()
+    //! \copydoc ImplicitProblem::bBoxMax()
     const GlobalPosition &bBoxMax() const
     { return bBoxMax_; }
 

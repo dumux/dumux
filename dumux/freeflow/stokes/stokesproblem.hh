@@ -30,7 +30,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxStokesProblems
+ * \ingroup ImplicitBaseProblems
+ * \ingroup BoxStokesModel
  * \brief Base class for all problems which use the Stokes box model.
  *
  * This implements gravity (if desired) and a function returning the temperature.

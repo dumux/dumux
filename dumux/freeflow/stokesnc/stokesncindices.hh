@@ -34,7 +34,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxStokesncModel
- * \ingroup BoxIndices
+ * \ingroup ImplicitIndices
  * \brief The common indices for the compositional n component Stokes box model.
  *
  * \tparam PVOffset The first index in a primary variable vector.

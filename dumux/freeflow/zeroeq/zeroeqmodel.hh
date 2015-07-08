@@ -35,29 +35,29 @@ namespace Dumux
  * \ingroup BoxZeroEqModel
  * \brief Adaptation of the box scheme to the ZeroEq model.
  *
- * This model implements an isothermal ZeroEq Navier Stokes flow (RANS) of a fluid
- * solving the momentum balance and the mass balance.
- *
- * \todo dynamic size of wallInterval struct
- *
- * \todo check balance equations
- * Momentum Balance:
- * \f[
- *   \frac{\partial \left(\varrho_g {\boldsymbol{v}}_g\right)}{\partial t}
- *   + \boldsymbol{\nabla} \boldsymbol{\cdot} \left(
- *     \varrho_g {\boldsymbol{v}}_g {\boldsymbol{v}}_g}
- *   - \mu_g \left(\boldsymbol{\nabla} \boldsymbol{v}_g
- *                 + \boldsymbol{\nabla} \boldsymbol{v}_g^T\right)
- *   - \mu_{g,t} \left(\boldsymbol{\nabla} \boldsymbol{v}_g
- *                     + \boldsymbol{\nabla} \boldsymbol{v}_g^T\right)
- *   + \left(p_g {\bf {I}}
- *   \right)
- *   - \varrho_g {\bf g} = 0,
- * \f]
+ * This model implements an single-phase isothermal free flow
+ * solving the mass and the momentum balance. For the momentum balance
+ * the Reynolds-averaged Navier-Stokes (RANS) equation with zero equation
+ * (algebraic) turbulence model is used.
  *
  * Mass balance:
  * \f[
- *  \frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
+ *  \frac{\partial \varrho_\textrm{g}}{\partial t}
+ *  + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g}\right)
+ *  - q_\textrm{g} = 0
+ * \f]
+ *
+ * Momentum Balance:
+ * \f[
+ *   \frac{\partial \left(\varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g}\right)}{\partial t}
+ *   + \boldsymbol{\nabla} \boldsymbol{\cdot} \left(
+ *     \varrho_\textrm{g} {\boldsymbol{v}_\textrm{g} {\boldsymbol{v}}_\textrm{g}}
+ *     - \left[ \mu_\textrm{g} + \mu_\textrm{g,t} \right]
+ *       \left(\boldsymbol{\nabla} \boldsymbol{v}_\textrm{g}
+ *             + \boldsymbol{\nabla} \boldsymbol{v}_\textrm{g}^T \right)
+ *   \right)
+ *   + \left(p_\textrm{g} {\bf {I}} \right)
+ *   - \varrho_\textrm{g} {\bf g} = 0,
  * \f]
  *
  * This is discretized by a fully-coupled vertex-centered finite volume
@@ -141,21 +141,21 @@ public:
         ElementVolumeVariables elemVolVars;
 
         // Loop over elements
-        ElementIterator elemIt = this->problem_.gridView().template begin<0>();
-        ElementIterator endit = this->problem_.gridView().template end<0>();
-        for (; elemIt != endit; ++elemIt)
+        ElementIterator eIt = this->problem_.gridView().template begin<0>();
+        ElementIterator eEndIt = this->problem_.gridView().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
         {
-            if (elemIt->partitionType() != Dune::InteriorEntity)
+            if (eIt->partitionType() != Dune::InteriorEntity)
                 continue;
 
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemVolVars.update(this->problem_(), *elemIt, fvGeometry);
-            this->localResidual().evalFluxes(*elemIt, elemVolVars);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemVolVars.update(this->problem_(), *eIt, fvGeometry);
+            this->localResidual().evalFluxes(*eIt, elemVolVars);
 
             bool hasLeft = false;
             bool hasRight = false;
             for (int i = 0; i < fvGeometry.numVertices; i++) {
-                const GlobalPosition &global = fvGeometry.subContVol[i].global;
+                const GlobalPosition &globalPos = fvGeometry.subContVol[i].global;
                 if (globalI[axis] < coordVal)
                     hasLeft = true;
                 else if (globalI[axis] >= coordVal)
@@ -165,7 +165,7 @@ public:
                 continue;
 
             for (int i = 0; i < fvGeometry.numVertices; i++) {
-                const GlobalPosition &global = fvGeometry.subContVol[i].global;
+                const GlobalPosition &globalPos = fvGeometry.subContVol[i].global;
                 if (globalI[axis] < coordVal)
                     flux += this->localResidual().residual(i);
             }
@@ -213,34 +213,34 @@ public:
         {}
 
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator endit = this->gridView_().template end<0>();
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
 
-        for (; elemIt != endit; ++elemIt)
+        for (; eIt != eEndIt; ++eIt)
         {
-            int idx = this->elementMapper().map(*elemIt);
+            int idx = this->elementMapper().map(*eIt);
             rank[idx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
 
-            int numLocalVerts = elemIt->template count<dim>();
+            int numLocalVerts = eIt->template count<dim>();
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                volVars.update(sol[globalIdx],
+                int vIdxGlobal = this->vertexMapper().map(*eIt, i, dim);
+                volVars.update(sol[vIdxGlobal],
                                this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                i,
                                false);
 
-                pN[globalIdx] = volVars.pressure();
-                delP[globalIdx] = volVars.pressure() - 1e5;
-                rho[globalIdx] = volVars.density();
-                mu[globalIdx] = volVars.dynamicViscosity();
-                velocity[globalIdx] = volVars.velocity();
+                pN[vIdxGlobal] = volVars.pressure();
+                delP[vIdxGlobal] = volVars.pressure() - 1e5;
+                rho[vIdxGlobal] = volVars.density();
+                mu[vIdxGlobal] = volVars.dynamicViscosity();
+                velocity[vIdxGlobal] = volVars.velocity();
             };
         }
 
@@ -254,35 +254,35 @@ public:
         // ensure that the actual values are given out
         asImp_().updateWallProperties();
 
-        elemIt = this->gridView_().template begin<0>();
-        endit = this->gridView_().template end<0>();
+        eIt = this->gridView_().template begin<0>();
+        eEndIt = this->gridView_().template end<0>();
 
-        for (; elemIt != endit; ++elemIt)
+        for (; eIt != eEndIt; ++eIt)
         {
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                false);
 
-            IntersectionIterator isIt = this->gridView_().ibegin(*elemIt);
-            const IntersectionIterator &endIt = this->gridView_().iend(*elemIt);
+            IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
+            const IntersectionIterator &endIt = this->gridView_().iend(*eIt);
 
             for (; isIt != endIt; ++isIt)
             {
-                int faceIdx = isIt->indexInInside();
+                int fIdx = isIt->indexInInside();
 
                 FluxVariables fluxVars(this->problem_(),
-                                                    *elemIt,
+                                                    *eIt,
                                                     fvGeometry,
-                                                    faceIdx,
+                                                    fIdx,
                                                     elemVolVars,
                                                     false);
 
-                GlobalPosition globalPos = fvGeometry.subContVolFace[faceIdx].ipGlobal;
+                GlobalPosition globalPos = fvGeometry.subContVolFace[fIdx].ipGlobal;
 
                 if (asImp_().shouldWriteSCVData(globalPos))
                     asImp_().writeSCVData(volVars, fluxVars, globalPos);
@@ -760,31 +760,31 @@ public:
         FVElementGeometry fvGeometry;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator endit = this->gridView_().template end<0>();
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
 
-        for (; elemIt != endit; ++elemIt)
+        for (; eIt != eEndIt; ++eIt)
         {
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                false);
 
-            for (int faceIdx = 0; faceIdx < fvGeometry.numScvf; ++faceIdx)
+            for (int fIdx = 0; fIdx < fvGeometry.numScvf; ++fIdx)
             {
 
                 FluxVariables fluxVars(this->problem_(),
-                                    *elemIt,
+                                    *eIt,
                                     fvGeometry,
-                                    faceIdx,
+                                    fIdx,
                                     elemVolVars,
                                     false);
 
-                GlobalPosition globalPos = fvGeometry.subContVolFace[faceIdx].ipGlobal;
+                GlobalPosition globalPos = fvGeometry.subContVolFace[fIdx].ipGlobal;
 
                 asImp_().calculateMaxFluxVars(fluxVars, globalPos);
             }
@@ -843,34 +843,34 @@ public:
     {
         FVElementGeometry fvGeometry;
         ElementBoundaryTypes elemBcTypes;
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator endit = this->gridView_().template end<0>();
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
 
-        for (; elemIt != endit; ++elemIt)
+        for (; eIt != eEndIt; ++eIt)
         {
-            fvGeometry.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), *eIt);
+            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                false);
 
-            IntersectionIterator isIt = this->gridView_().ibegin(*elemIt);
-            const IntersectionIterator &endIt = this->gridView_().iend(*elemIt);
+            IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
+            const IntersectionIterator &endIt = this->gridView_().iend(*eIt);
 
             for (; isIt != endIt; ++isIt)
             {
-                int faceIdx = isIt->indexInInside();
+                int fIdx = isIt->indexInInside();
                 FluxVariables fluxVars(this->problem_(),
-                                                    *elemIt,
+                                                    *eIt,
                                                     fvGeometry,
-                                                    faceIdx,
+                                                    fIdx,
                                                     elemVolVars,
                                                     false);
 
-                GlobalPosition globalPos = fvGeometry.subContVolFace[faceIdx].ipGlobal;
+                GlobalPosition globalPos = fvGeometry.subContVolFace[fIdx].ipGlobal;
                 int posIdx = getPosIdx(globalPos);
                 int wallIdx = getWallIdx(globalPos, posIdx);
 
@@ -900,22 +900,22 @@ public:
         FVElementGeometry fvGeometry;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator elemIt = this->gridView_().template begin<0>();
-        ElementIterator endit = this->gridView_().template end<0>();
+        ElementIterator eIt = this->gridView_().template begin<0>();
+        ElementIterator eEndIt = this->gridView_().template end<0>();
 
-        for (; elemIt != endit; ++elemIt)
+        for (; eIt != eEndIt; ++eIt)
         {
-            fvGeometry.update(this->gridView_(), *elemIt);
+            fvGeometry.update(this->gridView_(), *eIt);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *elemIt,
+                               *eIt,
                                fvGeometry,
                                false);
 
-            const ReferenceElement &refElement = ReferenceElements::general(elemIt->geometry().type());
-            IntersectionIterator isIt = this->gridView_().ibegin(*elemIt);
-            const IntersectionIterator &endIt = this->gridView_().iend(*elemIt);
+            const ReferenceElement &refElement = ReferenceElements::general(eIt->geometry().type());
+            IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
+            const IntersectionIterator &endIt = this->gridView_().iend(*eIt);
             for (; isIt != endIt; ++isIt)
             {
                 // handle only faces on the boundary
@@ -924,19 +924,19 @@ public:
 
                 // Assemble the boundary for all vertices of the current
                 // face
-                int faceIdx = isIt->indexInInside();
-                int numFaceVerts = refElement.size(faceIdx, 1, dim);
+                int fIdx = isIt->indexInInside();
+                int numFaceVerts = refElement.size(fIdx, 1, dim);
                 for (int faceVertIdx = 0;
                      faceVertIdx < numFaceVerts;
                      ++faceVertIdx)
                 {
-                    int boundaryFaceIdx = fvGeometry.boundaryFaceIndex(faceIdx, faceVertIdx);
+                    int boundaryFaceIdx = fvGeometry.boundaryFaceIndex(fIdx, faceVertIdx);
 
 
 
 
                     const FluxVariables boundaryVars(this->problem_(),
-                                                     *elemIt,
+                                                     *eIt,
                                                      fvGeometry,
                                                      boundaryFaceIdx,
                                                      elemVolVars,

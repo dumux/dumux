@@ -69,7 +69,7 @@ SET_BOOL_PROP(Stokes2cSubProblem, EnableNavierStokes, false);
 
 /*!
  * \ingroup ImplicitTestProblems
- * \ingroup MultidomainProblems
+ * \ingroup TwoPTwoCStokesTwoCModel
  * \brief Isothermal two-component stokes subproblem with air flowing
  *        from the left to the right and coupling at the bottom.
  *

@@ -29,7 +29,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxZeroEqProblems
+ * \ingroup ImplicitBaseProblems
+ * \ingroup BoxZeroEqModel
  * \brief Base class for all problems which use the ZeroEq box model.
  *
  * This implements the call of update functions used for the wall properties of

@@ -33,6 +33,7 @@ namespace Dumux
 /*!
  * \ingroup ImplicitLocalResidual
  * \ingroup TwoPTwoCStokesTwoCModel
+ * \ingroup TwoPTwoCZeroEqTwoCModel
  * \brief Extending the TwoPTwoCLocalResidual by the required functions for
  *        a coupled application.
  */

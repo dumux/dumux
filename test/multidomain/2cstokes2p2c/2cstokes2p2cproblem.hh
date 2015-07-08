@@ -110,7 +110,7 @@ SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, LinearSolver, SuperLUBackend<TypeTag>);
 
 /*!
  * \ingroup ImplicitTestProblems
- * \ingroup MultidomainProblems
+ * \ingroup TwoPTwoCStokesTwoCModel
  * \brief The problem class for the coupling of an isothermal two-component Stokes
  *        and an isothermal two-phase two-component Darcy model.
  *
@@ -285,22 +285,22 @@ public:
         mdGrid.startSubDomainMarking();
 
         // subdivide grid in two subdomains
-        ElementIterator eendit = mdGrid.template leafend<0>();
-        for (ElementIterator elementIt = mdGrid.template leafbegin<0>();
-             elementIt != eendit; ++elementIt)
+        ElementIterator eEndit = mdGrid.template leafend<0>();
+        for (ElementIterator eIt = mdGrid.template leafbegin<0>();
+             eIt != eEndit; ++eIt)
         {
             // this is required for parallelization
             // checks if element is within a partition
-            if (elementIt->partitionType() != Dune::InteriorEntity)
+            if (eIt->partitionType() != Dune::InteriorEntity)
                 continue;
 
-            GlobalPosition globalPos = elementIt->geometry().center();
+            GlobalPosition globalPos = eIt->geometry().center();
 
             if (globalPos[1] > interfacePosY_)
-                mdGrid.addToSubDomain(stokes2c_,*elementIt);
+                mdGrid.addToSubDomain(stokes2c_,*eIt);
             else
                 if(globalPos[0] > noDarcyX_)
-                    mdGrid.addToSubDomain(twoPtwoC_,*elementIt);
+                    mdGrid.addToSubDomain(twoPtwoC_,*eIt);
         }
         mdGrid.preUpdateSubDomains();
         mdGrid.updateSubDomains();

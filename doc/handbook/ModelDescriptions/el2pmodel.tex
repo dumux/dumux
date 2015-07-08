@@ -4,9 +4,9 @@
 % file instead!!                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-This model implements a two-\/phase flow of compressible immiscible fluids $\alpha \in \{ w, n \}$. The deformation of the solid matrix is described with a quasi-\/stationary momentum balance equation. The influence of the pore fluid is accounted for through the effective stress concept (Biot 1941). The total stress acting on a rock is partially supported by the rock matrix and partially supported by the pore fluid. The effective stress represents the share of the total stress which is supported by the solid rock matrix and can be determined as a function of the strain according to Hooke's law.
+This model implements a two-\/phase flow of compressible immiscible fluids $\alpha \in \{ w, n \}$. The deformation of the solid matrix is described with a quasi-\/stationary momentum balance equation. The influence of the pore fluid is accounted for through the effective stress concept (Biot 1941). The total stress acting on a rock is partially supported by the rock matrix and partially supported by the pore fluid. The effective stress represents the share of the total stress which is supported by the solid rock matrix and can be determined as a function of the strain according to Hooke\textquotesingle{}s law.
 
-As an equation for the conservation of momentum within the fluid phases the standard multiphase Darcy's approach is used\-: \[ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right) \]
+As an equation for the conservation of momentum within the fluid phases the standard multiphase Darcy\textquotesingle{}s approach is used\-: \[ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right) \]
 
 Gravity can be enabled or disabled via the property system. By inserting this into the continuity equation, one gets \[ \frac{\partial \phi_{eff} \varrho_\alpha S_\alpha}{\partial t} - \text{div} \left\{ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}_\text{eff} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right) - \phi_{eff} \varrho_\alpha S_\alpha \frac{\partial \mathbf{u}}{\partial t} \right\} - q_\alpha = 0 \;, \]
 

@@ -18,10 +18,10 @@
  *****************************************************************************/
 /**
  * \file
- * \brief  Definition of an isothermal ZeroEq problem.
+ * \brief Definition of an isothermal ZeroEq problem.
  *
- * This problem implements an experiment performed by John Laufer
- * (The structure of turbulence in fully developed pipe flow, NACA Report, 1954).
+ * This problem implements a pipe flow experiment performed by John Laufer
+ * (Laufer J., The structure of turbulence in fully developed pipe flow, NACA Report, 1954).
  */
 #ifndef DUMUX_ZEROEQTESTPROBLEM_HH
 #define DUMUX_ZEROEQTESTPROBLEM_HH
@@ -75,19 +75,22 @@ SET_SCALAR_PROP(ZeroEqTestProblem, ZeroEqWriteAllSCVData, .8875);
 }
 
 /*!
+ * \ingroup BoxZeroEqModel
  * \ingroup ImplicitTestProblems
- * \ingroup ZeroEqModel
  * \brief ZeroEq problem with air flowing from the left to the right.
  *
  * The domain is sized 10m times 0.2469m. The problem is taken from an
- * experimental setup by John Laufer (The structure of turbulence in fully developed pipe flow,
- * NACA Report, 1954). The boundary conditions for the momentum balances
+ * experimental setup by John Laufer (J. Laufer, The structure of turbulence in
+ * fully developed pipe flow, NACA Report, 1954).
+ * The boundary conditions for the momentum balances
  * are set to Dirichlet on the left (inflow) and outflow on the right boundary.
  * The mass balance has outflow boundary conditions, which are replaced in the
- * localresidual by the sum of the two momentum balances. On the right boundary
+ * localresidual by the sum of the two momentum balances. On the right boundary,
  * the mass balance receives a Dirichlet value to set the pressure level.
  *
- * This problem uses the \ref ZeroEqModel.
+ * This problem uses the \ref ZeroEqModel with the Baldwin-Lomax turbulence model
+ * (Baldwin, B. S. & Lomax, H. Thin Layer Approximation and Algebraic Model for
+ * Seperated Turbulent Flows AIAA Journal, 1978).
  *
  * To run the simulation execute the following line in shell:<br>
  * <tt>./test_zeroeq -ParameterFile ./test_zeroeq.input</tt>
@@ -193,19 +196,14 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     *
+     * \copydoc ImplicitProblem::neumann()
      * A neumann condition for the RANS momentum equation equation corresponds to:
-     * \f[ -\mu \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N \f]
+     * \f[ - \left[ \mu + \mu_\textrm{t} \right] \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N \f]
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
+                 const FVElementGeometry &fvGeometry,
+                 const Intersection &intersection,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {

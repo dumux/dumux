@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- * \brief  Definition of a simple non-isothermal compositional ZeroEq2cni box problem
+ * \brief Definition of a non-isothermal compositional ZeroEqncni problem
  */
 #ifndef DUMUX_ZEROEQTWOCNITESTPROBLEM_HH
 #define DUMUX_ZEROEQTWOCNITESTPROBLEM_HH
@@ -69,14 +69,19 @@ SET_BOOL_PROP(ZeroEq2cniTestProblem, ProblemEnableGravity, false);
 }
 
 /*!
- * \ingroup ZeroEq2cniModel
+ * \ingroup BoxZeroEqncniModel
  * \ingroup ImplicitTestProblems
- * \brief Non-isothermal compositional ZeroEq2cni flow problem.
+ * \brief Non-isothermal compositional ZeroEqncni flow problem.
  *
- * \todo This is just some arbitrary test problem, for which the description
- *       has to be added
- * 
- * This problem uses the \ref BoxZeroEq2cniModel.
+ * The domain is sized 3m times 1m. Air is flowing in a pipe from left to right.
+ * Thus the momentum balance has Dirichlet conditions (inflow) on the left and
+ * no-slip on top and on bottom, on the right outflow conditions are applied. The total
+ * mass balance has outflow boundary conditions everywhere, except at the right where
+ * Dirichlet values are set. The energy equation has Dirichlet conditions everywhere,
+ * except on the right. The bottom of the pipe is cooler than the fluid.
+ *
+ * This problem uses the \ref ZeroEqncniModel with the Prandtl mixing length model for
+ * the eddy viscosity and the model by Deissler for the eddy diffusivity and eddy conductivity.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_zeroeq2cni -ParameterFile ./test_zeroeq2cni.input</tt>
@@ -179,19 +184,14 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     *
-     * A NEUMANN condition for the Stokes equation corresponds to:
-     * \f[ -\mu \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N \f]
+     * \copydoc ImplicitProblem::neumann()
+     * A neumann condition for the RANS momentum equation equation corresponds to:
+     * \f[ - \left[ \mu + \mu_\textrm{t} \right] \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N \f]
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
+                 const FVElementGeometry &fvGeometry,
+                 const Intersection &intersection,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {

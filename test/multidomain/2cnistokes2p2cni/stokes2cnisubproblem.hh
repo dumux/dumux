@@ -72,7 +72,7 @@ SET_BOOL_PROP(Stokes2cniSubProblem, EnableNavierStokes, false);
 
 /*!
  * \ingroup ImplicitTestProblems
- * \ingroup MultidomainProblems
+ * \ingroup TwoPTwoCNIStokesTwoCNIModel
  * \brief Non-isothermal two-component stokes subproblem with air flowing
  *        from the left to the right and coupling at the bottom.
  *

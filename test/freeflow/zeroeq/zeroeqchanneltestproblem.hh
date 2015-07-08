@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- * \brief  Definition of an isothermal ZeroEq channel flow
+ * \brief  Definition of an isothermal ZeroEq channel flow problem.
  */
 #ifndef DUMUX_ZEROEQCHANNELTESTPROBLEM_HH
 #define DUMUX_ZEROEQCHANNELTESTPROBLEM_HH
@@ -75,11 +75,18 @@ SET_SCALAR_PROP(ZeroEqChannelTestProblem, ZeroEqWriteAllSCVData, -1);
 }
 
 /*!
+ * \ingroup BoxZeroEqModel
  * \ingroup ImplicitTestProblems
- * \ingroup ZeroEqModel
  * \brief ZeroEq problem with air flowing from the left to the right.
  *
- * This problem uses the \ref ZeroEqModel.
+ * The domain is 5.0m long and 1.5m high. Air is flow from left to right.
+ * The momentum balance has Dirichlet conditions on the left (inflow) and
+ * on bottom (no-slip), on the right it has outflow condition. On the top,
+ * which corresponds to an open surface or the center line of a pipe Neumann
+ * no-flow for tangential momentum are applied. The mass balance is outflow
+ * except at the right side.
+ *
+ * This problem uses the \ref ZeroEqModel with the modified Van Driest turbulence model.
  *
  * To run the simulation execute the following line in shell:<br>
  * <tt>./test_zeroeq_channel -ParameterFile ./test_zeroeq_channel.input</tt>
@@ -193,19 +200,14 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     *
+     * \copydoc ImplicitProblem::neumann()
      * A neumann condition for the RANS momentum equation equation corresponds to:
-     * \f[ -\mu \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N \f]
+     * \f[ - \left[ \mu + \mu_\textrm{t} \right] \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N \f]
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
+                 const FVElementGeometry &fvGeometry,
+                 const Intersection &intersection,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {

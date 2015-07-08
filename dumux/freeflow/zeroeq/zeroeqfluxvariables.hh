@@ -37,8 +37,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitFluxVariables
  * \ingroup BoxZeroEqModel
+ * \ingroup ImplicitFluxVariables
  * \brief This template class contains data which is required to
  *        calculate the component fluxes over a face of a finite
  *        volume for a ZeroEq model.
@@ -65,10 +65,10 @@ public:
     ZeroEqFluxVariables(const Problem &problem,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
-                        const int faceIdx,
+                        const int fIdx,
                         const ElementVolumeVariables &elemVolVars,
                         const bool onBoundary = false)
-        : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
+        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
         , flowNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, FlowNormal))
         , wallNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, WallNormal))
         , eddyViscosityModel_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyViscosityModel))

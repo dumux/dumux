@@ -34,6 +34,7 @@ namespace Dumux
 	/*!
    * \ingroup ImplicitLocalResidual
    * \ingroup TwoPTwoCNIStokesTwoCNIModel
+   * \ingroup TwoPTwoCNIZeroEqTwoCNIModel
    * \brief Element-wise calculation of the Jacobian matrix for problems
    *        using the coupled compositional non-isothermal Stokes box model.
    *        It is derived from the compositional non-isothermal Stokes box model.

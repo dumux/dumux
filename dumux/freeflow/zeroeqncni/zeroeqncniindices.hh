@@ -47,8 +47,8 @@ struct EddyConductivityIndices
 };
 
 /*!
- * \ingroup ImplicitIndices
  * \ingroup BoxZeroEqncniModel
+ * \ingroup ImplicitIndices
  * \brief The common indices for the non-isothermal compositional ZeroEq box model.
  *
  * \tparam PVOffset The first index in a primary variable vector.

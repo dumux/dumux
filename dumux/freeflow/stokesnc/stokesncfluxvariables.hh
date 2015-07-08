@@ -36,7 +36,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxStokesncModel
- * \ingroup BoxFluxVariables
+ * \ingroup ImplicitFluxVariables
  * \brief This template class contains data which is required to
  *        calculate the component fluxes over a face of a finite
  *        volume for the compositional n component Stokes model.

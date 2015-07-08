@@ -20,6 +20,10 @@ set(TEX_INPUTS
   tutorial-coupled.tex
   tutorial-decoupled.tex
   tutorial.tex
+  ModelDescriptions/2cstokes2p2cmodel.tex
+  ModelDescriptions/2cnistokes2p2cnimodel.tex
+  ModelDescriptions/2czeroeq2p2cmodel.tex
+  ModelDescriptions/2cnizeroeq2p2cnimodel.tex
   ModelDescriptions/1p2cimplicitmodel.tex
   ModelDescriptions/1pdecoupledmodel.tex
   ModelDescriptions/1pimplicitmodel.tex
@@ -42,6 +46,9 @@ set(TEX_INPUTS
   ModelDescriptions/stokesimplicitmodel.tex
   ModelDescriptions/stokesncimplicitmodel.tex
   ModelDescriptions/stokesncniimplicitmodel.tex
+  ModelDescriptions/zeroeqimplicitmodel.tex
+  ModelDescriptions/zeroeqncimplicitmodel.tex
+  ModelDescriptions/zeroeqncniimplicitmodel.tex
   ../../tutorial/tutorial_coupled.cc
   ../../tutorial/tutorial_coupled.input
   ../../tutorial/tutorialproblem_coupled.hh
