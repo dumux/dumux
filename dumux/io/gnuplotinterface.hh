@@ -29,13 +29,13 @@
  *       a new GnuplotInterface object has to be created for each plot
  */
 
+#ifndef DUMUX_GNUPLOT_INTERFACE_HH
+#define DUMUX_GNUPLOT_INTERFACE_HH
+
 #if !HAVE_GNUPLOT
 #warning Gnuplot has not been found by CMake, no output possible.
 #define GNUPLOT_EXECUTABLE "/usr/bin/gnuplot"
 #endif
-
-#ifndef DUMUX_GNUPLOT_INTERFACE_HH
-#define DUMUX_GNUPLOT_INTERFACE_HH
 
 #include <cassert>
 #include <cmath>
@@ -45,6 +45,7 @@
 #include <string>
 #include <vector>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/stdstreams.hh>
 
 namespace Dumux

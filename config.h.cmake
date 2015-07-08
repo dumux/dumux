@@ -40,7 +40,7 @@
 #endif
 
 /* Define to 1 if gnuplot was found */
-#define HAVE_GNUPLOT @GNUPLOT_FOUND@
+#cmakedefine HAVE_GNUPLOT 1
 
 /* Define path to gnuplot executable */
 #cmakedefine GNUPLOT_EXECUTABLE "@GNUPLOT_EXECUTABLE@"
