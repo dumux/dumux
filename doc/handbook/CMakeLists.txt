@@ -1,54 +1,28 @@
 set(TEX_INPUTS
-  DumuxFlow.tex
-  fluidframework.tex
-  getting-started.tex
-  guidelines.tex
-  install.tex
-  intro.tex
-  models.tex
-  newFolder.tex
-  dumux-handbook.tex
-  NewtonInANutshell.tex
-  parameterfiles.tex
-  propertysystem.tex
-  quick-install.tex
-  quickstart-guide.tex
-  spatialdiscretization.tex
-  restartsimulations.tex
-  structure.tex
-  TipsNTricks.tex
-  tutorial-coupled.tex
-  tutorial-decoupled.tex
-  tutorial.tex
-  ModelDescriptions/2cstokes2p2cmodel.tex
-  ModelDescriptions/2cnistokes2p2cnimodel.tex
-  ModelDescriptions/2czeroeq2p2cmodel.tex
-  ModelDescriptions/2cnizeroeq2p2cnimodel.tex
-  ModelDescriptions/1p2cimplicitmodel.tex
-  ModelDescriptions/1pdecoupledmodel.tex
-  ModelDescriptions/1pimplicitmodel.tex
-  ModelDescriptions/2p2cdecoupledpressuremodel.tex
-  ModelDescriptions/2p2cdecoupledtransportmodel.tex
-  ModelDescriptions/2p2cimplicitmodel.tex
-  ModelDescriptions/2pdecoupledpressuremodel.tex
-  ModelDescriptions/2pdecoupledsaturationmodel.tex
-  ModelDescriptions/2pdfmimplicitmodel.tex
-  ModelDescriptions/2pimplicitmodel.tex
-  ModelDescriptions/3p3cimplicitmodel.tex
-  ModelDescriptions/3pimplicitmodel.tex
-  ModelDescriptions/co2implicitmodel.tex
-  ModelDescriptions/el1p2cmodel.tex
-  ModelDescriptions/el2pmodel.tex
-  ModelDescriptions/elasticmodel.tex
-  ModelDescriptions/mpncimplicitmodel.tex
-  ModelDescriptions/nonisothermalimplicitmodel.tex
-  ModelDescriptions/richardsimplicitmodel.tex
-  ModelDescriptions/stokesimplicitmodel.tex
-  ModelDescriptions/stokesncimplicitmodel.tex
-  ModelDescriptions/stokesncniimplicitmodel.tex
-  ModelDescriptions/zeroeqimplicitmodel.tex
-  ModelDescriptions/zeroeqncimplicitmodel.tex
-  ModelDescriptions/zeroeqncniimplicitmodel.tex
+  0_dumux-handbook.tex
+  0_discussion.tex
+  1_introduction.tex
+  2_detailedinstall.tex
+  2_gettingstarted.tex
+  2_quickinstall.tex
+  2_quickstartguide.tex
+  3_tutorial.tex
+  3_tutorialcoupled.tex
+  3_tutorialdecoupled.tex
+  4_dumuxoverview.tex
+  4_guidelines.tex
+  4_newfoldersetup.tex
+  4_newtoninanutshell.tex
+  4_parameterfiles.tex
+  4_restartsimulations.tex
+  4_structure.tex
+  4_tipsandtricks.tex
+  5_flowofthings.tex
+  5_fluidframework.tex
+  5_models.tex
+  5_propertysystem.tex
+  5_spatialdiscretizations.tex
+  5_workingwithdumux.tex
   ../../tutorial/tutorial_coupled.cc
   ../../tutorial/tutorial_coupled.input
   ../../tutorial/tutorialproblem_coupled.hh
@@ -65,7 +39,7 @@ set(TEX_IMAGES
   PNG/dunedesign.png
   ../logo/dumux_logo_hires_whitebg.png)
 
-dune_add_latex_document(dumux-handbook.tex
+dune_add_latex_document(0_dumux-handbook.tex
   FATHER_TARGET doc
   DEFAULT_PDF
   BIBFILES dumux-handbook.bib

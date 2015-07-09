@@ -1,0 +1,118 @@
+\chapter{Discussion about the new handbook}
+
+BITTE: Fur svn ist es schrecklich eine lange Code-Zeile zu haben, bitte fugt
+manuelle Zeilenumbruche hinzu
+\todo[inline]{Ihr konnt die todo Befehle benutzen um Dinge zu markieren, die euch
+  auffallen, dann können wir die beim nachsten Mal besprechen}
+\todo[inline]{Bitte schaut mal ob die grobe Kapitelstrukutur stimmt, durch das
+  umziehen der Dateien, kann sein, das ich etwas beim andern der chapter, sections, etc
+  vergessen habe. Kann sein, das es dadurch auch etwas unübersichtlich wurde, da
+  subsubsection zu paragraphs wurden. Wir sollten vllt die Kapitel aufteilen und
+  dann jeder eines durchgehen.}
+\section{Beschlossene ToDos}
+\begin{itemize}
+  \item Umstrukturierung (Thomas)
+  \item \Dumux aus den Uberschriften in Kap 5 rausnehmen
+  \item Modelle raus, Liste rein (Christoph)
+  \item Neues Gitterkapitel (Natalie)
+  \item Wiki (behandla, Mailing list (LH2), external Modules, lectures, tests
+        (Vishal), Infos fur neue Doktoranden (Christoph)
+  \item Hinweis auf tests, lecture und feature list am Ende von Tutorial
+  \item Doxygen main page - feature list und parameter list
+  \item Newton etwas ausfuhrlicher und Dumux spezifischer, schematische
+        Skizze der Matrix (Christoph)
+\end{itemize}
+
+\section{Weitere ToDos}
+\begin{itemize}
+  \item Wenn wir einen guten Weg zum Rechtschreibung prüfen finden, ware das sicher
+        auch gut.
+  \item Reihenfolge der Unterkapitel
+  \item Name fur Kapitel 4 und 5
+  \item man sieht kaum einen Unterschied zwischen subsubsection und paragraphs s.u.
+  \item wir haben listtings für bash code (ist OK), für c++ und dumux code (sollten
+        wir schauen wo was benutzt wird und den dumux code entfernen, außerdem wären
+        Farben ganz nett), dazu könnten wir dann noch ein dumuxInputFile listing
+        mit anderer Farbgebung (da andere Kommentare) erstellen
+\end{itemize}
+
+\subsubsection{subsubsection}
+tafsasf mskmf safijsafaSF SAKFMAÖLSFMLDSF 
+
+\paragraph{paragraph}
+tafsasf mskmf safijsafaSF SAKFMAÖLSFMLDSF 
+
+\section{Open Questions}
+\begin{itemize}
+  \item Was kann ins Wiki ausgelagert werden?
+  \item Was kann ins doxygen ausgelagert werden?
+  \item Alles was (nicht?) LH2 spezifische raus?
+  \item Fur listOfProperties und listOfFeatures auf doxygen verweisen! (kommt
+        unter doxygen main pages)
+  \item Modelbeschreibungen rausschmeißen?
+  \item bennenung der ausgelagerten tex dateien mit kapitelnummer (nur eine nummer)
+        beginnend
+  \item Neue Kapitel/Abschnitte
+  \begin{itemize}
+    \item Wie kann ich Gitter erstellen (externe tools), /einlesen (dune), wo
+          kann ich bei dune nachschauen. Welche Dateien werden uberhaupt unterstutzt?
+          in Kap 5 (jemanden finden, der sich auskennt Alex, Timo, Bernd)
+  \end{itemize}
+  \item Tutorials:
+  \begin{itemize}
+    \item Noch aktuell, noch funktioniert?
+    \item Welche Features, Modelle brauchten auch ein Tutorial? Wie konnen wir
+          den Einstieg leicht machen und fur uns den Aufwand gering halten?
+    \item Verweis auf lecture fur realistischere Anwendungen
+  \end{itemize}
+\end{itemize}
+
+\section{Other}
+\subsection{How to move things to stable}
+\begin{itemize}
+  \item mandatory checks
+  \begin{itemize}
+    \item remove all warnings (compile e.g. with the pedantic option)
+    \item are all units given?
+    \item are all references .g. for model constant, fluids ... given?
+    \item no tabulators?
+    \item no trailing whitespaces?
+    \item is the gnu license still up to date?
+    \item valgrind?
+    \item run make headercheck
+  \end{itemize}
+  \item optional checks
+  \begin{itemize}
+    \item check whether the todos are necessary
+    \item which lines of code may lead to confusion -> comment them?
+    \item are the comments necessary and helpful?
+    \item check and implement the naming conventions from dumux-devel/doc/naminglist
+    \item are the svn ignore properties set correctly?
+  \end{itemize}
+  \item doxygen (mandatory)
+  \begin{itemize}
+    \item fill all please doc me placeholders
+    \item are all public function commented? (minimum level: brief documentation and
+          explanation of the function parameters)
+    \item compile doxygen
+  \end{itemize}
+  \item for new models
+  \begin{itemize}
+    \item no preprocessor macros on the model level
+    \item integrate the model description into the handbook
+    \item add a new section in doxygen via the modules.txt
+    \item check that all equations appear correctly in doxygen
+    \item check that all class definition are listed, are they also listed in
+          other groups, where they may be necessary (e.g. fluxvariables)
+    \item add suitable test problem(s) that tests the main features
+  \end{itemize}
+  \item for new problems
+  \begin{itemize}
+    \item add a descriptive problem description (e.g. size, BC, what can you see,
+          where is the example taken from)
+    \item add reference solution and include in automatic testing
+    \item are the input files cleaned up (no unnecessary parameters, are the units given,
+          no unnecessary comments, ...) maybe compare to already existing input files
+    \item can you see the main features if you run the reference problem
+  \end{itemize}
+\end{itemize}

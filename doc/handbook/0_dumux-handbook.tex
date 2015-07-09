@@ -1,0 +1,200 @@
+\documentclass[11pt,a4paper,headinclude,footinclude,DIV16]{scrreprt}
+\usepackage[english]{babel}
+\usepackage[htt]{hyphenat}
+\usepackage[ansinew]{inputenc}
+\usepackage[automark]{scrpage2}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{breakurl}
+\usepackage{enumerate}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{layout}
+\usepackage{listings}
+\usepackage{lscape}
+\usepackage{makeidx}
+\usepackage{pdflscape}
+\usepackage{rotating}
+\usepackage{subfig}
+\usepackage{tabularx}
+\usepackage{textcomp}
+\usepackage{theorem}
+\usepackage{tikz}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{units}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage{xspace}
+
+
+\newcommand{\snakeline}{%
+% {\uwave{\makebox[\linewidth]{\mbox{}}}}
+\uwave{\mbox{}}
+}
+
+\hypersetup{bookmarksdepth=3}
+\usetikzlibrary{arrows,backgrounds,decorations.pathmorphing,patterns,positioning,fit,shapes}
+
+% for listing of c++ code
+\lstset{language=C++, basicstyle=\ttfamily, 
+%   keywordstyle=\color{black}\bfseries,
+  tabsize=4, stringstyle=\ttfamily,
+%   commentstyle=\it,
+  extendedchars=true, escapeinside={/*@}{@*/},
+%   keywordstyle=\color[rgb]{0,0,1},
+%   commentstyle=\color[rgb]{0.026,0.112,0.095},
+%   stringstyle=\color[rgb]{0.627,0.126,0.941},
+  numberstyle=\color{cyan},
+  basicstyle=\ttfamily,
+  keywordstyle=\color{blue}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  commentstyle=\color{green}\ttfamily\it,
+  morecomment=[l][\color{magenta}]{\#}
+}
+
+% for listings of bash code in install.tex
+\lstdefinestyle{Bash}
+ {language=Bash,
+ backgroundcolor=\color{lightgray},
+ basicstyle=\ttfamily\small,
+ numbers=none,
+ captionpos=b,
+ tabsize=4,
+ breaklines=true,
+ frame=single,
+ rulecolor=\color{lightgray},
+ framerule=1pt,
+ framesep=1pt,
+ rulesep=0pt,
+ aboveskip=\bigskipamount,
+ belowskip=\bigskipamount
+}
+
+% for listings of DuMuX code
+\lstdefinestyle{DumuxCode}
+ {language=C++,
+ basicstyle=\ttfamily\scriptsize,
+ numbers=left,
+ numberstyle=\tiny,
+ numbersep=5pt,
+ breaklines=true
+}
+\lstset{showstringspaces=false, breaklines=true}
+
+
+\DeclareGraphicsExtensions{.pdf, .jpg}
+
+% Dune logo
+\newcommand{\Dune}{{DUNE}\xspace}
+% DuMuX logo
+\newcommand{\Dumux}{\texorpdfstring{Du\-Mu$^\text{x}$\xspace}{DuMuX\xspace}}
+\newcommand{\DumuxVersion}{2.8}
+% DuMuX logo colors
+\definecolor{dumuxYellow}{HTML}{E19417}
+\definecolor{dumuxBlue}{HTML}{0C73CF}
+% beautify C++
+\DeclareRobustCommand\Cplusplus{\texorpdfstring{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}\xspace}{C++}}
+
+% for dumux flow of things
+\newcommand{\nextline}{\par\phantom{a}\vspace*{0.1\textwidth}}
+
+\newcommand{\porosity}{\phi}
+\newcommand{\saturation}{S}
+
+\newcommand{\doxyref}[3]{\textnormal{#1}}
+\newenvironment{CompactList}
+{\begin{list}{}{
+  \setlength{\leftmargin}{0.5cm}
+  \setlength{\itemsep}{0pt}
+  \setlength{\parsep}{0pt}
+  \setlength{\topsep}{0pt}
+  \renewcommand{\makelabel}{\hfill}}}
+{\end{list}}
+\newenvironment{CompactItemize}
+{
+  \begin{itemize}
+  \setlength{\itemsep}{-3pt}
+  \setlength{\parsep}{0pt}
+  \setlength{\topsep}{0pt}
+  \setlength{\partopsep}{0pt}
+}
+{\end{itemize}}
+
+% a new counter
+% you can give a label to it and thus reference it
+% syntax: \numberThis{printedTextToBeLabeled}{label} 
+% if you wanted a \newline after a numbered thing, you could just add a empty line after ``\label{#2}''
+\newcounter{thingCounter}
+\renewcommand{\thethingCounter}{\arabic{thingCounter}}
+\newcommand{\numberThis}[2]{%
+        \refstepcounter{thingCounter}%
+        \thethingCounter.\ #1 \label{#2}
+}
+
+%The theorems
+\theorembodyfont{\upshape}
+\theoremheaderfont{\sffamily\bfseries}
+\newtheorem{exc}{Exercise}[chapter]
+\newtheorem{example}[exc]{Example}
+\newtheorem{rem}[exc]{Remark}
+\newtheorem{lst}{Listing}
+\newtheorem{warn}[exc]{Warning}
+\newtheorem{justCounting}{}
+
+\DeclareMathOperator{\grad}{\bf grad}
+\DeclareMathOperator{\curl}{curl}
+\DeclareMathOperator{\Div}{div}
+
+\pagestyle{scrheadings}
+
+\title{
+\begin{center}
+\includegraphics[width=0.7\textwidth]{../logo/dumux_logo_hires_whitebg.png}
+\\[3cm]
+{\Huge Handbook}
+\end{center}
+}
+
+\author{}
+
+\date{\today}
+
+\publishers{%
+\vspace{10mm}
+{\normalsize Lehrstuhl f\"ur Hydromechanik und Hydrosystemmodellierung, \\
+Universit\"at Stuttgart, Paffenwaldring 61, D-70569 Stuttgart, Germany}\\
+%
+\bigskip
+{\normalsize \texttt{\url{http://dumux.org}}}\\
+}
+
+\makeindex
+
+\begin{document}
+
+\maketitle
+
+\setcounter{tocdepth}{2}
+% \pdfbookmark[0]{Table of Contents}{Table of Contents}
+\tableofcontents
+
+\newpage
+\pdfbookmark[1]{List of ToDos}{List of ToDos}
+% \makeatletter\let\chapter\@undefined\makeatother
+\listoftodos
+
+\input{0_discussion}
+\input{1_introduction}
+\input{2_gettingstarted}
+\input{3_tutorial}
+\input{4_dumuxoverview}
+\input{5_workingwithdumux}
+
+
+\bibliographystyle{plain}
+\bibliography{dumux-handbook}
+\printindex
+\end{document}
