@@ -103,10 +103,11 @@ public:
      * \brief effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
      *
      * \param sw The saturation of the wetting phase
-     * \param lambdaW the thermal conductivity of the wetting phase
-     * \param lambdaN the thermal conductivity of the non-wetting phase
-     * \param lambdaSolid the thermal conductivity of the solid phase
+     * \param lambdaW The thermal conductivity of the wetting phase
+     * \param lambdaN The thermal conductivity of the non-wetting phase
+     * \param lambdaSolid The thermal conductivity of the solid phase
      * \param porosity The porosity
+     * \param rhoSolid The density of solid phase
      *
      * \return effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
      */

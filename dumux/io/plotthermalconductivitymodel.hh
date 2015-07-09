@@ -24,6 +24,8 @@
 #ifndef DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 #define DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dumux/common/basicproperties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
@@ -78,15 +80,28 @@ public:
         lambdaN_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, nPhaseIdx);
     }
 
+    //! Constructor
+    DUNE_DEPRECATED_MSG("Constructor() has changed signature")
+    PlotThermalConductivityModel()
+    : numIntervals_(1000)
+    {
+        PlotThermalConductivityModel(293.15, 1e5);
+    }
+
     /*!
      * \brief Plot the effective thermal conductivity-saturation curve
      *
-     * \param params The material law parameters
+     * \param porosity The porosity of the porous medium
+     * \param rhoSolid The density of the solid material
+     * \param lambdaSolid The thermal conductivity of the solid material
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
-    void plotlambdaeff(Scalar porosity, Scalar rhoSolid, Scalar lambdaSolid,
+    void plotlambdaeff(Scalar porosity,
+                       Scalar rhoSolid,
+                       Scalar lambdaSolid,
                        Scalar lowerSat = 0.0,
                        Scalar upperSat = 1.0,
                        std::string plotName = "lambda_eff",

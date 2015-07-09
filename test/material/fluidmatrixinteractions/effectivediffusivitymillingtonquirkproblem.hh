@@ -193,7 +193,7 @@ public:
     }
 
 
-    //! \copydoc Dumux::ImplicitProblem::initialPhasePresence()
+    //! \copydoc Dumux::InjectionProblem::initialPhasePresence()
     int initialPhasePresence(const Vertex &vertex,
                              int &vIdxGlobal,
                              const GlobalPosition &globalPos) const

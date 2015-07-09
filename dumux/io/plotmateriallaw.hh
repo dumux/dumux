@@ -62,6 +62,7 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotpcsw(const MaterialLawParams &params,
                   Scalar lowerSat = 0.0,
@@ -100,6 +101,7 @@ public:
      * \param lowerpc Minimum x-value
      * \param upperpc Maximum x-value
      * \param plotName Name of the plotted curve
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotswpc(const MaterialLawParams &params,
                   Scalar lowerpc = 0.0,
@@ -137,6 +139,7 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotdpcdsw(const MaterialLawParams &params,
                     Scalar lowerSat = 0.0,
@@ -175,6 +178,7 @@ public:
      * \param lowerpc Minimum x-value
      * \param upperpc Maximum x-value
      * \param plotName Name of the plotted curve
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotdswdpc(const MaterialLawParams &params,
                     Scalar lowerpc = 0.0,
@@ -212,6 +216,7 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotkr(const MaterialLawParams &params,
                 Scalar lowerSat = 0.0,
@@ -253,6 +258,7 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotdkrdsw(const MaterialLawParams &params,
                     Scalar lowerSat = 0.0,

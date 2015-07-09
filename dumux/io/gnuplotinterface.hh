@@ -105,6 +105,7 @@ public:
      *
      * \param title The name of the output file
      * \param plottingWindowNumber The ID of the specific plot
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plot(const std::string &title,
               const unsigned int plottingWindowNumber,
@@ -196,7 +197,7 @@ public:
     /*!
      * \brief Adds a file to list of plotted lines for specific window number
      *
-     * \param addFile Function to be plotted
+     * \param file Function to be plotted
      * \param plotName The name of the data set
      * \param plottingWindowNumber The ID of the specific plot
      * \param plotOptions Specific gnuplot options passed to this plot

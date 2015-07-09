@@ -54,10 +54,11 @@ public:
     /*!
      * \brief Plot the effective diffusion factor-saturation curve
      *
-     * \param params The material law parameters
+     * \param porosity The porosity of the porous medium
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotdeff(Scalar porosity,
                   Scalar lowerSat = 0.0,
