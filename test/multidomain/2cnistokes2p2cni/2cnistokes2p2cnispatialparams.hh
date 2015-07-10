@@ -121,12 +121,6 @@ public:
     }
 
     /*!
-     * \brief The destructor
-     */
-    ~TwoCNIStokesTwoPTwoCNISpatialParams()
-    { }
-
-    /*!
      * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
      *
      * \param element The finite element

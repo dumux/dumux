@@ -44,9 +44,6 @@ class IterativePrecondSolverBackend
 {
 public:
 
-  IterativePrecondSolverBackend()
-  {}
-
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
@@ -378,9 +375,6 @@ template <class TypeTag>
 class ILU0SolverBackend
 {
 public:
-
-  ILU0SolverBackend()
-  {}
 
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)

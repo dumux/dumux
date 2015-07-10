@@ -190,17 +190,19 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, numEq> > type;
 };
 
-//! use the plain newton method for the coupled problems by default
+// use the plain newton method for the coupled problems by default
 SET_TYPE_PROP(MultiDomain, NewtonMethod, NewtonMethod<TypeTag>);
 
-//! use the plain newton controller for coupled problems by default
+// use the plain newton controller for coupled problems by default
 SET_TYPE_PROP(MultiDomain, NewtonController, MultiDomainNewtonController<TypeTag>);
 
-//! Set the default type of the time manager for coupled models
+// Set the default type of the time manager for coupled models
 SET_TYPE_PROP(MultiDomain, TimeManager, TimeManager<TypeTag>);
 
+// needed to define size of ImplicitBase's PrimaryVariables
 SET_PROP(MultiDomain, NumEq)
-{ private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) TypeTag1;
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) TypeTag2;
 
@@ -209,7 +211,7 @@ SET_PROP(MultiDomain, NumEq)
         numEq2 = GET_PROP_VALUE(TypeTag2, NumEq)
     };
 public:
-    static const int value = numEq1; //TODO: why??
+    static const int value = numEq1;
 };
 
 SET_PROP(MultiDomain, NumEq1)

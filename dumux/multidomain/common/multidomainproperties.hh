@@ -27,8 +27,6 @@
 #define DUMUX_MULTIDOMAIN_PROPERTIES_HH
 
 #include <dumux/implicit/common/implicitproperties.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/linear/linearsolverproperties.hh>
 
 namespace Dumux
 {
@@ -42,7 +40,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for problems which utilize the coupling approach
-NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, ImplicitBase));
+NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(ImplicitBase));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
