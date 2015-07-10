@@ -182,29 +182,19 @@ public:
 		writer.attachVertexData(T, "temperature");
         writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");
-		
-		if(useMoles) 
-		{
-			for (int j = 0; j < numComponents; ++j)
-				{
-					std::ostringstream oss;
-					oss << "x"
-					<< FluidSystem::componentName(j)
-					<< FluidSystem::phaseName(phaseIdx);
-					writer.attachVertexData(*moleFraction[j], oss.str().c_str());
-				}
-		} else {
-			for (int j = 0; j < numComponents; ++j)
-			{
-				std::ostringstream oss;
-				oss << "X"
-				<< FluidSystem::componentName(j)
-				<< FluidSystem::phaseName(phaseIdx);
-				writer.attachVertexData(*massFraction[j], oss.str().c_str());
-			}
-		}
-        
-		
+
+        for (int j = 0; j < numComponents; ++j)
+        {
+            std::ostringstream moleFrac, massFrac;
+            moleFrac << "x_" << FluidSystem::phaseName(phaseIdx)
+                     << "^" << FluidSystem::componentName(j);
+            writer.attachVertexData(*moleFraction[j], moleFrac.str().c_str());
+
+            massFrac << "X_" << FluidSystem::phaseName(phaseIdx)
+                     << "^" << FluidSystem::componentName(j);
+            writer.attachVertexData(*massFraction[j], massFrac.str().c_str());
+        }
+
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");
         writer.attachVertexData(velocity, "v", dim);

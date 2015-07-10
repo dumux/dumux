@@ -101,7 +101,8 @@ class ZeroEqncniModel : public ZeroEqncModel<TypeTag>
         width = Indices::scvDataWidth // width of column
     };
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    enum { transportCompIdx = Indices::transportCompIdx };
+    enum { transportCompIdx = Indices::transportCompIdx,
+           numComponents = Indices::numComponents };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -155,7 +156,14 @@ public:
         unsigned numVertices = this->gridView_().size(dim);
         ScalarField &pN = *writer.allocateManagedBuffer(numVertices);
         ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &Xw = *writer.allocateManagedBuffer(numVertices);
+
+        ScalarField *moleFraction[numComponents];
+        for (int i = 0; i < numComponents; ++i)
+            moleFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
+        ScalarField *massFraction[numComponents];
+        for (int i = 0; i < numComponents; ++i)
+            massFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
+
         ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
         VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
@@ -192,7 +200,13 @@ public:
 
                 pN[vIdxGlobal] = volVars.pressure()*scale_;
                 delP[vIdxGlobal] = volVars.pressure()*scale_ - 1e5;
-                Xw[vIdxGlobal] = volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    (*moleFraction[compIdx])[vIdxGlobal]= volVars.moleFraction(compIdx);
+                    (*massFraction[compIdx])[vIdxGlobal]= volVars.massFraction(compIdx);
+                    Valgrind::CheckDefined((*moleFraction[compIdx])[vIdxGlobal]);
+                    Valgrind::CheckDefined((*massFraction[compIdx])[vIdxGlobal]);
+                }
                 rho[vIdxGlobal] = volVars.density()*scale_*scale_*scale_;
                 mu[vIdxGlobal] = volVars.dynamicViscosity()*scale_;
                 velocity[vIdxGlobal] = volVars.velocity();
@@ -202,9 +216,19 @@ public:
         }
         writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");
-        std::ostringstream outputNameX;
-        outputNameX << "X^" << FluidSystem::componentName(transportCompIdx);
-        writer.attachVertexData(Xw, outputNameX.str());
+
+        for (int j = 0; j < numComponents; ++j)
+        {
+            std::ostringstream moleFrac, massFrac;
+            moleFrac << "x_" << FluidSystem::phaseName(phaseIdx)
+                     << "^" << FluidSystem::componentName(j);
+            writer.attachVertexData(*moleFraction[j], moleFrac.str().c_str());
+
+            massFrac << "X_" << FluidSystem::phaseName(phaseIdx)
+                     << "^" << FluidSystem::componentName(j);
+            writer.attachVertexData(*massFraction[j], massFrac.str().c_str());
+        }
+
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");
         writer.attachVertexData(velocity, "v", dim);
