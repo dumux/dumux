@@ -118,8 +118,7 @@ public:
         // Newton-Raphson method
         for (int i = 0; i < 5; ++i) {
             // calculate the molar densities
-            int numSol = molarVolumes(Vm, params, T, pVap);
-            assert(numSol == 3);
+            assert(molarVolumes(Vm, params, T, pVap) == 3);
 
             Scalar f = fugacityDifference_(params, T, pVap, Vm[0], Vm[2]);
             Scalar df_dp =
