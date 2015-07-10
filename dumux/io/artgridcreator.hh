@@ -337,7 +337,7 @@ public:
             }
         }
 
-        grid_ = factory.createGrid();
+        gridPtr() = factory.createGrid();
     }
     
     static void outputARTtoScreen()
@@ -398,7 +398,16 @@ public:
      */
     static Grid &grid()
     {
-        return *grid_;
+        return *gridPtr();
+    }
+
+    /*!
+     * \brief Returns a reference to the shared pointer to the grid.
+     */
+    static GridPointer &gridPtr()
+    {
+        static GridPointer grid;
+        return grid;
     }
 
     /*!
@@ -407,7 +416,7 @@ public:
      */
     static void loadBalance()
     {
-        grid_->loadBalance();
+        gridPtr()->loadBalance();
     }
 
     static int vertexNumber()
@@ -448,11 +457,8 @@ private:
     static int edgeNumber_;
     static int faceNumber_; //in 2D
     static int elementNumber_; //in 3D
-    static GridPointer grid_;
 };
 
-template <class TypeTag>
-typename Dumux::ArtGridCreator<TypeTag>::GridPointer ArtGridCreator<TypeTag>::grid_;
 template <class TypeTag>
 typename Dumux::ArtGridCreator<TypeTag>::VerticesVector ArtGridCreator<TypeTag>::vertices_;
 template <class TypeTag>

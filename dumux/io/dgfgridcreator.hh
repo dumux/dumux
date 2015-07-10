@@ -51,8 +51,8 @@ public:
      */
     static void makeGrid(const std::string& dgfFileName)
     {
-        gridPtr_ = GridPointer(dgfFileName.c_str(), Dune::MPIHelper::getCommunicator());
-    };
+        gridPtr() = GridPointer(dgfFileName.c_str(), Dune::MPIHelper::getCommunicator());
+    }
 
     /*!
      * \brief Load the grid from the dgf file given in the input file.
@@ -68,16 +68,15 @@ public:
      */
     static Grid &grid()
     {
-        return *gridPtr_;
+        return *gridPtr();
     }
 
     /*!
      * \brief Returns a reference to the grid pointer.
-     *
-     * This method is specific to the DgfGridCreator!
      */
     static GridPointer &gridPtr()
     {
+        static GridPointer gridPtr_;
         return gridPtr_;
     }
 
@@ -86,15 +85,9 @@ public:
      */
     static void loadBalance()
     {
-        gridPtr_.loadBalance();
+        gridPtr().loadBalance();
     }
-
-private:
-    static GridPointer gridPtr_;
 };
-
-template <class TypeTag>
-typename DgfGridCreator<TypeTag>::GridPointer DgfGridCreator<TypeTag>::gridPtr_;
 
 } // namespace Dumux
 

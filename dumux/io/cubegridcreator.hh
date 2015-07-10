@@ -80,7 +80,7 @@ public:
             cellRes[2] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumberOfCellsZ);
         }
 
-        cubeGrid_ = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cellRes);
+        gridPtr() = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cellRes);
     }
 
     /*!
@@ -88,7 +88,7 @@ public:
      */
     static Grid &grid()
     {
-        return *cubeGrid_;
+        return *gridPtr();
     }
 
     /*!
@@ -97,15 +97,18 @@ public:
      */
     static void loadBalance()
     {
-        cubeGrid_->loadBalance();
+        gridPtr()->loadBalance();
     }
 
-protected:
-    static GridPointer cubeGrid_;
+    /*!
+     * \brief Returns a reference to the shared pointer to the grid.
+     */
+    static GridPointer &gridPtr()
+    {
+        static GridPointer cubeGrid;
+        return cubeGrid;
+    }
 };
-
-template <class TypeTag>
-typename Dumux::CubeGridCreator<TypeTag>::GridPointer CubeGridCreator<TypeTag>::cubeGrid_;
 
 }
 

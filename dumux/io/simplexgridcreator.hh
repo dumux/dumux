@@ -78,7 +78,7 @@ public:
             cellRes[2] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumberOfCellsZ);
         }
 
-        simplexGrid_ = Dune::StructuredGridFactory<Grid>::createSimplexGrid(lowerLeft, upperRight, cellRes);
+        gridPtr() = Dune::StructuredGridFactory<Grid>::createSimplexGrid(lowerLeft, upperRight, cellRes);
     }
 
     /*!
@@ -86,7 +86,7 @@ public:
      */
     static Grid &grid()
     {
-        return *simplexGrid_;
+        return *gridPtr();
     }
 
     /*!
@@ -95,15 +95,18 @@ public:
      */
     static void loadBalance()
     {
-        simplexGrid_->loadBalance();
+        gridPtr()->loadBalance();
     }
 
-private:
-    static GridPointer simplexGrid_;
+    /*!
+     * \brief Returns a reference to the shared pointer to the grid.
+     */
+    static GridPointer &gridPtr()
+    {
+        static GridPointer simplexGrid;
+        return simplexGrid;
+    }
 };
-
-template <class TypeTag>
-typename SimplexGridCreator<TypeTag>::GridPointer SimplexGridCreator<TypeTag>::simplexGrid_;
 
 }
 
