@@ -26,7 +26,7 @@
 #ifndef DUMUX_SATURATION_OVERLAY_FLUID_STATE_HH
 #define DUMUX_SATURATION_OVERLAY_FLUID_STATE_HH
 
-#include <dune/common/array.hh>
+#include <array>
 
 #include <dumux/common/valgrind.hh>
 
@@ -204,7 +204,7 @@ public:
 
 protected:
     const FluidState *fs_;
-    Dune::array<Scalar, numPhases> saturation_;
+    std::array<Scalar, numPhases> saturation_;
 };
 
 } // end namespace Dumux

@@ -69,7 +69,7 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        Dune::array<unsigned int, dim> cellRes;
+        std::array<unsigned int, dim> cellRes;
         cellRes.fill(1);
         GlobalPosition lowerLeft(0.0);
         GlobalPosition upperRight(1.0);

@@ -63,7 +63,7 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld> DimWorldVector;
     typedef Dune::BlockVector<DimWorldVector> DimWorldField;
-    typedef Dune::array<DimWorldField, numPhases> PhaseDimWorldField;
+    typedef std::array<DimWorldField, numPhases> PhaseDimWorldField;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 

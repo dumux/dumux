@@ -60,7 +60,7 @@ public:
      */
     static void makeGrid()
     {
-        Dune::array< unsigned int, dim > cellRes;
+        std::array< unsigned int, dim > cellRes;
         Dune::FieldVector<Scalar, dim> upperRight;
         Dune::FieldVector<Scalar, dim> lowerLeft;
 

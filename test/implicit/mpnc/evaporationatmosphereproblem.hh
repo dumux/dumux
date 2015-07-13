@@ -234,10 +234,10 @@ class EvaporationAtmosphereProblem
     typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
 
     typedef std::vector<Dune::FieldVector<Scalar, 1> >  ScalarBuffer;
-    typedef Dune::array<ScalarBuffer, numPhases>         PhaseBuffer;
+    typedef std::array<ScalarBuffer, numPhases>         PhaseBuffer;
     typedef Dune::FieldVector<Scalar, dim>              DimVector;
     typedef Dune::BlockVector<DimVector>           VelocityField;
-    typedef Dune::array<VelocityField, numPhases>        PhaseVelocityField;
+    typedef std::array<VelocityField, numPhases>        PhaseVelocityField;
 
 public:
     /*!

@@ -26,9 +26,9 @@
 #ifndef DUMUX_MPNC_VTK_BASE_WRITER_HH
 #define DUMUX_MPNC_VTK_BASE_WRITER_HH
 
+#include <array>
 #include <cstdio>
 
-#include <dune/common/array.hh>
 #include <dune/istl/bvector.hh>
 
 #include <dumux/io/vtkmultiwriter.hh>
@@ -63,9 +63,9 @@ class MPNCVtkWriterModule
 
 public:
     typedef std::vector<Dune::FieldVector<Scalar, 1> > ScalarVector;
-    typedef Dune::array<ScalarVector, numPhases> PhaseVector;
-    typedef Dune::array<ScalarVector, numComponents> ComponentVector;
-    typedef Dune::array<ComponentVector,  numPhases> PhaseComponentMatrix;
+    typedef std::array<ScalarVector, numPhases> PhaseVector;
+    typedef std::array<ScalarVector, numComponents> ComponentVector;
+    typedef std::array<ComponentVector,  numPhases> PhaseComponentMatrix;
 
     MPNCVtkWriterModule(const Problem &problem)
         : problem_(problem)

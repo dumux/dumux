@@ -20,6 +20,7 @@
 #ifndef DUMUX_LOCAL_STIFFNESS_HH
 #define DUMUX_LOCAL_STIFFNESS_HH
 
+#include <array>
 #include<iostream>
 #include<vector>
 #include<set>
@@ -28,7 +29,6 @@
 #include<dune/common/timer.hh>
 #include<dune/common/fvector.hh>
 #include<dune/common/fmatrix.hh>
-#include<dune/common/array.hh>
 #include<dune/geometry/type.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/istl/operators.hh>
@@ -76,7 +76,7 @@ namespace Dumux
     // types for matrics, vectors and boundary conditions
     typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
     typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
-        typedef Dune::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
+        typedef std::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
         typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     virtual ~LocalStiffness ()
@@ -256,7 +256,7 @@ namespace Dumux
     // types for matrics, vectors and boundary conditions
       typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
       typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
-      typedef Dune::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
+      typedef std::array<Dumux::BoundaryConditions::Flags,m> BCBlockType;    // componentwise boundary conditions
 
     /*! initialize local stiffness matrix */
       LinearLocalStiffness ()

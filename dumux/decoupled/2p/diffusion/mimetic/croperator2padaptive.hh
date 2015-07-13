@@ -92,7 +92,7 @@ class CROperatorAssemblerTwoPAdaptive
     typedef typename MatrixType::block_type MBlockType;
     typedef typename MatrixType::RowIterator rowiterator;
     typedef typename MatrixType::ColIterator coliterator;
-    typedef Dune::array<BoundaryConditions::Flags,1> BCBlockType;     // componentwise boundary conditions
+    typedef std::array<BoundaryConditions::Flags,1> BCBlockType;     // componentwise boundary conditions
     typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType;
     typedef Dumux::IntersectionMapper<GridView> IntersectionMapper;
 

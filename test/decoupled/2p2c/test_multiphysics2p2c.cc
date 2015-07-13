@@ -24,6 +24,7 @@
  */
 #include "config.h"
 
+#include <array>
 #include <iostream>
 
 #include <dune/common/exceptions.hh>
@@ -90,7 +91,7 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        Dune::array<int,dim> N;
+        std::array<int,dim> N;
         std::fill(N.begin(), N.end(), 10);
         Dune::FieldVector<double,dim> H(10.0);
         Grid grid(H, N);

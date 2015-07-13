@@ -26,7 +26,7 @@
 #ifndef DUMUX_PRESSURE_OVERLAY_FLUID_STATE_HH
 #define DUMUX_PRESSURE_OVERLAY_FLUID_STATE_HH
 
-#include <dune/common/array.hh>
+#include <array>
 
 #include <dumux/common/valgrind.hh>
 
@@ -205,7 +205,7 @@ public:
 
 protected:
     const FluidState *fs_;
-    Dune::array<Scalar, numPhases> pressure_;
+    std::array<Scalar, numPhases> pressure_;
 };
 
 } // end namespace Dumux

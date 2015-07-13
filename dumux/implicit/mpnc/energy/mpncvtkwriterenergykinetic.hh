@@ -72,11 +72,11 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     typedef typename ParentType::ScalarVector ScalarVector;
     typedef typename ParentType::PhaseVector PhaseVector;
     typedef typename ParentType::ComponentVector ComponentVector;
-    typedef Dune::array<ScalarVector, numEnergyEqs> EnergyEqVector;
+    typedef std::array<ScalarVector, numEnergyEqs> EnergyEqVector;
 
     typedef Dune::FieldVector<Scalar, dimWorld> DimWorldVector;
     typedef Dune::BlockVector<DimWorldVector> DimWorldField;
-    typedef Dune::array<DimWorldField, numPhases> PhaseDimWorldField;
+    typedef std::array<DimWorldField, numPhases> PhaseDimWorldField;
 
 
 public:
@@ -321,11 +321,11 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     typedef typename ParentType::ScalarVector ScalarVector;
     typedef typename ParentType::PhaseVector PhaseVector;
     typedef typename ParentType::ComponentVector ComponentVector;
-    typedef Dune::array<ScalarVector, numEnergyEqs> EnergyEqVector;
+    typedef std::array<ScalarVector, numEnergyEqs> EnergyEqVector;
 
     typedef Dune::FieldVector<Scalar, dimWorld> DimWorldVector;
     typedef Dune::BlockVector<DimWorldVector> DimWorldField;
-    typedef Dune::array<DimWorldField, numPhases> PhaseDimWorldField;
+    typedef std::array<DimWorldField, numPhases> PhaseDimWorldField;
 
 
 public:
