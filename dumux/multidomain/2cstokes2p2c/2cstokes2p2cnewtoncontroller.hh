@@ -48,6 +48,7 @@ class TwoCStokesTwoPTwoCNewtonController : public MultiDomainNewtonController<Ty
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
 public:
+    //! \brief The constructor
     TwoCStokesTwoPTwoCNewtonController(const Problem &problem)
         : ParentType(problem)
     {  }

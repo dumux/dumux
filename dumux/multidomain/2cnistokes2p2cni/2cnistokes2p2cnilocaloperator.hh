@@ -364,10 +364,10 @@ public:
         DimVector normalMassFlux2(0.);
 
         // velocity*normal*area*rho
+        // mass flux is needed for both (mass/mole) formulation, as the enthalpy is mass based
         for (int phaseIdx=0; phaseIdx<numPhases2; ++phaseIdx)
             normalMassFlux2[phaseIdx] = -boundaryVars2.volumeFlux(phaseIdx)*
                 cParams.elemVolVarsCur2[vertInElem2].density(phaseIdx);
-        ////////////////////////////////////////
 
         if (cParams.boundaryTypes1.isCouplingOutflow(energyEqIdx1))
         {

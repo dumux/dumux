@@ -155,10 +155,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, FVElementGeometry) FVElementGeometry1;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, FVElementGeometry) FVElementGeometry2;
 
-    // Multidomain Grid and Subgrid types
+    // Multidomain Grid types
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
     typedef typename MDGrid::Traits::template Codim<0>::Entity MDElement;
-    typedef typename MDGrid::SubDomainGrid SDGrid;
 
     typedef typename GET_PROP_TYPE(Stokes2cTypeTag, GridView) Stokes2cGridView;
     typedef typename GET_PROP_TYPE(TwoPTwoCTypeTag, GridView) TwoPTwoCGridView;
@@ -210,9 +209,13 @@ class TwoCStokesTwoPTwoCLocalOperator :
     typedef typename TwoPTwoCGridView::template Codim<dim>::EntityPointer VertexPointer2;
     typedef typename MDGrid::Traits::template Codim<0>::EntityPointer MDElementPointer;
 
+    //! \brief The constructor
     TwoCStokesTwoPTwoCLocalOperator(GlobalProblem& globalProblem)
         : globalProblem_(globalProblem)
     {
+        static_assert(GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) == GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                      "The coupling conditions is only implemented for same formulations (mass or mole) in both subdomains.");
+
         blModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, BoundaryLayer, Model);
         massTransferModel_ = GET_PARAM_FROM_GROUP(TypeTag, int, MassTransfer, Model);
 
@@ -406,12 +409,16 @@ class TwoCStokesTwoPTwoCLocalOperator :
     {
         const DimVector& globalPos1 = cParams.fvGeometry1.subContVol[vertInElem1].global;
         const DimVector& bfNormal1 = boundaryVars1.face().normal;
+
         const Scalar normalMassFlux = boundaryVars1.normalVelocity() *
             cParams.elemVolVarsCur1[vertInElem1].density();
 
         //rho*v*n as NEUMANN condition for porous medium (set, if B&J defined as NEUMANN condition)
         if (cParams.boundaryTypes2.isCouplingInflow(massBalanceIdx2))
         {
+            static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
+                          "This coupling condition is only implemented for mass fraction formulation.");
+
             if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
             {
                 couplingRes2.accumulate(lfsu_n.child(massBalanceIdx2), vertInElem2,
@@ -435,6 +442,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
             // only enter here, if a BOUNDARY LAYER MODEL is used for the computation of the diffusive fluxes
             if (blModel_)
             {
+                static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
+                              "Boundary layer and mass transfer models are only implemented for mass fraction formulation.");
+
                 const Scalar massFractionOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefMassfrac);
                 const Scalar M1 = FluidSystem::molarMass(transportCompIdx1);
                 const Scalar M2 = FluidSystem::molarMass(phaseCompIdx1);
@@ -520,6 +530,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
                 // compute fluxes explicitly at corner points - only quarter control volume
                 if (globalProblem_.sdProblem1().isCornerPoint(globalPos1))
                 {
+                    static_assert(!GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                                  "This coupling condition is only implemented for mass fraction formulation.");
+
                     const Scalar advectiveFlux =
                         normalMassFlux *
                         cParams.elemVolVarsCur1[vertInElem1].massFraction(transportCompIdx1);
@@ -536,6 +549,9 @@ class TwoCStokesTwoPTwoCLocalOperator :
                 // coupling via the defect
                 else
                 {
+                    static_assert(GET_PROP_VALUE(Stokes2cTypeTag, UseMoles) == GET_PROP_VALUE(TwoPTwoCTypeTag, UseMoles),
+                                  "This coupling condition is only implemented or different formulations (mass/mole) in the subdomains.");
+
                     // the component mass flux from the stokes domain
                     couplingRes2.accumulate(lfsu_n.child(contiWEqIdx2), vertInElem2,
                                             globalProblem_.localResidual1().residual(vertInElem1)[transportEqIdx1]);
@@ -611,6 +627,11 @@ class TwoCStokesTwoPTwoCLocalOperator :
         if (cParams.boundaryTypes1.isCouplingOutflow(transportEqIdx1))
         {
             // set residualStokes[transportEqIdx1] = x in stokes2clocalresidual.hh
+
+
+            static_assert(!GET_PROP_VALUE(Stokes2cTypeTag, UseMoles),
+                          "This coupling condition is only implemented for mass fraction formulation.");
+
             couplingRes1.accumulate(lfsu_s.child(transportEqIdx1), vertInElem1,
                                     -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
         }

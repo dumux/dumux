@@ -26,6 +26,7 @@
 #ifndef DUMUX_STOKESNC_COUPLING_LOCAL_RESIDUAL_HH
 #define DUMUX_STOKESNC_COUPLING_LOCAL_RESIDUAL_HH
 
+#include <dumux/freeflow/stokesnc/stokesnclocalresidual.hh>
 #include <dumux/freeflow/stokesnc/stokesncmodel.hh>
 
 namespace Dumux
@@ -368,7 +369,7 @@ protected:
         }
     }
 
-    // return true, if at least one equation on the boundary has a  coupling condition
+    //! \brief Return true, if at least one equation on the boundary has a  coupling condition
     bool boundaryHasCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -377,7 +378,7 @@ protected:
         return false;
     }
 
-    // return true, if at least one equation on the boundary has a mortar coupling condition
+    //! \brief Return true, if at least one equation on the boundary has a mortar coupling condition
     bool boundaryHasMortarCoupling_(const BoundaryTypes& bcTypes) const
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)

@@ -264,8 +264,14 @@ int startLocal(int argc, char **argv,
 
 int main(int argc, char** argv)
 {
+#if (HAVE_SUPERLU || HAVE_UMFPACK)
     typedef TTAG(TwoCStokesTwoPTwoCProblem) ProblemTypeTag;
     return startLocal<ProblemTypeTag>(argc, argv, printUsage);
+#else
+#warning "You need to have SuperLU or UMFPack installed to run this test."
+    std::cerr << "You need to have SuperLU or UMFPack installed to run this test\n";
+    return 77;
+#endif
 }
 
 #else

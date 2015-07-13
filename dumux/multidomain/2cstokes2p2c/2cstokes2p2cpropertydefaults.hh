@@ -40,21 +40,12 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 // Specify the multidomain gridview
-SET_PROP(TwoCStokesTwoPTwoC, GridView)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
- public:
-    typedef typename MDGrid::LeafGridView type;
-};
+SET_TYPE_PROP(TwoCStokesTwoPTwoC, GridView,
+              typename GET_PROP_TYPE(TypeTag, MultiDomainGrid)::LeafGridView);
 
 // Specify the type of the used solution vector
-SET_PROP(TwoCStokesTwoPTwoC, SolutionVector)
-{
- private:
-    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGridOperator) MDGridOperator;
- public:
-    typedef typename MDGridOperator::Traits::Domain type;
-};
+SET_TYPE_PROP(TwoCStokesTwoPTwoC, SolutionVector,
+              typename GET_PROP_TYPE(TypeTag, MultiDomainGridOperator)::Traits::Domain);
 
 // Specify the type of the multidomain assembler
 SET_TYPE_PROP(TwoCStokesTwoPTwoC, JacobianAssembler, Dumux::MultiDomainAssembler<TypeTag>);
