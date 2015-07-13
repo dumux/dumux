@@ -27,7 +27,6 @@
 #include <cassert>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/tuples.hh>
 #include <dune/common/float_cmp.hh>
 
 #include "valgrind.hh"
@@ -366,7 +365,7 @@ protected:
         ListIterator it = srcBegin;
         ++it;
         bool reverse = false;
-        if (Dune::get<0>(*srcBegin) > Dune::get<0>(*it))
+        if (std::get<0>(*srcBegin) > std::get<0>(*it))
             reverse = true;
         --it;
 
@@ -375,8 +374,8 @@ protected:
             int idx = i;
             if (reverse)
                 idx = numSamples - i - 1;
-            destX[i] = Dune::get<0>(*it);
-            destY[i] = Dune::get<1>(*it);
+            destX[i] = std::get<0>(*it);
+            destY[i] = std::get<1>(*it);
         }
     }
 

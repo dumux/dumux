@@ -475,10 +475,10 @@ public:
         typename TupleContainer::const_iterator it1 = it0;
         ++it1;
 
-        set(Dune::get<0>(*it0),
-            Dune::get<1>(*it0),
-            Dune::get<0>(*it1),
-            Dune::get<1>(*it1),
+        set(std::get<0>(*it0),
+            std::get<1>(*it0),
+            std::get<0>(*it1),
+            std::get<1>(*it1),
             m0, m1);
     }
 
