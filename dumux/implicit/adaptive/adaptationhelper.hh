@@ -19,9 +19,12 @@
 #ifndef DUMUX_ADAPTATIONHELPER_HH
 #define DUMUX_ADAPTATIONHELPER_HH
 
+#include <dune/common/version.hh>
+#include <dune/grid/common/gridenums.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
-//#include <dumux/linear/vectorexchange.hh>
+
+#include <dumux/common/propertysystem.hh>
 
 /**
  * @file
@@ -30,6 +33,15 @@
 
 namespace Dumux
 {
+
+namespace Properties
+{
+NEW_PROP_TAG(GridView);
+NEW_PROP_TAG(ImplicitIsBox);
+NEW_PROP_TAG(PrimaryVariables);
+NEW_PROP_TAG(Problem);
+NEW_PROP_TAG(Scalar);
+}
 
 template<class TypeTag>
 class AdaptationHelper

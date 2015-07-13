@@ -24,15 +24,13 @@
 #ifndef DUMUX_COMBUSTION_SPATIALPARAMS_HH
 #define DUMUX_COMBUSTION_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dune/common/parametertreeparser.hh>
 
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
-#include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-
-#include <dune/common/parametertreeparser.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
+#include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
+#include <dumux/material/spatialparams/implicitspatialparams.hh>
 
 namespace Dumux
 {
@@ -43,6 +41,13 @@ class CombustionSpatialParams;
 
 namespace Properties
 {
+// Some forward declarations
+NEW_PROP_TAG(EnableEnergy);
+NEW_PROP_TAG(FluidState);
+NEW_PROP_TAG(FluidSystem);
+NEW_PROP_TAG(NumEnergyEquations);
+NEW_PROP_TAG(NumPhases);
+
 // The spatial params TypeTag
 NEW_TYPE_TAG(CombustionSpatialParams);
 

@@ -64,7 +64,9 @@ namespace Properties
 NEW_TYPE_TAG(ThreeDTwoPTestProblem, INHERITS_FROM(Test3d2pSpatialParams));
 
 // Set the grid type
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(ThreeDTwoPTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+#endif
 
 // Set the problem property
 SET_TYPE_PROP(ThreeDTwoPTestProblem, Problem, Dumux::Test3D2PProblem<TypeTag>);

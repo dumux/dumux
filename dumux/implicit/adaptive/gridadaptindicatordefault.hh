@@ -19,12 +19,21 @@
 #ifndef DUMUX_IMPLICIT_GRIDADAPTINDICATORDEFAULT_HH
 #define DUMUX_IMPLICIT_GRIDADAPTINDICATORDEFAULT_HH
 
+#include <dumux/common/propertysystem.hh>
+
 /**
  * @file
  * @brief  Class defining a default indicator for grid adaptation
  */
 namespace Dumux
 {
+
+namespace Properties
+{
+NEW_PROP_TAG(GridView);
+NEW_PROP_TAG(Problem);
+}
+
 /*!\ingroup ImplicitGridAdaptIndicator
  * @brief  Class defining a default indicator for grid adaptation
  *

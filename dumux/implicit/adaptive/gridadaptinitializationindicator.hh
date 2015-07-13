@@ -29,6 +29,14 @@
  */
 namespace Dumux
 {
+
+namespace Properties
+{
+NEW_PROP_TAG(BoundaryTypes);
+NEW_PROP_TAG(PrimaryVariables);
+NEW_PROP_TAG(NumEq);
+}
+
 /*!\ingroup ImplicitGridAdaptInitializationIndicator
  * @brief  Class defining an initialization indicator for grid adaptation
  *

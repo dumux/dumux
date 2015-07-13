@@ -29,8 +29,15 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dumux/common/propertysystem.hh>
+
 namespace Dumux
 {
+
+namespace Properties
+{
+NEW_PROP_TAG(SolutionVector);
+}
 
 /*!\ingroup ImplicitGridAdapt
  * @brief Standard Module for h-adaptive simulations
