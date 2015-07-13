@@ -80,8 +80,8 @@ public:
         jacAsm_ = new JacobianAssembler();
         jacAsm_->init(problem);
 
-        uCur_ = Dune::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
-        uPrev_ = Dune::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
+        uCur_ = std::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
+        uPrev_ = std::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
 
         *uCur_= 0;
         *uPrev_= 0;
@@ -357,8 +357,8 @@ protected:
 
     // cur is the current solution, prev the solution of the previous
     // time step
-    Dune::shared_ptr<SolutionVector> uCur_;
-    Dune::shared_ptr<SolutionVector> uPrev_;
+    std::shared_ptr<SolutionVector> uCur_;
+    std::shared_ptr<SolutionVector> uPrev_;
 
     bool wasRestarted_;
 };

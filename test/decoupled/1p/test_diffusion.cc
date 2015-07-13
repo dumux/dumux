@@ -73,7 +73,7 @@ int main(int argc, char** argv)
         cellRes.fill(1);
         GlobalPosition lowerLeft(0.0);
         GlobalPosition upperRight(1.0);
-        static Dune::shared_ptr<Grid> grid 
+        static std::shared_ptr<Grid> grid
             = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft,
                                                                 upperRight,
                                                                 cellRes);

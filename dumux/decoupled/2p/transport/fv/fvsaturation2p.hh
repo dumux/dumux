@@ -482,9 +482,9 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Velocity type not supported!");
         }
 
-        capillaryFlux_ = Dune::make_shared<CapillaryFlux>(problem);
-        gravityFlux_ = Dune::make_shared<GravityFlux>(problem);
-        velocity_ = Dune::make_shared<Velocity>(problem);
+        capillaryFlux_ = std::make_shared<CapillaryFlux>(problem);
+        gravityFlux_ = std::make_shared<GravityFlux>(problem);
+        velocity_ = std::make_shared<Velocity>(problem);
 
         vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
         porosityThreshold_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, PorosityThreshold);
@@ -500,9 +500,9 @@ private:
     { return *static_cast<const Implementation *>(this); }
 
     Problem& problem_;
-    Dune::shared_ptr<Velocity> velocity_;
-    Dune::shared_ptr<CapillaryFlux> capillaryFlux_;
-    Dune::shared_ptr<GravityFlux> gravityFlux_;
+    std::shared_ptr<Velocity> velocity_;
+    std::shared_ptr<CapillaryFlux> capillaryFlux_;
+    std::shared_ptr<GravityFlux> gravityFlux_;
 
     int vtkOutputLevel_;
     Scalar porosityThreshold_;

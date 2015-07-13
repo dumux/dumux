@@ -223,7 +223,7 @@ public:
         problem_(problem), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)),
         subCFLFactor_(1.0), accumulatedDt_(0), dtThreshold_(1e-6)
     {
-        evalCflFluxFunction_ = Dune::make_shared<EvalCflFluxFunction>(problem);
+        evalCflFluxFunction_ = std::make_shared<EvalCflFluxFunction>(problem);
 
         Scalar cFLFactor = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
         subCFLFactor_ = std::min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
@@ -255,7 +255,7 @@ private:
     Problem& problem_;
     bool switchNormals_;
 
-    Dune::shared_ptr<EvalCflFluxFunction> evalCflFluxFunction_;
+    std::shared_ptr<EvalCflFluxFunction> evalCflFluxFunction_;
     std::vector<LocalTimesteppingData> timeStepData_;
     bool localTimeStepping_;
     Scalar subCFLFactor_;

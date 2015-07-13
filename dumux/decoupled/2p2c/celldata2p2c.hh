@@ -78,7 +78,7 @@ protected:
     int globalIdx_;
     Scalar perimeter_;
 
-    Dune::shared_ptr<FluidState> fluidState_;
+    std::shared_ptr<FluidState> fluidState_;
     FluxData fluxData_;
 public:
 
@@ -353,7 +353,7 @@ public:
     FluidState& manipulateFluidState()
     {
         if(!fluidState_)
-            fluidState_ = Dune::make_shared<FluidState>();
+            fluidState_ = std::make_shared<FluidState>();
         return *fluidState_;
     }
 

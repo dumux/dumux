@@ -142,7 +142,7 @@ private:
         int numElements = this->gridView_().size(0);
 
         // allocate raw matrix
-        this->matrix_ = Dune::make_shared<JacobianMatrix>(numElements, numElements, JacobianMatrix::random);
+        this->matrix_ = std::make_shared<JacobianMatrix>(numElements, numElements, JacobianMatrix::random);
 
         // find out the global indices of the neighboring elements of
         // each element

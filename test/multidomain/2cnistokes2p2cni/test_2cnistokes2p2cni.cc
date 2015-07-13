@@ -181,7 +181,7 @@ int startLocal_(int argc, char **argv,
     TimeManager timeManager;
 
     // instantiate coupled problem
-    Dune::shared_ptr<MDGrid> mdGrid_ = Dune::make_shared<MDGrid> (GridCreator::grid());
+    std::shared_ptr<MDGrid> mdGrid_ = std::make_shared<MDGrid> (GridCreator::grid());
 
     // instantiate coupled problem
     Problem problem(*mdGrid_,

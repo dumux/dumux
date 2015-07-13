@@ -151,7 +151,7 @@ public:
     void init(Problem &problem)
     {
         ParentType::init(problem);
-        vtkWriter_ = Dune::make_shared<MPNCVtkWriter>(problem);
+        vtkWriter_ = std::make_shared<MPNCVtkWriter>(problem);
 
         if (this->gridView_().comm().rank() == 0)
             std::cout
@@ -200,7 +200,7 @@ public:
         vtkWriter_->addCurrentSolution(writer);
     }
 
-    Dune::shared_ptr<MPNCVtkWriter> vtkWriter_;
+    std::shared_ptr<MPNCVtkWriter> vtkWriter_;
 
 private:
     bool enableSmoothUpwinding_;

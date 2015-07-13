@@ -79,7 +79,7 @@ public:
         : ParentType(timeManager, gridView),
         gravity_(0)
     {
-        spatialParams_ = Dune::make_shared<SpatialParams>(gridView);
+        spatialParams_ = std::make_shared<SpatialParams>(gridView);
 
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
@@ -192,7 +192,7 @@ private:
     GlobalPosition gravity_;
 
     // fluids and material properties
-    Dune::shared_ptr<SpatialParams> spatialParams_;
+    std::shared_ptr<SpatialParams> spatialParams_;
 };
 
 }

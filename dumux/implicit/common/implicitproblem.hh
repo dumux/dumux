@@ -127,7 +127,7 @@ public:
 
         // if we are calculating on an adaptive grid get the grid adapt model
         if (adaptiveGrid)
-            gridAdapt_ = Dune::make_shared<GridAdaptModel>(asImp_());
+            gridAdapt_ = std::make_shared<GridAdaptModel>(asImp_());
     }
 
     /*!
@@ -920,7 +920,7 @@ private:
     void createResultWriter_()
     { 
         if (!resultWriter_) 
-            resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
         
         // Tell the result writer that the grid changes if we are adaptive
         if (adaptiveGrid)
@@ -945,9 +945,9 @@ private:
     NewtonMethod newtonMethod_;
     NewtonController newtonCtl_;
 
-    Dune::shared_ptr<VtkMultiWriter> resultWriter_;
+    std::shared_ptr<VtkMultiWriter> resultWriter_;
 
-    Dune::shared_ptr<GridAdaptModel> gridAdapt_;
+    std::shared_ptr<GridAdaptModel> gridAdapt_;
 };
 } // namespace Dumux
 

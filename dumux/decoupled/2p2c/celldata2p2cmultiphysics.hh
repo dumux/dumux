@@ -62,7 +62,7 @@ private:
 private:
     int subdomain_;
     int fluidStateType_;
-    Dune::shared_ptr<SimpleFluidState> simpleFluidState_;
+    std::shared_ptr<SimpleFluidState> simpleFluidState_;
 
 //    FluxData fluxData_;
 public:
@@ -283,7 +283,7 @@ public:
         }
 
         if(!simpleFluidState_)
-            simpleFluidState_ = Dune::make_shared<SimpleFluidState>();
+            simpleFluidState_ = std::make_shared<SimpleFluidState>();
         return *simpleFluidState_;
     }
     //! Allows manipulation of the complex fluid state
@@ -301,7 +301,7 @@ public:
 
         if(!this->fluidState_)
         {
-            this->fluidState_ = Dune::make_shared<FluidState>();
+            this->fluidState_ = std::make_shared<FluidState>();
             // properly initialize pressure, since it is evaluated later:
             this->fluidState_->setPressure(wPhaseIdx, 1e5);
             this->fluidState_->setPressure(nPhaseIdx, 1e5);

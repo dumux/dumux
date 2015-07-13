@@ -95,43 +95,43 @@ public:
         sdProblem1_ = &globalProblem_->sdProblem1();
         sdProblem2_ = &globalProblem_->sdProblem2();
 
-        fem1_ = Dune::make_shared<FEM1>(globalProblem_->sdGridView1());
-        fem2_ = Dune::make_shared<FEM2>(globalProblem_->sdGridView2());
+        fem1_ = std::make_shared<FEM1>(globalProblem_->sdGridView1());
+        fem2_ = std::make_shared<FEM2>(globalProblem_->sdGridView2());
 
-        scalarGridFunctionSpace1_ = Dune::make_shared<ScalarGridFunctionSpace1>(globalProblem_->sdGridView1(),
+        scalarGridFunctionSpace1_ = std::make_shared<ScalarGridFunctionSpace1>(globalProblem_->sdGridView1(),
                                                                                 *fem1_);
-        scalarGridFunctionSpace2_ = Dune::make_shared<ScalarGridFunctionSpace2>(globalProblem_->sdGridView2(),
+        scalarGridFunctionSpace2_ = std::make_shared<ScalarGridFunctionSpace2>(globalProblem_->sdGridView2(),
                                                                                 *fem2_);
 
-        gridFunctionSpace1_ = Dune::make_shared<GridFunctionSpace1>(*scalarGridFunctionSpace1_);
-        gridFunctionSpace2_ = Dune::make_shared<GridFunctionSpace2>(*scalarGridFunctionSpace2_);
+        gridFunctionSpace1_ = std::make_shared<GridFunctionSpace1>(*scalarGridFunctionSpace1_);
+        gridFunctionSpace2_ = std::make_shared<GridFunctionSpace2>(*scalarGridFunctionSpace2_);
 
-        mdGridFunctionSpace_ = Dune::make_shared<MultiDomainGridFunctionSpace>(globalProblem_->mdGrid(),
+        mdGridFunctionSpace_ = std::make_shared<MultiDomainGridFunctionSpace>(globalProblem_->mdGrid(),
                                                                                *gridFunctionSpace1_,
                                                                                *gridFunctionSpace2_);
 
-        localOperator1_ = Dune::make_shared<LocalOperator1>(sdProblem1_->model());
-        localOperator2_ = Dune::make_shared<LocalOperator2>(sdProblem2_->model());
+        localOperator1_ = std::make_shared<LocalOperator1>(sdProblem1_->model());
+        localOperator2_ = std::make_shared<LocalOperator2>(sdProblem2_->model());
 
-        condition1_ = Dune::make_shared<MultiDomainCondition>(0);
-        condition2_ = Dune::make_shared<MultiDomainCondition>(1);
+        condition1_ = std::make_shared<MultiDomainCondition>(0);
+        condition2_ = std::make_shared<MultiDomainCondition>(1);
 
-        mdSubProblem1_ = Dune::make_shared<MultiDomainSubProblem1>(*localOperator1_, *condition1_);
-        mdSubProblem2_ = Dune::make_shared<MultiDomainSubProblem2>(*localOperator2_, *condition2_);
+        mdSubProblem1_ = std::make_shared<MultiDomainSubProblem1>(*localOperator1_, *condition1_);
+        mdSubProblem2_ = std::make_shared<MultiDomainSubProblem2>(*localOperator2_, *condition2_);
 
-        couplingLocalOperator_ = Dune::make_shared<MultiDomainCouplingLocalOperator>(*globalProblem_);
-        mdCoupling_ = Dune::make_shared<MultiDomainCoupling>(*mdSubProblem1_, *mdSubProblem2_, *couplingLocalOperator_);
+        couplingLocalOperator_ = std::make_shared<MultiDomainCouplingLocalOperator>(*globalProblem_);
+        mdCoupling_ = std::make_shared<MultiDomainCoupling>(*mdSubProblem1_, *mdSubProblem2_, *couplingLocalOperator_);
 
-        constraintsTrafo_ = Dune::make_shared<MultiDomainConstraintsTrafo>();
+        constraintsTrafo_ = std::make_shared<MultiDomainConstraintsTrafo>();
 
-        mdGridOperator_ = Dune::make_shared<MultiDomainGridOperator>(*mdGridFunctionSpace_, *mdGridFunctionSpace_,
+        mdGridOperator_ = std::make_shared<MultiDomainGridOperator>(*mdGridFunctionSpace_, *mdGridFunctionSpace_,
                                                                      *constraintsTrafo_, *constraintsTrafo_,
                                                                      *mdSubProblem1_, *mdSubProblem2_, *mdCoupling_);
 
-        matrix_ = Dune::make_shared<JacobianMatrix>(*mdGridOperator_);
+        matrix_ = std::make_shared<JacobianMatrix>(*mdGridOperator_);
         *matrix_ = 0;
 
-        residual_ = Dune::make_shared<SolutionVector>(*mdGridFunctionSpace_);
+        residual_ = std::make_shared<SolutionVector>(*mdGridFunctionSpace_);
     }
 
     //! \copydoc ImplicitAssembler::assemble()
@@ -192,34 +192,34 @@ private:
     SubDomainProblem1 *sdProblem1_;
     SubDomainProblem2 *sdProblem2_;
 
-    Dune::shared_ptr<FEM1> fem1_;
-    Dune::shared_ptr<FEM2> fem2_;
+    std::shared_ptr<FEM1> fem1_;
+    std::shared_ptr<FEM2> fem2_;
 
-    Dune::shared_ptr<ScalarGridFunctionSpace1> scalarGridFunctionSpace1_;
-    Dune::shared_ptr<ScalarGridFunctionSpace2> scalarGridFunctionSpace2_;
+    std::shared_ptr<ScalarGridFunctionSpace1> scalarGridFunctionSpace1_;
+    std::shared_ptr<ScalarGridFunctionSpace2> scalarGridFunctionSpace2_;
 
-    Dune::shared_ptr<GridFunctionSpace1> gridFunctionSpace1_;
-    Dune::shared_ptr<GridFunctionSpace2> gridFunctionSpace2_;
-    Dune::shared_ptr<MultiDomainGridFunctionSpace> mdGridFunctionSpace_;
+    std::shared_ptr<GridFunctionSpace1> gridFunctionSpace1_;
+    std::shared_ptr<GridFunctionSpace2> gridFunctionSpace2_;
+    std::shared_ptr<MultiDomainGridFunctionSpace> mdGridFunctionSpace_;
 
-    Dune::shared_ptr<LocalOperator1> localOperator1_;
-    Dune::shared_ptr<LocalOperator2> localOperator2_;
+    std::shared_ptr<LocalOperator1> localOperator1_;
+    std::shared_ptr<LocalOperator2> localOperator2_;
 
-    Dune::shared_ptr<MultiDomainCondition> condition1_;
-    Dune::shared_ptr<MultiDomainCondition> condition2_;
+    std::shared_ptr<MultiDomainCondition> condition1_;
+    std::shared_ptr<MultiDomainCondition> condition2_;
 
-    Dune::shared_ptr<MultiDomainSubProblem1> mdSubProblem1_;
-    Dune::shared_ptr<MultiDomainSubProblem2> mdSubProblem2_;
+    std::shared_ptr<MultiDomainSubProblem1> mdSubProblem1_;
+    std::shared_ptr<MultiDomainSubProblem2> mdSubProblem2_;
 
-    Dune::shared_ptr<MultiDomainCouplingLocalOperator> couplingLocalOperator_;
-    Dune::shared_ptr<MultiDomainCoupling> mdCoupling_;
+    std::shared_ptr<MultiDomainCouplingLocalOperator> couplingLocalOperator_;
+    std::shared_ptr<MultiDomainCoupling> mdCoupling_;
 
-    Dune::shared_ptr<MultiDomainConstraintsTrafo> constraintsTrafo_;
-    Dune::shared_ptr<MultiDomainGridOperator> mdGridOperator_;
+    std::shared_ptr<MultiDomainConstraintsTrafo> constraintsTrafo_;
+    std::shared_ptr<MultiDomainGridOperator> mdGridOperator_;
 
-    Dune::shared_ptr<JacobianMatrix> matrix_;
+    std::shared_ptr<JacobianMatrix> matrix_;
 
-    Dune::shared_ptr<SolutionVector> residual_;
+    std::shared_ptr<SolutionVector> residual_;
 };
 
 } // namespace Dumux

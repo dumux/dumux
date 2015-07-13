@@ -34,8 +34,6 @@
 #include <memory>
 #include <tuple>
 
-#include <dune/common/shared_ptr.hh>
-
 #include <dumux/parallel/mpibuffer.hh>
 
 #include "foreignoverlapfrombcrsmatrix.hh"
@@ -374,12 +372,12 @@ protected:
         // indices stemming from the overlap (i.e. without the border
         // indices)
         int numIndices = foreignOverlap.size();
-        numIndicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<int> >(1);
+        numIndicesSendBuff_[peerRank] = std::make_shared<MpiBuffer<int> >(1);
         (*numIndicesSendBuff_[peerRank])[0] = numIndices;
         numIndicesSendBuff_[peerRank]->send(peerRank);
 
         // create MPI buffers
-        indicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<IndexDistanceNpeers> >(numIndices);
+        indicesSendBuff_[peerRank] = std::make_shared<MpiBuffer<IndexDistanceNpeers> >(numIndices);
 
         // then send the additional indices themselfs
         ForeignOverlapWithPeer::const_iterator overlapIt = foreignOverlap.begin();
@@ -399,7 +397,7 @@ protected:
                                     numPeers);
 
             // send all peer ranks which see the given index
-            peersSendBuff_[peerRank].push_back(Dune::make_shared<MpiBuffer<int> >(2*numPeers));
+            peersSendBuff_[peerRank].push_back(std::make_shared<MpiBuffer<int> >(2*numPeers));
             typename std::map<ProcessRank, BorderDistance>::const_iterator it = foreignIndexOverlap.begin();
             typename std::map<ProcessRank, BorderDistance>::const_iterator endIt = foreignIndexOverlap.end();
             for (int j = 0; it != endIt; ++it, ++j)

@@ -25,11 +25,11 @@
 #ifndef DUMUX_OVERLAPPING_BLOCK_VECTOR_HH
 #define DUMUX_OVERLAPPING_BLOCK_VECTOR_HH
 
-#include <vector>
-#include <map>
 #include <iostream>
+#include <map>
+#include <memory>
+#include <vector>
 
-#include <dune/common/shared_ptr.hh>
 #include <dune/istl/bvector.hh>
 
 #include <dumux/parallel/mpibuffer.hh>
@@ -285,7 +285,7 @@ private:
 #if HAVE_MPI
         // create array for the front indices
         int numDomestic = overlap_->numDomestic();
-        frontMaster_ = Dune::make_shared<std::vector<ProcessRank> >(numDomestic, -1);
+        frontMaster_ = std::make_shared<std::vector<ProcessRank> >(numDomestic, -1);
 
         typename PeerSet::const_iterator peerIt;
         typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
@@ -297,9 +297,9 @@ private:
 
             const DomesticOverlapWithPeer &domesticOverlap = overlap_->domesticOverlapWithPeer(peerRank);
             int numEntries = domesticOverlap.size();
-            numIndicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<int> >(1);
-            indicesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<RowIndex> >(numEntries);
-            valuesSendBuff_[peerRank] = Dune::make_shared<MpiBuffer<FieldVector> >(numEntries);
+            numIndicesSendBuff_[peerRank] = std::make_shared<MpiBuffer<int> >(1);
+            indicesSendBuff_[peerRank] = std::make_shared<MpiBuffer<RowIndex> >(numEntries);
+            valuesSendBuff_[peerRank] = std::make_shared<MpiBuffer<FieldVector> >(numEntries);
 
             // fill the indices buffer with global indices
             MpiBuffer<RowIndex> &indicesSendBuff = *indicesSendBuff_[peerRank];
@@ -330,8 +330,8 @@ private:
             numRows = numRowsRecvBuff[0];
 
             // then, create the MPI buffers
-            indicesRecvBuff_[peerRank] = Dune::make_shared<MpiBuffer<RowIndex> >(numRows);
-            valuesRecvBuff_[peerRank] = Dune::make_shared<MpiBuffer<FieldVector> >(numRows);
+            indicesRecvBuff_[peerRank] = std::make_shared<MpiBuffer<RowIndex> >(numRows);
+            valuesRecvBuff_[peerRank] = std::make_shared<MpiBuffer<FieldVector> >(numRows);
             MpiBuffer<RowIndex> &indicesRecvBuff = *indicesRecvBuff_[peerRank];
 
             // next, receive the actual indices
@@ -439,14 +439,14 @@ private:
         }
     }
 
-    Dune::shared_ptr<std::vector<ProcessRank> > frontMaster_;
+    std::shared_ptr<std::vector<ProcessRank> > frontMaster_;
 
-    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<RowIndex> > > numIndicesSendBuff_;
-    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<RowIndex> > > indicesSendBuff_;
-    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<RowIndex> > > indicesRecvBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > numIndicesSendBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesSendBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesRecvBuff_;
 
-    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<FieldVector> > > valuesSendBuff_;
-    std::map<ProcessRank, Dune::shared_ptr<MpiBuffer<FieldVector> > > valuesRecvBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<FieldVector> > > valuesSendBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<FieldVector> > > valuesRecvBuff_;
 
     const Overlap *overlap_;
 };

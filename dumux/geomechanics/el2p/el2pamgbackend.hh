@@ -79,9 +79,9 @@ private:
     {
         int numVertices = this->problem().gridView().size(dim);
 
-        aBlocked_ = Dune::make_shared<BlockMatrix>(numVertices, numVertices, BlockMatrix::random);
-        xBlocked_ = Dune::make_shared<BlockVector>(numVertices);
-        bBlocked_ = Dune::make_shared<BlockVector>(numVertices);
+        aBlocked_ = std::make_shared<BlockMatrix>(numVertices, numVertices, BlockMatrix::random);
+        xBlocked_ = std::make_shared<BlockVector>(numVertices);
+        bBlocked_ = std::make_shared<BlockVector>(numVertices);
 
         // find out the global indices of the neighboring vertices of
         // each vertex

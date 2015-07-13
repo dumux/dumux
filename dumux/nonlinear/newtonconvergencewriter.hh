@@ -62,7 +62,7 @@ public:
     {
         ++ iteration_;
         if (!vtkMultiWriter_)
-            vtkMultiWriter_ = Dune::make_shared<VtkMultiWriter>(gridView, "convergence");
+            vtkMultiWriter_ = std::make_shared<VtkMultiWriter>(gridView, "convergence");
         vtkMultiWriter_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
     }
 
@@ -83,7 +83,7 @@ public:
 private:
     int timeStepIndex_;
     int iteration_;
-    Dune::shared_ptr<VtkMultiWriter> vtkMultiWriter_;
+    std::shared_ptr<VtkMultiWriter> vtkMultiWriter_;
     NewtonController &ctl_;
 };
 

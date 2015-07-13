@@ -48,7 +48,7 @@ class SimplexGridCreator
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
-    typedef Dune::shared_ptr<Grid> GridPointer;
+    typedef std::shared_ptr<Grid> GridPointer;
 
     enum { dim = Grid::dimension };
 

@@ -105,11 +105,11 @@ public:
             boxVolume_.resize(numDofs);
 
         localJacobian_.init(problem_());
-        jacAsm_ = Dune::make_shared<JacobianAssembler>();
+        jacAsm_ = std::make_shared<JacobianAssembler>();
         jacAsm_->init(problem_());
 
-        uCur_ = Dune::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
-        uPrev_ = Dune::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
+        uCur_ = std::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
+        uPrev_ = std::make_shared<SolutionVector>(jacAsm_->gridFunctionSpace());
 
         asImp_().applyInitialSolution_();
 
@@ -627,7 +627,7 @@ public:
     void resetJacobianAssembler ()
     {
         jacAsm_.template reset<JacobianAssembler>(0);
-        jacAsm_ = Dune::make_shared<JacobianAssembler>();
+        jacAsm_ = std::make_shared<JacobianAssembler>();
         jacAsm_->init(problem_());
     }
 
@@ -1000,15 +1000,15 @@ protected:
     LocalJacobian localJacobian_;
     // Linearizes the problem at the current time step using the
     // local jacobian
-    Dune::shared_ptr<JacobianAssembler> jacAsm_;
+    std::shared_ptr<JacobianAssembler> jacAsm_;
 
     // the set of all indices of vertices on the boundary
     std::vector<bool> boundaryIndices_;
 
     // cur is the current iterative solution, prev the converged
     // solution of the previous time step
-    Dune::shared_ptr<SolutionVector> uCur_;
-    Dune::shared_ptr<SolutionVector> uPrev_;
+    std::shared_ptr<SolutionVector> uCur_;
+    std::shared_ptr<SolutionVector> uPrev_;
 
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
 

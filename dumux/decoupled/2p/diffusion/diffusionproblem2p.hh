@@ -73,12 +73,12 @@ public:
     DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView), gravity_(0)
     {
-        spatialParams_ = Dune::make_shared<SpatialParams>(gridView);
+        spatialParams_ = std::make_shared<SpatialParams>(gridView);
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
 
-        pressModel_ = Dune::make_shared<PressureModel>(asImp_());
+        pressModel_ = std::make_shared<PressureModel>(asImp_());
     }
     /*!
      * \brief Constructs a DiffusionProblem2P object
@@ -95,7 +95,7 @@ public:
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
 
-        pressModel_ = Dune::make_shared<PressureModel>(asImp_());
+        pressModel_ = std::make_shared<PressureModel>(asImp_());
     }
 
     /*!
@@ -106,12 +106,12 @@ public:
     DiffusionProblem2P(const GridView &gridView)
     : ParentType(gridView, false), gravity_(0)
     {
-        spatialParams_ = Dune::make_shared<SpatialParams>(gridView);
+        spatialParams_ = std::make_shared<SpatialParams>(gridView);
         gravity_ = 0;
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
 
-        pressModel_ = Dune::make_shared<PressureModel>(asImp_());
+        pressModel_ = std::make_shared<PressureModel>(asImp_());
     }
     /*!
      * \brief Constructs a DiffusionProblem2P object
@@ -127,7 +127,7 @@ public:
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
 
-        pressModel_ = Dune::make_shared<PressureModel>(asImp_());
+        pressModel_ = std::make_shared<PressureModel>(asImp_());
     }
 
     /*!
@@ -248,9 +248,9 @@ private:
     GlobalPosition gravity_;
 
     // fluids and material properties
-    Dune::shared_ptr<SpatialParams> spatialParams_;
+    std::shared_ptr<SpatialParams> spatialParams_;
     bool newSpatialParams_;
-    Dune::shared_ptr<PressureModel> pressModel_;
+    std::shared_ptr<PressureModel> pressModel_;
 };
 
 }

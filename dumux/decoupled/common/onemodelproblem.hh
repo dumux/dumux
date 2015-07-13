@@ -107,9 +107,9 @@ public:
             }
         }
 
-        timeManager_ = Dune::make_shared<TimeManager>(verbose);
+        timeManager_ = std::make_shared<TimeManager>(verbose);
 
-        model_ = Dune::make_shared<Model>(asImp_()) ;
+        model_ = std::make_shared<Model>(asImp_()) ;
     }
 
     //! Constructs an object of type OneModelProblemProblem
@@ -137,7 +137,7 @@ public:
 
         timeManager_ = Dune::stackobject_to_shared_ptr<TimeManager>(timeManager);
 
-        model_ = Dune::make_shared<Model>(asImp_()) ;
+        model_ = std::make_shared<Model>(asImp_()) ;
     }
 
     /*!
@@ -451,7 +451,7 @@ public:
         if (verbose && gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
         if (!resultWriter_)
-            resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView(), asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView(), asImp_().name());
         resultWriter_->beginWrite(timeManager().time() + timeManager().timeStepSize());
         model().addOutputVtkFields(*resultWriter_);
         asImp_().addOutputVtkFields();
@@ -627,14 +627,14 @@ protected:
     VtkMultiWriter& resultWriter()
     {
         if (!resultWriter_)
-            resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
         return *resultWriter_;
     }
 
     VtkMultiWriter& resultWriter() const
     {
         if (!resultWriter_)
-            resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
         return *resultWriter_;
     }
 
@@ -655,13 +655,13 @@ private:
     GlobalPosition bBoxMin_;
     GlobalPosition bBoxMax_;
 
-    Dune::shared_ptr<TimeManager> timeManager_;
+    std::shared_ptr<TimeManager> timeManager_;
 
     Variables variables_;
 
-    Dune::shared_ptr<Model> model_;
+    std::shared_ptr<Model> model_;
 
-    Dune::shared_ptr<VtkMultiWriter> resultWriter_;
+    std::shared_ptr<VtkMultiWriter> resultWriter_;
     int outputInterval_;
     Scalar outputTimeInterval_;
 };

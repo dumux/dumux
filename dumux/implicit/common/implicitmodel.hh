@@ -109,7 +109,7 @@ public:
             boxVolume_.resize(numDofs);
 
         localJacobian_.init(problem_());
-        jacAsm_ = Dune::make_shared<JacobianAssembler>();
+        jacAsm_ = std::make_shared<JacobianAssembler>();
         jacAsm_->init(problem_());
 
         asImp_().applyInitialSolution_();
@@ -711,7 +711,7 @@ public:
     void resetJacobianAssembler ()
     {
         jacAsm_.template reset<JacobianAssembler>(0);
-        jacAsm_ = Dune::make_shared<JacobianAssembler>();
+        jacAsm_ = std::make_shared<JacobianAssembler>();
         jacAsm_->init(problem_());
     }
 
@@ -1093,7 +1093,7 @@ protected:
     LocalJacobian localJacobian_;
     // Linearizes the problem at the current time step using the
     // local jacobian
-    Dune::shared_ptr<JacobianAssembler> jacAsm_;
+    std::shared_ptr<JacobianAssembler> jacAsm_;
 
     // the set of all indices of vertices on the boundary
     std::vector<bool> boundaryIndices_;

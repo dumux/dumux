@@ -143,35 +143,35 @@ public:
     {
         problemPtr_ = &problem;
 
-        constraints_ = Dune::make_shared<Constraints>();
+        constraints_ = std::make_shared<Constraints>();
 
-        pressureFEM_ = Dune::make_shared<PressureFEM>(problemPtr_->gridView());
-        pressureScalarGFS_ = Dune::make_shared<PressureScalarGFS>(problemPtr_->gridView(), *pressureFEM_, *constraints_);
-        pressureGFS_ = Dune::make_shared<PressureGFS>(*pressureScalarGFS_);
+        pressureFEM_ = std::make_shared<PressureFEM>(problemPtr_->gridView());
+        pressureScalarGFS_ = std::make_shared<PressureScalarGFS>(problemPtr_->gridView(), *pressureFEM_, *constraints_);
+        pressureGFS_ = std::make_shared<PressureGFS>(*pressureScalarGFS_);
 
-        displacementFEM_ = Dune::make_shared<DisplacementFEM>(problemPtr_->gridView());
-        displacementScalarGFS_ = Dune::make_shared<DisplacementScalarGFS>(problemPtr_->gridView(), *displacementFEM_, *constraints_);
-        displacementGFS_ = Dune::make_shared<DisplacementGFS>(*displacementScalarGFS_);
+        displacementFEM_ = std::make_shared<DisplacementFEM>(problemPtr_->gridView());
+        displacementScalarGFS_ = std::make_shared<DisplacementScalarGFS>(problemPtr_->gridView(), *displacementFEM_, *constraints_);
+        displacementGFS_ = std::make_shared<DisplacementGFS>(*displacementScalarGFS_);
 
-        gridFunctionSpace_ = Dune::make_shared<GridFunctionSpace>(*pressureGFS_, *displacementGFS_);
+        gridFunctionSpace_ = std::make_shared<GridFunctionSpace>(*pressureGFS_, *displacementGFS_);
 
-        constraintsTrafo_ = Dune::make_shared<ConstraintsTrafo>();
+        constraintsTrafo_ = std::make_shared<ConstraintsTrafo>();
 
         // initialize the grid operator spaces
-        localOperator_ = Dune::make_shared<LocalOperator>(problemPtr_->model());
+        localOperator_ = std::make_shared<LocalOperator>(problemPtr_->model());
         gridOperator_ =
-            Dune::make_shared<GridOperator>(*gridFunctionSpace_, *constraintsTrafo_,
+            std::make_shared<GridOperator>(*gridFunctionSpace_, *constraintsTrafo_,
                                   *gridFunctionSpace_, *constraintsTrafo_, *localOperator_);
 
         // allocate raw matrix
-        matrix_ = Dune::make_shared<JacobianMatrix>(*gridOperator_);
+        matrix_ = std::make_shared<JacobianMatrix>(*gridOperator_);
 
         // initialize the jacobian matrix and the right hand side
         // vector
         *matrix_ = 0;
         reuseMatrix_ = false;
 
-        residual_ = Dune::make_shared<SolutionVector>(*gridFunctionSpace_);
+        residual_ = std::make_shared<SolutionVector>(*gridFunctionSpace_);
 
         int numVertices = gridView_().size(dim);
         int numElements = gridView_().size(0);
@@ -575,9 +575,9 @@ private:
     Problem *problemPtr_;
 
     // the jacobian matrix
-    Dune::shared_ptr<JacobianMatrix> matrix_;
+    std::shared_ptr<JacobianMatrix> matrix_;
     // the right-hand side
-    Dune::shared_ptr<SolutionVector> residual_;
+    std::shared_ptr<SolutionVector> residual_;
 
     // attributes required for jacobian matrix recycling
     bool reuseMatrix_;
@@ -594,17 +594,17 @@ private:
     Scalar reassembleTolerance_;
 
 
-    Dune::shared_ptr<Constraints> constraints_;
-    Dune::shared_ptr<PressureFEM> pressureFEM_;
-    Dune::shared_ptr<DisplacementFEM> displacementFEM_;
-    Dune::shared_ptr<PressureScalarGFS> pressureScalarGFS_;
-    Dune::shared_ptr<DisplacementScalarGFS> displacementScalarGFS_;
-    Dune::shared_ptr<PressureGFS> pressureGFS_;
-    Dune::shared_ptr<DisplacementGFS> displacementGFS_;
-    Dune::shared_ptr<GridFunctionSpace> gridFunctionSpace_;
-    Dune::shared_ptr<ConstraintsTrafo> constraintsTrafo_;
-    Dune::shared_ptr<LocalOperator> localOperator_;
-    Dune::shared_ptr<GridOperator> gridOperator_;
+    std::shared_ptr<Constraints> constraints_;
+    std::shared_ptr<PressureFEM> pressureFEM_;
+    std::shared_ptr<DisplacementFEM> displacementFEM_;
+    std::shared_ptr<PressureScalarGFS> pressureScalarGFS_;
+    std::shared_ptr<DisplacementScalarGFS> displacementScalarGFS_;
+    std::shared_ptr<PressureGFS> pressureGFS_;
+    std::shared_ptr<DisplacementGFS> displacementGFS_;
+    std::shared_ptr<GridFunctionSpace> gridFunctionSpace_;
+    std::shared_ptr<ConstraintsTrafo> constraintsTrafo_;
+    std::shared_ptr<LocalOperator> localOperator_;
+    std::shared_ptr<GridOperator> gridOperator_;
 };
 
 } // namespace PDELab

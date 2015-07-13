@@ -124,14 +124,14 @@ public:
                 bBoxMax_[i] = gridView.comm().max(bBoxMax_[i]);
             }
 
-        pressModel_ = Dune::make_shared<PressureModel>(asImp_());
+        pressModel_ = std::make_shared<PressureModel>(asImp_());
 
-        transportModel_ = Dune::make_shared<TransportModel>(asImp_());
-        model_ = Dune::make_shared<IMPETModel>(asImp_()) ;
+        transportModel_ = std::make_shared<TransportModel>(asImp_());
+        model_ = std::make_shared<IMPETModel>(asImp_()) ;
 
         // create an Object to handle adaptive grids
         if (adaptiveGrid)
-            gridAdapt_ = Dune::make_shared<GridAdaptModel>(asImp_());
+            gridAdapt_ = std::make_shared<GridAdaptModel>(asImp_());
 
         vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
         dtVariationRestrictionFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, DtVariationRestrictionFactor);
@@ -806,7 +806,7 @@ public:
             std::cout << "Writing result file for current time step\n";
 
         if (!resultWriter_)
-            resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
         if (adaptiveGrid)
             resultWriter_->gridChanged();
         resultWriter_->beginWrite(timeManager().time() + timeManager().timeStepSize());
@@ -822,14 +822,14 @@ protected:
     VtkMultiWriter& resultWriter()
     {
         if (!resultWriter_)
-            resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
         return *resultWriter_;
     }
     //! \copydoc Dumux::IMPETProblem::resultWriter()
     VtkMultiWriter& resultWriter() const
     {
         if (!resultWriter_)
-            resultWriter_ = Dune::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
+            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
         return *resultWriter_;
     }
 
@@ -856,15 +856,15 @@ private:
 
     Variables variables_;
 
-    Dune::shared_ptr<PressureModel> pressModel_;//!< object including the pressure model
-    Dune::shared_ptr<TransportModel> transportModel_;//!< object including the saturation model
-    Dune::shared_ptr<IMPETModel> model_;
+    std::shared_ptr<PressureModel> pressModel_;//!< object including the pressure model
+    std::shared_ptr<TransportModel> transportModel_;//!< object including the saturation model
+    std::shared_ptr<IMPETModel> model_;
 
-    Dune::shared_ptr<VtkMultiWriter> resultWriter_;
+    std::shared_ptr<VtkMultiWriter> resultWriter_;
     int outputInterval_;
     Scalar outputTimeInterval_;
     int vtkOutputLevel_;
-    Dune::shared_ptr<GridAdaptModel> gridAdapt_;
+    std::shared_ptr<GridAdaptModel> gridAdapt_;
 
     Scalar dtVariationRestrictionFactor_;
 };

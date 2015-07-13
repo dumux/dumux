@@ -152,15 +152,15 @@ private:
         borderListCreator(problem_.gridView(), problem_.vertexMapper());
 
         // create the overlapping Jacobian matrix
-        overlapMatrix_ = Dune::make_shared<OverlappingMatrix> (M,
+        overlapMatrix_ = std::make_shared<OverlappingMatrix> (M,
                 borderListCreator.foreignBorderList(),
                 borderListCreator.domesticBorderList(),
                 overlapSize_);
 
         // create the overlapping vectors for the residual and the
         // solution
-        overlapb_ = Dune::make_shared<OverlappingVector>(overlapMatrix_->overlap());
-        overlapx_ = Dune::make_shared<OverlappingVector>(*overlapb_);
+        overlapb_ = std::make_shared<OverlappingVector>(overlapMatrix_->overlap());
+        overlapx_ = std::make_shared<OverlappingVector>(*overlapb_);
     }
 
     void cleanup_()
@@ -173,9 +173,9 @@ private:
     const Problem &problem_;
 
     int overlapSize_;
-    Dune::shared_ptr<OverlappingMatrix> overlapMatrix_;
-    Dune::shared_ptr<OverlappingVector> overlapb_;
-    Dune::shared_ptr<OverlappingVector> overlapx_;
+    std::shared_ptr<OverlappingMatrix> overlapMatrix_;
+    std::shared_ptr<OverlappingVector> overlapb_;
+    std::shared_ptr<OverlappingVector> overlapx_;
 };
 
 template <class TypeTag, class Imp>

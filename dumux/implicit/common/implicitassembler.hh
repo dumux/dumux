@@ -528,7 +528,7 @@ protected:
     Problem *problemPtr_;
 
     // the jacobian matrix
-    Dune::shared_ptr<JacobianMatrix> matrix_;
+    std::shared_ptr<JacobianMatrix> matrix_;
     // the right-hand side
     SolutionVector residual_;
 

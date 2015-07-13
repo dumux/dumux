@@ -122,7 +122,7 @@ public:
         }
 
 
-        curWriter_ = Dune::make_shared<VtkWriter>(gridView_, Dune::VTK::conforming);
+        curWriter_ = std::make_shared<VtkWriter>(gridView_, Dune::VTK::conforming);
         ++curWriterNum_;
 
         curTime_ = t;
@@ -140,8 +140,8 @@ public:
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > VectorField;
 
-        Dune::shared_ptr<ManagedVectorField_<VectorField> > vfs =
-            Dune::make_shared<ManagedVectorField_<VectorField> >(nEntities);
+        std::shared_ptr<ManagedVectorField_<VectorField> > vfs =
+            std::make_shared<ManagedVectorField_<VectorField> >(nEntities);
         managedObjects_.push_back(vfs);
         return &(vfs->vf);
     }
@@ -492,12 +492,12 @@ private:
     int commSize_; // number of processes in the communicator
     int commRank_; // rank of the current process in the communicator
 
-    Dune::shared_ptr<VtkWriter> curWriter_;
+    std::shared_ptr<VtkWriter> curWriter_;
     double curTime_;
     std::string curOutFileName_;
     int curWriterNum_;
 
-    std::list<Dune::shared_ptr<ManagedObject_> > managedObjects_;
+    std::list<std::shared_ptr<ManagedObject_> > managedObjects_;
 };
 }
 
