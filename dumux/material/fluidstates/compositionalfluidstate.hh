@@ -296,7 +296,7 @@ public:
     { density_[phaseIdx] = value; }
 
     /*!
-     * \brief Set the specific enthalpy of a phase [J/m^3]
+     * \brief Set the specific enthalpy of a phase [J/kg]
      */
     void setEnthalpy(int phaseIdx, Scalar value)
     { enthalpy_[phaseIdx] = value; }
@@ -327,7 +327,7 @@ public:
             Valgrind::CheckDefined(pressure_[phaseIdx]);
             Valgrind::CheckDefined(saturation_[phaseIdx]);
             Valgrind::CheckDefined(density_[phaseIdx]);
-            //Valgrind::CheckDefined(enthalpy_[phaseIdx]);
+            Valgrind::CheckDefined(enthalpy_[phaseIdx]);
             Valgrind::CheckDefined(viscosity_[phaseIdx]);
         }
 

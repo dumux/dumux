@@ -167,7 +167,7 @@ public:
     };
 
     /*!
-     * \brief Specific enthalpy of liquid water \f$\mathrm{[J/kg]}\f$
+     * \brief Specific enthalpy of air \f$\mathrm{[J/kg]}\f$
      *        with 273.15 K as basis.
      * See:
      * W. Kays, M. Crawford, B. Weigand

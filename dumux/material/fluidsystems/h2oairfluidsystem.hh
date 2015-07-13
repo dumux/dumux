@@ -660,8 +660,8 @@ public:
                                     int phaseIdx,
                                     int componentIdx)
     {
-        Scalar T = fluidState.temperature(nPhaseIdx);
-        Scalar p = fluidState.pressure(nPhaseIdx);
+        Scalar T = fluidState.temperature(phaseIdx);
+        Scalar p = fluidState.pressure(phaseIdx);
         Valgrind::CheckDefined(T);
         Valgrind::CheckDefined(p);
 
@@ -671,7 +671,7 @@ public:
         }
         else if (phaseIdx == nPhaseIdx)
         {
-            if (componentIdx ==  H2OIdx)
+            if (componentIdx == H2OIdx)
             {
                 return H2O::gasEnthalpy(T, p);
             }
