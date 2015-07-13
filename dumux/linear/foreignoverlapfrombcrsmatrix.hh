@@ -31,13 +31,13 @@
 #include <list>
 #include <set>
 #include <map>
+#include <tuple>
 
 #if HAVE_MPI
 #include <mpi.h>
 #endif // HAVE_MPI
 
 #include <dune/common/fmatrix.hh>
-#include <dune/common/tuples.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/operators.hh>
@@ -65,8 +65,8 @@ public:
     typedef int Index;
     typedef Index LocalIndex;
     typedef std::pair<LocalIndex, ProcessRank> IndexRank;
-    typedef Dune::tuple<LocalIndex, ProcessRank, BorderDistance> IndexRankDist;
-    typedef Dune::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
+    typedef std::tuple<LocalIndex, ProcessRank, BorderDistance> IndexRankDist;
+    typedef std::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
     typedef std::list<IndexRankDist> SeedList;
 
     typedef std::set<ProcessRank> PeerSet;
@@ -121,13 +121,13 @@ public:
      * \brief Returns true iff a local index is a border index.
      */
     bool isBorder(int localIdx) const
-    { return borderIndices_.count(localIdx) > 0; };
+    { return borderIndices_.count(localIdx) > 0; }
 
     /*!
      * \brief Return the rank of the master process for a local index.
      */
     int masterOf(int localIdx) const
-    { return masterRank_[localIdx]; };
+    { return masterRank_[localIdx]; }
 
     /*!
      * \brief Return true if the current rank is the "master" of an
@@ -140,7 +140,7 @@ public:
      * rank.
      */
     bool iAmMasterOf(int localIdx) const
-    { return masterRank_[localIdx] == myRank_; };
+    { return masterRank_[localIdx] == myRank_; }
 
     /*!
      * \brief Returns the list of indices which intersect the process
@@ -174,7 +174,7 @@ public:
 
         // the index is seen by the peer
         return true;
-    };
+    }
 
     /*!
      * \brief Return the list of (local indices, border distance,
@@ -207,7 +207,7 @@ public:
      * \brief Returns the number local indices
      */
     int numLocal() const
-    { return numLocal_; };
+    { return numLocal_; }
 
     /*!
      * \brief Returns true iff a domestic index is local
@@ -215,7 +215,7 @@ public:
     bool isLocal(int domesticIdx) const
     {
         return domesticIdx < numLocal();
-    };
+    }
 
     /*!
      * \brief Returns true iff a local index is shared with an other process.
@@ -228,13 +228,13 @@ public:
      *        index is visible.
      */
     int numPeers(int localIdx) const
-    { return foreignOverlapByIndex_[localIdx].size(); };
+    { return foreignOverlapByIndex_[localIdx].size(); }
 
     /*!
      * \brief Returns the size of the overlap region
      */
     int overlapSize() const
-    { return overlapSize_; };
+    { return overlapSize_; }
 
     /*!
      * \brief Print the foreign overlap for debugging purposes.
@@ -249,11 +249,11 @@ public:
             ForeignOverlapWithPeer::const_iterator rowIt = it->second.begin();
             ForeignOverlapWithPeer::const_iterator rowEndIt = it->second.end();
             for (; rowIt != rowEndIt; ++rowIt) {
-                std::cout << Dune::get<0>(*rowIt) << "(" << Dune::get<1>(*rowIt) << ") ";
+                std::cout << std::get<0>(*rowIt) << "(" << std::get<1>(*rowIt) << ") ";
             }
             std::cout << "\n";
         }
-    };
+    }
 
 protected:
     // Calculate the set of peer processes from the initial seed list.
@@ -262,7 +262,7 @@ protected:
         SeedList::const_iterator it = seedList.begin();
         SeedList::const_iterator endIt = seedList.end();
         for (; it != endIt; ++it)
-            peerSet_.insert(Dune::get<1>(*it));
+            peerSet_.insert(std::get<1>(*it));
     }
 
     // calculate the local border indices given the initial seed list
@@ -276,7 +276,7 @@ protected:
                                                     it->borderDistance));
             borderIndices_.insert(it->localIdx);
         }
-    };
+    }
 
     // given a list of border indices and provided that
     // borderListToSeedList_() was already called, calculate the
@@ -340,9 +340,9 @@ protected:
         SeedList::const_iterator it = seedList.begin();
         SeedList::const_iterator endIt = seedList.end();
         for (; it != endIt; ++it) {
-            int localIdx = Dune::get<0>(*it);
-            int peerRank = Dune::get<1>(*it);
-            int distance = Dune::get<2>(*it);
+            int localIdx = std::get<0>(*it);
+            int peerRank = std::get<1>(*it);
+            int distance = std::get<2>(*it);
             if (foreignOverlapByIndex_[localIdx].count(peerRank) == 0) {
                 foreignOverlapByIndex_[localIdx][peerRank] = distance;
             }
@@ -365,9 +365,9 @@ protected:
         SeedList nextSeedList;
         it = seedList.begin();
         for (; it != endIt; ++it) {
-            int rowIdx = Dune::get<0>(*it);
-            int peerRank = Dune::get<1>(*it);
-            int borderDist = Dune::get<2>(*it);
+            int rowIdx = std::get<0>(*it);
+            int peerRank = std::get<1>(*it);
+            int borderDist = std::get<2>(*it);
 
             // find all column indies in the row. The indices of the
             // columns are the additional indices of the overlap which
@@ -389,11 +389,11 @@ protected:
                 typename SeedList::iterator sIt = nextSeedList.begin();
                 typename SeedList::iterator sEndIt = nextSeedList.end();
                 for (; sIt != sEndIt; ++sIt) {
-                    if (Dune::get<0>(*sIt) == newIdx &&
-                        Dune::get<1>(*sIt) == peerRank)
+                    if (std::get<0>(*sIt) == newIdx &&
+                        std::get<1>(*sIt) == peerRank)
                     {
                         hasIndex = true;
-                        Dune::get<2>(*sIt) = std::min(Dune::get<2>(*sIt), borderDist + 1);
+                        std::get<2>(*sIt) = std::min(std::get<2>(*sIt), borderDist + 1);
                         break;
                     }
                 }
@@ -414,7 +414,7 @@ protected:
         extendForeignOverlap_(A,
                               nextSeedList,
                               overlapSize);
-    };
+    }
 
     // assuming that the foreign overlap has been created for each
     // local index, this method groups the foreign overlap by peer
