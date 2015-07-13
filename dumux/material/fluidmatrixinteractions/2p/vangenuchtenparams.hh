@@ -50,7 +50,7 @@ public:
     {
         setVgAlpha(vgAlpha);
         setVgn(vgn);
-    };
+    }
 
     /*!
      * \brief Return the \f$\alpha\f$ shape parameter [1/Pa] of van Genuchten's

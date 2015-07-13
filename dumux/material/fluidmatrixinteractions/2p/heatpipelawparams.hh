@@ -44,7 +44,7 @@ public:
     {
         setP0(p0);
         setGamma(gamma);
-    };
+    }
 
     /*!
      * \brief Return the \f$\gamma\f$ shape parameter.

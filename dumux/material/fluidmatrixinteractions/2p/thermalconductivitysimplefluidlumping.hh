@@ -79,7 +79,7 @@ public:
      * \param lambdaSolid The thermal conductivity of the solid phase
      * \param porosity The porosity
      * \param rhoSolid The density of the solid phase
-     * 
+     *
      * \return Effective thermal conductivity of the fluid phases
      */
     static Scalar effectiveThermalConductivity(const Scalar sw,

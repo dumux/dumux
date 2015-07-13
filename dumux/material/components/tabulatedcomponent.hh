@@ -114,7 +114,7 @@ public:
 
             try { vaporPressure_[iT] = RawComponent::vaporPressure(temperature); }
             catch (Dune::NotImplemented) { vaporPressure_[iT] = NaN; }
-            catch (NumericalProblem e) { vaporPressure_[iT] = NaN; };
+            catch (NumericalProblem e) { vaporPressure_[iT] = NaN; }
 
             Scalar pgMax = maxGasPressure_(iT);
             Scalar pgMin = minGasPressure_(iT);
@@ -127,23 +127,23 @@ public:
 
                 try { gasEnthalpy_[i] = RawComponent::gasEnthalpy(temperature, pressure); }
                 catch (Dune::NotImplemented) { gasEnthalpy_[i] = NaN; }
-                catch (NumericalProblem) { gasEnthalpy_[i] = NaN; };
+                catch (NumericalProblem) { gasEnthalpy_[i] = NaN; }
 
                 try { gasHeatCapacity_[i] = RawComponent::gasHeatCapacity(temperature, pressure); }
                 catch (Dune::NotImplemented) { gasHeatCapacity_[i] = NaN; }
-                catch (NumericalProblem) { gasHeatCapacity_[i] = NaN; };
+                catch (NumericalProblem) { gasHeatCapacity_[i] = NaN; }
 
                 try { gasDensity_[i] = RawComponent::gasDensity(temperature, pressure); }
                 catch (Dune::NotImplemented) { gasDensity_[i] = NaN; }
-                catch (NumericalProblem) { gasDensity_[i] = NaN; };
+                catch (NumericalProblem) { gasDensity_[i] = NaN; }
 
                 try { gasViscosity_[i] = RawComponent::gasViscosity(temperature, pressure); }
                 catch (Dune::NotImplemented) { gasViscosity_[i] = NaN; }
-                catch (NumericalProblem) { gasViscosity_[i] = NaN; };
+                catch (NumericalProblem) { gasViscosity_[i] = NaN; }
 
                 try { gasThermalConductivity_[i] = RawComponent::gasThermalConductivity(temperature, pressure); }
                 catch (Dune::NotImplemented) { gasThermalConductivity_[i] = NaN; }
-                catch (NumericalProblem) { gasThermalConductivity_[i] = NaN; };
+                catch (NumericalProblem) { gasThermalConductivity_[i] = NaN; }
             }
 
             Scalar plMin = minLiquidPressure_(iT);
@@ -155,23 +155,23 @@ public:
 
                 try { liquidEnthalpy_[i] = RawComponent::liquidEnthalpy(temperature, pressure); }
                 catch (Dune::NotImplemented) { liquidEnthalpy_[i] = NaN; }
-                catch (NumericalProblem) { liquidEnthalpy_[i] = NaN; };
+                catch (NumericalProblem) { liquidEnthalpy_[i] = NaN; }
 
                 try { liquidHeatCapacity_[i] = RawComponent::liquidHeatCapacity(temperature, pressure); }
                 catch (Dune::NotImplemented) { liquidHeatCapacity_[i] = NaN; }
-                catch (NumericalProblem) { liquidHeatCapacity_[i] = NaN; };
+                catch (NumericalProblem) { liquidHeatCapacity_[i] = NaN; }
 
                 try { liquidDensity_[i] = RawComponent::liquidDensity(temperature, pressure); }
                 catch (Dune::NotImplemented) { liquidDensity_[i] = NaN; }
-                catch (NumericalProblem) { liquidDensity_[i] = NaN; };
+                catch (NumericalProblem) { liquidDensity_[i] = NaN; }
 
                 try { liquidViscosity_[i] = RawComponent::liquidViscosity(temperature, pressure); }
                 catch (Dune::NotImplemented) { liquidViscosity_[i] = NaN; }
-                catch (NumericalProblem) { liquidViscosity_[i] = NaN; };
+                catch (NumericalProblem) { liquidViscosity_[i] = NaN; }
 
                 try { liquidThermalConductivity_[i] = RawComponent::liquidThermalConductivity(temperature, pressure); }
                 catch (Dune::NotImplemented) { liquidThermalConductivity_[i] = NaN; }
-                catch (NumericalProblem) { liquidThermalConductivity_[i] = NaN; };
+                catch (NumericalProblem) { liquidThermalConductivity_[i] = NaN; }
             }
         }
 
@@ -198,7 +198,7 @@ public:
                 unsigned i = iT + iRho*nTemp_;
 
                 try { gasPressure_[i] = RawComponent::gasPressure(temperature, density); }
-                catch (NumericalProblem) { gasPressure_[i] = NaN; };
+                catch (NumericalProblem) { gasPressure_[i] = NaN; }
             }
 
             // calculate the minimum and maximum values for the liquid
@@ -220,7 +220,7 @@ public:
                 unsigned i = iT + iRho*nTemp_;
 
                 try { liquidPressure_[i] = RawComponent::liquidPressure(temperature, density); }
-                catch (NumericalProblem) { liquidPressure_[i] = NaN; };
+                catch (NumericalProblem) { liquidPressure_[i] = NaN; }
             }
         }
     }
@@ -274,7 +274,7 @@ public:
             return RawComponent::vaporPressure(T);
         }
         return result;
-    };
+    }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
@@ -286,7 +286,7 @@ public:
     static Scalar vaporTemperature(Scalar pressure)
     {
             return RawComponent::vaporTemperature(pressure);
-    };
+    }
 
     /*!
      * \brief Specific enthalpy of the gas \f$\mathrm{[J/kg]}\f$.
@@ -403,7 +403,7 @@ public:
                                              density);
         }
         return result;
-    };
+    }
 
     /*!
      * \brief The pressure of liquid in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
@@ -422,7 +422,7 @@ public:
                                                 density);
         }
         return result;
-    };
+    }
 
     /*!
      * \brief Returns true iff the gas phase is assumed to be compressible
@@ -497,7 +497,7 @@ public:
             return RawComponent::gasViscosity(temperature, pressure);
         }
         return result;
-    };
+    }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of liquid.
@@ -515,7 +515,7 @@ public:
             return RawComponent::liquidViscosity(temperature, pressure);
         }
         return result;
-    };
+    }
 
     /*!
      * \brief The thermal conductivity of gaseous water \f$\mathrm{[W/(m*K)]}\f$.
@@ -533,7 +533,7 @@ public:
             return RawComponent::gasThermalConductivity(temperature, pressure);
         }
         return result;
-    };
+    }
 
     /*!
      * \brief The thermal conductivity of liquid water \f$\mathrm{[W/(m*K)]}\f$.
@@ -551,7 +551,7 @@ public:
             return RawComponent::liquidThermalConductivity(temperature, pressure);
         }
         return result;
-    };
+    }
 
 
 private:

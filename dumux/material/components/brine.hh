@@ -66,7 +66,7 @@ public:
         const Scalar M2 = 58e-3; // molar mass of NaCl [kg/mol]
         const Scalar X2 = salinity; // mass fraction of salt in brine
         return M1*M2/(M2 + X2*(M1 - M2));
-    };
+    }
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of brine.
@@ -199,7 +199,7 @@ public:
     {
         Scalar eps = temperature*1e-8;
         return (liquidEnthalpy(temperature + eps, pressure) - liquidEnthalpy(temperature, pressure))/eps;
-    };
+    }
 
     /*!
      * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/kg]}\f$.
@@ -217,7 +217,7 @@ public:
                                         Scalar pressure)
     {
         return H2O::gasHeatCapacity(temperature, pressure);
-    };
+    }
 
     /*!
      * \brief Specific internal energy of steam \f$\mathrm{[J/kg]}\f$.
@@ -354,7 +354,7 @@ public:
      * \param pressure pressure of component
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
-    { return H2O::gasViscosity(temperature, pressure); };
+    { return H2O::gasViscosity(temperature, pressure); }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure brine.

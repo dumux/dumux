@@ -73,7 +73,7 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         return 8e-3;
-    };
+    }
 
 };
 

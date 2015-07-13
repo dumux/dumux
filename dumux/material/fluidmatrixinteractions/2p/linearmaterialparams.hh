@@ -46,7 +46,7 @@ public:
     {
         setEntryPc(entryPc);
         setMaxPc(maxPc);
-    };
+    }
 
 
     /*!

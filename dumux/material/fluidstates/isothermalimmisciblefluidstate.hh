@@ -105,7 +105,7 @@ public:
             return pressure(phaseIdx);
         else
             return 0;
-    };
+    }
 
     /*!
      * \brief The fugacity coefficient of a component in a phase [-]

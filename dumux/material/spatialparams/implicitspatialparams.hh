@@ -20,7 +20,7 @@
  * \file
  *
  * \ingroup SpatialParameters
- * \brief The base class for spatial parameters of multi-phase problems 
+ * \brief The base class for spatial parameters of multi-phase problems
  * using a fully implicit discretization method.
  */
 #ifndef DUMUX_IMPLICIT_SPATIAL_PARAMS_HH
@@ -41,7 +41,7 @@ NEW_PROP_TAG(MaterialLawParams);
 
 
 /**
- * \brief The base class for spatial parameters of multi-phase problems 
+ * \brief The base class for spatial parameters of multi-phase problems
  * using a fully implicit discretization method.
  */
 template<class TypeTag>

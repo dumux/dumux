@@ -54,7 +54,7 @@ public:
     static Scalar molarMass()
     {
         DUNE_THROW(Dune::NotImplemented, "molar mass for benzene");
-    };
+    }
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of benzene.
@@ -62,7 +62,7 @@ public:
     static Scalar criticalTemperature()
     {
         DUNE_THROW(Dune::NotImplemented, "criticalTemperature for benzene");
-    };
+    }
 
     /*!
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of benzene.
@@ -70,7 +70,7 @@ public:
     static Scalar criticalPressure()
     {
         DUNE_THROW(Dune::NotImplemented, "criticalPressure for benzene");
-    };
+    }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at benzene's triple point.
@@ -78,7 +78,7 @@ public:
     static Scalar tripleTemperature()
     {
         DUNE_THROW(Dune::NotImplemented, "tripleTemperature for benzene");
-    };
+    }
 
     /*!
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at benzene's triple point.
@@ -86,7 +86,7 @@ public:
     static Scalar triplePressure()
     {
         DUNE_THROW(Dune::NotImplemented, "triplePressure for benzene");
-    };
+    }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure benzene
@@ -97,7 +97,8 @@ public:
     static Scalar vaporPressure(Scalar T)
     {
         DUNE_THROW(Dune::NotImplemented, "vaporPressure for benzene");
-    };
+    }
+
     /*!
      * \brief Specific enthalpy of benzene steam \f$\mathrm{[J/kg]}\f$.
      *
@@ -108,7 +109,7 @@ public:
                                     Scalar pressure)
     {
         DUNE_THROW(Dune::NotImplemented, "gasEnthalpy for benzene");
-    };
+    }
 
     /*!
      * \brief Specific enthalpy of liquid benzene \f$\mathrm{[J/kg]}\f$.
@@ -120,7 +121,7 @@ public:
                                        Scalar pressure)
     {
         DUNE_THROW(Dune::NotImplemented, "liquidEnthalpy for benzene");
-    };
+    }
 
     /*!
      * \brief The density of steam at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
@@ -133,7 +134,7 @@ public:
         return IdealGas<Scalar>::density(molarMass(),
                                          temperature,
                                          pressure);
-    };
+    }
 
     /*!
      * \brief The density of pure benzene at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
@@ -156,7 +157,7 @@ public:
     static Scalar gasViscosity(Scalar temperature, Scalar pressure, bool regularize=true)
     {
         DUNE_THROW(Dune::NotImplemented, "gasViscosity for benzene");
-    };
+    }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure benzene.
@@ -167,7 +168,7 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         return 1.12e-3;//[Pa s]
-    };
+    }
 };
 
 } // end namespace

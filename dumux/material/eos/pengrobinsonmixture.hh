@@ -75,7 +75,7 @@ public:
      * \param params Parameters
      * \param phaseIdx The phase index
      * \param compIdx The index of the component
-     * 
+     *
      * The fugacity coefficient \f$\phi_i\f$ of a component \f$i\f$ is
      * defined as
      * \f[

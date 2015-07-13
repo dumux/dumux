@@ -272,15 +272,15 @@ public:
         Valgrind::SetDefined(averageMolarMass_[phaseIdx]);
         Valgrind::SetDefined(moleFraction_[phaseIdx][compIdx]);
 
-		moleFraction_[phaseIdx][compIdx] = value;
+        moleFraction_[phaseIdx][compIdx] = value;
 
-		// re-calculate the mean molar mass
-		sumMoleFractions_[phaseIdx] = 0.0;
-		averageMolarMass_[phaseIdx] = 0.0;
-		for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
-			sumMoleFractions_[phaseIdx] += moleFraction_[phaseIdx][compJIdx];
-			averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compJIdx]*FluidSystem::molarMass(compJIdx);
-		}
+        // re-calculate the mean molar mass
+        sumMoleFractions_[phaseIdx] = 0.0;
+        averageMolarMass_[phaseIdx] = 0.0;
+        for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
+            sumMoleFractions_[phaseIdx] += moleFraction_[phaseIdx][compJIdx];
+            averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compJIdx]*FluidSystem::molarMass(compJIdx);
+        }
     }
 
     /*!

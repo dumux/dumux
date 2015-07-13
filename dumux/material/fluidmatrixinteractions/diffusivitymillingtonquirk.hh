@@ -61,10 +61,10 @@ public:
                                                const Scalar diffCoeff)
 
     {
-    	Scalar tau = 1.0/(porosity * porosity) *
-    				pow(porosity * saturation, 7.0/3);
+        Scalar tau = 1.0/(porosity * porosity) *
+                    pow(porosity * saturation, 7.0/3);
 
-    	return porosity * saturation * tau * diffCoeff;
+        return porosity * saturation * tau * diffCoeff;
     }
 };
 }

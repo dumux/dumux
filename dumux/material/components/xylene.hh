@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * 
+ *
  * \ingroup Components
- * 
+ *
  * \brief Properties of xylene.
  */
 #ifndef DUMUX_XYLENE_HH
@@ -127,25 +127,25 @@ public:
         // Xylene: C9H12  : 3* CH3 ; 1* C6H5 (phenyl-ring) ; -2* H (this was too much!)
         // linear interpolation between table values [J/(mol K)]
 
-        if(temp < 298.0){                          	// take care: extrapolation for Temp<273
-            H = 13.4 + 1.2*(temp - 273.0)/25.0;		// 13.4 + 1.2 = 14.6 = H(T=298K) i.e. interpolation of table values 273<T<298
-            CH3 = 40.0 + 1.6*(temp - 273.0)/25.0;	// 40 + 1.6 = 41.6 = CH3(T=298K)
+        if(temp < 298.0){                              // take care: extrapolation for Temp<273
+            H = 13.4 + 1.2*(temp - 273.0)/25.0;        // 13.4 + 1.2 = 14.6 = H(T=298K) i.e. interpolation of table values 273<T<298
+            CH3 = 40.0 + 1.6*(temp - 273.0)/25.0;    // 40 + 1.6 = 41.6 = CH3(T=298K)
             C6H5 = 113.0 + 4.2*(temp - 273.0)/25.0; // 113 + 4.2 = 117.2 = C6H5(T=298K)
         }
         else if(temp < 323.0){
-            H = 14.6 + 0.9*(temp - 298.0)/25.0;		// i.e. interpolation of table values 298<T<323
+            H = 14.6 + 0.9*(temp - 298.0)/25.0;        // i.e. interpolation of table values 298<T<323
             CH3 = 41.6 + 1.9*(temp - 298.0)/25.0;
             C6H5 = 117.2 + 6.2*(temp - 298.0)/25.0;
         }
         else if(temp < 348.0){
-            H = 15.5 + 1.2*(temp - 323.0)/25.0;		// i.e. interpolation of table values 323<T<348
+            H = 15.5 + 1.2*(temp - 323.0)/25.0;        // i.e. interpolation of table values 323<T<348
             CH3 = 43.5 + 2.3*(temp - 323.0)/25.0;
             C6H5 = 123.4 + 6.3*(temp - 323.0)/25.0;
         }
         else {
             H = 16.7 + 2.1*(temp - 348.0)/25.0;         // i.e. interpolation of table values 348<T<373
-            CH3 = 45.8 + 2.5*(temp - 348.0)/25.0;		// take care: extrapolation for Temp>373
-            C6H5 = 129.7 + 6.3*(temp - 348.0)/25.0;		// most likely leads to underestimation
+            CH3 = 45.8 + 2.5*(temp - 348.0)/25.0;        // take care: extrapolation for Temp>373
+            C6H5 = 129.7 + 6.3*(temp - 348.0)/25.0;        // most likely leads to underestimation
         }
 
         return (C6H5 + 2*CH3 - H)/molarMass();// J/(mol K) -> J/(kg K)

@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * 
+ *
  * \brief Implements a linear saturation-capillary pressure relation
- * 
+ *
  * Implements a linear saturation-capillary pressure relation for
  * M-phase fluid systems.
  */

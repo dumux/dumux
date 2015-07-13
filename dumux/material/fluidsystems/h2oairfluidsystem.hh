@@ -116,7 +116,7 @@ public:
         switch (phaseIdx) {
         case wPhaseIdx: return "liquid";
         case nPhaseIdx: return "gas";
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
@@ -210,7 +210,7 @@ public:
         {
         case H2OIdx: return H2O::name();
         case AirIdx: return Air::name();
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
@@ -225,7 +225,7 @@ public:
         {
         case H2OIdx: return H2O::molarMass();
         case AirIdx: return Air::molarMass();
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
@@ -244,7 +244,7 @@ public:
 
         assert(0 <= compIdx && compIdx < numComponents);
         return Tcrit[compIdx];
-    };
+    }
 
     /*!
      * \brief Critical pressure of a component [Pa].
@@ -260,7 +260,7 @@ public:
 
         assert(0 <= compIdx && compIdx < numComponents);
         return pcrit[compIdx];
-    };
+    }
 
     /*!
      * \brief Molar volume of a component at the critical point [m^3/mol].
@@ -271,8 +271,7 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented,
                    "H2OAirFluidSystem::criticalMolarVolume()");
-        return 0;
-    };
+    }
 
     /*!
      * \brief The acentric factor of a component [].
@@ -288,7 +287,7 @@ public:
 
         assert(0 <= compIdx && compIdx < numComponents);
         return accFac[compIdx];
-    };
+    }
 
     /****************************************
      * thermodynamic relations
@@ -696,7 +695,7 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-		// PRELIMINARY, values for 293.15 K - has to be generalized
+        // PRELIMINARY, values for 293.15 K - has to be generalized
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
         if (phaseIdx == wPhaseIdx){// liquid phase

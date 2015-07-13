@@ -61,8 +61,8 @@ inline Scalar henryIAPWS(Scalar E,
 
     // regularizing temperature helps for stability.
     // Results are unphysical!
-    if (temperature > H2O::criticalTemperature()  )
-    	temperature = H2O::criticalTemperature()  ;
+    if (temperature > H2O::criticalTemperature())
+        temperature = H2O::criticalTemperature();
 
     Scalar Tr = temperature/H2O::criticalTemperature();
     Scalar tau = 1 - Tr;

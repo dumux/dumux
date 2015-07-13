@@ -53,7 +53,7 @@ public:
     static Scalar molarMass()
     {
         return 131.39e-3; // [kg/mol]
-    };
+    }
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of TCE.
@@ -61,7 +61,7 @@ public:
     static Scalar criticalTemperature()
     {
         DUNE_THROW(Dune::NotImplemented, "criticalTemperature for TCE");
-    };
+    }
 
     /*!
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of TCE.
@@ -69,7 +69,7 @@ public:
     static Scalar criticalPressure()
     {
         DUNE_THROW(Dune::NotImplemented, "criticalPressure for TCE");
-    };
+    }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at TCE's triple point.
@@ -77,7 +77,7 @@ public:
     static Scalar tripleTemperature()
     {
         DUNE_THROW(Dune::NotImplemented, "tripleTemperature for TCE");
-    };
+    }
 
     /*!
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at TCE's triple point.
@@ -85,7 +85,7 @@ public:
     static Scalar triplePressure()
     {
         DUNE_THROW(Dune::NotImplemented, "triplePressure for TCE");
-    };
+    }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure TCE
@@ -96,7 +96,7 @@ public:
     static Scalar vaporPressure(Scalar T)
     {
         return 3900; // [Pa] (at 20C)
-    };
+    }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be compressible
@@ -121,7 +121,7 @@ public:
         return IdealGas<Scalar>::density(molarMass(),
                                          temperature,
                                          pressure);
-    };
+    }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
@@ -149,7 +149,7 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         return 5.7e-4;// [Pa*s]
-    };
+    }
 };
 
 } // end namespace

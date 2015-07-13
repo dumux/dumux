@@ -66,7 +66,7 @@ public:
 //     * \brief Initialize the fluid system's static parameters
 //     */
 //    static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
-//    				 Scalar pressMin, Scalar pressMax, unsigned nPress)
+//                     Scalar pressMin, Scalar pressMax, unsigned nPress)
 //    {
 //        ParentType::init(tempMin, tempMax, nTemp,
 //                         pressMin, pressMax, nPress);
@@ -187,7 +187,6 @@ public:
                 Valgrind::CheckDefined(xnw);
                 fluidState.setMoleFraction(otherPhaseIdx, calcCompIdx, xnw) ;
                 return;
-                break;
             }
 
             case nCompIdx :
@@ -198,7 +197,7 @@ public:
                 const Scalar xnn    = H / pn * xwn; // mole fraction in the other phase
                 Valgrind::CheckDefined(xnn);
                 fluidState.setMoleFraction(otherPhaseIdx, calcCompIdx, xnn) ;
-                return ;
+                return;
             }
 
             default: DUNE_THROW(Dune::NotImplemented, "wrong index");
@@ -217,8 +216,7 @@ public:
                 const Scalar xww = pn / pv * xnw ; // mole fraction in the other phase
                 Valgrind::CheckDefined(xww);
                 fluidState.setMoleFraction(otherPhaseIdx, calcCompIdx, xww) ;
-                return ;
-                break ;
+                return;
             }
 
             case nCompIdx :
@@ -232,12 +230,11 @@ public:
                 return ;
             }
 
-            default: DUNE_THROW(Dune::NotImplemented, "wrong index");
-            break;
+            default:
+                DUNE_THROW(Dune::NotImplemented, "wrong index");
             }
 
             DUNE_THROW(Dune::NotImplemented, "wrong index");
-            break;
         }
     }
 
@@ -298,14 +295,11 @@ public:
                 fluidState.setMoleFraction(phaseIdx, compIdx, x[phaseIdx][compIdx]) ;
             }
     }
-    
-    
-    
-    
-        /*!
+
+    /*!
      * \brief Give the Henry constant for a component in a phase.
      */
-    static Scalar henry(Scalar temperature) 
+    static Scalar henry(Scalar temperature)
     {
         return Dumux::BinaryCoeff::H2O_N2::henry(temperature) ; // Pa
     }
@@ -317,16 +311,8 @@ public:
     {
         return ParentType::H2O::vaporPressure(temperature); // Pa // 1e-20 ; //
     }
-    
-    
-    
-    
-    
-    
 };
-
 }// end namespace Fluidsystem
-
 } // end namespace Dumux
 
 #endif

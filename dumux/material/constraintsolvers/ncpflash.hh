@@ -93,8 +93,8 @@ public:
      * \brief Guess initial values for all quantities.
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
-     * \param globalMolarities 
-     * 
+     * \param globalMolarities
+     *
      */
     template <class FluidState>
     static void guessInitial(FluidState &fluidState,
@@ -112,7 +112,7 @@ public:
                 fluidState.setMoleFraction(phaseIdx,
                                            compIdx,
                                            globalMolarities[compIdx]/sumMoles);
-            
+
             // pressure. use atmospheric pressure as initial guess
             fluidState.setPressure(phaseIdx, 1.0135e5);
 
@@ -135,9 +135,9 @@ public:
      *        fugacities in a phase.
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
-     * \param globalMolarities 
-     * \param matParams The material law object  
-     * 
+     * \param globalMolarities
+     * \param matParams The material law object
+     *
      * The phase's fugacities must already be set.
      */
     template <class MaterialLaw, class FluidState>

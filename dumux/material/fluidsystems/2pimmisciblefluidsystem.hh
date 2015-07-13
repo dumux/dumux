@@ -211,7 +211,7 @@ public:
         if (compIdx == wCompIdx)
             return WettingPhase::criticalTemperature();
         return NonwettingPhase::criticalTemperature();
-    };
+    }
 
     /*!
      * \brief Critical pressure of a component [Pa].
@@ -223,7 +223,7 @@ public:
         if (compIdx == wCompIdx)
             return WettingPhase::criticalPressure();
         return NonwettingPhase::criticalPressure();
-    };
+    }
 
     /*!
      * \brief The acentric factor of a component [].

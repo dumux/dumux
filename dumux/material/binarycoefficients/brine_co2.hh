@@ -47,7 +47,7 @@ public:
     /*!
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of water in the CO2 phase.
      *
-     * According to "Diffusion of Water in Liquid and Supercritical Carbon 
+     * According to "Diffusion of Water in Liquid and Supercritical Carbon
      * Dioxide: An NMR Study", Bin Xu et al., 2002.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
@@ -95,10 +95,10 @@ public:
      */
 
     static void calculateMoleFractions(const Scalar temperature,
-                                       const Scalar pg, 
+                                       const Scalar pg,
                                        const Scalar salinity,
                                        const int knownPhaseIdx,
-                                       Scalar &xlCO2, 
+                                       Scalar &xlCO2,
                                        Scalar &ygH2O) {
 
         Scalar A = computeA_(temperature, pg);
@@ -521,7 +521,7 @@ private:
         // CO2 because the mole fraction of CO2 in brine can be
         // considerable
         return pg - Brine::vaporPressure(temperature);
-    };
+    }
 
     /*!
      * \brief The fugacity coefficent of CO2 for a CO2-H2O mixture.

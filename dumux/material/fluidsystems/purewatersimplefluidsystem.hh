@@ -53,7 +53,7 @@ namespace FluidSystems
  * \ingroup Fluidsystems
  *
  * \brief A two-phase fluid system with water as sole component.
- * 		  Values are taken from Shi & Wang, A numerical investigation of transpiration cooling with liquid coolant phase change, Transport in Porous Media, 2011
+ *           Values are taken from Shi & Wang, A numerical investigation of transpiration cooling with liquid coolant phase change, Transport in Porous Media, 2011
  *
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
  * as all Parameters are defined via template parameters. Hence it is in an
@@ -84,13 +84,13 @@ public:
     static constexpr int wPhaseIdx = 0; // index of the wetting phase
     static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
     static constexpr int sPhaseIdx = 2; // Index of the solid phase
-    
-    // export component indices to indicate the main component 
-    // of the corresponding phase at atmospheric pressure 1 bar 
+
+    // export component indices to indicate the main component
+    // of the corresponding phase at atmospheric pressure 1 bar
     // and room temperature 20°C:
     static const int wCompIdx = wPhaseIdx;
     static const int nCompIdx = nPhaseIdx;
-    
+
     /*!
      * \brief Return the human readable name of a fluid phase
      *
@@ -319,7 +319,7 @@ public:
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                      Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
-    	std::cout << "Using very simple pure water fluid system\n";
+        std::cout << "Using very simple pure water fluid system\n";
     }
 
     /*!
@@ -341,8 +341,8 @@ public:
         }
         else if (phaseIdx == nPhaseIdx)// gas phase
         {
-        	return
-					1.679 ;
+            return
+                    1.679 ;
         }
         else DUNE_THROW(Dune::NotImplemented,
                    "wrong index");
@@ -367,7 +367,7 @@ public:
         }
         else if (phaseIdx == nPhaseIdx) // gas phase
         {
-        	return 7.16e-6 * density(fluidState, phaseIdx) ;
+            return 7.16e-6 * density(fluidState, phaseIdx) ;
         }
         else DUNE_THROW(Dune::NotImplemented,
                    "wrong index");
@@ -381,7 +381,7 @@ public:
      */
     template <class FluidState>
     static Scalar vaporTemperature(const FluidState &fluidState,
-    							   const unsigned int phaseIdx)
+                                   const unsigned int phaseIdx)
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         Scalar pressure = fluidState.pressure(nPhaseIdx) ;
@@ -498,11 +498,11 @@ public:
 
         // liquid phase
         if (phaseIdx == wPhaseIdx) {
-        	return cp * (temperature -  373.15);
+            return cp * (temperature -  373.15);
         }
         else if (phaseIdx == nPhaseIdx) // gas phase
         {
-        	return cp * (temperature - 373.15) + 2.257e6;
+            return cp * (temperature - 373.15) + 2.257e6;
         }
         else DUNE_THROW(Dune::NotImplemented,
                    "wrong index");
@@ -528,7 +528,7 @@ public:
         }
         else if (phaseIdx == nPhaseIdx) // gas phase
         {
-        	return 0.0248;
+            return 0.0248;
         }
         else DUNE_THROW(Dune::NotImplemented,
                    "wrong index");
@@ -553,7 +553,7 @@ public:
         }
         else if (phaseIdx == nPhaseIdx) // gas phase
         {
-        	return 2.029e3;
+            return 2.029e3;
         }
         else DUNE_THROW(Dune::NotImplemented,
                    "wrong index");

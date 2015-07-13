@@ -55,12 +55,12 @@ public:
      */
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                                const Scalar saturation,
-                                               const Scalar diffCoeff) 
+                                               const Scalar diffCoeff)
 
     {
         Scalar tau = GET_RUNTIME_PARAM(TypeTag, Scalar, tau);
-        
-    	return porosity * saturation * tau * diffCoeff;
+
+        return porosity * saturation * tau * diffCoeff;
     }
 };
 }

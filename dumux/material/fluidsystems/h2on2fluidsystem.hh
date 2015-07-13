@@ -83,13 +83,13 @@ public:
 
     static constexpr int wPhaseIdx = 0; // index of the wetting phase
     static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
-    
-    // export component indices to indicate the main component 
-    // of the corresponding phase at atmospheric pressure 1 bar 
+
+    // export component indices to indicate the main component
+    // of the corresponding phase at atmospheric pressure 1 bar
     // and room temperature 20°C:
     static const int wCompIdx = wPhaseIdx;
     static const int nCompIdx = nPhaseIdx;
-    
+
     /*!
      * \brief Return the human readable name of a fluid phase
      *

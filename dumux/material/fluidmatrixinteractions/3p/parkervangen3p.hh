@@ -17,10 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file 
- * 
+ * \file
+ *
  * \brief Implementation of van Genuchten's capillary pressure-saturation relation.
- * 
+ *
  */
 #ifndef PARKERVANGEN_3P_HH
 #define PARKERVANGEN_3P_HH

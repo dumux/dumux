@@ -17,9 +17,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file 
- * 
- * \brief Specification of the material params for the van Genuchten 
+ * \file
+ *
+ * \brief Specification of the material params for the van Genuchten
  *        capillary pressure model.
  *
  * In comparison to the 2p version, this parameter container also includes
@@ -60,7 +60,7 @@ public:
         setBetaGn(betaGn);
         setBetaGw(betaGw);
         setRhoBulk(rhoBulk);
-    };
+    }
 
     /*!
      * \brief Return the \f$\alpha\f$ shape parameter of van Genuchten's

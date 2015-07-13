@@ -175,7 +175,7 @@ public:
         sw /= (fluidState.phaseMassFraction(wPhaseIdx)/fluidState.density(wPhaseIdx)
                     + fluidState.phaseMassFraction(nPhaseIdx)/fluidState.density(nPhaseIdx));
         fluidState.setSaturation(wPhaseIdx, sw);
-    };
+    }
 
     //! The simplest possible update routine for 1p2c "flash" calculations
     /*!
@@ -241,8 +241,6 @@ public:
                 +fluidState.massFraction(presentPhaseIdx, nCompIdx)*FluidSystem::molarMass(nCompIdx));
 
         fluidState.setDensity(presentPhaseIdx, FluidSystem::density(fluidState, presentPhaseIdx));
-
-        return;
     }
 //@}
 

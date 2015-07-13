@@ -72,9 +72,9 @@ public:
     static const int H2OIdx = 0;
     static const int NAPLIdx = 1;
     static const int airIdx = 2;
-    
-    // export component indices to indicate the main component 
-    // of the corresponding phase at atmospheric pressure 1 bar 
+
+    // export component indices to indicate the main component
+    // of the corresponding phase at atmospheric pressure 1 bar
     // and room temperature 20°C:
     static const int wCompIdx = H2OIdx;
     static const int nCompIdx = NAPLIdx;
@@ -190,7 +190,7 @@ public:
         case wPhaseIdx: return "w";
         case nPhaseIdx: return "n";
         case gPhaseIdx: return "g";
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
@@ -203,7 +203,7 @@ public:
         case H2OIdx: return H2O::name();
         case airIdx: return Air::name();
         case NAPLIdx: return NAPL::name();
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
@@ -216,7 +216,7 @@ public:
         case H2OIdx: return H2O::molarMass();
         case airIdx: return Air::molarMass();
         case NAPLIdx: return NAPL::molarMass();
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
@@ -547,7 +547,7 @@ private:
     static Scalar gasPhaseDensity_(Scalar T, Scalar pg, Scalar xgw, Scalar xga, Scalar xgc)
     {
         return H2O::gasDensity(T, pg*xgw) + Air::gasDensity(T, pg*xga) + NAPL::gasDensity(T, pg*xgc);
-    };
+    }
 
     static Scalar NAPLPhaseDensity_(Scalar T, Scalar pn)
     {
@@ -581,10 +581,10 @@ namespace Properties {
  *        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
  *        {
  *            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- * 
+ *
  *        // Do not use the defaults !
  *        //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
- * 
+ *
  *        // Apply e.g. untabulated water:
  *        typedef Dumux::H2O<Scalar> H2O;
  *        };

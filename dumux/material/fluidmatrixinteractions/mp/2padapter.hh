@@ -20,7 +20,7 @@
  * \file 2padapter.hh
  *
  * \brief Makes the twophase capillary pressure-saturation relations available under the M-phase API for material laws
- * 
+ *
  * Makes the twophase capillary pressure-saturation relations
  * available under the M-phase API for material laws
  */

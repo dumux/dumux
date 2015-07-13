@@ -109,6 +109,7 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         return name[phaseIdx];
     }
+
     /*!
      * \brief Return whether a phase is liquid
      *
@@ -250,7 +251,7 @@ public:
             Scalar sumx = xlBrine + xlCO2;
             xlBrine /= sumx;
             xlCO2 /= sumx;
-       
+
             Scalar result = liquidDensity_(temperature,
                                            pressure,
                                            xlBrine,
@@ -270,7 +271,7 @@ public:
             Scalar sumx = xgBrine + xgCO2;
             xgBrine /= sumx;
             xgCO2 /= sumx;
-       
+
             Scalar result = gasDensity_(temperature,
                                         pressure,
                                         xgBrine,
@@ -302,10 +303,10 @@ public:
             // assume pure brine for the liquid phase. TODO: viscosity
             // of mixture
             result = Brine::liquidViscosity(temperature, pressure);
-        	}
-        else 
-        	result = CO2::gasViscosity(temperature, pressure);
-        
+            }
+        else
+            result = CO2::gasViscosity(temperature, pressure);
+
         Valgrind::CheckDefined(result);
         return result;
     }
@@ -361,8 +362,8 @@ public:
         // could use some cleanup.
         Scalar xlH2O, xgH2O;
         Scalar xlCO2, xgCO2;
-        Brine_CO2::calculateMoleFractions(temperature, 
-                                          pressure, 
+        Brine_CO2::calculateMoleFractions(temperature,
+                                          pressure,
                                           BrineRawComponent::salinity,
                                           /*knownPhaseIdx=*/-1,
                                           xlCO2,
@@ -379,12 +380,11 @@ public:
             Scalar phigH2O = 1.0;
             return phigH2O * xgH2O / xlH2O;
         }
-        else {
-            assert(compIdx == CO2Idx);
 
-            Scalar phigCO2 = 1.0;
-            return phigCO2 * xgCO2 / xlCO2;
-        };
+        assert(compIdx == CO2Idx);
+
+        Scalar phigCO2 = 1.0;
+        return phigCO2 * xgCO2 / xlCO2;
     }
 
     /*!
@@ -517,7 +517,7 @@ public:
 
         if (phaseIdx == lPhaseIdx) {
             Scalar XlCO2 = fluidState.massFraction(phaseIdx, CO2Idx);
-            
+
             Scalar result = liquidEnthalpyBrineCO2_(temperature,
                                                     pressure,
                                                     BrineRawComponent::salinity,
@@ -560,7 +560,7 @@ public:
 
     /*!
      * \copydoc BaseFluidSystem::heatCapacity
-     * 
+     *
      * We employ the heat capacity of the pure phases.
      * Todo: Include compositional effects.
      *
@@ -722,7 +722,7 @@ private:
         h_ls = (h_ls1 - X_CO2_w*hw + hg*X_CO2_w)*1E3; /*J/kg*/
 
         return (h_ls);
-    };
+    }
 };
 } // end namespace FluidSystems
 
@@ -762,10 +762,10 @@ SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
                 //    typedef Dumux::TabulatedComponent<Scalar,BrineRawComponent > Brine;
 
             // Apply the following component classes:
-            typedef Dumux::H2O<Scalar> H2O; 
+            typedef Dumux::H2O<Scalar> H2O;
             typedef Dumux::Brine<Scalar, H2O> BrineRawComponent;
             typedef typename BrineRawComponent Brine;// all components have to be redefined,
-            													//the applied H2O and Brine implemementations.
+                                                     // the applied H2O and Brine implemementations.
         };
     \endverbatim.
      Also remember to initialize all tabulated components (FluidSystem::init()), while this

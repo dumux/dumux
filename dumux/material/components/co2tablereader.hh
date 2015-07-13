@@ -42,10 +42,6 @@ class TabulatedCO2Properties
     enum { numTempSteps = Traits::numTempSteps, numPressSteps = Traits::numPressSteps };
 
 public:
-    TabulatedCO2Properties()
-    {
-    };
-
     Scalar minTemp() const
     { return Traits::minTemp; }
 
@@ -76,7 +72,7 @@ public:
                 pressure=minPress();
             if(pressure>maxPress())
                 pressure=maxPress();
-        };
+        }
 
         int i = findTempIdx_(temperature);
         int j = findPressIdx_(pressure);
@@ -99,7 +95,7 @@ public:
         // return the weighted sum of the low- and high-resolution
         // values
         return lowresValue;
-    };
+    }
 
     Scalar val(int i, int j) const
     {
@@ -112,10 +108,10 @@ public:
                        << ") on a " << Traits::name << " table of size ("
                        << Traits::numTempSteps << ", " << Traits::numPressSteps
                        << ")\n");
-        };
+        }
 #endif
         return Traits::vals[i][j];
-    };
+    }
 
 protected:
     int findTempIdx_(Scalar temperature) const
@@ -124,7 +120,7 @@ protected:
             return numTempSteps - 2;
         const int result = static_cast<int>((temperature - minTemp())/(maxTemp() - minTemp())*(numTempSteps - 1));
         return std::max(0, std::min(result, numTempSteps - 2));
-    };
+    }
 
     int findPressIdx_(Scalar pressure) const
     {
@@ -132,13 +128,13 @@ protected:
             return numPressSteps - 2;
         const int result = static_cast<int>((pressure - minPress())/(maxPress() - minPress())*(numPressSteps - 1));
         return std::max(0, std::min(result, numPressSteps - 2));
-    };
+    }
 
     Scalar temperatureAt_(int i) const
     { return i*(maxTemp() - minTemp())/(numTempSteps - 1) + minTemp(); }
     Scalar pressureAt_(int j) const
     { return j*(maxPress() - minPress())/(numPressSteps - 1) + minPress(); }
 };
-}
+} // end namespace Dumux
 
 #endif

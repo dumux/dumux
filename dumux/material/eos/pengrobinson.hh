@@ -95,7 +95,7 @@ public:
      *        setTP().
      * \param T temperature in \f$\mathrm{[K]}\f$
      * \param params Parameters
-     * 
+     *
      * Initially, the vapor pressure is roughly estimated by using the
      * Ambrose-Walton method, then the Newton method is used to make
      * difference between the gas and liquid phase fugacity zero.
@@ -139,7 +139,7 @@ public:
 
     /*!
      * \brief Computes molar volumes \f$\mathrm{[m^3 / mol]}\f$ where the Peng-Robinson EOS is
-     *        true. 
+     *        true.
      * \param fs Thermodynamic state of the fluids
      * \param params Parameters
      * \param phaseIdx The phase index

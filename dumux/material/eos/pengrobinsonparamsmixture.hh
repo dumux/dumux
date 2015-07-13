@@ -76,7 +76,7 @@ public:
     /*!
      * \brief Update Peng-Robinson parameters for the pure components.
      * \param fluidState Thermodynamic state of the fluids
-     * 
+     *
      */
     template <class FluidState>
     void updatePure(const FluidState &fluidState)

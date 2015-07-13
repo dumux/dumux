@@ -20,7 +20,7 @@
  * \file
  *
  * \ingroup SpatialParameters
- * \brief The base class for spatial parameters of one-phase problems 
+ * \brief The base class for spatial parameters of one-phase problems
  * using a fully implicit discretization method.
  */
 #ifndef DUMUX_IMPLICIT_SPATIAL_PARAMS_ONE_P_HH
@@ -46,7 +46,7 @@ NEW_PROP_TAG(SpatialParamsForchCoeff);
 
 
 /**
- * \brief The base class for spatial parameters of one-phase problems 
+ * \brief The base class for spatial parameters of one-phase problems
  * using a fully implicit discretization method.
  */
 template<class TypeTag>

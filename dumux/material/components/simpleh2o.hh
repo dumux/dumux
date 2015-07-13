@@ -280,7 +280,7 @@ public:
     {
         return 4.2e3;
     }
-    
+
      /*!
      * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of water.
      *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
@@ -290,7 +290,7 @@ public:
     {
        return 0.679;
     }
-    
+
      /*!
      * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of steam.
      *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
@@ -300,8 +300,8 @@ public:
     {
        return 0.025;
     }
-    
-    
+
+
 };
 
 template <class Scalar>

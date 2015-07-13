@@ -82,7 +82,7 @@ public:
      * \brief Guess initial values for all quantities.
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
-     * \param globalMolarities 
+     * \param globalMolarities
      */
     template <class FluidState>
     static void guessInitial(FluidState &fluidState,
@@ -108,8 +108,8 @@ public:
      *        fugacities in a phase.
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
-     * \param globalMolarities 
-     * \param matParams The material law object  
+     * \param globalMolarities
+     * \param matParams The material law object
      *
      * The phase's fugacities must already be set.
      */
