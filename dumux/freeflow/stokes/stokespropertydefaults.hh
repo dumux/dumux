@@ -78,6 +78,8 @@ SET_TYPE_PROP(BoxStokes, NewtonController, StokesNewtonController<TypeTag>);
 
 #if HAVE_SUPERLU
 SET_TYPE_PROP(BoxStokes, LinearSolver, SuperLUBackend<TypeTag>);
+#elif HAVE_UMFPACK
+SET_TYPE_PROP(BoxStokes, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
 
 //! the Model property

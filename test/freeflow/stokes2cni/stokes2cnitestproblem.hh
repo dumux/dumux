@@ -52,22 +52,15 @@ SET_TYPE_PROP(Stokes2cniTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(Stokes2cniTestProblem, Problem, Stokes2cniTestProblem<TypeTag>);
 
-//! Select the fluid system
-SET_PROP(Stokes2cniTestProblem, FluidSystem)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::FluidSystems::H2OAir<Scalar> type;
-};
+// Select the fluid system
+SET_TYPE_PROP(Stokes2cniTestProblem, FluidSystem,
+              Dumux::FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-#if HAVE_UMFPACK
-SET_TYPE_PROP(Stokes2cniTestProblem, LinearSolver, UMFPackBackend<TypeTag>);
-#endif
-
-//! Scalar is set to type long double for higher accuracy
-//SET_TYPE_PROP(Stokes2cniTestProblem, Scalar, long double);
-
+// Use Pardiso as linear solver, if available
 #if HAVE_PARDISO
 SET_TYPE_PROP(Stokes2cniTestProblem, LinearSolver, PardisoBackend<TypeTag>);
+#elif HAVE_UMFPACK
+SET_TYPE_PROP(Stokes2cniTestProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
 }
 

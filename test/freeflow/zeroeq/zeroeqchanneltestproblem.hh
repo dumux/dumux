@@ -55,14 +55,10 @@ SET_TYPE_PROP(ZeroEqChannelTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ZeroEqChannelTestProblem, Problem, Dumux::ZeroEqChannelTestProblem<TypeTag>);
 
-// Set the fluids
-SET_PROP(ZeroEqChannelTestProblem, Fluid)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef Dumux::GasPhase<Scalar, Dumux::Air<Scalar> > type;
-};
+// Set the air as the gas phase
+SET_TYPE_PROP(ZeroEqChannelTestProblem, Fluid,
+              Dumux::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                              Dumux::Air<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Disable gravity
 SET_BOOL_PROP(ZeroEqChannelTestProblem, ProblemEnableGravity, false);
@@ -72,6 +68,11 @@ SET_BOOL_PROP(ZeroEqChannelTestProblem, BBoxMaxIsWall, false);
 
 // Do not write sub-control volume data
 SET_SCALAR_PROP(ZeroEqChannelTestProblem, ZeroEqWriteAllSCVData, -1);
+
+#if HAVE_UMFPACK
+// Use UMFPack as linear solver
+SET_TYPE_PROP(ZeroEqChannelTestProblem, LinearSolver, UMFPackBackend<TypeTag>);
+#endif
 }
 
 /*!

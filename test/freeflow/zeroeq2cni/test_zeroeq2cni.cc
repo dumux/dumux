@@ -62,6 +62,12 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
+#if (HAVE_SUPERLU || HAVE_UMFPACK)
     typedef TTAG(ZeroEq2cniTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+#else
+#warning "You need to have SuperLU or UMFPack installed to run this test."
+    std::cerr << "You need to have SuperLU or UMFPack installed to run this test\n";
+    return 77;
+#endif
 }

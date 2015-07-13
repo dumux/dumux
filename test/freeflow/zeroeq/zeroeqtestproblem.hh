@@ -58,14 +58,10 @@ SET_TYPE_PROP(ZeroEqTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ZeroEqTestProblem, Problem, Dumux::ZeroEqTestProblem<TypeTag>);
 
-// Set the fluids
-SET_PROP(ZeroEqTestProblem, Fluid)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef Dumux::GasPhase<Scalar, Dumux::Air<Scalar> > type;
-};
+// Set the air as the gas phase
+SET_TYPE_PROP(ZeroEqTestProblem, Fluid,
+              Dumux::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                              Dumux::Air<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Disable gravity
 SET_BOOL_PROP(ZeroEqTestProblem, ProblemEnableGravity, false);

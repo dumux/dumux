@@ -39,8 +39,8 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd                          The end of the simulation. [s] \n"
-                                        "\t-TimeManager.DtInitial                     The initial timestep size. [s] \n"
+                                        "\t-TimeManager.TEnd               The end of the simulation. [s] \n"
+                                        "\t-TimeManager.DtInitial          The initial timestep size. [s] \n"
                                         "\t-Grid.File                      The file name of the file containing the grid \n"
                                         "\t                                   definition in DGF format\n";
 
@@ -51,12 +51,12 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if HAVE_SUPERLU
+#if (HAVE_SUPERLU || HAVE_UMFPACK)
     typedef TTAG(StokesTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
-#warning "No SuperLU installed. Stokes currently only works with SuperLU."
-    std::cout << "No SuperLU installed. Stokes currently only works with SuperLU." << std::endl;
-    return 1;
+#warning "You need to have SuperLU or UMFPack installed to run this test."
+    std::cerr << "You need to have SuperLU or UMFPack installed to run this test\n";
+    return 77;
 #endif
 }

@@ -68,13 +68,11 @@ namespace Dumux
     // Set calculation to Navier-Stokes, not Stokes
     SET_BOOL_PROP(NavierStokesTestProblem, EnableNavierStokes, true);
 
-    SET_PROP(NavierStokesTestProblem, Fluid)
-    {
-    private:
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    public:
-      typedef Dumux::GasPhase<Scalar, Dumux::N2ConstViscosity<Scalar> > type;
-    };
+    // Use nitrogen with a constant viscosity as gas phase
+    SET_TYPE_PROP(NavierStokesTestProblem, Fluid,
+                  Dumux::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                  Dumux::N2ConstViscosity<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+
     // Scalar is set to type double
     SET_TYPE_PROP(BoxStokes, Scalar, double);
   }

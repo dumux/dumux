@@ -63,6 +63,7 @@ class StokesFluxVariables
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
+    //! \brief The constructor
     StokesFluxVariables(const Problem &problem,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,

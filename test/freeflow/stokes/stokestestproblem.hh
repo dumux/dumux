@@ -49,18 +49,10 @@ SET_TYPE_PROP(StokesTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(StokesTestProblem, Problem, Dumux::StokesTestProblem<TypeTag>);
 
-SET_PROP(StokesTestProblem, Fluid)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef Dumux::GasPhase<Scalar, Dumux::N2<Scalar> > type;
-};
-//! Scalar is set to type long double for higher accuracy
-SET_TYPE_PROP(BoxStokes, Scalar, double);
-
-//! Disable unsymmetrized velocity gradient by default
-SET_BOOL_PROP(StokesTestProblem, EnableUnsymmetrizedVelocityGradient, false);
+// Use nitrogen as gas phase
+SET_TYPE_PROP(StokesTestProblem, Fluid,
+              Dumux::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                              Dumux::N2<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 }
 
 /*!

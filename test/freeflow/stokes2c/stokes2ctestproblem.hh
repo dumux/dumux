@@ -48,15 +48,9 @@ SET_TYPE_PROP(Stokes2cTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(Stokes2cTestProblem, Problem, Dumux::Stokes2cTestProblem<TypeTag>);
 
-//! Select the fluid system
-SET_PROP(BoxStokesnc, FluidSystem)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::FluidSystems::H2OAir<Scalar> type;
-};
-
-//! Scalar is set to type long double for higher accuracy
-//SET_TYPE_PROP(BoxStokes, Scalar, long double);
+// Select the fluid system
+SET_TYPE_PROP(Stokes2cTestProblem, FluidSystem,
+              Dumux::FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 }
 
 /*!

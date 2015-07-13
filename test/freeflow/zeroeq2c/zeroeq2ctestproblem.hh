@@ -56,13 +56,8 @@ SET_TYPE_PROP(ZeroEq2cTestProblem, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(ZeroEq2cTestProblem, Problem, Dumux::ZeroEq2cTestProblem<TypeTag>);
 
 // Select the fluid system
-SET_PROP(ZeroEq2cTestProblem, FluidSystem)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef Dumux::FluidSystems::H2OAir<Scalar> type;
-};
+SET_TYPE_PROP(ZeroEq2cTestProblem, FluidSystem,
+              Dumux::FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Disable gravity
 SET_BOOL_PROP(ZeroEq2cTestProblem, ProblemEnableGravity, false);
