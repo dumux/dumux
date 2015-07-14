@@ -78,18 +78,13 @@ public:
     //! Constructor
     FluxData2P2C()
     {
-        isUpwindCell_.resize(2 * dim);
-        for (int fIdx = 0; fIdx<2*dim; fIdx++)
-        {
-            isUpwindCell_[fIdx] = false;
-            for (int phaseIdx = 0; phaseIdx<numPhases; ++phaseIdx)
-                for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
-                    velocity_[phaseIdx][fIdx][dimIdx] = 0.0;
-        }
-
+        isUpwindCell_.resize(2*dim, 0.0);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int fIdx = 0; fIdx < 2*dim; ++fIdx)
+                velocity_[phaseIdx][fIdx] = 0.0;
     }
 
-        /*! \brief Returns the phase velocity vector at a cell-cell interface
+    /*! \brief Returns the phase velocity vector at a cell-cell interface
      *
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
