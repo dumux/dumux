@@ -399,7 +399,7 @@ private:
      */
     void forceRefineRatio(int maxLevelDelta = 1)
     {
-        LeafGridView leafView = problem_.gridView();
+        LeafGridView leafGridView = problem_.gridView();
         // delete all existing marks
         problem_.grid().postAdapt();
         bool done;
@@ -407,16 +407,16 @@ private:
         {
             // run through all cells
             done=true;
-            for (LeafIterator eIt = leafView.template begin<0>();
-                 eIt!=leafView.template end<0>(); ++eIt)
+            for (LeafIterator eIt = leafGridView.template begin<0>();
+                 eIt!=leafGridView.template end<0>(); ++eIt)
             {
                 // only mark non-ghost elements
                 if (eIt->partitionType() == Dune::GhostEntity)
                     continue;
 
                 // run through all neighbor-cells (intersections)
-                LeafIntersectionIterator isItend = leafView.iend(*eIt);
-                for (LeafIntersectionIterator isIt = leafView.ibegin(*eIt); isIt!= isItend; ++isIt)
+                LeafIntersectionIterator isItend = leafGridView.iend(*eIt);
+                for (LeafIntersectionIterator isIt = leafGridView.ibegin(*eIt); isIt!= isItend; ++isIt)
                 {
                     const typename LeafIntersectionIterator::Intersection intersection = *isIt;
                     if(!intersection.neighbor())
