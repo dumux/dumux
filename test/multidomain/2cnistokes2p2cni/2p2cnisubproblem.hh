@@ -399,14 +399,14 @@ public:
                             << std::endl;
 
                     evaporationFile << time/86400.0 << " " << storageChange[contiWEqIdx]*86400.0 << std::endl;
-                    unsigned int windowNumber = 1;
-                    gnuplot_.reset(windowNumber);
-                    gnuplot_.setXRange(0.0, time/86400.0, windowNumber);
-                    gnuplot_.setYRange(0.0, 12.0, windowNumber);
-                    gnuplot_.setXlabel("time [d]", windowNumber);
-                    gnuplot_.setYlabel("evaporation rate [mm/d]", windowNumber);
-                    gnuplot_.addFileToPlot("evaporation.out", "evaporation.out", windowNumber);
-                    gnuplot_.plot("evaporation", windowNumber, liveEvaporationRates_);
+                    gnuplot_.reset();
+                    gnuplot_.setInteraction(liveEvaporationRates_);
+                    gnuplot_.setXRange(0.0, time/86400.0);
+                    gnuplot_.setYRange(0.0, 12.0);
+                    gnuplot_.setXlabel("time [d]");
+                    gnuplot_.setYlabel("evaporation rate [mm/d]");
+                    gnuplot_.addFileToPlot("evaporation.out", "evaporation.out");
+                    gnuplot_.plot("evaporation");
                 }
 
                 storageLastTimestep_ = storage;

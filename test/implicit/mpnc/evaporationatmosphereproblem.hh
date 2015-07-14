@@ -248,7 +248,7 @@ public:
      */
     EvaporationAtmosphereProblem(TimeManager &timeManager,
     		const GridView &gridView)
-        : ParentType(timeManager, gridView)
+        : ParentType(timeManager, gridView), gnuplot_(false)
     {
         this->timeManager().startNextEpisode(24.* 3600.);
     }
@@ -362,18 +362,17 @@ public:
         }
 
         // use gnuplot for plotting the line data
-        unsigned int windowNumber = 0;
-        gnuplot_.reset(windowNumber);
-        gnuplot_.setXlabel("xN2w [-]", windowNumber);
-        gnuplot_.setYlabel("y [m]", windowNumber);
+        gnuplot_.setInteraction(true);
+        gnuplot_.reset();
+        gnuplot_.setXlabel("xN2w [-]");
+        gnuplot_.setYlabel("y [m]");
         std::ostringstream stream;
         stream << this->timeManager().time();
-        gnuplot_.setOption("set label 'at time " + stream.str() + "' at screen 0.15,0.90 left", windowNumber);
-        gnuplot_.setDatafileSeparator(' ', windowNumber);
+        gnuplot_.setOption("set label 'at time " + stream.str() + "' at screen 0.15,0.90 left");
+        gnuplot_.setDatafileSeparator(' ');
         std::string fileName = outputName_ + "plotOverLineIntoDepth.dat";
-        gnuplot_.addFileToPlot(fileName, fileName,
-                              windowNumber, " u 11:4 w l");
-        gnuplot_.plot("plot", windowNumber, true);
+        gnuplot_.addFileToPlot(fileName, fileName, " u 11:4 w l");
+        gnuplot_.plot("plot");
     }
 
     /*!

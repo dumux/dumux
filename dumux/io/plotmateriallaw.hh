@@ -51,8 +51,24 @@ class PlotMaterialLaw
 
 public:
     //! Constructor
-    PlotMaterialLaw()
+    PlotMaterialLaw(bool interaction = true)
     : numIntervals_(1000)
+    {
+        gnuplotpcsw_.setInteraction(interaction);
+        gnuplotswpc_.setInteraction(interaction);
+        gnuplotdpcdsw_.setInteraction(interaction);
+        gnuplotdswdpc_.setInteraction(interaction);
+        gnuplotkr_.setInteraction(interaction);
+        gnuplotkrdsw_.setInteraction(interaction);
+    }
+
+
+    DUNE_DEPRECATED_MSG("plotpcsw() has changed signature")
+    void plotpcsw(const MaterialLawParams &params,
+                  Scalar lowerSat,
+                  Scalar upperSat,
+                  std::string plotName,
+                  bool interaction)
     { }
 
     /*!
@@ -62,13 +78,11 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotpcsw(const MaterialLawParams &params,
                   Scalar lowerSat = 0.0,
                   Scalar upperSat = 1.0,
-                  std::string plotName = "pc-Sw",
-                  bool interaction = true)
+                  std::string plotName = "")
     {
         std::vector<Scalar> sw(numIntervals_+1);
         std::vector<Scalar> pc(numIntervals_+1);
@@ -85,14 +99,22 @@ public:
             pcMax = std::max(pcMax, pc[i]);
         }
 
-        unsigned int windowNumber = 1;
-        gnuplot_.setXRange(lowerSat, upperSat, windowNumber);
-        gnuplot_.setYRange(pcMin, pcMax, windowNumber);
-        gnuplot_.setXlabel("wetting phase saturation [-]", windowNumber);
-        gnuplot_.setYlabel("capillary pressure [Pa]", windowNumber);
-        gnuplot_.addDataSetToPlot(sw, pc, plotName, windowNumber);
-        gnuplot_.plot("pc-Sw", windowNumber, interaction);
+        gnuplotpcsw_.setXRange(lowerSat, upperSat);
+        gnuplotpcsw_.setYRange(pcMin, pcMax);
+        gnuplotpcsw_.setXlabel("wetting phase saturation [-]");
+        gnuplotpcsw_.setYlabel("capillary pressure [Pa]");
+        gnuplotpcsw_.addDataSetToPlot(sw, pc, plotName + "_pc-Sw");
+        gnuplotpcsw_.plot("pc-Sw");
     }
+
+
+    DUNE_DEPRECATED_MSG("plotswpc() has changed signature")
+    void plotswpc(const MaterialLawParams &params,
+                  Scalar lowerSat,
+                  Scalar upperSat,
+                  std::string plotName,
+                  bool interaction)
+    { }
 
     /*!
      * \brief Plot the saturation-capillary pressure curve
@@ -101,13 +123,11 @@ public:
      * \param lowerpc Minimum x-value
      * \param upperpc Maximum x-value
      * \param plotName Name of the plotted curve
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotswpc(const MaterialLawParams &params,
                   Scalar lowerpc = 0.0,
                   Scalar upperpc = 5000.0,
-                  std::string plotName = "Sw-pc",
-                  bool interaction = true)
+                  std::string plotName = "")
     {
         std::vector<Scalar> sat(numIntervals_+1);
         std::vector<Scalar> pc(numIntervals_+1);
@@ -123,14 +143,22 @@ public:
             swMax = std::max(swMax, sat[i]);
         }
 
-        unsigned int windowNumber = 2;
-        gnuplot_.setXRange(lowerpc, upperpc, windowNumber);
-        gnuplot_.setYRange(swMin, swMax, windowNumber);
-        gnuplot_.setXlabel("capillary pressure [Pa]", windowNumber);
-        gnuplot_.setYlabel("wetting phase saturation [-]", windowNumber);
-        gnuplot_.addDataSetToPlot(pc, sat, plotName, windowNumber);
-        gnuplot_.plot("sw-pc", windowNumber, interaction);
+        gnuplotswpc_.setXRange(lowerpc, upperpc);
+        gnuplotswpc_.setYRange(swMin, swMax);
+        gnuplotswpc_.setXlabel("capillary pressure [Pa]");
+        gnuplotswpc_.setYlabel("wetting phase saturation [-]");
+        gnuplotswpc_.addDataSetToPlot(pc, sat, plotName + "_Sw-pc");
+        gnuplotswpc_.plot("sw-pc");
     }
+
+
+    DUNE_DEPRECATED_MSG("plotdpcdsw() has changed signature")
+    void plotdpcdsw(const MaterialLawParams &params,
+                    Scalar lowerSat,
+                    Scalar upperSat,
+                    std::string plotName,
+                    bool interaction)
+    { }
 
     /*!
      * \brief Plot the gradient of the capillary pressure-saturation curve
@@ -139,13 +167,11 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotdpcdsw(const MaterialLawParams &params,
                     Scalar lowerSat = 0.0,
                     Scalar upperSat = 1.0,
-                    std::string plotName = "dpcdSw-Sw",
-                    bool interaction = true)
+                    std::string plotName = "")
     {
         std::vector<Scalar> sat(numIntervals_ + 1);
         std::vector<Scalar> dpcdsw(numIntervals_ + 1);
@@ -162,14 +188,22 @@ public:
             dpcdswMax = std::max(dpcdswMax, dpcdsw[i]);
         }
 
-        unsigned int windowNumber = 3;
-        gnuplot_.setXRange(lowerSat, upperSat, windowNumber);
-        gnuplot_.setYRange(dpcdswMin, dpcdswMax, windowNumber);
-        gnuplot_.setXlabel("wetting phase saturation [-]", windowNumber);
-        gnuplot_.setYlabel("gradient of the pc-Sw curve [Pa]", windowNumber);
-        gnuplot_.addDataSetToPlot(sat, dpcdsw, plotName, windowNumber);
-        gnuplot_.plot("dpcdsw", windowNumber, interaction);
+        gnuplotdpcdsw_.setXRange(lowerSat, upperSat);
+        gnuplotdpcdsw_.setYRange(dpcdswMin, dpcdswMax);
+        gnuplotdpcdsw_.setXlabel("wetting phase saturation [-]");
+        gnuplotdpcdsw_.setYlabel("gradient of the pc-Sw curve [Pa]");
+        gnuplotdpcdsw_.addDataSetToPlot(sat, dpcdsw, plotName + "_dpcdSw-Sw");
+        gnuplotdpcdsw_.plot("dpcdsw");
     }
+
+
+    DUNE_DEPRECATED_MSG("plotdswdpc() has changed signature")
+    void plotdswdpc(const MaterialLawParams &params,
+                    Scalar lowerpc,
+                    Scalar upperpc,
+                    std::string plotName,
+                    bool interaction)
+    { }
 
     /*!
      * \brief Plot the gradient of the saturation-capillary pressure curve
@@ -178,13 +212,11 @@ public:
      * \param lowerpc Minimum x-value
      * \param upperpc Maximum x-value
      * \param plotName Name of the plotted curve
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotdswdpc(const MaterialLawParams &params,
                     Scalar lowerpc = 0.0,
                     Scalar upperpc = 5000.0,
-                    std::string plotName = "dSwdpc-pc",
-                    bool interaction = true)
+                    std::string plotName = "")
     {
         std::vector<Scalar> dswdpc(numIntervals_+1);
         std::vector<Scalar> pc(numIntervals_+1);
@@ -200,14 +232,22 @@ public:
             dswdpcMax = std::max(dswdpcMax, dswdpc[i]);
         }
 
-        unsigned int windowNumber = 4;
-        gnuplot_.setXRange(lowerpc, upperpc, windowNumber);
-        gnuplot_.setYRange(dswdpcMin, dswdpcMax, windowNumber);
-        gnuplot_.setXlabel("capillary pressure [Pa]", windowNumber);
-        gnuplot_.setYlabel("gradient of the Sw-pc curve [1/Pa]", windowNumber);
-        gnuplot_.addDataSetToPlot(pc, dswdpc, plotName, windowNumber);
-        gnuplot_.plot("dswdpc", windowNumber, interaction);
+        gnuplotdswdpc_.setXRange(lowerpc, upperpc);
+        gnuplotdswdpc_.setYRange(dswdpcMin, dswdpcMax);
+        gnuplotdswdpc_.setXlabel("capillary pressure [Pa]");
+        gnuplotdswdpc_.setYlabel("gradient of the Sw-pc curve [1/Pa]");
+        gnuplotdswdpc_.addDataSetToPlot(pc, dswdpc, plotName + "_dSwdpc-pc");
+        gnuplotdswdpc_.plot("dswdpc");
     }
+
+
+    DUNE_DEPRECATED_MSG("plotkr() has changed signature")
+    void plotkr(const MaterialLawParams &params,
+                Scalar lowerSat,
+                Scalar upperSat,
+                std::string plotName,
+                bool interaction)
+    { }
 
     /*!
      * \brief Plot the relative permeabilities
@@ -216,13 +256,11 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotkr(const MaterialLawParams &params,
                 Scalar lowerSat = 0.0,
                 Scalar upperSat = 1.0,
-                std::string plotName = "",
-                bool interaction = true)
+                std::string plotName = "")
     {
         std::vector<Scalar> sw(numIntervals_ + 1);
         std::vector<Scalar> krw(numIntervals_ + 1);
@@ -241,15 +279,23 @@ public:
             krMax = std::max(krMax, std::max(krw[i], krn[i]));
         }
 
-        unsigned int windowNumber = 5;
-        gnuplot_.setXRange(lowerSat, upperSat, windowNumber);
-        gnuplot_.setYRange(krMin, krMax, windowNumber);
-        gnuplot_.setXlabel("wetting phase saturation [-]", windowNumber);
-        gnuplot_.setYlabel("relative permeability [-]", windowNumber);
-        gnuplot_.addDataSetToPlot(sw, krw, plotName + "_krw", windowNumber);
-        gnuplot_.addDataSetToPlot(sw, krn, plotName + "_krn", windowNumber);
-        gnuplot_.plot("kr", windowNumber, interaction);
+        gnuplotkr_.setXRange(lowerSat, upperSat);
+        gnuplotkr_.setYRange(krMin, krMax);
+        gnuplotkr_.setXlabel("wetting phase saturation [-]");
+        gnuplotkr_.setYlabel("relative permeability [-]");
+        gnuplotkr_.addDataSetToPlot(sw, krw, plotName + "_krw");
+        gnuplotkr_.addDataSetToPlot(sw, krn, plotName + "_krn");
+        gnuplotkr_.plot("kr");
     }
+
+
+    DUNE_DEPRECATED_MSG("plotdkrdsw() has changed signature")
+    void plotdkrdsw(const MaterialLawParams &params,
+                Scalar lowerSat,
+                Scalar upperSat,
+                std::string plotName,
+                bool interaction)
+    { }
 
     /*!
      * \brief Plot the gradient of the relative permeabilities
@@ -258,13 +304,11 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotdkrdsw(const MaterialLawParams &params,
                     Scalar lowerSat = 0.0,
                     Scalar upperSat = 1.0,
-                    std::string plotName = "",
-                    bool interaction = true)
+                    std::string plotName = "")
     {
         std::vector<Scalar> sw(numIntervals_+1);
         std::vector<Scalar> dkrw_dsw(numIntervals_+1);
@@ -283,14 +327,13 @@ public:
             dkrdswMax = std::max(dkrdswMax, std::max(dkrw_dsw[i], dkrn_dsw[i]));
         }
 
-        unsigned int windowNumber = 6;
-        gnuplot_.setXRange(lowerSat, upperSat, windowNumber);
-        gnuplot_.setYRange(dkrdswMin, dkrdswMax, windowNumber);
-        gnuplot_.setXlabel("wetting phase saturation [-]", windowNumber);
-        gnuplot_.setYlabel("gradient of the kr-Sw function [-]", windowNumber);
-        gnuplot_.addDataSetToPlot(sw, dkrw_dsw, plotName + "_dkrw_dsw", windowNumber);
-        gnuplot_.addDataSetToPlot(sw, dkrn_dsw, plotName + "_dkrn_dsw", windowNumber);
-        gnuplot_.plot("dkrndsw", windowNumber, interaction);
+        gnuplotkrdsw_.setXRange(lowerSat, upperSat);
+        gnuplotkrdsw_.setYRange(dkrdswMin, dkrdswMax);
+        gnuplotkrdsw_.setXlabel("wetting phase saturation [-]");
+        gnuplotkrdsw_.setYlabel("gradient of the kr-Sw function [-]");
+        gnuplotkrdsw_.addDataSetToPlot(sw, dkrw_dsw, plotName + "_dkrw_dsw");
+        gnuplotkrdsw_.addDataSetToPlot(sw, dkrn_dsw, plotName + "_dkrn_dsw");
+        gnuplotkrdsw_.plot("dkrndsw");
     }
 
     /*!
@@ -314,8 +357,13 @@ public:
     }
 
 private:
-    GnuplotInterface<Scalar> gnuplot_;
     int numIntervals_;
+    GnuplotInterface<Scalar> gnuplotpcsw_;
+    GnuplotInterface<Scalar> gnuplotswpc_;
+    GnuplotInterface<Scalar> gnuplotdpcdsw_;
+    GnuplotInterface<Scalar> gnuplotdswdpc_;
+    GnuplotInterface<Scalar> gnuplotkr_;
+    GnuplotInterface<Scalar> gnuplotkrdsw_;
 };
 } // end of namespace
 

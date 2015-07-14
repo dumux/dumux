@@ -30,7 +30,7 @@
 ////////////////////////
 int main()
 {
-    Dumux::GnuplotInterface<double> gnuplot;
+    Dumux::GnuplotInterface<double> gnuplot(false);
 
     unsigned int numIntervals = 100;
     std::vector<double> x(101);
@@ -49,18 +49,16 @@ int main()
         yMax = std::max(yMax, y[i]);
     }
 
-    unsigned int windowNumber = 0;
-    gnuplot.reset(windowNumber);
-    gnuplot.setXRange(0, 5, windowNumber);
-    gnuplot.setYRange(yMin, yMax, windowNumber);
-    gnuplot.setXlabel("x [-]", windowNumber);
-    gnuplot.setYlabel("f(x) [-]", windowNumber);
-    gnuplot.setDatafileSeparator(',', windowNumber);
-    gnuplot.setOption("set arrow from 0,0 to 2,20 head filled lc rgb 'dark-gray'", windowNumber);
-    gnuplot.setOption("set label 'arrow' at 1,15 center tc rgb 'dark-gray'", windowNumber);
-    gnuplot.addDataSetToPlot(x, y, "dataSet_f(x)=x^2", windowNumber, "every 5 w lp ps 2");
-    gnuplot.addFunctionToPlot("x**3", "function_f(x)=x^3", windowNumber);
-    gnuplot.addFileToPlot("0_dataSet_f(x)=x^2.dat", "file_f(x)=x^2.dat", windowNumber);
-    gnuplot.plot("plot", windowNumber, true);
+    gnuplot.setXRange(0, 5);
+    gnuplot.setYRange(yMin, yMax);
+    gnuplot.setXlabel("x [-]");
+    gnuplot.setYlabel("f(x) [-]");
+    gnuplot.setDatafileSeparator(',');
+    gnuplot.setOption("set arrow from 0,0 to 2,20 head filled lc rgb 'dark-gray'");
+    gnuplot.setOption("set label 'arrow' at 1,15 center tc rgb 'dark-gray'");
+    gnuplot.addDataSetToPlot(x, y, "dataSet_f(x)=x^2", "every 5 w lp ps 2");
+    gnuplot.addFunctionToPlot("x**3", "function_f(x)=x^3");
+    gnuplot.addFileToPlot("0_dataSet_f(x)=x^2.dat", "file_f(x)=x^2.dat");
+    gnuplot.plot("plot");
     exit(0);
 }

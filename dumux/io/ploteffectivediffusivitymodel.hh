@@ -47,8 +47,18 @@ class PlotEffectiveDiffusivityModel
 
 public:
     //! Constructor
-    PlotEffectiveDiffusivityModel()
+    PlotEffectiveDiffusivityModel(bool interaction = true)
     : numIntervals_(1000)
+    {
+        gnuplot_.setInteraction(interaction);
+    }
+
+    DUNE_DEPRECATED_MSG("plotdeff() has changed signature")
+    void plotdeff(Scalar porosity,
+                  Scalar lowerSat,
+                  Scalar upperSat,
+                  std::string plotName,
+                  bool interaction)
     { }
 
     /*!
@@ -58,13 +68,11 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotdeff(Scalar porosity,
                   Scalar lowerSat = 0.0,
                   Scalar upperSat = 1.0,
-                  std::string plotName = "D_eff",
-                  bool interaction = true)
+                  std::string plotName = "")
     {
         std::vector<Scalar> sw(numIntervals_+1);
         std::vector<Scalar> deff(numIntervals_+1);
@@ -81,18 +89,17 @@ public:
             deffMax = std::max(deffMax, deff[i]);
         }
 
-        unsigned int windowNumber = 7;
-        gnuplot_.setXRange(lowerSat, upperSat, windowNumber);
-        gnuplot_.setYRange(deffMin, deffMax, windowNumber);
-        gnuplot_.setXlabel("phase saturation [-]", windowNumber);
-        gnuplot_.setYlabel("effective diffusion/molecular diffusion [-]", windowNumber);
-        gnuplot_.addDataSetToPlot(sw, deff, plotName, windowNumber);
-        gnuplot_.plot("deff", windowNumber, interaction);
+        gnuplot_.setXRange(lowerSat, upperSat);
+        gnuplot_.setYRange(deffMin, deffMax);
+        gnuplot_.setXlabel("phase saturation [-]");
+        gnuplot_.setYlabel("effective diffusion/molecular diffusion [-]");
+        gnuplot_.addDataSetToPlot(sw, deff, plotName + "_d_eff");
+        gnuplot_.plot("deff");
     }
 
 private:
-    GnuplotInterface<Scalar> gnuplot_;
     int numIntervals_;
+    GnuplotInterface<Scalar> gnuplot_;
 };
 } // end of namespace
 

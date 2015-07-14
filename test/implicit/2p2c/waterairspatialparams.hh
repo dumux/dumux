@@ -126,21 +126,21 @@ public:
      */
     void plotMaterialLaw()
     {
-        PlotMaterialLaw<TypeTag> plotMaterialLaw;
-        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
-        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel(283.15/*temperature*/, 1e5/*pressure*/);
-        plotMaterialLaw.plotpcsw(fineMaterialParams_, 0.2, 1.0, "fine", plotFluidMatrixInteractions_);
-        plotMaterialLaw.plotpcsw(coarseMaterialParams_, 0.2, 1.0, "coarse", plotFluidMatrixInteractions_);
-        plotMaterialLaw.plotkr(fineMaterialParams_, 0.2, 1.0, "fine", plotFluidMatrixInteractions_);
-        plotMaterialLaw.plotkr(coarseMaterialParams_, 0.2, 1.0, "coarse", plotFluidMatrixInteractions_);
+        PlotMaterialLaw<TypeTag> plotMaterialLaw(plotFluidMatrixInteractions_);
+        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel(plotFluidMatrixInteractions_);
+        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel(283.15/*temperature*/, 1e5/*pressure*/,
+                                                                           plotFluidMatrixInteractions_);
 
-        plotEffectiveDiffusivityModel.plotdeff(finePorosity_, 0.0, 1.0, "fine", plotFluidMatrixInteractions_);
-        plotEffectiveDiffusivityModel.plotdeff(coarsePorosity_, 0.0, 1.0, "coarse", plotFluidMatrixInteractions_);
+        plotMaterialLaw.plotpcsw(fineMaterialParams_, 0.2, 1.0, "fine");
+        plotMaterialLaw.plotpcsw(coarseMaterialParams_, 0.2, 1.0, "coarse");
+        plotMaterialLaw.plotkr(fineMaterialParams_, 0.2, 1.0, "fine");
+        plotMaterialLaw.plotkr(coarseMaterialParams_, 0.2, 1.0, "coarse");
 
-        plotThermalConductivityModel.plotlambdaeff(finePorosity_, 2700.0, lambdaSolid_,
-                                                   0.0, 1.0, "fine", plotFluidMatrixInteractions_);
-        plotThermalConductivityModel.plotlambdaeff(coarsePorosity_, 2700.0, lambdaSolid_,
-                                                   0.0, 1.0, "coarse", plotFluidMatrixInteractions_);
+        plotEffectiveDiffusivityModel.plotdeff(finePorosity_, 0.0, 1.0, "fine");
+        plotEffectiveDiffusivityModel.plotdeff(coarsePorosity_, 0.0, 1.0, "coarse");
+
+        plotThermalConductivityModel.plotlambdaeff(finePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "fine");
+        plotThermalConductivityModel.plotlambdaeff(coarsePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "coarse");
     }
 
     /*!

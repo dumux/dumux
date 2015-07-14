@@ -65,32 +65,22 @@ public:
     };
 
     //! \brief The constructor
-    GnuplotInterface() :
+    GnuplotInterface(bool persist = true) :
         plotStyle_("lines"), pipe_(0),
         fileName_(0), plotOptions_(0), plotName_(0),
-        xRangeMin_(0), xRangeMax_(0),
-        yRangeMin_(0), yRangeMax_(0),
-        xLabel_(0), yLabel_(0),
-        options_(0),
-        datafileSeparator_(0),
+        interaction_(true),
+        xRangeMin_(1e100), xRangeMax_(-1e100),
+        yRangeMin_(1e100), yRangeMax_(-1e100),
+        xLabel_(""), yLabel_(""),
+        options_(""),
+        datafileSeparator_(' '),
         gnuplotPath_(GNUPLOT_EXECUTABLE),
-        terminalType_("wxt"),
-        numberOfGnuplotWindows_(8+1)
+        terminalType_("wxt")
     {
-        {
+        if (persist)
             pipe_ = popen((gnuplotPath_ + " -persist").c_str(), "w"); // "w" - writing
-        }
-        fileName_.resize(numberOfGnuplotWindows_);
-        plotOptions_.resize(numberOfGnuplotWindows_);
-        plotName_.resize(numberOfGnuplotWindows_);
-        xRangeMin_.resize(numberOfGnuplotWindows_, 1e100);
-        xRangeMax_.resize(numberOfGnuplotWindows_, -1e100);
-        yRangeMin_.resize(numberOfGnuplotWindows_, 1e100);
-        yRangeMax_.resize(numberOfGnuplotWindows_, -1e100);
-        xLabel_.resize(numberOfGnuplotWindows_, "");
-        yLabel_.resize(numberOfGnuplotWindows_, "");
-        options_.resize(numberOfGnuplotWindows_, "");
-        datafileSeparator_.resize(numberOfGnuplotWindows_, ' ');
+        else
+            pipe_ = popen((gnuplotPath_).c_str(), "w");
     }
 
     //! \brief The destructor
@@ -100,56 +90,59 @@ public:
             assert("Could not close pipe to Gnuplot!");
     }
 
+    DUNE_DEPRECATED_MSG("plot() signature has been changed")
+    void plot(const std::string &title,
+              const unsigned int plottingWindowNumber,
+              const bool interaction)
+    {
+        plot(title);
+    }
+
     /*!
      * \brief Plots the files for a specific window number, writes a gnuplot and png file.
      *
      * \param title The name of the output file
-     * \param plottingWindowNumber The ID of the specific plot
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
+     * \param plottingWindowNumber Change the number of the window in which the plot is shown
      */
-    void plot(const std::string &title,
-              const unsigned int plottingWindowNumber,
-              bool interaction)
+    void plot(const std::string &title, const unsigned int plottingWindowNumber = 0)
     {
         // set correct terminal and general options
         std::string plot = "reset\n";
-        plot += "set datafile separator \'" + convertToString(datafileSeparator_[plottingWindowNumber]) + "\'\n";
-        plot += "set term wxt " + convertToString(plottingWindowNumber) + "\n";
-        if (xRangeMin_[plottingWindowNumber] < 1e100 || xRangeMax_[plottingWindowNumber] > -1e100)
+        plot += "set datafile separator \'" + convertToString(datafileSeparator_) + "\'\n";
+        plot += "set term wxt " + convertToString(plottingWindowNumber) + " \n";
+        if (xRangeMin_ < 1e100 || xRangeMax_ > -1e100)
         {
-            plot += "set xrange [" + convertToString(xRangeMin_[plottingWindowNumber])
-                    + ":" + convertToString(xRangeMax_[plottingWindowNumber]) + "]" + "\n";
+            plot += "set xrange [" + convertToString(xRangeMin_)
+                    + ":" + convertToString(xRangeMax_) + "]" + "\n";
         }
-        if (yRangeMin_[plottingWindowNumber] < 1e100 || yRangeMax_[plottingWindowNumber] > -1e100)
+        if (yRangeMin_ < 1e100 || yRangeMax_ > -1e100)
         {
-            plot += "set yrange [" + convertToString(yRangeMin_[plottingWindowNumber])
-                    + ":" + convertToString(yRangeMax_[plottingWindowNumber]) + "]" + "\n";
+            plot += "set yrange [" + convertToString(yRangeMin_)
+                    + ":" + convertToString(yRangeMax_) + "]" + "\n";
         }
-        plot += "set xlabel \"" + xLabel_[plottingWindowNumber] + "\"\n";
-        plot += "set ylabel \"" + yLabel_[plottingWindowNumber] + "\"\n";
+        plot += "set xlabel \"" + xLabel_ + "\"\n";
+        plot += "set ylabel \"" + yLabel_ + "\"\n";
 
         // set user defined options
-        plot += options_[plottingWindowNumber] + "\n";
+        plot += options_ + "\n";
 
         // plot curves
         plot += "plot";
-        for (unsigned int i = 0; i < fileName_[plottingWindowNumber].size(); ++i)
+        for (unsigned int i = 0; i < fileName_.size(); ++i)
         {
-            plot += + " " + fileName_[plottingWindowNumber][i]
-                    + " " + plotOptions_[plottingWindowNumber][i]
-                    + " title '" + plotName_[plottingWindowNumber][i] + "'";
-            if (i < fileName_[plottingWindowNumber].size()-1)
+            plot += + " " + fileName_[i]
+                    + " " + plotOptions_[i]
+                    + " title '" + plotName_[i] + "'";
+            if (i < fileName_.size()-1)
                 plot += ",\\";
             plot += "\n";
         }
 
         // live plot of the results if gnuplot is installed
-        if (interaction)
-        {
 #ifdef HAVE_GNUPLOT
+        if (interaction_)
             executeGnuplot(plot.c_str());
 #endif
-        }
 
         // create a gnuplot file for output a png
         plot += "\n";
@@ -163,17 +156,32 @@ public:
         file.close();
     }
 
-    /*!
-     * \brief Deletes all plots from a plotting window and resets user-defined options
-     *
-     * \param plottingWindowNumber The ID of the specific plot
-     */
+
+    DUNE_DEPRECATED_MSG("reset() signature has been changed")
     void reset(const unsigned int plottingWindowNumber)
     {
-        fileName_[plottingWindowNumber].resize(0);
-        plotOptions_[plottingWindowNumber].resize(0);
-        plotName_[plottingWindowNumber].resize(0);
-        options_[plottingWindowNumber].resize(0);
+        reset();
+    }
+
+    /*!
+     * \brief Deletes all plots from a plotting window and resets user-defined options
+     */
+    void reset()
+    {
+        fileName_.resize(0);
+        plotOptions_.resize(0);
+        plotName_.resize(0);
+        options_ = "";
+    }
+
+
+    DUNE_DEPRECATED_MSG("addFunctionToPlot() signature has been changed")
+    void addFunctionToPlot(const std::string function,
+                           const std::string plotName,
+                           const unsigned int plottingWindowNumber,
+                           const std::string plotOptions = "with lines")
+    {
+        addFunctionToPlot(function, plotName);
     }
 
     /*!
@@ -181,17 +189,25 @@ public:
      *
      * \param function Function to be plotted
      * \param plotName The name of the data set
-     * \param plottingWindowNumber The ID of the specific plot
      * \param plotOptions Specific gnuplot options passed to this plot
      */
     void addFunctionToPlot(const std::string function,
                            const std::string plotName,
-                           const unsigned int plottingWindowNumber,
                            const std::string plotOptions = "with lines")
     {
-        fileName_[plottingWindowNumber].push_back(function);
-        plotOptions_[plottingWindowNumber].push_back(plotOptions);
-        plotName_[plottingWindowNumber].push_back(plotName);
+        fileName_.push_back(function);
+        plotOptions_.push_back(plotOptions);
+        plotName_.push_back(plotName);
+    }
+
+
+    DUNE_DEPRECATED_MSG("addFileToPlot() signature has been changed")
+    void addFileToPlot(const std::string file,
+                       const std::string plotName,
+                       const unsigned int plottingWindowNumber,
+                       const std::string plotOptions = "with lines")
+    {
+        addFileToPlot(file, plotName);
     }
 
     /*!
@@ -199,17 +215,26 @@ public:
      *
      * \param file Function to be plotted
      * \param plotName The name of the data set
-     * \param plottingWindowNumber The ID of the specific plot
      * \param plotOptions Specific gnuplot options passed to this plot
      */
     void addFileToPlot(const std::string file,
                        const std::string plotName,
-                       const unsigned int plottingWindowNumber,
                        const std::string plotOptions = "with lines")
     {
-        fileName_[plottingWindowNumber].push_back("'" + file + "'");
-        plotOptions_[plottingWindowNumber].push_back(plotOptions);
-        plotName_[plottingWindowNumber].push_back(plotName);
+        fileName_.push_back("'" + file + "'");
+        plotOptions_.push_back(plotOptions);
+        plotName_.push_back(plotName);
+    }
+
+
+    DUNE_DEPRECATED_MSG("addDataSetToPlot() signature has been changed")
+    void addDataSetToPlot(const std::vector<Scalar>& x,
+                          const std::vector<Scalar>& y,
+                          const std::string plotName,
+                          const unsigned int plottingWindowNumber,
+                          const std::string plotOptions = "with lines")
+    {
+        addDataSetToPlot(x, y, plotName);
     }
 
     /*!
@@ -218,57 +243,86 @@ public:
      * \param x Vector containing the x-axis data points
      * \param y Vector containing the y-axis data points
      * \param plotName The name of the data set
-     * \param plottingWindowNumber The ID of the specific plot
      * \param plotOptions Specific gnuplot options passed to this plot
      */
     void addDataSetToPlot(const std::vector<Scalar>& x,
                           const std::vector<Scalar>& y,
                           const std::string plotName,
-                          const unsigned int plottingWindowNumber,
                           const std::string plotOptions = "with lines")
     {
         assert(x.size() == y.size());
 
         //write data to file
-        std::string fileName = convertToString(plottingWindowNumber) + "_" + plotName + ".dat";
+        std::string fileName = plotName + ".dat";
         std::ofstream file;
         file.open(fileName);
         for (unsigned int i = 0; i < x.size(); i++)
         {
             checkNumber(x[i], "x[i] i=" + convertToString(i) + " in " + fileName);
             checkNumber(y[i], "y[i] i=" + convertToString(i) + " in " + fileName);
-            file << x[i] << datafileSeparator_[plottingWindowNumber] << y[i] << std::endl;
+            file << x[i] << datafileSeparator_ << y[i] << std::endl;
         }
         file.close();
 
         // adding file to list of plotted lines
-        fileName_[plottingWindowNumber].push_back("'" + fileName + "'");
-        plotOptions_[plottingWindowNumber].push_back(plotOptions);
-        plotName_[plottingWindowNumber].push_back(plotName);
+        fileName_.push_back("'" + fileName + "'");
+        plotOptions_.push_back(plotOptions);
+        plotName_.push_back(plotName);
+    }
+
+    /*!
+     * \brief Set whether a gnuplot window will be opened or not
+     *
+     * \param interaction Open window or not
+     */
+    void setInteraction(bool interaction)
+    {
+        interaction_ = interaction;
+    }
+
+
+    DUNE_DEPRECATED_MSG("setXlabel() signature has been changed")
+    void setXlabel(const std::string& label,
+                   const unsigned int plottingWindowNumber)
+    {
+        setXlabel(label);
     }
 
     /*!
      * \brief Sets the label for the x-axis
      *
      * \param label The label of the x-axis
-     * \param plottingWindowNumber The ID of the specific plot
      */
-    void setXlabel(const std::string& label,
+    void setXlabel(const std::string& label)
+    {
+        xLabel_ = label;
+    }
+
+
+    DUNE_DEPRECATED_MSG("setXlabel() signature has been changed")
+    void setYlabel(const std::string& label,
                    const unsigned int plottingWindowNumber)
     {
-        xLabel_[plottingWindowNumber] = label;
+        setYlabel(label);
     }
 
     /*!
      * \brief Sets the label for the y-axis
      *
      * \param label The label of the y-axis
-     * \param plottingWindowNumber The ID of the specific plot
      */
-    void setYlabel(const std::string& label,
+    void setYlabel(const std::string& label)
+    {
+        yLabel_ = label;
+    }
+
+
+    DUNE_DEPRECATED_MSG("setXRange() signature has been changed")
+    void setXRange(Scalar lowerEnd,
+                   Scalar upperEnd,
                    const unsigned int plottingWindowNumber)
     {
-        yLabel_[plottingWindowNumber] = label;
+        setXRange(lowerEnd, upperEnd);
     }
 
     /*!
@@ -276,14 +330,20 @@ public:
      *
      * \param lowerEnd The lowest plotted value for the x-axis
      * \param upperEnd The highest plotted value for the x-axis
-     * \param plottingWindowNumber The ID of the specific plot
      */
-    void setXRange(Scalar lowerEnd,
+    void setXRange(Scalar lowerEnd, Scalar upperEnd)
+    {
+        xRangeMin_ = std::min(xRangeMin_, lowerEnd);
+        xRangeMax_ = std::max(xRangeMax_, upperEnd);
+    }
+
+
+    DUNE_DEPRECATED_MSG("setYRange() signature has been changed")
+    void setYRange(Scalar lowerEnd,
                    Scalar upperEnd,
                    const unsigned int plottingWindowNumber)
     {
-        xRangeMin_[plottingWindowNumber] = std::min(xRangeMin_[plottingWindowNumber], lowerEnd);
-        xRangeMax_[plottingWindowNumber] = std::max(xRangeMax_[plottingWindowNumber], upperEnd);
+        setYRange(lowerEnd, upperEnd);
     }
 
     /*!
@@ -291,38 +351,47 @@ public:
      *
      * \param lowerEnd The lowest plotted value for the y-axis
      * \param upperEnd The highest plotted value for the y-axis
-     * \param plottingWindowNumber The ID of the specific plot
      */
-    void setYRange(Scalar lowerEnd,
-                   Scalar upperEnd,
+    void setYRange(Scalar lowerEnd, Scalar upperEnd)
+    {
+        yRangeMin_ = std::min(yRangeMin_, lowerEnd);
+        yRangeMax_ = std::max(yRangeMax_, upperEnd);
+    }
+
+
+    DUNE_DEPRECATED_MSG("setOption() signature has been changed")
+    void setOption(std::string option,
                    const unsigned int plottingWindowNumber)
     {
-        yRangeMin_[plottingWindowNumber] = std::min(yRangeMin_[plottingWindowNumber], lowerEnd);
-        yRangeMax_[plottingWindowNumber] = std::max(yRangeMax_[plottingWindowNumber], upperEnd);
+        setOption(option);
     }
 
     /*!
      * \brief Sets additional user-defined options
      *
      * \param option Additional line of option in gnuplot language
-     * \param plottingWindowNumber The ID of the specific plot
      */
-    void setOption(std::string option,
-                   const unsigned int plottingWindowNumber)
+    void setOption(std::string option)
     {
-        options_[plottingWindowNumber] += option + "\n";
+        options_ += option + "\n";
+    }
+
+
+    DUNE_DEPRECATED_MSG("setOption() signature has been changed")
+    void setDatafileSeparator(char separator,
+                              const unsigned int plottingWindowNumber)
+    {
+        setDatafileSeparator(separator);
     }
 
     /*!
      * \brief Sets the datafile separator
      *
      * \param separator The separator sign between two data columns
-     * \param plottingWindowNumber The ID of the specific plot
      */
-    void setDatafileSeparator(char separator,
-                              const unsigned int plottingWindowNumber)
+    void setDatafileSeparator(char separator)
     {
-        datafileSeparator_[plottingWindowNumber] = separator;
+        datafileSeparator_ = separator;
     }
 
     /*!
@@ -383,20 +452,20 @@ private:
 
     std::string plotStyle_;
     std::FILE * pipe_;
-    std::vector<StringVector> fileName_;
-    std::vector<StringVector> plotOptions_;
-    std::vector<StringVector> plotName_;
-    std::vector<Scalar> xRangeMin_;
-    std::vector<Scalar> xRangeMax_;
-    std::vector<Scalar> yRangeMin_;
-    std::vector<Scalar> yRangeMax_;
-    StringVector xLabel_;
-    StringVector yLabel_;
-    StringVector options_;
-    std::vector<char> datafileSeparator_;
+    StringVector fileName_;
+    StringVector plotOptions_;
+    StringVector plotName_;
+    bool interaction_;
+    Scalar xRangeMin_;
+    Scalar xRangeMax_;
+    Scalar yRangeMin_;
+    Scalar yRangeMax_;
+    std::string xLabel_;
+    std::string yLabel_;
+    std::string options_;
+    char datafileSeparator_;
     std::string gnuplotPath_;
     std::string terminalType_;
-    const unsigned int numberOfGnuplotWindows_;
 };
 } // end of namespace
 #endif // DUMUX_GNUPLOT_INTERFACE_HH

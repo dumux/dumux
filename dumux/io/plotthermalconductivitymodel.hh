@@ -61,6 +61,13 @@ class PlotThermalConductivityModel
     };
 
 public:
+    DUNE_DEPRECATED_MSG("Constructor() has changed signature")
+    PlotThermalConductivityModel()
+    : numIntervals_(1000)
+    {
+        PlotThermalConductivityModel(293.15, 1e5);
+    }
+
     /*!
      * \brief Constructor
      *
@@ -68,8 +75,9 @@ public:
      *
      * \param temperature temperature in \f$\mathrm{[K]}\f$
      * \param pressure reference pressure in \f$\mathrm{[Pa]}\f$
+     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
-    PlotThermalConductivityModel(Scalar temperature, Scalar pressure)
+    PlotThermalConductivityModel(Scalar temperature, Scalar pressure, bool interaction = true)
     : numIntervals_(1000)
     {
         FluidState fluidstate;
@@ -78,14 +86,20 @@ public:
         fluidstate.setPressure(nPhaseIdx, pressure);
         lambdaW_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, wPhaseIdx);
         lambdaN_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, nPhaseIdx);
+        gnuplot_.setInteraction(interaction);
     }
 
-    //! Constructor
-    DUNE_DEPRECATED_MSG("Constructor() has changed signature")
-    PlotThermalConductivityModel()
-    : numIntervals_(1000)
+
+    DUNE_DEPRECATED_MSG("plotlambdaeff() has changed signature")
+    void plotlambdaeff(Scalar porosity,
+                       Scalar rhoSolid,
+                       Scalar lambdaSolid,
+                       Scalar lowerSat,
+                       Scalar upperSat,
+                       std::string plotName,
+                       bool interaction)
     {
-        PlotThermalConductivityModel(293.15, 1e5);
+        plotlambdaeff(porosity, rhoSolid, lambdaSolid, lowerSat, upperSat, plotName);
     }
 
     /*!
@@ -97,15 +111,13 @@ public:
      * \param lowerSat Minimum x-value
      * \param upperSat Maximum x-value
      * \param plotName Name of the plotted curve
-     * \param interaction Specifies whether a live output via a gnuplot window is wanted
      */
     void plotlambdaeff(Scalar porosity,
                        Scalar rhoSolid,
                        Scalar lambdaSolid,
                        Scalar lowerSat = 0.0,
                        Scalar upperSat = 1.0,
-                       std::string plotName = "lambda_eff",
-                       bool interaction = true)
+                       std::string plotName = "")
     {
         std::vector<Scalar> sw(numIntervals_+1);
         std::vector<Scalar> lambda(numIntervals_+1);
@@ -123,18 +135,17 @@ public:
             lambdaMax = std::max(lambdaMax, lambda[i]);
         }
 
-        unsigned int windowNumber = 8;
-        gnuplot_.setXRange(lowerSat, upperSat,windowNumber);
-        gnuplot_.setYRange(lambdaMin, lambdaMax, windowNumber);
-        gnuplot_.setXlabel("wetting phase saturation [-]", windowNumber);
-        gnuplot_.setYlabel("effective thermal conductivity [W/(m K)]", windowNumber);
-        gnuplot_.addDataSetToPlot(sw, lambda, plotName, windowNumber);
-        gnuplot_.plot("lambdaeff", windowNumber, interaction);
+        gnuplot_.setXRange(lowerSat, upperSat);
+        gnuplot_.setYRange(lambdaMin, lambdaMax);
+        gnuplot_.setXlabel("wetting phase saturation [-]");
+        gnuplot_.setYlabel("effective thermal conductivity [W/(m K)]");
+        gnuplot_.addDataSetToPlot(sw, lambda, plotName + "_lambda_eff");
+        gnuplot_.plot("lambdaeff");
     }
 
 private:
-    GnuplotInterface<Scalar> gnuplot_;
     int numIntervals_;
+    GnuplotInterface<Scalar> gnuplot_;
     Scalar lambdaN_;
     Scalar lambdaW_;
 };

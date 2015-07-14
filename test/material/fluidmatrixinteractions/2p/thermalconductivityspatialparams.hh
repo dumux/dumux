@@ -106,10 +106,10 @@ public:
      */
     void plotMaterialLaw()
     {
-        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel_(293.15, 1e5);
+        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel_(293.15, 1e5, false);
         std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Conductivity, File);
         plotThermalConductivityModel_.plotlambdaeff(porosity_, rhoSolid_, lambdaSolid_,
-                                                    0.0, 1.0, fileName, false);
+                                                    0.0, 1.0, fileName);
     }
 
     /*!
