@@ -54,11 +54,7 @@ SET_TYPE_PROP(TwoPTwoCNISubProblem, LocalResidual, TwoPTwoCNICouplingLocalResidu
 SET_INT_PROP(TwoPTwoCNISubProblem, Formulation, TwoPTwoCFormulation::pnsw);
 
 // The gas component balance (air) is replaced by the total mass balance
-SET_PROP(TwoPTwoCNISubProblem, ReplaceCompEqIdx)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    static const int value = Indices::contiNEqIdx;
-};
+SET_INT_PROP(TwoPTwoCNISubProblem, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, Indices)::contiNEqIdx);
 
 // Use the fluid system from the coupled problem
 SET_TYPE_PROP(TwoPTwoCNISubProblem,
