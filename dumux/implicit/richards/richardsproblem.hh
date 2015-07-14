@@ -63,7 +63,13 @@ public:
      */
     RichardsProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
-    {}
+    {
+        bool gravity_ =GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+        static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
+
+        if ( (!gravity_) && (useHead) )
+            DUNE_THROW(Dune::InvalidStateException, "Don't run the Richards model with pressure head without gravity!");
+    }
 
     /*!
      * \name Problem parameters

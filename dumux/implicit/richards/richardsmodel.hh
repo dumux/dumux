@@ -127,8 +127,6 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
-    static const bool useHead = GET_PROP_VALUE(TypeTag, UseHead);
-
 public:
     /*!
      * \brief All relevant primary and secondary of a given
@@ -142,6 +140,7 @@ public:
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
+        bool gravity =GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
 
         // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
@@ -223,7 +222,8 @@ public:
                     (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
                     (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
                     (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
-                    (*ph)[dofIdxGlobal] = elemVolVars[scvIdx].pressureHead(wPhaseIdx);
+                    if (gravity)
+                        (*ph)[dofIdxGlobal] = elemVolVars[scvIdx].pressureHead(wPhaseIdx);
                     (*wc)[dofIdxGlobal] = elemVolVars[scvIdx].waterContent(wPhaseIdx);
                     (*source)[dofIdxGlobal] = sourcevalues[0];
                 }
@@ -244,7 +244,8 @@ public:
         writer.attachDofData(*mobN, "mobN", isBox);
         writer.attachDofData(*poro, "porosity", isBox);
         writer.attachDofData(*Te, "temperature", isBox);
-        writer.attachDofData(*ph, "pressure head", isBox);
+        if (gravity)
+            writer.attachDofData(*ph, "pressure head", isBox);
         writer.attachDofData(*wc, "water content", isBox);
         writer.attachDofData(*source, "source", isBox);
 
