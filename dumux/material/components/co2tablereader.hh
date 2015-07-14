@@ -42,6 +42,9 @@ class TabulatedCO2Properties
     enum { numTempSteps = Traits::numTempSteps, numPressSteps = Traits::numPressSteps };
 
 public:
+    TabulatedCO2Properties()
+    {}
+
     Scalar minTemp() const
     { return Traits::minTemp; }
 
