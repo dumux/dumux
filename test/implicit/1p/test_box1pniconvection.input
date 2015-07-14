@@ -1,4 +1,4 @@
-T[TimeManager]
+[TimeManager]
 DtInitial = 1 # [s]
 TEnd = 3e4 # [s]
 MaxTimeStepSize = 1e3
