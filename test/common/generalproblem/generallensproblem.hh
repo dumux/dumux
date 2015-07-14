@@ -56,7 +56,7 @@ class GeneralLensProblem;
 //////////
 namespace Properties
 {
-    
+
 //Set the general problem TypeTag which does not depend on the model
 NEW_TYPE_TAG(GeneralLensProblem, INHERITS_FROM(GeneralLensSpatialParams));
 

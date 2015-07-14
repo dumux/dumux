@@ -286,7 +286,7 @@ protected:
             this->residual_[scvIdx][momentumYIdx] += pressureCorrection[momentumYIdx]*
                     boundaryVars.face().area;
         }
-		
+
 		// set mole or mass fraction for the transported components
 		for (int compIdx = 0; compIdx < numComponents; compIdx++)
 		{

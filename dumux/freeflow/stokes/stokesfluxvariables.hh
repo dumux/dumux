@@ -231,14 +231,14 @@ public:
     { return velocityGrad_; }
 
     /*!
-     * \brief Return the dynamic eddy viscosity 
+     * \brief Return the dynamic eddy viscosity
      *        \f$\mathrm{[Pa \cdot s]} = \mathrm{[N \cdot s/m^2]}\f$ (if implemented).
      */
     const Scalar dynamicEddyViscosity() const
     { return kinematicEddyViscosity() * density(); }
 
     /*!
-     * \brief Return the kinematic eddy viscosity 
+     * \brief Return the kinematic eddy viscosity
      *        \f$\mathrm{[m^2/s]}\f$ (if implemented).
      */
     const Scalar kinematicEddyViscosity() const

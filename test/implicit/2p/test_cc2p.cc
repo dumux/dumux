@@ -51,7 +51,7 @@ void usage(const char *progName, const std::string &errorMsg)
                            "\t-SpatialParams.LensUpperRightY y-coordinate of the upper right corner of the lens [m] \n"
                            "\t-Problem.Name                  String for naming of the output files \n"
                            "\n";
-        
+
         std::cout << errorMessageOut << std::endl;
     }
 }

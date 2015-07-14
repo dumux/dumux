@@ -222,8 +222,8 @@ public:
     /*!
      * \brief Add data associated with degrees of freedom to the output.
      *
-     * This is a wrapper for the functions attachVertexData and attachCelldata. 
-     * Depending on the value of \a isVertexData, the appropriate function 
+     * This is a wrapper for the functions attachVertexData and attachCelldata.
+     * Depending on the value of \a isVertexData, the appropriate function
      * is selected.
      */
     template <class DataBuffer>
@@ -231,7 +231,7 @@ public:
     {
         if (isVertexData)
             attachVertexData(buf, name, nComps);
-        else 
+        else
             attachCellData(buf, name, nComps);
     }
 

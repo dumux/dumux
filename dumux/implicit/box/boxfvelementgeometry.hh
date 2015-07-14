@@ -650,7 +650,7 @@ public:
     SubControlVolumeFace subContVolFace[maxNE]; //!< data of the sub control volume faces
     BoundaryFace boundaryFace[maxBF]; //!< data of the boundary faces
     int numScv; //!< number of subcontrol volumes
-    int numScvf; //!< number of inner-domain subcontrolvolume faces 
+    int numScvf; //!< number of inner-domain subcontrolvolume faces
     int numNeighbors; //!< needed for compatibility with cc models
     std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
 
@@ -781,7 +781,7 @@ public:
             {
                 // get the global integration point and the Jacobian inverse
                 scvFace.ipGlobal = geometry.global(ipLocal);
-                JacobianInverseTransposed jacInvT = 
+                JacobianInverseTransposed jacInvT =
                     geometry.jacobianInverseTransposed(ipLocal);
 
                 // calculate the shape function gradients
@@ -857,7 +857,7 @@ public:
                     localFiniteElement.localBasis().evaluateJacobian(bFace.ipLocal, localJac);
                     localFiniteElement.localBasis().evaluateFunction(bFace.ipLocal, shapeVal);
 
-                    JacobianInverseTransposed jacInvT = 
+                    JacobianInverseTransposed jacInvT =
                         geometry.jacobianInverseTransposed(bFace.ipLocal);
                     bFace.numFap = numScv;
                     for (int scvIdx = 0; scvIdx < numScv; scvIdx++)

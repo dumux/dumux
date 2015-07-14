@@ -117,7 +117,7 @@ SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
  * To run the simulation execute the following line in shell:
  * <tt>./test_box1p -parameterFile test_box1p.input</tt> or
  * <tt>./test_cc1p -parameterFile test_cc1p.input</tt>
- * 
+ *
  * The same parameter file can be also used for 3d simulation but you need to change line
  * <tt>typedef Dune::YaspGrid<2> type;</tt> to
  * <tt>typedef Dune::YaspGrid<3> type;</tt> in the problem file
@@ -159,9 +159,9 @@ public:
     OnePTestProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, 
-                                             std::string, 
-                                             Problem, 
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                             std::string,
+                                             Problem,
                                              Name);
     }
 

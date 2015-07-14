@@ -230,7 +230,7 @@ public:
 
                 int fIdxInner = 0;
                 IntersectionIterator isEndIt = problem_.gridView().iend(element);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(element); 
+                for (IntersectionIterator isIt = problem_.gridView().ibegin(element);
                      isIt != isEndIt; ++isIt)
                 {
                     int fIdx = isIt->indexInInside();
@@ -267,7 +267,7 @@ public:
                 if (element.hasBoundaryIntersections())
                 {
                     IntersectionIterator isEndIt = problem_.gridView().iend(element);
-                    for (IntersectionIterator isIt = problem_.gridView().ibegin(element); 
+                    for (IntersectionIterator isIt = problem_.gridView().ibegin(element);
                          isIt != isEndIt; ++isIt)
                     {
                         if (isIt->boundary())
@@ -314,7 +314,7 @@ public:
                 }
                 // 3D prism and pyramids
                 else {
-                    DUNE_THROW(Dune::NotImplemented, 
+                    DUNE_THROW(Dune::NotImplemented,
                                "velocity output for cell-centered and prism/pyramid");
                 }
 

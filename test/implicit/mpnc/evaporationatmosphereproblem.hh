@@ -102,7 +102,7 @@ SET_TYPE_PROP(EvaporationAtmosphereProblem,
 
 // Set fluid configuration
 SET_PROP(EvaporationAtmosphereProblem, FluidSystem)
-{ 
+{
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:  typedef Dumux::FluidSystems::H2ON2Kinetic<Scalar, /*useComplexRelations=*/false> type;
 };
@@ -501,7 +501,7 @@ public:
         // permeabilities & co are defined. This way there is only injection in the free flow and
         // not also in the last porous medium node.
         const GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global;
-    
+
         priVars = 0.0;
 
         const Scalar massFluxInjectedPhase = massFluxInjectedPhase_ ;
@@ -668,7 +668,7 @@ private:
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
-        
+
         if(pressureFormulation == mostWettingFirst){
             // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pw

@@ -73,7 +73,7 @@ SET_TYPE_PROP(RichardsNIConvectionProblem,
  * \brief Test for the RichardsModel in combination with the NI model for a convection problem:
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
- * 
+ *
  * Initially the domain is fully saturated with water at a constant temperature.
  * On the left hand side water is injected at a constant rate and on the right hand side
  * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
@@ -250,7 +250,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values, 
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
         if(globalPos[0] > this->bBoxMax()[0] - eps_)

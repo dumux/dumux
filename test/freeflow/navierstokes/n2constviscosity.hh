@@ -24,7 +24,7 @@
  * \ingroup Components
  *
  * \brief Properties of pure molecular nitrogen \f$N_2\f$ with constant viscosity.
- * 
+ *
  * The constant viscosity is useful to get a desired Reynolds number.
  */
 
@@ -38,7 +38,7 @@ namespace Dumux
    *
    * \brief Properties of pure molecular nitrogen \f$N_2\f$ with constant
    *        viscosity.
-   * 
+   *
    * The constant viscosity is useful to get a desired Reynolds number.
    *
    * \tparam Scalar The type used for scalar values

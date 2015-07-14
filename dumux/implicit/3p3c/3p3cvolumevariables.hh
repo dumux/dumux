@@ -228,11 +228,11 @@ public:
             }
             // ... or calculated explicitly this way ...
             else {
-                Scalar partPressH2O = FluidSystem::fugacityCoefficient(fluidState_, 
-                                                                      wPhaseIdx, 
+                Scalar partPressH2O = FluidSystem::fugacityCoefficient(fluidState_,
+                                                                      wPhaseIdx,
                                                                       wCompIdx) * pw_;
-                Scalar partPressNAPL = FluidSystem::fugacityCoefficient(fluidState_, 
-                                                                       nPhaseIdx, 
+                Scalar partPressNAPL = FluidSystem::fugacityCoefficient(fluidState_,
+                                                                       nPhaseIdx,
                                                                        nCompIdx) * pn_;
                 Scalar partPressAir = pg_ - partPressH2O - partPressNAPL;
 
@@ -243,11 +243,11 @@ public:
                 // actually, it's nothing else than Henry coefficient
                 Scalar xwn = partPressNAPL
                              / (FluidSystem::fugacityCoefficient(fluidState_,
-                                                                 wPhaseIdx,nCompIdx) 
+                                                                 wPhaseIdx,nCompIdx)
                                 * pw_);
                 Scalar xwg = partPressAir
                              / (FluidSystem::fugacityCoefficient(fluidState_,
-                                                                 wPhaseIdx,gCompIdx) 
+                                                                 wPhaseIdx,gCompIdx)
                                 * pw_);
                 Scalar xww = 1.-xwg-xwn;
 
@@ -300,7 +300,7 @@ public:
                                                  /*setInternalEnergy=*/false);
             }
             // ... or calculated explicitly this way ...
-            else {    
+            else {
                 // note that the gas phase is actually not existing!
                 // thus, this is used as phase switch criterion
                 Scalar xgg = xwg * FluidSystem::fugacityCoefficient(fluidState_,
@@ -321,7 +321,7 @@ public:
                                    * pw_;
                 Scalar xna = 1.e-10;
                 Scalar xnw = 1.e-10;
-                 
+
                 fluidState_.setMoleFraction(gPhaseIdx, wCompIdx, xgw);
                 fluidState_.setMoleFraction(gPhaseIdx, gCompIdx, xgg);
                 fluidState_.setMoleFraction(gPhaseIdx, nCompIdx, xgn);
@@ -415,7 +415,7 @@ public:
                                                  /*setInternalEnergy=*/false);
             }
             // ... or calculated explicitly this way ...
-            else {    
+            else {
 
                 // note that the water phase is actually not existing!
                 // thus, this is used as phase switch criterion
@@ -480,11 +480,11 @@ public:
                 // actually, it's nothing else than Henry coefficient
                 Scalar xwn = xgn * pg_
                              / (FluidSystem::fugacityCoefficient(fluidState_,
-                                                                 wPhaseIdx,nCompIdx) 
+                                                                 wPhaseIdx,nCompIdx)
                                 * pw_);
                 Scalar xwg = xgg * pg_
                              / (FluidSystem::fugacityCoefficient(fluidState_,
-                                                                 wPhaseIdx,gCompIdx) 
+                                                                 wPhaseIdx,gCompIdx)
                                 * pw_);
                 Scalar xww = 1.-xwg-xwn;
 

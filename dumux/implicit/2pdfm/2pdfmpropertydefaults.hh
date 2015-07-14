@@ -19,7 +19,7 @@
  *
  * \brief Defines default values for the properties required by the
  *        2pDFM fully implicit model.
- * 
+ *
  * \ingroup Properties
  * \ingroup TwoPDFMModel
  * \ingroup ImplicitProperties

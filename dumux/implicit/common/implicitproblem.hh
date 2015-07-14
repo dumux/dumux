@@ -141,7 +141,7 @@ public:
     {
         // set the initial condition of the model
         model().init(asImp_());
-        
+
         if (adaptiveGrid)
         {
             gridAdapt().init();
@@ -158,10 +158,10 @@ public:
     void boundaryTypes(BoundaryTypes &values,
                        const Vertex &vertex) const
     {
-        if (!isBox) 
-            DUNE_THROW(Dune::InvalidStateException, 
+        if (!isBox)
+            DUNE_THROW(Dune::InvalidStateException,
                        "boundaryTypes(..., vertex) called for cell-centered method.");
-            
+
         // forward it to the method which only takes the global coordinate
         asImp_().boundaryTypesAtPos(values, vertex.geometry().center());
     }
@@ -176,10 +176,10 @@ public:
     void boundaryTypes(BoundaryTypes &values,
                        const Intersection &intersection) const
     {
-        if (isBox) 
-            DUNE_THROW(Dune::InvalidStateException, 
+        if (isBox)
+            DUNE_THROW(Dune::InvalidStateException,
                        "boundaryTypes(..., intersection) called for box method.");
-            
+
         // forward it to the method which only takes the global coordinate
         asImp_().boundaryTypesAtPos(values, intersection.geometry().center());
     }
@@ -213,10 +213,10 @@ public:
     void dirichlet(PrimaryVariables &values,
                    const Vertex &vertex) const
     {
-        if (!isBox) 
-            DUNE_THROW(Dune::InvalidStateException, 
+        if (!isBox)
+            DUNE_THROW(Dune::InvalidStateException,
                        "dirichlet(..., vertex) called for cell-centered method.");
-            
+
         // forward it to the method which only takes the global coordinate
         asImp_().dirichletAtPos(values, vertex.geometry().center());
     }
@@ -233,8 +233,8 @@ public:
     void dirichlet(PrimaryVariables &values,
                    const Intersection &intersection) const
     {
-        if (isBox) 
-            DUNE_THROW(Dune::InvalidStateException, 
+        if (isBox)
+            DUNE_THROW(Dune::InvalidStateException,
                        "dirichlet(..., intersection) called for box method.");
 
         // forward it to the method which only takes the global coordinate
@@ -503,7 +503,7 @@ public:
     {
         // If adaptivity is used, this method adapts the grid.
         // Remeber to call the parent class function if this is overwritten
-        // on a lower problem level when using an adaptive grid 
+        // on a lower problem level when using an adaptive grid
         if (adaptiveGrid && timeManager().timeStepIndex() > 0)
             this->gridAdapt().adaptGrid();
     }
@@ -698,13 +698,13 @@ public:
     /*!
      * \brief Returns the mapper for vertices to indices for possibly adaptive grids.
      */
-    VertexMapper &vertexMapper() 
+    VertexMapper &vertexMapper()
     { return vertexMapper_; }
 
     /*!
      * \brief Returns the mapper for elements to indices for possibly adaptive grids.
      */
-    ElementMapper &elementMapper() 
+    ElementMapper &elementMapper()
     { return elementMapper_; }
 
     /*!
@@ -918,10 +918,10 @@ protected:
 private:
     // makes sure that the result writer exists
     void createResultWriter_()
-    { 
-        if (!resultWriter_) 
+    {
+        if (!resultWriter_)
             resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
-        
+
         // Tell the result writer that the grid changes if we are adaptive
         if (adaptiveGrid)
         {

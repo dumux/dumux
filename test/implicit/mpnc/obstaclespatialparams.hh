@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- * 
+ *
  * \brief The spatial parameters for the ObstacleProblem
  */
 

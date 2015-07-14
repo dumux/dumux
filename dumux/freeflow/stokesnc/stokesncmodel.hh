@@ -78,7 +78,7 @@ class StokesncModel : public StokesModel<TypeTag>
 			transportCompIdx = Indices::transportCompIdx,
 			phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx),
 			useMoles = GET_PROP_VALUE(TypeTag, UseMoles),
-			numComponents = Indices::numComponents 
+			numComponents = Indices::numComponents
 	};
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -89,7 +89,7 @@ class StokesncModel : public StokesModel<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-	
+
 
 public:
     //! \copydoc ImplicitModel::addOutputVtkFields
@@ -97,7 +97,7 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-				
+
 		typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
 
@@ -112,11 +112,11 @@ public:
 		ScalarField *moleFraction[numComponents];
             for (int i = 0; i < numComponents; ++i)
                 moleFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
-		
+
 		ScalarField *massFraction[numComponents];
 		for (int i = 0; i < numComponents; ++i)
 			massFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
-		
+
 		ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
         VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
@@ -170,9 +170,9 @@ public:
                         Valgrind::CheckDefined((*moleFraction[compIdx])[vIdxGlobal]);
 						Valgrind::CheckDefined((*massFraction[compIdx])[vIdxGlobal]);
 					}
-				
+
 				T   [vIdxGlobal] = volVars.temperature();
-                
+
 				rho[vIdxGlobal] = volVars.density()*scale_*scale_*scale_;
                 mu[vIdxGlobal] = volVars.dynamicViscosity()*scale_;
                 velocity[vIdxGlobal] = volVars.velocity();

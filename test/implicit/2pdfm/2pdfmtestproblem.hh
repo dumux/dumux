@@ -188,7 +188,7 @@ public:
 
     /*!
      * \brief Returns the source within the domain.
-     * 
+     *
      * \param source Values of the source.
      * \param globalPos Global position
      */
@@ -316,7 +316,7 @@ public:
         values[snIdx] = 0.0;
     }
     // \}
-    
+
     /*!
      * \brief Whether the interface condition is used.
      */

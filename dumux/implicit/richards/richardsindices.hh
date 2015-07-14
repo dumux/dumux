@@ -39,11 +39,11 @@ template <class TypeTag>
 struct RichardsIndices
 {
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    
+
     //////////
     // primary variable indices
     //////////
-    
+
     //! Primary variable index for the wetting phase pressure
     static const int pwIdx = 0;
     //! Primary variable index for the wetting phase pressure head (used for pressure head formulation)
@@ -53,7 +53,7 @@ struct RichardsIndices
     //////////
     //! Equation index for the mass conservation of the wetting phase
     static const int contiEqIdx = 0;
-    
+
     //////////
     // phase indices
     //////////

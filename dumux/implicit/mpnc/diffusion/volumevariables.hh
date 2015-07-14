@@ -31,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \brief Variables for the diffusive fluxes in the MpNc model within 
+ * \brief Variables for the diffusive fluxes in the MpNc model within
  *        a finite volume.
  */
 template<class TypeTag, bool enableDiffusion>

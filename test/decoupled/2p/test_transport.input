@@ -3,7 +3,7 @@ TEnd = 1e4 # [s]
 DtInitial = 0 # [s]
 
 [Problem]
-EnableGravity = 0 
+EnableGravity = 0
 
 [Grid]
 File = ./grids/test_transport.dgf

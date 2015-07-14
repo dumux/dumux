@@ -1,6 +1,6 @@
 == Running the test cases in test/multidomain ==
 
-You need the following releases of the DUNE core modules and 
+You need the following releases of the DUNE core modules and
 dune-multidomain(grid):
 Dune core modules: release 2.3
 Dune-PDELab: release 2.0

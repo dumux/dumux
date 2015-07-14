@@ -130,7 +130,7 @@ public:
     {
         if (!allowPressure_)
         {
-            DUNE_THROW(Dune::InvalidStateException, 
+            DUNE_THROW(Dune::InvalidStateException,
                        "pressure called but not allowed\n\n");
         }
         assert(restrictPhaseIdx_ < 0 || restrictPhaseIdx_ == phaseIdx);

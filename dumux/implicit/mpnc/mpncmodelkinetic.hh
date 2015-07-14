@@ -156,16 +156,16 @@ public:
                 int i = fvGeometry.subContVolFace[fIdx].i;
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int I = this->vertexMapper().subIndex(*eIt, i, dim);
-#else 
+#else
                 int I = this->vertexMapper().map(*eIt, i, dim);
 #endif
 
                 int j = fvGeometry.subContVolFace[fIdx].j;
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int J = this->vertexMapper().subIndex(*eIt, j, dim);
-#else 
+#else
                 int J = this->vertexMapper().map(*eIt, j, dim);
-#endif 
+#endif
 
                 const Scalar scvfArea     = fvGeometry.subContVolFace[fIdx].normal.two_norm();
                 boxSurface_[I]      += scvfArea;

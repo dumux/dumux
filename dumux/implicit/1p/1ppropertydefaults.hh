@@ -69,7 +69,7 @@ SET_TYPE_PROP(OneP, FluxVariables, typename GET_PROP_TYPE(TypeTag, IsothermalFlu
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(OneP, Indices, typename GET_PROP_TYPE(TypeTag, IsothermalIndices));
 
-//! The spatial parameters to be employed. 
+//! The spatial parameters to be employed.
 //! Use ImplicitSpatialParamsOneP by default.
 SET_TYPE_PROP(OneP, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
 

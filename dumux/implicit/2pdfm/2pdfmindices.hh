@@ -39,8 +39,8 @@ namespace Dumux
  * \tparam formulation The formulation, either pwsn or pnsw
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, 
-          int formulation = TwoPFormulation::pwsn, 
+template <class TypeTag,
+          int formulation = TwoPFormulation::pwsn,
           int PVOffset = 0>
 struct TwoPDFMIndices : public TwoPIndices <TypeTag, formulation, PVOffset>
 {

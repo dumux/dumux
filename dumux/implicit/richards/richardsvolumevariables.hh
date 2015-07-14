@@ -120,7 +120,7 @@ public:
         Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
-        
+
         const MaterialLawParams &matParams =
                 problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
@@ -139,11 +139,11 @@ public:
             fluidState.setSaturation(nPhaseIdx, 1 - sw);
         }
         else{ //pressure formulation
-           
+
             Scalar minPc = MaterialLaw::pc(matParams, 1.0);
             fluidState.setPressure(wPhaseIdx, priVars[pwIdx]);
             fluidState.setPressure(nPhaseIdx, std::max(pnRef_, priVars[pwIdx] + minPc));
-            
+
             // saturations
             Scalar sw = MaterialLaw::sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
             fluidState.setSaturation(wPhaseIdx, sw);
@@ -157,7 +157,7 @@ public:
 
         fluidState.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
         fluidState.setViscosity(nPhaseIdx, 1e-10);
-	
+
         // compute and set the enthalpy
         fluidState.setEnthalpy(wPhaseIdx, Implementation::enthalpy_(fluidState, paramCache, wPhaseIdx));
         fluidState.setEnthalpy(nPhaseIdx, Implementation::enthalpy_(fluidState, paramCache, nPhaseIdx));
@@ -262,14 +262,14 @@ public:
      * \f[ p_c = p_n - p_w \f]
      */
     Scalar capillaryPressure() const
-    { 
+    {
         // pressure head formulation
         if (useHead)
             return -fluidState_.pressure(wPhaseIdx);
         else // pressure  formulation
-            return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); 
+            return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx);
     }
-    
+
     /*!
      * \brief Returns the pressureHead \f$\mathrm{[cm]}\f$ of a given phase within
      *        the control volume.
@@ -282,25 +282,25 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar pressureHead(const int phaseIdx) const
-    {  
+    {
         // pressure head formulation
         if (useHead)
-            return (100.) *(fluidState_.pressure(phaseIdx))/ fluidState_.density(phaseIdx)/ gravity_; 
+            return (100.) *(fluidState_.pressure(phaseIdx))/ fluidState_.density(phaseIdx)/ gravity_;
         else // pressure  formulation
             return (100.) *(fluidState_.pressure(phaseIdx) - pnRef_)/ fluidState_.density(phaseIdx)/ gravity_;
-    } 
-    
+    }
+
     /*!
      * \brief Returns the water content
      *        fluid phase within the finite volume.
      *
      * The water content is defined as the fraction of
-     * the saturation devided by the porosity 
-     
+     * the saturation devided by the porosity
+
      * \param phaseIdx The index of the fluid phase
      */
     Scalar waterContent (const int phaseIdx) const
-    { return fluidState_.saturation(phaseIdx)* porosity_; }        
+    { return fluidState_.saturation(phaseIdx)* porosity_; }
 
 protected:
     static Scalar temperature_(const PrimaryVariables &primaryVariables,
@@ -311,7 +311,7 @@ protected:
     {
         return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
     }
-    
+
     template<class ParameterCache>
     static Scalar enthalpy_(const FluidState& fluidState,
                             const ParameterCache& paramCache,

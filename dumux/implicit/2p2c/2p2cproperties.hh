@@ -69,7 +69,7 @@ NEW_PROP_TAG(EffectiveDiffusivityModel); //!< The employed model for the computa
 
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(UseMoles); //!< Defines whether mole (true) or mass (false) fractions are used
-NEW_PROP_TAG(UseConstraintSolver); //!< Determines whether the constraint solver should be used 
+NEW_PROP_TAG(UseConstraintSolver); //!< Determines whether the constraint solver should be used
 
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind weight for the mass conservation equations
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation

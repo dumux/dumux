@@ -153,10 +153,10 @@ public:
 
     /*!
      * \brief Intrinsic permeability of fractures.
-     * 
+     *
      * \param element The current element
      * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume. 
+     * \param scvIdx The index of the sub-control volume.
      */
     Scalar intrinsicPermeabilityFracture(const Element &element,
                                          const FVElementGeometry &fvGeometry,
@@ -232,7 +232,7 @@ public:
 
     /*!
      * \brief Checks whether vertex is a fracture.
-     * 
+     *
      * \param element The current element
      * \param localVertexIdx Vertex index to be checked
      */
@@ -252,7 +252,7 @@ public:
 
     /*!
      * \brief Checks whether vertex is a fracture.
-     * 
+     *
      * \param vIdxGlobal Vertex index to be checked
      */
     bool isVertexFracture(int vIdxGlobal) const
@@ -266,7 +266,7 @@ public:
 
     /*!
      * \brief Checks whether element edge is a fracture.
-     * 
+     *
      * \param element The current element
      * \param localFaceIdx Face index to be checked
      */
@@ -282,7 +282,7 @@ public:
 
     /*!
      * \brief Returns the width of the fracture.
-     * 
+     *
      * \param globalFaceIdx Global face index of which the width is returned
      */
     Scalar fractureWidth(int globalFaceIdx) const
@@ -292,7 +292,7 @@ public:
 
     /*!
      * \brief Returns the width of the fracture.
-     * 
+     *
      * \param element The current element
      * \param localFaceIdx Local face index of which the width is returned
      */
@@ -325,7 +325,7 @@ private:
     const GridView gridView_;
     const FaceMapper faceMapper_;
     const VertexMapper vertexMapper_;
-    
+
     Dumux::FractureMapper<TypeTag> fractureMapper_;
 };
 

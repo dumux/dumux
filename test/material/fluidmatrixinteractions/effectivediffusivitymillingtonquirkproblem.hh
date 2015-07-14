@@ -44,7 +44,7 @@ class EffectiveDiffusivityMillingtonQuirkProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(EffectiveDiffusivityMillingtonQuirkProblem, INHERITS_FROM(BoxModel, TwoPTwoCNI, EffectiveDiffusivitySpatialParams));
-    
+
 // Set the grid type
 SET_TYPE_PROP(EffectiveDiffusivityMillingtonQuirkProblem, Grid, Dune::YaspGrid<2>);
 
@@ -153,7 +153,7 @@ public:
 
 
     //! \copydoc Dumux::ImplicitProblem::boundaryTypesAtPos()
-    void boundaryTypesAtPos(BoundaryTypes &values, 
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
         values.setAllDirichlet();

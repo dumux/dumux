@@ -52,7 +52,7 @@ namespace Dumux
 
     // Set the problem property
     SET_TYPE_PROP(El1P2CProblem, Problem, Dumux::El1P2CProblem<TTAG(El1P2CProblem)>);
- 
+
     // Set fluid configuration
     SET_PROP(El1P2CProblem, FluidSystem)
     { private:

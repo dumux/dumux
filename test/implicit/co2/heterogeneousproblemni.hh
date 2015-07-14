@@ -325,7 +325,7 @@ public:
      *
      * \param globalPos The position
      *
-     * This problem assumes a geothermal gradient with 
+     * This problem assumes a geothermal gradient with
      * a surface temperature of 10 degrees Celsius.
      */
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
@@ -514,7 +514,7 @@ private:
 
     Scalar temperature_(const GlobalPosition globalPos) const
     {
-        Scalar T = 283.0 + (depthBOR_ - globalPos[dim-1])*0.03; 
+        Scalar T = 283.0 + (depthBOR_ - globalPos[dim-1])*0.03;
         return T;
     }
 

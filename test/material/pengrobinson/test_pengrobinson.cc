@@ -66,7 +66,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
         // we start at a fluid state with reservoir oil.
         for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
             for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
-                surfaceFluidState.setMoleFraction(phaseIdx, 
+                surfaceFluidState.setMoleFraction(phaseIdx,
                                                   compIdx,
                                                   reservoirFluidState.moleFraction(phaseIdx, compIdx));
             }
@@ -102,7 +102,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
         Flash::template solve<MaterialLaw>(surfaceFluidState, paramCache, matParams, tmpMolarities);
         Scalar fStar = surfaceFluidState.pressure(gPhaseIdx) - refPressure;
         Scalar fPrime = (fStar - f)/eps;
-        
+
         // newton update
         Scalar delta = f/fPrime;
         alpha -= delta;
@@ -110,7 +110,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
             break;
         }
     }
-        
+
     // calculate the final result
     tmpMolarities = molarities;
     tmpMolarities /= alpha;
@@ -229,8 +229,8 @@ int main(int argc, char** argv)
         // "flash" the modified reservoir oil
         Flash::solve<MaterialLaw>(flashFluidState, paramCache, matParams, curMolarities);
 
-        Scalar alphaSurface = bringOilToSurface<Scalar, FluidSystem>(surfaceFluidState, 
-                                                                     surfaceAlpha, 
+        Scalar alphaSurface = bringOilToSurface<Scalar, FluidSystem>(surfaceFluidState,
+                                                                     surfaceAlpha,
                                                                      flashFluidState,
                                                                      /*guessInitial=*/false);
         std::cout << alpha << " "

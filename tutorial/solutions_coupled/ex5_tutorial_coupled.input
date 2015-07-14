@@ -23,10 +23,10 @@ NumberOfCellsY = 10 # y-resolution of the grid
 # Simulation restart
 #
 # DuMux simulations can be restarted from *.drs files
-# Set Restart to the value of a specific file, 
+# Set Restart to the value of a specific file,
 # e.g.:  'Restart = 27184.1' for the restart file
 # name_time=27184.1_rank=0.drs
 # Please comment in the two lines below, if restart is desired.
 ###############################################################
 # [TimeManager]
-# Restart = ... 
+# Restart = ...

@@ -91,7 +91,7 @@ public:
         //pressure head formulation
         storage[contiEqIdx] =
                 volVars.saturation(wPhaseIdx)
-                * volVars.porosity(); 
+                * volVars.porosity();
         // pressure formulation
         if (!useHead)
             storage[contiEqIdx] *= volVars.density(wPhaseIdx);

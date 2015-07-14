@@ -125,7 +125,7 @@ SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
 //! The indices required by the isothermal 3p3c model
 SET_TYPE_PROP(ThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
 
-//! The spatial parameters to be employed. 
+//! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(ThreePThreeC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 

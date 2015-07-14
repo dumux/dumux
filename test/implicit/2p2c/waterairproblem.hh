@@ -46,7 +46,7 @@ namespace Properties
 NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(TwoPTwoCNI, WaterAirSpatialParams));
 NEW_TYPE_TAG(WaterAirBoxProblem, INHERITS_FROM(BoxModel, WaterAirProblem));
 NEW_TYPE_TAG(WaterAirCCProblem, INHERITS_FROM(CCModel, WaterAirProblem));
-    
+
 // Set the grid type
 SET_TYPE_PROP(WaterAirProblem, Grid, Dune::YaspGrid<2>);
 
@@ -234,7 +234,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values, 
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
         if(globalPos[0] > 40 - eps_ || globalPos[0] < eps_)
@@ -289,7 +289,7 @@ public:
         GlobalPosition globalPos;
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);
-        else 
+        else
             globalPos = intersection.geometry().center();
 
         // negative values for injection

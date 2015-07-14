@@ -92,5 +92,5 @@ if [ "$NOT_EQUAL" = "true" ]; then
 fi
 
 # SUCCESS!!!!!!
-echo "Result and reference result are identical" 
+echo "Result and reference result are identical"
 exit 0

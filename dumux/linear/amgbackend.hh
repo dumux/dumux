@@ -38,9 +38,9 @@
 namespace Dumux {
 
 /*!
- * \brief Scale the linear system by the inverse of 
+ * \brief Scale the linear system by the inverse of
  * its (block-)diagonal entries.
- * 
+ *
  * \param matrix the matrix to scale
  * \param rhs the right hand side vector to scale
  */
@@ -86,10 +86,10 @@ class AMGBackend
                            Smoother,Comm> AMGType;
     typedef typename AmgTraits::LinearOperator::matrix_type BCRSMat;
 
-public:    
+public:
     /*!
      * \brief Construct the backend.
-     * 
+     *
      * \param problem the problem at hand
      */
     AMGBackend(const Problem& problem)
@@ -99,7 +99,7 @@ public:
 
     /*!
      * \brief Solve a linear system.
-     * 
+     *
      * \param A the matrix
      * \param x the seeked solution vector, containing the initial solution upon entry
      * \param b the right hand side vector
@@ -110,7 +110,7 @@ public:
         int maxIt = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
         int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
         static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
-        
+
 #if HAVE_MPI
         Dune::SolverCategory::Category category = AmgTraits::isNonOverlapping?
             Dune::SolverCategory::nonoverlapping : Dune::SolverCategory::overlapping;
@@ -121,7 +121,7 @@ public:
         }
 
         typename AmgTraits::Comm comm(problem_.gridView().comm(), category);
-        
+
         if(AmgTraits::isNonOverlapping)
         {
             // extend the matrix pattern such that it is usable for AMG
@@ -160,8 +160,8 @@ public:
         smootherArgs.iterations = 1;
         smootherArgs.relaxationFactor = 1;
 
-        AMGType amg(fop, criterion, smootherArgs, comm);        
-        Dune::BiCGSTABSolver<typename AmgTraits::VType> solver(fop, sp, amg, residReduction, maxIt, 
+        AMGType amg(fop, criterion, smootherArgs, comm);
+        Dune::BiCGSTABSolver<typename AmgTraits::VType> solver(fop, sp, amg, residReduction, maxIt,
                                                                  rank==0?verbosity: 0);
 
 

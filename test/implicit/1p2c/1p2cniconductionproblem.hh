@@ -20,7 +20,7 @@
  * \file
  * \brief Test for the OnePTwoCModel in combination with the NI model for a conduction problem:
  * The simulation domain is a tube where with an elevated temperature on the left hand side.
- *       
+ *
  */
 #ifndef DUMUX_1P2CNI_CONDUCTION_PROBLEM_HH
 #define DUMUX_1P2CNI_CONDUCTION_PROBLEM_HH
@@ -58,7 +58,7 @@ SET_TYPE_PROP(OnePTwoCNIConductionProblem, Problem,
 
 // Set fluid configuration
 SET_TYPE_PROP(OnePTwoCNIConductionProblem,
-              FluidSystem, 
+              FluidSystem,
               Dumux::FluidSystems::H2ON2LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
 
 // Set the spatial parameters
@@ -155,9 +155,9 @@ public:
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, 
-                                             std::string, 
-                                             Problem, 
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                             std::string,
+                                             Problem,
                                              Name);
         outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
                   int, Problem, OutputInterval);
@@ -267,7 +267,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values, 
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
         if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)

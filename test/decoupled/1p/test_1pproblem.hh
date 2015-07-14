@@ -109,7 +109,7 @@ public:
         ParentType(gridView), velocity_(*this)
     {
         delta_ = 1e-3 ;
-      
+
             if (ParameterTree::tree().hasKey("Problem.Delta"))
             delta_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Delta);
             int numRefine;

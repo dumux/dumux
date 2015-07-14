@@ -128,7 +128,7 @@ private:
             // FE gradient at vertex idx
             const GlobalPosition &feGrad = this->face().grad[idx];
 
-            // index for the element volume variables 
+            // index for the element volume variables
             int volVarsIdx = this->face().fapIndices[idx];
 
             // the concentration gradient of the components
@@ -264,7 +264,7 @@ private:
                                                                          diffusionCoefficientMatrix_j[phaseIdx][wCompIdx]);
 
             // -> harmonic mean
-            porousDiffCoeff_[phaseIdx][wCompIdx] = harmonicMean(diffCoeffI, diffCoeffJ);            
+            porousDiffCoeff_[phaseIdx][wCompIdx] = harmonicMean(diffCoeffI, diffCoeffJ);
 
             // Diffusion coefficient in the porous medium
             diffCoeffI = EffectiveDiffusivityModel::effectiveDiffusivity(volVarsI.porosity(),

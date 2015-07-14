@@ -39,16 +39,16 @@ namespace Dumux
 
 namespace Properties
 {
-// forward declaration of properties 
+// forward declaration of properties
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight);
 NEW_PROP_TAG(SpatialParams);
 NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(ProblemEnableGravity);
-}   
+}
 
 /*!
  * \ingroup ImplicitFluxVariables
- * \brief Evaluates the normal component of the Darcy velocity 
+ * \brief Evaluates the normal component of the Darcy velocity
  * on a (sub)control volume face.
  */
 template <class TypeTag>
@@ -58,7 +58,7 @@ class ImplicitDarcyFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
@@ -112,7 +112,7 @@ public:
      */
     Scalar volumeFlux(const unsigned int phaseIdx) const
     { return volumeFlux_[phaseIdx]; }
-    
+
     /*!
      * \brief Return the velocity of a given phase.
      *
@@ -142,7 +142,7 @@ public:
      */
     const unsigned int downstreamIdx(const unsigned phaseIdx) const
     { return downstreamIdx_[phaseIdx]; }
-    
+
     /*!
      * \brief Return the local index of the upstream control volume
      *        for a given phase.
@@ -258,16 +258,16 @@ protected:
             const Element& elementI = *fvGeometry_.neighbors[face().i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
-            
+
             const Element& elementJ = *fvGeometry_.neighbors[face().j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
-            
+
             spatialParams.meanK(K,
                                 spatialParams.intrinsicPermeability(elementI, fvGeometryI, 0),
                                 spatialParams.intrinsicPermeability(elementJ, fvGeometryJ, 0));
         }
-        
+
         // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
@@ -296,7 +296,7 @@ protected:
                 upstreamIdx_[phaseIdx] = face().j;
                 downstreamIdx_[phaseIdx] = face().i;
             }
-            
+
             // obtain the upwind volume variables
             const VolumeVariables& upVolVars = elemVolVars[ upstreamIdx(phaseIdx) ];
             const VolumeVariables& downVolVars = elemVolVars[ downstreamIdx(phaseIdx) ];

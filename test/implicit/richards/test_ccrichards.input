@@ -11,7 +11,7 @@ EnableGravity = 1 # enable gravity
 
 [Implicit]
 EnablePartialReassemble = 1 # enable partial reassembly of the Jacobian matrix
-EnableJacobianRecycling = 1 # 
+EnableJacobianRecycling = 1 #
 
 [Newton]
 TargetSteps = 18 # set the "desireable" number of newton iterations of a time step

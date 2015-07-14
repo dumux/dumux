@@ -106,9 +106,9 @@ public:
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
-		
+
         const Scalar scale_ = GET_PROP_VALUE(TypeTag, Scaling);
-		
+
         // create the required scalar fields
         unsigned numVertices = this->gridView_().size(dim);
         ScalarField &pn = *writer.allocateManagedBuffer(numVertices);
@@ -118,22 +118,22 @@ public:
 		ScalarField *moleFraction[numComponents];
 		for (int i = 0; i < numComponents; ++i)
         moleFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
-		
+
 		ScalarField *massFraction[numComponents];
 		for (int i = 0; i < numComponents; ++i)
         massFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
-        
+
 		ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
         VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
-		
+
         unsigned numElements = this->gridView_().size(0);
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
-		
+
         FVElementGeometry fvGeometry;
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
-		
+
         ElementIterator eIt = this->gridView_().template begin<0>();
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
@@ -144,7 +144,7 @@ public:
             int idx = this->elementMapper().map(*eIt);
 #endif
             rank[idx] = this->gridView_().comm().rank();
-			
+
             fvGeometry.update(this->gridView_(), *eIt);
             elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
@@ -166,7 +166,7 @@ public:
                                fvGeometry,
                                i,
                                false);
-				
+
                 pn[vIdxGlobal] = volVars.pressure()*scale_;
                 delP[vIdxGlobal] = volVars.pressure()*scale_ - 1e5;
 				for (int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -176,9 +176,9 @@ public:
 					Valgrind::CheckDefined((*moleFraction[compIdx])[vIdxGlobal]);
 					Valgrind::CheckDefined((*massFraction[compIdx])[vIdxGlobal]);
 				}
-				
+
 				T   [vIdxGlobal] = volVars.temperature();
-                
+
 				rho[vIdxGlobal] = volVars.density()*scale_*scale_*scale_;
                 mu[vIdxGlobal] = volVars.dynamicViscosity()*scale_;
                 h[vIdxGlobal] = volVars.enthalpy();

@@ -53,7 +53,7 @@ NEW_PROP_TAG(Grid);
 NEW_PROP_TAG(GridView);
 NEW_PROP_TAG(GridCreator);
 }
-    
+
 /*!
  * \brief Reads in Artmesh files.
  */
@@ -219,7 +219,7 @@ public:
             }
             faces_.push_back(facePoints);
         }
-        
+
                 // set up the grid factory
         Dune::FieldVector<double,2> position;
         Dune::GridFactory<Grid> factory;
@@ -268,7 +268,7 @@ public:
             std::cout << faces_[k][3] << std::endl;
         }
 #endif
-        
+
         //***********************************************************************//
         //Create the Elements in Dune::GridFactory //
         //***********************************************************************//
@@ -324,7 +324,7 @@ public:
             std::cout << "nodes of the element " << vIdxGlobal[0]
                       << ", " << vIdxGlobal[1] << ", "
                       << vIdxGlobal[2] << std::endl;
-            std::cout << "1st " << vIdxGlobal[0] 
+            std::cout << "1st " << vIdxGlobal[0]
                       << "\t" << "2nd " << vIdxGlobal[1]
                       << "\t" << "3rd " << vIdxGlobal[2]
                       << std::endl;
@@ -339,7 +339,7 @@ public:
 
         gridPtr() = factory.createGrid();
     }
-    
+
     static void outputARTtoScreen()
     {
     ////////OUTPUT for verification
@@ -423,12 +423,12 @@ public:
     {
         return vertexNumber_;
     }
-    
+
     static int edgeNumber()
     {
         return edgeNumber_;
     }
-    
+
     static int faceNumber()
     {
         return faceNumber_;
@@ -438,17 +438,17 @@ public:
     {
         return vertices_;
     }
-    
+
     static EdgesVector& edges()
     {
         return edges_;
     }
-    
+
     static FacesVector& faces()
     {
         return faces_;
     }
-    
+
 private:
     static VerticesVector vertices_;
     static EdgesVector edges_;
@@ -502,7 +502,7 @@ public:
 public:
     /*!
      * \brief Constructor
-     * 
+     *
      * \param gridView The grid view
      */
     FractureMapper (const GridView& gridView)
@@ -512,7 +512,7 @@ public:
     {}
 
     /*!
-     * 
+     *
      */
     void map()
     {
@@ -541,7 +541,7 @@ public:
               {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                   int indexFace = faceMapper_.subIndex(*eIt, i, 1);
-#else 
+#else
                   int indexFace = faceMapper_.map(*eIt, i, 1);
 #endif
                   /*
@@ -553,13 +553,13 @@ public:
                   int localV2Idx = refElement.subEntity(i, 1, 1, dim);
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                   int indexVertex1 = vertexMapper_.subIndex(*eIt, localV1Idx, dim);
-#else 
+#else
                   int indexVertex1 = vertexMapper_.map(*eIt, localV1Idx, dim);
 #endif
 
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                   int indexVertex2 = vertexMapper_.subIndex(*eIt, localV2Idx, dim);
-#else 
+#else
                   int indexVertex2 = vertexMapper_.map(*eIt, localV2Idx, dim);
 #endif
                   Dune::FieldVector<DT, dim> nodeART_from;
@@ -576,7 +576,7 @@ public:
                       nodeART_from[1] = GridCreator::vertices()[GridCreator::edges()[j][1]][1];
                       nodeART_to[0] = GridCreator::vertices()[GridCreator::edges()[j][2]][0];
                       nodeART_to[1] = GridCreator::vertices()[GridCreator::edges()[j][2]][1];
-            
+
                       if ((nodeART_from == nodeDune_from && nodeART_to == nodeDune_to)
                           || (nodeART_from == nodeDune_to && nodeART_to == nodeDune_from))
                       {
@@ -607,7 +607,7 @@ public:
 
 #if PLOT
         int i=0;
-        for (VertexIterator vIt=gridView_.template begin<dim>(); 
+        for (VertexIterator vIt=gridView_.template begin<dim>();
              vIt != gridView_.template end<dim>(); ++vIt)
         {
             Dune::GeometryType geomType = vIt->type();
@@ -620,17 +620,17 @@ public:
 #endif
 
     }
-    
+
     bool isDuneFractureVertex(unsigned int i) const
     {
         return isDuneFractureVertex_[i];
     }
-    
+
     bool isDuneFractureEdge(unsigned int i) const
     {
         return isDuneFractureEdge_[i];
     }
-    
+
     int fractureEdgesIdx(unsigned int i) const
     {
         return fractureEdgesIdx_[i];

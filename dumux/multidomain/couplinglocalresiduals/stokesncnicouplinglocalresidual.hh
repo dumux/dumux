@@ -43,15 +43,15 @@ namespace Dumux
 	class StokesncniCouplingLocalResidual : public StokesncniLocalResidual<TypeTag>
 	{
 	protected:
-		
+
 		typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-		
+
 		typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-		
+
 		typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 		typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 		typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-		
+
 		enum {
 			dim = GridView::dimension,
 			dimWorld = GridView::dimensionworld,
@@ -61,7 +61,7 @@ namespace Dumux
 		enum {
 			//indices of the equations
 			massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance
-			
+
 			momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
 			momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
 			momentumZIdx = Indices::momentumZIdx, //!< Index of the z-component of the momentum balance
@@ -80,22 +80,22 @@ namespace Dumux
 			dimYIdx = Indices::dimYIdx, //!< Index for the second component of a vector
 			dimZIdx = Indices::dimZIdx //!< Index for the third component of a vector
 		};
-		
+
 		typedef typename GridView::ctype CoordScalar;
 		typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
 		typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
-		
+
 		typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 		typedef Dune::FieldVector<Scalar, dim> DimVector;
-		
+
 		typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-		
+
 		typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 		typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-		
+
 		typedef typename GridView::IntersectionIterator IntersectionIterator;
 		typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-		
+
 		static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 	public:
@@ -106,14 +106,14 @@ namespace Dumux
 		{
 			assert(this->residual_.size() == this->fvGeometry_().numScv);
 			const ReferenceElement &refElement = ReferenceElements::general(this->element_().geometry().type());
-			
+
 			// loop over vertices of the element
 			for (int idx = 0; idx < this->fvGeometry_().numScv; idx++)
 			{
 				// consider only SCVs on the boundary
 				if (this->fvGeometry_().subContVol[idx].inner)
 					continue;
-				
+
 				// important at corners of the grid
 				DimVector momentumResidual(0.0);
 				DimVector averagedNormal(0.0);
@@ -128,11 +128,11 @@ namespace Dumux
 					// handle only intersections on the boundary
 					if (!isIt->boundary())
 						continue;
-					
+
 					// assemble the boundary for all vertices of the current face
 					const int fIdx = isIt->indexInInside();
 					const int numFaceVertices = refElement.size(fIdx, 1, dim);
-					
+
 					// loop over the single vertices on the current face
 					for (int faceVertexIdx = 0; faceVertexIdx < numFaceVertices; ++faceVertexIdx)
 					{
@@ -141,7 +141,7 @@ namespace Dumux
 						if (refElement.subEntity(fIdx, 1, faceVertexIdx, dim)
                             != idx)
 							continue;
-						
+
 						const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(fIdx, faceVertexIdx);
 						const FluxVariables boundaryVars(this->problem_(),
 														 this->element_(),
@@ -149,7 +149,7 @@ namespace Dumux
 														 boundaryFaceIdx,
 														 this->curVolVars_(),
 														 true);
-						
+
 						// the computed residual of the momentum equations is stored
 						// into momentumResidual for the replacement of the mass balance
 						// in case of Dirichlet conditions for the momentum balance;
@@ -159,26 +159,26 @@ namespace Dumux
 							DimVector muGradVelNormal(0.);
 							const DimVector &boundaryFaceNormal =
 							boundaryVars.face().normal;
-							
+
 							boundaryVars.velocityGrad().umv(boundaryFaceNormal, muGradVelNormal);
 							muGradVelNormal *= (boundaryVars.dynamicViscosity()
                                                 + boundaryVars.dynamicEddyViscosity());
-							
+
 							for (int i=0; i < this->residual_.size(); i++)
 								Valgrind::CheckDefined(this->residual_[i]);
 							for (int dimIdx=0; dimIdx < dim; ++dimIdx)
 								momentumResidual[dimIdx] = this->residual_[idx][momentumXIdx+dimIdx];
-							
+
 							//Sign is right!!!: boundary flux: -mu grad v n
 							//but to compensate outernormal -> residual - (-mu grad v n)
 							momentumResidual += muGradVelNormal;
 							averagedNormal += boundaryFaceNormal;
 						}
-						
+
 						// evaluate fluxes at a single boundary segment
 						asImp_()->evalNeumannSegment_(isIt, idx, boundaryFaceIdx, boundaryVars);
 						asImp_()->evalOutflowSegment_(isIt, idx, boundaryFaceIdx, boundaryVars);
-						
+
 						//for the corner points, the boundary flux across the vertical non-coupling boundary faces
 						//has to be calculated to fulfill the mass balance
 						//convert suddomain intersection into multidomain intersection and check whether it is an outer boundary
@@ -228,7 +228,7 @@ namespace Dumux
 						numberOfOuterFaces++;
 					} // end loop over face vertices
 				} // end loop over intersections
-				
+
 				// replace defect at the corner points of the grid
 				// by the interpolation of the primary variables
 				if(!bcTypes.isDirichlet(massBalanceIdx))
@@ -242,12 +242,12 @@ namespace Dumux
 				if (numberOfOuterFaces == 2)
 					this->interpolateCornerPoints_(bcTypes, idx);
 			} // end loop over element vertices
-			
+
 			// evaluate the dirichlet conditions of the element
 			if (this->bcTypes_().hasDirichlet())
 				asImp_()->evalDirichlet_();
 		}
-		
+
 		void evalBoundaryPDELab_()
 		{
 			// loop over vertices of the element
@@ -256,11 +256,11 @@ namespace Dumux
 				// consider only SCVs on the boundary
 				if (this->fvGeometry_().subContVol[idx].inner)
 					continue;
-				
+
 				this->removeStabilizationAtBoundary_(idx);
 			} // end loop over vertices
 		}
-		
+
 	protected:
 		/*!
 		 * \brief Evaluate one part of the Dirichlet-like coupling conditions for a single
@@ -281,7 +281,7 @@ namespace Dumux
 				boundaryVars.face().normal /
 				boundaryVars.face().normal.two_norm();
 			Valgrind::CheckDefined(this->residual_[scvIdx][momentumYIdx]);
-			
+
 			// add pressure correction - required for pressure coupling,
 			// if p.n comes from the pm
 			if (bcTypes.isCouplingOutflow(momentumYIdx) || bcTypes.isMortarCoupling(momentumYIdx))
@@ -291,7 +291,7 @@ namespace Dumux
 				this->residual_[scvIdx][momentumYIdx] += pressureCorrection[momentumYIdx]*
 				boundaryVars.face().area;
 			}
-			
+
 			// set mole fraction for the transported components
 			for (int compIdx = 0; compIdx < numComponents; compIdx++)
 			{
@@ -314,7 +314,7 @@ namespace Dumux
 				Valgrind::CheckDefined(this->residual_[scvIdx][energyEqIdx]);
 			}
 		}
-		
+
 		void evalBeaversJoseph_(const IntersectionIterator &isIt,
 								const int scvIdx,
 								const int boundaryFaceIdx,
@@ -324,7 +324,7 @@ namespace Dumux
 
             const GlobalPosition &globalPos = this->fvGeometry_().boundaryFace[boundaryFaceIdx].ipGlobal;
             Scalar beaversJosephCoeff = this->problem_().beaversJosephCoeffAtPos(globalPos);
-			
+
             const Scalar Kxx = this->problem_().permeability(this->element_(),
                                                              this->fvGeometry_(),
                                                              scvIdx);
@@ -379,7 +379,7 @@ namespace Dumux
                 ////////////////////////////////////////////////////////////////////////////////////
             }
 		}
-		
+
 		// return true, if at least one equation on the boundary has a  coupling condition
 		bool boundaryHasCoupling_(const BoundaryTypes& bcTypes) const
 		{
@@ -388,7 +388,7 @@ namespace Dumux
 					return true;
 			return false;
 		}
-		
+
 	    // return true, if at least one equation on the boundary has a mortar coupling condition
 	    bool boundaryHasMortarCoupling_(const BoundaryTypes& bcTypes) const
 	    {
@@ -403,9 +403,9 @@ namespace Dumux
 		{ return static_cast<Implementation *>(this); }
 		const Implementation *asImp_() const
 		{ return static_cast<const Implementation *>(this); }
-		
+
 	};
-	
+
 } // Dumux
 
 #endif // DUMUX_STOKESNCNI_COUPLING_LOCAL_RESIDUAL_HH

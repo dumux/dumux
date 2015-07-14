@@ -71,10 +71,10 @@ class ThreePNISpatialParams : public ImplicitSpatialParams<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
-  
+
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
-    
+
     ThreePNISpatialParams(const GridView &gridView)
         : ParentType(gridView)
     {
@@ -83,8 +83,8 @@ public:
 
         // heat conductivity of granite
         lambdaSolid_ = 2.8;
-	
-	
+
+
         // residual saturations
         materialParams_.setSwr(0.12);
         materialParams_.setSwrx(0.12);
@@ -143,7 +143,7 @@ public:
     {
         return porosity_;
     }
-    
+
         /*!
      * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
@@ -207,7 +207,7 @@ public:
 
 
 private:
-  
+
     MaterialLawParams materialParams_;
     Scalar permeability_;
     Scalar porosity_;

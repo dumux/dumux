@@ -163,7 +163,7 @@ protected:
         }
     }
 
-    Scalar temperature_; 
+    Scalar temperature_;
     Scalar thermalConductivity_;
     Scalar heatCapacity_;
     Scalar componentEnthalpy_[numComponents];

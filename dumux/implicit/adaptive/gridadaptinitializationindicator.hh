@@ -87,7 +87,7 @@ private:
         const auto geometry = element.geometry();
         PrimaryVariables source(0.0);
         const GlobalPosition &globalPos = geometry.center();
-        
+
         // Check if the midpoint is in a source zone
         problem_.sourceAtPos(source, globalPos);
         if (source.infinity_norm() > eps_)
@@ -110,7 +110,7 @@ private:
      *  and check which boundary condition is defined on the intersection center. This
      *  is necessary as an element can partly have Neumann boundary conditions.
      *
-     *  \param bcTypes The boundary condition types 
+     *  \param bcTypes The boundary condition types
      *  \param values The value of the boundary condition. Returns the Neumann flux values
      *  \param element A grid element
      *  \param intersection The boundary intersection
@@ -120,7 +120,7 @@ private:
         const auto isGeometry = intersection.geometry();
         const GlobalPosition &globalPos = isGeometry.center();
 
-        // Check if the midpoint has matching boundary condition   
+        // Check if the midpoint has matching boundary condition
         problem_.boundaryTypesAtPos(bcTypes, globalPos);
         for (int i = 0; i < numEq; i++)
         {

@@ -135,7 +135,7 @@ public:
      */
     SpatialParams &spatialParams()
     { return *spatialParams_; }
-    
+
     /*!
      * \brief Returns the spatial parameters object.
      */

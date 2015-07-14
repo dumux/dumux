@@ -49,7 +49,7 @@ namespace Properties
 NEW_TYPE_TAG(ObstacleProblem, INHERITS_FROM(MPNC, ObstacleSpatialParams));
 NEW_TYPE_TAG(ObstacleBoxProblem, INHERITS_FROM(BoxModel, ObstacleProblem));
 NEW_TYPE_TAG(ObstacleCCProblem, INHERITS_FROM(CCModel, ObstacleProblem));
-    
+
 // Set the grid type
 SET_TYPE_PROP(ObstacleProblem, Grid, Dune::YaspGrid<2>);
 
@@ -105,7 +105,7 @@ SET_TYPE_PROP(ObstacleProblem, Scalar, double);
  * values as the initial condition.
  *
  * This problem uses the \ref MPNCModel.
- * 
+ *
  * To run the simulation execute the following line in shell:
  * <tt>./test_boxmpnc -parameterFile test_boxmpnc.input</tt> or
  * <tt>./test_ccmpnc -parameterFile test_ccmpnc.input</tt>
@@ -145,7 +145,7 @@ class ObstacleProblem
     typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    
+
 public:
     /*!
      * \brief The constructor

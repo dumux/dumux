@@ -32,7 +32,7 @@ void usage(const char *progName, const std::string &errorMsg)  /*@\label{tutoria
         <<  "\nUsage: " << progName << " [options]\n";
     if (errorMsg.size() > 0)
         std::cout << errorMsg << "\n";
-    std::cout 
+    std::cout
         << "\n"
         << "The list of mandatory arguments for this program is:\n"
         << "\t-TEnd                The end of the simulation [s]\n"

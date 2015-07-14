@@ -76,7 +76,7 @@ public:
      *        equations from zero. Gets a solution vector computed by PDELab
      *
      * \tparam ElemSolVectorType The local solution for the element using PDELab ordering
-     * 
+     *
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      * \param fvGeometry The element geometry

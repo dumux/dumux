@@ -100,7 +100,7 @@ SET_BOOL_PROP(Forchheimer2pProblem, VtkAddVelocities, true);
  * be set to the Darcy relation.
  *
  * This problem uses the \ref MPNCModel.
- * 
+ *
  * To run the simulation execute the following line in shell:
  * <tt>./test_forchheimer2p -parameterFile test_forchheimer2p.input</tt>
  */

@@ -69,7 +69,7 @@ private:
      *               linearization point and the current solution and
      *               _not_ the delta vector of the Newton iteration!
      */
-    void computeColors_(Scalar relTol) 
+    void computeColors_(Scalar relTol)
     {
         if (!this->enablePartialReassemble_())
             return;
@@ -108,12 +108,12 @@ private:
 #else
             int eIdx = this->elementMapper_().map(*eIt);
 #endif
-            if (this->elementColor_[eIdx] == ParentType::Red) 
+            if (this->elementColor_[eIdx] == ParentType::Red)
                 continue; // element is red already!
 
             if (this->delta_[eIdx] > relTol)
             {
-                // also mark the neighbors 
+                // also mark the neighbors
                IntersectionIterator endIsIt = this->gridView_().iend(*eIt);
                for (IntersectionIterator isIt = this->gridView_().ibegin(*eIt); isIt != endIsIt; ++isIt)
                {
@@ -129,13 +129,13 @@ private:
                }
             }
         }
-        
+
         // set the discrepancy of the red elements to zero
         for (unsigned int i = 0; i < this->delta_.size(); i++)
             if (this->elementColor_[i] == ParentType::Red)
                 this->delta_[i] = 0;
     }
-    
+
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()
     {
@@ -199,7 +199,7 @@ private:
         }
         this->matrix_->endindices();
     }
-    
+
     // assemble a non-ghost element
     void assembleElement_(const Element &element)
     {
@@ -238,7 +238,7 @@ private:
             this->storageJacobian_[globalI] +=
                 this->model_().localJacobian().storageJacobian(0);
 
-        // update the diagonal entry 
+        // update the diagonal entry
         (*this->matrix_)[globalI][globalI] = this->model_().localJacobian().mat(0,0);
 
         IntersectionIterator isIt = this->gridView_().ibegin(element);
@@ -287,7 +287,7 @@ private:
         // update the right hand side
         this->residual_[globalI] = 0.0;
 
-        // update the diagonal entry 
+        // update the diagonal entry
         typedef typename JacobianMatrix::block_type BlockType;
         BlockType &J = (*this->matrix_)[globalI][globalI];
         for (int j = 0; j < BlockType::rows; ++j)

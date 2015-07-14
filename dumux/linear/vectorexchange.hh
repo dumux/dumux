@@ -32,7 +32,7 @@ namespace Dumux
  * \brief A data handle class to exchange entries of a vector
  */
 template<class Mapper, class Vector> // mapper type and vector type
-class VectorExchange 
+class VectorExchange
   : public Dune::CommDataHandleIF<VectorExchange<Mapper,Vector>,
                                   typename Vector::value_type>
 {
@@ -54,7 +54,7 @@ public:
 
   /*! how many objects of type DataType have to be sent for a given entity
 
-  Note: Only the sender side needs to know this size. 
+  Note: Only the sender side needs to know this size.
   */
   template<class Entity>
   size_t size (Entity& entity) const
@@ -91,10 +91,10 @@ public:
   }
 
   //! constructor
-  VectorExchange (const Mapper& mapper, Vector& dataVector) 
+  VectorExchange (const Mapper& mapper, Vector& dataVector)
         : mapper_(mapper), dataVector_(dataVector)
   {}
- 
+
 private:
   const Mapper& mapper_;
   Vector& dataVector_;
@@ -102,4 +102,4 @@ private:
 
 }
 
-#endif 
+#endif

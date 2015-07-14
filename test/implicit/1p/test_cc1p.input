@@ -1,4 +1,4 @@
-[TimeManager]
+t[TimeManager]
 DtInitial = 1 # [s]
 TEnd = 1 # [s]
 

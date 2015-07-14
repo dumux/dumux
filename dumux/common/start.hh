@@ -364,19 +364,19 @@ int start_(int argc,
     if (ParameterTree::tree().hasKey("ParameterFile"))
     {
         // set the name to the one provided by the user
-        parameterFileName = GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile); // otherwise we read from the command line        
+        parameterFileName = GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile); // otherwise we read from the command line
     }
-    else 
+    else
     {
         // set the name to the default ./<programname>.input
         parameterFileName = argv[0];
         parameterFileName += ".input";
     }
-    
+
     // open and check whether the parameter file exists.
     std::ifstream parameterFile(parameterFileName.c_str());
     if (not parameterFile.is_open()) {
-        // if the name of the file has been specified, 
+        // if the name of the file has been specified,
         // this must be an error. Otherwise proceed.
         if (ParameterTree::tree().hasKey("ParameterFile"))
         {
@@ -387,7 +387,7 @@ int start_(int argc,
             return 1;
         }
     }
-    else 
+    else
     {
         // read parameters from the file without overwriting
         Dune::ParameterTreeParser::readINITree(parameterFileName,
@@ -397,7 +397,7 @@ int start_(int argc,
     parameterFile.close();
 
     bool printProps = false;
-    if (ParameterTree::tree().hasKey("PrintProperties") 
+    if (ParameterTree::tree().hasKey("PrintProperties")
         || ParameterTree::tree().hasKey("TimeManager.PrintProperties"))
         printProps = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintProperties);
 
@@ -408,7 +408,7 @@ int start_(int argc,
     // deal with the restart stuff
     bool restart = false;
     Scalar restartTime = 0;
-    if (ParameterTree::tree().hasKey("Restart") 
+    if (ParameterTree::tree().hasKey("Restart")
         || ParameterTree::tree().hasKey("TimeManager.Restart")) {
         restart = true;
         restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
@@ -416,7 +416,7 @@ int start_(int argc,
 
     // read the PrintParams parameter
     bool printParams = true;
-    if (ParameterTree::tree().hasKey("PrintParameters") 
+    if (ParameterTree::tree().hasKey("PrintParameters")
         || ParameterTree::tree().hasKey("TimeManager.PrintParameters"))
         printParams = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintParameters);
 
@@ -433,7 +433,7 @@ int start_(int argc,
     // read the initial time step and the end time
     double tEnd;
     double dt;
- 
+
     try { tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd); }
     catch (...) {
         std::string usageMessage = "\n\t -> Mandatory parameter 'TimeManager.TEnd'"

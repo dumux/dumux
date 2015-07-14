@@ -154,7 +154,7 @@ SET_TYPE_PROP(LensBoxAdaptiveProblem, BaseProblem, ImplicitPorousMediaProblem<Ty
  * size is \f$t_{\text{inital}} = 250\;s\f$.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box2p -parameterFile test_box2p.input</tt> or 
+ * <tt>./test_box2p -parameterFile test_box2p.input</tt> or
  * <tt>./test_cc2p -parameterFile test_cc2p.input</tt>
  */
 template <class TypeTag >
@@ -208,9 +208,9 @@ public:
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, 
-                                             std::string, 
-                                             Problem, 
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                             std::string,
+                                             Problem,
                                              Name);
     }
 

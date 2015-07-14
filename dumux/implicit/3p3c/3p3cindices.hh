@@ -48,12 +48,12 @@ public:
     static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< index of the nonwetting liquid phase
     static const int gPhaseIdx = FluidSystem::gPhaseIdx; //!< index of the gas phase
 
-    // Component indices to indicate the main component 
-    // of the corresponding phase at atmospheric pressure 1 bar 
+    // Component indices to indicate the main component
+    // of the corresponding phase at atmospheric pressure 1 bar
     // and room temperature 20°C:
-    static const int wCompIdx = FluidSystem::wCompIdx; 
-    static const int nCompIdx = FluidSystem::nCompIdx; 
-    static const int gCompIdx = FluidSystem::gCompIdx; 
+    static const int wCompIdx = FluidSystem::wCompIdx;
+    static const int nCompIdx = FluidSystem::nCompIdx;
+    static const int gCompIdx = FluidSystem::gCompIdx;
 
     // present phases (-> 'pseudo' primary variable)
     static const int threePhases = 1; //!< All three phases are present

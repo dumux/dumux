@@ -55,7 +55,7 @@ namespace Dumux
  \f]
  * is frequently used to
  * approximate the water distribution above the groundwater level.
- * 
+ *
  * It can be derived from the two-phase equations, i.e.
  \f[
  \phi\frac{\partial S_\alpha \varrho_\alpha}{\partial t}

@@ -77,7 +77,7 @@ SET_SCALAR_PROP(OnePTwoC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! Set the indices used by the 1p2c model
 SET_TYPE_PROP(OnePTwoC, Indices, typename GET_PROP_TYPE(TypeTag, IsothermalIndices));
-//! The spatial parameters to be employed. 
+//! The spatial parameters to be employed.
 //! Use ImplicitSpatialParamsOneP by default.
 SET_TYPE_PROP(OnePTwoC, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
 

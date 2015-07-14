@@ -270,7 +270,7 @@ public:
 
         return grad;
     }
-    
+
 private:
     Dumux::FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
     static constexpr Scalar eps_ = 1e-4;

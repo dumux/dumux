@@ -74,9 +74,9 @@ SET_TYPE_PROP(Richards, VolumeVariables, typename GET_PROP_TYPE(TypeTag, Isother
 //! The class for the quantities required for the flux calculation
 SET_TYPE_PROP(Richards, FluxVariables, typename GET_PROP_TYPE(TypeTag, IsothermalFluxVariables));
 
-//! The class of the newton controller                                                                
-SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);                         
- 
+//! The class of the newton controller
+SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);
+
 //! The upwind weight for the mass conservation equations
 SET_SCALAR_PROP(Richards, ImplicitMassUpwindWeight, 1.0);
 
@@ -86,7 +86,7 @@ SET_SCALAR_PROP(Richards, ImplicitMobilityUpwindWeight, 1.0);
 //! The class with all index definitions for the model
 SET_TYPE_PROP(Richards, Indices, typename GET_PROP_TYPE(TypeTag, IsothermalIndices));
 
-//! The spatial parameters to be employed. 
+//! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(Richards, SpatialParams, ImplicitSpatialParams<TypeTag>);
 

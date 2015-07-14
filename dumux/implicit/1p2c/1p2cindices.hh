@@ -46,7 +46,7 @@ struct OnePTwoCIndices
     //! Component indices
     static const int phaseCompIdx = phaseIdx;//!< The index of the main component of the considered phase
     //! The index of the transported (minor) component; ASSUMES phase indices of 0 and 1
-    static const int transportCompIdx = (unsigned int)(1-phaseIdx); 
+    static const int transportCompIdx = (unsigned int)(1-phaseIdx);
 
     // Equation indices
    static const int conti0EqIdx = PVOffset + 0; //!< continuity equation index

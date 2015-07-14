@@ -144,7 +144,7 @@ SET_BOOL_PROP(MimeticPressure2PTestProblem, ProblemEnableGravity, false);
  *
  * \brief test problem for diffusion models from the FVCA5 benchmark.
  *
- * The problem corresponds to Test 2 of the FVCA5 benchmark 
+ * The problem corresponds to Test 2 of the FVCA5 benchmark
  * session, http://www.latp.univ-mrs.fr/fvca5/benchmark/index.html.
  */
 template<class TypeTag>

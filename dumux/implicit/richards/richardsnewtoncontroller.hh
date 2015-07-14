@@ -85,7 +85,7 @@ public:
     {
         ParentType::newtonUpdate(uCurrentIter, uLastIter, deltaU);
 
-        if ( (!GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch)) && (!useHead) ) 
+        if ( (!GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch)) && (!useHead) )
         {
             // do not clamp anything after 5 iterations
             if (this->numSteps_ > 4)

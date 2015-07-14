@@ -80,11 +80,11 @@ class ParallelISTLHelper
     {
     public:
         typedef typename V::block_type DataType;
-        
+
         ConsistencyBoxGatherScatter(V& container, const Problem& problem)
             : BaseGatherScatter(problem), container_(container)
         {}
-        
+
         bool contains(int dim, int codim) const
         {
             return dofCodim==codim;
@@ -117,7 +117,7 @@ class ParallelISTLHelper
     private:
         V& container_;
     };
-    
+
 
     /**
      * @brief Writes 1<<24 to each data item (of the container) that is gathered or scattered
@@ -183,7 +183,7 @@ class ParallelISTLHelper
      * Used to compute an owner rank for each unknown.
      */
     class InteriorBorderGatherScatter
-        : public BaseGatherScatter, 
+        : public BaseGatherScatter,
           public Dune::CommDataHandleIF<InteriorBorderGatherScatter,std::size_t>
     {
     public:
@@ -391,7 +391,7 @@ public:
     ParallelISTLHelper (const Problem& problem, int verbose=1)
         : problem_(problem), verbose_(verbose), initialized_(false)
     {}
-    
+
     // \brief Initializes the markers for ghosts and owners with the correct size and values.
     //
     void initGhostsAndOwners(){
@@ -443,7 +443,7 @@ public:
     {
         return isGhost_[i];
     }
-    
+
     // \brief Make a vector of the box model consistent.
     template<typename B, typename A>
     void makeNonOverlappingConsistent(Dune::BlockVector<B,A>& v)
@@ -456,7 +456,7 @@ public:
                                  Dune::ForwardCommunication);
 #endif
     }
-    
+
 
 #if HAVE_MPI
 
@@ -928,7 +928,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(M& m, C& c)
     typedef typename C::ParallelIndexSet::GlobalIndex GlobalIndex;
     GlobalIndex count=0;
     auto owned=owner_.begin();
-    
+
     for(auto v=sharedDofs.begin(), vend=sharedDofs.end(); v != vend; ++v, ++owned)
         if(*v && *owned==1)
             ++count;

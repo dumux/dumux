@@ -32,7 +32,7 @@
 namespace Dumux
 {
 /*!
- * \brief Calculate errors for the diffusion test problem. 
+ * \brief Calculate errors for the diffusion test problem.
  */
 struct ResultEvaluation
 {
@@ -60,11 +60,11 @@ public:
     double ener1;
 
     /*!
-     * \brief Calculate errors for the diffusion test problem. 
-     * 
+     * \brief Calculate errors for the diffusion test problem.
+     *
      * \param gridView the GridView for which the result should be evaluated
      * \param problem the Problem at hand
-     * \param consecutiveNumbering indicates the order in which the 
+     * \param consecutiveNumbering indicates the order in which the
      * velocities are stored in the flux data
      */
     template<class GridView, class Problem>

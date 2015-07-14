@@ -131,7 +131,7 @@ public:
         }
         else // assume cubes as elements with most faces
         {
-            A_.setSize(1, 2*dim + 1); 
+            A_.setSize(1, 2*dim + 1);
             storageJacobian_.resize(1);
         }
     }
@@ -190,7 +190,7 @@ public:
             if(numRows > 1<<dim || numCols > 1<<dim)
                 A_.setSize(numRows, numCols);
         }
-        else 
+        else
         {
             numRows = 1;
             numCols = fvElemGeom_.numNeighbors;
@@ -232,7 +232,7 @@ public:
     { return localResidual_; }
 
     /*!
-     * \brief Returns the Jacobian of the equations at subcontrolvolume i 
+     * \brief Returns the Jacobian of the equations at subcontrolvolume i
      * to the primary variables at subcontrolvolume j.
      *
      * \param i The local subcontrolvolume index on which
@@ -394,11 +394,11 @@ protected:
      * \param partialDeriv The vector storing the partial derivatives of all
      *              equations
      * \param storageDeriv the mass matrix contributions
-     * \param col The block column index of the degree of freedom 
+     * \param col The block column index of the degree of freedom
      *            for which the partial derivative is calculated.
      *            Box: a sub-control volume index.
      *            Cell centered: a neighbor index.
-     * \param pvIdx The index of the primary variable 
+     * \param pvIdx The index of the primary variable
      *              for which the partial derivative is calculated
      */
     void evalPartialDerivative_(ElementSolutionVector &partialDeriv,
@@ -458,7 +458,7 @@ protected:
                                         neighborFVGeom,
                                         /*scvIdx=*/0,
                                         false);
-                   
+
             localResidual().eval(element_(),
                                  fvElemGeom_,
                                  prevVolVars_,

@@ -166,7 +166,7 @@ class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    
+
 public:
     /*!
      * \brief The constructor
@@ -187,7 +187,7 @@ public:
                 /*pMin=*/0.0,
                 /*pMax=*/30e6,
                 /*numP=*/300);
-        
+
         name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
     }
 
@@ -242,7 +242,7 @@ public:
      * \param values Stores the value of the boundary type
      * \param globalPos The global position
      */
-    void boundaryTypesAtPos(BoundaryTypes &values, 
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
         if (globalPos[0] < eps_)
@@ -298,13 +298,13 @@ public:
                  int boundaryFaceIdx) const
     {
         values = 0;
-        
+
         GlobalPosition globalPos;
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);
-        else 
+        else
             globalPos = intersection.geometry().center();
-        
+
         if (globalPos[1] < 15 && globalPos[1] > 7) {
             // inject air. negative values mean injection
             values[contiNEqIdx] = -1e-3; // kg/(s*m^2)

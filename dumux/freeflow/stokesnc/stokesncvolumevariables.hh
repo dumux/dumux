@@ -66,7 +66,7 @@ class StokesncVolumeVariables : public StokesVolumeVariables<TypeTag>
     enum {  conti0EqIdx = Indices::conti0EqIdx,
             massBalanceIdx = Indices::massBalanceIdx,
             transportEqIdx = Indices::transportEqIdx };
-    
+
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
@@ -81,17 +81,17 @@ public:
                 const int scvIdx,
                 const bool isOldSol)
     {
-        
+
 		// Model is restricted to 2 components when using mass fractions
-		if (!useMoles && numComponents>2) 
+		if (!useMoles && numComponents>2)
 		{
 			DUNE_THROW(Dune::NotImplemented, "This model is restricted to 2 components when using mass fractions!\
 			                                  To use mole fractions set property UseMoles true ...");
 		}
-		
+
 		// set the mole fractions first
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, this->fluidState(), isOldSol);
-		
+
 		// update vertex data for the mass and momentum balance
         ParentType::update(priVars,
                            problem,
@@ -99,13 +99,13 @@ public:
                            fvGeometry,
                            scvIdx,
                            isOldSol);
-		
+
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(this->fluidState());
-		
+
         for (int compIdx=0; compIdx<numComponents; compIdx++)
         {
 			if (phaseCompIdx!=compIdx)
@@ -135,9 +135,9 @@ public:
                                    FluidState& fluidState,
                                    const bool isOldSol = false)
     {
-        
+
 		if(!useMoles) //mass-fraction formulation
-		{ 
+		{
 			Scalar massOrMoleFrac[numComponents];
 			massOrMoleFrac[transportCompIdx] = priVars[massOrMoleFracIdx];
 			massOrMoleFrac[phaseCompIdx] = 1.0 - massOrMoleFrac[transportCompIdx];
@@ -154,8 +154,8 @@ public:
 		else
 		{
 			Scalar moleFracPhase, sumMoleFrac(0.0);
-			
-			//for components 
+
+			//for components
 			for (int compIdx=0; compIdx<numComponents; compIdx++)
 			{
 				if (conti0EqIdx+compIdx != massBalanceIdx)
@@ -164,7 +164,7 @@ public:
 					fluidState.setMoleFraction(phaseIdx, compIdx, priVars[conti0EqIdx+compIdx]);
 				}
 			}
-			
+
 			//molefraction for the main component (no primary variable)
 			moleFracPhase = 1 - sumMoleFrac;
 			fluidState.setMoleFraction(phaseIdx, phaseCompIdx, moleFracPhase);

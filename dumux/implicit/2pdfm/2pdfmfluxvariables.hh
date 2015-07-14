@@ -38,7 +38,7 @@ namespace Dumux
 /*!
  * \ingroup TwoPDFMModel
  * \ingroup ImplicitFluxVariables
- * \brief Contains the data which is required to calculate the fluxes of 
+ * \brief Contains the data which is required to calculate the fluxes of
  *        the fluid phases over a face of a finite volume for the two-phase
  *        discrete fracture-matrix model.
  *
@@ -83,7 +83,7 @@ public:
                  int fIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary), 
+        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary),
           fvGeometry_(fvGeometry), faceIdx_(fIdx), onBoundary_(onBoundary)
     {
         faceSCV_ = &this->face();
@@ -100,7 +100,7 @@ public:
 public:
     /*!
      * \brief Calculates the velocities in the lower-dimenstional fracture.
-     * 
+     *
      * \param problem The problem
      * \param element The finite element
      * \param elemVolVars The volume variables of the current element
@@ -184,7 +184,7 @@ protected:
 private:
     /*!
      * \brief Calculates the gradients in the lower-dimenstional fracture.
-     * 
+     *
      * \param problem The problem
      * \param element The finite element
      * \param elemVolVars The volume variables of the current element

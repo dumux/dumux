@@ -51,7 +51,7 @@ class BoxAssembler : public ImplicitAssembler<TypeTag>
 
 public:
     BoxAssembler(): ParentType() {}
-    
+
 private:
     // copying the jacobian assembler is not a good idea
     BoxAssembler(const BoxAssembler &);
@@ -329,7 +329,7 @@ private:
         for (int i = 0; i < numVerticesGlobal; ++i) {
             neighbors[i].insert(i);
         }
-        
+
         // allocate space for the rows of the matrix
         for (int i = 0; i < numVerticesGlobal; ++i) {
             this->matrix_->setrowsize(i, neighbors[i].size());
@@ -384,7 +384,7 @@ private:
             this->residual_[globI] += this->model_().localJacobian().residual(i);
             for (int j = 0; j < this->residual_[globI].dimension; ++j) {
                 if (!std::isfinite(this->residual_[globI][j])) {
-                    DUNE_THROW(NumericalProblem, 
+                    DUNE_THROW(NumericalProblem,
                                "residual_[" << globI << "][" << j << "] is not finite");
                 }
             }

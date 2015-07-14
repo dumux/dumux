@@ -365,7 +365,7 @@ public:
             vtkwriter.addCellData(exactSol,"exact pressure solution~");
             vtkwriter.write(fname,Dune::VTK::ascii);
         }
- 
+
         return;
     }
 };

@@ -57,10 +57,10 @@ namespace Dumux
  * By setting the property <code>EnableNavierStokes</code> to <code>true</code> the Navier-Stokes
  * equation can be solved. In this case an additional term
  * \f[
- *    + \varrho_g \left(\boldsymbol{v}_g \boldsymbol{\cdot} \boldsymbol{\nabla} \right) \boldsymbol{v}_g 
+ *    + \varrho_g \left(\boldsymbol{v}_g \boldsymbol{\cdot} \boldsymbol{\nabla} \right) \boldsymbol{v}_g
  * \f]
  * is added to the momentum balance equation.
- * 
+ *
  * This is discretized by a fully-coupled vertex-centered finite volume
  * (box) scheme in space and by the implicit Euler method in time.
  */

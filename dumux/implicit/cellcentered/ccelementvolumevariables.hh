@@ -44,7 +44,7 @@ class CCElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeT
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
@@ -76,7 +76,7 @@ public:
 
         int numNeighbors = fvGeometry.numNeighbors;
         this->resize(numNeighbors);
-        
+
         for (int i = 0; i < numNeighbors; i++)
         {
             const Element& neighbor = *(fvGeometry.neighbors[i]);
@@ -91,7 +91,7 @@ public:
 
             FVElementGeometry neighborFVGeom;
             neighborFVGeom.updateInner(neighbor);
-            
+
             (*this)[i].update(solI,
                               problem,
                               neighbor,
@@ -103,11 +103,11 @@ public:
         // only treat boundary if current solution is evaluated
         if (!oldSol)
         {
-            // check if element intersects with the boundary 
+            // check if element intersects with the boundary
             ElementBoundaryTypes elemBCTypes;
             elemBCTypes.update(problem, element);
-            if (elemBCTypes.hasDirichlet() 
-                || elemBCTypes.hasNeumann() 
+            if (elemBCTypes.hasDirichlet()
+                || elemBCTypes.hasNeumann()
                 || elemBCTypes.hasOutflow())
             {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
@@ -141,7 +141,7 @@ public:
                                                          /*scvIdx=*/0,
                                                          oldSol);
                     }
-                    else 
+                    else
                     {
                         (*this)[indexInVariables] = (*this)[0];
                     }

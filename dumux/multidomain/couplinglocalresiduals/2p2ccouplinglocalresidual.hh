@@ -187,7 +187,7 @@ public:
      */
     Scalar computePhaseStorage(const int scvIdx, bool usePrevSol) const
     {
-        const ElementVolumeVariables &elemVolVars = 
+        const ElementVolumeVariables &elemVolVars =
             usePrevSol ? this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 

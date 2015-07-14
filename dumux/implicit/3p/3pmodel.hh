@@ -39,7 +39,7 @@ namespace Dumux
  * \brief Adaption of the fully implicit scheme to the three-phase flow model.
  *
  * This model implements three-phase flow of three fluid phases
- * \f$\alpha \in \{ water, gas, NAPL \}\f$ 
+ * \f$\alpha \in \{ water, gas, NAPL \}\f$
  * The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum.
  *
@@ -51,7 +51,7 @@ namespace Dumux
  * and the implicit Euler method as time discretization.
  *
  * The model uses commonly applied auxiliary conditions like
- * \f$S_w + S_n + S_g = 1\f$ for the saturations. 
+ * \f$S_w + S_n + S_g = 1\f$ for the saturations.
  * Furthermore, the phase pressures are related to each other via
  * capillary pressures between the fluid phases, which are functions of
  * the saturation, e.g. according to the approach of Parker et al.

@@ -202,7 +202,7 @@ int startLocal_(int argc, char **argv,
     // deal with the restart stuff
     bool restart = false;
     Scalar restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
-    if (ParameterTree::tree().hasKey("Restart") 
+    if (ParameterTree::tree().hasKey("Restart")
         || ParameterTree::tree().hasKey("TimeManager.Restart")) {
         restart = true;
         restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
@@ -219,7 +219,7 @@ int startLocal_(int argc, char **argv,
 
     // print all parameters
     bool printParams = true;
-    if (ParameterTree::tree().hasKey("PrintParameters") 
+    if (ParameterTree::tree().hasKey("PrintParameters")
         || ParameterTree::tree().hasKey("TimeManager.PrintParameters"))
         printParams = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintParameters);
     if (printParams)

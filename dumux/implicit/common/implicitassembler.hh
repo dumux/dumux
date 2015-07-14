@@ -304,7 +304,7 @@ public:
 
         if (isBox)
             vertexColor_[dofIdxGlobal] = Red;
-        else 
+        else
             elementColor_[dofIdxGlobal] = Red;
     }
 
@@ -397,7 +397,7 @@ public:
      */
     const SolutionVector& residual() const
     { return residual_; }
-    SolutionVector& residual() 
+    SolutionVector& residual()
     { return residual_; }
 
 protected:

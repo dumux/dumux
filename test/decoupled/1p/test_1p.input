@@ -7,7 +7,7 @@ TEnd = 0 # [s]
 EnableGravity = 0 # Disable Gravity
 
 [LinearSolver]
-Verbosity = 1 # 
+Verbosity = 1 #
 
 [Grid]
 NumberOfCellsX = 1 # [-] resolution in x-direction

@@ -59,7 +59,7 @@ class MPNCVtkWriterMass : public MPNCVtkWriterModule<TypeTag>
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
-    
+
     typedef typename ParentType::ComponentVector ComponentVector;
     bool fugacityOutput_;
 

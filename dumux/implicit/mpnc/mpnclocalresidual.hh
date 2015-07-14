@@ -59,7 +59,7 @@ protected:
     enum {numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
-    
+
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -248,8 +248,8 @@ public:
                          prevElemVolVars,
                          curElemVolVars,
                          bcType);
-      
-        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox) 
+
+        if (GET_PROP_VALUE(TypeTag, ImplicitIsBox)
             || !bcType.hasDirichlet())
         {
             for (int i = 0; i < this->fvGeometry_().numScv; ++i) {
@@ -270,14 +270,14 @@ public:
 
     /*!
      * \brief Add Dirichlet boundary conditions for a single intersection
-     * 
-     * Sets the Dirichlet conditions in a strong sense, in contrast to 
+     *
+     * Sets the Dirichlet conditions in a strong sense, in contrast to
      * the general handling in CCLocalResidual.
      *
      * 		\param isIt
      * 		\param bcTypes
      */
-    void evalDirichletSegment_(const IntersectionIterator &isIt, 
+    void evalDirichletSegment_(const IntersectionIterator &isIt,
                                const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the Dirichlet boundary fluxes
@@ -292,7 +292,7 @@ public:
             if (bcTypes.isDirichlet(eqIdx))
             {
                 int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                this->residual_[0][eqIdx] 
+                this->residual_[0][eqIdx]
                   = this->curPriVar_(0, pvIdx) - values[pvIdx];
             }
             else if (eqIdx >= phase0NcpIdx)

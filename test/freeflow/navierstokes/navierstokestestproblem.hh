@@ -83,18 +83,18 @@ namespace Dumux
    * \brief Stokes flow problem with modified nitrogen (N2) circulating in
    *        a cavity. (lid-driven cavity-flow)
    *
-   * The example is taken from Ghia, Ghia, and Shin (1982), "High-Re solutions 
+   * The example is taken from Ghia, Ghia, and Shin (1982), "High-Re solutions
    * for incompressible flow using the Navier-Stokes equations and a multigrid
    * method", Journal of Computational Physics, Vol. 48, pp. 387-411.
-   * 
-   * The domain is two-dimensional and sized 1m times 1m. The boundary conditions 
+   *
+   * The domain is two-dimensional and sized 1m times 1m. The boundary conditions
    * for the momentum balances are Neumann zero boundary conditions except for
-   * the top, which is floating from left to right with 1 m/s. The mass balance 
-   * has outflow boundary conditions, which are replaced in the localresidual by 
-   * the sum of the two momentum balances. All vertices at the bottom receive 
+   * the top, which is floating from left to right with 1 m/s. The mass balance
+   * has outflow boundary conditions, which are replaced in the localresidual by
+   * the sum of the two momentum balances. All vertices at the bottom receive
    * Dirichlet boundary conditions to set the pressure level.
    *
-   * This problem uses the \ref BoxStokesModel with <code>EnableNavierStokes</code> 
+   * This problem uses the \ref BoxStokesModel with <code>EnableNavierStokes</code>
    * set to <code>true</code>.
    */
   template <class TypeTag>
@@ -110,7 +110,7 @@ namespace Dumux
       // Number of equations and grid dimension
       dim = GridView::dimension,
       dimWorld = GridView::dimensionworld,
-      
+
       // copy some indices for convenience
       massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance
       momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
@@ -179,7 +179,7 @@ namespace Dumux
        */
       void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
-      {        
+      {
         values.setOutflow(massBalanceIdx);
         values.setDirichlet(momentumXIdx);
         values.setDirichlet(momentumYIdx);

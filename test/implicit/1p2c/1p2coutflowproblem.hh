@@ -35,7 +35,7 @@
 #include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
 #include "1p2coutflowspatialparams.hh"
 
-#define NONISOTHERMAL 0 
+#define NONISOTHERMAL 0
 
 namespace Dumux
 {
@@ -104,14 +104,14 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
  * gradient of 1e5 Pa/m. The nitrogen is transported with the water flow
  * and leaves the domain at the right boundary
  * where an outflow boundary condition is applied.
- * 
+ *
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
  *
  * This problem uses the \ref OnePTwoCModel model.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box1p2c -parameterFile ./test_box1p2c.input</tt> or 
+ * <tt>./test_box1p2c -parameterFile ./test_box1p2c.input</tt> or
  * <tt>./test_cc1p2c -parameterFile ./test_cc1p2c.input</tt>
  */
 template <class TypeTag>
@@ -167,9 +167,9 @@ public:
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, 
-                                             std::string, 
-                                             Problem, 
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                             std::string,
+                                             Problem,
                                              Name);
 
         //stateing in the console whether mole or mass fractions are used
@@ -223,7 +223,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values, 
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
         if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)

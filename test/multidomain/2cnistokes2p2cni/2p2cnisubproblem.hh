@@ -43,7 +43,7 @@ class TwoPTwoCNISubProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TwoPTwoCNISubProblem, 
+NEW_TYPE_TAG(TwoPTwoCNISubProblem,
 	INHERITS_FROM(BoxTwoPTwoCNI, SubDomain, TwoCNIStokesTwoPTwoCNISpatialParams));
 
 // Set the problem property

@@ -4,9 +4,9 @@ This chapter tries to be a useful collection of tips and tricks that can be hand
 when working with \Dumux. One of the most prominent ideas for developing
 \Dune / \Dumux is that reinventing the wheel in terms of FEM code should
 be avoided. We try to follow this idea also in the day-to-day work by
-stating the \emph{tell us dogma}: ``If you found something useful, 
+stating the \emph{tell us dogma}: ``If you found something useful,
 handy or for other reasons helping when working with \Dumux: put it into
-this chapter.'' or inform other developers and write to 
+this chapter.'' or inform other developers and write to
 
 \subsection{\Dumux - General Remarks}
 
@@ -21,7 +21,7 @@ development requests at \url{http://www.dumux.org/flyspray/}.
 \paragraph{Dashboard}
 The testing-dashboard is a tool to constantly check the \Dumux problems for compiling
 or running correctly. It is a useful tool to check the impacts of your commits
-and for quality management. The dashboard is available at 
+and for quality management. The dashboard is available at
 \url{http://www.dumux.org/dashboard.php}.
 
 \paragraph{The \Dumux Mailing List:}
@@ -41,7 +41,7 @@ to the commit mailing list:
 \paragraph{Checking Your Commits:}
 \Dumux is developed with the help of Subversion (\texttt{svn}).
 This means that at some point you will commit your new and/or advanced features
-to the repository. In the following some additional guidelines are shown which are 
+to the repository. In the following some additional guidelines are shown which are
 are good practice. Especially if you plan on committing to the stable part of
 \Dumux you must follow these steps.
 \begin{itemize}
@@ -59,21 +59,21 @@ are good practice. Especially if you plan on committing to the stable part of
   \item check the testing-dashboard (see above), whether everything is still working
 \end{itemize}
 
-\paragraph{Naming conventions} 
+\paragraph{Naming conventions}
 General guidelines for naming conventions are specified in Section \ref{guidelines}.
 However, in order to avoid ambiguity a list of proposed names for variables, types,
 functions etc is provided where users and mainly \Dumux developers can refer for
 standards (check \texttt{dumux-devel/\allowbreak doc/\allowbreak naminglist/\allowbreak naming-conventions.odt}).
 
 \paragraph{Errors Messages Related to the Property System}
-The property system is a powerful tool and internally does some template and macro magic. 
+The property system is a powerful tool and internally does some template and macro magic.
 The price for it are sometimes unintuitive compiler error messages. For example if the
 definition of a property could not be found, the error is:
 \begin{lstlisting}[style=DumuxCode,numbers=none]
 error: no type named 'p' in 'struct Dumux::Properties::GetProperty<Dumux::Properties::TTag::TestProblem, Dumux::Properties::PTag::Scalar, Dumux::Properties::TTag::TestProblem, -1000>'
 \end{lstlisting}
 
-\noindent So check whether you did not misspelled any name related to the property system in the 
+\noindent So check whether you did not misspelled any name related to the property system in the
 line of the error message and whether you really declared the type tag you use there.\\
 Further check, if the \texttt{Problem} property was defined and spelled correctly.
 
@@ -86,18 +86,18 @@ $ svn diff > PATCHFILE
 \end{lstlisting}
 \noindent which creates a text file containing all your changes to the files
 in the current folder or its subdirectories.
-Other developers can now simply apply this patch by 
+Other developers can now simply apply this patch by
 \begin{lstlisting}[style=Bash]
 $ path -p0 < PATCHFILE
 \end{lstlisting}
 
 \paragraph{Using \Dune Debug Streams}
-\Dune provides a helpful feature, for keeping your debug-output organized. 
-  In stead of juggling with a bazillion \texttt{std::cout <<} statements or keeping some debug-precompiler statements organized, which are generally and strongly discouraged see \ref{guidelines} in order not to get 
-  flooded away by your output \Dune gives you a nice tool by the so called debug streams. 
+\Dune provides a helpful feature, for keeping your debug-output organized.
+  In stead of juggling with a bazillion \texttt{std::cout <<} statements or keeping some debug-precompiler statements organized, which are generally and strongly discouraged see \ref{guidelines} in order not to get
+  flooded away by your output \Dune gives you a nice tool by the so called debug streams.
 
-  These are streams like \texttt{cout} but they can be switched on and off for the whole project. 
-  Maybe if you are really in the  dark you want to see all your debug information. Another time you may only want to be warned if something is going seriously wrong during a simulation. 
+  These are streams like \texttt{cout} but they can be switched on and off for the whole project.
+  Maybe if you are really in the  dark you want to see all your debug information. Another time you may only want to be warned if something is going seriously wrong during a simulation.
   This can be achieved by setting the debug streams to desired values. There are five levels:
 \begin{verbatim}
 5 - grave (dgrave)
@@ -119,7 +119,7 @@ which are used like\\
 \lstinline{dataFile << "# This was written from "<< __FILE__ << ", line " << __LINE__ << "\n";}\\
 which translates into a line in the output file reading\\
 \lstinline{# This was written from [..]/dumux/dumux/io/outputToFile.hh, line 261}\\
-This can also be very useful, if you want to have information about where some warning or debug information was issued. 
+This can also be very useful, if you want to have information about where some warning or debug information was issued.
 
 \paragraph{Option Files optim.opts and debug.opts}
 \Dune and \Dumux are built with the help of \texttt{dunecontrol}, as explained on page \pageref{buildIt}.
@@ -127,7 +127,7 @@ A lot of options need to be specified for that, which is done in option files. \
 \texttt{debug.opts} and \texttt{optim.opts}. These two files differ in the way \Dune and \Dumux are compiled:
 either for debugging or for fast simulation. Switching between these two states can lead to a speedup of factor up to ten!
 Programs that are compiled with optimization can hardly be debugged because the debugger gets confused.
-Debugging with the optimization options active will lead to erratic behavior while debugging. 
+Debugging with the optimization options active will lead to erratic behavior while debugging.
 
 You can modify the files and add third-party dependencies or additional compiler flags.
 
@@ -154,7 +154,7 @@ The basic svn commands are:
   \item \texttt{svn commit} upload changes to the repository (only with meaningful
         commit messages)
 \end{itemize}
-The above shows you the necessary steps if you use the command line. There are also other tools providing a graphical 
+The above shows you the necessary steps if you use the command line. There are also other tools providing a graphical
 user interface for using svn like kdesvn or eclipse.
 
 \paragraph{Properties/Attributes}

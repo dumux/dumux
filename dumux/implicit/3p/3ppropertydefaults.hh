@@ -98,7 +98,7 @@ SET_SCALAR_PROP(ThreeP, ImplicitMobilityUpwindWeight, 1.0);
 //! The indices required by the isothermal 3p model
 SET_TYPE_PROP(ThreeP, Indices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
 
-//! The spatial parameters to be employed. 
+//! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(ThreeP, SpatialParams, ImplicitSpatialParams<TypeTag>);
 

@@ -208,7 +208,7 @@ std::cout << "lengthLeft = " << lengthLeft << ", lengthRight = " << lengthRight 
                     vertices[1] = j*(nX+1) + i+1;
                     vertices[2] = (j+1)*(nX+1) + i;
                     vertices[3] = (j+1)*(nX+1) + i+1;
-                    
+
                     factory.insertElement(Dune::GeometryType(Dune::GeometryType::cube,dim), vertices);
 
                 }

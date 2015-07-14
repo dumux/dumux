@@ -38,7 +38,7 @@ namespace Dumux
 template <class TypeTag, int PVOffset=0>
 struct StokesncniCommonIndices : public StokesncCommonIndices<TypeTag, PVOffset>
 {
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:

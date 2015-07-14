@@ -87,7 +87,7 @@ SET_BOOL_PROP(RichardsLensProblem, UseHead, false);
  * which uses the TwoPBoxModel, with the main difference being that
  * the domain is initally fully saturated by gas instead of water and
  * water instead of a %DNAPL infiltrates from the top.
- * 
+ *
  * This problem uses the \ref RichardsModel
  *
  * To run the simulation execute the following line in shell:
@@ -122,7 +122,7 @@ class RichardsLensProblem : public RichardsProblem<TypeTag>
         // Grid and world dimension
         dimWorld = GridView::dimensionworld
     };
-   
+
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -149,7 +149,7 @@ public:
         lensUpperRight_[1] = 3.0;
 
         this->spatialParams().setLensCoords(lensLowerLeft_, lensUpperRight_);
-        
+
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
     }
 
@@ -242,9 +242,9 @@ public:
                    const GlobalPosition &globalPos) const
     {
         // use initial values as boundary conditions
-        if (onInlet_(globalPos)) 
+        if (onInlet_(globalPos))
             // inflow of water
-            values[contiEqIdx] = -0.; 
+            values[contiEqIdx] = -0.;
         else
             initial_(values, globalPos);
     }

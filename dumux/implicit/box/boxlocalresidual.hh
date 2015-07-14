@@ -83,7 +83,7 @@ protected:
         PrimaryVariables dirichletValues(0);
         for (int scvIdx = 0; scvIdx < this->fvGeometry_().numScv; ++scvIdx) {
             const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-            
+
             if (bcTypes.hasDirichlet()) {
                 // ask the problem for the dirichlet values
                 const VertexPointer vPtr = this->element_().template subEntity<dim>(scvIdx);
@@ -208,7 +208,7 @@ protected:
             PrimaryVariables values(0.0);
             this->asImp_().computeFlux(values, boundaryFaceIdx, true);
             Valgrind::CheckDefined(values);
-            
+
             for (int equationIdx = 0; equationIdx < numEq; ++equationIdx)
             {
                 if (!bcTypes.isOutflow(equationIdx) )
@@ -262,7 +262,7 @@ protected:
             this->residual_[j] -= flux;
         }
     }
-    
+
     const VertexMapper &vertexMapper_() const
     { return this->problem_().vertexMapper(); }
 };

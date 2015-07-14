@@ -50,8 +50,8 @@ public:
 
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< Index for gas phase pressure in a solution vector
-    static const int swIdx = PVOffset + 1; //!< Index of water (more wetting than the other liquid) saturation 
-    static const int snIdx = PVOffset + 2; //!< Index of (e.g.) NAPL saturation 
+    static const int swIdx = PVOffset + 1; //!< Index of water (more wetting than the other liquid) saturation
+    static const int snIdx = PVOffset + 2; //!< Index of (e.g.) NAPL saturation
 
 
     // equation indices

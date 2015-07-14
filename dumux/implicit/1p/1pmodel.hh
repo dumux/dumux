@@ -43,7 +43,7 @@ namespace Dumux
  v = - \frac{\textbf K}{\mu}
  \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
  * \f]
- * 
+ *
  * and solves the mass continuity equation:
  * \f[
  \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace

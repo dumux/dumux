@@ -44,9 +44,9 @@
  *
  * Example:
  *
- * \code 
- * // -> retrieves scalar value UpwindWeight, default 
- * // is taken from the property UpwindWeight 
+ * \code
+ * // -> retrieves scalar value UpwindWeight, default
+ * // is taken from the property UpwindWeight
  * GET_PARAM(TypeTag, Scalar, UpwindWeight);
  * \endcode
  */
@@ -65,7 +65,7 @@
  *
  * Example:
  *
- * \code 
+ * \code
  * // -> retrieves Boolean value Newton.WriteConvergence, default
  * // is taken from the property NewtonWriteConvergence
  * GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence);
@@ -83,7 +83,7 @@
  *
  * Example:
  *
- * \code 
+ * \code
  * // -> retrieves global integer value NumberOfCellsX
  * GET_RUNTIME_PARAM(TypeTag, int, NumberOfCellsX);
  * \endcode
@@ -100,7 +100,7 @@
  *
  * Example:
  *
- * \code 
+ * \code
  * // -> retrieves global integer value "NumberOfCellsX" which is
  * // located in the parameter group "Grid"
  * GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumberOfCellsX);
@@ -191,7 +191,7 @@ void print(std::ostream &os = std::cout)
     os << "# Run-time specified parameters:" << std::endl;
     rt.report(os);
 
-    if (hasDeprecatedKeys_<TypeTag>(tree)) 
+    if (hasDeprecatedKeys_<TypeTag>(tree))
     {
         os << "# DEPRECATED run-time specified parameters:" << std::endl;
         drt.report(os);

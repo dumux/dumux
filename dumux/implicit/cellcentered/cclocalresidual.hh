@@ -85,15 +85,15 @@ protected:
             this->problem_().boundaryTypes(bcTypes, *isIt);
 
             // evaluate the Neumann conditions at the boundary face
-            if (bcTypes.hasNeumann()) 
+            if (bcTypes.hasNeumann())
                 this->asImp_().evalNeumannSegment_(isIt, bcTypes);
 
             // evaluate the outflow conditions at the boundary face
-            if (bcTypes.hasOutflow()) 
+            if (bcTypes.hasOutflow())
                 this->asImp_().evalOutflowSegment_(isIt, bcTypes);
 
             // evaluate the pure Dirichlet conditions at the boundary face
-            if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann()) 
+            if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
                 this->asImp_().evalDirichletSegment_(isIt, bcTypes);
         }
     }
@@ -115,7 +115,7 @@ protected:
             BoundaryTypes bcTypes;
             this->problem_().boundaryTypes(bcTypes, *isIt);
 
-            if (bcTypes.hasDirichlet() && bcTypes.hasNeumann()) 
+            if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
                 this->asImp_().evalDirichletSegmentMixed_(isIt, bcTypes);
         }
     }
@@ -123,7 +123,7 @@ protected:
     /*!
      * \brief Add Neumann boundary conditions for a single intersection
      */
-    void evalNeumannSegment_(const IntersectionIterator &isIt, 
+    void evalNeumannSegment_(const IntersectionIterator &isIt,
                              const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the neumann boundary fluxes
@@ -152,29 +152,29 @@ protected:
     /*!
      * \brief Add outflow boundary conditions for a single intersection
      */
-    void evalOutflowSegment_(const IntersectionIterator &isIt, 
+    void evalOutflowSegment_(const IntersectionIterator &isIt,
                              const BoundaryTypes &bcTypes)
     {
         if (this->element_().geometry().type().isCube() == false)
-            DUNE_THROW(Dune::InvalidStateException, 
+            DUNE_THROW(Dune::InvalidStateException,
                        "for cell-centered models, outflow BCs only work for cubes.");
 
-        // store pointer to the current FVElementGeometry 
+        // store pointer to the current FVElementGeometry
         const FVElementGeometry *oldFVGeometryPtr = this->fvElemGeomPtr_;
 
-        // copy the current FVElementGeometry to a local variable 
+        // copy the current FVElementGeometry to a local variable
         // and set the pointer to this local variable
         FVElementGeometry fvGeometry = this->fvGeometry_();
         this->fvElemGeomPtr_ = &fvGeometry;
 
-        // get the index of the boundary face 
+        // get the index of the boundary face
         unsigned bfIdx = isIt->indexInInside();
         unsigned oppositeIdx = bfIdx^1;
 
         // manipulate the corresponding subcontrolvolume face
         SCVFace& boundaryFace = fvGeometry.boundaryFace[bfIdx];
 
-        // set the second flux approximation index for the boundary face 
+        // set the second flux approximation index for the boundary face
         for (int nIdx = 0; nIdx < fvGeometry.numNeighbors-1; nIdx++)
         {
             // check whether the two faces are opposite of each other
@@ -196,7 +196,7 @@ protected:
         values *= this->curVolVars_(0).extrusionFactor();
 
         // add fluxes to the residual
-        Valgrind::CheckDefined(values);    
+        Valgrind::CheckDefined(values);
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
         {
             if (bcTypes.isOutflow(eqIdx))
@@ -211,7 +211,7 @@ protected:
      * \brief Treat Dirichlet boundary conditions in a weak sense for a single
      *        intersection that only has Dirichlet boundary conditions
      */
-    void evalDirichletSegment_(const IntersectionIterator &isIt, 
+    void evalDirichletSegment_(const IntersectionIterator &isIt,
                                    const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the Dirichlet boundary fluxes
@@ -236,7 +236,7 @@ protected:
      * \brief Treat Dirichlet boundary conditions in a strong sense for a
      *        single intersection that has mixed D/N boundary conditions
      */
-    void evalDirichletSegmentMixed_(const IntersectionIterator &isIt, 
+    void evalDirichletSegmentMixed_(const IntersectionIterator &isIt,
                                     const BoundaryTypes &bcTypes)
     {
         // temporary vector to store the Dirichlet boundary fluxes
@@ -252,7 +252,7 @@ protected:
             if (bcTypes.isDirichlet(eqIdx))
             {
                 int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                this->residual_[0][eqIdx] 
+                this->residual_[0][eqIdx]
                   = this->curPriVar_(0, pvIdx) - values[pvIdx];
             }
         }

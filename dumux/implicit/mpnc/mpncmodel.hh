@@ -20,7 +20,7 @@
  * \file
  * \brief A fully implicit model for MpNc flow using
  *        vertex centered finite volumes.
- * 
+ *
  */
 
 #ifndef DUMUX_MPNC_MODEL_HH
@@ -69,7 +69,7 @@ namespace Dumux
  *
  * For the missing \f$M\f$ model assumptions, the model assumes that
  * if a fluid phase is not present, the sum of the mole fractions of
- * this fluid phase is smaller than \f$1\f$, i.e.  
+ * this fluid phase is smaller than \f$1\f$, i.e.
  * \f[
  * \forall \alpha: S_\alpha = 0 \implies \sum_\kappa x_\alpha^\kappa \leq 1
  * \f]

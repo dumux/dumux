@@ -33,15 +33,15 @@
 
 namespace Dumux
 {
-    
+
 namespace Properties
 {
-// forward declaration of properties 
+// forward declaration of properties
 NEW_PROP_TAG(MobilityUpwindWeight);
 NEW_PROP_TAG(SpatialParams);
 NEW_PROP_TAG(NumPhases);
 NEW_PROP_TAG(ProblemEnableGravity);
-}   
+}
 
 /*!
  * \ingroup ImplicitFluxVariables
@@ -115,7 +115,7 @@ public:
                  const unsigned int fIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        :   ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, 
+        :   ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry,
                                                 fIdx, elemVolVars, onBoundary)
     {
         calculateNormalVelocity_(problem, element, elemVolVars);
@@ -151,16 +151,16 @@ protected:
             const Element& elementI = *this->fvGeometry_.neighbors[this->face().i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
-            
+
             const Element& elementJ = *this->fvGeometry_.neighbors[this->face().j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
-            
+
             spatialParams.meanK(K,
                                 spatialParams.intrinsicPermeability(elementI, fvGeometryI, 0),
                                 spatialParams.intrinsicPermeability(elementJ, fvGeometryJ, 0));
         }
-        
+
         // obtain the Forchheimer coefficient from the spatial parameters
         const Scalar forchCoeff = spatialParams.forchCoeff(element,
                                                           this->fvGeometry_,
@@ -298,7 +298,7 @@ protected:
       *
       * This function already exploits that \f$ \sqrt{K}\f$ is a diagonal matrix. Therefore,
       * we only have to deal with the main entries.
-      * The gradient of the Forchheimer relations looks as follows (mind that \f$ \sqrt{K}\f$ 
+      * The gradient of the Forchheimer relations looks as follows (mind that \f$ \sqrt{K}\f$
       * is a tensor):
       *
       * \f[  f\left(\underline{v_\alpha}\right) =
@@ -363,7 +363,7 @@ protected:
          if(absV > 1e-20)
              for (int i=0; i<dim; i++)
                  for (int k=0; k<dim; k++)
-                     derivative[i][k]= sqrtK[i][i] * velocity[i] * velocity[k] * forchCoeff 
+                     derivative[i][k]= sqrtK[i][i] * velocity[i] * velocity[k] * forchCoeff
                                        * density /  absV  / viscosity;
 
          // add on the main diagonal:

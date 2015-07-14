@@ -85,7 +85,7 @@ public:
     : problem_(problem)
     , overlapSize_(overlapSize)
     {}
-        
+
     ~IMPETBiCGStabILU0Solver()
     { cleanup_(); }
 
@@ -188,7 +188,7 @@ private:
         overlapb_.template reset<OverlappingVector>(0);
         overlapx_.template reset<OverlappingVector>(0);
     }
-    
+
     const Problem &problem_;
 
     int overlapSize_;

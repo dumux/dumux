@@ -83,10 +83,10 @@ class RichardsNISpatialParams : public ImplicitSpatialParams<TypeTag>
 
     //typedef LinearMaterial<Scalar> EffMaterialLaw;
 public:
-  
+
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
-    
+
     RichardsNISpatialParams(const GridView &gridView)
         : ParentType(gridView)
     {
@@ -95,7 +95,7 @@ public:
 
         // heat conductivity of granite
         lambdaSolid_ = 2.8;
-	
+
         // residual saturations
 
         // residual saturations
@@ -150,7 +150,7 @@ public:
     {
         return porosity_;
     }
-    
+
         /*!
      * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
@@ -214,7 +214,7 @@ public:
 
 
 private:
-  
+
     MaterialLawParams materialParams_;
     Scalar permeability_;
     Scalar porosity_;

@@ -47,7 +47,7 @@ class StokesncLocalResidual : public StokesLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    
+
     //dimensions
 	enum {  dim = GridView::dimension };
     //number of equations
@@ -67,15 +67,15 @@ class StokesncLocalResidual : public StokesLocalResidual<TypeTag>
     //component indices
     enum {  phaseCompIdx = Indices::phaseCompIdx,
             transportCompIdx = Indices::transportCompIdx };
-    
+
 	typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-	
+
 	typedef Dune::FieldVector<Scalar, dim> DimVector;
-    
+
 	typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -88,7 +88,7 @@ class StokesncLocalResidual : public StokesLocalResidual<TypeTag>
 public:
     /*!
      * \brief Evaluate the stored amount of quantities additional to the Stokes model
-     *        (transport equations). For using mole fraction also momentum balances and mass balance 
+     *        (transport equations). For using mole fraction also momentum balances and mass balance
      *         have to be calculated using molar quantities
      *
      * The result should be averaged over the volume (e.g. phase mass
@@ -111,19 +111,19 @@ public:
         const ElementVolumeVariables &elemVolVars = usePrevSol ?
         			this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
-		
+
         if (!useMoles)
 		{
-			/* works for a maximum of two components, for more components 
+			/* works for a maximum of two components, for more components
 			mole fractions must be used (property useMoles => true) */
-			
+
 			//storage of transported component
-			storage[transportEqIdx] = volVars.density() 
+			storage[transportEqIdx] = volVars.density()
 				* volVars.massFraction(transportCompIdx);
-			
+
 			Valgrind::CheckDefined(volVars.density());
 			Valgrind::CheckDefined(volVars.massFraction(transportCompIdx));
-			
+
 		}
         else
 		{
@@ -135,7 +135,7 @@ public:
 				{
 					storage[conti0EqIdx+compIdx] = volVars.molarDensity()
 						* volVars.moleFraction(compIdx);
-					
+
 					Valgrind::CheckDefined(volVars.molarDensity());
 					Valgrind::CheckDefined(volVars.moleFraction(compIdx));
 				}
@@ -158,13 +158,13 @@ public:
     {
       	// call ParentType function
 		ParentType::computeAdvectiveFlux(flux,fluxVars);
-            
+
         // data attached to upstream and the downstream vertices
 		const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
 		const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
 
         Scalar tmp = fluxVars.normalVelocity();
-		
+
 		if(!useMoles)
 		{
             tmp *= (this->massUpwindWeight_ * up.density() * up.massFraction(transportCompIdx)
@@ -182,13 +182,13 @@ public:
 				{
                     tmp *= (this->massUpwindWeight_ * up.molarDensity() * up.moleFraction(compIdx)
                             + (1.-this->massUpwindWeight_) * dn.molarDensity() * dn.moleFraction(compIdx));
-				
+
 					flux[conti0EqIdx+compIdx] += tmp;
 					Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
 				}
 			}
         }
-        
+
 	}
 
     /*!
@@ -218,7 +218,7 @@ public:
 				//loop over secondary components
 				for (int compIdx=0; compIdx<numComponents; compIdx++)
 				{
-					if (conti0EqIdx+compIdx != massBalanceIdx) 
+					if (conti0EqIdx+compIdx != massBalanceIdx)
 					{
 						flux[conti0EqIdx+compIdx] -= fluxVars.moleFractionGrad(compIdx)[dimIdx]
 								* fluxVars.face().normal[dimIdx]
@@ -227,7 +227,7 @@ public:
 						Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
 					}
 				}
-				
+
             }
 
 		}

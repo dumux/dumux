@@ -149,7 +149,7 @@ public:
 #else
             int vIdxGlobal = vertexMapper().map(element, i, dim);
 #endif
- 
+
             if (!hintsUsable_[vIdxGlobal]) {
                 curVolVars[i].setHint(NULL);
                 prevVolVars[i].setHint(NULL);
@@ -502,7 +502,7 @@ public:
     void serialize(Restarter &res)
     {
         if (isBox)
-            res.template serializeEntities<dim>(asImp_(), this->gridView_()); 
+            res.template serializeEntities<dim>(asImp_(), this->gridView_());
         else
             res.template serializeEntities<0>(asImp_(), this->gridView_());
     }
@@ -584,16 +584,16 @@ public:
     size_t numDofs() const
     {
         if (isBox)
-            return gridView_().size(dim); 
+            return gridView_().size(dim);
         else
-            return gridView_().size(0); 
+            return gridView_().size(0);
     }
 
     /*!
      * \brief Mapper for the entities where degrees of freedoms are
      *        defined to indices.
      *
-     * Is the box method is used, this means a mapper 
+     * Is the box method is used, this means a mapper
      * for vertices, if the cell centered method is used,
      * this means a mapper for elements.
      */
@@ -758,7 +758,7 @@ public:
     { return problem_().gridView(); }
 
     /*!
-     * \brief Returns true if the entity indicated by 'dofIdxGlobal' 
+     * \brief Returns true if the entity indicated by 'dofIdxGlobal'
      * is located on / touches the grid's boundary.
      *
      * \param dofIdxGlobal The global index of the entity
@@ -784,7 +784,7 @@ public:
 #endif
         else
             DUNE_THROW(Dune::InvalidStateException,
-                       "requested for cell-centered model");            
+                       "requested for cell-centered model");
     }
 
 
@@ -805,18 +805,18 @@ public:
     }
 
     /*!
-     * \brief Fill the fluid state according to the primary variables. 
-     * 
-     * Taking the information from the primary variables, 
-     * the fluid state is filled with every information that is 
-     * necessary to evaluate the model's local residual. 
-     * 
+     * \brief Fill the fluid state according to the primary variables.
+     *
+     * Taking the information from the primary variables,
+     * the fluid state is filled with every information that is
+     * necessary to evaluate the model's local residual.
+     *
      * \param priVars The primary variables of the model.
-     * \param problem The problem at hand. 
-     * \param element The current element. 
+     * \param problem The problem at hand.
+     * \param element The current element.
      * \param fvGeometry The finite volume element geometry.
-     * \param scvIdx The index of the subcontrol volume. 
-     * \param fluidState The fluid state to fill. 
+     * \param scvIdx The index of the subcontrol volume.
+     * \param fluidState The fluid state to fill.
      */
     template <class FluidState>
     static void completeFluidState(const PrimaryVariables& priVars,
@@ -966,13 +966,13 @@ protected:
                                                                    dim);
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                             int vIdxGlobal = vertexMapper().subIndex(*eIt, vIdx, dim);
-#else 
+#else
                             int vIdxGlobal = vertexMapper().map(*eIt, vIdx, dim);
 #endif
                             boundaryIndices_[vIdxGlobal] = true;
                         }
                     }
-                    else 
+                    else
                     {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                         int eIdxGlobal = elementMapper().index(*eIt);

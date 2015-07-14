@@ -43,7 +43,7 @@ namespace Properties
 NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
 NEW_TYPE_TAG(InjectionBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
 NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCModel, InjectionProblem));
-    
+
 // Set the grid type
 SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
 
@@ -73,7 +73,7 @@ SET_BOOL_PROP(InjectionProblem, UseMoles, true);
  * enters a water-filled aquifer. This is realized with a solution-dependent Neumann boundary condition at the right boundary
  * (\f$ 5m<y<15m\f$). The aquifer is situated 2700m below sea level. The injected fluid phase migrates upwards due to buoyancy.
  * It accumulates and partially enters the lower permeable aquitard.
- * 
+ *
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
  *

@@ -87,7 +87,7 @@ public:
 #else
         int numVertices = element.template count<dim>();
 #endif
-        
+
         this->resize(numVertices);
 
         hasDirichlet_ = false;
@@ -120,7 +120,7 @@ public:
                 const Element &element,
                 const FVElementGeometry &fvGeometry)
     { update(problem, element); }
-    
+
     /*!
      * \brief Returns whether the element has a vertex which contains
      *        a Dirichlet value.

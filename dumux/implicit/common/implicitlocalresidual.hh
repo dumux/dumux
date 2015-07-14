@@ -293,9 +293,9 @@ protected:
      */
     void evalBoundary_()
     {
-        // Dirichlet boundary conditions are treated differently 
-        // depending on the spatial discretization: for box, 
-        // they are incorporated in a strong sense, whereas for 
+        // Dirichlet boundary conditions are treated differently
+        // depending on the spatial discretization: for box,
+        // they are incorporated in a strong sense, whereas for
         // cell-centered, they are treated by means of fluxes.
         if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
         {
@@ -305,7 +305,7 @@ protected:
             if (bcTypes_().hasDirichlet())
                 asImp_().evalDirichlet_();
         }
-        else 
+        else
         {
             asImp_().evalBoundaryFluxes_();
 
@@ -322,7 +322,7 @@ protected:
 
     void evalDirichlet_()
     {
-        DUNE_THROW(Dune::InvalidStateException, 
+        DUNE_THROW(Dune::InvalidStateException,
                    "evalDirichlet_ has been called but is not implemented");
     }
 
@@ -421,7 +421,7 @@ protected:
         Valgrind::CheckDefined(elemPtr_);
         return *elemPtr_;
     }
-    
+
     /*!
      * \brief Returns a reference to the current element's finite
      *        volume geometry.

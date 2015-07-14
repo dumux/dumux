@@ -82,7 +82,7 @@ namespace Dumux
  * <ul>
  *  <li> All three phases are present: Primary variables are two saturations \f$(S_w\f$ and \f$S_n)\f$,
  *       and a pressure, in this case \f$p_g\f$. </li>
- *  <li> Only the water phase is present: Primary variables are now the mole fractions of air and 
+ *  <li> Only the water phase is present: Primary variables are now the mole fractions of air and
  *       contaminant in the water phase \f$(x_w^a\f$ and \f$x_w^c)\f$, as well as the gas pressure, which is,
  *       of course, in a case where only the water phase is present, just the same as the water pressure. </li>
  *  <li> Gas and NAPL phases are present: Primary variables \f$(S_n\f$, \f$x_g^w\f$, \f$p_g)\f$. </li>
@@ -196,12 +196,12 @@ public:
 
                 // initialize phase presence
                 staticDat_[eIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(*this->gridView_().template begin<dim> (), 
+                    = this->problem_().initialPhasePresence(*this->gridView_().template begin<dim> (),
                                                             eIdxGlobal, globalPos);
                 staticDat_[eIdxGlobal].wasSwitched = false;
 
                 staticDat_[eIdxGlobal].oldPhasePresence
-                    = staticDat_[eIdxGlobal].phasePresence;  
+                    = staticDat_[eIdxGlobal].phasePresence;
             }
         }
     }

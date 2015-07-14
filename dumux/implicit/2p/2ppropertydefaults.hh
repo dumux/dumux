@@ -83,11 +83,11 @@ SET_SCALAR_PROP(TwoP, ImplicitMassUpwindWeight, 1.0);
 SET_SCALAR_PROP(TwoP, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p model
-SET_TYPE_PROP(TwoP, 
-              Indices, 
+SET_TYPE_PROP(TwoP,
+              Indices,
               TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>);
 
-//! The spatial parameters to be employed. 
+//! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(TwoP, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
@@ -178,7 +178,7 @@ SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, TwoPLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_PROP(TwoPNI, IsothermalIndices)
-{ 
+{
 private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
 public:

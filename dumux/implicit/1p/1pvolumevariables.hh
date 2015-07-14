@@ -149,10 +149,10 @@ public:
 
     /*!
      * \brief Returns the mobility \f$\mathrm{[1/(Pa s)]}\f$.
-     * 
-     * This function enables the use of ImplicitDarcyFluxVariables 
+     *
+     * This function enables the use of ImplicitDarcyFluxVariables
      * with the 1p fully implicit model, ALTHOUGH the term mobility is
-     * usually not employed in the one phase context. 
+     * usually not employed in the one phase context.
      *
      * \param phaseIdx The phase index
      */

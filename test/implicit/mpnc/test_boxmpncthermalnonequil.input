@@ -1,6 +1,6 @@
 [TimeManager]
 DtInitial			= 5e-1	# [s]
-TEnd 			= 1e3 	# [s] 
+TEnd 			= 1e3 	# [s]
 MaxTimeStepSize	= 2e20 	# maximum allowed timestep size
 
 [Grid]
@@ -12,10 +12,10 @@ lengthPM = 0.1
 pnInitial		= 1e5 # 6.8e6 # 1e5 # 101475 	# Pa
 TInitial		=  372 # 373.15 #
 TRight 		=  400 # 373.15 #
-                  
+
 [BoundaryConditions]
-TBoundary 			=300 # 
-SwBoundary 			= 1e-3 # 
+TBoundary 			=300 #
+SwBoundary 			= 1e-3 #
 SwOneComponentSys 	= 1	 #
 
 massFluxInjectedPhase =   0.5 #
@@ -26,29 +26,29 @@ coldTime = 1
 [SpatialParams.PorousMedium]
 porosity			= 0.35 	#
 meanPoreSize		= 5e-4 	# characteristic length of the system
-factorEnergyTransfer	= 1		# 
-factorMassTransfer	= 1		# 
+factorEnergyTransfer	= 1		#
+factorMassTransfer	= 1		#
 
 [SpatialParams.OutFlow]
-permeabilityOutFlow			= 1e-6 	# m^2 
+permeabilityOutFlow			= 1e-6 	# m^2
 porosityOutFlow				= 0.35 	#
-soilThermalConductivityOutFlow	= 0.01# 
+soilThermalConductivityOutFlow	= 0.01#
 
 [SpatialParams.soil]
 density 					= 2600. 	# kg/m^3
 thermalConductivity 		= 30 	# W / (m K) soil:3, metal:30
 heatCapacity				= 466 	# J / (kg K) steel:466 granite:800
-   
+
 Swr =  0.0 #  5e-3
-Snr = 0 #  
+Snr = 0 #
 
 [Constants]
-outputName =  combustion # 
+outputName =  combustion #
 
 interfacialTension = 0.0589 # interfacial tension of water at 100 ° C
 
-nRestart		= 10000  	 	# after so many timesteps a restart file should be written      
-         
+nRestart		= 10000  	 	# after so many timesteps a restart file should be written
+
 [Implicit]
 MassUpwindWeight=1
 MobilityUpwindWeight=1

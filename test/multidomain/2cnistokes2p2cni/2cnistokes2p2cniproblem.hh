@@ -73,7 +73,7 @@ SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, Problem, TwoCNIStokesTwoPTwoCNIProblem<TypeTag>);
 
 // Set the local coupling operator
-SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, MultiDomainCouplingLocalOperator, 
+SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, MultiDomainCouplingLocalOperator,
               Dumux::TwoCNIStokesTwoPTwoCNILocalOperator<TypeTag>);
 
 // Set the two sub-problems of the global problem
@@ -356,7 +356,7 @@ public:
     /*!
      * \brief Calculates fluxes and coupling terms at the interface
      *        for the Stokes model.
-     * 
+     *
      * Flux output files are created and the summarized flux is
      * written to a file.
      */

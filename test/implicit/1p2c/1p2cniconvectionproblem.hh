@@ -21,7 +21,7 @@
  * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem:
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
- *        
+ *
  */
 #ifndef DUMUX_1P2CNI_CONVECTION_PROBLEM_HH
 #define DUMUX_1P2CNI_CONVECTION_PROBLEM_HH
@@ -57,7 +57,7 @@ SET_TYPE_PROP(OnePTwoCNIConvectionProblem, Problem,
 
 // Set fluid configuration
 SET_TYPE_PROP(OnePTwoCNIConvectionProblem,
-              FluidSystem, 
+              FluidSystem,
               Dumux::FluidSystems::H2ON2LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
 
 // Set the spatial parameters
@@ -78,7 +78,7 @@ SET_BOOL_PROP(OnePTwoCNIConvectionProblem, UseMoles, true);
  * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem:
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
- * 
+ *
  * Initially the domain is fully saturated with water at a constant temperature.
  * On the left hand side water is injected at a constant rate and on the right hand side
  * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
@@ -154,8 +154,8 @@ public:
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, 
-                                             std::string, 
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                             std::string,
                                              Problem, Name);
         outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
                 int, Problem, OutputInterval);
@@ -271,7 +271,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values, 
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
         if(globalPos[0] > this->bBoxMax()[0] - eps_)

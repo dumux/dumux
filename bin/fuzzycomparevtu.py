@@ -45,7 +45,7 @@ def isFuzzyEqualText(text1, text2, absolute, relative):
     for number1, number2 in zip(list1, list2):
         number1 = float(number1)
         number2 = float(number2)
-        if (abs(number1 - number2) > absolute 
+        if (abs(number1 - number2) > absolute
             and (number2 == 0.0 or abs(abs(number1 / number2) - 1.0) > relative)):
             if (abs(number1 - number2) > abs(maximum1 - maximum2)):
                 maximum1 = float(number1)

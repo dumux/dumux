@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- * 
+ *
  * \brief Definition of the spatial params properties for the Forchheimer problem
  *
  */

@@ -96,7 +96,7 @@ public:
     		return K_;
     }
 
-    /** 
+    /**
      * \brief Define the porosity \f$[-]\f$ of the porous medium depending
      *        on the position in the domain
      *
@@ -136,7 +136,7 @@ public:
     {
         for (int i = 0; i < dim; i++)
                 K_[i][i] = 1e-7;
-        for (int i = 0; i < dim; i++) 
+        for (int i = 0; i < dim; i++)
         	    KLense_[i][i] = 1e-9;
 
 

@@ -545,7 +545,7 @@ public:
             Scalar percent = Scalar(numSteps_ - targetSteps_)/targetSteps_;
             return oldTimeStep/(1.0 + percent);
         }
-        
+
         Scalar percent = Scalar(targetSteps_ - numSteps_)/targetSteps_;
         return oldTimeStep*(1.0 + percent/1.2);
     }

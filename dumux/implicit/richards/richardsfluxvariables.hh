@@ -31,7 +31,7 @@
 
 namespace Dumux
 {
-    
+
 
 /*!
  * \ingroup RichardsModel
@@ -41,9 +41,9 @@ namespace Dumux
 template <class TypeTag>
 class RichardsFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 {
-  
+
     typedef ImplicitDarcyFluxVariables<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;   
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -86,21 +86,21 @@ public:
      *        This is the calculated velocity multiplied by the unit normal
      *        and the area of the face.
      *        face().normal
-     *        has already the magnitude of the area. 
+     *        has already the magnitude of the area.
      *        For the Richards model the velocity of the non-wetting phase
      *        is set to zero.
      *
      * \param phaseIdx index of the phase
      */
     Scalar volumeFlux(const unsigned int phaseIdx) const
-    { 
+    {
       if(phaseIdx == nPhaseIdx)
           return 0.;
       else
           return ParentType::volumeFlux(phaseIdx);
     }
-    
- 
+
+
 };
 
 } // end namespace

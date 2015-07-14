@@ -173,7 +173,7 @@ SET_SCALAR_PROP(MPNC, ImplicitMassUpwindWeight, 1.0);
 //! weight for the upwind mobility in the velocity calculation
 SET_SCALAR_PROP(MPNC, ImplicitMobilityUpwindWeight, 1.0);
 
-//! The spatial parameters to be employed. 
+//! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(MPNC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 

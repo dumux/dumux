@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Convert intersection boundary types to vertex boundary types 
+ * \brief Convert intersection boundary types to vertex boundary types
  */
 #ifndef DUMUX_INTERSECTIONTOVERTEXBC_HH
 #define DUMUX_INTERSECTIONTOVERTEXBC_HH
@@ -32,9 +32,9 @@ namespace Dumux
 
 /*!
  * \ingroup BoxModel
- * \brief Convert intersection boundary types to vertex boundary types 
+ * \brief Convert intersection boundary types to vertex boundary types
  */
-template<typename TypeTag> 
+template<typename TypeTag>
 class IntersectionToVertexBC
 {
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -113,7 +113,7 @@ public:
                 values.setDirichlet(eqIdx);
     }
 
-private: 
+private:
     const Problem& problem_;
     std::vector<BoundaryTypes> vertexBC;
 };

@@ -55,7 +55,7 @@ class StokesncFluxVariables : public StokesFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    
+
     //dimensions
     enum {	dim = GridView::dimension };
     //phase indices
@@ -65,7 +65,7 @@ class StokesncFluxVariables : public StokesFluxVariables<TypeTag>
             transportCompIdx = Indices::transportCompIdx };
     //number of components
 	enum {	numComponents = Indices::numComponents };
-    
+
 	typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 	typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
@@ -82,7 +82,7 @@ public:
     {
         calculateValues_(problem, element, elemVolVars);
     }
-	
+
 	/*!
      * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
      */
@@ -131,7 +131,7 @@ protected:
             moleFraction_[compIdx] = Scalar(0.0);
             diffusionCoeff_[compIdx] = Scalar(0.0);
             moleFractionGrad_[compIdx] = Scalar(0.0);
-                
+
 			if (phaseCompIdx!=compIdx) //no transport equation parameters needed for the mass balance
 			{
                 molarDensity_ = Scalar(0.0);
@@ -141,7 +141,7 @@ protected:
 					 scvIdx < this->fvGeometry_.numScv;
 					 scvIdx++) // loop over vertices of the element
 				{
-            
+
 					molarDensity_ += elemVolVars[scvIdx].molarDensity()*
 						this->face().shapeValue[scvIdx];
 					massFraction_[compIdx] += elemVolVars[scvIdx].massFraction(compIdx) *
@@ -159,7 +159,7 @@ protected:
 							elemVolVars[scvIdx].moleFraction(compIdx);
 					}
 				}
-							
+
 				Valgrind::CheckDefined(molarDensity_);
         Valgrind::CheckDefined(massFraction_[compIdx]);
         Valgrind::CheckDefined(moleFraction_[compIdx]);
@@ -168,8 +168,8 @@ protected:
 			}
 		}
     }
-	
-	Scalar molarDensity_;  
+
+	Scalar molarDensity_;
     Scalar massFraction_[numComponents];
     Scalar moleFraction_[numComponents];
     Scalar diffusionCoeff_[numComponents];

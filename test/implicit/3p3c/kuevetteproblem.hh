@@ -48,7 +48,7 @@ namespace Properties
 NEW_TYPE_TAG(KuevetteProblem, INHERITS_FROM(ThreePThreeCNI, KuevetteSpatialParams));
 NEW_TYPE_TAG(KuevetteBoxProblem, INHERITS_FROM(BoxModel, KuevetteProblem));
 NEW_TYPE_TAG(KuevetteCCProblem, INHERITS_FROM(CCModel, KuevetteProblem));
-    
+
 // Set the grid type
 SET_TYPE_PROP(KuevetteProblem, Grid, Dune::YaspGrid<2>);
 
@@ -56,7 +56,7 @@ SET_TYPE_PROP(KuevetteProblem, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(KuevetteProblem, Problem, Dumux::KuevetteProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(KuevetteProblem, 
+SET_TYPE_PROP(KuevetteProblem,
               FluidSystem,
               Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
@@ -76,7 +76,7 @@ SET_SCALAR_PROP(KuevetteProblem, NewtonMaxRelativeShift, 1e-6);
  * are 1.5 m x 0.74 m. The top and bottom boundaries are closed, the right
  * boundary is a Dirichlet boundary allowing fluids to escape. From the left,
  * an injection of a hot water-air mixture is applied (Neumann boundary condition
- * for the mass components and the enthalpy), aimed at remediating an initial 
+ * for the mass components and the enthalpy), aimed at remediating an initial
  * NAPL (Non-Aquoeus Phase Liquid) contamination in the heterogeneous domain.
  * The contamination is initially placed partly into the coarse sand
  * and partly into a fine sand lense.
@@ -199,7 +199,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values, 
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
         if(globalPos[0] > 1.5 - eps_)
@@ -249,7 +249,7 @@ public:
         GlobalPosition globalPos;
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);
-        else 
+        else
             globalPos = intersection.geometry().center();
 
         // negative values for injection

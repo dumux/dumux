@@ -584,7 +584,7 @@ protected:
                 DimVector muGradVelTangential(0.0);
                 velGrad.umv(tangent, muGradVelTangential);
                 muGradVelTangential *= boundaryVars.dynamicViscosity() + boundaryVars.dynamicEddyViscosity();
- 
+
                 this->residual_[scvIdx][massBalanceIdx] -= 0.5*stabilizationBeta_
                     * (muGradVelTangential*tangent);
             }
@@ -640,7 +640,7 @@ protected:
     }
 
     /*!
-     * \brief Interpolate the pressure at corner points of the grid, thus taking the degree of freedom there. 
+     * \brief Interpolate the pressure at corner points of the grid, thus taking the degree of freedom there.
      * 		  This is required due to stability reasons.
      */
     void interpolateCornerPoints_(const BoundaryTypes &bcTypes, const int scvIdx)

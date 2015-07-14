@@ -65,7 +65,7 @@ class MPNCVtkWriterEnergy : public MPNCVtkWriterModule<TypeTag>
     typedef typename ParentType::PhaseVector PhaseVector;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
-    
+
 public:
     MPNCVtkWriterEnergy(const Problem &problem)
         : ParentType(problem)

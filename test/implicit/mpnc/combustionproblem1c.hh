@@ -81,9 +81,9 @@ SET_TYPE_PROP(CombustionProblemOneComponent,
 
 // Set fluid configuration
 SET_PROP(CombustionProblemOneComponent, FluidSystem){
-private: 
+private:
 	typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: 
+public:
 	typedef Dumux::FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*useComplexRelations=*/false> type;
 };
 
@@ -133,11 +133,11 @@ SET_BOOL_PROP(CombustionProblemOneComponent, EnableKinetic, false);
  */
 SET_PROP(CombustionProblemOneComponent, FluidState)
 {
-private: 
+private:
 	typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-private: 
+private:
 	typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-public: 
+public:
 	typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
 };
 

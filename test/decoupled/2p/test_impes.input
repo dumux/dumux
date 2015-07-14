@@ -10,11 +10,11 @@ UpperRightX = 300 # [m] length of the domain
 UpperRightY = 60 # [m] height of the domain
 
 [Impet]
-CFLFactor = 0.95 
+CFLFactor = 0.95
 
 [Problem]
 Name = test_impes # name passed to the output routines
-EnableGravity = 0 
+EnableGravity = 0
 
 [Vtk]
 OutputLevel = 0

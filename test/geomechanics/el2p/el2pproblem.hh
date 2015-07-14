@@ -307,7 +307,7 @@ public:
         {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper_.index(*vIt);
-#else 
+#else
             int vIdxGlobal = vertexMapper_.map(*vIt);
 #endif
             //

@@ -99,7 +99,7 @@ SET_BOOL_PROP(HeterogeneousProblem, UseMoles, false);
  * also contains so-called boundary ids which can be used assigned during the grid creation in order to differentiate
  * between different parts of the boundary.
  * These boundary ids can be imported into the problem where the boundary conditions can then be assigned accordingly.
- * 
+ *
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is false.
  *
@@ -311,7 +311,7 @@ public:
      *
      * \param globalPos The position
      *
-     * This problem assumes a geothermal gradient with 
+     * This problem assumes a geothermal gradient with
      * a surface temperature of 10 degrees Celsius.
      */
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
@@ -491,7 +491,7 @@ private:
 
     Scalar temperature_(const GlobalPosition globalPos) const
     {
-        Scalar T = 283.0 + (depthBOR_ - globalPos[dimWorld-1])*0.03; 
+        Scalar T = 283.0 + (depthBOR_ - globalPos[dimWorld-1])*0.03;
         return T;
     }
 

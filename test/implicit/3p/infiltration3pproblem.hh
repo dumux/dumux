@@ -69,7 +69,7 @@ SET_SCALAR_PROP(InfiltrationThreePProblem, NewtonMaxRelativeShift, 1e-4);
  *
  * The 2D domain of this test problem is 500 m long and 10 m deep, where
  * the lower part represents a slightly inclined groundwater table, and the
- * upper part is the vadose zone. 
+ * upper part is the vadose zone.
  * A LNAPL (Non-Aqueous Phase Liquid which is lighter than water) infiltrates
  * (modelled with a Neumann boundary condition) into the vadose zone. Upon
  * reaching the water table, it spreads (since lighter than water) and migrates
@@ -198,7 +198,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values, 
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
         if(globalPos[0] > 500. - eps_)
@@ -270,7 +270,7 @@ public:
         GlobalPosition globalPos;
         if (isBox)
             globalPos = element.geometry().corner(scvIdx);
-        else 
+        else
             globalPos = intersection.geometry().center();
 
         // negative values for injection

@@ -107,8 +107,8 @@ SET_PROP(TwoPTwoC, MaterialLawParams)
 };
 
 //! Use the 2p2c local residual operator
-SET_TYPE_PROP(TwoPTwoC, 
-              LocalResidual, 
+SET_TYPE_PROP(TwoPTwoC,
+              LocalResidual,
               TwoPTwoCLocalResidual<TypeTag>);
 
 //! Use the 2p2c Newton controller
@@ -160,7 +160,7 @@ SET_BOOL_PROP(TwoPTwoC, ProblemEnableGravity, true);
 //! Use mole fractions in the balance equations by default
 SET_BOOL_PROP(TwoPTwoC, UseMoles, true);
 
-//! Determines whether the constraint solver is used 
+//! Determines whether the constraint solver is used
 SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
 
 //! Set default value for the Forchheimer coefficient
@@ -201,7 +201,7 @@ SET_TYPE_PROP(TwoPTwoCNI, IsothermalLocalResidual, TwoPTwoCLocalResidual<TypeTag
 
 //set isothermal Indices
 SET_PROP(TwoPTwoCNI, IsothermalIndices)
-{ 
+{
 private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
 public:

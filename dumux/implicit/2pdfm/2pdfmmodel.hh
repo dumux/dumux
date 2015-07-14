@@ -18,7 +18,7 @@
 /*!
 * \file
 *
-* \brief Adaption of the fully implicit scheme to the two-phase flow in discrete fracture-matrix 
+* \brief Adaption of the fully implicit scheme to the two-phase flow in discrete fracture-matrix
 *        model.
 */
 
