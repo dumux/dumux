@@ -3,13 +3,11 @@ set(TEX_INPUTS
   0_discussion.tex
   1_introduction.tex
   2_detailedinstall.tex
-  2_gettingstarted.tex
   2_quickinstall.tex
   2_quickstartguide.tex
   3_tutorial.tex
   3_tutorialcoupled.tex
   3_tutorialdecoupled.tex
-  4_dumuxoverview.tex
   4_guidelines.tex
   4_newfoldersetup.tex
   4_newtoninanutshell.tex
@@ -22,7 +20,6 @@ set(TEX_INPUTS
   5_models.tex
   5_propertysystem.tex
   5_spatialdiscretizations.tex
-  5_workingwithdumux.tex
   ../../tutorial/tutorial_coupled.cc
   ../../tutorial/tutorial_coupled.input
   ../../tutorial/tutorialproblem_coupled.hh

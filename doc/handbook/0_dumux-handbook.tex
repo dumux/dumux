@@ -1,4 +1,5 @@
 \documentclass[11pt,a4paper,headinclude,footinclude,DIV16]{scrreprt}
+\usepackage[usenames,dvipsnames]{xcolor} % include at beginning because of compitibility issues
 \usepackage[english]{babel}
 \usepackage[htt]{hyphenat}
 \usepackage[ansinew]{inputenc}
@@ -26,7 +27,6 @@
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage{units}
 \usepackage{url}
-\usepackage{xcolor}
 \usepackage{xspace}
 
 
@@ -38,32 +38,18 @@
 \hypersetup{bookmarksdepth=3}
 \usetikzlibrary{arrows,backgrounds,decorations.pathmorphing,patterns,positioning,fit,shapes}
 
-% for listing of c++ code
-\lstset{language=C++, basicstyle=\ttfamily,
-%   keywordstyle=\color{black}\bfseries,
-  tabsize=4, stringstyle=\ttfamily,
-%   commentstyle=\it,
-  extendedchars=true, escapeinside={/*@}{@*/},
-%   keywordstyle=\color[rgb]{0,0,1},
-%   commentstyle=\color[rgb]{0.026,0.112,0.095},
-%   stringstyle=\color[rgb]{0.627,0.126,0.941},
-  numberstyle=\color{cyan},
-  basicstyle=\ttfamily,
-  keywordstyle=\color{blue}\ttfamily,
-  stringstyle=\color{red}\ttfamily,
-  commentstyle=\color{green}\ttfamily\it,
-  morecomment=[l][\color{magenta}]{\#}
+\lstset{showstringspaces=false,
+ breaklines=true,
+ tabsize=4
 }
-
 % for listings of bash code in install.tex
-\lstdefinestyle{Bash}
- {language=Bash,
+\lstdefinestyle{Bash}{
+ language=Bash,
  backgroundcolor=\color{lightgray},
  basicstyle=\ttfamily\small,
  numbers=none,
  captionpos=b,
  tabsize=4,
- breaklines=true,
  frame=single,
  rulecolor=\color{lightgray},
  framerule=1pt,
@@ -72,17 +58,31 @@
  aboveskip=\bigskipamount,
  belowskip=\bigskipamount
 }
-
 % for listings of DuMuX code
-\lstdefinestyle{DumuxCode}
- {language=C++,
- basicstyle=\ttfamily\scriptsize,
- numbers=left,
- numberstyle=\tiny,
- numbersep=5pt,
- breaklines=true
+\lstdefinestyle{DumuxCode}{
+  language=C++,
+  extendedchars=true,
+  escapeinside={/*@}{@*/}, % escape the long comments
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\tiny,
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{Blue}\ttfamily,
+  stringstyle=\color{BrickRed}\ttfamily,
+  commentstyle=\color[gray]{0.35}\ttfamily\it,
+  morecomment=[l][\color{OliveGreen}]{\#}
 }
-\lstset{showstringspaces=false, breaklines=true}
+% for listings of DuMuX parameter files
+\lstdefinestyle{DumuxParameterFile}{
+ language=sh,
+ numbers=left,
+ numbersep=5pt,
+ numberstyle=\tiny,
+ basicstyle=\ttfamily\scriptsize,
+ stringstyle=\color{BrickRed}\ttfamily,
+ commentstyle=\color[gray]{0.35}\ttfamily\it,
+ morecomment=[l][\color{Blue}]{[},
+}
 
 
 \DeclareGraphicsExtensions{.pdf, .jpg}
@@ -160,7 +160,7 @@
 
 \author{}
 
-\date{\today}
+\date{Version \DumuxVersion}
 
 \publishers{%
 \vspace{10mm}
@@ -187,11 +187,42 @@ Universit\"at Stuttgart, Paffenwaldring 61, D-70569 Stuttgart, Germany}\\
 \listoftodos
 
 \input{0_discussion}
+
+\chapter{Introduction}
 \input{1_introduction}
-\input{2_gettingstarted}
+
+\chapter{Getting started}
+First, we describe a quick installation procedure.
+Then a quick start guide for the first \Dumux experience is provided.
+\input{2_quickinstall}
+\input{2_quickstartguide}
+\input{2_detailedinstall}
+
+\chapter{Tutorial}\label{chp:tutorial}
 \input{3_tutorial}
-\input{4_dumuxoverview}
-\input{5_workingwithdumux}
+\input{3_tutorialcoupled}
+\input{3_tutorialdecoupled}
+
+\chapter{Overview and Infrastructure}
+The intention of this chapter is to provide the reader with basic knowledge
+about how things are structured in \Dumux and what is necessary for
+using \Dumux without any deeper modifications.
+\input{4_structure}
+\input{4_newfoldersetup}
+\input{4_parameterfiles}
+\input{4_guidelines}
+\input{4_newtoninanutshell}
+\input{4_tipsandtricks}
+\input{4_restartsimulations}
+
+\chapter{Advanced \Dumux\ -- Detailed Instructions}
+This chapter contains detailed information for those who are interested
+in deeper modifications of underlying \Dumux models, classes, functions, etc.
+\input{5_models}
+\input{5_spatialdiscretizations}
+\input{5_propertysystem}
+\input{5_fluidframework}
+\input{5_flowofthings}
 
 
 \bibliographystyle{plain}
