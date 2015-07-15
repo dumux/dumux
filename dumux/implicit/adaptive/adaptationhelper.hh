@@ -148,11 +148,9 @@ public:
 					if (eIt->level() > 0)
 					{
 						ElementPointer epFather = eIt->father();
-						int indexI = this->elementIndex(problem, *epFather);
 						AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
 						adaptedValuesFather.count += 1;
-						storeAdaptationValues(adaptedValues, adaptedValuesFather,
-											problem.model().curSol()[indexI]);
+						storeAdaptationValues(adaptedValues, adaptedValuesFather);
 					}
 
 				}
@@ -349,8 +347,7 @@ public:
      * \param fatherElement The element of the father
      */
     static void storeAdaptationValues(AdaptedValues& adaptedValues,
-                                    AdaptedValues& adaptedValuesFather,
-									const PrimaryVariables& u)
+                                    AdaptedValues& adaptedValuesFather)
     {
     	if(!isBox)
     	{
