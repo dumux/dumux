@@ -84,16 +84,16 @@ public:
      */
     MultiDomainNewtonController(const Problem &problem)
         : ParentType(problem)
-		, endIterMsgStream_(std::ostringstream::out)
+        , endIterMsgStream_(std::ostringstream::out)
         , linearSolver_(problem)
         , convergenceWriter_(asImp_())
     {
-//		  Writes out, where the relative tolerance is defined
+//          Writes out, where the relative tolerance is defined
         std::cout << "ParameterNewtonRelTol= "
-        		<< PROP_DIAGNOSTIC(TypeTag, NewtonMaxRelativeShift)
-        		<< ", "
-        		<< GET_PROP_VALUE(TypeTag, NewtonMaxRelativeShift)
-        		<< std::endl;
+                << PROP_DIAGNOSTIC(TypeTag, NewtonMaxRelativeShift)
+                << ", "
+                << GET_PROP_VALUE(TypeTag, NewtonMaxRelativeShift)
+                << std::endl;
     }
 
     //! \copydoc ParentType::newtonUpdateShift()

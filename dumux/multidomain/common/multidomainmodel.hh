@@ -87,11 +87,11 @@ public:
         *uPrev_= 0;
 
         SplitAndMerge::mergeSolVectors(sdModel1().curSol(),
-                                	   sdModel2().curSol(),
-                                	   *uCur_);
+                                       sdModel2().curSol(),
+                                       *uCur_);
         SplitAndMerge::mergeSolVectors(sdModel1().prevSol(),
-                                	   sdModel2().prevSol(),
-                                	   *uPrev_);
+                                       sdModel2().prevSol(),
+                                       *uPrev_);
     }
 
     /*!
@@ -331,7 +331,7 @@ public:
      */
     size_t numDofs() const
     {
-		return sdModel1().numDofs()*numEq1 + sdModel2().numDofs()*numEq2;
+        return sdModel1().numDofs()*numEq1 + sdModel2().numDofs()*numEq2;
     }
 
     //! \copydoc Dumux::ImplicitModel::resetJacobianAssembler()

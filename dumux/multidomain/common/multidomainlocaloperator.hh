@@ -42,26 +42,26 @@ class MultiDomainLocalOperator
  : public Dune::PDELab::FullVolumePattern,
    public Dune::PDELab::LocalOperatorDefaultFlags
 {
-	// copying the local operator for PDELab is not a good idea
-	MultiDomainLocalOperator(const MultiDomainLocalOperator &);
+    // copying the local operator for PDELab is not a good idea
+    MultiDomainLocalOperator(const MultiDomainLocalOperator &);
 
-	typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-	typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-	typedef typename Grid::Traits::template Codim<0>::EntityPointer EntityPointer;
+    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename Grid::Traits::template Codim<0>::EntityPointer EntityPointer;
 
-	enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
+    enum{numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
 public:
-	// pattern assembly flags
-	enum { doPatternVolume = true };
+    // pattern assembly flags
+    enum { doPatternVolume = true };
 
-	// residual assembly flags
-	enum { doAlphaVolume = true };
+    // residual assembly flags
+    enum { doAlphaVolume = true };
 
     //! \brief The constructor
-	MultiDomainLocalOperator(Model &model)
-	: model_(model)
-	{}
+    MultiDomainLocalOperator(Model &model)
+    : model_(model)
+    {}
 
     /*!
      * \brief Volume integral depending on test and ansatz functions
@@ -78,19 +78,19 @@ public:
      * \param lfsv Local function space for test functions
      * \param r Residual vector
      */
-	template<typename EG, typename LFSU, typename X, typename LFSV, typename R>
-	void alpha_volume (const EG& eg, const LFSU& lfsu, const X& x,
-			const LFSV& lfsv, R& r) const
-	{
-		typedef typename LFSU::Traits::SizeType size_type;
+    template<typename EG, typename LFSU, typename X, typename LFSV, typename R>
+    void alpha_volume (const EG& eg, const LFSU& lfsu, const X& x,
+            const LFSV& lfsv, R& r) const
+    {
+        typedef typename LFSU::Traits::SizeType size_type;
 
-		const EntityPointer elementPtr = model_.gridView().grid().subDomainEntityPointer(eg.entity());
-		model_.localResidual().eval(*elementPtr);
+        const EntityPointer elementPtr = model_.gridView().grid().subDomainEntityPointer(eg.entity());
+        model_.localResidual().eval(*elementPtr);
 
-		int numVertices = x.size()/numEq;
-		for (size_type comp = 0; comp < r.size(); comp++)
-		    r.accumulate(lfsv, comp, model_.localResidual().residual(comp%numVertices)[comp/numVertices]);
-	}
+        int numVertices = x.size()/numEq;
+        for (size_type comp = 0; comp < r.size(); comp++)
+            r.accumulate(lfsv, comp, model_.localResidual().residual(comp%numVertices)[comp/numVertices]);
+    }
 
     /*!
      * \brief Jacobian of volume term
@@ -114,23 +114,23 @@ public:
             const X& x,
             const LFSV& lfsv,
             M& mat) const
-	{
-		typedef typename LFSU::Traits::SizeType size_typeU;
-		typedef typename LFSV::Traits::SizeType size_typeV;
+    {
+        typedef typename LFSU::Traits::SizeType size_typeU;
+        typedef typename LFSV::Traits::SizeType size_typeV;
 
-		const EntityPointer elementPtr = model_.gridView().grid().subDomainEntityPointer(eg.entity());
-		model_.localJacobian().assemble(*elementPtr);
+        const EntityPointer elementPtr = model_.gridView().grid().subDomainEntityPointer(eg.entity());
+        model_.localJacobian().assemble(*elementPtr);
 
-		int numVertices = x.size()/numEq;
-		for (size_typeV j=0; j<lfsv.size(); j++) {
-			for (size_typeU i=0; i<lfsu.size(); i++) {
-				mat.accumulate(lfsv, i, lfsu, j, (model_.localJacobian().mat(i%numVertices,j%numVertices))[i/numVertices][j/numVertices]);
-			}
-		}
-	}
+        int numVertices = x.size()/numEq;
+        for (size_typeV j=0; j<lfsv.size(); j++) {
+            for (size_typeU i=0; i<lfsu.size(); i++) {
+                mat.accumulate(lfsv, i, lfsu, j, (model_.localJacobian().mat(i%numVertices,j%numVertices))[i/numVertices][j/numVertices]);
+            }
+        }
+    }
 
 private:
-	Model& model_;
+    Model& model_;
 };
 
 } // namespace PDELab

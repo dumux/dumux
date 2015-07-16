@@ -88,17 +88,17 @@ public:
     MultiDomainProblem(MultiDomainGrid &mdGrid,
                        TimeManager &timeManager)
         : timeManager_(timeManager)
-		, newtonMethod_(asImp_())
-		, newtonCtl_(asImp_())
-		, mdGrid_(mdGrid)
-		, mdGridView_(mdGrid.leafGridView())
-		, mdVertexMapper_(mdGrid_.leafGridView())
-		, sdID1_(0)
-		, sdID2_(1)
-		, sdGrid1_(mdGrid.subDomain(sdID1_))
-		, sdGrid2_(mdGrid.subDomain(sdID2_))
-		, sdProblem1_(timeManager, sdGrid1_.leafGridView())
-		, sdProblem2_(timeManager, sdGrid2_.leafGridView())
+        , newtonMethod_(asImp_())
+        , newtonCtl_(asImp_())
+        , mdGrid_(mdGrid)
+        , mdGridView_(mdGrid.leafGridView())
+        , mdVertexMapper_(mdGrid_.leafGridView())
+        , sdID1_(0)
+        , sdID2_(1)
+        , sdGrid1_(mdGrid.subDomain(sdID1_))
+        , sdGrid2_(mdGrid.subDomain(sdID2_))
+        , sdProblem1_(timeManager, sdGrid1_.leafGridView())
+        , sdProblem2_(timeManager, sdGrid2_.leafGridView())
     {}
 
     //! \copydoc Dumux::ImplicitProblem::init()
@@ -236,7 +236,7 @@ public:
      */
     void updateSuccessful()
     {
-    	model_.updateSuccessful();
+        model_.updateSuccessful();
     }
 
     //! \copydoc Dumux::ImplicitProblem::shouldWriteOutput()

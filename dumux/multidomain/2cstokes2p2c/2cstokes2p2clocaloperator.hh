@@ -171,18 +171,18 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
     // FREE FLOW
     enum { numEq1 = GET_PROP_VALUE(Stokes2cTypeTag, NumEq) };
-    enum { nPhaseIdx1 = Stokes2cIndices::phaseIdx };           	//!< Index of the free-flow phase of the fluidsystem
+    enum { nPhaseIdx1 = Stokes2cIndices::phaseIdx };               //!< Index of the free-flow phase of the fluidsystem
     enum { // equation indices in the Stokes domain
-        momentumXIdx1 = Stokes2cIndices::momentumXIdx, 			//!< Index of the x-component of the momentum balance
-        momentumYIdx1 = Stokes2cIndices::momentumYIdx, 			//!< Index of the y-component of the momentum balance
-        momentumZIdx1 = Stokes2cIndices::momentumZIdx, 			//!< Index of the z-component of the momentum balance
-        lastMomentumIdx1 = Stokes2cIndices::lastMomentumIdx, 	//!< Index of the last component of the momentum balance
-        massBalanceIdx1 = Stokes2cIndices::massBalanceIdx, 		//!< Index of the mass balance
-        transportEqIdx1 = Stokes2cIndices::transportEqIdx 		//!< Index of the transport equation
+        momentumXIdx1 = Stokes2cIndices::momentumXIdx,             //!< Index of the x-component of the momentum balance
+        momentumYIdx1 = Stokes2cIndices::momentumYIdx,             //!< Index of the y-component of the momentum balance
+        momentumZIdx1 = Stokes2cIndices::momentumZIdx,             //!< Index of the z-component of the momentum balance
+        lastMomentumIdx1 = Stokes2cIndices::lastMomentumIdx,     //!< Index of the last component of the momentum balance
+        massBalanceIdx1 = Stokes2cIndices::massBalanceIdx,         //!< Index of the mass balance
+        transportEqIdx1 = Stokes2cIndices::transportEqIdx         //!< Index of the transport equation
     };
     enum { // indices of the components
-        transportCompIdx1 = Stokes2cIndices::transportCompIdx, 	//!< Index of transported component
-        phaseCompIdx1 = Stokes2cIndices::phaseCompIdx         	//!< Index of main component of the phase
+        transportCompIdx1 = Stokes2cIndices::transportCompIdx,     //!< Index of transported component
+        phaseCompIdx1 = Stokes2cIndices::phaseCompIdx             //!< Index of main component of the phase
     };
 
     // POROUS MEDIUM
@@ -193,7 +193,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
         massBalanceIdx2 = TwoPTwoCIndices::contiNEqIdx  //!< Index of the total mass balance (if one comopnent balance is replaced)
     };
     enum { // component indices
-    	wCompIdx2 = TwoPTwoCIndices::wCompIdx,          //!< Index of the liquids main component
+        wCompIdx2 = TwoPTwoCIndices::wCompIdx,          //!< Index of the liquids main component
         nCompIdx2 = TwoPTwoCIndices::nCompIdx           //!< Index of the main component of the gas
     };
     enum { // phase indices
@@ -559,7 +559,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
             }
         }
         if (cParams.boundaryTypes2.isCouplingOutflow(contiWEqIdx2))
-        	std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
+            std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
     }
 
     /*!
@@ -636,7 +636,7 @@ class TwoCStokesTwoPTwoCLocalOperator :
                                     -cParams.elemVolVarsCur2[vertInElem2].massFraction(nPhaseIdx2, wCompIdx2));
         }
         if (cParams.boundaryTypes1.isCouplingInflow(transportEqIdx1))
-        	std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
+            std::cerr << "Upwind PM -> FF does not work for the transport equation for a 2-phase system!" << std::endl;
     }
 
  protected:

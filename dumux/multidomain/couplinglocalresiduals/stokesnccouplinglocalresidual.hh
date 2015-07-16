@@ -50,14 +50,14 @@ protected:
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-	typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
-		numComponents = Indices::numComponents
+        numComponents = Indices::numComponents
     };
     enum {
         //indices of the equations
@@ -287,21 +287,21 @@ protected:
                     boundaryVars.face().area;
         }
 
-		// set mole or mass fraction for the transported components
-		for (int compIdx = 0; compIdx < numComponents; compIdx++)
-		{
-			int eqIdx = dim + compIdx;
-			if (eqIdx != massBalanceIdx) {
+        // set mole or mass fraction for the transported components
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        {
+            int eqIdx = dim + compIdx;
+            if (eqIdx != massBalanceIdx) {
                 if (bcTypes.isCouplingOutflow(eqIdx))
                 {
                     if(useMoles)
                         this->residual_[scvIdx][eqIdx] = volVars.moleFraction(compIdx);
                     else
                         this->residual_[scvIdx][eqIdx] = volVars.massFraction(compIdx);
-					Valgrind::CheckDefined(this->residual_[scvIdx][eqIdx]);
+                    Valgrind::CheckDefined(this->residual_[scvIdx][eqIdx]);
                 }
             }
-		}
+        }
     }
 
     void evalBeaversJoseph_(const IntersectionIterator &isIt,

@@ -137,13 +137,13 @@ public:
     //! \copydoc ImplicitAssembler::assemble()
     void assemble()
     {
-    	// assemble the matrix
-    	*matrix_ = 0;
-    	mdGridOperator_->jacobian(globalProblem_->model().curSol(), *matrix_);
+        // assemble the matrix
+        *matrix_ = 0;
+        mdGridOperator_->jacobian(globalProblem_->model().curSol(), *matrix_);
 
-    	// calculate the global residual
-    	*residual_ = 0;
-    	mdGridOperator_->residual(globalProblem_->model().curSol(), *residual_);
+        // calculate the global residual
+        *residual_ = 0;
+        mdGridOperator_->residual(globalProblem_->model().curSol(), *residual_);
     }
 
     //! \copydoc ImplicitAssembler::reassembleAll()
