@@ -102,8 +102,8 @@ public:
 // Linear solver settings
 SET_TYPE_PROP(LensCCProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
 SET_TYPE_PROP(LensBoxProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
-SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
-SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
+SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 
 SET_BOOL_PROP(LensCCAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptationIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
