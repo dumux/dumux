@@ -27,5 +27,9 @@ add_subdirectory(doc)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 add_subdirectory(tutorial EXCLUDE_FROM_ALL)
 
+# de-activate testing the DUNE way
+# now ctest (aka make test) does not build the tests
+set(DUNE_TEST_MAGIC OFF)
+
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
