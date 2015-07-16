@@ -118,12 +118,12 @@ void testNatural(const Spline &sp,
     double d2 = sp.evalDerivative(x[n-1] - eps);
     double d3 = sp.evalDerivative(x[n-1]);
 
-    if (std::abs(d1 - d0)/eps > 1000*eps)
+    if (Dune::FloatCmp::ne( (d1-d0)/eps, 0.0 ))
         DUNE_THROW(Dune::InvalidStateException,
                    "Invalid derivative at beginning of interval: is "
                    << (d1 - d0)/eps << " ought to be 0");
 
-    if (std::abs(d3 - d2)/eps > 1000*eps)
+    if (Dune::FloatCmp::ne( (d3-d2)/eps, 0.0 ))
         DUNE_THROW(Dune::InvalidStateException,
                    "Invalid derivative at end of interval: is "
                    << (d3 - d2)/eps << " ought to be 0");

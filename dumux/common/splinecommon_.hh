@@ -172,10 +172,10 @@ public:
     {
         assert(extrapolate || applies(x));
         if (extrapolate) {
-            if (x < xMin())
-                evalDerivative_(xMin(), 0);
-            else if (x > xMax())
-                evalDerivative_(xMax(), numSamples_() - 1);
+            if (Dune::FloatCmp::le(x, xMin()))
+                return evalDerivative_(xMin(), 0);
+            else if (Dune::FloatCmp::ge(x, xMax()))
+                return evalDerivative_(xMax(), numSamples_() - 1);
         }
 
         return evalDerivative_(x, segmentIdx_(x));
