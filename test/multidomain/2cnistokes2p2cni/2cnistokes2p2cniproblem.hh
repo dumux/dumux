@@ -92,14 +92,10 @@ SET_TYPE_PROP(TwoPTwoCNISubProblem, OtherSubDomainTypeTag, TTAG(Stokes2cniSubPro
 SET_TYPE_PROP(Stokes2cniSubProblem, SpatialParams, Dumux::TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
 SET_TYPE_PROP(TwoPTwoCNISubProblem, SpatialParams, Dumux::TwoCNIStokesTwoPTwoCNISpatialParams<TypeTag>);
 
-// Set the fluid system
-SET_PROP(TwoCNIStokesTwoPTwoCNIProblem, FluidSystem)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::FluidSystems::H2OAir<Scalar,
-        Dumux::H2O<Scalar>,
-        /*useComplexrelations=*/true> type;
-};
+// Set the fluid system to use complex relations (last argument)
+SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, FluidSystem,
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                   Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true>);
 
 #ifdef HAVE_PARDISO
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, LinearSolver, PardisoBackend<TypeTag>);

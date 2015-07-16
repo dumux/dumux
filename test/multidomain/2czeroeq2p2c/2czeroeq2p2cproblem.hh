@@ -78,14 +78,10 @@ SET_TYPE_PROP(TwoPTwoCSubProblem, OtherSubDomainTypeTag, TTAG(ZeroEq2cSubProblem
 SET_TYPE_PROP(ZeroEq2cSubProblem, SpatialParams, Dumux::TwoCZeroEqTwoPTwoCSpatialParams<TypeTag>);
 SET_TYPE_PROP(TwoPTwoCSubProblem, SpatialParams, Dumux::TwoCZeroEqTwoPTwoCSpatialParams<TypeTag>);
 
-// Set the fluid system
-SET_PROP(TwoCZeroEqTwoPTwoCProblem, FluidSystem)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::FluidSystems::H2OAir<Scalar,
-                                        Dumux::H2O<Scalar>,
-                                        /*useComplexrelations=*/false> type;
-};
+// Set the fluid system to use simple relations (last argument)
+SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, FluidSystem,
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                   Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false>);
 
 // If SuperLU is not available, the UMFPack solver is used:
 #ifdef HAVE_SUPERLU

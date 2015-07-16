@@ -91,14 +91,10 @@ SET_TYPE_PROP(TwoPTwoCSubProblem, OtherSubDomainTypeTag, TTAG(Stokes2cSubProblem
 SET_TYPE_PROP(Stokes2cSubProblem, SpatialParams, Dumux::TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
 SET_TYPE_PROP(TwoPTwoCSubProblem, SpatialParams, Dumux::TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
 
-// Set the fluid system
-SET_PROP(TwoCStokesTwoPTwoCProblem, FluidSystem)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::FluidSystems::H2OAir<Scalar,
-        Dumux::H2O<Scalar>,
-        /*useComplexrelations=*/false> type;
-};
+// Set the fluid system to use simple relations (last argument)
+SET_TYPE_PROP(TwoCStokesTwoPTwoCProblem, FluidSystem,
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                   Dumux::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false>);
 
 // if you do not have PARDISO, the SuperLU solver is used:
 #ifdef HAVE_PARDISO
