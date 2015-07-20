@@ -77,25 +77,18 @@ class ZeroEqModel : public GET_PROP_TYPE(TypeTag, BaseStokesModel)
         intervals = GET_PROP_VALUE(TypeTag, NumberOfIntervals),
         bboxMinIsWall = GET_PROP_VALUE(TypeTag, BBoxMinIsWall),
         bboxMaxIsWall = GET_PROP_VALUE(TypeTag, BBoxMaxIsWall),
-        walls = (bboxMinIsWall ? 1 : 0) + (bboxMaxIsWall ? 1 : 0),
-        prec = Indices::scvDataPrecision, // precision of scv data
-        width = Indices::scvDataWidth // width of column
+        walls = (bboxMinIsWall ? 1 : 0) + (bboxMaxIsWall ? 1 : 0)
     };
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
     typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -107,7 +100,6 @@ public:
     ZeroEqModel()
         : flowNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, FlowNormal))
         , wallNormal_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, WallNormal))
-        , writeAllSCVData_(GET_PARAM_FROM_GROUP(TypeTag, Scalar, ZeroEq, WriteAllSCVData))
     {
         eps_ = 1e-6;
 
@@ -120,58 +112,6 @@ public:
                         << GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyViscosityModel)
                         << "." << std::endl;
         }
-    }
-
-    /*!
-     * \brief Calculate the fluxes across a certain layer in the domain.
-     *        The layer is situated perpendicular to the coordinate axis "coord" and cuts
-     *        the axis at the value "coordVal".
-     *
-     * \param globalSol The global solution vector.
-     * \param flux A vector to store the flux.
-     * \param axis The dimension, perpendicular to which the layer is situated.
-     * \param coordVal The (Scalar) coordinate on the axis, at which the layer is situated.
-     */
-    void calculateFluxAcrossLayer(const SolutionVector &globalSol, Dune::FieldVector<Scalar, numEq> &flux, int axis, Scalar coordVal)
-    {
-        GlobalPosition globalI, globalJ;
-        PrimaryVariables tmpFlux(0.0);
-
-        FVElementGeometry fvGeometry;
-        ElementVolumeVariables elemVolVars;
-
-        // Loop over elements
-        ElementIterator eIt = this->problem_.gridView().template begin<0>();
-        ElementIterator eEndIt = this->problem_.gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
-        {
-            if (eIt->partitionType() != Dune::InteriorEntity)
-                continue;
-
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemVolVars.update(this->problem_(), *eIt, fvGeometry);
-            this->localResidual().evalFluxes(*eIt, elemVolVars);
-
-            bool hasLeft = false;
-            bool hasRight = false;
-            for (int i = 0; i < fvGeometry.numVertices; i++) {
-                const GlobalPosition &globalPos = fvGeometry.subContVol[i].global;
-                if (globalI[axis] < coordVal)
-                    hasLeft = true;
-                else if (globalI[axis] >= coordVal)
-                    hasRight = true;
-            }
-            if (!hasLeft || !hasRight)
-                continue;
-
-            for (int i = 0; i < fvGeometry.numVertices; i++) {
-                const GlobalPosition &globalPos = fvGeometry.subContVol[i].global;
-                if (globalI[axis] < coordVal)
-                    flux += this->localResidual().residual(i);
-            }
-        }
-
-        flux = this->problem_.gridView().comm().sum(flux);
     }
 
     /*!
@@ -189,41 +129,38 @@ public:
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
+        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
 
         // create the required scalar fields
         unsigned numVertices = this->gridView_().size(dim);
+        unsigned numElements = this->gridView_().size(0);
         ScalarField &pN = *writer.allocateManagedBuffer(numVertices);
         ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
         ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
-        VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
-
-        unsigned numElements = this->gridView_().size(0);
+        VectorField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
+        ScalarField &mut = *writer.allocateManagedBuffer(numElements);
+        ScalarField &lmix = *writer.allocateManagedBuffer(numElements);
+        ScalarField &uPlus = *writer.allocateManagedBuffer(numElements);
+        ScalarField &yPlus = *writer.allocateManagedBuffer(numElements);
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
+
+        // write volume values to .vtu and .csv
+        std::ofstream volVarsFile("volVarsData.csv", std::ios_base::out);
+        asImp_().writeVolVarsHeader(volVarsFile);
+        volVarsFile << std::endl;
 
         FVElementGeometry fvGeometry;
         VolumeVariables volVars;
 
-        ElementBoundaryTypes elemBcTypes;
-
-        VertexIterator vIt = this->gridView_().template begin<dim>();
-        VertexIterator vEndIt = this->gridView_().template end<dim>();
-        for (; vIt != vEndIt; ++vIt)
-        {}
-
-
         ElementIterator eIt = this->gridView_().template begin<0>();
         ElementIterator eEndIt = this->gridView_().template end<0>();
-
         for (; eIt != eEndIt; ++eIt)
         {
             int idx = this->elementMapper().map(*eIt);
             rank[idx] = this->gridView_().comm().rank();
 
             fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
-
 
             int numLocalVerts = eIt->template count<dim>();
             for (int i = 0; i < numLocalVerts; ++i)
@@ -241,8 +178,12 @@ public:
                 rho[vIdxGlobal] = volVars.density();
                 mu[vIdxGlobal] = volVars.dynamicViscosity();
                 velocity[vIdxGlobal] = volVars.velocity();
-            };
+
+                asImp_().writeVolVarsData(volVarsFile, volVars);
+                volVarsFile << std::endl;
+            }
         }
+        volVarsFile.close();
 
         writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");
@@ -250,17 +191,19 @@ public:
         writer.attachVertexData(mu, "mu");
         writer.attachVertexData(velocity, "v", dim);
 
-
         // ensure that the actual values are given out
         asImp_().updateWallProperties();
 
+        // write flux values to .vtu and .csv
+        std::ofstream fluxVarsFile("fluxVarsData.csv", std::ios_base::out);
+        asImp_().writeFluxVarsHeader(fluxVarsFile);
+        fluxVarsFile << std::endl;
+
         eIt = this->gridView_().template begin<0>();
         eEndIt = this->gridView_().template end<0>();
-
         for (; eIt != eEndIt; ++eIt)
         {
             fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
@@ -268,236 +211,116 @@ public:
                                fvGeometry,
                                false);
 
-            IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
-            const IntersectionIterator &endIt = this->gridView_().iend(*eIt);
+            unsigned int numFluxVars = 0;
+            Scalar sumDynamicEddyViscosity = 0.0;
+            Scalar sumMixingLength = 0.0;
+            Scalar sumUPlus = 0.0;
+            Scalar sumYPlus = 0.0;
 
-            for (; isIt != endIt; ++isIt)
+            IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
+            IntersectionIterator isEndIt = this->gridView_().iend(*eIt);
+            for (; isIt != isEndIt; ++isIt)
             {
                 int fIdx = isIt->indexInInside();
 
-                FluxVariables fluxVars(this->problem_(),
-                                                    *eIt,
-                                                    fvGeometry,
-                                                    fIdx,
-                                                    elemVolVars,
-                                                    false);
+                FluxVariables fluxVars(this->problem_(), *eIt, fvGeometry,
+                                       fIdx, elemVolVars, false);
 
-                GlobalPosition globalPos = fvGeometry.subContVolFace[fIdx].ipGlobal;
+                asImp_().writeFluxVarsData(fluxVarsFile, fluxVars);
+                fluxVarsFile << std::endl;
 
-                if (asImp_().shouldWriteSCVData(globalPos))
-                    asImp_().writeSCVData(volVars, fluxVars, globalPos);
+                sumDynamicEddyViscosity += fluxVars.dynamicEddyViscosity();
+                sumMixingLength += fluxVars.mixingLength();
+                sumUPlus += fluxVars.uPlus();
+                sumYPlus += fluxVars.yPlusRough();
+                numFluxVars += 1;
             }
+
+            int eIdxGlobal = this->elementMapper().map(*eIt);
+            mut[eIdxGlobal] = sumDynamicEddyViscosity / numFluxVars;
+            lmix[eIdxGlobal] = sumMixingLength / numFluxVars;
+            uPlus[eIdxGlobal] = sumUPlus / numFluxVars;
+            yPlus[eIdxGlobal] = sumYPlus / numFluxVars;
         }
+        fluxVarsFile.close();
+
+        writer.attachCellData(mut, "mu_t");
+        writer.attachCellData(lmix, "l_mix");
+        writer.attachCellData(uPlus, "u^+");
+        writer.attachCellData(yPlus, "y^+");
     }
 
 
-    /**********************************
-     * SCVDATA
-     * -------
-     * This section contains functions to zeroeq output related functions.
-     */
-
     /*!
-     * \brief Returns true if a scv-data file for gnuplot evaluation
-     *        should be given out.
+     * \brief Writes the header for the volVarsData.csv file
      *
-     * \param globalPos Global Position.
+     * \param stream The output file stream
      */
-    const bool shouldWriteSCVData(const GlobalPosition &globalPos) const
+    void writeVolVarsHeader(std::ofstream &stream)
     {
-        if (writeAllSCVData_ > 1.0)
-            return true;
-        else if (writeAllSCVData_ < 0.0)
-            return false;
-        else
-        {
-            Scalar relGlobalPosMin = (globalPos[flowNormal_] - 1e-3 - this->problem_().bBoxMin()[flowNormal_])
-                                     / (this->problem_().bBoxMax()[flowNormal_] - this->problem_().bBoxMin()[flowNormal_]);
-            Scalar relGlobalPosMax = (globalPos[flowNormal_] + 1e-3 - this->problem_().bBoxMin()[flowNormal_])
-                                     / (this->problem_().bBoxMax()[flowNormal_] - this->problem_().bBoxMin()[flowNormal_]);
-            return (relGlobalPosMax > writeAllSCVData_ && relGlobalPosMin < writeAllSCVData_);
-        }
+//         stream << "# time end" << std::endl;
+        stream << "#globalPos[0]"
+               << "," << "globalPos[1]"
+               << "," << "velocity[0]"
+               << "," << "velocity[1]"
+               << "," << "pressure"
+               << "," << "density"
+               << "," << "temperature";
     }
 
     /*!
-     * \brief Writes scv-data file for gnuplot evaluation.
+     * \brief Writes the data into the volVarsData.csv file
      *
-     * \param volVars Volume Variables of current scv.
-     * \param fluxVars Flux Variables of current element.
-     * \param globalPos Global Position.
+     * \param stream The output file stream
      */
-    void writeSCVData(const VolumeVariables &volVars, const FluxVariables &fluxVars, const GlobalPosition &globalPos)
+    void writeVolVarsData(std::ofstream &stream, const VolumeVariables &volVars)
     {
-        std::ofstream fileAct ("");
-        std::stringstream stream ("");
-
-        char flowNormalChar = 'x';
-        if (flowNormal_ == 1) flowNormalChar = 'y';
-        stream << "scvData" << "-" << flowNormalChar << std::setprecision(4)
-               << (globalPos[flowNormal_] - this->problem_().bBoxMin()[flowNormal_])
-                  / (this->problem_().bBoxMax()[flowNormal_] - this->problem_().bBoxMin()[flowNormal_])
-               << ".dat";
-        std::string fileString2(stream.str());
-        stream.str(""); stream.clear();
-        const char* fileNameAct = fileString2.c_str();
-
-        int posIdx = getPosIdx(globalPos);
-        int wallIdx = getWallIdx(globalPos, posIdx);
-        if (!wall[wallIdx].headerWritten[posIdx])
-        {
-            fileAct.open(fileNameAct, std::ios::out);
-
-            asImp_().writeSCVHeader(stream, fluxVars, globalPos);
-            stream << std::endl;
-            if (bboxMinIsWall)
-            {
-                asImp_().writeWallHeader(stream, posIdx, 0);
-                stream << std::endl;
-            }
-            if (bboxMaxIsWall)
-            {
-                asImp_().writeWallHeader(stream, posIdx, 1);
-                stream << std::endl;
-            }
-            asImp_().writeDataHeader(stream, posIdx);
-            stream << std::endl;
-
-            fileAct << stream.str();
-            stream.str(""); stream.clear();
-            fileAct.close();
-            for (int wIdx = 0; wIdx < walls; ++wIdx)
-                wall[wIdx].headerWritten[posIdx] = true;
-        }
-        fileAct.open(fileNameAct, std::ios::app);
-
-        asImp_().writeSCVDataValues(stream, volVars, fluxVars, globalPos);
-        stream << std::endl;
-        fileAct << stream.str();
-        fileAct.close();
+        stream << volVars.globalPos()[0]
+               << "," << volVars.globalPos()[1]
+               << "," << volVars.velocity()[0]
+               << "," << volVars.velocity()[1]
+               << "," << volVars.pressure()
+               << "," << volVars.density()
+               << "," << volVars.temperature();
     }
 
     /*!
-     * \brief Writes scv-data header, containing basic properties, which are constant
-     *        at this point.
+     * \brief Writes the header for the fluxVarsData.csv file
      *
-     * \param stream Output Filestream.
-     * \param fluxVars Flux Variables of current element.
-     * \param globalPos Global Position.
+     * \param stream The output file stream
      */
-    void writeSCVHeader(std::stringstream &stream, const FluxVariables &fluxVars, const GlobalPosition &globalPos)
+    void writeFluxVarsHeader(std::ofstream &stream)
     {
-        int posIdx = getPosIdx(globalPos);
-        stream << std::setprecision(prec) << "# "
-               << std::setw(width-2) << "over x[m]:"
-               << std::setw(width) << globalPos[flowNormal_]
-               << std::setw(width) << "at t[s]:"
-               << std::setw(width) << this->problem_().timeManager().time()
-               << std::setw(width) << "Re_d[-]:"
-               << std::setw(width) << wall[0].maxVelocityAbs[posIdx][flowNormal_]
-                                      * (this->problem_().bBoxMax()[wallNormal_] - this->problem_().bBoxMin()[wallNormal_])
-                                      / fluxVars.kinematicViscosity()
-               << std::setw(width) << "Re_x[-]:"
-               << std::setw(width) << wall[0].maxVelocityAbs[posIdx][flowNormal_]
-                                      * (this->problem_().bBoxMax()[flowNormal_] - this->problem_().bBoxMin()[flowNormal_])
-                                      / fluxVars.kinematicViscosity()
-               << std::endl;
-        stream << std::setprecision(prec) << "# "
-               << std::setw(width-2)<< "eddyVMod"
-               << std::setw(width) << GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyViscosityModel)
-               << " - " << std::setw(width*2-3) << std::left  << eddyViscosityModelName() << std::right;
+//         stream << "# time end" << std::endl;
+        stream << "#globalPos[0]"
+               << "," << "globalPos[1]"
+               << "," << "uPlus"
+               << "," << "yPlus"
+               << "," << "uStar"
+               << "," << "eddyViscosity"
+               << "," << "mixingLength";
     }
 
     /*!
-     * \brief Writes property names to wall-data header.
+     * \brief Writes the data into the fluxVarsData.csv file
      *
-     * \param stream Output Filestream.
-     * \param posIdx Position Index of current Global Position.
-     * \param wallIdx Wall Index of current Global Position.
+     * \param stream The output file stream
      */
-    void writeWallHeader(std::stringstream &stream, int posIdx, int wallIdx)
+    void writeFluxVarsData(std::ofstream &stream, const FluxVariables &fluxVars)
     {
-        stream << std::setprecision(prec) << "# "
-               << std::setw(width-4) << "wall[" << wallIdx << "]"
-               << std::setw(width) << "u_*[m/s]:"
-               << std::setw(width) << std::sqrt(wall[wallIdx].wallShearStress[posIdx] / wall[wallIdx].wallDensity[posIdx])
-               << std::setw(width) << "vs_5[m]:"
-               << std::setw(width) << 5.0 * wall[wallIdx].wallKinematicViscosity[posIdx]
-                                      / std::sqrt(wall[wallIdx].wallShearStress[posIdx] / wall[wallIdx].wallDensity[posIdx])
-               << std::setw(width) << "bl_tot[m]:"
-               << std::setw(width) << std::abs(wall[wallIdx].boundaryLayerThickness[posIdx])
-               << std::setw(width) << "ks_+[-]:"
-               << std::setw(width) << wall[wallIdx].sandGrainRoughness[posIdx]
-                                      * std::sqrt(std::abs(wall[wallIdx].wallVelGrad[posIdx]) * wall[wallIdx].wallKinematicViscosity[posIdx])
-                                      / wall[wallIdx].wallKinematicViscosity[posIdx]
-               << std::setw(width) << "velGrad[1/s]:"
-               << std::setw(width) << wall[wallIdx].wallVelGrad[posIdx]
-               << std::setw(width) << "nu[m^2/s]:"
-               << std::setw(width) << wall[wallIdx].wallKinematicViscosity[posIdx]
-               << std::setw(width) << "rho[kg/m^3]:"
-               << std::setw(width) << wall[wallIdx].wallDensity[posIdx]
-               << std::setw(width) << "tau[Pa]:"
-               << std::setw(width) << wall[wallIdx].wallShearStress[posIdx];
+        stream << fluxVars.globalPos()[0]
+               << "," << fluxVars.globalPos()[1]
+               << "," << fluxVars.uPlus()
+               << "," << fluxVars.yPlusRough()
+               << "," << fluxVars.frictionVelocityWall()
+               << "," << fluxVars.dynamicEddyViscosity()
+               << "," << fluxVars.mixingLength();
     }
 
     /*!
-     * \brief Writes property names to scv-data header.
-     *
-     * \param stream Output Filestream.
-     * \param posIdx Position Index of current Global Position.
+     * \name Wall properties
      */
-    void writeDataHeader(std::stringstream &stream, int posIdx)
-    {
-        stream << std::setw(1) << "#" << std::setw(width-1);
-        for (int numIdx = 1; numIdx < 30; ++numIdx)
-            stream << numIdx << std::setw(width);
-        stream << std::endl;
-        stream << std::setw(1) << "#" << std::setw(width-1) << "x [m]"
-               << std::setw(width) << "y [m]"
-               << std::setw(width) << "u [m/s]"
-               << std::setw(width) << "v [m/s]"
-               << std::setw(width) << "u/u_max [-]"
-               << std::setw(width) << "v/v_max [-]"
-               << std::setw(width) << "y^+ [-]"
-               << std::setw(width) << "u^+ [-]"
-               << std::setw(width) << "velGrad [1/s]"
-               << std::setw(width) << "rho [kg/m^3]"
-               << std::setw(width) << "nu [m^2/s]"
-               << std::setw(width) << "nu_t [m^2/s]";
-    }
-
-    /*!
-     * \brief Writes values to scv-data.
-     *
-     * \param stream Output Filestream.
-     * \param volVars Volume Variables of current scv.
-     * \param fluxVars Flux Variables of current element.
-     * \param globalPos Global Position.
-     */
-    void writeSCVDataValues(std::stringstream &stream, const VolumeVariables &volVars, const FluxVariables &fluxVars, const GlobalPosition &globalPos)
-    {
-        int posIdx = getPosIdx(globalPos);
-        int wallIdx = getWallIdx(globalPos, posIdx);
-        stream << std::setw(width) << std::setprecision(prec+1) << globalPos[0]
-               << std::setw(width) << globalPos[1]
-               << std::setw(width) << std::setprecision(prec) << fluxVars.velocity()[0]
-               << std::setw(width) << fluxVars.velocity()[1]
-               << std::setw(width) << fluxVars.velocity()[0] / wall[wallIdx].maxVelocityAbs[posIdx][0]
-               << std::setw(width) << fluxVars.velocity()[1] / wall[wallIdx].maxVelocityAbs[posIdx][1]
-               << std::setw(width) << fluxVars.frictionVelocityWall() * std::abs(wall[wallIdx].wallPos[posIdx] - globalPos[wallNormal_]) / fluxVars.kinematicViscosity()
-               << std::setw(width) << fluxVars.velocity()[flowNormal_] / fluxVars.frictionVelocityWall()
-               << std::setw(width) << fluxVars.velocityGrad()[flowNormal_][wallNormal_]
-               << std::setw(width) << fluxVars.density()
-               << std::setw(width) << fluxVars.dynamicViscosity() / fluxVars.density()
-               << std::setw(width) << fluxVars.dynamicEddyViscosity() / fluxVars.density();
-    }
-
-
-
-    /**********************************
-     * WALL PROPERTIES
-     * ---------------
-     * This section contains functions which treat the wall handling.
-     */
+    // \{
 
      /*!
      * \brief Container for all necessary information, needed to calculate the
@@ -758,7 +581,6 @@ public:
     void updateMaxFluxVars()
     {
         FVElementGeometry fvGeometry;
-        ElementBoundaryTypes elemBcTypes;
 
         ElementIterator eIt = this->gridView_().template begin<0>();
         ElementIterator eEndIt = this->gridView_().template end<0>();
@@ -766,7 +588,6 @@ public:
         for (; eIt != eEndIt; ++eIt)
         {
             fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
@@ -825,7 +646,7 @@ public:
         if (wall[wallIdx].fMax[posIdx] < fluxVars.fz())
         {
             wall[wallIdx].fMax[posIdx] = fluxVars.fz();
-            wall[wallIdx].yMax[posIdx] = distanceToWallReal(globalPos, wallIdx, posIdx);
+            wall[wallIdx].yMax[posIdx] = distanceToWallRough(globalPos, wallIdx, posIdx);
 //            // if the values in the middle should be set on both wall
 //            for (int wIdx = 0; wIdx < walls; ++wIdx)
 //                if (std::abs(distanceToWall(globalPos, wIdx, posIdx)) < std::abs(wall[wIdx].boundaryLayerThickness[posIdx] + 1e-4))
@@ -842,14 +663,12 @@ public:
     void updateCrossLength()
     {
         FVElementGeometry fvGeometry;
-        ElementBoundaryTypes elemBcTypes;
         ElementIterator eIt = this->gridView_().template begin<0>();
         ElementIterator eEndIt = this->gridView_().template end<0>();
 
         for (; eIt != eEndIt; ++eIt)
         {
             fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
@@ -858,9 +677,9 @@ public:
                                false);
 
             IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
-            const IntersectionIterator &endIt = this->gridView_().iend(*eIt);
+            const IntersectionIterator &isEndIt = this->gridView_().iend(*eIt);
 
-            for (; isIt != endIt; ++isIt)
+            for (; isIt != isEndIt; ++isIt)
             {
                 int fIdx = isIt->indexInInside();
                 FluxVariables fluxVars(this->problem_(),
@@ -875,19 +694,28 @@ public:
                 int wallIdx = getWallIdx(globalPos, posIdx);
 
                 // muCross
-                if (fluxVars.dynamicEddyViscosityOuter() < fluxVars.dynamicEddyViscosityInner() && useViscosityInner(globalPos, posIdx))
-                    wall[wallIdx].crossLength[posIdx] = distanceToWallReal(globalPos, wallIdx, posIdx) - eps_ * std::abs(distanceToWallReal(globalPos, wallIdx, posIdx) / distanceToWallReal(globalPos, wallIdx, posIdx));
+                if (fluxVars.dynamicEddyViscosityOuter() < fluxVars.dynamicEddyViscosityInner()
+                    && useViscosityInner(globalPos, posIdx))
+                {
+                    wall[wallIdx].crossLength[posIdx] = distanceToWallReal(globalPos, wallIdx, posIdx);
+                }
 
                 if (std::abs(fluxVars.velocity()[flowNormal_]) >= 0.99 * std::abs(wall[wallIdx].maxVelocity[posIdx][flowNormal_])
                     && std::abs(wall[wallIdx].boundaryLayerThicknessCalculated[posIdx]) > std::abs(distanceToWallReal(globalPos, wallIdx, posIdx)))
+                {
                     wall[wallIdx].boundaryLayerThicknessCalculated[posIdx] = distanceToWallReal(globalPos, wallIdx, posIdx);
+                }
 
                 if (wall[wallIdx].maxVelocity[posIdx][flowNormal_] * globalPos[flowNormal_] / fluxVars.kinematicViscosity() < 2300)
+                {
                     wall[wallIdx].viscousSublayerThicknessCalculated[posIdx] = wall[wallIdx].boundaryLayerThicknessCalculated[posIdx];
+                }
                 else if ((fluxVars.velocity()[flowNormal_] / fluxVars.frictionVelocityWall() <= 5.0)
                          && (std::abs(wall[wallIdx].viscousSublayerThicknessCalculated[posIdx])
                              < std::abs(distanceToWallReal(globalPos, wallIdx, posIdx))))
+                {
                     wall[wallIdx].viscousSublayerThicknessCalculated[posIdx] = distanceToWallReal(globalPos, wallIdx, posIdx);
+                }
             }
         }
     }
@@ -898,7 +726,6 @@ public:
     void updateWallFluidProperties()
     {
         FVElementGeometry fvGeometry;
-        ElementBoundaryTypes elemBcTypes;
 
         ElementIterator eIt = this->gridView_().template begin<0>();
         ElementIterator eEndIt = this->gridView_().template end<0>();
@@ -915,8 +742,8 @@ public:
 
             const ReferenceElement &refElement = ReferenceElements::general(eIt->geometry().type());
             IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
-            const IntersectionIterator &endIt = this->gridView_().iend(*eIt);
-            for (; isIt != endIt; ++isIt)
+            const IntersectionIterator &isEndIt = this->gridView_().iend(*eIt);
+            for (; isIt != isEndIt; ++isIt)
             {
                 // handle only faces on the boundary
                 if (!isIt->boundary())
@@ -1123,6 +950,8 @@ public:
         return (prevValue + (nextValue - prevValue) / (next - prev) * (position - prev));
     }
 
+    // \} // wall properties
+
     /*!
      * \brief Returns whether the actual eddy viscosity model includes surface roughness approach.
      *
@@ -1176,8 +1005,6 @@ protected:
 private:
     const int flowNormal_;
     const int wallNormal_;
-    Scalar writeAllSCVData_;
-    Scalar scvDataCoordinateDelta_;
     Scalar eps_;
 };
 

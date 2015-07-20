@@ -58,7 +58,6 @@ NEW_PROP_TAG(ZeroEqBBoxMinSandGrainRoughness); //!< Sets a sand grain roughness 
 NEW_PROP_TAG(ZeroEqBBoxMaxSandGrainRoughness); //!< Sets a sand grain roughness at BBoxMax
 NEW_PROP_TAG(ZeroEqEddyViscosityModel); //!< Returns used eddy viscosity model
 NEW_PROP_TAG(NumberOfIntervals); //!< Returns number of wall intervals
-NEW_PROP_TAG(ZeroEqWriteAllSCVData); //!< Returns which scv data are written
 NEW_PROP_TAG(BaseStokesModel); //!< Returns the base implementation of the Stokes model
 NEW_PROP_TAG(BaseStokesVolumeVariables); //!< Returns the base implementation of the Stokes volume variables
 NEW_PROP_TAG(BaseStokesFluxVariables); //!< Returns the base implementation of the Stokes flux variables

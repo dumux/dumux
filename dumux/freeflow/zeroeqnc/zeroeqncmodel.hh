@@ -85,33 +85,24 @@ class ZeroEqncModel : public ZeroEqModel<TypeTag>
         dimWorld = GridView::dimensionworld,
         intervals = GET_PROP_VALUE(TypeTag, NumberOfIntervals),
         walls = (GET_PROP_VALUE(TypeTag, BBoxMinIsWall) ? 1 : 0)
-                + (GET_PROP_VALUE(TypeTag, BBoxMaxIsWall) ? 1 : 0),
-        prec = Indices::scvDataPrecision, // precision of scv data
-        width = Indices::scvDataWidth // width of column
+                + (GET_PROP_VALUE(TypeTag, BBoxMaxIsWall) ? 1 : 0)
     };
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { transportCompIdx = Indices::transportCompIdx,
            numComponents = Indices::numComponents };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
@@ -137,36 +128,41 @@ public:
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
-
-        const Scalar scale_ = GET_PROP_VALUE(TypeTag, Scaling);
+        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
 
         // create the required scalar fields
         unsigned numVertices = this->gridView_().size(dim);
+        unsigned numElements = this->gridView_().size(0);
         ScalarField &pN = *writer.allocateManagedBuffer(numVertices);
         ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
-
         ScalarField *moleFraction[numComponents];
+        ScalarField *massFraction[numComponents];
+        ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
+        VectorField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
+        ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &D = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &mut = *writer.allocateManagedBuffer(numElements);
+        ScalarField &lmix = *writer.allocateManagedBuffer(numElements);
+        ScalarField &uPlus = *writer.allocateManagedBuffer(numElements);
+        ScalarField &yPlus = *writer.allocateManagedBuffer(numElements);
+        ScalarField &Dt = *writer.allocateManagedBuffer(numElements);
+        ScalarField &rank = *writer.allocateManagedBuffer(numElements);
         for (int i = 0; i < numComponents; ++i)
             moleFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
-        ScalarField *massFraction[numComponents];
         for (int i = 0; i < numComponents; ++i)
             massFraction[i] = writer.template allocateManagedBuffer<Scalar, 1>(numVertices);
 
-        ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
-        VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
-
-        unsigned numElements = this->gridView_().size(0);
-        ScalarField &rank = *writer.allocateManagedBuffer(numElements);
+        // write volume values to .vtu and .csv
+        std::ofstream volVarsFile("volVarsData.csv", std::ios_base::out);
+        asImp_().writeVolVarsHeader(volVarsFile);
+        volVarsFile << std::endl;
 
         FVElementGeometry fvGeometry;
-        VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
+        VolumeVariables volVars;
 
         ElementIterator eIt = this->gridView_().template begin<0>();
         ElementIterator eEndIt = this->gridView_().template end<0>();
-
         for (; eIt != eEndIt; ++eIt)
         {
             int idx = this->elementMapper().map(*eIt);
@@ -186,8 +182,8 @@ public:
                                i,
                                false);
 
-                pN[vIdxGlobal] = volVars.pressure()*scale_;
-                delP[vIdxGlobal] = volVars.pressure()*scale_ - 1e5;
+                pN[vIdxGlobal] = volVars.pressure();
+                delP[vIdxGlobal] = volVars.pressure() - 1e5;
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
                     (*moleFraction[compIdx])[vIdxGlobal]= volVars.moleFraction(compIdx);
@@ -195,10 +191,13 @@ public:
                     Valgrind::CheckDefined((*moleFraction[compIdx])[vIdxGlobal]);
                     Valgrind::CheckDefined((*massFraction[compIdx])[vIdxGlobal]);
                 }
-                rho[vIdxGlobal] = volVars.density()*scale_*scale_*scale_;
-                mu[vIdxGlobal] = volVars.dynamicViscosity()*scale_;
+                rho[vIdxGlobal] = volVars.density();
+                mu[vIdxGlobal] = volVars.dynamicViscosity();
+                D[vIdxGlobal] = volVars.diffusionCoeff(transportCompIdx);
                 velocity[vIdxGlobal] = volVars.velocity();
-                velocity[vIdxGlobal] *= 1/scale_;
+
+                asImp_().writeVolVarsData(volVarsFile, volVars);
+                volVarsFile << std::endl;
             }
         }
         writer.attachVertexData(pN, "P");
@@ -215,22 +214,26 @@ public:
                      << "^" << FluidSystem::componentName(j);
             writer.attachVertexData(*massFraction[j], massFrac.str().c_str());
         }
+        volVarsFile.close();
 
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");
+        writer.attachVertexData(D, "D");
         writer.attachVertexData(velocity, "v", dim);
 
-
-        // just to have the actual values plotted
+        // ensure that the actual values are given out
         asImp_().updateWallProperties();
+
+        // write flux values to .vtu and .csv
+        std::ofstream fluxFile("fluxVarsData.csv", std::ios_base::out);
+        asImp_().writeFluxVarsHeader(fluxFile);
+        fluxFile << std::endl;
 
         eIt = this->gridView_().template begin<0>();
         eEndIt = this->gridView_().template end<0>();
-
         for (; eIt != eEndIt; ++eIt)
         {
             fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
@@ -238,72 +241,67 @@ public:
                                fvGeometry,
                                false);
 
-            IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
-            const IntersectionIterator &endIt = this->gridView_().iend(*eIt);
+            unsigned int numFluxVars = 0;
+            Scalar sumDynamicEddyViscosity = 0.0;
+            Scalar sumMixingLength = 0.0;
+            Scalar sumUPlus = 0.0;
+            Scalar sumYPlus = 0.0;
+            Scalar sumEddyDiffusivity = 0.0;
 
-            for (; isIt != endIt; ++isIt)
+            IntersectionIterator isIt = this->gridView_().ibegin(*eIt);
+            IntersectionIterator isEndIt = this->gridView_().iend(*eIt);
+            for (; isIt != isEndIt; ++isIt)
             {
                 int fIdx = isIt->indexInInside();
 
-                FluxVariables fluxVars(this->problem_(),
-                                                    *eIt,
-                                                    fvGeometry,
-                                                    fIdx,
-                                                    elemVolVars,
-                                                    false);
+                FluxVariables fluxVars(this->problem_(), *eIt, fvGeometry,
+                                       fIdx, elemVolVars, false);
 
-                GlobalPosition globalPos = fvGeometry.subContVolFace[fIdx].ipGlobal;
+                asImp_().writeFluxVarsData(fluxFile, fluxVars);
+                fluxFile << std::endl;
 
-                if (asImp_().shouldWriteSCVData(globalPos))
-                asImp_().writeSCVData(volVars, fluxVars, globalPos);
+                sumDynamicEddyViscosity += fluxVars.dynamicEddyViscosity();
+                sumMixingLength += fluxVars.mixingLength();
+                sumUPlus += fluxVars.uPlus();
+                sumYPlus += fluxVars.yPlusRough();
+                sumEddyDiffusivity += fluxVars.eddyDiffusivity();
+                numFluxVars += 1;
             }
+
+            int eIdxGlobal = this->elementMapper().map(*eIt);
+            mut[eIdxGlobal] = sumDynamicEddyViscosity / numFluxVars;
+            lmix[eIdxGlobal] = sumMixingLength / numFluxVars;
+            uPlus[eIdxGlobal] = sumUPlus / numFluxVars;
+            yPlus[eIdxGlobal] = sumYPlus / numFluxVars;
+            Dt[eIdxGlobal] = sumEddyDiffusivity / numFluxVars;
         }
+        fluxFile.close();
+
+        writer.attachCellData(mut, "mu_t");
+        writer.attachCellData(lmix, "l_mix");
+        writer.attachCellData(uPlus, "u^+");
+        writer.attachCellData(yPlus, "y^+");
+        writer.attachCellData(Dt, "D_t");
     }
 
-    //! \copydoc ZeroEqModel::writeSCVHeader
-    void writeSCVHeader(std::stringstream &stream, const FluxVariables &fluxVars, const GlobalPosition &globalPos)
+    //! \copydoc ZeroEqModel::writeFluxVarsHeader
+    void writeFluxVarsHeader(std::ofstream &stream)
     {
-        ParentType::writeSCVHeader(stream, fluxVars, globalPos);
-
-        stream << std::setw(width) << "eddyDMod"
-               << std::setw(width) << GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyDiffusivityModel)
-               << " - " << std::setw(width*2-3) << std::left  << eddyDiffusivityModelName() << std::right;
+        ParentType::writeFluxVarsHeader(stream);
+        stream << "," << "eddyDiffusivity";
     }
 
-    //! \copydoc ZeroEqModel::writeDataHeader
-    void writeDataHeader(std::stringstream &stream, int posIdx)
+    //! \copydoc ZeroEqModel::writeFluxVarsData
+    void writeFluxVarsData(std::ofstream &stream, const FluxVariables &fluxVars)
     {
-        ParentType::writeDataHeader(stream, posIdx);
-
-        stream << std::setw(width) << "X [kg/kg]"
-               << std::setw(width) << "X/X_max [-]"
-               << std::setw(width) << "N [mol/mol]"
-               << std::setw(width) << "N/N_max [-]"
-               << std::setw(width) << "NGrad [mol/m]"
-               << std::setw(width) << "D [m^2/s]"
-               << std::setw(width) << "D_t [m^2/s]"
-               << std::setw(width) << "Sc [-]"
-               << std::setw(width) << "Sc_t [-]";
+        ParentType::writeFluxVarsData(stream, fluxVars);
+        stream << "," << fluxVars.eddyDiffusivity();
     }
 
-    //! \copydoc ZeroEqModel::writeSCVDataValues
-    void writeSCVDataValues(std::stringstream &stream, const VolumeVariables &volVars, const FluxVariables &fluxVars, const GlobalPosition &globalPos)
-    {
-        ParentType::writeSCVDataValues(stream, volVars, fluxVars, globalPos);
-
-        int posIdx = this->getPosIdx(globalPos);
-        int wallIdx = this->getWallIdx(globalPos, posIdx);
-        stream << std::setprecision(prec)
-               << std::setw(width) << fluxVars.massFraction(transportCompIdx)
-               << std::setw(width) << fluxVars.massFraction(transportCompIdx) / this->wall[wallIdx].maxMassFraction[posIdx]
-               << std::setw(width) << fluxVars.moleFraction(transportCompIdx)
-               << std::setw(width) << fluxVars.moleFraction(transportCompIdx) / this->wall[wallIdx].maxMoleFraction[posIdx]
-               << std::setw(width) << fluxVars.moleFractionGrad(transportCompIdx)[wallNormal_]
-               << std::setw(width) << fluxVars.diffusionCoeff(transportCompIdx)
-               << std::setw(width) << fluxVars.eddyDiffusivity()
-               << std::setw(width) << fluxVars.schmidtNumber()
-               << std::setw(width) << fluxVars.turbulentSchmidtNumber();
-    }
+    /*!
+     * \name Wall properties
+     */
+    // \{
 
     //! \copydoc ZeroEqModel::resetWallProperties
     void resetWallProperties()
@@ -343,6 +341,8 @@ public:
         this->wall[wallIdx].maxMassFraction[posIdx] = this->interpolation(posIdx, prevIdx, this->wall[wallIdx].maxMassFraction[prevIdx], nextIdx, this->wall[wallIdx].maxMassFraction[nextIdx]);
         this->wall[wallIdx].maxMoleFraction[posIdx] = this->interpolation(posIdx, prevIdx, this->wall[wallIdx].maxMoleFraction[prevIdx], nextIdx, this->wall[wallIdx].maxMoleFraction[nextIdx]);
     }
+
+    // \} // wall properties
 
     /*!
      * \brief Returns the name of used the eddy diffusivity model.

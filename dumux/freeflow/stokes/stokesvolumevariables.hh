@@ -52,7 +52,7 @@ class StokesVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     enum {
         dim = GridView::dimension,
-
+        dimWorld = GridView::dimensionworld,
         momentumXIdx = Indices::momentumXIdx,
         lastMomentumIdx = Indices::lastMomentumIdx,
         pressureIdx = Indices::pressureIdx
@@ -67,6 +67,7 @@ class StokesVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     /*!
@@ -88,6 +89,7 @@ public:
 
         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_, isOldSol);
 
+        globalPos_ = fvGeometry.subContVol[scvIdx].global;
         for (int dimIdx=momentumXIdx; dimIdx<=lastMomentumIdx; ++dimIdx)
             velocity_[dimIdx] = priVars[dimIdx];
     }
@@ -138,12 +140,17 @@ public:
     { return fluidState_; }
 
     /*!
+     * \brief Returns the global position for the control-volume.
+     */
+    const GlobalPosition globalPos() const
+    { return globalPos_; }
+
+    /*!
      * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the fluid within the
      *        sub-control volume.
      */
     Scalar density() const
     { return fluidState_.density(phaseIdx); }
-
 
     /*!
      * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ of the fluid within the
@@ -204,6 +211,7 @@ protected:
     }
 
     DimVector velocity_;
+    GlobalPosition globalPos_;
     FluidState fluidState_;
 
 private:

@@ -65,9 +65,6 @@ SET_TYPE_PROP(ZeroEqTestProblem, Fluid,
 
 // Disable gravity
 SET_BOOL_PROP(ZeroEqTestProblem, ProblemEnableGravity, false);
-
-// Write sub-control volume data only at x=0.8875 in dimensionless coordinates
-SET_SCALAR_PROP(ZeroEqTestProblem, ZeroEqWriteAllSCVData, .8875);
 }
 
 /*!

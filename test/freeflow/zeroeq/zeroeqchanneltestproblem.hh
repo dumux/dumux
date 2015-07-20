@@ -66,9 +66,6 @@ SET_BOOL_PROP(ZeroEqChannelTestProblem, ProblemEnableGravity, false);
 // Set only bottom as wall
 SET_BOOL_PROP(ZeroEqChannelTestProblem, BBoxMaxIsWall, false);
 
-// Do not write sub-control volume data
-SET_SCALAR_PROP(ZeroEqChannelTestProblem, ZeroEqWriteAllSCVData, -1);
-
 #if HAVE_UMFPACK
 // Use UMFPack as linear solver
 SET_TYPE_PROP(ZeroEqChannelTestProblem, LinearSolver, UMFPackBackend<TypeTag>);

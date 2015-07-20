@@ -74,16 +74,15 @@ public:
         , eddyViscosityModel_(GET_PARAM_FROM_GROUP(TypeTag, int, ZeroEq, EddyViscosityModel))
         , karmanConstant_(GET_PROP_VALUE(TypeTag, KarmanConstant))
     {
-        DimVector globalPos = this->face().ipGlobal;
         dynamicEddyViscosity_ = 0.0;
         mixingLength_ = 0.0;
         dynamicEddyViscosityInner_ = 0.0;
         dynamicEddyViscosityOuter_ = 0.0;
         fz_ = 0.0;
-        posIdx_ = problem.model().getPosIdx(globalPos);
-        wallIdx_ = problem.model().getWallIdx(globalPos, posIdx_);
-        distanceToWallRough_ = std::abs(problem.model().distanceToWallRough(globalPos, wallIdx_, posIdx_));
-        distanceToWallReal_ = std::abs(problem.model().distanceToWallReal(globalPos, wallIdx_, posIdx_));
+        posIdx_ = problem.model().getPosIdx(globalPos());
+        wallIdx_ = problem.model().getWallIdx(globalPos(), posIdx_);
+        distanceToWallRough_ = std::abs(problem.model().distanceToWallRough(globalPos(), wallIdx_, posIdx_));
+        distanceToWallReal_ = std::abs(problem.model().distanceToWallReal(globalPos(), wallIdx_, posIdx_));
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
             maxVelocity_[dimIdx] = problem.model().wall[wallIdx_].maxVelocity[posIdx_][dimIdx];
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
@@ -209,7 +208,13 @@ protected:
 
 public:
     /*!
-     * \brief Returns the mixing length \f$\mathrm{[m]}\f$ for the element center.
+     * \brief Returns the global coordinates of the integration point.
+     */
+    DimVector globalPos() const
+    { return this->face().ipGlobal; }
+
+    /*!
+     * \brief Returns the mixing length \f$\mathrm{[m]}\f$.
      */
     Scalar mixingLength() const
     { return mixingLength_; }
@@ -274,6 +279,12 @@ public:
      */
     Scalar yPlusRough() const
     { return yPlusRough_; }
+
+    /*!
+     * \brief Returns a dimensionless velocity \f$\mathrm{[-]}\f$.
+     */
+    Scalar uPlus() const
+    { return this->velocity()[flowNormal_] / frictionVelocityWall(); }
 
     /*!
      * \brief Returns the Karman constant \f$\mathrm{[-]}\f$.

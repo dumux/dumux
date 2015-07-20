@@ -82,9 +82,6 @@ SET_INT_PROP(BoxZeroEq, ZeroEqEddyViscosityModel, 1);
 //! Set the number of wall intervals in which more complex turbulence models are evaluated
 SET_INT_PROP(BoxZeroEq, NumberOfIntervals, 1000);
 
-//! Set which scv data files should be written (<0 - no, 1> all)
-SET_SCALAR_PROP(BoxZeroEq, ZeroEqWriteAllSCVData, -1);
-
 //! Set the BaseStokesFluxVariables to StokesFluxVariables
 SET_TYPE_PROP(BoxZeroEq, BaseStokesFluxVariables, StokesFluxVariables<TypeTag>);
 
