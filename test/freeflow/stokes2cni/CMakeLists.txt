@@ -1,14 +1,15 @@
+add_input_file_links()
+
 add_dumux_test(test_stokes2cni test_stokes2cni test_stokes2cni.cc
-  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
-  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
-  ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-reference.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/stokes2cni-00008.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni)
+               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+                  --script fuzzy
+                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni"
+                  --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-reference.vtu
+                          ${CMAKE_CURRENT_BINARY_DIR}/stokes2cni-00008.vtu)
 
 add_dumux_test(test_stokes2cni_conduction test_stokes2cni test_stokes2cni.cc
-  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
-  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
-  ${CMAKE_SOURCE_DIR}/test/references/stokes2cni_conduction-reference.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/stokes2cni_conduction-00008.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni
-  -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_stokes2cni_conduction.input)
+               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+                  --script fuzzy
+                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_stokes2cni_conduction.input"
+                  --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni_conduction-reference.vtu
+                          ${CMAKE_CURRENT_BINARY_DIR}/stokes2cni_conduction-00006.vtu)
