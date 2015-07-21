@@ -8,6 +8,7 @@ set(TEX_INPUTS
   3_tutorial.tex
   3_tutorialcoupled.tex
   3_tutorialdecoupled.tex
+  4_grids.tex
   4_guidelines.tex
   4_newfoldersetup.tex
   4_newtoninanutshell.tex
