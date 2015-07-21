@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the two-phase n-component mineralisation box model.
+ *        using the two-phase n-component box model.
  */
 
 #ifndef DUMUX_2PNC_LOCAL_RESIDUAL_BASE_HH

@@ -40,7 +40,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the isothermal two phase n component mineralisation problems
+//! The type tag for the isothermal two phase n component problems
 NEW_TYPE_TAG(BoxTwoPNC, INHERITS_FROM(BoxModel));
 
 //////////////////////////////////////////////////////////////////

@@ -196,7 +196,7 @@ public:
 #endif        
         int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
 
-    /////////////
+        /////////////
         // set the saturations
         /////////////
 
@@ -217,7 +217,7 @@ public:
         fluidState.setSaturation(nPhaseIdx, Sg);
         fluidState.setSaturation(wPhaseIdx, 1.0 - Sg);
 
-            /////////////
+        /////////////
         // set the pressures of the fluid phases
         /////////////
 
@@ -235,7 +235,7 @@ public:
         }
         else if (formulation == pgSl) {
             fluidState.setPressure(nPhaseIdx, primaryVariables[pressureIdx]);
-    // Here we check for (p_g - pc) in order to ensure that (p_l > 0)
+            // Here we check for (p_g - pc) in order to ensure that (p_l > 0)
             if (primaryVariables[pressureIdx] - pc < 0.0)
             {
                 std::cout<< "p_g: "<< primaryVariables[pressureIdx]<<" Cap_press: "<< pc << std::endl;

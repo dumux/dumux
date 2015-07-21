@@ -26,7 +26,6 @@
 #define DUMUX_2PNC_MODEL_HH
 
 #include <dune/common/version.hh>
-// #include <dumux/material/constants.hh>
 
 #include "2pncproperties.hh"
 #include "2pncindices.hh"
