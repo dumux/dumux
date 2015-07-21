@@ -173,7 +173,7 @@ public:
         if (onUpperBoundary_(globalPos))
         {
             values.setNeumann(momentumXIdx);
-            values.setDirichlet(velocityYIdx, momentumYIdx);
+            values.setDirichlet(velocityYIdx);
         }
 
         if (onRightBoundary_(globalPos))
@@ -187,7 +187,7 @@ public:
 
         // set pressure on left boundary (at least at one point)
         if (onRightBoundary_(globalPos))
-            values.setDirichlet(pressureIdx, massBalanceIdx);
+            values.setDirichlet(pressureIdx);
     }
 
     //! \copydoc ImplicitProblem::dirichletAtPos()

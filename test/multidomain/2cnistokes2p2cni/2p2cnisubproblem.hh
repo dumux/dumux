@@ -254,9 +254,7 @@ public:
 
         if (onLowerBoundary_(globalPos))
         {
-//        	values.setAllDirichlet();
-//        	values.setDirichlet(pressureIdx, contiTotalMassIdx);
-        	values.setDirichlet(temperatureIdx, energyEqIdx);
+            values.setDirichlet(temperatureIdx);
         }
 
         if (onUpperBoundary_(globalPos))
@@ -272,7 +270,6 @@ public:
             }
             else
             {
-//                values.setAllDirichlet();
                 values.setAllNeumann();
             }
         }

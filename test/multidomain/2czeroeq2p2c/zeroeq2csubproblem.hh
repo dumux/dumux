@@ -250,7 +250,7 @@ public:
         values.setOutflow(massBalanceIdx);
 
         if (onRightBoundary_(globalPos))
-            values.setDirichlet(pressureIdx, massBalanceIdx);
+            values.setDirichlet(pressureIdx);
     }
 
     //! \copydoc ImplicitProblem::dirichletAtPos()

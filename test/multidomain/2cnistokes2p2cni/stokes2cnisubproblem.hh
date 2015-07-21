@@ -219,7 +219,7 @@ public:
             if (useDirichletBC_)
             {
                 values.setNeumann(transportEqIdx);
-                values.setDirichlet(temperatureIdx, energyEqIdx);
+                values.setDirichlet(temperatureIdx);
             }
             else
             {
@@ -234,8 +234,8 @@ public:
         {
             if (useDirichletBC_)
             {
-                values.setDirichlet(massOrMoleFracIdx, transportEqIdx);
-                values.setDirichlet(temperatureIdx, energyEqIdx);
+                values.setDirichlet(massOrMoleFracIdx);
+                values.setDirichlet(temperatureIdx);
             }
             else
             {
@@ -260,7 +260,7 @@ public:
             if (useDirichletBC_)
             {
                 values.setNeumann(transportEqIdx);
-                values.setDirichlet(temperatureIdx, energyEqIdx);
+                values.setDirichlet(temperatureIdx);
             }
             else
             {
@@ -273,7 +273,6 @@ public:
             if (globalPos[0] > runUpDistanceX_-eps_ && time > initializationTime_)
             {
                 values.setAllCouplingOutflow();
-//                values.setCouplingInflow(energyEqIdx);
             }
         }
 
@@ -286,10 +285,10 @@ public:
         if (onRightBoundary_(globalPos))
         {
             if (time > initializationTime_)
-                values.setDirichlet(pressureIdx, massBalanceIdx);
+                values.setDirichlet(pressureIdx);
             else
                 if (!onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
-                    values.setDirichlet(pressureIdx, massBalanceIdx);
+                    values.setDirichlet(pressureIdx);
         }
     }
 

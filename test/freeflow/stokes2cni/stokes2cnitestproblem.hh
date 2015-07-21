@@ -178,7 +178,7 @@ public:
         // set pressure at the upper boundary
         if (onUpperBoundary_(globalPos) &&
                 !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
-            values.setDirichlet(massBalanceIdx);
+            values.setDirichlet(pressureIdx);
     }
 
     //! \copydoc ImplicitProblem::dirichletAtPos()

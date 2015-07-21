@@ -243,7 +243,7 @@ public:
             values.setAllNeumann();
 
 #if !ISOTHERMAL
-        values.setDirichlet(temperatureIdx, energyEqIdx);
+        values.setDirichlet(temperatureIdx);
 #endif
     }
 

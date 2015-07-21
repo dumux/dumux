@@ -225,7 +225,7 @@ public:
 
         if (onLowerBoundary_(globalPos))
         {
-            values.setDirichlet(temperatureIdx, energyEqIdx);
+            values.setDirichlet(temperatureIdx);
         }
 
         if (onUpperBoundary_(globalPos))

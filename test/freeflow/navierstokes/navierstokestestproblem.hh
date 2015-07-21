@@ -113,8 +113,9 @@ namespace Dumux
 
       // copy some indices for convenience
       massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance
-      momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
-      momentumYIdx = Indices::momentumYIdx //!< Index of the y-component of the momentum balance
+      pressureIdx = Indices::pressureIdx, //!< Index of the pressure
+      velocityXIdx = Indices::velocityXIdx, //!< Index of the x-component of the velocity
+      velocityYIdx = Indices::velocityYIdx //!< Index of the y-component of the velocity
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -181,13 +182,13 @@ namespace Dumux
                             const GlobalPosition &globalPos) const
       {
         values.setOutflow(massBalanceIdx);
-        values.setDirichlet(momentumXIdx);
-        values.setDirichlet(momentumYIdx);
+        values.setDirichlet(velocityXIdx);
+        values.setDirichlet(velocityYIdx);
 
         // set pressure for all vertices at the bottom
         if (onLowerBoundary_(globalPos))
         {
-          values.setDirichlet(massBalanceIdx);
+          values.setDirichlet(pressureIdx);
         }
       }
 
@@ -276,10 +277,10 @@ namespace Dumux
                     const GlobalPosition &globalPos) const
       {
         // pressure
-        values[massBalanceIdx] = 1e5;
+        values[pressureIdx] = 1e5;
         // velocity in x- and y-direction
-        values[momentumXIdx] = 0.0;
-        values[momentumYIdx] = 0.0;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
       }
 
       bool onLeftBoundary_(const GlobalPosition &globalPos) const

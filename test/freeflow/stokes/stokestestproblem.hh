@@ -165,7 +165,7 @@ public:
         const Scalar middle = (this->bBoxMax()[1] - this->bBoxMin()[1])/2;
         if (onRightBoundary_(globalPos) &&
                 globalPos[1] > middle - eps_ && globalPos[1] < middle + eps_)
-            values.setDirichlet(massBalanceIdx);
+            values.setDirichlet(pressureIdx);
     }
 
     //! \copydoc ImplicitProblem::dirichletAtPos()

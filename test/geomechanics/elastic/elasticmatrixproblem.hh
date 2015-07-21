@@ -150,13 +150,13 @@ public:
                             const GlobalPosition &globalPos) const
     {
         values.setAllNeumann();
-        values.setDirichlet(uyIdx, momentumYEqIdx);
+        values.setDirichlet(uyIdx);
 
         if(globalPos[0] < eps_)
         {
-            values.setDirichlet(uxIdx, momentumXEqIdx);
+            values.setDirichlet(uxIdx);
             if(globalPos[2] < eps_)
-                values.setDirichlet(uzIdx, momentumZEqIdx);
+                values.setDirichlet(uzIdx);
         }
     }
 

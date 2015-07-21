@@ -489,8 +489,8 @@ public:
             values.setDirichlet(uxIdx);
             if(initializationRun_ == false)
             {
-                values.setDirichlet(pressureIdx, contiWEqIdx);
-                values.setDirichlet(saturationIdx, contiNEqIdx);
+                values.setDirichlet(pressureIdx);
+                values.setDirichlet(saturationIdx);
             }
         }
         // The solid displacement normal to the lateral boundaries is fixed.
@@ -499,8 +499,8 @@ public:
             values.setDirichlet(uyIdx);
             if(initializationRun_ == false)
             {
-                values.setDirichlet(pressureIdx, contiWEqIdx);
-                values.setDirichlet(saturationIdx, contiNEqIdx);
+                values.setDirichlet(pressureIdx);
+                values.setDirichlet(saturationIdx);
             }
         }
 
@@ -514,8 +514,8 @@ public:
         // values are only given at the top boundary.
         if(globalPos[2] > this->bBoxMax()[2]-eps_)
         {
-            values.setDirichlet(pressureIdx, contiWEqIdx);
-            values.setDirichlet(saturationIdx, contiNEqIdx);
+            values.setDirichlet(pressureIdx);
+            values.setDirichlet(saturationIdx);
         }
     }
 

@@ -217,16 +217,16 @@ public:
     {
             if (globalPos[0] < this->bBoxMin()[0] + eps_)
             {
-                bcTypes.setDirichlet(pressEqIdx);
-                bcTypes.setDirichlet(satEqIdx);
-//                bcTypes.setAllDirichlet(); // alternative if the same BC is used for both types of equations
+                bcTypes.setDirichlet(pwIdx);
+                bcTypes.setDirichlet(swIdx);
+//                bcTypes.setAllDirichlet(); // alternative if the same BC is used for all primary variables
             }
             // all other boundaries
             else
             {
                 bcTypes.setNeumann(pressEqIdx);
                 bcTypes.setNeumann(satEqIdx);
-//                bcTypes.setAllNeumann(); // alternative if the same BC is used for both types of equations
+//                bcTypes.setAllNeumann(); // alternative if the same BC is used for all equations
             }
     }
     //! Value for dirichlet boundary condition at position globalPos.

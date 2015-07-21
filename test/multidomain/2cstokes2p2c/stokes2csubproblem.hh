@@ -259,10 +259,10 @@ public:
         if (onRightBoundary_(globalPos))
         {
             if (time > initializationTime_)
-                values.setDirichlet(pressureIdx, massBalanceIdx);
+                values.setDirichlet(pressureIdx);
             else 
             	if (!onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
-                	values.setDirichlet(pressureIdx, massBalanceIdx);
+                	values.setDirichlet(pressureIdx);
         }
     }
 

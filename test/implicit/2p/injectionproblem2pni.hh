@@ -253,7 +253,7 @@ public:
 #if !ISOTHERMAL
         // set a dirichlet value for the temperature, use the energy
         // equation to set the value
-        values.setDirichlet(temperatureIdx, energyEqIdx);
+        values.setDirichlet(temperatureIdx);
 #endif
     }
 

@@ -337,7 +337,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
     if (isInlet(globalPos))
     {
         bcTypes.setNeumann(eqIdxPress);
-        bcTypes.setDirichlet(eqIdxSat);
+        bcTypes.setDirichlet(swIdx);
     }
     else if (isBottom(globalPos) || isTop(globalPos))
     {
@@ -345,7 +345,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
     }
     else
     {
-        bcTypes.setDirichlet(eqIdxPress);
+        bcTypes.setDirichlet(pwIdx);
         bcTypes.setOutflow(eqIdxSat);
     }
 #elif  PROBLEM == 0

@@ -212,13 +212,13 @@ public:
         if (onUpperBoundary_(globalPos))
         {
             values.setNeumann(transportEqIdx);
-            values.setDirichlet(temperatureIdx, energyEqIdx);
+            values.setDirichlet(temperatureIdx);
         }
 
         if (onLowerBoundary_(globalPos))
         {
             values.setNeumann(transportEqIdx);
-            values.setDirichlet(temperatureIdx, energyEqIdx);
+            values.setDirichlet(temperatureIdx);
 
             if (globalPos[0] > runUpDistanceX1_ - eps_
                 && globalPos[0] < runUpDistanceX2_ + eps_)
@@ -247,7 +247,7 @@ public:
         if (onRightBoundary_(globalPos))
         {
             values.setAllOutflow();
-            values.setDirichlet(pressureIdx, massBalanceIdx);
+            values.setDirichlet(pressureIdx);
         }
     }
 

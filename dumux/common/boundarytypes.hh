@@ -317,16 +317,15 @@ public:
      * \brief Set a dirichlet boundary condition for a single primary
      *        variable.
      *
-     * WARNING: This method assumes that the equation with the same
-     * index as the primary variable to be set is used to specify the
-     * Dirichlet condition. USE WITH _GREAT_ CARE!
+     * Depending on the discretization, setting the Dirichlet condition
+     * will replace the balance equation with index equal to pvIdx.
      *
-     * \param eqIdx The index of the equation which is assumed to be
-     *              equal to the index of the primary variable
+     * \param pvIdx The index of the primary variable inside a
+     *              PrimaryVariables object.
      */
-    void setDirichlet(int eqIdx)
+    void setDirichlet(int pvIdx)
     {
-        setDirichlet(eqIdx, eqIdx);
+        setDirichlet(pvIdx, pvIdx);
     }
 
     /*!
