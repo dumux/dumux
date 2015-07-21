@@ -23,6 +23,8 @@
 #ifndef DUMUX_ADAPTIVEGRIDRESTART_HH
 #define DUMUX_ADAPTIVEGRIDRESTART_HH
 
+#include <dune/common/deprecated.hh>
+
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
 #if HAVE_ALUGRID
@@ -61,7 +63,9 @@ struct GridRestartCheck<Dune::YaspGrid<dim>, dim>
 };
 
 template<int dim>
-struct GridRestartCheck<Dune::SGrid<dim, dim>, dim>
+struct
+DUNE_DEPRECATED_MSG("SGrid is deprecated in Dune 2.4, use YaspGrid instead.")
+GridRestartCheck<Dune::SGrid<dim, dim>, dim>
 {
     static const bool allowRestart = false;
 };

@@ -58,7 +58,7 @@ namespace Dumux
  *
  *  Remark1: only for 2-D quadrilateral grid
  *
- *  Remark2: implemented for UGGrid, ALUGrid, or SGrid/YaspGrid
+ *  Remark2: implemented for UGGrid, ALUGrid, or YaspGrid
  *
  *\tparam TypeTag The problem Type Tag
  */
@@ -528,8 +528,7 @@ void FvMpfaO2dPressure2p<TypeTag>::initializeMatrix()
             // get 'nextIsIt'
             switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
-            // for SGrid and YaspGrid
-            case GridTypeIndices::sGrid:
+            // for YaspGrid
             case GridTypeIndices::yaspGrid:
             {
                 if (nextIsIt == isEndIt)
@@ -628,8 +627,7 @@ void FvMpfaO2dPressure2p<TypeTag>::initializeMatrix()
             // get 'nextIsIt'
             switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
-            // for SGrid and YaspGrid
-            case GridTypeIndices::sGrid:
+            // for YaspGrid
             case GridTypeIndices::yaspGrid:
             {
                 if (nextIsIt == isEndIt)
@@ -774,8 +772,7 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
             //get isIt14
             switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
-            // for SGrid and YaspGrid
-            case GridTypeIndices::sGrid:
+            // for YaspGrid
             case GridTypeIndices::yaspGrid:
             {
                 if (isIt14 == isIt12End)

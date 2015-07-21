@@ -30,7 +30,6 @@
 // dumux environment
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid/2d/alugrid.hh>
 #include <dune/grid/alugrid/3d/alugrid.hh>
@@ -53,8 +52,6 @@ struct GridTypes
 public:
     //
     static const int any = 0;
-    //SGrid
-    static const int sGrid = 1;
     //YaspGrid
     static const int yaspGrid = 2;
     //UGGrid
@@ -73,12 +70,6 @@ template<int dim>
 struct GridImp<Dune::YaspGrid<dim>, dim>
 {
     static const int imp = GridTypes::yaspGrid;
-};
-
-template<int dim>
-struct GridImp<Dune::SGrid<dim, dim>, dim>
-{
-    static const int imp = GridTypes::sGrid;
 };
 
 #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID

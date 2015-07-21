@@ -39,7 +39,7 @@ namespace Dumux
  *
  * Remark1: only for 2-D quadrilateral grids!
  *
- * Remark2: can use UGGrid, ALUGrid or SGrid/YaspGrid!
+ * Remark2: can use UGGrid, ALUGrid, or YaspGrid
  *
  * \tparam TypeTag The problem Type Tag
  */
