@@ -16,7 +16,7 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
   # if present, copy grids folder
   set(grids_directory ${CMAKE_CURRENT_SOURCE_DIR}/grids)
   if(EXISTS ${grids_directory} AND IS_DIRECTORY ${grids_directory})
-    file(COPY ${grids_directory} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    dune_symlink_to_source_files(FILES grids)
   endif()
 
   # if present, copy input file
@@ -26,7 +26,7 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
     set(input_file ${CMAKE_CURRENT_SOURCE_DIR}/${base_source_name}.input)
   endif()
   if(EXISTS ${input_file})
-    file(COPY ${input_file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    dune_symlink_to_source_files(FILES "${dumux_test_executable}.input")
   endif()
 
   # add executable
