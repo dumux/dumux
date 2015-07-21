@@ -27,8 +27,6 @@
 #ifndef DUMUX_TWOCNISTOKES2P2CNISPATIALPARAMS_HH
 #define DUMUX_TWOCNISTOKES2P2CNISPATIALPARAMS_HH
 
-#include <dune/grid/io/file/vtk/common.hh>
-
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>

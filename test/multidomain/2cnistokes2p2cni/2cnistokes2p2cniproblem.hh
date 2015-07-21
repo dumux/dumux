@@ -245,7 +245,7 @@ public:
     ~TwoCNIStokesTwoPTwoCNIProblem()
     {
         fluxFile_.close();
-    };
+    }
 
     /*!
      * \brief Called by the Dumux::TimeManager in order to

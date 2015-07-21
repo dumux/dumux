@@ -24,13 +24,14 @@
 #ifndef DUMUX_MULTIDOMAIN_PROBLEM_HH
 #define DUMUX_MULTIDOMAIN_PROBLEM_HH
 
+#include <dune/common/deprecated.hh>
+
 #include "multidomainmodel.hh"
 #include "multidomainnewtoncontroller.hh"
 #include "multidomainpropertydefaults.hh"
 #include "subdomainpropertydefaults.hh"
 #include "multidomainassembler.hh"
 
-#include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
 
 
@@ -168,6 +169,7 @@ public:
      * \param dtInitial Initial time step
      * \param tEnd Time, when simulation ends
      */
+    DUNE_DEPRECATED_MSG("Is deprecated and will be removed without replacement.")
     bool simulate(Scalar dtInitial, Scalar tEnd)
     {
         timeManager_.setEndTime(tEnd);

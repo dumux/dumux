@@ -22,6 +22,8 @@ Differences Between DuMuX 2.7 and DuMuX 2.8
 * Deprecated CLASSES/FILES, to be removed after 2.8:
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.8:
+  - The method simulate(Scalar dtInitial, Scalar tEnd) from MultiDomainProblem,
+    it is unused and wil be dropped.
 
 * Deprecated protected MEMBER VARIABLES, to be removed after 2.8: BEWARE: Older
   compilers will not print any warning if a deprecated protected member variable
