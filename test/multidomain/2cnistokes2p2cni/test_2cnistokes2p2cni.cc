@@ -281,12 +281,10 @@ int main(int argc, char** argv)
 
 #else
 
-#warning You need to have dune-multidomain installed to run this test
-
-int main()
+int main(int argc, char** argv)
 {
+#warning You need to have dune-multidomain installed to run this test
     std::cerr << "You need to have dune-multidomain installed to run this test\n";
     return 77;
 }
-
 #endif

@@ -62,11 +62,10 @@ int main(int argc, char** argv)
 }
 
 #else // HAVE_UG
-
 int main(int argc, char** argv)
 {
-    std::cout << "External grid UG needed to run this example." << std::endl;
+#warning External grid UG needed to run this example.
+    std::cerr << "External grid UG needed to run this example." << std::endl;
     return 77;
 }
-
 #endif // HAVE_UG

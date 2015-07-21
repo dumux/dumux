@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     return Dumux::start<TypeTag>(argc, argv, usage);
 #else
 #warning ALUGrid needed for this test.
-    std::cout << "ALUGrid needed for this test. Aborting." << std::endl;
+    std::cerr << "ALUGrid needed for this test. Aborting." << std::endl;
     return 77;
 #endif
 }

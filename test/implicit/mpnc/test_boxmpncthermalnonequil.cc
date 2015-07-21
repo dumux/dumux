@@ -62,7 +62,8 @@ int main(int argc, char** argv)
   typedef TTAG(CombustionProblemOneComponent) ProblemTypeTag;
   return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
-#warning CombustionProblemOneComponent skipped, needs Super LU!
+#warning CombustionProblemOneComponent skipped, needs SuperLU!
+  std::cerr << "CombustionProblemOneComponent skipped, needs SuperLU!" << std::endl;
   return 77;
 #endif
 

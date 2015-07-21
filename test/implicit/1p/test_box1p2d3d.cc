@@ -63,7 +63,8 @@ int main(int argc, char** argv)
     typedef TTAG(OnePTwoDThreeDTestBoxProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
-    std::cout << "Test skipped, it needs Alberta!" << std::endl;
+#warning External grid Alberta needed to run this example.
+    std::cerr << "Test skipped, it needs Alberta!" << std::endl;
     return 77;
 #endif
 }

@@ -66,6 +66,8 @@ int main(int argc, char** argv)
     typedef TTAG(LensCCAdaptiveProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
 #else
+#warning You need dune-ALUGrid to run this test.
+    std::cerr << "You need dune-ALUGrid to run this test." << std::endl;
     return 77;
 #endif
 

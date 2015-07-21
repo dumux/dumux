@@ -63,13 +63,12 @@ int main(int argc, char** argv)
 
 #else
 
-#warning You need to have ALUGrid installed to run this test
-
 #include <iostream>
 
 int main()
 {
-    std::cerr << "You need to have ALUGrid installed to run this test\n";
+#warning You need to have dune-ALUGrid installed to run this test
+    std::cerr << "You need to have dune-ALUGrid installed to run this test\n";
     return 77;
 }
 #endif // HAVE_ALUGRID || HAVE_DUNE_ALUGRID

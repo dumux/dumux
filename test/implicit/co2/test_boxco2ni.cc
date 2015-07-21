@@ -68,10 +68,12 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
 #if !DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-    std::cout << "Test skipped, it needs experimental grid extensions, see optim.opts or debug.opts." << std::endl;
+#warning Test needs experimental grid extensions.
+    std::cerr << "Test skipped, it needs experimental grid extensions, see optim.opts or debug.opts." << std::endl;
     return 77;
 #elif !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID)
-    std::cout << "Test skipped, it needs ALUGrid, see optim.opts or debug.opts." << std::endl;
+#warning You need to have dune-ALUGrid installed to run this test.
+    std::cerr << "You need to have dune-ALUGrid installed to run this test." << std::endl;
     return 77;
 #else
     typedef TTAG(HeterogeneousNIBoxProblem) ProblemTypeTag;

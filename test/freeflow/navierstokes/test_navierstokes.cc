@@ -55,8 +55,8 @@ int main(int argc, char** argv)
     typedef TTAG(NavierStokesTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
-#warning "You need to have SuperLU and ALUGrid or UG to run this test."
-    std::cout << "You need to have SuperLU and ALUGrid or UG to run this test." << std::endl;
+#warning "You need to have SuperLU and dune-ALUGrid or UG to run this test."
+    std::cerr << "You need to have SuperLU and dune-ALUGrid or UG to run this test." << std::endl;
     return 77;
 #endif
 }

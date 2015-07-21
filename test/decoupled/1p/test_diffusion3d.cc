@@ -225,12 +225,10 @@ int main(int argc, char** argv)
     return 3;
 }
 #else
-
-#warning You need to have ALUGrid or UG installed to run this test
-
 int main()
 {
-    std::cerr << "You need to have ALUGrid or UG installed to run this test\n";
+#warning You need to have dune-ALUGrid or UG installed to run this test
+    std::cerr << "You need to have dune-ALUGrid or UG installed to run this test\n";
     return 77;
 }
 #endif // HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG

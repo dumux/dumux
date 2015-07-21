@@ -104,12 +104,11 @@ int main(int argc, char** argv) {
 
 #else // HAVE_DUNE_PDELAB
 
-#warning You need to have dune-pdelab (>= 2.0) installed to run this test.
-
 #include <iostream>
 
 int main()
 {
+#warning You need to have dune-pdelab (>= 2.0) installed to run this test.
     std::cerr << "You need to have dune-pdelab (>= 2.0) installed to run this test.\n";
     return 77;
 }
