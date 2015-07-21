@@ -35,7 +35,7 @@ except OSError as e:
     print("OSError: Command not found. Most likely the executable specified doesn't exist.")
     sys.exit(1)
 if res:
-    sys.exit(1)
+    sys.exit(res)
 
 # run the comparison
 if args['script']:
