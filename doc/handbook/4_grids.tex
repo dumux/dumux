@@ -17,7 +17,16 @@ Inside \Dumux, the \texttt{DGFGridCreater} is set by default and doesn't need to
 \subsection{Petrel}
 
 
-\subsection{Artmesh}
-
+\subsection{ArtMesh}
+\href{http://www.topologica.org/toplog/wp/}{ArtMesh} is a 3D mesh generation software. It has its own mesh file format
+which can be read by \Dumux via the ArtGridCreator. Traditionally it was used within \Dumux for fracture simulations with
+the discrete fracture matrix model (\texttt{2pdfm}). A detailed description of the fracture network creation and gridding
+can be found for example in the dissertation of \href{http://elib.uni
+-stuttgart.de/opus/frontdoor.php?source_opus=8047&la=de}{Tatomir}, pp. 68.
 
 \subsection{ICEM}
+For complex geometries a graphical tool to create grids might be appropriate. One possibility to mesh for example CAD
+geometry data is the commercial software \href{http://www.ansys.com/Products/Other+Products/ANSYS+ICEM+CFD/}{ANSYS ICEM
+CFD}. A very detailed, but outdated description can be found at the LH2 internal \href{http://www.hydrosys.uni
+-stuttgart.de/Intern/tiki/tiki-index.php?page=Netzgenerierung}{wiki}. A more recent best practice guide is available at
+\url{XXX}. At LH2 exists a script which converts the ICEM mesh into the DGF.
