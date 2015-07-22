@@ -414,7 +414,7 @@ public:
      * \brief Returns the factor for the reduction of the initial permeability 
      * due precipitates in the porous medium
      */ 	
-    Scalar permFactor() const
+    Scalar permeabilityFactor() const
     { return permeabilityFactor_; }
     
     /*!

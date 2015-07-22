@@ -196,7 +196,7 @@ public:
         ScalarField *boxVolume     = writer.allocateManagedBuffer (numDofs);
 //      ScalarField *potential     = writer.allocateManagedBuffer (numDofs);
         ScalarField *cellNum 	   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *permFactor    = writer.allocateManagedBuffer (numDofs);
+        ScalarField *permeabilityFactor    = writer.allocateManagedBuffer (numDofs);
         ScalarField *precipitateVolumeFraction[numSPhases] ;
 //      ScalarField *saturationIdx[numSPhases];
 
@@ -288,7 +288,7 @@ public:
                     (*precipitateVolumeFraction[sPhaseIdx])[globalIdx]   = volVars.precipitateVolumeFraction(sPhaseIdx + numPhases);
                 }
                 (*temperature)[globalIdx] 	 = volVars.temperature();
-                (*permFactor)[globalIdx] 	 = volVars.permFactor();
+                (*permeabilityFactor)[globalIdx] 	 = volVars.permeabilityFactor();
                 (*phasePresence)[globalIdx]  = this->staticDat_[globalIdx].phasePresence;
 //                 (*potential)[globalIdx]      = (volVars.pressure(wPhaseIdx)-1e5)
 //                         /volVars.fluidState().density(wPhaseIdx)
@@ -316,7 +316,7 @@ public:
                 Tensor K = this->perm_(this->problem_().spatialParams().intrinsicPermeability(*elemIt, fvGeometry, i));
 
                 for (int j = 0; j<dim; ++j)
-                    (*Perm[j])[globalIdx] = K[j][j] * volVars.permFactor();
+                    (*Perm[j])[globalIdx] = K[j][j] * volVars.permeabilityFactor();
             };
 
             // velocity output
@@ -336,7 +336,7 @@ public:
         writer.attachVertexData(*mobL, "mobL");
         writer.attachVertexData(*mobG, "mobG");
         writer.attachVertexData(*poro, "porosity");
-        writer.attachVertexData(*permFactor, "permFactor");
+        writer.attachVertexData(*permeabilityFactor, "permeabilityFactor");
         writer.attachVertexData(*temperature, "temperature");
         writer.attachVertexData(*phasePresence, "phase presence");
 //         writer.attachVertexData(*potential, "potential");
@@ -436,7 +436,6 @@ public:
                                       globalIdx,
                                       global))
                 { wasSwitched = true;
-                std::cout<<"Switch works :) "<<std::endl;
                 }
             }
         }
@@ -467,7 +466,6 @@ protected:
                            const VolumeVariables &volVars, int globalIdx,
                            const GlobalPosition &globalPos)
     {
-
             // evaluate primary variable switch
             bool wouldSwitch = false;
             int phasePresence = this->staticDat_[globalIdx].phasePresence;
@@ -517,7 +515,7 @@ protected:
             //Calculate sum of mole fractions (water and air) in the hypothetical liquid phase
             //WARNING: Here numComponents is replaced by numMajorComponents as the solutes 
             //are only present in the liquid phase and cannot condense as the liquid (water).
-            for (int compIdx = 0; compIdx < numMajorComponents; compIdx++)
+            for (int compIdx = 0; compIdx < numComponents; compIdx++)
                 {
                     sumxl += volVars.fluidState().moleFraction(wPhaseIdx, compIdx);
                 }
@@ -547,8 +545,8 @@ protected:
             {
                 Scalar xgmax = 1;
                 Scalar sumxg = 0;
-                //Calculate sum of mole fractions in the hypothetical liquid phase
-                for (int compIdx = 0; compIdx < numMajorComponents; compIdx++)
+                //Calculate sum of mole fractions in the hypothetical gas phase
+                for (int compIdx = 0; compIdx < numComponents; compIdx++)
                 {
                     sumxg += volVars.fluidState().moleFraction(nPhaseIdx, compIdx);
                 }

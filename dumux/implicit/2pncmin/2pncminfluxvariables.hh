@@ -132,10 +132,10 @@ protected:
             const VolumeVariables &volVarsJ = elemVolVars[this->face().j];
 
             auto K_i = spatialParams.intrinsicPermeability(element,this->fvGeometry_,this->face().i);
-            K_i *= volVarsI.permFactor();
+            K_i *= volVarsI.permeabilityFactor();
 
             auto K_j = spatialParams.intrinsicPermeability(element,this->fvGeometry_,this->face().j);
-            K_j *= volVarsJ.permFactor();
+            K_j *= volVarsJ.permeabilityFactor();
 
             spatialParams.meanK(K,K_i,K_j);
 
