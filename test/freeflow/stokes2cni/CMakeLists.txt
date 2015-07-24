@@ -1,3 +1,5 @@
+add_input_file_links()
+
 add_dumux_test(test_stokes2cni test_stokes2cni test_stokes2cni.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                   --script fuzzy

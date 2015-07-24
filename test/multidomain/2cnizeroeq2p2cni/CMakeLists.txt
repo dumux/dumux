@@ -1,3 +1,5 @@
+add_input_file_links()
+
 dune_symlink_to_source_files(FILES evaporationRates.gp)
 
 add_dumux_test(test_2cnizeroeq2p2cni test_2cnizeroeq2p2cni test_2cnizeroeq2p2cni.cc

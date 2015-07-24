@@ -7,6 +7,7 @@ if(("${DUNE_COMMON_VERSION_MAJOR}" STREQUAL "2")
   include(CopyOfDuneSymlinkOrCopy)
 endif()
 # additional macros
+include(AddInputFileLinks)
 include(DumuxTestMacros)
 
 find_package(Gnuplot)

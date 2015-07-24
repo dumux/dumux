@@ -1,3 +1,5 @@
+add_input_file_links()
+
 # isothermal tests
 add_dumux_test(test_box3p test_box3p test_box3p.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py

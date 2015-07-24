@@ -1,3 +1,5 @@
+add_input_file_links()
+
 add_dumux_test(test_el2p test_el2p test_el2p.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy

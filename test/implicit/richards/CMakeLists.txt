@@ -1,3 +1,5 @@
+add_input_file_links()
+
 if(MPI_CXX_FOUND)
   add_dumux_test(test_boxrichards test_boxrichards test_boxrichards.cc
                  python ${CMAKE_SOURCE_DIR}/bin/runtest.py

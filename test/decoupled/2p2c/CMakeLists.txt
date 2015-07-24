@@ -1,3 +1,5 @@
+add_input_file_links()
+
 add_dumux_test(test_adaptive2p2c2d test_adaptive2p2c2d test_adaptive2p2c2d.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                --script fuzzy

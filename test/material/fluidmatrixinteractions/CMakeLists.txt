@@ -1,5 +1,7 @@
 add_subdirectory("2p")
 
+add_input_file_links()
+
 add_dumux_test(test_effectivediffusivitymillingtonquirk test_effectivediffusivitymillingtonquirk test_effectivediffusivitymillingtonquirk.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script exact

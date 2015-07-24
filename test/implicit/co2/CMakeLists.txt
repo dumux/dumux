@@ -1,3 +1,5 @@
+add_input_file_links()
+
 # build target for the CO2 test problem
 add_dumux_test(test_boxco2 test_boxco2 test_boxco2.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py

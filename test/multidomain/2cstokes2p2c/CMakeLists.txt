@@ -1,3 +1,5 @@
+add_input_file_links()
+
 add_dumux_test(test_2cstokes2p2c test_2cstokes2p2c test_2cstokes2p2c.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                   --script fuzzy
