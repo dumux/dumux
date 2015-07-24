@@ -64,9 +64,16 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
     // All command line options need to start with '-'
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] != '-') {
-            std::ostringstream oss;
-            oss << "\n -> Command line argument " << i << " (='" << argv[i] << "') is invalid. <- \n\n\n\n";
-            return oss.str();
+            if (i == 1) {
+                // try to pass first argument as parameter file
+                paramTree["ParameterFile"] = argv[1];
+                continue;
+            }
+            else {
+                std::ostringstream oss;
+                oss << "\n -> Command line argument " << i << " (='" << argv[i] << "') is invalid. <- \n\n\n\n";
+                return oss.str();
+            }
         }
 
         // read a -MyOpt VALUE option
