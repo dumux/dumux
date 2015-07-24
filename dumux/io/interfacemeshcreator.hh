@@ -28,6 +28,8 @@
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
+#include <dune/common/deprecated.hh>
+
 namespace Dumux
 {
 /*!
@@ -38,7 +40,9 @@ namespace Dumux
  */
 
 template <class Grid>
-class InterfaceMeshCreator
+class
+DUNE_DEPRECATED_MSG("The InterfaceMeshCreator class is deprecated. Please use the the InterfaceGridCreator class instead.")
+InterfaceMeshCreator
 {
 public:
     enum {dim = Grid::dimension};

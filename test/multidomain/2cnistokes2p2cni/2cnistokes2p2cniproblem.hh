@@ -32,11 +32,13 @@
 #ifndef DUMUX_2CNISTOKES2P2CNIPROBLEM_HH
 #define DUMUX_2CNISTOKES2P2CNIPROBLEM_HH
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
+#include <dumux/io/interfacegridcreator.hh>
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/multidomain/common/multidomainproblem.hh>
 #include <dumux/multidomain/2cnistokes2p2cni/2cnistokes2p2cnilocaloperator.hh>
@@ -102,6 +104,9 @@ SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, LinearSolver, PardisoBackend<TypeTa
 #else
 SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, LinearSolver, SuperLUBackend<TypeTag>);
 #endif // HAVE_PARDISO
+
+// Use the interface grid creator to create the grid
+SET_TYPE_PROP(TwoCNIStokesTwoPTwoCNIProblem, GridCreator, Dumux::InterfaceGridCreator<TypeTag>);
 }
 
 /*!
@@ -149,7 +154,7 @@ class TwoCNIStokesTwoPTwoCNIProblem : public MultiDomainProblem<TypeTag>
     typedef typename GET_PROP_TYPE(Stokes2cniTypeTag, FVElementGeometry) FVElementGeometry1;
     typedef typename GET_PROP_TYPE(TwoPTwoCNITypeTag, FVElementGeometry) FVElementGeometry2;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) HostGrid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
     typedef typename MDGrid::LeafGridView MDGridView;
     typedef typename MDGrid::SubDomainGrid SDGrid;
@@ -208,9 +213,22 @@ public:
      * \param mdGrid The multidomain grid
      * \param timeManager The time manager
      */
+    DUNE_DEPRECATED_MSG("This constructor is deprecated, please use the new constructor, which works with the common start facility. This has to be changed in the *.cc file.")
     TwoCNIStokesTwoPTwoCNIProblem(MDGrid &mdGrid,
-    							  TimeManager &timeManager)
-        : ParentType(mdGrid, timeManager)
+                                  TimeManager &timeManager)
+    : TwoCNIStokesTwoPTwoCNIProblem(timeManager, GridCreator::grid().leafGridView())
+    {}
+
+    /*!
+     * \brief The problem for the coupling of Stokes and Darcy flow
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     */
+    template<class GridView>
+    TwoCNIStokesTwoPTwoCNIProblem(TimeManager &timeManager,
+                                  GridView gridView)
+    : ParentType(timeManager, gridView)
     {
         interfacePosY_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
         noDarcyX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX);

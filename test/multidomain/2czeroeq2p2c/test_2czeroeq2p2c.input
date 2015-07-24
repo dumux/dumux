@@ -5,21 +5,20 @@ TEnd = 518400 # [s] # 518400 = 6 days
 EpisodeLength = 8e5 # [s] # 43200
 
 [Grid]
-XMin = 0.0 # [m]
-XMax = 0.5 # [m]
-YMin = 0.0 # [m]
-YMax = 0.75 # [m]
+LowerLeftX = 0.0 # [m]
+UpperRightX = 0.5 # [m]
+LowerLeftY = 0.0 # [m]
+UpperRightY = 0.75 # [m]
 # Number of elements in x-, y-direction
-CellsX = 20
-CellsY = 40
+NumberOfCellsX = 20
+NumberOfCellsY = 40
 # Grading and refinement of the mesh
-GradingY = 1.16
-Refinement = 0
+GradingFactorY = 1.16
 RefineTop = false
 # Position information
 NoDarcyX = 0.25 # [m] # Horizontal position without PM below
 RunUpDistanceX = 0.26 # [m] # Horizontal position without Coupling to PM
-InterfacePos = 0.25 # [m] # Vertical position of coupling interface
+InterfacePosY = 0.25 # [m] # Vertical position of coupling interface
 
 [Output]
 NameFF = zeroeq2c

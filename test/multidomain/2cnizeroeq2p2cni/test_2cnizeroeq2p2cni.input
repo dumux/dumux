@@ -5,22 +5,22 @@ TEnd = 3600 # [s]
 EpisodeLength = 14400 # [s] # 14400s = 4h
 
 [Grid]
-XMin = 0.0
-XMax = 0.75
-YMin = 0.0
-YMax = 0.75
+LowerLeftX = 0.0 # [m]
+UpperRightX = 0.75 # [m]
+LowerLeftY = 0.0 # [m]
+UpperRightY = 0.75 # [m]
 # Number of elements in x-, y-direction
-CellsX = 15
-CellsY = 30
+NumberOfCellsX = 15
+NumberOfCellsY = 30
 # Grading and refinement of the mesh
-GradingY = 1.16
+GradingFactorY = 1.16
 RefineTop = true
 # Position information
 NoDarcyX1 = 0.25 # [m] # Beginning of PM below
 NoDarcyX2 = 0.5 # [m] # End of PM below
 RunUpDistanceX1 = 0.251 # [m] # Beginning of without Coupling to PM (x-coordinate)
 RunUpDistanceX2 = 0.499 # [m] # End of without Coupling to PM (x-coordinate)
-InterfacePos = 0.25 # [m] # Vertical position of coupling interface
+InterfacePosY = 0.25 # [m] # Vertical position of coupling interface
 
 [Output]
 NameFF = zeroeq2cni

@@ -11,6 +11,10 @@ Differences Between DuMuX 2.7 and DuMuX 2.8
     to the freeflow folder.
   - Tests for coupling a turbulent free flow using zeroeq turbulence models
     with flow in a porous medium have been added.
+  - The constructor of the multidomain problems has changed. They will now be called
+    directly from the start.hh, identical to the other problems. The new parameter
+    are the TimeManager and the HostGrid.
+  - The interfacegridcreator is now available as a new GridCreator type.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - The use and support for SGrid is dropped. SGrid is deprecated in Dune 2.4.
@@ -22,10 +26,18 @@ Differences Between DuMuX 2.7 and DuMuX 2.8
   the corresponding run.
 
 * Deprecated CLASSES/FILES, to be removed after 2.8:
+  - The InterfaceMeshCreator has been moved to InterfaceGridCreator and adapted
+    to the structure of other grid creators, it can simply be used by specifying
+    the GridCreator TypeTag.
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.8:
   - The method simulate(Scalar dtInitial, Scalar tEnd) from MultiDomainProblem,
     it is unused and will be dropped.
+  - The GnuplotInterface functions are now called without giving a window number.
+    If plots should be plotted in different windows, different GnuplotInterface
+    objects are now required. This affects also all other plots in the "io" folder.
+  - The write() function in plotoverline2d.hh now has an append function, to be
+    able to decide whether the previously written file should be kept or not.
 
 * Deprecated protected MEMBER VARIABLES, to be removed after 2.8: BEWARE: Older
   compilers will not print any warning if a deprecated protected member variable

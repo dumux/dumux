@@ -1,15 +1,13 @@
 DGF
 Interval
-0 0   % first corner
-0.25 0.5   % second corner
-20 64 % cells in x and y direction
+0 0 % first corner
+0.25 0.5 % second corner
+25 50 % 25 cells in x and 50 in y direction
 #
-GridParameter
-overlap 0
-periodic
-closure green
-copies none
-heapsize 500
+
+Cube
+0 1 2 3
+#
 
 BOUNDARYDOMAIN
 default 1    % all boundaries have id 1

@@ -24,10 +24,12 @@
 #ifndef DUMUX_TWOCZEROEQTWOPTWOCPROBLEM_HH
 #define DUMUX_TWOCZEROEQTWOPTWOCPROBLEM_HH
 
+#include <dune/common/deprecated.hh>
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
+#include <dumux/io/interfacegridcreator.hh>
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/multidomain/common/multidomainproblem.hh>
 #include <dumux/multidomain/2cstokes2p2c/2cstokes2p2clocaloperator.hh>
@@ -89,6 +91,9 @@ SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, LinearSolver, SuperLUBackend<TypeTag>);
 #else
 SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
+
+// Use the interface grid creator to create the grid
+SET_TYPE_PROP(TwoCZeroEqTwoPTwoCProblem, GridCreator, Dumux::InterfaceGridCreator<TypeTag>);
 }
 
 
@@ -110,6 +115,7 @@ class TwoCZeroEqTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MDGrid;
     typedef typename MDGrid::LeafGridView MDGridView;
     enum { dim = MDGridView::dimension };
@@ -121,20 +127,33 @@ class TwoCZeroEqTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
 
 public:
     /*!
-     * \brief The problem for the coupling of ZeroEq and Darcy flow
+     * \brief The problem for the coupling of Stokes and Darcy flow
      *
      * \param mdGrid The multidomain grid
      * \param timeManager The time manager
      */
+    DUNE_DEPRECATED_MSG("This constructor is deprecated, please use the new constructor, which works with the common start facility. This has to be changed in the *.cc file.")
     TwoCZeroEqTwoPTwoCProblem(MDGrid &mdGrid,
                               TimeManager &timeManager)
-        : ParentType(mdGrid, timeManager)
+    : TwoCZeroEqTwoPTwoCProblem(timeManager, GridCreator::grid().leafGridView())
+    {}
+
+    /*!
+     * \brief The problem for the coupling of Stokes and Darcy flow
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     */
+    template<class GridView>
+    TwoCZeroEqTwoPTwoCProblem(TimeManager &timeManager,
+                              GridView gridView)
+    : ParentType(timeManager, gridView)
     {
         dtInit_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
         episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLength);
 
         // define location of the interface
-        interfacePos_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePos);
+        interfacePosY_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
         noDarcyX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX);
 
         // define output options
@@ -176,7 +195,7 @@ public:
 
             GlobalPosition globalPos = eIt->geometry().center();
 
-            if (globalPos[1] > interfacePos_)
+            if (globalPos[1] > interfacePosY_)
                 mdGrid.addToSubDomain(zeroeq2c_,*eIt);
             else
                 if(globalPos[0] > noDarcyX_)
@@ -223,7 +242,7 @@ private:
     unsigned freqRestart_;
     unsigned freqOutput_;
 
-    Scalar interfacePos_;
+    Scalar interfacePosY_;
     Scalar noDarcyX_;
     Scalar episodeLength_;
     Scalar initializationTime_;

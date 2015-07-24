@@ -56,6 +56,7 @@ private:
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain1TypeTag) SubDomain1TypeTag;
     typedef typename GET_PROP_TYPE(TypeTag, SubDomain2TypeTag) SubDomain2TypeTag;
@@ -69,8 +70,7 @@ private:
     typedef typename GET_PROP_TYPE(SubDomain1TypeTag, GridView) SubDomainGridView1;
     typedef typename GET_PROP_TYPE(SubDomain2TypeTag, GridView) SubDomainGridView2;
 
-     typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MultiDomainGrid;
-
+    typedef typename GET_PROP_TYPE(TypeTag, MultiDomainGrid) MultiDomainGrid;
     typedef typename MultiDomainGrid::LeafGridView MultiDomainGridView;
     typedef typename MultiDomainGrid::Traits::template Codim<0>::Entity MultiDomainElement;
     typedef typename MultiDomainGrid::SubDomainGrid SubDomainGrid;
@@ -84,23 +84,32 @@ public:
       *
       * \param mdGrid The multi domain grid
       * \param timeManager The TimeManager which is used by the simulation
-      *
       */
+    DUNE_DEPRECATED_MSG("This constructor is deprecated, please use the new constructor, which works with the common start facility. This has to be changed in the *.cc file.")
     MultiDomainProblem(MultiDomainGrid &mdGrid,
                        TimeManager &timeManager)
+    : MultiDomainProblem(timeManager, GridCreator::grid().leafGridView())
+    {}
+
+    /*!
+     * \brief The problem for the coupling of Stokes and Darcy flow
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     */
+    template<class GridView>
+    MultiDomainProblem(TimeManager &timeManager,
+                       GridView gridView)
         : timeManager_(timeManager)
         , newtonMethod_(asImp_())
         , newtonCtl_(asImp_())
-        , mdGrid_(mdGrid)
-        , mdGridView_(mdGrid.leafGridView())
-        , mdVertexMapper_(mdGrid_.leafGridView())
-        , sdID1_(0)
-        , sdID2_(1)
-        , sdGrid1_(mdGrid.subDomain(sdID1_))
-        , sdGrid2_(mdGrid.subDomain(sdID2_))
-        , sdProblem1_(timeManager, sdGrid1_.leafGridView())
-        , sdProblem2_(timeManager, sdGrid2_.leafGridView())
-    {}
+    {
+        mdGrid_ = std::make_shared<MultiDomainGrid> (GridCreator::grid());
+        mdGridView_ = std::make_shared<MultiDomainGridView> (mdGrid_->leafGridView());
+        mdVertexMapper_ = std::make_shared<VertexMapper> (mdGrid_->leafGridView());
+        sdProblem1_ = std::make_shared<SubDomainProblem1> (timeManager, mdGrid_->subDomain(sdID1()).leafGridView());
+        sdProblem2_ = std::make_shared<SubDomainProblem2> (timeManager, mdGrid_->subDomain(sdID2()).leafGridView());
+    }
 
     //! \copydoc Dumux::ImplicitProblem::init()
     void init()
@@ -112,7 +121,7 @@ public:
         // set the initial condition of the model
         model().init(asImp_());
 
-        // intialize lagrange multipliers
+        // initialize Lagrange multipliers
         asImp_().initMortarElements();
     }
 
@@ -130,7 +139,6 @@ public:
         Restarter res;
         res.serializeBegin(this->asImp_());
         std::cerr << "Serialize to file '" << res.fileName() << "'\n";
-
         this->timeManager().serialize(res);
         this->asImp_().serialize(res);
         res.serializeEnd();
@@ -140,9 +148,7 @@ public:
     void restart(Scalar tRestart)
     {
         typedef Dumux::Restart Restarter;
-
         Restarter res;
-
         res.deserializeBegin(this->asImp_(), tRestart);
         std::cout << "Deserialize from file '" << res.fileName() << "'\n";
         this->timeManager().deserialize(res);
@@ -316,37 +322,37 @@ public:
      * \brief Returns the ID of the first domain
      */
     const typename MultiDomainGrid::SubDomainIndex sdID1() const
-    { return sdID1_; }
+    { return typename MultiDomainGrid::SubDomainIndex(0); }
 
     /*!
      * \brief Returns the ID of the second domain
      */
     const typename MultiDomainGrid::SubDomainIndex sdID2() const
-    { return sdID2_; }
+    { return typename MultiDomainGrid::SubDomainIndex(1); }
 
     /*!
      * \brief Returns a reference to subproblem1
      */
     SubDomainProblem1& sdProblem1()
-    { return sdProblem1_; }
+    { return *sdProblem1_; }
 
     /*!
      * \brief Returns a const reference to subproblem1
      */
     const SubDomainProblem1& sdProblem1() const
-    { return sdProblem1_; }
+    { return *sdProblem1_; }
 
     /*!
      * \brief Returns a reference to subproblem2
      */
     SubDomainProblem2& sdProblem2()
-    { return sdProblem2_; }
+    { return *sdProblem2_; }
 
     /*!
      * \brief Returns a const reference to subproblem2
      */
     const SubDomainProblem2& sdProblem2() const
-    { return sdProblem2_; }
+    { return *sdProblem2_; }
 
     /*!
      * \brief Returns a reference to the localresidual1
@@ -364,55 +370,55 @@ public:
      * \brief Returns a reference to the multidomain grid
      */
     MultiDomainGrid& mdGrid()
-    { return mdGrid_; }
+    { return *mdGrid_; }
 
     /*!
      * \brief Returns a const reference to the multidomain grid
      */
     const MultiDomainGrid& mdGrid() const
-    { return mdGrid_; }
+    { return *mdGrid_; }
 
     /*!
      * \brief Returns the multidomain gridview
      */
     const MultiDomainGridView& mdGridView() const
-    { return mdGridView_; }
+    { return *mdGridView_; }
 
     /*!
      * \brief Returns the multidomain gridview
      */
     const MultiDomainGridView& gridView() const
-    { return mdGridView_; }
+    { return *mdGridView_; }
 
     /*!
      * \brief Provides a vertex mapper for the multidomain
      */
     VertexMapper& mdVertexMapper()
-    { return mdVertexMapper_; }
+    { return *mdVertexMapper_; }
 
     /*!
      * \brief Returns a const reference to the subdomain1 grid
      */
     const SubDomainGrid& sdGrid1() const
-    { return sdGrid1_; }
+    { return mdGrid_->subDomain(sdID1()); }
 
     /*!
      * \brief Returns a const reference to the subdomain2 grid
      */
     const SubDomainGrid& sdGrid2() const
-    { return sdGrid2_; }
+    { return mdGrid_->subDomain(sdID2()); }
 
     /*!
      * \brief Returns the gridview of subdomain1
      */
     const SubDomainGridView1 sdGridView1() const
-    { return sdGrid1_.leafGridView(); }
+    { return sdGrid1().leafGridView(); }
 
     /*!
      * \brief Returns the gridview of subdomain2
      */
     const SubDomainGridView2 sdGridView2() const
-    { return sdGrid2_.leafGridView(); }
+    { return sdGrid2().leafGridView(); }
 
     /*!
      * \brief Returns a pointer to the subdomain1 element
@@ -420,7 +426,7 @@ public:
      * \param mdElement1 The multi domain element1
      */
     SubDomainElementPointer sdElementPointer1(const MultiDomainElement& mdElement1)
-    { return sdGrid1_.subDomainEntityPointer(mdElement1); }
+    { return sdGrid1().subDomainEntityPointer(mdElement1); }
 
     /*!
      * \brief Returns a pointer to the subdomain2 element
@@ -428,13 +434,12 @@ public:
      * \param mdElement2 The multi domain element2
      */
     SubDomainElementPointer sdElementPointer2(const MultiDomainElement& mdElement2)
-    { return sdGrid2_.subDomainEntityPointer(mdElement2); }
+    { return sdGrid2().subDomainEntityPointer(mdElement2); }
 
 
 protected:
     void initMortarElements()
     {}
-
 
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
@@ -454,18 +459,12 @@ private:
 
     Model model_;
 
-    MultiDomainGrid &mdGrid_;
-    const MultiDomainGridView mdGridView_;
-    VertexMapper mdVertexMapper_;
+    std::shared_ptr<MultiDomainGrid> mdGrid_;
+    std::shared_ptr<MultiDomainGridView> mdGridView_;
+    std::shared_ptr<VertexMapper> mdVertexMapper_;
 
-    typename MultiDomainGrid::SubDomainIndex sdID1_;
-    typename MultiDomainGrid::SubDomainIndex sdID2_;
-
-    const SubDomainGrid& sdGrid1_;
-    const SubDomainGrid& sdGrid2_;
-
-    SubDomainProblem1 sdProblem1_;
-    SubDomainProblem2 sdProblem2_;
+    std::shared_ptr<SubDomainProblem1> sdProblem1_;
+    std::shared_ptr<SubDomainProblem2> sdProblem2_;
 };
 
 // definition of the static class member simname_,
