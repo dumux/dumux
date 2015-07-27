@@ -62,6 +62,7 @@
 
 #include <dumux/material/fluidsystems/h2on2fluidsystemkinetic.hh>
 #include <dumux/io/gnuplotinterface.hh>
+#include <dumux/io/interfacegridcreator.hh>
 #include <dumux/io/plotoverline2d.hh>
 
 #include <dumux/material/fluidstates/nonequilibriumfluidstate.hh>
@@ -94,6 +95,9 @@ SET_PROP(EvaporationAtmosphereProblem, Grid)
     typedef typename Dune::YaspGrid<2> type;
 #endif
 };
+
+// Use the interface grid creator to create the grid
+SET_TYPE_PROP(EvaporationAtmosphereProblem, GridCreator, InterfaceGridCreator<TypeTag>);
 
 // Set the problem property
 SET_TYPE_PROP(EvaporationAtmosphereProblem,

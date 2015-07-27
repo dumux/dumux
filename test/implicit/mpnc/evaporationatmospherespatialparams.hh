@@ -199,8 +199,8 @@ public:
         void setInputInitialize()
         {
                 eps_                    = 1e-6;
-                heightPM_               = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.InterfacePos);
-                heightDomain_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.YMax);
+                heightPM_               = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.InterfacePosY);
+                heightDomain_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.UpperRightY);
                 // BEWARE! First the input values have to be set, than the material parameters can be set
 
                 // this is the parameter value from file part
