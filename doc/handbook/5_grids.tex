@@ -1,0 +1,40 @@
+\section{Grid Handling}
+\label{sec:gridhandling}
+
+This section summarizes some ideas about grid generation and grids that can be used by \Dumux. There are
+several external grid generates available which can be used. The output files of these generators need
+usually conversion into the Dune Grid Format (DGF), or some other format which can be read in by \Dune.
+We intend to give brief ideas how to work with external grids. However, this list is not complete.
+
+\subsection{DGF}
+Most of our \Dumux tests and tutorials use the Dune Grid Format (DGF) to read in grids. A detailed description
+of the DGF format and some examples can be found in the \Dune doxygen documentation
+\textbf{(Modules $\rightarrow$ I/O $\rightarrow$ Dune Grid Format (DGF)}). To generate larger or more
+complex DGF files, we recommend to write your own scripts, e.g in C++, Matlab or Python.
+
+The DGF format can also used to read in spatial parameters defined on the grid. These parameters can
+be defined on nodes as well as on the elements. An example for predefined parameters on a grid is
+the \texttt{test\_boxco2} or \texttt{test\_cco2} in the  \texttt{dumux/test/co2} folder.
+
+% Inside \Dumux, the \texttt{DGFGridCreater} is set by default and doesn't need to be set your problem file.
+
+
+\subsection{GMSH}
+
+
+\subsection{Petrel}
+
+
+\subsection{ArtMesh}
+\href{http://www.topologica.org/toplog/wp/}{ArtMesh} is a 3D mesh generation software. It has its own mesh file format
+which can be read by \Dumux via the ArtGridCreator. Traditionally it was used within \Dumux for fracture simulations with
+the discrete fracture matrix model (\texttt{2pdfm}). A detailed description of the fracture network creation and gridding
+can be found for example in the dissertation of \href{http://elib.uni
+-stuttgart.de/opus/frontdoor.php?source_opus=8047&la=de}{Tatomir}, pp. 68.
+
+\subsection{ICEM}
+For complex geometries a graphical tool to create grids might be appropriate. One possibility to mesh for example CAD
+geometry data is the commercial software \href{http://www.ansys.com/Products/Other+Products/ANSYS+ICEM+CFD/}{ANSYS ICEM
+CFD}. A very detailed, but outdated description can be found at the LH2 internal \href{http://www.hydrosys.uni
+-stuttgart.de/Intern/tiki/tiki-index.php?page=Netzgenerierung}{wiki} \todo{link tut nicht - wollen wir überhaupt interne links}. A more recent best practice guide is available at
+\url{XXX} \todo{wenn der link nicht tut rausschmeißen}. At LH2 exists a script which converts the ICEM mesh into the DGF \todo{können wir das skript in \texttt{util} aufnehmen?}.

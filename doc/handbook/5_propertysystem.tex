@@ -1,12 +1,12 @@
-\section{The \Dumux Property System}
+\section{Property System}
 \label{sec:propertysystem}
 
 This subsection is dedicated to the \Dumux property system. First, a high
 level overview over its design and principle ideas is given, then
 follows a short reference and a short self-contained example.
 
-\subsection{Concepts and Features of the \Dumux Property System}
-
+\subsection{Motivation}
+\todo{text kürzen}
 The \Dumux property system was designed as an attempt to mitigate the
 problems of traits classes. In fact, it can be seen as a traits system
 which allows easy inheritance and any acyclic dependency of parameter
@@ -20,8 +20,7 @@ penalties associated with it. It is based on the following concepts:
   \textbf{property tag} which can be seen as a label with its name.
 \item[Property Inheritance:] Just like normal classes, properties can
   be arranged in hierarchies. In the context of the \Dumux property
-  system, nodes of the inheritance hierarchy are called \textbf{type
-    tags}.
+  system, nodes of the inheritance hierarchy are called \textbf{type tags}.
 \end{description}
 
 It also supports \textbf{property nesting} and
@@ -32,7 +31,7 @@ introspection denotes the ability to generate diagnostic messages
 which can be used to find out where a certain property was defined and
 how it was inherited.
 
-\subsection{\Dumux Property System Reference}
+\subsection{Features and How-To}
 
 All source files which use the \Dumux property system should include
 the header file \texttt{dumux/ \hskip-1ex{}common/

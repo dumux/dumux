@@ -2,7 +2,7 @@
 \usepackage[usenames,dvipsnames]{xcolor} % include at beginning because of compitibility issues
 \usepackage[english]{babel}
 \usepackage[htt]{hyphenat}
-\usepackage[ansinew]{inputenc}
+\usepackage[utf8]{inputenc}
 \usepackage[automark]{scrpage2}
 \usepackage[normalem]{ulem}
 \usepackage{amsmath}
@@ -28,103 +28,29 @@
 \usepackage{units}
 \usepackage{url}
 \usepackage{xspace}
-
-
-\newcommand{\snakeline}{%
-% {\uwave{\makebox[\linewidth]{\mbox{}}}}
-\uwave{\mbox{}}
-}
-
 \hypersetup{bookmarksdepth=3}
 \usetikzlibrary{arrows,backgrounds,decorations.pathmorphing,patterns,positioning,fit,shapes}
-
-\lstset{showstringspaces=false,
- breaklines=true,
- tabsize=4
-}
-% for listings of bash code in install.tex
-\lstdefinestyle{Bash}{
- language=Bash,
- backgroundcolor=\color{lightgray},
- basicstyle=\ttfamily\small,
- numbers=none,
- captionpos=b,
- tabsize=4,
- frame=single,
- rulecolor=\color{lightgray},
- framerule=1pt,
- framesep=1pt,
- rulesep=0pt,
- aboveskip=\bigskipamount,
- belowskip=\bigskipamount
-}
-% for listings of DuMuX code
-\lstdefinestyle{DumuxCode}{
-  language=C++,
-  extendedchars=true,
-  escapeinside={/*@}{@*/}, % escape the long comments
-  numbers=left,
-  numbersep=5pt,
-  numberstyle=\tiny,
-  basicstyle=\ttfamily\scriptsize,
-  keywordstyle=\color{Blue}\ttfamily,
-  stringstyle=\color{BrickRed}\ttfamily,
-  commentstyle=\color[gray]{0.35}\ttfamily\it,
-  morecomment=[l][\color{OliveGreen}]{\#}
-}
-% for listings of DuMuX parameter files
-\lstdefinestyle{DumuxParameterFile}{
- language=sh,
- numbers=left,
- numbersep=5pt,
- numberstyle=\tiny,
- basicstyle=\ttfamily\scriptsize,
- stringstyle=\color{BrickRed}\ttfamily,
- commentstyle=\color[gray]{0.35}\ttfamily\it,
- morecomment=[l][\color{Blue}]{[},
-}
-
+\include{0_listingstyle}
 
 \DeclareGraphicsExtensions{.pdf, .jpg}
 
-% Dune logo
+% Dune and Dumux logo
 \newcommand{\Dune}{{DUNE}\xspace}
-% DuMuX logo
 \newcommand{\Dumux}{\texorpdfstring{Du\-Mu$^\text{x}$\xspace}{DuMuX\xspace}}
 \newcommand{\DumuxVersion}{2.8}
-% DuMuX logo colors
 \definecolor{dumuxYellow}{HTML}{E19417}
 \definecolor{dumuxBlue}{HTML}{0C73CF}
-% beautify C++
+
+% sytles
+\newcommand{\nextline}{\par\phantom{a}\vspace*{0.1\textwidth}}
+\newcommand{\snakeline}{\uwave{\mbox{}}}
 \DeclareRobustCommand\Cplusplus{\texorpdfstring{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}\xspace}{C++}}
 
-% for dumux flow of things
-\newcommand{\nextline}{\par\phantom{a}\vspace*{0.1\textwidth}}
-
+% notation
 \newcommand{\porosity}{\phi}
 \newcommand{\saturation}{S}
 
-\newcommand{\doxyref}[3]{\textnormal{#1}}
-\newenvironment{CompactList}
-{\begin{list}{}{
-  \setlength{\leftmargin}{0.5cm}
-  \setlength{\itemsep}{0pt}
-  \setlength{\parsep}{0pt}
-  \setlength{\topsep}{0pt}
-  \renewcommand{\makelabel}{\hfill}}}
-{\end{list}}
-\newenvironment{CompactItemize}
-{
-  \begin{itemize}
-  \setlength{\itemsep}{-3pt}
-  \setlength{\parsep}{0pt}
-  \setlength{\topsep}{0pt}
-  \setlength{\partopsep}{0pt}
-}
-{\end{itemize}}
-
-% a new counter
-% you can give a label to it and thus reference it
+% a new counter you can give a label to it and thus reference it
 % syntax: \numberThis{printedTextToBeLabeled}{label}
 % if you wanted a \newline after a numbered thing, you could just add a empty line after ``\label{#2}''
 \newcounter{thingCounter}
@@ -137,12 +63,7 @@
 %The theorems
 \theorembodyfont{\upshape}
 \theoremheaderfont{\sffamily\bfseries}
-\newtheorem{exc}{Exercise}[chapter]
-\newtheorem{example}[exc]{Example}
-\newtheorem{rem}[exc]{Remark}
 \newtheorem{lst}{Listing}
-\newtheorem{warn}[exc]{Warning}
-\newtheorem{justCounting}{}
 
 \DeclareMathOperator{\grad}{\bf grad}
 \DeclareMathOperator{\curl}{curl}
@@ -177,7 +98,7 @@ Universit\"at Stuttgart, Paffenwaldring 61, D-70569 Stuttgart, Germany}\\
 
 \maketitle
 
-\setcounter{tocdepth}{2}
+\setcounter{tocdepth}{1}
 % \pdfbookmark[0]{Table of Contents}{Table of Contents}
 \tableofcontents
 
@@ -204,26 +125,29 @@ Then a quick start guide for the first \Dumux experience is provided.
 \input{3_tutorialdecoupled}
 
 \chapter{Overview and Infrastructure}
-The intention of this chapter is to provide the reader with basic knowledge
-about how things are structured in \Dumux and what is necessary for
-using \Dumux without any deeper modifications.
+This chapter provides an overview of the general structure in \Dumux \ref{sc_structure}
+and gives help for basic work with \Dumux
+(\ref{sc_newfoldersetup},\ref{sc_parameterfiles},\ref{sc_restartsimulations},\ref{sc_guidelines},\ref{sc_developingdumux}).
+Further it present useful external tools \ref{sc_externaltools} and basic
+concepts \ref{sc_newtoninanutshell}.
 \input{4_structure}
 \input{4_newfoldersetup}
 \input{4_parameterfiles}
-\input{4_guidelines}
-\input{4_newtoninanutshell}
-\input{4_tipsandtricks}
 \input{4_restartsimulations}
-\input{4_grids}
+\input{4_guidelines}
+\input{4_developingdumux}
+\input{4_externaltools}
+\input{4_newtoninanutshell}
 
 \chapter{Advanced \Dumux\ -- Detailed Instructions}
 This chapter contains detailed information for those who are interested
 in deeper modifications of underlying \Dumux models, classes, functions, etc.
 \input{5_models}
 \input{5_spatialdiscretizations}
+\input{5_flowofthings}
 \input{5_propertysystem}
 \input{5_fluidframework}
-\input{5_flowofthings}
+\input{5_grids}
 
 
 \bibliographystyle{plain}

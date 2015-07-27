@@ -1,71 +1,27 @@
-\section{Setup of a New Folder and New Tests}
-
-\paragraph{Setting up a New Folder}
-In this section it is described how to set up a new folder and how to tell
-the build system, that there is a new one.
-
+\section{Setup of new Folders and new Tests}
+\label{sc_newfoldersetup}
+This section describes how to set up a new folder and how to tell
+the build system there is a new one.
+\paragraph{Adding new Folders}
 \begin{enumerate}[1)]
  \item create new folder with content
  \item adapt the \verb+CMakeList.txt+ in the folder above and add a line with
-       \verb+add_subdirectory(NEW\_FOLDER)+
- \item adapt the \verb+CMakeList.txt+ in the newly created folder and add your test
-       (see below for more information)
+       \verb+add_subdirectory(NEW_FOLDER)+
+ \item create a \verb+CMakeList.txt+ in the newly created folder
  \item go to your \texttt{build}-directory and type \verb+make+ to
-       reconfigure the system
+       re-configure the system
 \end{enumerate}
 
-\paragraph{Adding a New Test Program}
-\noindent To simply add a new executable use the following macro. The test will \emph{not} be built
-automatically when running \texttt{ctest}. You have to compile it manually by
-\texttt{make test\_program}.
-\begin{verbatim}
-add_executable_all(test\_program test\_program.cc)
-\end{verbatim}
-
-\noindent To add a test, which should be compiled when running \texttt{ctest}, use the
-\texttt{add\_dumux\_test} macro. You can decide whether, the program should be run
-after compiling or not.
-Please note that the name of the test (first argument) must be unique, whereas the name
-of the executable (second argument) can occur multiple times.
-\begin{verbatim}
-add_dumux_test(test\_program test\_program test\_program.cc
-  test\_program # add this line, if the program should also be run
-  )
-\end{verbatim}
-
-\noindent To add a test which should be run and compared to a reference solution when using
-\texttt{ctest}, please use the following structure. The macro \texttt{\${CMAKE\_SOURCE\_DIR}}
-gives the location of your source code. The macro \texttt{\${CMAKE\_CURRENT\_BINARY\_DIR}}
-gives the current folder with the executable.
-\begin{verbatim}
-add_dumux_test(test\_program test\_program test\_program.cc
-  ${CMAKE_SOURCE_DIR}/bin/runTest.sh
-  ${CMAKE_SOURCE_DIR}/bin/fuzzycomparevtu.py
-  LOCATION_TO_THE_REFERNCE_SOLUTION/test\_program-reference.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test\_program-00009.vtu
-  ${CMAKE_CURRENT_BINARY_DIR}/test\_program)
-\end{verbatim}
-
-\paragraph{Committing a New older to SVN}
-For those who work with Subversion (\texttt{svn}) and want to commit a newly setup folder to the repository some basics are
-given in this paragraph. For further reading please check out the Subversion User Manual found at \cite{APACHE-SUBVERSION-HP}
-where you will also find a "High Speed Turorial" in the appendix. \\
-The four most important commands are \texttt{svn checkout}, \texttt{svn update},  \texttt{svn add}
-and \texttt{svn commit}. The first one (\texttt{svn checkout}) you probably already know from the \Dumux installation.
-It will create a copy of the trunk version from the svn server on your local system. Use \texttt{svn update} to get the
-latest changes in the repository (commits from other users). In order to add a new folder to the repository the following
-steps have to be taken:
-
+\paragraph{Adding new Test Programs}
+\noindent To add a test use the \texttt{add\_dumux\_test} macro.
+The command has four arguments:
 \begin{enumerate}[1)]
-\item \texttt{svn update}: The first step is to update your \Dumux. You should execute this command in your
-      dumux-stable or dumux-devel folder.
-\item \texttt{svn add --depth=empty YOURFOLDER}: This command adds the folder without its content.
-\item In your folder: use \texttt{svn add YOURFILES} to add your files. Generally, you should only add
-      your header files (.hh), your source files (.cc), your input file (.input), if required your
-      grid file (.dgf) or if necessary other text-based files. Please do not upload (large) binary files.
-\item Type \texttt{svn status} in your \texttt{dumux}-root directory the see all the file changes.
-      \texttt{?} indicates possible forgotten files. Make sure that you include all necessary
-      files in your commit.
-\item Use \texttt{svn commit} from the directory level containing your folder. This uploads all your changes to the
-      svn server. You will be asked to briefly explain the content of your commit in an editor.
+  \item name of test (has to be unique)
+  \item name of executable
+  \item source file (*.cc)
+  \item command to be executed as test - either the executable or a
+        some helper script with arguments
 \end{enumerate}
+
+To commit all your changes in the current folder and all subfolders, type \texttt{svn commit}.
+Please give a meaningful commit message.

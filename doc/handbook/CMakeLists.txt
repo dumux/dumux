@@ -1,6 +1,7 @@
 set(TEX_INPUTS
   0_dumux-handbook.tex
   0_discussion.tex
+  0_listingstyle.tex
   1_introduction.tex
   2_detailedinstall.tex
   2_quickinstall.tex
@@ -8,16 +9,17 @@ set(TEX_INPUTS
   3_tutorial.tex
   3_tutorialcoupled.tex
   3_tutorialdecoupled.tex
-  4_grids.tex
   4_guidelines.tex
+  4_developingdumux.tex
+  4_externaltools.tex
   4_newfoldersetup.tex
   4_newtoninanutshell.tex
   4_parameterfiles.tex
   4_restartsimulations.tex
   4_structure.tex
-  4_tipsandtricks.tex
   5_flowofthings.tex
   5_fluidframework.tex
+  5_grids.tex
   5_models.tex
   5_propertysystem.tex
   5_spatialdiscretizations.tex

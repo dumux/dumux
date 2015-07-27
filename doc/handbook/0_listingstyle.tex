@@ -1,0 +1,88 @@
+\newcommand{\textcolordummy}[2]{#2}
+\newcommand{\textcolordigits}{\textcolor{Mulberry}}
+\lstset{showstringspaces=false,
+ inputencoding=ansinew,
+ breaklines=true,
+ tabsize=4,
+ literate={0}{{\textcolordigits{0}}}{1}%
+          {1}{{\textcolordigits{1}}}{1}%
+          {2}{{\textcolordigits{2}}}{1}%
+          {3}{{\textcolordigits{3}}}{1}%
+          {4}{{\textcolordigits{4}}}{1}%
+          {5}{{\textcolordigits{5}}}{1}%
+          {6}{{\textcolordigits{6}}}{1}%
+          {7}{{\textcolordigits{7}}}{1}%
+          {8}{{\textcolordigits{8}}}{1}%
+          {9}{{\textcolordigits{9}}}{1}%
+          {.0}{{\textcolordigits{.0}}}{2}% Following is to ensure that only periods
+          {.1}{{\textcolordigits{.1}}}{2}% followed by a digit are changed.
+          {.2}{{\textcolordigits{.2}}}{2}%
+          {.3}{{\textcolordigits{.3}}}{2}%
+          {.4}{{\textcolordigits{.4}}}{2}%
+          {.5}{{\textcolordigits{.5}}}{2}%
+          {.6}{{\textcolordigits{.6}}}{2}%
+          {.7}{{\textcolordigits{.7}}}{2}%
+          {.8}{{\textcolordigits{.8}}}{2}%
+          {.9}{{\textcolordigits{.9}}}{2}%
+          {e0}{{\textcolordigits{e0}}}{2}% Following is to ensure that only periods
+          {e1}{{\textcolordigits{e1}}}{2}% followed by a digit are changed.
+          {e2}{{\textcolordigits{e2}}}{2}%
+          {e3}{{\textcolordigits{e3}}}{2}%
+          {e4}{{\textcolordigits{e4}}}{2}%
+          {e5}{{\textcolordigits{e5}}}{2}%
+          {e6}{{\textcolordigits{e6}}}{2}%
+          {e7}{{\textcolordigits{e7}}}{2}%
+          {e8}{{\textcolordigits{e8}}}{2}%
+          {e9}{{\textcolordigits{e9}}}{2}%
+          {e-0}{{\textcolordigits{e-0}}}{2}% Following is to ensure that only periods
+          {e-1}{{\textcolordigits{e-1}}}{2}% followed by a digit are changed.
+          {e-2}{{\textcolordigits{e-2}}}{2}%
+          {e-3}{{\textcolordigits{e-3}}}{2}%
+          {e-4}{{\textcolordigits{e-4}}}{2}%
+          {e-5}{{\textcolordigits{e-5}}}{2}%
+          {e-6}{{\textcolordigits{e-6}}}{2}%
+          {e-7}{{\textcolordigits{e-7}}}{2}%
+          {e-8}{{\textcolordigits{e-8}}}{2}%
+          {e-9}{{\textcolordigits{e-9}}}{2},
+}
+% for listings of bash code in install.tex
+\lstdefinestyle{Bash}{
+ language=Bash,
+ backgroundcolor=\color{lightgray},
+ basicstyle=\ttfamily\small\let\textcolor\textcolordummy,
+ numbers=none,
+ captionpos=b,
+ tabsize=4,
+ frame=single,
+ rulecolor=\color{lightgray},
+ framerule=1pt,
+ framesep=1pt,
+ rulesep=0pt,
+ aboveskip=\bigskipamount,
+ belowskip=\bigskipamount
+}
+% for listings of DuMuX code
+\lstdefinestyle{DumuxCode}{
+  language=C++,
+  extendedchars=true,
+  escapeinside={/*@}{@*/}, % escape the long comments
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\tiny,
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{Blue}\ttfamily\let\textcolor\textcolordummy,
+  stringstyle=\color{BrickRed}\ttfamily\let\textcolor\textcolordummy,
+  commentstyle=\color[gray]{0.35}\ttfamily\it\let\textcolor\textcolordummy,
+  morecomment=[l][\color{OliveGreen}\let\textcolor\textcolordummy]{\#},
+}
+% for listings of DuMuX parameter files
+\lstdefinestyle{DumuxParameterFile}{
+ language=sh,
+ numbers=left,
+ numbersep=5pt,
+ numberstyle=\tiny,
+ basicstyle=\ttfamily\scriptsize,
+ stringstyle=\color{BrickRed}\ttfamily\let\textcolor\textcolordummy,
+ commentstyle=\color[gray]{0.35}\ttfamily\it\let\textcolor\textcolordummy,
+ morecomment=[l][\color{Blue}\let\textcolor\textcolordummy]{[},
+}

@@ -1,9 +1,6 @@
-\section[The \Dumux Models]{Physical and Numerical Models Available in \Dumux}
-\todo[inline]{Evtl. könnten wir das in zwei kapitel aufsplitten? Physical und numerical
- models}
-
-\subsection{Physical and Mathematical Description}
-
+\section{Models}
+\todo{die abschnitte im einzelnen überarbeiten}
+\subsection{Basic Definitions and Assumptions}
 Characteristic of compositional multiphase models is that the phases
 are not only matter of a single chemical substance. Instead, their
 composition in general includes several species, and for the mass transfer,
@@ -15,8 +12,6 @@ three-phase three-component system water-NAPL-gas
 systems is straightforward and can be found, e.\ g., in
 \cite{A3:bielinski:2006,A3:acosta:2006}.
 
-\subsubsection{Basic Definitions and Assumptions for the Compositional
-  Model Concept}
 \textbf{Components:}
 The term {\it component} stands for constituents of the phases which
 can be associated with a unique chemical species, or, more generally, with
@@ -116,100 +111,17 @@ $D_\alpha^\kappa$ & diffusivity of component $\kappa$ in phase $\alpha$ & $\bold
 $\boldsymbol{v}_\alpha$ & velocity (Darcy or free flow)& & \\
 \end{tabular}
 
-
-\subsubsection{Balance Equations}
-For the balance equations for multicomponent systems, it is in many
-cases convenient to use a molar formulation of the continuity
-equation. Considering the mass conservation for each component allows
-us to drop source/sink terms for describing the mass transfer between
-phases. Then, the
-molar mass balance can be written as:
-%
-\begin{multline}
-  \label{A3:eqmass1}
- \phi \frac{\partial (\sum_\alpha \varrho_{\text{mol}, \alpha}
-    x_\alpha^\kappa S_\alpha )}{\partial t}
- - \sum\limits_\alpha \Div \left\lbrace \frac{k_{\text{r}
-        \alpha}}{\mu_\alpha} \varrho_{\text{mol}, \alpha}
-    x_\alpha^\kappa \textbf{K} (\grad p_\alpha -
-    \varrho_{\alpha} \boldsymbol{g}) \right\rbrace  \\
-  %
-  %
- - \sum\limits_\alpha \Div \left\lbrace \tau \phi S_\alpha D_\alpha^\kappa \varrho_{\text{mol},
-      \alpha} \grad x_\alpha^\kappa \right\rbrace
- - q^\kappa = 0, \qquad \kappa \in \{\text{w,a,c}\}.
-\end{multline}
-
-The component mass balance can also be written in terms of mass fractions
-by replacing molar densities by mass densities and mole by mass fractions.
-To obtain a single conserved quantity in the temporal derivative, the total
-concentration, representing the mass of one component per unit volume, is defined as
-\begin{displaymath}
-C^\kappa = \sum_\alpha \phi S_\alpha \varrho_{\text{mass},\alpha} X_\alpha^\kappa \; .
-\end{displaymath}
-Using this definition, the component mass balance is written as:
-
-\begin{multline}
-  \label{A3:eqmass2}
-    \frac{\partial C^\kappa}{\partial t} =
-  \sum\limits_\alpha \Div \left\lbrace \frac{k_{\text{r}
-        \alpha}}{\mu_\alpha} \varrho_{\text{mass}, \alpha}
-    X_\alpha^\kappa \textbf{K} (\grad p_\alpha +
-    \varrho_{\text{mass}, \alpha} \boldsymbol{g}) \right\rbrace  \\
-  %
-  %
-   + \sum\limits_\alpha \Div \left\lbrace \tau \phi S_\alpha D_\alpha^\kappa \varrho_{\text{mass},
-      \alpha} \frac{M^\kappa}{M_\alpha} \grad x_\alpha^\kappa \right\rbrace
- + q^\kappa = 0, \qquad \kappa \in \{\text{w,a,c}\}.
-\end{multline}
-
-
-In the case of non-isothermal systems, we further have to balance the
-thermal energy. We assume fully reversible processes, such that entropy
-is not needed as a model parameter. Furthermore, we neglect
-dissipative effects and the heat transport due to molecular
-diffusion. The energy balance can then be
-formulated as:
-%
-\begin{multline}
-  \label{A3:eqenergmak1}
-  \phi \frac{\partial \left( \sum_\alpha \varrho_{\alpha}
-      u_\alpha S_\alpha \right)}{\partial t} + \left( 1 -
-    \phi \right) \frac{\partial \varrho_{\text{s}} c_{\text{s}}
-    T}{\partial t}
- - \Div \left( \lambda_{\text{pm}} \grad T \right)
-   \\
-   - \sum\limits_\alpha \Div \left\lbrace \frac{k_{\text{r}
-        \alpha}}{\mu_\alpha} \varrho_{\alpha} h_\alpha
-    K \left( \grad p_\alpha - \varrho_{\alpha}
-      \boldsymbol{g} \right) \right\rbrace
- - q^h \; = \; 0.
-\end{multline}
-
-In order to close the system, supplementary constraints for capillary pressure, saturations and mole
-fractions are needed, \cite{A3:helmig:1997}.
-According to the Gibbsian phase rule, the number of degrees of freedom
-in a non-isothermal compositional multiphase system is equal to the
-number of components plus one. This means we need as many independent
-unknowns in the system description. The
-available primary variables are, e.\ g., saturations, mole/mass
-fractions, temperature, pressures, etc.
-
 \subsection{Available Models}
+\todo{modelliste einfügen}
+\todo{auf doxygen verweisen}
+
 The following description of the available models is automatically extracted
 from the Doxygen documentation.
 
-\todo[inline]{Die Modelle waren etwas uneinheitlich von der Notation (ich habe
-  hier auch gerade das entsprechende ToDo entfernt). Das ist naturlich jetzt
-  nicht mehr so schlimm, da die Modelle nicht mehr untereinander auftauchen,
-  allerdings wird auch die Fehlersuche schwieriger (aus dem Auge aus dem Sinn).}
-
-\todo[inline]{evtl. entferne Unterkapitel. Einfugen der Modelliste, die könnte
-  in ahnlicher Form auch aufs doxygen? Update der Liste in die Release Manager
-  Tasks ubernehmen}
+\subsection{Implicit and Decoupled Models}
 
 \subsubsection{Fully-Implicit Models}
-
+\todo{überarbeiten}
 The fully-implicit models described in this section are using the box or the
 cell centered finite volume method as described in section \ref{box} and \ref{cc}
 for spatial and the implicit Euler
@@ -217,7 +129,7 @@ method as temporal discretization. The models themselves are located in
 subdirectories of \texttt{dumux/implicit} of the \Dumux distribution.
 
 \subsubsection{Decoupled Models}
-%
+\todo{überarbeiten}
 The basic idea the so-called decoupled models have in common is to reformulate the
 equations of multi-phase flow (e.g. Eq. \ref{A3:eqmass1}) into one equation for
 pressure and equations for phase-/component-/etc. transport. The pressure equation

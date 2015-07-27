@@ -1,4 +1,4 @@
-\section{The \Dumux Fluid Framework}
+\section{Fluid Framework}
 \label{sec:fluidframework}
 
 This chapter discusses the \Dumux fluid framework. \Dumux users who
@@ -8,7 +8,7 @@ configurations may skip this chapter.
 In the chapter, a high level overview over the the principle concepts
 is provided first, then some implementation details follow.
 
-\subsection{Overview of the Fluid Framework}
+\subsection{Overview}
 
 The \Dumux fluid framework currently features the following concepts
 (listed roughly in their order of importance):
@@ -62,6 +62,7 @@ The \Dumux fluid framework currently features the following concepts
 \end{description}
 
 \subsection{Fluid States}
+\todo[inline]{übersichtlicher gestalten}
 
 Fluid state objects express the complete thermodynamic state of a
 system at a given spatial and temporal position.
@@ -160,6 +161,7 @@ Also, {\bf all} fluid states {\bf must} provide the following methods:
 \end{description}
 
 \subsubsection{Available Fluid States}
+\todo{könnte aufs doxygen ausgelagert werden}
 Currently, the following fluid states are provided by \Dumux:
 \begin{description}
 \item[NonEquilibriumFluidState:] This is the most general fluid state
@@ -351,6 +353,7 @@ such fluid systems cannot be used for models that depend on those
 methods.
 
 \subsubsection{Available Fluid Systems}
+\todo{könnte aufs doxygen ausgelagert werden}
 
 Currently, the following fluid systems are available in \Dumux:
 \begin{description}
@@ -469,8 +472,3 @@ system of equations is closed.
   potentially present. Currently, this solver does not support
   non-ideal mixtures.
 \end{description}
-
-%%% Local Variables:
-%%% mode: latex
-%%% TeX-master: "dumux-handbook"
-%%% End:
