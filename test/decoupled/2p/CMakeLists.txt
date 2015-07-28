@@ -84,7 +84,7 @@ add_dumux_test(test_3d2pmimeticadaptive test_3d2pmimeticadaptive test_3d2p.cc
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/test_3d2pmimeticadaptive-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimeticadaptive-00012.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimeticadaptive -Problem.OutputName test_3d2pmimeticadaptive -ModelType MimeticAdaptive")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmimeticadaptive -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pmimeticadaptive -ModelType MimeticAdaptive")
 
 add_dumux_test(test_3d2pmpfal test_3d2pmpfal test_3d2p.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
