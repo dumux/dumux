@@ -1,12 +1,12 @@
---- orig_tutorial_coupled.input	2013-09-30 10:26:43.000000000 +0200
-+++ tutorial_coupled.input	2013-09-30 14:35:52.624240174 +0200
-@@ -9,14 +9,14 @@
- ###############################################################
- 
+Index: tutorial_coupled.input
+===================================================================
+--- tutorial_coupled.input	(revision 15171)
++++ tutorial_coupled.input	(working copy)
+@@ -1,9 +1,9 @@
  [TimeManager]
 -TEnd = 500000 # duration of the simulation [s]
 -DtInitial = 10 # initial time step size [s]
-+TEnd = 1e6 # duration of the simulation [s]
++TTEnd = 1e6 # duration of the simulation [s]
 +DtInitial = 100 # initial time step size [s]
  
  [Grid]
@@ -18,6 +18,3 @@
 +UpperRightY = 50 # y-coordinate of the upper-right corner of the grid [m]
 +NumberOfCellsX = 20 # x-resolution of the grid
 +NumberOfCellsY = 10 # y-resolution of the grid
- 
- ###############################################################
- # Simulation restart

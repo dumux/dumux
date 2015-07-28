@@ -1,11 +1,13 @@
---- orig_tutorialspatialparams_coupled.hh	2013-09-30 11:19:36.000000000 +0200
-+++ tutorialspatialparams_coupled.hh	2013-09-30 11:19:55.331483486 +0200
+Index: tutorialspatialparams_coupled.hh
+===================================================================
+--- tutorialspatialparams_coupled.hh	(revision 15068)
++++ tutorialspatialparams_coupled.hh	(working copy)
 @@ -54,10 +54,10 @@
      // material law typedefs
      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
      // select material law to be used
 -    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;     /*@\label{tutorial-coupled:rawlaw}@*/
-+    //typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;     /*@\label{tutorial-coupled:rawlaw}@*/
++//     typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;     /*@\label{tutorial-coupled:rawlaw}@*/
  public:
      // adapter for absolute law
 -    typedef EffToAbsLaw<RawMaterialLaw> type;   /*@\label{tutorial-coupled:eff2abs}@*/
@@ -19,8 +21,8 @@
          //set residual saturations
 -        materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
 -        materialParams_.setSnr(0.0);
-+        //materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
-+        //materialParams_.setSnr(0.0);
++//         materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
++//         materialParams_.setSnr(0.0);
  
          //parameters of Brooks & Corey Law
 -        materialParams_.setPe(500.0);

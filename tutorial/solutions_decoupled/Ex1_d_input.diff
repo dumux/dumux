@@ -1,12 +1,8 @@
-### Eclipse Workspace Patch 1.0
-#P dumux-stable
-Index: tutorial/tutorial_decoupled.input
+Index: tutorial_decoupled.input
 ===================================================================
---- tutorial/tutorial_decoupled.input	(revision 9128)
-+++ tutorial/tutorial_decoupled.input	(working copy)
-@@ -9,14 +9,14 @@
- ###############################################################
- 
+--- tutorial_decoupled.input	(revision 15171)
++++ tutorial_decoupled.input	(working copy)
+@@ -1,9 +1,9 @@
  [TimeManager]
 -TEnd = 100000 # duration of the simulation [s]
 +TEnd = 20000 # duration of the simulation [s]
@@ -20,6 +16,3 @@ Index: tutorial/tutorial_decoupled.input
 +UpperRightY = 300 # y-coordinate of the upper-right corner of the grid [m]
 +NumberOfCellsX = 15 # x-resolution of the grid
 +NumberOfCellsY = 30 # y-resolution of the grid
- 
- ###############################################################
- # Simulation restart

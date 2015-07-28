@@ -1,6 +1,8 @@
---- orig_tutorialspatialparams_coupled.hh	2012-09-24 11:02:12.440395726 +0200
-+++ ex3_tutorialspatialparams_coupled.hh	2012-09-24 12:02:21.868070355 +0200
-@@ -120,7 +120,7 @@
+Index: tutorialspatialparams_coupled.hh
+===================================================================
+--- tutorialspatialparams_coupled.hh	(revision 15068)
++++ tutorialspatialparams_coupled.hh	(working copy)
+@@ -119,7 +119,7 @@
      Scalar porosity(const Element &element,                    /*@\label{tutorial-coupled:porosity}@*/
                      const FVElementGeometry &fvGeometry,
                      const int scvIdx) const
@@ -9,18 +11,17 @@
  
      /*! Returns the parameter object for the material law (i.e. Brooks-Corey)
       *  depending on the position in the domain
-@@ -147,8 +147,22 @@
+@@ -146,9 +146,22 @@
      {
          //set main diagonal entries of the permeability tensor to a value
          //setting to one value means: isotropic, homogeneous
 -        for (int i = 0; i < dim; i++)
 -            K_[i][i] = 1e-7;
-+
 +        try
 +        {
 +            for (int i = 0; i < dim; i++)
 +                K_[i][i] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Perm);
-+
+ 
 +            porosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Porosity);
 +        }
 +        catch (Dumux::ParameterException &e) {
@@ -31,10 +32,11 @@
 +            std::cerr << "Unknown exception thrown!\n";
 +            exit(1);
 +        }
- 
++
          //set residual saturations
          materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
-@@ -161,6 +175,7 @@
+         materialParams_.setSnr(0.0);
+@@ -160,6 +173,7 @@
  
  private:
      Dune::FieldMatrix<Scalar, dim, dim> K_;

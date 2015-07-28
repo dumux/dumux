@@ -1,8 +1,8 @@
-Index: tutorial/tutorialspatialparams_decoupled.hh
+Index: tutorialspatialparams_decoupled.hh
 ===================================================================
---- tutorial/tutorialspatialparams_decoupled.hh	(revision 9210)
-+++ tutorial/tutorialspatialparams_decoupled.hh	(working copy)
-@@ -104,7 +104,7 @@
+--- tutorialspatialparams_decoupled.hh	(revision 15068)
++++ tutorialspatialparams_decoupled.hh	(working copy)
+@@ -103,7 +103,7 @@
       */
      double porosity(const Element& element) const
      {
@@ -11,17 +11,17 @@ Index: tutorial/tutorialspatialparams_decoupled.hh
      }
  
      /*! Return the parameter object for the material law (i.e. Brooks-Corey)
-@@ -125,9 +125,22 @@
+@@ -124,8 +124,21 @@
      TutorialSpatialParamsDecoupled(const GridView& gridView)
      : ParentType(gridView), K_(0)
      {
 -        for (int i = 0; i < dim; i++)
 -                K_[i][i] = 1e-7;
-+         try
++        try
 +         {
 +             for (int i = 0; i < dim; i++)
 +                 K_[i][i] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Perm);
- 
++ 
 +             porosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Porosity);
 +         }
 +         catch (Dumux::ParameterException &e) {
@@ -32,11 +32,10 @@ Index: tutorial/tutorialspatialparams_decoupled.hh
 +             std::cerr << "Unknown exception thrown!\n";
 +             exit(1);
 +         }
-+
+ 
          // residual saturations
          materialLawParams_.setSwr(0);
-         materialLawParams_.setSnr(0);
-@@ -143,6 +156,7 @@
+@@ -142,6 +155,7 @@
  private:
      MaterialLawParams materialLawParams_;
      FieldMatrix K_;

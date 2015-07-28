@@ -1,6 +1,8 @@
---- orig_tutorial_coupled.input	2013-09-30 10:26:43.000000000 +0200
-+++ tutorial_coupled.input	2013-09-30 10:27:42.657685301 +0200
-@@ -13,10 +13,10 @@
+Index: tutorial_coupled.input
+===================================================================
+--- tutorial_coupled.input	(revision 15171)
++++ tutorial_coupled.input	(working copy)
+@@ -3,7 +3,7 @@
  DtInitial = 10 # initial time step size [s]
  
  [Grid]
@@ -12,6 +14,3 @@
 +UpperRightY = 500 # y-coordinate of the upper-right corner of the grid [m]
 +NumberOfCellsX = 20 # x-resolution of the grid
 +NumberOfCellsY = 25 # y-resolution of the grid
- 
- ###############################################################
- # Simulation restart

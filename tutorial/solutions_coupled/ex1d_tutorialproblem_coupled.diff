@@ -1,16 +1,18 @@
---- orig_tutorialproblem_coupled.hh	2012-09-24 08:56:29.268511049 +0200
-+++ ex1d_tutorialproblem_coupled.hh	2012-09-24 10:35:57.793432961 +0200
-@@ -42,7 +42,8 @@
+Index: tutorialproblem_coupled.hh
+===================================================================
+--- tutorialproblem_coupled.hh	(revision 15068)
++++ tutorialproblem_coupled.hh	(working copy)
+@@ -46,7 +46,8 @@
  
  // The components that are used
  #include <dumux/material/components/h2o.hh>
 -#include <dumux/material/components/lnapl.hh>
 +#include <dumux/material/components/brine.hh>
 +#include <dumux/material/components/dnapl.hh>
- #include <dumux/common/cubegridcreator.hh>
+ #include <dumux/io/cubegridcreator.hh>
  
  namespace Dumux{
-@@ -71,14 +72,14 @@
+@@ -76,7 +77,7 @@
  SET_PROP(TutorialProblemCoupled, WettingPhase) /*@\label{tutorial-coupled:2p-system-start}@*/
  {
  private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -19,6 +21,7 @@
  };
  
  // Set the non-wetting phase
+@@ -83,7 +84,7 @@
  SET_PROP(TutorialProblemCoupled, NonwettingPhase)
  {
  private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

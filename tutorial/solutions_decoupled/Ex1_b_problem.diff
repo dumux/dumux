@@ -1,26 +1,17 @@
---- orig_tutorialproblem_decoupled.hh	2013-09-30 15:23:52.407775870 +0200
-+++ tutorialproblem_decoupled.hh	2013-09-30 15:27:31.360653894 +0200
-@@ -134,8 +134,8 @@
-     TutorialProblemDecoupled(TimeManager &timeManager, const GridView &gridView)
-         : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
-     {
--        //write only every 10th time step to output file
--        this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
-+        //write only every 20th time step to output file
-+        this->setOutputInterval(20);/*@\label{tutorial-decoupled:outputinterval}@*/
-     }
- 
-     //! The problem name.
-@@ -214,7 +214,7 @@
+Index: tutorialproblem_decoupled.hh
+===================================================================
+--- tutorialproblem_decoupled.hh	(revision 15171)
++++ tutorialproblem_decoupled.hh	(working copy)
+@@ -215,7 +215,7 @@
       */
      void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:bctype}@*/
      {
 -            if (globalPos[0] < this->bBoxMin()[0] + eps_)
 +            if (globalPos[1] < this->bBoxMin()[1] + eps_)
              {
-                 bcTypes.setDirichlet(pressEqIdx);
-                 bcTypes.setDirichlet(satEqIdx);
-@@ -256,7 +256,7 @@
+                 bcTypes.setDirichlet(pwIdx);
+                 bcTypes.setDirichlet(swIdx);
+@@ -257,7 +257,7 @@
      void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:neumann}@*/
      {
          values = 0;

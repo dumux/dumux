@@ -1,6 +1,8 @@
---- orig_tutorialproblem_coupled.hh	2013-09-23 17:09:45.000000000 +0200
-+++ tutorialproblem_coupled.hh	2013-09-30 10:18:59.432348697 +0200
-@@ -150,7 +150,7 @@
+Index: tutorialproblem_coupled.hh
+===================================================================
+--- tutorialproblem_coupled.hh	(revision 15068)
++++ tutorialproblem_coupled.hh	(working copy)
+@@ -160,7 +160,7 @@
      void boundaryTypes(BoundaryTypes &bcTypes, const Vertex &vertex) const
      {
          const GlobalPosition &globalPos = vertex.geometry().center();
@@ -9,7 +11,7 @@
             bcTypes.setAllDirichlet();
          else // neuman for the remaining boundaries
             bcTypes.setAllNeumann();
-@@ -179,9 +179,9 @@
+@@ -189,9 +189,9 @@
      {
          const GlobalPosition &globalPos =
              fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;

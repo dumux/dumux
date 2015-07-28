@@ -1,8 +1,8 @@
-Index: tutorial/tutorialproblem_decoupled.hh
+Index: tutorialproblem_decoupled.hh
 ===================================================================
---- tutorial/tutorialproblem_decoupled.hh	(revision 9210)
-+++ tutorial/tutorialproblem_decoupled.hh	(working copy)
-@@ -138,6 +138,21 @@
+--- tutorialproblem_decoupled.hh	(revision 15068)
++++ tutorialproblem_decoupled.hh	(working copy)
+@@ -135,8 +135,23 @@
      TutorialProblemDecoupled(TimeManager &timeManager, const GridView &gridView)
          : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
      {
@@ -21,21 +21,22 @@ Index: tutorial/tutorialproblem_decoupled.hh
 +             std::cerr << "Unknown exception thrown!\n";
 +             exit(1);
 +         }
-+
          //write only every 10th time step to output file
--         this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
-+         this->setOutputInterval(outputInterval);/*@\label{tutorial-decoupled:outputinterval}@*/
+-        this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
++        this->setOutputInterval(outputInterval);/*@\label{tutorial-decoupled:outputinterval}@*/
      }
-@@ -262,7 +277,7 @@
+ 
+     //! The problem name.
+@@ -259,7 +274,7 @@
          values = 0;
-         if (globalPos[0] > this->bboxMax()[0] - eps_)
+         if (globalPos[0] > this->bBoxMax()[0] - eps_)
          {
 -            values[nPhaseIdx] = 3e-2;
 +            values[nPhaseIdx] = outflowRateOil_;
          }
      }
      //! Initial condition at position globalPos.
-@@ -282,6 +297,7 @@
+@@ -279,6 +294,7 @@
  
  private:
      const Scalar eps_;

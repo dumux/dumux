@@ -1,10 +1,8 @@
-### Eclipse Workspace Patch 1.0
-#P dumux-stable
-Index: tutorial/tutorialspatialparams_decoupled.hh
+Index: tutorialspatialparams_decoupled.hh
 ===================================================================
---- tutorial/tutorialspatialparams_decoupled.hh	(revision 9128)
-+++ tutorial/tutorialspatialparams_decoupled.hh	(working copy)
-@@ -89,9 +89,12 @@
+--- tutorialspatialparams_decoupled.hh	(revision 15068)
++++ tutorialspatialparams_decoupled.hh	(working copy)
+@@ -88,10 +88,13 @@
       *  Alternatively, the function intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) could be
       *  defined, where globalPos is the vector including the global coordinates of the finite volume.
       */
@@ -12,14 +10,16 @@ Index: tutorial/tutorialspatialparams_decoupled.hh
 +    const FieldMatrix& intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
      {
 -            return K_;
-+     	if(globalPos[0]<300)
-+            return K1;
-+    	else
-+    		return K2;
-     }
+-    }
++       if(globalPos[0]<300)
++           return K1;
++       else
++           return K2;
++    }
  
      //! Define the porosity \f$[-]\f$ of the porous medium depending
-@@ -102,9 +105,12 @@
+     /*! on the position in the domain
+@@ -101,9 +104,12 @@
       *  Alternatively, the function porosityAtPos(const GlobalPosition& globalPos) could be
       *  defined, where globalPos is the vector including the global coordinates of the finite volume.
       */
@@ -27,14 +27,14 @@ Index: tutorial/tutorialspatialparams_decoupled.hh
 +    double porosityAtPos(const GlobalPosition& globalPos) const
      {
 -        return 0.2;
-+      	if(globalPos[0]<300)
-+    	return 0.15;
-+    	else
-+        return 0.3;
++       if(globalPos[0]<300)
++           return 0.15;
++       else
++           return 0.3;
      }
  
      /*! Return the parameter object for the material law (i.e. Brooks-Corey)
-@@ -123,10 +129,12 @@
+@@ -122,10 +128,12 @@
  
      //! Constructor
      TutorialSpatialParamsDecoupled(const GridView& gridView)
@@ -43,21 +43,19 @@ Index: tutorial/tutorialspatialparams_decoupled.hh
      {
          for (int i = 0; i < dim; i++)
 -                K_[i][i] = 1e-7;
-+                K1[i][i] = 1e-8;
++            K1[i][i] = 1e-8;
 +        for (int i = 0; i < dim; i++) 
-+        	    K2[i][i] = 1e-9;
++            K2[i][i] = 1e-9;
  
          // residual saturations
          materialLawParams_.setSwr(0);
-@@ -142,8 +150,9 @@
+@@ -141,7 +149,8 @@
  
  private:
      MaterialLawParams materialLawParams_;
 -    FieldMatrix K_;
--};
 +    FieldMatrix K1;
 +    FieldMatrix K2;
-+   };
+ };
  
  } // end namespace
- #endif

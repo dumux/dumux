@@ -1,14 +1,18 @@
---- ex1c_tutorialproblem_decoupled.hh	2013-09-30 15:36:26.000000000 +0200
-+++ tutorialproblem_decoupled.hh	2013-09-30 15:56:19.162117409 +0200
-@@ -43,6 +43,7 @@
+Index: tutorialproblem_decoupled.hh
+===================================================================
+--- tutorialproblem_decoupled.hh	(revision 15068)
++++ tutorialproblem_decoupled.hh	(working copy)
+@@ -42,7 +42,8 @@
+ // the components that are used
  #include <dumux/material/components/h2o.hh>
- #include <dumux/material/components/dnapl.hh>
- #include <dumux/material/components/brine.hh>
+ #include <dumux/material/components/lnapl.hh>
+-
++#include <dumux/material/components/brine.hh>
 +#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
- 
  namespace Dumux
  {
-@@ -70,23 +71,24 @@
+ 
+@@ -70,24 +71,25 @@
  //Set the grid creator
  SET_TYPE_PROP(TutorialProblemDecoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-decoupled:set-gridcreator}@*/
  
@@ -18,49 +22,50 @@
 -private:
 -    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 -public:
--    typedef Dumux::LiquidPhase<Scalar, Dumux::Brine<Scalar, H2O<Scalar> > > type; /*@\label{tutorial-decoupled:wettingPhase}@*/
+-    typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-decoupled:wettingPhase}@*/
 -};
--
++SET_TYPE_PROP(TutorialProblemDecoupled, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
++// // Set the wetting phase
++// SET_PROP(TutorialProblemDecoupled, WettingPhase) /*@\label{tutorial-decoupled:2p-system-start}@*/
++// {
++// private:
++//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
++// public:
++//     typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-decoupled:wettingPhase}@*/
++// };
++// 
++// // Set the non-wetting phase
++// SET_PROP(TutorialProblemDecoupled, NonwettingPhase)
++// {
++// private:
++//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
++// public:
++//     typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
++// }; /*@\label{tutorial-decoupled:2p-system-end}@*/
+ 
 -// Set the non-wetting phase
 -SET_PROP(TutorialProblemDecoupled, NonwettingPhase)
 -{
 -private:
 -    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 -public:
--    typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
+-    typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
 -}; /*@\label{tutorial-decoupled:2p-system-end}@*/
-+SET_TYPE_PROP(TutorialProblemDecoupled, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
-+//// Set the wetting phase
-+//SET_PROP(TutorialProblemDecoupled, WettingPhase) /*@\label{tutorial-decoupled:2p-system-start}@*/
-+//{
-+//private:
-+//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-+//public:
-+//    typedef Dumux::LiquidPhase<Scalar, Dumux::Brine<Scalar, H2O<Scalar> > > type; /*@\label{tutorial-decoupled:wettingPhase}@*/
-+//};
-+//
-+//// Set the non-wetting phase
-+//SET_PROP(TutorialProblemDecoupled, NonwettingPhase)
-+//{
-+//private:
-+//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-+//public:
-+//    typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
-+//}; /*@\label{tutorial-decoupled:2p-system-end}@*/
- 
+-
  SET_TYPE_PROP(TutorialProblemDecoupled, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-decoupled:cflflux}@*/
  SET_SCALAR_PROP(TutorialProblemDecoupled, ImpetCFLFactor, 0.95); /*@\label{tutorial-decoupled:cflfactor}@*/
+ 
 @@ -137,6 +139,7 @@
      {
-         //write only every 20th time step to output file
-         this->setOutputInterval(20);/*@\label{tutorial-decoupled:outputinterval}@*/
+         //write only every 10th time step to output file
+         this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
 +        GET_PROP_TYPE(TypeTag, FluidSystem)::init();
      }
  
      //! The problem name.
 @@ -259,7 +262,7 @@
          values = 0;
-         if (globalPos[1] > this->bBoxMax()[1] - eps_)
+         if (globalPos[0] > this->bBoxMax()[0] - eps_)
          {
 -            values[nPhaseIdx] = 3e-2;
 +            values[nPhaseIdx] = 3e-4;

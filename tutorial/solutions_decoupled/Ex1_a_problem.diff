@@ -1,6 +1,8 @@
---- orig_tutorialproblem_decoupled.hh	2013-09-30 15:23:52.407775870 +0200
-+++ tutorialproblem_decoupled.hh	2013-09-30 15:22:31.163304757 +0200
-@@ -134,8 +134,8 @@
+Index: tutorialproblem_decoupled.hh
+===================================================================
+--- tutorialproblem_decoupled.hh	(revision 15068)
++++ tutorialproblem_decoupled.hh	(working copy)
+@@ -135,8 +135,8 @@
      TutorialProblemDecoupled(TimeManager &timeManager, const GridView &gridView)
          : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
      {

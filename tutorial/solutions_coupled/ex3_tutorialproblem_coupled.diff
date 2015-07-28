@@ -1,15 +1,10 @@
---- orig_tutorialproblem_coupled.hh	2012-09-24 08:56:29.268511049 +0200
-+++ ex3_tutorialproblem_coupled.hh	2012-09-24 12:01:47.644008161 +0200
-@@ -116,10 +116,25 @@
- 
- public:
-     TutorialProblemCoupled(TimeManager &timeManager,
--                           const GridView &gridView)
--        : ParentType(timeManager, gridView)
--        , eps_(3e-6)
-+            const GridView &gridView)
-+    : ParentType(timeManager, gridView)
-+    , eps_(3e-6)
+Index: tutorialproblem_coupled.hh
+===================================================================
+--- tutorialproblem_coupled.hh	(revision 15068)
++++ tutorialproblem_coupled.hh	(working copy)
+@@ -127,6 +127,20 @@
+         : ParentType(timeManager, gridView)
+         , eps_(3e-6)
      {
 +        try
 +        {
@@ -25,11 +20,10 @@
 +            std::cerr << "Unknown exception thrown!\n";
 +            exit(1);
 +        }
-+
-     }
- 
-     //! Specifies the problem name. This is used as a prefix for files
-@@ -184,7 +199,7 @@
+ #if !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG)
+       std::cout << "If you want to use simplices instead of cubes, install and use ALUGrid or UGGrid." << std::endl;
+ #endif // !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG)
+@@ -194,7 +208,7 @@
          if (globalPos[0] > right - eps_) {
              // oil outflux of 30 g/(m * s) on the right boundary.
              values[Indices::contiWEqIdx] = 0;
@@ -38,7 +32,7 @@
          } else {
              // no-flow on the remaining Neumann-boundaries.
              values[Indices::contiWEqIdx] = 0;
-@@ -219,6 +234,7 @@
+@@ -229,6 +243,7 @@
  private:
      // small epsilon value
      Scalar eps_;

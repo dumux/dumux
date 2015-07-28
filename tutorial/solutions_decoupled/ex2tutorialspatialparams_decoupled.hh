@@ -90,7 +90,7 @@ public:
      */
     const FieldMatrix& intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
     {
-    	if(((globalPos[0]>25)and(globalPos[0]<75))and((globalPos[1]>15)and(globalPos[1]<35)))
+    	if(((globalPos[0]>25)&&(globalPos[0]<75))&&((globalPos[1]>15)&&(globalPos[1]<35)))
             return KLense_;
     	else
     		return K_;
@@ -107,7 +107,7 @@ public:
      */
     double porosityAtPos(const GlobalPosition& globalPos) const
     {
-    	if(((globalPos[0]>25)and(globalPos[0]<75))and((globalPos[1]>15)and(globalPos[1]<35)))
+    	if(((globalPos[0]>25)&&(globalPos[0]<75))&&((globalPos[1]>15)&&(globalPos[1]<35)))
     	return 0.15;
     	else
         return 0.2;
@@ -124,7 +124,7 @@ public:
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-    	if(((globalPos[0]>25)and(globalPos[0]<75))and((globalPos[1]>15)and(globalPos[1]<35)))
+    	if(((globalPos[0]>25)&&(globalPos[0]<75))&&((globalPos[1]>15)&&(globalPos[1]<35)))
     	return materialParamsLense_;
     	else
     	return materialParams_;

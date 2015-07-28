@@ -1,20 +1,18 @@
-### Eclipse Workspace Patch 1.0
-#P dumux-stable
-Index: tutorial/tutorial_decoupled.input
+Index: tutorial_decoupled.input
 ===================================================================
---- tutorial/tutorial_decoupled.input	(revision 8322)
-+++ tutorial/tutorial_decoupled.input	(working copy)
-@@ -1,7 +1,7 @@
--tEnd = 100000 # duration of the simulation [s]
-+tEnd = 500000 # duration of the simulation [s]
- dtInitial = 10 # initial time step size [s]
+--- tutorial_decoupled.input	(revision 15171)
++++ tutorial_decoupled.input	(working copy)
+@@ -1,9 +1,9 @@
+ [TimeManager]
+-TEnd = 100000 # duration of the simulation [s]
++TEnd = 500000 # duration of the simulation [s]
+ DtInitial = 10 # initial time step size [s]
+ 
  [Grid]
- upperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
--upperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
--numberOfCellsX = 100 # x-resolution of the grid
--numberOfCellsY = 1 # y-resolution of the grid
-\ No newline at end of file
-+upperRightY = 300 # y-coordinate of the upper-right corner of the grid [m]
-+numberOfCellsX = 15 # x-resolution of the grid
-+numberOfCellsY = 30 # y-resolution of the grid
-\ No newline at end of file
+ UpperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
+-UpperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
+-NumberOfCellsX = 100 # x-resolution of the grid
+-NumberOfCellsY = 1 # y-resolution of the grid
++UpperRightY = 300 # y-coordinate of the upper-right corner of the grid [m]
++NumberOfCellsX = 20 # x-resolution of the grid
++NumberOfCellsY = 10 # y-resolution of the grid

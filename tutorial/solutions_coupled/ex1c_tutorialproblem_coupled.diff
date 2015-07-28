@@ -1,26 +1,26 @@
---- tutorialproblem_coupled.hh	2012-09-24 08:56:29.268511049 +0200
-+++ ex1c_tutorialproblem_coupled.hh	2012-09-24 09:39:03.494088512 +0200
-@@ -43,7 +43,7 @@
+Index: tutorialproblem_coupled.hh
+===================================================================
+--- tutorialproblem_coupled.hh	(revision 15068)
++++ tutorialproblem_coupled.hh	(working copy)
+@@ -47,7 +47,7 @@
  // The components that are used
  #include <dumux/material/components/h2o.hh>
  #include <dumux/material/components/lnapl.hh>
--#include <dumux/common/cubegridcreator.hh>
-+#include <dumux/common/simplexgridcreator.hh>
+-#include <dumux/io/cubegridcreator.hh>
++#include <dumux/io/simplexgridcreator.hh>
  
  namespace Dumux{
  // Forward declaration of the problem class
-@@ -60,7 +60,7 @@
+@@ -64,13 +64,13 @@
  
  // Set grid and the grid creator to be used
- #if HAVE_ALUGRID
--SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid}@*/
-+SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::simplex, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid}@*/
+ #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID /*@\label{tutorial-coupled:set-grid}@*/
+-SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid-ALU}@*/
++SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::simplex, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid-ALU}@*/
+ #elif HAVE_UG
+ SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::UGGrid<2>);
  #else
  SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::YaspGrid<2>);
- #warning If you want to use adaptivity, install and use ALUGrid.
-@@ -65,7 +65,7 @@
- SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::YaspGrid<2>);
- #warning If you want to use adaptivity, install and use ALUGrid.
  #endif // HAVE_ALUGRID
 -SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
 +SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::SimplexGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/

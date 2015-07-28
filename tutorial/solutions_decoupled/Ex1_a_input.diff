@@ -1,12 +1,11 @@
-### Eclipse Workspace Patch 1.0
-#P dumux-stable
-Index: tutorial/tutorial_decoupled.input
+Index: tutorial_decoupled.input
 ===================================================================
---- tutorial/tutorial_decoupled.input	(revision 8322)
-+++ tutorial/tutorial_decoupled.input	(working copy)
-@@ -1,4 +1,4 @@
--tEnd = 100000 # duration of the simulation [s]
-+tEnd = 500000 # duration of the simulation [s]
- dtInitial = 10 # initial time step size [s]
+--- tutorial_decoupled.input	(revision 15171)
++++ tutorial_decoupled.input	(working copy)
+@@ -1,5 +1,5 @@
+ [TimeManager]
+-TEnd = 100000 # duration of the simulation [s]
++TEnd = 500000 # duration of the simulation [s]
+ DtInitial = 10 # initial time step size [s]
+ 
  [Grid]
- upperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
