@@ -12,4 +12,4 @@ add_dumux_test(test_stokes2cni_conduction test_stokes2cni test_stokes2cni.cc
                   --script fuzzy
                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_stokes2cni_conduction.input"
                   --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni_conduction-reference.vtu
-                          ${CMAKE_CURRENT_BINARY_DIR}/stokes2cni_conduction-00006.vtu)
+                          ${CMAKE_CURRENT_BINARY_DIR}/stokes2cni_conduction-00008.vtu)
