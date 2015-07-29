@@ -1,0 +1,29 @@
+From 5a6df3dced371302cd4361a35f21e141d8162d1b Mon Sep 17 00:00:00 2001
+From: Bernd Flemisch <bernd@iws.uni-stuttgart.de>
+Date: Tue, 28 Jul 2015 14:02:32 +0200
+Subject: adapt opm-parser such that it can be used by Dumux
+
+---
+ CMakeLists.txt | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index cdac561..7cb1534 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -81,8 +81,8 @@ include(ConfigVars)
+ set(OPM_MACROS_ROOT ${PROJECT_SOURCE_DIR})
+ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+ set(opm-parser_NAME opm-parser)
+-set(opm-parser_LIBRARIES Parser opm-json)
+-if(NOT BUILD_SHARED_LIBS)
+-  list(APPEND opm-parser_LIBRARIES cjson)
+-endif()
++#set(opm-parser_LIBRARIES Parser opm-json)
++#if(NOT BUILD_SHARED_LIBS)
++#  list(APPEND opm-parser_LIBRARIES cjson)
++#endif()
+ opm_cmake_config(opm-parser)
+-- 
+2.1.4
+

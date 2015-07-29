@@ -36,6 +36,15 @@ add_dumux_test(test_generalizeddirichlet test_generalizeddirichlet test_generali
                          ${CMAKE_CURRENT_BINARY_DIR}/generalizeddirichlet-00035.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_generalizeddirichlet")
 
+if(HAVE_DUNE_CORNERPOINT)
+add_dumux_test(test_cc2pcornerpoint test_cc2pcornerpoint test_cc2pcornerpoint.cc
+               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/cc2pcornerpoint-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/cc2pcornerpoint-00006.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pcornerpoint")
+endif()
+
 # non-isothermal tests
 if(HAVE_UG)
 add_dumux_test(test_box2pni test_box2pni test_box2pni.cc

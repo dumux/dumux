@@ -13,3 +13,16 @@
   If you want to use Dune 2.4, it is most likely that the missing functionality
   will be included in dune-grid by 10/2014, so the patch will not be needed.
 
+- If dune-cornerpoint has to be used for, e.g., employing the CpGridCreator,
+  a set of patches is needed for the build system. The patches have to be
+  applied in the directories of the OPM modules:
+  * opm-parser: patch -p1 <../dumux/patches/opm-parser-2015.04.patch
+  * opm-core: patch -p1 <../dumux/patches/opm-core-2015.04.patch
+  * dune-cornerpoint: patch -p1 <../dumux/patches/dune-cornerpoint-2015.04.patch
+  In addition to applying the patches, it is necessary to set manually some
+  CMake variables in the CMAKE_FLAGS section of the .opts-file:
+    -Ddune-cornerpoint_PREFIX=/path/to/dune-cornerpoint \
+    -Dopm-core_PREFIX=/path/to/opm-core \
+    -Dopm-parser_PREFIX=/path/to/opm-parser \
+    -DHAVE_DUNE_CORNERPOINT=1 \
+
