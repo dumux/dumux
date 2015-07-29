@@ -22,8 +22,8 @@ GradingFactorY = 1.1
 RefineTop = false
 
 [Output]
-NameFF = stokes2cni
-NamePM = 2p2cni
+NameFF = stokes2cni_boundarylayer
+NamePM = 2p2cni_boundarylayer
 #Frequency of restart file, flux and VTK output
 FreqRestart = 1000      # how often restart files are written out
 FreqOutput = 10         # frequency of VTK output
