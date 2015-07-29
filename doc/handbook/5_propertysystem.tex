@@ -1,46 +1,42 @@
 \section{Property System}
 \label{sec:propertysystem}
 
-This subsection is dedicated to the \Dumux property system. First, a high
-level overview over its design and principle ideas is given, then
-follows a short reference and a short self-contained example.
+A high level overview over the property system's design and principle ideas
+are given, then follows a reference and a self-contained example.
 
-\subsection{Motivation}
-\todo{text kürzen}
+\subsection{Motivation and features}
 The \Dumux property system was designed as an attempt to mitigate the
-problems of traits classes. In fact, it can be seen as a traits system
+problems of traits classes. It can be seen as a traits system
 which allows easy inheritance and any acyclic dependency of parameter
 definitions. Just like traits, the \Dumux property system is a compile
-time mechanism, which means that there are no run-time performance
-penalties associated with it. It is based on the following concepts:
-\begin{description}
-\item[Property:] In the context of the \Dumux property system, a
-  property is an arbitrary class body which may contain type
-  definitions, values and methods. Each property has a so-called
-  \textbf{property tag} which can be seen as a label with its name.
-\item[Property Inheritance:] Just like normal classes, properties can
-  be arranged in hierarchies. In the context of the \Dumux property
-  system, nodes of the inheritance hierarchy are called \textbf{type tags}.
+time mechanism, thus there is no run-time performance penalty associated
+with it.
+
+In the context of the \Dumux property system, a property is an arbitrary
+class body which may contain type definitions, values and methods. Each
+property has a so-called \emph{property tag} which labels its name.
+
+Just like normal classes, properties can be arranged in hierarchies. In
+the context of the \Dumux property system, nodes of the inheritance
+hierarchy are called \emph{type tags}.
 \end{description}
 
-It also supports \textbf{property nesting} and
-\textbf{introspection}. Property nesting means that the definition of
+It also supports \emph{property nesting} and
+\emph{introspection}. Property nesting means that the definition of
 a property can depend on the value of other properties which may be
-defined for arbitrary levels of the inheritance hierarchy.  The term
+defined for arbitrary levels of the inheritance hierarchy. The term
 introspection denotes the ability to generate diagnostic messages
 which can be used to find out where a certain property was defined and
 how it was inherited.
 
-\subsection{Features and How-To}
-
-All source files which use the \Dumux property system should include
+\subsection{How-to}
+All source files which use the property system should include
 the header file \texttt{dumux/ \hskip-1ex{}common/
   \hskip-1ex{}propertysystem.hh}.  Declaration of type tags and
 property tags as well as defining properties must be done inside the
 namespace \texttt{Dumux::Properties}.
 
 \subsubsection{Defining Type Tags}
-
 New nodes in the type tag hierarchy can be defined using
 \begin{lstlisting}[style=DumuxCode]
 NEW_TYPE_TAG(NewTypeTagName, INHERITS_FROM(BaseTagName1, BaseTagName2, ...));
@@ -62,8 +58,7 @@ NEW_TYPE_TAG(MyDerivedTypeTag, INHERITS_FROM(MyBaseTypeTag1, MyBaseTypeTag2));
 \end{lstlisting}
 
 \subsubsection{Declaring Property Tags}
-
-New property tags -- i.e. labels for properties -- are declared
+New property tags, i.e. labels for properties, are declared
 using
 \begin{lstlisting}[style=DumuxCode]
 NEW_PROP_TAG(NewPropTagName);
@@ -82,7 +77,6 @@ NEW_PROP_TAG(MyPropertyTag);
 \end{lstlisting}
 
 \subsubsection{Defining Properties}
-
 The value of a property on a given node of the type tag hierarchy is
 defined using
 \begin{lstlisting}[style=DumuxCode]
@@ -130,8 +124,7 @@ SET_SCALAR_PROP(MyTypeTag, MyScalarValue, 12345.67890);
 \end{lstlisting}
 
 \subsubsection{Un-setting Properties}
-
-Sometimes some inherited properties do not make sense for a certain
+Sometimes an inherited properties do not make sense for a certain
 node in the type tag hierarchy. These properties can be explicitly
 un-set using
 \begin{lstlisting}[style=DumuxCode]
@@ -158,7 +151,6 @@ UNSET_PROP(DerivedTypeTag, TestProp);
 \end{lstlisting}
 
 \subsubsection{Converting Tag Names to Tag Types}
-
 For the \Cplusplus compiler, property and type tags are like ordinary
 types. Both can thus be used as template arguments. To convert a
 property tag name or a type tag name into the corresponding type, the
@@ -166,7 +158,6 @@ macros \texttt{TTAG(TypeTagName)} and \texttt{PTAG(PropertyTagName)}
 ought to be used.
 
 \subsubsection{Retrieving Property Values}
-
 The value of a property can be retrieved using
 \begin{lstlisting}[style=DumuxCode]
 GET_PROP(TypeTag, PropertyTag)
@@ -209,7 +200,6 @@ class MyClass {
 \end{lstlisting}
 
 \subsubsection{Nesting Property Definitions}
-
 Inside property definitions there is access to all other properties
 which are defined somewhere on the type tag hierarchy. The node for
 which the current property is requested is available via the keyword
@@ -226,9 +216,7 @@ public: typedef std::vector<Scalar> type;
 };
 \end{lstlisting}
 
-
 \subsection{A Self-Contained Example}
-
 As a concrete example, let us consider some kinds of cars: Compact
 cars, sedans, trucks, pickups, military tanks and the Hummer-H1 sports
 utility vehicle. Since all these cars share some characteristics, it
