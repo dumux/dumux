@@ -17,7 +17,7 @@ EXAMPLE_PATH          += @srcdir@/extradoc
 
 IMAGE_PATH             = @srcdir@/images
 
-EXTRA_PACKAGES        += amsmath,amssymb
+EXTRA_PACKAGES        += amsmath,amssymb,units
 
 # enable client side searching
 SEARCHENGINE           = YES

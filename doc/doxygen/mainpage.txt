@@ -9,12 +9,16 @@
 \section intro Introduction
 
 Welcome to the DuMuX documentation pages. This documentation has been
-generated using Doxygen, a free source code documentation system for
+generated using <a href="http://www.doxygen.org/index.html">Doxygen</a>, a free source code documentation system for
 documenting C/C++ code.
 
 \section mods Modules
 
-The best way to start is from the page Modules which gives
+The best way to start is from the page <a href="modules.html">Modules</a> which gives
 you access to the documentation by category.
+
+\section params Parameters
+
+An overview of all availabe parameters is given in \ref parameterlist.txt.
 
 */
