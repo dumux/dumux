@@ -28,7 +28,7 @@ else()
                    --files ${CMAKE_SOURCE_DIR}/test/references/test_impes-reference.vtu
                            ${CMAKE_CURRENT_BINARY_DIR}/test_impeswithamg-00009.vtu
                    --command "${CMAKE_CURRENT_BINARY_DIR}/test_impeswithamg")
-endif(MPI_FOUND)
+endif()
 
 add_dumux_test(test_transport test_transport test_transport.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py

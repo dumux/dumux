@@ -60,7 +60,7 @@ add_dumux_test(test_box2pni test_box2pni test_box2pni.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-cube-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injection2pnibox-00008.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pni")
-endif(HAVE_UG)
+endif()
 
 if(HAVE_UG)
 add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
@@ -76,4 +76,4 @@ add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-cube-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/injection2pnicc-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pni")
-endif(HAVE_UG)
+endif()

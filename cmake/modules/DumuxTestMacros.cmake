@@ -33,7 +33,7 @@ macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_sour
   # check whether executable already exists
   if(NOT TARGET ${dumux_test_executable})
     add_executable(${dumux_test_executable} ${dumux_test_executable_source})
-  endif(NOT TARGET ${dumux_test_executable})
+  endif()
 
   # link all libraries to executable, add all flags
   add_dumux_all_flags(${dumux_test_executable})

@@ -15,7 +15,7 @@ else()
                    --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
                            ${CMAKE_CURRENT_BINARY_DIR}/richardslensbox-00008.vtu
                    --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards")
-endif(MPI_CXX_FOUND)
+endif()
 
 add_dumux_test(test_ccrichards test_ccrichards test_ccrichards.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
