@@ -210,49 +210,45 @@ public:
               // composition is stored explicitly.
 
 
-			if(!useMoles) //mass-fraction formulation
-			{
-				// extract _mass_ fractions in the nonwetting phase
-				Scalar massFractionN[numComponents];
-				massFractionN[wCompIdx] = priVars[switchIdx];
-				massFractionN[nCompIdx] = 1 - massFractionN[wCompIdx];
+            if(useMoles) // mole-fraction formulation
+            {
+                // extract _mole_ fractions in the nonwetting phase
+                Scalar moleFractionN[numComponents];
+                moleFractionN[wCompIdx] = priVars[switchIdx];
+                moleFractionN[nCompIdx] = 1 - moleFractionN[wCompIdx];
 
-				// calculate average molar mass of the nonwetting phase
-				Scalar M1 = FluidSystem::molarMass(wCompIdx);
-				Scalar M2 = FluidSystem::molarMass(nCompIdx);
-				Scalar X2 = massFractionN[nCompIdx];
-				Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
+                // set the fluid state
+                ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, moleFractionN[wCompIdx]);
+                ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, moleFractionN[nCompIdx]);
 
-				// convert mass to mole fractions and set the fluid state
-				ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, massFractionN[wCompIdx]*avgMolarMass/M1);
-				ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, massFractionN[nCompIdx]*avgMolarMass/M2);
+                // TODO give values for non-existing wetting phase
+                Scalar xwCO2 = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, wPhaseIdx);
+                Scalar xwH2O = 1 - xwCO2;
+                ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
+                ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
+            }
+            else // mass-fraction formulation
+            {
+                // extract _mass_ fractions in the nonwetting phase
+                Scalar massFractionN[numComponents];
+                massFractionN[wCompIdx] = priVars[switchIdx];
+                massFractionN[nCompIdx] = 1 - massFractionN[wCompIdx];
 
-				// TODO give values for non-existing wetting phase
-				Scalar xwCO2 = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, wPhaseIdx);
-				Scalar xwH2O = 1 - xwCO2;
-				//              Scalar xwCO2 = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, wPhaseIdx, nPhaseOnly);
-				//              Scalar xwH2O = 1 - xwCO2;
-				ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
-				ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
-			}
-			else //mole-fraction formulation
-			{
-				// extract _mole_ fractions in the nonwetting phase
-				Scalar moleFractionN[numComponents];
-				moleFractionN[wCompIdx] = priVars[switchIdx];
-				moleFractionN[nCompIdx] = 1 - moleFractionN[wCompIdx];
+                // calculate average molar mass of the nonwetting phase
+                Scalar M1 = FluidSystem::molarMass(wCompIdx);
+                Scalar M2 = FluidSystem::molarMass(nCompIdx);
+                Scalar X2 = massFractionN[nCompIdx];
+                Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
 
-				// set the fluid state
-				ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, moleFractionN[wCompIdx]);
-				ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, moleFractionN[nCompIdx]);
+                // convert mass to mole fractions and set the fluid state
+                ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, massFractionN[wCompIdx]*avgMolarMass/M1);
+                ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, massFractionN[nCompIdx]*avgMolarMass/M2);
 
-				// TODO give values for non-existing wetting phase
-				Scalar xwCO2 = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, wPhaseIdx);
-				Scalar xwH2O = 1 - xwCO2;
-			//              Scalar xwCO2 = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, wPhaseIdx, nPhaseOnly);
-			//              Scalar xwH2O = 1 - xwCO2;
-				ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
-				ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
+                // TODO give values for non-existing wetting phase
+                Scalar xwCO2 = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, wPhaseIdx);
+                Scalar xwH2O = 1 - xwCO2;
+                ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
+                ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
 			}
 
 			//Get the phase densities from the FluidSystem and set them in the fluidState
@@ -275,50 +271,46 @@ public:
                // only the wetting phase is present, i.e. wetting phase
                // composition is stored explicitly.
 
-          	if(!useMoles) //mass-fraction formulation
-          	{
-               // extract _mass_ fractions in the nonwetting phase
-               Scalar massFractionW[numComponents];
-               massFractionW[nCompIdx] = priVars[switchIdx];
-               massFractionW[wCompIdx] = 1 - massFractionW[nCompIdx];
+              if(useMoles) // mole-fraction formulation
+              {
+                  // extract _mole_ fractions in the nonwetting phase
+                  Scalar moleFractionW[numComponents];
+                  moleFractionW[nCompIdx] = priVars[switchIdx];
+                  moleFractionW[wCompIdx] = 1 - moleFractionW[nCompIdx];
 
-               // calculate average molar mass of the nonwetting phase
-               Scalar M1 = FluidSystem::molarMass(wCompIdx);
-               Scalar M2 = FluidSystem::molarMass(nCompIdx);
-               Scalar X2 = massFractionW[nCompIdx];
-               Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
+                  // convert mass to mole fractions and set the fluid state
+                  ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, moleFractionW[wCompIdx]);
+                  ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, moleFractionW[nCompIdx]);
 
-               // convert mass to mole fractions and set the fluid state
-               ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, massFractionW[wCompIdx]*avgMolarMass/M1);
-               ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, massFractionW[nCompIdx]*avgMolarMass/M2);
+                  //  TODO give values for non-existing nonwetting phase
+                  Scalar xnH2O = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx);
+                  Scalar xnCO2 = 1 - xnH2O;
+                  ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
+                  ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
+              }
+              else // mass-fraction formulation
+              {
+                  // extract _mass_ fractions in the nonwetting phase
+                  Scalar massFractionW[numComponents];
+                  massFractionW[nCompIdx] = priVars[switchIdx];
+                  massFractionW[wCompIdx] = 1 - massFractionW[nCompIdx];
 
-               //  TODO give values for non-existing nonwetting phase
-               Scalar xnH2O = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx);
-               Scalar xnCO2 = 1 - xnH2O; //FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx);
-//               Scalar xnH2O = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx, wPhaseOnly);
-//               Scalar xnCO2 = 1 - xnH2O;
-               ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
-               ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
-          	}
-          	else //mole-fraction formulation
-          	{
-          		// extract _mole_ fractions in the nonwetting phase
-          		Scalar moleFractionW[numComponents];
-          		moleFractionW[nCompIdx] = priVars[switchIdx];
-          		moleFractionW[wCompIdx] = 1 - moleFractionW[nCompIdx];
+                  // calculate average molar mass of the nonwetting phase
+                  Scalar M1 = FluidSystem::molarMass(wCompIdx);
+                  Scalar M2 = FluidSystem::molarMass(nCompIdx);
+                  Scalar X2 = massFractionW[nCompIdx];
+                  Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
 
-          		// convert mass to mole fractions and set the fluid state
-          		ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, moleFractionW[wCompIdx]);
-          		ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, moleFractionW[nCompIdx]);
+                  // convert mass to mole fractions and set the fluid state
+                  ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, massFractionW[wCompIdx]*avgMolarMass/M1);
+                  ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, massFractionW[nCompIdx]*avgMolarMass/M2);
 
-                //  TODO give values for non-existing nonwetting phase
-                Scalar xnH2O = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx);
-                Scalar xnCO2 = 1 - xnH2O; //FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx);
- //               Scalar xnH2O = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx, wPhaseOnly);
- //               Scalar xnCO2 = 1 - xnH2O;
-                ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
-                ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
-          	}
+                  //  TODO give values for non-existing nonwetting phase
+                  Scalar xnH2O = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx);
+                  Scalar xnCO2 = 1 - xnH2O;
+                  ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
+                  ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
+              }
 
                Scalar rhoW = FluidSystem::density(ParentType::fluidState_, paramCache, wPhaseIdx);
                Scalar rhoN = FluidSystem::density(ParentType::fluidState_, paramCache, nPhaseIdx);

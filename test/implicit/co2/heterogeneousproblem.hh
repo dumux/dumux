@@ -209,14 +209,14 @@ public:
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
 
-        //stateing in the console whether mole or mass fractions are used
-        if(!useMoles)
+        //stating in the console whether mole or mass fractions are used
+        if(useMoles)
         {
-        	std::cout<<"problem uses mass-fractions"<<std::endl;
+            std::cout<<"problem uses mole fractions"<<std::endl;
         }
         else
         {
-        	std::cout<<"problem uses mole-fractions"<<std::endl;
+            std::cout<<"problem uses mass fractions"<<std::endl;
         }
     }
 
@@ -477,14 +477,14 @@ private:
         Scalar meanM =
             FluidSystem::molarMass(BrineIdx)*moleFracLiquidBrine +
             FluidSystem::molarMass(CO2Idx)*moleFracLiquidCO2;
-        if(!useMoles) //mass-fraction formulation
+        if(useMoles) // mole-fraction formulation
         {
-        	Scalar massFracLiquidCO2 = moleFracLiquidCO2*FluidSystem::molarMass(CO2Idx)/meanM;
-        	values[Indices::switchIdx] = massFracLiquidCO2;
+            values[Indices::switchIdx] = moleFracLiquidCO2;
         }
-        else //mole-fraction formulation
+        else // mass-fraction formulation
         {
-        	values[Indices::switchIdx] = moleFracLiquidCO2;
+            Scalar massFracLiquidCO2 = moleFracLiquidCO2*FluidSystem::molarMass(CO2Idx)/meanM;
+            values[Indices::switchIdx] = massFracLiquidCO2;
         }
         values[Indices::pressureIdx] = pl;
     }

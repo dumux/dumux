@@ -112,35 +112,35 @@ public:
         			this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
-        if (!useMoles)
-		{
-			/* works for a maximum of two components, for more components
-			mole fractions must be used (property useMoles => true) */
+        if (useMoles)
+        {
+            // mass balance and transport equations
+            for (int compIdx=0; compIdx<numComponents; compIdx++)
+            {
+                if (conti0EqIdx+compIdx != massBalanceIdx)
+                //else // transport equations
+                {
+                    storage[conti0EqIdx+compIdx] = volVars.molarDensity()
+                        * volVars.moleFraction(compIdx);
 
-			//storage of transported component
-			storage[transportEqIdx] = volVars.density()
-				* volVars.massFraction(transportCompIdx);
-
-			Valgrind::CheckDefined(volVars.density());
-			Valgrind::CheckDefined(volVars.massFraction(transportCompIdx));
-
-		}
+                    Valgrind::CheckDefined(volVars.molarDensity());
+                    Valgrind::CheckDefined(volVars.moleFraction(compIdx));
+                }
+            }
+        }
         else
-		{
-			// mass balance and transport equations
-			for (int compIdx=0; compIdx<numComponents; compIdx++)
-			{
-				if (conti0EqIdx+compIdx != massBalanceIdx)
-				//else // transport equations
-				{
-					storage[conti0EqIdx+compIdx] = volVars.molarDensity()
-						* volVars.moleFraction(compIdx);
+        {
+            /* works for a maximum of two components, for more components
+            mole fractions must be used (set property UseMoles to true) */
 
-					Valgrind::CheckDefined(volVars.molarDensity());
-					Valgrind::CheckDefined(volVars.moleFraction(compIdx));
-				}
-			}
-		}
+            //storage of transported component
+            storage[transportEqIdx] = volVars.density()
+                * volVars.massFraction(transportCompIdx);
+
+            Valgrind::CheckDefined(volVars.density());
+            Valgrind::CheckDefined(volVars.massFraction(transportCompIdx));
+
+        }
     }
 
     /*!
@@ -165,31 +165,30 @@ public:
 
         Scalar tmp = fluxVars.normalVelocity();
 
-		if(!useMoles)
-		{
+        if(useMoles)
+        {
+            //transport equations
+            for (int compIdx=0; compIdx<numComponents; compIdx++)
+            {
+                if (conti0EqIdx+compIdx != massBalanceIdx) // mass balance is calculated above
+                {
+                    tmp *= (this->massUpwindWeight_ * up.molarDensity() * up.moleFraction(compIdx)
+                            + (1.-this->massUpwindWeight_) * dn.molarDensity() * dn.moleFraction(compIdx));
+
+                    flux[conti0EqIdx+compIdx] += tmp;
+                    Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
+                }
+            }
+        }
+        else
+        {
             tmp *= (this->massUpwindWeight_ * up.density() * up.massFraction(transportCompIdx)
                     + (1.-this->massUpwindWeight_) * dn.density() * dn.massFraction(transportCompIdx));
 
             flux[transportEqIdx] += tmp;
             Valgrind::CheckDefined(flux[transportEqIdx]);
-		}
-        else
-		{
-			//transport equations
-			for (int compIdx=0; compIdx<numComponents; compIdx++)
-			{
-				if (conti0EqIdx+compIdx != massBalanceIdx) //mass balance is calculated above
-				{
-                    tmp *= (this->massUpwindWeight_ * up.molarDensity() * up.moleFraction(compIdx)
-                            + (1.-this->massUpwindWeight_) * dn.molarDensity() * dn.moleFraction(compIdx));
-
-					flux[conti0EqIdx+compIdx] += tmp;
-					Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
-				}
-			}
         }
-
-	}
+    }
 
     /*!
      * \brief Adds the diffusive component flux to the flux vector over
@@ -202,16 +201,7 @@ public:
                               const FluxVariables &fluxVars) const
     {
         // diffusive component flux
-        if(!useMoles)
-        {
-            flux[transportEqIdx] -= fluxVars.moleFractionGrad(transportCompIdx)
-              * fluxVars.face().normal
-              * (fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
-              * fluxVars.molarDensity()
-              * FluidSystem::molarMass(transportCompIdx);// Multiplied by molarMass [kg/mol] to convert form [mol/m^3 s] to [kg/m^3 s]
-            Valgrind::CheckDefined(flux[transportEqIdx]);
-        }
-        else
+        if(useMoles)
         {
             //loop over secondary components
             for (int compIdx=0; compIdx<numComponents; compIdx++)
@@ -225,6 +215,15 @@ public:
                     Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
                 }
             }
+        }
+        else
+        {
+            flux[transportEqIdx] -= fluxVars.moleFractionGrad(transportCompIdx)
+              * fluxVars.face().normal
+              * (fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
+              * fluxVars.molarDensity()
+              * FluidSystem::molarMass(transportCompIdx);// Multiplied by molarMass [kg/mol] to convert form [mol/m^3 s] to [kg/m^3 s]
+            Valgrind::CheckDefined(flux[transportEqIdx]);
         }
     }
 };

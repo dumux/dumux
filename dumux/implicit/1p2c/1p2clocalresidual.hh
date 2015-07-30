@@ -107,16 +107,7 @@ public:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         storage = 0;
-        if(!useMoles) //mass-fraction formulation
-        {
-            // storage term of continuity equation - massfractions
-            storage[conti0EqIdx] +=
-                volVars.density()*volVars.porosity();
-            //storage term of the transport equation - massfractions
-            storage[transportEqIdx] +=
-                volVars.density() * volVars.massFraction(transportCompIdx) * volVars.porosity();
-        }
-        else //mole-fraction formulation
+        if(useMoles) // mole-fraction formulation
         {
             // storage term of continuity equation- molefractions
             //careful: molarDensity changes with moleFrac!
@@ -126,7 +117,15 @@ public:
                 volVars.molarDensity()*volVars.moleFraction(transportCompIdx) *
                 volVars.porosity();
         }
-
+        else // mass-fraction formulation
+        {
+            // storage term of continuity equation - massfractions
+            storage[conti0EqIdx] +=
+                volVars.density()*volVars.porosity();
+            //storage term of the transport equation - massfractions
+            storage[transportEqIdx] +=
+                volVars.density() * volVars.massFraction(transportCompIdx) * volVars.porosity();
+        }
     }
 
     /*!
@@ -221,7 +220,21 @@ public:
         Scalar tmp(0);
 
         // diffusive flux of second component
-        if(!useMoles) //mass-fraction formulation
+        if(useMoles) // mole-fraction formulation
+        {
+            // diffusive flux of the second component - molefraction
+            tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
+            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
+
+            // dispersive flux of second component - molefraction
+                        GlobalPosition normalDisp;
+                        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
+                        tmp -= fluxVars.molarDensity()*
+                            (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
+
+            flux[transportEqIdx] += tmp;
+        }
+        else // mass-fraction formulation
         {
             // diffusive flux of the second component - massfraction
             tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
@@ -235,20 +248,6 @@ public:
 
             // convert it to a mass flux and add it
             flux[transportEqIdx] += tmp * FluidSystem::molarMass(transportCompIdx);
-        }
-        else //mole-fraction formulation
-        {
-            // diffusive flux of the second component - molefraction
-            tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
-            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
-
-            // dispersive flux of second component - molefraction
-                        GlobalPosition normalDisp;
-                        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-                        tmp -= fluxVars.molarDensity()*
-                            (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
-
-            flux[transportEqIdx] += tmp;
         }
     }
 

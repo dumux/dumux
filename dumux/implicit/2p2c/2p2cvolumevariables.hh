@@ -317,7 +317,17 @@ public:
             // only the nonwetting phase is present, i.e. nonwetting phase
             // composition is stored explicitly.
 
-            if(!useMoles) //mass-fraction formulation
+            if(useMoles) // mole-fraction formulation
+            {
+                Scalar moleFractionN[numComponents];
+                moleFractionN[wCompIdx] = priVars[switchIdx];
+                moleFractionN[nCompIdx] = 1 - moleFractionN[wCompIdx];
+
+                // set the fluid state
+                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, moleFractionN[wCompIdx]);
+                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, moleFractionN[nCompIdx]);
+            }
+            else // mass-fraction formulation
             {
                 // extract _mass_ fractions in the nonwetting phase
                 Scalar massFractionN[numComponents];
@@ -333,16 +343,6 @@ public:
                 // convert mass to mole fractions and set the fluid state
                 fluidState.setMoleFraction(nPhaseIdx, wCompIdx, massFractionN[wCompIdx]*avgMolarMass/M1);
                 fluidState.setMoleFraction(nPhaseIdx, nCompIdx, massFractionN[nCompIdx]*avgMolarMass/M2);
-            }
-            else //mole-fraction formulation
-            {
-                Scalar moleFractionN[numComponents];
-                moleFractionN[wCompIdx] = priVars[switchIdx];
-                moleFractionN[nCompIdx] = 1 - moleFractionN[wCompIdx];
-
-                // set the fluid state
-                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, moleFractionN[wCompIdx]);
-                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, moleFractionN[nCompIdx]);
             }
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). This is the job
@@ -398,7 +398,17 @@ public:
         else if (phasePresence == wPhaseOnly) {
             // only the wetting phase is present, i.e. wetting phase
             // composition is stored explicitly.
-            if(!useMoles) //mass-fraction formulation
+            if(useMoles) // mole-fraction formulation
+            {
+                Scalar moleFractionW[numComponents];
+                moleFractionW[nCompIdx] = priVars[switchIdx];
+                moleFractionW[wCompIdx] = 1 - moleFractionW[nCompIdx];
+
+                // set the fluid state
+                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, moleFractionW[wCompIdx]);
+                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, moleFractionW[nCompIdx]);
+            }
+            else // mass-fraction formulation
             {
                 // extract _mass_ fractions in the nonwetting phase
                 Scalar massFractionW[numComponents];
@@ -414,16 +424,6 @@ public:
                 // convert mass to mole fractions and set the fluid state
                 fluidState.setMoleFraction(wPhaseIdx, wCompIdx, massFractionW[wCompIdx]*avgMolarMass/M1);
                 fluidState.setMoleFraction(wPhaseIdx, nCompIdx, massFractionW[nCompIdx]*avgMolarMass/M2);
-            }
-            else //mole-fraction formulation
-            {
-                Scalar moleFractionW[numComponents];
-                moleFractionW[nCompIdx] = priVars[switchIdx];
-                moleFractionW[wCompIdx] = 1 - moleFractionW[nCompIdx];
-
-                // set the fluid state
-                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, moleFractionW[wCompIdx]);
-                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, moleFractionW[nCompIdx]);
             }
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). This is the job

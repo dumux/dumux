@@ -123,12 +123,12 @@ protected:
 
         storage = 0.0;
 
-        if(!useMoles)
-            // mass balance mass fraction based
-            storage[massBalanceIdx] = volVars.density();
-        else
+        if(useMoles)
             // mass balance mole fraction based
             storage[massBalanceIdx] = volVars.molarDensity();
+        else
+            // mass balance mass fraction based
+            storage[massBalanceIdx] = volVars.density();
 
         // momentum balance
         for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
@@ -188,15 +188,15 @@ protected:
 
         DimVector massBalanceResidual = fluxVars.velocity();
 
-        if(!useMoles)
-        {
-            massBalanceResidual *= (massUpwindWeight_ * up.density()
-                                    + (1.-massUpwindWeight_) * dn.density());
-        }
-        else
+        if(useMoles)
         {
             massBalanceResidual *= (massUpwindWeight_ * up.molarDensity()
                                     + (1.-massUpwindWeight_) * dn.molarDensity());
+        }
+        else
+        {
+            massBalanceResidual *= (massUpwindWeight_ * up.density()
+                                    + (1.-massUpwindWeight_) * dn.density());
         }
 
         if (!fluxVars.onBoundary())

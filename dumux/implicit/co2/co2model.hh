@@ -254,15 +254,15 @@ public:
                              << volVars.saturation(nPhaseIdx) << std::endl;
                    newPhasePresence = wPhaseOnly;
 
-                   if(!useMoles) //mass-fraction formulation
+                   if(useMoles) // mole-fraction formulation
                    {
-					   globalSol[dofIdxGlobal][switchIdx]
-						   = volVars.massFraction(wPhaseIdx, nCompIdx);
+                       globalSol[dofIdxGlobal][switchIdx]
+                           = volVars.moleFraction(wPhaseIdx, nCompIdx);
                    }
-                   else //mole-fraction formulation
+                   else // mass-fraction formulation
                    {
-					   globalSol[dofIdxGlobal][switchIdx]
-					       = volVars.moleFraction(wPhaseIdx, nCompIdx);
+                       globalSol[dofIdxGlobal][switchIdx]
+                           = volVars.massFraction(wPhaseIdx, nCompIdx);
                    }
                }
                else if (volVars.saturation(wPhaseIdx) <= Smin)
@@ -274,15 +274,15 @@ public:
                              << volVars.saturation(wPhaseIdx) << std::endl;
                    newPhasePresence = nPhaseOnly;
 
-                   if(!useMoles) //mass-fraction formulation
+                   if(useMoles) // mole-fraction formulation
                    {
-					   globalSol[dofIdxGlobal][switchIdx]
-						   = volVars.massFraction(nPhaseIdx, wCompIdx);
+                        globalSol[dofIdxGlobal][switchIdx]
+                            = volVars.moleFraction(nPhaseIdx, wCompIdx);
                    }
-                   else //mole-fraction formulation
+                   else //mass-fraction formulation
                    {
-						globalSol[dofIdxGlobal][switchIdx]
-						= volVars.moleFraction(nPhaseIdx, wCompIdx);
+                       globalSol[dofIdxGlobal][switchIdx]
+                           = volVars.massFraction(nPhaseIdx, wCompIdx);
                    }
                }
            }

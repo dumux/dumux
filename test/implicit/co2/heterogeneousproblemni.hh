@@ -218,14 +218,14 @@ public:
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
 
-        //stateing in the console whether mole or mass fractions are used
-        if(!useMoles)
+        //stating in the console whether mole or mass fractions are used
+        if(useMoles)
         {
-        	std::cout<<"problem uses mass-fractions"<<std::endl;
+            std::cout<<"problem uses mole fractions"<<std::endl;
         }
         else
         {
-        	std::cout<<"problem uses mole-fractions"<<std::endl;
+            std::cout<<"problem uses mass fractions"<<std::endl;
         }
     }
 

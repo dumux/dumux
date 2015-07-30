@@ -143,45 +143,45 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 
         // compute storage term of all components within all phases
         storage = 0;
-        if(!useMoles) //mass fraction formulation
+        if(useMoles) // mole-fraction formulation
         {
-			for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-			{
-				for (unsigned int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
-				{
-					unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
-					storage[eqIdx] += volVars.density(phaseIdx)
-						* volVars.saturation(phaseIdx)
-						* volVars.massFraction(phaseIdx, compIdx);
-				}
-				// this is only processed if one component mass balance equation
-				// is replaced by the total mass balance equation
-				if (replaceCompEqIdx < numComponents)
-					storage[replaceCompEqIdx] +=
-						volVars.density(phaseIdx)
-						* volVars.saturation(phaseIdx);
-			}
-			storage *= volVars.porosity();
+            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                for (unsigned int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
+                {
+                    unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
+                    storage[eqIdx] += volVars.molarDensity(phaseIdx)
+                        * volVars.saturation(phaseIdx)
+                        * volVars.moleFraction(phaseIdx, compIdx);
+                 }
+                 // this is only processed if one component mass balance equation
+                 // is replaced by the total mass balance equation
+                 if (replaceCompEqIdx < numComponents)
+                     storage[replaceCompEqIdx] +=
+                         volVars.molarDensity(phaseIdx)
+                         * volVars.saturation(phaseIdx);
+            }
+            storage *= volVars.porosity();
         }
-        else //mole-fraction formulation
+        else // mass-fraction formulation
         {
-			for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-			{
-				for (unsigned int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
-				{
-					unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
-					storage[eqIdx] += volVars.molarDensity(phaseIdx)
-						* volVars.saturation(phaseIdx)
-						* volVars.moleFraction(phaseIdx, compIdx);
-				 }
-				 // this is only processed if one component mass balance equation
-				 // is replaced by the total mass balance equation
-				 if (replaceCompEqIdx < numComponents)
-					 storage[replaceCompEqIdx] +=
-						 volVars.molarDensity(phaseIdx)
-						 * volVars.saturation(phaseIdx);
-			}
-			storage *= volVars.porosity();
+            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                for (unsigned int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
+                {
+                    unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
+                    storage[eqIdx] += volVars.density(phaseIdx)
+                        * volVars.saturation(phaseIdx)
+                        * volVars.massFraction(phaseIdx, compIdx);
+                }
+                // this is only processed if one component mass balance equation
+                // is replaced by the total mass balance equation
+                if (replaceCompEqIdx < numComponents)
+                    storage[replaceCompEqIdx] +=
+                        volVars.density(phaseIdx)
+                        * volVars.saturation(phaseIdx);
+            }
+            storage *= volVars.porosity();
         }
     }
 
@@ -222,71 +222,9 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         // advective fluxes of all components in all phases
         ////////
 
-    	if(!useMoles) //mass-fraction formulation
-    	{
-			for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-			{
-				// data attached to upstream and downstream vertices
-				// of the current phase
-				const VolumeVariables &up =
-					this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
-				const VolumeVariables &dn =
-					this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
-
-				for (unsigned int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
-				{
-					unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
-					// add advective flux of current component in current
-					// phase
-					if (massUpwindWeight_ > 0.0)
-						// upstream vertex
-						flux[eqIdx] +=
-							fluxVars.volumeFlux(phaseIdx)
-							* massUpwindWeight_
-							* up.density(phaseIdx)
-							* up.massFraction(phaseIdx, compIdx);
-					if (massUpwindWeight_ < 1.0)
-						// downstream vertex
-						flux[eqIdx] +=
-							fluxVars.volumeFlux(phaseIdx)
-							* (1 - massUpwindWeight_)
-							* dn.density(phaseIdx)
-							* dn.massFraction(phaseIdx, compIdx);
-
-					Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
-					Valgrind::CheckDefined(up.density(phaseIdx));
-					Valgrind::CheckDefined(up.massFraction(phaseIdx, compIdx));
-					Valgrind::CheckDefined(dn.density(phaseIdx));
-					Valgrind::CheckDefined(dn.massFraction(phaseIdx, compIdx));
-				}
-				// flux of the total mass balance;
-				// this is only processed if one component mass balance equation
-				// is replaced by a total mass balance equation
-				if (replaceCompEqIdx < numComponents)
-				{
-					// upstream vertex
-					if (massUpwindWeight_ > 0.0)
-						flux[replaceCompEqIdx] +=
-							fluxVars.volumeFlux(phaseIdx)
-							* massUpwindWeight_
-							* up.density(phaseIdx);
-					// downstream vertex
-					if (massUpwindWeight_ < 1.0)
-						flux[replaceCompEqIdx] +=
-							fluxVars.volumeFlux(phaseIdx)
-							* (1 - massUpwindWeight_)
-							* dn.density(phaseIdx);
-					Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
-					Valgrind::CheckDefined(up.density(phaseIdx));
-					Valgrind::CheckDefined(dn.density(phaseIdx));
-
-				}
-
-			}
-    	}
-    	else //mole-fraction formulation
-    	{
-        	for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        if(useMoles) // mole-fraction formulation
+        {
+            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
                 // data attached to upstream and the downstream vertices
                 // of the current phase
@@ -345,7 +283,69 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                 }
 
             }
-    	}
+        }
+        else // mass-fraction formulation
+        {
+            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                // data attached to upstream and downstream vertices
+                // of the current phase
+                const VolumeVariables &up =
+                    this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
+                const VolumeVariables &dn =
+                    this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
+
+                for (unsigned int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
+                {
+                    unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
+                    // add advective flux of current component in current
+                    // phase
+                    if (massUpwindWeight_ > 0.0)
+                        // upstream vertex
+                        flux[eqIdx] +=
+                            fluxVars.volumeFlux(phaseIdx)
+                            * massUpwindWeight_
+                            * up.density(phaseIdx)
+                            * up.massFraction(phaseIdx, compIdx);
+                    if (massUpwindWeight_ < 1.0)
+                        // downstream vertex
+                        flux[eqIdx] +=
+                            fluxVars.volumeFlux(phaseIdx)
+                            * (1 - massUpwindWeight_)
+                            * dn.density(phaseIdx)
+                            * dn.massFraction(phaseIdx, compIdx);
+
+                    Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
+                    Valgrind::CheckDefined(up.density(phaseIdx));
+                    Valgrind::CheckDefined(up.massFraction(phaseIdx, compIdx));
+                    Valgrind::CheckDefined(dn.density(phaseIdx));
+                    Valgrind::CheckDefined(dn.massFraction(phaseIdx, compIdx));
+                }
+                // flux of the total mass balance;
+                // this is only processed if one component mass balance equation
+                // is replaced by a total mass balance equation
+                if (replaceCompEqIdx < numComponents)
+                {
+                    // upstream vertex
+                    if (massUpwindWeight_ > 0.0)
+                        flux[replaceCompEqIdx] +=
+                            fluxVars.volumeFlux(phaseIdx)
+                            * massUpwindWeight_
+                            * up.density(phaseIdx);
+                    // downstream vertex
+                    if (massUpwindWeight_ < 1.0)
+                        flux[replaceCompEqIdx] +=
+                            fluxVars.volumeFlux(phaseIdx)
+                            * (1 - massUpwindWeight_)
+                            * dn.density(phaseIdx);
+                    Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
+                    Valgrind::CheckDefined(up.density(phaseIdx));
+                    Valgrind::CheckDefined(dn.density(phaseIdx));
+
+                }
+
+            }
+        }
     }
 
     /*!
@@ -358,54 +358,54 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
 
     {
-		if(!useMoles) //mass-fraction formulation
-		{
-			// add diffusive flux of gas component in liquid phase
-			Scalar tmp = - (fluxVars.moleFractionGrad(wPhaseIdx)*fluxVars.face().normal);
-			tmp *=
-				fluxVars.porousDiffCoeff(wPhaseIdx) *
-				fluxVars.molarDensity(wPhaseIdx);
-			// add the diffusive fluxes only to the component mass balance
-			if (replaceCompEqIdx != contiNEqIdx)
-				flux[contiNEqIdx] += tmp * FluidSystem::molarMass(nCompIdx);
-			if (replaceCompEqIdx != contiWEqIdx)
-				flux[contiWEqIdx] -= tmp * FluidSystem::molarMass(wCompIdx);
+        if(useMoles) // mole-fraction formulation
+        {
+            // add diffusive flux of gas component in liquid phase
+            Scalar tmp = - (fluxVars.moleFractionGrad(wPhaseIdx)*fluxVars.face().normal);
+            tmp *=
+                fluxVars.porousDiffCoeff(wPhaseIdx) *
+                fluxVars.molarDensity(wPhaseIdx);
+            // add the diffusive fluxes only to the component mass balance
+            if (replaceCompEqIdx != contiNEqIdx)
+                flux[contiNEqIdx] += tmp;
+            if (replaceCompEqIdx != contiWEqIdx)
+                flux[contiWEqIdx] -= tmp;
 
-			// add diffusive flux of liquid component in non-wetting phase
-			tmp = -(fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal);
-			tmp *=
-				fluxVars.porousDiffCoeff(nPhaseIdx) *
-				fluxVars.molarDensity(nPhaseIdx);
-			// add the diffusive fluxes only to the component mass balance
-			if (replaceCompEqIdx != contiWEqIdx)
-				flux[contiWEqIdx] += tmp * FluidSystem::molarMass(wCompIdx);
-			if (replaceCompEqIdx != contiNEqIdx)
-				flux[contiNEqIdx] -= tmp * FluidSystem::molarMass(nCompIdx);
-		}
-		else //mole-fraction formulation
-		{
-			// add diffusive flux of gas component in liquid phase
-			Scalar tmp = - (fluxVars.moleFractionGrad(wPhaseIdx)*fluxVars.face().normal);
-			tmp *=
-				fluxVars.porousDiffCoeff(wPhaseIdx) *
-				fluxVars.molarDensity(wPhaseIdx);
-			// add the diffusive fluxes only to the component mass balance
-			if (replaceCompEqIdx != contiNEqIdx)
-				flux[contiNEqIdx] += tmp;
-			if (replaceCompEqIdx != contiWEqIdx)
-				flux[contiWEqIdx] -= tmp;
+            // add diffusive flux of liquid component in non-wetting phase
+            tmp = -(fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal);
+            tmp *=
+                fluxVars.porousDiffCoeff(nPhaseIdx) *
+                fluxVars.molarDensity(nPhaseIdx);
+            // add the diffusive fluxes only to the component mass balance
+            if (replaceCompEqIdx != contiWEqIdx)
+                flux[contiWEqIdx] += tmp;
+            if (replaceCompEqIdx != contiNEqIdx)
+                flux[contiNEqIdx] -= tmp;
+        }
+        else // mass-fraction formulation
+        {
+            // add diffusive flux of gas component in liquid phase
+            Scalar tmp = - (fluxVars.moleFractionGrad(wPhaseIdx)*fluxVars.face().normal);
+            tmp *=
+                fluxVars.porousDiffCoeff(wPhaseIdx) *
+                fluxVars.molarDensity(wPhaseIdx);
+            // add the diffusive fluxes only to the component mass balance
+            if (replaceCompEqIdx != contiNEqIdx)
+                flux[contiNEqIdx] += tmp * FluidSystem::molarMass(nCompIdx);
+            if (replaceCompEqIdx != contiWEqIdx)
+                flux[contiWEqIdx] -= tmp * FluidSystem::molarMass(wCompIdx);
 
-			// add diffusive flux of liquid component in non-wetting phase
-			tmp = -(fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal);
-			tmp *=
-				fluxVars.porousDiffCoeff(nPhaseIdx) *
-				fluxVars.molarDensity(nPhaseIdx);
-			// add the diffusive fluxes only to the component mass balance
-			if (replaceCompEqIdx != contiWEqIdx)
-				flux[contiWEqIdx] += tmp;
-			if (replaceCompEqIdx != contiNEqIdx)
-				flux[contiNEqIdx] -= tmp;
-		}
+            // add diffusive flux of liquid component in non-wetting phase
+            tmp = -(fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal);
+            tmp *=
+                fluxVars.porousDiffCoeff(nPhaseIdx) *
+                fluxVars.molarDensity(nPhaseIdx);
+            // add the diffusive fluxes only to the component mass balance
+            if (replaceCompEqIdx != contiWEqIdx)
+                flux[contiWEqIdx] += tmp * FluidSystem::molarMass(wCompIdx);
+            if (replaceCompEqIdx != contiNEqIdx)
+                flux[contiNEqIdx] -= tmp * FluidSystem::molarMass(nCompIdx);
+        }
     }
 
     /*!
@@ -429,50 +429,50 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
  protected:
     void evalPhaseStorage_(const int phaseIdx)
     {
-    	if(!useMoles) //mass-fraction formulation
-		{
-			// evaluate the storage terms of a single phase
-			for (int i=0; i < this->fvGeometry_().numScv; i++) {
-				PrimaryVariables &storage = this->storageTerm_[i];
-				const ElementVolumeVariables &elemVolVars = this->curVolVars_();
-				const VolumeVariables &volVars = elemVolVars[i];
+        if(useMoles) // mole-fraction formulation
+        {
+            // evaluate the storage terms of a single phase
+            for (int i=0; i < this->fvGeometry_().numScv; i++) {
+                PrimaryVariables &storage = this->storageTerm_[i];
+                const ElementVolumeVariables &elemVolVars = this->curVolVars_();
+                const VolumeVariables &volVars = elemVolVars[i];
 
-				// compute storage term of all components within all phases
-				storage = 0;
-				for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-				{
-					int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
-					storage[eqIdx] += volVars.density(phaseIdx)
-						* volVars.saturation(phaseIdx)
-						* volVars.massFraction(phaseIdx, compIdx);
-				}
+                // compute storage term of all components within all phases
+                storage = 0;
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
+                    storage[eqIdx] += volVars.molarDensity(phaseIdx)
+                        * volVars.saturation(phaseIdx)
+                        * volVars.moleFraction(phaseIdx, compIdx);
+                }
 
-				storage *= volVars.porosity();
-				storage *= this->fvGeometry_().subContVol[i].volume;
-			}
-		}
-    	else //mole-fraction formulation
-		{
-			// evaluate the storage terms of a single phase
-			for (int i=0; i < this->fvGeometry_().numScv; i++) {
-				PrimaryVariables &storage = this->storageTerm_[i];
-				const ElementVolumeVariables &elemVolVars = this->curVolVars_();
-				const VolumeVariables &volVars = elemVolVars[i];
+                storage *= volVars.porosity();
+                storage *= this->fvGeometry_().subContVol[i].volume;
+            }
+        }
+        else // mass-fraction formulation
+        {
+            // evaluate the storage terms of a single phase
+            for (int i=0; i < this->fvGeometry_().numScv; i++) {
+                PrimaryVariables &storage = this->storageTerm_[i];
+                const ElementVolumeVariables &elemVolVars = this->curVolVars_();
+                const VolumeVariables &volVars = elemVolVars[i];
 
-				// compute storage term of all components within all phases
-				storage = 0;
-				for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-				{
-					int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
-					storage[eqIdx] += volVars.molarDensity(phaseIdx)
-						* volVars.saturation(phaseIdx)
-						* volVars.moleFraction(phaseIdx, compIdx);
-				}
+                // compute storage term of all components within all phases
+                storage = 0;
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
+                    storage[eqIdx] += volVars.density(phaseIdx)
+                        * volVars.saturation(phaseIdx)
+                        * volVars.massFraction(phaseIdx, compIdx);
+                }
 
-				storage *= volVars.porosity();
-				storage *= this->fvGeometry_().subContVol[i].volume;
-			}
-		}
+                storage *= volVars.porosity();
+                storage *= this->fvGeometry_().subContVol[i].volume;
+            }
+        }
     }
 
     /*!

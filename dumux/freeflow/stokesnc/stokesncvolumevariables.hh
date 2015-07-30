@@ -136,39 +136,39 @@ public:
                                    const bool isOldSol = false)
     {
 
-		if(!useMoles) //mass-fraction formulation
-		{
-			Scalar massOrMoleFrac[numComponents];
-			massOrMoleFrac[transportCompIdx] = priVars[massOrMoleFracIdx];
-			massOrMoleFrac[phaseCompIdx] = 1.0 - massOrMoleFrac[transportCompIdx];
-			// calculate average molar mass of the gas phase
-			Scalar M1 = FluidSystem::molarMass(transportCompIdx);
-			Scalar M2 = FluidSystem::molarMass(phaseCompIdx);
-			Scalar X2 = massOrMoleFrac[phaseCompIdx];
-			Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
+        if(useMoles) // mole-fraction formulation
+        {
+            Scalar moleFracPhase, sumMoleFrac(0.0);
 
-			// convert mass to mole fractions and set the fluid state
-			fluidState.setMoleFraction(phaseIdx, transportCompIdx, massOrMoleFrac[transportCompIdx]*avgMolarMass/M1);
-			fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massOrMoleFrac[phaseCompIdx]*avgMolarMass/M2);
-		}
-		else
-		{
-			Scalar moleFracPhase, sumMoleFrac(0.0);
+            // loop over components
+            for (int compIdx=0; compIdx<numComponents; compIdx++)
+            {
+                if (conti0EqIdx+compIdx != massBalanceIdx)
+                {
+                    sumMoleFrac += priVars[conti0EqIdx+compIdx];
+                    fluidState.setMoleFraction(phaseIdx, compIdx, priVars[conti0EqIdx+compIdx]);
+                }
+            }
 
-			//for components
-			for (int compIdx=0; compIdx<numComponents; compIdx++)
-			{
-				if (conti0EqIdx+compIdx != massBalanceIdx)
-				{
-					sumMoleFrac += priVars[conti0EqIdx+compIdx];
-					fluidState.setMoleFraction(phaseIdx, compIdx, priVars[conti0EqIdx+compIdx]);
-				}
-			}
+            // mole fraction for the main component (no primary variable)
+            moleFracPhase = 1 - sumMoleFrac;
+            fluidState.setMoleFraction(phaseIdx, phaseCompIdx, moleFracPhase);
+        }
+        else // mass-fraction formulation
+        {
+            Scalar massOrMoleFrac[numComponents];
+            massOrMoleFrac[transportCompIdx] = priVars[massOrMoleFracIdx];
+            massOrMoleFrac[phaseCompIdx] = 1.0 - massOrMoleFrac[transportCompIdx];
+            // calculate average molar mass of the gas phase
+            Scalar M1 = FluidSystem::molarMass(transportCompIdx);
+            Scalar M2 = FluidSystem::molarMass(phaseCompIdx);
+            Scalar X2 = massOrMoleFrac[phaseCompIdx];
+            Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
 
-			//molefraction for the main component (no primary variable)
-			moleFracPhase = 1 - sumMoleFrac;
-			fluidState.setMoleFraction(phaseIdx, phaseCompIdx, moleFracPhase);
-		}
+            // convert mass to mole fractions and set the fluid state
+            fluidState.setMoleFraction(phaseIdx, transportCompIdx, massOrMoleFrac[transportCompIdx]*avgMolarMass/M1);
+            fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massOrMoleFrac[phaseCompIdx]*avgMolarMass/M2);
+        }
     }
 
     /*!
