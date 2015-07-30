@@ -30,6 +30,7 @@
 #define DUMUX_2PNC_PROPERTIES_HH
 
 #include <dumux/implicit/box/boxproperties.hh>
+#include <dumux/implicit/cellcentered/ccproperties.hh>
 
 namespace Dumux
 {
@@ -40,8 +41,10 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the isothermal two phase n component problems
-NEW_TYPE_TAG(BoxTwoPNC, INHERITS_FROM(BoxModel));
+//! The type tag for the implicit isothermal two phase n component problems
+NEW_TYPE_TAG(TwoPNC);
+NEW_TYPE_TAG(BoxTwoPNC, INHERITS_FROM(BoxModel, TwoPNC));
+NEW_TYPE_TAG(CCTwoPNC, INHERITS_FROM(CCModel, TwoPNC));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

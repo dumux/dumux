@@ -54,7 +54,7 @@ namespace Properties {
  * We just forward the number from the fluid system
  *
  */
-SET_PROP(BoxTwoPNC, NumComponents)
+SET_PROP(TwoPNC, NumComponents)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -64,7 +64,7 @@ public:
 
 };
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_PROP(BoxTwoPNC, ReplaceCompEqIdx)
+SET_PROP(TwoPNC, ReplaceCompEqIdx)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -73,7 +73,7 @@ public:
     static const int value = FluidSystem::numComponents;
 };
 //! The major components belonging to the existing phases are mentioned here e.g., 2 for water and air being the major component in the liquid and gas phases in a 2 phase system 
-SET_PROP(BoxTwoPNC, NumMajorComponents)
+SET_PROP(TwoPNC, NumMajorComponents)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -90,7 +90,7 @@ public:
  * We just forward the number from the fluid system and use an static
  * assert to make sure it is 2.
  */
-SET_PROP(BoxTwoPNC, NumPhases)
+SET_PROP(TwoPNC, NumPhases)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -103,7 +103,7 @@ public:
 /*!
  * \brief Set the property for the number of equations: For each existing component one equation has to be solved.
  */
-SET_PROP(BoxTwoPNC, NumEq)
+SET_PROP(TwoPNC, NumEq)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -113,10 +113,10 @@ public:
 };
 
 //! Set the default formulation to pl-Sg: This can be over written in the problem.
-SET_INT_PROP(BoxTwoPNC, Formulation, TwoPNCFormulation::plSg);
+SET_INT_PROP(TwoPNC, Formulation, TwoPNCFormulation::plSg);
 
 //! Set the property for the material parameters by extracting it from the material law.
-SET_PROP(BoxTwoPNC, MaterialLawParams)
+SET_PROP(TwoPNC, MaterialLawParams)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
@@ -126,45 +126,45 @@ public:
 };
 
 //! Use the 2pnc local residual operator
-SET_TYPE_PROP(BoxTwoPNC,
+SET_TYPE_PROP(TwoPNC,
               LocalResidual,
               TwoPNCLocalResidual<TypeTag>);
 
 //! Use the 2pnc newton controller
-SET_TYPE_PROP(BoxTwoPNC, NewtonController, TwoPNCNewtonController<TypeTag>);
+SET_TYPE_PROP(TwoPNC, NewtonController, TwoPNCNewtonController<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPNC, Model, TwoPNCModel<TypeTag>);
+SET_TYPE_PROP(TwoPNC, Model, TwoPNCModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoPNC, FluxVariables, TwoPNCFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoPNC, FluxVariables, TwoPNCFluxVariables<TypeTag>);
 
 //! define the base flux variables to realize Darcy flow
-SET_TYPE_PROP(BoxTwoPNC, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoPNC, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(BoxTwoPNC, ImplicitMassUpwindWeight, 1.0);
+SET_SCALAR_PROP(TwoPNC, ImplicitMassUpwindWeight, 1.0);
 
 //! Set default mobility upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(BoxTwoPNC, ImplicitMobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(TwoPNC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2pnc model
-SET_TYPE_PROP(BoxTwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);
+SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);
 
 //! Use the ImplicitSpatialParams by default
-SET_TYPE_PROP(BoxTwoPNC, SpatialParams, ImplicitSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPNC, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 //! Enable gravity by default
-SET_BOOL_PROP(BoxTwoPNC, ProblemEnableGravity, true);
+SET_BOOL_PROP(TwoPNC, ProblemEnableGravity, true);
 
 //! Disable velocity output by default
-SET_BOOL_PROP(BoxTwoPNC, VtkAddVelocity, false);
+SET_BOOL_PROP(TwoPNC, VtkAddVelocity, false);
 
 //! disable electro-chemistry by default
-SET_BOOL_PROP(BoxTwoPNC, useElectrochem, false);
+SET_BOOL_PROP(TwoPNC, useElectrochem, false);
 
 }
 
