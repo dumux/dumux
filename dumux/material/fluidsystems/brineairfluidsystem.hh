@@ -30,7 +30,7 @@
 #include <dumux/material/idealgas.hh>
 
 #include <dumux/material/fluidsystems/basefluidsystem.hh>
-#include <dumux/material/components/brine_varSalinity.hh>
+#include <dumux/material/components/brinevarsalinity.hh>
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/nacl.hh>
