@@ -33,7 +33,7 @@
 #include <dumux/material/components/brine_varSalinity.hh>
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/NaCl.hh>
+#include <dumux/material/components/nacl.hh>
 #include <dumux/material/binarycoefficients/brine_air.hh>
 #include <dumux/material/binarycoefficients/h2o_air.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
