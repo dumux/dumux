@@ -201,36 +201,31 @@ public:
     void computeDiffusiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
     {
-		// diffusive component flux
-        for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
+        // diffusive component flux
+        if(!useMoles)
         {
-			if(!useMoles)
-			{
-                flux[transportEqIdx] -= fluxVars.moleFractionGrad(transportCompIdx)[dimIdx]
-		                          * fluxVars.face().normal[dimIdx]
-		                          *(fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
-		                          * fluxVars.molarDensity()
-		                          * FluidSystem::molarMass(transportCompIdx);// Multiplied by molarMass [kg/mol] to convert form [mol/m^3 s] to [kg/m^3 s]
-                Valgrind::CheckDefined(flux[transportEqIdx]);
-			}
-			else
-			{
-				//loop over secondary components
-				for (int compIdx=0; compIdx<numComponents; compIdx++)
-				{
-					if (conti0EqIdx+compIdx != massBalanceIdx)
-					{
-						flux[conti0EqIdx+compIdx] -= fluxVars.moleFractionGrad(compIdx)[dimIdx]
-								* fluxVars.face().normal[dimIdx]
-								*(fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
-								* fluxVars.molarDensity();
-						Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
-					}
-				}
-
+            flux[transportEqIdx] -= fluxVars.moleFractionGrad(transportCompIdx)
+              * fluxVars.face().normal
+              * (fluxVars.diffusionCoeff(transportCompIdx) + fluxVars.eddyDiffusivity())
+              * fluxVars.molarDensity()
+              * FluidSystem::molarMass(transportCompIdx);// Multiplied by molarMass [kg/mol] to convert form [mol/m^3 s] to [kg/m^3 s]
+            Valgrind::CheckDefined(flux[transportEqIdx]);
+        }
+        else
+        {
+            //loop over secondary components
+            for (int compIdx=0; compIdx<numComponents; compIdx++)
+            {
+                if (conti0EqIdx+compIdx != massBalanceIdx)
+                {
+                    flux[conti0EqIdx+compIdx] -= fluxVars.moleFractionGrad(compIdx)
+                      * fluxVars.face().normal
+                      * (fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
+                      * fluxVars.molarDensity();
+                    Valgrind::CheckDefined(flux[conti0EqIdx+compIdx]);
+                }
             }
-
-		}
+        }
     }
 };
 

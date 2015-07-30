@@ -324,7 +324,7 @@ protected:
         // add the component of the pressure gradient to the respective part
         // of the momentum equation and take the gravity term into account
         // signs are inverted, since q is subtracted
-        for (int dimIdx=0; dimIdx<dim; ++dimIdx)
+        for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
         {
             source[momentumXIdx + dimIdx] -= pressureGradAtSCVCenter[dimIdx];
             source[momentumXIdx + dimIdx] += volVars.density()*this->problem_().gravity()[dimIdx];
@@ -413,7 +413,7 @@ protected:
 
                         for (unsigned int i=0; i < this->residual_.size(); i++)
                             Valgrind::CheckDefined(this->residual_[i]);
-                        for (int dimIdx=0; dimIdx < dim; ++dimIdx)
+                        for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
                             momentumResidual[dimIdx] = this->residual_[scvIdx][momentumXIdx+dimIdx];
 
                         //Sign is right!!!: boundary flux: -mu grad v n

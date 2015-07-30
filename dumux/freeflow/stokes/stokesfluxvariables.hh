@@ -91,28 +91,27 @@ protected:
         velocity_ = Scalar(0);
         pressureGrad_ = Scalar(0);
         velocityGrad_ = Scalar(0);
-//        velocityDiv_ = Scalar(0);
 
-        for (int idx = 0;
-             idx < fvGeometry_.numScv;
-             idx++) // loop over adjacent vertices
+        for (int scvIdx = 0;
+             scvIdx < fvGeometry_.numScv;
+             scvIdx++) // loop over adjacent vertices
         {
             // phase density and viscosity at IP
-            density_ += elemVolVars[idx].density() *
-                face().shapeValue[idx];
-            dynamicViscosity_ += elemVolVars[idx].dynamicViscosity() *
-                face().shapeValue[idx];
-            pressure_ += elemVolVars[idx].pressure() *
-                face().shapeValue[idx];
+            density_ += elemVolVars[scvIdx].density() *
+                face().shapeValue[scvIdx];
+            dynamicViscosity_ += elemVolVars[scvIdx].dynamicViscosity() *
+                face().shapeValue[scvIdx];
+            pressure_ += elemVolVars[scvIdx].pressure() *
+                face().shapeValue[scvIdx];
 
             // velocity at the IP (fluxes)
-            DimVector velocityTimesShapeValue = elemVolVars[idx].velocity();
-            velocityTimesShapeValue *= face().shapeValue[idx];
+            DimVector velocityTimesShapeValue = elemVolVars[scvIdx].velocity();
+            velocityTimesShapeValue *= face().shapeValue[scvIdx];
             velocity_ += velocityTimesShapeValue;
 
             // the pressure gradient
-            tmp = face().grad[idx];
-            tmp *= elemVolVars[idx].pressure();
+            tmp = face().grad[scvIdx];
+            tmp *= elemVolVars[scvIdx].pressure();
             pressureGrad_ += tmp;
             // take gravity into account
             tmp = problem.gravity();
@@ -121,13 +120,11 @@ protected:
             pressureGrad_ -= tmp;
 
             // the velocity gradients and divergence
-            for (int dimIdx = 0; dimIdx<dim; ++dimIdx)
+            for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
-                tmp = face().grad[idx];
-                tmp *= elemVolVars[idx].velocity()[dimIdx];
+                tmp = face().grad[scvIdx];
+                tmp *= elemVolVars[scvIdx].velocity()[dimIdx];
                 velocityGrad_[dimIdx] += tmp;
-
-//                velocityDiv_ += face().grad[idx][dimIdx]*elemVolVars[idx].velocity()[dimIdx];
             }
         }
 
@@ -139,7 +136,6 @@ protected:
         Valgrind::CheckDefined(velocity_);
         Valgrind::CheckDefined(pressureGrad_);
         Valgrind::CheckDefined(velocityGrad_);
-//        Valgrind::CheckDefined(velocityDiv_);
     }
 
     void determineUpwindDirection_(const ElementVolumeVariables &elemVolVars)
@@ -244,14 +240,6 @@ public:
     const Scalar kinematicEddyViscosity() const
     { return 0; }
 
-
-//    /*!
-//     * \brief Return the divergence of the normal velocity at the
-//     *        integration point.
-//     */
-//    Scalar velocityDiv() const
-//    { return velocityDiv_; }
-
     /*!
      * \brief Return the local index of the upstream sub-control volume.
      */
@@ -280,7 +268,6 @@ protected:
     Scalar dynamicViscosity_;
     Scalar pressure_;
     Scalar normalvelocity_;
-//    Scalar velocityDiv_;
     DimVector velocity_;
 
     // gradients at the IPs

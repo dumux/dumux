@@ -126,25 +126,23 @@ protected:
         temperatureGrad_ = Scalar(0);
 
         // calculate gradients and secondary variables at IPs
-        DimVector tmp(0.0);
-        for (int idx = 0;
-             idx < this->fvGeometry_.numScv;
-             idx++) // loop over vertices of the element
+        for (int scvIdx = 0;
+             scvIdx < this->fvGeometry_.numScv;
+             scvIdx++) // loop over vertices of the element
         {
-            temperature_ += elemVolVars[idx].temperature() *
-                this->face().shapeValue[idx];
+            temperature_ += elemVolVars[scvIdx].temperature() *
+                this->face().shapeValue[scvIdx];
 
-            thermalConductivity_ += elemVolVars[idx].thermalConductivity() *
-                this->face().shapeValue[idx];
+            thermalConductivity_ += elemVolVars[scvIdx].thermalConductivity() *
+                this->face().shapeValue[scvIdx];
 
-            heatCapacity_ += elemVolVars[idx].heatCapacity() *
-                this->face().shapeValue[idx];
+            heatCapacity_ += elemVolVars[scvIdx].heatCapacity() *
+                this->face().shapeValue[scvIdx];
 
             // the gradient of the temperature at the IP
-            for (int dimIdx=0; dimIdx<dim; ++dimIdx)
-                temperatureGrad_[dimIdx] +=
-                    this->face().grad[idx][dimIdx]*
-                    elemVolVars[idx].temperature();
+            DimVector grad = this->face().grad[scvIdx];
+            grad *= elemVolVars[scvIdx].temperature();
+            temperatureGrad_ += grad;
         }
         Valgrind::CheckDefined(temperature_);
         Valgrind::CheckDefined(thermalConductivity_);
@@ -154,10 +152,10 @@ protected:
         for (unsigned int i = 0; i < numComponents; ++i)
         {
             componentEnthalpy_[i] = Scalar(0.0);
-            for (int idx = 0; idx < this->fvGeometry_.numScv; idx++) // loop over vertices of the element
+            for (int scvIdx = 0; scvIdx < this->fvGeometry_.numScv; scvIdx++) // loop over vertices of the element
             {
-                componentEnthalpy_[i] += elemVolVars[idx].componentEnthalpy(i)
-                                         * this->face().shapeValue[idx];
+                componentEnthalpy_[i] += elemVolVars[scvIdx].componentEnthalpy(i)
+                                         * this->face().shapeValue[scvIdx];
             }
             Valgrind::CheckDefined(componentEnthalpy_[i]);
         }

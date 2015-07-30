@@ -170,13 +170,7 @@ protected:
                 fz_ = distanceToWallRough_ * omega * (1.0 - std::exp(-yPlusRough_ / aPlus ));
             Scalar fMax = problem.model().wall[wallIdx_].fMax[posIdx_];
             Scalar yMax = std::abs(problem.model().wall[wallIdx_].yMax[posIdx_]);
-            Scalar temp[2] = {0.0, 0.0};
-            for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            {
-                temp[0] += maxVelocity_[dimIdx] * maxVelocity_[dimIdx];
-                temp[1] += minVelocity_[dimIdx] * minVelocity_[dimIdx];
-            }
-            Scalar uDiff = std::sqrt(temp[0]) - std::sqrt(temp[1]);
+            Scalar uDiff = maxVelocity_.two_norm() - minVelocity_.two_norm();
 
             Scalar f1 = yMax * fMax;
             Scalar f2 = cWK * yMax * uDiff * uDiff / fMax;

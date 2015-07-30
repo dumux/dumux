@@ -133,34 +133,32 @@ public:
         computeConductiveFlux(flux, fluxVars);
 
         // diffusive component energy flux
-        for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
+        Scalar sumDiffusiveFluxes = 0;
+        for (int compIdx=0; compIdx<numComponents; compIdx++)
         {
-            Scalar sumDiffusiveFluxes = 0;
-            for (int compIdx=0; compIdx<numComponents; compIdx++)
+            if (compIdx != phaseCompIdx)
             {
-                if (compIdx != phaseCompIdx)
-                {
-                    Valgrind::CheckDefined(fluxVars.moleFractionGrad(compIdx)[dimIdx]);
-                    Valgrind::CheckDefined(fluxVars.face().normal[dimIdx]);
-                    Valgrind::CheckDefined(fluxVars.diffusionCoeff(compIdx));
-                    Valgrind::CheckDefined(fluxVars.eddyDiffusivity());
-                    Valgrind::CheckDefined(fluxVars.molarDensity());
-                    Valgrind::CheckDefined(FluidSystem::molarMass(compIdx));
-                    Valgrind::CheckDefined(fluxVars.componentEnthalpy(compIdx));
-                    Scalar diffusiveFlux = fluxVars.moleFractionGrad(compIdx)[dimIdx]
-                                        * fluxVars.face().normal[dimIdx]
-                                        *(fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
-                                        * fluxVars.molarDensity();
-                    sumDiffusiveFluxes += diffusiveFlux;
-                    flux[energyEqIdx] -= diffusiveFlux * fluxVars.componentEnthalpy(compIdx)
-                                         * FluidSystem::molarMass(compIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s];
-                }
+                Valgrind::CheckDefined(fluxVars.moleFractionGrad(compIdx));
+                Valgrind::CheckDefined(fluxVars.face().normal);
+                Valgrind::CheckDefined(fluxVars.diffusionCoeff(compIdx));
+                Valgrind::CheckDefined(fluxVars.eddyDiffusivity());
+                Valgrind::CheckDefined(fluxVars.molarDensity());
+                Valgrind::CheckDefined(FluidSystem::molarMass(compIdx));
+                Valgrind::CheckDefined(fluxVars.componentEnthalpy(compIdx));
+                Scalar diffusiveFlux = fluxVars.moleFractionGrad(compIdx)
+                  * fluxVars.face().normal
+                  * (fluxVars.diffusionCoeff(compIdx) + fluxVars.eddyDiffusivity())
+                  * fluxVars.molarDensity();
+                sumDiffusiveFluxes += diffusiveFlux;
+                flux[energyEqIdx] -= diffusiveFlux * fluxVars.componentEnthalpy(compIdx)
+                  * FluidSystem::molarMass(compIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s];
             }
-
-            // the diffusive flux of the phase component is the negative of the sum of the component fluxes
-            flux[energyEqIdx] += sumDiffusiveFluxes * fluxVars.componentEnthalpy(phaseCompIdx)
-                                 * FluidSystem::molarMass(phaseCompIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s];
         }
+
+        // the diffusive flux of the phase component is the negative of the sum of the component fluxes
+        flux[energyEqIdx] += sumDiffusiveFluxes * fluxVars.componentEnthalpy(phaseCompIdx)
+          * FluidSystem::molarMass(phaseCompIdx); // Multiplied by molarMass [kg/mol] to convert from [mol/m^3 s] to [kg/m^3 s];
+
         Valgrind::CheckDefined(flux[energyEqIdx]);
     }
 
@@ -175,13 +173,9 @@ public:
                                const FluxVariables &fluxVars) const
     {
         // diffusive heat flux
-        for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
-        {
-            flux[energyEqIdx] -=
-                fluxVars.temperatureGrad()[dimIdx] *
-                fluxVars.face().normal[dimIdx] *
-                (fluxVars.thermalConductivity() + fluxVars.thermalEddyConductivity());
-        }
+        flux[energyEqIdx] -=
+            fluxVars.temperatureGrad() * fluxVars.face().normal
+            * (fluxVars.thermalConductivity() + fluxVars.thermalEddyConductivity());
         Valgrind::CheckDefined(flux[energyEqIdx]);
     }
 };
