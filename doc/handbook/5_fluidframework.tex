@@ -1,6 +1,9 @@
 \section{Fluid Framework}
 \label{sec:fluidframework}
 
+\todo[inline]{Wie kann dieses Kapitel besser mit doxygen vereinbart werden? Evtl. durch generische
+              Klassen in dumux, die dann automatische im doxygen auftauchen.}
+
 This chapter discusses the \Dumux fluid framework. \Dumux users who
 do not want to write new models and who do not need new fluid
 configurations may skip this chapter.
@@ -62,23 +65,18 @@ The \Dumux fluid framework currently features the following concepts
 \end{description}
 
 \subsection{Fluid States}
-\todo[inline]{übersichtlicher gestalten}
-
 Fluid state objects express the complete thermodynamic state of a
 system at a given spatial and temporal position.
 
 \subsubsection{Exported Constants}
-
-{\bf All} fluid states {\bf must} export the following constants:
+All fluid states must export the following constants:
 \begin{description}
 \item[numPhases:] The number of fluid phases considered.
-\item[numComponents:] The number of considered chemical
-  species or pseudo-species.
+\item[numComponents:] The number of considered chemical species or pseudo-species.
 \end{description}
 
 \subsubsection{Accessible Thermodynamic Quantities}
-
-Also, {\bf all} fluid states {\bf must} provide the following methods:
+Also, all fluid states must provide the following methods:
 \begin{description}
 \item[temperature():] The absolute temperature $T_\alpha$ of
   a fluid phase $\alpha$.
@@ -161,7 +159,8 @@ Also, {\bf all} fluid states {\bf must} provide the following methods:
 \end{description}
 
 \subsubsection{Available Fluid States}
-\todo{könnte aufs doxygen ausgelagert werden}
+\todo{Diese Liste von verfügbaren \emph{FluidStates} sollte eigentlich so und 
+      in gleicher Ausfgührlichkeit im doxygen möglich sein -$>$ deshalb raus.}
 Currently, the following fluid states are provided by \Dumux:
 \begin{description}
 \item[NonEquilibriumFluidState:] This is the most general fluid state
@@ -353,7 +352,8 @@ such fluid systems cannot be used for models that depend on those
 methods.
 
 \subsubsection{Available Fluid Systems}
-\todo{könnte aufs doxygen ausgelagert werden}
+\todo{Diese Liste von verfügbaren \emph{FluidSystems} sollte eigentlich so und 
+      in gleicher Ausfgührlichkeit im doxygen möglich sein -$>$ deshalb raus.}
 
 Currently, the following fluid systems are available in \Dumux:
 \begin{description}
