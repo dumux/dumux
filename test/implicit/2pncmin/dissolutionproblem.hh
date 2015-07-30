@@ -147,46 +147,35 @@ public:
                        const GridView &gridView)
         : ParentType(timeManager, GridCreator::grid().leafGridView())
     {
-        try
-        {
-            outerSalinity_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterSalinity);
-            saltPorosity_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, SaltPorosity);
-            temperature_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Temperature);
-            reservoirPressure_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ReservoirPressure);
-            initLiqSaturation_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidSaturation);
-            initPrecipitatedSalt1_   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt1);
-            initPrecipitatedSalt2_   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt2);
+    
+        outerSalinity_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterSalinity);
+        temperature_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Temperature);
+        reservoirPressure_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ReservoirPressure);
+        initLiqSaturation_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidSaturation);
+        initPrecipitatedSalt1_   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt1);
+        initPrecipitatedSalt2_   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt2);
 
-            outerLiqSaturation_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterLiqSaturation);
-            innerLiqSaturation_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerLiqSaturation);
-            innerSalinity_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerSalinity);
-            innerPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerPressure);
-            outerPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterPressure);
-            reservoirSaturation_    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, reservoirSaturation);
-            
-        	nTemperature_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NTemperature);
-            nPressure_              = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NPressure);
-            pressureLow_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureLow);
-            pressureHigh_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureHigh);
-            temperatureLow_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureLow);
-            temperatureHigh_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
-            name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputName);
-            freqMassOutput_ 	    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
-            storageLastTimestep_    = Scalar(0);
-            lastMassOutputTime_     = Scalar(0);
+        outerLiqSaturation_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterLiqSaturation);
+        innerLiqSaturation_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerLiqSaturation);
+        innerSalinity_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerSalinity);
+        innerPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerPressure);
+        outerPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterPressure);
+        reservoirSaturation_    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, reservoirSaturation);
+        
+        nTemperature_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NTemperature);
+        nPressure_              = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NPressure);
+        pressureLow_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureLow);
+        pressureHigh_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureHigh);
+        temperatureLow_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureLow);
+        temperatureHigh_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
+        name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputName);
+        freqMassOutput_ 	    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Output, FreqMassOutput);
+        storageLastTimestep_    = Scalar(0);
+        lastMassOutputTime_     = Scalar(0);
 
-            outfile.open("evaporation.out");
-            outfile << "time; evaporationRate" << std::endl;
+        outfile.open("evaporation.out");
+        outfile << "time; evaporationRate" << std::endl;
 
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            exit(1) ;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            exit(1);
-        }
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
                           /*nT=*/nTemperature_,
@@ -233,7 +222,7 @@ public:
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
-    { return temperature_; };
+    { return temperature_; }
 
     /*!
      * \name Boundary conditions
@@ -354,7 +343,6 @@ public:
                             const FVElementGeometry &fvGeometry,
                             int scvIdx, const ElementVolumeVariables &elemVolVars) const
     {
-//         std::cout<<"Hallo there :)"<<std::endl;
         source = 0;
         const  VolumeVariables &volVars = elemVolVars[scvIdx];
         Scalar moleFracNaCl_lPhase = volVars.fluidState().moleFraction(wPhaseIdx, NaClIdx);
@@ -362,6 +350,7 @@ public:
         Scalar massFracNaCl_Max_lPhase = this->spatialParams().SolubilityLimit();
         Scalar moleFracNaCl_Max_lPhase = massTomoleFrac_(massFracNaCl_Max_lPhase);
         Scalar moleFracNaCl_Max_gPhase = moleFracNaCl_Max_lPhase / volVars.fluidState().pressure(nPhaseIdx);
+        Scalar saltPorosity = this->spatialParams().porosityMin(element, fvGeometry, scvIdx);
 
         // liquid phase
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)
@@ -381,7 +370,7 @@ public:
         if (precipSalt*this->timeManager().timeStepSize() + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
             precipSalt = - volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)/this->timeManager().timeStepSize();
 
-        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= volVars.InitialPorosity() - saltPorosity_ && precipSalt > 0)
+        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= volVars.InitialPorosity() - saltPorosity  && precipSalt > 0)
             precipSalt = 0;
 
         source[conti0EqIdx + NaClIdx] += -precipSalt;
@@ -437,7 +426,6 @@ private:
     Scalar pressureLow_, pressureHigh_;
     Scalar temperatureLow_, temperatureHigh_;
     Scalar outerSalinity_;
-    Scalar saltPorosity_;
     Scalar reservoirPressure_;
     Scalar innerPressure_;
     Scalar outerPressure_;

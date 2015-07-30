@@ -145,8 +145,7 @@ public:
             }
         }
         //set the additional equations for the numComponents-numMajorComponents
-        //Components, of which the molefractions are known,
-        //to molefraction(knownCompIdx)=xKnown
+        //Components, of which the molefractions are known, set to molefraction(knownCompIdx)=xKnown
         for(int knownCompIdx = 0; knownCompIdx < numComponents-numMajorComponents; ++knownCompIdx)
         {
         	int rowIdx = numComponents + numPhases + knownCompIdx;
@@ -195,24 +194,10 @@ public:
         		}
         	}
         }
-//        std::cout << "M_: "<< M << std::endl;
-//        std::cout << "b_: "<< b << std::endl;
 
         // solve for all mole fractions
         M.solve(x, b);
-
-//        std::cout << "x_: "<< x << std::endl;
-
-        // In case known mole fraction is set to zero in problem the system determines unrealistic mole fractions
-        //resetting the mole fractions to zero again
-//		if(fluidState.moleFraction(knownPhaseIdx, numMajorComponents)== 0.0);
-//		for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-//				int rowIdx = phaseIdx*numComponents + numMajorComponents;
-//				x[rowIdx]= 0.0;
-//			}
-
-//		std::cout << "x_1: "<< x << std::endl;
-
+        
         // set all mole fractions and the the additional quantities in
         // the fluid state
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {

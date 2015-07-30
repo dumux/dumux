@@ -70,17 +70,19 @@ public:
             return;
 
         // Pure component fugacities
-        for (int i = 0; i < numComponents; ++ i) {
-            //std::cout << f << " -> " << mutParams.fugacity(phaseIdx, i)/f << "\n";
-            fluidState.setMoleFraction(phaseIdx,
-                                   i,
-                                   1.0/numComponents);
+        for (int i = 0; i < numComponents; ++ i) 
+        {
+            fluidState.setMoleFraction(phaseIdx,i, 1.0/numComponents);
         }
     }
 
     /*!
      * \brief Calculates the chemical equilibrium from the component
-     *        fugacities in a phase. This constraint solver is developed for drying scenarios where salt component is restricted to liquid phase and still for the sake for equilibrium calculation some residual salt must be considered in the gas phase. In such cases for existence of gas phase only, in the theoretical liquid phase, we set the mole fraction of salt to  1e-10.
+     *        fugacities in a phase. This constraint solver is developed for drying scenarios where 
+     *        salt component is restricted to liquid phase and still for the sake for equilibrium 
+     *        calculation some residual salt must be considered in the gas phase. In such cases for 
+     *        existence of gas phase only, in the theoretical liquid phase, we set the mole fraction 
+     *        of salt to  1e-10.
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
      * \param phaseIdx The phase index
@@ -105,8 +107,7 @@ public:
         else
             DUNE_THROW(NumericalProblem, "This constraint solver is not tested for non-ideal mixtures: Please refer computefromfugacities.hh for details" );
     }
-
-
+    
 protected:
     // update the phase composition in case the phase is an ideal
     // mixture, i.e. the component's fugacity coefficients are
@@ -118,7 +119,8 @@ protected:
                                int phasePresence,
                                const ComponentVector &fugacities)
     {
-        for (int i = 0; i < numComponents; ++ i) {
+        for (int i = 0; i < numComponents; ++ i) 
+        {
             Scalar phi = FluidSystem::fugacityCoefficient(fluidState,
                                                           paramCache,
                                                           phaseIdx,

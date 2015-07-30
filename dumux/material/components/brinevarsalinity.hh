@@ -76,25 +76,25 @@ public:
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of brine. Here, it is assumed to be equal to that of pure water.
      */
     static Scalar criticalTemperature()
-    { return H2O::criticalTemperature(); /* [K] */ }
+    { return H2O::criticalTemperature(); }
 
     /*!
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of brine. Here, it is assumed to be equal to that of pure water.
      */
     static Scalar criticalPressure()
-    { return H2O::criticalPressure(); /* [N/m^2] */ }
+    { return H2O::criticalPressure(); }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at brine's triple point. Here, it is assumed to be equal to that of pure water.
      */
     static Scalar tripleTemperature()
-    { return H2O::tripleTemperature(); /* [K] */ }
+    { return H2O::tripleTemperature(); }
 
     /*!
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at brine's triple point. Here, it is assumed to be equal to that of pure water.
      */
     static Scalar triplePressure()
-    { return H2O::triplePressure(); /* [N/m^2] */ }
+    { return H2O::triplePressure(); }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure brine
@@ -103,7 +103,7 @@ public:
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      */
     static Scalar vaporPressure(Scalar T)
-    { return H2O::vaporPressure(T); /* [N/m^2] */ }
+    { return H2O::vaporPressure(T); }
 
     /*!
      * \brief Specific enthalpy of gaseous brine \f$\mathrm{[J/kg]}\f$.
@@ -113,7 +113,7 @@ public:
      */
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
-    { return H2O::gasEnthalpy(temperature, pressure); /* [J/kg] */ }
+    { return H2O::gasEnthalpy(temperature, pressure); }
 
     /*!
      * \brief Specific enthalpy of liquid brine \f$\mathrm{[J/kg]}\f$.
@@ -124,6 +124,7 @@ public:
      * Equations given in:    - Palliser & McKibbin 1997
      *                         - Michaelides 1981
      *                         - Daubert & Danner 1989
+     * 
      */
     static const Scalar liquidEnthalpy(Scalar T,
                                        Scalar p, Scalar salinity)
@@ -320,11 +321,11 @@ public:
         salinity = std::abs(salinity);
         Scalar T_C = temperature - 273.15;
         if(salinity < 0.0)
-        {salinity = 0.0;}
+        {salinity = 0.0; }
         Scalar A = (0.42*pow((pow(salinity, 0.8)-0.17), 2) + 0.045)*pow(T_C, 0.8);
         Scalar mu_brine = 0.1 + 0.333*salinity + (1.65+91.9*salinity*salinity*salinity)*exp(-A);
         assert(mu_brine > 0.0);
-        return mu_brine/1000.0; /* unit: Pa s */
+        return mu_brine/1000.0; 
     }
 };
 } // end namespace

@@ -105,15 +105,13 @@ public:
         //set main diagonal entries of the permeability tensor to a value
         //setting to one value means: isotropic, homogeneous
         for (int i = 0; i < dim; i++)
-           // K_[i][i] = 1e-7;
-            K_[i][i] = 2.23e-14;//2.23e-14;
+            K_[i][i] = 2.23e-14;
 
         // residual saturations
         materialParams_.setSwr(0.2);
         materialParams_.setSnr(1E-3);
 
         //parameters of Brooks & Corey Law
-        //materialParams_.setPe(500.0);
         materialParams_.setPe(500);
         materialParams_.setLambda(2);
     }
@@ -127,8 +125,7 @@ public:
      * \param globalSolution The global solution vector
      */
     void update(const SolutionVector &globalSolution)
-    {
-    };
+    { };
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
@@ -141,13 +138,15 @@ public:
      *  could be defined, where globalPos is the vector including the global coordinates
      *  of the finite volume.
      */
-    const Dune::FieldMatrix<Scalar, dim, dim> &intrinsicPermeability(const Element &element, /*@\label{tutorial-coupled:permeability}@*/
-                                                    const FVElementGeometry &fvGeometry,
-                                                    const int scvIdx) const
-    { return K_; }
+    const Dune::FieldMatrix<Scalar, dim, dim> &intrinsicPermeability(const Element &element, 
+                                                                     const FVElementGeometry &fvGeometry,
+                                                                     const int scvIdx) const
+    { 
+        return K_; 
+    }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
+     * \brief Define the minimum porosity \f$[-]\f$ after salt precipitation
      *
      * \param elemVolVars The data defined on the sub-control volume
      * \param element The finite element
@@ -159,10 +158,10 @@ public:
                        const FVElementGeometry &fvGeometry,
                        int scvIdx) const
      {
-            return 1e-5;
+        return 1e-5;
      }
      
-         /*!
+    /*!
      * \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
      *
      * \param elemVolVars The data defined on the sub-control volume
@@ -175,7 +174,7 @@ public:
                      const FVElementGeometry &fvGeometry,
                      int scvIdx) const
      {
-            return 0.11;
+        return 0.11;
      }
 
 
@@ -184,20 +183,20 @@ public:
                     int scvIdx) const
     {
 
-            return 1 - 0.11;
+        return 1 - 0.11;
     }
 
     double SolubilityLimit() const
     {
-            return 0.26;
+        return 0.26;
     }
 
     double theta(const Element &element,
             const FVElementGeometry &fvGeometry,
             int scvIdx) const
-     {
-             return 10.0;
-     }
+    {
+        return 10.0;
+    }
 
 
     // return the brooks-corey context depending on the position
@@ -205,7 +204,7 @@ public:
                                                 const FVElementGeometry &fvGeometry,
                                                 int scvIdx) const
     {
-            return materialParams_;
+        return materialParams_;
     }
 
 private:
