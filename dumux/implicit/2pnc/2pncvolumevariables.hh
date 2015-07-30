@@ -27,7 +27,6 @@
 
 #include <iostream>
 #include <vector>
-#include <dune/common/parallel/collectivecommunication.hh>
 
 #include <dumux/implicit/common/implicitmodel.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
