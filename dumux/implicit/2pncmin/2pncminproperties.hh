@@ -41,7 +41,9 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the isothermal two phase n component mineralisation problems
-NEW_TYPE_TAG(BoxTwoPNCMin, INHERITS_FROM(BoxTwoPNC));
+NEW_TYPE_TAG(TwoPNCMin, INHERITS_FROM(TwoPNC));
+NEW_TYPE_TAG(BoxTwoPNCMin, INHERITS_FROM(BoxModel, TwoPNCMin));
+NEW_TYPE_TAG(CCTwoPNCMin, INHERITS_FROM(CCModel, TwoPNCMin));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

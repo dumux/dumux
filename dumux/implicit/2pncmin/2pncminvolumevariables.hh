@@ -34,7 +34,7 @@
 
 #include "2pncminproperties.hh"
 #include "2pncminindices.hh"
-#include <dumux/material/constraintsolvers/computefromreferencephase2pnc.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase2pncmin.hh>
 #include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 #include <dumux/implicit/2pnc/2pncvolumevariables.hh>
 
@@ -63,9 +63,9 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-//     typedef typename GET_PROP_TYPE(TypeTag, Chemistry) Chemistry;
 
-    enum {
+    enum 
+    {
         dim = GridView::dimension,
         dimWorld=GridView::dimensionworld,
 
@@ -102,8 +102,8 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename Grid::ctype CoordScalar;
-    typedef Dumux::Miscible2pNcComposition<Scalar, FluidSystem> Miscible2pNcComposition;
-    typedef Dumux::ComputeFromReferencePhase2pNc<Scalar, FluidSystem> ComputeFromReferencePhase2pNc;
+    typedef Dumux::miscible2pncComposition<Scalar, FluidSystem> miscible2pncComposition;
+    typedef Dumux::computeFromReferencePhase2pncmin<Scalar, FluidSystem> computeFromReferencePhase2pncmin;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -136,6 +136,8 @@ public:
 
     // porosity evaluation
     initialPorosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
+    minimumPorosity_ = problem.spatialParams().porosityMin(element, fvGeometry, scvIdx);
+
 
     sumPrecipitates_ = 0.0;
     for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
@@ -157,7 +159,7 @@ public:
 
 //      this->porosity_ = initialPorosity_ - sumPrecipitates_;
 
-   this->porosity_ = std::max(0.1, std::max(0.0, initialPorosity_ - sumPrecipitates_));
+     this->porosity_ = std::max(minimumPorosity_, std::max(0.0, initialPorosity_ - sumPrecipitates_));
 
    salinity_= 0.0;
    moleFractionSalinity_ = 0.0;
@@ -289,7 +291,7 @@ public:
             	fluidState.setMoleFraction(wPhaseIdx, compIdx, priVars[compIdx]);
             }
 
-            Miscible2pNcComposition::solve(fluidState,
+            miscible2pncComposition::solve(fluidState,
                                             paramCache,
                                             wPhaseIdx,	//known phaseIdx
                                             /*setViscosity=*/true,
@@ -338,11 +340,12 @@ public:
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase2pNc" constraint solver
-            ComputeFromReferencePhase2pNc::solve(fluidState,
-                                             paramCache,
-                                             nPhaseIdx,
-                                             /*setViscosity=*/true,
-                                             /*setInternalEnergy=*/false);
+            computeFromReferencePhase2pncmin::solve(fluidState,
+                                                    paramCache,
+                                                    nPhaseIdx,
+                                                    nPhaseOnly,
+                                                    /*setViscosity=*/true,
+                                                    /*setInternalEnergy=*/false);
 
             }
         else if (phasePresence == wPhaseOnly){
@@ -374,11 +377,12 @@ public:
 //             calculate the composition of the remaining phases (as
 //             well as the densities of all phases). this is the job
 //             of the "ComputeFromReferencePhase2pNc" constraint solver
-            ComputeFromReferencePhase2pNc::solve(fluidState,
-                                             paramCache,
-                                             wPhaseIdx,
-                                             /*setViscosity=*/true,
-                                             /*setInternalEnergy=*/false);
+            computeFromReferencePhase2pncmin::solve(fluidState,
+                                                    paramCache,
+                                                    wPhaseIdx,
+                                                    wPhaseOnly,
+                                                    /*setViscosity=*/true,
+                                                    /*setInternalEnergy=*/false);
         }
         paramCache.updateAll(fluidState);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -453,21 +457,11 @@ public:
     {
         if (phaseIdx < numPhases)
             return this->fluidState_.density(phaseIdx);
-#if SALINIZATION
         else if (phaseIdx >= numPhases)
-        return FluidSystem::precipitateDensity(phaseIdx);
-#endif
+            return FluidSystem::precipitateDensity(phaseIdx);
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
-    /*!
-        * \brief Returns the liquid vapor pressure within the control volume.
-        */
-#if SALINIZATION
-    Scalar vaporPressure() const
-    { return FluidSystem::vaporPressure(this->fluidState_.temperature(/*phaseIdx=*/0),this->fluidState_.moleFraction(wPhaseIdx, FluidSystem::NaClIdx)); }
-#endif
-
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
@@ -478,10 +472,8 @@ public:
     {
         if (phaseIdx < numPhases)
             return this->fluidState_.molarDensity(phaseIdx);
-#if SALINIZATION
         else if (phaseIdx >= numPhases)
             return FluidSystem::precipitateMolarDensity(phaseIdx);
-#endif
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -537,6 +529,7 @@ protected:
     Scalar permeabilityFactor_;
     Scalar initialPorosity_;
     Scalar InitialPermeability_;
+    Scalar minimumPorosity_;
     Scalar sumPrecipitates_;
     Scalar salinity_;
     Scalar moleFractionSalinity_;

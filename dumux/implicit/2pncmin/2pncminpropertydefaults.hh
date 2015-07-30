@@ -56,7 +56,7 @@ namespace Properties {
  * We just forward the number from the fluid system
  *
  */
-SET_PROP(BoxTwoPNCMin, NumSecComponents)
+SET_PROP(TwoPNCMin, NumSecComponents)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -71,7 +71,7 @@ public:
  * We just forward the number from the fluid system
  *
  */
-SET_PROP(BoxTwoPNCMin, NumSPhases)
+SET_PROP(TwoPNCMin, NumSPhases)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -85,7 +85,7 @@ public:
  * For each component and each precipitated mineral/solid phase one equation has to
  * be solved.
  */
-SET_PROP(BoxTwoPNCMin, NumEq)
+SET_PROP(TwoPNCMin, NumEq)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -95,24 +95,24 @@ public:
 };
 
 //! Use the 2pncmin local residual operator
-SET_TYPE_PROP(BoxTwoPNCMin,
+SET_TYPE_PROP(TwoPNCMin,
               LocalResidual,
               TwoPNCMinLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPNCMin, Model, TwoPNCMinModel<TypeTag>);
+SET_TYPE_PROP(TwoPNCMin, Model, TwoPNCMinModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoPNCMin, VolumeVariables, TwoPNCMinVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoPNCMin, VolumeVariables, TwoPNCMinVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoPNCMin, FluxVariables, TwoPNCMinFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoPNCMin, FluxVariables, TwoPNCMinFluxVariables<TypeTag>);
 
 //! The indices required by the isothermal 2pNcMin model
-SET_TYPE_PROP(BoxTwoPNCMin, Indices, TwoPNCMinIndices <TypeTag, /*PVOffset=*/0>);
+SET_TYPE_PROP(TwoPNCMin, Indices, TwoPNCMinIndices <TypeTag, /*PVOffset=*/0>);
 
 //! disable useSalinity for the calculation of osmotic pressure by default
-SET_BOOL_PROP(BoxTwoPNCMin, useSalinity, false);
+SET_BOOL_PROP(TwoPNCMin, useSalinity, false);
 
 
 //! default value for the forchheimer coefficient
