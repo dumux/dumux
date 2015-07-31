@@ -45,7 +45,8 @@
           {e-8}{{\textcolordigits{e-8}}}{2}%
           {e-9}{{\textcolordigits{e-9}}}{2},
 }
-% for listings of bash code in install.tex
+
+% for listings of bash code
 \lstdefinestyle{Bash}{
  language=Bash,
  backgroundcolor=\color{lightgray},
@@ -61,6 +62,18 @@
  aboveskip=\bigskipamount,
  belowskip=\bigskipamount
 }
+
+% for listings of shell code
+\lstdefinestyle{Shell}{
+ language=sh,
+ numbers=left,
+ numbersep=5pt,
+ numberstyle=\tiny,
+ basicstyle=\ttfamily\scriptsize,
+ stringstyle=\color{BrickRed}\ttfamily\let\textcolor\textcolordummy,
+ commentstyle=\color[gray]{0.35}\ttfamily\it\let\textcolor\textcolordummy,
+}
+
 % for listings of DuMuX code
 \lstdefinestyle{DumuxCode}{
   language=C++,
@@ -75,6 +88,7 @@
   commentstyle=\color[gray]{0.35}\ttfamily\it\let\textcolor\textcolordummy,
   morecomment=[l][\color{OliveGreen}\let\textcolor\textcolordummy]{\#},
 }
+
 % for listings of DuMuX parameter files
 \lstdefinestyle{DumuxParameterFile}{
  language=sh,

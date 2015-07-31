@@ -33,11 +33,17 @@ more information.
 The options needed to be specified for that are provided using option files like
 \texttt{debug.opts} and \texttt{optim.opts}. These two compile \Dune and \Dumux
 either for debugging or for fast simulation. Programs compiled with optimization options
-can lead to a speedup of factor up to ten!
+can lead to a speedup of factor up to ten!\\
 In contrast programs that are compiled with optimization can hardly be debugged.
-You can modify the files and add third-party dependencies or additional compiler flags.
-
-\todo{Hinweis/Beispiel, wie ein anderer Compiler eingebunden werden kann (Thomas)}
+You can modify the files and change the compiler, the name of the build director,
+add third-party dependencies, add additional compiler flags, ... .
+\begin{lstlisting}[style=Shell]
+BUILDDIR=build-clang
+CMAKE_FLAGS="\
+  -DCMAKE_C_COMPILER=/usr/bin/clang \
+  -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+  -DUG_DIR=./externals/ug-3.12.1"
+\end{lstlisting}
 
 \paragraph{Dunecontrol for selected modules}
 A complete build using \texttt{dunecontrol} takes some time. In many cases not all modules need to be re-built.

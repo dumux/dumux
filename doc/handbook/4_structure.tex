@@ -63,125 +63,153 @@
 \item \texttt{tutorial}: contains the tutorials described in Chapter \ref{chp:tutorial}.
 \end{itemize}
 
-% \begin{figure}
-\begin{sidewaysfigure}
-\begin{tikzpicture}[>=latex,inner xsep=0.15cm,rounded corners]
-\node [minimum height=0.7cm,draw,inner xsep=0.94cm,rotate=90,thick] (d) at(-2,0) {dumux};
-\node [minimum height=0.7cm,draw,inner xsep=1.03cm,thick] (lin) at(0.5,0) {linear};
-\node [minimum height=0.7cm,draw,inner xsep=1.32cm,thick] (io) at(0.5,1) {io};
+\begin{figure}
+% \begin{sidewaysfigure}
+\begin{tikzpicture}[scale=0.8,grow'=right,level distance=1.5in,sibling distance=.05in]
+\tikzset{edge from parent/.style={thick, draw=dumuxBlue, edge from parent fork right}}
+\tikzset{every tree node/.style={draw, thick, align=center}}
+\tikzset{frontier/.style={distance from root=6.0in}}
 
-\node [minimum height=0.7cm,draw,inner xsep=0.87cm,thick] (imp) at(0.5,3.5) {implicit};
- \node [minimum height=0.7cm,draw,inner xsep=0.88cm,thick] (c1) at(4.2,2) {common};
- \node [minimum height=0.7cm,draw,inner xsep=0.54cm,thick] (cell) at(4.2,3) {cell centered};
- \node [minimum height=0.7cm,draw,inner xsep=1.28cm,thick] (box) at(4.2,4) {box};
- \node [minimum height=0.7cm,draw,inner xsep=0.33cm,thick] (spec1) at(4.2,5) {specific models};
+\tikzset{FirstLevel/.style={
+  draw=dumuxYellow,
+  rectangle,
+  align=center,
+  minimum width=1.1in,
+  minimum height=0.2in,
+  text width=1.2in,
+}}
+\tikzset{SecondLevel/.style={
+  draw=dumuxBlue,
+  rectangle,
+  align=center,
+  minimum width=1.1in,
+  minimum height=0.2in,
+  text width=1.2in,
+}}
 
-\node [minimum height=0.7cm,draw,inner xsep=0.82cm,thick] (free) at(0.5,6) {free flow};
-  \node [minimum height=0.7cm,draw,inner xsep=0.33cm,thick] (spec2) at(4.2,6) {specific models};
+\tikzset{ThirdLevel/.style={
+  draw=none,
+  align=left,
+  minimum width=4.2in,
+  text width=4.1in,
+  font=\footnotesize
+}}
 
-\node [minimum height=0.7cm,draw,inner xsep=0.7cm,thick] (dec) at(0.5,7.5) {decoupled};
- \node [minimum height=0.7cm,draw,inner xsep=0.88cm,thick] (c2) at(4.2,7) {common};
- \node [minimum height=0.7cm,draw,inner xsep=0.33cm,thick] (spec3) at(4.2,8) {specific models};
 
-\node [minimum height=0.7cm,draw,inner xsep=0.82cm,thick] (c3) at(0.5,9) {common};
-
-\node [minimum height=0.7cm,draw,inner xsep=0.82cm,thick] (m) at(0.5,-4.5) {material};
- \node [minimum height=0.7cm,draw,thick] (bin) at(4.2,-1) {binarycoefficients};
- \node [minimum height=0.7cm,draw,inner xsep=0.6cm,thick] (comp) at(4.2,-2) {components};
- \node [minimum height=0.7cm,draw,inner xsep=0.2cm,thick] (con) at(4.2,-3) {constraintsolvers};
- \node [minimum height=0.7cm,draw,inner xsep=1.34cm,thick] (eos) at(4.2,-4) {eos};
- \node [inner ysep=0.05cm,draw,text width=2cm,align=center,inner xsep=0.59cm,thick] (fi) at(4.2,-5) {fluidmatrix-\\[-16pt]interactions};
- \node [minimum height=0.7cm,draw,inner xsep=0.73cm,thick] (fstate) at(4.2,-6) {fluidstates};
- \node [minimum height=0.7cm,draw,inner xsep=0.56cm,thick] (fsys) at(4.2,-7) {fluidsystems};
- \node [minimum height=0.7cm,draw,inner xsep=0.11cm,thick] (s) at(4.2,-8) {spatialparameters};
-
-\node [minimum height=0.7cm,draw,inner xsep=0.74cm,thick] (non) at(0.5,-9) {nonlinear};
-\node [minimum height=0.7cm,draw,inner xsep=0.9cm,thick] (para) at(0.5,-10) {parallel};
-
-\draw (d)--(lin);
-\draw (-1.4,0)--(-1.4,9)--(c3);
-\draw (-1.4,0)--(-1.4,-10)--(para);
-\draw (-1.4,7.5)--(dec);
-\draw (-1.4,6)--(free);
-\draw (-1.4,3.5)--(imp);
-\draw (-1.4,1)--(io);
-\draw (-1.4,-4.5)--(m);
-\draw (-1.4,-9)--(non);
-
-\draw (dec)--(2.4,7.5);
-\draw (spec3)--(2.4,8)--(2.4,7)--(c2);
-\draw (free)--(spec2);
-\draw (imp)--(2.4,3.5);
-\draw (spec1)--(2.4,5)--(2.4,2)--(c1);
-\draw (box)--(2.4,4);
-\draw (cell)--(2.4,3);
-\draw (m)--(2.4,-4.5);
-\draw (bin)--(2.4,-1)--(2.4,-8)--(s);
-\draw (comp)--(2.4,-2);
-\draw (con)--(2.4,-3);
-\draw (eos)--(2.4,-4);
-\draw (fi)--(2.4,-5);
-\draw (fstate)--(2.4,-6);
-\draw (fsys)--(2.4,-7);
-
-\draw [->](c3)--(6.5,9) node [right,text width=12.5cm,align=left]
-  {Common files of the implicit (box and cell centered) models and the de-\\[-4pt]
-   coupled models: time integration, start routine, the  property system, ...};
-\draw [->](spec3)--(6.5,8) node [right,text width=12.5cm,align=left]
-  {Specific model definition for the decoupled formulation. In each model \\[-4pt]
-   folder are subdirectories for the implicit pressure  equation, sorted by \\[-4pt]discretization method, and for the explicit transport.};
-\draw [->](c2)--(6.5,7) node [right,text width=12.5cm,align=left]
-  {Base classes and general files for the decoupled formulation.};
-\draw [->](spec2)--(6.5,6) node [right,text width=12.5cm,align=left]
-  {Specific model definition for free flow problems using the Strokes \\[-4pt]
-   equation: non-isothermal, compositional, one-phase models.};
-\draw [->](spec1)--(6.5,5) node [right,text width=12.5cm,align=left]
-  {Model and problem definition: implementation of equations, model spe-\\[-4pt]
-   cific properties and indices.};
-\draw [->](box)--(6.5,4) node [right,text width=12.5cm,align=left]
-  {Specific files for gerenal fully implicit boxmethod: boxassembler, dual \\[-5pt]
-   mesh geometry in boxfvelementgeometry.hh, base classes for model and \\[-5pt]problem definition.};
-\draw [->](cell)--(6.5,3) node [right,text width=12.5cm,align=left]
-  {Specific files for fully implicit cell centered method: ccassembler, mesh \\[-5pt]
-   geometry in ccfvelementgeometry.hh, base classes for model and problem \\[-5pt]definition.};
-\draw [->](c1)--(6.5,2) node [right,text width=12.5cm,align=left]
-  {Common functionality of cell centered and box formulation: assembling \\[-5pt]
-   in implicitlocaljacobian.hh, evaluation of partial derivative in \\[-5pt]implicitlocalresidual.hh, base classes for model and problem definition.};
-\draw [->](io)--(6.5,1) node [right,text width=12.5cm,align=left]
-  {Additional in-/output possibilities like restart files, gnuplot-interface and a VTKWriter \\[-4pt]
-   extension. Grid Creator files.};
-\draw [->](lin)--(6.5,0) node [right,text width=12.5cm,align=left] {Linear solver backend.};
-\draw [->](bin)--(6.5,-1) node [right,text width=12.5cm,align=left]
-  {Binary coefficients (like binary diffusion coefficients) and those needed for \\[-4pt]
-   the constitutive relationships (e.g. Henry coefficient).};
-\draw [->](comp)--(6.5,-2) node [right,text width=12.5cm,align=left]
-  {Properties of a pure chemical substance (e.g. water) \\[-4pt]or pseudo substance (e.g. air).};
-\draw [->](con)--(6.5,-3) node [right,text width=12.5cm,align=left]
-  {Constraint solvers specify a well defined set of input variables and make \\[-4pt]
-   sure that the resulting fluid state is consistent with a given set of \\[-4pt]thermodynamic equations.};
-\draw [->](eos)--(6.5,-4) node [right,text width=12.5cm,align=left]
-  {Equations of state (eos) are auxiliary classes which provide relations \\[-4pt]
-   between a fluid phase's temperature, pressure, composition and density.};
-\draw [->](fi)--(6.5,-5) node [right,text width=12.5cm,align=left]
-  {Constitutive relationships (e.g. capillary pressure - saturation - curve).};
-\draw [->](fstate)--(6.5,-6) node [right,text width=12.5cm,align=left]
-  {Fluid states are responsible for representing the complete thermodynamic \\[-4pt]
-   configuration of a system at a given spatial and temporal position.};
-\draw [->](fsys)--(6.5,-7) node [right,text width=12.5cm,align=left]
-  {Fluid systems express the thermodynamic relations between quantities.};
-\draw [->](s)--(6.5,-8) node [right,text width=12.5cm,align=left]
-  {Base class for all spatially dependent variables, like permeability and \\[-4pt]
-   porosity. Includes spatial averaging routines. All other properties are \\[-4pt]
-   specified in the specific files of the respective models.};
-\draw [->](non)--(6.5,-9) node [right,text width=12.5cm,align=left]
-  {Newton's method.};
-\draw [->](para)--(6.5,-10) node [right,text width=12.5cm,align=left]
-  {Files for parallel programming.};
+\Tree
+[.\node[draw=dumuxYellow, ultra thick] {dumux};
+  [.\node[FirstLevel] {common};
+    \node[ThirdLevel] {
+          Common files of the implicit (box and cell centered) models and the
+          decoupled models: time integration, start routine, the  property
+          system, ...};
+  ]
+  [.\node[FirstLevel] {decoupled};
+    [.\node[SecondLevel] {\emph{models}};
+      \node[ThirdLevel] {
+           Specific model definition for the decoupled formulation. In each model
+           folder are subdirectories for the implicit pressure  equation, sorted by
+           discretization method, and for the explicit transport.};
+    ]
+    [.\node[SecondLevel] {common};
+      \node[ThirdLevel] {Base classes and general files for the decoupled formulation.};
+    ]
+  ]
+  [.\node[FirstLevel] {geomechanics};
+    [.\node[SecondLevel] {\emph{models}};
+      \node[ThirdLevel] {Specific model definition for coupled flow and geomechnics simulations.};
+    ]
+  ]
+  [.\node[FirstLevel] {freeflow};
+    [.\node[SecondLevel] {\emph{models}};
+      \node[ThirdLevel] {Specific model definition for free flow problems using the (Navier-) Stokes
+                         and algebraic turbulence models.};
+    ]
+  ]
+  [.\node[FirstLevel] {implicit};
+    [.\node[SecondLevel] {\emph{models}};
+      \node[ThirdLevel] {Model and problem definition: implementation of equations,
+                         model specific properties and indices.};
+    ]
+    [.\node[SecondLevel] {box};
+      \node[ThirdLevel] {Specific files for gerenal fully implicit boxmethod:
+                         boxassembler, dual mesh geometry in boxfvelementgeometry.hh,
+                         base classes for model and problem definition.};
+    ]
+    [.\node[SecondLevel] {cellcentered};
+      \node[ThirdLevel] {Specific files for fully implicit cell centered method: ccassembler,
+                         mesh geometry in ccfvelementgeometry.hh, base classes for model and
+                         problem definition.};
+    ]
+    [.\node[SecondLevel] {common};
+      \node[ThirdLevel] {Common functionality of cell centered and box formulation:
+                         assembling in implicitlocaljacobian.hh, evaluation of partial derivative
+                         in implicitlocalresidual.hh, base classes for model and problem definition.};
+    ]
+  ]
+  [.\node[FirstLevel] {io};
+    \node[ThirdLevel] {Additional in-/output possibilities like restart files, gnuplot-interface
+                       and a VTKWriter extension. Grid Creator files.};
+  ]
+  [.\node[FirstLevel] {linear};
+    \node[ThirdLevel] {Linear solver backend.};
+  ]
+  [.\node[FirstLevel] {material};
+    [.\node[SecondLevel] {binarycoefficients};
+      \node[ThirdLevel] {Binary coefficients (like binary diffusion coefficients) and those
+                         needed for the constitutive relationships (e.g. Henry coefficient)};
+    ]
+    [.\node[SecondLevel] {components};
+      \node[ThirdLevel] {Properties of a pure chemical substance (e.g. water)
+                         or pseudo substance (e.g. air).};
+    ]
+    [.\node[SecondLevel] {constraintsolvers};
+      \node[ThirdLevel] {Constraint solvers specify a well defined set of input variables
+                         and make sure that the resulting fluid state is consistent with a
+                         given set of thermodynamic equations.};
+    ]
+    [.\node[SecondLevel] {eos};
+      \node[ThirdLevel] {Equations of state (eos) are auxiliary classes which provide
+                         relations between a fluid phase's temperature, pressure, composition
+                         and density.};
+    ]
+    [.\node[SecondLevel] {fluidmatrixint.};
+      \node[ThirdLevel] {Constitutive relationships (e.g. capillary pressure - saturation - curve};
+    ]
+    [.\node[SecondLevel] {fluidstates};
+      \node[ThirdLevel] {Fluid states are responsible for representing the complete thermodynamic
+                         configuration of a system at a given spatial and temporal position.};
+    ]
+    [.\node[SecondLevel] {fluidsystems};
+      \node[ThirdLevel] {Fluid systems express the thermodynamic relations between quantities.};
+    ]
+    [.\node[SecondLevel] {spatialparameters};
+      \node[ThirdLevel] {Base class for all spatially dependent variables, like permeability and
+                         porosity. Includes spatial averaging routines. All other properties are
+                         specified in the specific files of the respective models.};
+    ]
+  ]
+  [.\node[FirstLevel] {multidomain};
+    [.\node[SecondLevel] {\emph{models}};
+      \node[ThirdLevel] {Localoperators, which implement the correct coupling and
+                         communication between the submodels, and model specific properties.};
+    ]
+    [.\node[SecondLevel] {common};
+      \node[ThirdLevel] {The multidomain wrappers, generic functions, and properties.};
+    ]
+    [.\node[SecondLevel] {couplinglocalres.};
+      \node[ThirdLevel] {The localresiduals extending the baselocalresiduals for coupling.};
+    ]
+  ]
+  [.\node[FirstLevel] {nonlinear};
+    \node[ThirdLevel] {Newton's method.};
+  ]
+  [.\node[FirstLevel] {parallel};
+    \node[ThirdLevel] {Files for parallel programming.};
+  ]
+]
 \end{tikzpicture}
-\caption{Structure of the directory \texttt{dumux} containing the \Dumux source files.
-          \todo[inline]{Diese Skizze ist NICHT mehr aktuell. Hochkant passt sie wahrscheinlich besser auf die Seite.
-                        Neue Tikz Templates sollten eingführt werden. Eventuell Grafik/Schrift verkleinern und einpassen.
-                        Eventuell mit nur relative Platzierung der Boxen mit lower-of ... (Thomas)}}
+\caption{Structure of the directory \texttt{dumux} containing the \Dumux source files.}
 \label{fig:dumux-structure}
-\end{sidewaysfigure}
-% \end{figure}
+% \end{sidewaysfigure}
+\end{figure}
