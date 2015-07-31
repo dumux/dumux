@@ -197,10 +197,10 @@ public:
    // permeabilityFactor_ = std::pow((this->porosity_/initialPorosity_),8);
 
     //Tixier relation with residual water saturation set to 0.001
-    //permeabilityFactor_ = (std::pow((250 * (std::pow(this->porosity_,3)) / 0.001),2)) / InitialPermeability_;
+    //permeabilityFactor_ = (std::pow((250 * (std::pow(this->porosity_,3)) / 0.001),2)) / initialPermeability_;
 
     //Coates relation with residual water saturation set to 0.001
-    //permeabilityFactor_ = (std::pow((100 * (std::pow(this->porosity_,2)) * (1-0.001) / 0.001,2))) / InitialPermeability_ ;
+    //permeabilityFactor_ = (std::pow((100 * (std::pow(this->porosity_,2)) * (1-0.001) / 0.001,2))) / initialPermeability_ ;
 
 
     // energy related quantities not contained in the fluid state
@@ -403,15 +403,15 @@ public:
      * \brief Returns the inital porosity of the 
      * pure, precipitate-free porous medium
      */
-    Scalar InitialPorosity() const
+    Scalar initialPorosity() const
     { return initialPorosity_;}
     
     /*!
      * \brief Returns the inital permeability of the 
      * pure, precipitate-free porous medium
      */    
-    Scalar InitialPermeability() const
-    { return InitialPermeability_;}
+    Scalar initialPermeability() const
+    { return initialPermeability_;}
     
     /*!
      * \brief Returns the factor for the reduction of the initial permeability 
@@ -527,7 +527,7 @@ protected:
 //     Scalar saturationIdx_[numSPhases];
     Scalar permeabilityFactor_;
     Scalar initialPorosity_;
-    Scalar InitialPermeability_;
+    Scalar initialPermeability_;
     Scalar minimumPorosity_;
     Scalar sumPrecipitates_;
     Scalar salinity_;
