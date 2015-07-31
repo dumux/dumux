@@ -38,10 +38,10 @@ class H2O_Air
 {
 public:
     /*!
-     * \brief Henry coefficent \f$\mathrm{[N/m^2]}\f$  for air in liquid water.
+     * \brief Henry coefficient \f$\mathrm{[N/m^2]}\f$  for air in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      *
-     * Henry coefficent See:
+     * Henry coefficient See:
      * Stefan Finsterle, 1993
      * Inverse Modellierung zur Bestimmung hydrogeologischer Parameter eines Zweiphasensystems
      * page 29 Formula (2.9) (nach Tchobanoglous & Schroeder, 1985)
@@ -56,11 +56,12 @@ public:
     }
 
     /*!
-     * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular water and air
+     * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and air
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
-     * Vargaftik : Tables on the thermophysical properties of liquids and gases. John Wiley &      * Sons, New York, 1975.
+     * Vargaftik: Tables on the thermophysical properties of liquids and gases.
+     * John Wiley & Sons, New York, 1975.
      *
      * Walker, Sabey, Hampton: Studies of heat transfer and water migration in soils.
      * Dep. of Agricultural and Chemical Engineering, Colorado State University,
@@ -83,7 +84,7 @@ public:
     /*!
      * Lacking better data on water-air diffusion in liquids, we use at the
      * moment the diffusion coefficient of the air's main component nitrogen!!
-     * \brief Diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular nitrogen in liquid water.
+     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular nitrogen in liquid water.
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
@@ -99,7 +100,7 @@ public:
      * R. Reid et al.: "The properties of Gases and Liquids", 4th edition,
      * pp. 599, McGraw-Hill, 1987
      *
-     * R. Ferrell, D. Himmelblau: "Diffusion Coeffients of Nitrogen and
+     * R. Ferrell, D. Himmelblau: "Diffusion Coefficients of Nitrogen and
      * Oxygen in Water", Journal of Chemical Engineering and Data,
      * Vol. 12, No. 1, pp. 111-115, 1967
      */

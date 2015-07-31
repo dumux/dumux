@@ -19,8 +19,8 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX scheme to the non-isothermal
- *        compositional stokes model (with n components).
+ * \brief Adaptation of the box scheme to the non-isothermal
+ *        n-component Stokes model.
  */
 #ifndef DUMUX_STOKESNCNI_MODEL_HH
 #define DUMUX_STOKESNCNI_MODEL_HH
@@ -35,46 +35,55 @@
 namespace Dumux {
 /*!
  * \ingroup BoxStokesncniModel
- * \brief Adaption of the BOX scheme to the non-isothermal compositional n-component Stokes model.
+ * \brief Adaptation of the box scheme to the non-isothermal
+ *        n-component Stokes model.
  *
  * This model implements a non-isothermal n-component Stokes flow of a fluid
- * solving a momentum balance, a mass balance, a conservation equation for one component,
+ * solving a momentum balance, a mass balance, conservation equations for \f$n-1\f$ components,
  * and one balance equation for the energy.
  *
- * Momentum Balance:
+ * The momentum balance:
  * \f[
-\frac{\partial \left(\varrho_g {\boldsymbol{v}}_g\right)}{\partial t}
-+ \boldsymbol{\nabla} \boldsymbol{\cdot} \left(p_g {\bf {I}}
-- \mu_g \left(\boldsymbol{\nabla} \boldsymbol{v}_g
-+ \boldsymbol{\nabla} \boldsymbol{v}_g^T\right)\right)
-- \varrho_g {\bf g} = 0,
+ *    \frac{\partial \left(\varrho_g {\boldsymbol{v}}_g\right)}{\partial t}
+ *    + \text{div} \left( p_g {\bf {I}}
+ *    - \mu_g \left( \textbf{grad}\, \boldsymbol{v}_g
+ *                   + \textbf{grad}\, \boldsymbol{v}_g^T \right) \right)
+ *    - \varrho_g {\bf g} = 0
+ * \f]
+ * By setting the property <code>EnableNavierStokes</code> to <code>true</code> the Navier-Stokes
+ * equation can be solved. In this case an additional term
+ * \f[
+ *    + \text{div} \left( \varrho_g \boldsymbol{v}_g \boldsymbol{v}_g \right)
+ * \f]
+ * is added to the momentum balance equation.
+ *
+ * The mass balance equation:
+ * \f[
+ *    \frac{\partial \varrho_g}{\partial t}
+ *    + \text{div} \left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
  * \f]
  *
- * Mass balance equation:
+ * The component mass balance equations:
  * \f[
-\frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
+ *    \frac{\partial \left(\varrho_g X_g^\kappa\right)}{\partial t}
+ *    + \text{div} \left( \varrho_g {\boldsymbol{v}}_g X_g^\kappa
+ *    - D^\kappa_g \varrho_g \frac{M^\kappa}{M_g} \textbf{grad}\, x_g^\kappa \right)
+ *    - q_g^\kappa = 0
+ * \f]
+ * Please note that, even though it is n-component model, the diffusive
+ * fluxes are still calculated with binary diffusion.
+ *
+ * The energy balance equation:
+ * \f[
+ *    \frac{\partial (\varrho_g  u_g)}{\partial t}
+ *    + \text{div} \left( \varrho_g h_g {\boldsymbol{v}}_g
+ *    - \sum_\kappa \left[ h^\kappa_g D^\kappa_g \varrho_g \frac{M^\kappa}{M_g}
+ *                         \textbf{grad}\, x^\kappa_g \right]
+ *    - \lambda_g \textbf{grad}\, T \right) - q_T = 0
  * \f]
  *
- * Component mass balance equation:
- * \f[
- \frac{\partial \left(\varrho_g X_g^\kappa\right)}{\partial t}
- + \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_g {\boldsymbol{v}}_g X_g^\kappa
- - D^\kappa_g \varrho_g \frac{M^\kappa}{M_g} \boldsymbol{\nabla} x_g^\kappa \right)
- - q_g^\kappa = 0
- * \f]
- *
- * Energy balance equation:
- * \f[
-\frac{\partial (\varrho_g  u_g)}{\partial t}
-+ \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_g h_g {\boldsymbol{v}}_g
-- \sum_\kappa \left[ h^\kappa_g D^\kappa_g \varrho_g \frac{M^\kappa}{M_g} \nabla x^\kappa_g \right]
-- \lambda_g \boldsymbol{\nabla} T \right) - q_T = 0
- * \f]
- *
- * This is discretized using a fully-coupled vertex
- * centered finite volume (box) scheme as spatial and
- * the implicit Euler method as temporal discretization.
- *
+ * This is discretized by a fully-coupled vertex-centered finite volume
+ * (box) scheme in space and by the implicit Euler method in time.
  */
 template<class TypeTag>
 class StokesncniModel : public StokesncModel<TypeTag>

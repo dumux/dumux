@@ -43,41 +43,43 @@ namespace Dumux
  * Mass balance:
  * \f[
  *  \frac{\partial \varrho_\textrm{g}}{\partial t}
- *  + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g}\right)
+ *  + \text{div} \left( \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} \right)
  *  - q_\textrm{g} = 0
  * \f]
  *
  * Momentum Balance:
  * \f[
  *   \frac{\partial \left(\varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g}\right)}{\partial t}
- *   + \boldsymbol{\nabla} \boldsymbol{\cdot} \left(
+ *   + \text{div} \left(
  *     \varrho_\textrm{g} {\boldsymbol{v}_\textrm{g} {\boldsymbol{v}}_\textrm{g}}
  *     - \left[ \mu_\textrm{g} + \mu_\textrm{g,t} \right]
- *       \left(\boldsymbol{\nabla} \boldsymbol{v}_\textrm{g}
- *             + \boldsymbol{\nabla} \boldsymbol{v}_\textrm{g}^T \right)
+ *       \left( \textbf{grad}\, \boldsymbol{v}_\textrm{g}
+ *              + \textbf{grad}\, \boldsymbol{v}_\textrm{g}^T \right)
  *   \right)
  *   + \left(p_\textrm{g} {\bf {I}} \right)
- *   - \varrho_\textrm{g} {\bf g} = 0,
+ *   - \varrho_\textrm{g} {\bf g} = 0
  * \f]
  *
  * Component mass balance equations:
  * \f[
  *  \frac{\partial \left(\varrho_\textrm{g} X_\textrm{g}^\kappa\right)}{\partial t}
- *  + \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} X_\textrm{g}^\kappa
+ *  + \text{div} \left( \varrho_\textrm{g} {\boldsymbol{v}}_\textrm{g} X_\textrm{g}^\kappa
  *  - \left[ D^\kappa_\textrm{g} + D^\kappa_\textrm{g,t} \right]
- *    \varrho_\textrm{g} \frac{M^\kappa}{M_\textrm{g}} \boldsymbol{\nabla} x_\textrm{g}^\kappa \right)
+ *    \varrho_\textrm{g} \frac{M^\kappa}{M_\textrm{g}} \textbf{grad}\, x_\textrm{g}^\kappa \right)
  *  - q_\textrm{g}^\kappa = 0
  * \f]
  *
  * Energy balance equation:
  * \f[
  *  \frac{\partial (\varrho_\textrm{g}  u_\textrm{g})}{\partial t}
- *  + \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_\textrm{g} h_\textrm{g} {\boldsymbol{v}}_\textrm{g}
+ *  + \text{div} \left( \varrho_\textrm{g} h_\textrm{g} {\boldsymbol{v}}_\textrm{g}
  *  - \sum_\kappa \left( h^\kappa_\textrm{g} \left[ D^\kappa_\textrm{g} + D^\kappa_\textrm{g,t} \right]
- *                       \varrho_\textrm{g} \frac{M^\kappa}{M_\textrm{g}} \nabla x^\kappa_\textrm{g} \right)
- *  - \left[ \lambda_\textrm{g} + \lambda_\textrm{g,t} \right] \boldsymbol{\nabla} T \right)
+ *                       \varrho_\textrm{g} \frac{M^\kappa}{M_\textrm{g}} \textbf{grad}\, x^\kappa_\textrm{g} \right)
+ *  - \left[ \lambda_\textrm{g} + \lambda_\textrm{g,t} \right] \textbf{grad}\, T \right)
  *  - q_\textrm{T} = 0
  * \f]
+ * Please note that, even though it is n-component model, the diffusive
+ * fluxes are still calculated with binary diffusion.
  *
  * This is discretized by a fully-coupled vertex-centered finite volume
  * (box) scheme in space and by the implicit Euler method in time.
