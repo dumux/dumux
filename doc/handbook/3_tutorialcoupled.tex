@@ -1,4 +1,5 @@
-\section[Fully-Implicit Model]{Solving a Problem Using a Fully-Coupled Model}\label{tutorial-coupled}
+\section[Fully-Implicit Model]{Solving a Problem Using a Fully-Coupled Model}
+\label{tutorial-coupled}
 
 The process of setting up a problem using \Dumux can be roughly divided into four parts:
 \begin{enumerate}
@@ -63,7 +64,6 @@ The solved equations are the mass balances of water and oil:
 \end{align}
 
 \subsection{The Main File}
-
 Listing \ref{tutorial-coupled:mainfile} shows the main application file
 \texttt{tutorial/tutorial\_coupled.cc} for the coupled two-phase
 model. This file has to be compiled and executed in order to solve the problem described
@@ -109,11 +109,9 @@ custom function which is defined on
 line~\ref{tutorial-coupled:usage-function} in the main file.
 In this function the usage message is customized to the problem at hand.
 This means that at least the necessary parameters are listed here.
-For more information about the input file please refer to section \ref{sec:inputFiles}.
 
-
-\subsection{The Problem Class}\label{tutorial-coupled:problem}
-
+\subsection{The Problem Class}
+\label{tutorial-coupled:problem}
 When solving a problem using \Dumux, the most important file is the
 so-called \textit{problem file} as shown in
 listing~\ref{tutorial-coupled:problemfile}.
@@ -194,7 +192,7 @@ available:
   discretization. This inhibits the specification of two different
   boundary condition types for one equation at one sub-control
   volume.  Be aware that the second parameter is a Dune grid entity
-  with the codimension \texttt{dim}.
+  with the co-dimension \texttt{dim}.
 \end{description}
 
 To ensure that no boundaries are undefined, a small safeguard value
@@ -237,8 +235,8 @@ maximum values of each global coordinate of the grid. This method
 and the analogous \texttt{bBoxMin()} method are provided by the base
 class \texttt{Dumux::BoxProblem<TypeTag>}.
 
-\subsection{Defining Fluid Properties}\label{tutorial-coupled:description-fluid-class}
-
+\subsection{Defining Fluid Properties}
+\label{tutorial-coupled:description-fluid-class}
 The \Dumux distribution includes some common substances which can be
 used out of the box. The properties of the pure substances (such as
 the components nitrogen, water, or the pseudo-component air) are
@@ -255,8 +253,8 @@ interactions are defined by {\em fluid systems}, which are located in
 % In this example, a class for the definition of a two-phase system is used. This allows for the choice
 % of the two components oil and water and for access of the parameters that are relevant for the two-phase model.
 
-\subsection{Defining Spatially Dependent Parameters}\label{tutorial-coupled:description-spatialParameters}
-
+\subsection{Defining Spatially Dependent Parameters}
+\label{tutorial-coupled:description-spatialParameters}
 In \Dumux, many properties of the porous medium can depend on the
 spatial location. Such properties are the \textit{intrinsic
   permeability}, the parameters of the \textit{capillary pressure} and
@@ -597,7 +595,6 @@ initial time-step size of $\unit[100]{s}$. Then, you can compile the program.
 \end{itemize}
 
 \subsubsection{Exercise 3: Parameter File Input}
-
 As you have experienced, compilation takes quite some time. Therefore,
 \Dumux provides a simple method to read in parameters at run-time
 via \textit{parameter input files}.
@@ -617,10 +614,9 @@ can be done as shown in the files \texttt{ex3\_tutorialproblem\_coupled.diff}
 and \texttt{ex3\_tutorialspatialparams\_coupled.diff} in the \texttt{solutions\_coupled} folder. Add some (for
 example \texttt{Newton.MaxSteps} and \texttt{Problem.EnableGravity}) to the
 parameter file \texttt{tutorial\_coupled.input} and observe what
-happens if they are modified. For more information about the input file please refer to section \ref{sec:inputFiles}.
+happens if they are modified.
 
 \subsubsection{Exercise 4: Create a New Component}
-
 Create a new file for the benzene component called \texttt{benzene.hh}
 and implement a new component. (You may get a hint by looking at
 existing components in the directory \verb+/dumux/material/components+). \\
@@ -628,9 +624,7 @@ Use benzene as a new fluid and run the model of Exercise 2 with water
 and benzene. Benzene has a density of $\unitfrac[889.51]{kg}{m^3}$ and
 a viscosity of $\unit[0.00112]{Pa \, s}$.
 
-
 \subsubsection{Exercise 5: Time Dependent Boundary Conditions}
-
 In this exercise we want to investigate the influence of time dependent boundary
 conditions. For this, redo the steps of exercise 2 and create a new problem and
 spatial parameters file.

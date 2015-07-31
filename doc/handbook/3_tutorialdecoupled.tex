@@ -94,8 +94,7 @@ the user if the simulation is called incorrectly, is printed via the
 custom function which is defined on
 line~\ref{tutorial-decoupled:usage-function}. In this function the usage
 message is customized to the problem at hand. This means that at least
-the necessary parameters are listed here.  For more information about
-the input file please refer to section \ref{sec:inputFiles}.
+the necessary parameters are listed here.
 
 \subsection{The Problem Class}
 \label{decoupled_problem}
@@ -405,7 +404,7 @@ compile the program.
  \item Further increase the CFL-factor to 2 and investigate the saturation.
 \end{itemize}
 
-\subsubsection{Exercise 3: Parameter file input.}
+\subsubsection{Exercise 3: Parameter file input}
 As you have experienced, compilation takes quite some time. Therefore, \Dumux
 provides a simple method to read in parameters (such as simulation end time or
 modelling parameters) via \texttt{Paramter Input Files}. The tests in the Test-folder
@@ -436,7 +435,6 @@ and benzene. Benzene has a density of $889.51 \, \text{kg} / \text{m}^3$
 and a viscosity of $0.00112 \, \text{Pa} \, \text{s}$.
 
 \subsubsection{Exercise 5: Time Dependent Boundary Conditions}
-
 In this exercise we want to investigate the influence of time dependent boundary
 conditions. For this, redo the steps of exercise 2 and create a new problem and
 spatial parameters file.
@@ -531,10 +529,7 @@ no matter if we model coupled or decoupled. Try to formulate a spatial parameter
 file that works with both problems, the coupled and the decoupled. Therein, only
 use functions at the position.
 
-
-
 \section{Further Practice}\label{tutorial-furtherpractice}
-
 If there is a request for further practice, we refer here to the problems, that are already implemented in \Dumux.
 Several examples for coupled and decoupled models can be found in the test-directory. 
 An overview of the available tests cases can be found ...
@@ -556,8 +551,3 @@ The \Dumux-lecture module can be obtained as follows:
 $ # make sure you are in DUMUX-Root
 $ svn checkout --username=anonymous --password='' svn://svn.iws.uni-stuttgart.de/DUMUX/dumux-lecture/trunk dumux-lecture
 \end{lstlisting}
-
-%%% Local Variables:
-%%% mode: latex
-%%% TeX-master: "dumux-handbook"
-%%% End:
