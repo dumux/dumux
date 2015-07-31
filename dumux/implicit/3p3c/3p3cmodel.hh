@@ -51,14 +51,14 @@ namespace Dumux
  * By inserting this into the equations for the conservation of the
  * components, one transport equation for each component is obtained as
  * \f{eqnarray*}
- && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa
+ && \phi \frac{\partial (\sum_\alpha \varrho_{\alpha,mol} x_\alpha^\kappa
  S_\alpha )}{\partial t}
  - \sum\limits_\alpha \text{div} \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
- \varrho_\alpha x_\alpha^\kappa \mathbf{K}
- (\textbf{grad}\, p_\alpha - \varrho_\alpha \mbox{\bf g}) \right\}
+ \varrho_{\alpha,mol} x_\alpha^\kappa \mathbf{K}
+ (\textbf{grad}\, p_\alpha - \varrho_{\alpha,mass} \mbox{\bf g}) \right\}
  \nonumber \\
  \nonumber \\
- && - \sum\limits_\alpha \text{div} \left\{ D_\text{pm}^\kappa \varrho_\alpha \frac{M^\kappa}{M_\alpha}
+ && - \sum\limits_\alpha \text{div} \left\{ D_\text{pm}^\kappa \varrho_{\alpha,mol}
  \textbf{grad} x^\kappa_{\alpha} \right\}
  - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha
  \f}
