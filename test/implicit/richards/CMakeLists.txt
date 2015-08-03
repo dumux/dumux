@@ -24,6 +24,14 @@ add_dumux_test(test_ccrichards test_ccrichards test_ccrichards.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/richardslenscc-00008.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichards")
 
+# comparison to analytical solution - only with cc
+add_dumux_test(test_ccrichardsanalytical test_ccrichardsanalytical test_ccrichardsanalytical.cc
+                 python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+                 --script fuzzy
+ 		 --files ${CMAKE_SOURCE_DIR}/test/references/richardsanalyticalcc-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/richardsanalyticalcc-01002.vtu
+ 	         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsanalytical")
+
 # non-isothermal tests
 add_dumux_test(test_boxrichardsniconvection test_boxrichardsniconvection test_boxrichardsniconvection.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py

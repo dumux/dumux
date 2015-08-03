@@ -1,0 +1,11 @@
+[TimeManager]
+DtInitial = 1e-1 # [s]
+TEnd = 100 # [s]
+MaxTimeStepSize = 1e-1 # [s]
+
+[Grid]
+File = ./grids/richardsanalytical-1x64.dgf
+
+[Problem]
+Name = richardsanalyticalcc
+EnableGravity = false
