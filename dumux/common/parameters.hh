@@ -442,7 +442,6 @@ private:
 
         // retrieve actual parameter from the parameter tree
         if (!Params::tree().hasKey(canonicalName) && !Params::tree().hasKey(paramName)) {
-            print<TypeTag>();
             DUNE_THROW(::Dumux::ParameterException,
                        "Mandatory parameter '" << canonicalName
                        << "' was not specified");

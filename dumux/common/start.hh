@@ -498,6 +498,7 @@ int start(int argc,
         return start_<TypeTag>(argc, argv, usage);
     }
     catch (Dumux::ParameterException &e) {
+        Dumux::Parameters::print<TypeTag>();
         std::cerr << e << ". Abort!\n";
         return 1;
     }
