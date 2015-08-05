@@ -23,6 +23,32 @@ the \texttt{test\_boxco2} or \texttt{test\_cco2} in the  \texttt{dumux/test/co2}
 
 
 \subsection{Petrel}
+Grids from Petrel (in ASCII format with the extension *.GRDECL) can be imported into \Dumux in two ways:
+  \begin{enumerate}
+  \item Using the GRDECL format directly with the help of the grid-manager \texttt{dune-cornerpoint}.
+  \item Converting the GRDECL file into the DGF format.
+  \end{enumerate}
+The fist options requires the installation of \texttt{dune-cornerpoint} along with its dependencies. Set the property \texttt{Grid} to \texttt{Dune::CpGrid} in your problem file. 
+
+The second option has the advantage that you end up with a DGF which can then be used with any grid-manager (\texttt{dune-alugrid}, \texttt{UG} etc.) You also have to install \texttt{dune-cornerpoint}. Additionally you have to modify the converter \texttt{grdecl2vtu} found in \texttt{dune-cornerpoint/examples} to also write a DGF. To do so you have to:
+\begin{itemize}
+ \item Include the \texttt{dgfwriter.hh} found in \texttt{dune-grid/dune/grid/io/file/dgfparser}
+ \item Create an object of the \texttt{Dune::DGFWriter} and call the its function \texttt{write()} within the \texttt{main} function for example after the \texttt{vtkwriter()} is called: 
+\begin{lstlisting}[style=DumuxCode]
+Dune::DGFWriterParam<CpGrid::LeafGridView> dgfWriter(grid.leafView()))
+dgfWriter.write(fnamebase + ".dgf")
+\end{lstlisting} 
+\end{itemize}
+Material parameters for elements with Petrel specific keywords like \texttt{PORO} are parsed by the converter \texttt{grdecl2vtu} (see the \texttt{main} function). They are available as vectors within the \texttt{main} function. The main GRDECL file with the coordinates must include the GRDECL files of the parameters, if for example the parameters are not already included, include the file bearing your parameter in your main GRDECL file:
+\begin{lstlisting}
+INCLUDE
+'PARAMETER_X.GRDECL'
+/
+\end{lstlisting} 
+To add the parameters to your DGF you have to make changes to the header \texttt{dgfwriter.hh} such that they are passed as arguments of the \texttt{write()} function and written after each element (modify \texttt{writeElement()} and internal \texttt{write()} functions accordingly). Take caution that you stick to the correct DGF syntax (see \textbf{Modules $\rightarrow$ I/O $\rightarrow$ Dune Grid Format (DGF)} for reference). 
+
+
+
 
 
 \subsection{ArtMesh}
