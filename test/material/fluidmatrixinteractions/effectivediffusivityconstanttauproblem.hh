@@ -19,10 +19,10 @@
 /*!
  * \file
  *
- * \brief Simple test problem for the Somerton thermal conductivity law
+ * \brief Test for the constant tau effective diffusivity model
  */
-#ifndef DUMUX_THERMAL_CONDUCTIVITY_SOMERTON_PROBLEM_HH
-#define DUMUX_THERMAL_CONDUCTIVITY_SOMERTON_PROBLEM_HH
+#ifndef DUMUX_EFFECTIVE_DIFFUSIVITY_CONSTANT_TAU_PROBLEM_HH
+#define DUMUX_EFFECTIVE_DIFFUSIVITY_CONSTANT_TAU_PROBLEM_HH
 
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
@@ -63,10 +63,10 @@ SET_TYPE_PROP(EffectiveDiffusivityConstantTauProblem, EffectiveDiffusivityModel,
 /*!
  * \ingroup MaterialTestProblems
  *
- * \brief Simple test problem for the Somerton thermal conductivity law
+ * \brief Test for the constant tau effective diffusivity model
  *
  * To run the test execute the following line in shell:
- * <tt>./test_thermalconductivitysomerton</tt>
+ * <tt>./test_effectivediffusivityconstanttau</tt>
  *
  */
 template <class TypeTag >

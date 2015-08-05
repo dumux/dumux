@@ -22,8 +22,8 @@
  * \brief A grid creator for the coupled problems, with a refined interface
  */
 
-#ifndef DUMUX_INTERFACEMESHCREATOR_HH
-#define DUMUX_INTERFACEMESHCREATOR_HH
+#ifndef DUMUX_INTERFACEGRIDCREATOR_HH
+#define DUMUX_INTERFACEGRIDCREATOR_HH
 
 #include <dune/common/deprecated.hh>
 
@@ -48,7 +48,7 @@ NEW_PROP_TAG(Grid);
  * A grid creator, which can refine the grid towards the
  * coupling interface and the top of the domain.
  */
-template <class TypeTag>
+template<class TypeTag>
 class InterfaceGridCreator
 {
 public:
