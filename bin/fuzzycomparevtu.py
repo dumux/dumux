@@ -143,9 +143,13 @@ def is_fuzzy_equal_text(text1, text2, parameter, numComp, absolute, relative, ze
 
         # manipulate the data set for the sake of sensible comparison
         # if the parameter is listed in the zeroThreshold dictionary replace all float under threshold with zero.
+        # only replace them with zero if the parameters in both lists are under the threshold. Otherwise we
+        # compare a non-zero value with 0 later.
         if parameter in zeroValueThreshold:
-            floatList1 = [0.0 if abs(i) < float(zeroValueThreshold[parameter]) else i for i in floatList1]
-            floatList2 = [0.0 if abs(i) < float(zeroValueThreshold[parameter]) else i for i in floatList2]
+            floatList1 = [0.0 if abs(i) < float(zeroValueThreshold[parameter]) and abs(j) < float(zeroValueThreshold[parameter])
+                          else i for i, j in zip(floatList1, floatList2)]
+            floatList2 = [0.0 if abs(i) < float(zeroValueThreshold[parameter]) and abs(j) < float(zeroValueThreshold[parameter])
+                          else j for i, j in zip(floatList1, floatList2)]
 
         absFloatList1 = [abs(i) for i in floatList1]
         absFloatList2 = [abs(i) for i in floatList2]
