@@ -1,13 +1,14 @@
-From 8820cd98c38e282911cd5eb417d3456b74aec424 Mon Sep 17 00:00:00 2001
+From b30c947ee7b40f6e58e6d03e682c92c535568366 Mon Sep 17 00:00:00 2001
 From: Bernd Flemisch <bernd@iws.uni-stuttgart.de>
-Date: Tue, 28 Jul 2015 13:59:19 +0200
+Date: Tue, 4 Aug 2015 17:09:53 +0200
 Subject: adapt opm-core such that it can be used by Dumux
 
 ---
  cmake/Modules/Findopm-parser.cmake     | 179 ++++++---------------------------
+ cmake/Modules/opm-core-prereqs.cmake   |   2 +-
  cmake/Modules/opm-parser-prereqs.cmake |  20 ++++
  opm/core/linalg/call_umfpack.c         |  12 +--
- 3 files changed, 58 insertions(+), 153 deletions(-)
+ 4 files changed, 59 insertions(+), 154 deletions(-)
  create mode 100644 cmake/Modules/opm-parser-prereqs.cmake
 
 diff --git a/cmake/Modules/Findopm-parser.cmake b/cmake/Modules/Findopm-parser.cmake
@@ -206,6 +207,19 @@ index f69a491..fe721a0 100644
 +  )
 +include (UseDynamicBoost)
 +#debug_find_vars ("opm-parser")
+diff --git a/cmake/Modules/opm-core-prereqs.cmake b/cmake/Modules/opm-core-prereqs.cmake
+index ec118c5..ed35dcb 100644
+--- a/cmake/Modules/opm-core-prereqs.cmake
++++ b/cmake/Modules/opm-core-prereqs.cmake
+@@ -18,7 +18,7 @@ set (opm-core_DEPS
+ 	"CXX11Features REQUIRED"
+ 	# various runtime library enhancements
+ 	"Boost 1.44.0
+-		COMPONENTS date_time filesystem system iostreams unit_test_framework REQUIRED"
++		COMPONENTS date_time filesystem system iostreams unit_test_framework regex REQUIRED"
+ 	# matrix library
+ 	"BLAS REQUIRED"
+ 	"LAPACK REQUIRED"
 diff --git a/cmake/Modules/opm-parser-prereqs.cmake b/cmake/Modules/opm-parser-prereqs.cmake
 new file mode 100644
 index 0000000..309e12e
