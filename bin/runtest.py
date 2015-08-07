@@ -1,6 +1,7 @@
 import argparse
 import os, sys
 import subprocess
+import json
 from fuzzycomparevtu import compare_vtk
 
 # parse arguments
@@ -9,7 +10,8 @@ parser.add_argument('-c', '--command', nargs=1, help='The executable and optiona
 parser.add_argument('-s', '--script', nargs=1, help="The comparison script. [fuzzy, exact, <path_to_script>] where the script takes two vtu files as arguments.")
 parser.add_argument('-f', '--files', nargs='+', help="Pairs of reference and vtu file names. Usage: '[-f ref1 vtu1 [[ref2] [vtu2] ...]]'")
 parser.add_argument('-r', '--relative', type=float, default=1e-2, help='maximum relative error (default=1e-2) when using fuzzy comparison')
-parser.add_argument('-a', '--absolute', type=float, default=1e-9, help='maximum absolute error (default=1e-9) when using fuzzy comparison')
+parser.add_argument('-a', '--absolute', type=float, default=1.5e-7, help='maximum absolute error (default=1.5e-7) when using fuzzy comparison')
+parser.add_argument('-z', '--zeroThreshold', type=json.loads, default='{}', help='Thresholds for treating numbers as zero for a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}')
 args = vars(parser.parse_args())
 
 # check parameters
@@ -54,14 +56,7 @@ if args['script']:
         return_code = 0
         for i in range(0, len(args['files'])//2):
             print("\nFuzzy comparison...")
-            if args['relative'] and args['absolute']:
-                result = compare_vtk(args['files'][i*2], args['files'][(i*2)+1], relative=args['relative'], absolute=args['absolute'])
-            elif args['relative'] and not args['absolute']:
-                result = compare_vtk(args['files'][i*2], args['files'][(i*2)+1], relative=args['relative'])
-            elif args['absolute'] and not args['relative']:
-                result = compare_vtk(args['files'][i*2], args['files'][(i*2)+1], absolute=args['absolute'])
-            else:
-                result = compare_vtk(args['files'][i*2], args['files'][(i*2)+1])
+            result = compare_vtk(args['files'][i*2], args['files'][(i*2)+1], relative=args['relative'], absolute=args['absolute'], zeroValueThreshold=args['zeroThreshold'])
             if result:
                 return_code = 1
         sys.exit(return_code)

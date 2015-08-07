@@ -15,7 +15,7 @@ from six.moves import zip
 
 
 # fuzzy compare VTK tree from VTK strings
-def compare_vtk(vtk1, vtk2, absolute=1e-9, relative=1e-2, verbose=True):
+def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={}, verbose=True):
     """ take two vtk files and compare them. Returns an exit key as returnvalue.
 
     Arguments:
@@ -29,6 +29,13 @@ def compare_vtk(vtk1, vtk2, absolute=1e-9, relative=1e-2, verbose=True):
         The epsilon used for comparing numbers with an absolute criterion
     relative: float
         The epsilon used for comparing numbers with an relative criterion
+    zeroValueThreshold: dict
+        A dictionary of parameter value pairs that set the threshold under
+        which a number is treated as zero for a certain parameter. Use this parameter if
+        you have to avoid comparisons of very small numbers for a certain parameter.
+    verbose : bool
+        If the script should produce informative output. Enabled by default as the details
+        give the tester a lot more information on why tests fail.
     """
 
     # construct element tree from vtk file
@@ -42,20 +49,21 @@ def compare_vtk(vtk1, vtk2, absolute=1e-9, relative=1e-2, verbose=True):
 
     if verbose:
         print("Comparing {} and {}".format(vtk1, vtk2))
+        print("...with a maximum relative error of {} and a maximum absolute error of {}*p_max, where p_max is highest absolute parameter value.".format(relative, absolute))
 
     # sort the vtk file so that the comparison is independent of the
     # index numbering (coming e.g. from different grid managers)
     sortedroot1, sortedroot2 = sort_vtk_by_coordinates(sortedroot1, sortedroot2, verbose)
 
     # do the fuzzy compare
-    if is_fuzzy_equal_node(sortedroot1, sortedroot2, absolute, relative, verbose):
+    if is_fuzzy_equal_node(sortedroot1, sortedroot2, absolute, relative, zeroValueThreshold, verbose):
         return 0
     else:
         return 1
 
 
 # fuzzy compare of VTK nodes
-def is_fuzzy_equal_node(node1, node2, absolute, relative, verbose=True):
+def is_fuzzy_equal_node(node1, node2, absolute, relative, zeroValueThreshold, verbose):
 
     is_equal = True
     for node1child, node2child in zip(node1.iter(), node2.iter()):
@@ -78,7 +86,10 @@ def is_fuzzy_equal_node(node1, node2, absolute, relative, verbose=True):
             else:
                 return False
         if node1child.text or node2child.text:
-            if not is_fuzzy_equal_text(node1child.text, node2child.text, node1child.attrib["Name"], absolute, relative, verbose):
+            if not is_fuzzy_equal_text(node1child.text, node2child.text,
+                                       node1child.attrib["Name"],
+                                       int(node1child.attrib["NumberOfComponents"]),
+                                       absolute, relative, zeroValueThreshold, verbose):
                 if node1child.attrib["Name"] == node2child.attrib["Name"]:
                     if verbose:
                         print('Data differs in parameter: {}'.format(node1child.attrib["Name"]))
@@ -95,7 +106,7 @@ def is_fuzzy_equal_node(node1, node2, absolute, relative, verbose=True):
 
 
 # fuzzy compare of text (in the xml sense) consisting of whitespace separated numbers
-def is_fuzzy_equal_text(text1, text2, parameter, absolute, relative, verbose=True):
+def is_fuzzy_equal_text(text1, text2, parameter, numComp, absolute, relative, zeroValueThreshold, verbose):
     list1 = text1.split()
     list2 = text2.split()
     # difference only in whitespace?
@@ -103,34 +114,75 @@ def is_fuzzy_equal_text(text1, text2, parameter, absolute, relative, verbose=Tru
         return True
     # compare number by number
     is_equal = True
-    max_relative_difference = 0.0
-    max_absolute_difference = 0.0
-    for number1, number2 in zip(list1, list2):
-        number1 = float(number1)
-        number2 = float(number2)
-        if not number2 == 0.0:
-            # check for the relative difference
-            if abs(abs(number1 / number2) - 1.0) > relative and not abs(number1 - number2) < absolute:
-                if verbose:
-                    #print('Relative difference is too large between: {} and {}'.format(number1, number2))
-                    max_relative_difference = max(max_relative_difference, abs(abs(number1 / number2) - 1.0))
-                    is_equal = False
-                else:
-                    return False
+
+    # first split the list into compononents
+    lists1 = []
+    lists2 = []
+    parameters = []
+    for i in range(0, numComp):
+        lists1.append(list1[i::numComp])
+        lists2.append(list2[i::numComp])
+        if numComp > 1:
+            parameters.append("{}_{}".format(parameter, i))
+            # if zero threshold was set for all components one component inherits it from the parameter
+            if parameter in zeroValueThreshold:
+                zeroValueThreshold["{}_{}".format(parameter, i)] = zeroValueThreshold[parameter]
         else:
-            # check for the absolute difference
-            if abs(number1 - number2) > absolute:
+            parameters.append(parameter)
+
+    for list1, list2, parameter in zip(lists1, lists2, parameters):
+        # for verbose output
+        max_relative_difference = 0.0
+        message = ''
+
+        # see inspiration, explanations in
+        # https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
+        # get the order of magnitude of the parameter by calculating the max
+        floatList1 = [float(i) for i in list1]
+        floatList2 = [float(i) for i in list2]
+
+        # manipulate the data set for the sake of sensible comparison
+        # if the parameter is listed in the zeroThreshold dictionary replace all float under threshold with zero.
+        if parameter in zeroValueThreshold:
+            floatList1 = [0.0 if abs(i) < float(zeroValueThreshold[parameter]) else i for i in floatList1]
+            floatList2 = [0.0 if abs(i) < float(zeroValueThreshold[parameter]) else i for i in floatList2]
+
+        absFloatList1 = [abs(i) for i in floatList1]
+        absFloatList2 = [abs(i) for i in floatList2]
+
+        magnitude = max(max(absFloatList1), max(absFloatList2))
+        minimal = min(min(absFloatList1), min(absFloatList2))
+
+        for number1, number2 in zip(floatList1, floatList2):
+            diff = abs(number1 - number2)
+            largernumber = max(abs(number1), abs(number2))
+
+            # If the absolute criterion is satisfied we consider the numbers equal...
+            # scale the absolute tolerance with the magnitude of the parameter
+            if diff <= absolute * magnitude:
+                continue
+
+            # ...if not check the relative criterion
+            if diff <= largernumber * relative:
+                continue
+            else:
+                # the numbers are not equal
                 if verbose:
-                    #print('Absolute difference is too large between: {} and {}'.format(number1, number2))
-                    max_absolute_difference = max(max_absolute_difference, abs(number1 - number2))
                     is_equal = False
+                    if largernumber != 0.0:
+                        if diff / largernumber > max_relative_difference:
+                            message = 'Difference is too large between: {} and {}'.format(number1, number2)
+                            max_relative_difference = diff / largernumber
                 else:
                     return False
-    if verbose:
-        if max_absolute_difference != 0.0:
-            print('Maximum absolute difference for parameter {}: {}'.format(parameter, max_absolute_difference))
-        if max_relative_difference != 0.0:
+
+        if verbose and max_relative_difference != 0.0:
+            print(message)
             print('Maximum relative difference for parameter {}: {:.2%}'.format(parameter, max_relative_difference))
+            print('Info: The highest absolute value of {} is {} and the smallest {}.'.format(parameter, magnitude, minimal))
+            if parameter in zeroValueThreshold:
+                print('For parameter {} a zero value threshold of {} was given.'.format(parameter, zeroValueThreshold[parameter]))
+
     return is_equal
 
 
@@ -188,8 +240,8 @@ def sort_vtk(root):
 
 
 # sorts the data by point coordinates so that it is independent of index numbering
-def sort_vtk_by_coordinates(root1, root2, verbose=True):
-    if not is_fuzzy_equal_node(root1.find(".//Points/DataArray"), root2.find(".//Points/DataArray"), 1e-2, 1e-9, False):
+def sort_vtk_by_coordinates(root1, root2, verbose):
+    if not is_fuzzy_equal_node(root1.find(".//Points/DataArray"), root2.find(".//Points/DataArray"), absolute=1e-2, relative=1.5e-7, zeroValueThreshold=dict(), verbose=False):
         if verbose:
             print("Sorting vtu by coordinates...")
         for root in [root1, root2]:
@@ -210,8 +262,8 @@ def sort_vtk_by_coordinates(root1, root2, verbose=True):
             coords = dataArrays["Coordinates"].split()
             # group the coordinates into coordinate tuples
             dim = int(numberOfComponents["Coordinates"])
-            for i in range(len(coords)//dim):
-                vertexArray.append([float(c) for c in coords[i*dim:i*dim+dim]])
+            for i in range(len(coords) // dim):
+                vertexArray.append([float(c) for c in coords[i * dim: i * dim + dim]])
 
             # obtain a vertex index map
             vMap = []
@@ -245,8 +297,8 @@ def sort_vtk_by_coordinates(root1, root2, verbose=True):
                 # convert if vector
                 num = int(numberOfComponents[name])
                 newitems = []
-                for i in range(len(items)//num):
-                    newitems.append([i for i in items[i*num:i*num+num]])
+                for i in range(len(items) // num):
+                    newitems.append([i for i in items[i * num: i * num + num]])
                 items = newitems
                 # sort the items: we have either vertex or cell data
                 if name in pointDataArrays:
@@ -287,7 +339,7 @@ if __name__ == "__main__":
     parser.add_argument('vtk_file_1', type=str, help='first file to compare')
     parser.add_argument('vtk_file_2', type=str, help='second file to compare')
     parser.add_argument('-r', '--relative', type=float, default=1e-2, help='maximum relative error (default=1e-2)')
-    parser.add_argument('-a', '--absolute', type=float, default=1e-9, help='maximum absolute error (default=1e-9)')
+    parser.add_argument('-a', '--absolute', type=float, default=1.5e-7, help='maximum absolute error (default=1.5e-7)')
     parser.add_argument('-v', '--verbose', type=bool, default=True, help='verbosity of the script')
     args = vars(parser.parse_args())
 
