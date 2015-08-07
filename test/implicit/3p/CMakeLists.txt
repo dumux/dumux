@@ -21,7 +21,8 @@ add_dumux_test(test_box3pniconvection test_box3pniconvection test_box3pniconvect
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/3pniconvectionbox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconvection-00011.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconvection")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconvection"
+                 --zeroThreshold {"velocity":1e-16})
 
 add_dumux_test(test_cc3pniconvection test_cc3pniconvection test_cc3pniconvection.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
@@ -35,7 +36,8 @@ add_dumux_test(test_box3pniconduction test_box3pniconduction test_box3pniconduct
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/3pniconductionbox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconduction-00007.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconduction")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconduction"
+                 --zeroThreshold {"velocity":1e-16})
 
 add_dumux_test(test_cc3pniconduction test_cc3pniconduction test_cc3pniconduction.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py

@@ -5,4 +5,5 @@ add_dumux_test(test_elastic test_elastic test_elastic.cc
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/elasticmatrix-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/elasticmatrix-00002.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_elastic")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_elastic"
+                 --zeroThreshold {"stress X":1e-10,"stress Y":1e-10,"stress Z":1e-10})
