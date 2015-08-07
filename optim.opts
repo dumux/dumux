@@ -14,7 +14,6 @@ GXX_WARNING_OPTS=" \
 GXX_OPTS=" \
     -fno-strict-aliasing \
     -fstrict-overflow \
-    -ffast-math \
     -fno-finite-math-only \
     -O3 \
     -march=native \
