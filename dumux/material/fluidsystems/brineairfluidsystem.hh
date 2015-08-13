@@ -298,40 +298,40 @@ public:
     static void init()
     {
         init(/*tempMin=*/273.15,
-	     /*tempMax=*/800.0,
-	     /*numTemptempSteps=*/200,
+             /*tempMax=*/800.0,
+             /*numTemptempSteps=*/200,
              /*startPressure=*/-10,
              /*endPressure=*/20e6,
              /*pressureSteps=*/200);
     }
    /*!
-	* \brief Initialize the fluid system's static parameters using
-	*        problem specific temperature and pressure ranges
-	*
-	* \param tempMin The minimum temperature used for tabulation of water [K]
-	* \param tempMax The maximum temperature used for tabulation of water [K]
-	* \param nTemp The number of ticks on the temperature axis of the  table of water
-	* \param pressMin The minimum pressure used for tabulation of water [Pa]
-	* \param pressMax The maximum pressure used for tabulation of water [Pa]
-	* \param nPress The number of ticks on the pressure axis of the  table of water
-	*/
+    * \brief Initialize the fluid system's static parameters using
+    *        problem specific temperature and pressure ranges
+    *
+    * \param tempMin The minimum temperature used for tabulation of water [K]
+    * \param tempMax The maximum temperature used for tabulation of water [K]
+    * \param nTemp The number of ticks on the temperature axis of the  table of water
+    * \param pressMin The minimum pressure used for tabulation of water [Pa]
+    * \param pressMax The maximum pressure used for tabulation of water [Pa]
+    * \param nPress The number of ticks on the pressure axis of the  table of water
+    */
 
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                       Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
-		if (useComplexRelations)
-			std::cout << "Using complex H2O-Air fluid system\n";
-		else
-			std::cout << "Using fast H2O-Air fluid system\n";
+        if (useComplexRelations)
+            std::cout << "Using complex Brine-Air fluid system\n";
+        else
+            std::cout << "Using fast Brine-Air fluid system\n";
 
-		if (H2O::isTabulated) {
-			std::cout << "Initializing tables for the H2O fluid properties ("
-					  << nTemp*nPress
-					  << " entries).\n";
+        if (H2O::isTabulated) {
+            std::cout << "Initializing tables for the H2O fluid properties ("
+                        << nTemp*nPress
+                        << " entries).\n";
 
-			H2O::init(tempMin, tempMax, nTemp,
-							   pressMin, pressMax, nPress);
-		}
+            H2O::init(tempMin, tempMax, nTemp,
+                                pressMin, pressMax, nPress);
+        }
     }
 
      /*!
@@ -360,21 +360,21 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-		switch (phaseIdx) {
-			case lPhaseIdx:
-				return liquidDensity_(temperature,
-						      pressure,
-						      fluidState.moleFraction(lPhaseIdx, AirIdx),
-						      fluidState.moleFraction(lPhaseIdx, H2OIdx),
-						      fluidState.massFraction(lPhaseIdx, NaClIdx));
-			case gPhaseIdx:
-				return gasDensity_(temperature,
-						   pressure,
-						   fluidState.moleFraction(gPhaseIdx, H2OIdx));
+        switch (phaseIdx) {
+            case lPhaseIdx:
+                return liquidDensity_(temperature,
+                                pressure,
+                                fluidState.moleFraction(lPhaseIdx, AirIdx),
+                                fluidState.moleFraction(lPhaseIdx, H2OIdx),
+                                fluidState.massFraction(lPhaseIdx, NaClIdx));
+            case gPhaseIdx:
+                return gasDensity_(temperature,
+                            pressure,
+                            fluidState.moleFraction(gPhaseIdx, H2OIdx));
 
-			default:
-				DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
-			}
+            default:
+                DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+            }
       }
 
     /*!
@@ -402,19 +402,19 @@ public:
         {
             // assume pure brine for the liquid phase. TODO: viscosity
             // of mixture
-	    Scalar XNaCl = fluidState.massFraction(lPhaseIdx, NaClIdx);
+        Scalar XNaCl = fluidState.massFraction(lPhaseIdx, NaClIdx);
             Scalar result = Brine::liquidViscosity(temperature, pressure, XNaCl);
             Valgrind::CheckDefined(result);
             return result;
         }
         else if (phaseIdx == gPhaseIdx)
         {
-			Scalar result = Air::gasViscosity(temperature, pressure);
-			Valgrind::CheckDefined(result);
-			return result;
+            Scalar result = Air::gasViscosity(temperature, pressure);
+            Valgrind::CheckDefined(result);
+            return result;
         }
         else
-        	DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
 
     }
 
@@ -455,15 +455,15 @@ public:
 
         else if (phaseIdx == lPhaseIdx)
         {
-	  if (compIdx == H2OIdx)
-	      return vaporPressure_(T,fluidState.moleFraction(lPhaseIdx,NaClIdx))/p;
-	  else if (compIdx == AirIdx)
-	      return Dumux::BinaryCoeff::H2O_Air::henry(T)/p;
-	  else
-	      return 1/p;
+        if (compIdx == H2OIdx)
+            return vaporPressure_(T,fluidState.moleFraction(lPhaseIdx,NaClIdx))/p;
+        else if (compIdx == AirIdx)
+            return Dumux::BinaryCoeff::H2O_Air::henry(T)/p;
+        else
+            return 1/p;
         }
         else
-	  DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
 
@@ -524,11 +524,11 @@ public:
             assert(compJIdx == H2OIdx || compJIdx == NaClIdx);
             Scalar result = 0.0;
             if(compJIdx == H2OIdx)
-				result = Brine_Air::gasDiffCoeff(temperature, pressure);
-			else if (compJIdx == NaClIdx)
-				result = 0.12e-9; //Just added to avoid numerical problem. does not have any physical significance
-			else
-				DUNE_THROW(Dune::NotImplemented, "Binary difussion coefficient : Incorrect compIdx");
+                result = Brine_Air::gasDiffCoeff(temperature, pressure);
+            else if (compJIdx == NaClIdx)
+                result = 0.12e-9; //Just added to avoid numerical problem. does not have any physical significance
+            else
+                DUNE_THROW(Dune::NotImplemented, "Binary difussion coefficient : Incorrect compIdx");
             Valgrind::CheckDefined(result);
             return result;
         }
@@ -563,10 +563,10 @@ public:
 
         if (phaseIdx == lPhaseIdx)
         {
-			Scalar XlNaCl = fluidState.massFraction(phaseIdx, NaClIdx);
-			Scalar result = liquidEnthalpyBrine_(T, p, XlNaCl);
-				Valgrind::CheckDefined(result);
-				return result;
+            Scalar XlNaCl = fluidState.massFraction(phaseIdx, NaClIdx);
+            Scalar result = liquidEnthalpyBrine_(T, p, XlNaCl);
+                Valgrind::CheckDefined(result);
+                return result;
         }
         else
         {
@@ -669,10 +669,10 @@ public:
      */
     template <class FluidState>
     static Scalar molalityNaCl(const FluidState &fluidState,
-			       const ParameterCache &paramCache,
-			       Scalar salinity)
+                               const ParameterCache &paramCache,
+                               Scalar salinity)
       {
-	   return Brine_Air::molalityNaCl(salinity);// massfraction
+        return Brine_Air::molalityNaCl(salinity);// massfraction
       }
 
 private:
@@ -724,8 +724,8 @@ private:
     }
 
     static Scalar liquidEnthalpyBrine_(Scalar T,
-					Scalar p,
-					Scalar XlNaCl)
+                                       Scalar p,
+                                       Scalar XlNaCl)
     {
         /* XlAir : mass fraction of Air in brine */
         /* same function as enthalpy_brine, only extended by Air content */

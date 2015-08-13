@@ -30,6 +30,7 @@
 #include "2pncproperties.hh"
 #include "2pncindices.hh"
 #include "2pnclocalresidual.hh"
+#include <dumux/material/constants.hh>
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 
 namespace Dumux
@@ -429,9 +430,9 @@ public:
                     //Current Output
                     (*currentDensity)[globalIdx] = -1.0*source[numComponents-1]*4*Constant::F;
                     //recorrection of the area for output
-                    Scalar gridYMin = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.yMin);
-                    Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.yMax);
-                    Scalar nCellsY  = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.CellsY);
+                    Scalar gridYMin = 0.0;
+                    Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.UpperRightY);
+                    Scalar nCellsY  = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.NumberOfCellsY);
 
                     Scalar lengthBox= (gridYMax - gridYMin)/nCellsY;
 

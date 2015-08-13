@@ -1,6 +1,6 @@
-# Parameter file for tutorial_coupled.
+# Parameter file for test case 2pncmin.
 # Everything behind a '#' is a comment.
-# Type "./tutorial_coupled --help" for more information.
+# Type "./test_2pncmin --help" for more information.
 
 # Mandatory arguments
 
