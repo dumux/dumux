@@ -22,17 +22,8 @@
  * \brief Test for the 2pnc box model used for water management in PEM fuel cells.
  */
 #include "config.h"
-#include <iostream>
-#include <boost/format.hpp>
-
 #include "fuelcellproblem.hh"
-
 #include <dumux/common/start.hh>
-#include <dune/common/exceptions.hh>
-#include <dune/common/mpihelper.hh>
-#include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/utility/structuredgridfactory.hh>
-
 
 /*!
  * \brief Provides an interface for customizing error messages associated with

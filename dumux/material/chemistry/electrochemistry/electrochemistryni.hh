@@ -42,7 +42,7 @@ namespace Dumux
     * Class calculating source terms and current densities for fuel cells 
     * with the electrochemical models suggested by Ochs [2008] or Acosta [2006]
     */
-    template <class TypeTag,static const int electroChemApproach>
+    template <class TypeTag, const int electroChemApproach>
     class ElectroChemestryNI:friend ElectroChemestry<TypeTag,electroChemApproach>
     {
     protected:

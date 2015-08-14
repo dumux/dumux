@@ -641,9 +641,6 @@ public:
                                              int compJIdx)
 
     {
-        static Scalar undefined(1e10);
-        Valgrind::SetUndefined(undefined);
-
         if (compIIdx > compJIdx)
             std::swap(compIIdx, compJIdx);
 
