@@ -8,21 +8,16 @@ MaxTimeStepSize = 1000           # maximum time step size
 TEnd= 1e3                        # duration of the simulation [s]
 
 [Grid]
-
 #Number of cells in X and Y directions
 NumberOfCellsX = 21
 NumberOfCellsY = 6
-
 #Extend of entire domain
 UpperRightX = 2.0e-3 # x-coordinate of the upper-right corner of the grid [m]
 UpperRightY = 5.5e-4 # y-coordinate of the upper-right corner of the grid [m]
 
-#Vertical position of coupling interface
-#interfacePos = 0.25
-
-
 [Problem]
 Name = fuelcell
+EnableGravity = 0
 
 [FluidSystem]
 NTemperature = 3                # [-] number of temperature table entries
@@ -33,7 +28,7 @@ TemperatureLow = 312.15         # [K] lower temperature limit for tabularization
 TemperatureHigh = 314.15        # [K] upper temperature limit for tabularization
 InitialTemperature = 310        # [K] initial temperature for tabularization
 
-[FuelCell]
+[ElectroChemistry]
 SpecificResistance = 0.25               #[Ohm*cm^2]
 ReversibleVoltage = 1.191               #[V]
 CellVoltage = 0.5                       #[V]
@@ -47,19 +42,15 @@ NumElectrons = 2                        #[-] number of electrons transferred in 
 SurfaceIncreasingFactor = 60
 TransportNumberH20 = 0.2327             #[-] account for osmotic H20 transport term from membrane, value Lena Walter
 pO2Inlet = 0.3e5                        #[Pa] partial pressure of oxygen at gas channel inlet
-MaxIterations = 300                     #[-] Maximum number for iterations for solving electrochemical system 
-
+MaxIterations = 300                     #[-] Maximum number for iterations for solving electrochemical system
 
 [Newton]
 RelTolerance = 1e-8
 TargetSteps = 10
 MaxSteps = 15
-WriteConvergence = false 
+WriteConvergence = false
 MaxTimeStepDivisions = 20
 
-#############################################################
-# Linear solver parameters 
-#############################################################
 [LinearSolver]
 ResidualReduction = 1e-8
 Verbosity = 0

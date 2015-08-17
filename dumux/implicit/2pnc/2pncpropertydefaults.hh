@@ -162,10 +162,6 @@ SET_BOOL_PROP(TwoPNC, ProblemEnableGravity, true);
 
 //! Disable velocity output by default
 SET_BOOL_PROP(TwoPNC, VtkAddVelocity, false);
-
-//! disable electro-chemistry by default
-SET_BOOL_PROP(TwoPNC, useElectrochem, false);
-
 }
 
 }

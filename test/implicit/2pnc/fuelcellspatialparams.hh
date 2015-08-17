@@ -59,7 +59,7 @@ SET_PROP(FuelCellSpatialParams, MaterialLaw)
 
  public:
     // define the material law parameterized by absolute saturations
-    typedef PhilToPhobLaw<EffMaterialLaw> type; 
+    typedef PhilToPhobLaw<EffMaterialLaw> type;
 };
 }
 
@@ -114,18 +114,18 @@ public:
 
         // porosities
         porosity_ = 0.2;
-        
+
         //thermalconductivity
-        lambdaSolid_ = 14.7; //[W/(m*K)] Acosta
-        
+        lambdaSolid_ = 14.7; //[W/(m*K)] Acosta et al. [2006]
+
         // residual saturations
-        materialParams_.setSwr(0.12);//here water, see philtophoblaw
-        materialParams_.setSnr(0.0); 
+        materialParams_.setSwr(0.12); //here water, see philtophoblaw
+        materialParams_.setSnr(0.0);
 
         //parameters for the vanGenuchten law
-        materialParams_.setVgAlpha(6.66e-5); //alpha=1/pcb
+        materialParams_.setVgAlpha(6.66e-5); // alpha = 1/pcb
         materialParams_.setVgn(3.652);
-        
+
         eps_ = 1e-6;
     }
 
@@ -143,7 +143,7 @@ public:
     const DimMatrix intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvGeometry,
                                        const int scvIdx) const
-    {return K_;}
+    { return K_; }
 
     /*!
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
@@ -158,12 +158,12 @@ public:
                     const int scvIdx) const
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        
+
         if (globalPos[1]<eps_)
             return porosity_;
         else
             return 0.2;
-            
+
     }
 
     /*!
@@ -223,7 +223,7 @@ public:
                         const FVElementGeometry &fvGeometry,
                         const int faceIdx) const
     {
-        
+
         static const Scalar lWater = 0.6;
         static const Scalar lGranite = 2.8;
 
@@ -241,7 +241,7 @@ public:
         // the heat conductivity of the matrix. in general this is a
         // tensorial value, but we assume isotropic heat conductivity.
         Scalar heatCond = ldry + sqrt(sW) * (ldry - lsat);
-    
+
         // the matrix heat flux is the negative temperature gradient
         // times the heat conductivity.
         heatFlux = tempGrad;
@@ -254,7 +254,7 @@ public:
     {
         return lambdaSolid_;
     }
-    
+
 private:
     DimMatrix K_;
     Scalar porosity_;

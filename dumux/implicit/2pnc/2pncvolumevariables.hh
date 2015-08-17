@@ -62,7 +62,7 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum 
+    enum
     {
         dim = GridView::dimension,
         dimWorld=GridView::dimensionworld,
@@ -103,7 +103,7 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 public:
-  
+
       //! The type of the object returned by the fluidState() method
       typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
     /*!
@@ -122,14 +122,14 @@ public:
                            fvGeometry,
                            scvIdx,
                            isOldSol);
-        
+
         completeFluidState(primaryVariables, problem, element, fvGeometry, scvIdx, fluidState_, isOldSol);
-            
+
         /////////////
         // calculate the remaining quantities
         /////////////
         const MaterialLawParams &materialParams = problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-        
+
     // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
@@ -161,13 +161,13 @@ public:
                 }
             }
 
-    // porosity 
+    // porosity
     porosity_ = problem.spatialParams().porosity(element,
                                                         fvGeometry,
                                                         scvIdx);
     Valgrind::CheckDefined(porosity_);
     // energy related quantities not contained in the fluid state
-            
+
     asImp_().updateEnergy_(primaryVariables, problem,element, fvGeometry, scvIdx, isOldSol);
     }
 
@@ -187,12 +187,12 @@ public:
         Scalar t = Implementation::temperature_(primaryVariables, problem, element,
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
-        
+
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
 #else
         int dofIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dofCodim);
-#endif        
+#endif
         int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
 
         /////////////
@@ -211,7 +211,7 @@ public:
             else if (formulation == pgSl)
                 Sg = 1.0 - primaryVariables[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
-        }   
+        }
     else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         fluidState.setSaturation(nPhaseIdx, Sg);
         fluidState.setSaturation(wPhaseIdx, 1.0 - Sg);
@@ -309,7 +309,7 @@ public:
         // composition is stored explicitly.
         // extract _mass_ fractions in the gas phase
             Dune::FieldVector<Scalar, numComponents> moleFrac;
-            
+
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
                 moleFrac[compIdx] = primaryVariables[compIdx];
@@ -329,7 +329,7 @@ public:
             {
                 fluidState.setMoleFraction(wPhaseIdx, compIdx, moleFrac[compIdx]);
             }
-            
+
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "computeFromReferencePhase2pnc" constraint solver
@@ -349,7 +349,7 @@ public:
             fluidState.setViscosity(phaseIdx, mu);
         }
     }
-    
+
     /*!
      * \brief Returns the phase state for the control-volume.
      */
@@ -375,7 +375,7 @@ public:
     {
         if (phaseIdx < numPhases)
             return fluidState_.density(phaseIdx);
-        
+
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -402,8 +402,8 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar pressure(int phaseIdx) const
-    { 
-        return fluidState_.pressure(phaseIdx); 
+    {
+        return fluidState_.pressure(phaseIdx);
     }
 
     /*!
@@ -448,7 +448,7 @@ public:
     { return diffCoeff_[phaseIdx][compIdx]; }
 
 protected:
-  
+
     static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem& problem,
                                const Element &element,
@@ -457,7 +457,7 @@ protected:
     {
         return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
     }
-    
+
     template<class ParameterCache>
     static Scalar enthalpy_(const FluidState& fluidState,
                             const ParameterCache& paramCache,
@@ -491,8 +491,8 @@ private:
     { return *static_cast<Implementation*>(this); }
 
     const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }  
-    
+    { return *static_cast<const Implementation*>(this); }
+
 };
 
 } // end namespace

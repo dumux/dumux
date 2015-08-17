@@ -24,14 +24,15 @@
 #ifndef DUMUX_FUELCELL_PROBLEM_HH
 #define DUMUX_FUELCELL_PROBLEM_HH
 
+#include <dune/grid/uggrid.hh>
+
+#include <dumux/io/cubegridcreator.hh>
 #include <dumux/implicit/2pnc/2pncmodel.hh>
-
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
-
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include <dumux/material/fluidsystems/h2on2o2fluidsystem.hh>
+#include <dumux/material/constants.hh>
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
-#include <dumux/io/cubegridcreator.hh>
+
 #include "fuelcellspatialparams.hh"
 
 namespace Dumux
@@ -50,10 +51,9 @@ NEW_TYPE_TAG(FuelCellCCProblem, INHERITS_FROM(CCModel, FuelCellProblem));
 SET_TYPE_PROP(FuelCellProblem, Grid, Dune::UGGrid<2>);
 // Set the grid creator
 SET_TYPE_PROP(FuelCellProblem, GridCreator, Dumux::CubeGridCreator<TypeTag>);
-
 // Set the problem property
 SET_TYPE_PROP(FuelCellProblem, Problem, Dumux::FuelCellProblem<TypeTag>);
-
+// Set the primary variable combination for the 2pnc model
 SET_INT_PROP(FuelCellProblem, Formulation, TwoPNCFormulation::pgSl);
 
 // Set fluid configuration
@@ -65,12 +65,8 @@ SET_PROP(FuelCellProblem, FluidSystem)
     typedef Dumux::FluidSystems::H2ON2O2<Scalar, useComplexRelations> type;
 };
 
+// Set the transport equation that is replaced by the total mass balance
 SET_INT_PROP(FuelCellProblem, ReplaceCompEqIdx, 3);
-
-// Disable gravity
-SET_BOOL_PROP(FuelCellProblem, ProblemEnableGravity, false);
-//Electrochem output
-SET_BOOL_PROP(FuelCellProblem, useElectrochem, true);
 }
 
 
@@ -90,30 +86,29 @@ class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-	typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    enum 
-    {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
 
-    enum 
+    enum
     {
         numComponents = FluidSystem::numComponents,
         numSecComponents = FluidSystem::numSecComponents,
     };
-    // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum 
+    enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
+        nPhaseIdx = Indices::nPhaseIdx
+    };
+    enum
+    {
         wCompIdx = FluidSystem::wCompIdx, //major component of the liquid phase
         nCompIdx = FluidSystem::nCompIdx, //major component of the gas phase
-
+    };
+    enum
+    {
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
         switchIdx = Indices::switchIdx, //liquid saturation or mole fraction
         conti0EqIdx = Indices::conti0EqIdx
@@ -132,10 +127,13 @@ class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    
-//  Select the electrochemistry method from the electrochemistry.hh file included as header.
-    typedef typename Dumux::ElectroChemestry<TypeTag, Dumux::Ochs> ElectroChemestry;
 
+    // Select the electrochemistry method
+    typedef typename Dumux::ElectroChemistry<TypeTag, Dumux::ElectroChemistryModel::Ochs> ElectroChemistry;
+    typedef Dumux::Constants<Scalar> Constant;
+
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 public:
     /*!
      * \brief The constructor
@@ -147,17 +145,17 @@ public:
                      const GridView &gridView)
         : ParentType(timeManager, GridCreator::grid().leafGridView())
     {
-            nTemperature_       = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.NTemperature);
-            nPressure_          = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.NPressure);
-            pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.PressureLow);
-            pressureHigh_       = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.PressureHigh);
-            temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.TemperatureLow);
-            temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.TemperatureHigh);
-            temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.InitialTemperature);
-            
-            name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
-            
-            pO2Inlet_			= GET_RUNTIME_PARAM(TypeTag, Scalar, FuelCell.pO2Inlet); 
+        nTemperature_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, NTemperature);
+        nPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, NPressure);
+        pressureLow_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureLow);
+        pressureHigh_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureHigh);
+        temperatureLow_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureLow);
+        temperatureHigh_    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
+        temperature_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, InitialTemperature);
+
+        name_               = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+
+        pO2Inlet_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, ElectroChemistry, pO2Inlet);
 
         eps_ = 1e-6;
 
@@ -216,16 +214,12 @@ public:
     {
         const GlobalPosition globalPos = element.geometry().corner(scvIdx);
         const VolumeVariables &volVars = elemVolVars[scvIdx];
-        
+
         values = 0.0;
-        
+
         //reaction sources from electro chemistry
         if(onLowerBoundary_(globalPos))
-        {
-            ElectroChemestry electroChemestry;
-            electroChemestry.reactionSource(values,
-                                        volVars);
-        }
+            ElectroChemistry::reactionSource(values, volVars);
     }
 
 
@@ -245,7 +239,7 @@ public:
                             const GlobalPosition &globalPos) const
     {
         values.setAllNeumann();
-        
+
         if (onUpperBoundary_(globalPos)){
             values.setAllDirichlet();
         }
@@ -262,14 +256,14 @@ public:
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         initial_(values, globalPos);
-        
-        if(onUpperBoundary_(globalPos)) 
+
+        if(onUpperBoundary_(globalPos))
         {
             Scalar pg = 1.0e5;
             values[pressureIdx] = pg;
             values[switchIdx] = 0.3;//Sl for bothPhases
             values[switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
-        } 
+        }
     }
 
     /*!
@@ -323,19 +317,82 @@ public:
      * \param globalIdx The index of the global vertex
      * \param globalPos The global position
      */
-    
+
     int initialPhasePresence(const Vertex &vertex,
                              int &globalIdx,
                              const GlobalPosition &globalPos) const
-    {        
+    {
         return Indices::bothPhases;
-    }   
-    
+    }
+
+    /*!
+     * \brief Add problem specific vtk output for the electrochemistry
+     */
+    void addOutputVtkFields()
+    {
+        // add the output field specific to the electrochemistry
+        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
+
+        // get the number of degrees of freedom
+        unsigned numDofs = this->model().numDofs();
+
+        // create the required scalar fields
+        ScalarField *currentDensity = this->resultWriter().allocateManagedBuffer (numDofs);
+        ScalarField *reactionSourceH2O = this->resultWriter().allocateManagedBuffer (numDofs);
+        ScalarField *reactionSourceO2 = this->resultWriter().allocateManagedBuffer (numDofs);
+
+        auto eIt = this->gridView().template begin<0>();
+        const auto eEndIt = this->gridView().template end<0>();
+        for (; eIt != eEndIt; ++eIt)
+        {
+            FVElementGeometry fvGeometry;
+            fvGeometry.update(this->gridView(), *eIt);
+
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(*this,
+                               *eIt,
+                               fvGeometry,
+                               false /* oldSol? */);
+
+            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            {
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                int dofIdxGlobal = this->model().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+#else
+                int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
+#endif
+                //reactionSource Output
+                PrimaryVariables source;
+                this->solDependentSource(source, *eIt, fvGeometry, scvIdx, elemVolVars);
+
+                (*reactionSourceH2O)[dofIdxGlobal] = source[wPhaseIdx];
+                (*reactionSourceO2)[dofIdxGlobal] = source[numComponents-1];
+
+                //Current Output
+                (*currentDensity)[dofIdxGlobal] = -1.0*source[numComponents-1]*4*Constant::F;
+                //recorrection of the area for output
+                Scalar gridYMin = 0.0;
+                Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.UpperRightY);
+                Scalar nCellsY  = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.NumberOfCellsY);
+
+                Scalar lengthBox = (gridYMax - gridYMin)/nCellsY;
+
+                // Only works for box
+                (*currentDensity)[dofIdxGlobal] = (*currentDensity)[dofIdxGlobal]/2*lengthBox/10000; //i in [A/cm^2]
+            }
+
+        }
+
+        this->resultWriter().attachDofData(*reactionSourceH2O, "reactionSourceH2O [mol/(sm^2)]", isBox);
+        this->resultWriter().attachDofData(*reactionSourceO2, "reactionSourceO2 [mol/(sm^2)]", isBox);
+        this->resultWriter().attachDofData(*currentDensity, "currentDensity [A/cm^2]", isBox);
+    }
+
 private:
 
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
-    {   
+    {
         Scalar pg = 1.0e5;
         values[pressureIdx] = pg;
         values[switchIdx] = 0.3;//Sl for bothPhases

@@ -61,9 +61,9 @@ namespace FluidSystems
  *
  * \brief A two-phase (phases water and air) fluid system
  * with water, nitrogen and oxygen as components.
- * 
+ *
  *  This fluidsystem uses tabulated version of water of the IAPWS-formulation.
- * 
+ *
  *   Also remember to initialize tabulated components (FluidSystem::init()), while this
  *   is not necessary for non-tabularized ones.
  * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
@@ -109,10 +109,10 @@ public:
 
     static constexpr int wPhaseIdx = 0; // index of the wetting phase
     static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
-    
+
     static constexpr int lPhaseIdx = wPhaseIdx; // DEPRECATED index of the liquid phase
     static constexpr int gPhaseIdx = nPhaseIdx; // DEPRECATED index of the gas phase
-    
+
     /*!
      * \brief Return the human readable name of a fluid phase
      *
@@ -754,7 +754,7 @@ public:
      * \brief Thermal conductivity of a fluid phase [W/(m K)].
      *
      * Use the conductivity of air and water as a first approximation.
-     * 
+     *
      * http://en.wikipedia.org/wiki/List_of_thermal_conductivities
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider

@@ -64,7 +64,7 @@ namespace Dumux
  \f}
  *
  * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme (this is not done for 2pnc approach yet, however possible) as  
+ * or cell-centered finite volume scheme (this is not done for 2pnc approach yet, however possible) as
  * spatial and the implicit Euler method as time discretization.
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
@@ -141,8 +141,7 @@ class TwoPNCMinModel: public TwoPNCModel<TypeTag>
 
         plSg = TwoPNCFormulation::plSg,
         pgSl = TwoPNCFormulation::pgSl,
-        formulation = GET_PROP_VALUE(TypeTag, Formulation),
-		useElectrochem = GET_PROP_VALUE(TypeTag, useElectrochem)
+        formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
@@ -156,7 +155,7 @@ class TwoPNCMinModel: public TwoPNCModel<TypeTag>
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-        enum { dofCodim = isBox ? dim : 0 };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
 
@@ -180,29 +179,26 @@ public:
         unsigned numDofs = this->numDofs();
 
         // create the required scalar fields
-
-        ScalarField *Sg		   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *Sl 	   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pg		   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pl		   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *pc 	   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *rhoL	   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *rhoG	   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *mobL	   = writer.allocateManagedBuffer (numDofs);
-        ScalarField *mobG 	   = writer.allocateManagedBuffer (numDofs);
+        ScalarField *Sg           = writer.allocateManagedBuffer (numDofs);
+        ScalarField *Sl        = writer.allocateManagedBuffer (numDofs);
+        ScalarField *pg           = writer.allocateManagedBuffer (numDofs);
+        ScalarField *pl           = writer.allocateManagedBuffer (numDofs);
+        ScalarField *pc        = writer.allocateManagedBuffer (numDofs);
+        ScalarField *rhoL       = writer.allocateManagedBuffer (numDofs);
+        ScalarField *rhoG       = writer.allocateManagedBuffer (numDofs);
+        ScalarField *mobL       = writer.allocateManagedBuffer (numDofs);
+        ScalarField *mobG        = writer.allocateManagedBuffer (numDofs);
         ScalarField *phasePresence = writer.allocateManagedBuffer (numDofs);
         ScalarField *temperature   = writer.allocateManagedBuffer (numDofs);
         ScalarField *poro          = writer.allocateManagedBuffer (numDofs);
         ScalarField *boxVolume     = writer.allocateManagedBuffer (numDofs);
-//      ScalarField *potential     = writer.allocateManagedBuffer (numDofs);
-        ScalarField *cellNum 	   = writer.allocateManagedBuffer (numDofs);
+        ScalarField *cellNum        = writer.allocateManagedBuffer (numDofs);
         ScalarField *permeabilityFactor    = writer.allocateManagedBuffer (numDofs);
         ScalarField *precipitateVolumeFraction[numSPhases] ;
-//      ScalarField *saturationIdx[numSPhases];
 
-	for (int i = 0; i < numSPhases; ++i)
+        for (int i = 0; i < numSPhases; ++i)
         {
-        	precipitateVolumeFraction[i]= writer.allocateManagedBuffer (numDofs);
+            precipitateVolumeFraction[i]= writer.allocateManagedBuffer (numDofs);
         }
 
         ScalarField *massFraction[numPhases][numComponents];
@@ -225,15 +221,15 @@ public:
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
 
         if (velocityOutput.enableOutput()) // check if velocity output is demanded
-              {
-                  // initialize velocity fields
-                  for (unsigned int i = 0; i < numDofs; ++i)
-                  {
-                      (*velocityN)[i] = Scalar(0);
-                      (*velocityW)[i] = Scalar(0);
-                      (*cellNum)[i] = Scalar(0.0);
-                  }
-              }
+        {
+            // initialize velocity fields
+            for (unsigned int i = 0; i < numDofs; ++i)
+            {
+                (*velocityN)[i] = Scalar(0);
+                (*velocityW)[i] = Scalar(0);
+                (*cellNum)[i] = Scalar(0.0);
+            }
+        }
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =
@@ -250,7 +246,7 @@ public:
             int idx = this->problem_().elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
             fvGeometry.update(this->gridView_(), *elemIt);
-            
+
             elemVolVars.update(this->problem_(),
                     *elemIt,
                     fvGeometry,
@@ -260,7 +256,7 @@ public:
             int numVerts = elemIt->subEntities(dim);
 #else
             int numVerts = elemIt->template count<dim> ();
-#endif   
+#endif
             for (int i = 0; i < numVerts; ++i)
             {
                 int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
@@ -271,36 +267,25 @@ public:
                                i,
                                false);
 
-                (*Sg)[globalIdx]     		 = volVars.saturation(nPhaseIdx);
-                (*Sl)[globalIdx]     		 = volVars.saturation(wPhaseIdx);
-                (*pg)[globalIdx]  	 		 = volVars.pressure(nPhaseIdx);
-                (*pl)[globalIdx]   	 		 = volVars.pressure(wPhaseIdx);
-                (*pc)[globalIdx]	 		 = volVars.capillaryPressure();
-                (*rhoL)[globalIdx]	 	 	 = volVars.fluidState().density(wPhaseIdx);
-                (*rhoG)[globalIdx]	  		 = volVars.fluidState().density(nPhaseIdx);
-                (*mobL)[globalIdx] 	 	     = volVars.mobility(wPhaseIdx);
-                (*mobG)[globalIdx] 	 	     = volVars.mobility(nPhaseIdx);
-                (*boxVolume)[globalIdx]		+= fvGeometry.subContVol[i].volume;
-                (*poro)[globalIdx] 		     = volVars.porosity();
+                (*Sg)[globalIdx]              = volVars.saturation(nPhaseIdx);
+                (*Sl)[globalIdx]              = volVars.saturation(wPhaseIdx);
+                (*pg)[globalIdx]                = volVars.pressure(nPhaseIdx);
+                (*pl)[globalIdx]                 = volVars.pressure(wPhaseIdx);
+                (*pc)[globalIdx]              = volVars.capillaryPressure();
+                (*rhoL)[globalIdx]               = volVars.fluidState().density(wPhaseIdx);
+                (*rhoG)[globalIdx]               = volVars.fluidState().density(nPhaseIdx);
+                (*mobL)[globalIdx]               = volVars.mobility(wPhaseIdx);
+                (*mobG)[globalIdx]               = volVars.mobility(nPhaseIdx);
+                (*boxVolume)[globalIdx]        += fvGeometry.subContVol[i].volume;
+                (*poro)[globalIdx]              = volVars.porosity();
 
                 for (int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
                 {
                     (*precipitateVolumeFraction[sPhaseIdx])[globalIdx]   = volVars.precipitateVolumeFraction(sPhaseIdx + numPhases);
                 }
-                (*temperature)[globalIdx] 	 = volVars.temperature();
-                (*permeabilityFactor)[globalIdx] 	 = volVars.permeabilityFactor();
+                (*temperature)[globalIdx]      = volVars.temperature();
+                (*permeabilityFactor)[globalIdx]      = volVars.permeabilityFactor();
                 (*phasePresence)[globalIdx]  = this->staticDat_[globalIdx].phasePresence;
-//                 (*potential)[globalIdx]      = (volVars.pressure(wPhaseIdx)-1e5)
-//                         /volVars.fluidState().density(wPhaseIdx)
-//                         /9.81
-//                         - (zmax - globalPos[dim-1]);
-// 
-// 
-//                 for (int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
-//                 {
-//                     (*saturationIdx[sPhaseIdx])[globalIdx]   = volVars.saturationIdx(sPhaseIdx + numPhases);
-//                 }
-
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -339,10 +324,9 @@ public:
         writer.attachVertexData(*permeabilityFactor, "permeabilityFactor");
         writer.attachVertexData(*temperature, "temperature");
         writer.attachVertexData(*phasePresence, "phase presence");
-//         writer.attachVertexData(*potential, "potential");
         writer.attachVertexData(*boxVolume, "boxVolume");
-        
-    
+
+
         for (int i = 0; i < numSPhases; ++i)
         {
             std::ostringstream oss;
@@ -350,14 +334,6 @@ public:
                 << FluidSystem::phaseName(numPhases + i);
             writer.attachDofData(*precipitateVolumeFraction[i], oss.str().c_str(), isBox);
         }
-
-//         for (int i = 0; i < numSPhases; ++i)
-//         {
-//             std::ostringstream oss;
-//             oss << "saturationIndex_"
-//                 << FluidSystem::phaseName(numPhases + i);
-//             writer.attachDofData(*saturationIdx[i], oss.str().c_str(), isBox);
-//         }
 
         writer.attachVertexData(*Perm[0], "Kxx");
         if (dim >= 2)
@@ -447,9 +423,9 @@ public:
         wasSwitched = this->gridView_().comm().max(wasSwitched);
 
         setSwitched_(wasSwitched);
-    } 
+    }
 protected:
-	 
+
     /*!
      * \brief Set whether there was a primary variable switch after in
      *        the last timestep.
@@ -458,7 +434,7 @@ protected:
     {
         switchFlag_ = yesno;
     }
-    
+
     /*!
      * \copydoc 2pnc::primaryVarSwitch_
      */
@@ -513,7 +489,7 @@ protected:
             {
             Scalar sumxl = 0;
             //Calculate sum of mole fractions (water and air) in the hypothetical liquid phase
-            //WARNING: Here numComponents is replaced by numMajorComponents as the solutes 
+            //WARNING: Here numComponents is replaced by numMajorComponents as the solutes
             //are only present in the liquid phase and cannot condense as the liquid (water).
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
                 {
