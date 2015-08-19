@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/io/cubegridcreator.hh>
+#include <dumux/io/gridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -43,7 +44,7 @@
 
 #include "test_impesspatialparams.hh"
 
-#include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
+#include <dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
 
 #include <dumux/linear/amgbackend.hh>
 
@@ -117,8 +118,8 @@ NEW_TYPE_TAG(IMPESTestProblemWithAMG, INHERITS_FROM(IMPESTestProblem));
 SET_TYPE_PROP(IMPESTestProblemWithAMG, LinearSolver, Dumux::AMGBackend<TypeTag>);
 // Set the grid type
 SET_TYPE_PROP(IMPESTestProblemWithAMG, Grid, Dune::YaspGrid<2>);
-// set the GridCreator property
-SET_TYPE_PROP(IMPESTestProblemWithAMG, GridCreator, Dumux::DgfGridCreator<TypeTag>);
+// Set the grid creator
+SET_TYPE_PROP(IMPESTestProblemWithAMG, GridCreator, Dumux::GridCreator<TypeTag>);
 }
 
 /*!

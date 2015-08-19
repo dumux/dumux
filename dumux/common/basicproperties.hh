@@ -30,7 +30,7 @@
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/io/dgfgridcreator.hh>
+#include <dumux/io/gridcreator.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 
 namespace Dumux
@@ -71,6 +71,9 @@ NEW_PROP_TAG(ParameterTree);
 
 //! Property which defines the group that is queried for parameters by default
 NEW_PROP_TAG(ModelParameterGroup);
+
+//! Property which defines the group that is queried for grid (creator) parameters by default
+NEW_PROP_TAG(GridParameterGroup);
 
 //! Property which provides a GridCreator (manages grids)
 NEW_PROP_TAG(GridCreator);
@@ -151,8 +154,11 @@ SET_PROP(NumericModel, ParameterTree)
 //! use the global group as default for the model's parameter group
 SET_STRING_PROP(NumericModel, ModelParameterGroup, "");
 
+//! use the Grid group as default for the grid parameter group
+SET_STRING_PROP(NumericModel, GridParameterGroup, "Grid");
+
 //! Use the DgfGridCreator by default
-SET_TYPE_PROP(NumericModel, GridCreator, Dumux::DgfGridCreator<TypeTag>);
+SET_TYPE_PROP(NumericModel, GridCreator, Dumux::GridCreator<TypeTag>);
 
 //! Set default output level to 0 -> only primary variables are added to output
 SET_INT_PROP(NumericModel, VtkOutputLevel, 0);

@@ -109,6 +109,37 @@
 #define GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName) \
     ::Dumux::Parameters::getRuntime<TypeTag, ParamType>(#GroupName, #ParamName)
 
+/*!
+ * \ingroup Parameter
+ * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
+ *        the Dumux property system.
+ *
+ * The third argument is group name, which has to be a c-string
+ * This allows to use string variables as group name. The functionality of having varaibles as
+ * group name is no problem when directly using the Dune::ParameterTree. For consistency with the
+ * macro way of reading in the parameters this macro is necessary e.g. in the gridcreator to reach
+ * a satisfying level of generality.
+ *
+ * Example with a temporary c-string:
+ *
+ * \code
+ * // -> retrieves global integer value "NumberOfCellsX" which is
+ * // located in the parameter group "Grid"
+ * GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, "Grid", NumberOfCellsX);
+ * \endcode
+ *
+ * Example with a string variable:
+ *
+ * \code
+ * // -> retrieves global integer value "NumberOfCellsX" which is
+ * // located in the parameter group "Grid"
+ * std::string groupName = "Grid";
+ * GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, groupName.c_str(), NumberOfCellsX);
+ * \endcode
+ */
+#define GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, ParamType, GroupName, ParamName) \
+    ::Dumux::Parameters::getRuntime<TypeTag, ParamType>(GroupName, #ParamName)
+
 namespace Dumux
 {
 namespace Properties
