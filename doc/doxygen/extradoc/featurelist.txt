@@ -1,0 +1,13 @@
+/*!
+ *\file
+ *\ingroup Feature
+ *
+ *\brief List of Features implemented in the Dumux-test-problems
+ *
+ * The list gives an overview over features that are already 
+ * implemented in Dumux and in which respective test problem 
+ * they can be found. 
+ * The list is currently in progress, it will be completed soon.
+ * 
+ * \htmlinclude features.html
+ */
