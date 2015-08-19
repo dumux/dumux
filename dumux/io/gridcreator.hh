@@ -67,7 +67,7 @@
 // Alberta specific includes
 #if HAVE_ALBERTA
 #include <dune/grid/albertagrid.hh>
-#include <dune/albertagrid/dgfparser.hh>
+#include <dune/grid/albertagrid/dgfparser.hh>
 #endif
 
 #include <dumux/common/propertysystem.hh>
