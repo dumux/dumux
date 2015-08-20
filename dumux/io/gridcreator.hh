@@ -60,7 +60,7 @@
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid/3d/alugrid.hh>
 #include <dune/grid/alugrid/2d/alugrid.hh>
-#include <dune/alugrid/dgf.hh>
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #endif
 
 // FoamGrid specific includes
