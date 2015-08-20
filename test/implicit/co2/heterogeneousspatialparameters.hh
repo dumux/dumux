@@ -74,14 +74,12 @@ class HeterogeneousSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     typedef ImplicitSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef Dune::GridPtr<Grid> GridPointer;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    enum {
-        dim=GridView::dimension
-    };
+    enum { dim=GridView::dimension };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -97,7 +95,7 @@ public:
      * \param gridView The grid view
      */
     HeterogeneousSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+        : ParentType(gridView), gridView_(gridView)
     {
         /*
          * Layer Index Setup:
@@ -134,18 +132,17 @@ public:
      *
      * \param gridPtr The grid pointer
      */
-    void setParams(GridPointer *gridPtr)
+    void setParams()
     {
-        gridPtr_ = gridPtr;
-        int numElements = (*gridPtr_)->leafGridView().size(0);
+        int numElements = gridView_.size(0);
         paramIdx_.resize(numElements);
 
-        ElementIterator eIt = (*gridPtr_)->leafGridView().template begin<0>();
-        const ElementIterator eEndIt = (*gridPtr_)->leafGridView().template end<0>();
+        ElementIterator eIt = gridView_.template begin<0>();
+        const ElementIterator eEndIt = gridView_.template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            int eIdx = (*gridPtr_)->leafGridView().indexSet().index(*eIt);
-            int param = (*gridPtr_).parameters(*eIt)[0];
+            int eIdx = gridView_.indexSet().index(*eIt);
+            int param = GridCreator::parameters(*eIt)[0];
             paramIdx_[eIdx] = param;
         }
     }
@@ -162,7 +159,7 @@ public:
                                        int scvIdx) const
     {
         //Get the global index of the element
-        int eIdx = (*gridPtr_)->leafGridView().indexSet().index(element);
+        int eIdx = gridView_.indexSet().index(element);
 
         if (paramIdx_[eIdx] == barrierTop_)
             return barrierTopK_;
@@ -184,7 +181,7 @@ public:
                     int scvIdx) const
     {
         //Get the global index of the element
-        int eIdx = (*gridPtr_)->leafGridView().indexSet().index(element);
+        int eIdx = gridView_.indexSet().index(element);
 
         if (paramIdx_[eIdx] == barrierTop_)
             return barrierTopPorosity_;
@@ -277,7 +274,7 @@ private:
 
     MaterialLawParams materialParams_;
 
-    GridPointer *gridPtr_;
+    const GridView gridView_;
     std::vector<int> paramIdx_;
 };
 

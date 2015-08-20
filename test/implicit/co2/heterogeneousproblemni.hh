@@ -203,10 +203,8 @@ public:
          * - Overwriting on command line not possible
         */
 
-        GridPointer *gridPtr = &GridCreator::gridPtr();
-        this->spatialParams().setParams(gridPtr);
-
-
+        // set the spatial parameters by reading the DGF grid file
+        this->spatialParams().setParams();
 
         eps_ = 1e-6;
 

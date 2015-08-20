@@ -113,7 +113,6 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef Dune::GridPtr<Grid> GridPointer;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -128,14 +127,17 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         lPhaseIdx = Indices::wPhaseIdx,
-        gPhaseIdx = Indices::nPhaseIdx,
-
+        gPhaseIdx = Indices::nPhaseIdx
+    };
+    enum {
         wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
+        nCompIdx = FluidSystem::nCompIdx
+    };
+    enum {
         BrineIdx = FluidSystem::BrineIdx,
-        CO2Idx = FluidSystem::CO2Idx,
-
+        CO2Idx = FluidSystem::CO2Idx
+    };
+    enum {
         conti0EqIdx = Indices::conti0EqIdx,
         contiCO2EqIdx = conti0EqIdx + CO2Idx
     };
@@ -196,8 +198,9 @@ public:
          * - Reporting whether it was used does not work
          * - Overwriting on command line not possible
         */
-        GridPointer *gridPtr = &GridCreator::gridPtr();
-        this->spatialParams().setParams(gridPtr);
+
+        // set the spatial parameters by reading the DGF grid file
+        this->spatialParams().setParams();
 
         eps_ = 1e-6;
 
@@ -245,7 +248,7 @@ public:
      *        writer.
      */
     void addOutputVtkFields()
-        {
+    {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
 
          // get the number of degrees of freedom
@@ -292,7 +295,8 @@ public:
          this->resultWriter().attachDofData(*Kxx, "Kxx", false); //element data
          this->resultWriter().attachDofData(*cellPorosity, "cellwisePorosity", false); //element data
          this->resultWriter().attachDofData(*boxVolume, "boxVolume", isBox);
-        }
+    }
+
     /*!
      * \name Problem parameters
      */

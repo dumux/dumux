@@ -15,10 +15,17 @@ Differences Between DuMuX 2.7 and DuMuX 2.8
     directly from the start.hh, identical to the other problems. The new parameter
     are the TimeManager and the HostGrid.
   - The interfacegridcreator is now available as a new GridCreator type.
+  - The gridcreator is now the new standard grid creator replacing the dgfgridcreator,
+    it comprises all functionality from the dgf grid creator (see also immediate
+    interface changes), plus the ability to read gmsh, or build a
+    structured grid (only with dune 2.4) by merely changing the input file.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - The use and support for SGrid is dropped. SGrid is deprecated in Dune 2.4.
     Use YaspGrid instead.
+  - The (new standard) GridCreator's public method gridPtr has been removed. For
+    using PARAMETERS from DGF files use the GridCreators parameters method via
+    GridCreator::parameters(...). See co2 test for an example.
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.8: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
