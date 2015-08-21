@@ -7,7 +7,8 @@ add_dumux_test(test_2cnistokes2p2cni test_2cnistokes2p2cni test_2cnistokes2p2cni
                   --files ${CMAKE_SOURCE_DIR}/test/references/2cnistokes2p2cni-ff-reference.vtu
                           ${CMAKE_CURRENT_BINARY_DIR}/stokes2cni-00004.vtu
                           ${CMAKE_SOURCE_DIR}/test/references/2cnistokes2p2cni-pm-reference.vtu
-                          ${CMAKE_CURRENT_BINARY_DIR}/2p2cni-00004.vtu)
+                          ${CMAKE_CURRENT_BINARY_DIR}/2p2cni-00004.vtu
+                  --zeroThreshold {"v":1e-7,"velocityN":1e-12,"velocityW":5e-10})
 
 add_dumux_test(test_2cnistokes2p2cni_boundarylayer test_2cnistokes2p2cni test_2cnistokes2p2cni.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
@@ -16,4 +17,5 @@ add_dumux_test(test_2cnistokes2p2cni_boundarylayer test_2cnistokes2p2cni test_2c
                   --files ${CMAKE_SOURCE_DIR}/test/references/2cnistokes2p2cniboundarylayer-ff-reference.vtu
                           ${CMAKE_CURRENT_BINARY_DIR}/stokes2cni_boundarylayer-00004.vtu
                           ${CMAKE_SOURCE_DIR}/test/references/2cnistokes2p2cniboundarylayer-pm-reference.vtu
-                          ${CMAKE_CURRENT_BINARY_DIR}/2p2cni_boundarylayer-00004.vtu)
+                          ${CMAKE_CURRENT_BINARY_DIR}/2p2cni_boundarylayer-00004.vtu
+                  --zeroThreshold {"v":1e-7,"velocityN":1e-12,"velocityW":5e-10})
