@@ -42,15 +42,15 @@
 namespace Dumux
 {
 
-// forward declaration for the property definitions
+// Forward declaration for the property definitions
 template <class TypeTag> class AMGBackend;
 
 namespace Properties
 {
-//! the type traits required for using the AMG backend
+//! The type traits required for using the AMG backend
 NEW_PROP_TAG(AmgTraits);
 
-//! box: use the non-overlapping AMG
+//! Box: use the non-overlapping AMG
 SET_PROP(BoxModel, AmgTraits)
 {
 public:
@@ -77,7 +77,7 @@ public:
 #endif
 };
 
-//! cell-centered: use the overlapping AMG
+//! Cell-centered: use the overlapping AMG
 SET_PROP(CCModel, AmgTraits)
 {
 public:
@@ -103,7 +103,7 @@ public:
 #endif
 };
 
-//! decoupled model: use the overlapping AMG
+//! Decoupled model: use the overlapping AMG
 SET_PROP(DecoupledModel, AmgTraits)
 {
 public:
