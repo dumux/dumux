@@ -13,20 +13,22 @@
 # - further arguments:            are optional and are used as arguments for calling the test
 ###
 macro(add_dumux_test dumux_test dumux_test_executable dumux_test_executable_source)
-  # if present, copy grids folder
+  # if present, symlink the grids folder
   set(grids_directory ${CMAKE_CURRENT_SOURCE_DIR}/grids)
   if(EXISTS ${grids_directory} AND IS_DIRECTORY ${grids_directory})
     dune_symlink_to_source_files(FILES grids)
   endif()
 
-  # if present, copy input file
+  # if present, symlink the input file
   set(input_file ${CMAKE_CURRENT_SOURCE_DIR}/${dumux_test_executable}.input)
   if(NOT EXISTS ${input_file})
     get_filename_component(base_source_name ${dumux_test_executable_source} NAME_WE)
     set(input_file ${CMAKE_CURRENT_SOURCE_DIR}/${base_source_name}.input)
   endif()
   if(EXISTS ${input_file})
-    dune_symlink_to_source_files(FILES "${dumux_test_executable}.input")
+    # dune symlink takes a path relative to the source directory
+    get_filename_component(input_file ${input_file} NAME_WE)
+    dune_symlink_to_source_files(FILES ${input_file}.input)
   endif()
 
   # add executable
