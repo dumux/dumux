@@ -735,7 +735,7 @@ public:
 
         Restarter res;
         res.serializeBegin(asImp_());
-        std::cerr << "Serialize to file " << res.fileName() << "\n";
+        std::cout << "Serialize to file " << res.fileName() << "\n";
 
         timeManager().serialize(res);
         resultWriter().serialize(res);
@@ -748,7 +748,7 @@ public:
 
         if (adaptiveGrid)
         {
-            AdaptiveGridRestart<Grid, dim>::serializeGrid(asImp_());
+            AdaptiveGridRestart<Grid>::serializeGrid(asImp_());
         }
     }
 
@@ -763,7 +763,7 @@ public:
     {
         if (adaptiveGrid)
         {
-            AdaptiveGridRestart<Grid, dim>::restartGrid(asImp_());
+            AdaptiveGridRestart<Grid>::restartGrid(asImp_());
             variables().initialize();
             model().initialize();
         }
@@ -772,7 +772,7 @@ public:
 
         Restarter res;
         res.deserializeBegin(asImp_(), tRestart);
-        std::cerr << "Deserialize from file " << res.fileName() << "\n";
+        std::cout << "Deserialize from file " << res.fileName() << "\n";
 
         timeManager().deserialize(res);
 

@@ -138,7 +138,7 @@ public:
         typedef Dumux::Restart Restarter;
         Restarter res;
         res.serializeBegin(this->asImp_());
-        std::cerr << "Serialize to file '" << res.fileName() << "'\n";
+        std::cout << "Serialize to file '" << res.fileName() << "'\n";
         this->timeManager().serialize(res);
         this->asImp_().serialize(res);
         res.serializeEnd();

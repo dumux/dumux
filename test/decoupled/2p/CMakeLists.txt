@@ -14,6 +14,16 @@ add_dumux_test(test_impesadaptive test_impesadaptive test_impesadaptive.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/test_2padaptive-00007.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_impesadaptive")
 
+add_dumux_test(test_impesadaptiverestart test_impesadaptiverestart test_impesadaptiverestart.cc
+               python ${CMAKE_SOURCE_DIR}/bin/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/test_2padaptive-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_2padaptive-00007.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_impesadaptiverestart")
+
+# the restart test has to run after the test that produces the restart file
+set_tests_properties(test_impesadaptiverestart PROPERTIES DEPENDS test_impesadaptive)
+
 if(MPI_FOUND)
   add_dumux_test(test_impeswithamg test_impeswithamg test_impeswithamg.cc
                  python ${CMAKE_SOURCE_DIR}/bin/runtest.py
@@ -99,4 +109,3 @@ add_dumux_test(test_3d2pmpfaladaptive test_3d2pmpfaladaptive test_3d2p.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/test_3d2pmpfaladaptive-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfaladaptive-00012.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfaladaptive -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pmpfaladaptive -ModelType MPFALAdaptive")
-

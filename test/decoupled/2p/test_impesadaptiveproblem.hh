@@ -56,6 +56,7 @@ class TestIMPESAdaptiveProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(TestIMPESAdaptiveProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, TestIMPESAdaptiveSpatialParams));
+NEW_TYPE_TAG(TestIMPESAdaptiveRestartProblem, INHERITS_FROM(TestIMPESAdaptiveProblem));
 
 // Set the grid type
 #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
@@ -64,6 +65,11 @@ SET_TYPE_PROP(TestIMPESAdaptiveProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Du
 
 // set the GridCreator property
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, GridCreator, CubeGridCreator<TypeTag>);
+
+#if HAVE_DUNE_ALUGRID
+// reset the GridCreator to the standard one for testing the restart functionality
+SET_TYPE_PROP(TestIMPESAdaptiveRestartProblem, GridCreator, GridCreator<TypeTag>);
+#endif
 
 // Set the problem property
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, Dumux::TestIMPESAdaptiveProblem<TypeTag>);
@@ -150,7 +156,16 @@ public:
     TestIMPESAdaptiveProblem(TimeManager &timeManager, const GridView &gridView) :
             ParentType(timeManager, gridView), eps_(1e-6)
     {
-        GridCreator::grid().globalRefine(GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel));
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+
+        // Refine the grid provided that no restart occurs. Otherwise, an
+        // already refined grid will be read.
+        typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
+        if (!(ParameterTree::tree().hasKey("Restart")
+              || ParameterTree::tree().hasKey("TimeManager.Restart")))
+        {
+            GridCreator::grid().globalRefine(GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel));
+        }
         this->setGrid(GridCreator::grid());
 
         this->setOutputInterval(10);
@@ -167,12 +182,12 @@ public:
      */
     const char *name() const
     {
-        return "test_2padaptive";
+        return name_.c_str();
     }
 
     bool shouldWriteRestartFile() const
     {
-        return false;
+        return true;
     }
 
     /*!
@@ -267,6 +282,7 @@ public:
 
 private:
     const Scalar eps_;
+    std::string name_;
 };
 } //end namespace
 

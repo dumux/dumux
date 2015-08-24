@@ -85,6 +85,8 @@ namespace Properties
 // poperty forward declarations
 NEW_PROP_TAG(Grid);
 NEW_PROP_TAG(GridParameterGroup);
+NEW_PROP_TAG(AdaptiveGrid);
+NEW_PROP_TAG(Scalar);
 }
 
 
@@ -815,7 +817,40 @@ public:
      */
     static void makeGrid()
     {
-        // First try to create it from a DGF or msh file in GridParameterGroup.File
+#if HAVE_DUNE_ALUGRID
+        // First check if a restart for an adaptive grid is required
+        try {
+            if (GET_PROP_VALUE(TypeTag, AdaptiveGrid))
+            {
+                typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+                Scalar restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
+                // we came until here so the restart key was found. Restore the grid.
+                int rank = 0;
+#if HAVE_MPI
+                MPI_Comm_rank(Dune::MPIHelper::getCommunicator(), &rank);
+#endif
+                try {
+                    std::string name = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+                    std::ostringstream oss;
+                    oss << name << "_time=" << restartTime << "_rank=" << rank << ".grs";
+                    std::cout << "Restoring an ALUGrid from " << oss.str() << std::endl;
+                    ParentType::gridPtr() = std::shared_ptr<Grid>(Dune::BackupRestoreFacility<Grid>::restore(oss.str()));
+                    return;
+                }
+                catch (Dumux::ParameterException &e)
+                {
+                    std::cerr << e.what() << std::endl;
+                    std::cerr << "Restart functionality for an adaptive grid requested, but failed." << std::endl;
+                    std::cerr << "Did you forget to provide Problem.Name in your .input file?" << std::endl;
+                    throw;
+                }
+            }
+        }
+        catch (Dumux::ParameterException &e) {}
+        catch (...) { throw; }
+#endif
+
+        // Then try to create it from a DGF or msh file in GridParameterGroup.File
         try {
             const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
             ParentType::makeGridFromFile(fileName, "ALUGrid");
