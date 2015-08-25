@@ -19,6 +19,7 @@
 #ifndef DUMUX_IMPLICIT_GRIDADAPTINITIALIZATIONINDICATOR_HH
 #define DUMUX_IMPLICIT_GRIDADAPTINITIALIZATIONINDICATOR_HH
 
+#include <dune/geometry/type.hh>
 #include <dune/common/dynvector.hh>
 #include <dune/common/version.hh>
 #include "gridadaptproperties.hh"
@@ -52,15 +53,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptationIndicator) AdaptationIndicator;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     enum
     {
@@ -69,11 +61,30 @@ private:
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
     };
 
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::Traits::template Codim<dim>::EntityPointer VertexPointer;
+    typedef typename GridView::Intersection Intersection;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::Grid::ctype CoordScalar;
+    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
+    typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
+
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptationIndicator) AdaptationIndicator;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
     enum { refineCell = 1 };
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dim-1> LocalPositionFace;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+
 
     /*! \brief Search for a source term
      *
@@ -82,22 +93,14 @@ private:
      *
      *  \param element A grid element
      */
-    bool hasSource_(const Element& element)
+    bool hasSource_(const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const ElementVolumeVariables& elemVolVars)
     {
-        const auto geometry = element.geometry();
         PrimaryVariables source(0.0);
-        const GlobalPosition &globalPos = geometry.center();
-
-        // Check if the midpoint is in a source zone
-        problem_.sourceAtPos(source, globalPos);
-        if (source.infinity_norm() > eps_)
-            return true;
-
-        // Check if a corner is on a source zone
-        for (int vIdx = 0; vIdx < geometry.corners(); ++vIdx)
+        for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
         {
-            source = 0.0;
-            problem_.sourceAtPos(source, geometry.corner(vIdx));
+            problem_.solDependentSource(source, element, fvGeometry, scvIdx, elemVolVars);
             if (source.infinity_norm() > eps_)
                 return true;
         }
@@ -115,30 +118,48 @@ private:
      *  \param element A grid element
      *  \param intersection The boundary intersection
      */
-    bool hasRefineBC_(BoundaryTypes &bcTypes, const Element& element, const Intersection& intersection)
+    bool hasRefineBC_(ElementBoundaryTypes &elemBcTypes,
+                      const Element& element,
+                      const Intersection& intersection,
+                      const FVElementGeometry& fvGeometry,
+                      const ElementVolumeVariables& elemVolVars)
     {
-        const auto isGeometry = intersection.geometry();
-        const GlobalPosition &globalPos = isGeometry.center();
-
-        // Check if the midpoint has matching boundary condition
-        problem_.boundaryTypesAtPos(bcTypes, globalPos);
-        for (int i = 0; i < numEq; i++)
+        // Check for boundary conditions
+        if(isBox)
         {
-            if(bcTypes.isDirichlet(i) && refineAtDirichletBC_)
-                return true;
-            if(bcTypes.isNeumann(i) && refineAtFluxBC_)
+            Dune::GeometryType geoType = element.geometry().type();
+            const ReferenceElement &refElement = ReferenceElements::general(geoType);
+            int fIdx = intersection.indexInInside();
+            int numFaceVerts = refElement.size(fIdx, 1, dim);
+            for (int faceVertexIdx = 0; faceVertexIdx < numFaceVerts; ++faceVertexIdx)
             {
-                PrimaryVariables fluxes(0.0);
-                problem_.neumannAtPos(fluxes, globalPos);
-                if (fluxes.infinity_norm() > eps_)
-                    return true;
+                int scvIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
+                BoundaryTypes bcTypes = elemBcTypes[scvIdx];
+                const VertexPointer v = element.template subEntity<dim>(scvIdx);
+                problemBoundaryTypes_(bcTypes, *v);
+                int bfIdx = fvGeometry.boundaryFaceIndex(fIdx, faceVertexIdx);
+                for (int i = 0; i < numEq; i++)
+                {
+                    if(bcTypes.isDirichlet(i) && refineAtDirichletBC_)
+                        return true;
+                    if(bcTypes.isNeumann(i) && refineAtFluxBC_)
+                    {
+                        PrimaryVariables fluxes(0.0);
+                        problem_.solDependentNeumann(fluxes, element, fvGeometry,
+                                                 intersection, scvIdx, bfIdx,
+                                                 elemVolVars);
+                        if (fluxes.infinity_norm() > eps_)
+                            return true;
+                    }
+                }
             }
-        }
 
-        // Check if a corner has a matching boundary condition
-        for (int vIdx = 0; vIdx < isGeometry.corners(); ++vIdx)
+        }
+        else
         {
-            problem_.boundaryTypesAtPos(bcTypes, isGeometry.corner(vIdx));
+            BoundaryTypes bcTypes = elemBcTypes[0];
+            problem_.boundaryTypes(bcTypes, intersection);
+            int bfIdx = intersection.indexInInside();
             for (int i = 0; i < numEq; i++)
             {
                 if(bcTypes.isDirichlet(i) && refineAtDirichletBC_)
@@ -146,7 +167,9 @@ private:
                 if(bcTypes.isNeumann(i) && refineAtFluxBC_)
                 {
                     PrimaryVariables fluxes(0.0);
-                    problem_.neumannAtPos(fluxes, isGeometry.corner(vIdx));
+                    problem_.solDependentNeumann(fluxes, element, fvGeometry,
+                                                 intersection, 0, bfIdx,
+                                                 elemVolVars);
                     if (fluxes.infinity_norm() > eps_)
                         return true;
                 }
@@ -154,6 +177,18 @@ private:
         }
         return false;
     }
+
+    // only actually call the problem method when it exists
+    template <class T = TypeTag>
+    void problemBoundaryTypes_(BoundaryTypes& bcTypes,
+                              const typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), Vertex>::type& v) const
+    {
+        problem_.boundaryTypes(bcTypes, v);
+    }
+    template <class T = TypeTag>
+    void problemBoundaryTypes_(BoundaryTypes& bcTypes,
+                              const typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), Vertex>::type& v) const
+    {}
 
 
 public:
@@ -180,9 +215,9 @@ public:
         {
 
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-        	int globalIdxI = problem_.elementMapper().index(*eIt);
+            int globalIdxI = problem_.elementMapper().index(*eIt);
 #else
-        	int globalIdxI = problem_.elementMapper().map(*eIt);
+            int globalIdxI = problem_.elementMapper().map(*eIt);
 #endif
             int level = eIt->level();
             maxLevel_ = std::max(level, maxLevel_);
@@ -194,16 +229,29 @@ public:
                 continue;
             }
 
+            if (!(refineAtSource_ || refineAtFluxBC_ || refineAtDirichletBC_))
+            	continue;
+
+            // get the fvGeometry and elementVolVars needed for the bc and source interfaces
+            FVElementGeometry fvGeometry;
+            ElementVolumeVariables elemVolVars;
+            fvGeometry.update(problem_.gridView(), *eIt);
+            elemVolVars.update(problem_, *eIt, fvGeometry, false /* oldSol? */);
+
             // Check if we have to refine around a source term
             if (indicatorVector_[globalIdxI] != refineCell && refineAtSource_)
             {
-                if(hasSource_(*eIt))
+                if(hasSource_(*eIt, fvGeometry, elemVolVars))
                 {
                     nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                     indicatorVector_[globalIdxI] = refineCell;
                     continue;
                 }
             }
+
+            // get the element boundary types
+            ElementBoundaryTypes bcTypes;
+            bcTypes.update(problem_, *eIt, fvGeometry);
 
             // Check if we have to refine at the boundary
             if (indicatorVector_[globalIdxI] != refineCell && (refineAtDirichletBC_ || refineAtFluxBC_))
@@ -214,8 +262,7 @@ public:
                 {
                     if (isIt->boundary())
                     {
-                        BoundaryTypes bcTypes;
-                        if(hasRefineBC_(bcTypes, *eIt, *isIt))
+                        if(hasRefineBC_(bcTypes, *eIt, *isIt, fvGeometry, elemVolVars))
                         {
                             nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                             indicatorVector_[globalIdxI] = refineCell;
@@ -268,9 +315,13 @@ public:
     void init()
     {};
 
+    /*! \brief If the model needs to be initialized after adaption.
+     *         We always need to initialize since the hasRefineBC_ method needs information from
+               an up-to-date model.
+     */
     bool initializeModel()
     {
-        return nextMaxLevel_ == maxAllowedLevel_;
+        return true;
     }
 
     /*! \brief Constructs a GridAdaptationIndicator instance
