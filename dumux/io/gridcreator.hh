@@ -135,6 +135,38 @@ public:
     }
 
     /*!
+     * \brief Call the parameters function of the DGF grid pointer if available
+     */
+    static const int getBoundaryDomainMarker(int boundarySegmentIndex)
+    {
+        if(enableGmshDomainMarkers_)
+            return boundaryMarkers_[boundarySegmentIndex];
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The getBoundaryDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
+                                                     << " If your Gmsh file contains domain markers / physical entities,"
+                                                     << " enable them by setting " << GET_PROP_VALUE(TypeTag, GridParameterGroup)
+                                                     << ".DomainMarkers = 1 in the input file.");
+    }
+
+    /*!
+     * \brief Call the parameters function of the DGF grid pointer if available
+     */
+    static const int getElementDomainMarker(int elementIdx)
+    {
+        if(enableGmshDomainMarkers_)
+        {
+            if(elementIdx >= grid().levelGridView(0).size(0))
+                DUNE_THROW(Dune::RangeError, "Requested element index is bigger than the number of level 0 elements!");
+            return elementMarkers_[elementIdx];
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The getElementDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
+                                                     << " If your Gmsh file contains domain markers / physical entities,"
+                                                     << " enable them by setting " << GET_PROP_VALUE(TypeTag, GridParameterGroup)
+                                                     << ".DomainMarkers = 1 in the input file.");
+    }
+
+    /*!
      * \brief Call loadBalance() function of the grid.
      */
     static void loadBalance()
@@ -162,7 +194,7 @@ protected:
     }
 
     /*!
-     * \brief Returns a reference to the dgf grid pointer (Dune::GridPtr<Grid>).
+     * \brief Returns a reference to the DGF grid pointer (Dune::GridPtr<Grid>).
      */
     static Dune::GridPtr<Grid> &dgfGridPtr()
     {
@@ -172,7 +204,7 @@ protected:
             return dgfGridPtr_;
         }
         else
-            DUNE_THROW(Dune::InvalidStateException, "The dgf grid pointer is only available if the grid was constructed with a DGF file!");
+            DUNE_THROW(Dune::InvalidStateException, "The DGF grid pointer is only available if the grid was constructed with a DGF file!");
     }
 
     /*!
@@ -212,14 +244,26 @@ protected:
         {
             // get some optional parameters
             bool verbose = false;
-            try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbose);}
+            try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbosity);}
             catch (Dumux::ParameterException &e) { }
 
             bool boundarySegments = false;
             try { boundarySegments = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), BoundarySegments);}
             catch (Dumux::ParameterException &e) { }
 
-            gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, verbose, boundarySegments));
+            bool domainMarkers = false;
+            try { domainMarkers = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), DomainMarkers);}
+            catch (Dumux::ParameterException &e) { }
+
+            if(domainMarkers)
+            {
+                enableGmshDomainMarkers_ = true;
+                gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, boundaryMarkers_, elementMarkers_, verbose, boundarySegments));
+            }
+            else
+            {
+                gridPtr() = std::shared_ptr<Grid>(Dune::GmshReader<Grid>::read(fileName, verbose, boundarySegments));
+            }
         }
     }
 
@@ -290,10 +334,31 @@ protected:
     *        It is always enabled if a DGF grid file was used to create the grid.
     */
     static bool enableDgfGridPointer_;
+
+    /*!
+    * \brief A state variable if domain markers have been read from a gmsh file.
+    */
+    static bool enableGmshDomainMarkers_;
+
+    /*!
+    * \brief Element and domain markers obtained from Gmsh physical entities
+    *        They map from element indices / boundary ids to the physical entity mark
+    */
+    static std::vector<int> elementMarkers_;
+    static std::vector<int> boundaryMarkers_;
 };
 
 template <class TypeTag, class Grid>
 bool GridCreatorBase<TypeTag, Grid>::enableDgfGridPointer_ = false;
+
+template <class TypeTag, class Grid>
+bool GridCreatorBase<TypeTag, Grid>::enableGmshDomainMarkers_ = false;
+
+template <class TypeTag, class Grid>
+std::vector<int> GridCreatorBase<TypeTag, Grid>::elementMarkers_;
+
+template <class TypeTag, class Grid>
+std::vector<int> GridCreatorBase<TypeTag, Grid>::boundaryMarkers_;
 
 /*!
  * \brief Provides the grid creator implementation for all supported grid managers that constructs a grid
@@ -674,7 +739,7 @@ private:
  * - Cells : number of elements in a structured grid
  * - CellType : "Cube" or "Simplex" to be used for structured grids
  * - Refinement : the number of global refines to perform
- * - Verbose : whether the grid construction should output to standard out
+ * - Verbosity : whether the grid construction should output to standard out
  * - HeapSize: The heapsize used to allocate memory
  * - BoundarySegments : whether to insert boundary segments into the grid
  *
@@ -708,7 +773,7 @@ public:
             preProcessing_();
             // Check for cell type
             std::string cellType = "Cube";
-            try { cellType = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), CellType);
+            try { cellType = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), CellType);
                 if (cellType != "Cube" && cellType != "Simplex")
                     DUNE_THROW(Dune::IOError, "UGGrid only supports 'Cube' or 'Simplex' as closure type. Not '"<< cellType<<"'!");
             }
@@ -800,7 +865,7 @@ private:
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
  * - Refinement : the number of global refines to perform
- * - Verbose : whether the grid construction should output to standard out
+ * - Verbosity : whether the grid construction should output to standard out
  * - BoundarySegments : whether to insert boundary segments into the grid
  *
  */
@@ -891,7 +956,7 @@ public:
 
  * The following keys are recognized:
  * - File : A DGF or gmsh file to load from, type detection by file extension
- * - Verbose : whether the grid construction should output to standard out
+ * - Verbosity : whether the grid construction should output to standard out
  * - LowerLeft : lowerleft corner of a structured grid
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
@@ -943,7 +1008,7 @@ public:
 
  * The following keys are recognized:
  * - File : A DGF or gmsh file to load from, type detection by file extension
- * - Verbose : whether the grid construction should output to standard out
+ * - Verbosity : whether the grid construction should output to standard out
  * - LowerLeft : lowerleft corner of a structured grid
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
@@ -1028,7 +1093,7 @@ public:
 
  * The following keys are recognized:
  * - File : A DGF or gmsh file to load from, type detection by file extension
- * - Verbose : whether the grid construction should output to standard out
+ * - Verbosity : whether the grid construction should output to standard out
  *
  */
 template<class TypeTag, int dim, int dimworld>
