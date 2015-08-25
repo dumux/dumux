@@ -25,6 +25,8 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/common/mcmgmapper.hh>
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/version.hh>
 #include <dumux/io/gridcreator.hh>
 #include <dumux/common/basicproperties.hh>
 
@@ -73,14 +75,18 @@ public:
                 {
                     // get local vertex index with respect to the element
                     int vIdxLocal = refElement.subEntity(isIt->indexInInside(), 1, vIdx, dim);
-                    auto vertex = eIt->template subEntity<dim>(vIdxLocal);
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
+                    int vIdxGlobal = vertexMapper.index(*eIt, vIdxLocal, dim);
+#else
+                    int vIdxGlobal = vertexMapper.map(*eIt, vIdxLocal, dim);
+#endif
                     // make sure we always take the lowest non-zero marker (problem dependent!)
-                    if (boundaryMarker[vertexMapper.index(vertex)] == 0)
-                        boundaryMarker[vertexMapper.index(vertex)] = GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex());
+                    if (boundaryMarker[vIdxGlobal] == 0)
+                        boundaryMarker[vIdxGlobal] = GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex());
                     else
                     {
-                        if (boundaryMarker[vertexMapper.index(vertex)] > GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex()))
-                            boundaryMarker[vertexMapper.index(vertex)] = GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex());
+                        if (boundaryMarker[vIdxGlobal] > GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex()))
+                            boundaryMarker[vIdxGlobal] = GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex());
                     }
                 }
             }
@@ -94,6 +100,9 @@ int main(int argc, char** argv)
 {
 #if HAVE_UG
 try {
+    // initialize MPI, finalize is done automatically on exit
+    Dune::MPIHelper::instance(argc, argv);
+
     // Some typedefs
     typedef typename TTAG(GridCreatorGmshTest) TypeTag;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
