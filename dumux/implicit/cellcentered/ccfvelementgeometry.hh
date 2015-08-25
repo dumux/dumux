@@ -228,6 +228,14 @@ public:
             }
         }
     }
+
+    /*!
+     * \brief For compatibilty with the box element geometry
+     */
+    int boundaryFaceIndex(const int fIdx, const int vIdxInFace) const
+    {
+        return fIdx;
+    }
 };
 
 }
