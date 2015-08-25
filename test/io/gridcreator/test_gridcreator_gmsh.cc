@@ -76,7 +76,7 @@ public:
                     // get local vertex index with respect to the element
                     int vIdxLocal = refElement.subEntity(isIt->indexInInside(), 1, vIdx, dim);
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int vIdxGlobal = vertexMapper.index(*eIt, vIdxLocal, dim);
+                    int vIdxGlobal = vertexMapper.subIndex(*eIt, vIdxLocal, dim);
 #else
                     int vIdxGlobal = vertexMapper.map(*eIt, vIdxLocal, dim);
 #endif

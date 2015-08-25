@@ -1,4 +1,4 @@
-if(MPI_FOUND)
+if(("${DUNE_COMMON_VERSION_MAJOR}" STREQUAL "2") AND ("${DUNE_COMMON_VERSION_MINOR}" STREQUAL "3"))
   add_dumux_test(test_gridcreator_gmsh test_gridcreator_gmsh test_gridcreator_gmsh.cc
                  python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                    --script fuzzy
