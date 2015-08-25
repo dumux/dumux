@@ -49,7 +49,7 @@ def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={
 
     if verbose:
         print("Comparing {} and {}".format(vtk1, vtk2))
-        print("...with a maximum relative error of {} and a maximum absolute error of {}*p_max, where p_max is highest absolute parameter value.".format(relative, absolute))
+        print("... with a maximum relative error of {} and a maximum absolute error of {}*max_abs_parameter_value.".format(relative, absolute))
 
     # sort the vtk file so that the comparison is independent of the
     # index numbering (coming e.g. from different grid managers)
@@ -92,7 +92,6 @@ def is_fuzzy_equal_node(node1, node2, absolute, relative, zeroValueThreshold, ve
                                        absolute, relative, zeroValueThreshold, verbose):
                 if node1child.attrib["Name"] == node2child.attrib["Name"]:
                     if verbose:
-                        print('Data differs in parameter: {}'.format(node1child.attrib["Name"]))
                         is_equal = False
                     else:
                         return False
@@ -175,15 +174,15 @@ def is_fuzzy_equal_text(text1, text2, parameter, numComp, absolute, relative, ze
                     is_equal = False
                     if largernumber != 0.0:
                         if diff / largernumber > max_relative_difference:
-                            message = 'Difference is too large between: {} and {}'.format(number1, number2)
                             max_relative_difference = diff / largernumber
+                            message = 'Difference is too large: {:.2%} -> between: {} and {}'.format(max_relative_difference, number1, number2)
                 else:
                     return False
 
         if verbose and max_relative_difference != 0.0:
+            print('\nData differs in parameter: {}'.format(parameter))
             print(message)
-            print('Maximum relative difference for parameter {}: {:.2%}'.format(parameter, max_relative_difference))
-            print('Info: The highest absolute value of {} is {} and the smallest {}.'.format(parameter, magnitude, minimal))
+            print('Info for {}: max_abs_parameter_value={} and min_abs_parameter_value={}.'.format(parameter, magnitude, minimal))
             if parameter in zeroValueThreshold:
                 print('For parameter {} a zero value threshold of {} was given.'.format(parameter, zeroValueThreshold[parameter]))
 
