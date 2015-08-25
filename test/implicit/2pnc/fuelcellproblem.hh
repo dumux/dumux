@@ -24,8 +24,6 @@
 #ifndef DUMUX_FUELCELL_PROBLEM_HH
 #define DUMUX_FUELCELL_PROBLEM_HH
 
-#include <dune/grid/uggrid.hh>
-
 #include <dumux/io/cubegridcreator.hh>
 #include <dumux/implicit/2pnc/2pncmodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
@@ -48,7 +46,9 @@ NEW_TYPE_TAG(FuelCellBoxProblem, INHERITS_FROM(BoxModel, FuelCellProblem));
 NEW_TYPE_TAG(FuelCellCCProblem, INHERITS_FROM(CCModel, FuelCellProblem));
 
 // Set the grid type
+#if HAVE_UG
 SET_TYPE_PROP(FuelCellProblem, Grid, Dune::UGGrid<2>);
+#endif
 // Set the grid creator
 SET_TYPE_PROP(FuelCellProblem, GridCreator, Dumux::CubeGridCreator<TypeTag>);
 // Set the problem property

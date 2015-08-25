@@ -24,8 +24,6 @@
 #ifndef DUMUX_DISSOLUTION_PROBLEM_HH
 #define DUMUX_DISSOLUTION_PROBLEM_HH
 
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-
 #include <dumux/implicit/2pncmin/2pncminmodel.hh>
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 #include<dumux/material/fluidsystems/brineairfluidsystem.hh>
@@ -45,7 +43,7 @@ NEW_TYPE_TAG(DissolutionBoxProblem, INHERITS_FROM(BoxModel, DissolutionProblem))
 NEW_TYPE_TAG(DissolutionCCProblem, INHERITS_FROM(CCModel, DissolutionProblem));
 
 // Set the grid type
-SET_TYPE_PROP(DissolutionProblem, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(DissolutionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(DissolutionProblem, Problem, Dumux::DissolutionProblem<TypeTag>);
