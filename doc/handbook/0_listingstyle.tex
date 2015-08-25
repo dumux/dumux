@@ -86,7 +86,13 @@
   keywordstyle=\color{Blue}\ttfamily\let\textcolor\textcolordummy,
   stringstyle=\color{BrickRed}\ttfamily\let\textcolor\textcolordummy,
   commentstyle=\color[gray]{0.35}\ttfamily\it\let\textcolor\textcolordummy,
-  morecomment=[l][\color{OliveGreen}\let\textcolor\textcolordummy]{\#},
+  emph={NEW_TYPE_TAG, NEW_PROP_TAG, UNSET_PROP, TTAG, PTAG,
+       SET_PROP, GET_PROP, GET_PROP_VALUE, GET_PROP_TYPE,
+       SET_BOOL_PROP, SET_STRING_PROP, SET_SCALAR_PROP, SET_TYPE_PROP, SET_INT_PROP,
+       GET_BOOL_PROP, GET_STRING_PROP, GET_SCALAR_PROP, GET_TYPE_PROP, GET_INT_PROP,
+       GET_PARAM, GET_PARAM_FROM_GROUP, GET_RUNTIME_PARAM, GET_RUNTIME_PARAM_FROM_GROUP},
+  emphstyle=\color{OliveGreen}\let\textcolor\textcolordummy,
+  directivestyle=\color{Brown}\ttfamily\let\textcolor\textcolordummy,
 }
 
 % for listings of DuMuX parameter files
