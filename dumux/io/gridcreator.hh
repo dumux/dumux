@@ -135,7 +135,9 @@ public:
     }
 
     /*!
-     * \brief Call the parameters function of the DGF grid pointer if available
+     * \brief Return the boundary domain marker (Gmsh physical entity number) of an intersection
+              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
+     * \param boundarySegmentIndex The boundary segment index of the intersection (intersection.boundarySegmentIndex()
      */
     static const int getBoundaryDomainMarker(int boundarySegmentIndex)
     {
@@ -149,7 +151,9 @@ public:
     }
 
     /*!
-     * \brief Call the parameters function of the DGF grid pointer if available
+     * \brief Return the element domain marker (Gmsh physical entity number) of an element.
+              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
+     * \param elementIdx The element index
      */
     static const int getElementDomainMarker(int elementIdx)
     {
@@ -336,13 +340,13 @@ protected:
     static bool enableDgfGridPointer_;
 
     /*!
-    * \brief A state variable if domain markers have been read from a gmsh file.
+    * \brief A state variable if domain markers have been read from a Gmsh file.
     */
     static bool enableGmshDomainMarkers_;
 
     /*!
-    * \brief Element and domain markers obtained from Gmsh physical entities
-    *        They map from element indices / boundary ids to the physical entity mark
+    * \brief Element and boundary domain markers obtained from Gmsh physical entities
+    *        They map from element indices / boundary ids to the physical entity number
     */
     static std::vector<int> elementMarkers_;
     static std::vector<int> boundaryMarkers_;
