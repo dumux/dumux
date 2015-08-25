@@ -57,7 +57,7 @@ void printUsage(const char *progName, const std::string &errorMsg)
                            "NumberOfCellsX           Number of cells in x-direction\n"
                            "NumberOfCellsY           Number of cells in y-direction\n"
                            "GradingFactorY           Vertical grading of the cells\n"
-                           "RefineTop                Specifies whethter the top of the free flow will be refined\n"
+                           "RefineTopY               Specifies whethter the top of the free flow will be refined\n"
                            "InterfacePosY            Vertical position of the interface [m]\n"
                            "NoDarcyX1                Horizontal position where the porous medium starts [m]\n"
                            "NoDarcyX2                Horizontal position where the porous medium ends [m]\n"

@@ -71,21 +71,30 @@ public:
         Dune::array<unsigned int, dim> numCells;
         Dune::FieldVector<Scalar, dim> lowerLeft;
         Dune::FieldVector<Scalar, dim> upperRight;
-        Dune::FieldVector<Scalar, dim> refinePoint(0);
-        Dune::FieldVector<Scalar, dim> gradingFactor(1);
+        Dune::FieldVector<Scalar, dim> refinePoint(0.0);
+        Dune::FieldVector<Scalar, dim> gradingFactor(1.0);
+        Dune::FieldVector<bool, dim> refineTop(false);
 
         // x-direction
         numCells[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, unsigned int, Grid, NumberOfCellsX);
         lowerLeft[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftX);
         upperRight[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightX);
+        try { refinePoint[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosX); }
+        catch (Dumux::ParameterException &e) { }
+        try { gradingFactor[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, GradingFactorX); }
+        catch (Dumux::ParameterException &e) { }
+        try { refineTop[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, RefineTopX); }
+        catch (Dumux::ParameterException &e) { }
         // y-direction
         numCells[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, unsigned int, Grid, NumberOfCellsY);
         lowerLeft[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, LowerLeftY);
         upperRight[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightY);
-        refinePoint[1] =  GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
-        gradingFactor[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, GradingFactorY);
-
-        bool refineTop = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, RefineTop);
+        try { refinePoint[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY); }
+        catch (Dumux::ParameterException &e) { }
+        try { gradingFactor[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, GradingFactorY); }
+        catch (Dumux::ParameterException &e) { }
+        try { refineTop[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Grid, RefineTopY); }
+        catch (Dumux::ParameterException &e) { }
 
         typedef Dune::YaspGrid<dim> HelperGrid;
         std::shared_ptr<HelperGrid> helperGrid = std::shared_ptr<HelperGrid> (
@@ -110,9 +119,9 @@ public:
         int nY = numCells[1];
 
         std::vector<std::vector<Scalar> > localPositions(dim);
-        for (int comp = 0; comp < dim; comp++)
+        for (int dimIdx = 0; dimIdx < dim; dimIdx++)
         {
-            Scalar lengthLeft = refinePointLocal[comp];
+            Scalar lengthLeft = refinePointLocal[dimIdx];
             Scalar lengthRight = 1.0 - lengthLeft;
 
             int nLeft, nRight;
@@ -120,71 +129,71 @@ public:
             if (lengthLeft < 1e-10)
             {
                 nLeft = 0;
-                nRight = numCells[comp];
+                nRight = numCells[dimIdx];
 
-                if (gradingFactor[comp] > 1.0)
-                    hLeft = hRight = (1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nRight));
+                if (gradingFactor[dimIdx] > 1.0)
+                    hLeft = hRight = (1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nRight));
                 else
-                    hLeft = hRight = 1.0/numCells[comp];
+                    hLeft = hRight = 1.0/numCells[dimIdx];
             }
             else if (lengthLeft > 1.0 - 1e-10)
             {
-                nLeft = numCells[comp];
+                nLeft = numCells[dimIdx];
                 nRight = 0;
 
-                if (gradingFactor[comp] > 1.0)
-                    hLeft = hRight = (1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nLeft));
+                if (gradingFactor[dimIdx] > 1.0)
+                    hLeft = hRight = (1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nLeft));
                 else
-                    hLeft = hRight = 1.0/numCells[comp];
+                    hLeft = hRight = 1.0/numCells[dimIdx];
             }
-            else if (comp == dim - 1 && refineTop)
+            else if (refineTop[dimIdx])
             {
-                lengthLeft = refinePointLocal[comp];
-                lengthRight = (1 - refinePointLocal[comp])/2;
+                lengthLeft = refinePointLocal[dimIdx];
+                lengthRight = (1 - refinePointLocal[dimIdx])/2;
 
-                nLeft = nRight = numCells[comp]/3;
+                nLeft = nRight = numCells[dimIdx]/3;
 
-                if (numCells[comp]%3 == 1)
+                if (numCells[dimIdx]%3 == 1)
                     nLeft += 1;
-                else if (numCells[comp]%3 == 2)
+                else if (numCells[dimIdx]%3 == 2)
                     nRight += 1;
 
-                hLeft = lengthLeft*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nLeft));
-                hRight = lengthRight*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nRight));
+                hLeft = lengthLeft*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nLeft));
+                hRight = lengthRight*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nRight));
             }
             else if (lengthLeft > 0.5)
             {
-                Scalar nLeftDouble = std::ceil(-log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactor[comp], numCells[comp])
+                Scalar nLeftDouble = std::ceil(-log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactor[dimIdx], numCells[dimIdx])
                                                                       * lengthRight/lengthLeft))
-                            /(2.0*pow(gradingFactor[comp], numCells[comp])))/log(gradingFactor[comp]));
-                nLeft = std::min((unsigned int)std::ceil(nLeftDouble), numCells[comp]);
+                            /(2.0*pow(gradingFactor[dimIdx], numCells[dimIdx])))/log(gradingFactor[dimIdx]));
+                nLeft = std::min((unsigned int)std::ceil(nLeftDouble), numCells[dimIdx]);
 
-                nRight = numCells[comp] - nLeft;
+                nRight = numCells[dimIdx] - nLeft;
 
-                if (gradingFactor[comp] > 1.0)
+                if (gradingFactor[dimIdx] > 1.0)
                 {
-                    hLeft = lengthLeft*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nLeft));
-                    hRight = lengthRight*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nRight));
+                    hLeft = lengthLeft*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nLeft));
+                    hRight = lengthRight*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nRight));
                 }
                 else
-                    hLeft = hRight = 1.0/numCells[comp];
+                    hLeft = hRight = 1.0/numCells[dimIdx];
             }
             else
             {
-                Scalar nRightDouble = -log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactor[comp], numCells[comp])
+                Scalar nRightDouble = -log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactor[dimIdx], numCells[dimIdx])
                                                              * lengthLeft/lengthRight))
-                            /(2.0*pow(gradingFactor[comp], numCells[comp])))/log(gradingFactor[comp]);
-                nRight = std::min((unsigned int)std::ceil(nRightDouble), numCells[comp]);
+                            /(2.0*pow(gradingFactor[dimIdx], numCells[dimIdx])))/log(gradingFactor[dimIdx]);
+                nRight = std::min((unsigned int)std::ceil(nRightDouble), numCells[dimIdx]);
 
-                nLeft = numCells[comp] - nRight;
+                nLeft = numCells[dimIdx] - nRight;
 
-                if (gradingFactor[comp] > 1.0)
+                if (gradingFactor[dimIdx] > 1.0)
                 {
-                    hLeft = lengthLeft*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nLeft));
-                    hRight = lengthRight*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nRight));
+                    hLeft = lengthLeft*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nLeft));
+                    hRight = lengthRight*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nRight));
                 }
                 else
-                    hLeft = hRight = 1.0/numCells[comp];
+                    hLeft = hRight = 1.0/numCells[dimIdx];
             }
             std::cout << "lengthLeft = " << lengthLeft
                       << ", lengthRight = " << lengthRight
@@ -194,33 +203,33 @@ public:
                       << ", nRight = " << nRight
                       << std::endl;
 
-            int numVertices = numCells[comp] + 1;
-            localPositions[comp].resize(numVertices);
+            int numVertices = numCells[dimIdx] + 1;
+            localPositions[dimIdx].resize(numVertices);
 
-            localPositions[comp][0] = 0.0;
+            localPositions[dimIdx][0] = 0.0;
             for (int i = 0; i < nLeft; i++)
             {
-                Scalar hI = hLeft*pow(gradingFactor[comp], nLeft-1-i);
-                localPositions[comp][i+1] = localPositions[comp][i] + hI;
+                Scalar hI = hLeft*pow(gradingFactor[dimIdx], nLeft-1-i);
+                localPositions[dimIdx][i+1] = localPositions[dimIdx][i] + hI;
             }
 
             for (int i = 0; i < nRight; i++)
             {
-                Scalar hI = hRight*pow(gradingFactor[comp], i);
-                localPositions[comp][nLeft+i+1] = localPositions[comp][nLeft+i] + hI;
+                Scalar hI = hRight*pow(gradingFactor[dimIdx], i);
+                localPositions[dimIdx][nLeft+i+1] = localPositions[dimIdx][nLeft+i] + hI;
             }
 
-            if (comp == dim - 1 && refineTop)
+            if (refineTop[dimIdx])
                 for (int i = 0; i < nRight; i++)
                 {
-                    Scalar hI = hRight*pow(gradingFactor[comp], nRight-1-i);
-                    localPositions[comp][nLeft+nRight+i+1] = localPositions[comp][nLeft+nRight+i] + hI;
+                    Scalar hI = hRight*pow(gradingFactor[dimIdx], nRight-1-i);
+                    localPositions[dimIdx][nLeft+nRight+i+1] = localPositions[dimIdx][nLeft+nRight+i] + hI;
                 }
 
-            if (localPositions[comp][numVertices-1] != 1.0)
+            if (localPositions[dimIdx][numVertices-1] != 1.0)
             {
                 for (int i = 0; i < numVertices; i++)
-                    localPositions[comp][i] /= localPositions[comp][numVertices-1];
+                    localPositions[dimIdx][i] /= localPositions[dimIdx][numVertices-1];
             }
         }
 
@@ -285,9 +294,9 @@ public:
         int nY = numCells[1];
 
         std::vector<std::vector<Scalar> > localPositions(dim);
-        for (int comp = 0; comp < dim; comp++)
+        for (int dimIdx = 0; dimIdx < dim; dimIdx++)
         {
-            Scalar lengthLeft = refinePointLocal[comp];
+            Scalar lengthLeft = refinePointLocal[dimIdx];
             Scalar lengthRight = 1.0 - lengthLeft;
 
             int nLeft, nRight;
@@ -295,71 +304,71 @@ public:
             if (lengthLeft < 1e-10)
             {
                 nLeft = 0;
-                nRight = numCells[comp];
+                nRight = numCells[dimIdx];
 
-                if (gradingFactor[comp] > 1.0)
-                    hLeft = hRight = (1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nRight));
+                if (gradingFactor[dimIdx] > 1.0)
+                    hLeft = hRight = (1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nRight));
                 else
-                    hLeft = hRight = 1.0/numCells[comp];
+                    hLeft = hRight = 1.0/numCells[dimIdx];
             }
             else if (lengthLeft > 1.0 - 1e-10)
             {
-                nLeft = numCells[comp];
+                nLeft = numCells[dimIdx];
                 nRight = 0;
 
-                if (gradingFactor[comp] > 1.0)
-                    hLeft = hRight = (1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nLeft));
+                if (gradingFactor[dimIdx] > 1.0)
+                    hLeft = hRight = (1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nLeft));
                 else
-                    hLeft = hRight = 1.0/numCells[comp];
+                    hLeft = hRight = 1.0/numCells[dimIdx];
             }
-            else if (comp == dim - 1 && refineTop)
+            else if (dimIdx == dim - 1 && refineTop)
             {
-                lengthLeft = refinePointLocal[comp];
-                lengthRight = (1 - refinePointLocal[comp])/2;
+                lengthLeft = refinePointLocal[dimIdx];
+                lengthRight = (1 - refinePointLocal[dimIdx])/2;
 
-                nLeft = nRight = numCells[comp]/3;
+                nLeft = nRight = numCells[dimIdx]/3;
 
-                if (numCells[comp]%3 == 1)
+                if (numCells[dimIdx]%3 == 1)
                     nLeft += 1;
-                else if (numCells[comp]%3 == 2)
+                else if (numCells[dimIdx]%3 == 2)
                     nRight += 1;
 
-                hLeft = lengthLeft*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nLeft));
-                hRight = lengthRight*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nRight));
+                hLeft = lengthLeft*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nLeft));
+                hRight = lengthRight*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nRight));
             }
             else if (lengthLeft > 0.5)
             {
-                Scalar nLeftDouble = std::ceil(-log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactor[comp], numCells[comp])
+                Scalar nLeftDouble = std::ceil(-log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactor[dimIdx], numCells[dimIdx])
                                                                       * lengthRight/lengthLeft))
-                            /(2.0*pow(gradingFactor[comp], numCells[comp])))/log(gradingFactor[comp]));
-                nLeft = std::min((int)std::ceil(nLeftDouble), numCells[comp]);
+                            /(2.0*pow(gradingFactor[dimIdx], numCells[dimIdx])))/log(gradingFactor[dimIdx]));
+                nLeft = std::min((int)std::ceil(nLeftDouble), numCells[dimIdx]);
 
-                nRight = numCells[comp] - nLeft;
+                nRight = numCells[dimIdx] - nLeft;
 
-                if (gradingFactor[comp] > 1.0)
+                if (gradingFactor[dimIdx] > 1.0)
                 {
-                    hLeft = lengthLeft*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nLeft));
-                    hRight = lengthRight*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nRight));
+                    hLeft = lengthLeft*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nLeft));
+                    hRight = lengthRight*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nRight));
                 }
                 else
-                    hLeft = hRight = 1.0/numCells[comp];
+                    hLeft = hRight = 1.0/numCells[dimIdx];
             }
             else
             {
-                Scalar nRightDouble = -log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactor[comp], numCells[comp])
+                Scalar nRightDouble = -log((1.0 + sqrt(1.0 + 4.0 * pow(gradingFactor[dimIdx], numCells[dimIdx])
                                                              * lengthLeft/lengthRight))
-                            /(2.0*pow(gradingFactor[comp], numCells[comp])))/log(gradingFactor[comp]);
-                nRight = std::min((int)std::ceil(nRightDouble), numCells[comp]);
+                            /(2.0*pow(gradingFactor[dimIdx], numCells[dimIdx])))/log(gradingFactor[dimIdx]);
+                nRight = std::min((int)std::ceil(nRightDouble), numCells[dimIdx]);
 
-                nLeft = numCells[comp] - nRight;
+                nLeft = numCells[dimIdx] - nRight;
 
-                if (gradingFactor[comp] > 1.0)
+                if (gradingFactor[dimIdx] > 1.0)
                 {
-                    hLeft = lengthLeft*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nLeft));
-                    hRight = lengthRight*(1.0 - gradingFactor[comp])/(1.0 - pow(gradingFactor[comp], nRight));
+                    hLeft = lengthLeft*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nLeft));
+                    hRight = lengthRight*(1.0 - gradingFactor[dimIdx])/(1.0 - pow(gradingFactor[dimIdx], nRight));
                 }
                 else
-                    hLeft = hRight = 1.0/numCells[comp];
+                    hLeft = hRight = 1.0/numCells[dimIdx];
             }
             std::cout << "lengthLeft = " << lengthLeft
                       << ", lengthRight = " << lengthRight
@@ -369,33 +378,33 @@ public:
                       << ", nRight = " << nRight
                       << std::endl;
 
-            int numVertices = numCells[comp] + 1;
-            localPositions[comp].resize(numVertices);
+            int numVertices = numCells[dimIdx] + 1;
+            localPositions[dimIdx].resize(numVertices);
 
-            localPositions[comp][0] = 0.0;
+            localPositions[dimIdx][0] = 0.0;
             for (int i = 0; i < nLeft; i++)
             {
-                Scalar hI = hLeft*pow(gradingFactor[comp], nLeft-1-i);
-                localPositions[comp][i+1] = localPositions[comp][i] + hI;
+                Scalar hI = hLeft*pow(gradingFactor[dimIdx], nLeft-1-i);
+                localPositions[dimIdx][i+1] = localPositions[dimIdx][i] + hI;
             }
 
             for (int i = 0; i < nRight; i++)
             {
-                Scalar hI = hRight*pow(gradingFactor[comp], i);
-                localPositions[comp][nLeft+i+1] = localPositions[comp][nLeft+i] + hI;
+                Scalar hI = hRight*pow(gradingFactor[dimIdx], i);
+                localPositions[dimIdx][nLeft+i+1] = localPositions[dimIdx][nLeft+i] + hI;
             }
 
-            if (comp == dim - 1 && refineTop)
+            if (dimIdx == dim - 1 && refineTop)
                 for (int i = 0; i < nRight; i++)
                 {
-                    Scalar hI = hRight*pow(gradingFactor[comp], nRight-1-i);
-                    localPositions[comp][nLeft+nRight+i+1] = localPositions[comp][nLeft+nRight+i] + hI;
+                    Scalar hI = hRight*pow(gradingFactor[dimIdx], nRight-1-i);
+                    localPositions[dimIdx][nLeft+nRight+i+1] = localPositions[dimIdx][nLeft+nRight+i] + hI;
                 }
 
-            if (localPositions[comp][numVertices-1] != 1.0)
+            if (localPositions[dimIdx][numVertices-1] != 1.0)
             {
                 for (int i = 0; i < numVertices; i++)
-                    localPositions[comp][i] /= localPositions[comp][numVertices-1];
+                    localPositions[dimIdx][i] /= localPositions[dimIdx][numVertices-1];
             }
         }
 

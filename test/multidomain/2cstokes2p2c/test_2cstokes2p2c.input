@@ -19,7 +19,7 @@ NumberOfCellsX = 30
 NumberOfCellsY = 62
 # Grading and refinement of the mesh in y direction
 GradingFactorY = 1.13
-RefineTop = false
+RefineTopY = false
 
 [Output]
 NameFF = stokes2c
@@ -77,6 +77,4 @@ WriteConvergence = false
 MaxTimeStepDivisions = 20
 
 [LinearSolver]
-ResidualReduction = 1e-10
 Verbosity = 0
-MaxIterations = 200

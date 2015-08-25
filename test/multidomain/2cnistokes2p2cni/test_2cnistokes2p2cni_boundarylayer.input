@@ -19,7 +19,7 @@ NumberOfCellsX = 15
 NumberOfCellsY = 20
 # Grading and refinement of the mesh in y direction
 GradingFactorY = 1.1
-RefineTop = false
+RefineTopY = false
 
 [Output]
 NameFF = stokes2cni_boundarylayer
@@ -72,8 +72,6 @@ Swr = 0.005 # [-]
 Snr = 0.01 # [-]
 VgAlpha = 6.371e-4 # [1/Pa]
 VgN = 8.0 # [-]
-Pentry = 1357
-BCLambda = 6.960
 LambdaSolid = 5.26 # [W/(m*K)]
 
 [Newton]
@@ -84,6 +82,4 @@ WriteConvergence = false
 MaxTimeStepDivisions = 20
 
 [LinearSolver]
-ResidualReduction = 1e-9
 Verbosity = 0
-MaxIterations = 200

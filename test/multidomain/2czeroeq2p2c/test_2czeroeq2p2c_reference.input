@@ -14,7 +14,7 @@ NumberOfCellsX = 10
 NumberOfCellsY = 25
 # Grading and refinement of the mesh
 GradingFactorY = 1.1
-RefineTop = false
+RefineTopY = false
 # Position information
 NoDarcyX = 0.25 # [m] # Horizontal position without PM below
 RunUpDistanceX = 0.26 # [m] # Horizontal position without Coupling to PM
@@ -27,8 +27,6 @@ NamePM = 2p2c
 FreqRestart = 100            # 500  # how often restart files are written out
 FreqOutput = 5               #  10  # frequency of VTK output
 FreqMassOutput = 5           #  20  # frequency of mass and evaporation rate output (Darcy)
-FreqFluxOutput = 3           # 100  # frequency of detailed flux output
-FreqVaporFluxOutput = 3      #   5  # frequency of summarized flux output
 
 [FreeFlow]
 RefVelocity = 3.5 # [m/s]
@@ -59,12 +57,9 @@ WriteConvergence = false
 MaxTimeStepDivisions = 20
 
 [LinearSolver]
-ResidualReduction = 1e-8
 Verbosity = 0
-MaxIterations = 100
 
 [ZeroEq]
-WriteAllSCVData = -1.0
 # Eddy Viscosity Models
 # 0 = none
 # 1 = Prandtl
