@@ -1,0 +1,15 @@
+
+#install headers
+install(FILES
+multidomainassembler.hh
+multidomainconvergencewriter.hh
+multidomainlocaloperator.hh
+multidomainmodel.hh
+multidomainnewtoncontroller.hh
+multidomainproblem.hh
+multidomainproperties.hh
+multidomainpropertydefaults.hh
+splitandmerge.hh
+subdomainproperties.hh
+subdomainpropertydefaults.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/common)

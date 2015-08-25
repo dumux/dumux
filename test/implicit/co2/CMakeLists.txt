@@ -38,3 +38,15 @@ add_dumux_test(test_ccco2ni test_ccco2ni test_ccco2ni.cc
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccco2ni")
 
 
+
+#install sources
+install(FILES
+heterogeneousco2tables.hh
+heterogeneousproblem.hh
+heterogeneousproblemni.hh
+heterogeneousspatialparameters.hh
+test_boxco2.cc
+test_boxco2ni.cc
+test_ccco2.cc
+test_ccco2ni.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/co2)

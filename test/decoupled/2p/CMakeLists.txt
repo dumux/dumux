@@ -109,3 +109,25 @@ add_dumux_test(test_3d2pmpfaladaptive test_3d2pmpfaladaptive test_3d2p.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/test_3d2pmpfaladaptive-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfaladaptive-00012.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_3d2pmpfaladaptive -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_3d2p.input -Problem.OutputName test_3d2pmpfaladaptive -ModelType MPFALAdaptive")
+
+#install sources
+install(FILES
+buckleyleverettanalyticsolution.hh
+mcwhorteranalyticsolution.hh
+test_3d2p.cc
+test_3d2pproblem.hh
+test_3d2pspatialparams.hh
+test_impesadaptive.cc
+test_impesadaptiveproblem.hh
+test_impesadaptivespatialparams.hh
+test_impes.cc
+test_impesproblem.hh
+test_impesspatialparams.hh
+test_impeswithamg.cc
+test_mpfa2p.cc
+test_mpfa2pproblem.hh
+test_mpfa2pspatialparams.hh
+test_transport.cc
+test_transportproblem.hh
+test_transportspatialparams.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/decoupled/2p)

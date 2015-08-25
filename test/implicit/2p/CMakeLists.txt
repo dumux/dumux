@@ -77,3 +77,22 @@ add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/injection2pnicc-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pni")
 endif()
+
+#install sources
+install(FILES
+cc2pcornerpointproblem.hh
+cc2pcornerpointspatialparams.hh
+generalizeddirichletproblem.hh
+generalizeddirichletspatialparams.hh
+injectionproblem2pni.hh
+lensproblem.hh
+lensspatialparams.hh
+test_box2p.cc
+test_box2pni.cc
+test_boxadaptive2p.cc
+test_cc2p.cc
+test_cc2pcornerpoint.cc
+test_cc2pni.cc
+test_ccadaptive2p.cc
+test_generalizeddirichlet.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p)

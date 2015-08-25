@@ -1,0 +1,14 @@
+
+#install headers
+install(FILES
+mpncfluxvariablesenergy.hh
+mpncfluxvariablesenergykinetic.hh
+mpncindicesenergy.hh
+mpncindicesenergykinetic.hh
+mpnclocalresidualenergy.hh
+mpnclocalresidualenergykinetic.hh
+mpncvolumevariablesenergy.hh
+mpncvolumevariablesenergykinetic.hh
+mpncvtkwriterenergy.hh
+mpncvtkwriterenergykinetic.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/implicit/mpnc/energy)

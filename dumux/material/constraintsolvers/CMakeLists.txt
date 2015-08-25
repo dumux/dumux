@@ -1,0 +1,16 @@
+
+#install headers
+install(FILES
+compositionalflash.hh
+compositionfromfugacities2pncmin.hh
+compositionfromfugacities.hh
+computefromreferencephase2pnc.hh
+computefromreferencephase2pncmin.hh
+computefromreferencephase.hh
+fluidsystemcomputefromreferencephase.hh
+fluidsystemconstraintsolver.hh
+immiscibleflash.hh
+miscible2pnccomposition.hh
+misciblemultiphasecomposition.hh
+ncpflash.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/constraintsolvers)

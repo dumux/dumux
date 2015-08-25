@@ -1,0 +1,16 @@
+
+#install headers
+install(FILES
+awnsurfaceexpfct.hh
+awnsurfaceexpfctparams.hh
+awnsurfaceexpswpcto3.hh
+awnsurfaceexpswpcto3params.hh
+awnsurfacepcmaxfct.hh
+awnsurfacepcmaxfctparams.hh
+awnsurfacepolynomial2ndorder.hh
+awnsurfacepolynomial2ndorderparams.hh
+awnsurfacepolynomialedgezero2ndorder.hh
+awnsurfacepolynomialedgezero2ndorderparams.hh
+efftoabslawia.hh
+efftoabslawiaparams.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/2pia)

@@ -1,0 +1,24 @@
+
+#install headers
+install(FILES
+fvmpfal2dpressure2padaptive.hh
+fvmpfal2dpressure2p.hh
+fvmpfal2dpressureproperties2padaptive.hh
+fvmpfal2dpressureproperties2p.hh
+fvmpfal2dpressurevelocity2padaptive.hh
+fvmpfal2dpressurevelocity2p.hh
+fvmpfal2dtransmissibilitycalculator.hh
+fvmpfal2dvelocity2padaptive.hh
+fvmpfal2dvelocity2p.hh
+fvmpfal3dinteractionvolumecontaineradaptive.hh
+fvmpfal3dinteractionvolumecontainer.hh
+fvmpfal3dpressure2padaptive.hh
+fvmpfal3dpressure2p.hh
+fvmpfal3dpressureproperties2padaptive.hh
+fvmpfal3dpressureproperties2p.hh
+fvmpfal3dpressurevelocity2padaptive.hh
+fvmpfal3dpressurevelocity2p.hh
+fvmpfal3dtransmissibilitycalculator.hh
+fvmpfal3dvelocity2padaptive.hh
+fvmpfal3dvelocity2p.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/decoupled/2p/diffusion/fvmpfa/lmethod)

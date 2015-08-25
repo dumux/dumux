@@ -24,3 +24,18 @@ add_dumux_test(test_diffusion3d test_diffusion3d test_diffusion3d.cc
                          ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d_mimetic-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_mimetic-00001.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_diffusion3d_reference.input")
+
+#install sources
+install(FILES
+resultevaluation3d.hh
+resultevaluation.hh
+test_1p.cc
+test_1pproblem.hh
+test_1pspatialparams.hh
+test_diffusion3d.cc
+test_diffusion.cc
+test_diffusionproblem3d.hh
+test_diffusionproblem.hh
+test_diffusionspatialparams3d.hh
+test_diffusionspatialparams.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/decoupled/1p)

@@ -14,3 +14,9 @@ add_dumux_test(test_stokes2c_diffusion test_stokes2c test_stokes2c.cc
                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2c -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_stokes2c_diffusion.input"
                   --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c_diffusion-reference.vtu
                           ${CMAKE_CURRENT_BINARY_DIR}/stokes2c_diffusion-00020.vtu)
+
+#install sources
+install(FILES
+stokes2ctestproblem.hh
+test_stokes2c.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/freeflow/stokes2c)

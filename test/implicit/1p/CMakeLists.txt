@@ -93,3 +93,24 @@ add_dumux_test(test_cc1p2d3d test_cc1p2d3d test_cc1p2d3d.cc
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p2d3d")
 add_dune_alberta_flags(test_cc1p2d3d GRIDDIM 2 WORLDDIM 3)
 
+
+#install sources
+install(FILES
+1pniconductionproblem.hh
+1pniconvectionproblem.hh
+1pnispatialparams.hh
+1ptestproblem.hh
+1ptestspatialparams.hh
+test_box1p1d3d.cc
+test_box1p2d3d.cc
+test_box1p.cc
+test_box1pniconduction.cc
+test_box1pniconvection.cc
+test_box1pwithamg.cc
+test_cc1p1d3d.cc
+test_cc1p2d3d.cc
+test_cc1p.cc
+test_cc1pniconduction.cc
+test_cc1pniconvection.cc
+test_cc1pwithamg.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/1p)

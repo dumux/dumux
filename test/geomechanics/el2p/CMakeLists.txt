@@ -15,3 +15,11 @@ if(MPI_FOUND)
                            ${CMAKE_CURRENT_BINARY_DIR}/s0004-p0001-el2p-00003.vtu
                    --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_el2p_parallel ${CMAKE_CURRENT_SOURCE_DIR}/grids/test_el2p.dgf 100 200 100")
 endif()
+
+#install sources
+install(FILES
+el2pco2tables.hh
+el2pproblem.hh
+el2pspatialparams.hh
+test_el2p.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/geomechanics/el2p)

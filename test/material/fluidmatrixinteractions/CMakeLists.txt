@@ -15,3 +15,12 @@ add_dumux_test(test_effectivediffusivityconstanttau test_effectivediffusivitycon
                  --files ${CMAKE_SOURCE_DIR}/test/references/effectivediffusivityconstanttau-reference.dat
                          ${CMAKE_CURRENT_BINARY_DIR}/constanttau_d_eff.dat
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_effectivediffusivityconstanttau")
+
+#install sources
+install(FILES
+effectivediffusivityconstanttauproblem.hh
+effectivediffusivitymillingtonquirkproblem.hh
+effectivediffusivityspatialparams.hh
+test_effectivediffusivityconstanttau.cc
+test_effectivediffusivitymillingtonquirk.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/material/fluidmatrixinteractions)

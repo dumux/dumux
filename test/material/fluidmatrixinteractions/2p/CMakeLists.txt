@@ -13,3 +13,12 @@ add_dumux_test(test_thermalconductivitysomerton test_thermalconductivitysomerton
                  --files ${CMAKE_SOURCE_DIR}/test/references/thermalconductivitysomerton-reference.dat
                          ${CMAKE_CURRENT_BINARY_DIR}/somerton_lambda_eff.dat
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_thermalconductivitysomerton")
+
+#install sources
+install(FILES
+test_thermalconductivityjohansen.cc
+test_thermalconductivitysomerton.cc
+thermalconductivityjohansenproblem.hh
+thermalconductivitysomertonproblem.hh
+thermalconductivityspatialparams.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/material/fluidmatrixinteractions/2p)

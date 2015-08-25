@@ -45,3 +45,22 @@ add_dumux_test(test_boxmpncthermalnonequil test_boxmpncthermalnonequil test_boxm
                  --files ${CMAKE_SOURCE_DIR}/test/references/combustion-reference.vtp
                          ${CMAKE_CURRENT_BINARY_DIR}/combustion-00078.vtp
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxmpncthermalnonequil")
+
+#install sources
+install(FILES
+combustionproblem1c.hh
+combustionspatialparams.hh
+evaporationatmosphereproblem.hh
+evaporationatmospherespatialparams.hh
+forchheimer1pproblem.hh
+forchheimer2pproblem.hh
+forchheimerspatialparams.hh
+obstacleproblem.hh
+obstaclespatialparams.hh
+test_boxmpnc.cc
+test_boxmpnckinetic.cc
+test_boxmpncthermalnonequil.cc
+test_ccmpnc.cc
+test_forchheimer1p.cc
+test_forchheimer2p.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/mpnc)

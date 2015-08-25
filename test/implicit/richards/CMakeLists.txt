@@ -60,3 +60,21 @@ add_dumux_test(test_ccrichardsniconduction test_ccrichardsniconduction test_ccri
                  --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductioncc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction-00007.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction")
+
+#install sources
+install(FILES
+richardsanalyticalproblem.hh
+richardsanalyticalspatialparams.hh
+richardslensproblem.hh
+richardslensspatialparams.hh
+richardsniconductionproblem.hh
+richardsniconvectionproblem.hh
+richardsnispatialparams.hh
+test_boxrichards.cc
+test_boxrichardsniconduction.cc
+test_boxrichardsniconvection.cc
+test_ccrichardsanalytical.cc
+test_ccrichards.cc
+test_ccrichardsniconduction.cc
+test_ccrichardsniconvection.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/richards)

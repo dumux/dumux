@@ -1,0 +1,9 @@
+
+#install headers
+install(FILES
+2p2ccouplinglocalresidual.hh
+2p2cnicouplinglocalresidual.hh
+boxcouplinglocalresidual.hh
+stokesnccouplinglocalresidual.hh
+stokesncnicouplinglocalresidual.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/couplinglocalresiduals)

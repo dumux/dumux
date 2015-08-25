@@ -24,6 +24,7 @@ dune_project()
 
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
+add_subdirectory(dumux)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 add_subdirectory(tutorial EXCLUDE_FROM_ALL)
 

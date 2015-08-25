@@ -17,3 +17,10 @@ add_dumux_test(test_general_dec test_general_dec test_generalproblem2p.cc
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_general_dec
                             -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_generalproblem2p_reference.input
                             -ModelType Decoupled")
+
+#install sources
+install(FILES
+generallensproblem.hh
+generallensspatialparams.hh
+test_generalproblem2p.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/common/generalproblem)

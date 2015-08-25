@@ -48,3 +48,18 @@ add_dumux_test(test_cc1p2cniconvection test_cc1p2cniconvection test_cc1p2cniconv
                  --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccconvection-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/cc1p2cniconvection-00011.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p2cniconvection")
+
+#install sources
+install(FILES
+1p2cniconductionproblem.hh
+1p2cniconvectionproblem.hh
+1p2cnispatialparams.hh
+1p2coutflowproblem.hh
+1p2coutflowspatialparams.hh
+test_box1p2c.cc
+test_box1p2cniconduction.cc
+test_box1p2cniconvection.cc
+test_cc1p2c.cc
+test_cc1p2cniconduction.cc
+test_cc1p2cniconvection.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/1p2c)

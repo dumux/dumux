@@ -49,3 +49,19 @@ add_dumux_test(test_cc3p3cnikuevette test_cc3p3cnikuevette test_cc3p3cnikuevette
                  --files ${CMAKE_SOURCE_DIR}/test/references/kuevette3p3cnicc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/kuevettecc-000${REF_FILE_NUMBER}.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3p3cnikuevette")
+
+#install sources
+install(FILES
+columnxylolproblem.hh
+columnxylolspatialparams.hh
+infiltrationproblem.hh
+infiltrationspatialparameters.hh
+kuevetteproblem.hh
+kuevettespatialparams.hh
+test_box3p3c.cc
+test_box3p3cnicolumnxylol.cc
+test_box3p3cnikuevette.cc
+test_cc3p3c.cc
+test_cc3p3cnicolumnxylol.cc
+test_cc3p3cnikuevette.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/3p3c)

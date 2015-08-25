@@ -13,3 +13,11 @@ add_dumux_test(test_zeroeq_channel test_zeroeq_channel test_zeroeq_channel.cc
                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_zeroeq_channel"
                   --files ${CMAKE_SOURCE_DIR}/test/references/zeroeqchannel-reference.vtu
                           ${CMAKE_CURRENT_BINARY_DIR}/zeroeqchannel-00022.vtu)
+
+#install sources
+install(FILES
+test_zeroeq.cc
+test_zeroeq_channel.cc
+zeroeqchanneltestproblem.hh
+zeroeqtestproblem.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/freeflow/zeroeq)

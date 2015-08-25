@@ -29,3 +29,15 @@ add_dumux_test(test_cc2p2cni test_cc2p2cni test_cc2p2cni.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/wateraircc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/wateraircc-00010.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2p2cni -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_cc2p2cni_reference.input")
+
+#install sources
+install(FILES
+injectionproblem.hh
+injectionspatialparams.hh
+test_box2p2c.cc
+test_box2p2cni.cc
+test_cc2p2c.cc
+test_cc2p2cni.cc
+waterairproblem.hh
+waterairspatialparams.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p2c)

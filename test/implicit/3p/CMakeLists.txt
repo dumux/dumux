@@ -47,3 +47,18 @@ add_dumux_test(test_cc3pniconduction test_cc3pniconduction test_cc3pniconduction
                          ${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconduction-00007.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconduction"
                  --zeroThreshold {"velocityW":1e-16})
+
+#install sources
+install(FILES
+3pniconductionproblem.hh
+3pniconvectionproblem.hh
+3pnispatialparams.hh
+infiltration3pproblem.hh
+infiltration3pspatialparams.hh
+test_box3p.cc
+test_box3pniconduction.cc
+test_box3pniconvection.cc
+test_cc3p.cc
+test_cc3pniconduction.cc
+test_cc3pniconvection.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/3p)

@@ -6,3 +6,10 @@ add_dumux_test(test_navierstokes test_navierstokes test_navierstokes.cc
                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_navierstokes"
                   --files ${CMAKE_SOURCE_DIR}/test/references/navierstokes-reference.vtu
                           ${CMAKE_CURRENT_BINARY_DIR}/navierstokes-00008.vtu)
+
+#install sources
+install(FILES
+n2constviscosity.hh
+navierstokestestproblem.hh
+test_navierstokes.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/freeflow/navierstokes)

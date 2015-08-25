@@ -7,3 +7,9 @@ add_dumux_test(test_box2pncmin test_box2pncmin test_box2pncmin.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/saltflushbox2pncmin-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/saltflushbox-00044.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pncmin")
+#install sources
+install(FILES
+dissolutionproblem.hh
+dissolutionspatialparams.hh
+test_box2pncmin.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2pncmin)

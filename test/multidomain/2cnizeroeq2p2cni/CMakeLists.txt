@@ -10,3 +10,12 @@ add_dumux_test(test_2cnizeroeq2p2cni test_2cnizeroeq2p2cni test_2cnizeroeq2p2cni
                           ${CMAKE_CURRENT_BINARY_DIR}/zeroeq2cni-00010.vtu
                           ${CMAKE_SOURCE_DIR}/test/references/2cnizeroeq2p2cni-pm-reference.vtu
                           ${CMAKE_CURRENT_BINARY_DIR}/2p2cni-00010.vtu)
+
+#install sources
+install(FILES
+2cnizeroeq2p2cniproblem.hh
+2cnizeroeq2p2cnispatialparameters.hh
+2p2cnisubproblem.hh
+test_2cnizeroeq2p2cni.cc
+zeroeq2cnisubproblem.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/2cnizeroeq2p2cni)

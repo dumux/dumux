@@ -6,3 +6,9 @@ add_dumux_test(test_stokes test_stokes test_stokes.cc
                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes"
                   --files ${CMAKE_SOURCE_DIR}/test/references/stokes-reference.vtu
                           ${CMAKE_CURRENT_BINARY_DIR}/stokes-00014.vtu)
+
+#install sources
+install(FILES
+stokestestproblem.hh
+test_stokes.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/freeflow/stokes)

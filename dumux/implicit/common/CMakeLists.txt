@@ -1,0 +1,16 @@
+
+#install headers
+install(FILES
+implicitassembler.hh
+implicitdarcyfluxvariables.hh
+implicitforchheimerfluxvariables.hh
+implicitlocaljacobian.hh
+implicitlocalresidual.hh
+implicitmodel.hh
+implicitporousmediaproblem.hh
+implicitproblem.hh
+implicitproperties.hh
+implicitpropertydefaults.hh
+implicitvelocityoutput.hh
+implicitvolumevariables.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/implicit/common)
