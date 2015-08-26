@@ -235,9 +235,9 @@ public:
         {
             if(eIt->partitionType() == Dune::InteriorEntity)
             {
-              this->localResidual().evalPhaseStorage(*eIt, phaseIdx);
+                this->localResidual().evalPhaseStorage(*eIt, phaseIdx);
 
-              for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
+                for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
                     storage += this->localResidual().storageTerm()[i];
             }
         }
@@ -308,7 +308,7 @@ public:
     {
 
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
+        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
 
         // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
@@ -385,6 +385,12 @@ public:
 #else
                 int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
 #endif
+                volVars.update(sol[dofIdxGlobal],
+                               this->problem_(),
+                               *eIt,
+                               fvGeometry,
+                               scvIdx,
+                               false);
 
                 GlobalPosition globalPos = fvGeometry.subContVol[scvIdx].global;
                 (*Sg)[dofIdxGlobal]             = elemVolVars[scvIdx].saturation(nPhaseIdx);
