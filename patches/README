@@ -1,7 +1,12 @@
+- If you want to run a Dumux multidomain model with Dune 2.4, the module
+  dune-multidomaingrid has to be patched: apply multidomaingrid-2.3.patch in the
+  directory containing the releases/2.3-branch of dune-multidomaingrid, e.g.:
+  patch -p1 <../dumux/patches/multidomaingrid-2.3.patch
+
 - If the AMGBackend should be used without SuperLU as coarse grid solver, it can
   be benefitial to decrease the corresponding tolerance. To do so, apply the
   patch istl-2.3.0.patch in your directory containing
-  DUNE-ISTL 2.3.0, e.g.:
+  dune-istl 2.3.0, e.g.:
   patch -p1 <../dumux/patches/istl-2.3.0.patch
 
 - If UG has been installed for parallel usage, and you want to run a Dumux
