@@ -141,9 +141,8 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    FuelCellProblem(TimeManager &timeManager,
-                     const GridView &gridView)
-        : ParentType(timeManager, GridCreator::grid().leafGridView())
+    FuelCellProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
         nTemperature_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, NTemperature);
         nPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, NPressure);
@@ -168,12 +167,6 @@ public:
     }
 
     /*!
-     * \brief Called directly after the time integration.
-     */
-    void postTimeStep()
-    { }
-
-    /*!
      * \name Problem parameters
      */
 
@@ -193,19 +186,7 @@ public:
     Scalar temperature() const
     { return temperature_; }
 
-    void sourceAtPos(PrimaryVariables &values,
-                     const GlobalPosition &globalPos) const
-    {
-        values = 0;
-    }
-
-    void source(PrimaryVariables &values, const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx, const VolumeVariables &volVars) const
-    {
-        values = 0;
-    }
-
+    //! \copydoc Dumux::ImplicitProblem::solDependentSource()
     void solDependentSource(PrimaryVariables &values,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,
@@ -341,9 +322,7 @@ public:
         ScalarField *reactionSourceH2O = this->resultWriter().allocateManagedBuffer (numDofs);
         ScalarField *reactionSourceO2 = this->resultWriter().allocateManagedBuffer (numDofs);
 
-        auto eIt = this->gridView().template begin<0>();
-        const auto eEndIt = this->gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (auto eIt = this->gridView().template begin<0>(); eIt != this->gridView().template end<0>(); ++eIt)
         {
             FVElementGeometry fvGeometry;
             fvGeometry.update(this->gridView(), *eIt);
