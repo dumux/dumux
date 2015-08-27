@@ -101,8 +101,8 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename Grid::ctype CoordScalar;
-    typedef Dumux::miscible2pncComposition<Scalar, FluidSystem> miscible2pncComposition;
-    typedef Dumux::computeFromReferencePhase2pncmin<Scalar, FluidSystem> computeFromReferencePhase2pncmin;
+    typedef Dumux::Miscible2pNCComposition<Scalar, FluidSystem> Miscible2pNCComposition;
+    typedef Dumux::ComputeFromReferencePhase2pNCMin<Scalar, FluidSystem> ComputeFromReferencePhase2pNCMin;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -290,7 +290,7 @@ public:
             	fluidState.setMoleFraction(wPhaseIdx, compIdx, priVars[compIdx]);
             }
 
-            miscible2pncComposition::solve(fluidState,
+            Miscible2pNCComposition::solve(fluidState,
                                             paramCache,
                                             wPhaseIdx,	//known phaseIdx
                                             /*setViscosity=*/true,
@@ -339,7 +339,7 @@ public:
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase2pNc" constraint solver
-            computeFromReferencePhase2pncmin::solve(fluidState,
+            ComputeFromReferencePhase2pNCMin::solve(fluidState,
                                                     paramCache,
                                                     nPhaseIdx,
                                                     nPhaseOnly,
@@ -376,7 +376,7 @@ public:
 //             calculate the composition of the remaining phases (as
 //             well as the densities of all phases). this is the job
 //             of the "ComputeFromReferencePhase2pNc" constraint solver
-            computeFromReferencePhase2pncmin::solve(fluidState,
+            ComputeFromReferencePhase2pNCMin::solve(fluidState,
                                                     paramCache,
                                                     wPhaseIdx,
                                                     wPhaseOnly,

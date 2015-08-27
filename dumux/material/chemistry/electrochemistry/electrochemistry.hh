@@ -65,23 +65,26 @@ class ElectroChemistry
     enum {
         //indices of the phases
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
+        nPhaseIdx = Indices::nPhaseIdx
+    };
+    enum {
         //indices of the components
         wCompIdx = FluidSystem::wCompIdx, //major component of the liquid phase
         nCompIdx = FluidSystem::nCompIdx, //major component of the gas phase
-        O2Idx = wCompIdx + 2,
-
+        O2Idx = wCompIdx + 2
+    };
+    enum {
         //indices of the primary variables
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
         switchIdx = Indices::switchIdx, //liquid saturation or mole fraction
-        temperatureIdx = FluidSystem::numComponents, //temperature
-
+        temperatureIdx = FluidSystem::numComponents //temperature
+    };
+    enum {
         //equation indices
         conti0EqIdx = Indices::conti0EqIdx,
         contiH2OEqIdx = conti0EqIdx + wCompIdx,
         contiO2EqIdx = conti0EqIdx + wCompIdx + 2,
-        energyEqIdx = FluidSystem::numComponents, //energy equation
+        energyEqIdx = FluidSystem::numComponents //energy equation
     };
 
 public:

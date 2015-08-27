@@ -57,7 +57,7 @@ namespace Dumux {
  * - if the setInternalEnergy parameter is true, also specific enthalpies and internal energies of *all* phases
  */
 template <class Scalar, class FluidSystem>
-class miscible2pncComposition
+class Miscible2pNCComposition
 {
     static const int numPhases = FluidSystem::numPhases;
     static const int numComponents = FluidSystem::numComponents;

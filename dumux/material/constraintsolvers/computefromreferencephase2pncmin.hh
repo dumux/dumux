@@ -65,7 +65,7 @@ namespace Dumux {
  * - if the setEnthalpy parameter is true, also specific enthalpies and internal energies of *all* phases
  */
 template <class Scalar, class FluidSystem>
-class computeFromReferencePhase2pncmin
+class ComputeFromReferencePhase2pNCMin
 {
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };

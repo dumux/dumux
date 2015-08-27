@@ -50,13 +50,18 @@ class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryMode
     typedef Dumux::Constants<Scalar> Constant;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
+    enum {
+        //indices of the components
+        wCompIdx = FluidSystem::wCompIdx, //major component of the liquid phase
+        nCompIdx = FluidSystem::nCompIdx, //major component of the gas phase
+        O2Idx = wCompIdx + 2
+    };
     enum { //equation indices
             conti0EqIdx = Indices::conti0EqIdx,
             contiH2OEqIdx = conti0EqIdx + wCompIdx,
             contiO2EqIdx = conti0EqIdx + wCompIdx + 2,
             energyEqIdx = FluidSystem::numComponents, //energy equation
-        };
+    };
 
 public:
     /*!
@@ -76,12 +81,13 @@ public:
         static Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.UpperRightY);
         static Scalar nCellsY = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.NumberOfCellsY);
         static Scalar thermoneutralVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.ThermoneutralVoltage);
+        static Scalar cellVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.CellVoltage);
 
         //initialise current density
         Scalar currentDensity = 0.0;
 
         //call internal method to calculate the current density
-        currentDensity = this->calculateCurrentDensity_(volVars, maxIter);
+        currentDensity = ParentType::calculateCurrentDensity_(volVars, maxIter);
 
         //correction to account for actually relevant reaction area
         //current density has to be devided by the half length of the box

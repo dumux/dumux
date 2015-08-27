@@ -97,8 +97,8 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename Grid::ctype CoordScalar;
-    typedef Dumux::miscible2pncComposition<Scalar, FluidSystem> miscible2pncComposition;
-    typedef Dumux::computeFromReferencePhase2pnc<Scalar, FluidSystem> computeFromReferencePhase2pnc;
+    typedef Dumux::Miscible2pNCComposition<Scalar, FluidSystem> Miscible2pNCComposition;
+    typedef Dumux::ComputeFromReferencePhase2pNC<Scalar, FluidSystem> ComputeFromReferencePhase2pNC;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -258,13 +258,13 @@ public:
             // constraint solver
 
             // set the known mole fractions in the fluidState so that they
-            // can be used by the miscible2pncComposition constraint solver
+            // can be used by the Miscible2pNCComposition constraint solver
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
                 fluidState.setMoleFraction(wPhaseIdx, compIdx, primaryVariables[compIdx]);
             }
 
-            miscible2pncComposition::solve(fluidState,
+            Miscible2pNCComposition::solve(fluidState,
                         paramCache,
                         wPhaseIdx,	//known phaseIdx
                         /*setViscosity=*/true,
@@ -296,8 +296,8 @@ public:
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
-            // of the "computeFromReferencePhase2pnc" constraint solver
-                computeFromReferencePhase2pnc::solve(fluidState,
+            // of the "ComputeFromReferencePhase2pNC" constraint solver
+                ComputeFromReferencePhase2pNC::solve(fluidState,
                                                 paramCache,
                                                 nPhaseIdx,
                                                 /*setViscosity=*/true,
@@ -332,8 +332,8 @@ public:
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
-            // of the "computeFromReferencePhase2pnc" constraint solver
-            computeFromReferencePhase2pnc::solve(fluidState,
+            // of the "ComputeFromReferencePhase2pNC" constraint solver
+            ComputeFromReferencePhase2pNC::solve(fluidState,
                                                 paramCache,
                                                 wPhaseIdx,
                                                 /*setViscosity=*/true,

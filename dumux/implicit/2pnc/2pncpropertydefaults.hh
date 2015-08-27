@@ -36,9 +36,10 @@
 #include "2pncproperties.hh"
 #include "2pncnewtoncontroller.hh"
 
-
+#include <dumux/implicit/nonisothermal/nipropertydefaults.hh>
 #include <dumux/implicit/common/implicitdarcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 namespace Dumux
 {
@@ -125,10 +126,8 @@ public:
     typedef typename MaterialLaw::Params type;
 };
 
-//! Use the 2pnc local residual operator
-SET_TYPE_PROP(TwoPNC,
-              LocalResidual,
-              TwoPNCLocalResidual<TypeTag>);
+//! Use the 2pnc local residual
+SET_TYPE_PROP(TwoPNC, LocalResidual, TwoPNCLocalResidual<TypeTag>);
 
 //! Use the 2pnc newton controller
 SET_TYPE_PROP(TwoPNC, NewtonController, TwoPNCNewtonController<TypeTag>);
@@ -162,6 +161,50 @@ SET_BOOL_PROP(TwoPNC, ProblemEnableGravity, true);
 
 //! Disable velocity output by default
 SET_BOOL_PROP(TwoPNC, VtkAddVelocity, false);
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(NonIsothermal, ThermalConductivityModel)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+public:
+    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+};
+
+//! temperature is already written by the isothermal model
+SET_BOOL_PROP(TwoPNCNI, NiOutputLevel, 0);
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+
+// set isothermal Model
+SET_TYPE_PROP(TwoPNCNI, IsothermalModel, TwoPNCModel<TypeTag>);
+
+// set isothermal FluxVariables
+SET_TYPE_PROP(TwoPNCNI, IsothermalFluxVariables, TwoPNCFluxVariables<TypeTag>);
+
+//set isothermal VolumeVariables
+SET_TYPE_PROP(TwoPNCNI, IsothermalVolumeVariables, TwoPNCVolumeVariables<TypeTag>);
+
+//set isothermal LocalResidual
+SET_TYPE_PROP(TwoPNCNI, IsothermalLocalResidual, TwoPNCLocalResidual<TypeTag>);
+
+//set isothermal Indices
+SET_TYPE_PROP(TwoPNCNI, IsothermalIndices, TwoPNCIndices<TypeTag, /*PVOffset=*/0>);
+
+//set isothermal NumEq
+SET_PROP(TwoPNCNI, IsothermalNumEq)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+
+public:
+    static const int value = FluidSystem::numComponents;
+};
+
+
 }
 
 }

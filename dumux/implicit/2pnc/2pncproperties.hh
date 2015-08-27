@@ -31,6 +31,7 @@
 
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
+#include <dumux/implicit/nonisothermal/niproperties.hh>
 
 namespace Dumux
 {
@@ -45,6 +46,11 @@ namespace Properties
 NEW_TYPE_TAG(TwoPNC);
 NEW_TYPE_TAG(BoxTwoPNC, INHERITS_FROM(BoxModel, TwoPNC));
 NEW_TYPE_TAG(CCTwoPNC, INHERITS_FROM(CCModel, TwoPNC));
+
+//! The type tag for the implicit non-isothermal two phase n component problems
+NEW_TYPE_TAG(TwoPNCNI, INHERITS_FROM(TwoPNC, NonIsothermal));
+NEW_TYPE_TAG(BoxTwoPNCNI, INHERITS_FROM(BoxModel, TwoPNCNI));
+NEW_TYPE_TAG(CCTwoPNCNI, INHERITS_FROM(CCModel, TwoPNCNI));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
