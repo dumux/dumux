@@ -23,7 +23,6 @@ An overview of all availabe parameters is given in \ref parameterlist.txt.
 
 \section features Features
 
-An overview of special features implemented in the Dumux-test-problems is given in \ref featurelist.txt.
-<br>The list is currently in progress, it will be completed soon.
+An overview of special features implemented in the DuMuX-test-problems is given in \ref featurelist.txt.
 
 */
