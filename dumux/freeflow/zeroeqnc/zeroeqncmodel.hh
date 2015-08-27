@@ -144,6 +144,7 @@ public:
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
         ScalarField &D = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mut = *writer.allocateManagedBuffer(numElements);
+        ScalarField &nut = *writer.allocateManagedBuffer(numElements);
         ScalarField &lmix = *writer.allocateManagedBuffer(numElements);
         ScalarField &uPlus = *writer.allocateManagedBuffer(numElements);
         ScalarField &yPlus = *writer.allocateManagedBuffer(numElements);
@@ -245,6 +246,7 @@ public:
 
             unsigned int numFluxVars = 0;
             Scalar sumDynamicEddyViscosity = 0.0;
+            Scalar sumKinematicEddyViscosity = 0.0;
             Scalar sumMixingLength = 0.0;
             Scalar sumUPlus = 0.0;
             Scalar sumYPlus = 0.0;
@@ -263,6 +265,7 @@ public:
                 fluxFile << std::endl;
 
                 sumDynamicEddyViscosity += fluxVars.dynamicEddyViscosity();
+                sumKinematicEddyViscosity += fluxVars.kinematicEddyViscosity();
                 sumMixingLength += fluxVars.mixingLength();
                 sumUPlus += fluxVars.uPlus();
                 sumYPlus += fluxVars.yPlusRough();
@@ -272,6 +275,7 @@ public:
 
             int eIdxGlobal = this->elementMapper().map(*eIt);
             mut[eIdxGlobal] = sumDynamicEddyViscosity / numFluxVars;
+            nut[eIdxGlobal] = sumKinematicEddyViscosity / numFluxVars;
             lmix[eIdxGlobal] = sumMixingLength / numFluxVars;
             uPlus[eIdxGlobal] = sumUPlus / numFluxVars;
             yPlus[eIdxGlobal] = sumYPlus / numFluxVars;
@@ -280,6 +284,7 @@ public:
         fluxFile.close();
 
         writer.attachCellData(mut, "mu_t");
+        writer.attachCellData(nut, "nu_t");
         writer.attachCellData(lmix, "l_mix");
         writer.attachCellData(uPlus, "u^+");
         writer.attachCellData(yPlus, "y^+");

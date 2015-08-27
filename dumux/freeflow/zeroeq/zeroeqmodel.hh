@@ -140,6 +140,7 @@ public:
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
         VectorField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
         ScalarField &mut = *writer.allocateManagedBuffer(numElements);
+        ScalarField &nut = *writer.allocateManagedBuffer(numElements);
         ScalarField &lmix = *writer.allocateManagedBuffer(numElements);
         ScalarField &uPlus = *writer.allocateManagedBuffer(numElements);
         ScalarField &yPlus = *writer.allocateManagedBuffer(numElements);
@@ -213,6 +214,7 @@ public:
 
             unsigned int numFluxVars = 0;
             Scalar sumDynamicEddyViscosity = 0.0;
+            Scalar sumKinematicEddyViscosity = 0.0;
             Scalar sumMixingLength = 0.0;
             Scalar sumUPlus = 0.0;
             Scalar sumYPlus = 0.0;
@@ -230,6 +232,7 @@ public:
                 fluxVarsFile << std::endl;
 
                 sumDynamicEddyViscosity += fluxVars.dynamicEddyViscosity();
+                sumKinematicEddyViscosity += fluxVars.kinematicEddyViscosity();
                 sumMixingLength += fluxVars.mixingLength();
                 sumUPlus += fluxVars.uPlus();
                 sumYPlus += fluxVars.yPlusRough();
@@ -238,6 +241,7 @@ public:
 
             int eIdxGlobal = this->elementMapper().map(*eIt);
             mut[eIdxGlobal] = sumDynamicEddyViscosity / numFluxVars;
+            nut[eIdxGlobal] = sumKinematicEddyViscosity / numFluxVars;
             lmix[eIdxGlobal] = sumMixingLength / numFluxVars;
             uPlus[eIdxGlobal] = sumUPlus / numFluxVars;
             yPlus[eIdxGlobal] = sumYPlus / numFluxVars;
@@ -245,6 +249,7 @@ public:
         fluxVarsFile.close();
 
         writer.attachCellData(mut, "mu_t");
+        writer.attachCellData(nut, "nu_t");
         writer.attachCellData(lmix, "l_mix");
         writer.attachCellData(uPlus, "u^+");
         writer.attachCellData(yPlus, "y^+");
@@ -258,7 +263,7 @@ public:
      */
     void writeVolVarsHeader(std::ofstream &stream)
     {
-//         stream << "# time end" << std::endl;
+        std::cout << "Writing volVars file" << std::endl;
         stream << "#globalPos[0]"
                << "," << "globalPos[1]"
                << "," << "velocity[0]"
@@ -291,13 +296,14 @@ public:
      */
     void writeFluxVarsHeader(std::ofstream &stream)
     {
-//         stream << "# time end" << std::endl;
+        std::cout << "Writing fluxVars file" << std::endl;
         stream << "#globalPos[0]"
                << "," << "globalPos[1]"
                << "," << "uPlus"
                << "," << "yPlus"
                << "," << "uStar"
-               << "," << "eddyViscosity"
+               << "," << "dynamicEddyViscosity"
+               << "," << "kinematicEddyViscosity"
                << "," << "mixingLength";
     }
 
@@ -314,6 +320,7 @@ public:
                << "," << fluxVars.yPlusRough()
                << "," << fluxVars.frictionVelocityWall()
                << "," << fluxVars.dynamicEddyViscosity()
+               << "," << fluxVars.kinematicEddyViscosity()
                << "," << fluxVars.mixingLength();
     }
 
