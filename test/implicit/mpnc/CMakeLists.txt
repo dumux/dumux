@@ -36,9 +36,10 @@ add_dumux_test(test_boxmpnckinetic test_boxmpnckinetic test_boxmpnckinetic.cc
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/evaporationatmosphere-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/evaporationatmosphere-00006.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxmpnckinetic")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxmpnckinetic"
+                 --zeroThreshold {"TnMinusTs":0.5,"TwMinusTn":0.5,"velocity_w_1":2e-12})
 
-  # build target for the energy kinetic test problem, two energy balance equations
+# build target for the energy kinetic test problem, two energy balance equations
 add_dumux_test(test_boxmpncthermalnonequil test_boxmpncthermalnonequil test_boxmpncthermalnonequil.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy

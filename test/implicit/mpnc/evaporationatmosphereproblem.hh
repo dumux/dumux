@@ -89,10 +89,8 @@ SET_PROP(EvaporationAtmosphereProblem, Grid)
 {
 #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
-#elif HAVE_UG
-    typedef typename Dune::UGGrid<2> type;
 #else
-    typedef typename Dune::YaspGrid<2> type;
+    typedef typename Dune::UGGrid<2> type;
 #endif
 };
 
