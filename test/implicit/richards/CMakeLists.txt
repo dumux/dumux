@@ -53,7 +53,7 @@ add_dumux_test(test_boxrichardsniconduction test_boxrichardsniconduction test_bo
                  --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductionbox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconduction-00007.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconduction"
-                 --zeroThreshold {"velocity":1e-16})
+                 --zeroThreshold {"velocity":1e-8})
 
 add_dumux_test(test_ccrichardsniconduction test_ccrichardsniconduction test_ccrichardsniconduction.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
@@ -61,7 +61,7 @@ add_dumux_test(test_ccrichardsniconduction test_ccrichardsniconduction test_ccri
                  --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductioncc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction-00007.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction"
-                 --zeroThreshold {"velocity":1e-16})
+                 --zeroThreshold {"velocity":1e-8})
 
 #install sources
 install(FILES

@@ -24,7 +24,7 @@ add_dumux_test(test_box1p2cniconduction test_box1p2cniconduction test_box1p2cnic
                  --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniboxconduction-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/box1p2cniconduction-00007.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1p2cniconduction"
-                 --zeroThreshold {"velocity":1e-16})
+                 --zeroThreshold {"velocity":1e-8})
 
 add_dumux_test(test_box1p2cniconvection test_box1p2cniconvection test_box1p2cniconvection.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
@@ -40,7 +40,7 @@ add_dumux_test(test_cc1p2cniconduction test_cc1p2cniconduction test_cc1p2cnicond
                  --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccconduction-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/cc1p2cniconduction-00007.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1p2cniconduction"
-                 --zeroThreshold {"velocity":1e-16})
+                 --zeroThreshold {"velocity":1e-8})
 
 add_dumux_test(test_cc1p2cniconvection test_cc1p2cniconvection test_cc1p2cniconvection.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
