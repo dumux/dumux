@@ -226,11 +226,8 @@ public:
                     localPositions[dimIdx][nLeft+nRight+i+1] = localPositions[dimIdx][nLeft+nRight+i] + hI;
                 }
 
-            if (localPositions[dimIdx][numVertices-1] != 1.0)
-            {
-                for (int i = 0; i < numVertices; i++)
-                    localPositions[dimIdx][i] /= localPositions[dimIdx][numVertices-1];
-            }
+            for (int i = 0; i < numVertices; i++)
+                localPositions[dimIdx][i] /= localPositions[dimIdx][numVertices-1];
         }
 
         Dune::FieldVector<Scalar,dim> local;
