@@ -393,19 +393,6 @@ protected:
                             boundaryVars.face().normal;
 
                         Dune::FieldMatrix<Scalar, dim, dim> velGrad = boundaryVars.velocityGrad();
-                        if (enableUnsymmetrizedVelocityGradient)
-                        {
-                            // nothing has to be done in this case:
-                            // grad v
-                        }
-//                         else
-//                         {
-//                             // compute symmetrized gradient for the momentum flux:
-//                             // grad v + (grad v)^T
-//                             for (int i=0; i<dim; ++i)
-//                                 for (int j=0; j<dim; ++j)
-//                                     velGrad[i][j] += boundaryVars.velocityGrad()[j][i];
-//                         }
 
                         DimVector muGradVelNormal(0.0);
                         velGrad.umv(boundaryFaceNormal, muGradVelNormal);
@@ -488,24 +475,15 @@ protected:
                 DimVector tangent;
                 if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(stabilizationBeta_, 0.0, 1.0e-30))
                 {
+                    if (dim == 3)
+                        DUNE_THROW(Dune::NotImplemented, "The beta-stabilization is only implemented for 2D.");
+
                     const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
+
                     tangent[0] = elementUnitNormal[1];  //TODO: 3D
                     tangent[1] = -elementUnitNormal[0];
 
                     Dune::FieldMatrix<Scalar, dim, dim> velGrad = boundaryVars.velocityGrad();
-                    if (enableUnsymmetrizedVelocityGradient)
-                    {
-                        // nothing has to be done in this case:
-                        // grad v
-                    }
-//                     else
-//                     {
-//                         // compute symmetrized gradient for the momentum flux:
-//                         // mu (grad v + (grad v)^t)
-//                         for (int i=0; i<dim; ++i)
-//                             for (int j=0; j<dim; ++j)
-//                                 velGrad[i][j] += boundaryVars.velocityGrad()[j][i];
-//                     }
 
                     DimVector muGradVelTangential(0.0);
                     velGrad.mv(tangent, muGradVelTangential);
@@ -645,7 +623,9 @@ protected:
      */
     void interpolateCornerPoints_(const BoundaryTypes &bcTypes, const int scvIdx)
     {
-        // TODO: 3D
+        if (dim == 3)
+            DUNE_THROW(Dune::NotImplemented, "The function interpolateCornerPoints_() is only implemented for 2D.");
+
         if (bcTypes.isCouplingInflow(massBalanceIdx) || bcTypes.isCouplingOutflow(massBalanceIdx))
         {
             if (scvIdx == 0 || scvIdx == 3)
