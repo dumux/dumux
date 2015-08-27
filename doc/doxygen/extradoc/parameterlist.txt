@@ -7,5 +7,127 @@
  * The listed run-time parameters are in general available,
  * but we point out that a certain model might not be able
  * to use every parameter!
- * \htmlinclude parameters.html
+ *
+ * | Group | Parameter | Type | Default Value | Explanation
+ * | :- | :- | :- | :- | :-
+ * | - | ParameterFile | std::string | executable.input | The name of the parameter file
+ * | \b FreeFlow | BoundaryLayerModel | int | 0 | 0 for none, 1 Blasius, 2 and 3 turbulent BL, 9 constant thickness
+ * | | BoundaryLayerOffset | Scalar | - | virtual run-up distance for BL models
+ * | | ConstThickness | Scalar | - | constant BL thickness (BL model 9)
+ * | | ExponentMTC | Scalar | - | Mass transfer coefficient for S^MTC
+ * | | MassTransferModel | int | 0 | 0 for none, 1 power law, 2 Schluender model
+ * | | RefMassfrac | Scalar | - | Free stream water mass fraction
+ * | | VxMax | Scalar | - | Free stream velocity
+ * | \b Grid | File | std::string | - | The name of the grid file, if DGF should be used
+ * | | NumberOfCellsX | int | - | The number of cells in x direction, if GridCreator should be used
+ * | | NumberOfCellsY | int | - | The number of cells in y direction, if GridCreator should be used
+ * | | NumberOfCellsZ | int | - | The number of cells in z direction, if GridCreator should be used
+ * | | UpperRightX | Scalar | - | The x-coordinate of the upper back right corner, if GridCreator should be used
+ * | | UpperRightY | Scalar | - | The y-coordinate of the upper back right corner, if GridCreator should be used
+ * | | UpperRightZ | Scalar | - | The z-coordinate of the upper back right corner, if GridCreator should be used
+ * | \b GridAdapt | AdaptionInterval | int | 1 | Time step interval for adaption
+ * | | CoarsenPercentileFlux | Scalar | 0.2 | Percentile of cells coarsened because of flux criterion
+ * | | CoarsenPercentileSat | Scalar | 0.2 | Percentile of cells coarsened because of saturation criterion
+ * | | CoarsenThresholdFlux | Scalar | 0.2 | Flux threshold for coarsening cells
+ * | | CoarsenThresholdSat | Scalar | 0.2 | Saturation threshold for coarsening cells
+ * | | CoarsenTolerance | Scalar | 0.001 | Tolerance for coarsening
+ * | | EnableInitializationIndicator | bool | FALSE | Switch the use of initial grid adaption on/off
+ * | | EnableMultiPointFluxApproximation | bool | TRUE | HangingNode: Two-point flux approximation (false) or MPFA (true)
+ * | | MaxInteractionVolumes | int | 4 | Maximum number of interaction regions used
+ * | | MaxLevel | int | 1 | Maximum allowed level
+ * | | MinLevel | int | 0 | Mimimum allowed level
+ * | | RefineAtDirichletBC | bool | FALSE | Switch for refinement at Dirichlet BC's -> not used by all indicators!
+ * | | RefineAtFluxBC | bool | FALSE | Switch for refinement at Neumann BC's -> not used by all indicators!
+ * | | RefineAtSource | bool | FALSE | Switch for refinement at sources -> not used by all indicators!
+ * | | RefinePercentileFlux | Scalar | 0.8 | Percentile of cells refined because of flux criterion
+ * | | RefinePercentileSat | Scalar | 0.8 | Percentile of cells refined because of saturation criterion
+ * | | RefineThresholdFlux | Scalar | 0.8 | Flux threshold for refining cells
+ * | | RefineThresholdSat | Scalar | 0.8 | Saturation threshold for refining cells
+ * | | RefineTolerance | Scalar | 0.05 | Tolerance for refinement
+ * | \b Impet | CFLFactor | Scalar | 1 | Scalar factor for additional scaling of the time step
+ * | | DtVariationRestrictionFactor | Scalar | std::numeric_limits<double>::max() | |
+ * | | EnableVolumeIntegral | bool | TRUE | Enables volume integral in the pressure equation (volume balance formulation)
+ * | | ErrorTermFactor | Scalar | 0.5 | Scaling factor for the error term
+ * | | ErrorTermLowerBound | Scalar | 0.1 (2p), 0.2 (2p2c) | Lower threshold used for the error term evaluation
+ * | | ErrorTermUpperBound | Scalar | 0.9 | Upper threshold used for the error term evaluation
+ * | | IterationFlag | int | 0 | 0 = no iterations, 1 = iterate IterationNumber iterations, 2 = iterate until converged or IterationNumber is reached
+ * | | IterationNumber | int | 2 | Number of iterations if IMPET iterations are enabled by the IterationFlags
+ * | | MaximumDefect | Scalar | 1.00E-005 | Maximum Defect if IMPET iterations are enabled by the IterationFlags
+ * | | PorosityThreshold | Scalar | 1e-6 | |
+ * | | RelaxationFactor | Scalar | 1 | 1 = new solution is new solution, 0 = old solution is new solution
+ * | | RestrictFluxInTransport | int | 0 | Restrict flux if direction reverses after pressure equation
+ * | | SubCFLFactor | Scalar | 1 | CFL factor for local time-stepping
+ * | | SwitchNormals | bool | FALSE | |
+ * | \b Implicit | EnableHints | bool | FALSE | use the already calculated solutions as starting values of the volume variables
+ * | | EnableJacobianRecycling | bool | FALSE | Specify whether the jacobian matrix of the last iteration of a time step should be reused
+ * | | EnablePartialReassemble | bool | FALSE | Specify whether the jacobian matrix should be only reassembled for elements where at least one vertex is above the specified tolerance
+ * | | EnableSmoothUpwinding | bool | FALSE | Use the smooth upwinding method (MPNC only)
+ * | | MassUpwindWeight | Scalar | 1 (0.5 for 1p) | The value of the weight of the upwind direction in the mass conservation equations
+ * | | MaxTimeStepDivisions | int | 10 | |
+ * | | MobilityUpwindWeight | Scalar | 1 (0.5 for 1p) | Weight for the upwind mobility in the velocity calculation
+ * | | NumericDifferenceMethod | int | 1 | which kind of method should be used to numerically calculate the partial derivatives of the residual (1: forward, 0: central, -1: backward)
+ * | | UseTwoPointFlux | bool | FALSE | indicates whether two-point flux should be used
+ * | | WithStabilization | bool | TRUE | |
+ * | \b LinearSolver | GMResRestart | int | 10 | restart parameter for GMRes
+ * | | MaxIterations | double | 250 (imp), 500 (dec) | maximum number of iterations of solver
+ * | | PreconditionerIterations | int | 1 | number of preconditioner iterations per solver iteration
+ * | | PreconditionerRelaxation | double | 1 | relaxation parameter for the preconditioner
+ * | | ResidualReduction | double | 1e-6 (imp), 1e-13 (dec) | target reduction of the initial residual
+ * | | Verbosity | int | 0 | Specifies the verbosity of the linear solver
+ * | \b MPFA | CalcVelocityInTransport | bool | FALSE | Enable facewise velocity calculation in the transport step (less efficient!)
+ * | | EnableComplexLStencil | bool | TRUE | Enable use of the two more complex (non-centered) L-shapes (3-d)
+ * | | EnableSimpleLStencil | bool | TRUE | Enable use of the two simpler (centered) L-shapes (3-d)
+ * | | EnableTPFA | bool | FALSE | Enable use of TPFA (3-d) if neighboring cells are of the same grid level
+ * | | TransmissibilityCriterion | int | 0 | 0 = default criterion, 1 = accumulative criterion
+ * | | TransmissibilityCriterionThreshold | Scalar | 1e-8 | Threshold for transmissibility choice
+ * | \b Newton | AbsTolerance | Scalar | 1.00E-005 | the value for the absolute error reduction below which convergence is declared
+ * | | EnableAbsoluteCriterion | bool | FALSE | indicate whether the absolute error should be used
+ * | | EnableChop | bool | TRUE | Chop the Newton update at the beginning of the non-linear solver (MPNC only)
+ * | | EnableRelativeCriterion | bool | TRUE | indicate whether the relative error should be used
+ * | | EnableResidualCriterion | bool | FALSE | Enable absolute criterion
+ * | | EnableShiftCriterion | bool | TRUE | Enable relative criterion for convergence 
+ * | | MaxRelativeShift | Scalar | 1e-8 | Set relative tolerance
+ * | | MaxSteps | int | 18 | Number of maximum iterations for the Newton method
+ * | | MaxTimeStepDivisions | int | 10 | |
+ * | | RelTolerance | Scalar | 1.00E-008 | the value for the relative error below which convergence is declared
+ * | | ResidualReduction | Scalar | 1e-5 | factor for reduction of error for iterative linear solvers
+ * | | SatisfyAbsAndRel | bool | FALSE | indicate whether both of the criteria should be satisfied to declare convergence
+ * | | SatisfyResidualAndShiftCriterion | bool | FALSE | Use absolute and relative criteria
+ * | | TargetSteps | int | 10 | The number of iterations at which the Newton method should aim at
+ * | | UseLineSearch | bool | FALSE | Specifies whether the update should be done using line search
+ * | | WriteConvergence | bool | FALSE | specifies whether the convergence rate and the global residual gets written out to disk for every Newton iteration
+ * | \b Pardiso | NumProcessors | int | - | |
+ * | \b PorousMedium | CharPoreDiameter | Scalar | - | Parameter for Schluender mass-transfer model
+ * | \b Problem | EnableGravity | bool | TRUE | Returns whether gravity is considered in the problem
+ * | | Salinity | Scalar | 1e-3 | |
+ * | \b SpatialParams | ForchCoeff | Scalar | 0.55 | Property for the forchheimer coefficient
+ * | \b Stokes | StabilizationAlpha | Scalar | 0 | The parameter for the stabilization
+ * | | StabilizationBeta | Scalar | 0 | The parameter for the stabilization at boundaries
+ * | \b TimeManager | DtInitial | Scalar | - | The initial time step size
+ * | | MaxTimeStepSize | Scalar | 1.00E+100 | maximum time step size
+ * | | PrintParameters | bool | TRUE | print used and unused parameters and their values at the end of the simulation
+ * | | PrintProperties | bool | FALSE | print used properties and their values at the end of the simulation
+ * | | Restart | Scalar | FALSE | use the restart mechanism
+ * | | SubTimestepVerbosity | int | 0 | |
+ * | | TEnd | Scalar | - | the final time until the simulation should run
+ * | \b Vtk | AddAverageMolarMass | bool | FALSE | add average molar mass to output (MPNC only)
+ * | | AddBoundaryTypes | bool | FALSE | add boundary types to output (MPNC only)
+ * | | AddDeltaP | bool | FALSE | Output of pressure minus a fixed value
+ * | | AddDensities | bool | TRUE | add densities to output (MPNC only)
+ * | | AddEnthalpies | bool | TRUE | add enthalpies to output (MPNC only)
+ * | | AddFugacities | bool | FALSE | add fugacities to output (MPNC only)
+ * | | AddInternalEnergies | bool | FALSE | add internal energies to output (MPNC only)
+ * | | AddMassFractions | bool | FALSE | add mass fractions to output (MPNC only)
+ * | | AddMobilities | bool | TRUE | add mobilities to output (MPNC only)
+ * | | AddMolarities | bool | FALSE | add molarities to output (MPNC only)
+ * | | AddMoleFractions | bool | TRUE | add mole fractions to output (MPNC only)
+ * | | AddPermeability | bool | FALSE | |
+ * | | AddPorosity | bool | TRUE | add porosity to output (MPNC only)
+ * | | AddPressures | bool | TRUE | add pressures to output (MPNC only)
+ * | | AddSaturations | bool | TRUE | add saturations to output (MPNC only)
+ * | | AddTemperatures | bool | FALSE | add temperatures to output (MPNC only)
+ * | | AddVelocities | bool | FALSE | add velocities to output (MPNC only)
+ * | | AddVelocity | bool | FALSE | add velocity to output (2p(ni) and 2p2c(ni) only)
+ * | | OutputLevel | int | 0 (2 for 2p2c) | Vtk output verbosity (0: only primary variables, >0 more depending on the model)
+ * | | RockMechanicsSignConvention | bool | TRUE | Compressive stress has positive sign
  */

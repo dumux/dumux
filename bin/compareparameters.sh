@@ -40,39 +40,44 @@ sed -i 's/,/, /g' new_parameters.csv
 sort -u new_parameters.csv -o new_parameters.csv
 # remove lines containing no parameter names
 sed -i '/, , /d' new_parameters.csv
-
+#adapt to doxygen format
+sed -i 's/^/ * | /' new_parameters.csv
+sed -i 's/, / | /g' new_parameters.csv
 
 # 2. obtain a list old_parameters.csv of all old parameters
-# convert the spreadsheet to csv
-if ! unoconv --format=csv -e FilterOptions=44,34,0,3,1/1/2/1/3/1/4/9/5/9 -o tmp.csv doc/doxygen/extradoc/parameters.ods; then
-  echo "Failed to convert parameters.ods. Be sure that it is not opened somewhere."
-  rm -f new_parameters.csv tmp.csv
-  exit 1
-fi
-unoconv --format=csv -i FilterOptions=44,34,0,3,1/1/2/1/3/1/4/9/5/9 -o old_parameters.csv tmp.csv
-rm tmp.csv
+cp -v doc/doxygen/extradoc/parameterlist.txt old_parameters.csv
+# truncate the test from file
+sed -i -e '1,12d' old_parameters.csv
 # remove lines containing no parameter names
-sed -i '/,,/d' old_parameters.csv
+sed -i '/| |  | /d' old_parameters.csv
+# remove bold format for parameter groups
+sed -i 's/ \\b / /g' old_parameters.csv
 # loop over all lines, add group name if necessary
 word=""
 while read line; do
-  word=$(echo "$line" | awk '{print $1;}')
+  word=$(echo "$line" | awk '{print $3;}')
   #echo "$word"
   firstletter=$(echo $word | head -c 1)
-  if [ $firstletter != "," ]; then
+  if [ "$firstletter" != "|" ]; then
    group=$word
   fi
-  if [ $group = "" ]; then
-   echo "No group found in line $line. Abort."
+  if [ "$group" = "" ]; then
+   echo "No group found in line $line."
   fi
   linewithoutgroup=$(echo "$line" | cut -d " " -f2-)
   echo "$group $linewithoutgroup" >>tmp.csv
 done <old_parameters.csv
 mv tmp.csv old_parameters.csv
-# format in the same way as new_parameters.csv
-sed -i 's/ //g' old_parameters.csv
-sed -i 's/,/, /g' old_parameters.csv
-sort -u old_parameters.csv -o old_parameters.csv
+# truncate the default and description information
+cat old_parameters.csv | while read line
+do
+  TEMP=`echo "${line% |*}"`
+  echo "${TEMP% |*}" >> tmp.csv
+done
+mv tmp.csv old_parameters.csv
+#adapt to doxygen format
+sed -i 's/| | /| /g' old_parameters.csv
+sed -i 's/^/ * | /' old_parameters.csv
 
 # 3. compare lists of old and new parameters
 # treat additions
@@ -81,8 +86,10 @@ if [[ -s added.csv ]]; then
   echo ""
   echo "Compared to parameters.ods, the following parameters have been _added_:"
   echo ""
-  echo "Group, Parameter, Type:"
+  echo "Group | Parameter | Type:"
+  echo "-------------------------"
   sed -i 's/+//g' added.csv
+  sed -i 's/ \* | //g' added.csv
   cat added.csv
   echo ""
   echo "Search for those parameters and their default values. If default values"
@@ -96,8 +103,11 @@ if [[ -s deleted.csv ]]; then
   echo ""
   echo "Compared to parameters.ods, the following parameters have been _deleted_:"
   echo ""
-  echo "Group, Parameter, Type:"
+  echo "Group | Parameter | Type:"
+  echo "-------------------------"
   sed -i 's/-//g' deleted.csv
+  sed -i 's/ \* | //g' deleted.csv
+  sed -i '/^\*/d' deleted.csv
   cat deleted.csv
   echo ""
   echo "Check whether those parameters really don't exist anymore by grepping for"
