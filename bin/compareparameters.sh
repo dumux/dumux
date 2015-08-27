@@ -84,7 +84,7 @@ sed -i 's/^/ * | /' old_parameters.csv
 diff -u old_parameters.csv new_parameters.csv | grep -E "^\+" | grep -v "\++" >added.csv
 if [[ -s added.csv ]]; then
   echo ""
-  echo "Compared to parameters.ods, the following parameters have been _added_:"
+  echo "Compared to parameterlist.txt, the following parameters have been _added_:"
   echo ""
   echo "Group | Parameter | Type:"
   echo "-------------------------"
@@ -95,13 +95,13 @@ if [[ -s added.csv ]]; then
   echo "Search for those parameters and their default values. If default values"
   echo "are set, you can find them by searching for GroupNameParameterName (one"
   echo "word only). Decide whether the parameter should be included in"
-  echo "doc/doxygen/extradoc/parameters.ods, possibly by discussing with the responsible guy."
+  echo "doc/doxygen/extradoc/parameterlist.txt, possibly by discussing with the responsible guy."
 fi
 # treat deletions
 diff -u old_parameters.csv new_parameters.csv | grep -E "^\-" | grep -v "\--" >deleted.csv
 if [[ -s deleted.csv ]]; then
   echo ""
-  echo "Compared to parameters.ods, the following parameters have been _deleted_:"
+  echo "Compared to parameterlist.txt, the following parameters have been _deleted_:"
   echo ""
   echo "Group | Parameter | Type:"
   echo "-------------------------"
@@ -111,17 +111,13 @@ if [[ -s deleted.csv ]]; then
   cat deleted.csv
   echo ""
   echo "Check whether those parameters really don't exist anymore by grepping for"
-  echo "their name. If so, delete the corresponding rows in doc/doxygen/extradoc/parameters.ods."
+  echo "their name. If so, delete the corresponding rows in doc/doxygen/extradoc/parameterlist.txt."
 fi
 # final remark
 if [[ ! -s added.csv && ! -s deleted.csv ]]; then
   echo ""
-  echo "Compared to parameters.ods, no parameters have been added or deleted."
+  echo "Compared to parameterlist.txt, no parameters have been added or deleted."
   echo ""
-else
-  echo ""
-  echo "_Important:_ If you change parameters.ods, be sure to export it to"
-  echo "parameters.html."
 fi
 # clean up
 rm -f old_parameters.csv new_parameters.csv added.csv deleted.csv
