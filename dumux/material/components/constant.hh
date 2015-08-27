@@ -19,10 +19,12 @@
 /*!
  * \file
  * \ingroup Components
- * \brief A component using a value of 1 for all fluid properties.
+ * \brief Setting constant fluid properties via the input file for testing purposes.
  */
-#ifndef DUMUX_UNIT_HH
-#define DUMUX_UNIT_HH
+#ifndef DUMUX_CONSTANT_HH
+#define DUMUX_CONSTANT_HH
+
+#include <dumux/common/parameters.hh>
 
 #include "component.hh"
 
@@ -31,12 +33,13 @@ namespace Dumux
 /*!
  * \ingroup Components
  *
- * \brief A component using a value of one for all fluid properties.
+ * \brief A component which returns run time specified values
+ *        for all fluid properties.
  *
- * \tparam Scalar The type used for scalar values
+ * \tparam Scalar  The type used for scalar values
  */
-template <class Scalar>
-class Unit : public Component<Scalar, Unit<Scalar> >
+template<class TypeTag, class Scalar>
+class Constant : public Component<Scalar, Constant<TypeTag, Scalar> >
 {
 
 public:
@@ -44,7 +47,7 @@ public:
      * \brief A human readable name for the component.
      */
     static const char *name()
-    { return "Unit"; }
+    { return "Constant"; }
 
     /*!
      * \brief Returns true if the liquid phase is assumed to be compressible
@@ -53,29 +56,65 @@ public:
     { return false; }
 
     /*!
-     * \brief Sets the density to 1 \f$\mathrm{[kg/m^3]}\f$.
+     * \brief Sets the liquid density in \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
      * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        return 1.0;
+        static const Scalar density
+            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidDensity);
+        return density;
     }
 
     /*!
-     * \brief Sets the viscosity to 1 \f$\mathrm{[Pa*s]}\f$.
+     * \brief Sets the liquid dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
      * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
-        return 1.0;
+        static const Scalar viscosity
+            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidKinematicViscosity);
+        return viscosity * liquidDensity(temperature, pressure);
     }
 
+
+    /*!
+     * \brief Returns true if the gas phase is assumed to be compressible
+     */
+    static bool gasIsCompressible()
+    { return false; }
+
+    /*!
+     * \brief Sets the gas density in \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * \param temperature phase temperature in \f$\mathrm{[K]}\f$
+     * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasDensity(Scalar temperature, Scalar pressure)
+    {
+        static const Scalar density
+            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasDensity);
+        return density;
+    }
+
+    /*!
+     * \brief Sets the gas dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
+     *
+     * \param temperature phase temperature in \f$\mathrm{[K]}\f$
+     * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasViscosity(Scalar temperature, Scalar pressure)
+    {
+        static const Scalar viscosity
+            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasKinematicViscosity);
+        return viscosity * gasDensity(temperature, pressure);
+    }
 };
 
 } // end namespace
 
-#endif
+#endif // DUMUX_CONSTANT_HH

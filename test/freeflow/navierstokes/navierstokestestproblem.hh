@@ -36,12 +36,10 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser.hh>
 
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 
 #include <dumux/freeflow/stokes/stokesmodel.hh>
-
-#include "n2constviscosity.hh"
 
 namespace Dumux
 {
@@ -71,7 +69,7 @@ namespace Dumux
     // Use nitrogen with a constant viscosity as gas phase
     SET_TYPE_PROP(NavierStokesTestProblem, Fluid,
                   Dumux::GasPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                  Dumux::N2ConstViscosity<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+                                  Dumux::Constant<TypeTag, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
     // Scalar is set to type double
     SET_TYPE_PROP(BoxStokes, Scalar, double);
