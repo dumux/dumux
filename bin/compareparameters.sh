@@ -4,6 +4,8 @@
 # retrieve all occurrences of GET_PARAM and GET_RUNTIME_PARAM
 find dumux/ -name '*.[ch][ch]' -exec grep 'GET_PARAM' {} \; | sort -u >new_parameters.csv
 find dumux/ -name '*.[ch][ch]' -exec grep 'GET_RUNTIME_PARAM' {} \; | sort -u >>new_parameters.csv
+# remove all lines containing CSTRING
+sed -i '/CSTRING/d' new_parameters.csv
 # remove #define's
 sed -i '/#define/d' new_parameters.csv
 # remove everything before GET_PARAM and GET_RUNTIME_PARAM
@@ -23,6 +25,8 @@ sed -i '/,.*,/!d' new_parameters.csv
 # append types to the end of the lines
 sed -i '/^bool,/ s/$/, bool/' new_parameters.csv
 sed -i '/^double,/ s/$/, double/' new_parameters.csv
+sed -i 's/unsigned int/int/' new_parameters.csv
+sed -i 's/unsigned/int/' new_parameters.csv
 sed -i '/^int,/ s/$/, int/' new_parameters.csv
 sed -i '/^Scalar,/ s/$/, Scalar/' new_parameters.csv
 sed -i '/^std::string,/ s/$/, std::string/' new_parameters.csv
@@ -59,25 +63,32 @@ while read line; do
   #echo "$word"
   firstletter=$(echo $word | head -c 1)
   if [ "$firstletter" != "|" ]; then
-   group=$word
+    group=$word
+    linewithoutgroup=$(echo "$line" | cut -d \| -f2-)
+    echo "$linewithoutgroup" >>tmp.csv
+  else
+    linewithoutgroup=$(echo "$line" | cut -d \| -f2-)
+    echo "$group$linewithoutgroup" >>tmp.csv
   fi
   if [ "$group" = "" ]; then
    echo "No group found in line $line."
   fi
-  linewithoutgroup=$(echo "$line" | cut -d " " -f2-)
-  echo "$group $linewithoutgroup" >>tmp.csv
 done <old_parameters.csv
 mv tmp.csv old_parameters.csv
 # truncate the default and description information
 cat old_parameters.csv | while read line
 do
-  TEMP=`echo "${line% |*}"`
+  TEMP=`echo "${line% |*|}"`
   echo "${TEMP% |*}" >> tmp.csv
 done
 mv tmp.csv old_parameters.csv
 #adapt to doxygen format
 sed -i 's/| | /| /g' old_parameters.csv
 sed -i 's/^/ * | /' old_parameters.csv
+# remove the line with the ParameterFile
+sed -i '/ParameterFile/d' old_parameters.csv
+# sort uniquely for consistency
+sort -u old_parameters.csv -o old_parameters.csv
 
 # 3. compare lists of old and new parameters
 # treat additions
