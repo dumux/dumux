@@ -71,14 +71,17 @@ public:
     /*!
      * \brief Sets the liquid dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
+     * Although the dynamic viscosity \f$\mathrm{[Pa*s]} is returned,
+     * the kinematic viscosity \f$\mathrm{[m^2/s]} is requested from run time input.
+     *
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
      * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar viscosity
+        static const Scalar kinematicViscosity
             = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidKinematicViscosity);
-        return viscosity * liquidDensity(temperature, pressure);
+        return kinematicViscosity * liquidDensity(temperature, pressure);
     }
 
 
@@ -104,14 +107,17 @@ public:
     /*!
      * \brief Sets the gas dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
+     * Although the dynamic viscosity \f$\mathrm{[Pa*s]} is returned,
+     * the kinematic viscosity \f$\mathrm{[m^2/s]} is requested from run time input.
+     *
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
      * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar viscosity
+        static const Scalar kinematicViscosity
             = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasKinematicViscosity);
-        return viscosity * gasDensity(temperature, pressure);
+        return kinematicViscosity * gasDensity(temperature, pressure);
     }
 };
 

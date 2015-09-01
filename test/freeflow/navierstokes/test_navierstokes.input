@@ -8,5 +8,5 @@ File = ./grids/test_navierstokes.dgf
 
 [Problem]
 EnableGravity = 0 # Disable gravity
-GasDensity = 1.1903
-GasKinematicViscosity = 0.011903
+GasDensity = 1.1903 # [kg/m^3]
+GasKinematicViscosity = 0.011903 # [m^2/s]

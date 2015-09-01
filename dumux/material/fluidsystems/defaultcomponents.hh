@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Provides defaults for all available components.
+ * \brief Provides defaults for the members of a fluidsystem.
  */
 #ifndef DUMUX_DEFAULT_COMPONENTS_HH
 #define DUMUX_DEFAULT_COMPONENTS_HH
@@ -44,19 +44,20 @@ namespace Dumux
 {
 namespace Properties
 {
-//! defines the components which are being used by the fluid system by
+//! Defines the components which are being used by the fluid system by
 //! default and how they are initialized
 NEW_PROP_TAG(DefaultComponents);
 
-//! defines the components which are actually being used by the fluid
-//! system
+//! Defines, if a detailed description for members of the fluidsystem is used
+NEW_PROP_TAG(EnableComplicatedFluidSystem);
+
+//! Defines the components which are actually being used by the fluidsystem
 NEW_PROP_TAG(Components);
 
-NEW_PROP_TAG(EnableComplicatedFluidSystem);
-NEW_PROP_TAG(Scalar);
-
+//! Specifies default component names and initializes the H2O fluid properties
 SET_PROP(NumericModel, DefaultComponents)
-{ private:
+{
+private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dumux::H2O<Scalar> H2O_IAPWS;
 
@@ -82,23 +83,18 @@ public:
     }
 };
 
-SET_PROP(NumericModel, Components)
-    : public GET_PROP(TypeTag, DefaultComponents)
-{};
+//! Initialize the components with default behavior
+SET_PROP(NumericModel, Components) : public GET_PROP(TypeTag, DefaultComponents) {};
 
-//! Enables detailed description of fluidsystems
-/*
+/*!
+ * \brief Enables a detailed description of the fluidsystem
+ *
  * Complicated but detailed members of fluidsystems (e.g. phase viscosity,
  * phase density) can be simplified for efficiency reasons with this property.
  * Typically, such high demands on accuracy are not needed, so this property
  * is set to "false" as the default.
- *
- * To enable it, use
- * SET_BOOL_PROP(MyTypeTag, EnableComplicatedFluidSystem, true);
  */
-
-SET_PROP(NumericModel, EnableComplicatedFluidSystem)
-{  static const bool value = false; };
+SET_BOOL_PROP(NumericModel, EnableComplicatedFluidSystem, false);
 
 } // namespace Properties
 } // namespace Dumux
