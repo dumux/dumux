@@ -1,8 +1,5 @@
 \section{Property System}
 \label{sec:propertysystem}
-\todo[inline]{Irgendwo sollten wir erklären wir Property Werte geholt werden und
-              was der Unterschied zwisch GET\_PROP\_VALUE, GET\_PARAM\_FROM\_GROUP
-              und GET\_RUNTIME\_PARAM\_FROM\_GROUP ist.}
 A high level overview over the property system's design and principle ideas
 are given, then follows a reference and a self-contained example.
 
@@ -32,8 +29,8 @@ how it was inherited.
 
 \subsection{How-to}
 All source files which use the property system should include
-the header file \texttt{dumux/ \hskip-1ex{}common/
-  \hskip-1ex{}propertysystem.hh}.  Declaration of type tags and
+the header file \path{dumux/common/propertysystem.hh}.
+Declaration of type tags and
 property tags as well as defining properties must be done inside the
 namespace \texttt{Dumux::Properties}.
 
@@ -371,13 +368,30 @@ int main()
 }
 \end{lstlisting}
 will yield the following output:
-\begin{lstlisting}[style=DumuxCode]
-top speed of sedan: 210
-top speed of truck: 100
-Properties for Sedan:
-  bool   AutomaticTransmission = 'true' defined at test_propertysystem.cc:68
-  int    GasUsage = '7' defined at test_propertysystem.cc:67
-  Inherited from CompactCar:
-    int    NumSeats = '5' defined at test_propertysystem.cc:55
-    int    TopSpeed = '::Dumux::Properties::GetProperty<TypeTag, ::Dumux::Properties::PTag::GasUsage>::p::value * 30' defined at test_propertysystem.cc:54
+\begin{lstlisting}[style=Bash, basicstyle=\ttfamily\scriptsize\let\textcolor\textcolordummy]
+$ top speed of sedan: 210
+$ top speed of truck: 100
+$ Properties for Sedan:
+$   bool   AutomaticTransmission = 'true' defined at test_propertysystem.cc:68
+$   int    GasUsage = '7' defined at test_propertysystem.cc:67
+$   Inherited from CompactCar:
+$     int    NumSeats = '5' defined at test_propertysystem.cc:55
+$     int    TopSpeed = '::Dumux::Properties::GetProperty<TypeTag, ::Dumux::Properties::PTag::GasUsage>::p::value * 30' defined at test_propertysystem.cc:54
 \end{lstlisting}
+
+\subsection{Property and Parameter Values}
+In \Dumux three different ways to obtain the value of a property are available:
+\begin{description}
+\item[\texttt{{\small GET\_PROP\_VALUE:}}]
+Always returns the \emph{compile-time} specified value of the property. This is
+needed for properties, which are not intended to be changed by parameter files.
+
+\item[\texttt{{\small GET\_PARAM\_FROM\_GROUP:}}]
+Returns the compile-time specified value, if this value is not be overwritten
+by the parameter input file.
+
+\item[\texttt{{\small GET\_RUNTIME\_PARAM\_FROM\_GROUP:}}]
+Always returns a \emph{run-time} specified value. If the value is not specified
+at run-time an error is thrown. This is needed for problem specific properties
+or properties, which do not have a meaningful default value.
+\end{description}

@@ -1,7 +1,6 @@
 \documentclass[11pt,a4paper,headinclude,footinclude,DIV16]{scrreprt}
-\usepackage[usenames,dvipsnames]{xcolor} % include at beginning because of compitibility issues
+\usepackage[usenames,dvipsnames,table]{xcolor} % include at beginning because of compitibility issues
 \usepackage[english]{babel}
-\usepackage[htt]{hyphenat}
 \usepackage[utf8]{inputenc}
 \usepackage[automark]{scrpage2}
 \usepackage[normalem]{ulem}
@@ -13,15 +12,12 @@
 \usepackage{enumerate}
 \usepackage{hyperref}
 \usepackage{graphicx}
-\usepackage{layout}
 \usepackage{listings}
-\usepackage{lscape}
 \usepackage{makeidx}
 \usepackage{pdflscape}
 \usepackage{rotating}
 \usepackage{subfig}
 \usepackage{tabularx}
-\usepackage{textcomp}
 \usepackage{theorem}
 \usepackage{tikz}
 \usepackage{tikz-qtree}
@@ -131,6 +127,7 @@ Then a quick start guide for the first \Dumux experience is provided.
 \input{3_tutorial}
 \input{3_tutorialcoupled}
 \input{3_tutorialdecoupled}
+\input{3_furtherpractice}
 
 \chapter{Overview and Infrastructure}
 This chapter provides an overview of the general structure in \Dumux \ref{sc_structure}
@@ -152,7 +149,7 @@ This chapter contains detailed information for those who are interested
 in deeper modifications of underlying \Dumux models, classes, functions, etc.
 \input{5_models}
 \input{5_spatialdiscretizations}
-\input{5_flowofthings}
+\input{5_stepsofasimulation}
 \input{5_propertysystem}
 \input{5_fluidframework}
 \input{5_grids}

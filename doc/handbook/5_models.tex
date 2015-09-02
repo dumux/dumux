@@ -1,41 +1,47 @@
 \section{Models}
-\todo{die abschnitte im einzelnen überarbeiten (Thomas)}
+Here the basic definitions, the general models concept, and a list of
+models available in \Dumux are given.
+
 \subsection{Basic Definitions and Assumptions}
-Characteristic of compositional multiphase models is that the phases
-are not only matter of a single chemical substance. Instead, their
-composition in general includes several species, and for the mass transfer,
-the component behavior is quite different from the phase behavior. In the following, we
-give some basic definitions and assumptions that are required for the
-formulation of the model concept below. As an example, we take a
-three-phase three-component system water-NAPL-gas
+The basic definitions and assumptions are made, using the example
+of a three-phase three-component system water-NAPL-gas
 \cite{A3:class:2002a}. The modification for other multicomponent
 systems is straightforward and can be found, e.\ g., in
 \cite{A3:bielinski:2006,A3:acosta:2006}.
 
+% \todo{gibt es hier noch mehr (allgemeine) Punkte, die es sich lohnen würde
+%       aufzunehmen?}
+
 \begin{description}
 \item[Components:]
-The term {\it component} stands for constituents of the phases which
+The term \emph{component} stands for constituents of the phases which
 can be associated with a unique chemical species, or, more generally, with
 a group of species exploiting similar physical behavior. In this work, we
 assume a water-gas-NAPL system composed of the phases water (subscript
 $\text{w}$), gas ($\text{g}$), and NAPL ($\text{n}$). These phases are
-composed of the components water (superscript $\text{w}$), air
-($\text{a}$), and the organic contaminant ($\text{c}$) (see Fig.
+composed of the components water (superscript $\text{w}$), the pseudo-component
+air ($\text{a}$), and the organic contaminant ($\text{c}$) (see Fig.
 \ref{fig:phaseMassEnergyTransfer}).
 
+\item[Phases:]
+For compositional multi-phase models, \emph{phases}
+are not only matter of a single chemical substance. Instead, their
+composition in general includes several species/components. For mass transfer,
+the component behavior is quite different from the phase behavior.
+
 \item[Equilibrium:]
-For the non-isothermal multiphase processes in porous media under
-consideration, we state that the assumption of local thermal
-equilibrium is valid since flow velocities are small. We neglect
-chemical reactions and biological decomposition and assume chemical
-equilibrium.  Mechanical equilibrium is not valid in a porous medium,
-since discontinuities in pressure can occur across a fluid-fluid
-interface due to capillary effects.
+For the non-isothermal, multi-phase, multi-component processes in porous media
+we state that the assumption of \emph{local thermodynamic equilibrium}.
+Chemical equilibrium means that the mass/mole fractions of a component in
+different phases are in equilibrium.
+Thermal equilibrium assumes the same temperature for all considered phases.
+Mechanical equilibrium is not valid in a porous medium, since discontinuities
+in pressure can occur across a fluid-fluid interface due to capillary effects.
 
 \item[Notation:]
-The index $\alpha \in \{\text{w}, \text{n}, \text{g}\}$ refers
-to the phase, while the superscript $\kappa \in \{\text{w}, \text{a}, \text{c}\}$ refers
-to the component.
+The subscript index $\alpha \in \{\text{w}, \text{n}, \text{g}\}$ refers
+to the phase, while the superscript $\kappa \in \{\text{w}, \text{a}, \text{c}\}$
+refers to the component.
 \end{description}
 
 \begin{table}

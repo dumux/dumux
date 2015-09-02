@@ -9,6 +9,7 @@ set(TEX_INPUTS
   3_tutorial.tex
   3_tutorialcoupled.tex
   3_tutorialdecoupled.tex
+  3_furtherpractice.tex
   4_guidelines.tex
   4_developingdumux.tex
   4_externaltools.tex
@@ -18,6 +19,7 @@ set(TEX_INPUTS
   4_restartsimulations.tex
   4_structure.tex
   5_flowofthings.tex
+  5_stepsofasimulation.tex
   5_fluidframework.tex
   5_grids.tex
   5_models.tex
