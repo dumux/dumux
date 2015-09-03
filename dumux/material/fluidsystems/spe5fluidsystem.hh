@@ -43,6 +43,7 @@ namespace Dumux
 namespace FluidSystems
 {
 /*!
+ * \ingroup Fluidsystems
  * \brief The fluid system for the SPE-5 benchmark problem.
  *
  * This problem comprises \f$H_2O\f$, \f$C_1\f$, \f$C_3\f$, \f$C_6\f$,

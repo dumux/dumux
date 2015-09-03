@@ -45,6 +45,7 @@ NEW_PROP_TAG(NumComponents);
 }
 
 /*!
+ * \ingroup FluidStates
  * \brief Represents all relevant thermodynamic quantities of a
  *        multi-phase, multi-component fluid system
  *

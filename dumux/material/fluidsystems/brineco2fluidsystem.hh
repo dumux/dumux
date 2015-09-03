@@ -44,6 +44,7 @@ namespace Dumux
 
 namespace FluidSystems{
 /*!
+ * \ingroup Fluidsystems
  * \brief A compositional fluid with brine and carbon as
  *        components in both, the liquid and the gas (supercritical) phase.
  *

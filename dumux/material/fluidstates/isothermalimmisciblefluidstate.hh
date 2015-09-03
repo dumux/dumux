@@ -34,6 +34,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup FluidStates
  * \brief Represents all relevant thermodynamic quantities of a
  *        multi-phase fluid system assuming immiscibility and
  *        thermodynamic equilibrium.

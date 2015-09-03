@@ -33,6 +33,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup FluidStates
  * \brief This is a fluid state which allows to set the fluid
  *        pressures and takes all other quantities from an other
  *        fluid state.

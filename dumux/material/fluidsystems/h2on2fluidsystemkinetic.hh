@@ -42,6 +42,7 @@ namespace Dumux
 namespace FluidSystems
 {
 /*!
+ * \ingroup Fluidsystems
  * \brief A twophase fluid system with water and nitrogen as components.
  */
 template <class Scalar, bool useComplexRelations = true>

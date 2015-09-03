@@ -45,6 +45,7 @@ namespace FluidSystems
 {
 
 /*!
+ * \ingroup Fluidsystems
  * \brief A compositional fluid with water and molecular nitrogen as
  *        components in both, the liquid and the gas phase.
  */

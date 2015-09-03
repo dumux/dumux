@@ -76,6 +76,10 @@
      */
     /*!
      * \ingroup Material
+     * \defgroup FluidStates Fluid States
+     */
+    /*!
+     * \ingroup Material
      *  \defgroup fluidmatrixinteractions Fluid-Matrix Interactions
      */
         /*!

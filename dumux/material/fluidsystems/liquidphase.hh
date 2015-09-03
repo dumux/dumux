@@ -28,6 +28,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup Fluidsystems
  * \brief liquid phase consisting of a single component
  */
 template <class Scalar, class ComponentT>

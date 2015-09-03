@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Components
  *
  * \brief A class for the CO2 fluid properties
  */
@@ -35,6 +36,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup Components
  * \brief A class for the CO2 fluid properties
  *
  * Under reservoir conditions, CO2 is typically in supercritical state. These

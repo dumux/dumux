@@ -20,7 +20,6 @@
 /*!
  * \file
  *
- * \ingroup Fluidsystems
  * \brief A three-phase (phases water and air) fluid system
  * with water, nitrogen and oxygen as components.
  */
