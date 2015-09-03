@@ -131,19 +131,16 @@ public:
 
         fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
 
-        Scalar x1 = priVars[massOrMoleFracIdx]; //mole or mass fraction of component 1
-        if(!useMoles) // mass-fraction formulation
+        if(useMoles)
         {
-            // convert mass to mole fractions
-            Scalar M0 = FluidSystem::molarMass(phaseCompIdx);
-            Scalar M1 = FluidSystem::molarMass(transportCompIdx);
-            //meanMolarMass if x1_ is a massfraction
-            Scalar meanMolarMass = M0*M1/(M1 + x1*(M0 - M1));
-
-            x1 *= meanMolarMass/M1;
+            fluidState.setMoleFraction(phaseIdx, phaseCompIdx, 1 - priVars[massOrMoleFracIdx]);
+            fluidState.setMoleFraction(phaseIdx, transportCompIdx, priVars[massOrMoleFracIdx]);
         }
-        fluidState.setMoleFraction(phaseIdx, phaseCompIdx, 1 - x1);
-        fluidState.setMoleFraction(phaseIdx, transportCompIdx, x1);
+        else
+        {
+            // setMassFraction() has only to be called 1-numComponents times
+            fluidState.setMassFraction(phaseIdx, transportCompIdx, priVars[massOrMoleFracIdx]);
+        }
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState, phaseIdx);

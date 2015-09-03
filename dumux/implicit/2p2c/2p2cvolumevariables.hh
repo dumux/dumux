@@ -316,34 +316,17 @@ public:
         else if (phasePresence == nPhaseOnly) {
             // only the nonwetting phase is present, i.e. nonwetting phase
             // composition is stored explicitly.
-
-            if(useMoles) // mole-fraction formulation
+            if(useMoles)
             {
-                Scalar moleFractionN[numComponents];
-                moleFractionN[wCompIdx] = priVars[switchIdx];
-                moleFractionN[nCompIdx] = 1 - moleFractionN[wCompIdx];
-
-                // set the fluid state
-                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, moleFractionN[wCompIdx]);
-                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, moleFractionN[nCompIdx]);
+                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, 1 - priVars[switchIdx]);
+                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
             }
-            else // mass-fraction formulation
+            else
             {
-                // extract _mass_ fractions in the nonwetting phase
-                Scalar massFractionN[numComponents];
-                massFractionN[wCompIdx] = priVars[switchIdx];
-                massFractionN[nCompIdx] = 1 - massFractionN[wCompIdx];
-
-                // calculate average molar mass of the nonwetting phase
-                Scalar M1 = FluidSystem::molarMass(wCompIdx);
-                Scalar M2 = FluidSystem::molarMass(nCompIdx);
-                Scalar X2 = massFractionN[nCompIdx];
-                Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
-
-                // convert mass to mole fractions and set the fluid state
-                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, massFractionN[wCompIdx]*avgMolarMass/M1);
-                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, massFractionN[nCompIdx]*avgMolarMass/M2);
+                // setMassFraction() has only to be called 1-numComponents times
+                fluidState.setMassFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
             }
+
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). This is the job
             // of the "ComputeFromReferencePhase" constraint solver
@@ -400,31 +383,15 @@ public:
             // composition is stored explicitly.
             if(useMoles) // mole-fraction formulation
             {
-                Scalar moleFractionW[numComponents];
-                moleFractionW[nCompIdx] = priVars[switchIdx];
-                moleFractionW[wCompIdx] = 1 - moleFractionW[nCompIdx];
-
-                // set the fluid state
-                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, moleFractionW[wCompIdx]);
-                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, moleFractionW[nCompIdx]);
+                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1-priVars[switchIdx]);
+                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
             }
             else // mass-fraction formulation
             {
-                // extract _mass_ fractions in the nonwetting phase
-                Scalar massFractionW[numComponents];
-                massFractionW[nCompIdx] = priVars[switchIdx];
-                massFractionW[wCompIdx] = 1 - massFractionW[nCompIdx];
-
-                // calculate average molar mass of the nonwetting phase
-                Scalar M1 = FluidSystem::molarMass(wCompIdx);
-                Scalar M2 = FluidSystem::molarMass(nCompIdx);
-                Scalar X2 = massFractionW[nCompIdx];
-                Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
-
-                // convert mass to mole fractions and set the fluid state
-                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, massFractionW[wCompIdx]*avgMolarMass/M1);
-                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, massFractionW[nCompIdx]*avgMolarMass/M2);
+                // setMassFraction() has only to be called 1-numComponents times
+                fluidState.setMassFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
             }
+
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). This is the job
             // of the "ComputeFromReferencePhase" constraint solver

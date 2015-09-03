@@ -409,19 +409,8 @@ private:
     {
         fluidState.setTemperature(refTemperature());
         fluidState.setPressure(phaseIdx, refPressure());
-
-        Scalar massFraction[numComponents];
-        massFraction[transportCompIdx] = refMassfrac();
-        massFraction[phaseCompIdx] = 1 - massFraction[transportCompIdx];
-
-        // calculate average molar mass of the gas phase
-        Scalar M1 = FluidSystem::molarMass(transportCompIdx);
-        Scalar M2 = FluidSystem::molarMass(phaseCompIdx);
-        Scalar X2 = massFraction[phaseCompIdx];
-        Scalar massToMoleDenominator = M2 + X2*(M1 - M2);
-
-        fluidState.setMoleFraction(phaseIdx, transportCompIdx, massFraction[transportCompIdx]*M2/massToMoleDenominator);
-        fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massFraction[phaseCompIdx]*M1/massToMoleDenominator);
+        // setMassFraction() has only to be called 1-numComponents times
+        fluidState.setMassFraction(phaseIdx, transportCompIdx, refMassfrac());
     }
 
     // can be used for the variation of a boundary condition

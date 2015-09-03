@@ -446,9 +446,9 @@ public:
                                                            elemVolVarsCur1,
                                                            /*onBoundary=*/true);
 
-                advectiveWaterVaporFlux += computeAdvectiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
-                diffusiveWaterVaporFlux += computeDiffusiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
-                totalWaterComponentFlux += firstVertexDefect[vertInElem1][transportEqIdx1];
+                    advectiveWaterVaporFlux += computeAdvectiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
+                    diffusiveWaterVaporFlux += computeDiffusiveVaporFluxes1(elemVolVarsCur1, boundaryVars1, vertInElem1);
+                    totalWaterComponentFlux += firstVertexDefect[vertInElem1][transportEqIdx1];
 				}
             }
         } // end loop over element faces on interface

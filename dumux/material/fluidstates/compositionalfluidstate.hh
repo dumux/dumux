@@ -51,9 +51,13 @@ public:
     CompositionalFluidState()
     {
         // set the composition to 0
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)  {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
                 moleFraction_[phaseIdx][compIdx] = 0;
+                massFraction_[phaseIdx][compIdx] = 0;
+            }
 
             averageMolarMass_[phaseIdx] = 0;
             sumMoleFractions_[phaseIdx] = 0;
@@ -87,13 +91,7 @@ public:
      * \brief The mass fraction of a component in a phase []
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
-    {
-        return
-            std::abs(sumMoleFractions_[phaseIdx])
-            * moleFraction_[phaseIdx][compIdx]
-            * FluidSystem::molarMass(compIdx)
-            / std::max(1e-40, std::abs(averageMolarMass_[phaseIdx]));
-    }
+    { return massFraction_[phaseIdx][compIdx]; }
 
     /*!
      * \brief The average molar mass of a fluid phase [kg/mol]
@@ -282,6 +280,55 @@ public:
             sumMoleFractions_[phaseIdx] += moleFraction_[phaseIdx][compJIdx];
             averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compJIdx]*FluidSystem::molarMass(compJIdx);
         }
+
+        for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+        {
+            massFraction_[phaseIdx][compJIdx] =
+                std::abs(sumMoleFractions_[phaseIdx])
+                * moleFraction_[phaseIdx][compJIdx]
+                * FluidSystem::molarMass(compJIdx)
+                / std::max(1e-40, std::abs(averageMolarMass_[phaseIdx]));
+        }
+    }
+
+    /*!
+     * \brief Set the mass fraction of a component in a phase []
+     *        and update the average molar mass [kg/mol] according
+     *        to the current composition of the phase
+     */
+    void setMassFraction(int phaseIdx, int compIdx, Scalar value)
+    {
+        Valgrind::CheckDefined(value);
+        Valgrind::SetDefined(sumMoleFractions_[phaseIdx]);
+        Valgrind::SetDefined(averageMolarMass_[phaseIdx]);
+        Valgrind::SetDefined(moleFraction_[phaseIdx][compIdx]);
+        Valgrind::SetDefined(massFraction_[phaseIdx][compIdx]);
+
+        if (numComponents != 2)
+            DUNE_THROW(Dune::NotImplemented, "This currently only works for 2 components and for setting the mass fractions of the transported component.");
+        else
+        {
+            // calculate average molar mass of the gas phase
+            Scalar M1 = FluidSystem::molarMass(compIdx);
+            Scalar M2 = FluidSystem::molarMass(1-compIdx);
+            Scalar X2 = 1.0-value;
+            Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
+
+            massFraction_[phaseIdx][compIdx] = value;
+            massFraction_[phaseIdx][1-compIdx] = 1.0-value;
+
+            moleFraction_[phaseIdx][compIdx] = massFraction_[phaseIdx][compIdx]
+                                               * avgMolarMass / M1;
+            moleFraction_[phaseIdx][1-compIdx] = 1.0-moleFraction_[phaseIdx][compIdx];
+
+            // re-calculate the mean molar mass
+            sumMoleFractions_[phaseIdx] = 0.0;
+            averageMolarMass_[phaseIdx] = 0.0;
+            for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
+                sumMoleFractions_[phaseIdx] += moleFraction_[phaseIdx][compJIdx];
+                averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compJIdx]*FluidSystem::molarMass(compJIdx);
+            }
+        }
     }
 
     /*!
@@ -322,6 +369,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
                 Valgrind::CheckDefined(moleFraction_[phaseIdx][compIdx]);
+                Valgrind::CheckDefined(massFraction_[phaseIdx][compIdx]);
                 Valgrind::CheckDefined(fugacityCoefficient_[phaseIdx][compIdx]);
             }
             Valgrind::CheckDefined(averageMolarMass_[phaseIdx]);
@@ -338,6 +386,7 @@ public:
 
 protected:
     Scalar moleFraction_[numPhases][numComponents];
+    Scalar massFraction_[numPhases][numComponents];
     Scalar fugacityCoefficient_[numPhases][numComponents];
 
     Scalar averageMolarMass_[numPhases];
