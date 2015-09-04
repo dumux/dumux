@@ -147,7 +147,9 @@ public:
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
 
         // write volume values to .vtu and .csv
-        std::ofstream volVarsFile("volVarsData.csv", std::ios_base::out);
+        char fileName[30];
+        sprintf(fileName, "%s%05d%s", "volVarsData-", this->problem_().timeManager().timeStepIndex(), ".csv");
+        std::ofstream volVarsFile(fileName, std::ios_base::out);
         asImp_().writeVolVarsHeader(volVarsFile);
         volVarsFile << std::endl;
 
@@ -196,7 +198,8 @@ public:
         asImp_().updateWallProperties();
 
         // write flux values to .vtu and .csv
-        std::ofstream fluxVarsFile("fluxVarsData.csv", std::ios_base::out);
+        sprintf(fileName, "%s%05d%s", "fluxVarsData-", this->problem_().timeManager().timeStepIndex(), ".csv");
+        std::ofstream fluxVarsFile(fileName, std::ios_base::out);
         asImp_().writeFluxVarsHeader(fluxVarsFile);
         fluxVarsFile << std::endl;
 

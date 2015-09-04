@@ -89,9 +89,9 @@ public:
      * 1 = constant boundary layer thickness, which can be set in the parameter file<br>
      * 2 = laminar: Blasius' analytical solution<br>
      * 3 = turbulent (smooth);<br>
-     * 4 = viscous sublayer (smooth); after Schultz-Grunow<br>
-     * 5 = viscous sublayer (smooth); after Truckenbrodt<br>
-     * 6 = viscous sublayer (rough); after Truckenbrodt<br>
+     * 4 = viscous sublayer (smooth)<br>
+     * 5 = viscous sublayer (rough)<br>
+     * 6 = viscous sublayer (rough)<br>
      */
     const Scalar viscousBoundaryLayerThickness()
     {
