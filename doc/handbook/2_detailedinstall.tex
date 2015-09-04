@@ -17,7 +17,7 @@ In a technical sense \Dumux is a module of \Dune.
 Thus, the installation procedure of \Dumux is the same as that of \Dune.
 Details regarding the installation of \Dune are provided on the \Dune website \cite{DUNE-INST}.
 If you are interested in more details about the build system that is used,
-they can be found in the {\Dune} Buildsystem Howto \cite{DUNE-BS}.
+they can be found in the {\Dune} CMake FAQs \cite{DUNE-CMAKE} and CMake's documentation \cite{CMAKE-DOC}.
 
 All \Dune modules, including \Dumux, get extracted into a common directory, as it
 is done in an ordinary \Dune installation.
@@ -42,10 +42,9 @@ After extracting the source code for all relevant \Dune modules, including \Dumu
 by the shell-command \texttt{dunecontrol} which is part of the \Dune build system.
 
 \subsection{Prerequisites} \label{sec:prerequisites}
-The GNU tool chain of \texttt{g++}  and the tools of the GNU build system \cite{GNU-BS}, also known as GNU autotools
-(\texttt{autoconf}, \texttt{automake}, \texttt{autogen}, \texttt{libtool}), as well as \texttt{make}
-must be available in a recent version. For a list of prerequisite software packages to install,see
-\cite{DUNE-WIKI-PREREQUISITE-SOFTWARE}.
+A reasonable recent C++ compiler (g++, clang++ or Intels ICC), CMake (version 2.8.6 or newer) and their
+dependencies are required.
+For a list of prerequisite software packages to install see \cite{DUNE-WIKI-PREREQUISITE-SOFTWARE}.
 
 The building of included documentation like this handbook requires \LaTeX{} and auxiliary tools
 \texttt{bibtex}. One usually chooses a \LaTeX{} distribution like \texttt{texlive} for this purpose.
@@ -57,7 +56,7 @@ Extracting them can be done using \texttt{doxygen}, cf. Section \ref{sec:build-d
 Depending on whether you are going to use external libraries and modules for additional \Dune features,
 additional software packages may be required. Some hints on that are given in Section \ref{sec:external-modules-libraries}.
 
-Subversion (SVN) and a Git clients must be installed to download modules from Subversion and Git repositories.
+Subversion (SVN) and Git clients must be installed to download modules from Subversion and Git repositories.
 
 \subsection{Obtaining Source Code for \Dune and \Dumux}
 As stated above, the \Dumux release and trunk (developer tree) are based on the most recent
