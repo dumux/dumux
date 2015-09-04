@@ -18,7 +18,6 @@ set(TEX_INPUTS
   4_parameterfiles.tex
   4_restartsimulations.tex
   4_structure.tex
-  5_flowofthings.tex
   5_stepsofasimulation.tex
   5_fluidframework.tex
   5_grids.tex
