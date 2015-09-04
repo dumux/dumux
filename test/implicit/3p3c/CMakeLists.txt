@@ -30,12 +30,15 @@ add_dumux_test(test_cc3p3cnicolumnxylol test_cc3p3cnicolumnxylol test_cc3p3cnico
                          ${CMAKE_CURRENT_BINARY_DIR}/columnxylolcc-00054.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3p3cnicolumnxylol")
 
+# the zeroThreshold for the non-wetting phase are quite high, because the non-wetting
+# phase is not present at the end of the simulation
 add_dumux_test(test_box3p3cnikuevette test_box3p3cnikuevette test_box3p3cnikuevette.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/kuevette3p3cnibox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/kuevettebox-00013.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p3cnikuevette")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p3cnikuevette"
+                 --zeroThreshold {"x^mesitylene_n":1e-9,"x^Air_n":1e-9,"x^H2O_n":1e-9})
 
 # with Dune 2.3 we have 14 time steps, with Dune 2.4 we have 12
 # remove this code if support for Dune 2.3 is dropped

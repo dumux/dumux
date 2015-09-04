@@ -414,9 +414,9 @@ public:
             {
                 std::ostringstream oss;
                 oss << "x^"
-                    << FluidSystem::phaseName(i)
+                    << FluidSystem::componentName(j)
                     << "_"
-                    << FluidSystem::componentName(j);
+                    << FluidSystem::phaseName(i);
                 writer.attachDofData(*moleFraction[i][j], oss.str().c_str(), isBox);
             }
         }
