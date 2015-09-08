@@ -1,34 +1,17 @@
 \section{Steps of a \Dumux Simulation}
 \label{flow}
 
-\todo[inline]{Hier könnte man den Text auch etwas abspecken}
-This chapter is supposed to show how things are ``handed around'' in \Dumux. This
+
+This chapter is supposed to show how things are ``handed around'' in \Dumux. It
 is not a comprehenisve guide through the modeling framework of \Dumux, but
 hopefully it will help getting to grips with it.
 
 In Section \ref{content} the structure of \Dumux is shown from a \emph{content}
 point of view.
-Section \ref{implementation} is written from the point of view of the \emph{implementation}.
-These two approaches are linked by the circled numbers (like \textbf{\textcircled{\ref{init}}})
-in the flowchart of Section \ref{implementation} corresponding to the enumeration
-of the list of Section \ref{content}. This is supposed to demonstrate at which point
-of the program-flow you are content- and implementation-wise.
-
-Section \ref{implementation} is structured by \fbox{boxes} and
-$\overrightarrow{\textnormal{arrows}}$. Boxes stand for more or less important
-points in the programm. They may may be reckoned ``step stones''. Likewise, the
-arrows connect the boxes. If important things happen in between, it is written
-under the arrows.
-
-\fbox{Plain boxes} stand for generic parts of the program. \fbox{\fbox{double}}
-$\lbrace\lbrace$boundings$\rbrace\rbrace$ stand for the implementation specific
-part of the program, like \verb+2p, 2p2c...+. This will be the most important
-part for most users. \uwave{snakelike lines} tell you that this part is specific
-to the components considered.
-
-For keeping things simple, the program flow of a \verb+2p+ model is shown.
-There are extensive comments regarding the formating in the tex file: so feel free,
-to enhance this description.
+Section \ref{implementation} however is written from the point of view of the \emph{implementation}.
+The same coloration in the flowcharts of both sections refers to the same level of calculation. For keeping things 
+simple, the program flow of a \verb+2p+ model is shown in section \ref{implementation}. There are extensive comments 
+regarding the formating in the tex file: so feel free, to enhance this description.
 
 \subsection{Structure -- by Content}
 
@@ -38,9 +21,9 @@ to enhance this description.
 This list shows the algorithmic outline of a typical \Dumux run. Each item stands
 for a characteristic step within the modeling framework.
 
-\clearpage
-In Figure \ref{fig:algorithm}, the algorithmic representations of both approaches
-down to the element level are illustrated.
+%\clearpage
+In Figure \ref{fig:algorithm}, the algorithmic representations of both approaches, the coupled fully 
+implicit and the decoupled semi-implicit one are illustrated down to the element level.
 
 \begin{figure}[hbt]
 \begin{tabular}{ l | l }

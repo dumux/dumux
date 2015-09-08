@@ -18,7 +18,7 @@ complex DGF files, we recommend to write your own scripts, e.g in C++, Matlab or
 
 The DGF format can also used to read in spatial parameters defined on the grid. These parameters can
 be defined on nodes as well as on the elements. An example for predefined parameters on a grid is
-the \texttt{test\_boxco2} or \texttt{test\_cco2} in the  \texttt{dumux/test/co2} folder.
+the \texttt{test\_boxco2} or \texttt{test\_cco2} in the  \texttt{dumux/test/implicit/co2} folder.
 
 \subsubsection{Gmsh Mesh Format}
 Gmsh is an open-source flexible grid generator for unstructured finite-element meshes (\cite{GEUZAINE2009}, \url{http://geuz.org/gmsh/}).
@@ -27,8 +27,10 @@ the provided GUI, we refer to the Gmsh documentation (\url{http://geuz.org/gmsh/
 
 The MSH format can contain element and boundary markers defined in the grid. Thus, boundaries can be easily marked as e.g. inflow boundaries
 using Gmsh. Further, the format supports higher order elements. They can be used to create boundary parameterization supported by e.g. the grid
-manager \texttt{UGGrid}.
-\todo{Timo: Gmsh in einem Test in stable benutzen. Am besten mit boundaryFlags und boundarySegments.}
+manager \texttt{UGGrid}. 
+An example can be found in \texttt{dumux/test\allowbreak/io/gridcreator}.
+
+
 
 \subsection{The default \texttt{GridCreator}}
 The default \texttt{GridCreator} is called \texttt{GridCreator} and is automatically avaible in all problems.
@@ -145,8 +147,7 @@ can be found for example in the dissertation of \href{http://elib.uni
 -stuttgart.de/opus/frontdoor.php?source_opus=8047&la=de}{Tatomir}, pp. 68.
 
 \subsubsection{ICEM}
-\todo[inline]{Detailierte Beschreibung im Wiki? Links entfernen, die nicht funktionieren. Text überarbeiten. (Natalie)}
 For complex geometries a graphical tool to create grids might be appropriate. One possibility to mesh for example CAD
 geometry data is the commercial software \href{http://www.ansys.com/Products/Other+Products/ANSYS+ICEM+CFD/}{ANSYS ICEM
-CFD}. A very detailed, but outdated description can be found at the LH2 internal wiki. A more recent best practice guide is available at
-\url{XXX}. At LH2 exists a script which converts the ICEM mesh into the DGF.
+CFD}. A very detailed, but outdated description can be found at the LH2 internal wiki. A more recent best practice guide is available
+in dumux-devel at dumux-devel/util/gridconverters/Documentation\_ICEM\_CFD\_create\_mesh.odt. At LH2 exists a script which converts the ICEM mesh into the DGF.

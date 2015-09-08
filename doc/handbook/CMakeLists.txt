@@ -1,6 +1,5 @@
 set(TEX_INPUTS
   0_dumux-handbook.tex
-  0_discussion.tex
   0_listingstyle.tex
   1_introduction.tex
   2_detailedinstall.tex
