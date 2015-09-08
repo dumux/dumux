@@ -47,25 +47,25 @@ public:
     }
 
     /*!
-     * \brief Return the \f$\gamma\f$ shape parameter.
+     * \brief Return the \f$\mathrm{[\gamma]}\f$ shape parameter.
      */
     Scalar gamma() const
     { return gamma_; }
 
     /*!
-     * \brief Set the \f$\gamma\f$ shape parameter.
+     * \brief Set the \f$\\mathrm{[gamma]}\f$ shape parameter.
      */
     void setGamma(Scalar v)
     { gamma_ = v; }
 
     /*!
-     * \brief Return the entry pressure \f$p_0\f$.
+     * \brief Return the entry pressure \f$\mathrm{[p_0]}\f$ in \f$\mathrm{[Pa]}\f$.
      */
     Scalar p0() const
     { return p0_; }
 
     /*!
-     * \brief Return the entry pressure \f$p_0\f$.
+     * \brief Return the entry pressure \f$\mathrm{[p_0]}\f$ in \f$\mathrm{[Pa]}\f$.
      */
     void setP0(Scalar v)
     { p0_ = v; }

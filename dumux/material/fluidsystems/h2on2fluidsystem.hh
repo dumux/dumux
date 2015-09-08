@@ -210,7 +210,7 @@ public:
     }
 
     /*!
-     * \brief Return the molar mass of a component in [kg/mol].
+     * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -226,7 +226,7 @@ public:
     }
 
     /*!
-     * \brief Critical temperature of a component [K].
+     * \brief Critical temperature of a component \f$\mathrm{[K]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -242,7 +242,7 @@ public:
     }
 
     /*!
-     * \brief Critical pressure of a component [Pa].
+     * \brief Critical pressure of a component \f$\mathrm{[Pa]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -258,7 +258,7 @@ public:
     }
 
     /*!
-     * \brief Molar volume of a component at the critical point [m^3/mol].
+     * \brief Molar volume of a component at the critical point \f$\mathrm{[m^3/mol]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -270,7 +270,7 @@ public:
     }
 
     /*!
-     * \brief The acentric factor of a component [].
+     * \brief The acentric factor of a component \f$\mathrm{[-]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -309,11 +309,11 @@ public:
      * \brief Initialize the fluid system's static parameters using
      *        problem specific temperature and pressure ranges
      *
-     * \param tempMin The minimum temperature used for tabulation of water [K]
-     * \param tempMax The maximum temperature used for tabulation of water [K]
+     * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+     * \param tempMax The maximum temperature used for tabulation of water \f$\mathrm{[K]}\f$
      * \param nTemp The number of ticks on the temperature axis of the  table of water
-     * \param pressMin The minimum pressure used for tabulation of water [Pa]
-     * \param pressMax The maximum pressure used for tabulation of water [Pa]
+     * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+     * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
      * \param nPress The number of ticks on the pressure axis of the  table of water
      */
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
@@ -335,7 +335,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the density [kg/m^3] of a fluid phase
+     * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
      *
      * If useComplexRelations == true, we apply
      * Formula (2.6) from S.O.Ochs:
@@ -398,7 +398,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
+     * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -459,27 +459,27 @@ public:
     }
 
     /*!
-     * \brief Calculate the fugacity coefficient [Pa] of an individual
+     * \brief Calculate the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
      *        component in a fluid phase
      *
-     * The fugacity coefficient \f$\phi^\kappa_\alpha\f$ of
-     * component \f$\kappa\f$ in phase \f$\alpha\f$ is connected to
-     * the fugacity \f$f^\kappa_\alpha\f$ and the component's mole
-     * fraction \f$x^\kappa_\alpha\f$ by means of the relation
+     * The fugacity coefficient \f$\mathrm{\phi^\kappa_\alpha}\f$ of
+     * component \f$\mathrm{\kappa}\f$ in phase \f$\mathrm{\alpha}\f$ is connected to
+     * the fugacity \f$\mathrm{f^\kappa_\alpha}\f$ and the component's mole
+     * fraction \f$\mathrm{x^\kappa_\alpha}\f$ by means of the relation
      *
      * \f[
      f^\kappa_\alpha = \phi^\kappa_\alpha\;x^\kappa_\alpha\;p_\alpha
      \f]
-     * where \f$p_\alpha\f$ is the pressure of the fluid phase.
+     * where \f$\mathrm{p_\alpha}\f$ is the pressure of the fluid phase.
      *
      * The quantity "fugacity" itself is just an other way to express
-     * the chemical potential \f$\zeta^\kappa_\alpha\f$ of the
+     * the chemical potential \f$\mathrm{\zeta^\kappa_\alpha}\f$ of the
      * component. It is defined via
      *
      * \f[
      f^\kappa_\alpha := \exp\left\{\frac{\zeta^\kappa_\alpha}{k_B T_\alpha} \right\}
      \f]
-     * where \f$k_B = 1.380\cdot10^{-23}\;J/K\f$ is the Boltzmann constant.
+     * where \f$\mathrm{k_B = 1.380\cdot10^{-23}\;J/K}\f$ is the Boltzmann constant.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -512,17 +512,17 @@ public:
 
     /*!
      * \brief Calculate the molecular diffusion coefficient for a
-     *        component in a fluid phase [mol^2 * s / (kg*m^3)]
+     *        component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
      *
-     * Molecular diffusion of a compoent \f$\kappa\f$ is caused by a
+     * Molecular diffusion of a compoent \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
      * \f[ J = - D \mathbf{grad} \mu_\kappa \f]
      *
-     * where \f$\mu_\kappa\f$ is the component's chemical potential,
-     * \f$D\f$ is the diffusion coefficient and \f$J\f$ is the
-     * diffusive flux. \f$mu_\kappa\f$ is connected to the component's
-     * fugacity \f$f_\kappa\f$ by the relation
+     * where \f$\mathrm{\mu_\kappa}\f$ is the component's chemical potential,
+     * \f$\mathrm{D}\f$ is the diffusion coefficient and \f$\mathrm{J}\f$ is the
+     * diffusive flux. \f$\mathrm{mu_\kappa}\f$ is connected to the component's
+     * fugacity \f$\mathrm{f_\kappa}\f$ by the relation
      *
      * \f[ \mu_\kappa = R T_\alpha \mathrm{ln} \frac{f_\kappa}{p_\alpha} \f]
      *
@@ -545,7 +545,7 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient for components
+     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
      *        \f$i\f$ and \f$j\f$ in this phase.
      *
      * \param fluidState An arbitrary fluid state
@@ -597,7 +597,7 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature, pressure and
-     *        density, calculate its specific enthalpy [J/kg].
+     *        density, calculate its specific enthalpy \f$\mathrm{[J/kg]}\f$.
      *
      *  \todo This fluid system neglects the contribution of
      *        gas-molecules in the liquid phase. This contribution is
@@ -639,7 +639,7 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity of a fluid phase [W/(m K)].
+     * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      *
      * Use the conductivity of air and water as a first approximation.
      *
@@ -692,7 +692,7 @@ public:
 
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
-     *        \f$\mathrm{[J/kg]}\f$.
+     *        \f$\mathrm{[J/(kg K)]}\f$.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider

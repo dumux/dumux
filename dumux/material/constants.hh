@@ -38,44 +38,44 @@ template<class Scalar>
 class Constants
 { public:
     /*!
-     * \brief The ideal gas constant [J/(mol K)]
+     * \brief The ideal gas constant \f$\mathrm{[J/(mol K)]}\f$
      */
     static const Scalar R;
 
     /*!
-     * \brief The Avogadro constant [1/mol]
+     * \brief The Avogadro constant \f$\mathrm{[1/mol]}\f$
      */
     static const Scalar Na;
 
     /*!
-     * \brief The Boltzmann constant [J/K]
+     * \brief The Boltzmann constant \f$\mathrm{[J/K]}\f$
      */
     static const Scalar kb;
 
     /*!
-     * \brief Speed of light in vacuum [m/s]
+     * \brief Speed of light in vacuum \f$\mathrm{[m/s]}\f$
      */
     static const Scalar c;
 
     /*!
-     * \brief Faraday constant [C/mol]
+     * \brief Faraday constant \f$\mathrm{[C/mol]}\f$
      *
      * Source: CODATA 2010
      */
     static const Scalar F;
 
     /*!
-     * \brief Newtonian constant of gravitation [m^3/(kg s^2)]
+     * \brief Newtonian constant of gravitation \f$\mathrm{[m^3/(kg s^2)]}\f$
      */
     static const Scalar G;
 
     /*!
-     * \brief Planck constant [J s]
+     * \brief Planck constant \f$\mathrm{[J s]}\f$
      */
     static const Scalar h;
 
     /*!
-     * \brief Reduced Planck constant [J s]
+     * \brief Reduced Planck constant \f$\mathrm{[J s]}\f$
      */
     static const Scalar hRed;
 };

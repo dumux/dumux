@@ -50,6 +50,9 @@ public:
 
     /*!
      * \brief The capillary pressure-saturation curve.
+     * \param pc Container for capillary pressure in \f$\mathrm{[Pa]}\f$
+     * \param params Array of parameters
+     * \param fluidState Fluidstate
      */
     template <class pcContainerT, class FluidState>
     static void capillaryPressures(pcContainerT &pc,
@@ -65,6 +68,9 @@ public:
 
     /*!
      * \brief The relative permeability of all phases.
+     * \param kr Container for relative permeability
+     * \param params Array of parameters
+     * \param fluidState Fluidstate
      */
     template <class krContainerT, class FluidState>
     static void relativePermeabilities(krContainerT &kr,

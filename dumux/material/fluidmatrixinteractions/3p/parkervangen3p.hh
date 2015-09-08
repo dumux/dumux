@@ -53,13 +53,20 @@ public:
 
     /*!
      * \brief The capillary pressure-saturation curve.
+     * \param params Array of parameters
+     * \param sw wetting phase saturation
      *
      */
     static Scalar pc(const Params &params, Scalar sw)
     {
         DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pcgn, pcnw, and pcgw");
     }
-
+   /*!
+     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c 
+     * \param params Array of parameters
+     * \param sw wetting phase saturation or sum of wetting phase saturations
+     *
+     */
     static Scalar pcgw(const Params &params, Scalar sw)
     {
     /*
@@ -104,7 +111,11 @@ public:
             return(r/params.betaGw());
         }
     }
-
+  /*!
+     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c 
+     * \param params Array of parameters
+     * \param sw wetting phase saturation or sum of wetting phase saturations
+     */
     static Scalar pcnw(const Params &params, Scalar sw)
     {
     /*
@@ -149,7 +160,11 @@ public:
             return(r/params.betaNw());
         }
     }
-
+    /*!
+     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c 
+     * \param params Array of parameters
+     * \param st sum of wetting (liquid) phase saturations
+     */
     static Scalar pcgn(const Params &params, Scalar St)
     {
     /*
@@ -193,7 +208,11 @@ public:
             return(r/params.betaGn());
         }
     }
-
+ /*!
+     * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c 
+     * \param params Array of parameters
+     * \param sn Non-wetting liquid saturation
+     */
     static Scalar pcAlpha(const Params &params, Scalar sn)
     {
         /* continuous transition to zero */
@@ -215,6 +234,8 @@ public:
 
     /*!
      * \brief The saturation-capillary pressure curve.
+     * \param params Array of parameters
+     * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      *
      */
     static Scalar sw(const Params &params, Scalar pc)
@@ -225,7 +246,8 @@ public:
     /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
-     *
+     * \param params Array of parameters
+     * \param sw Wetting liquid saturation
     */
     static Scalar dpc_dsw(const Params &params, Scalar sw)
     {
@@ -235,6 +257,8 @@ public:
     /*!
      * \brief Returns the partial derivative of the effective
      *        saturation to the capillary pressure.
+     * \param params Array of parameters
+     * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar dsw_dpc(const Params &params, Scalar pc)
     {
@@ -250,9 +274,9 @@ public:
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
      *
-     * \param sn saturation of the NAPL phase.
-     * \param sg saturation of the gas phase.
-     * \param saturation saturation of the water phase.
+     * \param sn Non-wetting liquid saturation
+     * \param sg Gas saturation
+     * \param saturation wetting liquid saturation
      * \param params Array of parameters.
      */
     static Scalar krw(const Params &params,  Scalar saturation, Scalar sn, Scalar sg)
@@ -281,9 +305,9 @@ public:
      * Journal of Contaminant Hydrology 66 (2003), 261-285
      *
      *
-     * \param sw saturation of the water phase.
-     * \param sg saturation of the gas phase.
-     * \param saturation saturation of the NAPL phase.
+     * \param sw Wetting liquid saturation
+     * \param sg Gas saturation
+     * \param saturation Non-wetting liquid saturation
      * \param params Array of parameters.
      */
     static Scalar krn(const Params &params, Scalar sw, Scalar saturation, Scalar sg)
@@ -325,9 +349,9 @@ public:
      * (see p61. in "Comparison of the Three-Phase Oil Relative Permeability Models"
      * MOJDEH  DELSHAD and GARY A. POPE, Transport in Porous Media 4 (1989), 59-83.)
      *
-     * \param sw saturation of the water phase.
-     * \param sn saturation of the NAPL phase.
-     * \param saturation saturation of the gas phase.
+     * \param sw Wetting liquid saturation
+     * \param sn Non-wetting liquid saturation
+     * \param saturation Gas saturation
      * \param params Array of parameters.
      */
     static Scalar krg(const Params &params, Scalar sw, Scalar sn, Scalar saturation)
@@ -354,9 +378,9 @@ public:
 
     /*!
      * \brief The relative permeability for a phase.
-     * \param sw saturation of the water phase.
-     * \param sg saturation of the gas phase.
-     * \param sn saturation of the NAPL phase.
+     * \param sw Wetting liquid saturation
+     * \param sg Gas saturation
+     * \param sn Non-wetting liquid saturation
      * \param params Array of parameters.
      * \param phaseIdx indicator, The saturation of all phases.
      */
@@ -377,14 +401,14 @@ public:
         return 0;
     }
 
-   /*
+   /*!
     * \brief the basis for calculating adsorbed NAPL in storage term
-    * \param bulk density of porous medium, adsorption coefficient
+    * \param params Array of parameters
     */
    static Scalar bulkDensTimesAdsorpCoeff (const Params &params)
    {
       return params.rhoBulk() * params.KdNAPL();
-   }
+//    }
 };
 }
 

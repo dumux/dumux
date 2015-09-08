@@ -62,80 +62,80 @@ public:
     { return false; /* we're a liquid! */ }
 
     /*!
-     * \brief The mass in [kg] of one mole of the component.
+     * \brief The mass in \f$\mathrm{[kg]}\f$ of one mole of the component.
      */
     static Scalar molarMass()
     {  return Component::molarMass(); }
 
     /*!
-     * \brief Returns the critical temperature of the component
+     * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of the component
      */
     static Scalar criticalTemperature()
     {  return Component::criticalTemperature(); }
 
     /*!
-     * \brief Returns the critical pressure of the component
+     * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of the component
      */
     static Scalar criticalPressure()
     {  return Component::criticalPressure(); }
 
     /*!
-     * \brief Returns the temperature at the component's triple point.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at the component's triple point.
      */
     static Scalar tripleTemperature()
     {  return Component::tripleTemperature(); }
 
     /*!
-     * \brief Returns the pressure at the component's triple point.
+     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at the component's triple point.
      */
     static Scalar triplePressure()
     { return Component::triplePressure(); }
 
     /*!
-     * \brief The vapor pressure in [N/m^2] of the component at a given
+     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
      *        temperature.
      */
     static Scalar vaporPressure(Scalar T)
     {  return Component::vaporPressure(T); }
 
     /*!
-     * \brief The density [kg/m^3] of the component at a given pressure and temperature.
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
      */
     static Scalar density(Scalar temperature, Scalar pressure)
     {  return Component::liquidDensity(temperature, pressure); }
 
     /*!
-     * \brief The pressure [Pa] of the component at a given density and temperature.
+     * \brief The pressure \f$\mathrm{[Pa]}\f$ of the component at a given density and temperature.
      */
     static Scalar pressure(Scalar temperature, Scalar density)
     {  return Component::liquidPressure(temperature, density); }
 
     /*!
-     * \brief Specific enthalpy [J/kg] the pure component as a liquid.
+     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
      */
     static const Scalar enthalpy(Scalar temperature, Scalar pressure)
     {  return Component::liquidEnthalpy(temperature, pressure); }
 
     /*!
-     * \brief Specific internal energy [J/kg] the pure component as a liquid.
+     * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
      */
     static const Scalar internalEnergy(Scalar temperature, Scalar pressure)
     { return Component::liquidInternalEnergy(temperature, pressure); }
 
     /*!
-     * \brief The dynamic liquid viscosity [N/m^3*s] of the pure component.
+     * \brief The dynamic liquid viscosity \f$\mathrm{[N/m^3*s]}\f$ of the pure component.
      */
     static Scalar viscosity(Scalar temperature, Scalar pressure)
     {  return Component::liquidViscosity(temperature, pressure); }
 
     /*!
-     * \brief Thermal conductivity of the fluid [W/(m^2 K/m)].
+     * \brief Thermal conductivity of the fluid \f$\mathrm{[W/(m K)]}\f$.
      */
     static Scalar thermalConductivity(Scalar temperature, Scalar pressure)
     { return Component::liquidThermalConductivity(temperature, pressure); }
 
     /*!
-     * \brief Specific isobaric heat capacity of the fluid [J/kg].
+     * \brief Specific isobaric heat capacity of the fluid \f$\mathrm{[J/(kg K)]}\f$.
      */
     static Scalar heatCapacity(Scalar temperature, Scalar pressure)
     { return Component::liquidHeatCapacity(temperature, pressure); }

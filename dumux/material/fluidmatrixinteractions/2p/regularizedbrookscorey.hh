@@ -45,7 +45,7 @@ namespace Dumux
  *        In order to avoid very steep gradients the marginal values are "regularized".
  *        This means that in stead of following the curve of the material law in these regions, some linear approximation is used.
  *        Doing this is not worse than following the material law. E.g. for very low wetting phase values the material
- *        laws predict infinite values for \f$p_c\f$ which is completely unphysical. In case of very high wetting phase
+ *        laws predict infinite values for \f$\mathrm{p_c}\f$ which is completely unphysical. In case of very high wetting phase
  *        saturations the difference between regularized and "pure" material law is not big.
  *
  *        Regularizing has the additional benefit of being numerically friendly: Newton's method does not like infinite gradients.
@@ -73,8 +73,8 @@ public:
      *        curve.
      *
      * regularized part:
-     *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *    - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
      *                       by a straight line (yes, there is a kink :-( ).
      *
      * For the non-regularized part:
@@ -111,8 +111,8 @@ public:
      * \brief   A regularized Brooks-Corey saturation-capillary pressure curve.
      *
      * regularized part:
-     *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *    - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
      *                       by a straight line (yes, there is a kink :-( ).
      *
      *  The according quantities are obtained by exploiting theorem of intersecting lines.
@@ -153,12 +153,12 @@ public:
 
     /*!
      * \brief A regularized version of the partial derivative
-     *        of the \f$p_c(\overline S_w)\f$ w.r.t. effective saturation
+     *        of the \f$\mathrm{p_c(\overline{S}_w)}\f$ w.r.t. effective saturation
      *        according to Brooks & Corey.
      *
      * regularized part:
      *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
      *                       by a straight line and use that slope (yes, there is a kink :-( ).
      *
      * For the non-regularized part:
@@ -186,12 +186,12 @@ public:
 
     /*!
      * \brief A regularized version of the partial derivative
-     *        of the \f$\overline S_w(p_c)\f$ w.r.t. cap.pressure
+     *        of the \f$\mathrm{\overline{S}_w(p_c)}\f$ w.r.t. cap.pressure
      *        according to Brooks & Corey.
      *
      *  regularized part:
      *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
      *                       by a straight line and use that slope (yes, there is a kink :-( ).
      *
      * For the non-regularized part:
@@ -238,9 +238,9 @@ public:
      *          parameterization.
      *
      *  regularized part:
-     *    - below \f$ \overline S_w =0\f$:                  set relative permeability to zero
-     *    - above \f$ \overline S_w =1\f$:                  set relative permeability to one
-     *    - between \f$ 0.95 \leq \overline S_w \leq 1\f$:  use a spline as interpolation
+     *    - below \f$\mathrm{\overline{S}_w =0}\f$:                  set relative permeability to zero
+     *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
+     *    - between \f$\mathrm{ 0.95 \leq \overline{S}_w \leq 1}\f$:  use a spline as interpolation
      *
      *  For not-regularized part:
         \copydetails BrooksCorey::krw()
@@ -262,9 +262,9 @@ public:
      *          parameterization.
      *
      * regularized part:
-     *    - below \f$ \overline S_w =0\f$:                  set relative permeability to zero
-     *    - above \f$ \overline S_w =1\f$:                  set relative permeability to one
-     *    - for \f$ 0 \leq \overline S_w \leq 0.05 \f$:     use a spline as interpolation
+     *    - below \f$\mathrm{\overline{S}_w =0}\f$:                  set relative permeability to zero
+     *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
+     *    - for \f$\mathrm{0 \leq \overline{S}_w \leq 0.05}\f$:     use a spline as interpolation
      *
          \copydetails BrooksCorey::krn()
      *

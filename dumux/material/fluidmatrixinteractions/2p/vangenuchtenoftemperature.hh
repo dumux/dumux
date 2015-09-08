@@ -56,6 +56,11 @@ public:
      *          The standard regularized version of the van Genuchten law is used and subsequantially scaled
      *          by some more or less empirical fit: WRR, Grant(2003)
      *          --> see range of validity (==fit range) in the paper ! <--
+     * \param Swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
+     *                  is constructed accordingly. Afterwards the values are set there, too.
+     * \param temperature The temperature in \f$\mathrm{[K]}\f$
      */
     static Scalar pc(const Params &params, const Scalar & Swe, const Scalar & temperature)
     {

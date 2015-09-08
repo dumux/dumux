@@ -71,8 +71,8 @@ public:
     /*!
      * \brief Sets the liquid dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
-     * Although the dynamic viscosity \f$\mathrm{[Pa*s]} is returned,
-     * the kinematic viscosity \f$\mathrm{[m^2/s]} is requested from run time input.
+     * Although the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ is returned,
+     * the kinematic viscosity \f$\mathrm{[m^2/s]}\f$ is requested from run time input.
      *
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
      * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
@@ -107,8 +107,8 @@ public:
     /*!
      * \brief Sets the gas dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
-     * Although the dynamic viscosity \f$\mathrm{[Pa*s]} is returned,
-     * the kinematic viscosity \f$\mathrm{[m^2/s]} is requested from run time input.
+     * Although the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ is returned,
+     * the kinematic viscosity \f$\mathrm{[m^2/s]}\f$ is requested from run time input.
      *
      * \param temperature phase temperature in \f$\mathrm{[K]}\f$
      * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$

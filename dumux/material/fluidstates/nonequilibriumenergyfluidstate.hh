@@ -79,7 +79,7 @@ public:
     { return fugacity(0, compIdx); }
 
     /*!
-     * \brief The fugacity of a component in a phase [Pa]
+     * \brief The fugacity of a component in a phase \f$\mathrm{[Pa]}\f$
     */
     Scalar fugacity(int phaseIdx, int compIdx) const
     {
@@ -96,7 +96,7 @@ public:
      *****************************************************/
 
     /*!
-     * \brief Set the temperature [K] of a fluid phase
+     * \brief Set the temperature \f$\mathrm{[K]}\f$ of a fluid phase
      *        Both versions of the function need to be here.
      *        Otherwise the compiler gets confused.
      *        Thus, this is just forwarding to the Parent
@@ -108,7 +108,7 @@ public:
     }
 
     /*!
-     * \brief Set the temperature [K] of a fluid phase
+     * \brief Set the temperature \f$\mathrm{[K]}\f$ of a fluid phase
      *        Both versions of the function need to be here.
      *        Otherwise the compiler gets confused.
      *        Thus, this is just presenting the signature to the compiler.

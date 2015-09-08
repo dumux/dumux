@@ -21,8 +21,8 @@
  *
  * \brief The mixing rule for the oil and the gas phases of the SPE5 problem.
  *
- * This problem comprises \f$H_2O\f$, \f$C_1\f$, \f$C_3\f$, \f$C_6\f$,
- * \f$C_10\f$, \f$C_15\f$ and \f$C_20\f$ as components.
+ * This problem comprises \f$\mathrm{H_2O}\f$, \f$\mathrm{C_1}\f$, \f$\mathrm{C_3}\f$, \f$\mathrm{C_6}\f$,
+ * \f$\mathrm{C_10}\f$, \f$\mathrm{C_15}\f$ and \f$\mathrm{C_20}\f$ as components.
  *
  * See:
  *
@@ -46,8 +46,8 @@ namespace FluidSystems
  * \ingroup Fluidsystems
  * \brief The fluid system for the SPE-5 benchmark problem.
  *
- * This problem comprises \f$H_2O\f$, \f$C_1\f$, \f$C_3\f$, \f$C_6\f$,
- * \f$C_10\f$, \f$C_15\f$ and \f$C_20\f$ as components.
+ * This problem comprises \f$\mathrm{H_2O}\f$, \f$\mathrm{C_1}\f$, \f$\mathrm{C_3}\f$, \f$\mathrm{C_6}\f$,
+ * \f$\mathrm{C_10}\f$, \f$\mathrm{C_15}\f$ and \f$\mathrm{C_20}\f$ as components.
  *
  * See:
  *
@@ -85,6 +85,7 @@ public:
 
     /*!
      * \brief Return the human readable name of a fluid phase
+     * \param phaseIdx The index of the fluid phase to consider
      */
     static const char *phaseName(int phaseIdx)
     {
@@ -100,6 +101,7 @@ public:
 
     /*!
      * \brief Return whether a phase is liquid
+     * \param phaseIdx The index of the fluid phase to consider
      */
     static bool isLiquid(int phaseIdx)
     {
@@ -109,6 +111,7 @@ public:
 
     /*!
      * \brief Return whether a phase is compressible
+     * \param phaseIdx The index of the fluid phase to consider
      *
      * In the SPE-5 problems all fluids are compressible...
      */
@@ -129,6 +132,7 @@ public:
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
      * in some cases.
+     * \param phaseIdx The index of the fluid phase to consider
      */
     static bool isIdealMixture(int phaseIdx)
     {
@@ -167,6 +171,7 @@ public:
 
     /*!
      * \brief Return the human readable name of a component
+     * \param compIdx The index of the component to consider
      */
     static const char *componentName(int compIdx)
     {
@@ -185,7 +190,8 @@ public:
     }
 
     /*!
-     * \brief Return the molar mass of a component in [kg/mol].
+     * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
+     * \param compIdx The index of the component to consider
      */
     static Scalar molarMass(int compIdx)
     {
@@ -204,7 +210,8 @@ public:
     }
 
     /*!
-     * \brief Critical temperature of a component [K].
+     * \brief Critical temperature of a component \f$\mathrm{[K]}\f$.
+     * \param compIdx The index of the component to consider
      */
     static Scalar criticalTemperature(int compIdx)
     {
@@ -223,7 +230,8 @@ public:
     }
 
     /*!
-     * \brief Critical pressure of a component [Pa].
+     * \brief Critical pressure of a component \f$\mathrm{[Pa]}\f$.
+     * \param compIdx The index of the component to consider
      */
     static Scalar criticalPressure(int compIdx)
     {
@@ -242,7 +250,8 @@ public:
     }
 
     /*!
-     * \brief Molar volume of a component at the critical point [m^3/mol].
+     * \brief Molar volume of a component at the critical point \f$\mathrm{[m^3/mol]}\f$.
+     * \param compIdx The index of the component to consider
      */
     static Scalar criticalMolarVolume(int compIdx)
     {
@@ -262,7 +271,8 @@ public:
     }
 
     /*!
-     * \brief The acentric factor of a component [].
+     * \brief The acentric factor of a component \f$\mathrm{[-]}\f$.
+     * \param compIdx The index of the component to consider
      */
     static Scalar acentricFactor(int compIdx)
     {
@@ -282,6 +292,8 @@ public:
 
     /*!
      * \brief Returns the interaction coefficient for two components.
+     * \param comp1Idx The index of component 1 to consider
+     * \param comp2Idx The index of component 2 to consider
      *
      * The values are given by the SPE5 paper.
      */
@@ -355,7 +367,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the density [kg/m^3] of a fluid phase
+     * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
      *
      *
      * \param fluidState An arbitrary fluid state
@@ -373,7 +385,10 @@ public:
     }
 
     /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
+     * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
+     * \param fs An arbitrary fluid state
+     * \param paramCache Container for cache parameters
+     * \param phaseIdx The index of the fluid phase to consider
      */
     template <class FluidState>
     static Scalar viscosity(const FluidState &fs,
@@ -399,15 +414,19 @@ public:
     }
 
     /*!
-     * \brief Calculate the fugacity coefficient [Pa] of an individual
+     * \brief Calculate the fugacity coefficient \f$\mathrm{[Pa]}\f$ of an individual
      *        component in a fluid phase
      *
-     * The fugacity coefficient \f$\phi^\kappa_\alpha\f$ is connected
-     * to the fugacity \f$f^\kappa_\alpha\f$ and the component's mole
-     * fraction in a phase \f$x^\kappa_\alpha\f$ by means of the
+     * The fugacity coefficient \f$\mathrm{\phi^\kappa_\alpha}\f$ is connected
+     * to the fugacity \f$\mathrm{f^\kappa_\alpha}\f$ and the component's mole
+     * fraction in a phase \f$\mathrm{x^\kappa_\alpha}\f$ by means of the
      * relation
      *
      * \f[ f^\kappa_\alpha = \phi^\kappa_\alpha \cdot x^\kappa_\alpha \cdot p_alpha \f]
+     * \param fs An arbitrary fluid state
+     * \param paramCache Container for cache parameters
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
      */
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fs,
@@ -434,22 +453,26 @@ public:
 
     /*!
      * \brief Calculate the binary molecular diffusion coefficient for
-     *        a component in a fluid phase [mol^2 * s / (kg*m^3)]
+     *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
      *
-     * Molecular diffusion of a compoent \f$\kappa\f$ is caused by a
+     * Molecular diffusion of a compoent \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
      * \f[ J = - D grad \mu_\kappa \f]
      *
-     * where \f$\mu_\kappa\f$ is the component's chemical potential,
-     * \f$D\f$ is the diffusion coefficient and \f$J\f$ is the
-     * diffusive flux. \f$\mu_\kappa\f$ is connected to the component's
-     * fugacity \f$f_\kappa\f$ by the relation
+     * where \f$\mathrm{\mu_\kappa}\f$ is the component's chemical potential,
+     * \f$\mathrm{D}\f$ is the diffusion coefficient and \f$\mathrm{J}\f$ is the
+     * diffusive flux. \f$\mathrm{\mu_\kappa}\f$ is connected to the component's
+     * fugacity \f$\mathrm{f_\kappa}\f$ by the relation
      *
      * \f[ \mu_\kappa = R T_\alpha \mathrm{ln} \frac{f_\kappa}{p_\alpha} \f]
      *
-     * where \f$p_\alpha\f$ and \f$T_\alpha\f$ are the fluid phase'
+     * where \f$\mathrm{p_\alpha}\f$ and \f$\mathrm{T_\alpha}\f$ are the fluid phase'
      * pressure and temperature.
+     * \param fs An arbitrary fluid state
+     * \param paramCache Container for cache parameters
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
      */
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fs,
@@ -460,7 +483,7 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient for components
+     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
      *        \f$i\f$ and \f$j\f$ in this phase.
      *
      * \param fluidState An arbitrary fluid state
@@ -479,20 +502,35 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        calculate its specific enthalpy [J/kg].
+     *        calculate its specific enthalpy \f$\mathrm{[J/kg]}\f$.
+     * \param fs An arbitrary fluid state
+     * \param paramCache Container for cache parameters
+     * \param phaseIdx The index of the fluid phase to consider
      */
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fs,
                            const ParameterCache &paramCache,
                            int phaseIdx)
     { DUNE_THROW(Dune::NotImplemented, "Enthalpies"); }
-
+/*!
+     * \brief Given a phase's composition, temperature and pressure,
+     *        calculate its thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
+     * \param fluidState An arbitrary fluid state
+     * \param paramCache Container for cache parameters
+     * \param phaseIdx The index of the fluid phase to consider
+     */
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       const ParameterCache &paramCache,
                                       int phaseIdx)
     { DUNE_THROW(Dune::NotImplemented, "Thermal conductivities"); }
-
+/*!
+     * \brief Given a phase's composition, temperature and pressure,
+     *        calculate its heat capacity \f$\mathrm{[J/(kg K)]}\f$.
+     * \param fluidState An arbitrary fluid state
+     * \param paramCache Container for cache parameters
+     * \param phaseIdx The index of the fluid phase to consider
+     */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                const ParameterCache &paramCache,

@@ -52,12 +52,12 @@ public:
      * \brief The awn surface
      *
      * the suggested (as estimated from pore network models) awn surface:
-     * \f[
-     a_{wn} = a_1 (S_{wr}-S_w)(1.-S_w) + a_2 (S_{wr}-S_w)(1.-S_w) p_c + a_3 (S_{wr}-S_w)(1.-S_w) p_c^2
-     \f]
+     * \f$[
+     a_{wn} = a_{1} (S_{wr}-S_{w})(1.-S_{w}) + a_2 (S_{wr}-S_{w})(1.-S_{w}) p_{c} + a_{3} (S_{wr}-S_{w})(1.-S_{w}) p_{c}^2
+     \f$]
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
-     * \param  pc Capillary pressure
+     * \param  pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar interfacialArea(const Params &params, const Scalar Sw, const Scalar pc)
     {
@@ -76,7 +76,7 @@ public:
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
-     * \param  pc Capillary pressure
+     * \param  pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar dawn_dpc (const Params &params, const Scalar Sw, const Scalar pc)
     {
@@ -92,7 +92,7 @@ public:
      *
      * \param  params parameter container for the coefficients of the surface
      * \param  Sw Effective saturation of the wetting phase
-     * \param  pc Capillary pressure
+     * \param  pc Capillary pressure in \f$\mathrm{[Pa]}\f$
      */
     static Scalar dawn_dsw (const Params &params, const Scalar Sw, const Scalar pc)
     {

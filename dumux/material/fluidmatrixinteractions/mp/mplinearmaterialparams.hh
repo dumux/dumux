@@ -49,6 +49,7 @@ public:
     /*!
      * \brief Return the threshold saturation at which the relative
      *        permeability starts to get regularized.
+     * \param phaseIdx Index of the phase
      *
      * This is simply 10%
      */
@@ -56,25 +57,31 @@ public:
     { return 0.10; }
 
     /*!
-     * \brief Return the capillary pressure for a phase \f$\alpha\f$ at \f$S_\alpha=0\f$.
+     * \brief Return the capillary pressure in \f$\mathrm{[Pa]}\f$ for a phase \f$\mathrm{\alpha}\f$ at \f$\mathrm{S_\alpha=0}\f$.
+     * \param phaseIdx Index of the phase
      */
     Scalar pcMinSat(int phaseIdx) const
     { return pcMinSat_[phaseIdx]; }
 
     /*!
-     * \brief Set the capillary pressure for a phase \f$\alpha\f$ at \f$S_\alpha=0\f$.
+     * \brief Set the capillary pressure in \f$\mathrm{[Pa]}\f$ for a phase \f$\mathrm{\alpha}\f$ at \f$\mathrm{S_\alpha=0}\f$.
+     * \param phaseIdx Index of the phase
+     * \param val value of the capillary pressure
      */
     void setPcMinSat(int phaseIdx, Scalar val)
     { pcMinSat_[phaseIdx] = val; }
 
     /*!
-     * \brief Return the capillary pressure for a phase \f$\alpha\f$ at \f$S_\alpha=1\f$.
+     * \brief Return the capillary pressure in \f$\mathrm{[Pa]}\f$ for a phase \f$\mathrm{\alpha}\f$ at \f$\mathrm{S_\alpha=1}\f$.
+     * \param phaseIdx Index of the phase
      */
     Scalar pcMaxSat(int phaseIdx) const
     { return pcMaxSat_[phaseIdx]; }
 
     /*!
-     * \brief Set the capillary pressure for a phase \f$\alpha\f$ at \f$S_\alpha=1\f$.
+     * \brief Set the capillary pressure in \f$\mathrm{[Pa]}\f$ for a phase \f$\mathrm{\alpha}\f$ at \f$\mathrm{S_\alpha=1}\f$.
+     * \param phaseIdx Index of the phase
+     * \param val value of the capillary pressure
      */
     void setPcMaxSat(int phaseIdx, Scalar val)
     { pcMaxSat_[phaseIdx] = val; }
@@ -85,6 +92,7 @@ public:
      *
      * This is just 5%. If you need a different value, write your own
      * parameter class.
+     * \param phaseIdx Index of the phase
      */
     Scalar krLowS(int phaseIdx) const
     { return 0.05; }
@@ -95,6 +103,7 @@ public:
      *
      * This is just 95%. If you need a different value, write your own
      * parameter class.
+     * \param phaseIdx Index of the phase
      */
     Scalar krHighS(int phaseIdx) const
     { return 0.95; }

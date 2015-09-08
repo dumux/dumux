@@ -46,12 +46,12 @@ class DiffusivityConstantTau
 {
 public:
     /*!
-     * \brief Returns the effective diffusion coefficient \f$[m^2/s]\f$ based
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ based
      *        on a constant tortuosity value
      *
      * \param porosity The porosity
      * \param saturation The saturation of the phase
-     * \param diffCoeff The diffusion coefficient of the phase
+     * \param diffCoeff The diffusion coefficient of the phase in \f$\mathrm{[m^2/s]}\f$
      */
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                                const Scalar saturation,

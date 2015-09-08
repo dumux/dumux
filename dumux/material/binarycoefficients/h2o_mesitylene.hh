@@ -39,7 +39,7 @@ class H2O_Mesitylene
 {
 public:
     /*!
-     * \brief Henry coefficent \f$\mathrm{[N/m^2]}\f$  for mesitylene in liquid water.
+     * \brief Henry coefficent \f$\mathrm{[Pa]}\f$  for mesitylene in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * See:
      *

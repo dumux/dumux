@@ -32,7 +32,7 @@ namespace Dumux
  * \brief Specification of the material parameters
  *       for the van Genuchten constitutive relations.
  *
- *       In this implementation setting either the \f$n\f$ or \f$m\f$ shape parameter
+ *       In this implementation setting either the \f$\mathrm{n}\f$ or \f$\mathrm{m}\f$ shape parameter
  *       automatically calculates the other. I.e. they cannot be set independently.
  *
  * \ingroup fluidmatrixinteractionsparams
@@ -53,47 +53,47 @@ public:
     }
 
     /*!
-     * \brief Return the \f$\alpha\f$ shape parameter [1/Pa] of van Genuchten's
+     * \brief Return the \f$\mathrm{\alpha}\f$ shape parameter \f$\mathrm{[1/Pa]}\f$ of van Genuchten's
      *        curve.
      */
     Scalar vgAlpha() const
     { return vgAlpha_; }
 
     /*!
-     * \brief Set the \f$\alpha\f$ shape parameter [1/Pa] of van Genuchten's
+     * \brief Set the \f$\mathrm{\alpha}\f$ shape parameter \f$\mathrm{[1/Pa]}\f$ of van Genuchten's
      *        curve.
      */
     void setVgAlpha(Scalar v)
     { vgAlpha_ = v; }
 
     /*!
-     * \brief Return the \f$m\f$ shape parameter [-] of van Genuchten's
+     * \brief Return the \f$\mathrm{m}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
      *        curve.
      */
     Scalar vgm() const
     { return vgm_; }
 
     /*!
-     * \brief Set the \f$m\f$ shape parameter [-] of van Genuchten's
+     * \brief Set the \f$\mathrm{m}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
      *        curve.
      *
-     * The \f$n\f$ shape parameter is set to \f$n = \frac{1}{1 - m}\f$
+     * The \f$\mathrm{n}\f$ shape parameter is set to \f$\mathrm{n = \frac{1}{1 - m}}\f$
      */
     void setVgm(Scalar m)
     { vgm_ = m; vgn_ = 1/(1 - vgm_); }
 
     /*!
-     * \brief Return the \f$n\f$ shape parameter [-] of van Genuchten's
+     * \brief Return the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
      *        curve.
      */
     Scalar vgn() const
     { return vgn_; }
 
     /*!
-     * \brief Set the \f$n\f$ shape parameter [-] of van Genuchten's
+     * \brief Set the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
      *        curve.
      *
-     * The \f$n\f$ shape parameter is set to \f$m = 1 - \frac{1}{n}\f$
+     * The \f$\mathrm{n}\f$ shape parameter is set to \f$\mathrm{m = 1 - \frac{1}{n}}\f$
      */
     void setVgn(Scalar n)
     { vgn_ = n; vgm_ = 1 - 1/vgn_; }

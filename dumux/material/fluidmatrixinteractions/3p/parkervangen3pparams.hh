@@ -63,53 +63,57 @@ public:
     }
 
     /*!
-     * \brief Return the \f$\alpha\f$ shape parameter of van Genuchten's
+     * \brief Return the \f$\mathrm{\alpha}\f$ shape parameter of van Genuchten's
      *        curve.
      */
     Scalar vgAlpha() const
     { return vgAlpha_; }
 
     /*!
-     * \brief Set the \f$\alpha\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\mathrm{\alpha}\f$ shape parameter of van Genuchten's
      *        curve.
+     * \param v Set shape parameter
      */
     void setVgAlpha(Scalar v)
     { vgAlpha_ = v; }
 
     /*!
-     * \brief Return the \f$m\f$ shape parameter of van Genuchten's
+     * \brief Return the \f$\mathrm{m}\f$ shape parameter of van Genuchten's
      *        curve.
      */
     Scalar vgm() const
     { return vgm_; }
 
     /*!
-     * \brief Set the \f$m\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\mathrm{m}\f$ shape parameter of van Genuchten's
      *        curve.
+     * \param m Set shape parameter
      *
-     * The \f$n\f$ shape parameter is set to \f$n = \frac{1}{1 - m}\f$
+     * The \f$\mathrm{n}\f$ shape parameter is set to \f$n = \frac{1}{1 - m}\f$
      */
     void setVgm(Scalar m)
     { vgm_ = m; vgn_ = 1/(1 - vgm_); }
 
     /*!
-     * \brief Return the \f$n\f$ shape parameter of van Genuchten's
+     * \brief Return the \f$\mathrm{n}\f$ shape parameter of van Genuchten's
      *        curve.
      */
     Scalar vgn() const
     { return vgn_; }
 
     /*!
-     * \brief Set the \f$n\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\mathrm{n}\f$ shape parameter of van Genuchten's
      *        curve.
+     * \param n Set shape parameter
      *
-     * The \f$n\f$ shape parameter is set to \f$m = 1 - \frac{1}{n}\f$
+     * The \f$\mathrm{n}\f$ shape parameter is set to \f$\mathrm{m = 1 - \frac{1}{n}}\f$
      */
     void setVgn(Scalar n)
     { vgn_ = n; vgm_ = 1 - 1/vgn_; }
 
     /*!
      * \brief Return the residual saturation.
+     * \param phaseIdx Indicator, The saturation of phases
      */
     Scalar satResidual(int phaseIdx) const
     {
@@ -147,6 +151,7 @@ public:
 
     /*!
      * \brief Set the residual wetting saturation.
+     * \param input Set residual wetting saturation
      */
     void setSwr(Scalar input)
     { swr_ = input; }
@@ -159,6 +164,7 @@ public:
 
     /*!
      * \brief Set the residual non-wetting saturation.
+     * \param input Set the resiudal non-wetting saturation
      */
     void setSnr(Scalar input)
     { snr_ = input; }
@@ -171,15 +177,20 @@ public:
 
     /*!
      * \brief Set the residual gas saturation.
+     * \param input Set the resiudal gas saturation
      */
     void setSgr(Scalar input)
     { sgr_ = input; }
-
+     
+    /*!
+     * \brief Set the residual gas saturation.
+     */
     Scalar swrx() const
     { return swrx_; }
 
     /*!
      * \brief Set the residual gas saturation.
+     * \param input Set the resiudal gas saturation
      */
     void setSwrx(Scalar input)
     { swrx_ = input; }
@@ -210,6 +221,7 @@ public:
 
     /*!
      * \brief defines if residual n-phase saturation should be regarded in its relative permeability.
+     * \param input Regard residual n-phase saturation
      */
     void setKrRegardsSnr(bool input)
     { krRegardsSnr_ = input; }
@@ -222,13 +234,14 @@ public:
 
 
     /*!
-     * \brief Return the bulk density of the porous medium
+     * \brief Return the bulk density of the porous medium in \f$\mathrm{[kg/m^3]}\f$
      */
     Scalar rhoBulk() const
     { return rhoBulk_; }
 
     /*!
      * \brief Set the bulk density of the porous medium
+     * \param input Density of the porous medium in \f$\mathrm{[kg/m^3]}\f$
      */
     void setRhoBulk(Scalar input)
     { rhoBulk_ = input; }
@@ -241,6 +254,7 @@ public:
 
     /*!
      * \brief Set the adsorption coefficient
+     * \param input Set the adsorption coefficient
      */
     void setKdNAPL(Scalar input)
     { KdNAPL_ = input; }

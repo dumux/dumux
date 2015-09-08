@@ -82,6 +82,7 @@ public:
 
     /*!
      * \brief Return the human readable name of a fluid phase
+     * \param phaseIdx The index of the fluid phase to consider
      */
     static const char *phaseName(int phaseIdx)
     {
@@ -96,6 +97,7 @@ public:
 
     /*!
      * \brief Return whether a phase is liquid
+     * \param phaseIdx The index of the fluid phase to consider
      */
     static bool isLiquid(int phaseIdx)
     {
@@ -109,6 +111,7 @@ public:
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
      *        be an ideal mixture.
+     * \param phaseIdx The index of the fluid phase to consider
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
@@ -188,8 +191,7 @@ public:
     }
 
     /*!
-     * \brief Return the molar mass of a component in [kg/mol].
-     *
+     * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
      * \param compIdx index of the component
      */
     static Scalar molarMass(int compIdx)
@@ -202,7 +204,8 @@ public:
     }
 
     /*!
-     * \brief Critical temperature of a component [K].
+     * \brief Critical temperature of a component \f$\mathrm{[K]}\f$.
+     * \param compIdx index of the component
      */
     static Scalar criticalTemperature(int compIdx)
     {
@@ -214,7 +217,8 @@ public:
     }
 
     /*!
-     * \brief Critical pressure of a component [Pa].
+     * \brief Critical pressure of a component \f$\mathrm{[Pa]}\f$.
+     * \param compIdx index of the component
      */
     static Scalar criticalPressure(int compIdx)
     {
@@ -226,7 +230,8 @@ public:
     }
 
     /*!
-     * \brief The acentric factor of a component [].
+     * \brief The acentric factor of a component \f$\mathrm{[-]}\f$.
+     * \param compIdx index of the component
      */
     static Scalar acentricFactor(int compIdx)
     {
@@ -252,12 +257,11 @@ public:
     }
 
     /*!
-     * \brief Return the density of a phase [kg/m^3].
+     * \brief Return the density of a phase \f$mathrm{[kg/m^3]}\f$.
      *
      * \param fluidState The fluid state of the two-phase model
      * \param phaseIdx Index of the fluid phase
      *
-     * \tparam FluidState the fluid state class of the two-phase model
      */
     using Base::density;
     template <class FluidState>
@@ -274,8 +278,9 @@ public:
     }
 
     /*!
-     * \brief Return the viscosity of a phase [Pa*s].
-     *
+     * \brief Return the viscosity of a phase \f$\mathrm{[Pa*s]}\f$.
+     * \param fluidState The fluid state of the two-phase model
+     * \param phaseIdx Index of the fluid phase
      */
     using Base::viscosity;
     template <class FluidState>
@@ -292,12 +297,15 @@ public:
     }
 
     /*!
-     * \brief Calculate the fugacity coefficient [Pa] of an individual
+     * \brief Calculate the fugacity coefficient \f$\mathrm{[Pa]}\f$ of an individual
      *        component in a fluid phase
+     * \param fluidState The fluid state of the two-phase model
+     * \param phaseIdx Index of the fluid phase
+     * \param compIdx index of the component
      *
-     * The fugacity coefficient \f$\phi_\kappa\f$ is connected to the
-     * fugacity \f$f_\kappa\f$ and the component's molarity
-     * \f$x_\kappa\f$ by means of the relation
+     * The fugacity coefficient \f$\mathrm{\phi_\kappa}\f$ is connected to the
+     * fugacity \f$\mathrm{f_\kappa}\f$ and the component's molarity
+     * \f$\mathrm{x_\kappa}\f$ by means of the relation
      *
      * \f[ f_\kappa = \phi_\kappa * x_{\kappa} \f]
      */
@@ -321,21 +329,24 @@ public:
 
     /*!
      * \brief Calculate the binary molecular diffusion coefficient for
-     *        a component in a fluid phase [mol^2 * s / (kg*m^3)]
-     *
-     * Molecular diffusion of a compoent \f$\kappa\f$ is caused by a
+     *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
+     * \param fluidState The fluid state of the two-phase model
+     * \param phaseIdx Index of the fluid phase
+     * \param compIdx index of the component
+     * 
+     * Molecular diffusion of a compoent \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
      * \f[ J = - D \mathbf{grad} \mu_\kappa \f]
      *
-     * where \f$\mu_\kappa\f$ is the component's chemical potential,
-     * \f$D\f$ is the diffusion coefficient and \f$J\f$ is the
-     * diffusive flux. \f$\mu_\kappa\f$ is connected to the component's
-     * fugacity \f$f_\kappa\f$ by the relation
+     * where \f$\mathrm{\mu_\kappa]}\f$ is the component's chemical potential,
+     * \f$\mathrm{D}\f$ is the diffusion coefficient and \f$\mathrm{J}\f$ is the
+     * diffusive flux. \f$\mathrm{\mu_\kappa}\f$ is connected to the component's
+     * fugacity \f$\mathrm{f_\kappa}\f$ by the relation
      *
      * \f[ \mu_\kappa = R T_\alpha \mathrm{ln} \frac{f_\kappa}{p_\alpha} \f]
      *
-     * where \f$p_\alpha\f$ and \f$T_\alpha\f$ are the fluid phase'
+     * where \f$\mathrm{p_\alpha}\f$ and \f$\mathrm{T_\alpha}\f$ are the fluid phase'
      * pressure and temperature.
      */
     using Base::diffusionCoefficient;
@@ -351,8 +362,12 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient for components
-     *        \f$i\f$ and \f$j\f$ in this phase.
+     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
+     *        \f$\mathrm{i}\f$ and \f$\mathrm{j}\f$ in this phase.
+     * \param fluidState The fluid state of the two-phase model
+     * \param phaseIdx Index of the fluid phase
+     * \param compIIdx index of the component i
+     * \param compJIdx index of the component j
      */
     using Base::binaryDiffusionCoefficient;
     template <class FluidState>
@@ -368,7 +383,9 @@ public:
     }
 
     /*!
-     * \brief Return the specific enthalpy of a fluid phase [J/kg].
+     * \brief Return the specific enthalpy of a fluid phase \f$\mathrm{[J/kg]}\f$.
+     * \param fluidState The fluid state of the two-phase model
+     * \param phaseIdx Index of the fluid phase
      */
     using Base::enthalpy;
     template <class FluidState>
@@ -385,7 +402,9 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity of a fluid phase [W/(m^2 K/m)].
+     * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
+     * \param fluidState The fluid state of the two-phase model
+     * \param phaseIdx Index of the fluid phase
      */
     using Base::thermalConductivity;
     template <class FluidState>
@@ -403,10 +422,10 @@ public:
 
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
-     *        \f$\mathrm{[J/kg]}\f$.
+     *        \f$\mathrm{[J/(kg*K)]}\f$.
      *
-     * \param params    mutable parameters
-     * \param phaseIdx  for which phase to give back the heat capacity
+     * \param fluidState The fluid state of the two-phase model
+     * \param phaseIdx for which phase to give back the heat capacity
      */
     using Base::heatCapacity;
     template <class FluidState>

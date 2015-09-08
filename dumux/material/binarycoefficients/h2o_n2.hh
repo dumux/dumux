@@ -43,7 +43,7 @@ class H2O_N2
 {
 public:
     /*!
-     * \brief Henry coefficent \f$\mathrm{[N/m^2]}\f$  for molecular nitrogen in liquid water.
+     * \brief Henry coefficent \f$\mathrm{[Pa]}\f$  for molecular nitrogen in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
     template <class Scalar>

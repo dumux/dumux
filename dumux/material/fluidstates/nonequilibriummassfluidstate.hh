@@ -81,7 +81,7 @@ class NonEquilibriumMassFluidState :
      * implementation...
      *****************************************************/
     /*!
-     * \brief Set the temperature [K] of a fluid phase
+     * \brief Set the temperature \f$\mathrm{[K]}\f$ of a fluid phase
      *        Both versions of the function need to be here.
      *        Otherwise the compiler gets confused.
      *        Thus, this is just forwarding to the Parent
@@ -95,7 +95,7 @@ class NonEquilibriumMassFluidState :
     }
 
     /*!
-     * \brief Set the temperature [K] of the fluid phases.
+     * \brief Set the temperature \f$\mathrm{[K]}\f$ of the fluid phases.
      *        Both versions of the function need to be here.
      *        Otherwise the compiler gets confused.
      *        Thus, this is just presenting the signature to the compiler.
@@ -106,7 +106,7 @@ class NonEquilibriumMassFluidState :
     }
 
     /*!
-     * \brief Get the temperature [K] of the fluid phases.
+     * \brief Get the temperature \f$\mathrm{[K]}\f$ of the fluid phases.
      */
     Scalar temperature() const
     {
@@ -114,7 +114,7 @@ class NonEquilibriumMassFluidState :
     }
 
     /*!
-     * \brief Get the temperature [K] of the fluid phases.
+     * \brief Get the temperature \f$\mathrm{[K]}\f$ of the fluid phases.
      */
     Scalar temperature(const int dummy) const
     {
@@ -124,6 +124,7 @@ class NonEquilibriumMassFluidState :
     /*!
       * \brief Retrieve all parameters from an arbitrary fluid
       *        state. The assign method from the parent class cannot be used, because here, we have only one temperature.
+      * \param fs Fluidstate
       */
      template <class FluidState>
      void assign(const FluidState& fs)

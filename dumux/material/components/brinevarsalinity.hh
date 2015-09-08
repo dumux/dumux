@@ -61,7 +61,7 @@ public:
 
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of brine.
-     *
+     *\param salinity The mass fraction of salt in brine
      * This assumes that the salt is pure NaCl.
      */
    static Scalar molarMass(Scalar salinity)
@@ -120,6 +120,7 @@ public:
      *
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      * \param p pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param salinity The mass fraction of salt
      *
      * Equations given in:    - Palliser & McKibbin 1997
      *                         - Michaelides 1981
@@ -202,6 +203,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param salinity The mass fraction of salt
      */
     static const Scalar liquidInternalEnergy(Scalar temperature,
                                              Scalar pressure, Scalar salinity)
@@ -225,6 +227,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     * \param salinity The mass fraction of salt
      *
      * Equations given in:    - Batzle & Wang (1992)
      *                        - cited by: Adams & Bachu in Geofluids (2002) 2, 257-271
@@ -269,6 +272,7 @@ public:
     *
     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
+    * \param salinity The mass fraction of salt
     */
    static Scalar liquidPressure(Scalar temperature, Scalar density, Scalar salinity)
    {
@@ -309,7 +313,8 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *
+     * \param salinity The mass fraction of salt
+     * 
      * Equation given in:    - Batzle & Wang (1992)
      *                         - cited by: Bachu & Adams (2002)
      *                           "Equations of State for basin geofluids"

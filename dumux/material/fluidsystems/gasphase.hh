@@ -61,80 +61,95 @@ public:
     { return Component::gasIsIdeal(); }
 
     /*!
-     * \brief The mass in [kg] of one mole of the component.
+     * \brief The mass in \f$\mathrm{[kg]}\f$ of one mole of the component.
      */
     static Scalar molarMass()
     {  return Component::molarMass(); }
 
     /*!
-     * \brief Returns the critical temperature of the component
+     * \brief Returns the critical temperature in \f$\mathrm{[K]}\f$ of the component 
      */
     static Scalar criticalTemperature()
     {  return Component::criticalTemperature(); }
 
     /*!
-     * \brief Returns the critical pressure of the component
+     * \brief Returns the critical pressure in \f$\mathrm{[Pa]}\f$ of the component 
      */
     static Scalar criticalPressure()
     {  return Component::criticalPressure(); }
 
     /*!
-     * \brief Returns the temperature at the component's triple point.
+     * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at the component's triple point. 
      */
     static Scalar tripleTemperature()
     {  return Component::tripleTemperature(); }
 
     /*!
-     * \brief Returns the pressure at the component's triple point.
+     * \brief Returns the pressure in \f$\mathrm{[Pa]}\f$ at the component's triple point.
      */
     static Scalar triplePressure()
     { return Component::triplePressure(); }
 
     /*!
-     * \brief The vapor pressure in [N/m^2] of the component at a given
+     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
      *        temperature.
+     * \param T temperature \f$\mathrm{[K]}\f$
      */
     static Scalar vaporPressure(Scalar T)
     { return Component::vaporPressure(T); }
 
     /*!
-     * \brief The density [kg/m^3] of the component at a given pressure and temperature.
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar density(Scalar temperature, Scalar pressure)
     {  return Component::gasDensity(temperature, pressure); }
 
     /*!
-     * \brief The pressure [Pa] of the component at a given density and temperature.
+     * \brief The pressure \f$\mathrm{[Pa]}\f$ of the component at a given density and temperature.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param density The given density \f$\mathrm{[kg/m^3]}\f$
      */
     static Scalar pressure(Scalar temperature, Scalar density)
     {  return Component::gasPressure(temperature, density); }
 
     /*!
-     * \brief Specific enthalpy [J/kg] the pure component as a gas.
+     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of the pure component as a gas.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static const Scalar enthalpy(Scalar temperature, Scalar pressure)
     {  return Component::gasEnthalpy(temperature, pressure); }
 
     /*!
-     * \brief Specific internal energy [J/kg] the pure component as a gas.
+     * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ of the pure component as a gas.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static const Scalar internalEnergy(Scalar temperature, Scalar pressure)
     { return Component::gasInternalEnergy(temperature, pressure); }
 
     /*!
-     * \brief The dynamic viscosity [Pa s] of the pure component at a given pressure and temperature.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the pure component at a given pressure and temperature.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar viscosity(Scalar temperature, Scalar pressure)
     {  return Component::gasViscosity(temperature, pressure); }
 
     /*!
-     * \brief Thermal conductivity of the fluid [W/(m^2 K/m)].
+     * \brief Thermal conductivity of the fluid \f$\mathrm{[W/(m K)]}\f$.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar thermalConductivity(Scalar temperature, Scalar pressure)
     { return Component::gasThermalConductivity(temperature, pressure); }
 
     /*!
-     * \brief Specific isobaric heat capacity of the fluid [J/kg].
+     * \brief Specific isobaric heat capacity of the fluid \f$\mathrm{[J/(kg K)]}\f$.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar heatCapacity(Scalar temperature, Scalar pressure)
     { return Component::gasHeatCapacity(temperature, pressure); }

@@ -39,7 +39,7 @@ class H2O_Xylene
 {
 public:
     /*!
-     * \brief Henry coefficent \f$\mathrm{[N/m^2]}\f$  for xylene in liquid water.
+     * \brief Henry coefficent \f$\mathrm{[Pa]}\f$  for xylene in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      *
      * See:

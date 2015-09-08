@@ -57,11 +57,11 @@ public:
      *
      * Van Genuchten's empirical capillary pressure <-> saturation
      * function is given by
-     * \f[
+     * \f$\mathrm{
      p_C = (\overline{S}_w^{-1/m} - 1)^{1/n}/\alpha
-     \f]
-     * \param swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     }\f$
+     * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
@@ -75,15 +75,15 @@ public:
      * \brief The saturation-capillary pressure curve according to van Genuchten.
      *
      * This is the inverse of the capillary pressure-saturation curve:
-     * \f[
+     * \f$\mathrm{
      \overline{S}_w = {p_C}^{-1} = ((\alpha p_C)^n + 1)^{-m}
-     \f]
+     }\f$
      *
-     * \param pc        Capillary pressure \f$p_C\f$
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param pc Capillary pressure \f$\mathrm{p_C}\f$ in \f$\mathrm{[Pa]}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
-     * \return          The effective saturation of the wetting phase \f$\overline{S}_w\f$
+     * \return          The effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
      */
     static Scalar sw(const Params &params, Scalar pc)
     {
@@ -97,14 +97,14 @@ public:
      *        pressure w.r.t. the effective saturation according to van Genuchten.
      *
      * This is equivalent to
-     * \f[
+     * \f$\mathrm{
      \frac{\partial p_C}{\partial \overline{S}_w} =
      -\frac{1}{\alpha} (\overline{S}_w^{-1/m} - 1)^{1/n - }
      \overline{S}_w^{-1/m} / \overline{S}_w / m
-     \f]
+     }\f$
      *
-     * \param swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
     */
@@ -121,8 +121,8 @@ public:
      * \brief The partial derivative of the effective
      *        saturation to the capillary pressure according to van Genuchten.
      *
-     * \param pc        Capillary pressure \f$p_C\f$
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param pc Capillary pressure \f$\mathrm{p_C}\f$ in \f$\mathrm{[Pa]}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
@@ -140,8 +140,8 @@ public:
      *        the medium implied by van Genuchten's
      *        parameterization.
      *
-     * \param swe        The mobile saturation of the wetting phase.
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.     */
     static Scalar krw(const Params &params, Scalar swe)
@@ -157,8 +157,8 @@ public:
      *        wetting phase in regard to the wetting saturation of the
      *        medium implied by the van Genuchten parameterization.
      *
-     * \param swe       The mobile saturation of the wetting phase.
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
@@ -176,8 +176,8 @@ public:
      *        of the medium implied by van Genuchten's
      *        parameterization.
      *
-     * \param swe        The mobile saturation of the wetting phase.
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
@@ -196,8 +196,8 @@ public:
      *        the medium as implied by the van Genuchten
      *        parameterization.
      *
-     * \param swe        The mobile saturation of the wetting phase.
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */

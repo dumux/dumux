@@ -48,78 +48,78 @@ public:
     }
 
     /*!
-     * \brief Return the \f$a_{00}\f$ shape parameter of awn surface.
+     * \brief Return the \f$\mathrm{a_{00}}\f$ shape parameter of awn surface.
      */
     const Scalar a00() const
     { return a00_; }
 
     /*!
-     * \brief Return the \f$a_{10}\f$ shape parameter of awn surface.
+     * \brief Return the \f$\mathrm{a_{10}}\f$ shape parameter of awn surface.
      */
     const Scalar a10() const
     { return a10_; }
 
     /*!
-     * \brief Return the \f$a_{20}\f$ shape parameter of awn surface.
+     * \brief Return the \f$\mathrm{a_{20}}\f$ shape parameter of awn surface.
      */
     const Scalar a20() const
     { return a20_; }
 
     /*!
-     * \brief Return the \f$a_{11}\f$ shape parameter of awn surface.
+     * \brief Return the \f$\mathrm{a_{11}}\f$ shape parameter of awn surface.
      */
     const Scalar a11() const
     { return a11_; }
 
     /*!
-     * \brief Return the \f$a_{01}\f$ shape parameter of awn surface.
+     * \brief Return the \f$\mathrm{a_{01}}\f$ shape parameter of awn surface.
      */
     const Scalar a01() const
     { return a01_; }
 
     /*!
-     * \brief Return the \f$a_{02}\f$ shape parameter of awn surface.
+     * \brief Return the \f$\mathrm{a_{02}}\f$ shape parameter of awn surface.
      */
     const Scalar a02() const
     { return a02_; }
 
     /*!
-     * \brief Set the \f$a_{00}\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\mathrm{a_{00}}\f$ shape parameter of van Genuchten's
      *        curve.
      */
     void setA00(const Scalar v)
     { a00_ = v; }
 
     /*!
-     * \brief Set the \f$a_{10}\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\mathrm{a_{10}}\f$ shape parameter of van Genuchten's
      *        curve.
      */
     void setA10(const Scalar v)
     { a10_ = v; }
 
     /*!
-     * \brief Set the \f$a_{20}\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\mathrm{a_{20}}\f$ shape parameter of van Genuchten's
      *        curve.
      */
     void setA20(const Scalar v)
     { a20_ = v; }
 
     /*!
-     * \brief Set the \f$a_{11}\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\mathrm{a_{11}}\f$ shape parameter of van Genuchten's
      *        curve.
      */
     void setA11(const Scalar v)
     { a11_ = v; }
 
     /*!
-     * \brief Set the \f$a_{01}\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\mathrm{a_{01}}\f$ shape parameter of van Genuchten's
      *        curve.
      */
     void setA01(const Scalar v)
     { a01_ = v; }
 
     /*!
-     * \brief Set the \f$a_{02}\f$ shape parameter of van Genuchten's
+     * \brief Set the \f$\mathrm{a_{02}}\f$ shape parameter of van Genuchten's
      *        curve.
      */
     void setA02(const Scalar v)

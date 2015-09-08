@@ -74,6 +74,9 @@ public:
     /*!
      * \brief Update all parameters required by the fluid system to
      *        calculate some quantities for the phase.
+     * \param fs An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param except The except quantity
      */
     template <class FluidState>
     void updatePhase(const FluidState &fs,
@@ -99,6 +102,10 @@ public:
      * concentration changed between two update*() calls. If more than
      * one concentration changed, call updatePhaseComposition() of
      * updatePhase()!
+ 
+     * \param fs An arbitrary fluid state
+     * \param compIdx The index of the component to consider
+     * \param phaseIdx The index of the fluid phase to consider
      */
     template <class FluidState>
     void updateSingleMoleFraction(const FluidState &fs,
@@ -116,6 +123,7 @@ public:
 
     /*!
      * \brief The Peng-Robinson attractive parameter for a phase.
+     * \param phaseIdx The index of the fluid phase to consider
      */
     Scalar a(int phaseIdx) const
     {
@@ -132,6 +140,7 @@ public:
 
     /*!
      * \brief The Peng-Robinson covolume for a phase.
+     * \param phaseIdx The index of the fluid phase to consider
      */
     Scalar b(int phaseIdx) const
     {
@@ -150,6 +159,8 @@ public:
      * \brief The Peng-Robinson attractive parameter for a pure
      *        component given the same temperature and pressure of the
      *        phase.
+     * \param compIdx The index of the component to consider
+     * \param phaseIdx The index of the fluid phase to consider
      */
     Scalar aPure(int phaseIdx, int compIdx) const
     {
@@ -167,6 +178,8 @@ public:
     /*!
      * \brief The Peng-Robinson covolume for a pure component given
      *        the same temperature and pressure of the phase.
+     * \param compIdx The index of the component to consider
+     * \param phaseIdx The index of the fluid phase to consider
      */
     Scalar bPure(int phaseIdx, int compIdx) const
     {
@@ -182,7 +195,8 @@ public:
     }
 
     /*!
-     * \brief Returns the molar volume of a phase [m^3/mol]
+     * \brief Returns the molar volume of a phase \f$\mathrm{[m^3/mol]}\f$
+     * \param phaseIdx The index of the fluid phase to consider
      */
     Scalar molarVolume(int phaseIdx) const
     { assert(VmUpToDate_[phaseIdx]); return Vm_[phaseIdx]; }

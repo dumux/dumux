@@ -39,7 +39,7 @@ class ThermalConductivityAverage
 {
 public:
     /*!
-     * \brief simple effective thermal conductivity \f$[W/(m K)]\f$
+     * \brief simple effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      *
      * \param volVars volume variables
      * \param spatialParams spatial parameters
@@ -47,7 +47,7 @@ public:
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
      * \param scvIdx scvIdx (to be passed to spatialParams)
      *
-     * \return effective thermal conductivity \f$[W/(m K)]\f$
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
     template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,

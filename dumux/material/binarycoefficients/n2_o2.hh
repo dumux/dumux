@@ -43,7 +43,7 @@ class N2_O2
 {
 public:
     /*!
-     * \brief Henry coefficent \f$\mathrm{[N/m^2]}\f$  for molecular oxygen in liquid nitrogen.
+     * \brief Henry coefficent \f$\mathrm{[Pa]}\f$  for molecular oxygen in liquid nitrogen.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
     template <class Scalar>

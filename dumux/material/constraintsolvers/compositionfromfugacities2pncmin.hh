@@ -87,6 +87,7 @@ public:
      * \param paramCache  Container for cache parameters
      * \param phaseIdx The phase index
      * \param targetFug target fugacity
+     * \param phasePresence Presence of the phase
      *
      * The phase's fugacities must already be set.
      */

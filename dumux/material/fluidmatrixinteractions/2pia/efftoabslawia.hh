@@ -71,7 +71,11 @@ public:
     typedef typename MaterialParams::Scalar Scalar;
 
     /*!
-     * \brief The interfacial area relation
+     * \brief The interfacial area relation 
+     * \param sw Absolute saturation of the wetting phase \f$\mathrm{{S}_w}\f$.
+     * \param iaParams parameter container for the interfacial area
+     * \param pc Capillary pressure in \f$\mathrm{[Pa]}\f$
+     * \param params parameter container for the saturation/materials
      */
     static Scalar interfacialArea(const Params & iaParams,
                                   const MaterialParams & params,
@@ -87,8 +91,8 @@ protected:
     /*!
      * \brief Convert an absolute wetting saturation to an effective one.
      *
-     * \param sw        Absolute saturation of the wetting phase \f${S}_w\f$.
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param sw Absolute saturation of the wetting phase \f$\mathrm{{S}_w}\f$.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Effective saturation of the wetting phase.

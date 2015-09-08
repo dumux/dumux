@@ -73,7 +73,7 @@ class ThermalConductivitySomerton
 {
 public:
     /*!
-     * \brief effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974) extended for a three phase system
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) extended for a three phase system
      *
      * \param volVars volume variables
      * \param spatialParams spatial parameters
@@ -81,7 +81,7 @@ public:
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
      * \param scvIdx scvIdx (to be passed to spatialParams)
      *
-     * \return effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      *
      * This gives an interpolation of the effective thermal conductivities of a porous medium
      * filled with the water phase (w), a NAPL phase (n) and a gas phase (g).
@@ -107,17 +107,17 @@ public:
     }
 
     /*!
-     * \brief effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      *
      * \param sw The saturation of the wetting phase
-     * \param sn The saturation of the wetting phase
-     * \param lambdaW the thermal conductivity of the water phase
-     * \param lambdaN the thermal conductivity of the NAPL phase
-     * \param lambdaG the thermal conductivity of the gas phase
-     * \param lambdaSolid the thermal conductivity of the solid phase
+     * \param sn The saturation of the non-wetting phase
+     * \param lambdaW the thermal conductivity of the water phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaN the thermal conductivity of the NAPL phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaG the thermal conductivity of the gas phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaSolid the thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
      * \param porosity The porosity
      *
-     * \return effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      */
     static Scalar effectiveThermalConductivity(const Scalar sw,
                                                const Scalar sn,

@@ -76,36 +76,36 @@ public:
      * on thermodynamic equilibrium required)
      *****************************************************/
     /*!
-     * \brief Returns the saturation of a phase []
+     * \brief Returns the saturation of a phase \f$\mathrm{[-]}\f$
      */
     Scalar saturation(int phaseIdx) const
     { return saturation_[phaseIdx]; }
 
     /*!
-     * \brief The mole fraction of a component in a phase []
+     * \brief The mole fraction of a component in a phase \f$\mathrm{[-]}\f$
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     { return moleFraction_[phaseIdx][compIdx]; }
 
     /*!
-     * \brief The mass fraction of a component in a phase []
+     * \brief The mass fraction of a component in a phase \f$\mathrm{[-]}\f$
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     { return massFraction_[phaseIdx][compIdx]; }
 
     /*!
-     * \brief The average molar mass of a fluid phase [kg/mol]
+     * \brief The average molar mass of a fluid phase \f$\mathrm{[kg/mol]}\f$
      *
      * The average molar mass is the mean mass of a mole of the
      * fluid at current composition. It is defined as the sum of the
      * component's molar masses weighted by the current mole fraction:
-     * \f[ \bar M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa \f]
+     * \f$\mathrm{ \bar M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa}\f$
      */
     Scalar averageMolarMass(int phaseIdx) const
     { return averageMolarMass_[phaseIdx]; }
 
     /*!
-     * \brief The molar concentration of a component in a phase [mol/m^3]
+     * \brief The molar concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$
      *
      * This quantity is usually called "molar concentration" or just
      * "concentration", but there are many other (though less common)
@@ -117,61 +117,61 @@ public:
     { return molarDensity(phaseIdx)*moleFraction(phaseIdx, compIdx); }
 
     /*!
-     * \brief The fugacity of a component in a phase [Pa]
+     * \brief The fugacity of a component in a phase \f$\mathrm{[Pa]}\f$
      */
     Scalar fugacity(int phaseIdx, int compIdx) const
     { return fugacityCoefficient(phaseIdx, compIdx)*moleFraction(phaseIdx, compIdx)*pressure(phaseIdx); }
 
     /*!
-     * \brief The fugacity coefficient of a component in a phase [-]
+     * \brief The fugacity coefficient of a component in a phase \f$\mathrm{[-]}\f$
      */
     Scalar fugacityCoefficient(int phaseIdx, int compIdx) const
     { return fugacityCoefficient_[phaseIdx][compIdx]; }
 
     /*!
-     * \brief The molar volume of a fluid phase [m^3/mol]
+     * \brief The molar volume of a fluid phase \f$\mathrm{[m^3/mol]}\f$
      */
     Scalar molarVolume(int phaseIdx) const
     { return 1/molarDensity(phaseIdx); }
 
     /*!
-     * \brief The mass density of a fluid phase [kg/m^3]
+     * \brief The mass density of a fluid phase \f$\mathrm{[kg/m^3]}\f$
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief The molar density of a fluid phase [mol/m^3]
+     * \brief The molar density of a fluid phase \f$\mathrm{[mol/m^3]}\f$
      */
     Scalar molarDensity(int phaseIdx) const
     { return density_[phaseIdx]/averageMolarMass(phaseIdx); }
 
     /*!
-     * \brief The temperature of a fluid phase [K]
+     * \brief The temperature of a fluid phase \f$\mathrm{[K]}\f$
      */
     Scalar temperature(int phaseIdx) const
     { return temperature_; }
 
     /*!
-     * \brief The pressure of a fluid phase [Pa]
+     * \brief The pressure of a fluid phase \f$\mathrm{[Pa]}\f$
      */
     Scalar pressure(int phaseIdx) const
     { return pressure_[phaseIdx]; }
 
     /*!
-     * \brief The specific enthalpy of a fluid phase [J/kg]
+     * \brief The specific enthalpy of a fluid phase \f$\mathrm{[J/kg]}\f$
      */
     Scalar enthalpy(int phaseIdx) const
     { return enthalpy_[phaseIdx]; }
 
     /*!
-     * \brief The specific internal energy of a fluid phase [J/kg]
+     * \brief The specific internal energy of a fluid phase \f$\mathrm{[J/kg]}\f$
      */
     Scalar internalEnergy(int phaseIdx) const
     { return enthalpy_[phaseIdx] - pressure(phaseIdx)/density(phaseIdx); }
 
     /*!
-     * \brief The dynamic viscosity of a fluid phase [Pa s]
+     * \brief The dynamic viscosity of a fluid phase \f$\mathrm{[Pa s]}\f$
      */
     Scalar viscosity(int phaseIdx) const
     { return viscosity_[phaseIdx]; }
@@ -183,13 +183,13 @@ public:
      *****************************************************/
 
     /*!
-     * \brief The temperature within the domain [K]
+     * \brief The temperature within the domain \f$\mathrm{[K]}\f$
      */
     Scalar temperature() const
     { return temperature_; }
 
     /*!
-     * \brief The fugacity of a component
+     * \brief The fugacity of a component  \f$\mathrm{[Pa]}\f$
      *
      * This assumes chemical equilibrium.
      */
@@ -233,13 +233,13 @@ public:
     }
 
     /*!
-     * \brief Set the temperature [K] of all phases.
+     * \brief Set the temperature \f$\mathrm{[K]}\f$ of all phases.
      */
     void setTemperature(Scalar value)
     { temperature_ = value; }
 
     /*!
-     * \brief Set the temperature [K] of a specific phase.
+     * \brief Set the temperature \f$\mathrm{[K]}\f$ of a specific phase.
      *        This is not implemented in this fluidstate.
      */
     void setTemperature(const int phaseIdx, const Scalar value)
@@ -248,20 +248,20 @@ public:
     }
 
     /*!
-     * \brief Set the fluid pressure of a phase [Pa]
+     * \brief Set the fluid pressure of a phase  \f$\mathrm{[Pa]}\f$
      */
     void setPressure(int phaseIdx, Scalar value)
     { pressure_[phaseIdx] = value; }
 
     /*!
-     * \brief Set the saturation of a phase []
+     * \brief Set the saturation of a phase \f$\mathrm{[-]}\f$
      */
     void setSaturation(int phaseIdx, Scalar value)
     { saturation_[phaseIdx] = value; }
 
     /*!
-     * \brief Set the mole fraction of a component  in a phase []
-     *        and update the average molar mass [kg/mol] according
+     * \brief Set the mole fraction of a component  in a phase \f$\mathrm{[-]}\f$
+     *        and update the average molar mass \f$\mathrm{[kg/mol]}\f$ according
      *        to the current composition of the phase
      */
     void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
@@ -292,8 +292,8 @@ public:
     }
 
     /*!
-     * \brief Set the mass fraction of a component in a phase []
-     *        and update the average molar mass [kg/mol] according
+     * \brief Set the mass fraction of a component in a phase \f$\mathrm{[-]}\f$
+     *        and update the average molar mass \f$\mathrm{[kg/mol]}\f$ according
      *        to the current composition of the phase
      */
     void setMassFraction(int phaseIdx, int compIdx, Scalar value)
@@ -332,25 +332,25 @@ public:
     }
 
     /*!
-     * \brief Set the fugacity of a component in a phase []
+     * \brief Set the fugacity of a component in a phase \f$\mathrm{[Pa]}\f$
      */
     void setFugacityCoefficient(int phaseIdx, int compIdx, Scalar value)
     { fugacityCoefficient_[phaseIdx][compIdx] = value; }
 
     /*!
-     * \brief Set the density of a phase [kg / m^3]
+     * \brief Set the density of a phase \f$\mathrm{[kg / m^3]}\f$
      */
     void setDensity(int phaseIdx, Scalar value)
     { density_[phaseIdx] = value; }
 
     /*!
-     * \brief Set the specific enthalpy of a phase [J/kg]
+     * \brief Set the specific enthalpy of a phase\f$\mathrm{[J/kg]}\f$
      */
     void setEnthalpy(int phaseIdx, Scalar value)
     { enthalpy_[phaseIdx] = value; }
 
     /*!
-     * \brief Set the dynamic viscosity of a phase [Pa s]
+     * \brief Set the dynamic viscosity of a phase \f$\mathrm{[Pa s]}\f$
      */
     void setViscosity(int phaseIdx, Scalar value)
     { viscosity_[phaseIdx] = value; }

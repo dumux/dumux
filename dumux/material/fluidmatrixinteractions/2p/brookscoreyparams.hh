@@ -56,26 +56,26 @@ public:
     }
 
     /*!
-     * \brief Returns the entry pressure [Pa]
+     * \brief Returns the entry pressure in \f$\mathrm{[Pa]}\f$
      */
     Scalar pe() const
     { return pe_; }
 
     /*!
-     * \brief Set the entry pressure [Pa]
+     * \brief Set the entry pressure in \f$\mathrm{[Pa]}\f$]
      */
     void setPe(Scalar v)
     { pe_ = v; }
 
 
     /*!
-     * \brief Returns the lambda shape parameter
+     * \brief Returns the lambda shape parameter \f$\mathrm{[-]}\f$
      */
     Scalar lambda() const
     { return lambda_; }
 
     /*!
-     * \brief Set the lambda shape parameter
+     * \brief Set the lambda shape parameter \f$\mathrm{[-]}\f$
      */
     void setLambda(Scalar v)
     { lambda_ = v; }

@@ -83,6 +83,9 @@ public:
 
     /*!
      * \brief Give the enthalpy of a *component* in a phase.
+     * \param fluidState A container with the current (physical) state of the fluid
+     * \param phaseIdx The index of the phase to consider
+     * \param compIdx The index of the component to consider
      */
     template <class FluidState>
     static Scalar componentEnthalpy(FluidState &fluidState,
@@ -251,9 +254,13 @@ public:
      *        phases was needed.
      *
      *        In the case of Henry, Raoult this would be
-     *                   nComp      wComp
-     *        nPhase    pn x_n^n    pn x_n^w
-     *        wPhase    pv w_w^w    H x_w^n
+     * 
+     *        ----- n-Comp w-Comp 
+     * 
+     *        nPhase pn \f$\mathrm{x_n^n}\f$ pn \f$\mathrm{x_n^w}\f$
+     *      
+     *        wPhase pv \f$\mathrm{w_w^w}\f$ H \f$\mathrm{x_w^n}\f$
+     *       
      *
      *        Plus additional relations for additional components.
      *
@@ -298,7 +305,8 @@ public:
     }
 
     /*!
-     * \brief Give the Henry constant for a component in a phase.
+     * \brief Give the Henry constant for a component in a phase. \f$\mathrm{[Pa]}\f$
+     * \param temperature The given temperature
      */
     static Scalar henry(Scalar temperature)
     {
@@ -306,7 +314,8 @@ public:
     }
 
     /*!
-     * \brief Give the vapor pressure of a component above one phase.
+     * \brief Give the vapor pressure of a component above one phase. \f$\mathrm{[Pa]}\f$
+     * \param temperature The given temperature
      */
     static Scalar vaporPressure(Scalar temperature)
     {

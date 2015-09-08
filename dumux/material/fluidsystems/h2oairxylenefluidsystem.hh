@@ -20,7 +20,7 @@
  * \file
  *
  * \brief A fluid system with water, gas and NAPL as phases and
- *        \f$H_2O\f$ and \f$Air\f$ and \f$NAPL (contaminant)\f$ as components.
+ *        \f$\mathrm{H_2O}\f$ and \f$\mathrm{Air}\f$ and \f$\mathrm{NAPL (contaminant)}\f$ as components.
  */
 #ifndef DUMUX_H2O_AIR_XYLENE_FLUID_SYSTEM_HH
 #define DUMUX_H2O_AIR_XYLENE_FLUID_SYSTEM_HH
@@ -98,11 +98,11 @@ public:
      * \brief Initialize the fluid system's static parameters using
      *        problem specific temperature and pressure ranges
      *
-     * \param tempMin The minimum temperature used for tabulation of water [K]
-     * \param tempMax The maximum temperature used for tabulation of water [K]
+     * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+     * \param tempMax The maximum temperature used for tabulation of water \f$\mathrm{[K]}\f$
      * \param nTemp The number of ticks on the temperature axis of the  table of water
-     * \param pressMin The minimum pressure used for tabulation of water [Pa]
-     * \param pressMax The maximum pressure used for tabulation of water [Pa]
+     * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+     * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
      * \param nPress The number of ticks on the pressure axis of the  table of water
      */
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
@@ -180,6 +180,7 @@ public:
 
     /*!
      * \brief Return the human readable name of a phase (used in indices)
+     * \param phaseIdx The index of the fluid phase to consider
      */
     static const char *phaseName(int phaseIdx)
     {
@@ -193,6 +194,7 @@ public:
 
     /*!
      * \brief Return the human readable name of a component (used in indices)
+     * \param compIdx The index of the component to consider
      */
     static const char *componentName(int compIdx)
     {
@@ -205,7 +207,8 @@ public:
     }
 
     /*!
-     * \brief Return the molar mass of a component in [kg/mol].
+     * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$
+     * \param compIdx The index of the component to consider
      */
     static Scalar molarMass(int compIdx)
     {
@@ -219,7 +222,9 @@ public:
 
     /*!
      * \brief Given all mole fractions in a phase, return the phase
-     *        density [kg/m^3].
+     *        density \f$\mathrm{[kg/m^3]}\f$.
+     * \param fluidState The fluid state 
+     * \param phaseIdx The index of the phase to consider 
      */
     using Base::density;
     template <class FluidState>
@@ -263,7 +268,9 @@ public:
     }
 
     /*!
-     * \brief Return the viscosity of a phase.
+     * \brief Return the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
+     * \param fluidState The fluid state 
+     * \param phaseIdx The index of the phase to consider 
      */
     using Base::viscosity;
     template <class FluidState>
@@ -336,7 +343,10 @@ public:
 
     /*!
      * \brief Given all mole fractions, return the diffusion
-     *        coefficent of a component in a phase.
+     *        coefficent \f$\mathrm{[m^2/s]}\f$ of a component in a phase.
+     * \param fluidState The fluid state 
+     * \param phaseIdx The index of the phase to consider 
+     * \param compIdx The index of the component to consider
      */
     using Base::diffusionCoefficient;
     template <class FluidState>
@@ -401,8 +411,11 @@ public:
     }
 
     /*!
-     * \brief Returns the fugacity coefficient [-] of a component in a
+     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
      *        phase.
+     * \param fluidState The fluid state 
+     * \param phaseIdx The index of the phase to consider 
+     * \param compIdx The index of the component to consider
      *
      * In this case, things are actually pretty simple. We have an ideal
      * solution. Thus, the fugacity coefficient is 1 in the gas phase
@@ -455,7 +468,9 @@ public:
 
     /*!
      * \brief Given all mole fractions in a phase, return the specific
-     *        phase enthalpy [J/kg].
+     *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
+     * \param fluidState The fluid state 
+     * \param phaseIdx The index of the phase to consider 
      */
     /*!
      *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
@@ -489,7 +504,12 @@ public:
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
-
+    
+ /*!
+     * \brief Return the heat capacity in \f$\mathrm{[J/(kg K)]}\f$.
+     * \param fluidState The fluid state 
+     * \param phaseIdx The index of the phase
+     */
     using Base::heatCapacity;
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
@@ -497,7 +517,12 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirXylene::heatCapacity()");
     }
-
+    
+ /*!
+     * \brief Return the thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
+     * \param fluidState The fluid state 
+     * \param phaseIdx The index of the phase
+     */
     using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,

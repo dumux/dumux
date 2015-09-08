@@ -51,7 +51,7 @@ namespace Dumux
  *        approximation is used.  Doing this is not worse than
  *        following the material law. E.g. for very low wetting phase
  *        values the material laws predict infinite values for
- *        \f$p_c\f$ which is completely unphysical. In case of very
+ *        \f$\mathrm{p_c}\f$ which is completely unphysical. In case of very
  *        high wetting phase saturations the difference between
  *        regularized and "pure" material law is not big.
  *
@@ -82,8 +82,8 @@ public:
      *          curve.
      *
      * regularized part:
-     *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *    - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
      *                       by a straight line (yes, there is a kink :-( ).
      *
      *  For not-regularized part:
@@ -133,8 +133,8 @@ public:
      * \brief   A regularized van Genuchten saturation-capillary pressure curve.
      *
      * regularized part:
-     *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *    - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
      *                       by a straight line (yes, there is a kink :-( ).
      *
      *  The according quantities are obtained by exploiting theorem of intersecting lines.
@@ -189,12 +189,12 @@ public:
 
     /*!
     * \brief A regularized version of the partial derivative
-    *        of the \f$p_c(\overline S_w)\f$ w.r.t. effective saturation
+    *        of the \f$\mathrm{p_c(\overline{S}_w)}\f$ w.r.t. effective saturation
     *        according to van Genuchten.
     *
     * regularized part:
     *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-    *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+    *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
     *                       by a straight line and use that slope (yes, there is a kink :-( ).
     *
     *        For not-regularized part:
@@ -219,12 +219,12 @@ public:
 
     /*!
      * \brief A regularized version of the partial derivative
-     *        of the \f$\overline S_w(p_c)\f$ w.r.t. cap.pressure
+     *        of the \f$\mathrm{\overline{S}_w(p_c)}\f$ w.r.t. cap.pressure
      *        according to van Genuchten.
      *
      *  regularized part:
      *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$
+     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
      *                       by a straight line and use that slope (yes, there is a kink :-( ).
      *
      *        For not-regularized part:
@@ -261,9 +261,9 @@ public:
      *          parameterization.
      *
      *  regularized part:
-     *    - below \f$ \overline S_w =0\f$:                  set relative permeability to zero
-     *    - above \f$ \overline S_w =1\f$:                  set relative permeability to one
-     *    - between \f$ 0.95 \leq \overline S_w \leq 1\f$:  use a spline as interpolation
+     *    - below \f$\mathrm{\overline{S}_w =0}\f$:                  set relative permeability to zero
+     *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
+     *    - between \f$\mathrm{0.95 \leq \overline{S}_w \leq 1}\f$:  use a spline as interpolation
      *
      *  For not-regularized part:
         \copydetails VanGenuchten::krw()
@@ -297,9 +297,9 @@ public:
      *          parameterization.
      *
      * regularized part:
-     *    - below \f$ \overline S_w =0\f$:                  set relative permeability to zero
-     *    - above \f$ \overline S_w =1\f$:                  set relative permeability to one
-     *    - for \f$ 0 \leq \overline S_w \leq 0.05 \f$:     use a spline as interpolation
+     *    - below \f$\mathrm{\overline{S}_w =0}\f$:                  set relative permeability to zero
+     *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
+     *    - for \f$\mathrm{0 \leq \overline{S}_w \leq 0.05}\f$:     use a spline as interpolation
      *
          \copydetails VanGenuchten::krn()
      *
@@ -334,7 +334,7 @@ private:
      * \brief   The slope of the straight line used to regularize
      *          saturations below the minimum saturation.
      *
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      */
@@ -349,7 +349,7 @@ private:
      * \brief   The slope of the straight line used to regularize
      *          saturations above the minimum saturation.
      *
-     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      */

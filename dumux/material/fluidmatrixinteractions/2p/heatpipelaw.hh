@@ -55,8 +55,8 @@ public:
     /*!
      * \brief The capillary pressure-saturation curve.
      *
-     * \param params Array of parameters
-     * \param Sw Effective saturation of of the wetting phase \f$\overline{S}_w\f$
+     * \param params Array of parameters asd
+     * \param Sw Effective saturation of of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
      */
     static Scalar pc(const Params &params, Scalar Sw)
     {
@@ -81,7 +81,9 @@ public:
     /*!
      * \brief The saturation-capillary pressure curve.
      *
-     * \return The effective saturaion of the wetting phase \f$\overline{S}_w\f$
+     * \return The effective saturaion of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
+     * \param params Array of parameters
+     * \param pC  capillary pressure \f$\mathrm{[p_C]}\f$ in \f$\mathrm{[Pa]}\f$.
      */
     static Scalar Sw(const Params &params, Scalar pC)
     {
@@ -91,6 +93,8 @@ public:
     /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
+     * \param params Array of parameters
+     * \param Sw Effective saturation of of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
      */
     static Scalar dpC_dSw(const Params &params, Scalar Sw)
     {
@@ -110,6 +114,8 @@ public:
     /*!
      * \brief Returns the partial derivative of the effective
      *        saturation to the capillary pressure.
+     * \param params Array of parameters
+     * \param pC  capillary pressure \f$\mathrm{[p_C]}\f$ in \f$\mathrm{[Pa]}\f$.
      */
     static Scalar dSw_dpC(const Params &params, Scalar pC)
     {

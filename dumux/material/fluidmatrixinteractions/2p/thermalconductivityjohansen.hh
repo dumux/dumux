@@ -48,19 +48,19 @@ struct JohansenIndices
  * conductivities are calculated as geometric mean of the thermal conductivity of the porous
  * material and of the respective fluid phase.
  * The material law is:
- * \f[
+ * \f$\mathrm{[
  \lambda_\text{eff} = \lambda_{\text{dry}} + \sqrt{(S_w)} \left(\lambda_\text{wet} - \lambda_\text{dry}\right)
- \f]
+ }\f$
  *
  * with
- * \f[
+ * \f$\mathrm{
  \lambda_\text{wet} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
- \f]
+ }\f$
  * and the semi-empirical relation
  *
- * \f[
+ * \f$\mathrm{
  \lambda_\text{dry} = \frac{0.135*\rho_s*\phi + 64.7}{\rho_s - 0.947 \rho_s*\phi}.
- \f]
+ }\f$
  *
  * Source: Phdthesis (Johansen1975) Johansen, O. Thermal conductivity of soils Norw. Univ. of Sci. Technol., Trondheim, Norway, 1975
  */
@@ -69,7 +69,7 @@ class ThermalConductivityJohansen
 {
 public:
     /*!
-     * \brief Returns the effective thermal conductivity \f$[W/(m K)]\f$ after Johansen (1975).
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975).
      *
      * \param volVars volume variables
      * \param spatialParams spatial parameters
@@ -77,7 +77,7 @@ public:
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
      * \param scvIdx scvIdx (to be passed to spatialParams)
      *
-     * \return Effective thermal conductivity \f$[W/(m K)]\f$ after Johansen (1975)
+     * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975)
      *
      * This formulation is semi-empirical and fitted to quartz sand.
      * This gives an interpolation of the effective thermal conductivities of a porous medium
@@ -106,16 +106,16 @@ public:
     }
 
     /*!
-     * \brief Returns the effective thermal conductivity \f$[W/(m K)]\f$ after Johansen (1975).
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975).
      *
      * \param Sw The saturation of the wetting phase
-     * \param lambdaW The thermal conductivity of the wetting phase
-     * \param lambdaN The thermal conductivity of the non-wetting phase
-     * \param lambdaSolid The thermal conductivity of the solid phase
+     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$ 
+     * \param lambdaN The thermal conductivity of the non-wetting phase in \f$\mathrm{[W/(m K)]}\f$ 
+     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$ 
      * \param porosity The porosity
-     * \param rhoSolid The density of solid phase
+     * \param rhoSolid The density of solid phase in \f$\mathrm{[kg/m^3]}\f$ 
      *
-     * \return Effective thermal conductivity \f$[W/(m K)]\f$ after Johansen (1975)
+     * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975)
      */
     static Scalar effectiveThermalConductivity(const Scalar Sw,
                                                const Scalar lambdaW,

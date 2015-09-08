@@ -44,7 +44,7 @@ class ThermalConductivitySimpleFluidLumping
 
 public:
     /*!
-     * \brief effective thermal conductivity \f$[W/(m K)]\f$
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      *
      * \param volVars volume variables
      * \param spatialParams spatial parameters
@@ -52,7 +52,7 @@ public:
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
      * \param scvIdx scvIdx (to be passed to spatialParams)
      *
-     * \return effective thermal conductivity \f$[W/(m K)]\f$
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
     template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
@@ -71,14 +71,14 @@ public:
     }
 
     /*!
-     * \brief Returns the effective thermal conductivity \f$[W/(m K)]\f$.
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
      *
      * \param sw The saturation of the wetting phase
-     * \param lambdaW The thermal conductivity of the wetting phase
-     * \param lambdaN The thermal conductivity of the non-wetting phase
-     * \param lambdaSolid The thermal conductivity of the solid phase
+     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$ 
+     * \param lambdaN The thermal conductivity of the non-wetting phase in \f$\mathrm{[W/(m K)]}\f$ 
+     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$ 
      * \param porosity The porosity
-     * \param rhoSolid The density of the solid phase
+     * \param rhoSolid The density of the solid phase in \f$\mathrm{[kg/m^3]}\f$ 
      *
      * \return Effective thermal conductivity of the fluid phases
      */

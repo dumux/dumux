@@ -47,37 +47,37 @@ public:
     }
 
      /*!
-     * \brief Return the \f$a_{1}\f$ shape parameter of awn surface.
+     * \brief Return the \f$\mathrm{[a_{1}}\f$ shape parameter of awn surface.
      */
     const Scalar a1() const
     { return a1_; }
 
     /*!
-     * \brief Return the \f$a_{2}\f$ shape parameter of awn surface.
+     * \brief Return the \f$\mathrm{a_{2}}\f$ shape parameter of awn surface.
      */
     const Scalar a2() const
     { return a2_; }
 
     /*!
-     * \brief Return the \f$a_{3}\f$ shape parameter of awn surface.
+     * \brief Return the \f$\mathrm{a_{3}}\f$ shape parameter of awn surface.
      */
     const Scalar a3() const
     { return a3_; }
 
     /*!
-     * \brief Set the \f$a_{1}\f$ shape parameter.
+     * \brief Set the \f$\mathrm{a_{1}}\f$ shape parameter.
      */
     void setA1(const Scalar v)
     { a1_ = v; }
 
     /*!
-     * \brief Set the \f$a_{2}\f$ shape parameter.
+     * \brief Set the \f$\mathrm{a_{2}}\f$ shape parameter.
      */
     void setA2(const Scalar v)
     { a2_ = v; }
 
     /*!
-     * \brief Set the \f$a_{3}\f$ shape parameter.
+     * \brief Set the \f$\mathrm{a_{3}}\f$ shape parameter.
      */
     void setA3(const Scalar v)
     { a3_ = v; }

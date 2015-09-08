@@ -46,11 +46,11 @@ class Brine_Air {
 
 public:
     /*!
-     * \brief Binary diffusion coefficent [m^2/s] of water in the Air phase.
+     * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ of water in the Air phase.
      *
      * According to "Diffusion of Water in Liquid and Supercritical Carbon Dioxide: An NMR Study",Bin Xu et al., 2002
-     * \param temperature the temperature [K]
-     * \param pressure the phase pressure [Pa]
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure) {
         //Diffusion coefficient of water in the Air phase
@@ -74,7 +74,9 @@ public:
         * linear dependency on temperature. We thus simply scale the
         * experimentally obtained diffusion coefficient of Ferrell and
         * Himmelblau by the temperature.
-        *
+        * \param temperature The temperature \f$\mathrm{[K]}\f$
+        * \param pressure The pressure \f$\mathrm{[Pa]}\f$
+        * 
         * See:
         *
         * R. Reid et al.: "The properties of Gases and Liquids", 4th edition,
@@ -101,12 +103,13 @@ public:
      *        applying the activity coefficient expression of "Duan and Sun 2003"
      *        and the correlations for pure water given in "Spycher, Pruess and Ennis-King 2003"
      *
-     * \param temperature the temperature [K]
-     * \param pg the gas phase pressure [Pa]
-     * \param XlNaCl the XlNaCl [kg NaCl / kg solution]
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param XlNaCl the XlNaCl \f$\mathrm{[kg NaCl / kg solution]}\f$
      * \param knownPhaseIdx indicates which phases are present
-     * \param xlAir mole fraction of Air in brine [mol/mol]
-     * \param ygH2O mole fraction of water in the gas phase [mol/mol]
+     * \param xlAir mole fraction of Air in brine \f$\mathrm{[mol/mol]}\f$
+     * \param ygH2O mole fraction of water in the gas phase \f$\mathrm{[mol/mol]}\f$
+     * \param xlNaCl the xlNaCl
      */
     static void calculateMoleFractions(const Scalar temperature,
                                        const Scalar pg, 
@@ -152,11 +155,11 @@ public:
     }
 
     /*!
-     * \brief Returns the fugacity coefficient of the Air component in a water-Air mixture
+     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of the Air component in a water-Air mixture
      * (given in Spycher, Pruess and Ennis-King (2003))
      *
-     * \param T the temperature [K]
-     * \param pg the gas phase pressure [Pa]
+     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar fugacityCoefficientAir(Scalar T, Scalar pg) {
 
@@ -178,11 +181,11 @@ public:
     }
 
     /*!
-     * \brief Returns the fugacity coefficient of the H2O component in a water-Air mixture
+     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of the H2O component in a water-Air mixture
      * (given in Spycher, Pruess and Ennis-King (2003))
      *
-     * \param T the temperature [K]
-     * \param pg the gas phase pressure [Pa]
+     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar fugacityCoefficientH2O(Scalar T, Scalar pg) {
 
@@ -204,9 +207,9 @@ public:
     }
 
     /*!
-     * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction (mol NaCl / mol solution)
+     * \brief Returns the molality of NaCl \f$\mathrm{(mol NaCl / kg water)}\f$ for a given mole fraction \f$\mathrm{(mol NaCl / mol solution)}\f$
      *
-     * \param xlNaCl mole fraction of NaCL in brine [mol/mol]
+     * \param XlNaCl mole fraction of NaCL in brine \f$\mathrm{[mol/mol]}\f$
      */
     static Scalar molalityNaCl(Scalar XlNaCl) {
 
@@ -218,9 +221,9 @@ public:
 
 private:
     /*!
-     * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction
+     * \brief Returns the molality of NaCl \f$\mathrm{(mol NaCl / kg water)}\f$ for a given mole fraction
      *
-     * \param XlNaCl the XlNaCl [kg NaCl / kg solution]
+     * \param XlNaCl the XlNaCl \f$\mathrm{[kg NaCl / kg solution]}\f$
      */
     static Scalar massTomoleFrac_(Scalar XlNaCl) {
 
@@ -236,11 +239,11 @@ private:
     }
 
     /*!
-     * \brief Returns the equilibrium molality of Air (mol Air / kg water) for a
+     * \brief Returns the equilibrium molality of Air \f$\mathrm{(mol Air / kg water)}\f$ for a
      * Air-water mixture at a given pressure and temperature
      *
-     * \param T the temperature [K]
-     * \param pg the gas phase pressure [Pa]
+     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar molalityAirinPureWater_(Scalar temperature, Scalar pg) {
         Scalar A = computeA_(temperature, pg); // according to Spycher, Pruess and Ennis-King (2003)
@@ -256,9 +259,9 @@ private:
      *           molal description. According to "Duan and Sun 2003"
      *           given in "Spycher and Pruess 2005"
      *
-     * \param temperature the temperature [K]
-     * \param pg the gas phase pressure [Pa]
-     * \param molalityNaCl molality of NaCl (mol NaCl / kg water)
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
+     * \param molalityNaCl molality of NaCl \f$\mathrm{(mol NaCl / kg water)}\f$
      */
     static Scalar activityCoefficient_(Scalar temperature, Scalar pg,
             Scalar molalityNaCl) {
@@ -275,8 +278,8 @@ private:
      * them mutual solubility in the water-Air system.
      * Given in Spycher, Pruess and Ennis-King (2003)
      *
-     * \param T the temperature [K]
-     * \param pg the gas phase pressure [Pa]
+     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeA_(Scalar T, Scalar pg) {
         Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
@@ -295,8 +298,8 @@ private:
      * the mutual solubility in the water-Air system.
      * Given in Spycher, Pruess and Ennis-King (2003)
      *
-     * \param T the temperature [K]
-     * \param pg the gas phase pressure [Pa]
+     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeB_(Scalar T, Scalar pg) {
         Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
@@ -314,8 +317,8 @@ private:
      * \brief Returns the parameter lambda, which is needed for the
      * calculation of the Air activity coefficient in the brine-Air system.
      * Given in Spycher and Pruess (2005)
-     * \param T the temperature [K]
-     * \param pg the gas phase pressure [Pa]
+     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeLambda_(Scalar T, Scalar pg) {
         Scalar lambda;
@@ -333,8 +336,8 @@ private:
      * \brief Returns the parameter xi, which is needed for the
      * calculation of the Air activity coefficient in the brine-Air system.
      * Given in Spycher and Pruess (2005)
-     * \param T the temperature [K]
-     * \param pg the gas phase pressure [Pa]
+     * \param T the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar computeXi_(Scalar T, Scalar pg) {
         Scalar xi;
@@ -351,7 +354,7 @@ private:
      * \brief Returns the equilibrium constant for Air, which is needed for the
      * calculation of the mutual solubility in the water-Air system
      * Given in Spycher, Pruess and Ennis-King (2003)
-     * \param T the temperature [K]
+     * \param T the temperature \f$\mathrm{[K]}\f$
      */
     static Scalar equilibriumConstantAir_(Scalar T) {
         Scalar TinC = T - 273.15; //temperature in °C
@@ -365,7 +368,7 @@ private:
      * \brief Returns the equilibrium constant for H2O, which is needed for the
      * calculation of the mutual solubility in the water-Air system
      * Given in Spycher, Pruess and Ennis-King (2003)
-     * \param T the temperature [K]
+     * \param T the temperature \f$\mathrm{[K]}\f$
      */
     static Scalar equilibriumConstantH2O_(Scalar T) {
         Scalar TinC = T - 273.15; //temperature in °C
@@ -397,8 +400,8 @@ public:
      * \brief Returns the _mole_ (!) fraction of Air in the liquid
      *        phase at a given temperature, pressure and density of
      *        Air.
-     * \param T the temperature [K]
-     * \param pg the gas phase pressure [Pa]
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      * \param rhoAir density of Air
      */
     static Scalar moleFracAirInBrine(Scalar temperature, Scalar pg, Scalar rhoAir)

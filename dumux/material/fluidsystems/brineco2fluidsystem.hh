@@ -177,7 +177,7 @@ public:
     }
 
     /*!
-     * \brief Return the molar mass of a component in [kg/mol].
+     * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -226,12 +226,10 @@ public:
     /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
-     *        density [kg/m^3].
+     *        density \f$\mathrm{[kg/m^3]}\f$.
      *
-     * \param fluidState the fluid state
-     * \param phaseIdx index of the phase
-     *
-     * \tparam FluidState the fluid state class
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase
      */
     using Base::density;
     template <class FluidState>
@@ -283,11 +281,10 @@ public:
     }
 
     /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
+     * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
-     * \tparam FluidState the fluid state class
      */
     using Base::viscosity;
     template <class FluidState>
@@ -313,30 +310,30 @@ public:
     }
 
     /*!
-     * \brief Returns the fugacity coefficient [-] of a component in a
+     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
      *        phase.
      *
-     * The fugacity coefficient \f$\phi^\kappa_\alpha\f$ of
-     * component \f$\kappa\f$ in phase \f$\alpha\f$ is connected to
-     * the fugacity \f$f^\kappa_\alpha\f$ and the component's mole
-     * fraction \f$x^\kappa_\alpha\f$ by means of the relation
+     * The fugacity coefficient \f$\mathrm{\phi^\kappa_\alpha}\f$ of
+     * component \f$\mathrm{\kappa}\f$ in phase \f$\mathrm{\alpha}\f$ is connected to
+     * the fugacity \f$\mathrm{f^\kappa_\alpha}\f$ and the component's mole
+     * fraction \f$\mathrm{x^\kappa_\alpha}\f$ by means of the relation
      *
      * \f[
      f^\kappa_\alpha = \phi^\kappa_\alpha\;x^\kappa_\alpha\;p_\alpha
      \f]
-     * where \f$p_\alpha\f$ is the pressure of the fluid phase.
+     * where \f$\mathrm{p_\alpha}\f$ is the pressure of the fluid phase.
      *
      * The fugacity itself is just an other way to express the
-     * chemical potential \f$\zeta^\kappa_\alpha\f$ of the component:
+     * chemical potential \f$\mathrm{\zeta^\kappa_\alpha}\f$ of the component:
      *
      * \f[
      f^\kappa_\alpha := \exp\left\{\frac{\zeta^\kappa_\alpha}{k_B T_\alpha} \right\}
      \f]
-     * where \f$k_B\f$ is Boltzmann's constant.
+     * where \f$\mathrm{k_B}\f$ is Boltzmann's constant.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
-     * \tparam compIdx The index of the component
+     * \param compIdx The index of the component
      */
     using Base::fugacityCoefficient;
     template <class FluidState>
@@ -391,6 +388,9 @@ public:
     /*!
      * \brief Returns the equilibrium concentration of the dissolved component
      *        in a phase.
+     * \param fluidState An arbitrary fluid state 
+     * \param paramCache Parameter cache
+     * \param phaseIdx The index of the fluid phase to consider
      */
 
     template <class FluidState>
@@ -430,21 +430,21 @@ public:
 
     /*!
      * \brief Calculate the molecular diffusion coefficient for a
-     *        component in a fluid phase [mol^2 * s / (kg*m^3)]
+     *        component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
      *
-     * Molecular diffusion of a compoent \f$\kappa\f$ is caused by a
+     * Molecular diffusion of a compoent \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
      * \f[ J = - D \textbf{grad} mu_\kappa \f]
      *
-     * where \f$\mu_\kappa\f$ is the component's chemical potential,
-     * \f$D\f$ is the diffusion coefficient and \f$J\f$ is the
-     * diffusive flux. \f$mu_\kappa\f$ is connected to the component's
-     * fugacity \f$f_\kappa\f$ by the relation
+     * where \f$\mathrm{\mu_\kappa}\f$ is the component's chemical potential,
+     * \f$D\f$ is the diffusion coefficient and \f$\mathrm{J}\f$ is the
+     * diffusive flux. \f$\mathrm{mu_\kappa}\f$ is connected to the component's
+     * fugacity \f$\mathrm{f_\kappa}\f$ by the relation
      *
      * \f[ \mu_\kappa = R T_\alpha \mathrm{ln} \frac{f_\kappa}{p_\alpha} \f]
      *
-     * where \f$p_\alpha\f$ and \f$T_\alpha\f$ are the fluid phase'
+     * where \f$\mathrm{p_\alpha}\f$ and \f$\mathrm{T_\alpha}\f$ are the fluid phase'
      * pressure and temperature.
      *
      * \param fluidState An arbitrary fluid state
@@ -463,7 +463,11 @@ public:
 
     /*!
      * \brief Given the phase compositions, return the binary
-     *        diffusion coefficent of two components in a phase.
+     *        diffusion coefficent \f$\mathrm{[m^2/s]}\f$ of two components in a phase.
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIIdx Index of the component i
+     * \param compJIdx Index of the component j 
      */
     using Base::binaryDiffusionCoefficient;
     template <class FluidState>
@@ -502,7 +506,7 @@ public:
 
     /*!
      * \brief Given the phase composition, return the specific
-     *        phase enthalpy [J/kg].
+     *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -540,11 +544,10 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity of a fluid phase [W/(m^2 K/m)].
+     * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
-     * \tparam FluidState the fluid state class
      */
     using Base::thermalConductivity;
     template <class FluidState>
@@ -567,7 +570,6 @@ public:
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
-     * \tparam FluidState the fluid state class
      */
     using Base::heatCapacity;
     template <class FluidState>

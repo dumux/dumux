@@ -50,33 +50,33 @@ public:
 
 
     /*!
-     * \brief Return the entry pressure for the linear material law.
+     * \brief Return the entry pressure for the linear material law in \f$\mathrm{[Pa]}\f$.
      *
-     * The entry pressure is reached at \f$\overline S_w = 1\f$
+     * The entry pressure is reached at \f$\mathrm{\overline{S}_w = 1}\f$
      */
     Scalar entryPc() const
     { return entryPc_; }
 
     /*!
-     * \brief Set the entry pressure for the linear material law.
+     * \brief Set the entry pressure for the linear material law in \f$\mathrm{[Pa]}\f$.
      *
-     * The entry pressure is reached at \f$ \overline S_w = 1\f$
+     * The entry pressure is reached at \f$\mathrm{\overline{S}_w = 1}\f$
      */
     void setEntryPc(Scalar v)
     { entryPc_ = v; }
 
     /*!
-     * \brief Return the maximum capillary pressure for the linear material law.
+     * \brief Return the maximum capillary pressure for the linear material law in \f$\mathrm{[Pa]}\f$..
      *
-     * The maximum capillary pressure is reached at \f$ \overline S_w = 0\f$
+     * The maximum capillary pressure is reached at \f$\mathrm{\overline{S}_w = 0}\f$
      */
     Scalar maxPc() const
     { return maxPc_; }
 
     /*!
-     * \brief Set the maximum capillary pressure for the linear material law.
+     * \brief Set the maximum capillary pressure for the linear material law in \f$\mathrm{[Pa]}\f$..
      *
-     * The maximum capillary pressure is reached at \f$ \overline S_w = 0\f$
+     * The maximum capillary pressure is reached at \f$\mathrm{\overline{S}_w = 0}\f$
      */
     void setMaxPc(Scalar v)
     { maxPc_ = v; }

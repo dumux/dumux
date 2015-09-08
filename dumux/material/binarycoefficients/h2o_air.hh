@@ -38,7 +38,7 @@ class H2O_Air
 {
 public:
     /*!
-     * \brief Henry coefficient \f$\mathrm{[N/m^2]}\f$  for air in liquid water.
+     * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for air in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      *
      * Henry coefficient See:

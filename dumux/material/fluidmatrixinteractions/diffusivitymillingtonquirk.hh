@@ -50,11 +50,11 @@ class DiffusivityMillingtonQuirk
 {
 public:
     /*!
-     * \brief Returns the effective diffusion coefficient \f$[m^2/s]\f$ after Millington Quirk.
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ after Millington Quirk.
      *
      * \param porosity The porosity
      * \param saturation The saturation of the phase
-     * \param diffCoeff The diffusion coefficient of the phase
+     * \param diffCoeff The diffusion coefficient of the phase \f$\mathrm{[m^2/s]}\f$
      */
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                                const Scalar saturation,

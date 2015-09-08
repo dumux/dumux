@@ -47,19 +47,19 @@ struct SomertonIndices
  *  material and of the respective fluid phase.
  *
  * The material law is:
- * \f[
+ * \f$\mathrm{
  \lambda_\text{eff} = \lambda_{\text{dry}} + \sqrt{(S_w)} \left(\lambda_\text{wet} - \lambda_\text{dry}\right)
- \f]
+ }\f$
  *
  * with
- * \f[
+ * \f$\mathrm{
  \lambda_\text{wet} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
- \f]
+ }\f$
  * and
  *
- * \f[
+ * \f$\mathrm{
  \lambda_\text{dry} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
- \f]
+ }\f$
  *
  */
 template<class Scalar, class Indices = SomertonIndices>
@@ -67,7 +67,7 @@ class ThermalConductivitySomerton
 {
 public:
     /*!
-     * \brief effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      *
      * \param volVars volume variables
      * \param spatialParams spatial parameters
@@ -75,7 +75,7 @@ public:
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
      * \param scvIdx scvIdx (to be passed to spatialParams)
      *
-     * \return effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      *
      * This gives an interpolation of the effective thermal conductivities of a porous medium
      * filled with the non-wetting phase and a porous medium filled with the wetting phase.
@@ -100,16 +100,16 @@ public:
     }
 
     /*!
-     * \brief effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
+     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      *
      * \param sw The saturation of the wetting phase
-     * \param lambdaW The thermal conductivity of the wetting phase
-     * \param lambdaN The thermal conductivity of the non-wetting phase
-     * \param lambdaSolid The thermal conductivity of the solid phase
+     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$ 
+     * \param lambdaN The thermal conductivity of the non-wetting phase in \f$\mathrm{[W/(m K)]}\f$ 
+     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$ 
      * \param porosity The porosity
-     * \param rhoSolid The density of solid phase
+     * \param rhoSolid The density of solid phase in \f$\mathrm{[kg/m^3]}\f$ 
      *
-     * \return effective thermal conductivity \f$[W/(m K)]\f$ after Somerton (1974)
+     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
      */
     static Scalar effectiveThermalConductivity(const Scalar sw,
                                                const Scalar lambdaW,

@@ -233,7 +233,7 @@ public:
     }
 
     /*!
-     * \brief Return the molar mass of a component in [kg/mol].
+     * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -248,7 +248,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
     /*!
-     * \brief Return the mass density of the precipitate [kg/m^3].
+     * \brief Return the mass density of the precipitate \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
@@ -257,7 +257,7 @@ public:
         return /*2165.0*/NaCl::Density();
     }
     /*!
-     * \brief Return the saturation vapor pressure of the liquid phase.
+     * \brief Return the saturation vapor pressure of the liquid phase \f$\mathrm{[Pa]}\f$.
      *
      * \param Temperature temperature of the liquid phase
      * \param salinity salinity (salt mass fraction) of the liquid phase
@@ -267,7 +267,7 @@ public:
        return vaporPressure_(Temperature,salinity);
      }
      /*!
-     * \brief Return the saturation vapor pressure of the liquid phase.
+     * \brief Return the salt specific heat capacity \f$\mathrm{[J/(kg K)]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
@@ -276,7 +276,7 @@ public:
 	return 36.79/molarMass(phaseIdx);
     }
     /*!
-     * \brief Return the molar density of the precipitate [mol/m^3].
+     * \brief Return the molar density of the precipitate \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The index of the precipitated phase to consider
      */
@@ -307,11 +307,11 @@ public:
     * \brief Initialize the fluid system's static parameters using
     *        problem specific temperature and pressure ranges
     *
-    * \param tempMin The minimum temperature used for tabulation of water [K]
-    * \param tempMax The maximum temperature used for tabulation of water [K]
+    * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+    * \param tempMax The maximum temperature used for tabulation of water \f$\mathrm{[K]}\f$
     * \param nTemp The number of ticks on the temperature axis of the  table of water
-    * \param pressMin The minimum pressure used for tabulation of water [Pa]
-    * \param pressMax The maximum pressure used for tabulation of water [Pa]
+    * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+    * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
     * \param nPress The number of ticks on the pressure axis of the  table of water
     */
 
@@ -336,14 +336,12 @@ public:
      /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
-     *        density [kg/m^3].
+     *        density \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx index of the phase
-     * \param temperature phase temperature in [K]
-     * \param pressure phase pressure in [Pa]
+     * \param temperature phase temperature in \f$\mathrm{[K]}\f$
+     * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      * \param fluidState the fluid state
-     *
-     * \tparam FluidState the fluid state class
      *
      * Equation given in:    - Batzle & Wang (1992)
      *                         - cited by: Bachu & Adams (2002)
@@ -377,7 +375,7 @@ public:
       }
 
     /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
+     * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -418,18 +416,21 @@ public:
     }
 
     /*!
-     * \brief Returns the fugacity coefficient [-] of a component in a
+     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
      *        phase.
-     *
-     * The fugacity coefficient \f$\phi^\kappa_\alpha\f$ of
-     * component \f$\kappa\f$ in phase \f$\alpha\f$ is connected to
-     * the fugacity \f$f^\kappa_\alpha\f$ and the component's mole
-     * fraction \f$x^\kappa_\alpha\f$ by means of the relation
+     * \param  fluidState The fluid state
+     * \param phaseIdx Index of the phase
+     * \param compIdx Index of the component
+     * 
+     * The fugacity coefficient \f$\mathrm{\phi^\kappa_\alpha}\f$ of
+     * component \f$\mathrm{\kappa}\f$ in phase \f$\mathrm{\alpha}\f$ is connected to
+     * the fugacity \f$\mathrm{f^\kappa_\alpha}\f$ and the component's mole
+     * fraction \f$\mathrm{x^\kappa_\alpha}\f$ by means of the relation
      *
      * \f[
      f^\kappa_\alpha = \phi^\kappa_\alpha\;x^\kappa_\alpha\;p_\alpha
      \f]
-     * where \f$p_\alpha\f$ is the pressure of the fluid phase.
+     * where \f$\mathrm{p_\alpha}\f$ is the pressure of the fluid phase.
      *
      * For liquids with very low miscibility this boils down to the
      * inverse Henry constant for the solutes and the saturated vapor pressure
@@ -478,8 +479,8 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient for components
-     *        \f$i\f$ and \f$j\f$ in this phase.
+     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
+     *        \f$\mathrm{i}\f$ and \f$\mathrm{j}\f$ in this phase.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -535,7 +536,9 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return its specific enthalpy [J/kg].
+     *        return its specific enthalpy \f$\mathrm{[J/kg]}\f$.
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase
      *
      * See:
      * Class Class 2000
@@ -581,7 +584,10 @@ public:
     };
 
     /*!
-    * \brief Returns the specific enthalpy [J/kg] of a component in a specific phase
+    * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
+    * \param fluidState The fluid state
+    * \param phaseIdx The index of the phase
+    * \param componentIdx The index of the component
     */
     template <class FluidState>
     static Scalar componentEnthalpy(const FluidState &fluidState,
@@ -614,7 +620,7 @@ public:
     
     
     /*!
-     * \brief Thermal conductivity of a fluid phase [W/(m^2 K/m)].
+     * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      *
      * \param fluidState An abitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -661,7 +667,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
     /*!
-     * \brief Return the molality of NaCl salt [mol/m^3].
+     * \brief Return the molality of NaCl salt \f$\mathrm{[mol/m^3]}\f$.
      * \param fluidState An abitrary fluid state
      * \param paramCache parameter cache
      * \param salinity Salinity of brine

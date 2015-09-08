@@ -20,7 +20,7 @@
 /*!
  * \file
  *
- * \brief A fluid system with a liquid and a gaseous phase and \f$H_2O\f$ and \f$Air\f$
+ * \brief A fluid system with a liquid and a gaseous phase and \f$\mathrm{H_2O}\f$ and \f$\mathrm{Air}\f$
  *        as components.
  */
 #ifndef DUMUX_H2O_AIR_SYSTEM_HH
@@ -214,7 +214,7 @@ public:
     }
 
     /*!
-     * \brief Return the molar mass of a component [kg/mol].
+     * \brief Return the molar mass of a component \f$\mathrm{[kg/mol]}\f$.
      *
      * \param compIdx index of the component
      */
@@ -230,7 +230,7 @@ public:
 
 
     /*!
-     * \brief Critical temperature of a component [K].
+     * \brief Critical temperature of a component \f$\mathrm{[K]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -246,7 +246,7 @@ public:
     }
 
     /*!
-     * \brief Critical pressure of a component [Pa].
+     * \brief Critical pressure of a component \f$\mathrm{[Pa]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -262,7 +262,7 @@ public:
     }
 
     /*!
-     * \brief Molar volume of a component at the critical point [m^3/mol].
+     * \brief Molar volume of a component at the critical point \f$\mathrm{[m^3/mol]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -273,7 +273,7 @@ public:
     }
 
     /*!
-     * \brief The acentric factor of a component [].
+     * \brief The acentric factor of a component \f$\mathrm{[-]}\f$.
      *
      * \param compIdx The index of the component to consider
      */
@@ -312,11 +312,11 @@ public:
      * \brief Initialize the fluid system's static parameters using
      *        problem specific temperature and pressure ranges
      *
-     * \param tempMin The minimum temperature used for tabulation of water [K]
-     * \param tempMax The maximum temperature used for tabulation of water [K]
+     * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+     * \param tempMax The maximum temperature used for tabulation of water\f$\mathrm{[K]}\f$
      * \param nTemp The number of ticks on the temperature axis of the  table of water
-     * \param pressMin The minimum pressure used for tabulation of water [Pa]
-     * \param pressMax The maximum pressure used for tabulation of water [Pa]
+     * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+     * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
      * \param nPress The number of ticks on the pressure axis of the  table of water
      */
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
@@ -340,7 +340,7 @@ public:
     /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
-     *        density [kg/m^3].
+     *        density \f$\mathrm{[kg/m^3]}\f$.
      *
      * Formula (2.6)
      * in
@@ -350,11 +350,10 @@ public:
      *
      *
      * \param phaseIdx index of the phase
-     * \param temperature phase temperature in [K]
-     * \param pressure phase pressure in [Pa]
+     * \param temperature phase temperature in \f$\mathrm{[K]}\f$
+     * \param pressure phase pressure in \f$\mathrm{[Pa]}\f$
      * \param fluidState the fluid state
      *
-     * \tparam FluidState the fluid state class
      */
     using Base::density;
     template <class FluidState>
@@ -416,7 +415,7 @@ public:
 
 
     /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
+     * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -487,7 +486,7 @@ public:
     }
 
     /*!
-     * \brief Returns the fugacity coefficient [-] of a component in a
+     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
      *        phase.
      *
      * The fugacity coefficient \f$\phi^\kappa_\alpha\f$ of
@@ -538,7 +537,7 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient for components
+     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
      *        \f$i\f$ and \f$j\f$ in this phase.
      *
      * \param fluidState An arbitrary fluid state
@@ -605,7 +604,9 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return its specific enthalpy [J/kg].
+     *        return its specific enthalpy \f$\mathrm{[J/kg]}\f$.
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
      *
      * See:
      * Class Class 2000
@@ -651,7 +652,11 @@ public:
     }
 
     /*!
-     * \brief Returns the specific enthalpy [J/kg] of a component in a specific phase
+     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param componentIdx The index of the component to consider
+     * 
      */
     template <class FluidState>
     static Scalar componentEnthalpy(const FluidState &fluidState,
@@ -683,7 +688,9 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity of a fluid phase [W/(m K)].
+     * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
      *
      * Use the conductivity of air and water as a first approximation.
      * Source:

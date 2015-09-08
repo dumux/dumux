@@ -40,7 +40,10 @@ public:
     typedef Dumux::NullParameterCache ParameterCache;
 
     /*!
-     * \brief Calculate the density [kg/m^3] of a fluid phase
+     * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
+     * \param fluidState The fluid state 
+     * \param phaseIdx Index of the fluid phase
+     * \param paramCache mutable parameters
      */
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
@@ -51,12 +54,16 @@ public:
     }
 
     /*!
-     * \brief Calculate the fugacity coefficient [Pa] of an individual
+     * \brief Calculate the fugacity coefficient \f$\mathrm{[Pa]}\f$ of an individual
      *        component in a fluid phase
-     *
-     * The fugacity coefficient \f$\phi_\kappa\f$ is connected to the
-     * fugacity \f$f_\kappa\f$ and the component's molarity
-     * \f$x_\kappa\f$ by means of the relation
+     * \param fluidState The fluid state 
+     * \param phaseIdx Index of the fluid phase
+     * \param paramCache mutable parameters
+     * \param compIdx Index of the component
+     * 
+     * The fugacity coefficient \f$\mathrm{\phi_\kappa}\f$ is connected to the
+     * fugacity \f$\mathrm{f_\kappa}\f$ and the component's molarity
+     * \f$\mathrm{x_\kappa}\f$ by means of the relation
      *
      * \f[ f_\kappa = \phi_\kappa * x_{\kappa} \f]
      */
@@ -70,7 +77,10 @@ public:
     }
 
     /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
+     * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
+     * \param fluidState The fluid state 
+     * \param phaseIdx Index of the fluid phase
+     * \param paramCache mutable parameters
      */
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
@@ -82,21 +92,24 @@ public:
 
     /*!
      * \brief Calculate the binary molecular diffusion coefficient for
-     *        a component in a fluid phase [mol^2 * s / (kg*m^3)]
-     *
-     * Molecular diffusion of a compoent \f$\kappa\f$ is caused by a
+     *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
+     * \param fluidState The fluid state 
+     * \param phaseIdx Index of the fluid phase
+     * \param paramCache mutable parameters
+     * \param compIdx Index of the component
+     * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
      * \f[ J = - D \mathbf{grad} \mu_\kappa \f]
      *
-     * where \f$\mu_\kappa\f$ is the component's chemical potential,
-     * \f$D\f$ is the diffusion coefficient and \f$J\f$ is the
-     * diffusive flux. \f$\mu_\kappa\f$ is connected to the component's
-     * fugacity \f$f_\kappa\f$ by the relation
+     * where \f$\mathrm{\mu_\kappa}\f$ is the component's chemical potential,
+     * \f$\mathrm{D}\f$ is the diffusion coefficient and \f$\mathrm{J}\f$ is the
+     * diffusive flux. \f$\mathrm{\mu_\kappa}\f$ is connected to the component's
+     * fugacity \f$\mathrm{f_\kappa}\f$ by the relation
      *
      * \f[ \mu_\kappa = R T_\alpha \mathrm{ln} \frac{f_\kappa}{p_\alpha} \f]
      *
-     * where \f$p_\alpha\f$ and \f$T_\alpha\f$ are the fluid phase'
+     * where \f$\mathrm{p_\alpha}\f$ and \f$\mathrm{T_\alpha}\f$ are the fluid phase'
      * pressure and temperature.
      */
     template <class FluidState>
@@ -110,8 +123,13 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient for components
-     *        \f$i\f$ and \f$j\f$ in this phase.
+     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
+     *        \f$\mathrm{i}\f$ and \f$\mathrm{j}\f$ in this phase.
+     * \param fluidState The fluid state 
+     * \param phaseIdx Index of the fluid phase
+     * \param paramCache mutable parameters
+     * \param compIIdx Index of the component i
+     * \param compJIdx Index of the component j 
      */
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
@@ -126,8 +144,11 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature, pressure and
-     *        density, calculate its specific enthalpy [J/kg].
-     *
+     *        density, calculate its specific enthalpy \f$\mathrm{[J/kg]}\f$.
+     * \param fluidState The fluid state 
+     * \param phaseIdx Index of the fluid phase
+     * \param paramCache mutable parameters
+     * 
      *  \todo This fluid system neglects the contribution of
      *        gas-molecules in the liquid phase. This contribution is
      *        probably not big. Somebody would have to find out the
@@ -142,8 +163,11 @@ public:
     }
 
     /*!
-     * \brief Thermal conductivity of a fluid phase [W/(m K)].
-     *
+     * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
+     * \param fluidState The fluid state 
+     * \param phaseIdx Index of the fluid phase
+     * \param paramCache mutable parameters
+     * 
      * Use the conductivity of air and water as a first approximation.
      * Source:
      * http://en.wikipedia.org/wiki/List_of_thermal_conductivities
@@ -157,13 +181,12 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of a fluid phase [J/kg].
+     * \brief Specific isobaric heat capacity of a fluid phase \f$\mathrm{[J/(kg*K)]}\f$.
      *
-     * \param paramCache   mutable parameters
+     * \param paramCache mutable parameters
      * \param phaseIdx  for which phase to give back the heat capacity
-     * \param fluidState represents all relevant thermodynamic quantities of a
-     *  fluid system
-     * */
+     * \param fluidState represents all relevant thermodynamic quantities of a fluid system
+     */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                const ParameterCache &paramCache,
