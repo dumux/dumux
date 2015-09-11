@@ -20,7 +20,6 @@
 \usepackage{theorem}
 \usepackage{tikz}
 \usepackage{tikz-qtree}
-\usepackage[colorinlistoftodos]{todonotes}
 \usepackage{units}
 \usepackage{url}
 \usepackage{xspace}
@@ -102,21 +101,15 @@ Universit\"at Stuttgart, Paffenwaldring 61, D-70569 Stuttgart, Germany}\\
 \maketitle
 
 \setcounter{tocdepth}{1}
-% \pdfbookmark[0]{Table of Contents}{Table of Contents}
 \tableofcontents
-
 \newpage
-\pdfbookmark[1]{List of ToDos}{List of ToDos}
-% \makeatletter\let\chapter\@undefined\makeatother
-%\listoftodos
-
 
 \chapter{Introduction}
 \input{1_introduction}
 
 \chapter{Getting started}
-First, we describe a quick installation procedure.
-Then a quick start guide for the first \Dumux experience is provided.
+First, we briefly describe the installation procedure.
+Then we provide a quick start guide for the first \Dumux experience.
 \input{2_quickinstall}
 \input{2_quickstartguide}
 \input{2_detailedinstall}
@@ -131,7 +124,7 @@ Then a quick start guide for the first \Dumux experience is provided.
 This chapter provides an overview of the general structure in \Dumux \ref{sc_structure}
 and gives help for basic work with \Dumux
 (\ref{sc_newfoldersetup},\ref{sc_parameterfiles},\ref{sc_restartsimulations},\ref{sc_guidelines},\ref{sc_developingdumux}).
-Further it present useful external tools \ref{sc_externaltools} and basic
+Further it presents useful external tools \ref{sc_externaltools} and basic
 concepts \ref{sc_linearsystem}.
 \input{4_structure}
 \input{4_newfoldersetup}
