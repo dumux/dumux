@@ -408,7 +408,7 @@ public:
    static Scalar bulkDensTimesAdsorpCoeff (const Params &params)
    {
       return params.rhoBulk() * params.KdNAPL();
-//    }
+   }
 };
 }
 
