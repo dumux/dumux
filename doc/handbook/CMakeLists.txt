@@ -46,5 +46,5 @@ dune_add_latex_document(0_dumux-handbook.tex
   INPUTS ${TEX_INPUTS}
   IMAGES ${TEX_IMAGES})
 
-create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/dumux-handbook.pdf
+create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/0_dumux-handbook.pdf
   ${CMAKE_INSTALL_DOCDIR})
