@@ -66,6 +66,8 @@ class ImplicitGridAdapt
     typedef typename GET_PROP_TYPE(TypeTag, AdaptationIndicator) AdaptationIndicator;
     typedef typename GET_PROP_TYPE(TypeTag, AdaptationInitializationIndicator) AdaptationInitializationIndicator;
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
     /*!
      * Constructor for h-adaptive simulations (adaptive grids)
@@ -78,13 +80,22 @@ public:
           marked_(0),
           coarsened_(0)
     {
-        levelMin_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
-        levelMax_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
-        adaptationInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptationInterval);
-
-        if (levelMin_ < 0)
+        if(isBox)
         {
-            DUNE_THROW(Dune::InvalidStateException, "Coarsening the level 0 entities is not possible! Choose MinLevel >= 0");
+            DUNE_THROW(Dune::NotImplemented,
+                       "Grid adaptation is not yet mass conservative for Box method! "
+                        << "Use cell-centered scheme instead!");
+        }
+        else
+        {
+            levelMin_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
+            levelMax_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
+            adaptationInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptationInterval);
+
+            if (levelMin_ < 0)
+            {
+                DUNE_THROW(Dune::InvalidStateException, "Coarsening the level 0 entities is not possible! Choose MinLevel >= 0");
+            }
         }
     }
 
