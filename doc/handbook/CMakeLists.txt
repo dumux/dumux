@@ -9,11 +9,11 @@ set(TEX_INPUTS
   3_tutorialcoupled.tex
   3_tutorialdecoupled.tex
   3_furtherpractice.tex
+  4_assemblinglinearsystem.tex
   4_guidelines.tex
   4_developingdumux.tex
   4_externaltools.tex
   4_newfoldersetup.tex
-  4_newtoninanutshell.tex
   4_parameterfiles.tex
   4_restartsimulations.tex
   4_structure.tex
