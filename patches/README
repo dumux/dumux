@@ -15,8 +15,8 @@
   compiler will complain. Apply the patch grid-2.3.1.patch in your directory
   containing dune-grid 2.3.1 by, e.g.:
   patch -p1 <../dumux/patches/grid-2.3.1.patch
-  If you want to use Dune 2.4, it is most likely that the missing functionality
-  will be included in dune-grid by 10/2014, so the patch will not be needed.
+  If you want to use Dune 2.4, the missing functionality is already included,
+  so the patch is not needed.
 
 - If dune-cornerpoint has to be used for, e.g., employing the CpGridCreator,
   a set of patches is needed for the build system. The patches have to be
