@@ -427,7 +427,7 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param bTypes The boundarytypes types for the conservation equations
-     * \param vertex The vertex for which the boundary type is set
+     * \param globalPos The global position
      */
     void boundaryTypesAtPos(BoundaryTypes &bTypes,
                             const GlobalPosition &globalPos) const
@@ -464,7 +464,7 @@ public:
      *
      * \param priVars Stores the Dirichlet values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
-     * \param vertex The vertex for which the boundary type is set
+     * \param globalPos The global position
      *
      */
     void dirichletAtPos(PrimaryVariables &priVars,
@@ -580,9 +580,7 @@ public:
      *
      * \param priVars Stores the initial solution for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param globalPos The global position
      */
     void initialAtPos(PrimaryVariables &priVars,
                       const GlobalPosition &globalPos) const
