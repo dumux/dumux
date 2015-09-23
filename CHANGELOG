@@ -2,31 +2,74 @@ Differences Between DuMuX 2.7 and DuMuX 2.8
 ===================================================
 
 * IMPORTANT NOTES:
+  - DuMuX 2.8 is expected to run based on either Dune 2.3 or Dune 2.4. However,
+    no attempt has been made to fix the warnings arising from the deprecation of
+    EntityPointer in Dune 2.4. This will be made during the next release cycle.
+    Moreover, using the multidomain models based on Dune 2.4 is currently only
+    possible by patching dune-multidomaingrid. See test/multidomain/README for
+    details.
 
 * DELETED BUILD SYSTEM: The Autotools based build system was removed, use the
   CMake based build system as it is default since Dune 2.4.
 
 * IMPROVEMENTS and ENHANCEMENTS:
-  - A bug in the diffusion term in the freeflow models has been fixed.
+  - New fully-implicit porous-media models for two fluid phases that may consist
+    of an arbitrary number of components have been added. The basic one is
+    associated with the property TwoPNC, see test/implicit/2pnc. A more advanced
+    one that incorporates solid-fluid phase changes is indicated by TwoPNCMin,
+    see test/implicit/2pncmin.
+
+  - The implicit cell-centered models now can use adaptive grid refinement. To
+    make a test problem adaptive, just set the property AdaptiveGrid to true and
+    choose corresponding indicators via AdaptionInitializationIndicator and
+    AdaptionIndicator, see test/implicit/2p/lensproblem.hh for an example. So
+    far, indicators are only provided for the TwoPModel. Indicators for other
+    models will be provided in the future, as well as parallelization and box
+    discretization.
+
+  - With the CpGridCreator, a grid creator has been introduced that reads from a
+    Petrel output / Eclipse input file and generates a CpGrid that is offered by
+    the OPM module dune-cornerpoint. The fully-implicit cell-centered models are
+    now able to deal with cornerpoint grids. See
+    test/implicit/2p/test_cc2pcornerpoint for a test of the functionality. A
+    realistic corner-point grid will be provided in dumux-lecture soon. The OPM
+    modules need to be patched to be compatible with Dune's CMake based build
+    system, see patches/README for details.
+
   - Zero equation turbulence models (zeroeq) have been added as new models
-    to the freeflow folder.
-  - Tests for coupling a turbulent free flow using zeroeq turbulence models
-    with flow in a porous medium have been added.
-  - The constructor of the multidomain problems has changed. They will now be called
-    directly from the start.hh, identical to the other problems. The new parameter
-    are the TimeManager and the HostGrid.
-  - The interfacegridcreator is now available as a new GridCreator type.
-  - The gridcreator is now the new standard grid creator replacing the dgfgridcreator,
-    it comprises all functionality from the dgf grid creator (see also immediate
-    interface changes), plus the ability to read gmsh, or build a
-    structured grid (only with dune 2.4) by merely changing the input file.
+    to the freeflow folder. Tests for coupling a turbulent free flow using
+    zeroeq turbulence models with flow in a porous medium have been added.
+
+  - A new class GridCreator is now the new standard grid creator replacing
+    DgfGridCreator. It comprises all functionality from the DgfGridCreator (see
+    also immediate interface changes), plus the ability to read gmsh, or to
+    build a structured grid (only with Dune 2.4) by merely changing the input
+    file.
+
+  - Multidomain problems can now be run by using the general start routine,
+    just as most other problems. For this, the constructor of the multidomain
+    problems has been changed and the InterfaceMeshCreator has been replaced by
+    the InterfaceGridCreator, see below.
+
+  - The Richards model has now an additional flag useHead, which can be used to
+    switch between a pressure-saturation and a pressureHead-watercontent
+    formulation. The primary variables are either pressure in [Pa] or pressure
+    head in [cm], respectively. Default is useHead = false. See
+    test/implicit/richards for details.
+
+  - A bug in the diffusion term in the freeflow models has been fixed.
+
+  - A lot of work has been devoted to improving the testing environment, adding
+    new tests, restructuring the handbook and improving the documentation.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
-  - The use and support for SGrid is dropped. SGrid is deprecated in Dune 2.4.
-    Use YaspGrid instead.
+
   - The (new standard) GridCreator's public method gridPtr has been removed. For
     using PARAMETERS from DGF files use the GridCreators parameters method via
-    GridCreator::parameters(...). See co2 test for an example.
+    GridCreator::parameters(...). See test/implicit/co2 for an example.
+
+  - The use and support for SGrid is dropped. SGrid is deprecated in Dune 2.4.
+    Use YaspGrid instead.
 
 * Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.8: BEWARE: The
   compiler will not print any warning if a deprecated property or parameter name
@@ -39,11 +82,18 @@ Differences Between DuMuX 2.7 and DuMuX 2.8
     the GridCreator TypeTag.
 
 * Deprecated MEMBER FUNCTIONS, to be removed after 2.8:
+  - The constructor of the multidomain problems has changed. They will now be
+    called directly from the start.hh, identical to the other problems. The new
+    parameters are the TimeManager and the HostGrid.
+
   - The method simulate(Scalar dtInitial, Scalar tEnd) from MultiDomainProblem,
-    it is unused and will be dropped.
-  - The GnuplotInterface functions are now called without giving a window number.
-    If plots should be plotted in different windows, different GnuplotInterface
-    objects are now required. This affects also all other plots in the "io" folder.
+    is unused and will be dropped.
+
+  - The GnuplotInterface functions are now called without giving a window
+    number. If plots should be plotted in different windows, different
+    GnuplotInterface objects are now required. This affects also all other plots
+    in the "io" folder.
+
   - The write() function in plotoverline2d.hh now has an append function, to be
     able to decide whether the previously written file should be kept or not.
 
