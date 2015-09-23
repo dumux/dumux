@@ -11,20 +11,29 @@
  * | Group | Parameter | Type | Default Value | Explanation |
  * | :- | :- | :- | :- | :-
  * | - | ParameterFile | std::string | executable.input | name of the parameter file |
- * | \b FreeFlow | BoundaryLayerModel | int | 0 | 0 for none, 1 Blasius, 2 and 3 turbulent BL, 9 constant thickness |
- * | | BoundaryLayerOffset | Scalar | - | virtual run-up distance for BL models |
+ * | \b BoundaryLayer | Model | int | 0 | 0 for none, 1 Blasius, 2 and 3 turbulent BL, 9 constant thickness |
  * | | ConstThickness | Scalar | - | constant BL thickness (BL model 9) |
- * | | ExponentMTC | Scalar | - | mass transfer coefficient for S^MTC |
- * | | MassTransferModel | int | 0 | 0 for none, 1 power law, 2 Schluender model |
- * | | RefMassfrac | Scalar | - | free stream water mass fraction |
- * | | VxMax | Scalar | - | free stream velocity |
+ * | | Offset | Scalar | - | virtual run-up distance for BL models |
+ * | | RoughnessLength | Scalar | - | Equivalent sand grain roughness [m] |
+ * | | YPlus | Scalar | - | Conversion factor between dimensionless wall distance y^+ and actual wall distance |
+ * | \b FreeFlow | RefMassfrac | Scalar | - | free stream water vapor mass fraction |
+ * | | RefTemperature | Scalar | - | free stream temperature |
+ * | | RefVelocity | Scalar | - | free stream velocity |
  * | \b Grid | File | std::string | - | name of the grid file, if a corresponding GridCreator is used |
+ * | | GradingFactorX | Scalar | 1.0 | Grid factor for the cells on the x-coordinate (only Interface-GridCreator) |
+ * | | GradingFactorY | Scalar | 1.0 | Grid factor for the cells on the y-coordinate (only Interface-GridCreator) |
+ * | | InterfacePosX | Scalar | 0.0 | x-coordinate of the refinement point/line (only Interface-GridCreator) |
+ * | | InterfacePosY | Scalar | 0.0 | y-coordinate of the refinement point/line (only Interface-GridCreator) |
+ * | | LowerLeftX | Scalar | - | x-coordinate of the lower front left corner for the Cube/Simplex/Interface-GridCreator |
+ * | | LowerLeftY | Scalar | - | y-coordinate of the lower front left corner for the Cube/Simplex/Interface-GridCreator |
  * | | NumberOfCellsX | int | - | number of cells in x direction for the Cube/SimplexGridCreator |
  * | | NumberOfCellsY | int | - | number of cells in y direction for the Cube/SimplexGridCreator |
  * | | NumberOfCellsZ | int | - | number of cells in z direction for the Cube/SimplexGridCreator |
- * | | UpperRightX | Scalar | - | x-coordinate of the upper back right corner for the Cube/SimplexGridCreator |
- * | | UpperRightY | Scalar | - | y-coordinate of the upper back right corner for the Cube/SimplexGridCreator |
- * | | UpperRightZ | Scalar | - | z-coordinate of the upper back right corner for the Cube/SimplexGridCreator |
+ * | | RefineTopX | bool | false | Refine to the right of the domain (only Interface-GridCreator) |
+ * | | RefineTopY | bool | false | Refine to the top of the domain (only Interface-GridCreator) |
+ * | | UpperRightX | Scalar | - | x-coordinate of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
+ * | | UpperRightY | Scalar | - | y-coordinate of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
+ * | | UpperRightZ | Scalar | - | z-coordinate of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
  * | \b GridAdapt | AdaptionInterval | int | 1 | time step interval for adaption |
  * | | CoarsenPercentileFlux | Scalar | 0.2 | percentile of cells coarsened because of flux criterion |
  * | | CoarsenPercentileSat | Scalar | 0.2 | percentile of cells coarsened because of saturation criterion |
@@ -74,6 +83,9 @@
  * | | PreconditionerRelaxation | double | 1 | relaxation parameter for the preconditioner |
  * | | ResidualReduction | double | 1e-6 (imp), 1e-13 (dec) | target reduction of the initial residual |
  * | | Verbosity | int | 0 | specifies the verbosity of the linear solver |
+ * | \b MassTransfer | Model | int | 0 | 0 for none, 1 power law, 2 Schluender model |
+ * | | CharPoreRadius | Scalar | - | parameter for Schluender mass-transfer model |
+ * | | Coefficient | Scalar | - | mass transfer coefficient for S^MTC |
  * | \b MPFA | CalcVelocityInTransport | bool | false | enable facewise velocity calculation in the transport step (less efficient!) |
  * | | EnableComplexLStencil | bool | true | enable use of the two more complex (non-centered) L-shapes (3-d) |
  * | | EnableSimpleLStencil | bool | true | enable use of the two simpler (centered) L-shapes (3-d) |
@@ -92,8 +104,12 @@
  * | | UseLineSearch | bool | false | specifies whether the update should be done using line search |
  * | | WriteConvergence | bool | false | specifies whether the convergence rate and the global residual gets written out to disk for every Newton iteration |
  * | \b Pardiso | NumProcessors | int | - | |
- * | \b PorousMedium | CharPoreDiameter | Scalar | - | parameter for Schluender mass-transfer model |
  * | \b Problem | EnableGravity | bool | true | returns whether gravity is considered in the problem |
+ * | | GasDensity | Scalar | - | The density of the gas (only components/constant.hh) |
+ * | | GasKinematicViscosity | Scalar | - | The kinematic viscosity of the gas (only components/constant.hh) |
+ * | | LiquidDensity | Scalar | - | The density of the liquid (only components/constant.hh) |
+ * | | LiquidKinematicViscosity | Scalar | - | The kinematic viscosity of the liquid (only components/constant.hh) |
+ * | | Name | std::string | - | The name of the current problem, used for output |
  * | | Salinity | Scalar | 1e-3 | |
  * | \b SpatialParams | ForchCoeff | Scalar | 0.55 | property for the forchheimer coefficient |
  * | \b Stokes | StabilizationAlpha | Scalar | 0 | parameter for the stabilization |
@@ -121,8 +137,16 @@
  * | | AddPressures | bool | true | add pressures to output (MPNC only) |
  * | | AddSaturations | bool | true | add saturations to output (MPNC only) |
  * | | AddTemperatures | bool | false | add temperatures to output (MPNC only) |
- * | | AddVelocities | bool | false | add velocities to output (MPNC only) |
  * | | AddVelocity | bool | false | add velocity to output (2p(ni) and 2p2c(ni) only) |
  * | | OutputLevel | int | 0 (2 for 2p2c) | Vtk output verbosity (0: only primary variables, >0 more depending on the model) |
  * | | RockMechanicsSignConvention | bool | true | Compressive stress has positive sign |
+ * | \b ZeroEq | BBoxMaxSandGrainRoughness | Scalar | 0.0 | Equivalent sand grain roughness of the upper wall [m] |
+ * | | BBoxMinSandGrainRoughness | Scalar | 0.0 | Equivalent sand grain roughness of the lower wall [m] |
+ * | | EddyConductivityModel | int | 1 | The used eddy conductivity model (default = Reynolds analogy) |
+ * | | EddyDiffusivityModel | int | 1 | The used eddy diffusivity model (default = Reynolds analogy) |
+ * | | EddyViscosityModel | int | 1 | The used eddy viscosity model (default = Prandtl) |
+ * | | FlowNormal | int | 0 | Coordinate axis of main velocity entry |
+ * | | TurbulentPrandtlNumber | Scalar | 1.0 | Conversion between eddy viscosity and eddy conductivity |
+ * | | TurbulentSchmidtNumber | Scalar | 1.0 | Conversion between eddy viscosity and eddy diffusivity |
+ * | | WallNormal | int | 1 | Coordinate axis normal to the wall |
  */

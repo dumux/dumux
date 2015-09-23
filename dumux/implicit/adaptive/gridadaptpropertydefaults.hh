@@ -47,8 +47,8 @@ SET_SCALAR_PROP(GridAdapt, GridAdaptRefineTolerance, 0.05);
 SET_SCALAR_PROP(GridAdapt, GridAdaptCoarsenTolerance, 0.001);
 SET_SCALAR_PROP(GridAdapt, GridAdaptRefineThreshold, 0.0);
 SET_SCALAR_PROP(GridAdapt, GridAdaptCoarsenThreshold, 0.0);
-SET_INT_PROP(GridAdapt, GridAdaptAdaptationInterval, 1);
-//Switch initial grid adaptation off per default
+SET_INT_PROP(GridAdapt, GridAdaptAdaptionInterval, 1);
+//Switch initial grid adaption off per default
 SET_BOOL_PROP(GridAdapt, GridAdaptEnableInitializationIndicator, false);
 
 // Switch of extra refinement strategy at boundaries/sources
@@ -56,10 +56,10 @@ SET_BOOL_PROP(GridAdapt, GridAdaptRefineAtDirichletBC, false);
 SET_BOOL_PROP(GridAdapt, GridAdaptRefineAtFluxBC, false);
 SET_BOOL_PROP(GridAdapt, GridAdaptRefineAtSource, false);
 
-//! Set the default indicator class models for adaptation or coarsening
-SET_TYPE_PROP(GridAdapt, AdaptationIndicator, ImplicitGridAdaptIndicatorDefault<TypeTag>);
-//!Set default class for adaptation initialization indicator
-SET_TYPE_PROP(GridAdapt,  AdaptationInitializationIndicator, ImplicitGridAdaptInitializationIndicatorDefault<TypeTag>);
+//! Set the default indicator class models for adaption or coarsening
+SET_TYPE_PROP(GridAdapt, AdaptionIndicator, ImplicitGridAdaptIndicatorDefault<TypeTag>);
+//!Set default class for adaption initialization indicator
+SET_TYPE_PROP(GridAdapt,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicatorDefault<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux

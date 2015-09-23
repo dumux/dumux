@@ -26,7 +26,7 @@
 
 /**
  * @file
- * @brief  Class defining an initialization indicator for grid adaptation
+ * @brief  Class defining an initialization indicator for grid adaption
  */
 namespace Dumux
 {
@@ -39,9 +39,9 @@ NEW_PROP_TAG(NumEq);
 }
 
 /*!\ingroup ImplicitGridAdaptInitializationIndicator
- * @brief  Class defining an initialization indicator for grid adaptation
+ * @brief  Class defining an initialization indicator for grid adaption
  *
- *  Uses the defined grid adaptation indicator and further accounts for sources and boundaries.
+ *  Uses the defined grid adaption indicator and further accounts for sources and boundaries.
  *  Only for grid initialization!
  *
  * \tparam TypeTag The problem TypeTag
@@ -71,7 +71,7 @@ private:
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptationIndicator) AdaptationIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -202,7 +202,7 @@ public:
 
         //First adapt for boundary conditions and sources to get a good initial solution
         if (nextMaxLevel_ == maxAllowedLevel_)
-            adaptationIndicator_.calculateIndicator();
+            adaptionIndicator_.calculateIndicator();
 
         // prepare an indicator for refinement
         indicatorVector_.resize(problem_.gridView().size(0));
@@ -290,7 +290,7 @@ public:
         if (indicatorVector_[idx] == refineCell)
             return true;
         else if (maxLevel_ == maxAllowedLevel_)
-            return adaptationIndicator_.refine(element);
+            return adaptionIndicator_.refine(element);
         else
             return false;
     }
@@ -311,7 +311,7 @@ public:
         return maxLevel_;
     }
 
-    /*! \brief Initializes the adaptation indicator class */
+    /*! \brief Initializes the adaption indicator class */
     void init()
     {};
 
@@ -324,7 +324,7 @@ public:
         return true;
     }
 
-    /*! \brief Constructs a GridAdaptationIndicator instance
+    /*! \brief Constructs a GridAdaptionIndicator instance
      *
      * This standard indicator is based on the saturation gradient. It checks the local gradient
      * compared to the maximum global gradient. The indicator is compared locally to a
@@ -332,10 +332,10 @@ public:
      * or coarsening or should not be adapted.
      *
      * \param problem The problem object
-     * \param adaptationIndicator Indicator whether a be adapted
+     * \param adaptionIndicator Indicator whether a be adapted
      */
-    ImplicitGridAdaptInitializationIndicator(Problem& problem, AdaptationIndicator& adaptationIndicator):
-        problem_(problem), adaptationIndicator_(adaptationIndicator), maxLevel_(0), nextMaxLevel_(0), eps_(1e-30)
+    ImplicitGridAdaptInitializationIndicator(Problem& problem, AdaptionIndicator& adaptionIndicator):
+        problem_(problem), adaptionIndicator_(adaptionIndicator), maxLevel_(0), nextMaxLevel_(0), eps_(1e-30)
     {
         minAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
         maxAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
@@ -353,7 +353,7 @@ public:
 
 private:
     Problem& problem_;
-    AdaptationIndicator& adaptationIndicator_;
+    AdaptionIndicator& adaptionIndicator_;
     Dune::DynamicVector<int> indicatorVector_;
     int maxLevel_;
     int nextMaxLevel_;
@@ -368,7 +368,7 @@ private:
 
 
 /*!\ingroup IMPES
- * @brief  Class defining a start indicator for grid adaptation
+ * @brief  Class defining a start indicator for grid adaption
  *
  *Default implementation
  *
@@ -381,7 +381,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptationIndicator) AdaptationIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
 
 public:
     /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
@@ -417,18 +417,18 @@ public:
         return false;
     }
 
-    /*! \brief Initializes the adaptation indicator class*/
+    /*! \brief Initializes the adaption indicator class*/
     void init()
     {};
 
-    /*! \brief Constructs a GridAdaptationIndicator for initialization of an adaptive grid
+    /*! \brief Constructs a GridAdaptionIndicator for initialization of an adaptive grid
      *
      * Default implementation
      *
      * \param problem The problem object
-     * \param adaptationIndicator Indicator whether a be adapted
+     * \param adaptionIndicator Indicator whether a be adapted
      */
-    ImplicitGridAdaptInitializationIndicatorDefault(Problem& problem, AdaptationIndicator& adaptationIndicator)
+    ImplicitGridAdaptInitializationIndicatorDefault(Problem& problem, AdaptionIndicator& adaptionIndicator)
     {}
 };
 

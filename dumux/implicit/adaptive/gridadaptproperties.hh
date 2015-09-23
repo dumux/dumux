@@ -33,19 +33,19 @@ namespace Dumux
 {
 namespace Properties
 {
-//! Grid adaptation type tag for all decoupled models.
+//! Grid adaption type tag for all decoupled models.
 NEW_TYPE_TAG(GridAdapt);
 
 //! Defines if the grid is h-adaptive
 NEW_PROP_TAG(AdaptiveGrid);
 
 //! Class defining the refinement/coarsening indicator
-NEW_PROP_TAG(AdaptationIndicator);
+NEW_PROP_TAG(AdaptionIndicator);
 
 //! Class defining the refinement/coarsening indicator for grid initialization
-NEW_PROP_TAG(AdaptationInitializationIndicator);
+NEW_PROP_TAG(AdaptionInitializationIndicator);
 
-//! Switch the use of initial grid adaptation on/off
+//! Switch the use of initial grid adaption on/off
 NEW_PROP_TAG(GridAdaptEnableInitializationIndicator);
 
 //! Mimimum allowed level
@@ -66,8 +66,8 @@ NEW_PROP_TAG(GridAdaptRefineThreshold);
 //! Tolerance for coarsening
 NEW_PROP_TAG(GridAdaptCoarsenThreshold);
 
-//! Time step interval for adaptation
-NEW_PROP_TAG(GridAdaptAdaptationInterval);
+//! Time step interval for adaption
+NEW_PROP_TAG(GridAdaptAdaptionInterval);
 
 //! Switch for refinement at Dirichlet BC's -> not used by all indicators!
 NEW_PROP_TAG(GridAdaptRefineAtDirichletBC);

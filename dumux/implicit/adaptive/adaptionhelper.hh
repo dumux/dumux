@@ -16,8 +16,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_ADAPTATIONHELPER_HH
-#define DUMUX_ADAPTATIONHELPER_HH
+#ifndef DUMUX_ADAPTIONHELPER_HH
+#define DUMUX_ADAPTIONHELPER_HH
 
 #include <dune/common/version.hh>
 #include <dune/grid/common/gridenums.hh>
@@ -44,7 +44,7 @@ NEW_PROP_TAG(Scalar);
 }
 
 template<class TypeTag>
-class AdaptationHelper
+class AdaptionHelper
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -91,7 +91,7 @@ private:
 private:
     const GridView gridView_;
     const Grid& grid_;
-    PersistentContainer adaptationMap_;
+    PersistentContainer adaptionMap_;
 
 public:
     //! Constructs an adaptive helper object
@@ -101,8 +101,8 @@ public:
      *
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      */
-    AdaptationHelper(const GridView& gridView) :
-    	gridView_(gridView), grid_(gridView.grid()), adaptationMap_(grid_, dofCodim)
+    AdaptionHelper(const GridView& gridView) :
+    	gridView_(gridView), grid_(gridView.grid()), adaptionMap_(grid_, dofCodim)
     {}
 
 
@@ -119,7 +119,7 @@ public:
      */
     void storePrimVars(Problem& problem)
     {
-        adaptationMap_.resize();
+        adaptionMap_.resize();
 
         // loop over all levels of the grid
         for (int level = grid_.maxLevel(); level >= 0; level--)
@@ -132,7 +132,7 @@ public:
 				for (ElementLevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
 				{
 					//get your map entry
-					AdaptedValues &adaptedValues = adaptationMap_[*eIt];
+					AdaptedValues &adaptedValues = adaptionMap_[*eIt];
 
 					// put your value in the map
 					if (eIt->isLeaf())
@@ -140,7 +140,7 @@ public:
 						// get index
 						int indexI = this->elementIndex(problem, *eIt);
 
-						storeAdaptationValues(adaptedValues, problem.model().curSol()[indexI]);
+						storeAdaptionValues(adaptedValues, problem.model().curSol()[indexI]);
 
 						adaptedValues.count = 1;
 					}
@@ -148,9 +148,9 @@ public:
 					if (eIt->level() > 0)
 					{
 						ElementPointer epFather = eIt->father();
-						AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
+						AdaptedValues& adaptedValuesFather = adaptionMap_[*epFather];
 						adaptedValuesFather.count += 1;
-						storeAdaptationValues(adaptedValues, adaptedValuesFather);
+						storeAdaptionValues(adaptedValues, adaptedValuesFather);
 					}
 
 				}
@@ -160,12 +160,12 @@ public:
 				for (LevelIterator dofIt = levelView.template begin<dofCodim>(); dofIt != levelView.template end<dofCodim>(); ++dofIt)
 				{
 					//get your map entry
-					AdaptedValues &adaptedValues = adaptationMap_[*dofIt];
+					AdaptedValues &adaptedValues = adaptionMap_[*dofIt];
 
 					// put your value in the map
 					int indexI = this->dofIndex(problem, *dofIt);
 
-					storeAdaptationValues(adaptedValues, problem.model().curSol()[indexI]);
+					storeAdaptionValues(adaptedValues, problem.model().curSol()[indexI]);
 
 					adaptedValues.count = 1;
 
@@ -189,7 +189,7 @@ public:
      */
     void reconstructPrimVars(Problem& problem)
     {
-        adaptationMap_.resize();
+        adaptionMap_.resize();
 
         for (int level = 0; level <= grid_.maxLevel(); level++)
         {
@@ -208,10 +208,10 @@ public:
                     {
                     	if(!isBox)
                     	{
-							AdaptedValues &adaptedValues = adaptationMap_[*eIt];
+							AdaptedValues &adaptedValues = adaptionMap_[*eIt];
 							int newIdxI = this->elementIndex(problem, *eIt);
 
-							setAdaptationValues(adaptedValues, problem.model().curSol()[newIdxI]);
+							setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
 						}
                     	else
                     	{
@@ -224,10 +224,10 @@ public:
                         	for(unsigned int i = 0; i < numSubEntities; i++)
                         	{
                         		DofPointer subEntity = eIt->template subEntity <dofCodim>(i);
-    							AdaptedValues &adaptedValues = adaptationMap_[*subEntity];
+    							AdaptedValues &adaptedValues = adaptionMap_[*subEntity];
     							int newIdxI = this->dofIndex(problem, *subEntity);
 
-    							setAdaptationValues(adaptedValues, problem.model().curSol()[newIdxI]);
+    							setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
 
                         	}
                     	}
@@ -242,12 +242,12 @@ public:
 
                         if(!isBox)
                         {
-							// create new entry: reconstruct from adaptationMap_[*father] to a new
-							// adaptationMap_[*son]
-							reconstructAdaptationValues(adaptationMap_, *epFather, *eIt, problem);
+							// create new entry: reconstruct from adaptionMap_[*father] to a new
+							// adaptionMap_[*son]
+							reconstructAdaptionValues(adaptionMap_, *epFather, *eIt, problem);
 
 							// access new son
-							AdaptedValues& adaptedValues = adaptationMap_[*eIt];
+							AdaptedValues& adaptedValues = adaptionMap_[*eIt];
 							adaptedValues.count = 1;
 
 							// if we are on leaf, store reconstructed values of son in CellData object
@@ -256,7 +256,7 @@ public:
 								// acess new CellData object
 								int newIdxI = this->elementIndex(problem, *eIt);
 
-								setAdaptationValues(adaptedValues, problem.model().curSol()[newIdxI]);
+								setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
 							}
                         }
                         else
@@ -271,7 +271,7 @@ public:
                         	for(unsigned int i = 0; i < numSubEntities; i++)
                         	{
                         		DofPointer subEntity = eIt->template subEntity <dofCodim>(i);
-    							AdaptedValues &adaptedValues = adaptationMap_[*subEntity];
+    							AdaptedValues &adaptedValues = adaptionMap_[*subEntity];
 
     							if(adaptedValues.count == 0){
 									LocalPosition dofCenterPos = geometryI.local(subEntity->geometry().center());
@@ -285,7 +285,7 @@ public:
 									for (int j = 0; j < shapeVal.size(); ++j)
 									{
 										DofPointer subEntityFather = epFather->template subEntity <dofCodim>(j);
-										AdaptedValues & adaptedValuesFather = adaptationMap_[*subEntityFather];
+										AdaptedValues & adaptedValuesFather = adaptionMap_[*subEntityFather];
 										u.axpy(shapeVal[j], adaptedValuesFather.u);
 									}
 
@@ -296,7 +296,7 @@ public:
     							if (eIt->isLeaf())
     							{
         							int newIdxI = this->dofIndex(problem, *subEntity);
-    								setAdaptationValues(adaptedValues, problem.model().curSol()[newIdxI]);
+    								setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
     							}
 
                         	}
@@ -308,9 +308,9 @@ public:
 
         }
         // reset entries in restrictionmap
-        adaptationMap_.resize( typename PersistentContainer::Value() );
-        adaptationMap_.shrinkToFit();
-        adaptationMap_.fill( typename PersistentContainer::Value() );
+        adaptionMap_.resize( typename PersistentContainer::Value() );
+        adaptionMap_.shrinkToFit();
+        adaptionMap_.fill( typename PersistentContainer::Value() );
 
 //#if HAVE_MPI
 //        // communicate ghost data
@@ -327,12 +327,12 @@ public:
     //! Stores values to be adapted in an adaptedValues container
     /**
      * Stores values to be adapted from the current CellData objects into
-     * the adaptation container in order to be mapped on a new grid.
+     * the adaption container in order to be mapped on a new grid.
      *
      * \param adaptedValues Container for model-specific values to be adapted
      * \param element The element to be stored
      */
-    static void storeAdaptationValues(AdaptedValues& adaptedValues, const PrimaryVariables& u)
+    static void storeAdaptionValues(AdaptedValues& adaptedValues, const PrimaryVariables& u)
     {
         adaptedValues.u = u;
     }
@@ -346,7 +346,7 @@ public:
      * \param adaptedValuesFather Values to be adapted of father cell
      * \param fatherElement The element of the father
      */
-    static void storeAdaptationValues(AdaptedValues& adaptedValues,
+    static void storeAdaptionValues(AdaptedValues& adaptedValues,
                                     AdaptedValues& adaptedValuesFather)
     {
     	if(!isBox)
@@ -368,7 +368,7 @@ public:
      * \param adaptedValues Container for model-specific values to be adapted
      * \param element The element where things are stored.
      */
-    static void setAdaptationValues(AdaptedValues& adaptedValues, PrimaryVariables& u)
+    static void setAdaptionValues(AdaptedValues& adaptedValues, PrimaryVariables& u)
     {
     	PrimaryVariables uNew = adaptedValues.u;
     	uNew /= adaptedValues.count;
@@ -380,18 +380,18 @@ public:
     /**
      * Reconstructs a new solution from a father cell into a newly
      * generated son cell. New cell is stored into the global
-     * adaptationMap.
+     * adaptionMap.
      *
-     * \param adaptationMap Global map storing all values to be adapted
+     * \param adaptionMap Global map storing all values to be adapted
      * \param father Entity Pointer to the father cell
      * \param son Entity Pointer to the newly created son cell
      * \param problem The problem
      */
-    static void reconstructAdaptationValues(Dune::PersistentContainer<Grid, AdaptedValues>& adaptationMap,
+    static void reconstructAdaptionValues(Dune::PersistentContainer<Grid, AdaptedValues>& adaptionMap,
     		const Element& father, const Element& son, const Problem& problem)
     {
-		AdaptedValues& adaptedValues = adaptationMap[son];
-		AdaptedValues& adaptedValuesFather = adaptationMap[father];
+		AdaptedValues& adaptedValues = adaptionMap[son];
+		AdaptedValues& adaptedValuesFather = adaptionMap[father];
 
 		adaptedValues.u = adaptedValuesFather.u;
 		adaptedValues.u /= adaptedValuesFather.count;

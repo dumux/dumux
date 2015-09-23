@@ -106,12 +106,12 @@ SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<Ty
 SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 
 SET_BOOL_PROP(LensCCAdaptiveProblem, AdaptiveGrid, true);
-SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptationIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
-SET_TYPE_PROP(LensCCAdaptiveProblem,  AdaptationInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
+SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
+SET_TYPE_PROP(LensCCAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
 
 SET_BOOL_PROP(LensBoxAdaptiveProblem, AdaptiveGrid, true);
-SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptationIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
-SET_TYPE_PROP(LensBoxAdaptiveProblem,  AdaptationInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
+SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
+SET_TYPE_PROP(LensBoxAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
 
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(LensBoxProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);

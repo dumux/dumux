@@ -24,7 +24,7 @@
 #define DUMUX_IMPLICIT_GRIDADAPT_HH
 
 #include "gridadaptproperties.hh"
-#include "adaptationhelper.hh"
+#include "adaptionhelper.hh"
 #include <unordered_map>
 
 #include <dune/common/exceptions.hh>
@@ -63,8 +63,8 @@ class ImplicitGridAdapt
     typedef typename Grid::template Codim<0>::Entity Element;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptationIndicator) AdaptationIndicator;
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptationInitializationIndicator) AdaptationInitializationIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
+    typedef typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator) AdaptionInitializationIndicator;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
@@ -74,23 +74,23 @@ public:
      * @param problem The problem
      */
     ImplicitGridAdapt (Problem& problem)
-        : adaptationHelper_(problem.gridView()),
+        : adaptionHelper_(problem.gridView()),
           problem_(problem),
-          adaptationIndicator_(problem),
+          adaptionIndicator_(problem),
           marked_(0),
           coarsened_(0)
     {
         if(isBox)
         {
             DUNE_THROW(Dune::NotImplemented,
-                       "Grid adaptation is not yet mass conservative for Box method! "
+                       "Grid adaption is not yet mass conservative for Box method! "
                         << "Use cell-centered scheme instead!");
         }
         else
         {
             levelMin_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
             levelMax_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
-            adaptationInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptationInterval);
+            adaptionInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptionInterval);
 
             if (levelMin_ < 0)
             {
@@ -104,29 +104,29 @@ public:
      *
      * Prepares the grid for simulation after the initialization of the
      * problem. The applied indicator is selectable via the property
-     * AdaptationInitializationIndicator
+     * AdaptionInitializationIndicator
      */
     void init()
     {
-        adaptationIndicator_.init();
+        adaptionIndicator_.init();
 
         if (!GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, EnableInitializationIndicator))
             return;
 
-        AdaptationInitializationIndicator adaptationInitIndicator(problem_, adaptationIndicator_);
+        AdaptionInitializationIndicator adaptionInitIndicator(problem_, adaptionIndicator_);
 
         int maxIter = 2*levelMax_;
         int iter = 0;
         while (iter <= maxIter)
         {
-            adaptGrid(adaptationInitIndicator);
+            adaptGrid(adaptionInitIndicator);
 
             if (!wasAdapted())
             {
                 break;
             }
 
-            int shouldInitialize = adaptationInitIndicator.initializeModel();
+            int shouldInitialize = adaptionInitIndicator.initializeModel();
             if (problem_.grid().comm().max(shouldInitialize))
             {
                 problem_.model().init(problem_);
@@ -141,7 +141,7 @@ public:
      *
      * This method is called from IMPETProblem::preTimeStep() if
      * adaptive grids are used in the simulation. It uses the standard
-     * indicator (selected by the property AdaptationIndicator) and forwards to
+     * indicator (selected by the property AdaptionIndicator) and forwards to
      * with it to the ultimate method adaptGrid(indicator), which
      * uses a standard procedure for adaptivity:
      * 1) Determine the refinement indicator
@@ -152,7 +152,7 @@ public:
      */
     void adaptGrid()
     {
-        adaptGrid(adaptationIndicator_) ;
+        adaptGrid(adaptionIndicator_) ;
     }
 
     /*!
@@ -177,8 +177,8 @@ public:
         // reset internal counter for marked elements
         marked_ = coarsened_ = 0;
 
-        // check for adaptation interval: Adapt only at certain time step indices
-        if (problem_.timeManager().timeStepIndex() % adaptationInterval_ != 0)
+        // check for adaption interval: Adapt only at certain time step indices
+        if (problem_.timeManager().timeStepIndex() % adaptionInterval_ != 0)
             return;
 
         /**** 1) determine refining parameter if standard is used ***/
@@ -198,12 +198,12 @@ public:
             Dune::dinfo << marked_ << " cells have been marked_ to be refined, "
                         << coarsened_ << " to be coarsened." << std::endl;
 
-        /****  2b) Do pre-adaptation step    *****/
+        /****  2b) Do pre-adaption step    *****/
         problem_.grid().preAdapt();
         problem_.preAdapt();
 
         /****  3) Put primary variables in a map         *********/
-        adaptationHelper_.storePrimVars(problem_);
+        adaptionHelper_.storePrimVars(problem_);
 
         /****  4) Adapt Grid and size of variable vectors    *****/
         problem_.grid().adapt();
@@ -216,7 +216,7 @@ public:
         problem_.model().adaptVariableSize();
 
         /****  5) (Re-)construct primary variables to new grid **/
-        adaptationHelper_.reconstructPrimVars(problem_);
+        adaptionHelper_.reconstructPrimVars(problem_);
 
         // delete markers in grid
         problem_.grid().postAdapt();
@@ -262,7 +262,7 @@ public:
     }
 
     /*!
-     * @brief Returns true if grid cells have been marked for adaptation
+     * @brief Returns true if grid cells have been marked for adaption
      */
     bool wasAdapted()
     {
@@ -317,18 +317,18 @@ public:
         return levelMin_;
     }
 
-    AdaptationIndicator& adaptationIndicator()
+    AdaptionIndicator& adaptionIndicator()
     {
-        return adaptationIndicator_;
+        return adaptionIndicator_;
     }
 
-    AdaptationIndicator& adaptationIndicator() const
+    AdaptionIndicator& adaptionIndicator() const
     {
-        return adaptationIndicator_;
+        return adaptionIndicator_;
     }
 
 private:
-    AdaptationHelper<TypeTag> adaptationHelper_;
+    AdaptionHelper<TypeTag> adaptionHelper_;
 
 
     /*!
@@ -428,7 +428,7 @@ private:
 
     // private Variables
     Problem& problem_;
-    AdaptationIndicator adaptationIndicator_;
+    AdaptionIndicator adaptionIndicator_;
 
     int marked_;
     int coarsened_;
@@ -436,7 +436,7 @@ private:
     int levelMin_;
     int levelMax_;
 
-    int adaptationInterval_;
+    int adaptionInterval_;
 };
 
 /*!
