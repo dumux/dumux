@@ -108,6 +108,7 @@ public:
       typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
     /*!
      * \copydoc ImplicitVolumeVariables::update
+     * \param primaryVariables The primary Variables
      */
     void update(const PrimaryVariables &primaryVariables,
                 const Problem &problem,
@@ -174,6 +175,7 @@ public:
    /*!
     * \copydoc ImplicitModel::completeFluidState
     * \param isOldSol Specifies whether this is the previous solution or the current one
+    * \param primaryVariables The primary Variables
     */
     static void completeFluidState(const PrimaryVariables& primaryVariables,
                     const Problem& problem,

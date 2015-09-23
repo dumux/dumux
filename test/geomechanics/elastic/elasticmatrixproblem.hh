@@ -144,7 +144,7 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param values The boundary types for the conservation equations
-     * \param vertex The vertex for which the boundary type is set
+     * \param globalPos The global position
      */
     void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const

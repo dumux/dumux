@@ -90,7 +90,7 @@ public:
 
     /*! Constructs a DiffusivePart object
      *
-     *  \param A problem class object
+     *  \param problem problem class object
      */
     DiffusivePart(Problem& problem)
     {}

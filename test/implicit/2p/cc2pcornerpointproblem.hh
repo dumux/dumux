@@ -227,7 +227,7 @@ public:
      *        used for which equation on a given boundary segment
      *
      * \param values Stores the value of the boundary type
-     * \param globalPos The global position
+     * \param intersection The intersection
      */
     void boundaryTypes(BoundaryTypes &values,
                        const Intersection &intersection) const

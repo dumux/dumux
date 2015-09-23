@@ -87,7 +87,6 @@ public:
      * Default implementation
      *
      * \param problem The problem object
-     * \param adaptionIndicator Indicator whether a be adapted
      */
     ImplicitGridAdaptIndicatorDefault(Problem& problem)
     {}

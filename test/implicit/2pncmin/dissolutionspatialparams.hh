@@ -148,7 +148,6 @@ public:
     /*!
      * \brief Define the minimum porosity \f$[-]\f$ after salt precipitation
      *
-     * \param elemVolVars The data defined on the sub-control volume
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
@@ -164,7 +163,6 @@ public:
     /*!
      * \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
      *
-     * \param elemVolVars The data defined on the sub-control volume
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where

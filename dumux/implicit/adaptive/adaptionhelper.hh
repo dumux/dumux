@@ -330,7 +330,7 @@ public:
      * the adaption container in order to be mapped on a new grid.
      *
      * \param adaptedValues Container for model-specific values to be adapted
-     * \param element The element to be stored
+     * \param u The variables to be stored
      */
     static void storeAdaptionValues(AdaptedValues& adaptedValues, const PrimaryVariables& u)
     {
@@ -344,7 +344,6 @@ public:
      *
      * \param adaptedValues Container for model-specific values to be adapted
      * \param adaptedValuesFather Values to be adapted of father cell
-     * \param fatherElement The element of the father
      */
     static void storeAdaptionValues(AdaptedValues& adaptedValues,
                                     AdaptedValues& adaptedValuesFather)
@@ -366,7 +365,7 @@ public:
      * decoupled models.
      *
      * \param adaptedValues Container for model-specific values to be adapted
-     * \param element The element where things are stored.
+     * \param u The variables to be stored
      */
     static void setAdaptionValues(AdaptedValues& adaptedValues, PrimaryVariables& u)
     {

@@ -163,7 +163,7 @@ public:
     /*!
      * \brief The capillary pressure-saturation curve copied from MUFTE/pml/constrel3p3cni.c 
      * \param params Array of parameters
-     * \param st sum of wetting (liquid) phase saturations
+     * \param St sum of wetting (liquid) phase saturations
      */
     static Scalar pcgn(const Params &params, Scalar St)
     {

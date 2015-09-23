@@ -130,7 +130,6 @@ public:
     /*!
      * \brief Reads layer information from the grid
      *
-     * \param gridPtr The grid pointer
      */
     void setParams()
     {
