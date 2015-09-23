@@ -280,6 +280,7 @@ public:
      * \brief Writes the data into the volVarsData.csv file
      *
      * \param stream The output file stream
+     * \param volVars The volume variables
      */
     void writeVolVarsData(std::ofstream &stream, const VolumeVariables &volVars)
     {
@@ -314,6 +315,7 @@ public:
      * \brief Writes the data into the fluxVarsData.csv file
      *
      * \param stream The output file stream
+     * \param fluxVars The flux variables
      */
     void writeFluxVarsData(std::ofstream &stream, const FluxVariables &fluxVars)
     {
