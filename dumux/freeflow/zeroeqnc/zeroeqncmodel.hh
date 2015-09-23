@@ -32,7 +32,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxZeroEqncModel
- * \brief Adaptation of the box scheme to the compositional ZeroEq model.
+ * \brief Adaption of the box scheme to the compositional ZeroEq model.
  *
  * This model implements an single-phase isothermal compositional free flow
  * solving the mass and the momentum balance. For the momentum balance

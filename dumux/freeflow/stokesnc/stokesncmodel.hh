@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Adaptation of the box scheme to the n-component Stokes model.
+ * \brief Adaption of the box scheme to the n-component Stokes model.
  */
 #ifndef DUMUX_STOKESNC_MODEL_HH
 #define DUMUX_STOKESNC_MODEL_HH
@@ -34,7 +34,7 @@
 namespace Dumux {
 /*!
  * \ingroup BoxStokesncModel
- * \brief Adaptation of the box scheme to the compositional Stokes model.
+ * \brief Adaption of the box scheme to the compositional Stokes model.
  *
  * This model implements an isothermal n-component Stokes flow of a fluid
  * solving a momentum balance, a mass balance and conservation equations for \f$n-1\f$

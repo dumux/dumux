@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Adaptation of the box scheme to the non-isothermal
+ * \brief Adaption of the box scheme to the non-isothermal
  *        n-component Stokes model.
  */
 #ifndef DUMUX_STOKESNCNI_MODEL_HH
@@ -35,7 +35,7 @@
 namespace Dumux {
 /*!
  * \ingroup BoxStokesncniModel
- * \brief Adaptation of the box scheme to the non-isothermal
+ * \brief Adaption of the box scheme to the non-isothermal
  *        n-component Stokes model.
  *
  * This model implements a non-isothermal n-component Stokes flow of a fluid

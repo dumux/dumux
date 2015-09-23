@@ -38,7 +38,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxStokesModel
- * \brief Adaptation of the box scheme to the Stokes model.
+ * \brief Adaption of the box scheme to the Stokes model.
  *
  * This model implements laminar Stokes flow of a single fluid, solving the momentum balance equation
  * \f[

@@ -7,7 +7,8 @@ Differences Between DuMuX 2.7 and DuMuX 2.8
   CMake based build system as it is default since Dune 2.4.
 
 * IMPROVEMENTS and ENHANCEMENTS:
-  - The zero equation turbulence models (zeroeq) have been added as new models
+  - A bug in the diffusion term in the freeflow models has been fixed.
+  - Zero equation turbulence models (zeroeq) have been added as new models
     to the freeflow folder.
   - Tests for coupling a turbulent free flow using zeroeq turbulence models
     with flow in a porous medium have been added.
