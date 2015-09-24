@@ -1,0 +1,14 @@
+[TimeManager]
+DtInitial = 30 # [s]
+TEnd = 30000 # [s]
+
+[Grid]
+NumberOfCellsX = 48 # [-] resolution in x-direction
+NumberOfCellsY = 32 # [-] resolution in y-direction
+
+UpperRightX = 6 # [m] length of the domain
+UpperRightY = 4 # [m] height of the domain
+
+[Problem]
+Name = box2pmincdist # name passed to the output routines
+InteractingContinuaType = 1 # how the continua interact
