@@ -3,7 +3,7 @@
 ################################
 
 Module: dumux
-Version: 2.8-svn
+Version: 2.9-svn
 Maintainer: dumux@listserv.uni-stuttgart.de
 Depends: dune-grid (>= 2.3) dune-localfunctions (>= 2.3) dune-istl (>= 2.3)
 Suggests: dune-alugrid (>=2.4) dune-pdelab (>=2.0) dune-multidomain dune-cornerpoint
