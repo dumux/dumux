@@ -90,7 +90,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
         massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-    };
+    }
 
     /*!
      * \brief Evaluate the storage term of the current solution in a

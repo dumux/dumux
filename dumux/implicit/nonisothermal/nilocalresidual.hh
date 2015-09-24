@@ -66,7 +66,7 @@ public:
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
         massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-    };
+    }
 
     /*!
      * \brief Evaluate the amount of all conservation quantities
