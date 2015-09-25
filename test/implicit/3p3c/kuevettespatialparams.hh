@@ -24,6 +24,8 @@
 #ifndef DUMUX_KUEVETTE3P3CNI_SPATIAL_PARAMS_HH
 #define DUMUX_KUEVETTE3P3CNI_SPATIAL_PARAMS_HH
 
+#include <dune/common/float_cmp.hh>
+
 #include <dumux/implicit/3p3c/3p3cindices.hh>
 #include <dumux/material/spatialparams/implicitspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkervangen3p.hh>
@@ -255,11 +257,12 @@ public:
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
-        if (0.13 <= globalPos[0] && 1.20 >= globalPos[0] && 0.32 <= globalPos[1] && globalPos[1] <= 0.57)
-            return true;
-        else if (0.15 >= globalPos[1] && 1.20 <= globalPos[0])
-            return true;
-        else return false;
+        return ((Dune::FloatCmp::ge<Scalar>(globalPos[0],0.13)
+                    && Dune::FloatCmp::le<Scalar>(globalPos[0],1.20)
+                    && Dune::FloatCmp::ge<Scalar>(globalPos[1],0.32)
+                    && Dune::FloatCmp::le<Scalar>(globalPos[1],0.57))
+                || (Dune::FloatCmp::ge<Scalar>(globalPos[0],1.20)
+                    && Dune::FloatCmp::le<Scalar>(globalPos[1],0.15)));
     }
 
     Scalar fineK_;

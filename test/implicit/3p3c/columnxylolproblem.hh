@@ -81,13 +81,12 @@ SET_TYPE_PROP(ColumnProblem,
  *
  * This problem should typically be simulated for 200 days.
  * A good choice for the initial time step size is 1 s.
- * To adjust the simulation time it is necessary to edit the file test_box3p3cni.input
- * or test_cc3p3cni.input.
+ * To adjust the simulation time it is necessary to edit the input file.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box3p3cni -parameterFile test_box3p3cni.input</tt> or
- * <tt>./test_cc3p3cni -parameterFile test_cc3p3cni.input</tt>
- *  */
+ * <tt>./test_box3p3cnicolumnxylol test_box3p3cnicolumnxylol.input</tt> or
+ * <tt>./test_cc3p3cnicolumnxylol test_cc3p3cnicolumnxylol.input</tt>
+ */
 template <class TypeTag >
 class ColumnProblem : public ImplicitPorousMediaProblem<TypeTag>
 {

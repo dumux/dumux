@@ -94,9 +94,9 @@ SET_INT_PROP(InfiltrationProblem, ImplicitNumericDifferenceMethod, 0);
  * or test_cc3p3c.input.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box3p3c -parameterFile test_box3p3c.input</tt> or
- * <tt>./test_cc3p3c -parameterFile test_cc3p3c.input</tt>
- *  */
+ * <tt>./test_box3p3c test_box3p3c.input</tt> or
+ * <tt>./test_cc3p3c test_cc3p3c.input</tt>
+ */
 template <class TypeTag >
 class InfiltrationProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
