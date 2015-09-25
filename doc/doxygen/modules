@@ -1,0 +1,114 @@
+/*!
+ * \file
+ *
+ * \brief This file contains all module definitions for the doxygen documentation.
+ */
+
+/****************** Sequential ******************/ 
+/*!
+ * \defgroup Sequential Sequential Scheme: IMPET (Implicit Pressure Explicit Transport)
+ */
+ 
+	/*!
+	 * \ingroup Sequential
+	 * \defgroup IMPET IMPET Models and Base Problems
+	 */	 
+		/*!
+		 * \ingroup IMPET
+		 * \defgroup OnePhase Single Phase Model (Finite-Volume)
+		 */ 
+		/*!
+		 * \ingroup IMPET
+		 * \defgroup IMPES Immiscible IMPES
+		 */		 
+			/*!
+			 * \ingroup IMPES
+			 * \defgroup Pressure2p Immiscible pressure equation
+			 */
+			 	/*!
+			 	* \ingroup Pressure2p
+			 	* \defgroup FV2p Finite Volume
+			 	*/	
+				/*!
+				* \ingroup Pressure2p
+			 	* \defgroup Mimetic2p Mimetic Finite Differences
+			 	*/	
+			/*!
+			 * \ingroup IMPES
+			 * \defgroup Saturation2p Immiscible saturation transport
+			 */
+
+		/*!
+		 * \ingroup IMPET
+		 * \defgroup IMPESproblems IMPES Base Problems
+		 */
+			 
+		/*!
+		 * \ingroup IMPET
+		 * \defgroup IMPEC Miscible IMPEC
+		 */
+			/*!
+			 * \ingroup IMPEC
+			 * \defgroup multiphase Multiphase Compositional Models
+			 */
+			/*!
+			 * \ingroup IMPEC
+			 * \defgroup multiphysics Multiphysics Compositional Models
+			 */
+
+		/*!
+		 * \ingroup IMPET
+		 * \defgroup IMPECproblems IMPEC Base Problems
+		 */
+		
+	/*!
+	 * \ingroup Sequential
+	 * \defgroup IMPETtests Test Problems for all IMPET models
+	 */
+	
+	/*!
+	 * \ingroup Sequential
+	 * \defgroup IMPETbc Boundary Conditions for IMPET problems
+	 */
+	 
+/****************** Material ******************/
+/*!
+ * \defgroup Material Material Properties and Laws
+ */
+
+	/*!
+	 * \ingroup Material
+	 * \defgroup Binarycoefficients Binary Coefficients
+	 */
+	 
+	/*!
+	 * \ingroup Material
+	 * \defgroup Components Components
+	 */
+	
+		/*!
+		 * \ingroup Components
+		 * \defgroup IAPWS IAPWS
+		 */
+
+	/*!
+	 * \ingroup Material
+	 *  \defgroup fluidmatrixinteractions Fluid-Matrix--Interactions
+	 */
+		/*!
+		 * \ingroup fluidmatrixinteractions
+		 *  \defgroup fluidmatrixinteractionslaws Laws for Fluid-Matrix--Interactions
+		 */
+		 /*!
+		 * \ingroup fluidmatrixinteractions
+		 *  \defgroup fluidmatrixinteractionsparams Parameters for Fluid-Matrix--Interactions 
+		 */
+	/*!
+	 * \ingroup Material
+	 * \defgroup Fluidsystems Fluidsystems
+	 */
+ 
+	/*!
+	 * \ingroup Material
+	 * \defgroup SpatialParameters Spatial parameters
+	 */

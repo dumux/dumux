@@ -1,33 +1,14 @@
-- If you want to run a Dumux multidomain model with Dune 2.4, the module
-  dune-multidomaingrid has to be patched: apply multidomaingrid-2.3.patch in the
-  directory containing the releases/2.3-branch of dune-multidomaingrid, e.g.:
-  patch -p1 <../dumux/patches/multidomaingrid-2.3.patch
+On purpose of this patch directory
+----------------------------------
+DuMuX is based on a certain release of DUNE 
+and some of its components or models can make use of 
+external libraries and modules.
 
-- If the AMGBackend should be used without SuperLU as coarse grid solver, it can
-  be benefitial to decrease the corresponding tolerance. To do so, apply the
-  patch istl-2.3.0.patch in your directory containing
-  dune-istl 2.3.0, e.g.:
-  patch -p1 <../dumux/patches/istl-2.3.0.patch
+Sometimes software like a compiler or a standard library
+changes, so it can be useful to adapt these releases in a certain way
+that components will seamless work together.
+It can also be necessary to fix serious bugs in them, but it makes
+not always sense to use a developer version or a more recent release if available.
 
-- If UG has been installed for parallel usage, and you want to run a Dumux
-  multidomain model, you have to patch dune-grid. The patch will introduce
-  geometries for edges and faces in UG, which need to be present, otherwise the
-  compiler will complain. Apply the patch grid-2.3.1.patch in your directory
-  containing dune-grid 2.3.1 by, e.g.:
-  patch -p1 <../dumux/patches/grid-2.3.1.patch
-  If you want to use Dune 2.4, the missing functionality is already included,
-  so the patch is not needed.
-
-- If dune-cornerpoint has to be used for, e.g., employing the CpGridCreator,
-  a set of patches is needed for the build system. The patches have to be
-  applied in the directories of the OPM modules:
-  * opm-parser: patch -p1 <../dumux/patches/opm-parser-2015.04.patch
-  * opm-core: patch -p1 <../dumux/patches/opm-core-2015.04.patch
-  * dune-cornerpoint: patch -p1 <../dumux/patches/dune-cornerpoint-2015.04.patch
-  In addition to applying the patches, it is necessary to set manually some
-  CMake variables in the CMAKE_FLAGS section of the .opts-file:
-    -Ddune-cornerpoint_PREFIX=/path/to/dune-cornerpoint \
-    -Dopm-core_PREFIX=/path/to/opm-core \
-    -Dopm-parser_PREFIX=/path/to/opm-parser \
-    -DHAVE_DUNE_CORNERPOINT=1 \
-
+For fixing such things this directory is made. Files created here contain patches 
+against some DUNE release or some other component. Their application should be documented here too.

@@ -1,7 +1,8 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +11,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -45,6 +46,7 @@ namespace Dumux
 template <class Scalar>
 class H2 : public Component<Scalar, H2<Scalar> >
 {
+    typedef Component<Scalar, H2<Scalar> >  ParentType;
     typedef Dumux::IdealGas<Scalar> IdealGas;
 
 public:
@@ -58,7 +60,7 @@ public:
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular hydrogen.
      */
     static Scalar molarMass()
-    { return 2.01588e-3; }
+    { return 1.0e-3; }
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of molecular hydrogen.
@@ -77,6 +79,12 @@ public:
      */
     static Scalar tripleTemperature()
     { return 14.0; /* [K] */ }
+
+    /*!
+     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at molecular hydrogen's triple point.
+     */
+    static Scalar triplePressure()
+    { DUNE_THROW(Dune::NotImplemented, "triplePressure for H2"); }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure molecular hydrogen
@@ -118,18 +126,6 @@ public:
         // Assume an ideal gas
         return IdealGas::density(molarMass(), temperature, pressure);
     }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return true; }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { return true; }
 
     /*!
      * \brief The pressure of gaseous \f$H_2\f$ in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
@@ -175,6 +171,34 @@ public:
     }
 
     /*!
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of liquid hydrogen at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidDensity for H2"); }
+
+    /*!
+     * \brief The pressure of liquid hydrogen in \f$\mathrm{[Pa]}\f$ at a given density and
+     *        temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
+     */
+    static Scalar liquidPressure(Scalar temperature, Scalar density)
+    { DUNE_THROW(Dune::NotImplemented, "liquidPressure for H2"); }
+
+    /*!
+     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure liquid \f$H_2\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidEnthalpy(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidEnthalpy for H2"); }
+
+    /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$H_2\f$ at a given pressure and temperature.
      *
      *\param temperature temperature of component in \f$\mathrm{[K]}\f$
@@ -210,8 +234,17 @@ public:
         // convertion from micro poise to Pa s
         return mu/1e6 / 10;
     }
+
+    /*!
+     * \brief The dynamic liquid viscosity \f$\mathrm{[Pa*s]}\f$ of pure \f$H_2\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidViscosity for H2"); }
 };
 
-} // end namespace
+} // end namepace
 
 #endif

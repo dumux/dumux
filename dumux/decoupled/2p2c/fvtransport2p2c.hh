@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id:
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2010 by Markus Wolff, Benjamin Faigle                     *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -19,69 +21,46 @@
 #ifndef DUMUX_FVTRANSPORT2P2C_HH
 #define DUMUX_FVTRANSPORT2P2C_HH
 
-#include <cmath>
-#include <unordered_map>
-
-#include <dune/grid/common/gridenums.hh>
-#include <dune/common/float_cmp.hh>
-
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
-#include <dumux/material/constraintsolvers/compositionalflash.hh>
 #include <dumux/common/math.hh>
-#include <dumux/linear/vectorexchange.hh>
 
 /**
  * @file
  * @brief  Finite Volume discretization of the component transport equation
+ * @author Markus Wolff, Jochen Fritz, Benjamin Faigle
  */
 
 namespace Dumux
 {
-namespace Properties
-{
-NEW_PROP_TAG( TimeManagerSubTimestepVerbosity );
-
-SET_INT_PROP(DecoupledModel, TimeManagerSubTimestepVerbosity, 0);
-}
-
-//! Compositional transport step in a Finite Volume discretization
+//! Miscible Transport step in a Finite Volume discretization
 /*! \ingroup multiphase
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[
-      \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha}
-      \varrho_{alpha} \bf{v}_{\alpha}\right) + q^{\kappa},
+      \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{alpha} \bf{v}_{\alpha}\right) + q^{\kappa},
  *  \f]
  *  where \f$ \bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
  *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
  *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
- *  The whole flux contribution for each cell is subdivided into a storage term, a flux term and a source term.
- *  Corresponding functions (<tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt>) are provided,
- *  internal sources are directly treated.
- *
  *
  *  \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class FVTransport2P2C
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
 
     enum
     {
@@ -90,255 +69,92 @@ class FVTransport2P2C
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureN
+        pn = Indices::pressureNW,
+        pglobal = Indices::pressureGlobal,
+        vw = Indices::velocityW,
+        vn = Indices::velocityNW,
+        vt = Indices::velocityTotal,
+        Sw = Indices::saturationW,
+        Sn = Indices::saturationNW,
     };
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
-        contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx,
-        NumPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        NumComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename GridView::Intersection Intersection;
 
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar, NumPhases> PhaseVector;
-    typedef Dune::FieldVector<Scalar, NumComponents> ComponentVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef Dune::FieldVector<Scalar, 2> PhaseVector;
 
 public:
-    //! @copydoc FVPressure::EntryType
-    typedef Dune::FieldVector<Scalar, 2> EntryType;
-    typedef Dune::FieldVector<Scalar, 2> TimeStepFluxType;
-
-protected:
-    struct LocalTimesteppingData
-    {
-        Dune::FieldVector<EntryType, 2*dim> faceFluxes;
-        Dune::FieldVector<Scalar, 2*dim> faceTargetDt;
-        Scalar dt;
-        LocalTimesteppingData():faceFluxes(EntryType(0.0)), faceTargetDt(0.0), dt(0)
-        {}
-    };
-
-    //! Acess function for the current problem
-    Problem& problem()
-    { return problem_; }
-
-    void innerUpdate(TransportSolutionType& updateVec);
-
-public:
-    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false);
-
-    void updateTransportedQuantity(TransportSolutionType& updateVector);
-
-    void updateTransportedQuantity(TransportSolutionType& updateVector, Scalar dt);
-
-    void updateConcentrations(TransportSolutionType& updateVector, Scalar dt);
-
-    // Function which calculates the flux update
-    void getFlux(ComponentVector&, EntryType&,
-            const Intersection&, CellData&);
-
-    // Function which calculates the boundary flux update
-    void getFluxOnBoundary(ComponentVector&, EntryType&,
-                            const Intersection&, const CellData&);
-
-    void evalBoundary(GlobalPosition,const Intersection&,FluidState &, PhaseVector &);
+    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
 
     //! Set the initial values before the first pressure equation
     /*!
      * This method is called before first pressure equation is solved from Dumux::IMPET.
      */
     void initialize()
-    {
-        // resize update vector and set to zero
-        int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
-        totalConcentration_.resize(transportedQuantities);
-        for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
-        {
-            totalConcentration_[eqNumber].resize(problem().gridView().size(0));
-            totalConcentration_[eqNumber] = 0;
-        }
-    }
+    {};
 
-    //! \brief Write transport variables into the output files
+    void evalBoundary(GlobalPosition globalPosFace, IntersectionIterator& isIt,
+                         ElementIterator& eIt, FluidState &BCfluidState, PhaseVector &pressure);
+
+    //! \brief Write data files
      /*  \param writer applied VTK-writer */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        if(problem().vtkOutputLevel()>3)
-        {
-            typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
-            int size = problem_.gridView().size(0);
-            ScalarSolutionType *totalC1PV = writer.allocateManagedBuffer(size);
-            ScalarSolutionType *totalC2PV = writer.allocateManagedBuffer(size);
-            *totalC1PV = this->totalConcentration_[wCompIdx];
-            *totalC2PV = this->totalConcentration_[nCompIdx];
-            writer.attachCellData(*totalC1PV, "total Concentration w-Comp - vector");
-            writer.attachCellData(*totalC2PV, "total Concentration n-Comp - vector");
-        }
+        return;
     }
 
-    //! Function needed for restart option of the transport model: Write out
-    void serializeEntity(std::ostream &outstream, const Element &element)
-    {
-        int eIdxGlobal = problem().variables().index(element);
-        outstream << totalConcentration_[wCompIdx][eIdxGlobal]
-                  << "  " << totalConcentration_[nCompIdx][eIdxGlobal];
-    }
-    //! Function needed for restart option of the transport model: Read in
-    void deserializeEntity(std::istream &instream, const Element &element)
-    {
-        int eIdxGlobal = problem().variables().index(element);
-        CellData& cellData = problem().variables().cellData(eIdxGlobal);
-        instream >>  totalConcentration_[wCompIdx][eIdxGlobal]
-                 >> totalConcentration_[nCompIdx][eIdxGlobal];
-        cellData.setMassConcentration(wCompIdx, totalConcentration_[wCompIdx][eIdxGlobal]);
-        cellData.setMassConcentration(nCompIdx, totalConcentration_[nCompIdx][eIdxGlobal]);
-    }
 
-    /*! \name Access functions for protected variables  */
-    //@{
-    //! Return the vector of the transported quantity
-    /*! For an immiscible IMPES scheme, this is the saturation. For compositional simulations, however,
-     *  the total concentration of all components is transported.
-     *  @param transportedQuantity Vector of both transported components
-     */
-    void getTransportedQuantity(TransportSolutionType& transportedQuantity)
-    {
-        // resize update vector and set to zero
-        transportedQuantity.resize((GET_PROP_VALUE(TypeTag, NumEq) - 1));
-        for(int compIdx = 0; compIdx < (GET_PROP_VALUE(TypeTag, NumEq) - 1); compIdx++)
-            transportedQuantity[compIdx].resize(problem_.gridView().size(0));
-
-        transportedQuantity = totalConcentration_;
-    }
-
-    /*! \name Access functions for protected variables  */
-    //@{
-    //! Return the the total concentration stored in the transport vector
-    /*! To get real cell values, do not acess this method, but rather
-     * call the respective function in the cell data object.
-     * @param compIdx The index of the component
-     * @param eIdxGlobal The global index of the current cell.
-     */
-    Scalar& totalConcentration(int compIdx, int eIdxGlobal)
-    {
-        return totalConcentration_[compIdx][eIdxGlobal][0];
-    }
-
-    void getSource(Scalar& update, const Element& element, CellData& cellDataI)
-    {}
-
-
-    //! Function to control the abort of the transport-sub-time-stepping depending on a physical parameter range
-    /*!
-     * @param entry Cell entries of the update vector
-     */
-    template<class DataEntry>
-    bool inPhysicalRange(DataEntry& entry)
-    {
-        int numComp = GET_PROP_VALUE(TypeTag, NumEq) - 1;
-        for(int compIdx = 0; compIdx < numComp; compIdx++)
-        {
-            if (entry[compIdx] < -1.0e-6)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    //! Function to check if local time stepping is activated
-    bool enableLocalTimeStepping()
-    {
-        return localTimeStepping_;
-    }
-
-    //@}
     //! Constructs a FVTransport2P2C object
     /*!
-     * Currently, the compositional transport scheme can not be applied with a global pressure / total velocity
+     * Currently, the miscible transport scheme can not be applied with a global pressure / total velocity
      * formulation.
      *
      * \param problem a problem class object
      */
     FVTransport2P2C(Problem& problem) :
-        totalConcentration_(0.), problem_(problem),
-        switchNormals(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)), accumulatedDt_(0),
-        dtThreshold_(1e-6), subCFLFactor_(1.0)
+        problem_(problem), switchNormals(false)
     {
-        restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,int, Impet, RestrictFluxInTransport);
-        regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
-        if(regulateBoundaryPermeability)
-            minimalBoundaryPermeability = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.MinBoundaryPermeability);
-
-        Scalar cFLFactor = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
-        subCFLFactor_ = std::min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
-        verbosity_ = GET_PARAM_FROM_GROUP(TypeTag, int, TimeManager, SubTimestepVerbosity);
-
-        localTimeStepping_ = subCFLFactor_/cFLFactor < 1.0 - dtThreshold_;
-
-        if (localTimeStepping_)
-            std::cout<<"max CFL-Number of "<<cFLFactor<<", max Sub-CFL-Number of "
-                <<subCFLFactor_<<": Enable local time-stepping!" << std::endl;
+        const int velocityType = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility)) && velocityType == vt)
+        {
+            DUNE_THROW(Dune::NotImplemented,
+                    "Total velocity - global pressure - model cannot be used with compressible fluids!");
+        }
+        const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
+        if (saturationType != Sw && saturationType != Sn)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
+        }
+        if (pressureType != pw && pressureType != pn && pressureType != pglobal)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
+        }
+        if (velocityType != vw && velocityType != vn && velocityType != vt)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Velocity type not supported!");
+        }
     }
 
-    virtual ~FVTransport2P2C()
+    ~FVTransport2P2C()
     {
     }
-
-protected:
-    TransportSolutionType totalConcentration_; //!< private vector of transported primary variables
-    Problem& problem_;
-    bool impet_; //!< indicating if we are in an estimate (false) or real impet (true) step.
-    int averagedFaces_; //!< number of faces were flux was restricted
-
-    //! gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
-    //! Restriction of flux on new pressure field if direction reverses from the pressure equation
-    int restrictFluxInTransport_;
-    //! Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
-    bool regulateBoundaryPermeability;
-    //! Minimal limit for the boundary permeability
-    Scalar minimalBoundaryPermeability;
-    bool switchNormals;
-    //! Current time-interval in sub-time-stepping routine
-    Scalar accumulatedDt_;
-    //! Threshold for sub-time-stepping routine
-    const Scalar dtThreshold_;
-    //! Stores data for sub-time-stepping
-    std::vector<LocalTimesteppingData> timeStepData_;
-
-    void updatedTargetDt_(Scalar &dt);
-
-    void resetTimeStepData_()
-    {
-        timeStepData_.clear();
-        accumulatedDt_ = 0;
-    }
-
-    Scalar subCFLFactor_;
-    bool localTimeStepping_;
-    int verbosity_;
-
 
 private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
+    Problem& problem_;
 
-    //! @copydoc Dumux::IMPETProblem::asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
+    static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    bool switchNormals;
 };
 
 //! \brief Calculate the update vector and determine timestep size
@@ -347,1057 +163,397 @@ private:
  *  \f[
        C^{\kappa , new} = C^{\kappa , old} + u,
  *  \f]
- *  where \f$ u = \sum_{\gamma} \boldsymbol{v}_{\alpha} * \varrho_{\alpha} * X^{\kappa}_{\alpha} * \boldsymbol{n} * A_{\gamma} \f$,
- *  \f$ \boldsymbol{n} \f$ is the face normal and \f$ A_{\gamma} \f$ is the face area of face \f$ \gamma \f$.
+ *  where \f$ u = \sum_{element faces} \boldsymbol{v}_{\alpha} * \varrho_{\alpha} * X^{\kappa}_{\alpha} * \boldsymbol{n} * A_{element face} \f$,
+ *  \f$ \boldsymbol{n} \f$ is the face normal and \f$ A_{element face} \f$ is the face area.
  *
  *  In addition to the \a update vector, the recommended time step size \a dt is calculated
  *  employing a CFL condition.
+ *  This method = old concentrationUpdate()
  *
  *  \param t Current simulation time \f$\mathrm{[s]}\f$
  *  \param[out] dt Time step size \f$\mathrm{[s]}\f$
  *  \param[out] updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
- *  \param impet Flag that determines if it is a real impet step or an update estimate for volume derivatives
+ *  \param impes Flag that determines if it is a real impes step or an update estimate for volume derivatives
  */
 template<class TypeTag>
-void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
-        TransportSolutionType& updateVec, bool impet)
+void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes = false)
 {
     // initialize dt very large
     dt = 1E100;
 
-    unsigned int size = problem_.gridView().size(0);
-    if (localTimeStepping_)
-    {
-        if (this->timeStepData_.size() != size)
-            this->timeStepData_.resize(size);
-    }
-    // store if we do update Estimate for flux functions
-    impet_ = impet;
-    averagedFaces_ = 0;
-
-    // resize update vector and set to zero
-    updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
-    updateVec[wCompIdx].resize(problem_.gridView().size(0));
-    updateVec[nCompIdx].resize(problem_.gridView().size(0));
+    // set update vector to zero
     updateVec[wCompIdx] = 0;
     updateVec[nCompIdx] = 0;
 
     // Cell which restricts time step size
     int restrictingCell = -1;
 
-    ComponentVector entries(0.);
-    EntryType timestepFlux(0.);
-    // compute update vector
-    ElementIterator eEndIt = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
-    {
-        // get cell infos
-        int eIdxGlobalI = problem().variables().index(*eIt);
-        CellData& cellDataI = problem().variables().cellData(eIdxGlobalI);
+    // some phase properties
+    Dune::FieldVector<Scalar, dimWorld> gravity_ = problem_.gravity();
 
+    // compute update vector
+    ElementIterator eItEnd = problem_.gridView().template end<0> ();
+    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    {
+        // cell index
+        int globalIdxI = problem_.variables().index(*eIt);
+
+        // cell geometry type
+        Dune::GeometryType gt = eIt->geometry().type();
+
+        // get position
+        GlobalPosition globalPos = eIt->geometry().center();
+
+        // cell volume, assume linear map here
+        Scalar volume = eIt->geometry().volume();
+
+        // get values of cell I
+        Scalar pressI = problem_.variables().pressure()[globalIdxI];
+
+        Dune::FieldMatrix<Scalar,dim,dim> K_I(problem_.spatialParameters().intrinsicPermeability(globalPos, *eIt));
+
+        Scalar SwmobI = std::max((problem_.variables().saturation(globalIdxI)
+                                - problem_.spatialParameters().materialLawParams(globalPos, *eIt).Swr())
+                                , 1e-2);
+        Scalar SnmobI = std::max((1. - problem_.variables().saturation(globalIdxI)
+                                    - problem_.spatialParameters().materialLawParams(globalPos, *eIt).Snr())
+                                , 1e-2);
+
+
+        double Xw1_I = problem_.variables().wet_X1(globalIdxI);
+        double Xn1_I = problem_.variables().nonwet_X1(globalIdxI);
+
+        Scalar densityWI (0.), densityNWI(0.);
+        if (GET_PROP_VALUE(TypeTag, PTAG(NumDensityTransport)))
+        {
+            densityWI= problem_.variables().numericalDensity(globalIdxI, wPhaseIdx);
+            densityNWI = problem_.variables().numericalDensity(globalIdxI, nPhaseIdx);
+
+        }
+        else
+        {
+            densityWI= problem_.variables().densityWetting(globalIdxI);
+            densityNWI = problem_.variables().densityNonwetting(globalIdxI);
+        }
         // some variables for time step calculation
         double sumfactorin = 0;
         double sumfactorout = 0;
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
-            int indexInInside = isIt->indexInInside();
+            // get geometry type of face
+            Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
-            /****** interior face   *****************/
+            // center in face's reference element
+            typedef Dune::GenericReferenceElements<Scalar, dim - 1> FaceReferenceElements;
+            const Dune::FieldVector<Scalar, dim - 1>& faceLocal =
+                   FaceReferenceElements::general(faceGT).position(0, 0);
+
+            // center of face inside volume reference element
+            const LocalPosition localPosFace(0);
+
+            Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->unitOuterNormal(faceLocal);
+            if (switchNormals)
+                unitOuterNormal *= -1.0;
+
+            Scalar faceArea = isIt->geometry().volume();
+
+            // create vector for timestep and for update
+            Dune::FieldVector<Scalar, 2> factor (0.);
+            Dune::FieldVector<Scalar, 2> updFactor (0.);
+
+            // handle interior face
             if (isIt->neighbor())
-                getFlux(entries, timestepFlux, *isIt, cellDataI);
-
-            /******  Boundary Face   *****************/
-            if (isIt->boundary())
-                getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
-
-
-            if (localTimeStepping_)
             {
-                LocalTimesteppingData& localData = timeStepData_[eIdxGlobalI];
-                if (localData.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
+                // access neighbor
+                ElementPointer neighborPointer = isIt->outside();
+                int globalIdxJ = problem_.variables().index(*neighborPointer);
+
+                // compute factor in neighbor
+                Dune::GeometryType neighborGT = neighborPointer->geometry().type();
+
+                // cell center in global coordinates
+                const GlobalPosition& globalPos = eIt->geometry().center();
+
+                // neighbor cell center in global coordinates
+                const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+
+                // distance vector between barycenters
+                Dune::FieldVector<Scalar, dimWorld> distVec = globalPosNeighbor - globalPos;
+                // compute distance between cell centers
+                Scalar dist = distVec.two_norm();
+
+                Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
+                unitDistVec /= dist;
+
+                // get saturation and concentration value at neighbor cell center
+                double Xw1_J = problem_.variables().wet_X1(globalIdxJ);
+                double Xn1_J = problem_.variables().nonwet_X1(globalIdxJ);
+
+                // phase densities in neighbor
+                Scalar densityWJ (0.), densityNWJ(0.);
+                if (GET_PROP_VALUE(TypeTag, PTAG(NumDensityTransport)))
                 {
-                    localData.faceFluxes[indexInInside] = entries;
+                    densityWJ = problem_.variables().numericalDensity(globalIdxJ, wPhaseIdx);
+                    densityNWJ = problem_.variables().numericalDensity(globalIdxJ, nPhaseIdx);
                 }
+                else
+                {
+                    densityWJ = problem_.variables().densityWetting(globalIdxJ);
+                    densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
+                }
+
+                // average phase densities with central weighting
+                double densityW_mean = (densityWI + densityWJ) * 0.5;
+                double densityNW_mean = (densityNWI + densityNWJ) * 0.5;
+
+                double pressJ = problem_.variables().pressure()[globalIdxJ];
+
+                // compute mean permeability
+                Dune::FieldMatrix<Scalar,dim,dim> meanK_(0.);
+                Dumux::harmonicMeanMatrix(meanK_,
+                        K_I,
+                        problem_.spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
+                Dune::FieldVector<Scalar,dim> K(0);
+                meanK_.umv(unitDistVec,K);
+
+                // velocities
+                double potentialW = (K * unitOuterNormal) * (pressI - pressJ) / (dist);
+                double potentialNW = potentialW + ((K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean);
+                potentialW += ((K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean);
+
+                // upwind mobility
+                double lambdaW, lambdaN;
+                if (potentialW >= 0.)
+                    lambdaW = problem_.variables().mobilityWetting(globalIdxI);
+                else
+                    lambdaW = problem_.variables().mobilityWetting(globalIdxJ);
+
+                if (potentialNW >= 0.)
+                    lambdaN = problem_.variables().mobilityNonwetting(globalIdxI);
+                else
+                    lambdaN = problem_.variables().mobilityNonwetting(globalIdxJ);
+
+                double velocityW = lambdaW * potentialW;
+                double velocityN = lambdaN * potentialW;
+
+                // standardized velocity
+                double velocityJIw = std::max(-velocityW * faceArea / volume, 0.0);
+                double velocityIJw = std::max( velocityW * faceArea / volume, 0.0);
+                double velocityJIn = std::max(-velocityN * faceArea / volume, 0.0);
+                double velocityIJn = std::max( velocityN * faceArea / volume, 0.0);
+
+                // for timestep control
+                factor[0] = velocityJIw + velocityJIn;
+
+                double foutw = velocityIJw/SwmobI;
+                double foutn = velocityIJn/SnmobI;
+                if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
+                if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
+                factor[1] = foutw + foutn;
+
+                updFactor[wCompIdx] =
+                    velocityJIw * Xw1_J * densityWJ
+                    - velocityIJw * Xw1_I * densityWI
+                    + velocityJIn * Xn1_J * densityNWJ
+                    - velocityIJn * Xn1_I * densityNWI;
+                updFactor[nCompIdx] =
+                    velocityJIw * (1. - Xw1_J) * densityWJ
+                    - velocityIJw * (1. - Xw1_I) * densityWI
+                    + velocityJIn * (1. - Xn1_J) * densityNWJ
+                    - velocityIJn * (1. - Xn1_I) * densityNWI;
             }
-            else
+
+            /******************************************
+             *     Boundary Face
+             ******************************************/
+            if (isIt->boundary())
             {
+                // center of face in global coordinates
+                const GlobalPosition& globalPosFace = isIt->geometry().global(faceLocal);
+
+                // cell center in global coordinates
+                const GlobalPosition& globalPos = eIt->geometry().center();
+
+                // distance vector between barycenters
+                Dune::FieldVector<Scalar, dimWorld> distVec = globalPosFace - globalPos;
+                // compute distance between cell centers
+                Scalar dist = distVec.two_norm();
+
+                Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
+                unitDistVec /= dist;
+
+                //instantiate a fluid state
+                FluidState BCfluidState;
+
+                //get boundary type
+                BoundaryConditions::Flags bcTypeTransport_ = problem_.bcTypeTransport(globalPosFace, *isIt);
+
+                /**********         Dirichlet Boundary        *************/
+                if (bcTypeTransport_ == BoundaryConditions::dirichlet)
+                {
+                    //get dirichlet pressure boundary condition
+                    Scalar pressBound = problem_.dirichletPress(globalPosFace, *isIt);
+
+                    // read boundary values
+                    BoundaryConditions2p2c::Flags bctype = problem_.bcFormulation(globalPosFace, *isIt);
+                    if (bctype == BoundaryConditions2p2c::saturation)
+                    {
+                        Scalar satBound = problem_.dirichletTransport(globalPosFace, *isIt);
+                        BCfluidState.satFlash(satBound, pressBound,
+                                            problem_.spatialParameters().porosity(globalPos, *eIt),
+                                            problem_.temperature(globalPosFace, *eIt));
+
+                    }
+                    if (bctype == BoundaryConditions2p2c::concentration)
+                    {
+                        // saturation and hence pc and hence corresponding pressure unknown
+                        Scalar Z1Bound = problem_.dirichletTransport(globalPosFace, *isIt);
+                        BCfluidState.update(Z1Bound, pressBound,
+                                            problem_.spatialParameters().porosity(globalPos, *eIt),
+                                            problem_.temperature(globalPosFace, *eIt));
+                    }
+                    // determine fluid properties at the boundary
+                    Scalar Xw1Bound = BCfluidState.massFrac(wPhaseIdx, wCompIdx);
+                    Scalar Xn1Bound = BCfluidState.massFrac(nPhaseIdx, wCompIdx);
+                    Scalar densityWBound = BCfluidState.density(wPhaseIdx);
+                    Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
+                    Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx,
+                                                                        problem_.temperature(globalPosFace, *eIt),
+                                                                        pressBound, BCfluidState);
+                    Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx,
+                                                                        problem_.temperature(globalPosFace, *eIt),
+                                                                        pressBound, BCfluidState);
+
+                    // average
+                    double densityW_mean = (densityWI + densityWBound) / 2;
+                    double densityNW_mean = (densityNWI + densityNWBound) / 2;
+
+                    // prepare K
+                    Dune::FieldVector<Scalar,dim> K(0);
+                    K_I.umv(unitDistVec,K);
+
+                    // velocities
+                    double potentialW = (K * unitOuterNormal) * (pressI - pressBound) / (dist);
+                    double potentialNW = potentialW + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean;
+                    potentialW += (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean;
+
+                    // do upwinding for lambdas
+                    double lambdaW, lambdaN;
+                    if (potentialW >= 0.)
+                        lambdaW = problem_.variables().mobilityWetting(globalIdxI);
+                    else
+                        {
+                        if(GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility))==Indices::satDependent)
+                            lambdaW = BCfluidState.saturation(wPhaseIdx) / viscosityWBound;
+                        else
+                            lambdaW = MaterialLaw::krw(
+                                    problem_.spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
+                                    / viscosityWBound;
+                        }
+                    if (potentialNW >= 0.)
+                        lambdaN = problem_.variables().mobilityNonwetting(globalIdxI);
+                    else
+                        {
+                        if(GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility))==Indices::satDependent)
+                            lambdaN = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
+                        else
+                            lambdaN = MaterialLaw::krn(
+                                    problem_.spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
+                                    / viscosityNWBound;
+                        }
+                    // standardized velocity
+                    double velocityJIw = std::max(-lambdaW * potentialW * faceArea / volume, 0.0);
+                    double velocityIJw = std::max( lambdaW * potentialW * faceArea / volume, 0.0);
+                    double velocityJIn = std::max(-lambdaN * potentialNW * faceArea / volume, 0.0);
+                    double velocityIJn = std::max( lambdaN * potentialNW* faceArea / volume, 0.0);
+
+                    // for timestep control
+                    factor[0] = velocityJIw + velocityJIn;
+
+                    double foutw = velocityIJw/SwmobI;
+                    double foutn = velocityIJn/SnmobI;
+                    if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
+                    if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
+                    factor[1] = foutw + foutn;
+
+                    updFactor[wCompIdx] =
+                        + velocityJIw * Xw1Bound * densityWBound
+                        - velocityIJw * Xw1_I * densityWI
+                        + velocityJIn * Xn1Bound * densityNWBound
+                        - velocityIJn * Xn1_I * densityNWI ;
+                    updFactor[nCompIdx] =
+                        velocityJIw * (1. - Xw1Bound) * densityWBound
+                        - velocityIJw * (1. - Xw1_I) * densityWI
+                        + velocityJIn * (1. - Xn1Bound) * densityNWBound
+                        - velocityIJn * (1. - Xn1_I) * densityNWI ;
+                }//end dirichlet boundary
+
+                if (bcTypeTransport_ == BoundaryConditions::neumann)
+                {
+                    // Convention: outflow => positive sign : has to be subtracted from update vec
+                    Dune::FieldVector<Scalar,2> J = problem_.neumann(globalPosFace, *isIt);
+                    updFactor[wCompIdx] = - J[0] * faceArea / volume;
+                    updFactor[nCompIdx] = - J[1] * faceArea / volume;
+
+                    // for timestep control
+                    #define cflIgnoresNeumann
+                    #ifdef cflIgnoresNeumann
+                    factor[0] = 0;
+                    factor[1] = 0;
+                    #else
+                    double inflow = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;
+                    if (inflow>0)
+                        {
+                        factor[0] = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;    // =factor in
+                        factor[1] = -(updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI);    // =factor out
+                        }
+                    else
+                    {
+                        factor[0] = -(updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW);    // =factor in
+                        factor[1] = updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI;    // =factor out
+                    }
+                    #endif
+                }//end neumann boundary
+            }//end boundary
+            // correct update Factor by volume error
+            #ifdef errorInTransport
+            updFactor[wCompIdx] *= (1+problem_.variables().volErr(globalIdxI));
+            updFactor[nCompIdx] *= (1+problem_.variables().volErr(globalIdxI));
+            #endif
             // add to update vector
-                updateVec[wCompIdx][eIdxGlobalI] += entries[wCompIdx];
-                updateVec[nCompIdx][eIdxGlobalI] += entries[nCompIdx];
-            }
+            updateVec[wCompIdx][globalIdxI] += updFactor[wCompIdx];
+            updateVec[nCompIdx][globalIdxI] += updFactor[nCompIdx];
 
             // for time step calculation
-            sumfactorin += timestepFlux[0];
-            sumfactorout += timestepFlux[1];
+            sumfactorin += factor[0];
+            sumfactorout += factor[1];
 
         }// end all intersections
 
-        if (localTimeStepping_)
-        {
-            LocalTimesteppingData& localData = timeStepData_[eIdxGlobalI];
-            for (int i=0; i < 2*dim; i++)
-            {
-                updateVec[wCompIdx][eIdxGlobalI] += localData.faceFluxes[i][wCompIdx];
-                updateVec[nCompIdx][eIdxGlobalI] += localData.faceFluxes[i][nCompIdx];
-            }
-        }
+        /************************************
+         *     Handle source term
+         ***********************************/
+        Dune::FieldVector<double,2> q = problem_.source(globalPos, *eIt);
+        updateVec[wCompIdx][globalIdxI] += q[wCompIdx];
+        updateVec[nCompIdx][globalIdxI] += q[nCompIdx];
 
-        /***********     Handle source term     ***************/
-        PrimaryVariables q(NAN);
-        problem().source(q, *eIt);
-        updateVec[wCompIdx][eIdxGlobalI] += q[contiWEqIdx];
-        updateVec[nCompIdx][eIdxGlobalI] += q[contiNEqIdx];
-
-        // account for porosity in fluxes for time-step
+        // account for porosity
         sumfactorin = std::max(sumfactorin,sumfactorout)
-                        / problem().spatialParams().porosity(*eIt);
+                        / problem_.spatialParameters().porosity(globalPos, *eIt);
 
-        //calculate time step
-        if (localTimeStepping_)
+        if ( 1./sumfactorin < dt)
         {
-            timeStepData_[eIdxGlobalI].dt = 1./sumfactorin;
-            if ( 1./sumfactorin < dt)
-            {
-                dt = 1./sumfactorin;
-                restrictingCell= eIdxGlobalI;
-            }
-        }
-        else
-        {
-            if ( 1./sumfactorin < dt)
-            {
-                dt = 1./sumfactorin;
-                restrictingCell= eIdxGlobalI;
-            }
+            dt = 1./sumfactorin;
+            restrictingCell= globalIdxI;
         }
     } // end grid traversal
-
-#if HAVE_MPI
-    // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
-    for (int i = 0; i < updateVec.size(); i++)
-    {
-        DataHandle dataHandle(problem_.variables().elementMapper(), updateVec[i]);
-        problem_.gridView().template communicate<DataHandle>(dataHandle,
-                                                            Dune::InteriorBorder_All_Interface,
-                                                            Dune::ForwardCommunication);
-    }
-
-    if (localTimeStepping_)
-    {
-        typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
-
-        TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
-        problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
-                                                         Dune::InteriorBorder_All_Interface,
-                                                         Dune::ForwardCommunication);
-    }
-
-    dt = problem_.gridView().comm().min(dt);
-#endif
-
-    if(impet)
-    {
-        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "
-                <<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor)<< std::endl;
-        if (averagedFaces_ != 0)
-            Dune::dinfo  << " Averageing done for " << averagedFaces_ << " faces. "<< std::endl;
-    }
-}
-/*  Updates the transported quantity once an update is calculated.
- *  This method updates both, the internal transport solution vector and the entries in the cellData.
- *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
- *
- */
-template<class TypeTag>
-void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& updateVector)
-{
-    if (this->enableLocalTimeStepping())
-        this->innerUpdate(updateVector);
-    else
-        updateConcentrations(updateVector, problem().timeManager().timeStepSize());
-}
-
-/*  Updates the transported quantity once an update is calculated.
- *  This method updates both, the internal transport solution vector and the entries in the cellData.
- *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
- *
- */
-template<class TypeTag>
-void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& updateVector, Scalar dt)
-{
-    updateConcentrations(updateVector, dt);
-}
-
-/*  Updates the concentrations once an update is calculated.
- *  This method updates both, the internal transport solution vector and the entries in the cellData.
- *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
- *
- */
-template<class TypeTag>
-void FVTransport2P2C<TypeTag>::updateConcentrations(TransportSolutionType& updateVector, Scalar dt)
-{
-    // loop thorugh all elements
-    for (int i = 0; i< problem().gridView().size(0); i++)
-    {
-        CellData& cellDataI = problem().variables().cellData(i);
-        for(int compIdx = 0; compIdx < GET_PROP_VALUE(TypeTag, NumComponents); compIdx++)
-        {
-            totalConcentration_[compIdx][i] += (updateVector[compIdx][i]*=dt);
-            cellDataI.setMassConcentration(compIdx, totalConcentration_[compIdx][i]);
-        }
-    }
-}
-
-//! Get flux at an interface between two cells
-/** The flux through \f$ \gamma \f$  is calculated according to the underlying pressure field,
- * calculated by the pressure model.
- *  \f[ - A_{\gamma} \mathbf{n}^T_{\gamma} \mathbf{K}  \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
-     \mathbf{d}_{ij}  \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}^T \mathbf{d}_{ij} \right)
-                \sum_{\kappa} X^{\kappa}_{\alpha} \f]
- * Here, \f$ \mathbf{d}_{ij} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma} \f$
- * represents the normal of the face \f$ \gamma \f$. Due to the nature of the primay Variable, the (volume-)specific
- * total mass concentration, this represents a mass flux per cell volume.
- *
- * \param fluxEntries The flux entries, mass influx from cell \f$j\f$ to \f$i\f$.
- * \param timestepFlux flow velocities for timestep estimation
- * \param intersection The intersection
- * \param cellDataI The cell data for cell \f$i\f$
- */
-template<class TypeTag>
-void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
-                                        Dune::FieldVector<Scalar, 2>& timestepFlux,
-                                        const Intersection& intersection,
-                                        CellData& cellDataI)
-{
-    fluxEntries = 0.;
-    timestepFlux = 0.;
-    // cell information
-    ElementPointer elementPtrI= intersection.inside();
-    int eIdxGlobalI = problem().variables().index(*elementPtrI);
-
-    // get position
-    const GlobalPosition globalPos = elementPtrI->geometry().center();
-    const GlobalPosition& gravity_ = problem().gravity();
-    // cell volume, assume linear map here
-    Scalar volume = elementPtrI->geometry().volume();
-
-    // get values of cell I
-    Scalar pressI = problem().pressureModel().pressure(eIdxGlobalI);
-    Scalar pcI = cellDataI.capillaryPressure();
-    DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementPtrI));
-
-    PhaseVector SmobI(0.);
-    SmobI[wPhaseIdx] = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(*elementPtrI).swr())
-                            , 1e-2);
-    SmobI[nPhaseIdx] = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(*elementPtrI).snr())
-                            , 1e-2);
-
-    Scalar densityWI (0.), densityNWI(0.);
-    densityWI= cellDataI.density(wPhaseIdx);
-    densityNWI = cellDataI.density(nPhaseIdx);
-
-    // face properties
-    GlobalPosition unitOuterNormal = intersection.centerUnitOuterNormal();
-    if (switchNormals)
-        unitOuterNormal *= -1.0;
-    Scalar faceArea = intersection.geometry().volume();
-
-//    // local interface index
-//    const int indexInInside = intersection.indexInInside();
-//    const int indexInOutside = intersection.indexInOutside();
-
-    // create vector for timestep and for update
-    Dune::FieldVector<Scalar, 2> factor (0.);
-    Dune::FieldVector<Scalar, 2> updFactor (0.);
-
-    PhaseVector potential(0.);
-
-    // access neighbor
-    ElementPointer neighborPtr = intersection.outside();
-    int eIdxGlobalJ = problem().variables().index(*neighborPtr);
-    CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
-
-    // neighbor cell center in global coordinates
-    const GlobalPosition& globalPosNeighbor = neighborPtr->geometry().center();
-
-    // distance vector between barycenters
-    GlobalPosition distVec = globalPosNeighbor - globalPos;
-    // compute distance between cell centers
-    Scalar dist = distVec.two_norm();
-
-    GlobalPosition unitDistVec(distVec);
-    unitDistVec /= dist;
-
-    // phase densities in neighbor
-    Scalar densityWJ (0.), densityNWJ(0.);
-    densityWJ = cellDataJ.density(wPhaseIdx);
-    densityNWJ = cellDataJ.density(nPhaseIdx);
-
-    // average phase densities with central weighting
-    double densityW_mean = (densityWI + densityWJ) * 0.5;
-    double densityNW_mean = (densityNWI + densityNWJ) * 0.5;
-
-    double pressJ = problem().pressureModel().pressure(eIdxGlobalJ);
-    Scalar pcJ = cellDataJ.capillaryPressure();
-
-    // compute mean permeability
-    DimMatrix meanK_(0.);
-    Dumux::harmonicMeanMatrix(meanK_,
-            K_I,
-            problem().spatialParams().intrinsicPermeability(*neighborPtr));
-    Dune::FieldVector<Scalar,dim> K(0);
-    meanK_.umv(unitDistVec,K);
-
-    // determine potentials for upwind
-    switch (pressureType)
-    {
-    case pw:
-    {
-        potential[wPhaseIdx] = (pressI - pressJ) / (dist);
-        potential[nPhaseIdx] = (pressI - pressJ + pcI - pcJ) / (dist);
-        break;
-    }
-    case pn:
-    {
-        potential[wPhaseIdx] = (pressI - pressJ - pcI + pcJ) / (dist);
-        potential[nPhaseIdx] = (pressI - pressJ) / (dist);
-        break;
-    }
-    }
-    // add gravity term
-    potential[nPhaseIdx] +=  (gravity_ * unitDistVec) * densityNW_mean;
-    potential[wPhaseIdx] +=  (gravity_ * unitDistVec) * densityW_mean;
-
-    potential[wPhaseIdx] *= fabs(K * unitOuterNormal);
-    potential[nPhaseIdx] *= fabs(K * unitOuterNormal);
-
-    // determine upwinding direction, perform upwinding if possible
-    Dune::FieldVector<bool, NumPhases> doUpwinding(true);
-    PhaseVector lambda(0.);
-    for(int phaseIdx = 0; phaseIdx < NumPhases; phaseIdx++)
-    {
-        int contiEqIdx = 0;
-        if(phaseIdx == wPhaseIdx)
-            contiEqIdx = contiWEqIdx;
-        else
-            contiEqIdx = contiNEqIdx;
-
-        if(!impet_ or restrictFluxInTransport_==0) // perform a strict uwpind scheme
-        {
-            if (potential[phaseIdx] > 0.)
-            {
-                lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
-                cellDataI.setUpwindCell(intersection.indexInInside(), contiEqIdx, true);
-
-            }
-            else if(potential[phaseIdx] < 0.)
-            {
-                lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
-                cellDataI.setUpwindCell(intersection.indexInInside(), contiEqIdx, false);
-            }
-            else
-            {
-                doUpwinding[phaseIdx] = false;
-                cellDataI.setUpwindCell(intersection.indexInInside(), contiEqIdx, false);
-                cellDataJ.setUpwindCell(intersection.indexInOutside(), contiEqIdx, false);
-            }
-        }
-        else // Transport after PE with check on flow direction
-        {
-            bool wasUpwindCell = cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx);
-
-            if (potential[phaseIdx] > 0. && wasUpwindCell)
-                lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
-            else if (potential[phaseIdx] < 0. && !wasUpwindCell)
-                lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
-            // potential direction does not coincide with that of P.E.
-            else if(restrictFluxInTransport_ == 2)   // perform central averaging for all direction changes
-                doUpwinding[phaseIdx] = false;
-            else    // i.e. restrictFluxInTransport == 1
-            {
-               //check if harmonic weighting is necessary
-                if (potential[phaseIdx] > 0. && (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellDataJ.mobility(phaseIdx), 0.0, 1.0e-30)   // check if outflow induce neglected (i.e. mob=0) phase flux
-                       or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())))
-                    lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
-                else if (potential[phaseIdx] < 0. && (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellDataI.mobility(phaseIdx), 0.0, 1.0e-30) // check if inflow induce neglected phase flux
-                        or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())))
-                    lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
-                else
-                    doUpwinding[phaseIdx] = false;
-            }
-
-        }
-
-        // do not perform upwinding if so desired
-        if(!doUpwinding[phaseIdx])
-        {
-            //a) no flux if there wont be any flux regardless how to average/upwind
-            if(cellDataI.mobility(phaseIdx)+cellDataJ.mobility(phaseIdx)==0.)
-            {
-                potential[phaseIdx] = 0;
-                continue;
-            }
-
-            //b) perform harmonic averaging
-            fluxEntries[wCompIdx] -= potential[phaseIdx] * faceArea / volume
-                    * harmonicMean(cellDataI.massFraction(phaseIdx, wCompIdx) * cellDataI.mobility(phaseIdx) * cellDataI.density(phaseIdx),
-                            cellDataJ.massFraction(phaseIdx, wCompIdx) * cellDataJ.mobility(phaseIdx) * cellDataJ.density(phaseIdx));
-            fluxEntries[nCompIdx] -= potential[phaseIdx] * faceArea / volume
-                    * harmonicMean(cellDataI.massFraction(phaseIdx, nCompIdx) * cellDataI.mobility(phaseIdx) * cellDataI.density(phaseIdx),
-                            cellDataJ.massFraction(phaseIdx, nCompIdx) * cellDataJ.mobility(phaseIdx) * cellDataJ.density(phaseIdx));
-            // c) timestep control
-            // for timestep control : influx
-            timestepFlux[0] += std::max(0.,
-                    - potential[phaseIdx] * faceArea / volume
-                      * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx)));
-            // outflux
-            timestepFlux[1] += std::max(0.,
-                    potential[phaseIdx] * faceArea / volume
-                    * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx))/SmobI[phaseIdx]);
-
-            //d) output
-            if(!(cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())
-                    && eIdxGlobalI > eIdxGlobalJ) //(only for one side)
-            {
-                averagedFaces_++;
-                #if DUNE_MINIMAL_DEBUG_LEVEL < 3
-                // verbose (only for one side)
-                if(eIdxGlobalI > eIdxGlobalJ)
-                    Dune::dinfo << "harmonicMean flux of phase" << phaseIdx <<" used from cell" << eIdxGlobalI<< " into " << eIdxGlobalJ
-                    << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx)
-                    << " but pot = "<< potential[phaseIdx] <<  std::endl;
-                #endif
-            }
-
-            //e) stop further standard calculations
-            potential[phaseIdx] = 0;
-        }
-    }
-
-    // calculate and standardized velocity
-    double velocityJIw = std::max((-lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
-    double velocityIJw = std::max(( lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
-    double velocityJIn = std::max((-lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
-    double velocityIJn = std::max(( lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
-
-    // for timestep control : influx
-    timestepFlux[0] += velocityJIw + velocityJIn;
-
-    double foutw = velocityIJw/SmobI[wPhaseIdx];
-    double foutn = velocityIJn/SmobI[nPhaseIdx];
-    if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
-    if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
-    timestepFlux[1] += foutw + foutn;
-
-    fluxEntries[wCompIdx] +=
-        velocityJIw * cellDataJ.massFraction(wPhaseIdx, wCompIdx) * densityWJ
-        - velocityIJw * cellDataI.massFraction(wPhaseIdx, wCompIdx) * densityWI
-        + velocityJIn * cellDataJ.massFraction(nPhaseIdx, wCompIdx) * densityNWJ
-        - velocityIJn * cellDataI.massFraction(nPhaseIdx, wCompIdx) * densityNWI;
-    fluxEntries[nCompIdx] +=
-        velocityJIw * cellDataJ.massFraction(wPhaseIdx, nCompIdx) * densityWJ
-        - velocityIJw * cellDataI.massFraction(wPhaseIdx, nCompIdx) * densityWI
-        + velocityJIn * cellDataJ.massFraction(nPhaseIdx, nCompIdx) * densityNWJ
-        - velocityIJn * cellDataI.massFraction(nPhaseIdx, nCompIdx) * densityNWI;
-
-
-//    //add dispersion
-//    for (int phaseIdx = 0; phaseIdx < NumPhases; ++phaseIdx)
-//    {
-//
-//        //calculate porous media diffusion coefficient
-//        // for phases which exist in both finite volumes
-//        if (cellDataI.saturation(phaseIdx) <= 0 ||
-//                cellDataJ.saturation(phaseIdx) <= 0)
-//        {
-//            continue;
-//        }
-//
-//        // calculate tortuosity at the nodes i and j needed
-//        // for porous media diffusion coefficient
-//        Scalar poroI = problem().spatialParams().porosity(*elementPtrI);
-//        Scalar poroJ = problem().spatialParams().porosity(*neighborPtr);
-//        Scalar tauI =
-//            1.0/(poroI * poroI) *
-//            pow(poroI * cellDataI.saturation(phaseIdx), 7.0/3);
-//        Scalar tauJ =
-//            1.0/(poroJ * poroJ) *
-//            pow(poroJ * cellDataJ.saturation(phaseIdx), 7.0/3);
-//        // Diffusion coefficient in the porous medium
-//        // -> harmonic mean
-//        Scalar porousDiffCoeff
-//                = harmonicMean(poroI * cellDataI.saturation(phaseIdx) * tauI
-//                        * FluidSystem::binaryDiffusionCoefficient(cellDataI.fluidState(), phaseIdx, wCompIdx, nCompIdx),
-//                        poroJ * cellDataJ.saturation(phaseIdx) * tauJ
-//                        * FluidSystem::binaryDiffusionCoefficient(cellDataJ.fluidState(), phaseIdx, wCompIdx, nCompIdx));
-//        Scalar averagedMolarDensity = (cellDataI.density(phaseIdx) / cellDataI.fluidState().averageMolarMass(phaseIdx)
-//                +cellDataJ.density(phaseIdx) / cellDataJ.fluidState().averageMolarMass(phaseIdx))*0.5;
-//
-//        for (int compIdx = 0; compIdx < NumComponents; ++compIdx)
-//        {
-//
-//            Scalar gradx = (cellDataJ.moleFraction(phaseIdx, compIdx)-cellDataI.moleFraction(phaseIdx, compIdx) )/ dist;
-//            Scalar gradX = (cellDataJ.massFraction(phaseIdx, compIdx)-cellDataI.massFraction(phaseIdx, compIdx) )/ dist;
-//
-//            fluxEntries[compIdx] += gradx * averagedMolarDensity * porousDiffCoeff *  faceArea / volume;
-//        }
-//    }
+    if(impes)
+        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "<<dt * GET_PROP_VALUE(TypeTag, PTAG(CFLFactor))<< std::endl;
 
     return;
-}
-//! Get flux on Boundary
-/** The flux through \f$ \gamma \f$  is calculated according to the underlying pressure field,
- * calculated by the pressure model.
- *  \f[ - A_{\gamma}  \mathbf{n}^T_{\gamma} \mathbf{K} \mathbf{d}_{i-Boundary}
-      \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} X^{\kappa}_{\alpha}
-    \left( \frac{p_{\alpha,Boundary}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha}\mathbf{g}^T \mathbf{d}_{i-Boundary}\right) \f]
- * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij}} \f$
- * represents the normal of the face \f$ \gamma{ij} \f$.
- * \param fluxEntries The flux entries, mass influx from cell \f$j\f$ to \f$i\f$.
- * \param timestepFlux flow velocities for timestep estimation
- * \param intersection The intersection
- * \param cellDataI The cell data for cell \f$i\f$
- */
-template<class TypeTag>
-void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
-                                                    Dune::FieldVector<Scalar, 2>& timestepFlux,
-                                                    const Intersection& intersection,
-                                                    const CellData& cellDataI)
-{
-    // cell information
-    ElementPointer elementPtrI= intersection.inside();
-    int eIdxGlobalI = problem().variables().index(*elementPtrI);
-
-    // get position
-    const GlobalPosition globalPos = elementPtrI->geometry().center();
-
-    // cell volume, assume linear map here
-    Scalar volume = elementPtrI->geometry().volume();
-    const GlobalPosition& gravity_ = problem().gravity();
-    // get values of cell I
-    Scalar pressI = problem().pressureModel().pressure(eIdxGlobalI);
-    Scalar pcI = cellDataI.capillaryPressure();
-    DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementPtrI));
-
-    if(regulateBoundaryPermeability)
-    {
-        int axis = intersection.indexInInside() / 2;
-        if(K_I[axis][axis] < minimalBoundaryPermeability)
-            K_I[axis][axis] = minimalBoundaryPermeability;
     }
-
-    Scalar SwmobI = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(*elementPtrI).swr())
-                            , 1e-2);
-    Scalar SnmobI = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(*elementPtrI).snr())
-                            , 1e-2);
-
-    Scalar densityWI (0.), densityNWI(0.);
-    densityWI= cellDataI.density(wPhaseIdx);
-    densityNWI = cellDataI.density(nPhaseIdx);
-
-    // face properties
-    GlobalPosition unitOuterNormal = intersection.centerUnitOuterNormal();
-    if (switchNormals)
-        unitOuterNormal *= -1.0;
-    Scalar faceArea = intersection.geometry().volume();
-
-    // create vector for timestep and for update
-    Dune::FieldVector<Scalar, 2> factor (0.);
-    Dune::FieldVector<Scalar, 2> updFactor (0.);
-
-    PhaseVector potential(0.);
-    // center of face in global coordinates
-    const GlobalPosition& globalPosFace = intersection.geometry().center();
-
-    // distance vector between barycenters
-    GlobalPosition distVec = globalPosFace - globalPos;
-    // compute distance between cell centers
-    Scalar dist = distVec.two_norm();
-
-    GlobalPosition unitDistVec(distVec);
-    unitDistVec /= dist;
-
-    //instantiate a fluid state
-    FluidState BCfluidState;
-
-    //get boundary type
-    BoundaryTypes bcTypes;
-    problem().boundaryTypes(bcTypes, intersection);
-
-    /**********         Dirichlet Boundary        *************/
-    if (bcTypes.isDirichlet(contiWEqIdx)) // if contiWEq is Dirichlet, so is contiNEq
-    {
-        //get dirichlet pressure boundary condition
-        PhaseVector pressBound(0.);
-        Scalar pcBound (0.);
-
-        // read boundary values
-        this->evalBoundary(globalPosFace,
-                        intersection,
-                        BCfluidState,
-                        pressBound);
-
-        // determine fluid properties at the boundary
-        Scalar densityWBound = BCfluidState.density(wPhaseIdx);
-        Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
-        Scalar viscosityWBound = FluidSystem::viscosity(BCfluidState, wPhaseIdx);
-        Scalar viscosityNWBound = FluidSystem::viscosity(BCfluidState, nPhaseIdx);
-        if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
-            pcBound = BCfluidState.capillaryPressure();
-        // average
-        double densityW_mean = (densityWI + densityWBound) / 2;
-        double densityNW_mean = (densityNWI + densityNWBound) / 2;
-
-        // prepare K
-        Dune::FieldVector<Scalar,dim> K(0);
-        K_I.umv(unitDistVec,K);
-
-        //calculate potential gradient
-        switch (pressureType)
-        {
-            case pw:
-            {
-                potential[wPhaseIdx] = (pressI - pressBound[wPhaseIdx]) / dist;
-                potential[nPhaseIdx] = (pressI + pcI - pressBound[wPhaseIdx] - pcBound)
-                        / dist;
-                break;
-            }
-            case pn:
-            {
-                potential[wPhaseIdx] = (pressI - pcI - pressBound[nPhaseIdx] + pcBound)
-                        / dist;
-                potential[nPhaseIdx] = (pressI - pressBound[nPhaseIdx]) / dist;
-                break;
-            }
-        }
-        potential[wPhaseIdx] += (gravity_ * unitDistVec) * densityW_mean;
-        potential[nPhaseIdx] += (gravity_ * unitDistVec) * densityNW_mean;
-
-        potential[wPhaseIdx] *= fabs(K * unitOuterNormal);
-        potential[nPhaseIdx] *= fabs(K * unitOuterNormal);
-
-        // do upwinding for lambdas
-        PhaseVector lambda(0.);
-        if (potential[wPhaseIdx] >= 0.)
-            lambda[wPhaseIdx] = cellDataI.mobility(wPhaseIdx);
-        else
-            {
-            if(GET_PROP_VALUE(TypeTag, BoundaryMobility)==Indices::satDependent)
-                lambda[wPhaseIdx] = BCfluidState.saturation(wPhaseIdx) / viscosityWBound;
-            else
-                lambda[wPhaseIdx] = MaterialLaw::krw(
-                        problem().spatialParams().materialLawParams(*elementPtrI), BCfluidState.saturation(wPhaseIdx))
-                        / viscosityWBound;
-            }
-        if (potential[nPhaseIdx] >= 0.)
-            lambda[nPhaseIdx] = cellDataI.mobility(nPhaseIdx);
-        else
-            {
-            if(GET_PROP_VALUE(TypeTag, BoundaryMobility)==Indices::satDependent)
-                lambda[nPhaseIdx] = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
-            else
-                lambda[nPhaseIdx] = MaterialLaw::krn(
-                        problem().spatialParams().materialLawParams(*elementPtrI), BCfluidState.saturation(wPhaseIdx))
-                        / viscosityNWBound;
-            }
-        // calculate and standardized velocity
-        double velocityJIw = std::max((-lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
-        double velocityIJw = std::max(( lambda[wPhaseIdx] * potential[wPhaseIdx]) * faceArea / volume, 0.0);
-        double velocityJIn = std::max((-lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
-        double velocityIJn = std::max(( lambda[nPhaseIdx] * potential[nPhaseIdx]) * faceArea / volume, 0.0);
-
-        // for timestep control
-        timestepFlux[0] = velocityJIw + velocityJIn;
-
-        double foutw = velocityIJw/SwmobI;
-        double foutn = velocityIJn/SnmobI;
-        if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
-        if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
-        timestepFlux[1] = foutw + foutn;
-
-        fluxEntries[wCompIdx] =
-            + velocityJIw * BCfluidState.massFraction(wPhaseIdx, wCompIdx) * densityWBound
-            - velocityIJw * cellDataI.massFraction(wPhaseIdx, wCompIdx) * densityWI
-            + velocityJIn * BCfluidState.massFraction(nPhaseIdx, wCompIdx) * densityNWBound
-            - velocityIJn * cellDataI.massFraction(nPhaseIdx, wCompIdx) * densityNWI ;
-        fluxEntries[nCompIdx] =
-            velocityJIw * BCfluidState.massFraction(wPhaseIdx, nCompIdx) * densityWBound
-            - velocityIJw * cellDataI.massFraction(wPhaseIdx, nCompIdx) * densityWI
-            + velocityJIn * BCfluidState.massFraction(nPhaseIdx, nCompIdx) * densityNWBound
-            - velocityIJn * cellDataI.massFraction(nPhaseIdx, nCompIdx) * densityNWI ;
-    }//end dirichlet boundary
-    else if (bcTypes.isNeumann(contiWEqIdx))
-    {
-        // Convention: outflow => positive sign : has to be subtracted from update vec
-        PrimaryVariables J(NAN);
-        problem().neumann(J, intersection);
-        fluxEntries[wCompIdx] = - J[contiWEqIdx] * faceArea / volume;
-        fluxEntries[nCompIdx] = - J[contiNEqIdx] * faceArea / volume;
-
-        // for timestep control
-        #define cflIgnoresNeumann
-        #ifdef cflIgnoresNeumann
-        timestepFlux[0] = 0;
-        timestepFlux[1] = 0;
-        #else
-        double inflow = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;
-        if (inflow>0)
-            {
-            timestepFlux[0] = updFactor[wCompIdx] / densityW
-                        + updFactor[nCompIdx] / densityNW;    // =factor in
-            timestepFlux[1] = -(updFactor[wCompIdx] / densityW /SwmobI
-                        + updFactor[nCompIdx] / densityNW / SnmobI);    // =factor out
-            }
-        else
-        {
-            timestepFlux[0] = -(updFactor[wCompIdx] / densityW
-                            + updFactor[nCompIdx] / densityNW);    // =factor in
-            timestepFlux[1] = updFactor[wCompIdx] / densityW /SwmobI
-                        + updFactor[nCompIdx] / densityNW / SnmobI;    // =factor out
-        }
-        #endif
-    }//end neumann boundary
-    return;
-}
-
-//! evaluate the boundary conditions
-/*!
- *  As the transport primary variable in this formulation is the total component
- *  concentration, \f$ C^{\kappa} \f$ it seems natural that the boundary values
- *  are also total concentrations. However, as for the initial conditions, it is
- *  possible to define boundaries by means of a saturation. This choice determines
- *  which version of flash calculation is necessary to get to the composition at
- *  the boundary.
- *  \param globalPosFace The global position of the face of the current boundary cell
- *  \param intersection The current intersection
- *  \param BCfluidState FluidState object that is used for the boundary
- *  \param pressBound Boundary values of phase pressures
- */
-template<class TypeTag>
-void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
-                                            const Intersection& intersection,
-                                            FluidState &BCfluidState,
-                                            PhaseVector &pressBound)
-{
-    // prepare a flash solver
-    CompositionalFlash<TypeTag> flashSolver;
-
-    const ElementPointer eIt= intersection.inside();
-    // read boundary values
-    PrimaryVariables primaryVariablesOnBoundary(0.);
-    problem().dirichlet(primaryVariablesOnBoundary, intersection);
-
-    // read boundary type
-    typename Indices::BoundaryFormulation bcType;
-    problem().boundaryFormulation(bcType, intersection);
-    if (bcType == Indices::saturation)
-    {
-        Scalar satBound = primaryVariablesOnBoundary[contiWEqIdx];
-        if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
-        {
-            Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(*eIt),
-                    satBound);
-            switch (pressureType)
-            {
-            case pw:
-            {
-                pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-                pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx] + pcBound;
-                break;
-            }
-            case pn:
-            {
-                pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx] - pcBound;
-                pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-                break;
-            }
-            }
-        }
-        else // capillarity neglected
-            pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-
-        flashSolver.saturationFlash2p2c(BCfluidState, satBound, pressBound,
-                problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
-    }
-    else if (bcType == Indices::concentration)
-    {
-        // saturation and hence pc and hence corresponding pressure unknown
-        pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-        Scalar Z1Bound = primaryVariablesOnBoundary[contiWEqIdx];
-        flashSolver.concentrationFlash2p2c(BCfluidState, Z1Bound, pressBound,
-            problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
-
-        if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
-        {
-            Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(*eIt),
-                    BCfluidState.saturation(wPhaseIdx));
-            int maxiter = 3;
-            //start iteration loop
-            for(int iter=0; iter < maxiter; iter++)
-            {
-                //prepare pressures to enter flash calculation
-                switch (pressureType)
-                {
-                case pw:
-                {
-                    pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-                    pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx]
-                                                                                        + pcBound;
-                    break;
-                }
-                case pn:
-                {
-                    pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx]
-                                                                                         - pcBound;
-                    pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-                    break;
-                }
-                }
-
-                //store old pc
-                Scalar oldPc = pcBound;
-                //update with better pressures
-                flashSolver.concentrationFlash2p2c(BCfluidState, Z1Bound, pressBound,
-                        problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
-                pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(*eIt),
-                        BCfluidState.saturation(wPhaseIdx));
-                // TODO: get right criterion, do output for evaluation
-                //converge criterion
-                if (std::abs(oldPc - pcBound) < 10.0)
-                    iter = maxiter;
-            }
-        }
-    }
-    else
-        DUNE_THROW(Dune::NotImplemented, "Boundary Formulation neither Concentration nor Saturation??");
-}
-
-template<class TypeTag>
-void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
-{
-    dt = std::numeric_limits<Scalar>::max();
-
-    // update target time-step-sizes
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-    {
-#if HAVE_MPI
-        if (eIt->partitionType() != Dune::InteriorEntity)
-        {
-            continue;
-        }
-#endif
-
-        // cell index
-        int eIdxGlobalI = problem_.variables().index(*eIt);
-
-        LocalTimesteppingData& localDataI = timeStepData_[eIdxGlobalI];
-
-
-        typedef std::unordered_map<int, Scalar > FaceDt;
-        FaceDt faceDt;
-
-        // run through all intersections with neighbors and boundary
-        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
-        {
-            int indexInInside = isIt->indexInInside();
-
-            if (isIt->neighbor())
-            {
-                ElementPointer neighbor = isIt->outside();
-                int eIdxGlobalJ = problem_.variables().index(*neighbor);
-
-                int levelI = eIt->level();
-                int levelJ = neighbor->level();
-
-                if (eIdxGlobalI < eIdxGlobalJ && levelI <= levelJ)
-                {
-                    LocalTimesteppingData& localDataJ = timeStepData_[eIdxGlobalJ];
-
-                    int indexInOutside = isIt->indexInOutside();
-
-                    if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_
-                        || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
-                    {
-                        Scalar timeStep  = std::min(localDataI.dt, localDataJ.dt);
-
-                        if (levelI < levelJ)
-                        {
-                            typename FaceDt::iterator it = faceDt.find(indexInInside);
-                            if (it != faceDt.end())
-                            {
-                                it->second = std::min(it->second, timeStep);
-                            }
-                            else
-                            {
-                                faceDt.insert(std::make_pair(indexInInside, timeStep));
-                            }
-                        }
-                        else
-                        {
-                            localDataI.faceTargetDt[indexInInside] += subCFLFactor_ * timeStep;
-                            localDataJ.faceTargetDt[indexInOutside] += subCFLFactor_ * timeStep;
-                        }
-
-                        dt = std::min(dt, timeStep);
-                    }
-                }
-            }
-            else if (isIt->boundary())
-            {
-                if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
-                {
-                    localDataI.faceTargetDt[indexInInside] += subCFLFactor_ * localDataI.dt;
-                    dt = std::min(dt, subCFLFactor_ * localDataI.dt);
-                }
-            }
-        }
-        if (faceDt.size() > 0)
-        {
-            typename FaceDt::iterator it = faceDt.begin();
-            for (;it != faceDt.end();++it)
-            {
-                localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
-            }
-
-            IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
-            {
-                if (isIt->neighbor())
-                {
-                    int indexInInside = isIt->indexInInside();
-
-                    it = faceDt.find(indexInInside);
-                    if (it != faceDt.end())
-                    {
-                        ElementPointer neighbor = isIt->outside();
-                        int eIdxGlobalJ = problem_.variables().index(*neighbor);
-
-                        LocalTimesteppingData& localDataJ = timeStepData_[eIdxGlobalJ];
-
-                        int indexInOutside = isIt->indexInOutside();
-
-                        localDataJ.faceTargetDt[indexInOutside] += subCFLFactor_ * it->second;
-                    }
-                }
-            }
-        }
-    }
-
-#if HAVE_MPI
-    // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
-
-    TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
-    problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
-                                                         Dune::InteriorBorder_All_Interface,
-                                                         Dune::ForwardCommunication);
-
-    dt = problem_.gridView().comm().min(dt);
-#endif
-}
-
-template<class TypeTag>
-void FVTransport2P2C<TypeTag>::innerUpdate(TransportSolutionType& updateVec)
-{
-    if (localTimeStepping_)
-    {
-        Scalar realDt = problem_.timeManager().timeStepSize();
-
-        Scalar subDt = realDt;
-
-        updatedTargetDt_(subDt);
-
-        Scalar accumulatedDtOld = accumulatedDt_;
-        accumulatedDt_ += subDt;
-
-        Scalar t = problem_.timeManager().time();
-
-        if (accumulatedDt_ < realDt)
-        {
-            while(true)
-            {
-                Scalar dtCorrection = std::min(0.0, realDt - accumulatedDt_);
-                subDt += dtCorrection;
-
-                if (verbosity_ > 0)
-                    std::cout<<"    Sub-time-step size: "<<subDt<< std::endl;
-
-                    bool stopTimeStep = false;
-                    int size = problem_.gridView().size(0);
-                    for (int i = 0; i < size; i++)
-                    {
-                        EntryType newVal(0);
-                        int transportedQuantities = GET_PROP_VALUE(TypeTag, NumEq) - 1; // NumEq - 1 pressure Eq
-                        for (int eqNumber = 0; eqNumber < transportedQuantities; eqNumber++)
-                        {
-                            newVal[eqNumber] = totalConcentration_[eqNumber][i];
-                            newVal[eqNumber] += updateVec[eqNumber][i] * subDt;
-                        }
-                        if (!asImp_().inPhysicalRange(newVal))
-                        {
-                            stopTimeStep = true;
-
-                            break;
-                        }
-                    }
-
-#if HAVE_MPI
-                    int rank = 0;
-                    if (stopTimeStep)
-                        rank = problem_.gridView().comm().rank();
-
-                    rank = problem_.gridView().comm().max(rank);
-                    problem_.gridView().comm().broadcast(&stopTimeStep,1,rank);
-#endif
-
-
-                    if (stopTimeStep && accumulatedDtOld > dtThreshold_)
-                    {
-                        problem_.timeManager().setTimeStepSize(accumulatedDtOld);
-                        break;
-                    }
-                    else
-                    {
-                        asImp_().updateTransportedQuantity(updateVec, subDt);
-                    }
-
-
-                if (accumulatedDt_ >= realDt)
-                {
-                    break;
-                }
-
-                problem_.pressureModel().updateMaterialLaws();
-                problem_.model().updateTransport(t, subDt, updateVec);
-
-                updatedTargetDt_(subDt);
-
-                accumulatedDtOld = accumulatedDt_;
-                accumulatedDt_ += subDt;
-            }
-        }
-        else
-        {
-            asImp_().updateTransportedQuantity(updateVec, realDt);
-        }
-
-        resetTimeStepData_();
-    }
-}
-
 }
 #endif

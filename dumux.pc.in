@@ -8,8 +8,8 @@ DEPENDENCIES=@REQUIRES@
 
 Name: @PACKAGE_NAME@
 Version: @VERSION@
-Description: Dumux module for Dune (Distributed and Unified Numerics Environment)
-URL: http://www.dumux.org/
-Requires: ${DEPENDENCIES}
-Libs: -L${libdir}
-Cflags: -I${includedir}
+Description: dumux module
+URL: http://dune-project.org/
+Requires: dune-pdelab
+Libs: -L
+Cflags: -I

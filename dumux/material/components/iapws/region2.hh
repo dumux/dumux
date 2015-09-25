@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009-2010 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -82,7 +84,7 @@ public:
     /*!
      * \brief Returns the reduced temperature (dimensionless) for IAPWS region 2.
      *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param temperature temperature of component
      */
     static Scalar tau(Scalar temperature)
     { return 540.0 / temperature; }
@@ -93,7 +95,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
-    static Scalar dTau_dt(Scalar temperature)
+    static Scalar dtau_dT(Scalar temperature)
     { return - 540.0 / (temperature*temperature); }
 
     /*!
@@ -110,7 +112,7 @@ public:
      *
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dPi_dp(Scalar pressure)
+    static Scalar dpi_dp(Scalar pressure)
     { return 1.0 / 1e6; }
 
     /*!
@@ -119,7 +121,7 @@ public:
      *
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar dp_dPi(Scalar pressure)
+    static Scalar dp_dpi(Scalar pressure)
     { return 1e6; }
 
     /*!
@@ -166,7 +168,7 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static Scalar dGamma_dTau(Scalar temperature, Scalar pressure)
+    static Scalar dgamma_dtau(Scalar temperature, Scalar pressure)
     {
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
@@ -204,7 +206,7 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static Scalar dGamma_dPi(Scalar temperature, Scalar pressure)
+    static Scalar dgamma_dpi(Scalar temperature, Scalar pressure)
     {
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
@@ -236,7 +238,7 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static Scalar ddGamma_dTaudPi(Scalar temperature, Scalar pressure)
+    static Scalar ddgamma_dtaudpi(Scalar temperature, Scalar pressure)
     {
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
@@ -269,7 +271,7 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static Scalar ddGamma_ddPi(Scalar temperature, Scalar pressure)
+    static Scalar ddgamma_ddpi(Scalar temperature, Scalar pressure)
     {
         Scalar tau_ = tau(temperature);   /* reduced temperature */
         Scalar pi_ = pi(pressure);    /* reduced pressure */
@@ -290,45 +292,6 @@ public:
         return result;
     }
 
-    /*!
-     * \brief The second partial derivative of the Gibbs free energy to the
-     *        normalized temperature for IAPWS region 2 (i.e. sub-critical
-     *        steam) (dimensionless).
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *
-     * IAPWS: "Revised Release on the IAPWS Industrial Formulation
-     * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
-     */
-    static Scalar ddGamma_ddTau(Scalar temperature, Scalar pressure)
-    {
-        Scalar tau_ = tau(temperature);   /* reduced temperature */
-        Scalar pi_ = pi(pressure);    /* reduced pressure */
-
-        // ideal gas part
-        Scalar result = 0;
-        for (int i = 0; i < 9; i++) {
-            result +=
-                n_g(i) *
-                J_g(i) *
-                (J_g(i) - 1) *
-                std::pow(tau_, J_g(i) - 2);
-        }
-
-        // residual part
-        for (int i = 0; i < 43; i++) {
-            result +=
-                n_r(i) *
-                std::pow(pi_,  I_r(i)) *
-                J_r(i) *
-                (J_r(i) - 1.) *
-                std::pow(tau_ - 0.5, J_r(i) - 2.);
-        }
-
-        return result;
-    }
 
 private:
     static Scalar n_g(int i)
@@ -419,7 +382,7 @@ private:
 
 };
 
-} // end namespace IAPWS
-} // end namespace Dune
+} // end namepace IAPWS
+} // end namepace Dune
 
 #endif

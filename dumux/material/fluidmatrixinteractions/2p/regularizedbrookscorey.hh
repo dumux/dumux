@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -45,7 +47,7 @@ namespace Dumux
  *        In order to avoid very steep gradients the marginal values are "regularized".
  *        This means that in stead of following the curve of the material law in these regions, some linear approximation is used.
  *        Doing this is not worse than following the material law. E.g. for very low wetting phase values the material
- *        laws predict infinite values for \f$\mathrm{p_c}\f$ which is completely unphysical. In case of very high wetting phase
+ *        laws predict infinite values for \f$p_c\f$ which is completely unphysical. In case of very high wetting phase
  *        saturations the difference between regularized and "pure" material law is not big.
  *
  *        Regularizing has the additional benefit of being numerically friendly: Newton's method does not like infinite gradients.
@@ -69,21 +71,22 @@ public:
     typedef typename Params::Scalar Scalar;
 
     /*!
-     * \brief A regularized Brooks-Corey capillary pressure-saturation
-     *        curve.
+     * \brief   A regularized Brooks-Corey capillary pressure-saturation
+     *          curve.
      *
      * regularized part:
-     *    - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line (yes, there is a kink :-( ).
+     *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line (yes, there is a kink :-( ).
      *
-     * For the non-regularized part:
+     *  For not-regularized part:
      *
-     * \copydetails BrooksCorey::pc()
+         \copydetails BrooksCorey::pC()
      */
-    static Scalar pc(const Params &params, Scalar swe)
+
+
+    static Scalar pC(const Params &params, Scalar Swe)
     {
-        const Scalar sThres = params.thresholdSw();
+        const Scalar Sthres = params.thresholdSw();
 
         // make sure that the capilary pressure observes a
         // derivative != 0 for 'illegal' saturations. This is
@@ -91,44 +94,44 @@ public:
         // derivative is calculated numerically) in order to get the
         // saturation moving to the right direction if it
         // temporarily is in an 'illegal' range.
-        if (swe <= sThres) {
-            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
-            Scalar pcsweLow = BrooksCorey::pc(params, sThres);
-            return pcsweLow + m*(swe - sThres);
+        if (Swe <= Sthres) {
+            Scalar m = BrooksCorey::dpC_dSw(params, Sthres);
+            Scalar pC_SweLow = BrooksCorey::pC(params, Sthres);
+            return pC_SweLow + m*(Swe - Sthres);
         }
-        else if (swe > 1.0) {
-            Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
-            Scalar pcsweHigh = BrooksCorey::pc(params, 1.0);
-            return pcsweHigh + m*(swe - 1.0);
+        else if (Swe > 1) {
+            Scalar m = BrooksCorey::dpC_dSw(params, 1.0);
+            Scalar pC_SweHigh = BrooksCorey::pC(params, 1.0);
+            return pC_SweHigh + m*(Swe - 1.0);
         }
 
         // if the effective saturation is in an 'reasonable'
         // range, we use the real Brooks-Corey law...
-        return BrooksCorey::pc(params, swe);
+        return BrooksCorey::pC(params, Swe);
     }
 
     /*!
      * \brief   A regularized Brooks-Corey saturation-capillary pressure curve.
      *
      * regularized part:
-     *    - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line (yes, there is a kink :-( ).
+     *    - low saturation:  extend the \f$p_c(S_w)\f$ curve with the slope at the regularization point (i.e. no kink).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line (yes, there is a kink :-( ).
      *
      *  The according quantities are obtained by exploiting theorem of intersecting lines.
      *
-     * For the non-regularized part:
+     *  For not-regularized part:
      *
-     * \copydetails BrooksCorey::sw()
+         \copydetails BrooksCorey::Sw()
+     *
      */
-    static Scalar sw(const Params &params, Scalar pc)
+    static Scalar Sw(const Params &params, Scalar pC)
     {
-        const Scalar sThres = params.thresholdSw();
+        const Scalar Sthres = params.thresholdSw();
 
         // calculate the saturation which corrosponds to the
         // saturation in the non-regularized version of
         // the Brooks-Corey law
-        Scalar swe = BrooksCorey::sw(params, pc);
+        Scalar Swe = BrooksCorey::Sw(params, pC);
 
         // make sure that the capilary pressure observes a
         // derivative != 0 for 'illegal' saturations. This is
@@ -136,71 +139,69 @@ public:
         // derivative calculated numerically) in order to get the
         // saturation moving to the right direction if it
         // temporarily is in an 'illegal' range.
-        if (swe <= sThres) {
-            // invert the low saturation regularization of pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
-            Scalar pcsweLow = BrooksCorey::pc(params, sThres);
-            return sThres + (pc - pcsweLow)/m;
+        if (Swe <= Sthres) {
+            // invert the low saturation regularization of pC()
+            Scalar m = BrooksCorey::dpC_dSw(params, Sthres);
+            Scalar pC_SweLow = BrooksCorey::pC(params, Sthres);
+            return Sthres + (pC - pC_SweLow)/m;
         }
-        else if (swe > 1.0) {
-            Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
-            Scalar pcsweHigh = BrooksCorey::pc(params, 1.0);
-            return 1.0 + (pc - pcsweHigh)/m;
+        else if (Swe > 1) {
+            Scalar m = BrooksCorey::dpC_dSw(params, 1.0);
+            Scalar pC_SweHigh = BrooksCorey::pC(params, 1.0);
+            return 1.0 + (pC - pC_SweHigh)/m;;
         }
 
-        return BrooksCorey::sw(params, pc);
+        return BrooksCorey::Sw(params, pC);
     }
 
     /*!
      * \brief A regularized version of the partial derivative
-     *        of the \f$\mathrm{p_c(\overline{S}_w)}\f$ w.r.t. effective saturation
+     *        of the \f$p_c(\overline S_w)\f$ w.r.t. effective saturation
      *        according to Brooks & Corey.
      *
      * regularized part:
      *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line and use that slope (yes, there is a kink :-( ).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line and use that slope (yes, there is a kink :-( ).
      *
-     * For the non-regularized part:
+     *        For not-regularized part:
      *
-     * \copydetails BrooksCorey::dpc_dsw()
-     */
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
+       \copydetails BrooksCorey::dpC_dSw()
+     *
+    */
+    static Scalar dpC_dSw(const Params &params, Scalar Swe)
     {
-        const Scalar sThres = params.thresholdSw();
+        const Scalar Sthres = params.thresholdSw();
 
         // derivative of the regualarization
-        if (swe <= sThres) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
+        if (Swe <= Sthres) {
+            // calculate the slope of the straight line used in pC()
+            Scalar m = BrooksCorey::dpC_dSw(params, Sthres);
             return m;
         }
-        else if (swe > 1.0) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
+        else if (Swe > 1.0) {
+            // calculate the slope of the straight line used in pC()
+            Scalar m = BrooksCorey::dpC_dSw(params, 1.0);
             return m;
         }
 
-        return BrooksCorey::dpc_dsw(params, swe);
+        return BrooksCorey::dpC_dSw(params, Swe);
     }
 
     /*!
      * \brief A regularized version of the partial derivative
-     *        of the \f$\mathrm{\overline{S}_w(p_c)}\f$ w.r.t. cap.pressure
+     *        of the \f$\overline S_w(p_c)\f$ w.r.t. cap.pressure
      *        according to Brooks & Corey.
      *
      *  regularized part:
      *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line and use that slope (yes, there is a kink :-( ).
+     *    - high saturation: connect the high regularization point with \f$ \overline S_w =1\f$ by a straight line and use that slope (yes, there is a kink :-( ).
      *
-     * For the non-regularized part:
-     *
-     * \copydetails BrooksCorey::dsw_dpc()
+     *        For not-regularized part:
+        \copydetails BrooksCorey::dSw_dpC()
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
+    static Scalar dSw_dpC(const Params &params, Scalar pC)
     {
-        const Scalar sThres = params.thresholdSw();
+        const Scalar Sthres = params.thresholdSw();
 
         //instead of return value = inf, return a very large number
         if (params.pe() == 0.0)
@@ -211,24 +212,24 @@ public:
         // calculate the saturation which corresponds to the
         // saturation in the non-regularized version of the
         // Brooks-Corey law
-        Scalar swe;
-        if (pc < 0)
-            swe = 1.5; // make sure we regularize below
+        Scalar Swe;
+        if (pC < 0)
+            Swe = 1.5; // make sure we regularize below
         else
-            swe = BrooksCorey::sw(params, pc);
+            Swe = BrooksCorey::Sw(params, pC);
 
         // derivative of the regularization
-        if (swe <= sThres) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, sThres);
+        if (Swe <= Sthres) {
+            // calculate the slope of the straight line used in pC()
+            Scalar m = BrooksCorey::dpC_dSw(params, Sthres);
             return 1/m;
         }
-        else if (swe > 1.0) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dsw(params, 1.0);
+        else if (Swe > 1.0) {
+            // calculate the slope of the straight line used in pC()
+            Scalar m = BrooksCorey::dpC_dSw(params, 1.0);
             return 1/m;
         }
-        return 1.0/BrooksCorey::dpc_dsw(params, swe);
+        return 1.0/BrooksCorey::dpC_dSw(params, Swe);
     }
 
     /*!
@@ -238,22 +239,30 @@ public:
      *          parameterization.
      *
      *  regularized part:
-     *    - below \f$\mathrm{\overline{S}_w =0}\f$:                  set relative permeability to zero
-     *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
-     *    - between \f$\mathrm{ 0.95 \leq \overline{S}_w \leq 1}\f$:  use a spline as interpolation
+     *    - below \f$ \overline S_w =0\f$:                  set relative permeability to zero
+     *    - above \f$ \overline S_w =1\f$:                  set relative permeability to one
+     *    - between \f$ 0.95 \leq \overline S_w \leq 1\f$:  use a spline as interpolation
      *
      *  For not-regularized part:
         \copydetails BrooksCorey::krw()
      */
-    static Scalar krw(const Params &params, Scalar swe)
+    static Scalar krw(const Params &params, Scalar Swe)
     {
-        if (swe <= 0.0)
-            return 0.0;
-        else if (swe >= 1.0)
+        if (Swe <= 0)
+            return 0;
+        else if (Swe >= 1)
             return 1.0;
+        else if (Swe >= 1 - 0.05) {
+            Scalar m1 = BrooksCorey::dkrw_dSw(params, 1.0 - 0.05);
+            Scalar y1 = BrooksCorey::krw(params, 1.0 - 0.05);
+            Dumux::Spline<Scalar> sp(1 - 0.05, 1.0,
+                                     y1, 1.0,
+                                     m1, 0);
+            return sp.eval(Swe);
+        }
 
-        return BrooksCorey::krw(params, swe);
-    }
+        return BrooksCorey::krw(params, Swe);
+    };
 
     /*!
      * \brief   Regularized version of the  relative permeability
@@ -262,21 +271,29 @@ public:
      *          parameterization.
      *
      * regularized part:
-     *    - below \f$\mathrm{\overline{S}_w =0}\f$:                  set relative permeability to zero
-     *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
-     *    - for \f$\mathrm{0 \leq \overline{S}_w \leq 0.05}\f$:     use a spline as interpolation
+     *    - below \f$ \overline S_w =0\f$:                  set relative permeability to zero
+     *    - above \f$ \overline S_w =1\f$:                  set relative permeability to one
+     *    - for \f$ 0 \leq \overline S_w \leq 0.05 \f$:     use a spline as interpolation
      *
          \copydetails BrooksCorey::krn()
      *
      */
-    static Scalar krn(const Params &params, Scalar swe)
+    static Scalar krn(const Params &params, Scalar Swe)
     {
-        if (swe >= 1.0)
-            return 0.0;
-        else if (swe <= 0.0)
+        if (Swe >= 1)
+            return 0;
+        // check if we need to regularize the relative permeability
+        else if (Swe <= 0)
             return 1.0;
-
-        return BrooksCorey::krn(params, swe);
+        else if (Swe < 0.05) {
+            Scalar m1 = BrooksCorey::dkrn_dSw(params, 0.05);
+            Scalar y1 = BrooksCorey::krn(params, 0.05);
+            Dumux::Spline<Scalar> sp(0.0, 0.05,
+                                     1.0, y1,
+                                     0, m1);
+            return sp.eval(Swe);
+        }
+        return BrooksCorey::krn(params, Swe);
     }
 };
 }

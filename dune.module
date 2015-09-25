@@ -3,7 +3,10 @@
 ################################
 
 Module: dumux
-Version: 2.8-svn
-Maintainer: dumux@listserv.uni-stuttgart.de
-Depends: dune-grid (>= 2.3) dune-localfunctions (>= 2.3) dune-istl (>= 2.3)
-Suggests: dune-alugrid (>=2.4) dune-pdelab (>=2.0) dune-multidomain dune-cornerpoint
+Version: 2.0.2
+Maintainer: bernd@iws.uni-stuttgart.de
+Depends: dune-pdelab
+
+# if it is desired not to use pdelab, use the following
+# dependencies. parallel computations will not work then though
+#Depends: dune-grid  (>= 2.0) dune-localfunctions  (>= 2.0) dune-istl  (>= 2.0)

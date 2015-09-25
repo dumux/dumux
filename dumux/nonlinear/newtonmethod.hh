@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -39,19 +41,15 @@ namespace Dumux
 // forward declaration of property tags
 namespace Properties
 {
-// create a new type tag for models which apply the newton method
-NEW_TYPE_TAG(NewtonMethod);
-
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(Model);
 NEW_PROP_TAG(NewtonController);
 NEW_PROP_TAG(SolutionVector);
 NEW_PROP_TAG(JacobianAssembler);
-}
+};
 
 /*!
- * \ingroup Newton
  * \brief The algorithmic part of the multi dimensional newton method.
  *
  * In order to use the method you need a NewtonController.
@@ -59,13 +57,13 @@ NEW_PROP_TAG(JacobianAssembler);
 template <class TypeTag>
 class NewtonMethod
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 public:
     NewtonMethod(Problem &problem)
         : problem_(problem)
@@ -110,7 +108,7 @@ public:
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
             ctl.newtonFail();
             return false;
-        }
+        };
     }
 
 protected:
@@ -141,7 +139,7 @@ protected:
             uLastIter = uCurrentIter;
 
             if (ctl.verbose()) {
-                std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r";
+                std::cout << "Assembling global jacobian";
                 std::cout.flush();
             }
 
@@ -158,19 +156,17 @@ protected:
             // linear solve
             ///////////////
 
-            // Clear the current line using an ansi escape
-            // sequence.  for an explanation see
-            // http://en.wikipedia.org/wiki/ANSI_escape_code
-            const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
-
+            // solve the resulting linear equation system
+            solveTimer.start();
             if (ctl.verbose()) {
-                std::cout << "\rSolve: M deltax^k = r";
+                std::cout << "\rSolve Mx = r";
+                // Clear the current line using an ansi escape
+                // sequence.  for an explaination see
+                // http://en.wikipedia.org/wiki/ANSI_escape_code
+                const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
                 std::cout << clearRemainingLine;
                 std::cout.flush();
             }
-
-            // solve the resulting linear equation system
-            solveTimer.start();
 
             // set the delta vector to zero before solving the linear system!
             deltaU = 0;
@@ -183,12 +179,6 @@ protected:
             ///////////////
             // update
             ///////////////
-            if (ctl.verbose()) {
-                std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
-                std::cout << clearRemainingLine;
-                std::cout.flush();
-            }
-
             updateTimer.start();
             // update the current solution (i.e. uOld) with the delta
             // (i.e. u). The result is stored in u

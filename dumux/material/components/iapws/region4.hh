@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009-2010 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -63,8 +65,7 @@ public:
      *
      *\param temperature temperature of component in \f$\mathrm{[K]}\f$
      *
-     * The saturation pressure is often also called vapor pressure. This formulation is valid
-     * for a temperature range between 273.15 K and 647.096 K (critical temperature).
+     * The saturation pressure is often also called vapor pressure.
      */
     static Scalar saturationPressure(Scalar temperature)
     {
@@ -87,38 +88,9 @@ public:
 
         return 1e6*tmp;
     }
-
-    /*!
-     * \brief Returns the saturation temperature in \f$\mathrm{[K]}\f$ of pure water at a given
-     *        pressure.
-     *
-     *\param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *
-     * The saturation pressure is often also called vapor pressure.
-     */
-    static Scalar vaporTemperature(Scalar pressure)
-    {
-        static const Scalar n[10] = {
-            0.11670521452767e4, -0.72421316703206e6, -0.17073846940092e2,
-            0.12020824702470e5, -0.32325550322333e7, 0.14915108613530e2,
-            -0.48232657361591e4, 0.40511340542057e6, -0.23855557567849,
-            0.65017534844798e3
-        };
-        Scalar beta = pow((pressure/1e6 /*from Pa to MPa*/), (1./4.));
-        Scalar beta2 = pow(beta, 2.);
-        Scalar E = beta2 + n[2] * beta + n[5];
-        Scalar F = n[0]*beta2 + n[3]*beta + n[6];
-        Scalar G = n[1]*beta2 + n[4]*beta + n[7];
-
-        Scalar D = ( 2.*G)/(-F -std::sqrt(pow(F,2.) - 4.*E*G));
-
-        Scalar temperature = (n[9] + D - std::sqrt(pow(n[9]+D , 2.) - 4.* (n[8] + n[9]*D)) ) * 0.5;
-
-        return temperature;
-    }
 };
 
-} // end namespace IAPWS
-} // end namespace Dune
+} // end namepace IAPWS
+} // end namepace Dune
 
 #endif

@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008-2010 by Markus Wolff                                 *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -19,47 +21,43 @@
 #ifndef DUMUX_GRAVITYPART_HH
 #define DUMUX_GRAVITYPART_HH
 
-#include <dumux/decoupled/2p/transport/fv/convectivepart.hh>
-#include "fvtransportproperties2p.hh"
+#include "dumux/decoupled/2p/transport/fv/convectivepart.hh"
+
 
 /**
  * @file
- * @brief  Class for defining the gravity term of a two-phase flow saturation equation
+ * @brief  Class for defining the gravity term of a saturation equation
+ * @author Markus Wolff
  */
 
 namespace Dumux
 {
-/*!\ingroup FVSaturation2p
- * \brief  Class for defining the gravity term of  a two-phase flow saturation equation
+/*!\ingroup Saturation2p
+ * @brief  Class for defining the gravity term of a saturation equation
  *
  * Defines the gravity term of the form
  *
- * \f[
- * \bar \lambda \boldsymbol K \, (\rho_n - \rho_w) \, g \, \textbf{grad} \, z,
- * \f]
+ * \f[\bar \lambda \boldsymbol{K} \, (\rho_n - \rho_w) \, g \, \text{grad} \, z,\f]
  *
- * where \f$ \bar \lambda = \lambda_w f_n = \lambda_n f_w \f$ and \f$ \lambda \f$ is a phase
- * mobility and \f$ f \f$ a phase fractional flow function, \f$ \boldsymbol K \f$ is the intrinsic
- * permeability, \f$ \rho \f$ is a phase density and  \f$ g \f$ is the gravity constant.
+ * where \f$\bar \lambda = \lambda_w f_n = \lambda_n f_w\f$ and \f$\lambda\f$ is a phase mobility and \f$f\f$ a phase fractional flow function,
+ * \f$ \boldsymbol{K} \f$ is the intrinsic permeability, \f$\rho\f$ is a phase density and  \f$g\f$ is the gravity constant.
  *
- * \tparam TypeTag The Type Tag
+ * @tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class GravityPart: public ConvectivePart<TypeTag>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView)GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+      typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
     enum
     {
@@ -67,163 +65,167 @@ private:
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
     };
 
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef Dune::FieldVector<Scalar, dim> FieldVector;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-
-    /*! \brief Returns convective term for current element face
-     *
-     *  \param flux        Flux vector (gets the flux from the function)
-     *  \param intersection  Intersection of two grid elements/global boundary
-     *  \param satI           saturation of current element
-     *  \param satJ           saturation of neighbor element
+    //! Returns the gravity term
+    /*! Returns convective term for current element face
+     *  @param[in] element        entity of codim 0
+     *  @param[in] indexInInside  face index in reference element
+     *  @param[in] satI           saturation of current element
+     *  @param[in] satJ           saturation of neighbor element
+     *  \return     gravity term of a saturation equation
      */
-    void getFlux(DimVector& flux, const Intersection& intersection, const Scalar satI, const Scalar satJ) const
+    FieldVector operator() (const Element& element, const int indexInInside, const Scalar satI, const Scalar satJ) const
     {
-        ElementPointer element = intersection.inside();
+        // cell geometry type
+        Dune::GeometryType gt = element.geometry().type();
 
-        int globalIdxI = problem_.variables().index(*element);
-        CellData& cellDataI = problem_.variables().cellData(globalIdxI);
+        // cell center in reference element
+        typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+        const LocalPosition& localPos = ReferenceElements::general(gt).position(0,0);
 
-        int indexInInside = intersection.indexInInside();
+        // get global coordinate of cell center
+        const GlobalPosition& globalPos = element.geometry().global(localPos);
+
+        // get absolute permeability of cell
+        FieldMatrix permeability(problem_.spatialParameters().intrinsicPermeability(globalPos,element));
+
+        Scalar temperature = problem_.temperature(globalPos, element);
+        Scalar referencePressure = problem_.referencePressure(globalPos, element);
+        FluidState fluidState;
+        fluidState.update(satI, referencePressure, referencePressure, temperature);//not for compressible flow -> thus constant
+
+        IntersectionIterator isItEnd = problem_.gridView().iend(element);
+        IntersectionIterator isIt = problem_.gridView().ibegin(element);
+        for (; isIt != isItEnd; ++isIt)
+        {
+            if(isIt->indexInInside() == indexInInside)
+            break;
+        }
+        int globalIdxI = problem_.variables().index(element);
+
+        // get geometry type of face
+        Dune::GeometryType faceGT = isIt->geometryInInside().type();
+
+        Scalar potentialW = problem_.variables().potentialWetting(globalIdxI, indexInInside);
+        Scalar potentialNW = problem_.variables().potentialNonwetting(globalIdxI, indexInInside);
 
         //get lambda_bar = lambda_n*f_w
         Scalar lambdaWI = 0;
-        Scalar lambdaNwI = 0;
+        Scalar lambdaNWI = 0;
         Scalar lambdaWJ = 0;
-        Scalar lambdaNwJ = 0;
+        Scalar lambdaNWJ = 0;
+        Scalar densityWI = 0;
+        Scalar densityNWI = 0;
+        Scalar densityWJ = 0;
+        Scalar densityNWJ = 0;
 
         if (preComput_)
         {
-            lambdaWI=cellDataI.mobility(wPhaseIdx);
-            lambdaNwI=cellDataI.mobility(nPhaseIdx);
+            lambdaWI=problem_.variables().mobilityWetting(globalIdxI);
+            lambdaNWI=problem_.variables().mobilityNonwetting(globalIdxI);
+            densityWI = problem_.variables().densityWetting(globalIdxI);
+            densityNWI = problem_.variables().densityNonwetting(globalIdxI);
         }
         else
         {
-            lambdaWI = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satI);
-            lambdaWI /= viscosity_[wPhaseIdx];
-            lambdaNwI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satI);
-            lambdaNwI /= viscosity_[nPhaseIdx];
+            lambdaWI = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos, element), satI);
+            lambdaWI /= FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
+            lambdaNWI = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos, element), satI);
+            lambdaNWI /= FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
+            densityWI = FluidSystem::phaseDensity(wPhaseIdx, temperature, referencePressure, fluidState);
+            densityNWI = FluidSystem::phaseDensity(nPhaseIdx, temperature, referencePressure, fluidState);
         }
 
-        Scalar potentialDiffW = cellDataI.fluxData().upwindPotential(wPhaseIdx, indexInInside);
-        Scalar potentialDiffNw = cellDataI.fluxData().upwindPotential(nPhaseIdx, indexInInside);
-
-        DimMatrix meanPermeability(0);
-        GlobalPosition distVec(0);
-        Scalar lambdaW =  0;
-        Scalar lambdaNw = 0;
-
-        if (intersection.neighbor())
+        if (isIt->neighbor())
         {
             // access neighbor
-            ElementPointer neighborPointer = intersection.outside();
+            ElementPointer neighborPointer = isIt->outside();
 
             int globalIdxJ = problem_.variables().index(*neighborPointer);
-            CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
 
-            distVec = neighborPointer->geometry().center() - element->geometry().center();
+            // compute factor in neighbor
+            Dune::GeometryType neighborGT = neighborPointer->geometry().type();
+            typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+            const LocalPosition& localPosNeighbor = ReferenceElements::general(neighborGT).position(0,0);
 
-            // get permeability
-            problem_.spatialParams().meanK(meanPermeability,
-                    problem_.spatialParams().intrinsicPermeability(*element),
-                    problem_.spatialParams().intrinsicPermeability(*neighborPointer));
+            // neighbor cell center in global coordinates
+            const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
+
+            // take arithmetic average of absolute permeability
+            permeability += problem_.spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer);
+            permeability *= 0.5;
 
             //get lambda_bar = lambda_n*f_w
             if (preComput_)
             {
-                lambdaWJ=cellDataJ.mobility(wPhaseIdx);
-                lambdaNwJ=cellDataJ.mobility(nPhaseIdx);
+                lambdaWJ=problem_.variables().mobilityWetting(globalIdxJ);
+                lambdaNWJ=problem_.variables().mobilityNonwetting(globalIdxJ);
+                densityWJ = problem_.variables().densityWetting(globalIdxJ);
+                densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
             }
             else
             {
-                lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
-                lambdaWJ /= viscosity_[wPhaseIdx];
-                lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
-                lambdaNwJ /= viscosity_[nPhaseIdx];
+                lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPosNeighbor, *neighborPointer), satJ);
+                lambdaWJ /= FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
+                lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPosNeighbor, *neighborPointer), satJ);
+                lambdaNWJ /= FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
+                densityWJ = FluidSystem::phaseDensity(wPhaseIdx, temperature, referencePressure, fluidState);
+                densityNWJ = FluidSystem::phaseDensity(nPhaseIdx, temperature, referencePressure, fluidState);
             }
-
-            lambdaW = (potentialDiffW >= 0) ? lambdaWI : lambdaWJ;
-            lambdaW = (potentialDiffW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
-            lambdaNw = (potentialDiffNw >= 0) ? lambdaNwI : lambdaNwJ;
-            lambdaNw = (potentialDiffNw == 0) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNw;
         }
         else
         {
-            // get permeability
-            problem_.spatialParams().meanK(meanPermeability,
-                    problem_.spatialParams().intrinsicPermeability(*element));
-
-            distVec = intersection.geometry().center() - element->geometry().center();
-
             //calculate lambda_n*f_w at the boundary
-            lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satJ);
-            lambdaWJ /= viscosity_[wPhaseIdx];
-            lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satJ);
-            lambdaNwJ /= viscosity_[nPhaseIdx];
-
-            //If potential is zero always take value from the boundary!
-            lambdaW = (potentialDiffW > 0) ? lambdaWI : lambdaWJ;
-            lambdaNw = (potentialDiffNw > 0) ? lambdaNwI : lambdaNwJ;
+            lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos, element), satJ);
+            lambdaWJ /= FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
+            lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos, element), satJ);
+            lambdaNWJ /= FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
+            densityWJ = FluidSystem::phaseDensity(wPhaseIdx, temperature, referencePressure, fluidState);
+            densityNWJ = FluidSystem::phaseDensity(nPhaseIdx, temperature, referencePressure, fluidState);
         }
 
         // set result to K*grad(pc)
-        const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
-        Scalar dist = distVec.two_norm();
-        //calculate unit distVec
-        distVec /= dist;
-        Scalar areaScaling = (unitOuterNormal * distVec);
+        FieldVector result(0);
+        permeability.umv(problem_.gravity(), result);
 
-        Dune::FieldVector<Scalar, dim> permeability(0);
-        meanPermeability.mv(unitOuterNormal, permeability);
-
-        Scalar scalarPerm = permeability.two_norm();
-
-        Scalar scalarGravity = problem_.gravity() * distVec;
-
-        flux = unitOuterNormal;
+        Scalar lambdaW = (potentialW >= 0) ? lambdaWI : lambdaWJ;
+        lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
+        Scalar lambdaNW = (potentialNW >= 0) ? lambdaNWI : lambdaNWJ;
+        lambdaNW = (potentialNW == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNW;
+        Scalar densityW = (potentialW >= 0) ? densityWI : densityWJ;
+        densityW = (potentialW == 0.) ? 0.5 * (densityWI + densityWJ) : densityW;
+        Scalar densityNW = (potentialNW >= 0) ? densityNWI : densityNWJ;
+        densityNW = (potentialNW == 0.) ? 0.5 * (densityNWI + densityNWJ) : densityNW;
 
         // set result to f_w*lambda_n*K*grad(pc)
-        flux *= lambdaW*lambdaNw/(lambdaW+lambdaNw) * scalarPerm * (density_[wPhaseIdx] - density_[nPhaseIdx]) * scalarGravity * areaScaling;
+        result *= lambdaW*lambdaNW/(lambdaW+lambdaNW);
+        result *= (densityW - densityNW);
+
+        return result;
     }
-    /*! \brief Constructs a GravityPart object
-     *
-     *  \param problem A problem class object
+    /*! @brief Constructs a GravityPart object
+     *  @param problem an object of class Dumux::TransportProblem or derived
+     *  @param preComput if preCompute = true previous calculated mobilities are taken, if preCompute = false new mobilities will be computed (for implicit Scheme)
      */
-    GravityPart (Problem& problem)
-    : ConvectivePart<TypeTag>(problem), problem_(problem), preComput_(GET_PROP_VALUE(TypeTag, PrecomputedConstRels))
+    GravityPart (Problem& problem, const bool preComput = true)
+    : ConvectivePart<TypeTag>(problem), problem_(problem), preComput_(preComput)
     {}
 
-    //! For initialization
-    void initialize()
-    {
-        ElementIterator element = problem_.gridView().template begin<0> ();
-        FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
-        fluidState.setSaturation(wPhaseIdx, 1.);
-        fluidState.setSaturation(nPhaseIdx, 0.);
-        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
-        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
-        viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
-        viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
-    }
-
 private:
-    Problem& problem_; //problem data
-    const bool preComput_;//if preCompute = true the mobilities are taken from the variable object,
-                          //if preCompute = false new mobilities will be taken (for implicit Scheme)
-    Scalar density_[numPhases];
-    Scalar viscosity_[numPhases];
-};}
+    Problem& problem_;//problem data
+    const bool preComput_;//if preCompute = true the mobilities are taken from the variable object, if preCompute = false new mobilities will be taken (for implicit Scheme)
+};
+}
 
 #endif

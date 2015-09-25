@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -57,26 +59,8 @@ public:
      * This function throws a warning when called: "No init routine defined - make sure that this is not necessary!"
      */
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
-                     Scalar pressMin, Scalar pressMax, unsigned nPress)
+            Scalar pressMin, Scalar pressMax, unsigned nPress)
     {   Dune::dwarn << "No init routine defined - make sure that this is not necessary!" << std::endl; }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { DUNE_THROW(Dune::NotImplemented, "Component::gasIsCompressible()"); }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { DUNE_THROW(Dune::NotImplemented, "Component::gasIsCompressible()"); }
-
-    /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
-     */
-    static bool liquidIsCompressible()
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidIsCompressible()"); }
 
     /*!
      * \brief A human readable name for the component.
@@ -85,7 +69,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::name()"); }
 
     /*!
-     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
+     * \brief The molar mass in \f$\mathrm{[kg]}\f$ of the component.
      */
     static Scalar molarMass()
     { DUNE_THROW(Dune::NotImplemented, "Component::molarMass()"); }
@@ -124,8 +108,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::vaporPressure()"); }
 
     /*!
-     * \brief The density in \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure in
-     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     * \brief The density in \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure in \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -134,8 +117,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::density()"); }
 
     /*!
-     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the liquid component at a given pressure in
-     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the liquid component at a given pressure in \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -180,8 +162,8 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Component::liquidInternalEnergy()"); }
 
     /*!
-     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of the pure component at a given pressure in
-     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of the pure component at a given pressure in \f$\mathrm{[Pa]}\f$ and
+     * temperature in \f$\mathrm{[K]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -198,39 +180,8 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     { DUNE_THROW(Dune::NotImplemented, "Component::liquidViscosity()"); }
 
-    /*!
-     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a gas.
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::gasThermalConductivity()"); }
-
-    /*!
-     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a liquid.
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidThermalConductivity()"); }
-
-    /*!
-     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a gas.
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::gasHeatCapacity()"); }
-
-    /*!
-     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidHeatCapacity()"); }
 };
 
-} // end namespace
+} // end namepace
 
 #endif

@@ -1,29 +1,18 @@
 # This file contains local changes to the doxygen configuration
 # please us '+=' to add file/directories to the lists
 
-EXCLUDE_PATTERNS       = */.svn/*
+ENABLED_SECTIONS       = 
+EXCLUDE_PATTERNS       = */.svn/* 
 
 PREDEFINED            += "NEW_PROP_TAG(name)=Property tag name" \
-                         "NEW_TYPE_TAG(name)=Type tag name"
+                         "NEW_TYPE_TAG(name)=Type tag name"                        
 
-INPUT                 += @srcdir@/mainpage.txt \
-                         @srcdir@/modules.txt \
-                         @top_srcdir@/dumux \
-                         @top_srcdir@/test \
-                         @top_srcdir@/tutorial \
-                         @srcdir@/extradoc/parameterlist.txt \
-                         @srcdir@/extradoc/featurelist.txt
-
-EXAMPLE_PATH          += @srcdir@/extradoc
-
+INPUT                 += @srcdir@/mainpage \
+						 @srcdir@/modules \
+						 @top_srcdir@/dumux \
+						 @top_srcdir@/test \
+						 @top_srcdir@/tutorial
+						 
 IMAGE_PATH             = @srcdir@/images
-
-EXTRA_PACKAGES        += amsmath,amssymb,units
-
-# enable client side searching
-SEARCHENGINE           = YES
-SERVER_BASED_SEARCH    = NO
-
-# disable macro expansion (Otherwise, certain properties will not appear
-# in the documentation properly. This should be fixed at some time.)
-MACRO_EXPANSION = NO
+					 
+EXTRA_PACKAGES        += amsmath,amssymb

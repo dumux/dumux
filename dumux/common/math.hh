@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -32,7 +34,6 @@
 namespace Dumux
 {
 /*!
- * \ingroup Math
  * \brief Calculate the harmonic mean of two scalar values.
  *
  * \param x The first input value
@@ -47,7 +48,6 @@ Scalar harmonicMean(Scalar x, Scalar y)
 }
 
 /*!
- * \ingroup Math
  * \brief Calculate the geometric mean of two scalar values.
  *
  * \param x The first input value
@@ -62,7 +62,6 @@ Scalar geometricMean(Scalar x, Scalar y)
 }
 
 /*!
- * \ingroup Math
  * \brief Calculate the harmonic mean of a fixed-size matrix.
  *
  * This is done by calculating the harmonic mean for each entry
@@ -91,7 +90,6 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
 }
 
 /*!
- * \ingroup Math
  * \brief Invert a linear polynomial analytically
  *
  * The polynomial is defined as
@@ -117,13 +115,12 @@ int invertLinearPolynomial(SolContainer &sol,
 }
 
 /*!
- * \ingroup Math
  * \brief Invert a quadratic polynomial analytically
  *
  * The polynomial is defined as
  * \f[ p(x) = a\; x^2 + + b\;x + c \f]
  *
- * This method returns the number of solutions which are in the real
+ * This method teturns the number of solutions which are in the real
  * numbers. The "sol" argument contains the real roots of the parabola
  * in order with the smallest root first.
  *
@@ -157,35 +154,7 @@ int invertQuadraticPolynomial(SolContainer &sol,
     return 2; // two real roots
 }
 
-//! \cond false
-template <class Scalar, class SolContainer>
-void invertCubicPolynomialPostProcess_(SolContainer &sol,
-                                       int numSol,
-                                       Scalar a,
-                                       Scalar b,
-                                       Scalar c,
-                                       Scalar d)
-{
-    // do one Newton iteration on the analytic solution if the
-    // precision is increased
-    for (int i = 0; i < numSol; ++i) {
-        Scalar x = sol[i];
-        Scalar fOld = d + x*(c + x*(b + x*a));
-
-        Scalar fPrime = c + x*(2*b + x*3*a);
-        if (fPrime == 0.0)
-            continue;
-        x -= fOld/fPrime;
-
-        Scalar fNew = d + x*(c + x*(b + x*a));
-        if (std::abs(fNew) < std::abs(fOld))
-            sol[i] = x;
-    }
-}
-//! \endcond
-
 /*!
- * \ingroup Math
  * \brief Invert a cubic polynomial analytically
  *
  * The polynomial is defined as
@@ -202,14 +171,14 @@ void invertCubicPolynomialPostProcess_(SolContainer &sol,
  * \param d The coefficiont for the constant term
  */
 template <class Scalar, class SolContainer>
-int invertCubicPolynomial(SolContainer *sol,
+int invertCubicPolynomial(SolContainer &sol,
                           Scalar a,
                           Scalar b,
                           Scalar c,
                           Scalar d)
 {
     // reduces to a quadratic polynomial
-    if (a == 0)
+    if (a == 0.0)
         return invertQuadraticPolynomial(sol, b, c, d);
 
     // normalize the polynomial
@@ -244,15 +213,15 @@ int invertCubicPolynomial(SolContainer *sol,
         // t^3 + p*t = 0 = t*(t^2 + p),
         //
         // i. e. roots at t = 0, t^2 + p = 0
-        if (p > 0) {
-            sol[0] = 0.0 - b/3;
+        sol[0] = 0.0 - b/3;
+        if (p > 0)
             return 1; // only a single real root at t=0
-        }
-
         // two additional real roots at t = sqrt(-p) and t = -sqrt(-p)
-        sol[0] = -std::sqrt(-p) - b/3;
-        sol[1] = 0.0 - b/3;
-        sol[2] = std::sqrt(-p) - b/3;
+        sol[1] = std::sqrt(-p) - b/3;
+        sol[2] = -sol[1];
+
+        // sort the result
+        std::sort(sol, sol + 3);
 
         return 3;
     }
@@ -277,7 +246,7 @@ int invertCubicPolynomial(SolContainer *sol,
     //
     // Now, substituting u^3 = w yields
     //
-    // w^2 + q*w - p^3/27 = 0
+    // w^2 + q*w - p^3/27
     //
     // This is a quadratic equation with the solutions
     //
@@ -300,7 +269,6 @@ int invertCubicPolynomial(SolContainer *sol,
         // does not produce a division by zero. the remaining two
         // roots of u are rotated by +- 2/3*pi in the complex plane
         // and thus not considered here
-        invertCubicPolynomialPostProcess_(sol, 1, a, b, c, d);
         return 1;
     }
     else { // the negative discriminant case:
@@ -354,13 +322,8 @@ int invertCubicPolynomial(SolContainer *sol,
             phi += 2*M_PI/3;
         }
 
-        // post process the obtained solution to increase numerical
-        // precision
-        invertCubicPolynomialPostProcess_(sol, 3, a, b, c, d);
-
         // sort the result
         std::sort(sol, sol + 3);
-
         return 3;
     }
 
@@ -369,7 +332,6 @@ int invertCubicPolynomial(SolContainer *sol,
 }
 
 /*!
- * \ingroup Math
  * \brief Comparison of two position vectors
  *
  * Compares an current position vector with a reference vector, and returns true
@@ -395,7 +357,6 @@ bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
 }
 
 /*!
- * \ingroup Math
  * \brief Comparison of two position vectors
  *
  * Compares an current position vector with a reference vector, and returns true
@@ -421,7 +382,6 @@ bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
 }
 
 /*!
- * \ingroup Math
  * \brief Comparison of three position vectors
  *
  * Compares an current position vector with two reference vector, and returns true
@@ -451,7 +411,6 @@ bool isBetween(const Dune::FieldVector<Scalar, dim> &pos,
 
 
 /*!
- * \ingroup Math
  * \brief Evaluates the Antoine equation used to calculate the vapour
  *        pressure of various liquids.
  *
@@ -470,32 +429,6 @@ Scalar antoine(Scalar temperature,
 {
     const Scalar ln10 = 2.3025850929940459;
     return std::exp(ln10*(A - B/(C + temperature)));
-}
-
-/*!
- * \brief cross product of two vectors in three-dimensional Euclidean space
- *
- * \param vec1 The first vector
- * \param vec2 The second vector
- */
-template <class Scalar, int dim>
-Dune::FieldVector<Scalar, dim> crossProduct(const Dune::FieldVector<Scalar, dim> &vec1,
-              const Dune::FieldVector<Scalar, dim> &vec2)
-{
-    Dune::FieldVector<Scalar, dim> result(0);
-
-    if (dim == 3)
-    {
-        result[0] = vec1[1]*vec2[2]-vec1[2]*vec2[1];
-        result[1] = vec1[2]*vec2[0]-vec1[0]*vec2[2];
-        result[2] = vec1[0]*vec2[1]-vec1[1]*vec2[0];
-    }
-    else
-    {
-        DUNE_THROW(Dune::NotImplemented, "Cross product is so far only supported for three dimensions!");
-    }
-
-    return result;
 }
 
 }

@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -28,8 +30,9 @@
 #include "vangenuchtenparams.hh"
 
 #include <algorithm>
-#include <cmath>
-#include <cassert>
+
+#include <math.h>
+#include <assert.h>
 
 namespace Dumux
 {
@@ -57,39 +60,39 @@ public:
      *
      * Van Genuchten's empirical capillary pressure <-> saturation
      * function is given by
-     * \f$\mathrm{
+     * \f[
      p_C = (\overline{S}_w^{-1/m} - 1)^{1/n}/\alpha
-     }\f$
-     * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     \f]
+     * \param Swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$
+     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar pc(const Params &params, Scalar swe)
+    static Scalar pC(const Params &params, Scalar Swe)
     {
-        assert(0 <= swe && swe <= 1);
-        return pow(pow(swe, -1.0/params.vgm()) - 1, 1.0/params.vgn())/params.vgAlpha();
+        assert(0 <= Swe && Swe <= 1);
+        return pow(pow(Swe, -1.0/params.vgM()) - 1, 1.0/params.vgN())/params.vgAlpha();
     }
 
     /*!
      * \brief The saturation-capillary pressure curve according to van Genuchten.
      *
      * This is the inverse of the capillary pressure-saturation curve:
-     * \f$\mathrm{
+     * \f[
      \overline{S}_w = {p_C}^{-1} = ((\alpha p_C)^n + 1)^{-m}
-     }\f$
+     \f]
      *
-     * \param pc Capillary pressure \f$\mathrm{p_C}\f$ in \f$\mathrm{[Pa]}\f$
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \param pC        Capillary pressure \f$p_C\f$
+     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
-     * \return          The effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
+     * \return          The effective saturation of the wetting phase \f$\overline{S}_w\f$
      */
-    static Scalar sw(const Params &params, Scalar pc)
+    static Scalar Sw(const Params &params, Scalar pC)
     {
-        assert(pc >= 0);
+        assert(pC >= 0);
 
-        return pow(pow(params.vgAlpha()*pc, params.vgn()) + 1, -params.vgm());
+        return pow(pow(params.vgAlpha()*pC, params.vgN()) + 1, -params.vgM());
     }
 
     /*!
@@ -97,42 +100,42 @@ public:
      *        pressure w.r.t. the effective saturation according to van Genuchten.
      *
      * This is equivalent to
-     * \f$\mathrm{
+     * \f[
      \frac{\partial p_C}{\partial \overline{S}_w} =
      -\frac{1}{\alpha} (\overline{S}_w^{-1/m} - 1)^{1/n - }
      \overline{S}_w^{-1/m} / \overline{S}_w / m
-     }\f$
+     \f]
      *
-     * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \param Swe       Effective saturation of the wetting phase \f$\overline{S}_w\f$
+     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
     */
-    static Scalar dpc_dsw(const Params &params, Scalar swe)
+    static Scalar dpC_dSw(const Params &params, Scalar Swe)
     {
-        assert(0 <= swe && swe <= 1);
+        assert(0 <= Swe && Swe <= 1);
 
-        Scalar powSwe = pow(swe, -1/params.vgm());
-        return - 1.0/params.vgAlpha() * pow(powSwe - 1, 1.0/params.vgn() - 1)/params.vgn()
-            * powSwe/swe/params.vgm();
+        Scalar powSwe = pow(Swe, -1/params.vgM());
+        return - 1/params.vgAlpha() * pow(powSwe - 1, 1/params.vgN() - 1)/params.vgN()
+            * powSwe/Swe/params.vgM();
     }
 
     /*!
      * \brief The partial derivative of the effective
      *        saturation to the capillary pressure according to van Genuchten.
      *
-     * \param pc Capillary pressure \f$\mathrm{p_C}\f$ in \f$\mathrm{[Pa]}\f$
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \param pC        Capillary pressure \f$p_C\f$
+     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dsw_dpc(const Params &params, Scalar pc)
+    static Scalar dSw_dpC(const Params &params, Scalar pC)
     {
-        assert(pc >= 0);
+        assert(pC >= 0);
 
-        Scalar powAlphaPc = pow(params.vgAlpha()*pc, params.vgn());
-        return -pow(powAlphaPc + 1, -params.vgm()-1)*
-            params.vgm()*powAlphaPc/pc*params.vgn();
+        Scalar powAlphaPc = pow(params.vgAlpha()*pC, params.vgN());
+        return -pow(powAlphaPc + 1, -params.vgM()-1)*
+            params.vgM()*powAlphaPc/pC*params.vgN();
     }
 
     /*!
@@ -140,55 +143,56 @@ public:
      *        the medium implied by van Genuchten's
      *        parameterization.
      *
-     * \param swe The mobile saturation of the wetting phase.
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \param Swe        The mobile saturation of the wetting phase.
+     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.     */
-    static Scalar krw(const Params &params, Scalar swe)
+    static Scalar krw(const Params &params, Scalar Swe)
     {
-        assert(0 <= swe && swe <= 1);
+        assert(0 <= Swe && Swe <= 1);
 
-        Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.vgm()), params.vgm());
-        return sqrt(swe)*r*r;
-    }
+        Scalar r = 1. - pow(1 - pow(Swe, 1/params.vgM()), params.vgM());
+        return sqrt(Swe)*r*r;
+    };
 
     /*!
      * \brief The derivative of the relative permeability for the
      *        wetting phase in regard to the wetting saturation of the
      *        medium implied by the van Genuchten parameterization.
      *
-     * \param swe The mobile saturation of the wetting phase.
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \param Swe       The mobile saturation of the wetting phase.
+     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dkrw_dsw(const Params &params, Scalar swe)
+    static Scalar dkrw_dSw(const Params &params, Scalar Swe)
     {
-        assert(0 <= swe && swe <= 1);
+        assert(0 <= Swe && Swe <= 1);
 
-        const Scalar x = 1.0 - std::pow(swe, 1.0/params.vgm());
-        const Scalar xToM = std::pow(x, params.vgm());
-        return (1.0 - xToM)/std::sqrt(swe) * ( (1.0 - xToM)/2 + 2*xToM*(1.0-x)/x );
-    }
+        const Scalar x = 1 - std::pow(Swe, 1.0/params.vgM());
+        const Scalar xToM = std::pow(x, params.vgM());
+        return (1 - xToM)/std::sqrt(Swe) * ( (1 - xToM)/2 + 2*xToM*(1-x)/x );
+    };
+
 
     /*!
      * \brief The relative permeability for the non-wetting phase
      *        of the medium implied by van Genuchten's
      *        parameterization.
      *
-     * \param swe The mobile saturation of the wetting phase.
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \param Swe        The mobile saturation of the wetting phase.
+     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar krn(const Params &params, Scalar swe)
+    static Scalar krn(const Params &params, Scalar Swe)
     {
-        assert(0 <= swe && swe <= 1);
+        assert(0 <= Swe && Swe <= 1);
 
         return
-            pow(1 - swe, 1.0/3) *
-            pow(1 - pow(swe, 1.0/params.vgm()), 2*params.vgm());
-    }
+            pow(1 - Swe, 1.0/3) *
+            pow(1 - pow(Swe, 1/params.vgM()), 2*params.vgM());
+    };
 
     /*!
      * \brief The derivative of the relative permeability for the
@@ -196,20 +200,20 @@ public:
      *        the medium as implied by the van Genuchten
      *        parameterization.
      *
-     * \param swe The mobile saturation of the wetting phase.
-     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \param Swe        The mobile saturation of the wetting phase.
+     * \param params    A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      */
-    static Scalar dkrn_dsw(const Params &params, Scalar swe)
+    static Scalar dkrn_dSw(const Params &params, Scalar Swe)
     {
-        assert(0 <= swe && swe <= 1);
+        assert(0 <= Swe && Swe <= 1);
 
-        const Scalar x = std::pow(swe, 1.0/params.vgm());
+        const Scalar x = std::pow(Swe, 1.0/params.vgM());
         return
-            -std::pow(1.0 - x, 2*params.vgm())
-            *std::pow(1.0 - swe, -2.0/3)
-            *(1.0/3 + 2*x/swe);
+            -std::pow(1 - x, 2*params.vgM())
+            *std::pow(1 - Swe, -2/3)
+            *(1.0/3 + 2*x/Swe);
     }
 
 };

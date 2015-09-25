@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2010 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -33,10 +35,10 @@
 bool success;
 
 template <class Scalar>
-void isSame(const char *str, Scalar v, Scalar vRef, Scalar tol=1e-3)
+void isSame(const char *str, Scalar v, Scalar vRef, Scalar tol=5e-4)
 {
     if (std::abs( (v - vRef)/vRef ) > tol) {
-        std::cout << "error for \"" << str << "\": "  << (v - vRef)/vRef*100 << "% difference (tolerance: "  << tol*100 << "%)\n";
+        std::cout << "error for \"" << str << "\": "  << (v - vRef)/vRef*100 << "% difference\n";
         success = false;
         //exit(1);
     }
@@ -50,7 +52,7 @@ int main()
 
     Scalar tempMin = 274.15;
     Scalar tempMax = 622.15;
-    int nTemp = static_cast<int>(tempMax - tempMin) * 6/8;
+    int nTemp = (int) (tempMax - tempMin)*3/2;
 
     Scalar pMin = 10.00;
     Scalar pMax = IapwsH2O::vaporPressure(tempMax*1.1);
@@ -78,26 +80,28 @@ int main()
                1e-3);
         for (int j = 0; j < n; ++j) {
             Scalar p = pMin + (pMax - pMin)*Scalar(j)/n;
-            if (p < IapwsH2O::vaporPressure(T) * 1.001) {
-                Scalar tol = 1e-3;
+            if (p < IapwsH2O::vaporPressure(T) * 1.03) {
+                Scalar tol = 5e-4;
                 if (p > IapwsH2O::vaporPressure(T))
-                    tol = 1e-2;
+                    tol = 5e-2;
                 Scalar rho = IapwsH2O::gasDensity(T,p);
-                //isSame("Iapws::gasPressure", IapwsH2O::gasPressure(T,rho), p, 1e-6);
-                //isSame("gasPressure", TabulatedH2O::gasPressure(T,rho), p, 2e-2);
+                //std::cerr << T << " " << p << " " << IapwsH2O::gasPressure(T,rho) << " " << TabulatedH2O::gasPressure(T,rho) << "\n";
+                isSame("Iapws::gasPressure", IapwsH2O::gasPressure(T,rho), p, 1e-6);
+                isSame("gasPressure", TabulatedH2O::gasPressure(T,rho), p, 2e-2);
                 isSame("gasEnthalpy", TabulatedH2O::gasEnthalpy(T,p), IapwsH2O::gasEnthalpy(T,p), tol);
                 isSame("gasInternalEnergy", TabulatedH2O::gasInternalEnergy(T,p), IapwsH2O::gasInternalEnergy(T,p), tol);
                 isSame("gasDensity", TabulatedH2O::gasDensity(T,p), rho, tol);
                 isSame("gasViscosity", TabulatedH2O::gasViscosity(T,p), IapwsH2O::gasViscosity(T,p), tol);
             }
 
-            if (p > IapwsH2O::vaporPressure(T) / 1.001) {
-                Scalar tol = 1e-3;
+            if (p > IapwsH2O::vaporPressure(T) / 1.03) {
+                Scalar tol = 5e-4;
                 if (p < IapwsH2O::vaporPressure(T))
-                    tol = 1e-2;
+                    tol = 5e-2;
                 Scalar rho = IapwsH2O::liquidDensity(T,p);
-                //isSame("Iapws::liquidPressure", IapwsH2O::liquidPressure(T,rho), p, 1e-6);
-                //isSame("liquidPressure", TabulatedH2O::liquidPressure(T,rho), p, 2e-2);
+                //std::cerr << T << " " << p << " " << IapwsH2O::liquidPressure(T,rho) << " " << TabulatedH2O::liquidPressure(T,rho) << "\n";
+                isSame("Iapws::gasPressure", IapwsH2O::liquidPressure(T,rho), p, 1e-6);
+                isSame("liquidPressure", TabulatedH2O::liquidPressure(T,rho), p, 2e-2);
                 isSame("liquidEnthalpy", TabulatedH2O::liquidEnthalpy(T,p), IapwsH2O::liquidEnthalpy(T,p), tol);
                 isSame("liquidInternalEnergy", TabulatedH2O::liquidInternalEnergy(T,p), IapwsH2O::liquidInternalEnergy(T,p), tol);
                 isSame("liquidDensity", TabulatedH2O::liquidDensity(T,p), rho, tol);

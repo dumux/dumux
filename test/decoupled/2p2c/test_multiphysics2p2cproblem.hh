@@ -1,7 +1,11 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id: test_2p_injectionproblem.hh 3456 2010-04-09 12:11:51Z mwolff $
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
+ *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +14,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -24,15 +28,20 @@
 #ifndef DUMUX_TEST_2P2C_PROBLEM_HH
 #define DUMUX_TEST_2P2C_PROBLEM_HH
 
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+
 #include <dune/grid/yaspgrid.hh>
+#include <dune/grid/sgrid.hh>
+
+// fluid properties
+//#include <dumux/material/fluidsystems/brine_co2_system.hh>
+#include <dumux/material/fluidsystems/h2o_n2_system.hh>
 
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p2c/fvpressure2p2cmultiphysics.hh>
 #include <dumux/decoupled/2p2c/fvtransport2p2cmultiphysics.hh>
-#include <dumux/decoupled/2p2c/celldata2p2cmultiphysics.hh>
-// fluid properties
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
-#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
 
@@ -45,41 +54,74 @@ class TestMultTwoPTwoCProblem;
 // Specify the properties
 namespace Properties
 {
-NEW_TYPE_TAG(TestMultTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC, Test2P2CSpatialParams));
-
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, CellData, Dumux::CellData2P2CMultiPhysics<TypeTag>);
+NEW_TYPE_TAG(TestMultTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC/*, Transport*/));
 
 // Set the grid type
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, Grid, Dune::YaspGrid<3>);
+SET_PROP(TestMultTwoPTwoCProblem, Grid)
+{
+    //    typedef Dune::YaspGrid<2> type;
+    typedef Dune::SGrid<3, 3> type;
+};
 
 // Set the problem property
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, Problem, Dumux::TestMultTwoPTwoCProblem<TypeTag>);
+SET_PROP(TestMultTwoPTwoCProblem, Problem)
+{
+    typedef Dumux::TestMultTwoPTwoCProblem<TTAG(TestMultTwoPTwoCProblem)> type;
+};
 
 // Set the model properties
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, TransportModel,Dumux::FVTransport2P2CMultiPhysics<TypeTag>);
+SET_PROP(TestMultTwoPTwoCProblem, TransportModel)
+{
+    typedef Dumux::FVTransport2P2CMultiPhysics<TTAG(TestMultTwoPTwoCProblem)> type;
+};
 
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, PressureModel, Dumux::FVPressure2P2CMultiPhysics<TypeTag>);
+SET_PROP(TestMultTwoPTwoCProblem, PressureModel)
+{
+    typedef Dumux::FVPressure2P2CMultiPhysics<TTAG(TestMultTwoPTwoCProblem)> type;
+};
 
-SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
+SET_INT_PROP(TestMultTwoPTwoCProblem, VelocityFormulation,
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityW);
 
+SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation,
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureW);
+
+//// Select fluid system
+//SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
+//{
+//    typedef Dumux::Brine_CO2_System<TypeTag, Dumux::Benchmark3::CO2Tables> type;
+//};
 // Select fluid system
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
-
-// Select fluid system
-SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
+SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
+{
+    typedef Dumux::H2O_N2_System<TypeTag> type;
+};
 
 // Select water formulation
-SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultComponents)
+SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, PTAG(DefaultComponents))
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::H2O<Scalar> H2O;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+//    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
+        typedef Dumux::H2O<Scalar> H2O;
+};
+
+// Set the soil properties
+SET_PROP(TestMultTwoPTwoCProblem, SpatialParameters)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+
+public:
+    typedef Dumux::Test2P2CSpatialParams<TypeTag> type;
 };
 
 // Enable gravity
-SET_BOOL_PROP(TestMultTwoPTwoCProblem, ProblemEnableGravity, true);
-SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableCapillarity, true);
-SET_INT_PROP(TestMultTwoPTwoCProblem, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);
-SET_SCALAR_PROP(TestMultTwoPTwoCProblem, ImpetCFLFactor, 0.8);
+SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableGravity, true);
+SET_INT_PROP(DecoupledTwoPTwoC,
+        BoundaryMobility,
+        TwoPCommonIndices<TypeTag>::satDependent);
+SET_SCALAR_PROP(TestMultTwoPTwoCProblem, CFLFactor, 0.8);
 }
 
 /*!
@@ -95,39 +137,46 @@ SET_SCALAR_PROP(TestMultTwoPTwoCProblem, ImpetCFLFactor, 0.8);
  * description in the pressure module)
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_multiphyiscs2p2c</tt>
+ * <tt>./test_dec2p2c</tt>
  * Optionally, simulation endtime and first timestep size can be
  * specified by programm arguments.
  */
-template<class TypeTag>
-class TestMultTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
+template<class TypeTag = TTAG(TestMultTwoPTwoCProblem)>
+class TestMultTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag, TestMultTwoPTwoCProblem<TypeTag> >
 {
-typedef IMPETProblem2P2C<TypeTag> ParentType;
-typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+typedef TestMultTwoPTwoCProblem<TypeTag> ThisType;
+typedef IMPETProblem2P2C<TypeTag, ThisType> ParentType;
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
-// boundary typedefs
-typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
 enum
 {
     dim = GridView::dimension, dimWorld = GridView::dimensionworld
 };
 
-typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+enum
+{
+    wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+};
+
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
 typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
-TestMultTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition upperRight = 0) :
-ParentType(timeManager, gridView), lowerLeft_(0), upperRight_(upperRight), eps_(1e-6), depthBOR_(1000.0)
-{}
+TestMultTwoPTwoCProblem(const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
+ParentType(gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
+{
+    // initialize the tables of the fluid system
+//    FluidSystem::init();
+}
 
 /*!
  * \name Problem parameters
@@ -151,85 +200,104 @@ bool shouldWriteRestartFile() const
 
 //! Returns the temperature within the domain.
 /*! This problem assumes a temperature of 10 degrees Celsius.
- * \param globalPos The global Position
  */
-Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+Scalar temperature(const GlobalPosition& globalPos, const Element& element) const
 {
     return 273.15 + 10; // -> 10°C
 }
 
 // \}
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::referencePressureAtPos()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::referencePressure()
  */
-Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
+Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
 {
     return 1e6;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::boundaryTypesAtPos()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::bcTypePress()
  */
-void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
+typename BoundaryConditions::Flags bcTypePress(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
     if (globalPos[0] > 10-1E-6 || globalPos[0] < 1e-6)
-        bcTypes.setAllDirichlet();
-    else
-        // all other boundaries
-        bcTypes.setAllNeumann();
-}
-
-/*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::boundaryFormulation()
- */
-const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
-{
-    bcFormulation = Indices::concentration;
+        return BoundaryConditions::dirichlet;
+    // all other boundaries
+    return BoundaryConditions::neumann;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletAtPos()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::bcTypeTransport()
  */
-void dirichletAtPos(PrimaryVariables &bcValues ,const GlobalPosition& globalPos) const
+typename BoundaryConditions::Flags bcTypeTransport(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
-    Scalar pRef = referencePressureAtPos(globalPos);
-    Scalar temp = temperatureAtPos(globalPos);
+    return bcTypePress(globalPos, intersection);
+}
+/*!
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::bcFormulation()
+ */
+BoundaryConditions2p2c::Flags bcFormulation(const GlobalPosition& globalPos, const Intersection& intersection) const
+{
+    return BoundaryConditions2p2c::concentration;
+}
+/*!
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletPress()
+ */
+Scalar dirichletPress(const GlobalPosition& globalPos, const Intersection& intersection) const
+{
+    const Element& element = *(intersection.inside());
 
-    // Dirichlet for pressure equation
-    bcValues[Indices::pressureEqIdx] = (globalPos[0] < 1e-6) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
+    Scalar pRef = referencePressure(globalPos, element);
+    Scalar temp = temperature(globalPos, element);
+
+    // all other boundaries
+    return (globalPos[0] < 1e-6) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
             : (2e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1]);
-
-    // Dirichlet values for transport equations
-    bcValues[Indices::contiWEqIdx] = 1.;
-    bcValues[Indices::contiNEqIdx] = 1.- bcValues[Indices::contiWEqIdx];
-
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::neumannAtPos()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletTransport()
  */
-void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalPos) const
+Scalar dirichletTransport(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
-    neumannValues[Indices::contiNEqIdx] = 0.;
-    neumannValues[Indices::contiWEqIdx] = 0.;
+    return 1.;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::sourceAtPos()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::neumann()
  */
-void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
+Dune::FieldVector<Scalar,2> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
-    this->setZero(sourceValues);
-    if (fabs(globalPos[0] - 4.8) < 0.5 && fabs(globalPos[1] - 4.8) < 0.5)
-        sourceValues[Indices::contiNEqIdx] = 0.0001;
+    Dune::FieldVector<Scalar,2> neumannFlux(0.0);
+//    if (globalPos[1] < 15 && globalPos[1]> 5)
+//    {
+//        neumannFlux[nPhaseIdx] = -0.015;
+//    }
+    return neumannFlux;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::initialFormulation()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::source()
  */
-const void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
+Dune::FieldVector<Scalar,2> source(const GlobalPosition& globalPos, const Element& element)
 {
-    initialFormulation = Indices::concentration;
+    Dune::FieldVector<Scalar,2> q_(0);
+        if (fabs(globalPos[0] - 4.5) < 1 && fabs(globalPos[1] - 4.5) < 1) q_[1] = 0.0001;
+    return q_;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::initConcentrationAtPos()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::initFormulation()
  */
-Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
+const BoundaryConditions2p2c::Flags initFormulation (const GlobalPosition& globalPos, const Element& element) const
+{
+    return BoundaryConditions2p2c::concentration;
+}
+/*!
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::initSat()
+ */
+Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
+{
+    return 1;
+}
+/*!
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::initConcentration()
+ */
+Scalar initConcentration(const GlobalPosition& globalPos, const Element& element) const
 {
     return 1;
 }
@@ -238,8 +306,8 @@ private:
 GlobalPosition lowerLeft_;
 GlobalPosition upperRight_;
 
-const Scalar eps_;
-const Scalar depthBOR_;
+static const Scalar eps_ = 1e-6;
+static const Scalar depthBOR_ = 1000;
 };
 } //end namespace
 

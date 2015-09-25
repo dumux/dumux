@@ -1,9 +1,0 @@
-[TimeManager]
-DtInitial = 1 # [s]
-TEnd = 2 # [s]
-
-[Grid]
-File = ../../implicit/2p/grids/test_2p.dgf
-
-[Diffusivity]
-File = millingtonquirk

@@ -1,7 +1,8 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2010 by Andreas Lauser
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +11,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -45,6 +46,7 @@ namespace Dumux
 template <class Scalar>
 class CH4 : public Component<Scalar, CH4<Scalar> >
 {
+    typedef Component<Scalar, CH4<Scalar> >  ParentType;
     typedef Dumux::IdealGas<Scalar> IdealGas;
 
 public:
@@ -58,7 +60,7 @@ public:
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular methane.
      */
     static Scalar molarMass()
-    { return 16.043e-3; /* [kg/mol] */}
+    { return 16.043e-3;}
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of molecular methane
@@ -70,7 +72,7 @@ public:
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of molecular methane
      */
     static Scalar criticalPressure()
-    { return 46e5; /* [Pa] */ }
+    { return 46e5; /* [N/m^2] */ }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at molecular methane's triple point.
@@ -82,7 +84,7 @@ public:
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at molecular methane's triple point.
      */
     static Scalar triplePressure()
-    { return 0; /* [Pa] */ }
+    { return 0; /* [N/m^2] */ }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure molecular methane
@@ -93,11 +95,6 @@ public:
     static Scalar vaporPressure(Scalar T)
     { DUNE_THROW(Dune::NotImplemented, "vaporPressure for CH4"); }
 
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return true; }
 
     /*!
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of \f$CH_4\f$ gas at a given pressure and temperature.
@@ -112,12 +109,6 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { return true; }
-
-    /*!
      * \brief The pressure of gaseous \f$CH_4\f$ in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
@@ -128,6 +119,25 @@ public:
         // Assume an ideal gas
         return IdealGas::pressure(temperature, density/molarMass());
     }
+
+    /*!
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of \f$CH_4\f$ gas at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidDensity for CH4"); }
+
+    /*!
+     * \brief The pressure of liquid methane in \f$\mathrm{[Pa]}\f$ at a given density and
+     *        temperature.
+    *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
+     */
+    static Scalar liquidPressure(Scalar temperature, Scalar density)
+    { DUNE_THROW(Dune::NotImplemented, "liquidPressure for CH4"); }
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure methane gas.
@@ -161,15 +171,16 @@ public:
     }
 
     /*!
+     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure liquid \f$CH_4\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidEnthalpy(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidEnthalpy for CH4"); }
+
+    /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure methane gas.
-     *
-     *        Definition of enthalpy: \f$h= u + pv = u + p / \rho\f$.
-     *
-     *        Rearranging for internal energy yields: \f$u = h - pv\f$.
-     *
-     *        Exploiting the Ideal Gas assumption (\f$pv = R_{\textnormal{specific}} T\f$)gives: \f$u = h - R / M T \f$.
-     *
-     *        The universal gas constant can only be used in the case of molar formulations.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -180,9 +191,17 @@ public:
 
         return
             gasEnthalpy(temperature, pressure) -
-            1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
             IdealGas::R*temperature; // = pressure * spec. volume for an ideal gas
     }
+
+    /*!
+     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure liquid \f$CH_4\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidInternalEnergy(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidInternalEnergy of CH4"); }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$CH_4\f$ at a given pressure and temperature.
@@ -220,8 +239,17 @@ public:
         // convertion from micro poise to Pa s
         return mu/1e6 / 10;
     }
+
+    /*!
+     * \brief The dynamic liquid viscosity \f$\mathrm{[Pa*s]}\f$ of pure \f$CH_4\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidViscosity for CH4"); }
 };
 
-} // end namespace
+} // end namepace
 
 #endif

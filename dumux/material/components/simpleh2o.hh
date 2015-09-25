@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -44,9 +46,10 @@ namespace Dumux
 template <class Scalar>
 class SimpleH2O : public Component<Scalar, SimpleH2O<Scalar> >
 {
+    typedef Component<Scalar, SimpleH2O<Scalar> > ParentType;
     typedef Dumux::IdealGas<Scalar> IdealGas;
 
-    static const Scalar R;  // specific gas constant of water
+    static const double R = 461.526;  // specific gas constant of water
 
 public:
     /*!
@@ -149,13 +152,6 @@ public:
     /*!
      * \brief Specific internal energy of steam \f$\mathrm{[J/kg]}\f$.
      *
-     *        Definition of enthalpy: \f$h= u + pv = u + p / \rho\f$.
-     *
-     *        Rearranging for internal energy yields: \f$u = h - pv\f$.
-     *
-     *        Exploiting the Ideal Gas assumption (\f$pv = R_{\textnormal{specific}} T\f$)gives: \f$u = h - R / M T \f$.
-     *
-     *        The universal gas constant can only be used in the case of molar formulations.
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
@@ -164,7 +160,6 @@ public:
     {
         return
             gasEnthalpy(temperature, pressure) -
-            1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
             IdealGas::R*temperature; // = pressure *spec. volume for an ideal gas
     }
 
@@ -181,18 +176,6 @@ public:
             pressure/liquidDensity(temperature, pressure); }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return true; }
-
-    /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
-     */
-    static bool liquidIsCompressible()
-    { return false; }
-
-    /*!
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of steam at a given pressure and temperature.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
@@ -201,14 +184,8 @@ public:
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         // Assume an ideal gas
-        return molarMass()*IdealGas::molarDensity(temperature, pressure);
+        return molarMass()*IdealGas::concentration(temperature, pressure);
     }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { return true; }
 
     /*!
      * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
@@ -230,7 +207,7 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        return 1000.;
+        return 1000;
     }
 
     /*!
@@ -255,7 +232,7 @@ public:
     static Scalar gasViscosity(Scalar temperature, Scalar pressure, bool regularize=true)
     {
         return 1e-05;
-    }
+    };
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure water.
@@ -266,47 +243,9 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         return 1e-03;
-    }
-
-    /*!
-     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
-     *
-     *        \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     *        \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     *        @ T= 281.15K (8°C) , p=0.1MPa)
-     */
-    static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
-    {
-        return 4.2e3;
-    }
-
-     /*!
-     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of water.
-     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
-     */
-    static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
-    {
-       return 0.679;
-    }
-
-     /*!
-     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of steam.
-     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
-     */
-    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
-    {
-       return 0.025;
-    }
-
-
+    };
 };
 
-template <class Scalar>
-const Scalar SimpleH2O<Scalar>::R = Dumux::Constants<Scalar>::R / 18e-3;
-
-} // end namespace
+} // end namepace
 
 #endif

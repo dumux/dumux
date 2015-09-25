@@ -1,7 +1,10 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2010 by Markus Wolff                                      *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +13,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -21,6 +24,7 @@
 #define DUMUX_ONE_MODEL_PROBLEM_HH
 
 #include <dumux/decoupled/common/decoupledproperties.hh>
+#include <dumux/common/timemanager.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
 
@@ -28,6 +32,7 @@
 /**
  * @file
  * @brief  Base class for definition of an decoupled diffusion (pressure) or transport problem
+ * @author Markus Wolff
  */
 
 namespace Dumux
@@ -39,44 +44,38 @@ namespace Dumux
  *
  * @tparam TypeTag The Type Tag
  */
-template<class TypeTag>
+template<class TypeTag, class Implementation>
 class OneModelProblem
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    typedef Dumux::TimeManager<TypeTag>      TimeManager;
 
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::VertexMapper VertexMapper;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::ScalarSolution Solution;
 
     enum
     {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dimWorld = GridView::dimensionworld,
     };
     enum
     {
         wetting = 0, nonwetting = 1
     };
 
+    typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
-
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     // private!! copy constructor
     OneModelProblem(const OneModelProblem&)
@@ -91,230 +90,31 @@ public:
      */
     OneModelProblem(const GridView &gridView, bool verbose = true)
         : gridView_(gridView),
-          bBoxMin_(std::numeric_limits<double>::max()),
-          bBoxMax_(-std::numeric_limits<double>::max()),
+          bboxMin_(std::numeric_limits<double>::max()),
+          bboxMax_(-std::numeric_limits<double>::max()),
+          timeManager_(verbose),
           variables_(gridView),
-          outputInterval_(1),
-          outputTimeInterval_(0)
+          resultWriter_(asImp_().name())
     {
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
         const VertexIterator vEndIt = gridView.template end<dim>();
         for (; vIt!=vEndIt; ++vIt) {
             for (int i=0; i<dim; i++) {
-                bBoxMin_[i] = std::min(bBoxMin_[i], vIt->geometry().center()[i]);
-                bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().center()[i]);
+                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().center()[i]);
+                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().center()[i]);
             }
         }
 
-        timeManager_ = std::make_shared<TimeManager>(verbose);
-
-        model_ = std::make_shared<Model>(asImp_()) ;
+        model_ = new Model(asImp_()) ;
     }
 
-    //! Constructs an object of type OneModelProblemProblem
-    /*!
-     *  \tparam TypeTag The TypeTag
-     *  \tparam verbose Output level for Dumux::TimeManager
-     */
-    OneModelProblem(TimeManager &timeManager, const GridView &gridView)
-        : gridView_(gridView),
-          bBoxMin_(std::numeric_limits<double>::max()),
-          bBoxMax_(-std::numeric_limits<double>::max()),
-          variables_(gridView),
-          outputInterval_(1),
-          outputTimeInterval_(0)
+    //! destructor
+    virtual ~OneModelProblem ()
     {
-        // calculate the bounding box of the grid view
-        VertexIterator vIt = gridView.template begin<dim>();
-        const VertexIterator vEndIt = gridView.template end<dim>();
-        for (; vIt!=vEndIt; ++vIt) {
-            for (int i=0; i<dim; i++) {
-                bBoxMin_[i] = std::min(bBoxMin_[i], vIt->geometry().center()[i]);
-                bBoxMax_[i] = std::max(bBoxMax_[i], vIt->geometry().center()[i]);
-            }
-        }
-
-        timeManager_ = Dune::stackobject_to_shared_ptr<TimeManager>(timeManager);
-
-        model_ = std::make_shared<Model>(asImp_()) ;
+        delete model_;
     }
 
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param bcTypes The boundary types for the conservation equations
-     * \param intersection The intersection for which the boundary type is set
-     */
-    void boundaryTypes(BoundaryTypes &bcTypes,
-                       const Intersection &intersection) const
-    {
-        // forward it to the method which only takes the global coordinate
-        asImp_().boundaryTypesAtPos(bcTypes, intersection.geometry().center());
-    }
-
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param bcTypes The boundary types for the conservation equations
-     * \param globalPos The position of the center of the boundary intersection
-     */
-    void boundaryTypesAtPos(BoundaryTypes &bcTypes,
-                       const GlobalPosition &globalPos) const
-    {
-        // Throw an exception (there is no reasonable default value
-        // for Dirichlet conditions)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide "
-                   "a boundaryTypesAtPos() method.");
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param intersection The boundary intersection
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    void dirichlet(PrimaryVariables &values,
-            const Intersection &intersection) const
-    {
-        // forward it to the method which only takes the global coordinate
-        asImp_().dirichletAtPos(values, intersection.geometry().center());
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param globalPos The position of the center of the boundary intersection
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    void dirichletAtPos(PrimaryVariables &values,
-            const GlobalPosition &globalPos) const
-    {
-        // Throw an exception (there is no reasonable default value
-        // for Dirichlet conditions)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem specifies that some boundary "
-                   "segments are dirichlet, but does not provide "
-                   "a dirichletAtPos() method.");
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
-     * \param intersection The boundary intersection
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     */
-    void neumann(PrimaryVariables &values,
-            const Intersection &intersection) const
-    {
-        // forward it to the interface with only the global position
-        asImp_().neumannAtPos(values, intersection.geometry().center());
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
-     * \param globalPos The position of the center of the boundary intersection
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     */
-    void neumannAtPos(PrimaryVariables &values,
-            const GlobalPosition &globalPos) const
-    {
-        // Throw an exception (there is no reasonable default value
-        // for Neumann conditions)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem specifies that some boundary "
-                   "segments are neumann, but does not provide "
-                   "a neumannAtPos() method.");
-    }
-
-    /*!
-     * \brief Evaluate the source term
-     *
-     * \param values The source and sink values for the conservation equations
-     * \param element The element
-     *
-     * For this method, the \a values parameter stores the rate mass
-     * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
-     */
-    void source(PrimaryVariables &values,
-                const Element &element) const
-    {
-        // forward to generic interface
-        asImp_().sourceAtPos(values, element.geometry().center());
-    }
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * \param values The source and sink values for the conservation equations
-     * \param globalPos The position of the center of the finite volume
-     *            for which the source term ought to be
-     *            specified in global coordinates
-     *
-     * For this method, the \a values parameter stores the rate mass
-     * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
-     */
-    void sourceAtPos(PrimaryVariables &values,
-            const GlobalPosition &globalPos) const
-    {         // Throw an exception (there is no initial condition)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide "
-                   "a sourceAtPos() method.");
-        }
-
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * \param values The initial values for the primary variables
-     * \param element The element
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
-     */
-    void initial(PrimaryVariables &values,
-                 const Element &element) const
-    {
-        // forward to generic interface
-        asImp_().initialAtPos(values, element.geometry().center());
-    }
-
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param globalPos The position of the center of the finite volume
-     *            for which the initial values ought to be
-     *            set (in global coordinates)
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    void initialAtPos(PrimaryVariables &values,
-            const GlobalPosition &globalPos) const
-    {
-        // initialize with 0 by default
-        values = 0;
-    }
 
     /*!
      * \brief Called by the Dumux::TimeManager in order to
@@ -323,7 +123,6 @@ public:
     void init()
     {
         // set the initial condition of the model
-        variables_.initialize();
         model().initialize();
     }
 
@@ -332,14 +131,14 @@ public:
      *        integration.
      */
     void preTimeStep()
-    {}
+    { };
 
     /*!
      * \brief Called by Dumux::TimeManager in order to do a time
      *        integration on the model.
      */
     void timeIntegration()
-    {}
+    { };
 
     /*!
      * \brief Called by Dumux::TimeManager whenever a solution for a
@@ -350,7 +149,7 @@ public:
      * current solution to disk.
      */
     void postTimeStep()
-    {}
+    { };
 
     /*!
      * \brief Called by the time manager after everything which can be
@@ -364,13 +163,13 @@ public:
      * \brief Returns the current time step size [seconds].
      */
     Scalar timeStepSize() const
-    { return timeManager().timeStepSize(); }
+    { return timeManager_.timeStepSize(); }
 
     /*!
      * \brief Sets the current time step size [seconds].
      */
     void setTimeStepSize(Scalar dt)
-    { timeManager().setTimeStepSize(dt); }
+    { return timeManager_.setTimeStepSize(dt); }
 
     /*!
      * \brief Called by Dumux::TimeManager whenever a solution for a
@@ -378,7 +177,7 @@ public:
      *        been updated.
      */
     Scalar nextTimeStepSize(Scalar dt)
-    { return timeManager().timeStepSize();}
+    { return timeManager_.timeStepSize();}
 
     /*!
      * \brief Returns true if a restart file should be written to
@@ -396,25 +195,6 @@ public:
     }
 
     /*!
-     * \brief Sets a time interval for Output
-     *
-     * The default is 0.0 -> Output determined by output number interval (<tt>setOutputInterval(int)</tt>)
-     */
-    void setOutputTimeInterval(const Scalar timeInterval)
-    {
-        outputTimeInterval_ = (timeInterval > 0.0) ? timeInterval : 1e100;
-        timeManager().startNextEpisode(outputTimeInterval_);
-    }
-
-    /*!
-     * \brief Sets the interval for Output
-     *
-     * The default is 1 -> Output every time step
-     */
-    void setOutputInterval(int interval)
-    { outputInterval_ = interval; }
-
-    /*!
      * \brief Returns true if the current solution should be written to
      *        disk (i.e. as a VTK file)
      *
@@ -422,40 +202,23 @@ public:
      * very time step. This file is intented to be overwritten by the
      * implementation.
      */
-
     bool shouldWriteOutput() const
-    {
-        if (outputInterval_ > 0)
-        {
-            if (timeManager().timeStepIndex() % outputInterval_ == 0
-                || timeManager().willBeFinished()
-                || timeManager().episodeWillBeOver())
-            {
-                return true;
-            }
-        }
-        else if (timeManager().willBeFinished()
-                 || timeManager().episodeWillBeOver() || timeManager().timeStepIndex() == 0)
-        {
-            return true;
-        }
-        return false;
-    }
+    { return true; }
 
     void addOutputVtkFields()
-    {}
+    {
+        model().addOutputVtkFields(resultWriter_);
+    }
 
     //! Write the fields current solution into an VTK output file.
-    void writeOutput(bool verbose = true)
+    void writeOutput()
     {
-        if (verbose && gridView().comm().rank() == 0)
+        if (gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
-        if (!resultWriter_)
-            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView(), asImp_().name());
-        resultWriter_->beginWrite(timeManager().time() + timeManager().timeStepSize());
-        model().addOutputVtkFields(*resultWriter_);
+
+        resultWriter_.beginTimestep(timeManager_.time() + timeManager_.timeStepSize(), gridView());
         asImp_().addOutputVtkFields();
-        resultWriter_->endWrite();
+        resultWriter_.endTimestep();
     }
 
     /*!
@@ -463,17 +226,10 @@ public:
      */
     void episodeEnd()
     {
-        if (outputTimeInterval_ > 0.0 && !timeManager().finished())
-        {
-            timeManager().startNextEpisode(outputTimeInterval_);
-        }
-        else if (!timeManager().finished())
-        {
-            std::cerr << "The end of an episode is reached, but the problem "
-                      << "does not override the episodeEnd() method. "
-                      << "Doing nothing!\n";
-        }
-    }
+        std::cerr << "The end of an episode is reached, but the problem "
+                  << "does not override the episodeEnd() method. "
+                  << "Doing nothing!\n";
+    };
 
     // \}
 
@@ -496,7 +252,7 @@ public:
      * the application problem is declared! If not, the default name "sim"
      * will be used.
      */
-    void setName(const char *newName)
+    static void setName(const char *newName)
     {
         simname_ = newName;
     }
@@ -508,42 +264,30 @@ public:
     { return gridView_; }
 
     /*!
-     * \brief Returns the mapper for vertices to indices.
-     */
-    const VertexMapper &vertexMapper() const
-    { return variables_.vertexMapper(); }
-
-    /*!
-     * \brief Returns the mapper for elements to indices.
-     */
-    const ElementMapper &elementMapper() const
-    { return variables_.elementMapper(); }
-
-    /*!
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the smallest values.
      */
-    const GlobalPosition &bBoxMin() const
-    { return bBoxMin_; }
+    const GlobalPosition &bboxMin() const
+    { return bboxMin_; }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the largest values.
      */
-    const GlobalPosition &bBoxMax() const
-    { return bBoxMax_; }
+    const GlobalPosition &bboxMax() const
+    { return bboxMax_; }
 
     /*!
      * \brief Returns TimeManager object used by the simulation
      */
     TimeManager &timeManager()
-    { return *timeManager_; }
+    { return timeManager_; }
 
     /*!
      * \brief \copybrief Dumux::OneModelProblem::timeManager()
      */
     const TimeManager &timeManager() const
-    { return *timeManager_; }
+    { return timeManager_; }
 
     /*!
      * \brief Returns variables object.
@@ -591,11 +335,11 @@ public:
 
         Restarter res;
         res.serializeBegin(asImp_());
-        std::cout << "Serialize to file " << res.fileName() << "\n";
+        std::cerr << "Serialize to file " << res.fileName() << "\n";
 
-        timeManager().serialize(res);
-        resultWriter().serialize(res);
-        res.template deserializeEntities<0> (model(), gridView_);
+        timeManager_.serialize(res);
+        resultWriter_.serialize(res);
+        model().serialize(res);
 
         res.serializeEnd();
     }
@@ -606,39 +350,24 @@ public:
      *
      * It is the inverse of the serialize() method.
      */
-    void restart(double tRestart)
+    void deserialize(double t)
     {
         typedef Dumux::Restart Restarter;
 
         Restarter res;
-        res.deserializeBegin(asImp_(), tRestart);
-        std::cout << "Deserialize from file " << res.fileName() << "\n";
+        res.deserializeBegin(asImp_(), t);
+        std::cerr << "Deserialize from file " << res.fileName() << "\n";
 
-        timeManager().deserialize(res);
-        resultWriter().deserialize(res);
-        res.template deserializeEntities<0> (model(), gridView_);
+        timeManager_.deserialize(res);
+        resultWriter_.deserialize(res);
+        model().deserialize(res);
 
         res.deserializeEnd();
-    }
+    };
 
     // \}
 
 protected:
-    VtkMultiWriter& resultWriter()
-    {
-        if (!resultWriter_)
-            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
-        return *resultWriter_;
-    }
-
-    VtkMultiWriter& resultWriter() const
-    {
-        if (!resultWriter_)
-            resultWriter_ = std::make_shared<VtkMultiWriter>(gridView_, asImp_().name());
-        return *resultWriter_;
-    }
-
-private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
@@ -647,24 +376,36 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    std::string simname_; // a string for the name of the current simulation,
+    VtkMultiWriter& resultWriter()
+    {
+        return resultWriter_;
+    }
+
+    VtkMultiWriter& resultWriter() const
+    {
+        return resultWriter_;
+    }
+
+private:
+    static std::string simname_; // a string for the name of the current simulation,
                                   // which could be set by means of an program argument,
                                  // for example.
     const GridView gridView_;
 
-    GlobalPosition bBoxMin_;
-    GlobalPosition bBoxMax_;
+    GlobalPosition bboxMin_;
+    GlobalPosition bboxMax_;
 
-    std::shared_ptr<TimeManager> timeManager_;
+    TimeManager timeManager_;
 
     Variables variables_;
 
-    std::shared_ptr<Model> model_;
+    Model* model_;
 
-    std::shared_ptr<VtkMultiWriter> resultWriter_;
-    int outputInterval_;
-    Scalar outputTimeInterval_;
+    VtkMultiWriter resultWriter_;
 };
-
+// definition of the static class member simname_,
+// which is necessary because it is of type string.
+template <class TypeTag, class Implementation>
+std::string OneModelProblem<TypeTag, Implementation>::simname_="sim"; //initialized with default "sim"
 }
 #endif

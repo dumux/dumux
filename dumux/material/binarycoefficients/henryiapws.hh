@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -32,23 +34,13 @@ namespace Dumux
  * \ingroup Binarycoefficients
  * \brief The Henry constants in liquid water using the IAPWS 2004
  *        formulation.
- * \param E Correlation parameter
- * \param F Correlation parameter
- * \param G Correlation parameter
- * \param H Correlation parameter
- * \param temperature the temperature \f$\mathrm{[K]}\f$
  *
- * This function calculates \f$\mathrm{K_D}\f$, see:
+ * This function calculates \f$K_D\f$, see:
  *
  * IAPWS: "Guideline on the Henry's Constant and Vapor-Liquid
  * Distribution Constant for Gases in H2O and D2O at High
  * Temperatures"
- * Equation (5)
  * http://www.iapws.org/relguide/HenGuide.pdf
- *
- * Range of validity: T = {278.12 ; 636.46}
- * approximations beyond this range are increasingly incorrect.
- * However, close to the critical the values are more, again.
  */
 template <class Scalar>
 inline Scalar henryIAPWS(Scalar E,
@@ -58,11 +50,6 @@ inline Scalar henryIAPWS(Scalar E,
                          Scalar temperature)
 {
     typedef Dumux::H2O<Scalar> H2O;
-
-    // regularizing temperature helps for stability.
-    // Results are unphysical!
-    if (temperature > H2O::criticalTemperature())
-        temperature = H2O::criticalTemperature();
 
     Scalar Tr = temperature/H2O::criticalTemperature();
     Scalar tau = 1 - Tr;
@@ -93,7 +80,7 @@ inline Scalar henryIAPWS(Scalar E,
     // multiply it with the vapor pressure of water in order to get
     // derivative of the partial pressure.
     return exp(exponent)*H2O::vaporPressure(temperature);
-}
-}
+};
+};
 
 #endif // DUMUX_HENRY_IAPWS_HH

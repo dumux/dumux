@@ -1,7 +1,0 @@
-add_subdirectory("navierstokes")
-add_subdirectory("stokes")
-add_subdirectory("stokes2c")
-add_subdirectory("stokes2cni")
-add_subdirectory("zeroeq")
-add_subdirectory("zeroeq2c")
-add_subdirectory("zeroeq2cni")

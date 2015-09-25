@@ -1,8 +1,0 @@
-
-#install headers
-install(FILES
-2padapter.hh
-2poftadapter.hh
-mplinearmaterial.hh
-mplinearmaterialparams.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions/mp)

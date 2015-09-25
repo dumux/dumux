@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -23,60 +25,37 @@
 #ifndef DUMUX_VALGRIND_HH
 #define DUMUX_VALGRIND_HH
 
-#ifndef __clang__
+#ifndef HAVE_VALGRIND
+// make sure that the HAVE_VALGRIND macro is always defined
+#define HAVE_VALGRIND 0
+#endif
+
 #if __GNUC__ < 4 || (__GNUC__ == 4  && __GNUC_MINOR__ < 5)
 // do not do static_asserts for gcc < 4.5 (semantics changed, so old
 // GCCs will complain when using static_assert)
-#  define static_assert(a, b)
+#define static_assert(a, b)
 
 // do not do valgrind client requests for gcc < 4.5 (old GCCs do not
-// support anonymous template arguments which results in errors for
-// BoundaryTypes)
-#  ifdef HAVE_VALGRIND
-#    undef HAVE_VALGRIND
-#  endif
-#endif // GCC < 4.5
-#endif // __clang__
-
-#ifndef HAVE_VALGRIND
-// make sure that the HAVE_VALGRIND macro is always defined
-#  define HAVE_VALGRIND 0
-#endif
-
-#if ! HAVE_VALGRIND
+// support anonymous template arguments which results in errors inside
+// the BoundaryTypes class)
+#define SetUndefined(a) foo();
+#define SetDefined(a) foo();
+#define CheckDefined(a) foo();
+#define SetNoAccess(a) foo();
 namespace Valgrind
 {
-bool boolBlubb(bool value) { return value; }
-void voidBlubb() { }
-
-#define SetUndefined(t) voidBlubb()
-#define SetDefined(t) voidBlubb()
-#define CheckDefined(t) boolBlubb(true)
-#define SetNoAccess(t) voidBlubb()
-#define Running() boolBlubb(false)
+inline void foo() {}; // dummy function
 }
+
 #else
 
+#if HAVE_VALGRIND
 #include <valgrind/memcheck.h>
+#endif // HAVE_VALGRIND
 
 namespace Valgrind
 {
 /*!
- * \ingroup Valgrind
- * \brief Returns whether the program is running under Valgrind or not.
- */
-inline bool Running()
-{
-#if !defined NDEBUG && HAVE_VALGRIND
-    return RUNNING_ON_VALGRIND;
-#else
-    return false;
-#endif
-}
-
-
-/*!
- * \ingroup Valgrind
  * \brief Make valgrind complain if the object occupied by an object
  *        is undefined.
  *
@@ -88,29 +67,14 @@ inline bool Running()
  * \param value the object which valgrind should check
  */
 template <class T>
-inline bool CheckDefined(const T &value)
+inline void CheckDefined(const T &value)
 {
-#if !defined NDEBUG && HAVE_VALGRIND
-    unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(&value, sizeof(T));
-    return tmp == 0;
-#else
-    return true;
-#endif
-}
-
-template <class T>
-inline bool CheckDefined(const T *value, int size)
-{
-#if !defined NDEBUG && HAVE_VALGRIND
-    unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(value, size*sizeof(T));
-    return tmp == 0;
-#else
-    return true;
+#if HAVE_VALGRIND
+    VALGRIND_CHECK_MEM_IS_DEFINED(&value, sizeof(T));
 #endif
 }
 
 /*!
- * \ingroup Valgrind
  * \brief Make the memory on which an object resides undefined.
  *
  * \tparam T The type of the object which ought to be set to undefined
@@ -120,21 +84,12 @@ inline bool CheckDefined(const T *value, int size)
 template <class T>
 inline void SetUndefined(const T &value)
 {
-#if !defined NDEBUG && HAVE_VALGRIND
+#if HAVE_VALGRIND
     VALGRIND_MAKE_MEM_UNDEFINED(&value, sizeof(T));
 #endif
 }
 
-template <class T>
-inline void SetUndefined(const T *value, int size)
-{
-#if !defined NDEBUG && HAVE_VALGRIND
-    VALGRIND_MAKE_MEM_UNDEFINED(value, size*sizeof(T));
-#endif
-}
-
 /*!
- * \ingroup Valgrind
  * \brief Make the memory on which an object resides defined.
  *
  * \tparam T The type of the object which valgrind should consider as defined
@@ -144,21 +99,12 @@ inline void SetUndefined(const T *value, int size)
 template <class T>
 inline void SetDefined(const T &value)
 {
-#if !defined NDEBUG && HAVE_VALGRIND
+#if HAVE_VALGRIND
     VALGRIND_MAKE_MEM_DEFINED(&value, sizeof(T));
 #endif
 }
 
-template <class T>
-inline void SetDefined(const T *value, int n)
-{
-#if !defined NDEBUG && HAVE_VALGRIND
-    VALGRIND_MAKE_MEM_DEFINED(value, n*sizeof(T));
-#endif
-}
-
 /*!
- * \ingroup Valgrind
  * \brief Make valgrind complain if an object's memory is accessed.
  *
  * \tparam T The type of the object which valgrind should complain if accessed
@@ -168,16 +114,8 @@ inline void SetDefined(const T *value, int n)
 template <class T>
 inline void SetNoAccess(const T &value)
 {
-#if !defined NDEBUG && HAVE_VALGRIND
+#if HAVE_VALGRIND
     VALGRIND_MAKE_MEM_NOACCESS(&value, sizeof(T));
-#endif
-}
-
-template <class T>
-inline void SetNoAccess(const T *value, int n)
-{
-#if !defined NDEBUG && HAVE_VALGRIND
-    VALGRIND_MAKE_MEM_NOACCESS(value, n*sizeof(T));
 #endif
 }
 

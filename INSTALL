@@ -18,33 +18,36 @@ In order to compile DuMuX, you first have to download and extract the
 following DUNE modules into your source directory:
  
   - dune-common        from [1]
-  - dune-geometry      from [1]
   - dune-grid          from [1]
   - dune-istl          from [1]
   - dune-localfuctions from [1]
+  - dune-pdelab        from [2]
 
-Use either the 2.2 release or the 2.3-svn trunk. 
+Use the 2.0 release of the DUNE core modules and the 2.0 snapshot of 
+dune-pdelab. 
 
-With option files you can enable options, set compiler flags and
-define paths to external libraries. Exemplary option files are located 
-in $DUMUX_ROOT/optim.opts and $DUMUX_ROOT/debug.opts respectively. 
-($DUMUX_ROOT is the directory where the unpacked files of the DuMuX 
-distribution are located.) 
+Next, you need to decide whether you want to compile in debug or in
+optimized mode. Example files are located in $DUMUX_ROOT/optim.opts 
+and $DUMUX_ROOT/debug.opts respectively. ($DUMUX_ROOT is the 
+directory where the unpacked files of the DuMuX distribution are 
+located.) 
 
-A mandatory option to be included in CONFIGURE_FLAGS is:
---enable-fieldvector-size-is-method
-
-Now compile everything with
+Next, compile everything with
 
   ./dune-common/bin/dunecontrol --opts=$(DUMUX_ROOT)/optim.opts --module=dumux all
 
+Finally, install DUNE and DuMuX headers to your system by
+
+  ./dune-common/bin/dunecontrol --module=dumux make install
+
 A more comprehensive introduction to the DUNE build system can be
-found in [2].
+found in [3].
 
 Links
 -----
 
 0. http://www.dune-project.org/doc/installation-notes.html
 1. http://www.dune-project.org/download.html
-2. http://www.dune-project.org/doc/buildsystem/buildsystem.pdf
+2. http://www.dune-project.org/downloadext.html
+3. http://www.dune-project.org/doc/buildsystem/buildsystem.pdf
 

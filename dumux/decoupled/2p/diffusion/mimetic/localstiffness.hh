@@ -1,8 +1,5 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id: localstiffness.hh 560 2009-06-10 09:32:22Z sander $
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
- *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
  *   the Free Software Foundation, either version 2 of the License, or       *
@@ -10,41 +7,43 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+#ifndef DUNE_LOCALSTIFFNESS_HH
+#define DUNE_LOCALSTIFFNESS_HH
 
-#ifndef DUMUX_LOCAL_STIFFNESS_HH
-#define DUMUX_LOCAL_STIFFNESS_HH
-
-#include <array>
 #include<iostream>
 #include<vector>
 #include<set>
 #include<map>
+#include<stdio.h>
+#include<stdlib.h>
 
 #include<dune/common/timer.hh>
 #include<dune/common/fvector.hh>
 #include<dune/common/fmatrix.hh>
-#include<dune/geometry/type.hh>
+#include<dune/common/array.hh>
+#include<dune/common/exceptions.hh>
+#include<dune/common/geometrytype.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/istl/operators.hh>
 #include<dune/istl/bvector.hh>
 #include<dune/istl/matrix.hh>
-
 #include<dumux/common/boundaryconditions.hh>
-#include<dumux/decoupled/common/decoupledproperties.hh>
+
 /**
  * @file
  * @brief  defines a class for piecewise linear finite element functions
+ * @author Peter Bastian
  */
 
 namespace Dumux
 {
-  /** @ingroup MimeticPressure2p
+  /** @ingroup Mimetic2p
    *
    * @{
    */
@@ -60,24 +59,23 @@ namespace Dumux
   space and access to the local stiffness matrix. The actual assembling is done
   in a derived class via the virtual assemble method.
 
-  \tparam TypeTag The problem TypeTag
+  \tparam GV A grid view type
+  \tparam RT The field type used in the elements of the stiffness matrix
   \tparam m number of degrees of freedom per node (system size)
    */
-  template<class TypeTag, int m>
+  template<class GV, class RT, int m>
   class LocalStiffness
   {
-      typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     // grid types
-      typedef typename GridView::template Codim<0>::Entity Entity;
-    enum {n=GridView::dimension};
+      typedef typename GV::Grid::ctype DT;
+      typedef typename GV::template Codim<0>::Entity Entity;
+    enum {n=GV::dimension};
 
   public:
     // types for matrics, vectors and boundary conditions
-    typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
-    typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
-        typedef std::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
-        typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef Dune::FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
+    typedef Dune::FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
+        typedef Dune::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
 
     virtual ~LocalStiffness ()
     {
@@ -206,7 +204,7 @@ namespace Dumux
     /*! Access boundary condition type for each degree of freedom. Elements are
       undefined without prior call to the assemble method.
      */
-     const BoundaryTypes& bc (int i) const
+     const BCBlockType& bc (int i) const
      {
        return bctype[i];
      }
@@ -229,7 +227,7 @@ namespace Dumux
     // assembled data
         Dune::Matrix<MBlockType> A;
         std::vector<VBlockType> b;
-        std::vector<BoundaryTypes> bctype;
+        std::vector<BCBlockType> bctype;
 
   };
 
@@ -239,24 +237,23 @@ namespace Dumux
   space and access to the local stiffness matrix. The actual assembling is done
   in a derived class via the virtual assemble method.
 
-  \tparam TypeTag The problem TypeTag
+  \tparam GV A grid view type
+  \tparam RT The field type used in the elements of the stiffness matrix
   \tparam m number of degrees of freedom per node (system size)
    */
-  template<class TypeTag, int m>
-  class LinearLocalStiffness : public LocalStiffness<TypeTag,m>
+  template<class GV, class RT, int m>
+  class LinearLocalStiffness : public LocalStiffness<GV,RT,m>
   {
-      typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
     // grid types
-      typedef typename GridView::template Codim<0>::Entity Entity;
-    enum {n=GridView::dimension};
+      typedef typename GV::Grid::ctype DT;
+      typedef typename GV::template Codim<0>::Entity Entity;
+    enum {n=GV::dimension};
 
   public:
     // types for matrics, vectors and boundary conditions
-      typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
-      typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
-      typedef std::array<Dumux::BoundaryConditions::Flags,m> BCBlockType;    // componentwise boundary conditions
+      typedef Dune::FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
+      typedef Dune::FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
+      typedef Dune::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
 
     /*! initialize local stiffness matrix */
       LinearLocalStiffness ()

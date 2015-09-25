@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -31,7 +33,6 @@ namespace Dumux
 {
 
 /*!
- * \ingroup BC
  * \brief Class to specify the type of a boundary.
  */
 template <int numEq>
@@ -58,11 +59,10 @@ public:
             boundaryInfo_[i].isOutflow = 0;
             boundaryInfo_[i].isCouplingInflow = 0;
             boundaryInfo_[i].isCouplingOutflow = 0;
-            boundaryInfo_[i].isMortarCoupling = 0;
 
             eq2pvIdx_[i] = i;
             pv2eqIdx_[i] = i;
-        }
+        };
     }
 
     /*!
@@ -101,7 +101,6 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 0;
             boundaryInfo_[eqIdx].isCouplingInflow = 0;
             boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-            boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
             Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
@@ -119,7 +118,6 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 0;
             boundaryInfo_[eqIdx].isCouplingInflow = 0;
             boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-            boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
             eq2pvIdx_[eqIdx] = eqIdx;
             pv2eqIdx_[eqIdx] = eqIdx;
@@ -140,7 +138,6 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 1;
             boundaryInfo_[eqIdx].isCouplingInflow = 0;
             boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-            boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
             Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
@@ -158,7 +155,6 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 0;
             boundaryInfo_[eqIdx].isCouplingInflow = 1;
             boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-            boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
             Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
@@ -176,25 +172,6 @@ public:
             boundaryInfo_[eqIdx].isOutflow = 0;
             boundaryInfo_[eqIdx].isCouplingInflow = 0;
             boundaryInfo_[eqIdx].isCouplingOutflow = 1;
-            boundaryInfo_[eqIdx].isMortarCoupling = 0;
-
-            Valgrind::SetDefined(boundaryInfo_[eqIdx]);
-        }
-    }
-
-    /*!
-     * \brief Set all boundary conditions to mortar coupling.
-     */
-    void setAllMortarCoupling()
-    {
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-            boundaryInfo_[eqIdx].visited = 1;
-            boundaryInfo_[eqIdx].isDirichlet = 0;
-            boundaryInfo_[eqIdx].isNeumann = 0;
-            boundaryInfo_[eqIdx].isOutflow = 0;
-            boundaryInfo_[eqIdx].isCouplingInflow = 0;
-            boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-            boundaryInfo_[eqIdx].isMortarCoupling = 1;
 
             Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
@@ -214,7 +191,6 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 0;
         boundaryInfo_[eqIdx].isCouplingInflow = 0;
         boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -236,7 +212,6 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 0;
         boundaryInfo_[eqIdx].isCouplingInflow = 0;
         boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         // update the equation <-> primary variable mapping
         eq2pvIdx_[eqIdx] = pvIdx;
@@ -260,7 +235,6 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 1;
         boundaryInfo_[eqIdx].isCouplingInflow = 0;
         boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -276,7 +250,6 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 0;
         boundaryInfo_[eqIdx].isCouplingInflow = 1;
         boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -292,23 +265,6 @@ public:
         boundaryInfo_[eqIdx].isOutflow = 0;
         boundaryInfo_[eqIdx].isCouplingInflow = 0;
         boundaryInfo_[eqIdx].isCouplingOutflow = 1;
-        boundaryInfo_[eqIdx].isMortarCoupling = 0;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
-    }
-
-    /*!
-     * \brief Set a boundary condition for a single equation to mortar coupling.
-     */
-    void setMortarCoupling(int eqIdx)
-    {
-        boundaryInfo_[eqIdx].visited = 1;
-        boundaryInfo_[eqIdx].isDirichlet = 0;
-        boundaryInfo_[eqIdx].isNeumann = 0;
-        boundaryInfo_[eqIdx].isOutflow = 0;
-        boundaryInfo_[eqIdx].isCouplingInflow = 0;
-        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
-        boundaryInfo_[eqIdx].isMortarCoupling = 1;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
@@ -317,15 +273,16 @@ public:
      * \brief Set a dirichlet boundary condition for a single primary
      *        variable.
      *
-     * Depending on the discretization, setting the Dirichlet condition
-     * will replace the balance equation with index equal to pvIdx.
+     * WARNING: This method assumes that the equation with the same
+     * index as the primary variable to be set is used to specify the
+     * Dirichlet condition. USE WITH _GREAT_ CARE!
      *
-     * \param pvIdx The index of the primary variable inside a
-     *              PrimaryVariables object.
+     * \param eqIdx The index of the equation which is assumed to be
+     *              equal to the index of the primary variable
      */
-    void setDirichlet(int pvIdx)
+    void setDirichlet(int eqIdx)
     {
-        setDirichlet(pvIdx, pvIdx);
+        setDirichlet(eqIdx, eqIdx);
     }
 
     /*!
@@ -335,7 +292,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isDirichlet(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isDirichlet; }
+    { return boundaryInfo_[eqIdx].isDirichlet; };
 
     /*!
      * \brief Returns true if some equation is used to specify a
@@ -347,7 +304,7 @@ public:
             if (boundaryInfo_[i].isDirichlet)
                 return true;
         return false;
-    }
+    };
 
     /*!
      * \brief Returns true if an equation is used to specify a
@@ -356,7 +313,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isNeumann(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isNeumann; }
+    { return boundaryInfo_[eqIdx].isNeumann; };
 
     /*!
      * \brief Returns true if some equation is used to specify a
@@ -368,7 +325,7 @@ public:
             if (boundaryInfo_[i].isNeumann)
                 return true;
         return false;
-    }
+    };
 
     /*!
      * \brief Returns true if an equation is used to specify an
@@ -377,7 +334,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isOutflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isOutflow; }
+    { return boundaryInfo_[eqIdx].isOutflow; };
 
     /*!
      * \brief Returns true if some equation is used to specify an
@@ -389,7 +346,7 @@ public:
             if (boundaryInfo_[i].isOutflow)
                 return true;
         return false;
-    }
+    };
 
     /*!
      * \brief Returns true if an equation is used to specify an
@@ -398,7 +355,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isCouplingInflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isCouplingInflow; }
+    { return boundaryInfo_[eqIdx].isCouplingInflow; };
 
     /*!
      * \brief Returns true if some equation is used to specify an
@@ -410,7 +367,7 @@ public:
             if (boundaryInfo_[i].isCouplingInflow)
                 return true;
         return false;
-    }
+    };
 
     /*!
      * \brief Returns true if an equation is used to specify an
@@ -419,7 +376,7 @@ public:
      * \param eqIdx The index of the equation
      */
     bool isCouplingOutflow(unsigned eqIdx) const
-    { return boundaryInfo_[eqIdx].isCouplingOutflow; }
+    { return boundaryInfo_[eqIdx].isCouplingOutflow; };
 
     /*!
      * \brief Returns true if some equation is used to specify an
@@ -431,30 +388,7 @@ public:
             if (boundaryInfo_[i].isCouplingOutflow)
                 return true;
         return false;
-    }
-
-    /*!
-     * \brief Returns true if an equation is used to specify a
-     *        mortar coupling condition.
-     *
-     * \param eqIdx The index of the equation
-     */
-    bool isMortarCoupling(unsigned eqIdx) const
-    {
-        return boundaryInfo_[eqIdx].isMortarCoupling;
-    }
-
-    /*!
-     * \brief Returns true if some equation is used to specify a
-     *        mortar coupling condition.
-     */
-    bool hasMortarCoupling() const
-    {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isMortarCoupling)
-                return true;
-        return false;
-    }
+    };
 
     /*!
      * \brief Returns the index of the equation which should be used
@@ -465,7 +399,7 @@ public:
      *              by the Dirichlet condition.
      */
     unsigned dirichletToEqIndex(unsigned pvIdx) const
-    { return pv2eqIdx_[pvIdx]; }
+    { return pv2eqIdx_[pvIdx]; };
 
     /*!
      * \brief Returns the index of the primary variable which should
@@ -476,7 +410,7 @@ public:
      *              the Dirichlet condition.
      */
     unsigned eqToDirichletIndex(unsigned eqIdx) const
-    { return eq2pvIdx_[eqIdx]; }
+    { return eq2pvIdx_[eqIdx]; };
 
 private:
     // this is a bitfield structure!
@@ -487,7 +421,6 @@ private:
         unsigned char isOutflow : 1;
         unsigned char isCouplingInflow : 1;
         unsigned char isCouplingOutflow : 1;
-        unsigned char isMortarCoupling : 1;
     } boundaryInfo_[numEq];
 
     unsigned char eq2pvIdx_[numEq];

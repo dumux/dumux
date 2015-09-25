@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -45,6 +47,7 @@ namespace Dumux
 template <class Scalar>
 class N2 : public Component<Scalar, N2<Scalar> >
 {
+    typedef Component<Scalar, N2<Scalar> >  ParentType;
     typedef Dumux::IdealGas<Scalar> IdealGas;
 
 public:
@@ -135,18 +138,6 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return true; }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { return true; }
-
-    /*!
      * \brief The pressure of gaseous \f$N_2\f$ in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
@@ -157,6 +148,25 @@ public:
         // Assume an ideal gas
         return IdealGas::pressure(temperature, density/molarMass());
     }
+
+    /*!
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of \f$N_2\f$ gas at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidDensity for N2"); }
+
+    /*!
+     * \brief The pressure of liquid nitrogen  in \f$\mathrm{[Pa]}\f$ at a given density and
+     *        temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
+     */
+    static Scalar liquidPressure(Scalar temperature, Scalar density)
+    { DUNE_THROW(Dune::NotImplemented, "liquidPressure for N2"); }
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure nitrogen gas.
@@ -176,6 +186,9 @@ public:
         const Scalar cpVapC = 2.680e-5;
         const Scalar cpVapD = -1.168e-8;
 
+        //Scalar cp =
+        //    cpVapA + T*(cpVapB + T*(cpVapC + T*cpVapD));
+
         // calculate: \int_0^T c_p dT
         return
             1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
@@ -184,62 +197,40 @@ public:
                (cpVapB/2 + T*
                 (cpVapC/3 + T*
                  (cpVapD/4))));
-
-//#warning NIST DATA STUPID INTERPOLATION
-//        Scalar T2 = 300.;
-//        Scalar T1 = 285.;
-//        Scalar h2 = 311200.;
-//        Scalar h1 = 295580.;
-//        Scalar h = h1+ (h2-h1) / (T2-T1) * (T-T1);
-//        return h ;
     }
+
+    /*!
+     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure liquid \f$N_2\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidEnthalpy(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidEnthalpy for N2"); }
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure nitrogen gas.
      *
-     *        Definition of enthalpy: \f$h= u + pv = u + p / \rho\f$.
-     *
-     *        Rearranging for internal energy yields: \f$u = h - pv\f$.
-     *
-     *        Exploiting the Ideal Gas assumption (\f$pv = R_{\textnormal{specific}} T\f$)gives: \f$u = h - R / M T \f$.
-     *
-     *        The universal gas constant can only be used in the case of molar formulations.
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static const Scalar gasInternalEnergy(Scalar temperature,
                                           Scalar pressure)
     {
+
         return
             gasEnthalpy(temperature, pressure) -
-            1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
             IdealGas::R*temperature; // = pressure * spec. volume for an ideal gas
     }
 
     /*!
-     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure
-     *        nitrogen gas.
+     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure liquid \f$N_2\f$.
      *
-     * This is equivalent to the partial derivative of the specific
-     * enthalpy to the temperature.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static const Scalar gasHeatCapacity(Scalar T,
-                                        Scalar pressure)
-    {
-        // method of Joback
-        const Scalar cpVapA = 31.15;
-        const Scalar cpVapB = -0.01357;
-        const Scalar cpVapC = 2.680e-5;
-        const Scalar cpVapD = -1.168e-8;
-
-        return
-            1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
-
-            cpVapA + T*
-            (cpVapB + T*
-             (cpVapC + T*
-              (cpVapD)));
-    }
+    static Scalar liquidInternalEnergy(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidInternalEnergy of N2"); }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$N_2\f$ at a given pressure and temperature.
@@ -277,8 +268,17 @@ public:
         // convertion from micro poise to Pa s
         return mu/1e6 / 10;
     }
+
+    /*!
+     * \brief The dynamic liquid viscosity \f$\mathrm{[Pa*s]}\f$ of pure \f$N_2\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidViscosity for N2"); }
 };
 
-} // end namespace
+} // end namepace
 
 #endif

@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -50,40 +52,40 @@ public:
         Valgrind::SetUndefined(*this);
     }
 
-    BrooksCoreyParams(Scalar pe, Scalar lambda)
-        : pe_(pe), lambda_(lambda)
+    BrooksCoreyParams(Scalar pe, Scalar alpha)
+        : pe_(pe), alpha_(alpha)
     {
     }
 
     /*!
-     * \brief Returns the entry pressure in \f$\mathrm{[Pa]}\f$
+     * \brief Returns the entry pressure [Pa]
      */
     Scalar pe() const
     { return pe_; }
 
     /*!
-     * \brief Set the entry pressure in \f$\mathrm{[Pa]}\f$]
+     * \brief Set the entry pressure [Pa]
      */
     void setPe(Scalar v)
     { pe_ = v; }
 
 
     /*!
-     * \brief Returns the lambda shape parameter \f$\mathrm{[-]}\f$
+     * \brief Returns the alpha shape parameter
      */
-    Scalar lambda() const
-    { return lambda_; }
+    Scalar alpha() const
+    { return alpha_; }
 
     /*!
-     * \brief Set the lambda shape parameter \f$\mathrm{[-]}\f$
+     * \brief Set the alpha shape parameter
      */
-    void setLambda(Scalar v)
-    { lambda_ = v; }
+    void setAlpha(Scalar v)
+    { alpha_ = v; }
 
 private:
     Scalar pe_;
-    Scalar lambda_;
+    Scalar alpha_;
 };
-} // namespace Dumux
+}; // namespace Dumux
 
 #endif

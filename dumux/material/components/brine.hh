@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009-2010 by Melanie Darcis                               *
+ *   Copyright (C) 2009-2010 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -66,7 +68,7 @@ public:
         const Scalar M2 = 58e-3; // molar mass of NaCl [kg/mol]
         const Scalar X2 = salinity; // mass fraction of salt in brine
         return M1*M2/(M2 + X2*(M1 - M2));
-    }
+    };
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of brine.
@@ -78,7 +80,7 @@ public:
      * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of brine.
      */
     static Scalar criticalPressure()
-    { return H2O::criticalPressure(); /* [Pa] */ }
+    { return H2O::criticalPressure(); /* [N/m^2] */ }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at brine's triple point.
@@ -90,7 +92,7 @@ public:
      * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at brine's triple point.
      */
     static Scalar triplePressure()
-    { return H2O::triplePressure(); /* [Pa] */ }
+    { return H2O::triplePressure(); /* [N/m^2] */ }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure brine
@@ -100,7 +102,7 @@ public:
 
      */
     static Scalar vaporPressure(Scalar T)
-    { return H2O::vaporPressure(T); /* [Pa] */ }
+    { return H2O::vaporPressure(T); /* [N/m^2] */ }
 
     /*!
      * \brief Specific enthalpy of gaseous brine \f$\mathrm{[J/kg]}\f$.
@@ -181,44 +183,6 @@ public:
         return (h_ls);
     }
 
-
-    /*!
-     * \brief Specific isobaric heat capacity of liquid water \f$\mathrm{[J/kg]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *
-     * See:
-     *
-     * IAPWS: "Revised Release on the IAPWS Industrial Formulation
-     * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
-     */
-    static const Scalar liquidHeatCapacity(Scalar temperature,
-                                        Scalar pressure)
-    {
-        Scalar eps = temperature*1e-8;
-        return (liquidEnthalpy(temperature + eps, pressure) - liquidEnthalpy(temperature, pressure))/eps;
-    }
-
-    /*!
-     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/kg]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *
-     * See:
-     *
-     * IAPWS: "Revised Release on the IAPWS Industrial Formulation
-     * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
-     */
-    static const Scalar gasHeatCapacity(Scalar temperature,
-                                        Scalar pressure)
-    {
-        return H2O::gasHeatCapacity(temperature, pressure);
-    }
-
     /*!
      * \brief Specific internal energy of steam \f$\mathrm{[J/kg]}\f$.
      *
@@ -228,9 +192,7 @@ public:
     static const Scalar gasInternalEnergy(Scalar temperature,
                                           Scalar pressure)
     {
-        return
-            gasEnthalpy(temperature, pressure) -
-            pressure/gasDensity(temperature, pressure);
+        return H2O::gasInternalEnergy(temperature, pressure);
     }
 
     /*!
@@ -247,7 +209,6 @@ public:
             pressure/liquidDensity(temperature, pressure);
     }
 
-
     /*!
      * \brief The density of steam at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
      *
@@ -256,12 +217,6 @@ public:
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     { return H2O::gasDensity(temperature, pressure); }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { return H2O::gasIsIdeal(); }
 
     /*!
      * \brief The density of pure brine at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
@@ -287,24 +242,12 @@ public:
                     300*pMPa -
                     2400*pMPa*salinity +
                     TempC*(
-                        80.0 +
+                        80.0 -
                         3*TempC -
                         3300*salinity -
                         13*pMPa +
                         47*pMPa*salinity)));
     }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return H2O::gasIsCompressible(); }
-
-    /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
-     */
-    static bool liquidIsCompressible()
-    { return H2O::liquidIsCompressible(); }
 
     /*!
      * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
@@ -354,7 +297,7 @@ public:
      * \param pressure pressure of component
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
-    { return H2O::gasViscosity(temperature, pressure); }
+    { return H2O::gasViscosity(temperature, pressure); };
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure brine.
@@ -379,12 +322,12 @@ public:
     }
 };
 
+template <class Scalar, class H2O>
 /*!
  * \brief Default value for the salinity of the brine (dimensionless).
  */
-template <class Scalar, class H2O>
 Scalar Brine<Scalar, H2O>::salinity = 0.1; // also needs to be adapted in CO2 solubility table!
 
-} // end namespace
+} // end namepace
 
 #endif

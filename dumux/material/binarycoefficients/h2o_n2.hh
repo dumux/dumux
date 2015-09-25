@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -43,8 +45,9 @@ class H2O_N2
 {
 public:
     /*!
-     * \brief Henry coefficent \f$\mathrm{[Pa]}\f$  for molecular nitrogen in liquid water.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \brief Henry coefficent \f$\mathrm{[N/m^2]}\f$  for molecular nitrogen in liquid water.
+     *
+     * \copydetails Dumux::henryIAPWS
      */
     template <class Scalar>
     static Scalar henry(Scalar temperature)
@@ -55,7 +58,7 @@ public:
         const Scalar H = -29.4396;
 
         return henryIAPWS(E, F, G, H, temperature);
-    }
+    };
 
     /*!
      * \brief Binary diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular water and nitrogen.
@@ -73,15 +76,13 @@ public:
         // atomic diffusion volumes
         const Scalar SigmaNu[2] = { 13.1 /* H2O */,  18.5 /* N2 */ };
         // molar masses [g/mol]
-        const Scalar M[2] = { H2O::molarMass()*Scalar(1e3), N2::molarMass()*Scalar(1e3) };
+        const Scalar M[2] = { H2O::molarMass()*1e3, N2::molarMass()*1e3 };
 
         return fullerMethod(M, SigmaNu, temperature, pressure);
-    }
+    };
 
     /*!
      * \brief Diffusion coefficent \f$\mathrm{[m^2/s]}\f$ for molecular nitrogen in liquid water.
-     * \param temperature the temperature \f$\mathrm{[K]}\f$
-     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      *
      * The empirical equations for estimating the diffusion coefficient in
      * infinite solution which are presented in Reid, 1987 all show a
@@ -103,12 +104,11 @@ public:
     {
         const Scalar Texp = 273.15 + 25; // [K]
         const Scalar Dexp = 2.01e-9; // [m^2/s]
-
         return Dexp * temperature/Texp;
-    }
+    };
 };
 
 }
-} // end namespace
+} // end namepace
 
 #endif

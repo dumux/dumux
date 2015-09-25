@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,17 +12,19 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTBILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
 /*!
  * \file
  * \brief Provides the magic behind the DuMuX property system.
  *
- * \ingroup Properties
+ * \defgroup Properties Property System
+ *
  * Properties allow to associate arbitrary data types to
  * identifiers. A property is always defined on a pair (TypeTag,
  * PropertyTag) where TypeTag is the identifier for the object the
@@ -39,70 +43,32 @@
 #ifndef DUMUX_PROPERTIES_HH
 #define DUMUX_PROPERTIES_HH
 
-#include <cstring>
-#include <iostream>
-#include <list>
-#include <map>
-#include <set>
-#include <sstream>
-#include <string>
 // For is_base_of
-#include <type_traits>
+#include <boost/type_traits.hpp>
 
 // Integral Constant Expressions
-#include <dune/common/classname.hh>
+
+// string formating
+#include <boost/format.hpp>
+
 
 namespace Dumux
 {
 namespace Properties
 {
-#define DUMUX_GET_HEAD_(Arg1, ...) Arg1
-#define DUMUX_GET_TAIL_(Arg1, ...) Blubber // __VA_ARGS__
-
-#define DUMUX_STRINGIGY_HEAD_(Arg1, ...) #Arg1
-#define DUMUX_STRINGIGY_TAIL_(Arg1, ...) #__VA_ARGS__
-
 #if !defined NO_PROPERTY_INTROSPECTION
-
 //! Internal macro which is only required if the property introspection is enabled
-#define PROP_INFO_(EffTypeTagName, PropKind, PropTagName, ...)          \
+#define PROP_INFO_(EffTypeTagName, PropTagName) \
     template <>                                                         \
-    struct PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>       \
+    struct PropertyInfo< TTAG(EffTypeTagName), PTAG(PropTagName) >      \
     {                                                                   \
-    static int init() {                                                 \
-        PropertyRegistryKey key(                                        \
-            /*effTypeTagName=*/ Dune::className<TTAG(EffTypeTagName)>(), \
-            /*kind=*/PropKind,                                          \
-            /*name=*/#PropTagName,                                      \
-            /*value=*/#__VA_ARGS__,                                     \
-            /*file=*/__FILE__,                                          \
-            /*line=*/__LINE__);                                         \
-        PropertyRegistry::addKey(key);                                  \
-        return 0;                                                       \
-    };                                                                  \
-    static int foo;                                                     \
-    };                                                                  \
-    int PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::foo =   \
-    PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::init();
-
-//! Internal macro which is only required if the property introspection is enabled
-#define TTAG_INFO_(...)                                                 \
-    template <>                                                         \
-    struct TypeTagInfo<DUMUX_GET_HEAD_(__VA_ARGS__)>               \
-    {                                                                   \
-        static int init() {                                             \
-            TypeTagRegistry::addChildren<__VA_ARGS__>();                \
-            return 0;                                                   \
-        }                                                              \
-        static int foo;                                                 \
-    };                                                                  \
-    int TypeTagInfo<DUMUX_GET_HEAD_(__VA_ARGS__)>::foo =           \
-        TypeTagInfo<DUMUX_GET_HEAD_(__VA_ARGS__)>::init();
-
+        static std::string propertyName() { return #PropTagName ; }     \
+        static std::string fileDefined() { return __FILE__; }           \
+        static int lineDefined() { return __LINE__; }                   \
+    };
 #else
-//! Don't do anything if introspection is disabled
-#define PROP_INFO_(EffTypeTagName, PropKind, PropTagName, ...)
-#define TTAG_INFO_(EffTypeTagName, ...)
+//! Internal macro which is only required if the property introspection is enabled
+#define PROP_INFO_(EffTypeTagName, PropTagName)
 #endif
 
 // some macros for simplification
@@ -115,12 +81,7 @@ namespace Properties
 /*!
  * \brief Makes a type out of a property tag name
  */
-#define PTAG(PropTagName) PropTagName
-
-/*!
- * \brief Makes a type out of a property tag name
- */
-#define PTAG_(PropTagName) ::Dumux::Properties::PTag::PropTagName
+#define PTAG(PropTagName) ::Dumux::Properties::PTag::PropTagName
 
 /*!
  * \brief Define a new type tag.
@@ -128,7 +89,6 @@ namespace Properties
  * A type tag can inherit the properties defined on up to five parent
  * type tags. Examples:
  *
- * \code
  * // The type tag doesn't inherit any properties from other type tags
  * NEW_TYPE_TAG(FooTypeTag);
  *
@@ -139,16 +99,14 @@ namespace Properties
  * // those of BarTypeTag. Properties defined on BarTypeTag have
  * // preceedence over those defined for FooTypeTag:
  * NEW_TYPE_TAG(FooBarTypeTag, INHERITS_FROM(FooTypeTag, BarTypeTag));
- * \endcode
  */
-#define NEW_TYPE_TAG(...)                                               \
-    namespace TTag {                                                    \
-    struct DUMUX_GET_HEAD_(__VA_ARGS__, blubb)                          \
-        : public TypeTag<__VA_ARGS__>                                   \
-    { };                                                                \
-    TTAG_INFO_(__VA_ARGS__, void)                                       \
-    }                                                                   \
-    extern int semicolonHack_
+#define NEW_TYPE_TAG(TypeTagName, ...) \
+    namespace TTag {                                                \
+    struct TypeTagName : public TypeTag<TypeTagName, ##__VA_ARGS__> \
+    {                                                               \
+        static const std::string name() { return #TypeTagName ; }   \
+    };                                                              \
+    } extern int semicolonHack_
 
 /*!
  * \brief Syntactic sugar for NEW_TYPE_TAG.
@@ -166,29 +124,19 @@ namespace Properties
  *
  * Examples:
  *
- * \code
  * NEW_PROP_TAG(blubbPropTag);
  * NEW_PROP_TAG(blabbPropTag);
- * \endcode
  */
-#define NEW_PROP_TAG(PTagName)                             \
+#define NEW_PROP_TAG(PTagName) \
     namespace PTag {                                       \
     struct PTagName; } extern int semicolonHack_
+/*                                                         \
+    {                                                      \
+        static const char *name() { return #PTagName ;};   \
+    };                                                     \
+    } extern int semicolonHack_
+*/
 
-//! Internal macro
-#define SET_PROP_(EffTypeTagName, PropKind, PropTagName, ...)       \
-    template <class TypeTag>                                        \
-    struct Property<TypeTag,                                        \
-                    TTAG(EffTypeTagName),                           \
-                    PTAG_(PropTagName)>;                            \
-    PROP_INFO_(EffTypeTagName,                                      \
-               /*kind=*/PropKind,                                   \
-               PropTagName,                                         \
-               /*value=*/__VA_ARGS__)                               \
-    template <class TypeTag>                                        \
-    struct Property<TypeTag,                                        \
-                    TTAG(EffTypeTagName),                           \
-                    PTAG_(PropTagName) >
 
 /*!
  * \brief Set a property for a specific type tag.
@@ -200,7 +148,6 @@ namespace Properties
  *
  * Example:
  *
- * \code
  * SET_PROP(FooTypeTag, blubbPropTag)
  * {
  *    static int value = 10;
@@ -216,22 +163,47 @@ namespace Properties
  *
  *    static int calculateInternal_(int arg)
  *    { return arg * blabb::value; };
- * \endcode
  * };
  */
-#define SET_PROP(EffTypeTagName, PropTagName)                   \
+#define SET_PROP(EffTypeTagName, PropTagName) \
     template <class TypeTag>                                    \
-    struct Property<TypeTag,                                    \
-                    TTAG(EffTypeTagName),                       \
-                    PTAG_(PropTagName)>;                        \
-    PROP_INFO_(EffTypeTagName,                                  \
-               /*kind=*/"opaque",                               \
-               PropTagName,                                     \
-               /*value=*/"<opaque>")                            \
+    struct Property<TypeTag, \
+                    TTAG(EffTypeTagName), \
+                    PTAG(PropTagName)>;                         \
+    PROP_INFO_(EffTypeTagName, PropTagName) \
     template <class TypeTag>                                    \
-    struct Property<TypeTag,                                    \
-                    TTAG(EffTypeTagName),                       \
-                    PTAG_(PropTagName) >
+    struct Property<TypeTag, \
+                    TTAG(EffTypeTagName), \
+                    PTAG(PropTagName) >
+
+/*!
+ * \brief Set the default for a property.
+ *
+ * SET_PROP_DEFAULT works exactly like SET_PROP, except that it does
+ * not require an effective type tag. Defaults are used whenever a
+ * property was not explicitly set or explicitly unset for a type tag.
+ *
+ * Example:
+ *
+ * // set a default for the blabbPropTag property tag
+ * SET_PROP_DEFAULT(blabbPropTag)
+ * {
+ *    static const int value = 3;
+ * };
+ */
+#define SET_PROP_DEFAULT(PropTagName) \
+    template <class TypeTag>                                            \
+    struct DefaultProperty<TypeTag, PTAG(PropTagName)>;                 \
+    template <>                                                         \
+    struct PropertyInfo< void, PTAG(PropTagName) >                      \
+    {                                                                   \
+        static std::string propertyName() { return #PropTagName ; }     \
+        static std::string typeTagName() { return "*" ; }               \
+        static std::string fileDefined() { return __FILE__; }           \
+        static int lineDefined() { return __LINE__; }                   \
+    };                                                                  \
+    template <class TypeTag>                                            \
+    struct DefaultProperty<TypeTag, PTAG(PropTagName) >
 
 /*!
  * \brief Explicitly unset a property for a type tag.
@@ -241,23 +213,18 @@ namespace Properties
  *
  * Example:
  *
- * \code
  * // make the blabbPropTag property undefined for the BarTypeTag.
  * UNSET_PROP(BarTypeTag, blabbPropTag);
- * \endcode
  */
-#define UNSET_PROP(EffTypeTagName, PropTagName)                 \
+#define UNSET_PROP(EffTypeTagName, PropTagName) \
     template <>                                                 \
-    struct PropertyUnset<TTAG(EffTypeTagName),                  \
-                         PTAG_(PropTagName) >;                  \
-    PROP_INFO_(EffTypeTagName,                                  \
-               /*kind=*/"withdraw",                             \
-               PropTagName,                                     \
-               /*value=*/<none>)                                \
+    struct PropertyUnset<TTAG(EffTypeTagName), \
+                         PTAG(PropTagName) >;                   \
+    PROP_INFO_(EffTypeTagName, PropTagName) \
     template <>                                                 \
-    struct PropertyUnset<TTAG(EffTypeTagName),                  \
-                         PTAG_(PropTagName) >                   \
-        : public PropertyExplicitlyUnset                        \
+    struct PropertyUnset<TTAG(EffTypeTagName), \
+                         PTAG(PropTagName) >                    \
+        : public PropertyExplicitlyUnset \
         {}
 
 /*!
@@ -265,14 +232,11 @@ namespace Properties
  *
  * The constant can be accessed by the 'value' attribute.
  */
-#define SET_INT_PROP(EffTypeTagName, PropTagName, /*Value*/...)    \
-    SET_PROP_(EffTypeTagName,                                   \
-              /*kind=*/"int   ",                                \
-              PropTagName,                                      \
-              /*value=*/__VA_ARGS__)                            \
+#define SET_INT_PROP(EffTypeTagName, PropTagName, Value) \
+    SET_PROP(EffTypeTagName, PropTagName) \
     {                                                           \
         typedef int type;                                       \
-        static constexpr int value = __VA_ARGS__;               \
+        static const int value = Value;                         \
     }
 
 /*!
@@ -280,14 +244,11 @@ namespace Properties
  *
  * The constant can be accessed by the 'value' attribute.
  */
-#define SET_BOOL_PROP(EffTypeTagName, PropTagName, /*Value*/...)    \
-    SET_PROP_(EffTypeTagName,                                       \
-              /*kind=*/"bool  ",                                    \
-              PropTagName,                                          \
-              /*value=*/__VA_ARGS__)                                \
-    {                                                               \
-        typedef bool type;                                          \
-        static constexpr bool value = __VA_ARGS__;                  \
+#define SET_BOOL_PROP(EffTypeTagName, PropTagName, Value) \
+    SET_PROP(EffTypeTagName, PropTagName) \
+    {                                                      \
+        typedef bool type;                                 \
+        static const bool value = Value;                   \
     }
 
 /*!
@@ -295,13 +256,10 @@ namespace Properties
  *
  * The type can be accessed by the 'type' attribute.
  */
-#define SET_TYPE_PROP(EffTypeTagName, PropTagName, /*Value*/...)  \
-    SET_PROP_(EffTypeTagName,                                     \
-              /*kind=*/"type  ",                                  \
-              PropTagName,                                        \
-              /*value=*/__VA_ARGS__)                              \
-    {                                                             \
-        typedef __VA_ARGS__ type;                                 \
+#define SET_TYPE_PROP(EffTypeTagName, PropTagName, Type) \
+    SET_PROP(EffTypeTagName, PropTagName) \
+    {                                                      \
+        typedef Type type;                                 \
     }
 
 /*!
@@ -311,40 +269,14 @@ namespace Properties
  * use this macro, the property tag "Scalar" needs to be defined for
  * the real type tag.
  */
-#define SET_SCALAR_PROP(EffTypeTagName, PropTagName, ...)               \
-    SET_PROP_(EffTypeTagName,                                           \
-              /*kind=*/"scalar",                                        \
-              PropTagName,                                              \
-              /*value=*/__VA_ARGS__)                                    \
+#define SET_SCALAR_PROP(EffTypeTagName, PropTagName, Value) \
+    SET_PROP(EffTypeTagName, PropTagName) \
     {                                                                   \
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;         \
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;   \
     public:                                                             \
         typedef Scalar type;                                            \
-        static const Scalar value;                                      \
-    };                                                                  \
-    template <class TypeTag>                                            \
-    const typename Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::type   \
-    Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::value(__VA_ARGS__)
-
-/*!
- * \brief Set a property to a simple constant string value.
- *
- * The constant can be accessed by the 'value' attribute and is of
- * type std::string.
- */
-#define SET_STRING_PROP(EffTypeTagName, PropTagName, ...)               \
-    SET_PROP_(EffTypeTagName,                                           \
-              /*kind=*/"string",                                        \
-              PropTagName,                                              \
-              /*value=*/__VA_ARGS__)                                    \
-    {                                                                   \
-    public:                                                             \
-        typedef std::string type;                                       \
-        static const std::string value;                                 \
-    };                                                                  \
-    template <class TypeTag>                                            \
-    const typename Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::type \
-    Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::value(__VA_ARGS__)
+        static const Scalar value = Value;                              \
+    }
 
 /*!
  * \brief Get the property for a type tag.
@@ -353,10 +285,8 @@ namespace Properties
  * type (including the property itself), GET_PROP must be preceeded by
  * the 'typename' keyword.
  */
-#define GET_PROP(TypeTag, PropTagName) \
-    ::Dumux::Properties::GetProperty<TypeTag, PTAG_(PropTagName)>::p
-#define GET_PROP_(TypeTag, PropTag) \
-    ::Dumux::Properties::GetProperty<TypeTag, PropTag>::p
+#define GET_PROP(TypeTag, PropTag) \
+    ::Dumux::Properties::GetProperty< TypeTag, PropTag>::p
 
 /*!
  * \brief Access the 'value' attribute of a property for a type tag.
@@ -365,10 +295,8 @@ namespace Properties
  * PropTag) :: value.  If the property doesn't have an attribute named
  * 'value', this yields a compiler error.
  */
-#define GET_PROP_VALUE(TypeTag, PropTagName)                            \
-    ::Dumux::Properties::GetProperty<TypeTag, PTAG_(PropTagName)>::p::value
-#define GET_PROP_VALUE_(TypeTag, PropTag)                               \
-    ::Dumux::Properties::GetProperty<TypeTag, PropTag>::p::value
+#define GET_PROP_VALUE(TypeTag, PropTag) \
+    ::Dumux::Properties::GetProperty< TypeTag, PropTag>::p::value
 
 /*!
  * \brief Access the 'type' attribute of a property for a type tag.
@@ -378,10 +306,9 @@ namespace Properties
  * 'type', this yields a compiler error. Also, if you use this macro
  * within a template, it must be preceeded by the 'typename' keyword.
  */
-#define GET_PROP_TYPE(TypeTag, PropTagName) \
-    ::Dumux::Properties::GetProperty<TypeTag, PTAG_(PropTagName)>::p::type
-#define GET_PROP_TYPE_(TypeTag, PropTag) \
-    ::Dumux::Properties::GetProperty<TypeTag, PropTag>::p::type
+#define GET_PROP_TYPE(TypeTag, PropTag) \
+    ::Dumux::Properties::GetProperty< TypeTag, \
+                                     PropTag>::p::type
 
 #if !defined NO_PROPERTY_INTROSPECTION
 /*!
@@ -393,16 +320,15 @@ namespace Properties
  *
  * Example:
  *
- * \code
  * int main()
  * {
  *    std::cout << PROP_DIAGNOSTIC(FooBarTypeTag, blabbPropTag) << "\n";
  * };
- * \endcode
  */
-#define PROP_DIAGNOSTIC(TypeTag, PropTagName) \
-    ::Dumux::Properties::getDiagnostic<TypeTag>(#PropTagName)
-
+#define PROP_DIAGNOSTIC(TypeTag, PropTag) \
+    ::Dumux::Properties::propertyDiagnostic< TypeTag, \
+                                            TypeTag, \
+                                            PropTag>::message()
 #else
 /*!
  * \brief Return a human readable diagnostic message how exactly a
@@ -413,14 +339,12 @@ namespace Properties
  *
  * Example:
  *
- * \code
  * int main()
  * {
  *    std::cout << PROP_DIAGNOSTIC(FooBarTypeTag, blabbPropTag) << "\n";
  * };
- * \endcode
  */
-#define PROP_DIAGNOSTIC(TypeTag, PropTagName) "Property introspection disabled by NO_PROPERTY_INTROSPECTION"
+#define PROP_DIAGNOSTIC(TypeTag, PropTag) "Property introspection disabled by NO_PROPERTY_INTROSPECTION"
 #endif
 
 
@@ -429,197 +353,14 @@ namespace Properties
 // might damage your brain!
 //////////////////////////////////////////////
 
-//! \cond false
+//! \cond 0
 
 namespace PTag {}
 namespace TTag {}
 
-#if !defined NO_PROPERTY_INTROSPECTION
-
-namespace TTag
-{
-template <class EffTypeTag>
-struct TypeTagInfo
-{};
-}
-
-template <class EffTypeTagName, class PropTagName>
-struct PropertyInfo
-{};
-class PropertyRegistryKey
-{
-public:
-    PropertyRegistryKey()
-    {};
-
-    PropertyRegistryKey(const std::string &effTypeTagName,
-                        const std::string &propertyKind,
-                        const std::string &propertyName,
-                        const std::string &propertyValue,
-                        const std::string &fileDefined,
-                        int lineDefined)
-        : effTypeTagName_(effTypeTagName)
-        , propertyKind_(propertyKind)
-        , propertyName_(propertyName)
-        , propertyValue_(propertyValue)
-        , fileDefined_(fileDefined)
-        , lineDefined_(lineDefined)
-    {
-    };
-
-    // copy constructor
-    PropertyRegistryKey(const PropertyRegistryKey &v)
-        : effTypeTagName_(v.effTypeTagName_)
-        , propertyKind_(v.propertyKind_)
-        , propertyName_(v.propertyName_)
-        , propertyValue_(v.propertyValue_)
-        , fileDefined_(v.fileDefined_)
-        , lineDefined_(v.lineDefined_)
-    {};
-
-    const std::string &effTypeTagName() const
-    { return effTypeTagName_; }
-    const std::string &propertyKind() const
-    { return propertyKind_; }
-    const std::string &propertyName() const
-    { return propertyName_; }
-    const std::string &propertyValue() const
-    { return propertyValue_; }
-    const std::string &fileDefined() const
-    { return fileDefined_; }
-    int lineDefined() const
-    { return lineDefined_; }
-
-private:
-    std::string effTypeTagName_;
-    std::string propertyKind_;
-    std::string propertyName_;
-    std::string propertyValue_;
-    std::string fileDefined_;
-    int lineDefined_;
-};
-
-class PropertyRegistry
-{
-public:
-    typedef std::map<std::string, PropertyRegistryKey> KeyList;
-    typedef std::map<std::string, KeyList> KeyListMap;
-
-    static void addKey(const PropertyRegistryKey &key)
-    {
-        keys_[key.effTypeTagName()][key.propertyName()] = key;
-    }
-
-    static const PropertyRegistryKey &getKey(const std::string &effTypeTagName,
-                                             const std::string &propertyName)
-    {
-        return keys_[effTypeTagName][propertyName];
-    };
-
-    static const KeyList &getKeys(const std::string &effTypeTagName)
-    {
-        return keys_[effTypeTagName];
-    };
-
-private:
-    static KeyListMap keys_;
-};
-PropertyRegistry::KeyListMap PropertyRegistry::keys_;
-
-class TypeTagRegistry
-{
-public:
-    typedef std::list<std::string> ChildrenList;
-    typedef std::map<std::string, ChildrenList> ChildrenListMap;
-
-    template <class TypeTag, class Child1, class Child2, class Child3, class Child4, class Child5, class Dummy>
-    static void addChildren()
-    {
-        std::string typeTagName = Dune::className<TypeTag>();
-        if (typeid(Child1) != typeid(void))
-            keys_[typeTagName].push_front(Dune::className<Child1>());
-        if (typeid(Child2) != typeid(void))
-            keys_[typeTagName].push_front(Dune::className<Child2>());
-        if (typeid(Child3) != typeid(void))
-            keys_[typeTagName].push_front(Dune::className<Child3>());
-        if (typeid(Child4) != typeid(void))
-            keys_[typeTagName].push_front(Dune::className<Child4>());
-        if (typeid(Child5) != typeid(void))
-            keys_[typeTagName].push_front(Dune::className<Child5>());
-    }
-
-    template <class TypeTag, class Child1, class Child2, class Child3, class Child4, class Dummy>
-    static void addChildren()
-    { addChildren<TypeTag, Child1, Child2, Child3, Child4, void, Dummy>(); }
-
-    template <class TypeTag, class Child1, class Child2, class Child3, class Dummy>
-    static void addChildren()
-    { addChildren<TypeTag, Child1, Child2, Child3, void, void, Dummy>(); }
-
-    template <class TypeTag, class Child1, class Child2, class Dummy>
-    static void addChildren()
-    { addChildren<TypeTag, Child1, Child2, void, void,  void, Dummy>(); }
-
-    template <class TypeTag, class Child1, class Dummy>
-    static void addChildren()
-    { addChildren<TypeTag, Child1, void, void, void, void, Dummy>(); }
-
-    template <class TypeTag, class Dummy>
-    static void addChildren()
-    { addChildren<TypeTag, void, void, void, void, void, Dummy>(); }
-
-    static const ChildrenList &children(const std::string &typeTagName)
-    {
-        return keys_[typeTagName];
-    };
-
-private:
-    static ChildrenListMap keys_;
-};
-
-TypeTagRegistry::ChildrenListMap TypeTagRegistry::keys_;
-
-#endif // !defined NO_PROPERTY_INTROSPECTION
-
-using std::is_void;
-using std::is_base_of;
-
-// logical AND, OR and NOT operations to be used for template meta programming
-template <bool b1, bool b2, bool b3 = true, bool b4 = true, bool b5 = true, bool b6 = true, bool b7 = true>
-struct ice_and
-{
-    static const bool value = false;
-};
-
-template <>
-struct ice_and<true, true, true, true, true, true, true>
-{
-    static const bool value = true;
-};
-
-template <bool b1, bool b2, bool b3 = false, bool b4 = false, bool b5 = false, bool b6 = false, bool b7 = false>
-struct ice_or
-{
-    static const bool value = true;
-};
-
-template <>
-struct ice_or<false, false, false, false, false, false, false>
-{
-    static const bool value = false;
-};
-
-template <bool b>
-struct ice_not
-{
-    static const bool value = false;
-};
-
-template <>
-struct ice_not<false>
-{
-    static const bool value = true;
-};
+using namespace boost::type_traits;
+using boost::is_void;
+using boost::is_base_of;
 
 //! \internal
 class PropertyUndefined {};
@@ -639,6 +380,23 @@ template <class EffectiveTypeTag,
           class PropertyTag>
 struct PropertyUnset : public PropertyUndefined
 {
+};
+
+//! \internal
+template <class EffectiveTypeTag, class PropertyTag>
+struct PropertyInfo
+{
+    static std::string typeTagName()
+    { return "Unknown"; }
+
+    static std::string propertyName()
+    { return "Unknown (PropertyInfo is not specialized for this property)"; }
+
+    static std::string fileDefined()
+    { return __FILE__; }
+
+    static int lineDefined()
+    { return __LINE__; }
 };
 
 //! \internal
@@ -688,7 +446,7 @@ public:
 template <class PropertyTag>
 struct propertyExplicitlyUnsetOnTree<void, PropertyTag>
 {
-    const static bool value = std::true_type::value;
+    const static bool value = boost::true_type::value;
 };
 
 //! \internal
@@ -729,7 +487,7 @@ template <class RealTypeTag, class PropertyTag>
 class propertyDefinedOnTree<RealTypeTag, void, PropertyTag>
 {
 public:
-    static const bool value = std::false_type::value;
+    static const bool value = boost::false_type::value;
 };
 
 //! \internal
@@ -773,7 +531,7 @@ public:
 template <class RealTypeTag, class PropertyTag>
 struct defaultPropertyDefinedOnTree<RealTypeTag,void, PropertyTag>
 {
-    static const bool value = std::false_type::value;
+    static const bool value = boost::false_type::value;
 };
 
 //! \internal
@@ -845,8 +603,6 @@ public:
     typedef Child5T Child5;
 };
 
-NEW_TYPE_TAG(__Default);
-
 //! \internal
 template <class EffectiveTypeTag,
           class PropertyTag,
@@ -908,176 +664,208 @@ struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 5>
 };
 
 #if !defined NO_PROPERTY_INTROSPECTION
-std::string canonicalTypeTagNameToName_(const std::string &canonicalName)
-{
-    std::string result(canonicalName);
-    result.replace(0, strlen("Dumux::Properties::TTag::"), "");
-    return result;
-}
-
-inline bool getDiagnostic_(const std::string &typeTagName,
-                           const std::string &propTagName,
-                           std::string &result,
-                           const std::string indent)
-{
-    const PropertyRegistryKey *key = 0;
-
-    const PropertyRegistry::KeyList &keys =
-        PropertyRegistry::getKeys(typeTagName);
-    PropertyRegistry::KeyList::const_iterator it = keys.begin();
-    for (; it != keys.end(); ++it) {
-        if (it->second.propertyName() == propTagName) {
-            key = &it->second;
-            break;
-        }
-    }
-
-    if (key) {
-        std::ostringstream oss;
-        oss << indent
-            << key->propertyKind() << " "
-            << key->propertyName() << " defined on '"
-            << canonicalTypeTagNameToName_(key->effTypeTagName()) << "' at "
-            << key->fileDefined() << ":" << key->lineDefined() << "\n";
-        result = oss.str();
-        return true;
-    }
-
-    // print properties defined on children
-    typedef TypeTagRegistry::ChildrenList ChildrenList;
-    const ChildrenList &children = TypeTagRegistry::children(typeTagName);
-    ChildrenList::const_iterator ttagIt = children.begin();
-    std::string newIndent = indent + "  ";
-    for (; ttagIt != children.end(); ++ttagIt) {
-        if (getDiagnostic_(*ttagIt, propTagName, result, newIndent)) {
-            result.insert(0, indent + "Inherited from " + canonicalTypeTagNameToName_(typeTagName) + "\n");
-            return true;
-        }
-    }
-
-    return false;
-}
-
-template <class TypeTag>
-const std::string getDiagnostic(std::string propTagName)
-{
-    std::string result;
-
-    std::string TypeTagName(Dune::className<TypeTag>());
-
-    propTagName.replace(0, strlen("PTag("), "");
-    int n = propTagName.length();
-    propTagName.replace(n - 1, 1, "");
-    //TypeTagName.replace(0, strlen("Dumux::Properties::TTag::"), "");
-
-    if (!getDiagnostic_(TypeTagName, propTagName, result, "")) {
-        // check whether the property is a default property
-        const PropertyRegistry::KeyList &keys =
-            PropertyRegistry::getKeys(Dune::className<TTAG(__Default)>());
-        PropertyRegistry::KeyList::const_iterator it = keys.begin();
-        for (; it != keys.end(); ++it) {
-            const PropertyRegistryKey &key = it->second;
-            if (key.propertyName() != propTagName)
-                continue; // property already printed
-
-            std::ostringstream oss;
-            oss << "fallback " << key.propertyName()
-                << " defined at " << key.fileDefined()
-                << ":" << key.lineDefined()
-                <<"\n";
-            result = oss.str();
-        }
-    }
-
-
-    return result;
-}
-
-inline void print_(const std::string &typeTagName,
-                   std::ostream &os,
-                   const std::string indent,
-                   std::set<std::string> &printedProperties)
-{
-    if (indent == "")
-        os << indent << "Properties for " << canonicalTypeTagNameToName_(typeTagName) << ":";
-    else
-        os << indent << "Inherited from " << canonicalTypeTagNameToName_(typeTagName) << ":";
-    const PropertyRegistry::KeyList &keys =
-        PropertyRegistry::getKeys(typeTagName);
-    PropertyRegistry::KeyList::const_iterator it = keys.begin();
-    bool somethingPrinted = false;
-    for (; it != keys.end(); ++it) {
-        const PropertyRegistryKey &key = it->second;
-        if (printedProperties.count(key.propertyName()) > 0)
-            continue; // property already printed
-        if (!somethingPrinted) {
-            os << "\n";
-            somethingPrinted = true;
-        }
-        os << indent << "  "
-           << key.propertyKind() << " " << key.propertyName();
-        if (key.propertyKind() != "opaque")
-            os << " = '" << key.propertyValue() << "'";
-        os << " defined at " << key.fileDefined()
-           << ":" << key.lineDefined()
-           << "\n";
-        printedProperties.insert(key.propertyName());
-    };
-    if (!somethingPrinted)
-        os << " (none)\n";
-    // print properties defined on children
-    typedef TypeTagRegistry::ChildrenList ChildrenList;
-    const ChildrenList &children = TypeTagRegistry::children(typeTagName);
-    ChildrenList::const_iterator ttagIt = children.begin();
-    std::string newIndent = indent + "  ";
-    for (; ttagIt != children.end(); ++ttagIt) {
-        print_(*ttagIt, os, newIndent, printedProperties);
-    }
-}
-
 //! \internal
-template <class TypeTag>
-void print(std::ostream &os = std::cout)
+template <class RealTypeTag, class Tree, class PropertyTag>
+struct propertyDiagnostic
 {
-    std::set<std::string> printedProps;
-    print_(Dune::className<TypeTag>(), os, "", printedProps);
+    typedef typename Tree::SelfType EffTypeTag;
 
-    // print the default properties
-    const PropertyRegistry::KeyList &keys =
-        PropertyRegistry::getKeys(Dune::className<TTAG(__Default)>());
-    PropertyRegistry::KeyList::const_iterator it = keys.begin();
-    for (; it != keys.end(); ++it) {
-        const PropertyRegistryKey &key = it->second;
-        if (printedProps.count(key.propertyName()) > 0)
-            continue; // property already printed
-        os << "  default " << key.propertyName()
-           << " (" << key.fileDefined()
-           << ":" << key.lineDefined()
-           << ")\n";
-        printedProps.insert(key.propertyName());
+    static const int inheritedFrom = propertyTagIndex<RealTypeTag, EffTypeTag, PropertyTag>::value;
+
+    static const bool explicitlyUnset = propertyExplicitlyUnsetOnTree<Tree, PropertyTag>::value;
+    static const bool explicitlyUnsetOnSelf = propertyExplicitlyUnset<Tree, PropertyTag>::value;
+
+    typedef propertyDefined<RealTypeTag, Tree, PropertyTag> definedWhere;
+
+    typedef PropertyInfo<EffTypeTag, PropertyTag>           propInfo;
+    typedef PropertyInfo<void, PropertyTag>                 propInfoDefault;
+
+    static const std::string typeTagName()
+    {
+        return Tree::SelfType::name();
     };
-}
-#else // !defined NO_PROPERTY_INTROSPECTION
-template <class TypeTag>
-void print(std::ostream &os = std::cout)
-{
-    std::cout <<
-        "The Dumux property system was compiled with the macro\n"
-        "NO_PROPERTY_INTROSPECTION defined.\n"
-        "No diagnostic messages this time, sorry.\n";
-}
 
-template <class TypeTag>
-const std::string getDiagnostic(std::string propTagName)
-{
-    std::string result;
-    result =
-        "The Dumux property system was compiled with the macro\n"
-        "NO_PROPERTY_INTROSPECTION defined.\n"
-        "No diagnostic messages this time, sorry.\n";
-    return result;
+    static const std::string propertyName()
+    {
+        switch (inheritedFrom) {
+        case -1: return propInfoDefault::propertyName();
+        case -1000:
+        case 0: return propInfo::propertyName();
+        case 1: return Child1Diagnostic::propertyName();
+        case 2: return Child2Diagnostic::propertyName();
+        case 3: return Child3Diagnostic::propertyName();
+        case 4: return Child4Diagnostic::propertyName();
+        case 5: return Child5Diagnostic::propertyName();
+        }
+    };
+
+    typedef propertyDiagnostic<RealTypeTag, typename Tree::Child1, PropertyTag> Child1Diagnostic;
+    typedef propertyDiagnostic<RealTypeTag, typename Tree::Child2, PropertyTag> Child2Diagnostic;
+    typedef propertyDiagnostic<RealTypeTag, typename Tree::Child3, PropertyTag> Child3Diagnostic;
+    typedef propertyDiagnostic<RealTypeTag, typename Tree::Child4, PropertyTag> Child4Diagnostic;
+    typedef propertyDiagnostic<RealTypeTag, typename Tree::Child5, PropertyTag> Child5Diagnostic;
+
+
+    static std::string message(const std::string &indent="", bool topLevel=true)
+    {
+        std::string result;
+        if (topLevel) {
+            result =
+                (boost::format("%sProperty '%s' for type tag '%s'\n")
+                 %indent
+                 %propertyName()
+                 %typeTagName()
+                    ).str();
+        }
+        std::string newIndent = indent + "  ";
+
+        if (explicitlyUnsetOnSelf) {
+            result += (boost::format("%sexplicitly unset at %s:%d\n")
+                       %newIndent
+                       %propInfo::fileDefined()
+                       %propInfo::lineDefined()).str();
+            return result;
+        }
+        else if (explicitlyUnset) {
+            result += explicitlyUnsetMsg(indent);
+            return result;
+        };
+
+        switch (inheritedFrom) {
+        case -1:
+            result += newIndent;
+            result += (boost::format("default from %s:%d\n")
+                       %propInfoDefault::fileDefined()
+                       %propInfoDefault::lineDefined()).str();
+            break;
+
+        case 0:
+            result += newIndent;
+            result += (boost::format("defined at %s:%d\n")
+                       %propInfo::fileDefined()
+                       %propInfo::lineDefined()).str();
+            break;
+
+        case 1:
+            result += explicitlyUnsetOnChildMsg(indent, 5);
+            result += explicitlyUnsetOnChildMsg(indent, 4);
+            result += explicitlyUnsetOnChildMsg(indent, 3);
+            result += explicitlyUnsetOnChildMsg(indent, 2);
+            result += newIndent;
+            result += (boost::format("inherited from '%s'\n"
+                                     "%s") %
+                       Child1Diagnostic::typeTagName() %
+                       Child1Diagnostic::message(newIndent, false)).str();
+            break;
+
+        case 2:
+            result += explicitlyUnsetOnChildMsg(indent, 5);
+            result += explicitlyUnsetOnChildMsg(indent, 4);
+            result += explicitlyUnsetOnChildMsg(indent, 3);
+            result += newIndent;
+            result += (boost::format("inherited from '%s'\n"
+                                     "%s") %
+                       Child2Diagnostic::typeTagName() %
+                       Child2Diagnostic::message(newIndent, false)).str();
+            break;
+
+        case 3:
+            result += explicitlyUnsetOnChildMsg(indent, 5);
+            result += explicitlyUnsetOnChildMsg(indent, 4);
+            result += newIndent;
+            result += (boost::format("inherited from '%s'\n"
+                                     "%s") %
+                       Child3Diagnostic::typeTagName() %
+                       Child3Diagnostic::message(newIndent, false)).str();
+            break;
+
+        case 4:
+            result += explicitlyUnsetOnChildMsg(indent, 5);
+            result += newIndent;
+            result += (boost::format("inherited from '%s'\n"
+                                     "%s") %
+                       Child4Diagnostic::typeTagName() %
+                       Child4Diagnostic::message(newIndent, false)).str();
+            break;
+
+        case 5:
+            result += newIndent;
+            result += (boost::format("inherited from '%s'\n"
+                                     "%s") %
+                       Child5Diagnostic::typeTagName() %
+                       Child5Diagnostic::message(newIndent, false)).str();
+            break;
+
+        case -1000:
+            result += boost::format("was not set anywhere\n").str();
+        };
+
+        return result;
+    };
+
+    static std::string explicitlyUnsetMsg(const std::string &indent)
+    {
+        if (explicitlyUnsetOnSelf) {
+            return (boost::format("%sexplicitly unset for '%s' at %s:%d\n")
+                    %indent
+                    %typeTagName()
+                    %propInfo::fileDefined()
+                    %propInfo::lineDefined()).str();
+        }
+        else if (explicitlyUnset) {
+            std::string result = (boost::format("%sexplicitly unset for all parents of '%s':\n")
+                                  %indent
+                                  %typeTagName()).str();
+            result += explicitlyUnsetOnChildMsg(indent, 5);
+            result += explicitlyUnsetOnChildMsg(indent, 4);
+            result += explicitlyUnsetOnChildMsg(indent, 3);
+            result += explicitlyUnsetOnChildMsg(indent, 2);
+            result += explicitlyUnsetOnChildMsg(indent, 1);
+            return result;
+        };
+        return "";
+    }
+
+    static std::string explicitlyUnsetOnChildMsg(const std::string &indent, int unsetChild)
+    {
+        switch (unsetChild) {
+        case 5:
+            return Child5Diagnostic::explicitlyUnsetMsg(indent + "  ");
+        case 4:
+            return Child4Diagnostic::explicitlyUnsetMsg(indent + "  ");
+        case 3:
+            return Child3Diagnostic::explicitlyUnsetMsg(indent + "  ");
+        case 2:
+            return Child2Diagnostic::explicitlyUnsetMsg(indent + "  ");
+        case 1:
+            return Child1Diagnostic::explicitlyUnsetMsg(indent + "  ");
+        }
+        return "";
+    }
 };
 
+//! \internal
+template <class RealTypeTag, class PropertyTag>
+struct propertyDiagnostic<RealTypeTag, void, PropertyTag>
+{
+    typedef PropertyInfo<void, PropertyTag>           propInfo;
+
+    static const std::string propertyName()
+    { return propInfo::propertyName(); }
+
+    static const std::string typeTagName()
+    { return "* (Default Value)"; }
+
+    static std::string message(const std::string &ident="", bool topLevel=true)
+    {
+        return "";
+    };
+
+    static std::string explicitlyUnsetMsg(const std::string &indent, int numUnsetChilds=5)
+    {
+        return "";
+    };
+};
 #endif // !defined NO_PROPERTY_INTROSPECTION
 
 //! \endcond

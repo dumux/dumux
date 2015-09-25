@@ -1,7 +1,7 @@
 Why CMake
 =========
 
-You can use CMake 2.8 or higher as alternative to the build system 
+You can use CMake 2.6 or higher as alternative to the build system 
 provided by DUNE. CMake is included in most GNU/Linux distributions 
 or can be downloaded at www.cmake.org. Using CMake has several 
 advantages compared to autotools:
@@ -21,7 +21,7 @@ But alas, it comes with a cost:
    problems.
  - Dependencies between DUNE modules are not yet handled, i.e. all
    DUNE modules on which DuMuX depends (-> common, grid, istl, 
-   geometry, localfunctions) need to be installed already.
+   localfunctions, pdelab) need to be installed already.
 
 Preparing the installation
 --------------------------
@@ -75,7 +75,7 @@ cmake -DCMAKE_BUILD_TYPE=debug \
       -DMETIS_DIR=/usr/local/metis \
       path/to/DUMUX/source/directory
 
-With gcc 4.5.x, compilation might fail due to an internal compiler 
+With gcc >= 4.5.0, compilation might fail due to an internal compiler 
 error. In this case, you might want to specify the compiler explicitly 
-by using the cmake options -DCMAKE_CXX_COMPILER and -DCMAKE_C_COMPILER. 
+by using the cmake options -DCMAKE_CXX_COMPILER and -DCMAKE_CC_COMPILER. 
 

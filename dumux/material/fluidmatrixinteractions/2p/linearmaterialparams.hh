@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -42,48 +44,49 @@ public:
     LinearMaterialParams()
     {}
 
-    LinearMaterialParams(Scalar entryPc, Scalar maxPc)
+    LinearMaterialParams(Scalar entryPC, Scalar maxPC)
     {
-        setEntryPc(entryPc);
-        setMaxPc(maxPc);
-    }
+        setEntryPC(entryPC);
+        setMaxPC(maxPC);
+    };
 
 
     /*!
-     * \brief Return the entry pressure for the linear material law in \f$\mathrm{[Pa]}\f$.
+     * \brief Return the entry pressure for the linear material law.
      *
-     * The entry pressure is reached at \f$\mathrm{\overline{S}_w = 1}\f$
+     * The entry pressure is reached at \f$\overline S_w = 1\f$
      */
-    Scalar entryPc() const
-    { return entryPc_; }
+    Scalar entryPC() const
+    { return entryPC_; }
 
     /*!
-     * \brief Set the entry pressure for the linear material law in \f$\mathrm{[Pa]}\f$.
+     * \brief Set the entry pressure for the linear material law.
      *
-     * The entry pressure is reached at \f$\mathrm{\overline{S}_w = 1}\f$
+     * The entry pressure is reached at \f$ \overline S_w = 1\f$
      */
-    void setEntryPc(Scalar v)
-    { entryPc_ = v; }
+    void setEntryPC(Scalar v)
+    { entryPC_ = v; }
 
     /*!
-     * \brief Return the maximum capillary pressure for the linear material law in \f$\mathrm{[Pa]}\f$..
+     * \brief Return the maximum capillary pressure for the linear material law.
      *
-     * The maximum capillary pressure is reached at \f$\mathrm{\overline{S}_w = 0}\f$
+     * The maximum capillary pressure is reached at \f$ \overline S_w = 0\f$
      */
-    Scalar maxPc() const
-    { return maxPc_; }
+    Scalar maxPC() const
+    { return maxPC_; }
 
     /*!
-     * \brief Set the maximum capillary pressure for the linear material law in \f$\mathrm{[Pa]}\f$..
+     * \brief Set the maximum capillary pressure for the linear material law.
      *
-     * The maximum capillary pressure is reached at \f$\mathrm{\overline{S}_w = 0}\f$
+     * The maximum capillary pressure is reached at \f$ \overline S_w = 0\f$
      */
-    void setMaxPc(Scalar v)
-    { maxPc_ = v; }
+    void setMaxPC(Scalar v)
+    { maxPC_ = v; }
+
 
 private:
-    Scalar entryPc_;
-    Scalar maxPc_;
+    Scalar entryPC_;
+    Scalar maxPC_;
 };
 } // namespace Dumux
 

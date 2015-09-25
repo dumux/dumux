@@ -1,8 +1,0 @@
-[Problem]
-EnableGravity = 0 # Disable Gravity
-
-[Grid]
-File = ./grids/test_diffusion3d_ug1.dgf
-
-RefinementRatio = 0
-

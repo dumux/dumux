@@ -1,12 +1,13 @@
 GXX_WARNING_OPTS=" \
     -Wall \
-    -Wunused \
     -Wmissing-include-dirs \
     -Wcast-align \
     -Wno-sign-compare \
+    -Wno-packed-bitfield-compat \
     -Wno-unused-parameter"
 
-# additional -W flags for g++ which will lead to many warnings
+# additional -W flags for g++ which will lead to many warnings in
+# other dune modules
 #    -Wextra \
 #    -Wfloat-equal \
 #    -Wstrict-overflow \
@@ -16,13 +17,9 @@ GXX_OPTS=" \
     -fstrict-overflow \
     -g"
 
-USE_CMAKE=yes
-
-CMAKE_FLAGS="\
-  -DCMAKE_CXX_FLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
-  "
-
-# for CO2 and CO2ni tests
-# -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE \
-# need to be set in the configure flags
-# and the module dune-alugrid must be present
+CONFIGURE_FLAGS="\
+  CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
+  --enable-dunedevel \
+  --enable-documentation \
+  --disable-parallel \
+  --disable-mpiruntest"

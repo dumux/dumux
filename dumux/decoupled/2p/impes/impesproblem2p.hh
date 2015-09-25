@@ -1,7 +1,10 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2010 by Markus Wolff                                      *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +13,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -19,40 +22,40 @@
 /*!
  * \file
  * \brief Base class for all 2-phase problems which use an impes algorithm
+ * @author Markus Wolff
  */
 #ifndef DUMUX_IMPESPROBLEM_2P_HH
 #define DUMUX_IMPESPROBLEM_2P_HH
 
 #include <dumux/decoupled/common/impet.hh>
 #include <dumux/decoupled/common/impetproblem.hh>
-#include "impesproperties2p.hh"
-//TODO: include should be removed!!! -> Goal: Only include property files in the problem!
-#include "impesproperties2padaptive.hh"
+#include <dumux/decoupled/2p/variableclass2p.hh>
+#include <dumux/material/fluidsystems/2p_system.hh>
+#include <dumux/decoupled/2p/2pproperties.hh>
 
 
 namespace Dumux
 {
 /*!
- * \ingroup IMPETproblems
+ * \ingroup IMPESproblem
  * \ingroup IMPES
  * \brief  Base class for all 2-phase problems which use an impes algorithm
  *
- * @tparam TypeTag The problem TypeTag
+ * @tparam TypeTag The Type Tag
+ * @tparam Implementation The Problem implementation
  */
-template<class TypeTag>
-class IMPESProblem2P : public IMPETProblem<TypeTag>
+template<class TypeTag, class Implementation>
+class IMPESProblem2P : public IMPETProblem<TypeTag, Implementation>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef IMPETProblem<TypeTag> ParentType;
+    typedef IMPETProblem<TypeTag, Implementation> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
 
     enum {
@@ -60,46 +63,52 @@ class IMPESProblem2P : public IMPETProblem<TypeTag>
         dimWorld = Grid::dimensionworld
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-
     typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
 
-    //Copy constructor
     IMPESProblem2P(const IMPESProblem2P &)
     {}
 
 public:
     /*!
-     * \brief Constructs an IMPESProblem2P object
+     * \brief The constructor
      *
-     * \param timeManager The time manager
      * \param gridView The grid view
+     * \param verbose Output flag for the time manager.
      */
-    IMPESProblem2P(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
+    IMPESProblem2P(const GridView &gridView, bool verbose = true)
+        : ParentType(gridView, verbose),
         gravity_(0)
     {
-        spatialParams_ = std::make_shared<SpatialParams>(gridView);
+        newSpatialParams_ = true;
+        spatialParameters_ = new SpatialParameters(gridView);
 
         gravity_ = 0;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
             gravity_[dim - 1] = - 9.81;
     }
     /*!
-     * \brief Constructs an IMPESProblem2P object
+     * \brief The constructor
      *
-     * \param timeManager The time manager
      * \param gridView The grid view
-     * \param spatialParams SpatialParams instantiation
+     * \param spatialParameters SpatialParameters instantiation
+     * \param verbose Output flag for the time manager.
      */
-    IMPESProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
-        : ParentType(timeManager, gridView),
-        gravity_(0)
+    IMPESProblem2P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
+        : ParentType(gridView, verbose),
+        gravity_(0),spatialParameters_(&spatialParameters)
     {
-        spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
+        newSpatialParams_ = false;
         gravity_ = 0;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
             gravity_[dim - 1] = - 9.81;
+    }
+
+    virtual ~IMPESProblem2P()
+    {
+        if (newSpatialParams_)
+        {
+        delete spatialParameters_;
+        }
     }
 
     /*!
@@ -110,52 +119,10 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * \param element The element
-     *
+     * This method MUST be overwritten by the actual problem.
      */
-    Scalar temperature(const Element& element) const
-    {
-        return asImp_().temperatureAtPos(element.geometry().center());
-    }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * \param globalPos The position of the center of an element
-     *
-     */
-    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
-    {
-        // Throw an exception (there is no initial condition)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide "
-                   "a temperatureAtPos() method.");
-    }
-
-    /*!
-     * \brief Returns the reference pressure for evaluation of constitutive relations.
-     *
-     * \param element The element
-     *
-     */
-    Scalar referencePressure(const Element& element) const
-    {
-        return asImp_().referencePressureAtPos(element.geometry().center());
-    }
-
-    /*!
-     * \brief Returns the reference pressure for evaluation of constitutive relations.
-     *
-     * \param globalPos The position of the center of an element
-     *
-     */
-    Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
-    {
-        // Throw an exception (there is no initial condition)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide "
-                   "a referencePressureAtPos() method.");
-    }
+    Scalar temperature() const
+    { return this->asImp_()->temperature(); };
 
     /*!
      * \brief Returns the acceleration due to gravity.
@@ -169,30 +136,24 @@ public:
     /*!
      * \brief Returns the spatial parameters object.
      */
-    SpatialParams &spatialParams()
-    { return *spatialParams_; }
+    SpatialParameters &spatialParameters()
+    { return *spatialParameters_; }
 
     /*!
-     * \brief Returns the spatial parameters object.
+     * \copydoc Dumux::IMPESProblem2P::spatialParameters()
      */
-    const SpatialParams &spatialParams() const
-    { return *spatialParams_; }
+    const SpatialParameters &spatialParameters() const
+    { return *spatialParameters_; }
+
 
     // \}
 
 private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
-
     GlobalPosition gravity_;
 
     // fluids and material properties
-    std::shared_ptr<SpatialParams> spatialParams_;
+    SpatialParameters*  spatialParameters_;
+    bool newSpatialParams_;
 };
 
 }

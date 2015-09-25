@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -22,11 +24,12 @@
 /**
 * @file
 * @brief  Definition of boundary condition types, extend if necessary
+* @author Peter Bastian
 */
 namespace Dumux
 {
 /*!
- * \ingroup BC
+ * \ingroup IMPETbc
  */
 /**
 * @brief Define a class containing boundary condition flags
@@ -38,7 +41,6 @@ struct BoundaryConditions
 {
     /** \brief These values are ordered according to precedence */
     enum Flags {
-        mortarCoupling = -3, //!< An outflow boundary for coupled models using mortar elements
         couplingOutflow = -2, //!< An outflow boundary for coupled models
         couplingInflow = -1, //!< An inflow boundary for coupled models
         outflow = 0, //!< An outflow boundary

@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Markus Wolff                                      *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -20,12 +22,9 @@
 #define DUMUX_IMPET_PROPERTIES_HH
 
 #include <dumux/decoupled/common/decoupledproperties.hh>
-#include <dumux/decoupled/common/pressureproperties.hh>
-#include <dumux/decoupled/common/transportproperties.hh>
-
 /*!
  * \ingroup IMPET
- * \ingroup IMPETProperties
+ * \ingroup Properties
  */
 /*!
  * \file
@@ -57,40 +56,23 @@ NEW_TYPE_TAG(IMPET, INHERITS_FROM(DecoupledModel));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(ImpetCFLFactor);         //!< Scalar factor for additional scaling of the time step
-NEW_PROP_TAG( ImpetSubCFLFactor );//!< Scalar factor for scaling of local sub-time-step
-NEW_PROP_TAG(ImpetIterationFlag); //!< Flag to switch the iteration type of the IMPET scheme
-NEW_PROP_TAG(ImpetIterationNumber); //!< Number of iterations if IMPET iterations are enabled by the IterationFlags
-NEW_PROP_TAG(ImpetMaximumDefect); //!< Maximum Defect if IMPET iterations are enabled by the IterationFlags
-NEW_PROP_TAG(ImpetRelaxationFactor); //!< Used for IMPET iterations
-NEW_PROP_TAG(ImpetDtVariationRestrictionFactor);
-NEW_PROP_TAG(ImpetPorosityThreshold);
+NEW_PROP_TAG(PressureModel);         //!< The type of the discretization
+NEW_PROP_TAG(TransportModel);         //!< The type of the discretization
 
-//forward declaration!
-NEW_PROP_TAG( Model );//! The model of the specific problem
-}
-}
+NEW_PROP_TAG(CFLFactor);         //!< Scalar factor for additional scaling of the time step
+NEW_PROP_TAG(IterationFlag); //!< Flag to switch the iteration type of the IMPET scheme
+NEW_PROP_TAG(IterationNumber); //!< Number of iterations if IMPET iterations are enabled by the IterationFlags
+NEW_PROP_TAG(MaximumDefect); //!< Maximum Defect if IMPET iterations are enabled by the IterationFlags
+NEW_PROP_TAG(RelaxationFactor); //!< Used for IMPET iterations
 
-#include <dumux/decoupled/common/impet.hh>
-
-namespace Dumux
-{
-namespace Properties
-{
-//set impet model
 SET_TYPE_PROP(IMPET, Model, IMPET<TypeTag>);
 
-//Set defaults
-SET_SCALAR_PROP(IMPET, ImpetSubCFLFactor, 1.0);
-SET_SCALAR_PROP(IMPET, ImpetCFLFactor, 1.0);
-//! 0 = no iterations, 1 = iterate IterationNumber iterations, 2 = iterate until converged or IterationNumber is reached
-SET_INT_PROP(IMPET, ImpetIterationFlag, 0);
-SET_INT_PROP(IMPET, ImpetIterationNumber, 2);
-SET_SCALAR_PROP(IMPET, ImpetMaximumDefect, 1e-5);
-//! 1 = new solution is new solution, 0 = old solution is new solution
-SET_SCALAR_PROP(IMPET, ImpetRelaxationFactor, 1.0);
-SET_SCALAR_PROP(IMPET, ImpetDtVariationRestrictionFactor, std::numeric_limits<double>::max());
-SET_SCALAR_PROP(IMPET, ImpetPorosityThreshold, 1e-6);
+SET_SCALAR_PROP(IMPET, CFLFactor, 1);
+SET_INT_PROP(IMPET, IterationFlag, 0); //!< 0 = no iterations, 1 = iterate IterationNumber iterations, 2 = iterate until converged or IterationNumber is reached
+SET_INT_PROP(IMPET, IterationNumber, 2);
+SET_SCALAR_PROP(IMPET, MaximumDefect, 1e-5);
+SET_SCALAR_PROP(IMPET, RelaxationFactor, 1);//!< 1 = new solution is new solution, 0 = old solution is new solution
+
 }
 }
 

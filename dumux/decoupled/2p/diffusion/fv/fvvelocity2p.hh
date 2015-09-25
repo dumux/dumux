@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Markus Wolff                                      *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -22,719 +24,678 @@
 /**
  * @file
  * @brief  Velocity Field from a finite volume solution of a pressure equation.
+ * @author Markus Wolff
  */
 
-#include <dune/common/float_cmp.hh>
-#include <dune/grid/common/gridenums.hh>
-#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
+#include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
 
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-//! \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
-/*! Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization.
+//! \ingroup FV2p
+//! \brief Determines the velocity from a finite volume solution of the  pressure equation of the sequential Model (IMPES).
+/*! Calculates phase velocities or total velocity from a known pressure field in context of a Finite Volume implementation for the evaluation
+ * of equations of the form
+ * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
  * The wetting or the non-wetting phase pressure, or the global pressure has to be given as piecewise constant cell values.
  * The phase velocities are calculated following  Darcy's law as
- * \f[
- * \boldsymbol v_\alpha = \lambda_\alpha \boldsymbol K \left(\textbf{grad}\, p_\alpha + \rho_\alpha g  \textbf{grad}\, z \right),
- * \f]
- * where \f$ p_\alpha \f$ denotes the pressure of phase \f$ _\alpha \f$ (wetting or non-wetting),
- * \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda_\alpha \f$ the phase mobility,
- * \f$ \rho_\alpha \f$ the phase density and \f$ g \f$ the gravity constant.
+ * \f[\boldsymbol{v}_\alpha = \lambda_\alpha \boldsymbol{K} \left(\text{grad}\, p_\alpha + \rho_\alpha g  \text{grad}\, z\right),\f]
+ * where \f$p_\alpha\f$ denotes the pressure of phase \f$_\alpha\f$ (wetting or non-wetting), \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_\alpha\f$ the phase mobility, \f$\rho_\alpha\f$ the phase density and \f$g\f$ the gravity constant.
  * The total velocity is either calculated as sum of the phase velocities
- * \f[
- * \boldsymbol v_{total} = \boldsymbol v_{wetting}+\boldsymbol v_{non-wetting},
- * \f]
+ * \f[\boldsymbol{v}_{total} = \boldsymbol{v}_{wetting}+\boldsymbol{v}_{non-wetting},\f]
  * or with a given global pressure
- * \f[
- * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \left(\textbf{grad}\,
- *  p_{global} + \sum f_\alpha \rho_\alpha g  \textbf{grad}\, z\right).
- * \f]
+ * \f[\boldsymbol{v}_{total} = \lambda_{total} \boldsymbol{K} \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right).\f]
  *
  * \tparam TypeTag The Type Tag
  */
 
 template<class TypeTag>
-class FVVelocity2P
+class FVVelocity2P: public FVPressure2P<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView)GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef FVVelocity2P<TypeTag> ThisType;
+    typedef FVPressure2P<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-
+typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Grid Grid;
+    typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-
-    typedef typename Element::Geometry Geometry;
-    typedef typename Geometry::JacobianTransposed JacobianTransposed;
+    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
-
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-
     enum
     {
         pw = Indices::pressureW,
-        pn = Indices::pressureNw,
-        pGlobal = Indices::pressureGlobal,
+        pn = Indices::pressureNW,
+        pglobal = Indices::pressureGlobal,
         vw = Indices::velocityW,
-        vn = Indices::velocityNw,
+        vn = Indices::velocityNW,
         vt = Indices::velocityTotal,
-        sw = Indices::saturationW,
-        sn = Indices::saturationNw,
-        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx,
-        eqIdxPress = Indices::pressureEqIdx,
-        eqIdxSat = Indices::satEqIdx
+        Sw = Indices::saturationW,
+        Sn = Indices::saturationNW,
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    /*! \brief Constructs a FVVelocity2P object
-     * \param problem A Problem class object
+    //! Constructs a FVVelocity2P object
+    /*!
+     * \param problem a problem class object
      */
-    FVVelocity2P(Problem& problem) :
-    problem_(problem), gravity_(problem.gravity())
+    FVVelocity2P(Problem& problem)
+    : FVPressure2P<TypeTag>(problem)
     {
-        if (GET_PROP_VALUE(TypeTag, EnableCompressibility) && velocityType_ == vt)
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility)) && velocityType_ == vt)
         {
-            DUNE_THROW(Dune::NotImplemented,
-                    "Total velocity - global pressure - model cannot be used with compressible fluids!");
+            DUNE_THROW(Dune::NotImplemented, "Total velocity - global pressure - model cannot be used with compressible fluids!");
         }
         if (velocityType_ != vw && velocityType_ != vn && velocityType_ != vt)
         {
             DUNE_THROW(Dune::NotImplemented, "Velocity type not supported!");
         }
-
-        density_[wPhaseIdx] = 0.;
-        density_[nPhaseIdx] = 0.;
-        viscosity_[wPhaseIdx] = 0.;
-        viscosity_[nPhaseIdx] = 0.;
-
-        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
-    //! For initialization
-    void initialize()
-    {
-        if (!compressibility_)
-        {
-            ElementIterator element = problem_.gridView().template begin<0> ();
-            FluidState fluidState;
-            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setTemperature(problem_.temperature(*element));
-            fluidState.setSaturation(wPhaseIdx, 1.);
-            fluidState.setSaturation(nPhaseIdx, 0.);
-            density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
-            density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
-            viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
-            viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
-        }
-    }
-
-    // Calculates the velocity at a cell-cell interface.
-    void calculateVelocity(const Intersection&, CellData&);
-
-    //Calculates the velocity at a boundary.
-    void calculateVelocityOnBoundary(const Intersection&, CellData&);
-
-    /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
+    //! Calculate the velocity.
+    /*!
      *
-     * Returns true (In the standard finite volume discretization the velocity is calculated during the saturation transport.)
+     *  Given the piecewise constant pressure \f$p\f$,
+     *  this method calculates the velocity
+     *  The method is needed in the IMPES (Implicit Pressure Explicit Saturation) algorithm which is used for a fractional flow formulation
+     *  to provide the velocity field required for the solution of the saturation equation.
      */
-    bool calculateVelocityInTransport()
+    void calculateVelocity();
+
+    void update()
     {
-        return true;
+        ParentType::update();
+
+        calculateVelocity();
+
+        return;
     }
 
-    /*! \brief Adds velocity output to the output file
-     *
-     * Adds the phase velocities or a total velocity (depending on the formulation) to the output.
-     *
-     * \tparam MultiWriter Class defining the output writer
-     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
-     */
+    //! \copydoc Dumux::FVVelocity1P::addOutputVtkFields(MultiWriter &writer)
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        if (vtkOutputLevel_ > 0)
-        {
-            Dune::BlockVector < Dune::FieldVector<Scalar, dim> > &velocity = *(writer.template allocateManagedBuffer<Scalar,
-                    dim>(problem_.gridView().size(0)));
-            Dune::BlockVector < Dune::FieldVector<Scalar, dim> > &velocitySecondPhase =
-            *(writer.template allocateManagedBuffer<Scalar, dim>(problem_.gridView().size(0)));
+        ParentType::addOutputVtkFields(writer);
 
-            // compute update vector
-            ElementIterator eEndIt = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-            {
-                // cell index
-                int eIdxGlobal = problem_.variables().index(*eIt);
-
-                CellData& cellData = problem_.variables().cellData(eIdxGlobal);
-
-                const typename Element::Geometry& geometry = eIt->geometry();
-                // get corresponding reference element
-                typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-                const Dune::ReferenceElement< Scalar , dim > & refElement =
-                        ReferenceElements::general( geometry.type() );
-                const int numberOfFaces=refElement.size(1);
-
-                std::vector<Scalar> fluxW(numberOfFaces,0);
-                std::vector<Scalar> fluxNw(numberOfFaces,0);
-
-                // run through all intersections with neighbors and boundary
-                IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
-                {
-                    int isIndex = isIt->indexInInside();
-
-                    fluxW[isIndex] += isIt->geometry().volume()
-                    * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
-                    fluxNw[isIndex] += isIt->geometry().volume()
-                    * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
-                }
-
-                // calculate velocity on reference element as the Raviart-Thomas-0
-                // interpolant of the fluxes
-                Dune::FieldVector<Scalar, dim> refVelocity;
-                // simplices
-                if (refElement.type().isSimplex()) {
-                    for (int dimIdx = 0; dimIdx < dim; dimIdx++)
-                    {
-                        refVelocity[dimIdx] = -fluxW[dim - 1 - dimIdx];
-                        for (int fIdx = 0; fIdx < dim + 1; fIdx++)
-                        {
-                            refVelocity[dimIdx] += fluxW[fIdx]/(dim + 1);
-                        }
-                    }
-                }
-                // cubes
-                else if (refElement.type().isCube()){
-                    for (int i = 0; i < dim; i++)
-                        refVelocity[i] = 0.5 * (fluxW[2*i + 1] - fluxW[2*i]);
-                }
-                // 3D prism and pyramids
-                else {
-                    DUNE_THROW(Dune::NotImplemented, "velocity output for prism/pyramid not implemented");
-                }
-
-                const Dune::FieldVector<Scalar, dim> localPos =
-                        refElement.position(0, 0);
-
-                // get the transposed Jacobian of the element mapping
-                const JacobianTransposed jacobianT =
-                        geometry.jacobianTransposed(localPos);
-
-                // calculate the element velocity by the Piola transformation
-                Dune::FieldVector < Scalar, dim > elementVelocity(0);
-                jacobianT.umtv(refVelocity, elementVelocity);
-                elementVelocity /= geometry.integrationElement(localPos);
-
-                velocity[eIdxGlobal] = elementVelocity;
-
-                // calculate velocity on reference element as the Raviart-Thomas-0
-                // interpolant of the fluxes
-                // simplices
-                if (refElement.type().isSimplex()) {
-                    for (int dimIdx = 0; dimIdx < dim; dimIdx++)
-                    {
-                        refVelocity[dimIdx] = -fluxNw[dim - 1 - dimIdx];
-                        for (int fIdx = 0; fIdx < dim + 1; fIdx++)
-                        {
-                            refVelocity[dimIdx] += fluxNw[fIdx]/(dim + 1);
-                        }
-                    }
-                }
-                // cubes
-                else if (refElement.type().isCube()){
-                    for (int i = 0; i < dim; i++)
-                        refVelocity[i] = 0.5 * (fluxNw[2*i + 1] - fluxNw[2*i]);
-                }
-                // 3D prism and pyramids
-                else {
-                    DUNE_THROW(Dune::NotImplemented, "velocity output for prism/pyramid not implemented");
-                }
-
-                // calculate the element velocity by the Piola transformation
-                elementVelocity = 0;
-                jacobianT.umtv(refVelocity, elementVelocity);
-                elementVelocity /= geometry.integrationElement(localPos);
-
-                velocitySecondPhase[eIdxGlobal] = elementVelocity;
-            }
-
-            //switch velocities
-            if (velocityType_ == vt)
-            {
-                 writer.attachCellData(velocity, "total velocity", dim);
-            }
-            else
-            {
-                writer.attachCellData(velocity, "wetting-velocity", dim);
-                writer.attachCellData(velocitySecondPhase, "non-wetting-velocity", dim);
-            }
-        }
+//        typename Variables::ScalarSolutionType *velocityX = writer.template createField<Scalar, 1> (
+//                this->problem().gridView().size(0));
+//        typename Variables::ScalarSolutionType *velocityY = writer.template createField<Scalar, 1> (
+//                this->problem().gridView().size(0));
+//
+//        // compute update vector
+//        ElementIterator eItEnd = this->problem().gridView().template end<0>();
+//        for (ElementIterator eIt = this->problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+//        {
+//            // cell index
+//            int globalIdx = this->problem().variables().index(*eIt);
+//
+//
+//            Dune::FieldVector<Scalar, 2*dim> flux(0);
+//            // run through all intersections with neighbors and boundary
+//            IntersectionIterator
+//            isItEnd = this->problem().gridView().iend(*eIt);
+//            for (IntersectionIterator
+//                    isIt = this->problem().gridView().ibegin(*eIt); isIt
+//                    !=isItEnd; ++isIt)
+//            {
+//                int isIndex = isIt->indexInInside();
+//
+//                flux[isIndex] = isIt->geometry().volume() * (isIt->centerUnitOuterNormal() * this->problem().variables().velocityElementFace(*eIt, isIndex));
+//            }
+//
+//            Dune::FieldVector<Scalar, dim> refVelocity(0);
+//            refVelocity[0] = 0.5 * (flux[1] - flux[0]);
+//            refVelocity[1] = 0.5 * (flux[3] - flux[2]);
+//
+//            const Dune::FieldVector<Scalar, dim>& localPos = GenericReferenceElements::general(eIt->geometry().type()).position(0,
+//                    0);
+//
+//            // get the transposed Jacobian of the element mapping
+//            const FieldMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
+//            FieldMatrix jacobianT(jacobianInv);
+//            jacobianT.invert();
+//
+//            // calculate the element velocity by the Piola transformation
+//            Dune::FieldVector<Scalar, dim> elementVelocity(0);
+//            jacobianT.umtv(refVelocity, elementVelocity);
+//            elementVelocity /= eIt->geometry().integrationElement(localPos);
+//
+//            (*velocityX)[globalIdx] = elementVelocity[0];
+//            (*velocityY)[globalIdx] = elementVelocity[1];
+//        }
+//
+//        writer.addCellData(velocityX, "x-velocity");
+//        writer.addCellData(velocityY, "y-velocity");
 
         return;
     }
 
 private:
-    Problem& problem_;
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
-    Scalar density_[numPhases];
-    Scalar viscosity_[numPhases];
-
-    int vtkOutputLevel_;
-
-    //! gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
-    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
-    //! gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
-    //! gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation)); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
 };
 
-/*! \brief Calculates the velocity at a cell-cell interface.
- *
- * Calculates the velocity at a cell-cell interface from a given pressure field.
- *
- * \param intersection Intersection of two grid cells
- * \param cellData Object containing all model relevant cell data
- */
 template<class TypeTag>
-void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
+void FVVelocity2P<TypeTag>::calculateVelocity()
 {
-    ElementPointer elementI = intersection.inside();
-    ElementPointer elementJ = intersection.outside();
-
-    int eIdxGlobalJ = problem_.variables().index(*elementJ);
-
-    CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
-
-    // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = (*elementI).geometry().center();
-    const GlobalPosition& globalPosJ = (*elementJ).geometry().center();
-
-    // get mobilities and fractional flow factors
-    Scalar lambdaWI = cellData.mobility(wPhaseIdx);
-    Scalar lambdaNwI = cellData.mobility(nPhaseIdx);
-    Scalar lambdaWJ = cellDataJ.mobility(wPhaseIdx);
-    Scalar lambdaNwJ = cellDataJ.mobility(nPhaseIdx);
-
-    // get capillary pressure
-    Scalar pcI = cellData.capillaryPressure();
-    Scalar pcJ = cellDataJ.capillaryPressure();
-
-    //get face index
-    int isIndexI = intersection.indexInInside();
-    int isIndexJ = intersection.indexInOutside();
-
-    //get face normal
-    const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
-
-    // distance vector between barycenters
-    GlobalPosition distVec = globalPosJ - globalPosI;
-
-    // compute distance between cell centers
-    Scalar dist = distVec.two_norm();
-
-    // compute vectorized permeabilities
-    DimMatrix meanPermeability(0);
-
-    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
-            problem_.spatialParams().intrinsicPermeability(*elementJ));
-
-    Dune::FieldVector<Scalar, dim> permeability(0);
-    meanPermeability.mv(unitOuterNormal, permeability);
-
-    //calculate potential gradients
-    Scalar potentialDiffW = cellData.potential(wPhaseIdx) - cellDataJ.potential(wPhaseIdx);
-    Scalar potentialDiffNw = cellData.potential(nPhaseIdx) - cellDataJ.potential(nPhaseIdx);
-
-    if (compressibility_)
+    // compute update vector
+    ElementIterator eItEnd = this->problem().gridView().template end<0>();
+    for (ElementIterator eIt = this->problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
-        density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+       //
+        GlobalPosition globalPos = eIt->geometry().center();
 
-        density_[wPhaseIdx] =
-                (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx)) :
-                        density_[wPhaseIdx];
-        density_[nPhaseIdx] =
-                (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx)) :
-                        density_[nPhaseIdx];
+        // cell index
+        int globalIdxI = this->problem().variables().index(*eIt);
 
-        potentialDiffW = (cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx));
-        potentialDiffNw = (cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx));
+        Scalar pressI = this->problem().variables().pressure()[globalIdxI];
+        Scalar pcI = this->problem().variables().capillaryPressure(globalIdxI);
+        Scalar lambdaWI = this->problem().variables().mobilityWetting(globalIdxI);
+        Scalar lambdaNWI = this->problem().variables().mobilityNonwetting(globalIdxI);
+        Scalar fractionalWI = this->problem().variables().fracFlowFuncWetting(globalIdxI);
+        Scalar fractionalNWI = this->problem().variables().fracFlowFuncNonwetting(globalIdxI);
+        Scalar densityWI = this->problem().variables().densityWetting(globalIdxI);
+        Scalar densityNWI = this->problem().variables().densityNonwetting(globalIdxI);
 
-        potentialDiffW += density_[wPhaseIdx] * (distVec * gravity_); //delta z/delta x in unitOuterNormal[z]
-        potentialDiffNw += density_[nPhaseIdx] * (distVec * gravity_);
-    }
-
-    //store potentials for further calculations (velocity, saturation, ...)
-    cellData.fluxData().setUpwindPotential(wPhaseIdx, isIndexI, potentialDiffW);
-    cellData.fluxData().setUpwindPotential(nPhaseIdx, isIndexI, potentialDiffNw);
-
-    cellDataJ.fluxData().setUpwindPotential(wPhaseIdx, isIndexJ, -potentialDiffW);
-    cellDataJ.fluxData().setUpwindPotential(nPhaseIdx, isIndexJ, -potentialDiffNw);
-
-    //do the upwinding of the mobility depending on the phase potentials
-    Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWJ;
-    lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
-    Scalar lambdaNw = (potentialDiffNw > 0.) ? lambdaNwI : lambdaNwJ;
-    lambdaNw = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (lambdaNwI + lambdaNwJ) : lambdaNw;
-
-    if (compressibility_)
-    {
-        density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
-        density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
-
-        density_[wPhaseIdx] =
-                (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx)) :
-                        density_[wPhaseIdx];
-        density_[nPhaseIdx] =
-                (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx)) :
-                        density_[nPhaseIdx];
-    }
-
-    Scalar scalarPerm = permeability.two_norm();
-
-    //calculate the gravity term
-    Dune::FieldVector<Scalar, dimWorld> velocityW(unitOuterNormal);
-    Dune::FieldVector<Scalar, dimWorld> velocityNw(unitOuterNormal);
-
-    //calculate unit distVec
-    distVec /= dist;
-    Scalar areaScaling = (unitOuterNormal * distVec);
-    //this treatment of g allows to account for gravity flux through faces where the face normal
-    //has no z component (e.g. parallelepiped grids)
-    Scalar gravityTermW = (gravity_ * distVec) * density_[wPhaseIdx] * areaScaling;
-    Scalar gravityTermNw = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
-
-    //calculate velocity depending on the pressure used -> use pc = pn - pw
-    switch (pressureType_)
-    {
-    case pw:
-    {
-        velocityW *= lambdaW * scalarPerm
-                * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermW);
-        velocityNw *= lambdaNw * scalarPerm
-                * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermNw)
-                + 0.5 * (lambdaNwI + lambdaNwJ) * scalarPerm * (pcI - pcJ) / dist;
-        break;
-    }
-    case pn:
-    {
-        velocityW *= lambdaW * scalarPerm
-                * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermW)
-                - 0.5 * (lambdaWI + lambdaWJ) * scalarPerm * (pcI - pcJ) / dist;
-        velocityNw *= lambdaNw * scalarPerm
-                * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermNw);
-        break;
-    }
-    case pGlobal:
-    {
-        velocityW *= (lambdaW + lambdaNw) * scalarPerm * (cellData.globalPressure() - cellDataJ.globalPressure()) / dist
-                + scalarPerm * (lambdaW * gravityTermW + lambdaNw * gravityTermNw);
-        velocityNw = 0;
-        break;
-    }
-    }
-
-    //store velocities
-    cellData.fluxData().setVelocity(wPhaseIdx, isIndexI, velocityW);
-    cellData.fluxData().setVelocity(nPhaseIdx, isIndexI, velocityNw);
-    cellData.fluxData().setVelocityMarker(isIndexI);
-
-    cellDataJ.fluxData().setVelocity(wPhaseIdx, isIndexJ, velocityW);
-    cellDataJ.fluxData().setVelocity(nPhaseIdx, isIndexJ, velocityNw);
-    cellDataJ.fluxData().setVelocityMarker(isIndexJ);
-
-//                        printvector(std::cout, cellData.fluxData().velocity(), "velocity", "row", 4, 1, 3);
-    return;
-}
-
-/*! \brief Calculates the velocity at a boundary.
- *
- * Calculates the velocity at a boundary from a given pressure field.
- *
- * \param intersection Boundary intersection
- * \param cellData Object containing all model relevant cell data
- */
-template<class TypeTag>
-void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
-{
-    ElementPointer element = intersection.inside();
-
-    //get face index
-    int isIndex = intersection.indexInInside();
-
-    //get face normal
-    const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
-
-    BoundaryTypes bcType;
-    //get boundary type
-    problem_.boundaryTypes(bcType, intersection);
-    PrimaryVariables boundValues(0.0);
-
-    if (bcType.isDirichlet(eqIdxPress))
-    {
-        problem_.dirichlet(boundValues, intersection);
-
-        // get global coordinates of cell centers
-        const GlobalPosition& globalPosI = (*element).geometry().center();
-
-        // center of face in global coordinates
-        const GlobalPosition& globalPosJ = intersection.geometry().center();
-
-        // get mobilities and fractional flow factors
-        Scalar lambdaWI = cellData.mobility(wPhaseIdx);
-        Scalar lambdaNwI = cellData.mobility(nPhaseIdx);
-        Scalar fractionalWI = cellData.fracFlowFunc(wPhaseIdx);
-        Scalar fractionalNwI = cellData.fracFlowFunc(nPhaseIdx);
-
-        // get capillary pressure
-        Scalar pcI = cellData.capillaryPressure();
-
-        // distance vector between barycenters
-        GlobalPosition distVec = globalPosJ - globalPosI;
-
-        // compute distance between cell centers
-        Scalar dist = distVec.two_norm();
-
-        //permeability vector at boundary
-        // compute vectorized permeabilities
-        DimMatrix meanPermeability(0);
-
-        problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*element));
-
-        Dune::FieldVector<Scalar, dim> permeability(0);
-        meanPermeability.mv(unitOuterNormal, permeability);
-
-        //determine saturation at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-        Scalar satW = 0;
-        Scalar satNw = 0;
-        if (bcType.isDirichlet(eqIdxSat))
+        // run through all intersections with neighbors and boundary
+        IntersectionIterator
+        isItEnd = this->problem().gridView().iend(*eIt);
+        for (IntersectionIterator
+                isIt = this->problem().gridView().ibegin(*eIt); isIt
+                !=isItEnd; ++isIt)
         {
-            switch (saturationType_)
+            // local number of facet
+            int isIndex = isIt->indexInInside();
+
+            Dune::FieldVector<Scalar,dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
+
+            // get absolute permeability
+            const FieldMatrix& permeabilityI(this->problem().spatialParameters().intrinsicPermeability(globalPos, *eIt));
+
+            // handle interior face
+            if (isIt->neighbor())
             {
-            case sw:
+                // access neighbor
+                ElementPointer neighborPointer = isIt->outside();
+                int globalIdxJ = this->problem().variables().index(*neighborPointer);
+
+                // neighbor cell center in global coordinates
+                const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+
+                // distance vector between barycenters
+                Dune::FieldVector<Scalar,dimWorld> distVec = globalPosNeighbor - globalPos;
+
+                // compute distance between cell centers
+                Scalar dist = distVec.two_norm();
+
+                // get absolute permeability
+                const FieldMatrix& permeabilityJ(this->problem().spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
+
+                // compute vectorized permeabilities
+                FieldMatrix meanPermeability(0);
+
+//                // harmonic mean of permeability
+                for (int x = 0; x < dim; x++)
+                {
+                    meanPermeability[x][x] = 2 * permeabilityI[x][x] * permeabilityJ[x][x] / (permeabilityI[x][x]
+                            + permeabilityJ[x][x]);
+                    for (int y = 0; y < dim; y++)
+                    {
+                        if (x != y)
+                        {//use arithmetic mean for the off-diagonal entries to keep the tensor property!
+                            meanPermeability[x][y] = 0.5 * (permeabilityI[x][y] + permeabilityJ[x][y]);
+                        }
+                    }
+                }
+
+                Dune::FieldVector<Scalar,dim> permeability(0);
+                meanPermeability.mv(unitOuterNormal,permeability);
+
+                Scalar pressJ = this->problem().variables().pressure()[globalIdxJ];
+                Scalar pcJ = this->problem().variables().capillaryPressure(globalIdxJ);
+                Scalar lambdaWJ = this->problem().variables().mobilityWetting(globalIdxJ);
+                Scalar lambdaNWJ = this->problem().variables().mobilityNonwetting(globalIdxJ);
+                Scalar fractionalWJ = this->problem().variables().fracFlowFuncWetting(globalIdxJ);
+                Scalar fractionalNWJ = this->problem().variables().fracFlowFuncNonwetting(globalIdxJ);
+                Scalar densityWJ = this->problem().variables().densityWetting(globalIdxJ);
+                Scalar densityNWJ = this->problem().variables().densityNonwetting(globalIdxJ);
+
+                //calculate potential gradients
+                Scalar potentialW = 0;
+                Scalar potentialNW = 0;
+
+                potentialW = this->problem().variables().potentialWetting(globalIdxI, isIndex);
+                potentialNW = this->problem().variables().potentialNonwetting(globalIdxI, isIndex);
+
+                Scalar densityW = (potentialW> 0.) ? densityWI : densityWJ;
+                Scalar densityNW = (potentialNW> 0.) ? densityNWI : densityNWJ;
+
+                densityW = (potentialW == 0.) ? 0.5 * (densityWI + densityWJ) : densityW;
+                densityNW = (potentialNW == 0.) ? 0.5 * (densityNWI + densityNWJ) : densityNW;
+
+                switch (this->pressureType)
+                {
+                case pw:
+                {
+                    potentialW = (pressI - pressJ);
+                    potentialNW = (pressI - pressJ+ pcI - pcJ);
+                    break;
+                }
+                case pn:
+                {
+                    potentialW = (pressI - pressJ - pcI + pcJ);
+                    potentialNW = (pressI - pressJ);
+                    break;
+                }
+                case pglobal:
+                {
+                    potentialW = (pressI - pressJ - 0.5 * (fractionalNWI+fractionalNWJ)*(pcI - pcJ));
+                    potentialNW = (pressI - pressJ + 0.5 * (fractionalWI+fractionalWJ)*(pcI - pcJ));
+                    break;
+                }
+                }
+
+                potentialW += densityW * (distVec * this->gravity);//delta z/delta x in unitOuterNormal[z]
+                potentialNW += densityNW * (distVec * this->gravity);
+
+                //store potentials for further calculations (velocity, saturation, ...)
+                this->problem().variables().potentialWetting(globalIdxI, isIndex) = potentialW;
+                this->problem().variables().potentialNonwetting(globalIdxI, isIndex) = potentialNW;
+
+                //do the upwinding of the mobility depending on the phase potentials
+                Scalar lambdaW = (potentialW > 0.) ? lambdaWI : lambdaWJ;
+                lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
+                Scalar lambdaNW = (potentialNW > 0.) ? lambdaNWI : lambdaNWJ;
+                lambdaNW = (potentialNW == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNW;
+                densityW = (potentialW> 0.) ? densityWI : densityWJ;
+                densityW = (potentialW == 0.) ? 0.5 * (densityWI + densityWJ) : densityW;
+                densityNW = (potentialNW> 0.) ? densityNWI : densityNWJ;
+                densityNW = (potentialNW == 0.) ? 0.5 * (densityNWI + densityNWJ) : densityNW;
+
+                //calculate the gravity term
+                Dune::FieldVector<Scalar,dimWorld> velocityW(permeability);
+                Dune::FieldVector<Scalar,dimWorld> velocityNW(permeability);
+                Dune::FieldVector<Scalar,dimWorld> gravityTermW(unitOuterNormal);
+                Dune::FieldVector<Scalar,dimWorld> gravityTermNW(unitOuterNormal);
+
+                gravityTermW *= (this->gravity*permeability)*(lambdaW * densityW);
+                gravityTermNW *= (this->gravity*permeability)*(lambdaNW * densityNW);
+
+                //calculate velocity depending on the pressure used -> use pc = pn - pw
+                switch (this->pressureType)
+                {
+                case pw:
+                {
+                    velocityW *= lambdaW * (pressI - pressJ)/dist;
+                    velocityNW *= lambdaNW * (pressI - pressJ)/dist + 0.5 * (lambdaNWI + lambdaNWJ) * (pcI - pcJ) / dist;
+                    velocityW += gravityTermW;
+                    velocityNW += gravityTermNW;
+                    break;
+                }
+                case pn:
+                {
+                    velocityW *= lambdaW * (pressI - pressJ)/dist - 0.5 * (lambdaWI + lambdaWJ) * (pcI - pcJ) / dist;
+                    velocityNW *= lambdaNW * (pressI - pressJ) / dist;
+                    velocityW += gravityTermW;
+                    velocityNW += gravityTermNW;
+                    break;
+                }
+                case pglobal:
+                {
+                    this->problem().variables().velocity()[globalIdxI][isIndex] = permeability;
+                    this->problem().variables().velocity()[globalIdxI][isIndex]*= (lambdaW + lambdaNW)* (pressI - pressJ )/ dist;
+                    this->problem().variables().velocity()[globalIdxI][isIndex] += gravityTermW;
+                    this->problem().variables().velocity()[globalIdxI][isIndex] += gravityTermNW;
+                    break;
+                }
+                }
+
+                //store velocities
+                switch (velocityType_)
+                {
+                case vw:
+                {
+                    this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW;
+                    this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
+                    break;
+                }
+                case vn:
+                {
+                    this->problem().variables().velocity()[globalIdxI][isIndex] = velocityNW;
+                    this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
+                    break;
+                }
+                case vt:
+                {
+                    switch (this->pressureType)
+                    {
+                    case pw:
+                    {
+                        this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW + velocityNW;
+                        this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
+                        break;
+                    }
+                    case pn:
+                    {
+                        this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW + velocityNW;
+                        this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
+                        break;
+                    }
+                    }
+                    break;
+                }
+                }
+            }//end intersection with neighbor
+
+            // handle boundary face
+            if (isIt->boundary())
             {
-                satW = boundValues[saturationIdx];
-                satNw = 1 - boundValues[saturationIdx];
-                break;
-            }
-            case sn:
-            {
-                satW = 1 - boundValues[saturationIdx];
-                satNw = boundValues[saturationIdx];
-                break;
-            }
-            }
-        }
-        else
-        {
-            satW = cellData.saturation(wPhaseIdx);
-            satNw = cellData.saturation(nPhaseIdx);
-        }
+                // center of face in global coordinates
+                GlobalPosition globalPosFace = isIt->geometry().center();
 
-        Scalar pressBound = boundValues[pressureIdx];
-        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satW);
+                //get boundary type
+                BoundaryConditions::Flags bcTypeSat = this->problem().bctypeSat(globalPosFace, *isIt);
+                BoundaryConditions::Flags bcTypePress = this->problem().bctypePress(globalPosFace, *isIt);
 
-        //determine phase pressures from primary pressure variable
-        Scalar pressWBound = 0;
-        Scalar pressNwBound = 0;
-        if (pressureType_ == pw)
-        {
-            pressWBound = pressBound;
-            pressNwBound = pressBound + pcBound;
-        }
-        else if (pressureType_ == pn)
-        {
-            pressWBound = pressBound - pcBound;
-            pressNwBound = pressBound;
-        }
+                // distance vector between barycenters
+                Dune::FieldVector<Scalar,dimWorld> distVec = globalPosFace - globalPos;
 
-        //get temperature at current position
-        Scalar temperature = problem_.temperature(*element);
+                // compute distance between cell centers
+                Scalar dist = distVec.two_norm();
 
-        Scalar densityWBound = density_[wPhaseIdx];
-        Scalar densityNwBound = density_[nPhaseIdx];
-        Scalar viscosityWBound = viscosity_[wPhaseIdx];
-        Scalar viscosityNwBound = viscosity_[nPhaseIdx];
+                //multiply with normal vector at the boundary
+                Dune::FieldVector<Scalar,dim> permeability(0);
+                permeabilityI.mv(unitOuterNormal, permeability);
 
-        if (compressibility_)
-        {
-            FluidState fluidState;
-            fluidState.setSaturation(wPhaseIdx, satW);
-            fluidState.setSaturation(nPhaseIdx, satNw);
-            fluidState.setTemperature(temperature);
-            fluidState.setPressure(wPhaseIdx, pressWBound);
-            fluidState.setPressure(nPhaseIdx, pressNwBound);
+                Scalar satBound = 0;
+                if (bcTypeSat == BoundaryConditions::dirichlet)
+                {
+                    satBound = this->problem().dirichletSat(globalPosFace, *isIt);
+                }
+                else
+                {
+                    satBound = this->problem().variables().saturation()[globalIdxI];
+                }
 
-            densityWBound = FluidSystem::density(fluidState, wPhaseIdx);
-            densityNwBound = FluidSystem::density(fluidState, nPhaseIdx);
-            viscosityWBound = FluidSystem::viscosity(fluidState, wPhaseIdx) / densityWBound;
-            viscosityNwBound = FluidSystem::viscosity(fluidState, nPhaseIdx) / densityNwBound;
-        }
+                if (bcTypePress == BoundaryConditions::dirichlet)
+                {
+                    //determine phase saturations from primary saturation variable
+                    Scalar satW;
+                    Scalar satNW;
+                    switch (this->saturationType)
+                    {
+                    case Sw:
+                    {
+                        satW = satBound;
+                        satNW = 1-satBound;
+                        break;
+                    }
+                    case Sn:
+                    {
+                        satW = 1-satBound;
+                        satNW = satBound;
+                        break;
+                    }
+                    default:
+                    {
+                        DUNE_THROW(Dune::RangeError, "saturation type not implemented");
+                    }
+                    }
+                    Scalar pressBound = this->problem().dirichletPress(globalPosFace, *isIt);
+                    Scalar pcBound = MaterialLaw::pC(this->problem().spatialParameters().materialLawParams(globalPos, *eIt), satW);
 
-        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satW)
-                / viscosityWBound;
-        Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satW)
-                / viscosityNwBound;
+                    //determine phase pressures from primary pressure variable
+                    Scalar pressW=0;
+                    Scalar pressNW=0;
+                    switch (this->pressureType)
+                    {
+                    case pw:
+                    {
+                        pressW = pressBound;
+                        pressNW = pressBound + pcBound;
+                        break;
+                    }
+                    case pn:
+                    {
+                        pressW = pressBound - pcBound;
+                        pressNW = pressBound;
+                        break;
+                    }
+                    }
 
-        Scalar potentialDiffW = cellData.fluxData().upwindPotential(wPhaseIdx, isIndex);
-        Scalar potentialDiffNw = cellData.fluxData().upwindPotential(nPhaseIdx, isIndex);
+                    //get temperature at current position
+                    Scalar temperature = this->problem().temperature(globalPosFace, *eIt);
 
-        if (compressibility_)
-        {
-            density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : densityWBound;
-            density_[wPhaseIdx] =
-                    (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(wPhaseIdx) + densityWBound) : density_[wPhaseIdx];
-            density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : densityNwBound;
-            density_[nPhaseIdx] =
-                    (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(nPhaseIdx) + densityNwBound) : density_[nPhaseIdx];
-        }
+                    Scalar densityWBound = 0;
+                    Scalar densityNWBound = 0;
+                    Scalar lambdaWBound = 0;
+                    Scalar lambdaNWBound = 0;
+                    if (this->compressibility)
+                    {
+                        FluidState fluidState;
+                        fluidState.update(satW, pressW, pressNW, temperature);
+                        densityWBound = FluidSystem::phaseDensity(wPhaseIdx, temperature, pressW, fluidState);
+                        densityNWBound = FluidSystem::phaseDensity(nPhaseIdx, temperature, pressNW, fluidState);
+                        Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, pressW, fluidState);
+                        Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, pressNW, fluidState);
+                        lambdaWBound = MaterialLaw::krw(this->problem().spatialParameters().materialLawParams(globalPos, *eIt), satW) / viscosityWBound * densityWBound;
+                        lambdaNWBound = MaterialLaw::krn(this->problem().spatialParameters().materialLawParams(globalPos, *eIt), satW) / viscosityNWBound * densityNWBound;
+                    }
+                    else
+                    {
+                        Scalar referencePressure =  this->problem().referencePressure(globalPos, *eIt);
+                        FluidState fluidState;
+                        fluidState.update(satW, referencePressure, referencePressure, temperature);
+                        densityWBound = FluidSystem::phaseDensity(wPhaseIdx, temperature, referencePressure, fluidState);
+                        densityNWBound = FluidSystem::phaseDensity(nPhaseIdx, temperature, referencePressure, fluidState);
+                        Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
+                        Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
+                        lambdaWBound = MaterialLaw::krw(this->problem().spatialParameters().materialLawParams(globalPos, *eIt), satW) / viscosityWBound;
+                        lambdaNWBound = MaterialLaw::krn(this->problem().spatialParameters().materialLawParams(globalPos, *eIt), satW) / viscosityNWBound;
+                    }
 
-        //calculate potential gradient
-        if (pressureType_ == pGlobal)
-        {
-            potentialDiffW = (cellData.globalPressure() - pressBound - fractionalNwI * (pcI - pcBound));
-            potentialDiffNw = (cellData.globalPressure() - pressBound + fractionalWI * (pcI - pcBound));
-        }
-        else
-        {
-            potentialDiffW = (cellData.pressure(wPhaseIdx) - pressWBound);
-            potentialDiffNw = (cellData.pressure(nPhaseIdx) - pressNwBound);
-        }
+                    Scalar potentialW = 0;
+                    Scalar potentialNW = 0;
 
-        potentialDiffW += density_[wPhaseIdx] * (distVec * gravity_);
-        potentialDiffNw += density_[nPhaseIdx] * (distVec * gravity_);
+                    potentialW = this->problem().variables().potentialWetting(globalIdxI, isIndex);
+                    potentialNW = this->problem().variables().potentialNonwetting(globalIdxI, isIndex);
 
-        //store potential gradients for further calculations
-        cellData.fluxData().setUpwindPotential(wPhaseIdx, isIndex, potentialDiffW);
-        cellData.fluxData().setUpwindPotential(nPhaseIdx, isIndex, potentialDiffNw);
+                    Scalar densityW = (potentialW> 0.) ? densityWI : densityWBound;
+                    Scalar densityNW = (potentialNW> 0.) ? densityNWI : densityNWBound;
 
-        //do the upwinding of the mobility depending on the phase potentials
-        Scalar lambdaW = (potentialDiffW > 0.) ? lambdaWI : lambdaWBound;
-        lambdaW = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (lambdaWI + lambdaWBound) : lambdaW;
-        Scalar lambdaNw = (potentialDiffNw > 0.) ? lambdaNwI : lambdaNwBound;
-        lambdaNw = (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (lambdaNwI + lambdaNwBound) : lambdaNw;
+                    densityW = (potentialW == 0.) ? 0.5 * (densityWI + densityWBound) : densityW;
+                    densityNW = (potentialNW == 0.) ? 0.5 * (densityNWI + densityNWBound) : densityNW;
 
-        if (compressibility_)
-        {
-            density_[wPhaseIdx] = (potentialDiffW > 0.) ? cellData.density(wPhaseIdx) : densityWBound;
-            density_[wPhaseIdx] =
-                    (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffW, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(wPhaseIdx) + densityWBound) : density_[wPhaseIdx];
-            density_[nPhaseIdx] = (potentialDiffNw > 0.) ? cellData.density(nPhaseIdx) : densityNwBound;
-            density_[nPhaseIdx] =
-                    (Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(potentialDiffNw, 0.0, 1.0e-30)) ? 0.5 * (cellData.density(nPhaseIdx) + densityNwBound) : density_[nPhaseIdx];
-        }
+                    //calculate potential gradient
+                    switch (this->pressureType)
+                    {
+                    case pw:
+                    {
+                        potentialW = (pressI - pressBound);
+                        potentialNW = (pressI + pcI - pressBound - pcBound);
+                        break;
+                    }
+                    case pn:
+                    {
+                        potentialW = (pressI - pcI - pressBound + pcBound);
+                        potentialNW = (pressI - pressBound);
+                        break;
+                    }
+                    case pglobal:
+                    {
+                        potentialW = (pressI - pressBound - fractionalNWI * (pcI - pcBound));
+                        potentialNW = (pressI - pressBound + fractionalWI * (pcI - pcBound));
+                        break;
+                    }
+                    }
 
-        Scalar scalarPerm = permeability.two_norm();
+                    potentialW += densityW * (distVec * this->gravity);
+                    potentialNW += densityNW * (distVec * this->gravity);
 
-        //calculate the gravity term
-        Dune::FieldVector<Scalar, dimWorld> velocityW(unitOuterNormal);
-        Dune::FieldVector<Scalar, dimWorld> velocityNw(unitOuterNormal);
+                    //store potential gradients for further calculations
+                    this->problem().variables().potentialWetting(globalIdxI, isIndex) = potentialW;
+                    this->problem().variables().potentialNonwetting(globalIdxI, isIndex) = potentialNW;
 
-        //calculate unit distVec
-        distVec /= dist;
-        Scalar areaScaling = (unitOuterNormal * distVec);
-        //this treatment of g allows to account for gravity flux through faces where the face normal
-        //has no z component (e.g. parallelepiped grids)
-        Scalar gravityTermW = (gravity_ * distVec) * density_[wPhaseIdx] * areaScaling;
-        Scalar gravityTermNw = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
+                    //do the upwinding of the mobility depending on the phase potentials
+                    Scalar lambdaW = (potentialW > 0.) ? lambdaWI : lambdaWBound;
+                    lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWBound) : lambdaW;
+                    Scalar lambdaNW = (potentialNW > 0.) ? lambdaNWI : lambdaNWBound;
+                    lambdaNW = (potentialNW == 0) ? 0.5 * (lambdaNWI + lambdaNWBound) : lambdaNW;
+                    densityW = (potentialW> 0.) ? densityWI : densityWBound;
+                    densityW = (potentialW == 0.) ? 0.5 * (densityWI + densityWBound) : densityW;
+                    densityNW = (potentialNW> 0.) ? densityNWI : densityNWBound;
+                    densityNW = (potentialNW == 0.) ? 0.5 * (densityNWI + densityNWBound) : densityNW;
 
-        //calculate velocity depending on the pressure used -> use pc = pn - pw
-        switch (pressureType_)
-        {
-        case pw:
-        {
-            velocityW *= lambdaW * scalarPerm * ((cellData.pressure(wPhaseIdx) - pressBound) / dist + gravityTermW);
-            velocityNw *= lambdaNw * scalarPerm * ((cellData.pressure(wPhaseIdx) - pressBound) / dist + gravityTermNw)
-                    + 0.5 * (lambdaNwI + lambdaNwBound) * scalarPerm * (pcI - pcBound) / dist;
-            break;
-        }
-        case pn:
-        {
-            velocityW *= lambdaW * scalarPerm * ((cellData.pressure(nPhaseIdx) - pressBound) / dist + gravityTermW)
-                    - 0.5 * (lambdaWI + lambdaWBound) * scalarPerm * (pcI - pcBound) / dist;
-            velocityNw *= lambdaNw * scalarPerm * ((cellData.pressure(nPhaseIdx) - pressBound) / dist + gravityTermNw);
-            break;
-        }
-        case pGlobal:
-        {
-            velocityW *= (lambdaW + lambdaNw) * scalarPerm * (cellData.globalPressure() - pressBound) / dist
-                    + scalarPerm * (lambdaW * gravityTermW + lambdaNw * gravityTermNw);
-            velocityNw = 0;
-            break;
-        }
-        }
+                    //calculate the gravity term
+                    Dune::FieldVector<Scalar,dimWorld> velocityW(permeability);
+                    Dune::FieldVector<Scalar,dimWorld> velocityNW(permeability);
+                    Dune::FieldVector<Scalar,dimWorld> gravityTermW(unitOuterNormal);
+                    Dune::FieldVector<Scalar,dimWorld> gravityTermNW(unitOuterNormal);
 
-        //store velocities
-        cellData.fluxData().setVelocity(wPhaseIdx, isIndex, velocityW);
-        cellData.fluxData().setVelocity(nPhaseIdx, isIndex, velocityNw);
-        cellData.fluxData().setVelocityMarker(isIndex);
+                    gravityTermW *= (this->gravity*permeability)*(lambdaW * densityW);
+                    gravityTermNW *= (this->gravity*permeability)*(lambdaNW * densityNW);
 
-    } //end dirichlet boundary
+                    //calculate velocity depending on the pressure used -> use pc = pn - pw
+                    switch (this->pressureType)
+                    {
+                    case pw:
+                    {
+                        velocityW *= lambdaW * (pressI - pressBound)/dist;
+                        velocityNW *= lambdaNW * (pressI - pressBound)/dist + 0.5 * (lambdaNWI + lambdaNWBound) * (pcI - pcBound) / dist;
+                        velocityW += gravityTermW;
+                        velocityNW += gravityTermNW;
+                        break;
+                    }
+                    case pn:
+                    {
+                        velocityW *= lambdaW * (pressI - pressBound)/dist - 0.5 * (lambdaWI + lambdaWBound) * (pcI - pcBound) / dist;
+                        velocityNW *= lambdaNW * (pressI - pressBound) / dist;
+                        velocityW += gravityTermW;
+                        velocityNW += gravityTermNW;
+                        break;
+                    }
+                    case pglobal:
+                    {
+                        this->problem().variables().velocity()[globalIdxI][isIndex] = permeability;
+                        this->problem().variables().velocity()[globalIdxI][isIndex] *= (lambdaW + lambdaNW)* (pressI - pressBound )/ dist;
+                        this->problem().variables().velocity()[globalIdxI][isIndex] += gravityTermW;
+                        this->problem().variables().velocity()[globalIdxI][isIndex] += gravityTermNW;
+                        break;
+                    }
+                    }
 
-    else if (bcType.isNeumann(eqIdxPress))
-    {
-        problem_.neumann(boundValues, intersection);
+                    //store velocities
+                    switch (velocityType_)
+                    {
+                    case vw:
+                    {
+                        this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW;
+                        this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
+                        break;
+                    }
+                    case vn:
+                    {
+                        this->problem().variables().velocity()[globalIdxI][isIndex] = velocityNW;
+                        this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
+                        break;
+                    }
+                    case vt:
+                    {
+                        switch (this->pressureType)
+                        {
+                        case pw:
+                        {
+                            this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW + velocityNW;
+                            this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
+                            break;
+                        }
+                        case pn:
+                        {
+                            this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW + velocityNW;
+                            this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
+                            break;
+                        }
+                        }
+                        break;
+                    }
+                    }
+                }//end dirichlet boundary
 
-        Dune::FieldVector<Scalar, dimWorld> velocityW(unitOuterNormal);
-        Dune::FieldVector<Scalar, dimWorld> velocityNw(unitOuterNormal);
+                else
+                {
+                    std::vector<Scalar> J = this->problem().neumann(globalPosFace, *isIt);
+                    Dune::FieldVector<Scalar,dimWorld> velocityW(unitOuterNormal);
+                    Dune::FieldVector<Scalar,dimWorld> velocityNW(unitOuterNormal);
 
-        velocityW *= boundValues[wPhaseIdx];
-        velocityNw *= boundValues[nPhaseIdx];
+                    velocityW *= J[wPhaseIdx];
+                    velocityNW *= J[nPhaseIdx];
 
-        if (!compressibility_)
-        {
-            velocityW /= density_[wPhaseIdx];
-            velocityNw /= density_[nPhaseIdx];
-        }
+                    if (!this->compressibility)
+                    {
+                        velocityW /= densityWI;
+                        velocityNW /= densityNWI;
+                    }
 
-        //store potential gradients for further calculations
-        cellData.fluxData().setUpwindPotential(wPhaseIdx, isIndex, boundValues[wPhaseIdx]);
-        cellData.fluxData().setUpwindPotential(nPhaseIdx, isIndex, boundValues[nPhaseIdx]);
-
-        cellData.fluxData().setVelocity(wPhaseIdx, isIndex, velocityW);
-        cellData.fluxData().setVelocity(nPhaseIdx, isIndex, velocityNw);
-        cellData.fluxData().setVelocityMarker(isIndex);
-    } //end neumann boundary
-    else
-    {
-        DUNE_THROW(Dune::NotImplemented, "No valid boundary condition type defined for pressure equation!");
-    }
-
-//                        printvector(std::cout, cellData.fluxData().velocity(), "velocity", "row", 4, 1, 3);
+                    switch (velocityType_)
+                    {
+                    case vw:
+                    {
+                        this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW;
+                        this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
+                        break;
+                    }
+                    case vn:
+                    {
+                        this->problem().variables().velocity()[globalIdxI][isIndex] = velocityNW;
+                        this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
+                        break;
+                    }
+                    case vt:
+                    {
+                        switch (this->pressureType)
+                        {
+                        case pw:
+                        {
+                            this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW + velocityNW;
+                            this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
+                            break;
+                        }
+                        case pn:
+                        {
+                            this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW + velocityNW;
+                            this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
+                            break;
+                        }
+                        }
+                        break;
+                    }
+                    }
+                }//end neumann boundary
+            }//end boundary
+        }// end all intersections
+    }// end grid traversal
+//                        printvector(std::cout, this->problem().variables().velocity(), "velocity", "row", 4, 1, 3);
     return;
 }
 }

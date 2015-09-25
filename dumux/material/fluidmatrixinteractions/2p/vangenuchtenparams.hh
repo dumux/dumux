@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -32,7 +34,7 @@ namespace Dumux
  * \brief Specification of the material parameters
  *       for the van Genuchten constitutive relations.
  *
- *       In this implementation setting either the \f$\mathrm{n}\f$ or \f$\mathrm{m}\f$ shape parameter
+ *       In this implementation setting either the \f$n\f$ or \f$m\f$ shape parameter
  *       automatically calculates the other. I.e. they cannot be set independently.
  *
  * \ingroup fluidmatrixinteractionsparams
@@ -46,62 +48,62 @@ public:
     VanGenuchtenParams()
     {}
 
-    VanGenuchtenParams(Scalar vgAlpha, Scalar vgn)
+    VanGenuchtenParams(Scalar vgAlpha, Scalar vgN)
     {
         setVgAlpha(vgAlpha);
-        setVgn(vgn);
-    }
+        setVgN(vgN);
+    };
 
     /*!
-     * \brief Return the \f$\mathrm{\alpha}\f$ shape parameter \f$\mathrm{[1/Pa]}\f$ of van Genuchten's
+     * \brief Return the \f$\alpha\f$ shape parameter of van Genuchten's
      *        curve.
      */
     Scalar vgAlpha() const
     { return vgAlpha_; }
 
     /*!
-     * \brief Set the \f$\mathrm{\alpha}\f$ shape parameter \f$\mathrm{[1/Pa]}\f$ of van Genuchten's
+     * \brief Set the \f$\alpha\f$ shape parameter of van Genuchten's
      *        curve.
      */
     void setVgAlpha(Scalar v)
     { vgAlpha_ = v; }
 
     /*!
-     * \brief Return the \f$\mathrm{m}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+     * \brief Return the \f$m\f$ shape parameter of van Genuchten's
      *        curve.
      */
-    Scalar vgm() const
-    { return vgm_; }
+    Scalar vgM() const
+    { return vgM_; }
 
     /*!
-     * \brief Set the \f$\mathrm{m}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+     * \brief Set the \f$m\f$ shape parameter of van Genuchten's
      *        curve.
      *
-     * The \f$\mathrm{n}\f$ shape parameter is set to \f$\mathrm{n = \frac{1}{1 - m}}\f$
+     * The \f$n\f$ shape parameter is set to \f$n = \frac{1}{1 - m}\f$
      */
-    void setVgm(Scalar m)
-    { vgm_ = m; vgn_ = 1/(1 - vgm_); }
+    void setVgM(Scalar m)
+    { vgM_ = m; vgN_ = 1/(1 - vgM_); }
 
     /*!
-     * \brief Return the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+     * \brief Return the \f$n\f$ shape parameter of van Genuchten's
      *        curve.
      */
-    Scalar vgn() const
-    { return vgn_; }
+    Scalar vgN() const
+    { return vgN_; }
 
     /*!
-     * \brief Set the \f$\mathrm{n}\f$ shape parameter \f$\mathrm{[-]}\f$ of van Genuchten's
+     * \brief Set the \f$n\f$ shape parameter of van Genuchten's
      *        curve.
      *
-     * The \f$\mathrm{n}\f$ shape parameter is set to \f$\mathrm{m = 1 - \frac{1}{n}}\f$
+     * The \f$n\f$ shape parameter is set to \f$m = 1 - \frac{1}{n}\f$
      */
-    void setVgn(Scalar n)
-    { vgn_ = n; vgm_ = 1 - 1/vgn_; }
+    void setVgN(Scalar n)
+    { vgN_ = n; vgM_ = 1 - 1/vgN_; }
 
 private:
     Scalar vgAlpha_;
-    Scalar vgm_;
-    Scalar vgn_;
+    Scalar vgM_;
+    Scalar vgN_;
 };
 } // namespace Dumux
 

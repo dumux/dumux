@@ -1,0 +1,11 @@
+DGF
+Interval
+0 0   % first corner 
+22e-3 22e-3   % second corner
+44 44  % x-Achse wird 44x unterteilt und y-Achse
+# 
+
+BOUNDARYDOMAIN
+default 1    % all boundaries have id 1
+#BOUNDARYDOMAIN
+# unitcube.dgf 

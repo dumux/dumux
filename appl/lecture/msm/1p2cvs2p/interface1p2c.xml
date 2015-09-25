@@ -1,0 +1,39 @@
+<iPCM_problem>
+
+    <SoilProperties>
+        <FinePermeability>
+            3.1e-12
+        </FinePermeability>
+        <CoarsePermeability>
+            3.1e-12
+        </CoarsePermeability>
+       <FinePorosity>
+            0.35
+        </FinePorosity>
+        <CoarsePorosity>
+            0.35
+        </CoarsePorosity>
+    </SoilProperties>
+
+    <BoundaryAndInitialConditions>
+        <UpperPressure>
+            1.6e5
+        </UpperPressure>
+        <LowerPressure>
+            1.0e5
+        </LowerPressure>
+        <InfiltrationRate>
+            0.5
+        </InfiltrationRate>
+        <MaxTimeStepSize>
+            50
+        </MaxTimeStepSize>
+        <InfiltrationEndTime>
+            1000
+        </InfiltrationEndTime>
+        <SimulationNumber>
+               4
+        </SimulationNumber>
+    </BoundaryAndInitialConditions>
+
+</iPCM_problem>

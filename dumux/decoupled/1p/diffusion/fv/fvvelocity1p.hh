@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2010 by Markus Wolff                                      *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -19,343 +21,314 @@
 #ifndef DUMUX_FVVELOCITY1P_HH
 #define DUMUX_FVVELOCITY1P_HH
 
-#include<dumux/decoupled/1p/1pproperties.hh>
-
 /**
- * \file
- * \brief  Single phase finite volume velocity reconstruction
+ * @file
+ * @brief  Single Phase Finite Volume Model
+ * @author Markus Wolff
  */
 
+#include <dumux/decoupled/1p/diffusion/fv/fvpressure1p.hh>
 
 namespace Dumux
 {
-//! \ingroup FV1p
-//! \brief Single phase finite volume velocity reconstruction
-/*! Calculates velocities from a known pressure field applying a finite volume discretization.
+//! \ingroup OnePhase
+//! \brief Single Phase Finite Volume Model
+/*! Calculates velocities from a known pressure field in context of a Finite Volume implementation for the evaluation
+ * of equations of the form
+ * \f[\text{div}\, \boldsymbol{v} = q.\f]
  * The pressure has to be given as piecewise constant cell values.
  * The velocity is calculated following  Darcy's law as
- * \f[
- * \boldsymbol v = -\frac{1}{\mu} \boldsymbol K \left(\textbf{grad}\, p + \rho g  \textbf{grad}\, z\right),
- * \f]
- * where, \f$ p \f$ is the pressure, \f$ \boldsymbol K \f$ the absolute permeability,
- *        \f$ \mu \f$ the viscosity, \f$ \rho \f$ the density and \f$ g \f$ the gravity constant.
+ * \f[\boldsymbol{v} = -\frac{1}{\mu} \boldsymbol{K} \left(\text{grad}\, p + \rho g  \text{grad}\, z\right),\f]
+ * where, \f$p\f$ is the pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\mu\f$ the viscosity, \f$\rho\f$ the density and \f$g\f$ the gravity constant.
  *
- * \tparam TypeTag The Type Tag
+ * @tparam TypeTag The Type Tag
  */
 
 template<class TypeTag>
-class FVVelocity1P
+class FVVelocity1P: public FVPressure1P<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef FVVelocity1P<TypeTag> ThisType;
+    typedef FVPressure1P<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
 
-     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
-     typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
-
-     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
-typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::Grid Grid;
+    typedef typename GridView::IndexSet IndexSet;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    enum
-    {
-        pressEqIdx = Indices::pressureEqIdx // only one equation!
-    };
-
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    //! Constructs a FVVelocity1P object
+    //! The Constructor
     /**
-     * \param problem A problem class object
+     * \param problem a problem class object
      */
     FVVelocity1P(Problem& problem)
-    : problem_(problem), gravity_(problem.gravity())
-      {
-        ElementIterator element = problem_.gridView().template begin<0> ();
-        Scalar temperature = problem_.temperature(*element);
-        Scalar referencePress = problem_.referencePressure(*element);
+    : FVPressure1P<TypeTag>(problem)
+      {   }
 
-        density_ = Fluid::density(temperature, referencePress);
-        viscosity_ = Fluid::viscosity(temperature, referencePress);
-      }
 
-    // Calculates the velocity at a cell-cell interface.
-    void calculateVelocity(const Intersection&, CellData&);
-
-    //Calculates the velocity at a boundary.
-    void calculateVelocityOnBoundary(const Intersection&, CellData&);
-
-    /*! \brief Adds velocity output to the output file
+    //! Calculate the velocity.
+    /*!
      *
-     * Adds the velocities to the output.
-     *
-     * \tparam MultiWriter Class defining the output writer
-     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
+     *  Given the piecewise constant pressure \f$p\f$,
+     *  this method calculates the velocity field
      */
+    void calculateVelocity();
+
+
+    void initialize()
+    {
+        ParentType::initialize();
+
+        calculateVelocity();
+
+        return;
+    }
+
+    //! \brief Write data files
+    /*  \param name file name */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        Dune::BlockVector<Dune::FieldVector<Scalar, dim> > &velocity = *(writer.template allocateManagedBuffer<Scalar, dim> (
-                problem_.gridView().size(0)));
+        ParentType::addOutputVtkFields(writer);
+
+        typename Variables::ScalarSolutionType *velocityX = writer.template createField<Scalar, 1> (
+                this->problem().gridView().size(0));
+        typename Variables::ScalarSolutionType *velocityY = writer.template createField<Scalar, 1> (
+                this->problem().gridView().size(0));
 
         // compute update vector
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        ElementIterator eItEnd = this->problem().gridView().template end<0>();
+        for (ElementIterator eIt = this->problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
         {
             // cell index
-            int eIdxGlobal = problem_.variables().index(*eIt);
+            int globalIdx = this->problem().variables().index(*eIt);
 
-            CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
-            const typename Element::Geometry& geometry = eIt->geometry();
-            // get corresponding reference element
-            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-            const Dune::ReferenceElement< Scalar , dim > & refElement =
-                    ReferenceElements::general( geometry.type() );
-            const int numberOfFaces=refElement.size(1);
-
-            std::vector<Scalar> flux(numberOfFaces,0);
-
+            Dune::FieldVector<Scalar, 2*dim> flux(0);
             // run through all intersections with neighbors and boundary
             IntersectionIterator
-            isEndIt = problem_.gridView().iend(*eIt);
+            isItEnd = this->problem().gridView().iend(*eIt);
             for (IntersectionIterator
-                    isIt = problem_.gridView().ibegin(*eIt); isIt
-                    !=isEndIt; ++isIt)
+                    isIt = this->problem().gridView().ibegin(*eIt); isIt
+                    !=isItEnd; ++isIt)
             {
                 int isIndex = isIt->indexInInside();
 
-                flux[isIndex] = isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(isIndex));
+                flux[isIndex] = isIt->geometry().volume() * (isIt->centerUnitOuterNormal() * this->problem().variables().velocityElementFace(*eIt, isIndex));
             }
 
-            // calculate velocity on reference element as the Raviart-Thomas-0
-            // interpolant of the fluxes
-            Dune::FieldVector<Scalar, dim> refVelocity;
-            // simplices
-            if (refElement.type().isSimplex()) {
-                for (int dimIdx = 0; dimIdx < dim; dimIdx++)
-                {
-                    refVelocity[dimIdx] = -flux[dim - 1 - dimIdx];
-                    for (int fIdx = 0; fIdx < dim + 1; fIdx++)
-                    {
-                        refVelocity[dimIdx] += flux[fIdx]/(dim + 1);
-                    }
-                }
-            }
-            // cubes
-            else if (refElement.type().isCube()){
-                for (int i = 0; i < dim; i++)
-                    refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
-            }
-            // 3D prism and pyramids
-            else {
-                DUNE_THROW(Dune::NotImplemented, "velocity output for prism/pyramid not implemented");
-            }
+            Dune::FieldVector<Scalar, dim> refVelocity(0);
+            refVelocity[0] = 0.5 * (flux[1] - flux[0]);
+            refVelocity[1] = 0.5 * (flux[3] - flux[2]);
 
-            const Dune::FieldVector<Scalar, dim>& localPos
-              = refElement.position(0, 0);
+            typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+            const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElements::general(eIt->geometry().type()).position(0,
+                    0);
 
             // get the transposed Jacobian of the element mapping
-            const typename Element::Geometry::JacobianTransposed& jacobianT =
-                geometry.jacobianTransposed(localPos);
+            const FieldMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
+            FieldMatrix jacobianT(jacobianInv);
+            jacobianT.invert();
 
             // calculate the element velocity by the Piola transformation
             Dune::FieldVector<Scalar, dim> elementVelocity(0);
             jacobianT.umtv(refVelocity, elementVelocity);
-            elementVelocity /= geometry.integrationElement(localPos);
+            elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-            velocity[eIdxGlobal] = elementVelocity;
+            (*velocityX)[globalIdx] = elementVelocity[0];
+            (*velocityY)[globalIdx] = elementVelocity[1];
         }
 
-        writer.attachCellData(velocity, "velocity", dim);
+        writer.addCellData(velocityX, "x-velocity");
+        writer.addCellData(velocityY, "y-velocity");
 
         return;
     }
-private:
-    Problem &problem_;
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
-    Scalar density_;
-    Scalar viscosity_;
+
 };
-
-/*! \brief Calculates the velocity at a cell-cell interface.
-*
-* Calculates the velocity at a cell-cell interface from a given pressure field.
-*
-* \param intersection Intersection of two grid cells
-* \param cellData Object containing all model relevant cell data
-*/
 template<class TypeTag>
-void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
+void FVVelocity1P<TypeTag>::calculateVelocity()
 {
-    ElementPointer elementI = intersection.inside();
-    ElementPointer elementJ = intersection.outside();
-
-    int eIdxGlobalJ = problem_.variables().index(*elementJ);
-
-    CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
-
-    // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = elementI->geometry().center();
-    const GlobalPosition& globalPosJ = elementJ->geometry().center();
-
-    //get face index
-    int isIndexI = intersection.indexInInside();
-    int isIndexJ = intersection.indexInOutside();
-
-    //get face normal
-    const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
-
-    // distance vector between barycenters
-    GlobalPosition distVec = globalPosJ - globalPosI;
-
-    // compute distance between cell centers
-    Scalar dist = distVec.two_norm();
-
-    // compute vectorized permeabilities
-    DimMatrix meanPermeability(0);
-
-    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
-            problem_.spatialParams().intrinsicPermeability(*elementJ));
-
-    Dune::FieldVector < Scalar, dim > permeability(0);
-    meanPermeability.mv(unitOuterNormal, permeability);
-
-    permeability /= viscosity_;
-
-    //calculate potential gradients
-    Scalar potential = (cellData.pressure() - cellDataJ.pressure()) / dist;
-
-    potential += density_ * (unitOuterNormal * gravity_);
-
-    //store potentials for further calculations (velocity, saturation, ...)
-    cellData.fluxData().setPotential(isIndexI, potential);
-    cellDataJ.fluxData().setPotential(isIndexJ, -potential);
-
-    //calculate the gravity term
-    GlobalPosition velocity(permeability);
-    velocity *= (cellData.pressure() - cellDataJ.pressure()) / dist;
-
-    GlobalPosition gravityTerm(unitOuterNormal);
-    gravityTerm *= (gravity_ * permeability) * density_;
-
-    velocity += gravityTerm;
-
-    //store velocities
-    cellData.fluxData().setVelocity(isIndexI, velocity);
-    cellData.fluxData().setVelocityMarker(isIndexI);
-
-    cellDataJ.fluxData().setVelocity(isIndexJ, velocity);
-    cellDataJ.fluxData().setVelocityMarker(isIndexJ);
-    return;
-}
-
-/*! \brief Calculates the velocity at a boundary.
-*
-* Calculates the velocity at a boundary from a given pressure field.
-*
-* \param intersection Boundary intersection
-* \param cellData Object containing all model relevant cell data
-*/
-template<class TypeTag>
-void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
-{
-    ElementPointer element = intersection.inside();
-
-    //get face index
-    int isIndex = intersection.indexInInside();
-
-    //get face normal
-    const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
-
-    BoundaryTypes bcType;
-    //get boundary type
-    problem_.boundaryTypes(bcType, intersection);
-    PrimaryVariables boundValues(0.0);
-
-    if (bcType.isDirichlet(pressEqIdx))
+    // compute update vector
+    ElementIterator eItEnd = this->problem().gridView().template end<0>();
+    for (ElementIterator eIt = this->problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        problem_.dirichlet(boundValues, intersection);
+        //
+        GlobalPosition globalPos = eIt->geometry().center();
 
-        // get global coordinates of cell centers
-        const GlobalPosition& globalPosI = element->geometry().center();
+        // cell index
+        int globalIdxI = this->problem().variables().index(*eIt);
 
-        // center of face in global coordinates
-        const GlobalPosition& globalPosJ = intersection.geometry().center();
+        Scalar pressI = this->problem().variables().pressure()[globalIdxI];
 
-        // distance vector between barycenters
-        GlobalPosition distVec = globalPosJ - globalPosI;
+        Scalar temperatureI = this->problem().temperature(globalPos, *eIt);
+        Scalar referencePressI = this->problem().referencePressure(globalPos, *eIt);
 
-        // compute distance between cell centers
-        Scalar dist = distVec.two_norm();
+        Scalar densityI = Fluid::density(temperatureI, referencePressI);
 
-        //permeability vector at boundary
-        // compute vectorized permeabilities
-        DimMatrix meanPermeability(0);
+        // run through all intersections with neighbors and boundary
+        IntersectionIterator
+        isItEnd = this->problem().gridView().iend(*eIt);
+        for (IntersectionIterator
+                isIt = this->problem().gridView().ibegin(*eIt); isIt
+                !=isItEnd; ++isIt)
+        {
+            // local number of facet
+            int isIndex = isIt->indexInInside();
 
-        problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*element));
+            Dune::FieldVector<Scalar,dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
 
-        //multiply with normal vector at the boundary
-        Dune::FieldVector < Scalar, dim > permeability(0);
-        meanPermeability.mv(unitOuterNormal, permeability);
-        permeability /= viscosity_;
+            // get absolute permeability
+            FieldMatrix permeabilityI(this->problem().spatialParameters().intrinsicPermeability(globalPos, *eIt));
 
-        Scalar pressBound = boundValues;
+            // handle interior face
+            if (isIt->neighbor())
+            {
+                // access neighbor
+                ElementPointer neighborPointer = isIt->outside();
+                int globalIdxJ = this->problem().variables().index(*neighborPointer);
 
-        //calculate potential gradients
-        Scalar potential = (cellData.pressure() - pressBound) / dist;
 
-        potential += density_ * (unitOuterNormal * gravity_);
+                // cell center in global coordinates
+                const GlobalPosition& globalPos = eIt->geometry().center();
 
-        //store potentials for further calculations (velocity, saturation, ...)
-        cellData.fluxData().setPotential(isIndex, potential);
+                // neighbor cell center in global coordinates
+                const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
-        //calculate the gravity term
-        GlobalPosition velocity(permeability);
-        velocity *= (cellData.pressure() - pressBound) / dist;
+                // distance vector between barycenters
+                Dune::FieldVector<Scalar,dimWorld> distVec = globalPosNeighbor - globalPos;
 
-        GlobalPosition gravityTerm(unitOuterNormal);
-        gravityTerm *= (gravity_ * permeability) * density_;
+                // compute distance between cell centers
+                Scalar dist = distVec.two_norm();
 
-        velocity += gravityTerm;
+                // get absolute permeability
+                FieldMatrix permeabilityJ(this->problem().spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
 
-        //store velocities
-        cellData.fluxData().setVelocity(isIndex, velocity);
-        cellData.fluxData().setVelocityMarker(isIndex);
+                // compute vectorized permeabilities
+                FieldMatrix meanPermeability(0);
 
-    } //end dirichlet boundary
+//                // harmonic mean of permeability
+                for (int x = 0; x < dim; x++)
+                {
+                    meanPermeability[x][x] = 2 * permeabilityI[x][x] * permeabilityJ[x][x] / (permeabilityI[x][x]
+                            + permeabilityJ[x][x]);
+                    for (int y = 0; y < dim; y++)
+                    {
+                        if (x != y)
+                        {//use arithmetic mean for the off-diagonal entries to keep the tensor property!
+                            meanPermeability[x][y] = 0.5 * (permeabilityI[x][y] + permeabilityJ[x][y]);
+                        }
+                    }
+                }
 
-    else
-    {
-        problem_.neumann(boundValues, intersection);
-        GlobalPosition velocity(unitOuterNormal);
+                Dune::FieldVector<Scalar,dim> permeability(0);
+                meanPermeability.mv(unitOuterNormal,permeability);
 
-        velocity *= boundValues[pressEqIdx] / density_;
+                Scalar pressJ = this->problem().variables().pressure()[globalIdxJ];
 
-        //store potential gradients for further calculations
-        cellData.fluxData().setPotential(isIndex, boundValues[pressEqIdx]);
+                Scalar temperatureJ = this->problem().temperature(globalPos, *eIt);
+                Scalar referencePressJ = this->problem().referencePressure(globalPos, *eIt);
 
-        //store velocity
-        cellData.fluxData().setVelocity(isIndex, velocity);
-        cellData.fluxData().setVelocityMarker(isIndex);
-    } //end neumann boundary
+                Scalar densityJ = Fluid::density(temperatureJ, referencePressJ);
+
+                //calculate potential gradients
+                Scalar potential = this->problem().variables().potential(globalIdxI, isIndex);
+
+                Scalar density = (potential> 0.) ? densityI : densityJ;
+
+                density= (potential == 0.) ? 0.5 * (densityI + densityJ) : density;
+
+
+                potential = (pressI - pressJ) / dist;
+
+
+                potential += density * (unitOuterNormal * this->gravity);
+
+                //store potentials for further calculations (velocity, saturation, ...)
+                this->problem().variables().potential(globalIdxI, isIndex) = potential;
+
+                //do the upwinding depending on the potentials
+                density = (potential> 0.) ? densityI : densityJ;
+                density = (potential == 0.) ? 0.5 * (densityI + densityJ) : density;
+
+                //calculate the gravity term
+                Dune::FieldVector<Scalar,dimWorld> velocity(permeability);
+                velocity *= (pressI - pressJ)/dist;
+
+                Dune::FieldVector<Scalar,dimWorld> gravityTerm(unitOuterNormal);
+                gravityTerm *= (this->gravity*permeability)*density;
+
+                //store velocities
+                this->problem().variables().velocity()[globalIdxI][isIndex] = (velocity + gravityTerm);
+
+            }//end intersection with neighbor
+
+            // handle boundary face
+            if (isIt->boundary())
+            {
+                // center of face in global coordinates
+                GlobalPosition globalPosFace = isIt->geometry().center();
+
+                //get boundary type
+                BoundaryConditions::Flags bcType = this->problem().bctype(globalPosFace, *isIt);
+
+                // cell center in global coordinates
+                GlobalPosition globalPos = eIt->geometry().center();
+
+                // distance vector between barycenters
+                Dune::FieldVector<Scalar,dimWorld> distVec = globalPosFace - globalPos;
+
+                // compute distance between cell centers
+                Scalar dist = distVec.two_norm();
+
+                //multiply with normal vector at the boundary
+                Dune::FieldVector<Scalar,dim> permeability(0);
+                permeabilityI.mv(unitOuterNormal, permeability);
+
+                if (bcType == BoundaryConditions::dirichlet)
+                {
+                    Scalar pressBound = this->problem().dirichlet(globalPosFace, *isIt);
+
+                    //calculate the gravity term
+                    Dune::FieldVector<Scalar,dimWorld> velocity(permeability);
+                    velocity *= (pressI - pressBound)/dist;
+
+                    Dune::FieldVector<Scalar,dimWorld> gravityTerm(unitOuterNormal);
+                    gravityTerm *= (this->gravity*permeability)*densityI;
+
+                    this->problem().variables().velocity()[globalIdxI][isIndex] = (velocity + gravityTerm);
+
+                  }//end dirichlet boundary
+
+                else
+                {
+                   Scalar J = this->problem().neumann(globalPosFace, *isIt);
+                    Dune::FieldVector<Scalar,dimWorld> velocity(unitOuterNormal);
+
+                    velocity *= J/= densityI;
+
+                        this->problem().variables().velocity()[globalIdxI][isIndex] = velocity;
+
+                }//end neumann boundary
+            }//end boundary
+        }// end all intersections
+    }// end grid traversal
+//                        printvector(std::cout, this->problem().variables().velocity(), "velocity", "row", 4, 1, 3);
     return;
 }
 }

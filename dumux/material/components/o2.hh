@@ -1,7 +1,8 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +11,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -45,6 +46,7 @@ namespace Dumux
 template <class Scalar>
 class O2 : public Component<Scalar, O2<Scalar> >
 {
+    typedef Component<Scalar, O2<Scalar> >  ParentType;
     typedef Dumux::IdealGas<Scalar> IdealGas;
 
 public:
@@ -122,30 +124,18 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return true; }
-
-    /*!
      * \brief The density in \f$\mathrm{[kg/m^3]}\f$ of pure \f$O_2\f$ at a given pressure and temperature.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
-     * \todo: density liquid oxygen
+     * \todo density liquid oxygen
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         // Assume an ideal gas
         return IdealGas::density(molarMass(), temperature, pressure);
     }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { return true; }
 
     /*!
      * \brief The pressure of gaseous \f$O_2\f$ in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
@@ -191,6 +181,34 @@ public:
     }
 
     /*!
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of gaseous \f$O_2\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidDensity for O2"); }
+
+    /*!
+     * \brief The pressure of liquid oxygen in \f$\mathrm{[Pa]}\f$ at a given density and
+     *        temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param density density of component in \f$\mathrm{[kg/m^3]}\f$
+     */
+    static Scalar liquidPressure(Scalar temperature, Scalar density)
+    { DUNE_THROW(Dune::NotImplemented, "liquidPressure for O2"); }
+
+    /*!
+     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure liquid \f$O_2\f$.
+     *
+     * \param temperature temperature of component
+     * \param pressure pressure of component
+     */
+    static Scalar liquidEnthalpy(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidEnthalpy for O2"); }
+
+    /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$O_2\f$ at a given pressure and temperature.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
@@ -224,8 +242,18 @@ public:
         // convertion from micro poise to Pa s
         return mu/1e6 / 10;
     }
+
+    /*!
+     * \brief The dynamic liquid viscosity \f$\mathrm{[Pa*s]}\f$ of pure \f$O_2\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
+    { DUNE_THROW(Dune::NotImplemented, "liquidViscosity for O2"); }
+
 };
 
-} // end namespace
+} // end namepace
 
 #endif

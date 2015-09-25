@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -28,12 +30,11 @@
 #ifndef DUMUX_TABULATED_COMPONENT_HH
 #define DUMUX_TABULATED_COMPONENT_HH
 
-#include <cmath>
-#include <limits>
-#include <cassert>
-#include <iostream>
-
 #include <dumux/common/exceptions.hh>
+
+#include <boost/math/special_functions/fpclassify.hpp>
+
+#include <iostream>
 
 namespace Dumux
 {
@@ -54,7 +55,7 @@ namespace Dumux
  *                 arrays. This is quite useful for debugging
  *                 purposes.
  */
-template <class Scalar, class RawComponent, bool useVaporPressure=true>
+template <class Scalar, class RawComponent, bool verbose=true>
 class TabulatedComponent
 {
 public:
@@ -94,14 +95,10 @@ public:
 
         gasEnthalpy_ = new Scalar[nTemp_*nPress_];
         liquidEnthalpy_ = new Scalar[nTemp_*nPress_];
-        gasHeatCapacity_ = new Scalar[nTemp_*nPress_];
-        liquidHeatCapacity_ = new Scalar[nTemp_*nPress_];
         gasDensity_ = new Scalar[nTemp_*nPress_];
         liquidDensity_ = new Scalar[nTemp_*nPress_];
         gasViscosity_ = new Scalar[nTemp_*nPress_];
         liquidViscosity_ = new Scalar[nTemp_*nPress_];
-        gasThermalConductivity_ = new Scalar[nTemp_*nPress_];
-        liquidThermalConductivity_ = new Scalar[nTemp_*nPress_];
         gasPressure_ = new Scalar[nTemp_*nDensity_];
         liquidPressure_ = new Scalar[nTemp_*nDensity_];
 
@@ -113,8 +110,7 @@ public:
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
             try { vaporPressure_[iT] = RawComponent::vaporPressure(temperature); }
-            catch (Dune::NotImplemented) { vaporPressure_[iT] = NaN; }
-            catch (NumericalProblem e) { vaporPressure_[iT] = NaN; }
+            catch (NumericalProblem e) { vaporPressure_[iT] = NaN; };
 
             Scalar pgMax = maxGasPressure_(iT);
             Scalar pgMin = minGasPressure_(iT);
@@ -126,25 +122,14 @@ public:
                 unsigned i = iT + iP*nTemp_;
 
                 try { gasEnthalpy_[i] = RawComponent::gasEnthalpy(temperature, pressure); }
-                catch (Dune::NotImplemented) { gasEnthalpy_[i] = NaN; }
-                catch (NumericalProblem) { gasEnthalpy_[i] = NaN; }
-
-                try { gasHeatCapacity_[i] = RawComponent::gasHeatCapacity(temperature, pressure); }
-                catch (Dune::NotImplemented) { gasHeatCapacity_[i] = NaN; }
-                catch (NumericalProblem) { gasHeatCapacity_[i] = NaN; }
+                catch (NumericalProblem) { gasEnthalpy_[i] = NaN; };
 
                 try { gasDensity_[i] = RawComponent::gasDensity(temperature, pressure); }
-                catch (Dune::NotImplemented) { gasDensity_[i] = NaN; }
-                catch (NumericalProblem) { gasDensity_[i] = NaN; }
+                catch (NumericalProblem) { gasDensity_[i] = NaN; };
 
                 try { gasViscosity_[i] = RawComponent::gasViscosity(temperature, pressure); }
-                catch (Dune::NotImplemented) { gasViscosity_[i] = NaN; }
-                catch (NumericalProblem) { gasViscosity_[i] = NaN; }
-
-                try { gasThermalConductivity_[i] = RawComponent::gasThermalConductivity(temperature, pressure); }
-                catch (Dune::NotImplemented) { gasThermalConductivity_[i] = NaN; }
-                catch (NumericalProblem) { gasThermalConductivity_[i] = NaN; }
-            }
+                catch (NumericalProblem) { gasViscosity_[i] = NaN; };
+            };
 
             Scalar plMin = minLiquidPressure_(iT);
             Scalar plMax = maxLiquidPressure_(iT);
@@ -154,24 +139,13 @@ public:
                 unsigned i = iT + iP*nTemp_;
 
                 try { liquidEnthalpy_[i] = RawComponent::liquidEnthalpy(temperature, pressure); }
-                catch (Dune::NotImplemented) { liquidEnthalpy_[i] = NaN; }
-                catch (NumericalProblem) { liquidEnthalpy_[i] = NaN; }
-
-                try { liquidHeatCapacity_[i] = RawComponent::liquidHeatCapacity(temperature, pressure); }
-                catch (Dune::NotImplemented) { liquidHeatCapacity_[i] = NaN; }
-                catch (NumericalProblem) { liquidHeatCapacity_[i] = NaN; }
+                catch (NumericalProblem) { liquidEnthalpy_[i] = NaN; };
 
                 try { liquidDensity_[i] = RawComponent::liquidDensity(temperature, pressure); }
-                catch (Dune::NotImplemented) { liquidDensity_[i] = NaN; }
-                catch (NumericalProblem) { liquidDensity_[i] = NaN; }
+                catch (NumericalProblem) { liquidDensity_[i] = NaN; };
 
                 try { liquidViscosity_[i] = RawComponent::liquidViscosity(temperature, pressure); }
-                catch (Dune::NotImplemented) { liquidViscosity_[i] = NaN; }
-                catch (NumericalProblem) { liquidViscosity_[i] = NaN; }
-
-                try { liquidThermalConductivity_[i] = RawComponent::liquidThermalConductivity(temperature, pressure); }
-                catch (Dune::NotImplemented) { liquidThermalConductivity_[i] = NaN; }
-                catch (NumericalProblem) { liquidThermalConductivity_[i] = NaN; }
+                catch (NumericalProblem) { liquidViscosity_[i] = NaN; };
             }
         }
 
@@ -198,8 +172,8 @@ public:
                 unsigned i = iT + iRho*nTemp_;
 
                 try { gasPressure_[i] = RawComponent::gasPressure(temperature, density); }
-                catch (NumericalProblem) { gasPressure_[i] = NaN; }
-            }
+                catch (NumericalProblem) { gasPressure_[i] = NaN; };
+            };
 
             // calculate the minimum and maximum values for the liquid
             // densities
@@ -220,8 +194,8 @@ public:
                 unsigned i = iT + iRho*nTemp_;
 
                 try { liquidPressure_[i] = RawComponent::liquidPressure(temperature, density); }
-                catch (NumericalProblem) { liquidPressure_[i] = NaN; }
-            }
+                catch (NumericalProblem) { liquidPressure_[i] = NaN; };
+            };
         }
     }
 
@@ -274,19 +248,7 @@ public:
             return RawComponent::vaporPressure(T);
         }
         return result;
-    }
-
-    /*!
-     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
-     *        temperature.
-     *
-     * The method is only called by the decoupled flash, so tabulating is omitted.
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar vaporTemperature(Scalar pressure)
-    {
-            return RawComponent::vaporTemperature(pressure);
-    }
+    };
 
     /*!
      * \brief Specific enthalpy of the gas \f$\mathrm{[J/kg]}\f$.
@@ -320,42 +282,6 @@ public:
         if (std::isnan(result)) {
             printWarning_("liquidEnthalpy", temperature, pressure);
             return RawComponent::liquidEnthalpy(temperature, pressure);
-        }
-        return result;
-    }
-
-    /*!
-     * \brief Specific isobaric heat capacity of the gas \f$\mathrm{[J/(kg*K)]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static const Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
-    {
-        Scalar result = interpolateGasTP_(gasHeatCapacity_,
-                                          temperature,
-                                          pressure);
-        if (std::isnan(result)) {
-            printWarning_("gasHeatCapacity", temperature, pressure);
-            return RawComponent::gasHeatCapacity(temperature, pressure);
-        }
-        return result;
-    }
-
-    /*!
-     * \brief Specific isobaric heat capacity of the liquid \f$\mathrm{[J/(kg*K)]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static const Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
-    {
-        Scalar result = interpolateLiquidTP_(liquidHeatCapacity_,
-                                             temperature,
-                                             pressure);
-        if (std::isnan(result)) {
-            printWarning_("liquidHeatCapacity", temperature, pressure);
-            return RawComponent::liquidHeatCapacity(temperature, pressure);
         }
         return result;
     }
@@ -403,7 +329,7 @@ public:
                                              density);
         }
         return result;
-    }
+    };
 
     /*!
      * \brief The pressure of liquid in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
@@ -422,26 +348,7 @@ public:
                                                 density);
         }
         return result;
-    }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return RawComponent::gasIsCompressible(); }
-
-    /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
-     */
-    static bool liquidIsCompressible()
-    { return RawComponent::liquidIsCompressible(); }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { return RawComponent::gasIsIdeal(); }
-
+    };
 
     /*!
      * \brief The density of gas at a given pressure and temperature
@@ -497,7 +404,7 @@ public:
             return RawComponent::gasViscosity(temperature, pressure);
         }
         return result;
-    }
+    };
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of liquid.
@@ -515,44 +422,7 @@ public:
             return RawComponent::liquidViscosity(temperature, pressure);
         }
         return result;
-    }
-
-    /*!
-     * \brief The thermal conductivity of gaseous water \f$\mathrm{[W/(m*K)]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
-    {
-        Scalar result = interpolateGasTP_(gasThermalConductivity_,
-                                          temperature,
-                                          pressure);
-        if (std::isnan(result)) {
-            printWarning_("gasThermalConductivity", temperature, pressure);
-            return RawComponent::gasThermalConductivity(temperature, pressure);
-        }
-        return result;
-    }
-
-    /*!
-     * \brief The thermal conductivity of liquid water \f$\mathrm{[W/(m*K)]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
-    {
-        Scalar result = interpolateLiquidTP_(liquidThermalConductivity_,
-                                             temperature,
-                                             pressure);
-        if (std::isnan(result)) {
-            printWarning_("liquidThermalConductivity", temperature, pressure);
-            return RawComponent::liquidThermalConductivity(temperature, pressure);
-        }
-        return result;
-    }
-
+    };
 
 private:
     // prints a warning if the result is not in range or the table has
@@ -567,7 +437,7 @@ private:
             std::cerr << "TABULATED COMPONENT '" << name()
                       << "' WAS NOT INITIALIZED! "
                       << "PLEASE CALL FluidSystem::init()\n";
-        else
+        else if (verbose)
             std::cerr << "FORWARD METHOD CALL "<<quantity<<"("<<arg1<<", "<<arg2<<") OF COMPONENT '"<<name()<<"'. TABULATION TOO SMALL?\n";
         warningPrinted_ = true;
 #endif
@@ -598,28 +468,16 @@ private:
             return std::numeric_limits<Scalar>::quiet_NaN();
         }
 
-        unsigned iT = std::max<int>(0, std::min<int>(nTemp_ - 2, (int) alphaT));
+        unsigned iT = std::max<long long>(0, std::min<long long>(nTemp_ - 2, (long long) alphaT));
         alphaT -= iT;
 
         Scalar alphaP1 = pressLiquidIdx_(p, iT);
         Scalar alphaP2 = pressLiquidIdx_(p, iT + 1);
 
-        unsigned iP1 = std::max<int>(0, std::min<int>(nPress_ - 2, (int) alphaP1));
-        unsigned iP2 = std::max<int>(0, std::min<int>(nPress_ - 2, (int) alphaP2));
+        unsigned iP1 = std::max<long long>(0, std::min<long long>(nPress_ - 2, (long long) alphaP1));
+        unsigned iP2 = std::max<long long>(0, std::min<long long>(nPress_ - 2, (long long) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
-
-#if 0 && !defined NDEBUG
-        if(!(0 <= alphaT && alphaT <= 1.0))
-            DUNE_THROW(NumericalProblem, "Temperature out of range: "
-                       << "T=" << T << " range: [" << tempMin_ << ", " << tempMax_ << "]");
-        if(!(0 <= alphaP1 && alphaP1 <= 1.0))
-            DUNE_THROW(NumericalProblem, "First liquid pressure out of range: "
-                       << "p=" << p << " range: [" << minLiquidPressure_(tempIdx_(T)) << ", " << maxLiquidPressure_(tempIdx_(T)) << "]");
-        if(!(0 <= alphaP2 && alphaP2 <= 1.0))
-            DUNE_THROW(NumericalProblem, "Second liquid pressure out of range: "
-                       << "p=" << p << " range: [" << minLiquidPressure_(tempIdx_(T) + 1) << ", " << maxLiquidPressure_(tempIdx_(T) + 1) << "]");
-#endif
 
         return
             values[(iT    ) + (iP1    )*nTemp_]*(1 - alphaT)*(1 - alphaP1) +
@@ -638,27 +496,15 @@ private:
             return std::numeric_limits<Scalar>::quiet_NaN();
         }
 
-        unsigned iT = std::max<int>(0, std::min<int>(nTemp_ - 2, (int) alphaT));
+        unsigned iT = std::max<long long>(0, std::min<long long>(nTemp_ - 2, (long long) alphaT));
         alphaT -= iT;
 
         Scalar alphaP1 = pressGasIdx_(p, iT);
         Scalar alphaP2 = pressGasIdx_(p, iT + 1);
-        unsigned iP1 = std::max<int>(0, std::min<int>(nPress_ - 2, (int) alphaP1));
-        unsigned iP2 = std::max<int>(0, std::min<int>(nPress_ - 2, (int) alphaP2));
+        unsigned iP1 = std::max<long long>(0, std::min<long long>(nPress_ - 2, (long long) alphaP1));
+        unsigned iP2 = std::max<long long>(0, std::min<long long>(nPress_ - 2, (long long) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
-
-#if 0 && !defined NDEBUG
-        if(!(0 <= alphaT && alphaT <= 1.0))
-            DUNE_THROW(NumericalProblem, "Temperature out of range: "
-                       << "T=" << T << " range: [" << tempMin_ << ", " << tempMax_ << "]");
-        if(!(0 <= alphaP1 && alphaP1 <= 1.0))
-            DUNE_THROW(NumericalProblem, "First gas pressure out of range: "
-                       << "p=" << p << " range: [" << minGasPressure_(tempIdx_(T)) << ", " << maxGasPressure_(tempIdx_(T)) << "]");
-        if(!(0 <= alphaP2 && alphaP2 <= 1.0))
-            DUNE_THROW(NumericalProblem, "Second gas pressure out of range: "
-                       << "p=" << p << " range: [" << minGasPressure_(tempIdx_(T) + 1) << ", " << maxGasPressure_(tempIdx_(T) + 1) << "]");
-#endif
 
         return
             values[(iT    ) + (iP1    )*nTemp_]*(1 - alphaT)*(1 - alphaP1) +
@@ -672,13 +518,13 @@ private:
     static Scalar interpolateGasTRho_(const Scalar *values, Scalar T, Scalar rho)
     {
         Scalar alphaT = tempIdx_(T);
-        unsigned iT = std::max<int>(0, std::min<int>(nTemp_ - 2, (int) alphaT));
+        unsigned iT = std::max<long long>(0, std::min<long long>(nTemp_ - 2, (long long) alphaT));
         alphaT -= iT;
 
         Scalar alphaP1 = densityGasIdx_(rho, iT);
         Scalar alphaP2 = densityGasIdx_(rho, iT + 1);
-        unsigned iP1 = std::max<int>(0, std::min<int>(nDensity_ - 2, (int) alphaP1));
-        unsigned iP2 = std::max<int>(0, std::min<int>(nDensity_ - 2, (int) alphaP2));
+        unsigned iP1 = std::max<long long>(0, std::min<long long>(nDensity_ - 2, (long long) alphaP1));
+        unsigned iP2 = std::max<long long>(0, std::min<long long>(nDensity_ - 2, (long long) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -694,13 +540,13 @@ private:
     static Scalar interpolateLiquidTRho_(const Scalar *values, Scalar T, Scalar rho)
     {
         Scalar alphaT = tempIdx_(T);
-        unsigned iT = std::max<int>(0, std::min<int>(nTemp_ - 2, (int) alphaT));
+        unsigned iT = std::max<long long>(0, std::min<long long>(nTemp_ - 2, (long long) alphaT));
         alphaT -= iT;
 
         Scalar alphaP1 = densityLiquidIdx_(rho, iT);
         Scalar alphaP2 = densityLiquidIdx_(rho, iT + 1);
-        unsigned iP1 = std::max<int>(0, std::min<int>(nDensity_ - 2, (int) alphaP1));
-        unsigned iP2 = std::max<int>(0, std::min<int>(nDensity_ - 2, (int) alphaP2));
+        unsigned iP1 = std::max<long long>(0, std::min<long long>(nDensity_ - 2, (long long) alphaP1));
+        unsigned iP2 = std::max<long long>(0, std::min<long long>(nDensity_ - 2, (long long) alphaP2));
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -723,7 +569,6 @@ private:
     {
         Scalar plMin = minLiquidPressure_(tempIdx);
         Scalar plMax = maxLiquidPressure_(tempIdx);
-
         return (nPress_ - 1)*(pressure - plMin)/(plMax - plMin);
     }
 
@@ -732,7 +577,6 @@ private:
     {
         Scalar pgMin = minGasPressure_(tempIdx);
         Scalar pgMax = maxGasPressure_(tempIdx);
-
         return (nPress_ - 1)*(pressure - pgMin)/(pgMax - pgMin);
     }
 
@@ -755,42 +599,22 @@ private:
     // returns the minimum tabulized liquid pressure at a given
     // temperature index
     static Scalar minLiquidPressure_(int tempIdx)
-    {
-        if (!useVaporPressure)
-            return pressMin_;
-        else
-            return std::max<Scalar>(pressMin_, vaporPressure_[tempIdx] / 1.1);
-    }
+    { return std::max<Scalar>(pressMin_, vaporPressure_[tempIdx] / 1.1); }
 
     // returns the maximum tabulized liquid pressure at a given
     // temperature index
     static Scalar maxLiquidPressure_(int tempIdx)
-    {
-        if (!useVaporPressure)
-            return pressMax_;
-        else
-            return std::max<Scalar>(pressMax_, vaporPressure_[tempIdx] * 1.1);
-    }
+    { return std::max<Scalar>(pressMax_, vaporPressure_[tempIdx] * 1.1); }
 
     // returns the minumum tabulized gas pressure at a given
     // temperature index
     static Scalar minGasPressure_(int tempIdx)
-    {
-        if (!useVaporPressure)
-            return pressMin_;
-        else
-            return std::min<Scalar>(pressMin_, vaporPressure_[tempIdx] / 1.1 );
-    }
+    { return std::min<Scalar>(pressMin_, vaporPressure_[tempIdx] / 1.1 ); }
 
     // returns the maximum tabulized gas pressure at a given
     // temperature index
     static Scalar maxGasPressure_(int tempIdx)
-    {
-        if (!useVaporPressure)
-            return pressMax_;
-        else
-            return std::min<Scalar>(pressMax_, vaporPressure_[tempIdx] * 1.1);
-    }
+    { return std::min<Scalar>(pressMax_, vaporPressure_[tempIdx] * 1.1); }
 
 
     // returns the minimum tabulized liquid density at a given
@@ -835,17 +659,11 @@ private:
     static Scalar *gasEnthalpy_;
     static Scalar *liquidEnthalpy_;
 
-    static Scalar *gasHeatCapacity_;
-    static Scalar *liquidHeatCapacity_;
-
     static Scalar *gasDensity_;
     static Scalar *liquidDensity_;
 
     static Scalar *gasViscosity_;
     static Scalar *liquidViscosity_;
-
-    static Scalar *gasThermalConductivity_;
-    static Scalar *liquidThermalConductivity_;
 
     // 2D fields with the temperature and density as degrees of
     // freedom
@@ -867,67 +685,59 @@ private:
 };
 
 #ifndef NDEBUG
-template <class Scalar, class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<Scalar, RawComponent, useVaporPressure>::initialized_ = false;
+template <class Scalar, class RawComponent, bool verbose>
+bool TabulatedComponent<Scalar, RawComponent, verbose>::initialized_ = false;
 
-template <class Scalar, class RawComponent, bool useVaporPressure>
-bool TabulatedComponent<Scalar, RawComponent, useVaporPressure>::warningPrinted_ = false;
+template <class Scalar, class RawComponent, bool verbose>
+bool TabulatedComponent<Scalar, RawComponent, verbose>::warningPrinted_ = false;
 #endif
 
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::vaporPressure_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::minLiquidDensity__;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::maxLiquidDensity__;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::minGasDensity__;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::maxGasDensity__;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::gasEnthalpy_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::liquidEnthalpy_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::gasHeatCapacity_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::liquidHeatCapacity_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::gasDensity_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::liquidDensity_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::gasViscosity_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::liquidViscosity_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::gasThermalConductivity_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::liquidThermalConductivity_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::gasPressure_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar* TabulatedComponent<Scalar, RawComponent, useVaporPressure>::liquidPressure_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar TabulatedComponent<Scalar, RawComponent, useVaporPressure>::tempMin_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar TabulatedComponent<Scalar, RawComponent, useVaporPressure>::tempMax_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<Scalar, RawComponent, useVaporPressure>::nTemp_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar TabulatedComponent<Scalar, RawComponent, useVaporPressure>::pressMin_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar TabulatedComponent<Scalar, RawComponent, useVaporPressure>::pressMax_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<Scalar, RawComponent, useVaporPressure>::nPress_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar TabulatedComponent<Scalar, RawComponent, useVaporPressure>::densityMin_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-Scalar TabulatedComponent<Scalar, RawComponent, useVaporPressure>::densityMax_;
-template <class Scalar, class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<Scalar, RawComponent, useVaporPressure>::nDensity_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::vaporPressure_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::minLiquidDensity__;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::maxLiquidDensity__;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::minGasDensity__;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::maxGasDensity__;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::gasEnthalpy_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::liquidEnthalpy_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::gasDensity_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::liquidDensity_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::gasViscosity_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::liquidViscosity_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::gasPressure_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar* TabulatedComponent<Scalar, RawComponent, verbose>::liquidPressure_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar TabulatedComponent<Scalar, RawComponent, verbose>::tempMin_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar TabulatedComponent<Scalar, RawComponent, verbose>::tempMax_;
+template <class Scalar, class RawComponent, bool verbose>
+unsigned TabulatedComponent<Scalar, RawComponent, verbose>::nTemp_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar TabulatedComponent<Scalar, RawComponent, verbose>::pressMin_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar TabulatedComponent<Scalar, RawComponent, verbose>::pressMax_;
+template <class Scalar, class RawComponent, bool verbose>
+unsigned TabulatedComponent<Scalar, RawComponent, verbose>::nPress_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar TabulatedComponent<Scalar, RawComponent, verbose>::densityMin_;
+template <class Scalar, class RawComponent, bool verbose>
+Scalar TabulatedComponent<Scalar, RawComponent, verbose>::densityMax_;
+template <class Scalar, class RawComponent, bool verbose>
+unsigned TabulatedComponent<Scalar, RawComponent, verbose>::nDensity_;
 
 
-} // end namespace
+} // end namepace
 
 #endif

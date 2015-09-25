@@ -1,7 +1,11 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
+ *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +14,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -23,29 +27,75 @@
  */
 #include "config.h" /*@\label{tutorial-coupled:include-begin}@*/
 #include "tutorialproblem_coupled.hh"  /*@\label{tutorial-coupled:include-problem-header}@*/
-#include <dumux/common/start.hh> /*@\label{tutorial-coupled:include-end}@*/
 
-//! Prints a usage/help message if something goes wrong or the user asks for help
-void usage(const char *progName, const std::string &errorMsg)  /*@\label{tutorial-coupled:usage-function}@*/
+#include <dune/common/mpihelper.hh>
+#include <iostream> /*@\label{tutorial-coupled:include-end}@*/
+
+void usage(const char *progname)
 {
-    std::cout
-        <<  "\nUsage: " << progName << " [options]\n";
-    if (errorMsg.size() > 0)
-        std::cout << errorMsg << "\n";
-    std::cout
-        << "\n"
-        << "The list of mandatory arguments for this program is:\n"
-        << "\t-TEnd                The end of the simulation [s]\n"
-        << "\t-DtInitial           The initial timestep size [s]\n"
-        << "\t-Grid.UpperRightX    The x-coordinate of the grid's upper-right corner [m]\n"
-        << "\t-Grid.UpperRightY    The y-coordinate of the grid's upper-right corner [m]\n"
-        << "\t-Grid.NumberOfCellsX The grid's x-resolution\n"
-        << "\t-Grid.NumberOfCellsY The grid's y-resolution\n"
-        << "\n";
-}
+    std::cout << "usage: " << progname << " [--restart restartTime] tEnd dt\n";
+    exit(1);
+};
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(TutorialProblemCoupled) TypeTag; /*@\label{tutorial-coupled:set-type-tag}@*/
-    return Dumux::start<TypeTag>(argc, argv, usage); /*@\label{tutorial-coupled:call-start}@*/
+    try {
+        typedef TTAG(TutorialProblemCoupled) TypeTag; /*@\label{tutorial-coupled:set-type-tag}@*/
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid; /*@\label{tutorial-coupled:retrieve-types-begin}@*/
+        typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem; /*@\label{tutorial-coupled:retrieve-types-end}@*/
+
+        // Initialize MPI
+        Dune::MPIHelper::instance(argc, argv); /*@\label{tutorial-coupled:init-mpi}@*/
+
+        // parse the command line arguments
+        if (argc < 3) /*@\label{tutorial-coupled:parse-args-begin}@*/
+            usage(argv[0]);
+
+        // parse restart time if restart is requested
+        int argPos = 1;
+        bool restart = false;
+        double restartTime = 0;
+        if (std::string("--restart") == argv[argPos]) {
+            restart = true;
+            ++argPos;
+
+            std::istringstream(argv[argPos++]) >> restartTime;
+        }
+
+        // read the initial time step and the end time
+        if (argc - argPos != 2)
+            usage(argv[0]);
+
+        double tEnd, dt; /*@\label{tutorial-coupled:parse-tEn-and-dt}@*/
+        std::istringstream(argv[argPos++]) >> tEnd;
+        std::istringstream(argv[argPos++]) >> dt; /*@\label{tutorial-coupled:parse-args-end}@*/
+
+        // create the grid
+        Grid *gridPtr = GET_PROP(TypeTag, PTAG(Grid))::create(); /*@\label{tutorial-coupled:create-grid}@*/
+
+        // create time manager responsible for global simulation control
+        TimeManager timeManager;
+
+        // instantiate the problem on the leaf grid
+        Problem problem(timeManager, gridPtr->leafView()); /*@\label{tutorial-coupled:instantiate-problem}@*/
+        timeManager.init(problem, 0, dt, tEnd, !restart);
+        // load some previously saved state from disk
+        if (restart)
+            problem.restart(restartTime); /*@\label{tutorial-coupled:begin-restart}@*/
+        // run the simulation
+        timeManager.run(); /*@\label{tutorial-coupled:execute}@*/
+        return 0;
+    }
+    catch (Dune::Exception &e) { /*@\label{tutorial-coupled:catch-dune-exceptions}@*/
+        // Catch exceptions thrown somewhere in DUNE
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...) {  /*@\label{tutorial-coupled:catch-other-exceptions}@*/
+        // Catch exceptions thrown elsewhere
+        std::cerr << "Unknown exception thrown!\n";
+        throw;
+    }
+
+    return 3;
 }

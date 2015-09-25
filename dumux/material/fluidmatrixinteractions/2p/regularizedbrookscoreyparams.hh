@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -48,8 +50,8 @@ public:
     {
     }
 
-    RegularizedBrooksCoreyParams(Scalar pe, Scalar lambda)
-        : BrooksCoreyParams(pe, lambda)
+    RegularizedBrooksCoreyParams(Scalar pe, Scalar alpha)
+        : BrooksCoreyParams(pe, alpha)
     {
     }
 
@@ -62,17 +64,19 @@ public:
      */
     Scalar thresholdSw() const
     {
-        // Most problems are very sensitive to this value
-        // (e.g. making it smaller might result in negative
-        // pressures)
+        // Some problems are very sensitive to this value
+        // (e.g. makeing it smaller might result in negative
+        // pressures), if you change it here, you will almost
+        // certainly break someone's code!
         //
         // If you want to use a different regularization threshold,
         // overload this class and supply the new class as second
         // template parameter for the RegularizedVanGenuchten law!
-        return 1e-2;
+        return /* PLEASE DO _NOT_ */ 1e-2; /* CHANGE THIS VALUE. READ
+                                            * COMMENT ABOVE! */
     }
 
 };
-} // namespace Dumux
+}; // namespace Dumux
 
 #endif

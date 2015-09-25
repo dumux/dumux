@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -23,18 +25,20 @@
 #ifndef DUMUX_SPLINE_COMMON__HH
 #define DUMUX_SPLINE_COMMON__HH
 
-#include <iostream>
-#include <cassert>
-
-#include <dune/common/exceptions.hh>
-#include <dune/common/float_cmp.hh>
-
 #include "valgrind.hh"
 #include "math.hh"
 
+#include <dune/common/exceptions.hh>
+
+#include <algorithm>
+#include <iostream>
+#include <assert.h>
+
 namespace Dumux
 {
+//! \cond INTERNAL
 /*!
+ *
  * \brief The common code for all 3rd order polynomial splines.
  */
 template<class ScalarT, class ImplementationT>
@@ -125,60 +129,63 @@ public:
 
     /*!
      * \brief Evaluate the spline at a given position.
-     *
-     * \param x The value on the abscissa where the spline ought to be
-     *          evaluated
-     * \param extrapolate If this parameter is set to true, the spline
-     *                    will be extended beyond its range by
-     *                    straight lines, if false calling extrapolate
-     *                    for \f$ x \not [x_{min}, x_{max}]\f$ will
-     *                    cause a failed assertation.
      */
-    Scalar eval(Scalar x, bool extrapolate=false) const
+    Scalar eval(Scalar x) const
     {
-        assert(extrapolate || applies(x));
+        assert(applies(x));
 
-        // handle extrapolation
-        if (extrapolate) {
-            if (x < xMin()) {
-                Scalar m = evalDerivative(xMin(), /*segmentIdx=*/0);
-                Scalar y0 = y_(0);
-                return y0 + m*(x - xMin());
-            }
-            else if (x > xMax()) {
-                Scalar m = evalDerivative(xMax(), /*segmentIdx=*/numSamples_()-1);
-                Scalar y0 = y_(numSamples_()-1);
-                return y0 + m*(x - xMax());
-            }
-        }
+        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
+        // Springer, 2005, p. 109
 
-        return eval_(x, segmentIdx_(x));
+        int i = segmentIdx_(x);
+
+        Scalar h_i1 = h_(i + 1);
+        Scalar x_i = x - x_(i);
+        Scalar x_i1 = x_(i+1) - x;
+
+        Scalar A_i =
+            (y_(i+1) - y_(i))/h_i1
+            -
+            h_i1/6*(moment_(i+1) - moment_(i));
+        Scalar B_i = y_(i) - moment_(i)* (h_i1*h_i1) / 6;
+
+        return
+            moment_(i)* x_i1*x_i1*x_i1 / (6 * h_i1)
+            +
+            moment_(i + 1)* x_i*x_i*x_i / (6 * h_i1)
+            +
+            A_i*x_i
+            +
+            B_i;
     }
 
     /*!
      * \brief Evaluate the spline's derivative at a given position.
-     *
-     * \param x The value on the abscissa where the spline's
-     *          derivative ought to be evaluated
-     *
-     * \param extrapolate If this parameter is set to true, the spline
-     *                    will be extended beyond its range by
-     *                    straight lines, if false calling extrapolate
-     *                    for \f$ x \not [x_{min}, x_{max}]\f$ will
-     *                    cause a failed assertation.
-
      */
-     Scalar evalDerivative(Scalar x, bool extrapolate=false) const
+    Scalar evalDerivative(Scalar x) const
     {
-        assert(extrapolate || applies(x));
-        if (extrapolate) {
-            if (Dune::FloatCmp::le(x, xMin()))
-                return evalDerivative_(xMin(), 0);
-            else if (Dune::FloatCmp::ge(x, xMax()))
-                return evalDerivative_(xMax(), numSamples_() - 1);
-        }
+        assert(applies(x));
 
-        return evalDerivative_(x, segmentIdx_(x));
+        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
+        // Springer, 2005, p. 109
+
+        int i = segmentIdx_(x);
+
+        Scalar h_i1 = h_(i + 1);
+        Scalar x_i = x - x_(i);
+        Scalar x_i1 = x_(i+1) - x;
+
+        Scalar A_i =
+            (y_(i+1) - y_(i))/h_i1
+            -
+            h_i1/6*(moment_(i+1) - moment_(i));
+
+        return
+            -moment_(i) * x_i1*x_i1 / (2 * h_i1)
+            +
+            moment_(i + 1) * x_i*x_i / (2 * h_i1)
+            +
+            A_i;
     }
 
     /*!
@@ -236,7 +243,7 @@ public:
     {
         assert(applies(x0));
         assert(applies(x1));
-        assert(Dune::FloatCmp::ne<Scalar>(x0, x1));
+        assert(x0 != x1);
 
         // make sure that x0 is smaller than x1
         if (x0 > x1)
@@ -313,34 +320,7 @@ protected:
             destX[i] = srcX[idx];
             destY[i] = srcY[idx];
         }
-    }
-
-    template <class DestVector, class ListIterator>
-    void assignFromArrayList_(DestVector &destX,
-                              DestVector &destY,
-                              const ListIterator &srcBegin,
-                              const ListIterator &srcEnd,
-                              int numSamples)
-    {
-        assert(numSamples >= 2);
-
-        // find out wether the x values are in reverse order
-        ListIterator it = srcBegin;
-        ++it;
-        bool reverse = false;
-        if ((*srcBegin)[0] > (*it)[0])
-            reverse = true;
-        --it;
-
-        // loop over all sampling points
-        for (int i = 0; it != srcEnd; ++i, ++it) {
-            int idx = i;
-            if (reverse)
-                idx = numSamples - i - 1;
-            destX[i] = (*it)[0];
-            destY[i] = (*it)[1];
-        }
-    }
+    };
 
     /*!
      * \brief Set the sampling points.
@@ -349,35 +329,24 @@ protected:
      * [] operator where v[0] is the x value and v[1] is the y value
      * if the sampling point.
      */
-    template <class DestVector, class ListIterator>
-    void assignFromTupleList_(DestVector &destX,
-                              DestVector &destY,
-                              ListIterator srcBegin,
-                              ListIterator srcEnd,
-                              int numSamples)
+    template <class DestVector, class SourceVector>
+    void assignSamplingPoints_(DestVector &destX,
+                               DestVector &destY,
+                               const SourceVector &src,
+                               int numSamples)
     {
         assert(numSamples >= 2);
 
         // copy sample points, make sure that the first x value is
         // smaller than the last one
-
-        // find out wether the x values are in reverse order
-        ListIterator it = srcBegin;
-        ++it;
-        bool reverse = false;
-        if (std::get<0>(*srcBegin) > std::get<0>(*it))
-            reverse = true;
-        --it;
-
-        // loop over all sampling points
-        for (int i = 0; it != srcEnd; ++i, ++it) {
+        for (int i = 0; i < numSamples; ++i) {
             int idx = i;
-            if (reverse)
+            if (src[0][0] > src[numSamples - 1][0])
                 idx = numSamples - i - 1;
-            destX[i] = std::get<0>(*it);
-            destY[i] = std::get<1>(*it);
+            destX[i] = src[idx][0];
+            destY[i] = src[idx][1];
         }
-    }
+    };
 
 
     /*!
@@ -466,7 +435,7 @@ protected:
             M[i][i] = 2;
             M[i][i + 1] = lambda_i;
             d[i] = d_i;
-        }
+        };
 
         // first row
         M[0][0] = 2;
@@ -477,56 +446,6 @@ protected:
         d[0] = 0.0;
         d[n] = 0.0;
     }
-
-    // evaluate the spline at a given the position and given the
-    // segment index
-    Scalar eval_(Scalar x, int i) const
-    {
-        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
-        // Springer, 2005, p. 109
-        Scalar h_i1 = h_(i + 1);
-        Scalar x_i = x - x_(i);
-        Scalar x_i1 = x_(i+1) - x;
-
-        Scalar A_i =
-            (y_(i+1) - y_(i))/h_i1
-            -
-            h_i1/6*(moment_(i+1) - moment_(i));
-        Scalar B_i = y_(i) - moment_(i)* (h_i1*h_i1) / 6;
-
-        return
-            moment_(i)* x_i1*x_i1*x_i1 / (6 * h_i1)
-            +
-            moment_(i + 1)* x_i*x_i*x_i / (6 * h_i1)
-            +
-            A_i*x_i
-            +
-            B_i;
-    }
-
-    // evaluate the derivative of a spline given the actual position
-    // and the segment index
-    Scalar evalDerivative_(Scalar x, int i) const
-    {
-        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
-        // Springer, 2005, p. 109
-        Scalar h_i1 = h_(i + 1);
-        Scalar x_i = x - x_(i);
-        Scalar x_i1 = x_(i+1) - x;
-
-        Scalar A_i =
-            (y_(i+1) - y_(i))/h_i1
-            -
-            h_i1/6*(moment_(i+1) - moment_(i));
-
-        return
-            -moment_(i) * x_i1*x_i1 / (2 * h_i1)
-            +
-            moment_(i + 1) * x_i*x_i / (2 * h_i1)
-            +
-            A_i;
-    }
-
 
     // returns the monotonicality of an interval of a spline segment
     //
@@ -564,7 +483,7 @@ protected:
                 // or decreasing
                 x0 = x1;
             return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
-        }
+        };
         if ((x0 < xE1 && xE1 < x1) ||
             (x0 < xE2 && xE2 < x1))
         {
@@ -575,7 +494,7 @@ protected:
         x0 = (x0 + x1)/2; // pick point in the middle of the interval
                           // to avoid extrema on the boundaries
         return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
-    }
+    };
 
     /*!
      * \brief Find all the intersections of a segment of the spline
@@ -619,9 +538,9 @@ protected:
                 iHigh = i;
             else
                 iLow = i;
-        }
+        };
         return iLow;
-    }
+    };
 
     /*!
      * \brief Returns x[i] - x[i - 1]
@@ -630,8 +549,7 @@ protected:
     {
         assert(x_(i) > x_(i-1)); // the sampling points must be given
                                  // in ascending order
-        return x_(i) - x_(i - 1);
-    }
+        return x_(i) - x_(i - 1); }
 
     /*!
      * \brief Returns the y coordinate of the i-th sampling point.
@@ -678,6 +596,8 @@ protected:
     int numSamples_() const
     { return asImp_().numSamples(); }
 };
+
+//! \endcond
 
 }
 

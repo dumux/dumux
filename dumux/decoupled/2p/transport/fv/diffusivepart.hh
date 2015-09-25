@@ -1,7 +1,10 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +13,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -19,82 +22,91 @@
 #ifndef DUMUX_DIFFUSIVEPART_HH
 #define DUMUX_DIFFUSIVEPART_HH
 
-#include <dumux/decoupled/2p/transport/transportproperties2p.hh>
-
 /**
- * \file
- * \brief  Base class for defining a diffusive part of the saturation transport equation
+ * @file
+ * @brief  Base class for defining the diffusive part of an advection-diffusion equation
+ * @author Bernd Flemisch, Markus Wolff
  */
 namespace Dumux
 {
-/*!\ingroup FVSaturation2p
- * \brief  Base class for defining the diffusive part of the saturation transport equation
+/*!\ingroup Saturation2p
+ * @brief  Base class for defining the diffusive part of an advection-diffusion equation
  *
- * \tparam TypeTag The problem TypeTag
+ * @tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class DiffusivePart
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-      typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     enum{dim = GridView::dimension};
-    typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef Dune::FieldVector<Scalar, dim> FieldVector;
 
 public:
-
-    //! For initialization
-    void initialize()
-    {}
-
-    /*! \brief Returns diffusive term for current element face
-     *
-     *  \param flux        Flux vector (gets the flux from the function)
-     *  \param intersection  Intersection of two grid elements/global boundary
-     *  \param satI           saturation of current element
-     *  \param satJ           saturation of neighbor element
-     *  \param pcGradient     gradient of capillary pressure between element I and J
+    //! Returns diffusive term
+    /*! Returns diffusive term for current element face
+     *  @param[in] element        entity of codim 0
+     *  @param[in] indexInInside  face index in reference element
+     *  @param[in] satI           saturation of current element
+     *  @param[in] satJ           saturation of neighbor element
+     *  @param[in] pcGradient     gradient of capillary pressure between element I and J
+     *  \return     diffusive term of an advection-diffusion equation
      */
-    void getFlux(DimVector& flux, const Intersection& intersection, Scalar satI, Scalar satJ, const DimVector& pcGradient) const
-    {}
+    FieldVector operator() (const Element& element, const int indexInInside, Scalar satI, Scalar satJ, const FieldVector& pcGradient) const
+    {
+        FieldVector trivial(0);
+        return trivial;
+    }
 
-    /*! \brief Returns diffusive term for current element face
-     *
-     *  \param flux        Flux vector (gets the flux from the function)
-     *  \param intersection  Intersection of two grid elements/global boundary
-     *  \param satIntersection  saturation at the face between element I and J
-     *  \param satGradient       gradient of saturation between element I and J
-     *  \param time             time
+    //! Returns diffusive term
+    /*! Returns diffusive term for current element face
+     *  @param[in] element          entity of codim 0
+     *  @param[in] indexInInside    face index in reference element
+     *  @param[in] satIntersection  saturation at the face between element I and J
+     *  @param[in] satGradient       gradient of saturation between element I and J
+     *  @param[in] time             time
+     *  \return     diffusive term of an advection-diffusion equation
      */
-    void getFlux(DimVector& flux, const Intersection& intersection,
-                                    const Scalar satIntersection, const DimVector& satGradient, const Scalar time) const
-    {}
+    FieldVector operator() (const Element& element, const int indexInInside,
+                                    const Scalar satIntersection, const FieldVector& satGradient, const Scalar time) const
+    {
+        FieldVector trivial(0);
+        return trivial;
+    }
 
-    /*! \brief Returns diffusive term for current element face
-     *
-     *  \param flux        Flux vector (gets the flux from the function)
-     *  \param intersection  Intersection of two grid elements/global boundary
-     *  \param satIntersection  saturation at the face between element I and J
-     *  \param satGradient       gradient of saturation between element I and J
-     *  \param time             time
-     *  \param satI             saturation of current element
-     *  \param satJ             saturation of neighbor element
+    //! Returns diffusive term
+    /*! Returns diffusive term for current element face
+     *  @param[in] element          entity of codim 0
+     *  @param[in] indexInInside    face index in reference element
+     *  @param[in] satIntersection  saturation at the face between element I and J
+     *  @param[in] satGradient       gradient of saturation between element I and J
+     *  @param[in] time             time
+     *  @param[in] satI             saturation of current element
+     *  @param[in] satJ             saturation of neighbor element
+     *  \return     diffusive term of an advection-diffusion equation
      */
-    void getFlux(DimVector& flux, const Intersection& intersection,
-                                    const Scalar satIntersection, const DimVector& satGradient, const Scalar time,
+    FieldVector operator() (const Element& element, const int indexInInside,
+                                    const Scalar satIntersection, const FieldVector& satGradient, const Scalar time,
                                     Scalar satI, Scalar satJ) const
-    {}
+    {
+        FieldVector trivial(0);
+        return trivial;
+    }
 
-    /*! Constructs a DiffusivePart object
-     *
-     *  \param problem problem class object
+
+    //! The constructor
+    /*
+     *  \param problem object including the problem definition
      */
     DiffusivePart(Problem& problem)
     {}
-
+    //! always define virtual destructor in abstract base class
+    ~DiffusivePart()
+    { }
 };
 }
 

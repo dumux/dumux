@@ -1,7 +1,11 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 20010 by Markus Wolff                                     *
+ *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +14,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -24,29 +28,30 @@
  */
 #include "config.h"
 #include <iostream>
+#include <boost/format.hpp>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
-#include <dune/grid/utility/structuredgridfactory.hh>
+#include <dune/common/mpihelper.hh>
+#include <dune/grid/common/gridinfo.hh>
 
-#include "test_diffusionproblem.hh"
-#include "resultevaluation.hh"
+#include "test_diffusion_problem.hh"
+#include "benchmarkresult.hh"
 
 ////////////////////////
 // the main function
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << "usage: " << progname << " #refine [delta]\n";
+    std::cout << boost::format("usage: %s #refine [delta]\n")%progname;
     exit(1);
 }
 
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(FVVelocity2PTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
+        typedef TTAG(DiffusionTestProblem) TypeTag;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         static const int dim = Grid::dimension;
         typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
@@ -69,15 +74,11 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        std::array<unsigned int, dim> cellRes;
-        cellRes.fill(1);
-        GlobalPosition lowerLeft(0.0);
-        GlobalPosition upperRight(1.0);
-        static std::shared_ptr<Grid> grid
-            = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft,
-                                                                upperRight,
-                                                                cellRes);
-        grid->globalRefine(numRefine);
+        Dune::FieldVector<int,dim> N(1);
+        GlobalPosition L(0.0);
+        GlobalPosition H(1.0);
+        Grid grid(N,L,H);
+        grid.globalRefine(numRefine);
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
@@ -85,49 +86,45 @@ int main(int argc, char** argv)
         Dune::Timer timer;
         bool consecutiveNumbering = true;
 
-        typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), Problem) FVProblem;
-        FVProblem fvProblem(grid->leafGridView(), delta);
-        fvProblem.setName("fvdiffusion");
+        typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), PTAG(Problem)) FVProblem;
+        FVProblem fvProblem(grid.leafView(), delta);
         timer.reset();
         fvProblem.init();
-        fvProblem.calculateFVVelocity();
+        fvProblem.model().calculateVelocity();
         double fvTime = timer.elapsed();
         fvProblem.writeOutput();
         Dumux::ResultEvaluation fvResult;
-        fvResult.evaluate(grid->leafGridView(), fvProblem, consecutiveNumbering);
+        fvResult.evaluate(grid.leafView(), fvProblem, fvProblem.variables().pressure(), fvProblem.variables().velocity(), consecutiveNumbering);
 
-        typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), Problem) MPFAOProblem;
-        MPFAOProblem mpfaProblem(grid->leafGridView(), delta);
-        mpfaProblem.setName("fvmpfaodiffusion");
+        typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), PTAG(Problem)) MPFAOProblem;
+        MPFAOProblem mpfaProblem(grid.leafView(), delta);
         timer.reset();
         mpfaProblem.init();
+        mpfaProblem.model().calculateVelocity();
         double mpfaTime = timer.elapsed();
         mpfaProblem.writeOutput();
         Dumux::ResultEvaluation mpfaResult;
-        mpfaResult.evaluate(grid->leafGridView(), mpfaProblem, consecutiveNumbering);
+        mpfaResult.evaluate(grid.leafView(), mpfaProblem, mpfaProblem.variables().pressure(), mpfaProblem.variables().velocity(), consecutiveNumbering);
 
-        typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), Problem) MimeticProblem;
-        MimeticProblem mimeticProblem(grid->leafGridView(), delta);
-        mimeticProblem.setName("mimeticdiffusion");
+        typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), PTAG(Problem)) MimeticProblem;
+        MimeticProblem mimeticProblem(grid.leafView(), delta);
         timer.reset();
         mimeticProblem.init();
+        mimeticProblem.model().calculateVelocity();
         double mimeticTime = timer.elapsed();
         mimeticProblem.writeOutput();
         Dumux::ResultEvaluation mimeticResult;
-        mimeticResult.evaluate(grid->leafGridView(), mimeticProblem, consecutiveNumbering);
+        mimeticResult.evaluate(grid.leafView(), mimeticProblem, mimeticProblem.variables().pressure(), mimeticProblem.variables().velocity(), consecutiveNumbering);
 
         std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
         std::cout.precision(2);
         std::cout << "\t error press \t error grad\t sumflux\t erflm\t\t uMin\t\t uMax\t\t time" << std::endl;
         std::cout << "2pfa\t " << fvResult.relativeL2Error << "\t " << fvResult.ergrad << "\t " << fvResult.sumflux
-                        << "\t " << fvResult.erflm << "\t " << fvResult.uMin
-                        << "\t " << fvResult.uMax << "\t " << fvTime << std::endl;
-        std::cout << "mpfa-o\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.ergrad
-                        << "\t " << mpfaResult.sumflux << "\t " << mpfaResult.erflm
-                        << "\t " << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaTime << std::endl;
-        std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.ergrad
-                        << "\t " << mimeticResult.sumflux << "\t " << mimeticResult.erflm
-                        << "\t " << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticTime << std::endl;
+                        << "\t " << fvResult.erflm << "\t " << fvResult.uMin << "\t " << fvResult.uMax << "\t " << fvTime << std::endl;
+        std::cout << "mpfa-o\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.ergrad << "\t " << mpfaResult.sumflux
+                        << "\t " << mpfaResult.erflm << "\t " << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaTime << std::endl;
+        std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.ergrad << "\t " << mimeticResult.sumflux
+                        << "\t " << mimeticResult.erflm << "\t " << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticTime << std::endl;
 
 
 

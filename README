@@ -22,23 +22,20 @@ DuMuX, using the CMake based build system has advantages like much
 faster configure runs and out-of-tree builds. In this case, follow the
 instructions from INSTALL.cmake.
 
-
 LICENSE
 =======
 
 DuMuX is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 2 or - at your option - any later
-version. The GPL can be read online [3], or in the COPYING file
+version. The GPL can be read online [3], or in the LICENSE file
 provided in the topmost directory of the DuMuX source code tree.
 
-Please note that DuMuX's license, unlike DUNE, does NOT feature a
-template exception to the GNU General Public License. This means that
-you must publish any source code which uses any of the DuMuX header
-files if you want to redistribute your program to third parties. If
-this is unacceptable to you, please contact us [4, 5] for a commercial
-license.
-
-See the file COPYING for full copying permissions.
+Please note that DuMuX is - unlike DUNE - NOT licensed under the
+Lesser General Public License with a template exception. This means
+that you must publish any source code which uses any of the DuMuX
+header files if you want to redistribute your program to any third
+parties. If this is unacceptable to you, please contact us [4, 5]
+for a commercial license.
 
 
 Links
@@ -46,7 +43,7 @@ Links
 
 [0] http://dumux.org
 [1] http://dune-project.org
-[2] http://dumux.org/documents/dumux_awrpaper.pdf
+[2] http://dumux.org/documents/cachan_flemisch.pdf
 [3] http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 [4] Bernd Flemisch <bernd@iws.uni-stuttgart.de>
 [5] http://www.hydrosys.uni-stuttgart.de/index.en.php

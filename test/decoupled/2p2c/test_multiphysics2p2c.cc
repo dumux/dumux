@@ -1,7 +1,11 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id:
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 20010 by Benjamin Faigle                                  *
+ *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +14,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -24,21 +28,22 @@
  */
 #include "config.h"
 
-#include <array>
-#include <iostream>
+#include "test_multiphysics2p2cproblem.hh"
 
-#include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/common/gridinfo.hh>
 
-#include "test_multiphysics2p2cproblem.hh"
+#include <dune/common/exceptions.hh>
+#include <dune/common/mpihelper.hh>
+
+#include <iostream>
+#include <boost/format.hpp>
 
 ////////////////////////
 // the main function
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << "usage: " << progname << " [--restart restartTime] tEnd firstDt\n";
+    std::cout << boost::format("usage: %s [--restart restartTime] tEnd firstDt\n")%progname;
     exit(1);
 }
 
@@ -46,9 +51,10 @@ int main(int argc, char** argv)
 {
     try {
         typedef TTAG(TestMultTwoPTwoCProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Grid)    Grid;
-        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
-        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid))    Grid;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
 
         static const int dim = Grid::dimension;
 
@@ -61,10 +67,10 @@ int main(int argc, char** argv)
         // deal with the restart stuff
         int argPos = 1;
         bool restart = false;
-        double startTime = 0;
+        double restartTime = 0;
         // deal with start parameters
         double tEnd= 3e3;
-        double firstDt = 200;
+        double firstDt = 1e3;
         if (argc != 1)
         {
             // deal with the restart stuff
@@ -72,7 +78,7 @@ int main(int argc, char** argv)
                 restart = true;
                 ++argPos;
 
-                std::istringstream(argv[argPos++]) >> startTime;
+                std::istringstream(argv[argPos++]) >> restartTime;
             }
             if (argc - argPos == 2)
             {
@@ -91,21 +97,25 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        std::array<int,dim> N;
-        std::fill(N.begin(), N.end(), 10);
-        Dune::FieldVector<double,dim> H(10.0);
-        Grid grid(H, N);
+        Dune::FieldVector<int,dim> N(10);
+        Dune::FieldVector<double ,dim> L(0);
+        Dune::FieldVector<double,dim> H(10);
+        Grid grid(N,L,H);
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
-        TimeManager timeManager;
-        Problem problem(timeManager, grid.leafGridView(), H);
+
+        Problem problem(grid.leafView(), L, H);
+
+        // load restart file if necessarry
+        if (restart)
+            problem.deserialize(restartTime);
 
         // initialize the simulation
-        timeManager.init(problem, startTime, firstDt, tEnd, restart);
+        problem.timeManager().init(problem, 0, firstDt, tEnd, !restart);
         // run the simulation
-        timeManager.run();
+        problem.timeManager().run();
         return 0;
     }
     catch (Dune::Exception &e) {

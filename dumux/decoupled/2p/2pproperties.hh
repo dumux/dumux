@@ -1,7 +1,11 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +14,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -19,29 +23,44 @@
 
 /*!
  * \ingroup IMPES
- * \ingroup IMPETProperties
+ * \ingroup Properties
  */
 /*!
  * \file
  *
- * \brief Defines the properties required for (immiscible) two-phase sequential models.
+ * \brief Defines the properties required for (immiscible) twophase sequential models.
  */
 
-#ifndef DUMUX_2PPROPERTIES_DECOUPLED_HH
-#define DUMUX_2PPROPERTIES_DECOUPLED_HH
+#ifndef DUMUX_2PPROPERTIES_HH
+#define DUMUX_2PPROPERTIES_HH
+
+//Dune-includes
+#include <dune/istl/operators.hh>
+#include <dune/istl/solvers.hh>
+#include <dune/istl/preconditioners.hh>
 
 //Dumux-includes
-#include <dumux/decoupled/common/decoupledproperties.hh>
-#include "2pindices.hh"
-#include <dumux/material/spatialparams/fvspatialparams.hh>
+#include <dumux/decoupled/common/impetproperties.hh>
+#include <dumux/decoupled/2p/transport/transportproperties.hh>
 
 namespace Dumux
 {
+
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
-template <class TypeTag, bool enableCompressibility>
-class CellData2P;
+
+template<class TypeTag>
+class VariableClass2P;
+
+template<class TypeTag>
+class FluidSystem2P;
+
+template<class TypeTag>
+class TwoPFluidState;
+
+template<class TypeTag>
+struct TwoPCommonIndices;
 
 ////////////////////////////////
 // properties
@@ -52,133 +71,188 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The TypeTag for decoupled two-phase problems
-NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(DecoupledModel));
+//! The type tag for the two-phase problems
+NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(IMPET, Transport))
+;
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( SpatialParams ); //!< The type of the spatial parameters object
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(MaterialLawParams); //!< The material law parameters (extracted from the spatial parameters)
-NEW_PROP_TAG( ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG( Formulation); //!< The formulation of the model
-NEW_PROP_TAG( PressureFormulation); //!< The formulation of the pressure model
-NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the saturation model
-NEW_PROP_TAG( VelocityFormulation); //!< The type of velocity reconstructed for the transport model
-NEW_PROP_TAG( EnableCompressibility);//!< Returns whether compressibility is allowed
-NEW_PROP_TAG( WettingPhase); //!< The wetting phase of a two-phase model
-NEW_PROP_TAG( NonwettingPhase); //!< The non-wetting phase of a two-phase model
-NEW_PROP_TAG( FluidSystem ); //!< Defines the fluid system
-NEW_PROP_TAG( FluidState );//!< Defines the fluid state
 
-//! Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ImpetErrorTermFactor );
+NEW_PROP_TAG ( TwoPIndices )
+;
+NEW_PROP_TAG( SpatialParameters )
+; //!< The type of the spatial parameters object
+NEW_PROP_TAG( EnableGravity)
+; //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG( PressureFormulation)
+; //!< The formulation of the model
+NEW_PROP_TAG( SaturationFormulation)
+; //!< The formulation of the model
+NEW_PROP_TAG( VelocityFormulation)
+; //!< The formulation of the model
+NEW_PROP_TAG( EnableCompressibility)
+;// !< Returns whether compressibility is allowed
+NEW_PROP_TAG( WettingPhase)
+; //!< The wetting phase for two-phase models
+NEW_PROP_TAG( NonwettingPhase)
+; //!< The non-wetting phase for two-phase models
+NEW_PROP_TAG( FluidSystem )//!< Defines the fluid system
+;
+NEW_PROP_TAG( FluidState )//!< Defines the fluid state
+;
 
-//! Lower threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ImpetErrorTermLowerBound );
+//Properties for linear solvers
+NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
+NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
+NEW_PROP_TAG( PressurePreconditioner );//!< Type of the pressure preconditioner
+NEW_PROP_TAG( PressureSolver );//!< Type of the pressure solver
+NEW_PROP_TAG( SolverParameters );//!< Container for the solver parameters
+NEW_PROP_TAG(ReductionSolver);//!< Reduction value for linear solver
+NEW_PROP_TAG(MaxIterationNumberSolver);//!< Maximum iteration number for linear solver
+NEW_PROP_TAG(IterationNumberPreconditioner);//!< Iteration number for preconditioner
+NEW_PROP_TAG(VerboseLevelSolver);//!<Verbose level of linear solver and preconditioner
+NEW_PROP_TAG(RelaxationPreconditioner);//!< Relaxation factor for preconditioner
 
-//! Upper threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ImpetErrorTermUpperBound );
-}
-}
-
-#include <dumux/decoupled/common/variableclass.hh>
-#include <dumux/decoupled/2p/celldata2p.hh>
-#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/fluidstates/isothermalimmisciblefluidstate.hh>
-
-namespace Dumux
-{
-namespace Properties
-{
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-//! Set number of equations to 2 for isothermal two-phase models
-SET_INT_PROP(DecoupledTwoP, NumEq, 2);
 
-//! Set number of phases to 2 for two-phase models
-SET_INT_PROP(DecoupledTwoP, NumPhases, 2);//!< The number of phases in the 2p model is 2
+SET_PROP(DecoupledTwoP, NumPhases)
+//!< The number of phases in the 2p model is 2
+{
+private:
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
-//! Set number of components to 1 for immiscible two-phase models
+public:
+static const int value = FluidSystem::numPhases;
+static_assert(value == 2,
+        "Only fluid systems with 2 phases are supported by the 2p model!");
+};
 SET_INT_PROP(DecoupledTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
 
-//! Set \f$p_w\f$-\f$S_w\f$ formulation as default two-phase formulation
-SET_INT_PROP(DecoupledTwoP,
-    Formulation,
-    DecoupledTwoPCommonIndices::pwsw);
 
-//! Chose the set of indices depending on the chosen formulation
-SET_PROP(DecoupledTwoP, Indices)
+SET_PROP(DecoupledTwoP, TwoPIndices)
 {
-typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
+typedef TwoPCommonIndices<TypeTag> type;
 };
 
-//! Set the default pressure formulation according to the chosen two-phase formulation
+//! Set the default formulation
 SET_INT_PROP(DecoupledTwoP,
     PressureFormulation,
-    GET_PROP_TYPE(TypeTag, Indices)::pressureType);
+    TwoPCommonIndices<TypeTag>::pressureW);
 
-//! Set the default saturation formulation according to the chosen two-phase formulation
 SET_INT_PROP(DecoupledTwoP,
     SaturationFormulation,
-    GET_PROP_TYPE(TypeTag, Indices)::saturationType);
+    TwoPCommonIndices<TypeTag>::saturationW);
 
-//! Set the default velocity formulation according to the chosen two-phase formulation
 SET_INT_PROP(DecoupledTwoP,
     VelocityFormulation,
-    GET_PROP_TYPE(TypeTag, Indices)::velocityDefault);
+    TwoPCommonIndices<TypeTag>::velocityTotal);
 
-//! Disable compressibility by default
 SET_BOOL_PROP(DecoupledTwoP, EnableCompressibility, false);
 
-//! Set general decoupled VariableClass as default
-SET_TYPE_PROP(DecoupledTwoP, Variables, VariableClass<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoP, Variables, VariableClass2P<TypeTag>);
 
-//! Set standart CellData of immiscible two-phase models as default
-SET_TYPE_PROP(DecoupledTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, EnableCompressibility)>);
+SET_TYPE_PROP(DecoupledTwoP, FluidSystem, FluidSystem2P<TypeTag>);
 
-//! Set default fluid system
-SET_TYPE_PROP(DecoupledTwoP, FluidSystem, TwoPImmiscibleFluidSystem<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoP, FluidState, TwoPFluidState<TypeTag>);
 
-//! Set default fluid state
-SET_PROP(DecoupledTwoP, FluidState)
+SET_PROP(DecoupledTwoP, PressureCoefficientMatrix)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
+
 public:
-    typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
+    typedef Dune::BCRSMatrix<MB> type;
 };
-
-//! The spatial parameters to be employed. Use FVSpatialParams by default.
-SET_TYPE_PROP(DecoupledTwoP, SpatialParams, FVSpatialParams<TypeTag>);
-
-/*!
- * \brief Set the property for the material parameters by extracting
- *        it from the material law.
- */
-SET_PROP(DecoupledTwoP, MaterialLawParams)
+SET_PROP(DecoupledTwoP, PressureRHSVector)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
 public:
-    typedef typename MaterialLaw::Params type;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;
 };
 
-//! Default error term factor
-SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermFactor, 0.5);
-//! Default lower threshold for evaluation of an error term
-SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermLowerBound, 0.1);
-//! Default upper threshold for evaluation of an error term
-SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermUpperBound, 0.9);
+SET_PROP(DecoupledTwoP, PressurePreconditioner)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
+public:
+    typedef Dune::SeqILUn<Matrix, Vector, Vector> type;
+};
+SET_PROP(DecoupledTwoP, PressureSolver)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
+public:
+    typedef Dune::BiCGSTABSolver<Vector> type;
+//    typedef Dune::CGSolver<Vector> type;
+};
+SET_PROP_DEFAULT(LocalStiffness)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
-// enable gravity by default
-SET_BOOL_PROP(DecoupledTwoP, ProblemEnableGravity, true);
+public:
+    typedef MimeticGroundwaterEquationLocalStiffness<GridView,Scalar,Variables, Problem> type;
+};
+//SET_INT_PROP(DecoupledTwoP, PressurePreconditioner, SolverIndices::seqILU0);
+//SET_INT_PROP(DecoupledTwoP, PressureSolver, SolverIndices::biCGSTAB);
+SET_SCALAR_PROP(DecoupledTwoP, ReductionSolver, 1E-12);
+SET_INT_PROP(DecoupledTwoP, MaxIterationNumberSolver, 10000);
+SET_INT_PROP(DecoupledTwoP, IterationNumberPreconditioner, 0);
+SET_INT_PROP(DecoupledTwoP, VerboseLevelSolver, 1);
+SET_SCALAR_PROP(DecoupledTwoP, RelaxationPreconditioner, 1.0);
+SET_PROP(DecoupledTwoP, SolverParameters)
+{
+public:
+    //solver parameters
+    static const double reductionSolver = GET_PROP_VALUE(TypeTag, PTAG(ReductionSolver));
+    static const int maxIterationNumberSolver = GET_PROP_VALUE(TypeTag, PTAG(MaxIterationNumberSolver));
+    static const int iterationNumberPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(IterationNumberPreconditioner));
+    static const int verboseLevelSolver = GET_PROP_VALUE(TypeTag, PTAG(VerboseLevelSolver));
+    static const double relaxationPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(RelaxationPreconditioner));
+};
+
 // \}
 }
+
+/*!
+ * \brief The common indices for the two-phase model.
+ */
+template <class TypeTag>
+struct TwoPCommonIndices
+{
+private:
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+
+public:
+// Formulations
+//saturation flags
+static const int saturationW = 0;
+static const int saturationNW = 1;
+//pressure flags
+static const int pressureW = 0;
+static const int pressureNW = 1;
+static const int pressureGlobal = 2;
+//velocity flags
+static const int velocityW = 0;
+static const int velocityNW = 1;
+static const int velocityTotal = 2;
+
+// Phase indices
+static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase in a phase vector
+static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase in a phase vector
+};
+
 
 }
 

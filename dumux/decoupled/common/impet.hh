@@ -1,7 +1,10 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +13,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -22,6 +25,7 @@
 /**
  * @file
  * @brief  IMPET scheme
+ * @author Bernd Flemisch, Markus Wolff
  */
 
 #include "impetproperties.hh"
@@ -34,8 +38,8 @@ namespace Dumux
  *
  * The model implements the decoupled equations of two-phase flow.
  * These equations can be derived from the two-phase flow equations shown for the two-phase box model (TwoPBoxModel).
- * The first equation to solve is a pressure equation of elliptic character.
- * The second one is a transport equation (e.g. for saturation, concentration,...), which can be hyperbolic or parabolic.
+ * The first equation to solve is a pressure equation of elliptic character. The second one is a transport equation (e.g. for saturation, concentration,...),
+ * which can be hyperbolic or parabolic.
  *
  * As the equations are only weakly coupled they do not have to be solved simultaneously
  * but can be solved sequentially. First the pressure equation is solved implicitly,
@@ -47,33 +51,40 @@ namespace Dumux
  */
 template<class TypeTag> class IMPET
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef IMPET<TypeTag> ThisType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
-    enum IterationType
-        {
-            noIter,
-            iterToNumIter,
-            iterToConverged,
-        };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
+    enum
+    {
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
+
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
+
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     typedef typename SolutionTypes::ScalarSolution SolutionType;
 
     //! Set initial solution and initialize parameters
-    void initialize()
+    virtual void initialize()
     {
         //initial values of transported quantity
-        problem_.transportModel().initialize();
+        problem.transportModel().initialize();
         //call function with true to get a first initialisation of the pressure field
-        problem_.pressureModel().initialize();
+        problem.pressureModel().initialize();
+        problem.pressureModel().calculateVelocity();
 
         //update constitutive functions
-        problem_.pressureModel().updateMaterialLaws();
+        problem.pressureModel().updateMaterialLaws();
 
         Dune::dinfo << "IMPET: initialization done." << std::endl;
 
@@ -86,98 +97,82 @@ public:
      *  \param dt         time step size
      *  \param updateVec  vector for the update values
      *
-     *  Calculates the new pressure and velocity and determines the time step size
-     *  and the update of the transported quantity for the explicit time step.
+     *  Calculates the new pressure and velocity and determines the time step size and the update of the transported quantity for the explicit time step
      */
     void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec)
     {
-        if (iterFlag_ == noIter)
+        // the method is valid for any transported quantity.
+        int transSize = problem.variables().gridSize();
+        TransportSolutionType transportedQuantity(problem.variables().transportedQuantity());
+        TransportSolutionType transValueOldIter(problem.variables().transportedQuantity());
+        TransportSolutionType transValueHelp(transSize);
+        TransportSolutionType transValueDiff(transSize);
+        TransportSolutionType updateOldIter(transSize);
+        TransportSolutionType updateHelp(transSize);
+        TransportSolutionType updateDiff(transSize);
+
+        bool converg = false;
+        int iter = 0;
+        int iterTot = 0;
+        updateOldIter = 0;
+
+        while (!converg)
         {
-            //update pressure
-            problem_.pressureModel().update();
+            iter++;
+            iterTot++;
+
+            problem.pressureModel().pressure(false);
+
+            //calculate velocities
+            problem.pressureModel().calculateVelocity();
 
             //calculate defect of transported quantity
-            problem_.transportModel().update(t, dt, updateVec, true);
+            problem.transportModel().update(t, dt, updateVec, true);
 
-            dt *= cFLFactor_;
-        }
-        else if (iterFlag_ == iterToNumIter || iterFlag_ == iterToConverged)
-        {
-            bool converg = false;
-            int iter = 0;
-            int iterTot = 0;
-
-            // the method is valid for any transported quantity.
-            TransportSolutionType transValueOldIter;
-            problem_.transportModel().getTransportedQuantity(transValueOldIter);
-            TransportSolutionType updateOldIter(transValueOldIter);
-            updateOldIter = 0;
-            TransportSolutionType transportedQuantity(transValueOldIter);
-            TransportSolutionType updateHelp(transValueOldIter);
-            TransportSolutionType updateDiff(transValueOldIter);
-
-            while (!converg)
-            {
-                iter++;
-                iterTot++;
-
-                problem_.pressureModel().update();
-
-                //calculate defect of transported quantity
-                problem_.transportModel().update(t, dt, updateVec, true);
-
+            if (iterFlag_)
+            { // only needed if iteration has to be done
                 updateHelp = updateVec;
-                problem_.transportModel().getTransportedQuantity(transportedQuantity);
+                transportedQuantity = problem.variables().transportedQuantity();
                 transportedQuantity += (updateHelp *= (dt * cFLFactor_));
                 transportedQuantity *= omega_;
-                transValueOldIter *= (1 - omega_);
-                transportedQuantity += transValueOldIter;
+                transValueHelp = transValueOldIter;
+                transValueHelp *= (1 - omega_);
+                transportedQuantity += transValueHelp;
                 updateDiff = updateVec;
                 updateDiff -= updateOldIter;
                 transValueOldIter = transportedQuantity;
                 updateOldIter = updateVec;
-                Dune::dinfo << " defect = " << dt * updateDiff.two_norm() / transportedQuantity.two_norm();
-                // break criteria for iteration loop
-                if (iterFlag_ == iterToConverged && dt * updateDiff.two_norm() / transportedQuantity.two_norm() <= maxDefect_)
-                {
-                    converg = true;
-                }
-                else if (iterFlag_ == iterToNumIter && iter > nIter_)
-                {
-                    converg = true;
-                }
-
-                if (iterFlag_ == iterToConverged && transportedQuantity.infinity_norm() > (1 + maxDefect_))
-                {
-                    converg = false;
-                }
-                if (!converg && iter > nIter_)
-                {
-                    converg = true;
-                    std::cout << "Nonlinear loop in IMPET.update exceeded nIter = " << nIter_ << " iterations."
-                              << std::endl;
-                    std::cout << transportedQuantity.infinity_norm() << std::endl;
-                }
             }
-            // outputs
-            if (iterFlag_ == iterToConverged)
-                std::cout << "Iteration steps: " << iterTot << std::endl;
-            std::cout.setf(std::ios::scientific, std::ios::floatfield);
-
-            dt *= cFLFactor_;
+            // break criteria for iteration loop
+            if (iterFlag_ == 2 && dt * updateDiff.two_norm() / transportedQuantity.two_norm() <= maxDefect_)
+            {
+                converg = true;
+            }
+            else if (iterFlag_ == 1 && iter > nIter_)
+            {
+                converg = true;
+            }
+            else if (iterFlag_ == 0)
+            {
+                converg = true;
+            }
+            if (iterFlag_ == 2 && transportedQuantity.infinity_norm() > (1 + maxDefect_))
+            {
+                converg = false;
+            }
+            if (!converg && iter > nIter_)
+            {
+                converg = true;
+                std::cout << "Nonlinear loop in IMPET.update exceeded nIter = " << nIter_ << " iterations." << std::endl;
+                std::cout << transportedQuantity.infinity_norm() << std::endl;
+            }
         }
-        else
-        {
-            DUNE_THROW(Dune::NotImplemented,"IMPET: Iterationtype not implemented!");
-        }
+        // outputs
+        if (iterFlag_ == 2)
+            std::cout << "Iteration steps: " << iterTot << std::endl;
+        std::cout.setf(std::ios::scientific, std::ios::floatfield);
 
-    }
-
-    void updateTransport(const Scalar t, Scalar& dt, TransportSolutionType& updateVec)
-    {
-        problem_.pressureModel().updateVelocity();
-
-        problem_.transportModel().update(t, dt, updateVec, true);
+        dt *= cFLFactor_;
     }
 
     //! \brief Write data files
@@ -188,36 +183,47 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        problem_.pressureModel().addOutputVtkFields(writer);
-        problem_.transportModel().addOutputVtkFields(writer);
+        problem.pressureModel().addOutputVtkFields(writer);
+        problem.transportModel().addOutputVtkFields(writer);
 
         return;
     }
 
-    /*!
-     * \brief Mapper for the entities where degrees of freedoms are defined.
-     */
-    const ElementMapper &dofMapper() const
+    // serialization methods
+    //! Function needed for restart option.
+    template<class Restarter>
+    void serialize(Restarter &res)
     {
-        return problem_.elementMapper();
+        problem.variables().serialize<Restarter> (res);
+    }
+
+    //! Function needed for restart option.
+    template<class Restarter>
+    void deserialize(Restarter &res)
+    {
+        problem.variables().deserialize<Restarter> (res);
+        //update constitutive functions
+        problem.pressureModel().updateMaterialLaws();
     }
 
     //! Constructs an IMPET object
     /**
-     * \param problem Problem
+     * \param prob Problem
      */
-    IMPET(Problem& problem) :
-        problem_(problem)
+    IMPET(Problem& prob) :
+        problem(prob)
     {
-        cFLFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
-        iterFlag_ = GET_PARAM_FROM_GROUP(TypeTag, int, Impet, IterationFlag);
-        nIter_ = GET_PARAM_FROM_GROUP(TypeTag, int, Impet, IterationNumber);
-        maxDefect_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, MaximumDefect);
-        omega_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, RelaxationFactor);
+        cFLFactor_ = GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
+        iterFlag_ = GET_PROP_VALUE(TypeTag, PTAG(IterationFlag));
+        nIter_ = GET_PROP_VALUE(TypeTag, PTAG(IterationNumber));
+        maxDefect_ = GET_PROP_VALUE(TypeTag, PTAG(MaximumDefect));
+        omega_ = GET_PROP_VALUE(TypeTag, PTAG(RelaxationFactor));
     }
 
+protected:
+
+    Problem& problem; //!< object of type Problem including problem
 private:
-    Problem& problem_; //!< object of type Problem including problem
     Scalar cFLFactor_;
     int iterFlag_;
     int nIter_;

@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Andreas Lauser
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -26,9 +28,6 @@
 #ifndef DUMUX_H2O_HH
 #define DUMUX_H2O_HH
 
-#include <cmath>
-#include <cassert>
-
 #include <dumux/material/idealgas.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
@@ -39,6 +38,9 @@
 #include "iapws/region1.hh"
 #include "iapws/region2.hh"
 #include "iapws/region4.hh"
+
+#include <cmath>
+
 
 namespace Dumux
 {
@@ -58,14 +60,14 @@ namespace Dumux
 template <class Scalar>
 class H2O : public Component<Scalar, H2O<Scalar> >
 {
+    typedef Component<Scalar, H2O<Scalar> > ParentType;
 
     typedef IAPWS::Common<Scalar> Common;
     typedef IAPWS::Region1<Scalar> Region1;
     typedef IAPWS::Region2<Scalar> Region2;
     typedef IAPWS::Region4<Scalar> Region4;
 
-    static const Scalar Rs; // specific gas constant of water
-
+    static const Scalar R = Common::R;  // specific gas constant of water
 public:
     /*!
      * \brief A human readable name for the water.
@@ -136,27 +138,6 @@ public:
 
         return Region4::saturationPressure(T);
     }
-    /*!
-     * \brief The vapor temperature in \f$\mathrm{[K]}\f$ of pure water
-     *        at a given pressure.
-     *
-     *\param pressure pressure in \f$\mathrm{[Pa]}\f$
-     *
-     * See:
-     *
-     * IAPWS: "Revised Release on the IAPWS Industrial Formulation
-     * 1997 for the Thermodynamic Properties of Water and Steam",
-     * http://www.iapws.org/relguide/IF97-Rev.pdf
-     */
-    static Scalar vaporTemperature(Scalar pressure)
-    {
-        if (pressure > criticalPressure())
-            pressure = criticalPressure();
-        if (pressure < triplePressure())
-            pressure = triplePressure();
-
-        return Region4::vaporTemperature(pressure);
-    }
 
     /*!
      * \brief Specific enthalpy of water steam \f$\mathrm{[J/kg]}\f$.
@@ -177,7 +158,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Enthalpy of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
         // regularization
@@ -195,15 +176,15 @@ public:
             // the pressure is too high, in this case we use the slope
             // of the enthalpy at the vapor pressure to regularize
             Scalar dh_dp =
-                Rs*temperature*
+                R*temperature*
                 Region2::tau(temperature)*
-                Region2::dPi_dp(pv)*
-                Region2::ddGamma_dTaudPi(temperature, pv);
+                Region2::dpi_dp(pv)*
+                Region2::ddgamma_dtaudpi(temperature, pv);
 
             return
                 enthalpyRegion2_(temperature, pv) +
                 (pressure - pv)*dh_dp;
-        }
+        };
 
         return enthalpyRegion2_(temperature, pressure);
     }
@@ -227,7 +208,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Enthalpy of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
         // regularization
@@ -236,21 +217,21 @@ public:
             // the pressure is too low, in this case we use the slope
             // of the enthalpy at the vapor pressure to regularize
             Scalar dh_dp =
-                Rs * temperature*
+                R*temperature*
                 Region1::tau(temperature)*
-                Region1::dPi_dp(pv)*
-                Region1::ddGamma_dTaudPi(temperature, pv);
+                Region1::dpi_dp(pv)*
+                Region1::ddgamma_dtaudpi(temperature, pv);
 
             return
                 enthalpyRegion1_(temperature, pv) +
                 (pressure - pv)*dh_dp;
-        }
+        };
 
         return enthalpyRegion1_(temperature, pressure);
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/(kg*K)}\f$.
+     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/kg]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -261,14 +242,14 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static const Scalar gasHeatCapacity(Scalar temperature,
-                                        Scalar pressure)
+    static const Scalar gasHeatCap_p(Scalar temperature,
+                                    Scalar pressure)
     {
         if (!Region2::isValid(temperature, pressure))
         {
             DUNE_THROW(NumericalProblem,
                        "Heat capacity of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
         // regularization
@@ -277,16 +258,15 @@ public:
         }
         Scalar pv = vaporPressure(temperature);
         if (pressure > pv) {
-            // the pressure is too high, in this case we use the heat
-            // cap at the vapor pressure to regularize
+            // the pressure is too high, in this case we use the heat cap at the vapor pressure to regularize
             return
                 heatCap_p_Region2_(temperature, pv);
-        }
+        };
         return heatCap_p_Region2_(temperature, pressure);
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of liquid water \f$\mathrm{[J/(kg*K)]}\f$.
+     * \brief Specific isobaric heat capacity of liquid water \f$\mathrm{[J/kg]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -297,14 +277,14 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static const Scalar liquidHeatCapacity(Scalar temperature,
-                                           Scalar pressure)
+    static const Scalar liquidHeatCap_p(Scalar temperature,
+                                       Scalar pressure)
     {
         if (!Region1::isValid(temperature, pressure))
         {
             DUNE_THROW(NumericalProblem,
                        "heat Capacity of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
         // regularization
@@ -313,7 +293,7 @@ public:
             // the pressure is too low, in this case we use the heat cap at the vapor pressure to regularize
             return
                 heatCap_p_Region1_(temperature, pv);
-        }
+        };
 
         return heatCap_p_Region1_(temperature, pressure);
     }
@@ -337,7 +317,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Internal Energy of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
 
@@ -352,14 +332,14 @@ public:
             // calculate the partial derivative of the internal energy
             // to the pressure at the vapor pressure.
             Scalar tau = Region1::tau(temperature);
-            Scalar dGamma_dPi = Region1::dGamma_dPi(temperature, pv);
-            Scalar ddGamma_dTaudPi = Region1::ddGamma_dTaudPi(temperature, pv);
-            Scalar ddGamma_ddPi = Region1::ddGamma_ddPi(temperature, pv);
+            Scalar dgamma_dpi = Region1::dgamma_dpi(temperature, pv);
+            Scalar ddgamma_dtaudpi = Region1::ddgamma_dtaudpi(temperature, pv);
+            Scalar ddgamma_ddpi = Region1::ddgamma_ddpi(temperature, pv);
             Scalar pi = Region1::pi(pv);
-            Scalar dPi_dp = Region1::dPi_dp(pv);
+            Scalar dpi_dp = Region1::dpi_dp(pv);
             Scalar du_dp =
-                Rs*temperature*
-                (tau*dPi_dp*ddGamma_dTaudPi + dPi_dp*dPi_dp*dGamma_dPi + pi*dPi_dp*ddGamma_ddPi);
+                R*temperature*
+                (tau*dpi_dp*ddgamma_dtaudpi + dpi_dp*dpi_dp*dgamma_dpi + pi*dpi_dp*ddgamma_ddpi);
             */
 
             // use a straight line for extrapolation. use forward
@@ -370,7 +350,7 @@ public:
             Scalar uvPEps = internalEnergyRegion1_(temperature, pv + eps);
             Scalar du_dp = (uvPEps - uv)/eps;
             return uv + du_dp*(pressure - pv);
-        }
+        };
 
         return internalEnergyRegion1_(temperature, pressure);
     }
@@ -393,7 +373,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Internal Energy of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
         // regularization
@@ -409,7 +389,7 @@ public:
             return
                 enthalpyRegion2_(temperature, triplePressure() - 100)
                 -
-                Rs*temperature; // = p*v   for an ideal gas!
+                R*temperature; // = p*v   for an ideal gas!
         }
         Scalar pv = vaporPressure(temperature);
         if (pressure > pv) {
@@ -421,14 +401,14 @@ public:
             // calculate the partial derivative of the internal energy
             // to the pressure at the vapor pressure.
             Scalar tau = Region2::tau(temperature);
-            Scalar dGamma_dPi = Region2::dGamma_dPi(temperature, pv);
-            Scalar ddGamma_dTaudPi = Region2::ddGamma_dTaudPi(temperature, pv);
-            Scalar ddGamma_ddPi = Region2::ddGamma_ddPi(temperature, pv);
+            Scalar dgamma_dpi = Region2::dgamma_dpi(temperature, pv);
+            Scalar ddgamma_dtaudpi = Region2::ddgamma_dtaudpi(temperature, pv);
+            Scalar ddgamma_ddpi = Region2::ddgamma_ddpi(temperature, pv);
             Scalar pi = Region2::pi(pv);
-            Scalar dPi_dp = Region2::dPi_dp(pv);
+            Scalar dpi_dp = Region2::dpi_dp(pv);
             Scalar du_dp =
-                Rs*temperature*
-                (tau*dPi_dp*ddGamma_dTaudPi + dPi_dp*dPi_dp*dGamma_dPi + pi*dPi_dp*ddGamma_ddPi);
+                R*temperature*
+                (tau*dpi_dp*ddgamma_dtaudpi + dpi_dp*dpi_dp*dgamma_dpi + pi*dpi_dp*ddgamma_ddpi);
 
             // use a straight line for extrapolation
             Scalar uv = internalEnergyRegion2_(temperature, pv);
@@ -443,13 +423,13 @@ public:
             Scalar uvMEps = internalEnergyRegion2_(temperature, pv - eps);
             Scalar du_dp = (uv - uvMEps)/eps;
             return uv + du_dp*(pressure - pv);
-        }
+        };
 
         return internalEnergyRegion2_(temperature, pressure);
     }
 
     /*!
-     * \brief Specific isochoric heat capacity of liquid water \f$\mathrm{[J/(m^3*K)]}\f$.
+     * \brief Specific isochoric heat capacity of liquid water \f$\mathrm{[J/kg]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -460,14 +440,14 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
      */
-    static const Scalar liquidHeatCapacityConstVolume(Scalar temperature,
-                                                      Scalar pressure)
+    static const Scalar liquidHeatCap_v(Scalar temperature,
+                                             Scalar pressure)
     {
         if (!Region1::isValid(temperature, pressure))
         {
             DUNE_THROW(NumericalProblem,
                        "Heat capacity of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
 
@@ -483,7 +463,7 @@ public:
     }
 
     /*!
-     * \brief Specific isochoric heat capacity of steam and water vapor \f$\mathrm{[J/(kg*K)}\f$.
+     * \brief Specific isochoric heat capacity of steam and water vapor \f$\mathrm{[J/kg]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -494,13 +474,13 @@ public:
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf
     */
-    static Scalar gasHeatCapacityConstVolume(Scalar temperature, Scalar pressure)
+    static Scalar gasHeatCap_v(Scalar temperature, Scalar pressure)
     {
         if (!Region2::isValid(temperature, pressure))
         {
             DUNE_THROW(NumericalProblem,
                        "Heat capacity of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
         // regularization
@@ -511,22 +491,10 @@ public:
         Scalar pv = vaporPressure(temperature);
         if (pressure > pv) {
             return heatCap_v_Region2_(temperature, pv);
-        }
+        };
 
         return heatCap_v_Region2_(temperature, pressure);
     }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return true; }
-
-    /*!
-     * \brief Returns true iff the liquid phase is assumed to be compressible
-     */
-    static bool liquidIsCompressible()
-    { return true; }
 
     /*!
      * \brief The density of steam in \f$\mathrm{[kg/m^3]}\f$ at a given pressure and temperature.
@@ -546,7 +514,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Density of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
         // regularization
@@ -578,15 +546,15 @@ public:
             Scalar dv_dp = (v1 - v0)/eps;
             /*
             Scalar pi = Region2::pi(pv);
-            Scalar dp_dPi = Region2::dp_dPi(pv);
-            Scalar dGamma_dPi = Region2::dGamma_dPi(temperature, pv);
-            Scalar ddGamma_ddPi = Region2::ddGamma_ddPi(temperature, pv);
+            Scalar dp_dpi = Region2::dp_dpi(pv);
+            Scalar dgamma_dpi = Region2::dgamma_dpi(temperature, pv);
+            Scalar ddgamma_ddpi = Region2::ddgamma_ddpi(temperature, pv);
 
-            Scalar RT = Rs*temperature;
+            Scalar RT = R*temperature;
             Scalar dv_dp =
-                RT/(dp_dPi*pv)
+                RT/(dp_dpi*pv)
                 *
-                (dGamma_dPi + pi*ddGamma_ddPi - v0*dp_dPi/RT);
+                (dgamma_dpi + pi*ddgamma_ddpi - v0*dp_dpi/RT);
             */
 
             // calculate the partial derivative of the density to the
@@ -595,16 +563,10 @@ public:
 
             // use a straight line for extrapolation
             return 1.0/v0 + (pressure - pv)*drho_dp;
-        }
+        };
 
         return 1.0/volumeRegion2_(temperature, pressure);
     }
-
-    /*!
-     * \brief Returns true iff the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { return false; }
 
     /*!
      * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
@@ -667,7 +629,7 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Density of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
         // regularization
@@ -686,15 +648,15 @@ public:
             /*
             Scalar v0 = volumeRegion1_(temperature, pv);
             Scalar pi = Region1::pi(pv);
-            Scalar dp_dPi = Region1::dp_dPi(pv);
-            Scalar dGamma_dPi = Region1::dGamma_dPi(temperature, pv);
-            Scalar ddGamma_ddPi = Region1::ddGamma_ddPi(temperature, pv);
+            Scalar dp_dpi = Region1::dp_dpi(pv);
+            Scalar dgamma_dpi = Region1::dgamma_dpi(temperature, pv);
+            Scalar ddgamma_ddpi = Region1::ddgamma_ddpi(temperature, pv);
 
-            Scalar RT = Rs*temperature;
+            Scalar RT = R*temperature;
             Scalar dv_dp =
-                RT/(dp_dPi*pv)
+                RT/(dp_dpi*pv)
                 *
-                (dGamma_dPi + pi*ddGamma_ddPi - v0*dp_dPi/RT);
+                (dgamma_dpi + pi*ddgamma_ddpi - v0*dp_dpi/RT);
             */
 
             // calculate the partial derivative of the density to the
@@ -703,7 +665,7 @@ public:
 
             // use a straight line for extrapolation
             return 1.0/v0 + (pressure - pv)*drho_dp;
-        }
+        };
 
         return 1/volumeRegion1_(temperature, pressure);
     }
@@ -766,12 +728,12 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Viscosity of steam is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
         }
 
         Scalar rho = gasDensity(temperature, pressure);
         return Common::viscosity(temperature, rho);
-    }
+    };
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure water.
@@ -790,72 +752,12 @@ public:
         {
             DUNE_THROW(NumericalProblem,
                        "Viscosity of water is only implemented for temperatures below 623.15K and "
-                       "pressures below 100MPa. (T=" << temperature << ", p=" << pressure << ")");
-        }
+                       "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
+        };
 
         Scalar rho = liquidDensity(temperature, pressure);
         return Common::viscosity(temperature, rho);
-    }
-
-    /*!
-     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of water (IAPWS) .
-     *
-     * Implementation taken from:
-     * freesteam - IAPWS-IF97 steam tables library
-     * copyright (C) 2004-2009  John Pye
-     *
-     * Appendix B: Recommended Interpolating equation for Industrial Use
-     * see http://www.iapws.org/relguide/thcond.pdf
-     *
-     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidThermalConductivity( Scalar temperature,  Scalar pressure)
-    {
-        // Thermal conductivity of water is empirically fit.
-        // Evaluating that fitting-function outside the area of validity does not make sense.
-        if( not ( (pressure <= 400e6 and ((273.15<=temperature) and (temperature<=398.15)) )
-                    or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
-                    or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
-                    or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
-            DUNE_THROW(NumericalProblem,
-                       "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability."
-                       "(T=" << temperature << ", p=" << pressure << ")");
-        }
-
-        Scalar rho = liquidDensity(temperature, pressure);
-        return Common::thermalConductivityIAPWS(temperature, rho);
-    }
-
-    /*!
-     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ of steam (IAPWS) .
-     *
-     * Implementation taken from:
-     * freesteam - IAPWS-IF97 steam tables library
-     * copyright (C) 2004-2009  John Pye
-     *
-     * Appendix B: Recommended Interpolating equation for Industrial Use
-     * see http://www.iapws.org/relguide/thcond.pdf
-     *
-     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar gasThermalConductivity(const Scalar temperature, const Scalar pressure)
-    {
-        // Thermal conductivity of water is empirically fit.
-        // Evaluating that fitting-function outside the area of validity does not make sense.
-        if( not ( (pressure <= 400e6 and ((273.15<=temperature) and (temperature<=398.15)) )
-                    or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
-                    or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
-                    or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
-            DUNE_THROW(NumericalProblem,
-                       "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability."
-                       "(T=" << temperature << ", p=" << pressure << ")");
-        }
-
-        Scalar rho = gasDensity(temperature, pressure);
-        return Common::thermalConductivityIAPWS(temperature, rho);
-    }
+    };
 
 private:
     // the unregularized specific enthalpy for liquid water
@@ -863,103 +765,100 @@ private:
     {
         return
             Region1::tau(temperature) *
-            Region1::dGamma_dTau(temperature, pressure) *
-            Rs*temperature;
-    }
+            Region1::dgamma_dtau(temperature, pressure) *
+            R*temperature;
+    };
 
     // the unregularized specific isobaric heat capacity
     static Scalar heatCap_p_Region1_(Scalar temperature, Scalar pressure)
     {
         return
             - pow(Region1::tau(temperature), 2 ) *
-            Region1::ddGamma_ddTau(temperature, pressure) *
-            Rs;
-    }
+            Region1::ddgamma_ddtau(temperature, pressure) *
+            R;
+    };
 
     // the unregularized specific isochoric heat capacity
     static Scalar heatCap_v_Region1_(Scalar temperature, Scalar pressure)
     {
         double tau = Region1::tau(temperature);
-        double num = Region1::dGamma_dPi(temperature, pressure) - tau * Region1::ddGamma_dTaudPi(temperature, pressure);
-        double diff = pow(num, 2) / Region1::ddGamma_ddPi(temperature, pressure);
+        double num = Region1::dgamma_dpi(temperature, pressure) - tau * Region1::ddgamma_dtaudpi(temperature, pressure);
+        double diff = pow(num, 2) / Region1::ddgamma_ddpi(temperature, pressure);
 
         return
             - pow(tau, 2 ) *
-            Region1::ddGamma_ddTau(temperature, pressure) * Rs +
+            Region1::ddgamma_ddtau(temperature, pressure) * R +
             diff;
-    }
+    };
 
     // the unregularized specific internal energy for liquid water
     static Scalar internalEnergyRegion1_(Scalar temperature, Scalar pressure)
     {
         return
-            Rs * temperature *
-            ( Region1::tau(temperature)*Region1::dGamma_dTau(temperature, pressure) -
-              Region1::pi(pressure)*Region1::dGamma_dPi(temperature, pressure));
-    }
+            R * temperature *
+            ( Region1::tau(temperature)*Region1::dgamma_dtau(temperature, pressure) -
+              Region1::pi(pressure)*Region1::dgamma_dpi(temperature, pressure));
+    };
 
     // the unregularized specific volume for liquid water
     static Scalar volumeRegion1_(Scalar temperature, Scalar pressure)
     {
         return
             Region1::pi(pressure)*
-            Region1::dGamma_dPi(temperature, pressure) *
-            Rs * temperature / pressure;
-    }
+            Region1::dgamma_dpi(temperature, pressure) *
+            R * temperature / pressure;
+    };
 
     // the unregularized specific enthalpy for steam
     static Scalar enthalpyRegion2_(Scalar temperature, Scalar pressure)
     {
         return
             Region2::tau(temperature) *
-            Region2::dGamma_dTau(temperature, pressure) *
-            Rs*temperature;
-    }
+            Region2::dgamma_dtau(temperature, pressure) *
+            R*temperature;
+    };
 
     // the unregularized specific internal energy for steam
     static Scalar internalEnergyRegion2_(Scalar temperature, Scalar pressure)
     {
         return
-            Rs * temperature *
-            ( Region2::tau(temperature)*Region2::dGamma_dTau(temperature, pressure) -
-              Region2::pi(pressure)*Region2::dGamma_dPi(temperature, pressure));
-    }
+            R * temperature *
+            ( Region2::tau(temperature)*Region2::dgamma_dtau(temperature, pressure) -
+              Region2::pi(pressure)*Region2::dgamma_dpi(temperature, pressure));
+    };
 
     // the unregularized specific isobaric heat capacity
     static Scalar heatCap_p_Region2_(Scalar temperature, Scalar pressure)
     {
         return
             - pow(Region2::tau(temperature), 2 ) *
-            Region2::ddGamma_ddTau(temperature, pressure) *
-            Rs;
-    }
+            Region2::ddgamma_ddtau(temperature, pressure) *
+            R;
+    };
 
     // the unregularized specific isochoric heat capacity
     static Scalar heatCap_v_Region2_(Scalar temperature, Scalar pressure)
     {
         double tau = Region2::tau(temperature);
         double pi = Region2::pi(pressure);
-        double num = 1 + pi * Region2::dGamma_dPi(temperature, pressure) + tau * pi * Region2::ddGamma_dTaudPi(temperature, pressure);
-        double diff = num * num / (1 - pi * pi * Region2::ddGamma_ddPi(temperature, pressure));
+        double num = 1 + pi * Region2::dgamma_dpi(temperature, pressure) + tau * pi * Region2::ddgamma_dtaudpi(temperature, pressure);
+        double diff = num * num / (1 - pi * pi * Region2::ddgamma_ddpi(temperature, pressure));
         return
             - pow(tau, 2 ) *
-            Region2::ddGamma_ddTau(temperature, pressure) * Rs
+            Region2::ddgamma_ddtau(temperature, pressure) * R
             - diff;
-    }
+    };
 
     // the unregularized specific volume for steam
     static Scalar volumeRegion2_(Scalar temperature, Scalar pressure)
     {
         return
             Region2::pi(pressure)*
-            Region2::dGamma_dPi(temperature, pressure) *
-            Rs * temperature / pressure;
-    }
+            Region2::dgamma_dpi(temperature, pressure) *
+            R * temperature / pressure;
+    };
 }; // end class
 
-template <class Scalar>
-const Scalar H2O<Scalar>::Rs = Common::Rs;
-
-} // end namespace
+} // end namepace
 
 #endif

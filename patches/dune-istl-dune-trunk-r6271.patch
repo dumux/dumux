@@ -1,0 +1,38 @@
+diff --git a/dune/common/parallel/remoteindices.hh b/dune/common/parallel/remoteindices.hh
+index bfb6d43..bb7b0cf 100644
+--- a/dune/common/parallel/remoteindices.hh
++++ b/dune/common/parallel/remoteindices.hh
+@@ -1508,30 +1508,21 @@ namespace Dune{
+   }
+ 
+   template<typename T, typename A>
+-  inline typename std::map<int, std::pair<SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*,
+-					  SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*> >::const_iterator
++  inline typename RemoteIndices<T,A>::const_iterator
+   RemoteIndices<T,A>::find(int proc) const
+   {
+     return remoteIndices_.find(proc);
+   }
+ 
+   template<typename T, typename A>
+-  inline typename std::map<int, std::pair<SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*,
+-					  SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*> >::const_iterator
++  inline typename RemoteIndices<T,A>::const_iterator
+   RemoteIndices<T,A>::begin() const
+   {
+     return remoteIndices_.begin();
+   }
+   
+   template<typename T, typename A>
+-  inline typename std::map<int, std::pair<SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*,
+-					  SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*> >::const_iterator
++  inline typename RemoteIndices<T,A>::const_iterator
+   RemoteIndices<T,A>::end() const
+   {
+     return remoteIndices_.end();

@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2010 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -54,23 +56,25 @@ void testCommon(const Spline &sp,
         double y0 = (i>0)?sp.eval(x[i]-eps):y[0];
         double y1 = sp.eval(x[i]);
         double y2 = (i<n-1)?sp.eval(x[i]+eps):y[n-1];
-
-        if (std::abs(y0 - y[i]) > 100*eps || std::abs(y2 - y[i]) > 100*eps)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Spline seems to be discontinuous at sampling point " << i << "!");
-        if (std::abs(y1 - y[i]) > eps)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Spline does not capture sampling point " << i << "!");
+        assert(std::abs(y0 - y[i]) < 100*eps);
+        assert(std::abs(y1 - y[i]) < eps);
+        assert(std::abs(y2 - y[i]) < 100*eps);
 
         // make sure the derivative is continuous (assuming that the
         // second derivative is smaller than 1000)
         double d1 = sp.evalDerivative(x[i]);
         double d0 = (i>0)?sp.evalDerivative(x[i]-eps):d1;
         double d2 = (i<n-1)?sp.evalDerivative(x[i]+eps):d1;
+        assert(std::abs(d1 - d0) < 1000*eps);
+        assert(std::abs(d2 - d0) < 1000*eps);
 
-        if (std::abs(d1 - d0) > 1000*eps || std::abs(d2 - d0) > 1000*eps)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Spline seems to exhibit a discontinuous derivative at sampling point " << i << "!");
+        // make sure the derivative is consistent with the y values
+        y0 = sp.eval(x[i] - ((i>0)?eps*1e2:0));
+        y2 = sp.eval(x[i] + ((i<n-1)?eps*1e2:0));
+        double dC = (y2 - y0)/(2*1e2*eps);
+        if (i == 0 || i == n-1)
+            dC *= 2;
+        assert(std::abs(dC - d0) < 1e-5);
     }
 }
 
@@ -90,15 +94,9 @@ void testFull(const Spline &sp,
     // make sure the derivative at both end points is correct
     double d0 = sp.evalDerivative(x[0]);
     double d1 = sp.evalDerivative(x[n-1]);
-    if (std::abs(d0 - m0) > eps)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "Invalid derivative at beginning of interval: is "
-                   << d0 << " ought to be " << m0);
-    if (std::abs(d1 - m1) > eps)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "Invalid derivative at end of interval: is "
-                   << d1 << " ought to be " << m1);
-}
+    assert(std::abs(d0 - m0) < eps);
+    assert(std::abs(d1 - m1) < eps);
+};
 
 template <class Spline>
 void testNatural(const Spline &sp,
@@ -117,17 +115,9 @@ void testNatural(const Spline &sp,
 
     double d2 = sp.evalDerivative(x[n-1] - eps);
     double d3 = sp.evalDerivative(x[n-1]);
-
-    if (Dune::FloatCmp::ne( (d1-d0)/eps, 0.0 ))
-        DUNE_THROW(Dune::InvalidStateException,
-                   "Invalid derivative at beginning of interval: is "
-                   << (d1 - d0)/eps << " ought to be 0");
-
-    if (Dune::FloatCmp::ne( (d3-d2)/eps, 0.0 ))
-        DUNE_THROW(Dune::InvalidStateException,
-                   "Invalid derivative at end of interval: is "
-                   << (d3 - d2)/eps << " ought to be 0");
-}
+    assert(std::abs(d1 - d0)/eps < 1000*eps);
+    assert(std::abs(d3 - d2)/eps < 1000*eps);
+};
 
 void testAll()
 {
@@ -136,16 +126,6 @@ void testAll()
     double m0 = 10;
     double m1 = -10;
     double points[][2] =
-        {
-            {x[0], y[0]},
-            {x[1], y[1]},
-            {x[2], y[2]},
-            {x[3], y[3]},
-            {x[4], y[4]},
-        };
-
-
-    std::initializer_list<const std::pair<double, double> > pointsInitList =
         {
             {x[0], y[0]},
             {x[1], y[1]},
@@ -168,9 +148,9 @@ void testAll()
     /////////
 
     // full spline
-    { Dumux::Spline<double, 2> sp(x[0], x[1], y[0], y[1], m0, m1); sp.set(x[0],x[1],y[0],y[1],m0, m1); testFull(sp, x, y, m0, m1); }
-    { Dumux::Spline<double, 2> sp(x, y, m0, m1); sp.setXYArrays(2, x, y, m0, m1); testFull(sp, x, y, m0, m1);  }
-    { Dumux::Spline<double, 2> sp(points, m0, m1); sp.setArrayOfPoints(2, points, m0, m1); testFull(sp, x, y, m0, m1); }
+    { Dumux::Spline<double, 2> sp(x[0], x[1], y[0], y[1], m0, m1); sp.set(x[0],x[1],y[0],y[1],m0, m1); testFull(sp, x, y, m0, m1); };
+    { Dumux::Spline<double, 2> sp(x, y, m0, m1); sp.set(x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
+    { Dumux::Spline<double, 2> sp(points, m0, m1); sp.set(points,m0, m1); testFull(sp, x, y, m0, m1); };
 
 
     /////////
@@ -178,33 +158,28 @@ void testAll()
     /////////
 
     // full spline
-    { Dumux::Spline<double, 5> sp(x, y, m0, m1); sp.setXYArrays(5, x, y, m0, m1); testFull(sp, x, y, m0, m1);  }
-    { Dumux::Spline<double, 5> sp; sp.setArrayOfPoints(5, points, m0, m1); testFull(sp, x, y, m0, m1); }
-    { Dumux::Spline<double, 5> sp; sp.setContainerOfPoints(pointVec,m0, m1); testFull(sp, x, y, m0, m1); }
-    { Dumux::Spline<double, 5> sp; sp.setContainerOfTuples(pointsInitList, m0, m1); testFull(sp, x, y, m0, m1); }
+    { Dumux::Spline<double, 5> sp(x, y, m0, m1); sp.set(x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
+    { Dumux::Spline<double, 5> sp(points, m0, m1); sp.set(points,m0, m1); testFull(sp, x, y, m0, m1); };
 
     // natural spline
-    { Dumux::Spline<double, 5> sp(x, y); sp.setXYArrays(5, x, y); testNatural(sp, x, y); }
-    { Dumux::Spline<double, 5> sp; sp.setContainerOfPoints(pointVec); testNatural(sp, x, y); }
-    { Dumux::Spline<double, 5> sp; sp.setContainerOfTuples(pointsInitList); testNatural(sp, x, y); }
+    { Dumux::Spline<double, 5> sp(x, y); sp.set(x, y); testNatural(sp, x, y); };
+    { Dumux::Spline<double, 5> sp(points); sp.set(points); testNatural(sp, x, y); };
 
     /////////
     // test variable length splines
     /////////
 
     // full spline
-    { Dumux::Spline<double, -1> sp(5, x, y, m0, m1); sp.setXYArrays(5,x,y,m0, m1); testFull(sp, x, y, m0, m1);  }
-    { Dumux::Spline<double, -1> sp(xVec, yVec, m0, m1); sp.setXYContainers(xVec,yVec,m0, m1); testFull(sp, x, y, m0, m1);  }
-    { Dumux::Spline<double, -1> sp; sp.setArrayOfPoints(5,points,m0, m1); testFull(sp, x, y, m0, m1); }
-    { Dumux::Spline<double, -1> sp; sp.setContainerOfPoints(pointVec,m0, m1); testFull(sp, x, y, m0, m1);  }
-    { Dumux::Spline<double, -1> sp; sp.setContainerOfTuples(pointsInitList,m0, m1); testFull(sp, x, y, m0, m1); }
+    { Dumux::Spline<double, -1> sp(5, x, y, m0, m1); sp.set(5,x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
+    { Dumux::Spline<double, -1> sp(5, points, m0, m1); sp.set(5,points,m0, m1); testFull(sp, x, y, m0, m1); };
+    { Dumux::Spline<double, -1> sp(xVec, yVec, m0, m1); sp.set(xVec,yVec,m0, m1); testFull(sp, x, y, m0, m1);  };
+    { Dumux::Spline<double, -1> sp(pointVec, m0, m1); sp.set(pointVec,m0, m1); testFull(sp, x, y, m0, m1); };
 
     // natural spline
-    { Dumux::Spline<double, -1> sp(5, x, y); sp.setXYArrays(5,x,y); testNatural(sp, x, y);  }
-    { Dumux::Spline<double, -1> sp(xVec, yVec); sp.setXYContainers(xVec,yVec); testNatural(sp, x, y); }
-    { Dumux::Spline<double, -1> sp; sp.setArrayOfPoints(5,points); testNatural(sp, x, y); }
-    { Dumux::Spline<double, -1> sp; sp.setContainerOfPoints(pointVec); testNatural(sp, x, y); }
-    { Dumux::Spline<double, -1> sp; sp.setContainerOfTuples(pointsInitList); testNatural(sp, x, y); }
+    { Dumux::Spline<double, -1> sp(5, x, y); sp.set(5,x,y); testNatural(sp, x, y);  };
+    { Dumux::Spline<double, -1> sp(5, points); sp.set(5,points); testNatural(sp, x, y); };
+    { Dumux::Spline<double, -1> sp(xVec, yVec); sp.set(xVec,yVec); testNatural(sp, x, y); };
+    { Dumux::Spline<double, -1> sp(pointVec); sp.set(pointVec); testNatural(sp, x, y); };
 }
 
 void plot()
@@ -231,7 +206,7 @@ void plot()
                        0.01*(x_[n] - x_[0]) + x_[n],
                        1000);
     std::cerr << "Spline is monotonic: " << spFull.monotonic(x_[0], x_[n]) << "\n";
-}
+};
 
 int main(int argc, char** argv)
 {

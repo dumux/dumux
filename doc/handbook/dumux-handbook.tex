@@ -1,0 +1,158 @@
+\documentclass[11pt,a4paper,headinclude,footinclude,DIV16,normalheadings]{scrreprt}
+\usepackage[automark]{scrpage2}
+\usepackage[ansinew]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{theorem}
+\usepackage{color}
+\usepackage{listings}
+\lstset{language=C++, basicstyle=\ttfamily, 
+  keywordstyle=\color{black}\bfseries, tabsize=4, stringstyle=\ttfamily,
+  commentstyle=\it, extendedchars=true, escapeinside={/*@}{@*/}}
+
+% for listings of bash code in install.tex
+\definecolor{BashGrey}{rgb}{0.9,0.9,0.9}
+\lstdefinestyle{Bash}
+ {language=Bash,
+ backgroundcolor=\color{BashGrey},
+ basicstyle=\ttfamily\small,
+ numbers=none,
+ captionpos=b,
+ tabsize=4,
+ breaklines=true,
+ breakatwhitespace=true,
+ frame=single,
+ rulecolor=\color{BashGrey},
+ framerule=1pt,
+ framesep=1pt,
+ rulesep=0pt,
+ aboveskip=\bigskipamount,
+ belowskip=\bigskipamount
+}
+
+\usepackage{hyperref}
+\usepackage{psfrag}
+\usepackage{makeidx}
+\usepackage{graphicx}
+\usepackage{xspace}
+\usepackage[htt]{hyphenat}
+\usepackage{color}
+\usepackage{lscape}
+\usepackage{enumerate}
+\usepackage{rotating}
+\usepackage{subfig}
+
+\usepackage[normalem]{ulem}
+\usepackage{tabularx}
+\usepackage{graphics}
+\usepackage{pstricks}
+\newcommand{\snakeline}{%
+% {\uwave{\makebox[\linewidth]{\mbox{}}}}
+\uwave{\mbox{}}
+}
+\usepackage{layout}
+
+
+%\usepackage{ngerman}
+\usepackage[english]{babel}
+
+\DeclareGraphicsExtensions{.eps, .jpg}
+
+\newcommand{\Dune}{{DUNE}\xspace}
+\newcommand{\Dumux}{DuMu$^\text{x}$\xspace}
+\newcommand{\doxyref}[3]{\textnormal{#1}}
+\newenvironment{CompactList}
+{\begin{list}{}{
+  \setlength{\leftmargin}{0.5cm}
+  \setlength{\itemsep}{0pt}
+  \setlength{\parsep}{0pt}
+  \setlength{\topsep}{0pt}
+  \renewcommand{\makelabel}{\hfill}}}
+{\end{list}}
+\newenvironment{CompactItemize}
+{
+  \begin{itemize}
+  \setlength{\itemsep}{-3pt}
+  \setlength{\parsep}{0pt}
+  \setlength{\topsep}{0pt}
+  \setlength{\partopsep}{0pt}
+}
+{\end{itemize}}
+
+% a new counter
+% you can give a label to it and thus reference it
+% syntax: \numberThis{printedTextToBeLabeled}{label} 
+% if you wanted a \newline after a numbered thing, you could just add a empty line after ``\label{#2}''
+\newcounter{thingCounter}
+\renewcommand{\thethingCounter}{\arabic{thingCounter}}
+\newcommand{\numberThis}[2]{%
+        \refstepcounter{thingCounter}%
+        \thethingCounter.\ #1 \label{#2}
+}
+
+%The theorems
+\theorembodyfont{\upshape}
+\theoremheaderfont{\sffamily\bfseries}
+\newtheorem{exc}{Exercise}[chapter]
+\newtheorem{example}[exc]{Example}
+\newtheorem{rem}[exc]{Remark}
+\newtheorem{lst}{Listing}
+\newtheorem{warn}[exc]{Warning}
+\newtheorem{justCounting}{}
+
+\DeclareMathOperator{\grad}{grad}
+\DeclareMathOperator{\curl}{curl}
+\DeclareMathOperator{\Div}{div}
+
+\pagestyle{scrheadings}
+
+\title{
+\begin{center}
+\includegraphics[width=0.7\textwidth]{../logo/dumux_logo_hires_whitebg.eps}
+\\[3cm]
+{\Huge Handbook}
+\end{center}
+}
+
+\author{}
+
+\date{\today}
+
+\publishers{%
+\vspace{10mm}
+{\normalsize Lehrstuhl f\"ur Hydromechanik und Hydrosystemmodellierung, \\
+Universit\"at Stuttgart, Paffenwaldring 61, D-70569 Stuttgart, Germany}\\
+%
+\bigskip
+{\normalsize \texttt{\url{http://dumux.org}}}\\
+}
+
+\makeindex
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+\tableofcontents
+
+\input{intro}
+\input{getting-started}
+\input{designpatterns}
+\input{propertysystem}
+\input{tutorial}
+\input{structure}
+\input{models}
+\input{DumuxFlow}
+\input{NewtonInANutshell}
+\input{TipsNTricks}
+
+
+\bibliographystyle{plain}
+\bibliography{dumux-handbook}
+\printindex
+\end{document}

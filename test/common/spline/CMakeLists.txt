@@ -1,7 +1,8 @@
-add_dumux_test(test_spline test_spline test_spline.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/test_spline)
+# add build targets
+ADD_EXECUTABLE("test_spline" test_spline.cc)
+TARGET_LINK_LIBRARIES("test_spline" ${DumuxLinkLibraries})
 
-#install sources
-install(FILES
-test_spline.cc
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/common/spline)
+# add required libraries and includes to the build flags 
+LINK_DIRECTORIES(${DumuxLinkDirectories})
+INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})
+

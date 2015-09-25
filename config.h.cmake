@@ -1,50 +1,49 @@
-/* begin dumux
-   put the definitions for config.h specific to
-   your project here. Everything above will be
-   overwritten
-*/
+#ifndef CONFIG_H
+#define CONFIG_H
 
-/* begin private */
-/* Name of package */
-#define PACKAGE "@DUNE_MOD_NAME@"
+#define DUNE_MINIMAL_DEBUG_LEVEL 4
+#cmakedefine HAVE_BOOST 1
+#cmakedefine HAVE_DUNE 1
+#cmakedefine HAVE_DUNE_GRID 1
+#cmakedefine HAVE_DUNE_DISC 1
+#cmakedefine HAVE_DUNE_FEM 1
+#cmakedefine HAVE_DUNE_ISTL 1
+#cmakedefine HAVE_DUNE_LOCALFUNCTIONS 1
+#cmakedefine HAVE_DUNE_PDELAB 1
 
-/* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "@DUNE_MAINTAINER@"
-
-/* Define to the full name of this package. */
-#define PACKAGE_NAME "@DUNE_MOD_NAME@"
-
-/* Define to the full name and version of this package. */
-#define PACKAGE_STRING "@DUNE_MOD_NAME@ @DUNE_MOD_VERSION@"
-
-/* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "@DUNE_MOD_NAME@"
-
-/* Define to the home page for this package. */
-#define PACKAGE_URL "@DUNE_MOD_URL@"
-
-/* Define to the version of this package. */
-#define PACKAGE_VERSION "@DUNE_MOD_VERSION@"
-
-/* end private */
-
-/* Define to 1 if dune-pdelab is patched to be usable by DuMuX */
-#cmakedefine DUNE_PDELAB_IS_PATCHED_FOR_DUMUX @DUNE_PDELAB_IS_PATCHED_FOR_DUMUX@
-
-/* Define to 1 if constexpr is supported */
-#cmakedefine HAVE_CONSTEXPR @HAVE_CONSTEXPR@
-
-/* Set 'constexpr' to 'const' if constexpr is not supported */
-#ifndef HAVE_CONSTEXPR
-#define constexpr const
+#ifdef ENABLE_MPI
+#cmakedefine HAVE_MPI 1
 #endif
 
-/* Define to 1 if gnuplot was found */
-#cmakedefine HAVE_GNUPLOT 1
+#ifdef ENABLE_UG
+#cmakedefine HAVE_UG 1
+#ifdef ENABLE_MPI
+#define ModelP
+#endif
+#endif
 
-/* Define path to gnuplot executable */
-#cmakedefine GNUPLOT_EXECUTABLE "@GNUPLOT_EXECUTABLE@"
+#ifdef ENABLE_ALUGRID
+#cmakedefine HAVE_ALUGRID 1
+#endif
 
-/* end dumux
-   Everything below here will be overwritten
-*/
+#ifdef ENABLE_METIS
+#cmakedefine HAVE_METIS 1
+#endif
+
+#ifdef ENABLE_ALBERTA
+#cmakedefine HAVE_ALBERTA 1
+#endif
+
+#cmakedefine PROJECT_NAME             "${PROJECT_NAME}"
+#cmakedefine PROJECT_VERSION          "${PROJECT_VERSION}"
+#cmakedefine PROJECT_MAINTAINER       "${PROJECT_MAINTAINER}"
+#cmakedefine PROJECT_MAINTAINER_EMAIL "${PROJECT_MAINTAINER_EMAIL}"
+
+/* tr1/array. */
+//#cmakedefine HAVE_TR1_ARRAY 1
+#cmakedefine HAVE_MALLOC_H 1
+#cmakedefine HAVE_VALGRIND 1
+
+#define DUNE_DEPRECATED __attribute__((deprecated))
+
+#endif // CONFIG_H

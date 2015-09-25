@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2009 by Markus Wolff                                      *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -21,11 +23,13 @@
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/basicproperties.hh>
-#include <dumux/decoupled/common/gridadaptproperties.hh>
+
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
 
 /*!
  * \ingroup Sequential
- * \ingroup IMPETProperties
+ * \ingroup Properties
  */
 /*!
  * \file
@@ -41,7 +45,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Create a type tag for all decoupled models
-NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(NumericModel, GridAdaptTypeTag));
+NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -51,39 +55,29 @@ NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(NumericModel, GridAdaptTypeTag));
 //! This means vectors of primary variables, solution functions on the
 //! grid, and elements, and shape functions.
 NEW_PROP_TAG( SolutionTypes);
-NEW_PROP_TAG( PrimaryVariables);
-NEW_PROP_TAG( Indices);
+NEW_PROP_TAG( TransportSolutionType);
 
-NEW_PROP_TAG( PressureModel ); //!< The type of the discretization of a pressure model
-NEW_PROP_TAG( TransportModel ); //!< The type of the discretization of a transport model
-NEW_PROP_TAG( Velocity ); //!< The type velocity reconstruction
-NEW_PROP_TAG( NumEq ); //!< Number of equations in the system of PDEs
+NEW_PROP_TAG( Grid); //!< The type of the DUNE grid
+NEW_PROP_TAG( GridView); //!< The type of the grid view
+
+NEW_PROP_TAG( Problem); //!< The type of the problem
+NEW_PROP_TAG( Model); //!< The type of the discretizations
 NEW_PROP_TAG( NumPhases); //!< Number of phases in the system
 NEW_PROP_TAG( NumComponents); //!< Number of components in the system
 NEW_PROP_TAG( Variables); //!< The type of the container of global variables
-NEW_PROP_TAG( CellData );//!< Defines data object to be stored
-NEW_PROP_TAG( TimeManager );  //!< Manages the simulation time
-NEW_PROP_TAG( BoundaryTypes ); //!< Stores the boundary types of a single degree of freedom
-NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of an element and neighboring elements
+NEW_PROP_TAG( LocalStiffness); //!< The type of communication needed for the mimetic operator
 }
 }
 
+#include <dumux/common/boundarytypes.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/istl/bvector.hh>
-
-#include <dumux/common/timemanager.hh>
-#include <dumux/common/boundarytypes.hh>
-#include<dumux/common/boundaryconditions.hh>
-
-namespace Dumux
-{
-
-template<class TypeTag>
-class GridAdaptInitializationIndicatorDefault;
 
 template<class TypeTag>
 class VariableClass;
 
+namespace Dumux
+{
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////
@@ -94,24 +88,15 @@ namespace Properties
 SET_PROP(DecoupledModel, GridView)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
 
 public:
     typedef typename Grid::LeafGridView type;
 };
 
-//! Default number of intersections for quadrilaterals
-SET_PROP(DecoupledModel, MaxIntersections)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum
-    {
-        dim = GridView::dimension
-    };
-public:
-    static const int value = 2*dim;
-};
+
+//! Use the parent VariableClass
+SET_TYPE_PROP(DecoupledModel, Variables, VariableClass<TypeTag>);
 
 /*!
  * \brief Specifies the types which are assoicated with a solution.
@@ -120,74 +105,76 @@ public:
  */
 SET_PROP(DecoupledModel, SolutionTypes)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
+    typedef typename Grid::ctype CoordScalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
 
     enum
     {
         dim = GridView::dimension,
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        maxIntersections = GET_PROP_VALUE(TypeTag, MaxIntersections)
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents))
+    };
+
+    template<int dim>
+    struct VertexLayout
+    {
+        bool contains (Dune::GeometryType gt) const
+        {   return gt.dim() == 0;}
+    };
+
+    template<int dim>
+    struct ElementLayout
+    {
+        bool contains (Dune::GeometryType gt) const
+        {   return gt.dim() == dim;}
     };
 
 public:
     /*!
      * \brief Mapper for the grid view's vertices.
      */
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, VertexLayout> VertexMapper;
 
     /*!
      * \brief Mapper for the grid view's elements.
      */
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, ElementLayout> ElementMapper;
 
     /*!
      * \brief The type of a solution at a fixed time.
      *
      * This defines the primary and secondary variable vectors at each degree of freedom.
      */
-    typedef Dune::FieldVector<Scalar, numEq> PrimaryVariables;
-    //! type for vector of scalars
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarSolution;
-    //! type for vector of phase properties
-    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numComponents> ComponentProperty;
-    //! type for vector of phase properties
-    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> PhaseProperty;
-    //! type for vector of fluid properties: Vector[element][phase]
-    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> FluidProperty;
-    //! type for vector of vectors (of size 2 x dimension) of scalars
-    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, numPhases>, maxIntersections > > PhasePropertyElemFace;
-    //! type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
-    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections > > DimVecElemFace;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarSolution;//!<type for vector of scalars
+    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numComponents> ComponentProperty;//!<type for vector of phase properties
+    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> PhaseProperty;//!<type for vector of phase properties
+    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> FluidProperty;//!<type for vector of fluid properties: Vector[element][phase]
+    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, numPhases>, 2*dim > > PhasePropertyElemFace;//!<type for vector of vectors (of size 2 x dimension) of scalars
+    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, 2*dim > > DimVecElemFace;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
 };
-
-SET_TYPE_PROP(DecoupledModel,  Variables, VariableClass<TypeTag>);
-
-SET_TYPE_PROP(DecoupledModel,  PrimaryVariables, typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables);
-
-//! Set the default type for the time manager
-SET_TYPE_PROP(DecoupledModel, TimeManager, Dumux::TimeManager<TypeTag>);
 
 /*!
- * \brief Boundary types at a single degree of freedom.
+ * \brief Default implementation for the Vector of the transportet quantity
+ *
+ * This type defines the data type of the transportet quantity. In case of a
+ * immiscible 2p system, this would represent a vector holding the saturation
+ * of one phase.
  */
-SET_PROP(DecoupledModel, BoundaryTypes)
-{ private:
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-public:
-    typedef Dumux::BoundaryTypes<numEq>  type;
+SET_PROP_DEFAULT(TransportSolutionType)
+{
+    private:
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionType;
+
+    public:
+    typedef typename SolutionType::ScalarSolution type;//!<type for vector of scalar properties
 };
 
-//Set default class for adaptation initialization indicator
-SET_TYPE_PROP(GridAdaptTypeTag,  AdaptionInitializationIndicator, GridAdaptInitializationIndicatorDefault<TypeTag>);
+// \}
 
 }
 }
-
-#include "gridadaptinitializationindicatordefault.hh"
 
 #endif

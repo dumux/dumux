@@ -1,7 +1,11 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id: test_diffusion.cc 4144 2010-08-24 10:10:47Z bernd $
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 20010 by Markus Wolff                                     *
+ *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +14,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -23,44 +27,76 @@
  * \brief test for the decoupled one-phase model.
  */
 #include "config.h"
+#include <iostream>
+#include <boost/format.hpp>
 
-#include "test_1pproblem.hh"
-#include <dumux/common/start.hh>
+#include <dune/common/exceptions.hh>
+#include <dune/common/mpihelper.hh>
+#include <dune/grid/common/gridinfo.hh>
 
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
-                                       "\t-TimeManager.TEnd      End of the simulation [s] \n"
-                                       "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-                                       "\t-Grid.NumRefine        The refinement level of the grid. [-] \n";
-                    errorMessageOut += "\nAdditionally the following arguments can be specified:\n"
-                                       "\t-Problem.Delta         Anisotropy of permeability tensor. Value out"
-                                       "\t                       of (0, 1], with 1 being isotrop. Default: 1e-3.\n";
-
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
+#include "test_1p_problem.hh"
+#include "benchmarkresult.hh"
 
 ////////////////////////
 // the main function
 ////////////////////////
+void usage(const char *progname)
+{
+    std::cout << boost::format("usage: %s #refine [delta]\n")%progname;
+    exit(1);
+}
+
 int main(int argc, char** argv)
 {
-    typedef TTAG(TestProblemOneP) ProblemTypeTag;
+    try {
+        typedef TTAG(TestProblemOneP) TypeTag;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+        static const int dim = Grid::dimension;
+        typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
-    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+        // initialize MPI, finalize is done automatically on exit
+        Dune::MPIHelper::instance(argc, argv);
+
+        ////////////////////////////////////////////////////////////
+        // parse the command line arguments
+        ////////////////////////////////////////////////////////////
+        if (argc != 2 && argc != 3)
+            usage(argv[0]);
+
+        int numRefine;
+        std::istringstream(argv[1]) >> numRefine;
+
+        double delta = 1e-3;
+        if (argc == 3)
+            std::istringstream(argv[2]) >> delta;
+
+        ////////////////////////////////////////////////////////////
+        // create the grid
+        ////////////////////////////////////////////////////////////
+        Dune::FieldVector<int,dim> N(1);
+        GlobalPosition L(0.0);
+        GlobalPosition H(1.0);
+        Grid grid(N,L,H);
+        grid.globalRefine(numRefine);
+
+        ////////////////////////////////////////////////////////////
+        // instantiate and run the concrete problem
+        ////////////////////////////////////////////////////////////
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        Problem problem(grid.leafView(), delta);
+        problem.init();
+        problem.writeOutput();
+
+        return 0;
+    }
+    catch (Dune::Exception &e) {
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...) {
+        std::cerr << "Unknown exception thrown!\n";
+        throw;
+    }
+
+    return 3;
 }

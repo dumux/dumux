@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -26,6 +28,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
+
+#include <boost/format.hpp>
 
 #include <list>
 #include <string>
@@ -52,15 +56,20 @@ class Restart {
         int numCPUs = gridView.comm().size();
         int rank = gridView.comm().rank();
 
-        std::ostringstream oss;
-        oss << "DuMux restart file: "
-            << "gridName='"<<gridName<<"' "
-            << "numCPUs="<<numCPUs<<" "
-            << "myRank="<<rank<<" "
-            << "numElements="<<numElements<<" "
-            << "numEdges="<<numEdges<<" "
-            << "numVertices="<<numVertices;
-        return oss.str();
+        return
+            (boost::format("DuMux restart file: "
+                           "gridName='%s' "
+                           "numCPUs=%d "
+                           "myRank=%d "
+                           "numElements=%d "
+                           "numEdges=%d "
+                           "numVertices=%d")
+             %gridName
+             %numCPUs
+             %rank
+             %numElements
+             %numEdges
+             %numVertices).str();
     }
 
     //! \brief Return the restart file name.
@@ -70,10 +79,11 @@ class Restart {
                                               double t)
     {
         int rank = gridView.comm().rank();
-        std::ostringstream oss;
-        oss << simName<<"_time="<<t<<"_rank="<<rank<<".drs";
-        return oss.str();
-    }
+        return (boost::format("%s_time=%.3lf_rank=%05d.drs")
+                %simName
+                %t
+                %rank).str();
+    };
 
 
 public:
@@ -133,9 +143,7 @@ public:
     void serializeEntities(Serializer &serializer,
                            const GridView &gridView)
     {
-        std::ostringstream oss;
-        oss << "Entities: Codim " << codim;
-        std::string cookie = oss.str();
+        std::string cookie = (boost::format("Entities: Codim %d")%codim).str();
         serializeSectionBegin(cookie);
 
         // write element data
@@ -146,7 +154,7 @@ public:
         for (; it != endIt; ++it) {
             serializer.serializeEntity(outStream_, *it);
             outStream_ << "\n";
-        }
+        };
 
         serializeSectionEnd();
     }
@@ -157,7 +165,7 @@ public:
     void serializeEnd()
     {
         outStream_.close();
-    }
+    };
 
 
     /*!
@@ -170,7 +178,6 @@ public:
         fileName_ = restartFileName_(problem.gridView(),
                                      problem.name(),
                                      t);
-
 
         // open input file and read magic cookie
         inStream_.open(fileName_.c_str());
@@ -221,7 +228,7 @@ public:
         if (buf != cookie)
             DUNE_THROW(Dune::IOError,
                        "Could not start section '" << cookie << "'");
-    }
+    };
 
     /*!
      * \brief End of a section in the serialized output.
@@ -230,11 +237,11 @@ public:
     {
         std::string dummy;
         std::getline(inStream_, dummy);
-        for (unsigned int i = 0; i < dummy.length(); ++i) {
+        for (int i = 0; i < dummy.length(); ++i) {
             if (!std::isspace(dummy[i])) {
                 DUNE_THROW(Dune::InvalidStateException,
                            "Encountered unread values while deserializing");
-            }
+            };
         }
     }
 
@@ -248,9 +255,7 @@ public:
     void deserializeEntities(Deserializer &deserializer,
                              const GridView &gridView)
     {
-        std::ostringstream oss;
-        oss << "Entities: Codim " << codim;
-        std::string cookie = oss.str();
+        std::string cookie = (boost::format("Entities: Codim %d")%codim).str();
         deserializeSectionBegin(cookie);
 
         std::string curLine;
@@ -268,7 +273,7 @@ public:
             std::getline(inStream_, curLine);
             std::istringstream curLineStream(curLine);
             deserializer.deserializeEntity(curLineStream, *it);
-        }
+        };
 
         deserializeSectionEnd();
     }
@@ -289,7 +294,7 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented,
                    "Dumux::Restart::restartFileList()");
-    }
+    };
 
 
 private:

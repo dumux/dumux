@@ -1,7 +1,9 @@
-// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-// vi: set et ts=4 sw=4 sts=4:
+// $Id$
 /*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
+ *   Copyright (C) 2008 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -10,7 +12,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -18,17 +20,18 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Manages the handling of time dependent problems
+ * \brief Simplify the handling of time dependent problems
  */
 #ifndef DUMUX_TIME_MANAGER_HH
 #define DUMUX_TIME_MANAGER_HH
 
-#include <dune/common/float_cmp.hh>
-#include <dune/common/timer.hh>
-#include <dune/common/parallel/mpihelper.hh>
+#include <dumux/common/propertysystem.hh>
 
-#include "propertysystem.hh"
-#include "parameters.hh"
+#include <boost/format.hpp>
+
+#include <dune/common/timer.hh>
+#include <dune/common/mpihelper.hh>
+
 
 namespace Dumux
 {
@@ -36,37 +39,32 @@ namespace Properties
 {
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Problem);
-NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
 }
+/*!
+ * \addtogroup SimControl Simulation Supervision
+ */
 
 /*!
  * \ingroup SimControl
- * \brief Manages the handling of time dependent problems.
+ * \brief Simplify the handling of time dependent problems.
  *
- * This class facilitates the time management of the simulation.
- * It doesn't manage any user data, but keeps track of what the
- * current time, time step size and "episode" of the
- * simulation is. It triggers the initialization of the problem and
- * is responsible for the time control of a simulation run.
+ * This class manages a sequence of "episodes" which determine the
+ * boundary conditions of a problem. This approach is handy if the
+ * problem is not static, i.e. that boundary conditions change
+ * over time.
  *
- * The time manager allows to specify a sequence of "episodes" which
- * determine the boundary conditions of a problem. This approach
- * is handy if the problem is not static, i.e. the boundary
- * conditions change over time.
- *
- * An episode is a span of simulated time in which
- * the problem behaves in a specific way. It is characterized by
- * the (simulation) time it starts, its length and a consecutive
- * index starting at 0.
+ * This class is a low level way to simplify time management for the
+ * simulation. It doesn't manage any user data, but only keeps track
+ * about what the current "episode" of the simulation is. An episode
+ * is a span of simulated time at which the problem behaves in a
+ * specific way. It is characerized by the (simulation) time it
+ * starts, its length and a consecutive index starting at 0.
  */
 template <class TypeTag>
 class TimeManager
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-
-    TimeManager(const TimeManager&)
-    {}
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 public:
 
     TimeManager(bool verbose = true)
@@ -82,11 +80,14 @@ public:
         endTime_ = -1e100;
 
         timeStepSize_ = 1.0;
-        previousTimeStepSize_ = timeStepSize_;
         timeStepIdx_ = 0;
         finished_ = false;
 
         episodeLength_ = 1e100;
+
+        if (verbose_)
+            std::cout <<
+                "Welcome aboard DuMuX airlines. Please fasten your seatbelts! Emergency exits are near the time integration.\n";
     }
 
     /*!
@@ -97,47 +98,32 @@ public:
      * \param tStart The start time \f$\mathrm{[s]}\f$ of the simulation (typically 0)
      * \param dtInitial The initial time step size \f$\mathrm{[s]}\f$
      * \param tEnd The time at which the simulation is finished \f$\mathrm{[s]}\f$
-     * \param restart Specifies whether the initial condition should be written to disk
+     * \param writeInitialSol Specifies whether the initial condition
+     *                        should be written to disk
      */
     void init(Problem &problem,
               Scalar tStart,
               Scalar dtInitial,
               Scalar tEnd,
-              bool restart = false)
+              bool writeInitialSol = true)
     {
-        timer_.reset();
+        if (verbose_)
+            std::cout << "Initializing problem '" << problem_->name() << "'\n";
 
         problem_ = &problem;
         time_ = tStart;
         timeStepSize_ = dtInitial;
-        previousTimeStepSize_ = dtInitial;
         endTime_ = tEnd;
-
-        if (verbose_)
-            std::cout << "Initializing problem '" << problem_->name() << "'\n";
 
         // initialize the problem
         problem_->init();
 
-        // restart problem if necessary
-        if(restart)
-            problem_->restart(tStart);
-        else
-        {
-            // write initial condition (if problem is not restarted)
+        // initialize the problem
+        if (writeInitialSol) {
             time_ -= timeStepSize_;
-            if (problem_->shouldWriteOutput())
-                problem_->writeOutput();
+            problem_->writeOutput();
             time_ += timeStepSize_;
         }
-
-        if (verbose_) {
-            int numProcesses = Dune::MPIHelper::getCollectiveCommunication().size();
-            std::cout << "Initialization took " << timer_.elapsed() <<" seconds on "
-                      << numProcesses << " processes.\n"
-                      << "The cumulative CPU time was " << timer_.elapsed()*numProcesses << " seconds.\n";
-        }
-
     }
 
     /*!
@@ -186,12 +172,6 @@ public:
     { endTime_ = t; }
 
     /*!
-     * \brief Returns the current wall time (cpu time).
-     */
-    double wallTime() const
-    {  return timer_.elapsed(); }
-
-    /*!
      * \brief Set the current time step size to a given value.
      *
      * If the step size would exceed the length of the current
@@ -207,16 +187,10 @@ public:
     /*!
      * \brief Returns the suggested time step length \f$\mathrm{[s]}\f$ so that we
      *        don't miss the beginning of the next episode or cross
-     *        the end of the simulation.
+     *        the end of the simlation.
      */
     Scalar timeStepSize() const
     { return timeStepSize_; }
-
-    /*!
-     * \brief Returns the size of the previous time step \f$\mathrm{[s]}\f$.
-     */
-    Scalar previousTimeStepSize() const
-    { return previousTimeStepSize_; }
 
     /*!
      * \brief Returns number of time steps which have been
@@ -261,8 +235,7 @@ public:
             return 0.0;
 
         return
-            std::min(std::min(episodeMaxTimeStepSize(),
-                    GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize)),
+            std::min(episodeMaxTimeStepSize(),
                      std::max<Scalar>(0.0, endTime() - time()));
     };
 
@@ -281,16 +254,13 @@ public:
      *
      * \param tStart Time when the episode began \f$\mathrm{[s]}\f$
      * \param len    Length of the episode \f$\mathrm{[s]}\f$
-     * \param description descriptive name of the episode
      */
     void startNextEpisode(Scalar tStart,
-                          Scalar len,
-                          const std::string &description = "")
+                          Scalar len)
     {
         ++ episodeIndex_;
         episodeStartTime_ = tStart;
         episodeLength_ = len;
-        episodeDescription_ = description;
     }
 
     /*!
@@ -370,12 +340,13 @@ public:
     /*!
      * \brief Runs the simulation using a given problem class.
      *
-     * This method makes sure that time step sizes are aligned to
+     * This method makes sure that time steps sizes are aligned to
      * episode boundaries, amongst other stuff.
      */
     void run()
     {
-        timer_.reset();
+        Dune::Timer timer;
+        timer.reset();
 
         // do the time steps
         while (!finished())
@@ -391,59 +362,47 @@ public:
             problem_->postTimeStep();
 
             // write the result to disk
-            if (problem_->shouldWriteOutput())
+            if (problem_->shouldWriteOutput() || willBeFinished())
                 problem_->writeOutput();
 
-            // prepare the model for the next time integration
+            // perpare the model for the next time integration
             problem_->advanceTimeLevel();
 
             // advance the simulated time by the current time step size
             time_ += dt;
             ++timeStepIdx_;
 
-            if (verbose_) {
-                std::cout
-                    << "Time step "<<timeStepIndex()<<" done. "
-                    << "Wall time:"<<timer_.elapsed()
-                    <<", time:"<<time()
-                    <<", time step size:"<<dt
-                    <<"\n";
-            }
-
             // write restart file if mandated by the problem
             if (problem_->shouldWriteRestartFile())
                 problem_->serialize();
 
             // notify the problem if an episode is finished
+            Scalar nextDt = problem_->nextTimeStepSize(dt);
             if (episodeIsOver()) {
-                //define what to do at the end of an episode in the problem
                 problem_->episodeEnd();
+                // the problem sets the initial time step size of a
+                // new episode...
+                nextDt = timeStepSize();
+            }
 
-                //check if a time step size was explicitly defined in problem->episodeEnd()
-                if (Dune::FloatCmp::eq<Scalar>(dt, timeStepSize()))
-                {
-                    // set the initial time step size of a an episode to the last real time step size before the episode
-                    Scalar nextDt = std::max(previousTimeStepSize_, timeStepSize());
-                    previousTimeStepSize_ = nextDt;
-                    setTimeStepSize(nextDt);
-                }
+            // notify the problem that the timestep is done and ask it
+            // for a suggestion for the next timestep size
+            // set the time step size for the next step
+            setTimeStepSize(nextDt);
+
+            if (verbose_) {
+                std::cout <<
+                    boost::format("Time step %d done. Wall time:%.4g, time:%.4g, time step size:%.4g\n")
+                    %timeStepIndex()%timer.elapsed()%time()%dt;
             }
-            else
-            {
-                // notify the problem that the time step is done and ask it
-                // for a suggestion for the next time step size
-                // set the time step size for the next step
-                previousTimeStepSize_ = timeStepSize();
-                setTimeStepSize(problem_->nextTimeStepSize(dt));
-            }
+
         }
 
-        if (verbose_) {
-            int numProcesses = Dune::MPIHelper::getCollectiveCommunication().size();
-            std::cout << "Simulation took " << timer_.elapsed() <<" seconds on "
-                      << numProcesses << " processes.\n"
-                      << "The cumulative CPU time was " << timer_.elapsed()*numProcesses << " seconds.\n";
-        }
+        if (verbose_)
+            std::cout << "Simulation took " << timer.elapsed() <<" seconds.\n"
+                      << "We hope that you enjoyed simulating with us\n"
+                      << "and that you will chose us next time, too.\n";
+
     }
 
     /*!
@@ -463,7 +422,6 @@ public:
         res.serializeSectionBegin("TimeManager");
         res.serializeStream() << episodeIndex_ << " "
                               << episodeStartTime_ << " "
-                              << episodeLength_ << " "
                               << time_ << " "
                               << timeStepIdx_ << " ";
         res.serializeSectionEnd();
@@ -482,7 +440,6 @@ public:
         res.deserializeSectionBegin("TimeManager");
         res.deserializeStream() >> episodeIndex_
                                 >> episodeStartTime_
-                                >> episodeLength_
                                 >> time_
                                 >> timeStepIdx_;
         res.deserializeSectionEnd();
@@ -497,14 +454,11 @@ private:
     int episodeIndex_;
     Scalar episodeStartTime_;
     Scalar episodeLength_;
-    std::string episodeDescription_;
 
-    Dune::Timer timer_;
     Scalar time_;
     Scalar endTime_;
 
     Scalar timeStepSize_;
-    Scalar previousTimeStepSize_;
     int timeStepIdx_;
     bool finished_;
     bool verbose_;
