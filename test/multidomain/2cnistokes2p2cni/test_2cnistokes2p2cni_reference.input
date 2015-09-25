@@ -1,6 +1,6 @@
 [TimeManager]
 DtInitial = 5e-1 # [s]
-MaxTimeStepSize = 360 # [s]
+MaxTimeStepSize = 240 # [s]
 InitTime = 0 # [s] Initialization time without coupling
 TEnd= 3600 # [s]
 EpisodeLength = 43200 # [s]

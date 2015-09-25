@@ -26,6 +26,7 @@
 #ifndef DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 #define DUMUX_KUEVETTE3P3CNIPROBLEM_HH
 
+#include <dune/common/float_cmp.hh>
 #include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
@@ -87,17 +88,17 @@ SET_SCALAR_PROP(KuevetteProblem, NewtonMaxRelativeShift, 1e-6);
  * NAPL-kontaminierten por"osen Medien, Dissertation, Eigenverlag des Instituts
  * f"ur Wasserbau
  *
- * This problem uses the \ref ThreePThreeCNIModel
+ * This problem uses the \ref ThreePThreeCModel and \ref NIModel model.
  *
  * To see the basic effect and the differences to scenarios with pure steam or
  * pure air injection, it is sufficient to simulated for about 2-3 hours (10000 s).
  * Complete remediation of the domain requires much longer (about 10 days simulated time).
- * To adjust the simulation time it is necessary to edit the file test_3p3cni.input
+ * To adjust the simulation time it is necessary to edit the input file.
  *
  * To run the simulation execute:
- * <tt>./test_box3p3cni -parameterFile test_box3p3cni.input</tt> or
- * <tt>./test_cc3p3cni -parameterFile test_cc3p3cni.input</tt>
- *  */
+ * <tt>./test_box3p3cnikuevette test_box3p3cnikuevette.input</tt> or
+ * <tt>./test_cc3p3cnikuevette test_cc3p3cnikuevette.input</tt>
+ */
 template <class TypeTag >
 class KuevetteProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
@@ -202,11 +203,10 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
-        if(globalPos[0] > 1.5 - eps_)
+        if(globalPos[0] > this->bBoxMax()[0] - eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
-
     }
 
     /*!
@@ -227,30 +227,15 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations
-     * \param element The finite element
-     * \param fvGeomtry The finite-volume geometry in the box scheme
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param values The neumann values for the primary variables
+     * \param globalPos The position for which the bc type should be evaluated
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeomtry,
-                 const Intersection &intersection,
-                 const int scvIdx,
-                 int boundaryFaceIdx) const
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
         values = 0;
-
-        GlobalPosition globalPos;
-        if (isBox)
-            globalPos = element.geometry().corner(scvIdx);
-        else
-            globalPos = intersection.geometry().center();
 
         // negative values for injection
         if (globalPos[0] < eps_)
@@ -294,11 +279,10 @@ public:
                              const int &vIdxGlobal,
                              const GlobalPosition &globalPos) const
     {
-        if((globalPos[0] >= 0.20) && (globalPos[0] <= 0.80) && (globalPos[1] >= 0.4) && (globalPos[1] <= 0.65))
-        {
+        if (isInContaminationZone(globalPos))
             return threePhases;
-        }
-        else return wgPhaseOnly;
+        else
+            return wgPhaseOnly;
     }
 
        /*!
@@ -339,6 +323,15 @@ public:
 
 
 private:
+    // checks, whether a point is located inside the contamination zone
+    bool isInContaminationZone(const GlobalPosition &globalPos) const
+    {
+        return (Dune::FloatCmp::ge<Scalar>(globalPos[0],0.2)
+               && Dune::FloatCmp::le<Scalar>(globalPos[0],0.8)
+               && Dune::FloatCmp::ge<Scalar>(globalPos[1],0.4)
+               && Dune::FloatCmp::le<Scalar>(globalPos[1],0.65));
+    }
+
     // internal method for the initial condition (reused for the
     // dirichlet conditions!)
     void initial_(PrimaryVariables &values,
@@ -349,7 +342,7 @@ private:
         values[switch2Idx] = 1.e-6;
         values[temperatureIdx] = 293.0;
 
-        if((globalPos[0] >= 0.20) && (globalPos[0] <= 0.80) && (globalPos[1] >= 0.4) && (globalPos[1] <= 0.65))
+        if (isInContaminationZone(globalPos))
         {
             values[switch2Idx] = 0.07;
         }

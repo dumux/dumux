@@ -1,15 +1,13 @@
 [TimeManager]
 DtInitial = 1 # [s]
 TEnd = 200 # [s]
+MaxTimeStepSize = 60 # [s]
 
 [Grid]
-File = ./grids/column.dgf
+File = ./grids/kuev_3p3cni.dgf
 
 [Problem]
 Name = kuevettebox # name passed to the output routines
 
 [Implicit]
 NumericDifferenceMethod = 0 # use central differences (backward -1, forward +1)
-
-[TimeManager]
-MaxTimeStepSize = 60. # set the maximum time step
