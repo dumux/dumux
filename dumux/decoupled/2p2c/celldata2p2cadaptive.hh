@@ -20,6 +20,7 @@
 #define DUMUX_ELEMENTDATA2P2C_ADAPTIVE_HH
 
 #include <dune/common/float_cmp.hh>
+#include <dune/grid/utility/persistentcontainer.hh>
 
 #include <dumux/decoupled/2p2c/celldata2p2c.hh>
 #include <dumux/decoupled/2p2c/celldata2p2cmultiphysics.hh>

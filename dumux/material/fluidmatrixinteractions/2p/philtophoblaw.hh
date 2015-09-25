@@ -28,6 +28,8 @@
 #ifndef DUMUX_PHIL_TO_PHOB_LAW_HH
 #define DUMUX_PHIL_TO_PHOB_LAW_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslawparams.hh>
 

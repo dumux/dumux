@@ -26,6 +26,7 @@
 
 #include <cmath>
 
+#include <dumux/common/basicproperties.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/components/component.hh>
@@ -33,6 +34,15 @@
 
 namespace Dumux
 {
+
+namespace Properties
+{
+NEW_PROP_TAG(FluidSystem);
+NEW_PROP_TAG(FVElementGeometry);
+NEW_PROP_TAG(Indices);
+NEW_PROP_TAG(PrimaryVariables);
+NEW_PROP_TAG(VolumeVariables);
+}
 
 /*!
  * \brief

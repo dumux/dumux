@@ -19,6 +19,8 @@
 #ifndef DUMUX_ELEMENTDATA2P_ADAPTIVE_HH
 #define DUMUX_ELEMENTDATA2P_ADAPTIVE_HH
 
+#include <dune/grid/utility/persistentcontainer.hh>
+
 #include "celldata2p.hh"
 
 /**

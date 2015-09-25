@@ -24,10 +24,8 @@
 #ifndef DUMUX_TWOPMINC_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_TWOPMINC_LOCAL_RESIDUAL_BASE_HH
 
-//#include <dumux/implicit/2p/2pmodel.hh>
+#include <dumux/implicit/2p/2plocalresidual.hh>
 #include "2pmincproperties.hh"
-#include "2pmincmodel.hh"
-#include "2pmincvolumevariables.hh"
 
 namespace Dumux
 {

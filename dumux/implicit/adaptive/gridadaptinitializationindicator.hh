@@ -34,6 +34,10 @@ namespace Dumux
 namespace Properties
 {
 NEW_PROP_TAG(BoundaryTypes);
+NEW_PROP_TAG(ElementBoundaryTypes);
+NEW_PROP_TAG(ElementVolumeVariables);
+NEW_PROP_TAG(FVElementGeometry);
+NEW_PROP_TAG(ImplicitIsBox);
 NEW_PROP_TAG(PrimaryVariables);
 NEW_PROP_TAG(NumEq);
 }

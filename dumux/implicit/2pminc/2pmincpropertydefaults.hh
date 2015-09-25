@@ -28,10 +28,10 @@
 
 #include <dumux/implicit/2p/2ppropertydefaults.hh>
 
+#include "2pmincproperties.hh"
 #include "2pmincmodel.hh"
 #include "2pminclocalresidual.hh"
 #include "2pmincvolumevariables.hh"
-#include "2pmincproperties.hh"
 #include "2pmincfluxvariables.hh"
 #include "2pmincindices.hh"
 
