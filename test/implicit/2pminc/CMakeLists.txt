@@ -1,3 +1,5 @@
+add_input_file_links()
+
 add_dumux_test(test_box2pmincvol test_box2pminc test_box2pminc.cc
                python ${CMAKE_SOURCE_DIR}/bin/runtest.py
                --script fuzzy

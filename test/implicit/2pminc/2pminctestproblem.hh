@@ -231,8 +231,8 @@ public:
                 int,
                 Grid,
                 NumberOfCellsY);
-        assert(Dune::FloatCmp::neq(res_[0],0.0));
-        assert(Dune::FloatCmp::neq(res_[1],0.0));
+        assert(res_[0] > 0);
+        assert(res_[1] > 0);
 
         this->model().calculateMincGeometricParameters(res_, this->bBoxMin(), this->bBoxMax());
         this->getMincProblemParameters(gridView, res_);
