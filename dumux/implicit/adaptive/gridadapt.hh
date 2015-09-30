@@ -61,7 +61,6 @@ class ImplicitGridAdapt
     typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
     typedef typename GridView::IntersectionIterator LeafIntersectionIterator;
     typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator) AdaptionInitializationIndicator;
@@ -352,20 +351,20 @@ private:
             if(!is->neighbor())
                 continue;
 
-            ElementPointer outside = is->outside();
+            auto outside = is->outside();
 
             // only mark non-ghost elements
-            if (outside->partitionType() == Dune::GhostEntity)
+            if (outside.partitionType() == Dune::GhostEntity)
                 continue;
 
-            if ((outside->level() < levelMax_)
-                && (outside->level() < entity.level()))
+            if ((outside.level() < levelMax_)
+                && (outside.level() < entity.level()))
             {
-                problem_.grid().mark(1, *outside);
+                problem_.grid().mark(1, outside);
                 ++marked_;
 
                 if(level != levelMax_)
-                    checkNeighborsRefine_(*outside, ++level);
+                    checkNeighborsRefine_(outside, ++level);
             }
         }
         return true;
@@ -406,11 +405,9 @@ private:
                     if(!intersection.neighbor())
                         continue;
 
-                    ElementPointer outside =intersection.outside();
-                    if (eIt.level()+maxLevelDelta<outside.level())
+                    if (eIt->level() + maxLevelDelta < intersection.outside().level())
                     {
-                        ElementPointer entity =eIt;
-                        problem_.grid().mark( 1, *entity );
+                        problem_.grid().mark(1, *eIt);
                         done=false;
                     }
                 }

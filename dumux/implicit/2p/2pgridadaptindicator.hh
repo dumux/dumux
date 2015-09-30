@@ -45,7 +45,6 @@ private:
       typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -145,15 +144,15 @@ public:
                 if (intersection.neighbor())
                 {
                     // Access neighbor
-                    ElementPointer outside = intersection.outside();
+                    auto outside = intersection.outside();
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int globalIdxJ = problem_.elementMapper().index(*outside);
+                    int globalIdxJ = problem_.elementMapper().index(outside);
 #else
-                    int globalIdxJ = problem_.elementMapper().map(*outside);
+                    int globalIdxJ = problem_.elementMapper().map(outside);
 #endif
 
                     // Visit intersection only once
-                    if (eIt->level() > outside->level() || (eIt->level() == outside->level() && globalIdxI < globalIdxJ))
+                    if (eIt->level() > outside.level() || (eIt->level() == outside.level() && globalIdxI < globalIdxJ))
                     {
                     	Scalar satJ = 0.0;
 
@@ -162,7 +161,7 @@ public:
                     	else
                     	{
                             const LocalFiniteElementCache feCache;
-                            const auto geometryJ = outside->geometry();
+                            const auto geometryJ = outside.geometry();
                         	Dune::GeometryType geomType = geometryJ.type();
 
                         	GlobalPosition centerJ = geometryJ.local(geometryJ.center());
@@ -173,9 +172,9 @@ public:
                             for (int i = 0; i < shapeVal.size(); ++i)
                               {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                                  int dofIdxGlobal = problem_.model().dofMapper().subIndex(*outside, i, dofCodim);
+                                  int dofIdxGlobal = problem_.model().dofMapper().subIndex(outside, i, dofCodim);
 #else
-                                  int dofIdxGlobal = problem_.model().dofMapper().map(*outside, i, dofCodim);
+                                  int dofIdxGlobal = problem_.model().dofMapper().map(outside, i, dofCodim);
 #endif
                                   satJ += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
                               }

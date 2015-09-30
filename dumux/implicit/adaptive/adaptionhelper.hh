@@ -75,10 +75,8 @@ private:
     typedef typename Grid::LevelGridView LevelGridView;
     typedef typename LevelGridView::template Codim<dofCodim>::Iterator LevelIterator;
     typedef typename LevelGridView::template Codim<0>::Iterator ElementLevelIterator;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dofCodim>::Entity DofEntity;
-    typedef typename GridView::Traits::template Codim<dofCodim>::EntityPointer DofPointer;
     typedef Dune::PersistentContainer<Grid, AdaptedValues> PersistentContainer;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -147,8 +145,7 @@ public:
 					//Average in father
 					if (eIt->level() > 0)
 					{
-						ElementPointer epFather = eIt->father();
-						AdaptedValues& adaptedValuesFather = adaptionMap_[*epFather];
+						AdaptedValues& adaptedValuesFather = adaptionMap_[eIt->father()];
 						adaptedValuesFather.count += 1;
 						storeAdaptionValues(adaptedValues, adaptedValuesFather);
 					}
@@ -223,9 +220,9 @@ public:
 
                         	for(unsigned int i = 0; i < numSubEntities; i++)
                         	{
-                        		DofPointer subEntity = eIt->template subEntity <dofCodim>(i);
-    							AdaptedValues &adaptedValues = adaptionMap_[*subEntity];
-    							int newIdxI = this->dofIndex(problem, *subEntity);
+                                auto subEntity = eIt->template subEntity <dofCodim>(i);
+                                AdaptedValues &adaptedValues = adaptionMap_[subEntity];
+    							int newIdxI = this->dofIndex(problem, subEntity);
 
     							setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
 
@@ -238,13 +235,13 @@ public:
                     // value is not in map, interpolate from father element
                     if (eIt->level() > 0 && eIt->hasFather())
                     {
-                        ElementPointer epFather = eIt->father();
+                        auto epFather = eIt->father();
 
                         if(!isBox)
                         {
 							// create new entry: reconstruct from adaptionMap_[*father] to a new
 							// adaptionMap_[*son]
-							reconstructAdaptionValues(adaptionMap_, *epFather, *eIt, problem);
+							reconstructAdaptionValues(adaptionMap_, epFather, *eIt, problem);
 
 							// access new son
 							AdaptedValues& adaptedValues = adaptionMap_[*eIt];
@@ -270,13 +267,13 @@ public:
 
                         	for(unsigned int i = 0; i < numSubEntities; i++)
                         	{
-                        		DofPointer subEntity = eIt->template subEntity <dofCodim>(i);
-    							AdaptedValues &adaptedValues = adaptionMap_[*subEntity];
+                        		auto subEntity = eIt->template subEntity <dofCodim>(i);
+    							AdaptedValues &adaptedValues = adaptionMap_[subEntity];
 
     							if(adaptedValues.count == 0){
-									LocalPosition dofCenterPos = geometryI.local(subEntity->geometry().center());
+									LocalPosition dofCenterPos = geometryI.local(subEntity.geometry().center());
 									const LocalFiniteElementCache feCache;
-									Dune::GeometryType geomType = epFather->geometry().type();
+									Dune::GeometryType geomType = epFather.geometry().type();
 
 									const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
 									std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
@@ -284,8 +281,7 @@ public:
 									PrimaryVariables u(0);
 									for (int j = 0; j < shapeVal.size(); ++j)
 									{
-										DofPointer subEntityFather = epFather->template subEntity <dofCodim>(j);
-										AdaptedValues & adaptedValuesFather = adaptionMap_[*subEntityFather];
+										AdaptedValues & adaptedValuesFather = adaptionMap_[epFather.template subEntity <dofCodim>(j)];
 										u.axpy(shapeVal[j], adaptedValuesFather.u);
 									}
 
@@ -295,7 +291,7 @@ public:
 
     							if (eIt->isLeaf())
     							{
-        							int newIdxI = this->dofIndex(problem, *subEntity);
+        							int newIdxI = this->dofIndex(problem, subEntity);
     								setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
     							}
 
