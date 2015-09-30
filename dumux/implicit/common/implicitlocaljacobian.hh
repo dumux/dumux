@@ -408,10 +408,9 @@ protected:
     {
         int dofIdxGlobal;
         FVElementGeometry neighborFVGeom;
-        Element neighbor;
+        auto neighbor = element_();
         if (isBox)
         {
-            neighbor = element_();
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             dofIdxGlobal = vertexMapper_().subIndex(element_(), col, dim);
 #else
