@@ -408,9 +408,10 @@ protected:
     {
         int dofIdxGlobal;
         FVElementGeometry neighborFVGeom;
-        ElementPointer neighbor(element_());
+        Element neighbor;
         if (isBox)
         {
+            neighbor = element_();
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             dofIdxGlobal = vertexMapper_().subIndex(element_(), col, dim);
 #else
@@ -420,11 +421,11 @@ protected:
         else
         {
             neighbor = fvElemGeom_.neighbors[col];
-            neighborFVGeom.updateInner(*neighbor);
+            neighborFVGeom.updateInner(neighbor);
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            dofIdxGlobal = problemPtr_->elementMapper().index(*neighbor);
+            dofIdxGlobal = problemPtr_->elementMapper().index(neighbor);
 #else
-            dofIdxGlobal = problemPtr_->elementMapper().map(*neighbor);
+            dofIdxGlobal = problemPtr_->elementMapper().map(neighbor);
 #endif
         }
 
@@ -454,7 +455,7 @@ protected:
             else
                 curVolVars_[col].update(priVars,
                                         problem_(),
-                                        *neighbor,
+                                        neighbor,
                                         neighborFVGeom,
                                         /*scvIdx=*/0,
                                         false);
@@ -499,7 +500,7 @@ protected:
             else
                 curVolVars_[col].update(priVars,
                                         problem_(),
-                                        *neighbor,
+                                        neighbor,
                                         neighborFVGeom,
                                         /*scvIdx=*/0,
                                         false);

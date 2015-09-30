@@ -367,11 +367,11 @@ protected:
         }
         else
         {
-            const Element& elementI = *fvGeometry_.neighbors[face().i];
+            const Element& elementI = fvGeometry_.neighbors[face().i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
-            const Element& elementJ = *fvGeometry_.neighbors[face().j];
+            const Element& elementJ = fvGeometry_.neighbors[face().j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 

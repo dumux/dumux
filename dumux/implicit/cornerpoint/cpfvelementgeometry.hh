@@ -56,7 +56,6 @@ class CpFVElementGeometry
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
@@ -96,7 +95,7 @@ public:
     int numScv; //!< number of subcontrol volumes
     int numScvf; //!< number of inner-domain subcontrolvolume faces 
     int numNeighbors; //!< number of neighboring elements including the element itself
-    std::vector<ElementPointer> neighbors; //!< stores pointers for the neighboring elements
+    std::vector<Element> neighbors; //!< stores the neighboring elements
 
     void updateInner(const Element& element)
     {
@@ -118,8 +117,7 @@ public:
         numNeighbors = 1;
         neighbors.clear();
         neighbors.reserve(maxNE);
-        ElementPointer elementPointer(element);
-        neighbors.push_back(elementPointer);
+        neighbors.push_back(element);
     }
 
     void update(const GridView& gridView, const Element& element)
@@ -140,8 +138,7 @@ public:
             if (isIt->neighbor())
             {
                 numNeighbors++;
-                ElementPointer elementPointer(isIt->outside());
-                neighbors.push_back(elementPointer);
+                neighbors.push_back(isIt->outside());
 
                 int scvfIdx = numNeighbors - 2;
                 SubControlVolumeFace& scvFace = subContVolFace[scvfIdx];
@@ -161,7 +158,7 @@ public:
                 scvFace.area = volume;
 
                 GlobalPosition distVec = elementGlobal
-                                       - neighbors[scvfIdx+1]->geometry().center();
+                                       - neighbors[scvfIdx+1].geometry().center();
                 distVec /= distVec.two_norm2();
 
                 // gradients using a two-point flux approximation
@@ -222,13 +219,12 @@ public:
         // treat elements on the boundary
         if (onBoundary)
         {
-            ElementPointer elementPointer(element);
             for (int bfIdx = 0; bfIdx < maxBF; bfIdx++)
             {
                 SubControlVolumeFace& bFace = boundaryFace[bfIdx];
                 bFace.j = numNeighbors + bfIdx;
                 bFace.fapIndices[1] = bFace.j;
-                neighbors.push_back(elementPointer);
+                neighbors.push_back(element);
             }
         }
     }

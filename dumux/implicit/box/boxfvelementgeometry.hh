@@ -392,7 +392,6 @@ class BoxFVElementGeometry
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
@@ -652,7 +651,7 @@ public:
     int numScv; //!< number of subcontrol volumes
     int numScvf; //!< number of inner-domain subcontrolvolume faces
     int numNeighbors; //!< needed for compatibility with cc models
-    std::vector<ElementPointer> neighbors; //!< needed for compatibility with cc models
+    std::vector<Element> neighbors; //!< needed for compatibility with cc models
 
     const LocalFiniteElementCache feCache_;
 
