@@ -52,8 +52,6 @@ class FvMpfaL2dTransmissibilityCalculator
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
-
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
@@ -136,28 +134,28 @@ int FvMpfaL2dTransmissibilityCalculator<TypeTag>::calculateTransmissibility(
         std::vector<DimVector >& lambda,
         int idx1, int idx2, int idx3, int idx4)
 {
-    ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(idx1);
-    ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(idx2);
-    ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(idx3);
-    ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(idx4);
+    auto element1 = interactionVolume.getSubVolumeElement(idx1);
+    auto element2 = interactionVolume.getSubVolumeElement(idx2);
+    auto element3 = interactionVolume.getSubVolumeElement(idx3);
+    auto element4 = interactionVolume.getSubVolumeElement(idx4);
 
-    if (elementPointer3 == elementPointer4 && elementPointer1->level() != elementPointer2->level())
+    if (element3 == element4 && element1.level() != element2.level())
     {
         return noTransmissibility;
     }
 
     // get global coordinate of cell centers
-    const GlobalPosition& globalPos1 = elementPointer1->geometry().center();
-    const GlobalPosition& globalPos2 = elementPointer2->geometry().center();
-    const GlobalPosition& globalPos3 = elementPointer3->geometry().center();
-    const GlobalPosition& globalPos4 = elementPointer4->geometry().center();
+    const GlobalPosition& globalPos1 = element1.geometry().center();
+    const GlobalPosition& globalPos2 = element2.geometry().center();
+    const GlobalPosition& globalPos3 = element3.geometry().center();
+    const GlobalPosition& globalPos4 = element4.geometry().center();
 
     const GlobalPosition& globalPosCenter = interactionVolume.getCenterPosition();
 
-    const DimMatrix& K1 = problem_.spatialParams().intrinsicPermeability(*elementPointer1);
-    const DimMatrix& K2 = problem_.spatialParams().intrinsicPermeability(*elementPointer2);
-    const DimMatrix& K3 = problem_.spatialParams().intrinsicPermeability(*elementPointer3);
-    const DimMatrix& K4 = problem_.spatialParams().intrinsicPermeability(*elementPointer4);
+    const DimMatrix& K1 = problem_.spatialParams().intrinsicPermeability(element1);
+    const DimMatrix& K2 = problem_.spatialParams().intrinsicPermeability(element2);
+    const DimMatrix& K3 = problem_.spatialParams().intrinsicPermeability(element3);
+    const DimMatrix& K4 = problem_.spatialParams().intrinsicPermeability(element4);
 
     const GlobalPosition& globalPosFace12 = interactionVolume.getFacePosition(idx1, 0);
     const GlobalPosition& globalPosFace23 = interactionVolume.getFacePosition(idx2, 0);
@@ -390,25 +388,25 @@ int FvMpfaL2dTransmissibilityCalculator<TypeTag>::calculateLeftHNTransmissibilit
         std::vector<DimVector >& lambda,
         int idx1, int idx2, int idx3)
 {
-    ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(idx1);
-    ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(idx2);
-    ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(idx3);
+    auto element1 = interactionVolume.getSubVolumeElement(idx1);
+    auto element2 = interactionVolume.getSubVolumeElement(idx2);
+    auto element3 = interactionVolume.getSubVolumeElement(idx3);
 
-    if (elementPointer1->level() != elementPointer3->level())
+    if (element1.level() != element3.level())
     {
         return noTransmissibility;
     }
 
     // get global coordinate of cell centers
-    const GlobalPosition& globalPos1 = elementPointer1->geometry().center();
-    const GlobalPosition& globalPos2 = elementPointer2->geometry().center();
-    const GlobalPosition& globalPos3 = elementPointer3->geometry().center();
+    const GlobalPosition& globalPos1 = element1.geometry().center();
+    const GlobalPosition& globalPos2 = element2.geometry().center();
+    const GlobalPosition& globalPos3 = element3.geometry().center();
 
     const GlobalPosition& globalPosCenter = interactionVolume.getCenterPosition();
 
-    const DimMatrix& K1 = problem_.spatialParams().intrinsicPermeability(*elementPointer1);
-    const DimMatrix& K2 = problem_.spatialParams().intrinsicPermeability(*elementPointer2);
-    const DimMatrix& K3 = problem_.spatialParams().intrinsicPermeability(*elementPointer3);
+    const DimMatrix& K1 = problem_.spatialParams().intrinsicPermeability(element1);
+    const DimMatrix& K2 = problem_.spatialParams().intrinsicPermeability(element2);
+    const DimMatrix& K3 = problem_.spatialParams().intrinsicPermeability(element3);
 
     const GlobalPosition& globalPosFace12 = interactionVolume.getFacePosition(idx1, 0);
     DimVector &outerNormaln2 = interactionVolume.getNormal(idx1, 0);
@@ -533,25 +531,25 @@ int FvMpfaL2dTransmissibilityCalculator<TypeTag>::calculateRightHNTransmissibili
         std::vector<DimVector >& lambda,
         int idx1, int idx2, int idx3)
 {
-    ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(idx1);
-    ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(idx2);
-    ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(idx3);
+    auto element1 = interactionVolume.getSubVolumeElement(idx1);
+    auto element2 = interactionVolume.getSubVolumeElement(idx2);
+    auto element3 = interactionVolume.getSubVolumeElement(idx3);
 
-    if (elementPointer2->level() != elementPointer3->level())
+    if (element2.level() != element3.level())
     {
         return noTransmissibility;
     }
 
     // get global coordinate of cell centers
-    const GlobalPosition& globalPos1 = elementPointer1->geometry().center();
-    const GlobalPosition& globalPos2 = elementPointer2->geometry().center();
-    const GlobalPosition& globalPos3 = elementPointer3->geometry().center();
+    const GlobalPosition& globalPos1 = element1.geometry().center();
+    const GlobalPosition& globalPos2 = element2.geometry().center();
+    const GlobalPosition& globalPos3 = element3.geometry().center();
 
     const GlobalPosition& globalPosCenter = interactionVolume.getCenterPosition();
 
-    const DimMatrix& K1 = problem_.spatialParams().intrinsicPermeability(*elementPointer1);
-    const DimMatrix& K2 = problem_.spatialParams().intrinsicPermeability(*elementPointer2);
-    const DimMatrix& K3 = problem_.spatialParams().intrinsicPermeability(*elementPointer3);
+    const DimMatrix& K1 = problem_.spatialParams().intrinsicPermeability(element1);
+    const DimMatrix& K2 = problem_.spatialParams().intrinsicPermeability(element2);
+    const DimMatrix& K3 = problem_.spatialParams().intrinsicPermeability(element3);
 
     const GlobalPosition& globalPosFace12 = interactionVolume.getFacePosition(idx1, 0);
     const GlobalPosition& globalPosFace23 = interactionVolume.getFacePosition(idx2, 0);

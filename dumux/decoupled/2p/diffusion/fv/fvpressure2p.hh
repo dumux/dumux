@@ -143,7 +143,6 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -684,14 +683,14 @@ template<class TypeTag>
 void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& intersection
         , const CellData& cellData, const bool first)
 {
-    ElementPointer elementI = intersection.inside();
-    ElementPointer elementJ = intersection.outside();
+    auto elementI = intersection.inside();
+    auto elementJ = intersection.outside();
 
-    const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(*elementJ));
+    const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(elementJ));
 
     // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = elementI->geometry().center();
-    const GlobalPosition& globalPosJ = elementJ->geometry().center();
+    const GlobalPosition& globalPosI = elementI.geometry().center();
+    const GlobalPosition& globalPosJ = elementJ.geometry().center();
 
     // get mobilities and fractional flow factors
     Scalar lambdaWI = cellData.mobility(wPhaseIdx);
@@ -718,8 +717,8 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
 
-    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
-            problem_.spatialParams().intrinsicPermeability(*elementJ));
+    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(elementI),
+            problem_.spatialParams().intrinsicPermeability(elementJ));
 
     Dune::FieldVector<Scalar, dim> permeability(0);
     meanPermeability.mv(unitOuterNormal, permeability);
@@ -809,10 +808,10 @@ template<class TypeTag>
 void FVPressure2P<TypeTag>::getFluxOnBoundary(EntryType& entry,
 const Intersection& intersection, const CellData& cellData, const bool first)
 {
-    ElementPointer element = intersection.inside();
+    auto element = intersection.inside();
 
     // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = element->geometry().center();
+    const GlobalPosition& globalPosI = element.geometry().center();
 
     // center of face in global coordinates
     const GlobalPosition& globalPosJ = intersection.geometry().center();
@@ -854,7 +853,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
         DimMatrix meanPermeability(0);
 
         problem_.spatialParams().meanK(meanPermeability,
-                problem_.spatialParams().intrinsicPermeability(*element));
+                problem_.spatialParams().intrinsicPermeability(element));
 
         Dune::FieldVector<Scalar, dim> permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);
@@ -885,13 +884,13 @@ const Intersection& intersection, const CellData& cellData, const bool first)
             satW = cellData.saturation(wPhaseIdx);
             satNw = cellData.saturation(nPhaseIdx);
         }
-        Scalar temperature = problem_.temperature(*element);
+        Scalar temperature = problem_.temperature(element);
 
         //get dirichlet pressure boundary condition
         Scalar pressBound = boundValues[pressureIdx];
 
         //calculate consitutive relations depending on the kind of saturation used
-        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satW);
+        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
 
         //determine phase pressures from primary pressure variable
         Scalar pressW = 0;
@@ -932,9 +931,9 @@ const Intersection& intersection, const CellData& cellData, const bool first)
             rhoMeanNw = 0.5 * (cellData.density(nPhaseIdx) + densityNwBound);
         }
 
-        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satW)
+        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosityWBound;
-        Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satW)
+        Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosityNwBound;
 
         Scalar fractionalWBound = lambdaWBound / (lambdaWBound + lambdaNwBound);

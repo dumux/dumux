@@ -106,7 +106,6 @@ template<class TypeTag> class FV2dPressure2P2CAdaptive
 
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
@@ -284,13 +283,13 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                         }
                         //also check if additional cell was already used for another interaction triangle
                         for (unsigned int i = 0; i < foundAdditionals.size(); i++)
-                            if(foundAdditionals[i] == problem().variables().index(*additionalIsIt->outside()))
+                            if(foundAdditionals[i] == problem().variables().index(additionalIsIt->outside()))
                                     increaseRowSize = false;
 
                         if (increaseRowSize)
                         {
                             rowSize++;
-                            foundAdditionals.push_back(problem().variables().index(*additionalIsIt->outside()));
+                            foundAdditionals.push_back(problem().variables().index(additionalIsIt->outside()));
                         }
                     }
                 }
@@ -317,8 +316,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
             if (isIt->neighbor())
             {
                 // access neighbor
-                ElementPointer outside = isIt->outside();
-                int globalIdxJ = problem().variables().index(*outside);
+                int globalIdxJ = problem().variables().index(isIt->outside());
 
                 // add off diagonal index
                 this->A_.addindex(globalIdxI, globalIdxJ);
@@ -339,7 +337,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                                                                                               globalPos3, globalIdx3 );
                     // add off diagonal index if 2 half-edges regarded
                     if(halfedgesStored == 2)
-                        this->A_.addindex(globalIdxI, problem().variables().index(*additionalIsIt->outside()));
+                        this->A_.addindex(globalIdxI, problem().variables().index(additionalIsIt->outside()));
                 }
             }
     }
@@ -397,19 +395,19 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                 /************* handle interior face *****************/
                 if (isIt->neighbor())
                 {
-                    ElementPointer elementNeighbor = isIt->outside();
+                    auto elementNeighbor = isIt->outside();
 
-                    int globalIdxJ = problem().variables().index(*elementNeighbor);
+                    int globalIdxJ = problem().variables().index(elementNeighbor);
 
                     //check for hanging nodes
                     //take a hanging node never from the element with smaller level!
-                    bool haveSameLevel = (eIt->level() == elementNeighbor->level());
+                    bool haveSameLevel = (eIt->level() == elementNeighbor.level());
                     // calculate only from one side, but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
                         && (globalIdxI > globalIdxJ) && haveSameLevel
-                        && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                        && elementNeighbor.partitionType() == Dune::InteriorEntity)
                         continue;
 
                     entries = 0;
@@ -433,7 +431,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 
                         // The second condition is needed to not spoil the ghost element entries
                         if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
-                            && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                            && elementNeighbor.partitionType() == Dune::InteriorEntity)
                         {
                             this->f_[globalIdxJ] += entries[rhs];
                             this->A_[globalIdxJ][globalIdxJ] += entries[matrix];
@@ -504,28 +502,28 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
                                                     const CellData& cellDataI)
 {
     // acess Cell I
-    ElementPointer elementPointerI = intersectionIterator->inside();
-    int globalIdxI = problem().variables().index(*elementPointerI);
+    auto elementI = intersectionIterator->inside();
+    int globalIdxI = problem().variables().index(elementI);
 
     // get global coordinate of cell center
-    const GlobalPosition& globalPos = elementPointerI->geometry().center();
+    const GlobalPosition& globalPos = elementI.geometry().center();
 
     // cell volume & perimeter, assume linear map here
-    Scalar volume = elementPointerI->geometry().volume();
+    Scalar volume = elementI.geometry().volume();
     Scalar perimeter = cellDataI.perimeter();
 
     const GlobalPosition& gravity_ = problem().gravity();
 
     // get absolute permeability
-    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPointerI));
+    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(elementI));
 
     // access neighbor
-    ElementPointer neighborPointer = intersectionIterator->outside();
-    int globalIdxJ = problem().variables().index(*neighborPointer);
+    auto neighbor = intersectionIterator->outside();
+    int globalIdxJ = problem().variables().index(neighbor);
     CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
 
     // gemotry info of neighbor
-    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+    const GlobalPosition& globalPosNeighbor = neighbor.geometry().center();
 
     // distance vector between barycenters
     GlobalPosition distVec = globalPosNeighbor - globalPos;
@@ -537,7 +535,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
     unitDistVec /= dist;
 
     DimMatrix permeabilityJ
-        = problem().spatialParams().intrinsicPermeability(*neighborPointer);
+        = problem().spatialParams().intrinsicPermeability(neighbor);
 
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
@@ -556,7 +554,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
 
     // determine volume derivatives in neighbor
     if (!cellDataJ.hasVolumeDerivatives())
-        this->volumeDerivatives(globalPosNeighbor, *neighborPointer);
+        this->volumeDerivatives(globalPosNeighbor, neighbor);
 
     Scalar dv_dC1 = (cellDataJ.dv(wPhaseIdx)
                 + cellDataI.dv(wPhaseIdx)) / 2; // dV/dm1= dv/dC^1
@@ -616,7 +614,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
         // regard second half edge, if there is one
         if(halfedgesStored == 2)
         {
-            int AdditionalIdx = problem().variables().index(*(additionalIsIt->outside()));
+            int AdditionalIdx = problem().variables().index(additionalIsIt->outside());
             CellData& cellDataAdditional = problem().variables().cellData(AdditionalIdx);
             potentialW += (cellDataI.pressure(wPhaseIdx)-temp1*densityW) * additionalT[2]
                             + (cellDataJ.pressure(wPhaseIdx)-temp2*densityW) * additionalT[0]
@@ -720,7 +718,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
     // include second half-edge
     if(halfedgesStored == 2)
     {
-        int AdditionalIdx = problem().variables().index(*(additionalIsIt->outside()));
+        int AdditionalIdx = problem().variables().index(additionalIsIt->outside());
         CellData& cellDataAdditional = problem().variables().cellData(AdditionalIdx);
 
         /* extend T with other matrix entries and assemble to A_    */
@@ -806,13 +804,12 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         int& globalIdx3)
 {
     // get geometry information of cellI = cell1, cellJ = cell2
-    ElementPointer eIt = isIt->inside();
-    ElementPointer neighborPointer = isIt->outside();
+    auto element = isIt->inside();
+    auto neighbor = isIt->outside();
     GlobalPosition globalPos1 = eIt->geometry().center();
-    GlobalPosition globalPos2 = neighborPointer->geometry().center();
-    DimMatrix K1(problem().spatialParams().intrinsicPermeability(*eIt));
-    DimMatrix K2(problem().spatialParams().intrinsicPermeability(*neighborPointer));
-//    int debugIdx =  problem().variables().index(*isIt->outside());
+    GlobalPosition globalPos2 = neighbor.geometry().center();
+    DimMatrix K1(problem().spatialParams().intrinsicPermeability(element));
+    DimMatrix K2(problem().spatialParams().intrinsicPermeability(neighbor));
 
     /** 1) get geometrical information of interaction triangle   */
     // geometry and Data of face IJ in nomenclature of mpfa
@@ -824,25 +821,20 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     // nextIs points to next intersection
     IntersectionIterator nextIs = isIt;
     ++nextIs;
-    if (nextIs== problem().gridView().template iend(*eIt))
-        nextIs = problem().gridView().template ibegin(*eIt);
+    if (nextIs== problem().gridView().template iend(element))
+        nextIs = problem().gridView().template ibegin(element);
 
     // get last intersection : --intersection does not exist
     // paceingIt loops one IS bevore prevIs
-    IntersectionIterator prevIs = problem().gridView().template ibegin(*eIt);
+    IntersectionIterator prevIs = problem().gridView().template ibegin(element);
     IntersectionIterator paceingIt = prevIs;
-    for (++paceingIt; paceingIt != problem().gridView().template iend(*eIt); ++paceingIt)
+    for (++paceingIt; paceingIt != problem().gridView().template iend(element); ++paceingIt)
     {
-//        if((paceingIt->neighbor()))
-//            debugIdx = problem().variables().index(*paceingIt->outside());
-//        if((prevIs->neighbor()))
-//            debugIdx = problem().variables().index(*prevIs->outside());
-
         if (!paceingIt->neighbor())  // continue if no neighbor found
             ++prevIs;   // we investigate next paceingIt -> prevIs is also increased
         else if (paceingIt->outside() == isIt->outside())  // we already found prevIs
                 break;
-        else if (paceingIt == problem().gridView().template iend(*eIt))
+        else if (paceingIt == problem().gridView().template iend(element))
                 prevIs = paceingIt; // this could only happen if isIt is begin, so prevIs has to be last.
         else
             ++prevIs;   // we investigate next paceingIt -> prevIs is also increased
@@ -856,11 +848,9 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     IntersectionIterator face23 = isIt; // as long as face23=isIt, it is still not found!
     // store other intersection for the other interaction region for the other half-edge
 
-    IntersectionIterator isIt23End = problem().gridView().iend(*neighborPointer);
-    for (IntersectionIterator isIt23 = problem().gridView().ibegin(*neighborPointer); isIt23 != isIt23End; ++isIt23)
+    IntersectionIterator isIt23End = problem().gridView().iend(neighbor);
+    for (IntersectionIterator isIt23 = problem().gridView().ibegin(neighbor); isIt23 != isIt23End; ++isIt23)
     {
-//        if((isIt23->neighbor()))
-//            debugIdx = problem().variables().index(*isIt23->outside());
         // stop search if found
         if( (face13->outside() != isIt->outside()))
             break;
@@ -872,9 +862,6 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         // investigate if prevIs points to cell 3
         if (prevIs->neighbor())
         {
-//            if((prevIs->neighbor()))
-//                debugIdx = problem().variables().index(*prevIs->outside());
-
             if (prevIs->outside() == isIt23->outside())
             {
                 face23 = isIt23;
@@ -885,9 +872,6 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         // investigate if nextIs points to cell 3
         if (nextIs->neighbor())
         {
-//            if((nextIs->neighbor()))
-//                debugIdx = problem().variables().index(*nextIs->outside());
-
             if (nextIs->outside() == isIt23->outside())
             {
                 face23 = isIt23;
@@ -901,7 +885,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 
     // get information of cell3
     globalPos3 = face13->outside()->geometry().center();
-    globalIdx3 = problem().variables().index(*(face13->outside()));
+    globalIdx3 = problem().variables().index(face13->outside());
     // get absolute permeability of neighbor cell 3
     DimMatrix K3(problem().spatialParams().intrinsicPermeability(*(face13->outside())));
 
@@ -1046,15 +1030,15 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         IntersectionIterator tempIntersection = face13;
         bool corner1245found = false;
         // ensure iterator increases over local end
-        if (tempIntersection== problem().gridView().template iend(*eIt))
-            tempIntersection = problem().gridView().template ibegin(*eIt);
+        if (tempIntersection== problem().gridView().template iend(element))
+            tempIntersection = problem().gridView().template ibegin(element);
         while (!corner1245found)
         {
             ++tempIntersection;
 
             // ensure iterator increases over local end
-            if (tempIntersection== problem().gridView().template iend(*eIt))
-                tempIntersection = problem().gridView().template ibegin(*eIt);
+            if (tempIntersection== problem().gridView().template iend(element))
+                tempIntersection = problem().gridView().template ibegin(element);
             // enshure we do not arrive at isIt
             if (tempIntersection == isIt)
                 continue;
@@ -1227,10 +1211,10 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     interactionVolume.setFacePosition(globalPosFace41, 0, 1);
 
     // access neighbor cell 2 of 'isIt12'
-    ElementPointer elementPointer2 = isIt->inside();
+    auto element2 = isIt->inside();
 
     //****************     store pointer 2
-    interactionVolume.setSubVolumeElement(elementPointer2, 1);
+    interactionVolume.setSubVolumeElement(element2, 1);
 //    interactionVolume.setIndexOnElement(isIt->indexInInside(), 1, 1);
     interactionVolume.setNormal(unitOuterNormal12, 1, 1);
     interactionVolume.setFaceArea(faceVol12, 1, 1);
@@ -1238,10 +1222,10 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
 
 
     //****************     data for cell 4
-    ElementPointer elementPointer4 = isIt14->outside();
+    auto element4 = isIt14->outside();
 
     //store pointer 4
-    interactionVolume.setSubVolumeElement(elementPointer4, 3);
+    interactionVolume.setSubVolumeElement(element4, 3);
 //    interactionVolume.setIndexOnElement(globalIdx4, 3, 0);
 
     interactionVolume.setNormal(unitOuterNormal14, 3, 0);
@@ -1249,9 +1233,9 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     interactionVolume.setFacePosition(globalPosFace41, 3, 0);
 
     //****************     data for cell 3
-    ElementPointer elementPointer3 = isIt23->outside();
+    auto element3 = isIt23->outside();
     //store pointer 3
-    interactionVolume.setSubVolumeElement(elementPointer3, 2);
+    interactionVolume.setSubVolumeElement(element3, 2);
 
     GlobalPosition globalPosFace23 = isIt23->geometry().center();
     Scalar faceVol23 = isIt23->geometry().volume() / 2.0;
@@ -1268,11 +1252,6 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     interactionVolume.setFaceArea(dummy, 3, 1);
     interactionVolume.setFacePosition(globalPosFace23, 1, 0);
     interactionVolume.setFacePosition(globalPosFace23, 2, 1);
-
-//    int globalIdx1 = problem().variables().index(*isIt->outside());
-//    int globalIdx2 = problem().variables().index(*elementPointer2);
-//    int globalIdx3 = problem().variables().index(*elementPointer3);
-//    int globalIdx4 = problem().variables().index(*isIt14->outside());
 
     Dune::FieldVector<Scalar, dim> unity(1.);
     std::vector<Dune::FieldVector<Scalar, dim> > lambda(4, unity);

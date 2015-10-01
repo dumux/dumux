@@ -135,7 +135,6 @@ class FvMpfaL2dPressure2pAdaptive: public FVPressure<TypeTag>
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::Grid Grid;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -601,24 +600,24 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                 if (nextIsIt->neighbor())
                 {
                     // access the common neighbor of isIt's and nextIsIt's outside
-                    ElementPointer outside = isIt->outside();
-                    ElementPointer nextisItoutside = nextIsIt->outside();
+                    auto outside = isIt->outside();
+                    auto nextisItoutside = nextIsIt->outside();
 
                     bool isCorner = true;
 
-                    IntersectionIterator innerisItEnd = problem_.gridView().iend(*outside);
-                    IntersectionIterator innernextisItEnd = problem_.gridView().iend(*nextisItoutside);
+                    IntersectionIterator innerisItEnd = problem_.gridView().iend(outside);
+                    IntersectionIterator innernextisItEnd = problem_.gridView().iend(nextisItoutside);
 
-                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside);
+                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(outside);
                             innerisIt != innerisItEnd; ++innerisIt)
                     {
-                        for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(*nextisItoutside);
+                        for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(nextisItoutside);
                                 innernextisIt != innernextisItEnd; ++innernextisIt)
                         {
                             if (innerisIt->neighbor() && innernextisIt->neighbor())
                             {
-                                ElementPointer innerisItoutside = innerisIt->outside();
-                                ElementPointer innernextisItoutside = innernextisIt->outside();
+                                auto innerisItoutside = innerisIt->outside();
+                                auto innernextisItoutside = innernextisIt->outside();
 
                                 if (innerisItoutside == nextisItoutside || innernextisItoutside == outside)
 //                                    if (innerisItoutside == innernextisItoutside && innerisItoutside != eIt)
@@ -670,14 +669,14 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
             if (isIt->neighbor())
             {
                 // access neighbor
-                ElementPointer outside = isIt->outside();
-                int eIdxGlobalJ = problem_.variables().index(*outside);
+                auto outside = isIt->outside();
+                int eIdxGlobalJ = problem_.variables().index(outside);
 
                 // add off diagonal index
                 // add index (row,col) to the matrix
                 this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
 
-                if (eIt->level() < outside->level())
+                if (eIt->level() < outside.level())
                 {
                     continue;
                 }
@@ -712,47 +711,47 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                 if (nextIsIt->neighbor())
                 {
                     // access the common neighbor of isIt's and nextIsIt's outside
-                    ElementPointer nextisItoutside = nextIsIt->outside();
+                    auto nextisItoutside = nextIsIt->outside();
 
-                    if (eIt->level() < nextisItoutside->level())
+                    if (eIt->level() < nextisItoutside.level())
                     {
                         continue;
                     }
 
-                    IntersectionIterator innerisItEnd = problem_.gridView().iend(*outside);
-                    IntersectionIterator innernextisItEnd = problem_.gridView().iend(*nextisItoutside);
+                    IntersectionIterator innerisItEnd = problem_.gridView().iend(outside);
+                    IntersectionIterator innernextisItEnd = problem_.gridView().iend(nextisItoutside);
 
                     for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside);
                             innerisIt != innerisItEnd; ++innerisIt)
                     {
-                        for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(*nextisItoutside);
+                        for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(nextisItoutside);
                                 innernextisIt != innernextisItEnd; ++innernextisIt)
                         {
                             if (innerisIt->neighbor() && innernextisIt->neighbor())
                             {
-                                ElementPointer innerisItoutside = innerisIt->outside();
-                                ElementPointer innernextisItoutside = innernextisIt->outside();
+                                auto innerisItoutside = innerisIt->outside();
+                                auto innernextisItoutside = innernextisIt->outside();
 
                                 if (innerisItoutside == innernextisItoutside && innerisItoutside != eIt
                                         && innerisItoutside != nextisItoutside)
                                 {
-                                    int eIdxGlobalCorner = problem_.variables().index(*innerisItoutside);
+                                    int eIdxGlobalCorner = problem_.variables().index(innerisItoutside);
 
                                     this->A_.addindex(eIdxGlobalI, eIdxGlobalCorner);
 
                                     if (eIt->level() > outside->level())
                                     {
-                                        int eIdxGlobalJCorner = problem_.variables().index(*nextisItoutside);
+                                        int eIdxGlobalJCorner = problem_.variables().index(nextisItoutside);
 
                                         this->A_.addindex(eIdxGlobalJ, eIdxGlobalJCorner);
                                     }
-                                    if (eIt->level() > nextisItoutside->level())
+                                    if (eIt->level() > nextisItoutside.level())
                                     {
-                                        int eIdxGlobalJCorner = problem_.variables().index(*nextisItoutside);
+                                        int eIdxGlobalJCorner = problem_.variables().index(nextisItoutside);
 
                                         this->A_.addindex(eIdxGlobalJCorner, eIdxGlobalJ);
                                     }
-                                    if (eIt->level() > innerisItoutside->level())
+                                    if (eIt->level() > innerisItoutside.level())
                                     {
                                         this->A_.addindex(eIdxGlobalCorner, eIdxGlobalI);
                                     }
@@ -815,10 +814,10 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
             if (isIt12->neighbor())
             {
                 // access neighbor cell 2 of 'isIt12'
-                ElementPointer elementPointer2 = isIt12->outside();
-                int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
+                auto element2 = isIt12->outside();
+                int eIdxGlobal2 = problem_.variables().index(element2);
 
-                if (eIt->level() < elementPointer2->level())
+                if (eIt->level() < element2.level())
                 {
                     continue;
                 }
@@ -931,7 +930,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace41, 0, 1);
 
                 //store pointer 2
-                interactionVolumes_[globalVertIdx1234].setSubVolumeElement(elementPointer2, 1);
+                interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element2, 1);
                 interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt12->indexInOutside(), 1, 1);
                 interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal12, 1, 1);
                 interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol12, 1, 1);
@@ -942,10 +941,10 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 {
                     // neighbor cell 3
                     // access neighbor cell 3
-                    ElementPointer elementPointer4 = isIt14->outside();
+                    auto element4 = isIt14->outside();
 
                     //store pointer 4
-                    interactionVolumes_[globalVertIdx1234].setSubVolumeElement(elementPointer4, 3);
+                    interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element4, 3);
                     interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt14->indexInOutside(), 3, 0);
 
                     interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal14, 3, 0);
@@ -956,28 +955,28 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     GlobalPosition globalPosFace23(0);
                     GlobalPosition globalPosFace34(0);
 
-                    if (elementPointer4->level() < eIt->level())
+                    if (element4.level() < eIt->level())
                     {
                         bool isHangingNode = false;
 
-                        IntersectionIterator isIt2End = problem_.gridView().iend(*elementPointer2);
-                        IntersectionIterator isIt4End = problem_.gridView().iend(*elementPointer4);
-                        for (IntersectionIterator isIt2 = problem_.gridView().ibegin(*elementPointer2);
+                        IntersectionIterator isIt2End = problem_.gridView().iend(element2);
+                        IntersectionIterator isIt4End = problem_.gridView().iend(element4);
+                        for (IntersectionIterator isIt2 = problem_.gridView().ibegin(element2);
                                 isIt2 != isIt2End; ++isIt2)
                         {
                             bool breakLoop = false;
-                            for (IntersectionIterator isIt4 = problem_.gridView().ibegin(*elementPointer4);
+                            for (IntersectionIterator isIt4 = problem_.gridView().ibegin(element4);
                                     isIt4 != isIt4End; ++isIt4)
                             {
                                 if (isIt2->neighbor() && isIt4->neighbor())
                                 {
-                                    ElementPointer elementPointer32 = isIt2->outside();
-                                    ElementPointer elementPointer34 = isIt4->outside();
+                                    auto element32 = isIt2->outside();
+                                    auto element34 = isIt4->outside();
 
                                     //hanging node!
-                                    if (elementPointer32 == elementPointer4)
+                                    if (element32 == element4)
                                     {
-                                        if (eIt->level() != elementPointer2->level())
+                                        if (eIt->level() != element2.level())
                                         {
                                             breakLoop = true;
                                             isHangingNode = false;
@@ -1006,9 +1005,9 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                         unitOuterNormal23 *= -1;
                                         interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal23, 3, 1);
                                     }
-                                    else if (elementPointer34 == elementPointer2)
+                                    else if (element34 == element2)
                                     {
-                                        if (eIt->level() != elementPointer2->level())
+                                        if (eIt->level() != element2.level())
                                         {
                                             breakLoop = true;
                                             isHangingNode = false;
@@ -1037,17 +1036,17 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                         {
                             bool regularNode = false;
 
-                            for (IntersectionIterator isIt2 = problem_.gridView().ibegin(*elementPointer2);
+                            for (IntersectionIterator isIt2 = problem_.gridView().ibegin(element2);
                                     isIt2 != isIt2End; ++isIt2)
                             {
-                                for (IntersectionIterator isIt4 = problem_.gridView().ibegin(*elementPointer4);
+                                for (IntersectionIterator isIt4 = problem_.gridView().ibegin(element4);
                                         isIt4 != isIt4End; ++isIt4)
                                 {
                                     if (isIt4->neighbor())
                                     {
-                                        ElementPointer elementPointer41 = isIt4->outside();
+                                        auto element41 = isIt4->outside();
 
-                                        if (elementPointer41 == eIt && elementPointer41->level() > eIt->level())
+                                        if (element41 == eIt && element41.level() > eIt->level())
                                         {
                                             //adjust values of isIt12 in case of hanging nodes
                                             globalPosFace41 = isIt4->geometry().center();
@@ -1064,14 +1063,14 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                                     if (isIt2->neighbor() && isIt4->neighbor())
                                     {
-                                        ElementPointer elementPointer32 = isIt2->outside();
-                                        ElementPointer elementPointer34 = isIt4->outside();
+                                        auto element32 = isIt2->outside();
+                                        auto element34 = isIt4->outside();
 
                                         //hanging node!
-                                        if (elementPointer32 == elementPointer34 && elementPointer32 != eIt)
+                                        if (element32 == element34 && element32 != eIt)
                                         {
                                             //store pointer 3
-                                            interactionVolumes_[globalVertIdx1234].setSubVolumeElement(elementPointer32,
+                                            interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element32,
                                                     2);
 
                                             interactionVolumes_[globalVertIdx1234].setIndexOnElement(
@@ -1100,18 +1099,18 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                             unitOuterNormal43 *= -1;
                                             interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal43, 2, 0);
 
-                                            if (elementPointer32->level() > elementPointer2->level())
+                                            if (element32.level() > element2.level())
                                             {
                                                 IntersectionIterator isIt3End = problem_.gridView().iend(
-                                                        *elementPointer32);
+                                                        element32);
                                                 for (IntersectionIterator isIt3 = problem_.gridView().ibegin(
-                                                        *elementPointer32); isIt3 != isIt3End; ++isIt3)
+                                                        element32); isIt3 != isIt3End; ++isIt3)
                                                 {
                                                     if (isIt3->neighbor())
                                                     {
-                                                        ElementPointer elementPointer23 = isIt3->outside();
+                                                        auto element23 = isIt3->outside();
 
-                                                        if (elementPointer23 == elementPointer2)
+                                                        if (element23 == element2)
                                                         {
                                                             globalPosFace23 = isIt3->geometry().center();
                                                             faceVol23 = isIt3->geometry().volume() / 2.0;
@@ -1127,18 +1126,18 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                             interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace23, 2,
                                                     1);
 
-                                            if (elementPointer34->level() > elementPointer4->level())
+                                            if (element34.level() > element4.level())
                                             {
                                                 IntersectionIterator isIt3End = problem_.gridView().iend(
-                                                        *elementPointer34);
+                                                        element34);
                                                 for (IntersectionIterator isIt3 = problem_.gridView().ibegin(
-                                                        *elementPointer34); isIt3 != isIt3End; ++isIt3)
+                                                        element34); isIt3 != isIt3End; ++isIt3)
                                                 {
                                                     if (isIt3->neighbor())
                                                     {
-                                                        ElementPointer elementPointer43 = isIt3->outside();
+                                                        auto element43 = isIt3->outside();
 
-                                                        if (elementPointer43 == elementPointer4)
+                                                        if (element43 == element4)
                                                         {
                                                             globalPosFace34 = isIt3->geometry().center();
                                                             faceVol34 = isIt3->geometry().volume() / 2.0;
@@ -1175,19 +1174,19 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     else
                     {
                         bool regularNode = false;
-                        IntersectionIterator isIt2End = problem_.gridView().iend(*elementPointer2);
-                        IntersectionIterator isIt4End = problem_.gridView().iend(*elementPointer4);
-                        for (IntersectionIterator isIt2 = problem_.gridView().ibegin(*elementPointer2);
+                        IntersectionIterator isIt2End = problem_.gridView().iend(element2);
+                        IntersectionIterator isIt4End = problem_.gridView().iend(element4);
+                        for (IntersectionIterator isIt2 = problem_.gridView().ibegin(element2);
                                 isIt2 != isIt2End; ++isIt2)
                         {
-                            for (IntersectionIterator isIt4 = problem_.gridView().ibegin(*elementPointer4);
+                            for (IntersectionIterator isIt4 = problem_.gridView().ibegin(element4);
                                     isIt4 != isIt4End; ++isIt4)
                             {
                                 if (isIt4->neighbor())
                                 {
-                                    ElementPointer elementPointer41 = isIt4->outside();
+                                    auto element41 = isIt4->outside();
 
-                                    if (elementPointer41 == eIt && elementPointer41->level() > eIt->level())
+                                    if (element41 == eIt && element41.level() > eIt->level())
                                     {
                                         //adjust values of isIt12 in case of hanging nodes
                                         globalPosFace41 = isIt4->geometry().center();
@@ -1202,14 +1201,14 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                                 if (isIt2->neighbor() && isIt4->neighbor())
                                 {
-                                    ElementPointer elementPointer32 = isIt2->outside();
-                                    ElementPointer elementPointer34 = isIt4->outside();
+                                    auto element32 = isIt2->outside();
+                                    auto element34 = isIt4->outside();
 
                                     // find the common neighbor cell between cell 2 and cell 3, except cell 1
-                                    if (elementPointer32 == elementPointer34 && elementPointer32 != eIt)
+                                    if (element32 == element34 && element32 != eIt)
                                     {
                                         //store pointer 3
-                                        interactionVolumes_[globalVertIdx1234].setSubVolumeElement(elementPointer32, 2);
+                                        interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element32, 2);
 
                                         interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt2->indexInInside(),
                                                 1, 0);
@@ -1298,8 +1297,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                     bool finished = false;
 
-                    IntersectionIterator isIt2End = problem_.gridView().iend(*elementPointer2);
-                    for (IntersectionIterator isIt2 = problem_.gridView().ibegin(*elementPointer2); isIt2 != isIt2End;
+                    IntersectionIterator isIt2End = problem_.gridView().iend(element2);
+                    for (IntersectionIterator isIt2 = problem_.gridView().ibegin(element2); isIt2 != isIt2End;
                             ++isIt2)
                     {
                         if (isIt2->boundary())
@@ -1310,7 +1309,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                         dim);
 
                                 int globalVertIdx2corner = problem_.variables().index(
-                                        *((*elementPointer2).template subEntity < dim > (localVertIdx2corner)));
+                                        *((element2).template subEntity < dim > (localVertIdx2corner)));
 
                                 if (globalVertIdx2corner == globalVertIdx1234)
                                 {
@@ -1346,16 +1345,16 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                     interactionVolumes_[globalVertIdx1234].setOutsideFace(2);
 
 
-                                    if (eIt->level() == elementPointer2->level())
+                                    if (eIt->level() == element2.level())
                                     {
                                         innerBoundaryVolumeFaces_[eIdxGlobal1][isIt12->indexInInside()] = true;
                                         innerBoundaryVolumeFaces_[eIdxGlobal2][isIt12->indexInOutside()] = true;
                                     }
-                                    else if (eIt->level() < elementPointer2->level())
+                                    else if (eIt->level() < element2.level())
                                     {
                                         innerBoundaryVolumeFaces_[eIdxGlobal2][isIt12->indexInOutside()] = true;
                                     }
-                                    else if (eIt->level() > elementPointer2->level())
+                                    else if (eIt->level() > element2.level())
                                     {
                                         innerBoundaryVolumeFaces_[eIdxGlobal1][isIt12->indexInInside()] = true;
                                     }
@@ -1536,11 +1535,11 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 {
                     // neighbor cell 3
                     // access neighbor cell 3
-                    ElementPointer elementPointer4 = isIt14->outside();
-                    int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
+                    auto element4 = isIt14->outside();
+                    int eIdxGlobal4 = problem_.variables().index(element4);
 
-                    if ((eIt->level() == elementPointer4->level() && eIdxGlobal1 > eIdxGlobal4)
-                            || eIt->level() < elementPointer4->level())
+                    if ((eIt->level() == element4.level() && eIdxGlobal1 > eIdxGlobal4)
+                            || eIt->level() < element4.level())
                     {
                         interactionVolumes_[globalVertIdx1234].reset();
                         continue;
@@ -1549,7 +1548,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt14->indexInOutside(), 3, 0);
 
                     //store pointer 4
-                    interactionVolumes_[globalVertIdx1234].setSubVolumeElement(elementPointer4, 3);
+                    interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element4, 3);
 
                     interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal14, 3, 0);
                     interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol41, 3, 0);
@@ -1558,8 +1557,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     bool finished = false;
 
                     // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                    IntersectionIterator isIt4End = problem_.gridView().iend(*elementPointer4);
-                    for (IntersectionIterator isIt4 = problem_.gridView().ibegin(*elementPointer4); isIt4 != isIt4End;
+                    IntersectionIterator isIt4End = problem_.gridView().iend(element4);
+                    for (IntersectionIterator isIt4 = problem_.gridView().ibegin(element4); isIt4 != isIt4End;
                             ++isIt4)
                     {
                         if (isIt4->boundary())
@@ -1570,7 +1569,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                         dim);
 
                                 int globalVertIdx4corner = problem_.variables().index(
-                                        *((*elementPointer4).template subEntity < dim > (localVertIdx4corner)));
+                                        *((element4).template subEntity < dim > (localVertIdx4corner)));
 
                                 if (globalVertIdx4corner == globalVertIdx1234)
                                 {
@@ -1604,16 +1603,16 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                                     interactionVolumes_[globalVertIdx1234].setOutsideFace(1);
 
-                                    if (eIt->level() == elementPointer4->level())
+                                    if (eIt->level() == element4.level())
                                     {
                                         innerBoundaryVolumeFaces_[eIdxGlobal1][isIt14->indexInInside()] = true;
                                         innerBoundaryVolumeFaces_[eIdxGlobal4][isIt14->indexInOutside()] = true;
                                     }
-                                    if (eIt->level() < elementPointer4->level())
+                                    if (eIt->level() < element4.level())
                                     {
                                          innerBoundaryVolumeFaces_[eIdxGlobal4][isIt14->indexInOutside()] = true;
                                     }
-                                    if (eIt->level() > elementPointer4->level())
+                                    if (eIt->level() > element4.level())
                                     {
                                         innerBoundaryVolumeFaces_[eIdxGlobal1][isIt14->indexInInside()] = true;
                                     }
@@ -1665,13 +1664,13 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::printInteractionVolumes()
             std::cout << "global vertex index: " << vIdxGlobal << "\n";
             if (interactionVolume.getElementNumber() == 3)
             {
-                ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
-                ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
-                ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(3);
+                auto element1 = interactionVolume.getSubVolumeElement(0);
+                auto element2 = interactionVolume.getSubVolumeElement(1);
+                auto element4 = interactionVolume.getSubVolumeElement(3);
 
-                int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
-                int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
-                int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
+                int eIdxGlobal1 = problem_.variables().index(element1);
+                int eIdxGlobal2 = problem_.variables().index(element2);
+                int eIdxGlobal4 = problem_.variables().index(element4);
 
                 std::cout << "global element index 1: " << eIdxGlobal1 << "\n";
                 std::cout << "global element index 2: " << eIdxGlobal2 << "\n";
@@ -1679,15 +1678,15 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::printInteractionVolumes()
             }
             if (interactionVolume.getElementNumber() == 4)
             {
-                ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
-                ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
-                ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(2);
-                ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(3);
+                auto element1 = interactionVolume.getSubVolumeElement(0);
+                auto element2 = interactionVolume.getSubVolumeElement(1);
+                auto element3 = interactionVolume.getSubVolumeElement(2);
+                auto element4 = interactionVolume.getSubVolumeElement(3);
 
-                int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
-                int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
-                int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
-                int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
+                int eIdxGlobal1 = problem_.variables().index(element1);
+                int eIdxGlobal2 = problem_.variables().index(element2);
+                int eIdxGlobal3 = problem_.variables().index(element3);
+                int eIdxGlobal4 = problem_.variables().index(element4);
 
                 std::cout << "global element index 1: " << eIdxGlobal1 << "\n";
                 std::cout << "global element index 2: " << eIdxGlobal2 << "\n";
@@ -1718,28 +1717,28 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
         {
             if (interactionVolume.getElementNumber() == 4)
             {
-                ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
-                ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
-                ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(2);
-                ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(3);
+                auto element1 = interactionVolume.getSubVolumeElement(0);
+                auto element2 = interactionVolume.getSubVolumeElement(1);
+                auto element3 = interactionVolume.getSubVolumeElement(2);
+                auto element4 = interactionVolume.getSubVolumeElement(3);
 
                 // get global coordinate of cell centers
-                const GlobalPosition& globalPos1 = elementPointer1->geometry().center();
-                const GlobalPosition& globalPos2 = elementPointer2->geometry().center();
-                const GlobalPosition& globalPos3 = elementPointer3->geometry().center();
-                const GlobalPosition& globalPos4 = elementPointer4->geometry().center();
+                const GlobalPosition& globalPos1 = element1.geometry().center();
+                const GlobalPosition& globalPos2 = element2.geometry().center();
+                const GlobalPosition& globalPos3 = element3.geometry().center();
+                const GlobalPosition& globalPos4 = element4.geometry().center();
 
                 // cell volumes
-                Scalar volume1 = elementPointer1->geometry().volume();
-                Scalar volume2 = elementPointer2->geometry().volume();
-                Scalar volume3 = elementPointer3->geometry().volume();
-                Scalar volume4 = elementPointer4->geometry().volume();
+                Scalar volume1 = element1.geometry().volume();
+                Scalar volume2 = element2.geometry().volume();
+                Scalar volume3 = element3.geometry().volume();
+                Scalar volume4 = element4.geometry().volume();
 
                 // cell index
-                int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
-                int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
-                int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
-                int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
+                int eIdxGlobal1 = problem_.variables().index(element1);
+                int eIdxGlobal2 = problem_.variables().index(element2);
+                int eIdxGlobal3 = problem_.variables().index(element3);
+                int eIdxGlobal4 = problem_.variables().index(element4);
 
                 //get the cell Data
                 CellData& cellData1 = problem_.variables().cellData(eIdxGlobal1);
@@ -1749,13 +1748,13 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
 
                 // evaluate right hand side
                 PrimaryVariables source(0.0);
-                problem_.source(source, *elementPointer1);
+                problem_.source(source, element1);
                 this->f_[eIdxGlobal1] += volume1 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-                problem_.source(source, *elementPointer2);
+                problem_.source(source, element2);
                 this->f_[eIdxGlobal2] += volume2 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-                problem_.source(source, *elementPointer3);
+                problem_.source(source, element3);
                 this->f_[eIdxGlobal3] += volume3 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-                problem_.source(source, *elementPointer4);
+                problem_.source(source, element4);
                 this->f_[eIdxGlobal4] += volume4 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
                 this->f_[eIdxGlobal1] += evaluateErrorTerm_(cellData1) * volume1 / (4.0);
@@ -2101,23 +2100,23 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
             }
             else if (interactionVolume.getElementNumber() == 3)
             {
-                ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
-                ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
-                ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(3);
+                auto element1 = interactionVolume.getSubVolumeElement(0);
+                auto element2 = interactionVolume.getSubVolumeElement(1);
+                auto element4 = interactionVolume.getSubVolumeElement(3);
 
                 // get global coordinate of cell centers
-                const GlobalPosition& globalPos1 = elementPointer1->geometry().center();
-                const GlobalPosition& globalPos2 = elementPointer2->geometry().center();
-                const GlobalPosition& globalPos4 = elementPointer4->geometry().center();
+                const GlobalPosition& globalPos1 = element1.geometry().center();
+                const GlobalPosition& globalPos2 = element2.geometry().center();
+                const GlobalPosition& globalPos4 = element4.geometry().center();
 
                 // cell volumes
-                Scalar volume1 = elementPointer1->geometry().volume();
-                Scalar volume2 = elementPointer2->geometry().volume();
+                Scalar volume1 = element1.geometry().volume();
+                Scalar volume2 = element2.geometry().volume();
 
                 // cell index
-                int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
-                int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
-                int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
+                int eIdxGlobal1 = problem_.variables().index(element1);
+                int eIdxGlobal2 = problem_.variables().index(element2);
+                int eIdxGlobal4 = problem_.variables().index(element4);
 
                 //get the cell Data
                 CellData& cellData1 = problem_.variables().cellData(eIdxGlobal1);
@@ -2127,9 +2126,9 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                 // evaluate right hand side -> only add source for the cells without hanging node!
                 // In doing so every cell gets the source from 4 vertices and the division by 4 is correct!
                 PrimaryVariables source(0.0);
-                problem_.source(source, *elementPointer1);
+                problem_.source(source, element1);
                 this->f_[eIdxGlobal1] += volume1 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-                problem_.source(source, *elementPointer2);
+                problem_.source(source, element2);
                 this->f_[eIdxGlobal2] += volume2 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
                 this->f_[eIdxGlobal1] += evaluateErrorTerm_(cellData1) * volume1 / (4.0);
@@ -2393,26 +2392,26 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                     continue;
                 }
 
-                ElementPointer& elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
+                auto element = interactionVolume.getSubVolumeElement(elemIdx);
 
                 // get global coordinate of cell centers
-                const GlobalPosition& globalPos = elementPointer->geometry().center();
+                const GlobalPosition& globalPos = element->geometry().center();
 
                 // cell volumes
-                Scalar volume = elementPointer->geometry().volume();
+                Scalar volume = element->geometry().volume();
 
                 // cell index
-                int eIdxGlobal = problem_.variables().index(*elementPointer);
+                int eIdxGlobal = problem_.variables().index(element);
 
                 //get the cell Data
                 CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
                 //permeability vector at boundary
-                DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(*elementPointer));
+                DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(element));
 
                 // evaluate right hand side
                 PrimaryVariables source(0);
-                problem_.source(source, *elementPointer);
+                problem_.source(source, element);
                 this->f_[eIdxGlobal] += volume / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
                 this->f_[eIdxGlobal] += evaluateErrorTerm_(cellData) * volume / (4.0);
@@ -2439,11 +2438,11 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
                             const ReferenceElement& referenceElement = ReferenceElements::general(
-                                    elementPointer->geometry().type());
+                                    element->geometry().type());
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 
-                            const GlobalPosition& globalPosFace = elementPointer->geometry().global(localPos);
+                            const GlobalPosition& globalPosFace = element->geometry().global(localPos);
 
                             DimVector distVec(globalPosFace - globalPos);
                             Scalar dist = distVec.two_norm();
@@ -2475,7 +2474,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                             }
 
                             Scalar pcBound = MaterialLaw::pc(
-                                    problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
+                                    problem_.spatialParams().materialLawParams(element), satWBound);
 
                             Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_
                                     * (density_[nPhaseIdx] - density_[wPhaseIdx]);
@@ -2483,10 +2482,10 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                             pcBound += gravityDiffBound;
 
                             Dune::FieldVector<Scalar, numPhases> lambdaBound(
-                                    MaterialLaw::krw(problem_.spatialParams().materialLawParams(*elementPointer),
+                                    MaterialLaw::krw(problem_.spatialParams().materialLawParams(element),
                                             satWBound));
                             lambdaBound[nPhaseIdx] = MaterialLaw::krn(
-                                    problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
+                                    problem_.spatialParams().materialLawParams(element), satWBound);
                             lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
                             lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 

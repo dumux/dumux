@@ -142,7 +142,6 @@ class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::Grid Grid;
     typedef typename Element::Geometry Geometry;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -581,8 +580,7 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixRowSize()
             {
                 if (interactionVolume.hasSubVolumeElement(subVolumeIdx))
                 {
-                    const ElementPointer& neighbor = interactionVolume.getSubVolumeElement(subVolumeIdx);
-                    int eIdxGlobalJ = problem_.variables().index(*neighbor);
+                    int eIdxGlobalJ = problem_.variables().index(interactionVolume.getSubVolumeElement(subVolumeIdx));
 
                     neighborIndices.insert(eIdxGlobalJ);
                 }
@@ -625,8 +623,7 @@ void FvMpfaL3dPressure2p<TypeTag>::initializeMatrixIndices()
             {
                 if (interactionVolume.hasSubVolumeElement(subVolumeIdx))
                 {
-                    ElementPointer neighbor = interactionVolume.getSubVolumeElement(subVolumeIdx);
-                    int eIdxGlobalJ = problem_.variables().index(*neighbor);
+                    int eIdxGlobalJ = problem_.variables().index(interactionVolume.getSubVolumeElement(subVolumeIdx));
 
                     this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
                 }
@@ -673,44 +670,44 @@ void FvMpfaL3dPressure2p<TypeTag>::assemble()
 template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVolume& interactionVolume)
 {
-    ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
-    ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
-    ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(2);
-    ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(3);
-    ElementPointer& elementPointer5 = interactionVolume.getSubVolumeElement(4);
-    ElementPointer& elementPointer6 = interactionVolume.getSubVolumeElement(5);
-    ElementPointer& elementPointer7 = interactionVolume.getSubVolumeElement(6);
-    ElementPointer& elementPointer8 = interactionVolume.getSubVolumeElement(7);
+    auto element1 = interactionVolume.getSubVolumeElement(0);
+    auto element2 = interactionVolume.getSubVolumeElement(1);
+    auto element3 = interactionVolume.getSubVolumeElement(2);
+    auto element4 = interactionVolume.getSubVolumeElement(3);
+    auto element5 = interactionVolume.getSubVolumeElement(4);
+    auto element6 = interactionVolume.getSubVolumeElement(5);
+    auto element7 = interactionVolume.getSubVolumeElement(6);
+    auto element8 = interactionVolume.getSubVolumeElement(7);
 
     // get global coordinate of cell centers
-    const GlobalPosition& globalPos1 = elementPointer1->geometry().center();
-    const GlobalPosition& globalPos2 = elementPointer2->geometry().center();
-    const GlobalPosition& globalPos3 = elementPointer3->geometry().center();
-    const GlobalPosition& globalPos4 = elementPointer4->geometry().center();
-    const GlobalPosition& globalPos5 = elementPointer5->geometry().center();
-    const GlobalPosition& globalPos6 = elementPointer6->geometry().center();
-    const GlobalPosition& globalPos7 = elementPointer7->geometry().center();
-    const GlobalPosition& globalPos8 = elementPointer8->geometry().center();
+    const GlobalPosition& globalPos1 = element1.geometry().center();
+    const GlobalPosition& globalPos2 = element2.geometry().center();
+    const GlobalPosition& globalPos3 = element3.geometry().center();
+    const GlobalPosition& globalPos4 = element4.geometry().center();
+    const GlobalPosition& globalPos5 = element5.geometry().center();
+    const GlobalPosition& globalPos6 = element6.geometry().center();
+    const GlobalPosition& globalPos7 = element7.geometry().center();
+    const GlobalPosition& globalPos8 = element8.geometry().center();
 
     // cell volumes
-    Scalar volume1 = elementPointer1->geometry().volume();
-    Scalar volume2 = elementPointer2->geometry().volume();
-    Scalar volume3 = elementPointer3->geometry().volume();
-    Scalar volume4 = elementPointer4->geometry().volume();
-    Scalar volume5 = elementPointer5->geometry().volume();
-    Scalar volume6 = elementPointer6->geometry().volume();
-    Scalar volume7 = elementPointer7->geometry().volume();
-    Scalar volume8 = elementPointer8->geometry().volume();
+    Scalar volume1 = element1.geometry().volume();
+    Scalar volume2 = element2.geometry().volume();
+    Scalar volume3 = element3.geometry().volume();
+    Scalar volume4 = element4.geometry().volume();
+    Scalar volume5 = element5.geometry().volume();
+    Scalar volume6 = element6.geometry().volume();
+    Scalar volume7 = element7.geometry().volume();
+    Scalar volume8 = element8.geometry().volume();
 
     // cell index
-    int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
-    int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
-    int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
-    int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
-    int eIdxGlobal5 = problem_.variables().index(*elementPointer5);
-    int eIdxGlobal6 = problem_.variables().index(*elementPointer6);
-    int eIdxGlobal7 = problem_.variables().index(*elementPointer7);
-    int eIdxGlobal8 = problem_.variables().index(*elementPointer8);
+    int eIdxGlobal1 = problem_.variables().index(element1);
+    int eIdxGlobal2 = problem_.variables().index(element2);
+    int eIdxGlobal3 = problem_.variables().index(element3);
+    int eIdxGlobal4 = problem_.variables().index(element4);
+    int eIdxGlobal5 = problem_.variables().index(element5);
+    int eIdxGlobal6 = problem_.variables().index(element6);
+    int eIdxGlobal7 = problem_.variables().index(element7);
+    int eIdxGlobal8 = problem_.variables().index(element8);
 
     //get the cell Data
     CellData& cellData1 = problem_.variables().cellData(eIdxGlobal1);
@@ -847,28 +844,28 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     //                interactionVolume.printInteractionVolumeInfo();
     // evaluate right hand side
     PrimaryVariables source(0.0);
-    problem_.source(source, *elementPointer1);
+    problem_.source(source, element1);
     this->f_[eIdxGlobal1] += volume1 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-    problem_.source(source, *elementPointer2);
+    problem_.source(source, element2);
     this->f_[eIdxGlobal2] += volume2 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-    problem_.source(source, *elementPointer3);
+    problem_.source(source, element3);
     this->f_[eIdxGlobal3] += volume3 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-    problem_.source(source, *elementPointer4);
+    problem_.source(source, element4);
     this->f_[eIdxGlobal4] += volume4 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-    problem_.source(source, *elementPointer5);
+    problem_.source(source, element5);
     this->f_[eIdxGlobal5] += volume5 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-    problem_.source(source, *elementPointer6);
+    problem_.source(source, element6);
     this->f_[eIdxGlobal6] += volume6 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-    problem_.source(source, *elementPointer7);
+    problem_.source(source, element7);
     this->f_[eIdxGlobal7] += volume7 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
-    problem_.source(source, *elementPointer8);
+    problem_.source(source, element8);
     this->f_[eIdxGlobal8] += volume8 / (8.0)
         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
@@ -2292,26 +2289,26 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
             continue;
         }
 
-        ElementPointer& elementPointer = interactionVolume.getSubVolumeElement(elemIdx);
+        auto element = interactionVolume.getSubVolumeElement(elemIdx);
 
         // get global coordinate of cell centers
-        const GlobalPosition& globalPos = elementPointer->geometry().center();
+        const GlobalPosition& globalPos = element.geometry().center();
 
         // cell volumes
-        Scalar volume = elementPointer->geometry().volume();
+        Scalar volume = element.geometry().volume();
 
         // cell index
-        int eIdxGlobal = problem_.variables().index(*elementPointer);
+        int eIdxGlobal = problem_.variables().index(element);
 
         //get the cell Data
         CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         // permeability vector at boundary
-        DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(*elementPointer));
+        DimMatrix permeability(problem_.spatialParams().intrinsicPermeability(element));
 
         // evaluate right hand side
         PrimaryVariables source(0);
-        problem_.source(source, *elementPointer);
+        problem_.source(source, element);
         this->f_[eIdxGlobal] += volume / (8.0)
             * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
@@ -2367,7 +2364,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
                     }
 
                     Scalar pcBound = MaterialLaw::pc(
-                                                     problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
+                                                     problem_.spatialParams().materialLawParams(element), satWBound);
 
                     Scalar gravityDiffBound = (problem_.bBoxMax() - globalPosFace) * gravity_
                         * (density_[nPhaseIdx] - density_[wPhaseIdx]);
@@ -2375,9 +2372,9 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
                     pcBound += gravityDiffBound;
 
                     Dune::FieldVector<Scalar, numPhases>
-                      lambdaBound(MaterialLaw::krw(problem_.spatialParams().materialLawParams(*elementPointer),satWBound));
+                      lambdaBound(MaterialLaw::krw(problem_.spatialParams().materialLawParams(element),satWBound));
                     lambdaBound[nPhaseIdx] = MaterialLaw::krn(
-                                                              problem_.spatialParams().materialLawParams(*elementPointer), satWBound);
+                                                              problem_.spatialParams().materialLawParams(element), satWBound);
                     lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
                     lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 

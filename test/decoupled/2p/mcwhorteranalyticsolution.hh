@@ -70,7 +70,6 @@ class McWhorterAnalytic
     };
 
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FieldVector<Scalar, dimworld> GlobalPosition;
 
@@ -100,12 +99,11 @@ private:
         for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eEndIt; ++eIt)
         {
             // get entity
-            ElementPointer element = *eIt;
-            int index = problem_.variables().index(*element);
+            int index = problem_.variables().index(*eIt);
 
             Scalar sat = problem_.variables().cellData(index).saturation(wPhaseIdx);
 
-            Scalar volume = element->geometry().volume();
+            Scalar volume = eIt->geometry().volume();
 
             Scalar error = analyticSolution_[index] - sat;
 

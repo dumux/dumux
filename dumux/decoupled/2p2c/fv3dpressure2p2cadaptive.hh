@@ -129,8 +129,6 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
@@ -271,7 +269,7 @@ private:
     const Implementation &asImp_() const
     {   return *static_cast<const Implementation *>(this);}
 
-    int searchCommonVertex_(const Intersection& is, VertexPointer& vertexPointer)
+    int searchCommonVertex_(const Intersection& is, Vertex& vertex)
     {
         /******* get corner of interest ************/
         // search through corners of large cell with isIt
@@ -282,20 +280,20 @@ private:
         for(localIdxLarge = 0; localIdxLarge<is.inside()->template count<dim>(); ++localIdxLarge)
 #endif
         {
-            const VertexPointer vPtrLarge = is.inside()->template subEntity<dim>(localIdxLarge);
+            auto vLarge = is.inside().template subEntity<dim>(localIdxLarge);
 
             // search through corners of small cell with isIt
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            for(int verticeSmall = 0; verticeSmall<is.outside()->subEntities(dim); ++verticeSmall)
+            for(int verticeSmall = 0; verticeSmall<is.outside().subEntities(dim); ++verticeSmall)
 #else
             for(int verticeSmall = 0; verticeSmall<is.outside()->template count<dim>(); ++verticeSmall)
 #endif
             {
-                const VertexPointer vPtrSmall = is.outside()->template subEntity<dim>(verticeSmall);
+                auto vSmall = is.outside().template subEntity<dim>(verticeSmall);
 
-                if(problem().variables().index(*vPtrSmall) == problem().variables().index(*vPtrLarge) )
+                if(problem().variables().index(vSmall) == problem().variables().index(vLarge) )
                 {
-                    vertexPointer = vPtrSmall;
+                    vertex = vSmall;
                     return localIdxLarge;
                 }
             }
@@ -308,8 +306,8 @@ protected:
                                     InteractionVolume& interactionVolume,
                                     const int& subVolumeFaceIdx,
                                     bool properFluxDirection,
-                                    ElementPointer& additional2,
-                                    ElementPointer& additional3,
+                                    Element& additional2,
+                                    Element& additional3,
                                     TransmissivityMatrix& additionalT);
 
     std::map<int, std::vector<int> > irregularCellMap_; //!< Container to store all cell's Indice with a hanging node
@@ -413,15 +411,15 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                 if (isIt->neighbor())
                 {
                     //index outside
-                    int eIdxGlobalJ = problem().variables().index(*isIt->outside());
+                    int eIdxGlobalJ = problem().variables().index(isIt->outside());
 
                     // if mpfa is used, more entries might be needed if all interactionRegions are regarded
-                    if (isIt->outside()->level() > eIt->level()) //look from larger cell
+                    if (isIt->outside().level() > eIt->level()) //look from larger cell
                     {
-                        VertexPointer outerCornerPtr(isIt->inside()->template subEntity<dim>(0)); //initialize with rubbish
+                        auto outerCorner = isIt->inside().template subEntity<dim>(0); //initialize with rubbish
                         // prepare additional pointer to cells
-                        ElementPointer additional2(isIt->inside()); //initialize with something wrong!
-                        ElementPointer additional3(isIt->inside());
+                        auto additional2 = isIt->inside(); //initialize with something wrong!
+                        auto additional3 = isIt->inside();
 
                         // Prepare MPFA
                         /** get geometric Info, transmissibility matrix */
@@ -604,8 +602,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixIndices()
             if (isIt->neighbor())
             {
                 // access neighbor
-                ElementPointer outside = isIt->outside();
-                int eIdxGlobalJ = problem().variables().index(*outside);
+                int eIdxGlobalJ = problem().variables().index(isIt->outside());
 
                 // add off diagonal index
                 this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
@@ -695,17 +692,17 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                 if (isIt->neighbor())
                 {
 
-                    ElementPointer elementNeighbor = isIt->outside();
-                    int eIdxGlobalJ = problem().variables().index(*elementNeighbor);
+                    auto neighbor = isIt->outside();
+                    int eIdxGlobalJ = problem().variables().index(neighbor);
                     //check for hanging nodes
                     //take a hanging node never from the element with smaller level!
-                    bool haveSameLevel = (eIt->level() == elementNeighbor->level());
+                    bool haveSameLevel = (eIt->level() == neighbor.level());
                     // calculate only from one side, but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
                         && (eIdxGlobalI > eIdxGlobalJ) && haveSameLevel
-                        && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                        && neighbor.partitionType() == Dune::InteriorEntity)
                         continue;
 
                     entries = 0;
@@ -739,7 +736,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 
                         // The second condition is needed to not spoil the ghost element entries
                         if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
-                            && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                            && neighbor.partitionType() == Dune::InteriorEntity)
                         {
                             this->f_[eIdxGlobalJ] += entries[rhs];
                             this->A_[eIdxGlobalJ][eIdxGlobalJ] += entries[matrix];
@@ -810,26 +807,26 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
                                                     const CellData& cellDataI)
 {
     // acess Cell I
-    ElementPointer elementPointerI = isIt->inside();
-    int eIdxGlobalI = problem().variables().index(*elementPointerI);
+    auto elementI = isIt->inside();
+    int eIdxGlobalI = problem().variables().index(elementI);
 
     // get global coordinate of cell center
-    const GlobalPosition& globalPos = elementPointerI->geometry().center();
+    const GlobalPosition& globalPos = elementI.geometry().center();
 
     // cell volume & perimeter, assume linear map here
-    Scalar volume = elementPointerI->geometry().volume();
+    Scalar volume = elementI.geometry().volume();
     Scalar perimeter = cellDataI.perimeter();
 
     // get absolute permeability
-    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPointerI));
+    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(elementI));
 
     // access neighbor
-    ElementPointer neighborPointer = isIt->outside();
-    int eIdxGlobalJ = problem().variables().index(*neighborPointer);
+    auto neighbor = isIt->outside();
+    int eIdxGlobalJ = problem().variables().index(neighbor);
     CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
     // gemotry info of neighbor
-    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+    const GlobalPosition& globalPosNeighbor = neighbor.geometry().center();
 
     // distance vector between barycenters
     GlobalPosition distVec = globalPosNeighbor - globalPos;
@@ -841,7 +838,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
     unitDistVec /= dist;
 
     DimMatrix permeabilityJ
-        = problem().spatialParams().intrinsicPermeability(*neighborPointer);
+        = problem().spatialParams().intrinsicPermeability(neighbor);
 
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
@@ -860,7 +857,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
 
     // determine volume derivatives in neighbor
     if (!cellDataJ.hasVolumeDerivatives())
-        asImp_().volumeDerivatives(globalPosNeighbor, *neighborPointer);
+        asImp_().volumeDerivatives(globalPosNeighbor, neighbor);
 
     ComponentVector dv_dC(0.), graddv_dC(0.);
     for (int compIdx = 0; compIdx < NumComponents; ++compIdx)
@@ -1143,19 +1140,19 @@ void FV3dPressure2P2CAdaptive<TypeTag>::get1pMpfaFlux(const IntersectionIterator
                                                     const CellData& cellDataI)
 {
     // acess Cell I
-    ElementPointer elementPointerI = isIt->inside();
-    int eIdxGlobalI = problem().variables().index(*elementPointerI);
+    auto elementI = isIt->inside();
+    int eIdxGlobalI = problem().variables().index(elementI);
 
     // get global coordinate of cell center
-    const GlobalPosition& globalPos = elementPointerI->geometry().center();
+    const GlobalPosition& globalPos = elementI.geometry().center();
 
     // access neighbor
-    ElementPointer neighborPointer = isIt->outside();
-    int eIdxGlobalJ = problem().variables().index(*neighborPointer);
+    auto neighbor = isIt->outside();
+    int eIdxGlobalJ = problem().variables().index(neighbor);
     CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
     // gemotry info of neighbor
-    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+    const GlobalPosition& globalPosNeighbor = neighbor.geometry().center();
 
     // due to "safety cell" around subdomain, both cells I and J
     // have single-phase conditions, although one is in 2p domain.
@@ -1351,19 +1348,17 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         int& eIdxGlobal6)
 {
     // get geometry information of cellI = cell1, cellJ = cell2
-    ElementPointer eIt = isIt->inside();
-//    int eIdxGlobalI =  problem().variables().index(*eIt);
-    ElementPointer neighborPointer = isIt->outside();
-    GlobalPosition globalPos1 = eIt->geometry().center();
-    GlobalPosition globalPos2 = neighborPointer->geometry().center();
-    DimMatrix K1(problem().spatialParams().intrinsicPermeability(*eIt));
-    DimMatrix K2(problem().spatialParams().intrinsicPermeability(*neighborPointer));
-//    int eIdxGlobalJ =  problem().variables().index(*isIt->outside());
+    auto element = isIt->inside();
+    auto neighbor = isIt->outside();
+    GlobalPosition globalPos1 = element.geometry().center();
+    GlobalPosition globalPos2 = neighbor.geometry().center();
+    DimMatrix K1(problem().spatialParams().intrinsicPermeability(element));
+    DimMatrix K2(problem().spatialParams().intrinsicPermeability(neighbor));
 
     // determine ID of intersection seen from larger cell
     int intersectionID = 0;
     if(isIt->inside()->level() < isIt->outside()->level())
-        intersectionID = problem().grid().localIdSet().subId(*eIt,
+        intersectionID = problem().grid().localIdSet().subId(element,
                 isIt->indexInInside(), 1);
     else
         DUNE_THROW(Dune::NotImplemented, " ABORT, transmiss calculated from wrong side!!");
@@ -1379,11 +1374,11 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     IntersectionIterator face24=isIt; // as long as face24 = isIt, it is still not found!
     IntersectionIterator face26=isIt; // as long as face26 = isIt, it is still not found!
 
-    IntersectionIterator nextIsEnd = problem().gridView().iend(*neighborPointer);
-    for (IntersectionIterator isIt2 = problem().gridView().ibegin(*neighborPointer); isIt2 != nextIsEnd; ++isIt2)
+    IntersectionIterator nextIsEnd = problem().gridView().iend(neighbor);
+    for (IntersectionIterator isIt2 = problem().gridView().ibegin(neighbor); isIt2 != nextIsEnd; ++isIt2)
     {
         // continue if no neighbor or arrived at intersection
-        if(!(isIt2->neighbor()) or isIt2->outside() == eIt)
+        if(!(isIt2->neighbor()) || isIt2->outside() == element)
             continue;
 
         int currentNeighbor = problem().variables().index(*isIt2->outside());
@@ -1430,7 +1425,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     int localFace24 = face24->indexInInside();
     int localFace26 = face26->indexInInside();
 
-    const ReferenceElement& referenceElement = ReferenceElementContainer::general(neighborPointer->geometry().type());
+    const ReferenceElement& referenceElement = ReferenceElementContainer::general(neighbor.geometry().type());
     //find 'x'5 = edgeCoord1226
     int edge1226;
     // search through edges of face 12
@@ -1451,7 +1446,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         }
     }
     GlobalPosition edgeCoord1226 =  // 'x'5
-            neighborPointer->geometry().global(referenceElement.position(edge1226, dim-1));
+            neighbor.geometry().global(referenceElement.position(edge1226, dim-1));
 
     //find 'x'4 = edgeCoord1224
     int edge1224;
@@ -1472,7 +1467,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         }
     }
     GlobalPosition edgeCoord1224 =  // 'x'4
-            neighborPointer->geometry().global(referenceElement.position(edge1224, dim-1));
+            neighbor.geometry().global(referenceElement.position(edge1224, dim-1));
 
     //find 'x'6 = edgeCoord2426
     int edge2426;
@@ -1493,7 +1488,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         }
     }
     GlobalPosition edgeCoord2426 =   // 'x'6
-            neighborPointer->geometry().global(referenceElement.position(edge2426, dim-1));
+            neighbor.geometry().global(referenceElement.position(edge2426, dim-1));
 
     /** 2) Calculate omega, chi for matrices  **/
     // center of face in global coordinates, i.e., the midpoint of face 'isIt24'
@@ -1666,25 +1661,25 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         //initialize additional transmissitivity matrix
         TransmissivityMatrix additionalT(0.);
 
-        VertexPointer outerCornerPtr(isIt->inside()->template subEntity<dim>(0)); //initialize with rubbish
+        auto outerCorner = isIt->inside().template subEntity<dim>(0); //initialize with rubbish
         // prepare additonal pointer to cells
-        ElementPointer additional2(isIt->inside()); //initialize with something wrong!
-        ElementPointer additional3(isIt->inside());
+        auto additional2 = isIt->inside(); //initialize with something wrong!
+        auto additional3 = isIt->inside();
         int caseL = -2;
 
         /**** 2nd interaction region: get corner of interest ************/
         // search through corners of large cell with isIt
-        int localIdxLarge = searchCommonVertex_(*isIt, outerCornerPtr);
+        int localIdxLarge = searchCommonVertex_(*isIt, outerCorner);
 
         //in the parallel case, skip all border entities
         #if HAVE_MPI
         if (problem().gridView().comm().size() > 1)
-            if(outerCornerPtr->partitionType() != Dune::InteriorEntity)
+            if(outerCorner.partitionType() != Dune::InteriorEntity)
                 caseL = -1; // abort this specific interaction volume
         #endif
 
         // get Interaction Volume object
-        int vIdxGlobal = problem().variables().index(*outerCornerPtr);
+        int vIdxGlobal = problem().variables().index(outerCorner);
         InteractionVolume& interactionVolume
                         = interactionVolumesContainer_->interactionVolume(vIdxGlobal);
 
@@ -1715,8 +1710,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         if(caseL != -1) //check if we regard 2 interaction regions
         {
             problem().variables().storeMpfaData3D(*isIt, additionalT,
-                    additional2->geometry().center(), problem().variables().index(*additional2),
-                    additional3->geometry().center(), problem().variables().index(*additional3),
+                    additional2.geometry().center(), problem().variables().index(additional2),
+                    additional3.geometry().center(), problem().variables().index(additional3),
                     1); // offset for second interaction region
             countInteractionRegions++;
         }
@@ -1727,17 +1722,17 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
             // loop through remaining 2 points
             std::vector<int> diagonal;
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            for(int verticeSmall = 0; verticeSmall < isIt->outside()->subEntities(dim); ++verticeSmall)
+            for(int verticeSmall = 0; verticeSmall < isIt->outside().subEntities(dim); ++verticeSmall)
 #else
             for(int verticeSmall = 0; verticeSmall<isIt->outside()->template count<dim>(); ++verticeSmall)
 #endif
             {
-                const VertexPointer vPtrSmall = isIt->outside()->template subEntity<dim>(verticeSmall);
+                auto vSmall = isIt->outside().template subEntity<dim>(verticeSmall);
 
                 //in the parallel case, skip all border entities
                 #if HAVE_MPI
                 if (problem().gridView().comm().size() > 1)
-                    if(vPtrSmall->partitionType() != Dune::InteriorEntity)
+                    if(vSmall.partitionType() != Dune::InteriorEntity)
                         continue;
                 #endif
 
@@ -1751,10 +1746,10 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
                     GlobalPosition vertexOnInterface
                         = isIt->geometryInOutside().corner(indexOnFace);
 
-                    if(vPtrSmall != outerCornerPtr
+                    if(vSmall != outerCorner
                             && ((vertexOnInterface - vertexOnElement).two_norm()<1e-5))
                     {
-                        int vIdxGlobal = problem().variables().index(*vPtrSmall);
+                        int vIdxGlobal = problem().variables().index(vSmall);
                         // acess interactionVolume
                         InteractionVolume& interactionVolume
                             = interactionVolumesContainer_->interactionVolume(vIdxGlobal);
@@ -1767,7 +1762,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 
                         if(hangingNodeType != InteractionVolume::fourSmallCellsFace)
                         {
-                            diagonal.push_back(problem().variables().index(*vPtrSmall));
+                            diagonal.push_back(problem().variables().index(vSmall));
                             // a) take interaction volume and determine fIdx
                             if(hangingNodeType == InteractionVolume::noHangingNode)
                             {
@@ -1791,8 +1786,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
                             if(caseL != -1) //check if we regard this interaction region
                             {
                                 problem().variables().storeMpfaData3D(*isIt, additionalT,
-                                        additional2->geometry().center(), problem().variables().index(*additional2),
-                                        additional3->geometry().center(), problem().variables().index(*additional3),
+                                        additional2.geometry().center(), problem().variables().index(additional2),
+                                        additional3.geometry().center(), problem().variables().index(additional3),
                                         countInteractionRegions); // offset for this interaction region
                                 countInteractionRegions++;
                             }
@@ -1830,8 +1825,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 * \param subVolumeFaceIdx The local index of the intersection of interest in the interaction volume
 * \param properFluxDirection True if the intersection normal coincides
 *           with the local indexing in the interaction volume
-* \param[out] additional2 Pointer to the 3rd cell's element in the interaction volume
-* \param[out] additional3 Pointer to the 4th cell's element in the interaction volume
+* \param[out] additional2 The 3rd cell's element in the interaction volume
+* \param[out] additional3 The 4th cell's element in the interaction volume
 * \param[out] additionalT Transmissitivity matrix calculated
 */
 template<class TypeTag>
@@ -1839,8 +1834,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
                                 InteractionVolume& interactionVolume,
                                 const int& subVolumeFaceIdx,
                                 bool properFluxDirection,
-                                ElementPointer& additional2,
-                                ElementPointer& additional3,
+                                Element& additional2,
+                                Element& additional3,
                                 TransmissivityMatrix& additionalT)
 {
     // abort if we are on boundary

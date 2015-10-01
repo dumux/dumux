@@ -77,7 +77,6 @@ class FvMpfaL3dInteractionVolumeContainer
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename Intersection::Geometry IntersectionGeometry;
@@ -431,12 +430,12 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
         bool takeIntersection = true;
         if (isIt->neighbor())
         {
-            ElementPointer outside = isIt->outside();
-            int eIdxGlobalJ = problem_.variables().index(*outside);
+            auto outside = isIt->outside();
+            int eIdxGlobalJ = problem_.variables().index(outside);
 
-            if (levelI == outside->level() && eIdxGlobal > eIdxGlobalJ)
+            if (levelI == outside.level() && eIdxGlobal > eIdxGlobalJ)
                 takeIntersection = false;
-            if (levelI < outside->level())
+            if (levelI < outside.level())
                 takeIntersection = false;
         }
 
@@ -1384,11 +1383,11 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
 
     if (sameLevel)
     {
-        ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
-        ElementPointer& elementPointer8 = interactionVolume.getSubVolumeElement(7);
+        auto element1 = interactionVolume.getSubVolumeElement(0);
+        auto element8 = interactionVolume.getSubVolumeElement(7);
 
-        const ElementGeometry& geometry1 = elementPointer1->geometry();
-        const ElementGeometry& geometry8 = elementPointer8->geometry();
+        const ElementGeometry& geometry1 = element1.geometry();
+        const ElementGeometry& geometry8 = element8.geometry();
 
         const ReferenceElement& referenceElement = ReferenceElements::general(geometry1.type());
 
@@ -1535,8 +1534,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                 interactionVolume.setOutsideFace(10);
                 interactionVolume.setOutsideFace(11);
 
-                ElementPointer& element = interactionVolume.getSubVolumeElement(0);
-                int eIdxGlobal = problem_.variables().index(*element);
+                int eIdxGlobal = problem_.variables().index(interactionVolume.getSubVolumeElement(0));
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 0, 0)/4.0,0);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 0, 1)/4.0,3);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 0, 2)/4.0,8);
@@ -1553,8 +1551,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                 interactionVolume.setOutsideFace(10);
                 interactionVolume.setOutsideFace(11);
 
-                ElementPointer& element = interactionVolume.getSubVolumeElement(1);
-                int eIdxGlobal = problem_.variables().index(*element);
+                int eIdxGlobal = problem_.variables().index(interactionVolume.getSubVolumeElement(1));
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 1, 0)/4.0,1);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 1, 1)/4.0,0);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 1, 2)/4.0,9);
@@ -1571,8 +1568,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                 interactionVolume.setOutsideFace(9);
                 interactionVolume.setOutsideFace(10);
 
-                ElementPointer& element = interactionVolume.getSubVolumeElement(2);
-                int eIdxGlobal = problem_.variables().index(*element);
+                int eIdxGlobal = problem_.variables().index(interactionVolume.getSubVolumeElement(2));
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 2, 0)/4.0,3);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 2, 1)/4.0,2);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 2, 2)/4.0,11);
@@ -1589,8 +1585,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                 interactionVolume.setOutsideFace(9);
                 interactionVolume.setOutsideFace(11);
 
-                ElementPointer& element = interactionVolume.getSubVolumeElement(3);
-                int eIdxGlobal = problem_.variables().index(*element);
+                int eIdxGlobal = problem_.variables().index(interactionVolume.getSubVolumeElement(3));
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 3, 0)/4.0,2);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 3, 1)/4.0,1);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 3, 2)/4.0,10);
@@ -1607,8 +1602,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                 interactionVolume.setOutsideFace(10);
                 interactionVolume.setOutsideFace(11);
 
-                ElementPointer& element = interactionVolume.getSubVolumeElement(4);
-                int eIdxGlobal = problem_.variables().index(*element);
+                int eIdxGlobal = problem_.variables().index(interactionVolume.getSubVolumeElement(4));
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 4, 0)/4.0,8);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 4, 1)/4.0,4);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 4, 2)/4.0,7);
@@ -1625,8 +1619,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                 interactionVolume.setOutsideFace(10);
                 interactionVolume.setOutsideFace(11);
 
-                ElementPointer& element = interactionVolume.getSubVolumeElement(5);
-                int eIdxGlobal = problem_.variables().index(*element);
+                int eIdxGlobal = problem_.variables().index(interactionVolume.getSubVolumeElement(5));
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 5, 0)/4.0,9);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 5, 1)/4.0,5);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 5, 2)/4.0,4);
@@ -1643,8 +1636,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                 interactionVolume.setOutsideFace(9);
                 interactionVolume.setOutsideFace(10);
 
-                ElementPointer& element = interactionVolume.getSubVolumeElement(6);
-                int eIdxGlobal = problem_.variables().index(*element);
+                int eIdxGlobal = problem_.variables().index(interactionVolume.getSubVolumeElement(6));
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 6, 0)/4.0,11);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 6, 1)/4.0,7);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 6, 2)/4.0,6);
@@ -1661,8 +1653,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                 interactionVolume.setOutsideFace(9);
                 interactionVolume.setOutsideFace(11);
 
-                ElementPointer& element = interactionVolume.getSubVolumeElement(7);
-                int eIdxGlobal = problem_.variables().index(*element);
+                int eIdxGlobal = problem_.variables().index(interactionVolume.getSubVolumeElement(7));
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 7, 0)/4.0,10);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 7, 1)/4.0,6);
                 interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal, 7, 2)/4.0,5);
@@ -1674,8 +1665,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
             // edge
             if (interactionVolume.hasSubVolumeElement(0))
             {
-                ElementPointer& element1 = interactionVolume.getSubVolumeElement(0);
-                int eIdxGlobal1 = problem_.variables().index(*element1);
+                int eIdxGlobal1 = problem_.variables().index(interactionVolume.getSubVolumeElement(0));
                 if (interactionVolume.hasSubVolumeElement(1))
                 {
                     interactionVolume.setOutsideFace(4);
@@ -1686,8 +1676,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(10);
                     interactionVolume.setOutsideFace(11);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(1);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(1));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 0, 1)/4.0,3);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 0, 2)/4.0,8);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 1, 0)/4.0,1);
@@ -1705,8 +1694,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(9);
                     interactionVolume.setOutsideFace(10);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(2);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(2));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 0, 0)/4.0,0);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 0, 2)/4.0,8);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 2, 1)/4.0,2);
@@ -1724,8 +1712,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(6);
                     interactionVolume.setOutsideFace(11);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(4);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(4));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 0, 0)/4.0,0);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 0, 1)/4.0,3);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 4, 1)/4.0,4);
@@ -1736,8 +1723,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
             }
             if (interactionVolume.hasSubVolumeElement(7))
             {
-                ElementPointer& element1 = interactionVolume.getSubVolumeElement(7);
-                int eIdxGlobal1 = problem_.variables().index(*element1);
+                int eIdxGlobal1 = problem_.variables().index(interactionVolume.getSubVolumeElement(7));
                 if (interactionVolume.hasSubVolumeElement(5))
                 {
                     interactionVolume.setOutsideFace(0);
@@ -1748,8 +1734,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(8);
                     interactionVolume.setOutsideFace(11);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(5);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(5));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 7, 0)/4.0,10);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 7, 1)/4.0,6);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 5, 0)/4.0,9);
@@ -1767,8 +1752,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(8);
                     interactionVolume.setOutsideFace(9);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(6);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(6));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 7, 0)/4.0,10);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 7, 2)/4.0,5);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 6, 0)/4.0,11);
@@ -1786,8 +1770,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(7);
                     interactionVolume.setOutsideFace(11);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(3);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(3));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 7, 1)/4.0,6);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 7, 2)/4.0,5);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 3, 0)/4.0,2);
@@ -1798,8 +1781,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
             }
             if (interactionVolume.hasSubVolumeElement(5))
             {
-                ElementPointer& element1 = interactionVolume.getSubVolumeElement(5);
-                int eIdxGlobal1 = problem_.variables().index(*element1);
+                int eIdxGlobal1 = problem_.variables().index(interactionVolume.getSubVolumeElement(5));
                 if (interactionVolume.hasSubVolumeElement(1))
                 {
                     interactionVolume.setOutsideFace(3);
@@ -1810,8 +1792,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(6);
                     interactionVolume.setOutsideFace(10);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(1);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(1));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 5, 1)/4.0,5);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 5, 2)/4.0,4);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 1, 0)/4.0,1);
@@ -1829,8 +1810,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(10);
                     interactionVolume.setOutsideFace(11);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(4);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(4));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 5, 0)/4.0,9);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 5, 1)/4.0,5);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 4, 0)/4.0,8);
@@ -1841,8 +1821,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
             }
             if (interactionVolume.hasSubVolumeElement(6))
             {
-                ElementPointer& element1 = interactionVolume.getSubVolumeElement(6);
-                int eIdxGlobal1 = problem_.variables().index(*element1);
+                int eIdxGlobal1 = problem_.variables().index(interactionVolume.getSubVolumeElement(6));
                 if (interactionVolume.hasSubVolumeElement(4))
                 {
                     interactionVolume.setOutsideFace(1);
@@ -1853,8 +1832,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(2);
                     interactionVolume.setOutsideFace(3);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(4);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(4));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 6, 0)/4.0,11);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 6, 2)/4.0,6);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 4, 0)/4.0,8);
@@ -1872,8 +1850,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(4);
                     interactionVolume.setOutsideFace(8);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(2);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(2));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 6, 1)/4.0,7);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 6, 2)/4.0,6);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 2, 0)/4.0,3);
@@ -1884,8 +1861,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
             }
             if (interactionVolume.hasSubVolumeElement(3))
             {
-                ElementPointer& element1 = interactionVolume.getSubVolumeElement(3);
-                int eIdxGlobal1 = problem_.variables().index(*element1);
+                int eIdxGlobal1 = problem_.variables().index(interactionVolume.getSubVolumeElement(3));
                 if (interactionVolume.hasSubVolumeElement(1))
                 {
                     interactionVolume.setOutsideFace(4);
@@ -1896,8 +1872,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(8);
                     interactionVolume.setOutsideFace(11);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(1);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(1));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 3, 0)/4.0,2);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 3, 2)/4.0,10);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 1, 1)/4.0,0);
@@ -1915,8 +1890,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(8);
                     interactionVolume.setOutsideFace(9);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(2);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(2));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 3, 1)/4.0,1);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 3, 2)/4.0,10);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 2, 0)/4.0,3);
@@ -1932,12 +1906,10 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
             //side
             if (interactionVolume.hasSubVolumeElement(0))
             {
-                ElementPointer& element1 = interactionVolume.getSubVolumeElement(0);
-                int eIdxGlobal1 = problem_.variables().index(*element1);
+                int eIdxGlobal1 = problem_.variables().index(interactionVolume.getSubVolumeElement(0));
                 if (interactionVolume.hasSubVolumeElement(1))
                 {
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(1);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(1));
                     if (interactionVolume.hasSubVolumeElement(2) && interactionVolume.hasSubVolumeElement(3))
                     {
                         interactionVolume.setOutsideFace(4);
@@ -1945,10 +1917,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                         interactionVolume.setOutsideFace(6);
                         interactionVolume.setOutsideFace(7);
 
-                        ElementPointer& element3 = interactionVolume.getSubVolumeElement(2);
-                        int eIdxGlobal3 = problem_.variables().index(*element3);
-                        ElementPointer& element4 = interactionVolume.getSubVolumeElement(3);
-                        int eIdxGlobal4 = problem_.variables().index(*element4);
+                        int eIdxGlobal3 = problem_.variables().index(interactionVolume.getSubVolumeElement(2));
+                        int eIdxGlobal4 = problem_.variables().index(interactionVolume.getSubVolumeElement(3));
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 0, 2)/4.0, 8);
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 1, 2)/4.0, 9);
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal3, 2, 2)/4.0, 10);
@@ -1963,10 +1933,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                         interactionVolume.setOutsideFace(10);
                         interactionVolume.setOutsideFace(11);
 
-                        ElementPointer& element3 = interactionVolume.getSubVolumeElement(4);
-                        int eIdxGlobal3 = problem_.variables().index(*element3);
-                        ElementPointer& element4 = interactionVolume.getSubVolumeElement(5);
-                        int eIdxGlobal4 = problem_.variables().index(*element4);
+                        int eIdxGlobal3 = problem_.variables().index(interactionVolume.getSubVolumeElement(4));
+                        int eIdxGlobal4 = problem_.variables().index(interactionVolume.getSubVolumeElement(5));
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 0, 1)/4.0, 3);
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 1, 0)/4.0, 1);
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal3, 4, 2)/4.0, 7);
@@ -1983,12 +1951,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(9);
                     interactionVolume.setOutsideFace(10);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(2);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
-                    ElementPointer& element3 = interactionVolume.getSubVolumeElement(4);
-                    int eIdxGlobal3 = problem_.variables().index(*element3);
-                    ElementPointer& element4 = interactionVolume.getSubVolumeElement(6);
-                    int eIdxGlobal4 = problem_.variables().index(*element4);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(2));
+                    int eIdxGlobal3 = problem_.variables().index(interactionVolume.getSubVolumeElement(4));
+                    int eIdxGlobal4 = problem_.variables().index(interactionVolume.getSubVolumeElement(6));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 0, 0)/4.0, 0);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 2, 1)/4.0, 2);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal3, 4, 1)/4.0, 4);
@@ -1999,12 +1964,10 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
             }
             if (interactionVolume.hasSubVolumeElement(7))
             {
-                ElementPointer& element1 = interactionVolume.getSubVolumeElement(7);
-                int eIdxGlobal1 = problem_.variables().index(*element1);
+                int eIdxGlobal1 = problem_.variables().index(interactionVolume.getSubVolumeElement(7));
                 if (interactionVolume.hasSubVolumeElement(5))
                 {
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(5);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(5));
                     if (interactionVolume.hasSubVolumeElement(1) && interactionVolume.hasSubVolumeElement(3))
                     {
                         interactionVolume.setOutsideFace(3);
@@ -2012,10 +1975,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                         interactionVolume.setOutsideFace(8);
                         interactionVolume.setOutsideFace(11);
 
-                        ElementPointer& element3 = interactionVolume.getSubVolumeElement(1);
-                        int eIdxGlobal3 = problem_.variables().index(*element3);
-                        ElementPointer& element4 = interactionVolume.getSubVolumeElement(3);
-                        int eIdxGlobal4 = problem_.variables().index(*element4);
+                        int eIdxGlobal3 = problem_.variables().index(interactionVolume.getSubVolumeElement(1));
+                        int eIdxGlobal4 = problem_.variables().index(interactionVolume.getSubVolumeElement(3));
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 7, 1)/4.0, 6);
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 5, 2)/4.0, 4);
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal3, 1, 1)/4.0, 0);
@@ -2030,10 +1991,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                         interactionVolume.setOutsideFace(2);
                         interactionVolume.setOutsideFace(3);
 
-                        ElementPointer& element3 = interactionVolume.getSubVolumeElement(4);
-                        int eIdxGlobal3 = problem_.variables().index(*element3);
-                        ElementPointer& element4 = interactionVolume.getSubVolumeElement(6);
-                        int eIdxGlobal4 = problem_.variables().index(*element4);
+                        int eIdxGlobal3 = problem_.variables().index(interactionVolume.getSubVolumeElement(4));
+                        int eIdxGlobal4 = problem_.variables().index(interactionVolume.getSubVolumeElement(6));
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 7, 0)/4.0, 10);
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 5, 0)/4.0, 9);
                         interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal3, 4, 0)/4.0, 8);
@@ -2050,12 +2009,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
                     interactionVolume.setOutsideFace(8);
                     interactionVolume.setOutsideFace(9);
 
-                    ElementPointer& element2 = interactionVolume.getSubVolumeElement(6);
-                    int eIdxGlobal2 = problem_.variables().index(*element2);
-                    ElementPointer& element3 = interactionVolume.getSubVolumeElement(2);
-                    int eIdxGlobal3 = problem_.variables().index(*element3);
-                    ElementPointer& element4 = interactionVolume.getSubVolumeElement(3);
-                    int eIdxGlobal4 = problem_.variables().index(*element4);
+                    int eIdxGlobal2 = problem_.variables().index(interactionVolume.getSubVolumeElement(6));
+                    int eIdxGlobal3 = problem_.variables().index(interactionVolume.getSubVolumeElement(2));
+                    int eIdxGlobal4 = problem_.variables().index(interactionVolume.getSubVolumeElement(3));
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal1, 7, 2)/4.0, 5);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal2, 6, 1)/4.0, 7);
                     interactionVolume.setFaceArea(getRealFaceArea(interactionVolume, eIdxGlobal3, 2, 0)/4.0, 3);
@@ -2082,10 +2038,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
     //Add elements to the interaction volumes and store element-vertex map
     ElementIterator eEndIt = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-    {
-        ElementPointer ePtr = *eIt;
-        storeSubVolumeElements(*ePtr, elemVertMap);
-    }
+        storeSubVolumeElements(*eIt, elemVertMap);
 
     for (unsigned int i = 0; i < interactionVolumes_.size(); i++)
         if (interactionVolumes_[i].getElementNumber() == 0)
@@ -2093,10 +2046,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
 
     // Store information related to DUNE intersections for all interaction volumes
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-    {
-        ElementPointer ePtr = *eIt;
-        storeIntersectionInfo(*ePtr, elemVertMap);
-    }
+        storeIntersectionInfo(*eIt, elemVertMap);
 
     // Complete storage of the interaction volumes using the previously stored information
     // about the orientation and relationship of the DUNE elements in the interaction volumes (see doc/docextra/3dmpfa)
@@ -2128,23 +2078,23 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
         // editors, Simulation of Flow in Porous Media - Applications in Energy and Environment. De Gruyter.)
         if (!interactionVolume.isBoundaryInteractionVolume())
         {
-            ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
-            ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
-            ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(2);
-            ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(3);
-            ElementPointer& elementPointer5 = interactionVolume.getSubVolumeElement(4);
-            ElementPointer& elementPointer6 = interactionVolume.getSubVolumeElement(5);
-            ElementPointer& elementPointer7 = interactionVolume.getSubVolumeElement(6);
-            ElementPointer& elementPointer8 = interactionVolume.getSubVolumeElement(7);
+            auto element1 = interactionVolume.getSubVolumeElement(0);
+            auto element2 = interactionVolume.getSubVolumeElement(1);
+            auto element3 = interactionVolume.getSubVolumeElement(2);
+            auto element4 = interactionVolume.getSubVolumeElement(3);
+            auto element5 = interactionVolume.getSubVolumeElement(4);
+            auto element6 = interactionVolume.getSubVolumeElement(5);
+            auto element7 = interactionVolume.getSubVolumeElement(6);
+            auto element8 = interactionVolume.getSubVolumeElement(7);
 
-            int eIdxGlobal1 = problem_.variables().index(*elementPointer1);
-            int eIdxGlobal2 = problem_.variables().index(*elementPointer2);
-            int eIdxGlobal3 = problem_.variables().index(*elementPointer3);
-            int eIdxGlobal4 = problem_.variables().index(*elementPointer4);
-            int eIdxGlobal5 = problem_.variables().index(*elementPointer5);
-            int eIdxGlobal6 = problem_.variables().index(*elementPointer6);
-            int eIdxGlobal7 = problem_.variables().index(*elementPointer7);
-            int eIdxGlobal8 = problem_.variables().index(*elementPointer8);
+            int eIdxGlobal1 = problem_.variables().index(element1);
+            int eIdxGlobal2 = problem_.variables().index(element2);
+            int eIdxGlobal3 = problem_.variables().index(element3);
+            int eIdxGlobal4 = problem_.variables().index(element4);
+            int eIdxGlobal5 = problem_.variables().index(element5);
+            int eIdxGlobal6 = problem_.variables().index(element6);
+            int eIdxGlobal7 = problem_.variables().index(element7);
+            int eIdxGlobal8 = problem_.variables().index(element8);
 
             addRealFluxFaceArea_(interactionVolume.getFaceArea(0, 0), eIdxGlobal1, interactionVolume.getIndexOnElement(0, 0));
             addRealFluxFaceArea_(interactionVolume.getFaceArea(0, 1), eIdxGlobal1, interactionVolume.getIndexOnElement(0, 1));

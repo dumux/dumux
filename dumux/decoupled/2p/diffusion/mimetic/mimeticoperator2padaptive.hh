@@ -62,7 +62,6 @@ class MimeticOperatorAssemblerTwoPAdaptive : public CROperatorAssemblerTwoPAdapt
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;

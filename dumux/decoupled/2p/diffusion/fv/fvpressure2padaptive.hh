@@ -80,7 +80,6 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
         rhs = ParentType::rhs, matrix = ParentType::matrix
     };
 
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
@@ -251,30 +250,30 @@ template<class TypeTag>
 void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection& intersection
         , const CellData& cellData, const bool first)
 {
-    ElementPointer elementI = intersection.inside();
-    ElementPointer elementJ = intersection.outside();
+    auto elementI = intersection.inside();
+    auto elementJ = intersection.outside();
 
-    if (elementI->level() == elementJ->level() || dim == 3)
+    if (elementI.level() == elementJ.level() || dim == 3)
     {
         ParentType::getFlux(entry, intersection, cellData, first);
 
         //add the entry only once in case the VisitFacesOnlyOnce option is enabled!!!
-        if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && elementI->level() < elementJ->level())
+        if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && elementI.level() < elementJ.level())
         {
             entry = 0.;
         }
     }
     // hanging node situation: neighbor has higher level
-    else if (elementJ->level() == elementI->level() + 1)
+    else if (elementJ.level() == elementI.level() + 1)
     {
-        const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(*elementJ));
+        const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(elementJ));
 
         // get global coordinates of cell centers
-        const GlobalPosition& globalPosI = elementI->geometry().center();
-        const GlobalPosition& globalPosJ = elementJ->geometry().center();
+        const GlobalPosition& globalPosI = elementI.geometry().center();
+        const GlobalPosition& globalPosJ = elementJ.geometry().center();
 
-        int globalIdxI = problem_.variables().index(*elementI);
-        int globalIdxJ = problem_.variables().index(*elementJ);
+        int globalIdxI = problem_.variables().index(elementI);
+        int globalIdxJ = problem_.variables().index(elementJ);
 
         // get mobilities and fractional flow factors
         Scalar lambdaWI = cellData.mobility(wPhaseIdx);
@@ -302,24 +301,24 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
         // Count number of hanging nodes
         // not really necessary
         int globalIdxK = 0;
-        ElementPointer elementK = intersection.outside();
+        auto elementK = intersection.outside();
         // We are looking for two things:
         // IsIndexJ, the index of the interface from the neighbor-cell point of view
         // GlobalIdxK, the index of the third cell
         // Intersectioniterator around cell I
-        IntersectionIterator isItEndI = problem_.gridView().iend(*elementI);
-        for (IntersectionIterator isItI = problem_.gridView().ibegin(*elementI); isItI != isItEndI; ++isItI)
+        IntersectionIterator isItEndI = problem_.gridView().iend(elementI);
+        for (IntersectionIterator isItI = problem_.gridView().ibegin(elementI); isItI != isItEndI; ++isItI)
         {
             if (isItI->neighbor())
             {
-                ElementPointer neighborPointer2 = isItI->outside();
+                auto neighbor2 = isItI->outside();
 
                 // make sure we do not choose elemntI as third element
                 // -> faces with hanging node have more than one intersection but only one face index!
-                if (neighborPointer2 != elementJ && isItI->indexInInside() == isIndexI)
+                if (neighbor2 != elementJ && isItI->indexInInside() == isIndexI)
                 {
-                    globalIdxK = problem_.variables().index(*neighborPointer2);
-                    elementK = neighborPointer2;
+                    globalIdxK = problem_.variables().index(neighbor2);
+                    elementK = neighbor2;
                     break;
                 }
             }
@@ -341,11 +340,11 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
         FieldMatrix permeabilityK(0);
 
         problem_.spatialParams().meanK(permeabilityI,
-                problem_.spatialParams().intrinsicPermeability(*elementI));
+                problem_.spatialParams().intrinsicPermeability(elementI));
         problem_.spatialParams().meanK(permeabilityJ,
-                problem_.spatialParams().intrinsicPermeability(*elementJ));
+                problem_.spatialParams().intrinsicPermeability(elementJ));
         problem_.spatialParams().meanK(permeabilityK,
-                problem_.spatialParams().intrinsicPermeability(*elementK));
+                problem_.spatialParams().intrinsicPermeability(elementK));
 
         // Calculate permeablity component normal to interface
         Scalar kI, kJ, kK, kMean, ng;

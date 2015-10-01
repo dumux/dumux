@@ -76,7 +76,6 @@ class FVVelocity2P
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
@@ -332,16 +331,16 @@ private:
 template<class TypeTag>
 void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
-    ElementPointer elementI = intersection.inside();
-    ElementPointer elementJ = intersection.outside();
+    auto elementI = intersection.inside();
+    auto elementJ = intersection.outside();
 
-    int eIdxGlobalJ = problem_.variables().index(*elementJ);
+    int eIdxGlobalJ = problem_.variables().index(elementJ);
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
     // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = (*elementI).geometry().center();
-    const GlobalPosition& globalPosJ = (*elementJ).geometry().center();
+    const GlobalPosition& globalPosI = (elementI).geometry().center();
+    const GlobalPosition& globalPosJ = (elementJ).geometry().center();
 
     // get mobilities and fractional flow factors
     Scalar lambdaWI = cellData.mobility(wPhaseIdx);
@@ -369,8 +368,8 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
 
-    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
-            problem_.spatialParams().intrinsicPermeability(*elementJ));
+    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(elementI),
+            problem_.spatialParams().intrinsicPermeability(elementJ));
 
     Dune::FieldVector<Scalar, dim> permeability(0);
     meanPermeability.mv(unitOuterNormal, permeability);
@@ -491,7 +490,7 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
 template<class TypeTag>
 void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
 {
-    ElementPointer element = intersection.inside();
+    auto element = intersection.inside();
 
     //get face index
     int isIndex = intersection.indexInInside();
@@ -509,7 +508,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         problem_.dirichlet(boundValues, intersection);
 
         // get global coordinates of cell centers
-        const GlobalPosition& globalPosI = (*element).geometry().center();
+        const GlobalPosition& globalPosI = element.geometry().center();
 
         // center of face in global coordinates
         const GlobalPosition& globalPosJ = intersection.geometry().center();
@@ -533,7 +532,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         // compute vectorized permeabilities
         DimMatrix meanPermeability(0);
 
-        problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*element));
+        problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(element));
 
         Dune::FieldVector<Scalar, dim> permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);
@@ -566,7 +565,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         }
 
         Scalar pressBound = boundValues[pressureIdx];
-        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*element), satW);
+        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
 
         //determine phase pressures from primary pressure variable
         Scalar pressWBound = 0;
@@ -583,7 +582,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         }
 
         //get temperature at current position
-        Scalar temperature = problem_.temperature(*element);
+        Scalar temperature = problem_.temperature(element);
 
         Scalar densityWBound = density_[wPhaseIdx];
         Scalar densityNwBound = density_[nPhaseIdx];
@@ -605,9 +604,9 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
             viscosityNwBound = FluidSystem::viscosity(fluidState, nPhaseIdx) / densityNwBound;
         }
 
-        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satW)
+        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosityWBound;
-        Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satW)
+        Scalar lambdaNwBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosityNwBound;
 
         Scalar potentialDiffW = cellData.fluxData().upwindPotential(wPhaseIdx, isIndex);

@@ -65,7 +65,6 @@ private:
       typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -310,9 +309,8 @@ public:
                 {
                     if (useSatInd_ || usePercentileSat_)
                     {
-                        // Greife auf Nachbarn zu
-                        ElementPointer outside = intersection.outside();
-                        int globalIdxJ = problem_.variables().index(*outside);
+                        // get neighbors
+                        int globalIdxJ = problem_.variables().index(intersection.outside());
 
                         Scalar satJ = 0.;
                         switch (saturationType_)

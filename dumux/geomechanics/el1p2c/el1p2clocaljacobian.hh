@@ -41,7 +41,6 @@ class ElOnePTwoCLocalJacobian : public ImplicitLocalJacobian<TypeTag>
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     enum {
         dim = GridView::dimension,
     };

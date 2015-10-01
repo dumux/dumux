@@ -87,7 +87,6 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
@@ -225,24 +224,24 @@ void FvMpfaL3dVelocity2pAdaptive<TypeTag>::calculateHangingNodeInteractionVolume
         CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
         CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8, int fIdx)
         {
-    ElementPointer& elementPointer1 = interactionVolume.getSubVolumeElement(0);
-    ElementPointer& elementPointer2 = interactionVolume.getSubVolumeElement(1);
-    ElementPointer& elementPointer3 = interactionVolume.getSubVolumeElement(2);
-    ElementPointer& elementPointer4 = interactionVolume.getSubVolumeElement(3);
-    ElementPointer& elementPointer5 = interactionVolume.getSubVolumeElement(4);
-    ElementPointer& elementPointer6 = interactionVolume.getSubVolumeElement(5);
-    ElementPointer& elementPointer7 = interactionVolume.getSubVolumeElement(6);
-    ElementPointer& elementPointer8 = interactionVolume.getSubVolumeElement(7);
+    auto element1 = interactionVolume.getSubVolumeElement(0);
+    auto element2 = interactionVolume.getSubVolumeElement(1);
+    auto element3 = interactionVolume.getSubVolumeElement(2);
+    auto element4 = interactionVolume.getSubVolumeElement(3);
+    auto element5 = interactionVolume.getSubVolumeElement(4);
+    auto element6 = interactionVolume.getSubVolumeElement(5);
+    auto element7 = interactionVolume.getSubVolumeElement(6);
+    auto element8 = interactionVolume.getSubVolumeElement(7);
 
     // cell index
-    int globalIdx1 = problem_.variables().index(*elementPointer1);
-    int globalIdx2 = problem_.variables().index(*elementPointer2);
-    int globalIdx3 = problem_.variables().index(*elementPointer3);
-    int globalIdx4 = problem_.variables().index(*elementPointer4);
-    int globalIdx5 = problem_.variables().index(*elementPointer5);
-    int globalIdx6 = problem_.variables().index(*elementPointer6);
-    int globalIdx7 = problem_.variables().index(*elementPointer7);
-    int globalIdx8 = problem_.variables().index(*elementPointer8);
+    int globalIdx1 = problem_.variables().index(element1);
+    int globalIdx2 = problem_.variables().index(element2);
+    int globalIdx3 = problem_.variables().index(element3);
+    int globalIdx4 = problem_.variables().index(element4);
+    int globalIdx5 = problem_.variables().index(element5);
+    int globalIdx6 = problem_.variables().index(element6);
+    int globalIdx7 = problem_.variables().index(element7);
+    int globalIdx8 = problem_.variables().index(element8);
 
     // pressures flux calculation
     Dune::FieldVector<Scalar, 8> potW(0);

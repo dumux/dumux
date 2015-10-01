@@ -102,7 +102,6 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
@@ -516,16 +515,13 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         const Intersection& intersection, const CellData& cellDataI)
 {
     entries = 0.;
-    ElementPointer elementPointerI = intersection.inside();
+    auto elementI = intersection.inside();
 
     // get global coordinate of cell center
-    const GlobalPosition& globalPos = elementPointerI->geometry().center();
-
-    // cell index
-//    int eIdxGlobalI = problem().variables().index(*elementPointerI);
+    const GlobalPosition& globalPos = elementI.geometry().center();
 
     // get absolute permeability
-    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPointerI));
+    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(elementI));
 
     // get normal vector
     const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
@@ -534,12 +530,12 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
     Scalar faceArea = intersection.geometry().volume();
 
         // access neighbor
-        ElementPointer neighborPointer = intersection.outside();
-        int eIdxGlobalJ = problem().variables().index(*neighborPointer);
+        auto neighbor = intersection.outside();
+        int eIdxGlobalJ = problem().variables().index(neighbor);
         CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
         // gemotry info of neighbor
-        const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+        const GlobalPosition& globalPosNeighbor = neighbor.geometry().center();
 
         // distance vector between barycenters
         GlobalPosition distVec = globalPosNeighbor - globalPos;
@@ -551,7 +547,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         unitDistVec /= dist;
 
         DimMatrix permeabilityJ
-            = problem().spatialParams().intrinsicPermeability(*neighborPointer);
+            = problem().spatialParams().intrinsicPermeability(neighbor);
 
         // compute vectorized permeabilities
         DimMatrix meanPermeability(0);
@@ -621,9 +617,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
 {
     entries = 0.;
     // get global coordinate of cell center
-    ElementPointer elementPointerI = intersection.inside();
-    const GlobalPosition& globalPos = elementPointerI->geometry().center();
-//    int eIdxGlobalI = problem().variables().index(*elementPointerI);
+    auto elementI = intersection.inside();
+    const GlobalPosition& globalPos = elementI.geometry().center();
+//    int eIdxGlobalI = problem().variables().index(elementI);
     int phaseIdx = cellDataI.subdomain();
 
     // get normal vector
@@ -651,7 +647,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
                 if (bcType.isDirichlet(Indices::pressureEqIdx))
                 {
                     // get absolute permeability
-                    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPointerI));
+                    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(elementI));
                     if(this->regulateBoundaryPermeability)
                     {
                         int axis = intersection.indexInInside() / 2;
@@ -699,11 +695,11 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
                             {
                             if (phaseIdx == wPhaseIdx)
                                 lambdaBound = MaterialLaw::krw(
-                                    problem().spatialParams().materialLawParams(*elementPointerI), BCfluidState.saturation(wPhaseIdx))
+                                    problem().spatialParams().materialLawParams(elementI), BCfluidState.saturation(wPhaseIdx))
                                     / viscosityBound;
                             else
                                 lambdaBound = MaterialLaw::krn(
-                                    problem().spatialParams().materialLawParams(*elementPointerI), BCfluidState.saturation(wPhaseIdx))
+                                    problem().spatialParams().materialLawParams(elementI), BCfluidState.saturation(wPhaseIdx))
                                     / viscosityBound;
                             break;
                             }
