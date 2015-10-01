@@ -1,4 +1,5 @@
 # build system clutter
+build-*
 Makefile.in
 Makefile
 .deps/
