@@ -1427,8 +1427,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     {
                         int localVertIdx14corner = referenceElement.subEntity(indexInInside14, dim - 1, j, dim);
 
-                        int globalVertIdx14corner = problem_.variables().index(
-                                *((*eIt).template subEntity < dim > (localVertIdx14corner)));
+                        int globalVertIdx14corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx14corner));
 
                         if (globalVertIdx12corner == globalVertIdx14corner)
                         {
@@ -1568,8 +1567,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                 int localVertIdx4corner = referenceElement.subEntity(isIt4->indexInInside(), dim - 1, i,
                                         dim);
 
-                                int globalVertIdx4corner = problem_.variables().index(
-                                        *((element4).template subEntity < dim > (localVertIdx4corner)));
+                                int globalVertIdx4corner = problem_.variables().index(element4.template subEntity<dim>(localVertIdx4corner));
 
                                 if (globalVertIdx4corner == globalVertIdx1234)
                                 {

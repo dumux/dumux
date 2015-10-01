@@ -175,11 +175,11 @@ public:
     {
         ParentType::initialize();
 
-        ElementIterator element = problem_.gridView().template begin<0>();
+        ElementIterator eIt = problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
-        fluidState.setTemperature(problem_.temperature(element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*eIt));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*eIt));
+        fluidState.setTemperature(problem_.temperature(*eIt));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -823,15 +823,13 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
                 int localVertIdx12corner = referenceElement.subEntity(indexInInside12, dim - 1, i, dim);
 
-                int globalVertIdx12corner = problem_.variables().index(
-                        *((*eIt).template subEntity < dim > (localVertIdx12corner)));
+                int globalVertIdx12corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx12corner));
 
                 for (int j = 0; j < isIt14->geometry().corners(); ++j)
                 {
                     int localVertIdx14corner = referenceElement.subEntity(indexInInside14, dim - 1, j, dim);
 
-                    int globalVertIdx14corner = problem_.variables().index(
-                            *((*eIt).template subEntity < dim > (localVertIdx14corner)));
+                    int globalVertIdx14corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx14corner));
 
                     if (globalVertIdx12corner == globalVertIdx14corner)
                     {
@@ -967,7 +965,7 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                 auto element34 = isIt4->outside();
 
                                 // find the common neighbor cell between cell 2 and cell 3, except cell 1
-                                if (element32 == element34 && element32 != eIt)
+                                if (element32 == element34 && element32 != *eIt)
                                 {
                                     //store pointer 3
                                     interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element32, 2);
@@ -1251,8 +1249,7 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                 int localVertIdx4corner = referenceElement.subEntity(isIt4->indexInInside(), dim - 1, i,
                                         dim);
 
-                                int globalVertIdx4corner = problem_.variables().index(
-                                        *((element4).template subEntity < dim > (localVertIdx4corner)));
+                                int globalVertIdx4corner = problem_.variables().index(element4.template subEntity<dim>(localVertIdx4corner));
 
                                 if (globalVertIdx4corner == globalVertIdx1234)
                                 {

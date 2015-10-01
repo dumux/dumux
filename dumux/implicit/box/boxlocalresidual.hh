@@ -55,7 +55,6 @@ class BoxLocalResidual : public ImplicitLocalResidual<TypeTag>
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GridView::Grid::ctype CoordScalar;
@@ -86,9 +85,8 @@ protected:
 
             if (bcTypes.hasDirichlet()) {
                 // ask the problem for the dirichlet values
-                const VertexPointer vPtr = this->element_().template subEntity<dim>(scvIdx);
                 Valgrind::SetUndefined(dirichletValues);
-                this->asImp_().problem_().dirichlet(dirichletValues, *vPtr);
+                this->asImp_().problem_().dirichlet(dirichletValues, this->element_().template subEntity<dim>(scvIdx));
 
                 // set the dirichlet conditions
                 for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {

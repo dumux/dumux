@@ -266,7 +266,7 @@ public:
     //!\copydoc FvMpfaL3dInteractionVolume::setSubVolumeElement()
     void setSubVolumeElement(const Element& element, int subVolumeIdx)
     {
-        ParentType::setSubVolumeElement(element.seed(), subVolumeIdx);
+        ParentType::setSubVolumeElement(element, subVolumeIdx);
         existingLevel_.insert(element.level());
     }
 

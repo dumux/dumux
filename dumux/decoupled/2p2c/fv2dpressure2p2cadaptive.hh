@@ -806,7 +806,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     // get geometry information of cellI = cell1, cellJ = cell2
     auto element = isIt->inside();
     auto neighbor = isIt->outside();
-    GlobalPosition globalPos1 = eIt->geometry().center();
+    GlobalPosition globalPos1 = element.geometry().center();
     GlobalPosition globalPos2 = neighbor.geometry().center();
     DimMatrix K1(problem().spatialParams().intrinsicPermeability(element));
     DimMatrix K2(problem().spatialParams().intrinsicPermeability(neighbor));

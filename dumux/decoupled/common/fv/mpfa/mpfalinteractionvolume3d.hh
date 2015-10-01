@@ -581,9 +581,9 @@ public:
             if (elements_[i].size() > 0)
             {
             std::cout<<"element "<<i<<":\n";
-            std::cout<<"element level: "<<elements_[i][0]->level()<<"\n";
-            std::cout<<"element position: "<<elements_[i][0]->geometry().center()<<"\n";
-            std::cout<<"element volume: "<<elements_[i][0]->geometry().volume()<<"\n";
+            std::cout<<"element level: "<<GridCreator::grid().entity(elements_[i][0]).level()<<"\n";
+            std::cout<<"element position: "<<GridCreator::grid().entity(elements_[i][0]).geometry().center()<<"\n";
+            std::cout<<"element volume: "<<GridCreator::grid().entity(elements_[i][0]).geometry().volume()<<"\n";
             std::cout<<"face indices on element: "<<indexOnElement_[i]<<"\n";
             std::cout<<"face normals on element: "<<normal_[i]<<"\n";
             std::cout<<"face areas on element: ";

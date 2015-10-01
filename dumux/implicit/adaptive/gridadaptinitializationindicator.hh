@@ -68,7 +68,6 @@ private:
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Traits::template Codim<dim>::EntityPointer VertexPointer;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid::ctype CoordScalar;
@@ -139,8 +138,7 @@ private:
             {
                 int scvIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
                 BoundaryTypes bcTypes = elemBcTypes[scvIdx];
-                const VertexPointer v = element.template subEntity<dim>(scvIdx);
-                problemBoundaryTypes_(bcTypes, *v);
+                problemBoundaryTypes_(bcTypes, element.template subEntity<dim>(scvIdx));
                 int bfIdx = fvGeometry.boundaryFaceIndex(fIdx, faceVertexIdx);
                 for (int i = 0; i < numEq; i++)
                 {

@@ -444,7 +444,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
             addRealFaceArea_(faceVol, eIdxGlobal, indexInInside);
             if (isIt->neighbor())
             {
-                int eIdxGlobalJ = problem_.variables().index(*(isIt->outside()));
+                int eIdxGlobalJ = problem_.variables().index(isIt->outside());
                 addRealFaceArea_(faceVol, eIdxGlobalJ, isIt->indexInOutside());
             }
 

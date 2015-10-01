@@ -269,8 +269,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(Transmissibil
                                                                    int idx1, int idx2, int idx3, int idx4,
                                                                    int idx5, int idx6)
 {
-    int level1 = interactionVolume.getSubVolumeElement(idx1)->level();
-    int level2 = interactionVolume.getSubVolumeElement(idx2)->level();
+    int level1 = interactionVolume.getSubVolumeElement(idx1).level();
+    int level2 = interactionVolume.getSubVolumeElement(idx2).level();
 
     if (enableTPFA_ && level1 == level2)
     {
@@ -370,8 +370,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(Transmissibil
                                                                    int idx2, int idx3, int idx4, int idx5,
                                                                    int idx6, Dune::FieldVector<bool, 4> &useCases)
 {
-    int level1 = interactionVolume.getSubVolumeElement(idx1)->level();
-    int level2 = interactionVolume.getSubVolumeElement(idx2)->level();
+    int level1 = interactionVolume.getSubVolumeElement(idx1).level();
+    int level2 = interactionVolume.getSubVolumeElement(idx2).level();
 
     if (enableTPFA_ && level1 == level2)
     {

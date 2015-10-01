@@ -230,7 +230,7 @@ void FvMpfaL3dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity()
             int eIdxGlobal[8];
             for (int i = 0; i < 8; i++)
             {
-                eIdxGlobal[i] = problem_.variables().index(*(interactionVolume.getSubVolumeElement(i)));
+                eIdxGlobal[i] = problem_.variables().index(interactionVolume.getSubVolumeElement(i));
             }
 
             //get the cell Data

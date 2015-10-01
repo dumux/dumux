@@ -123,6 +123,7 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
     };
 
     // typedefs to abbreviate several dune classes...
+    typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::ReferenceElements<Scalar, dim> ReferenceElementContainer;
     typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
