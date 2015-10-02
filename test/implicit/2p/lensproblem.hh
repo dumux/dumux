@@ -102,6 +102,7 @@ public:
 // Linear solver settings
 SET_TYPE_PROP(LensCCProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
 SET_TYPE_PROP(LensBoxProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 
@@ -112,13 +113,15 @@ SET_TYPE_PROP(LensCCAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitG
 SET_BOOL_PROP(LensBoxAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
 SET_TYPE_PROP(LensBoxAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
+#endif
 
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(LensBoxProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 SET_TYPE_PROP(LensCCProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
+#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(LensCCAdaptiveProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 SET_TYPE_PROP(LensBoxAdaptiveProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
-
+#endif
 }
 
 /*!
