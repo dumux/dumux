@@ -294,7 +294,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 /************* handle interior face *****************/
                 if (isIt->neighbor())
                 {
-                    int eIdxGlobalJ = problem().variables().index(*(isIt->outside()));
+                    int eIdxGlobalJ = problem().variables().index(isIt->outside());
 
                     if (cellDataI.subdomain() != 2
                             or problem().variables().cellData(eIdxGlobalJ).subdomain() != 2) // cell in the 1p domain
@@ -815,7 +815,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
                 {
                     if (isIt->neighbor())
                     {
-                        int eIdxGlobalJ = problem().variables().index(*(isIt->outside()));
+                        int eIdxGlobalJ = problem().variables().index(isIt->outside());
                         // mark neighbor Element
                         nextSubdomain[eIdxGlobalJ] = 2;
                     }

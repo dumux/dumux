@@ -256,7 +256,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                 rowSize++;
 
                 // if mpfa is used, more entries might be needed if both halfedges are regarded
-                if (enableMPFA && (enableSecondHalfEdge && isIt->outside()->level() != eIt->level()))
+                if (enableMPFA && (enableSecondHalfEdge && isIt->outside().level() != eIt->level()))
                 {
                     GlobalPosition globalPos3(0.);
                     int globalIdx3=-1;
@@ -322,7 +322,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                 this->A_.addindex(globalIdxI, globalIdxJ);
 
                 // if mpfa is used, more entries might be needed if both halfedges are regarded
-                if (enableMPFA && (enableSecondHalfEdge && isIt->outside()->level() != eIt->level()))
+                if (enableMPFA && (enableSecondHalfEdge && isIt->outside().level() != eIt->level()))
                 {
                     GlobalPosition globalPos3(0.);
                     int globalIdx3=-1;
@@ -619,12 +619,12 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
             potentialW += (cellDataI.pressure(wPhaseIdx)-temp1*densityW) * additionalT[2]
                             + (cellDataJ.pressure(wPhaseIdx)-temp2*densityW) * additionalT[0]
                             + (cellDataAdditional.pressure(wPhaseIdx)
-                                -(additionalIsIt->outside()->geometry().center()*gravity_)
+                                -(additionalIsIt->outside().geometry().center()*gravity_)
                               *densityW) * additionalT[1];
             potentialNW += (cellDataI.pressure(nPhaseIdx)-temp1*densityNW) * additionalT[2]
                             + (cellDataJ.pressure(nPhaseIdx)-temp2*densityNW) * additionalT[0]
                             + (cellDataAdditional.pressure(nPhaseIdx)
-                                -(additionalIsIt->outside()->geometry().center()*gravity_)
+                                -(additionalIsIt->outside().geometry().center()*gravity_)
                               *densityNW) * additionalT[1];
         }
 
@@ -729,7 +729,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
         // add gravity to RHS vector
         this->f_[globalIdxI] += (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n) * temp2 * additionalT[0];
         this->f_[globalIdxI] += (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n)
-                * (additionalIsIt->outside()->geometry().center()*gravity_) * additionalT[1];
+                * (additionalIsIt->outside().geometry().center()*gravity_) * additionalT[1];
         this->f_[globalIdxI] += (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n) * temp1 * additionalT[2];
 
         if(enableVolumeIntegral) // switch off volume integral for mpfa case
@@ -742,7 +742,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
             // add gravity to RHS vector
             this->f_[globalIdxI] -= weightingFactor * (densityW * lambdaW * gV_w + densityNW * lambdaN * gV_n) * temp2 * additionalT[0];
             this->f_[globalIdxI] -= weightingFactor * (densityW * lambdaW * gV_w + densityNW * lambdaN * gV_n)
-                    * (additionalIsIt->outside()->geometry().center()*gravity_) * additionalT[1];
+                    * (additionalIsIt->outside().geometry().center()*gravity_) * additionalT[1];
             this->f_[globalIdxI] -= weightingFactor * (densityW * lambdaW * gV_w + densityNW * lambdaN * gV_n) * temp1 * additionalT[2];
         }
 
@@ -884,7 +884,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         Dune::dgrave << "is 13 not found!!!" << std::endl;
 
     // get information of cell3
-    globalPos3 = face13->outside()->geometry().center();
+    globalPos3 = face13->outside().geometry().center();
     globalIdx3 = problem().variables().index(face13->outside());
     // get absolute permeability of neighbor cell 3
     DimMatrix K3(problem().spatialParams().intrinsicPermeability(*(face13->outside())));

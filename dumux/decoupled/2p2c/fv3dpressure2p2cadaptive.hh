@@ -276,9 +276,9 @@ private:
         // search through corners of large cell with isIt
         int localIdxLarge = 0;
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-        for(localIdxLarge = 0; localIdxLarge < is.inside()->subEntities(dim); ++localIdxLarge)
+        for(localIdxLarge = 0; localIdxLarge < is.inside().subEntities(dim); ++localIdxLarge)
 #else
-        for(localIdxLarge = 0; localIdxLarge<is.inside()->template count<dim>(); ++localIdxLarge)
+        for(localIdxLarge = 0; localIdxLarge<is.inside().template count<dim>(); ++localIdxLarge)
 #endif
         {
             auto vLarge = is.inside().template subEntity<dim>(localIdxLarge);
@@ -287,7 +287,7 @@ private:
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             for(int verticeSmall = 0; verticeSmall<is.outside().subEntities(dim); ++verticeSmall)
 #else
-            for(int verticeSmall = 0; verticeSmall<is.outside()->template count<dim>(); ++verticeSmall)
+            for(int verticeSmall = 0; verticeSmall<is.outside().template count<dim>(); ++verticeSmall)
 #endif
             {
                 auto vSmall = is.outside().template subEntity<dim>(verticeSmall);
@@ -372,14 +372,14 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                 rowSize++;
 
                 // special treatment for hanging nodes in the mpfa case
-                if (enableMPFA && (eIt->level() < isIt->outside()->level()))
+                if (enableMPFA && (eIt->level() < isIt->outside().level()))
                 {
                     // each cell might have 4 hanging nodes with 4 irregular neighbors each
                     // get global ID of Interface from larger cell
                     int intersectionID = problem().grid().localIdSet().subId(*eIt,
                             isIt->indexInInside(), 1);
                     //index outside
-                    int eIdxGlobalJ = problem().variables().index(*isIt->outside());
+                    int eIdxGlobalJ = problem().variables().index(isIt->outside());
 
                     // add Entry of current neighbor cell to the IS seen from large cell
                     irregularCellMap_[intersectionID].push_back(eIdxGlobalJ);
@@ -460,9 +460,9 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             {
                                 if (isItcheck->neighbor())
                                 {
-                                    if(additionalIdx2==problem().variables().index(*isItcheck->outside()))
+                                    if(additionalIdx2==problem().variables().index(isItcheck->outside()))
                                         additional2isNeighbor = true;
-                                    if(additionalIdx3 == problem().variables().index(*isItcheck->outside()))
+                                    if(additionalIdx3 == problem().variables().index(isItcheck->outside()))
                                         additional3isNeighbor = true;
                                 }
 
@@ -520,9 +520,9 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             {
                                 if (isItcheck->neighbor())
                                 {
-                                    if(additionalIdx2 == problem().variables().index(*isItcheck->outside()))
+                                    if(additionalIdx2 == problem().variables().index(isItcheck->outside()))
                                         additional2isNeighbor = true;
-                                    if(additionalIdx3 == problem().variables().index(*isItcheck->outside()))
+                                    if(additionalIdx3 == problem().variables().index(isItcheck->outside()))
                                         additional3isNeighbor = true;
                                 }
                             }
@@ -609,7 +609,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixIndices()
                 this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
 
                 // special treatment for hanging nodes in the mpfa case
-                if (enableMPFA && (eIt->level() < isIt->outside()->level()))
+                if (enableMPFA && (eIt->level() < isIt->outside().level()))
                 {
                     // prepare stuff to enter transmissibility calculation
                     GlobalPosition globalPos3(0.);
@@ -1358,7 +1358,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 
     // determine ID of intersection seen from larger cell
     int intersectionID = 0;
-    if(isIt->inside()->level() < isIt->outside()->level())
+    if(isIt->inside().level() < isIt->outside().level())
         intersectionID = problem().grid().localIdSet().subId(element,
                 isIt->indexInInside(), 1);
     else
@@ -1382,7 +1382,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         if(!(isIt2->neighbor()) || isIt2->outside() == element)
             continue;
 
-        int currentNeighbor = problem().variables().index(*isIt2->outside());
+        int currentNeighbor = problem().variables().index(isIt2->outside());
 
         // have we found face24?
         if (find(localIrregularCells.begin(), localIrregularCells.end(),
@@ -1408,15 +1408,15 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     }
 
     // get information of cell4
-    globalPos4 = face24->outside()->geometry().center();
-    eIdxGlobal4 = problem().variables().index(*(face24->outside()));
+    globalPos4 = face24->outside().geometry().center();
+    eIdxGlobal4 = problem().variables().index(face24->outside());
     GlobalPosition outerNormaln24 = face24->centerUnitOuterNormal();
     // get absolute permeability of neighbor cell 3
     DimMatrix K4(problem().spatialParams().intrinsicPermeability(*(face24->outside())));
 
     // get information of cell6
-    globalPos6 = face26->outside()->geometry().center();
-    eIdxGlobal6 = problem().variables().index(*(face26->outside()));
+    globalPos6 = face26->outside().geometry().center();
+    eIdxGlobal6 = problem().variables().index(face26->outside());
     GlobalPosition outerNormaln26 = face26->centerUnitOuterNormal();
     // get absolute permeability of neighbor cell 3
     DimMatrix K6(problem().spatialParams().intrinsicPermeability(*(face26->outside())));
@@ -1725,7 +1725,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             for(int verticeSmall = 0; verticeSmall < isIt->outside().subEntities(dim); ++verticeSmall)
 #else
-            for(int verticeSmall = 0; verticeSmall<isIt->outside()->template count<dim>(); ++verticeSmall)
+            for(int verticeSmall = 0; verticeSmall<isIt->outside().template count<dim>(); ++verticeSmall)
 #endif
             {
                 auto vSmall = isIt->outside().template subEntity<dim>(verticeSmall);
@@ -2020,8 +2020,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
         case 4:{
             if (hangingNodeType == InteractionVolume::fourSmallCellsEdge) // should never happen, cause TPFA should be applied
             {
-                assert(problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                        != problem().variables().index(*(interactionVolume.getSubVolumeElement(5)))); // else there would not be a subVolFaceIdx 4
+                assert(problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                        != problem().variables().index(interactionVolume.getSubVolumeElement(5))); // else there would not be a subVolFaceIdx 4
                 Dune::dgrave << " SubVolumeFace4 in hanging node type 3 should be modelled by"
                                 << " Tpfa!!" <<std::endl; // TODO: or use 1,5,3,4 and case 4
                 return -1;
@@ -2058,8 +2058,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
         case 5:{
             if (hangingNodeType == InteractionVolume::fourSmallCellsEdge)
             {
-                assert (problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                        != problem().variables().index(*(interactionVolume.getSubVolumeElement(6)))); // else there would not be a subVolFaceIdx 5
+                assert (problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                        != problem().variables().index(interactionVolume.getSubVolumeElement(6))); // else there would not be a subVolFaceIdx 5
                 Dune::dgrave << " SubVolumeFace5 in hanging node type 3 should be modelled by"
                                     << " Tpfa!!" <<std::endl; // TODO: or use 1,5,7,0 and case 3
                 return -1;
@@ -2119,8 +2119,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
         case 6:{
             if (hangingNodeType == InteractionVolume::fourSmallCellsEdge)
             {
-                assert (problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                        != problem().variables().index(*(interactionVolume.getSubVolumeElement(5)))); // else there would not be a subVolFaceIdx 4
+                assert (problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                        != problem().variables().index(interactionVolume.getSubVolumeElement(5))); // else there would not be a subVolFaceIdx 4
                 Dune::dgrave << " SubVolumeFace6 in hanging node type 3 should be modelled by"
                         << " Tpfa!!" <<std::endl; // TODO: or use 2,6,0,7 and case 4
                 return -1;
@@ -2162,8 +2162,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
         {
             if (hangingNodeType == InteractionVolume::fourSmallCellsEdge)
             {
-                assert (problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                        != problem().variables().index(*(interactionVolume.getSubVolumeElement(6)))); // else there would not be a subVolFaceIdx 5
+                assert (problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                        != problem().variables().index(interactionVolume.getSubVolumeElement(6))); // else there would not be a subVolFaceIdx 5
                 Dune::dgrave << " SubVolumeFace5 in hanging node type 3 should be modelled by"
                                     << " Tpfa!!" <<std::endl; // TODO: or use 4,0,6,1 and case 4
                 return -1;
@@ -2234,8 +2234,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
             }
             else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag
                             || (hangingNodeType == InteractionVolume::fourSmallCellsEdge
-                                && (problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                                    != problem().variables().index(*(interactionVolume.getSubVolumeElement(6))))) )
+                                && (problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                                    != problem().variables().index(interactionVolume.getSubVolumeElement(6)))) )
             {
                 useCases[0] = false;
                 useCases[1] = true;
@@ -2298,8 +2298,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
             }
             else if (hangingNodeType == InteractionVolume::fourSmallCellsDiag
                     || (hangingNodeType == InteractionVolume::fourSmallCellsEdge
-                        &&(problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                            != problem().variables().index(*(interactionVolume.getSubVolumeElement(6)))) ))
+                        &&(problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                            != problem().variables().index(interactionVolume.getSubVolumeElement(6))) ))
             {
                 useCases[0] = true;
                 useCases[1] = false;
@@ -2310,8 +2310,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
                                         lambda, 1, 5, 3, 7, 0, 4, useCases);
             }
             else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge
-                    &&(problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                            != problem().variables().index(*(interactionVolume.getSubVolumeElement(5)))) )
+                    &&(problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                            != problem().variables().index(interactionVolume.getSubVolumeElement(5))) )
             {
                 useCases[0] = true;
                 useCases[1] = false;
@@ -2359,8 +2359,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
                 caseL = mpfal3DTransmissibilityCalculator_.transmissibilityCaseTwo(T, interactionVolume,
                                         lambda, 7, 3, 1, 2);
             else if ((hangingNodeType == InteractionVolume::fourSmallCellsEdge
-                      &&(problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                            != problem().variables().index(*(interactionVolume.getSubVolumeElement(6)))) )
+                      &&(problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                            != problem().variables().index(interactionVolume.getSubVolumeElement(6))) )
                       || hangingNodeType == InteractionVolume::sixSmallCells)
             {
                 useCases[0] = false;
@@ -2433,8 +2433,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
                 caseL = mpfal3DTransmissibilityCalculator_.transmissibilityCaseOne(T, interactionVolume,
                                         lambda, 2, 6, 0, 3);
             else if ((hangingNodeType == InteractionVolume::fourSmallCellsEdge
-                            && (problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                                != problem().variables().index(*(interactionVolume.getSubVolumeElement(6)))))
+                            && (problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                                != problem().variables().index(interactionVolume.getSubVolumeElement(6))))
                     || hangingNodeType == InteractionVolume::sixSmallCells)
             {
                 useCases[0] = true;
@@ -2446,8 +2446,8 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
                                         lambda, 2, 6, 0, 4, 3, 7, useCases);
             }
             else if (hangingNodeType == InteractionVolume::fourSmallCellsEdge
-                        && (problem().variables().index(*(interactionVolume.getSubVolumeElement(4)))
-                            != problem().variables().index(*(interactionVolume.getSubVolumeElement(5)))) )
+                        && (problem().variables().index(interactionVolume.getSubVolumeElement(4))
+                            != problem().variables().index(interactionVolume.getSubVolumeElement(5))) )
             {
                 useCases[0] = true;
                 useCases[1] = false;

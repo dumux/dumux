@@ -230,7 +230,7 @@ public:
 
                 if (isIt->neighbor())
                 {
-                const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(*(isIt->outside())));
+                const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(isIt->outside()));
                 if (!checkPhysicalRange_(cellDataJ))
                 {
                     indicatorVector_[globalIdxI] = refineBound_ + 1.0;

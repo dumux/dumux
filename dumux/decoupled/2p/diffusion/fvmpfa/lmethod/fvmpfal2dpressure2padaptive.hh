@@ -858,15 +858,13 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 {
                     int localVertIdx12corner = referenceElement.subEntity(indexInInside12, dim - 1, i, dim);
 
-                    int globalVertIdx12corner = problem_.variables().index(
-                            *((*eIt).template subEntity < dim > (localVertIdx12corner)));
+                    int globalVertIdx12corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx12corner));
 
                     for (int j = 0; j < isIt14->geometry().corners(); ++j)
                     {
                         int localVertIdx14corner = referenceElement.subEntity(indexInInside14, dim - 1, j, dim);
 
-                        int globalVertIdx14corner = problem_.variables().index(
-                                *((*eIt).template subEntity < dim > (localVertIdx14corner)));
+                        int globalVertIdx14corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx14corner));
 
                         if (globalVertIdx12corner == globalVertIdx14corner)
                         {
@@ -1308,8 +1306,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                 int localVertIdx2corner = referenceElement.subEntity(isIt2->indexInInside(), dim - 1, i,
                                         dim);
 
-                                int globalVertIdx2corner = problem_.variables().index(
-                                        *((element2).template subEntity < dim > (localVertIdx2corner)));
+                                int globalVertIdx2corner = problem_.variables().index(element2.template subEntity<dim>(localVertIdx2corner));
 
                                 if (globalVertIdx2corner == globalVertIdx1234)
                                 {
@@ -1420,8 +1417,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                     int localVertIdx12corner = referenceElement.subEntity(indexInInside12, dim - 1, i, dim);
 
-                    int globalVertIdx12corner = problem_.variables().index(
-                            *((*eIt).template subEntity < dim > (localVertIdx12corner)));
+                    int globalVertIdx12corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx12corner));
 
                     for (int j = 0; j < isIt14->geometry().corners(); ++j)
                     {
@@ -2393,10 +2389,10 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                 auto element = interactionVolume.getSubVolumeElement(elemIdx);
 
                 // get global coordinate of cell centers
-                const GlobalPosition& globalPos = element->geometry().center();
+                const GlobalPosition& globalPos = element.geometry().center();
 
                 // cell volumes
-                Scalar volume = element->geometry().volume();
+                Scalar volume = element.geometry().volume();
 
                 // cell index
                 int eIdxGlobal = problem_.variables().index(element);
@@ -2436,11 +2432,11 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
                             const ReferenceElement& referenceElement = ReferenceElements::general(
-                                    element->geometry().type());
+                                    element.geometry().type());
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 
-                            const GlobalPosition& globalPosFace = element->geometry().global(localPos);
+                            const GlobalPosition& globalPosFace = element.geometry().global(localPos);
 
                             DimVector distVec(globalPosFace - globalPos);
                             Scalar dist = distVec.two_norm();

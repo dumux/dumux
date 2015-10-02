@@ -223,7 +223,7 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
             // handle interior face
             if (isIt->neighbor())
             {
-                if (enableMPFA && isIt->outside()->level() != eIt->level())
+                if (enableMPFA && isIt->outside().level() != eIt->level())
                     getMpfaFlux(entries, timestepFlux, isIt, cellDataI);
                 else
                     this->getFlux(entries, timestepFlux, *isIt, cellDataI);

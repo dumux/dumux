@@ -228,7 +228,7 @@ public:
 
                 if (isIt->neighbor())
                 {
-                    int neighborIdx = problem.variables().index(*(isIt->outside()));
+                    int neighborIdx = problem.variables().index(isIt->outside());
 
                     CellData& cellDataNeighbor = problem.variables().cellData(neighborIdx);
 

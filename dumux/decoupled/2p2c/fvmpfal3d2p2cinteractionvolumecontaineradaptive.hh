@@ -407,8 +407,8 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
     }
 
     Dune::dgrave << " Could not find "<< interactionVolume.getHangingNodeType() <<" case  configuration for I = "
-            << problem_.variables().index(*isIt->inside()) << " localIdx " << mapI << " , "
-            << problem_.variables().index(*isIt->outside()) << " localIdx " << mapJ << std::endl;
+            << problem_.variables().index(isIt->inside()) << " localIdx " << mapI << " , "
+            << problem_.variables().index(isIt->outside()) << " localIdx " << mapJ << std::endl;
 
     return -1;
 }
@@ -554,8 +554,8 @@ inline int FvMpfaL3d2P2CInteractionVolumeContainerAdaptive<TypeTag>::getMpfaCase
     }
 
     Dune::dgrave << " Could not find "<< interactionVolume.getHangingNodeType() <<" case  configuration for I = "
-            << problem_.variables().index(*isIt->inside()) << " localIdx " << mapI << " and "
-            << problem_.variables().index(*isIt->outside()) << " localIdx " << mapJ << std::endl;
+            << problem_.variables().index(isIt->inside()) << " localIdx " << mapI << " and "
+            << problem_.variables().index(isIt->outside()) << " localIdx " << mapJ << std::endl;
     return -1;
 }
 

@@ -226,7 +226,7 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
             // handle interior face
             if (isIt->neighbor())
             {
-                if (enableMPFA && (isIt->outside()->level() != eIt->level()))
+                if (enableMPFA && (isIt->outside().level() != eIt->level()))
                     getMpfaFlux(entries, timestepFlux, isIt, cellDataI);
                 else
                     this->getFlux(entries, timestepFlux, *isIt, cellDataI);
@@ -439,18 +439,18 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
             // second half edge, if there is one
             if(halfedgesStored == 2)
             {
-                int AdditionalIdx = problem().variables().index(*(additionalIsIt->outside()));
+                int AdditionalIdx = problem().variables().index(additionalIsIt->outside());
                 CellData& cellDataAdditional = problem().variables().cellData(AdditionalIdx);
                 potential[wPhaseIdx] += (pressI-temp1*densityW_mean) * additionalT[2]
                                 +(pressJ-temp2*densityW_mean) * additionalT[0]
                                 +(problem().pressureModel().pressure(AdditionalIdx)
-                                    -(additionalIsIt->outside()->geometry().center()*gravity_*densityW_mean)
+                                    -(additionalIsIt->outside().geometry().center()*gravity_*densityW_mean)
                                   ) * additionalT[1];
                 potential[nPhaseIdx] += (pressI+pcI-temp1*densityNW_mean) * additionalT[2]
                                 +(pressJ+pcJ-temp2*densityNW_mean) * additionalT[0]
                                 +(problem().pressureModel().pressure(AdditionalIdx)
                                     + cellDataAdditional.capillaryPressure()
-                                    -(additionalIsIt->outside()->geometry().center()*gravity_*densityNW_mean)
+                                    -(additionalIsIt->outside().geometry().center()*gravity_*densityNW_mean)
                                   ) * additionalT[1];
             }
         }
@@ -465,19 +465,19 @@ void FV2dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
             // second half edge, if there is one
             if(halfedgesStored == 2)
             {
-                int AdditionalIdx = problem().variables().index(*(additionalIsIt->outside()));
+                int AdditionalIdx = problem().variables().index(additionalIsIt->outside());
                 CellData& cellDataAdditional = problem().variables().cellData(AdditionalIdx);
 
                 potential[wPhaseIdx] += (pressI-pcI-temp1*densityW_mean) * additionalT[2]
                                 +(pressJ-pcJ-temp2*densityW_mean) * additionalT[0]
                                 +(problem().pressureModel().pressure(AdditionalIdx)
                                    - cellDataAdditional.capillaryPressure()
-                                   -(additionalIsIt->outside()->geometry().center()*gravity_*densityW_mean)
+                                   -(additionalIsIt->outside().geometry().center()*gravity_*densityW_mean)
                                   ) * additionalT[1];
                 potential[nPhaseIdx] += (pressI-temp1*densityNW_mean) * additionalT[2]
                                 +(pressJ-temp2*densityNW_mean) * additionalT[0]
                                 +(problem().pressureModel().pressure(AdditionalIdx)
-                                    -(additionalIsIt->outside()->geometry().center()*gravity_*densityNW_mean))
+                                    -(additionalIsIt->outside().geometry().center()*gravity_*densityNW_mean))
                                     * additionalT[1];
             }
         }

@@ -184,7 +184,7 @@ public:
                             {
                                 if (isItN->neighbor())
                                 {
-                                    if (isItN->outside() == eIt)
+                                    if (isItN->outside() == *eIt)
                                     {
                                         break;
                                     }

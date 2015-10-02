@@ -230,7 +230,7 @@ public:
             }
             if (indicator.coarsen(*eIt) && eIt->hasFather())
             {
-                int idx = idSet.id(*(eIt->father()));
+                int idx = idSet.id(eIt->father());
                 typename CoarsenMarkerType::iterator it = coarsenMarker.find(idx);
                 if (it != coarsenMarker.end())
                 {
@@ -252,7 +252,7 @@ public:
 
             if (indicator.coarsen(*eIt) && eIt->level() > levelMin_)
             {
-                int idx = idSet.id(*(eIt->father()));
+                int idx = idSet.id(eIt->father());
                 typename CoarsenMarkerType::iterator it = coarsenMarker.find(idx);
                 if (it != coarsenMarker.end())
                 {

@@ -120,7 +120,7 @@ private:
                    if (isIt->neighbor())
                    {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                       int neighborIdx = this->elementMapper_().index(*isIt->outside());
+                       int neighborIdx = this->elementMapper_().index(isIt->outside());
 #else
                        int neighborIdx = this->elementMapper_().map(*isIt->outside());
 #endif
@@ -173,7 +173,7 @@ private:
                 if (isIt->neighbor())
                 {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    int globalJ = this->elementMapper_().index(*(isIt->outside()));
+                    int globalJ = this->elementMapper_().index(isIt->outside());
 #else
                     int globalJ = this->elementMapper_().map(*(isIt->outside()));
 #endif
@@ -248,7 +248,7 @@ private:
             if (isIt->neighbor())
             {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                int globalJ = this->elementMapper_().index(*(isIt->outside()));
+                int globalJ = this->elementMapper_().index(isIt->outside());
 #else
                 int globalJ = this->elementMapper_().map(*(isIt->outside()));
 #endif
