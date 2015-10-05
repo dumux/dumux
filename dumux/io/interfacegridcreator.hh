@@ -460,8 +460,8 @@ public:
      */
     static GridPointer &gridPtr()
     {
-        static GridPointer interfaceGridCreator;
-        return interfaceGridCreator;
+        static GridPointer interfaceGrid;
+        return interfaceGrid;
     }
 };
 }
