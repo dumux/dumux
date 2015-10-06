@@ -49,8 +49,8 @@ public:
         const double eps1 = eps_*(b[4] - b[1]);
         const double eps2 = eps_*(b[5] - b[2]);
         return (b[0] - eps0 <= point[0] && point[0] <= b[3] + eps0 &&
-        	    b[1] - eps1 <= point[1] && point[1] <= b[4] + eps1 &&
-        	    b[2] - eps2 <= point[2] && point[2] <= b[5] + eps2);
+                b[1] - eps1 <= point[1] && point[1] <= b[4] + eps1 &&
+                b[2] - eps2 <= point[2] && point[2] <= b[5] + eps2);
     }
 
     // Compute the bounding box of a vector of bounding boxes
@@ -71,9 +71,12 @@ public:
         for (; it != end; ++it)
         {
             const double* b = leafBoxes.data() + 6*(*it);
-            // Maybe write out the loop for optimization
-            for (std::size_t coordIdx = 0; coordIdx < 6; ++coordIdx)
-                if (b[coordIdx] < bBox[coordIdx]) bBox[coordIdx] = b[coordIdx];
+            if (b[0] < bBox[0]) bBox[0] = b[0];
+            if (b[1] < bBox[1]) bBox[1] = b[1];
+            if (b[2] < bBox[2]) bBox[2] = b[2];
+            if (b[3] > bBox[3]) bBox[3] = b[3];
+            if (b[4] > bBox[4]) bBox[4] = b[4];
+            if (b[5] > bBox[5]) bBox[5] = b[5];
         }
 
         // Compute the longest axis
@@ -161,7 +164,7 @@ public:
         const double eps0 = eps_*(b[3] - b[0]);
         const double eps1 = eps_*(b[4] - b[1]);
         return (b[0] - eps0 <= point[0] && point[0] <= b[2] + eps0 &&
-        	    b[1] - eps1 <= point[1] && point[1] <= b[3] + eps1);
+                b[1] - eps1 <= point[1] && point[1] <= b[3] + eps1);
     }
 
     // Compute the bounding box of a vector of bounding boxes
@@ -182,9 +185,10 @@ public:
         for (; it != end; ++it)
         {
             const double* b = leafBoxes.data() + 4*(*it);
-            // Maybe write out the loop for optimization
-            for (std::size_t coordIdx = 0; coordIdx < 4; ++coordIdx)
-                if (b[coordIdx] < bBox[coordIdx]) bBox[coordIdx] = b[coordIdx];
+            if (b[0] < bBox[0]) bBox[0] = b[0];
+            if (b[1] < bBox[1]) bBox[1] = b[1];
+            if (b[2] > bBox[2]) bBox[2] = b[2];
+            if (b[3] > bBox[3]) bBox[3] = b[3];
         }
 
         // Compute the longest axis
@@ -242,17 +246,18 @@ template <class GridView>
 class IndexToElementMap
   : public std::vector<typename GridView::Traits::Grid::template Codim<0>::EntitySeed>
 {
+    typedef typename GridView::Traits::Grid Grid;
     typedef typename GridView::template Codim<0>::Entity Element;
 public:
     IndexToElementMap(const GridView& gridView)
-      : grid(gridView.grid()) {}
+      : grid_(gridView.grid()) {}
 
     template<class T>
     Element entity(T&& t)
-    { return grid_.entity(*this[std::forward<T>(t)]); }
+    { return grid_.entity((*this)[std::forward<T>(t)]); }
 
 private:
-    const GridView::Traits::Grid& grid_;
+    const Grid& grid_;
 };
 
 //! The bounding box class. Implements an axis-aligned bounding box tree for grids.
@@ -291,7 +296,7 @@ public:
         {
             unsigned int eIdx = leafGridView.indexSet().index(element);
             computeEntityBoundingBox_(leafBoxes.data() + 2*dimworld*eIdx, element);
-            indexToElementMap_->push_back(element.seed());
+            (*indexToElementMap_)[eIdx] = element.seed();
         }
 
         // Create the leaf partition (to be sorted)
@@ -308,7 +313,7 @@ public:
     }
 
     // Compute all intersections between entities and a point
-    std::vector<unsigned int> computeEntityCollisions(const Dune::FieldVector<double, dimworld>& point) const
+    std::vector<unsigned int> computeEntityCollisions(const Dune::FieldVector<double, dimworld>& point)
     {
         // Call the recursive find function to find candidates
         std::vector<unsigned int> entities;
@@ -348,7 +353,7 @@ private:
                         const std::vector<unsigned int>::iterator& begin,
                         const std::vector<unsigned int>::iterator& end)
     {
-        assert(begin > end);
+        assert(begin < end);
 
         // Create empty bounding box
         BoundingBox bBox;
@@ -367,12 +372,12 @@ private:
         }
 
         // Compute the bounding box of all bounding boxes in the range [begin, end]
-        double b[dimworld];
+        double b[dimworld*2];
         std::size_t axis;
         BoundingBoxTreeHelper<dimworld>::computeBBoxOfBBoxes(b, axis, leafBoxes, begin, end);
 
         // Sort bounding boxes along the longest axis
-        std::vector<unsigned int>::iterator middle = begin + (end - begin) / 2;
+        std::vector<unsigned int>::iterator middle = begin + (end - begin)/2;
         BoundingBoxTreeHelper<dimworld>::sortBoundingBoxes(axis, leafBoxes, begin, middle, end);
 
         // Split the bounding boxes into two branches and call build recursively
@@ -442,6 +447,7 @@ private:
     { return bBox.child_0 == node; }
 
     // Compute the bounding box of a grid entity
+    template <class Entity>
     void computeEntityBoundingBox_(double* b, const Entity& entity) const
     {
         // get the bounding box coordinates
@@ -462,8 +468,8 @@ private:
             corner = geometry.corner(vLocalIdx);
             for (std::size_t dimIdx = 0; dimIdx < dimworld; ++dimIdx)
             {
-                xMin[dimIdx] = std::min(xMin[dimIdx], corner(vLocalIdx)[dimIdx]);
-                xMax[dimIdx] = std::max(xMax[dimIdx], corner(vLocalIdx)[dimIdx]);
+                xMin[dimIdx] = std::min(xMin[dimIdx], corner[dimIdx]);
+                xMax[dimIdx] = std::max(xMax[dimIdx], corner[dimIdx]);
             }
         }
     }
