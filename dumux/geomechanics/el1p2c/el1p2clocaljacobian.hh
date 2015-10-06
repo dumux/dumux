@@ -109,7 +109,7 @@ public:
     {
         int dofIdxGlobal;
         FVElementGeometry neighborFVGeom;
-        auto& neighbor = this->element_();
+        auto neighbor = this->element_();
         if (isBox)
         {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
