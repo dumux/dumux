@@ -161,8 +161,8 @@ public:
                                    unsigned int node)
     {
         const double* b = boundingBoxCoordinates + 4*node;
-        const double eps0 = eps_*(b[3] - b[0]);
-        const double eps1 = eps_*(b[4] - b[1]);
+        const double eps0 = eps_*(b[2] - b[0]);
+        const double eps1 = eps_*(b[3] - b[1]);
         return (b[0] - eps0 <= point[0] && point[0] <= b[2] + eps0 &&
                 b[1] - eps1 <= point[1] && point[1] <= b[3] + eps1);
     }
@@ -237,6 +237,70 @@ public:
             const double* bi = bBoxes.data() + 4*i;
             const double* bj = bBoxes.data() + 4*j;
             return bi[1] + bi[3] < bj[1] + bj[3];
+        }
+    };
+};
+
+template <>
+class BoundingBoxTreeHelper<1>
+{
+    // An epsilon for floating point operations
+    static constexpr double eps_ = 1.0e-7;
+public:
+    // Check whether a point is in a bounding box
+    static bool pointInBoundingBox(const Dune::FieldVector<double, 1>& point,
+                                   double* boundingBoxCoordinates,
+                                   unsigned int node)
+    {
+        const double* b = boundingBoxCoordinates + 2*node;
+        const double eps0 = eps_*(b[1] - b[0]);
+        return b[0] - eps0 <= point[0] && point[0] <= b[1] + eps0;
+    }
+
+    // Compute the bounding box of a vector of bounding boxes
+    static void computeBBoxOfBBoxes(double* bBox,
+                                    std::size_t& axis,
+                                    const std::vector<double>& leafBoxes,
+                                    const std::vector<unsigned int>::iterator& begin,
+                                    const std::vector<unsigned int>::iterator& end)
+    {
+        // Copy the iterator and get coordinates of first box
+        auto it = begin;
+        const double* b = leafBoxes.data() + 2*(*it);
+        bBox[0] = b[0];
+        bBox[1] = b[1];
+
+        // Compute min and max with the remaining boxes
+        for (; it != end; ++it)
+        {
+            const double* b = leafBoxes.data() + 2*(*it);
+            if (b[0] < bBox[0]) bBox[0] = b[0];
+            if (b[1] > bBox[1]) bBox[1] = b[1];
+        }
+
+        // Compute the longest axis
+        axis = 0;
+    }
+
+    // Sort the bounding boxes along the longest axis
+    static void sortBoundingBoxes(std::size_t axis,
+                                  const std::vector<double>& leafBoxes,
+                                  const std::vector<unsigned int>::iterator& begin,
+                                  const std::vector<unsigned int>::iterator& middle,
+                                  const std::vector<unsigned int>::iterator& end)
+    { std::nth_element(begin, middle, end, lessXBox(leafBoxes)); }
+
+    // Comparison operators for sorting bounding boxes. There are sorted by their
+    // mid points along the longest axis
+    struct lessXBox
+    {
+        const std::vector<double>& bBoxes;
+        lessXBox(const std::vector<double>& bBoxes): bBoxes(bBoxes) {}
+        inline bool operator()(unsigned int i, unsigned int j)
+        {
+            const double* bi = bBoxes.data() + 2*i;
+            const double* bj = bBoxes.data() + 2*j;
+            return bi[0] + bi[1] < bj[0] + bj[1];
         }
     };
 };
@@ -405,7 +469,7 @@ private:
         const BoundingBox& bBox = getBoundingBox_(node);
 
         // if the point is not in the bounding box we can stop
-        if (!BoundingBoxTreeHelper<dimworld>::pointInBoundingBox(point, node))
+        if (!BoundingBoxTreeHelper<dimworld>::pointInBoundingBox(point, boundingBoxCoordinates_.data(), node))
             return;
 
         // We know now it's inside. If the box is a leaf add it.
