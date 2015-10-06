@@ -289,9 +289,17 @@ public:
 
         // Create bounding boxes for all elements
         const unsigned int numLeaves = leafGridView.size(0);
-        std::vector<double> leafBoxes(2*dimworld*numLeaves); // min and max for all dims
+
+        // log output
+        std::cout << "Start building bounding box tree grid with " << numLeaves << " entites." << std::endl;
+
+        // create a vector for leaf boxes (min and max for all dims)
+        std::vector<double> leafBoxes(2*dimworld*numLeaves);
+
+        // Create index to element map
         indexToElementMap_ = std::make_shared<IndexToElementMap<GridView> >(leafGridView);
         indexToElementMap_->resize(numLeaves);
+
         for (auto&& element : elements(leafGridView))
         {
             unsigned int eIdx = leafGridView.indexSet().index(element);
@@ -299,12 +307,12 @@ public:
             (*indexToElementMap_)[eIdx] = element.seed();
         }
 
-        // Create the leaf partition (to be sorted)
+        // Create the leaf partition, the set of available indices (to be sorted)
         std::vector<unsigned int> leafPartition(numLeaves);
         for (unsigned int i = 0; i < numLeaves; ++i)
             leafPartition[i] = i;
 
-        // Recursively build the bounding box tree starting from the leaves
+        // Recursively build the bounding box tree
         build_(leafBoxes, leafPartition.begin(), leafPartition.end());
 
         // We are done, log output
