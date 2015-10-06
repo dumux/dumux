@@ -40,9 +40,11 @@ class BoundingBoxTreeHelper<3>
     static constexpr double eps_ = 1.0e-7;
 public:
     // Check whether a point is in a bounding box
-    static bool pointInBoundingBox(const Dune::FieldVector<double, 3>& point, unsigned int node)
+    static bool pointInBoundingBox(const Dune::FieldVector<double, 3>& point,
+                                   double* boundingBoxCoordinates,
+                                   unsigned int node)
     {
-        const double* b = boundingBoxCoordinates_.data() + 6*node;
+        const double* b = boundingBoxCoordinates + 6*node;
         const double eps0 = eps_*(b[3] - b[0]);
         const double eps1 = eps_*(b[4] - b[1]);
         const double eps2 = eps_*(b[5] - b[2]);
@@ -151,9 +153,11 @@ class BoundingBoxTreeHelper<2>
     static constexpr double eps_ = 1.0e-7;
 public:
     // Check whether a point is in a bounding box
-    static bool pointInBoundingBox(const Dune::FieldVector<double, 2>& point, unsigned int node)
+    static bool pointInBoundingBox(const Dune::FieldVector<double, 2>& point,
+                                   double* boundingBoxCoordinates,
+                                   unsigned int node)
     {
-        const double* b = boundingBoxCoordinates_.data() + 4*node;
+        const double* b = boundingBoxCoordinates + 4*node;
         const double eps0 = eps_*(b[3] - b[0]);
         const double eps1 = eps_*(b[4] - b[1]);
         return (b[0] - eps0 <= point[0] && point[0] <= b[2] + eps0 &&
