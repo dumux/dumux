@@ -45,7 +45,6 @@
 #include <string>
 #include <vector>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/stdstreams.hh>
 
 namespace Dumux
@@ -88,14 +87,6 @@ public:
     {
         if (pclose(pipe_) == -1)
             assert("Could not close pipe to Gnuplot!");
-    }
-
-    DUNE_DEPRECATED_MSG("plot() signature has been changed")
-    void plot(const std::string &title,
-              const unsigned int plottingWindowNumber,
-              const bool interaction)
-    {
-        plot(title);
     }
 
     /*!
@@ -156,13 +147,6 @@ public:
         file.close();
     }
 
-
-    DUNE_DEPRECATED_MSG("reset() signature has been changed")
-    void reset(const unsigned int plottingWindowNumber)
-    {
-        reset();
-    }
-
     /*!
      * \brief Deletes all plots from a plotting window and resets user-defined options
      */
@@ -172,16 +156,6 @@ public:
         plotOptions_.resize(0);
         plotName_.resize(0);
         options_ = "";
-    }
-
-
-    DUNE_DEPRECATED_MSG("addFunctionToPlot() signature has been changed")
-    void addFunctionToPlot(const std::string function,
-                           const std::string plotName,
-                           const unsigned int plottingWindowNumber,
-                           const std::string plotOptions = "with lines")
-    {
-        addFunctionToPlot(function, plotName);
     }
 
     /*!
@@ -200,16 +174,6 @@ public:
         plotName_.push_back(plotName);
     }
 
-
-    DUNE_DEPRECATED_MSG("addFileToPlot() signature has been changed")
-    void addFileToPlot(const std::string file,
-                       const std::string plotName,
-                       const unsigned int plottingWindowNumber,
-                       const std::string plotOptions = "with lines")
-    {
-        addFileToPlot(file, plotName);
-    }
-
     /*!
      * \brief Adds a file to list of plotted lines for specific window number
      *
@@ -224,17 +188,6 @@ public:
         fileName_.push_back("'" + file + "'");
         plotOptions_.push_back(plotOptions);
         plotName_.push_back(plotName);
-    }
-
-
-    DUNE_DEPRECATED_MSG("addDataSetToPlot() signature has been changed")
-    void addDataSetToPlot(const std::vector<Scalar>& x,
-                          const std::vector<Scalar>& y,
-                          const std::string plotName,
-                          const unsigned int plottingWindowNumber,
-                          const std::string plotOptions = "with lines")
-    {
-        addDataSetToPlot(x, y, plotName);
     }
 
     /*!
@@ -280,14 +233,6 @@ public:
         interaction_ = interaction;
     }
 
-
-    DUNE_DEPRECATED_MSG("setXlabel() signature has been changed")
-    void setXlabel(const std::string& label,
-                   const unsigned int plottingWindowNumber)
-    {
-        setXlabel(label);
-    }
-
     /*!
      * \brief Sets the label for the x-axis
      *
@@ -298,14 +243,6 @@ public:
         xLabel_ = label;
     }
 
-
-    DUNE_DEPRECATED_MSG("setXlabel() signature has been changed")
-    void setYlabel(const std::string& label,
-                   const unsigned int plottingWindowNumber)
-    {
-        setYlabel(label);
-    }
-
     /*!
      * \brief Sets the label for the y-axis
      *
@@ -314,15 +251,6 @@ public:
     void setYlabel(const std::string& label)
     {
         yLabel_ = label;
-    }
-
-
-    DUNE_DEPRECATED_MSG("setXRange() signature has been changed")
-    void setXRange(Scalar lowerEnd,
-                   Scalar upperEnd,
-                   const unsigned int plottingWindowNumber)
-    {
-        setXRange(lowerEnd, upperEnd);
     }
 
     /*!
@@ -337,15 +265,6 @@ public:
         xRangeMax_ = std::max(xRangeMax_, upperEnd);
     }
 
-
-    DUNE_DEPRECATED_MSG("setYRange() signature has been changed")
-    void setYRange(Scalar lowerEnd,
-                   Scalar upperEnd,
-                   const unsigned int plottingWindowNumber)
-    {
-        setYRange(lowerEnd, upperEnd);
-    }
-
     /*!
      * \brief Sets the range for the y-axis
      *
@@ -358,14 +277,6 @@ public:
         yRangeMax_ = std::max(yRangeMax_, upperEnd);
     }
 
-
-    DUNE_DEPRECATED_MSG("setOption() signature has been changed")
-    void setOption(std::string option,
-                   const unsigned int plottingWindowNumber)
-    {
-        setOption(option);
-    }
-
     /*!
      * \brief Sets additional user-defined options
      *
@@ -376,14 +287,6 @@ public:
         options_ += option + "\n";
     }
 
-
-    DUNE_DEPRECATED_MSG("setOption() signature has been changed")
-    void setDatafileSeparator(char separator,
-                              const unsigned int plottingWindowNumber)
-    {
-        setDatafileSeparator(separator);
-    }
-
     /*!
      * \brief Sets the datafile separator
      *
@@ -392,36 +295,6 @@ public:
     void setDatafileSeparator(char separator)
     {
         datafileSeparator_ = separator;
-    }
-
-    /*!
-     * \brief Sets the plotting style for the data sets
-     *
-     * \param style Plot style of the data sets
-     */
-    DUNE_DEPRECATED_MSG("setStyle() functionality has been replaced by directly passing gnuplot options to the add..ToPlot function")
-    void setStyle(const PlotStyle& style)
-    {
-        switch (style)
-        {
-        case lines:
-            plotStyle_ = "lines";
-            break;
-        case points:
-            plotStyle_ = "points";
-            break;
-        case linesPoints:
-            plotStyle_ = "linespoints";
-            break;
-        case impulses:
-            plotStyle_ = "impulses";
-            break;
-        case dots:
-            plotStyle_ = "dots";
-            break;
-        default:
-            assert(!"Unknown plot style");
-        }
     }
 
 private:

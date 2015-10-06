@@ -62,15 +62,6 @@ public:
         gnuplotkrdsw_.setInteraction(interaction);
     }
 
-
-    DUNE_DEPRECATED_MSG("plotpcsw() has changed signature")
-    void plotpcsw(const MaterialLawParams &params,
-                  Scalar lowerSat,
-                  Scalar upperSat,
-                  std::string plotName,
-                  bool interaction)
-    { }
-
     /*!
      * \brief Plot the capillary pressure-saturation curve
      *
@@ -107,15 +98,6 @@ public:
         gnuplotpcsw_.plot("pc-Sw");
     }
 
-
-    DUNE_DEPRECATED_MSG("plotswpc() has changed signature")
-    void plotswpc(const MaterialLawParams &params,
-                  Scalar lowerSat,
-                  Scalar upperSat,
-                  std::string plotName,
-                  bool interaction)
-    { }
-
     /*!
      * \brief Plot the saturation-capillary pressure curve
      *
@@ -150,15 +132,6 @@ public:
         gnuplotswpc_.addDataSetToPlot(pc, sat, plotName + "_Sw-pc");
         gnuplotswpc_.plot("sw-pc");
     }
-
-
-    DUNE_DEPRECATED_MSG("plotdpcdsw() has changed signature")
-    void plotdpcdsw(const MaterialLawParams &params,
-                    Scalar lowerSat,
-                    Scalar upperSat,
-                    std::string plotName,
-                    bool interaction)
-    { }
 
     /*!
      * \brief Plot the gradient of the capillary pressure-saturation curve
@@ -196,15 +169,6 @@ public:
         gnuplotdpcdsw_.plot("dpcdsw");
     }
 
-
-    DUNE_DEPRECATED_MSG("plotdswdpc() has changed signature")
-    void plotdswdpc(const MaterialLawParams &params,
-                    Scalar lowerpc,
-                    Scalar upperpc,
-                    std::string plotName,
-                    bool interaction)
-    { }
-
     /*!
      * \brief Plot the gradient of the saturation-capillary pressure curve
      *
@@ -239,15 +203,6 @@ public:
         gnuplotdswdpc_.addDataSetToPlot(pc, dswdpc, plotName + "_dSwdpc-pc");
         gnuplotdswdpc_.plot("dswdpc");
     }
-
-
-    DUNE_DEPRECATED_MSG("plotkr() has changed signature")
-    void plotkr(const MaterialLawParams &params,
-                Scalar lowerSat,
-                Scalar upperSat,
-                std::string plotName,
-                bool interaction)
-    { }
 
     /*!
      * \brief Plot the relative permeabilities
@@ -287,15 +242,6 @@ public:
         gnuplotkr_.addDataSetToPlot(sw, krn, plotName + "_krn");
         gnuplotkr_.plot("kr");
     }
-
-
-    DUNE_DEPRECATED_MSG("plotdkrdsw() has changed signature")
-    void plotdkrdsw(const MaterialLawParams &params,
-                Scalar lowerSat,
-                Scalar upperSat,
-                std::string plotName,
-                bool interaction)
-    { }
 
     /*!
      * \brief Plot the gradient of the relative permeabilities

@@ -179,12 +179,6 @@ public:
         return result;
     }
 
-    Scalar evalPhaseStorage(const int scvIdx) const
-    DUNE_DEPRECATED_MSG("use evalPhaseStorageDerivative instead")
-    {
-        return evalPhaseStorageDerivative(scvIdx);
-    }
-
     /*!
      * \brief Compute storage term of all components within all phases
      */

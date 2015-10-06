@@ -24,7 +24,6 @@
 #ifndef DUMUX_TWOCZEROEQTWOPTWOCPROBLEM_HH
 #define DUMUX_TWOCZEROEQTWOPTWOCPROBLEM_HH
 
-#include <dune/common/deprecated.hh>
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser.hh>
@@ -126,18 +125,6 @@ class TwoCZeroEqTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-    /*!
-     * \brief The problem for the coupling of Stokes and Darcy flow
-     *
-     * \param mdGrid The multidomain grid
-     * \param timeManager The time manager
-     */
-    DUNE_DEPRECATED_MSG("This constructor is deprecated, please use the new constructor, which works with the common start facility. This has to be changed in the *.cc file.")
-    TwoCZeroEqTwoPTwoCProblem(MDGrid &mdGrid,
-                              TimeManager &timeManager)
-    : TwoCZeroEqTwoPTwoCProblem(timeManager, GridCreator::grid().leafGridView())
-    {}
-
     /*!
      * \brief The problem for the coupling of Stokes and Darcy flow
      *

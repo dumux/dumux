@@ -24,8 +24,6 @@
 #ifndef DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 #define DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/basicproperties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
@@ -61,13 +59,6 @@ class PlotThermalConductivityModel
     };
 
 public:
-    DUNE_DEPRECATED_MSG("Constructor() has changed signature")
-    PlotThermalConductivityModel()
-    : numIntervals_(1000)
-    {
-        PlotThermalConductivityModel(293.15, 1e5);
-    }
-
     /*!
      * \brief Constructor
      *
@@ -87,19 +78,6 @@ public:
         lambdaW_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, wPhaseIdx);
         lambdaN_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, nPhaseIdx);
         gnuplot_.setInteraction(interaction);
-    }
-
-
-    DUNE_DEPRECATED_MSG("plotlambdaeff() has changed signature")
-    void plotlambdaeff(Scalar porosity,
-                       Scalar rhoSolid,
-                       Scalar lambdaSolid,
-                       Scalar lowerSat,
-                       Scalar upperSat,
-                       std::string plotName,
-                       bool interaction)
-    {
-        plotlambdaeff(porosity, rhoSolid, lambdaSolid, lowerSat, upperSat, plotName);
     }
 
     /*!

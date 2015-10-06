@@ -9,7 +9,6 @@ dgfgridcreator.hh
 gnuplotinterface.hh
 gridcreator.hh
 interfacegridcreator.hh
-interfacemeshcreator.hh
 ploteffectivediffusivitymodel.hh
 plotmateriallaw.hh
 plotoverline2d.hh

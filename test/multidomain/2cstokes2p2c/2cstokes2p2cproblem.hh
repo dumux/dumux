@@ -32,7 +32,6 @@
 #ifndef DUMUX_2CSTOKES2P2CPROBLEM_HH
 #define DUMUX_2CSTOKES2P2CPROBLEM_HH
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/multidomaingrid.hh>
@@ -202,18 +201,6 @@ class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
 
 
 public:
-    /*!
-     * \brief The problem for the coupling of Stokes and Darcy flow
-     *
-     * \param mdGrid The multidomain grid
-     * \param timeManager The time manager
-     */
-    DUNE_DEPRECATED_MSG("This constructor is deprecated, please use the new constructor, which works with the common start facility. This has to be changed in the *.cc file.")
-    TwoCStokesTwoPTwoCProblem(MDGrid &mdGrid,
-                       TimeManager &timeManager)
-    : TwoCStokesTwoPTwoCProblem(timeManager, GridCreator::grid().leafGridView())
-    {}
-
     /*!
      * \brief The problem for the coupling of Stokes and Darcy flow
      *

@@ -99,25 +99,6 @@ public:
      *        so they can be read in by another program like matlab.
      *        The file can be found by the extension: dat
      */
-    DUNE_DEPRECATED_MSG("write() method has changed signature")
-    void write(const Problem & problem,
-               const GlobalPosition & pointOne,
-               const GlobalPosition & pointTwo,
-               const std::string appendOutputName = "")
-    {
-        write(problem, pointOne, pointTwo, true, appendOutputName);
-    }
-
-    /*!
-     * \brief A function that writes results over a line (like paraview's plotOverline into a text file.)
-     *
-     *        The writer needs to be called in postTimeStep().
-     *
-     *        This function puts output variables (TemperaturePhase, Saturation, t, tIndex, ...)
-     *        over space (1D, over a line) into a text file,
-     *        so they can be read in by another program like matlab.
-     *        The file can be found by the extension: dat
-     */
     void write(const Problem & problem,
                const GlobalPosition & pointOne,
                const GlobalPosition & pointTwo,

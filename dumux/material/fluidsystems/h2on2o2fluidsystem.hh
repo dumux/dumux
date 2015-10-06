@@ -109,9 +109,6 @@ public:
     static constexpr int wPhaseIdx = 0; // index of the wetting phase
     static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
 
-    static constexpr int lPhaseIdx = wPhaseIdx; // DEPRECATED index of the liquid phase
-    static constexpr int gPhaseIdx = nPhaseIdx; // DEPRECATED index of the gas phase
-
     /*!
      * \brief Return the human readable name of a fluid phase
      *
@@ -670,7 +667,7 @@ public:
                        << " in phase " << phaseIdx << " is undefined!\n");
         }
         // gas phase
-        if (phaseIdx == gPhaseIdx) {
+        if (phaseIdx == nPhaseIdx) {
             if (compIIdx == H2OIdx && compJIdx == N2Idx)
                 return BinaryCoeff::H2O_N2::gasDiffCoeff(T, p);
             if (compIIdx == H2OIdx && compJIdx == O2Idx)
