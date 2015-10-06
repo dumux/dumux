@@ -243,7 +243,7 @@ public:
         ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt)
         {
-            int idx = this->problem_().elementMapper().map(*elemIt);
+            int idx = this->problem_().elementMapper().index(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
             fvGeometry.update(this->gridView_(), *elemIt);
 
@@ -259,7 +259,7 @@ public:
 #endif
             for (int i = 0; i < numVerts; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                int globalIdx = this->vertexMapper().subIndex(*elemIt, i, dim);
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
@@ -394,7 +394,7 @@ public:
             fvGeometry.update(this->gridView_(), *it);
             for (int i = 0; i < fvGeometry.numScv; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*it, i, dim);
+                int globalIdx = this->vertexMapper().subIndex(*it, i, dim);
 
                 if (this->staticDat_[globalIdx].visited)
                     continue;

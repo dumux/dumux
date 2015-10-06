@@ -168,16 +168,16 @@ public:
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            int idx = this->elementMapper().map(*eIt);
+            int idx = this->elementMapper().index(*eIt);
             rank[idx] = this->gridView_().comm().rank();
 
             fvGeometry.update(this->gridView_(), *eIt);
             elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
 
-            int numLocalVerts = eIt->template count<dim>();
+            int numLocalVerts = eIt->template subEntities(dim);
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int vIdxGlobal = this->vertexMapper().map(*eIt, i, dim);
+                int vIdxGlobal = this->vertexMapper().subIndex(*eIt, i, dim);
                 volVars.update(sol[vIdxGlobal],
                                this->problem_(),
                                *eIt,
@@ -273,7 +273,7 @@ public:
                 numFluxVars += 1;
             }
 
-            int eIdxGlobal = this->elementMapper().map(*eIt);
+            int eIdxGlobal = this->elementMapper().index(*eIt);
             mut[eIdxGlobal] = sumDynamicEddyViscosity / numFluxVars;
             nut[eIdxGlobal] = sumKinematicEddyViscosity / numFluxVars;
             lmix[eIdxGlobal] = sumMixingLength / numFluxVars;
