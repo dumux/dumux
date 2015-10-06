@@ -31,15 +31,13 @@ namespace Dumux {
 
 // optimized dimension-dependent methods
 template <int dimworld>
-class BoundingBoxTreeHelper
-{
-	// An epsilon for floating point operations
-    static const double eps_ = 1.0e-7;
-};
+class BoundingBoxTreeHelper {};
 
 template <>
 class BoundingBoxTreeHelper<3>
 {
+    // An epsilon for floating point operations
+    static constexpr double eps_ = 1.0e-7;
 public:
     // Check whether a point is in a bounding box
     static bool pointInBoundingBox(const Dune::FieldVector<double, 3>& point, unsigned int node)
@@ -149,6 +147,8 @@ public:
 template <>
 class BoundingBoxTreeHelper<2>
 {
+    // An epsilon for floating point operations
+    static constexpr double eps_ = 1.0e-7;
 public:
     // Check whether a point is in a bounding box
     static bool pointInBoundingBox(const Dune::FieldVector<double, 2>& point, unsigned int node)
