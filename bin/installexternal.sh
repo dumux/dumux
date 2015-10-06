@@ -8,18 +8,14 @@ DOWNLOAD_ONLY="n"
 TOPDIR=$(pwd)
 EXTDIR=$(pwd)/external
 
-downloadMETIS()
-{
-    if [ ! -e metis-5.1.0.tar.gz ]; then
-        wget http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/metis-5.1.0.tar.gz
-    fi
-}
-
 installMETIS()
 {
     cd $EXTDIR
 
-    downloadMETIS
+    if [ ! -e metis-5.1.0.tar.gz ]; then
+        wget http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/metis-5.1.0.tar.gz
+    fi
+
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
@@ -41,18 +37,14 @@ installMETIS()
     cd $TOPDIR
 }
 
-downloadMultidomain()
-{
-    if [ ! -e dune-multidomain ]; then
-        git clone -b releases/2.0 git://github.com/smuething/dune-multidomain.git
-    fi
-}
-
 installMultidomain()
 {
     cd $TOPDIR
 
-    downloadMultidomain
+    if [ ! -e dune-multidomain ]; then
+        git clone -b releases/2.0 git://github.com/smuething/dune-multidomain.git
+    fi
+
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
@@ -70,29 +62,17 @@ installMultidomain()
         return
     fi
 
-    if ! test -e "dune-multidomain"; then
-        git clone https://github.com/smuething/dune-multidomain.git
-    fi
-
-    echo ""
-    echo "If you need a specific version like 2.3, go into dune-multidomain and execute:"
-    echo "git checkout releases/2.3"
-
     cd $TOPDIR
-}
-
-downloadMultidomainGrid()
-{
-    if [ ! -e dune-multidomaingrid ]; then
-        git clone -b releases/2.3 git://github.com/smuething/dune-multidomaingrid.git
-    fi
 }
 
 installMultidomainGrid()
 {
     cd $TOPDIR
 
-    downloadMultidomainGrid
+    if [ ! -e dune-multidomaingrid ]; then
+        git clone -b releases/2.3 git://github.com/smuething/dune-multidomaingrid.git
+    fi
+
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
@@ -110,29 +90,26 @@ installMultidomainGrid()
         return
     fi
 
-    if ! test -e "dune-multidomaingrid"; then
-        git clone https://github.com/smuething/dune-multidomaingrid.git
+    # apply patch for dune versions newer than 2.3
+    cd dune-common
+    VERSION=`git status | head -n 1 | awk '{ print $3 }'`
+    if  [ "$VERSION" == "releases/2.4" ] || [ "$VERSION" == "master" ]; then
+        echo "Applying patch"
+        cd $TOPDIR/dune-multidomaingrid
+        patch -p1 < $TOPDIR/dumux/patches/multidomaingrid-2.3.patch
     fi
-
-    echo ""
-    echo "If you need a specific version like 2.3, go into dune-multidomaingrid and execute:"
-    echo "git checkout releases/2.3"
 
     cd $TOPDIR
-}
-
-downloadUG()
-{
-    if [ ! -e ug-3.12.1.tar.gz ]; then
-        wget http://conan.iwr.uni-heidelberg.de/download/ug-3.12.1.tar.gz
-    fi
 }
 
 installUG()
 {
     cd $EXTDIR
 
-    downloadUG
+    if [ ! -e ug-3.12.1.tar.gz ]; then
+        wget http://conan.iwr.uni-heidelberg.de/download/ug-3.12.1.tar.gz
+    fi
+
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
@@ -174,62 +151,12 @@ installUG()
     cd $TOPDIR
 }
 
-downloadGstat()
-{
-    if [ ! -e gstat.tar.gz ]; then
-        wget http://gstat.org/gstat.tar.gz
-    fi
-}
-
-installGstat()
-{
-    cd $EXTDIR
-
-    downloadGstat
-    if  test "$DOWNLOAD_ONLY" == "y"; then
-        return
-    fi
-
-    echo "The gstat tar ball from the gstat homepage does not compile anymore"
-    echo "    http://gstat.org/gstat.tar.gz"
-    echo "It misses some gdal headers. But actually it did not work with downloading"
-    echo "and installing gdal either."
-    echo "Maybe we should host the tarball from the svn somewhere. It also"
-    echo "includes some DuMuX related stuff"
-    exit 2
-
-    if  test "$CLEANUP" == "y"; then
-        rm -rf gstat
-        return
-    fi
-
-    if ! test -e "gstat"; then
-        mkdir gstat
-        tar zxvf gstat.tar.gz -C gstat --strip-components=1
-    fi
-
-    cd gstat
-    ./configure
-    make install
-
-    if [ ! -w /usr/local/bin ]; then
-      echo; echo "The Gstat binary can be found in gstat/src/gstat"
-      echo "You can set   alias gstat=\"$EXTDIR/gstat/src/gstat\""
-      echo "in your       ~/.bashrc   to use it from everywhere."; echo
-    else
-      make install
-    fi
-
-    cd $TOPDIR
-}
-
 installAll()
 {
     installMETIS
     installMultidomain
     installMultidomainGrid
     installUG
-    installGstat
 }
 
 createExternalDirectory()
@@ -249,7 +176,6 @@ usage()
     echo "  multidomain      Download dune-multidomain."
     echo "  multidomaingrid  Download dune-multidomaingrid."
     echo "  ug               Install the UG grid library."
-    echo "  gstat            Install the Gstat library."
     echo ""
     echo "The following options are recoginzed:"
     echo "    --parallel       Enable parallelization if available."
@@ -328,11 +254,6 @@ for TMP in "$@"; do
             SOMETHING_DONE="y"
             createExternalDirectory
             installUG
-            ;;
-        gstat)
-            SOMETHING_DONE="y"
-            createExternalDirectory
-            installGstat
             ;;
         *)
             usage
