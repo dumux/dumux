@@ -1,5 +1,6 @@
 #!/bin/bash
 
+CORRECT_LOCATION_FOR_DUNE_MODULES="n"
 ENABLE_MPI="n"
 ENABLE_DEBUG="n"
 CLEANUP="n"
@@ -7,6 +8,51 @@ DOWNLOAD_ONLY="n"
 
 TOPDIR=$(pwd)
 EXTDIR=$(pwd)/external
+
+checkLocationForDuneModules()
+{
+    # test for directory dune-common, dune-common-2.4 etc.
+    if ! ls dune-common* &> /dev/null; then
+        echo "You have to call $0 for $1 from"
+        echo "the same directory in which dune-common is located."
+        echo "You cannot install it in this folder."
+        CORRECT_LOCATION_FOR_DUNE_MODULES="n"
+        return
+    fi
+    CORRECT_LOCATION_FOR_DUNE_MODULES="y"
+}
+
+createExternalDirectory()
+{
+    if [ ! -e $EXTDIR ]; then
+        mkdir -v $EXTDIR
+    fi
+}
+
+installCornerpoint()
+{
+    cd $TOPDIR
+
+    checkLocationForDuneModules dune-cornerpoint
+    if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
+        return
+    fi
+
+    if [ ! -e dune-cornerpoint ]; then
+        git clone -b release/2015.04 https://github.com/OPM/dune-cornerpoint
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    if  test "$CLEANUP" == "y"; then
+        rm -rf dune-cornerpoint
+        return
+    fi
+
+    cd $TOPDIR
+}
 
 installMETIS()
 {
@@ -41,6 +87,11 @@ installMultidomain()
 {
     cd $TOPDIR
 
+    checkLocationForDuneModules dune-multidomain
+    if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
+        return
+    fi
+
     if [ ! -e dune-multidomain ]; then
         git clone -b releases/2.0 git://github.com/smuething/dune-multidomain.git
     fi
@@ -54,20 +105,17 @@ installMultidomain()
         return
     fi
 
-    # test for directory dune-common, dune-common-2.4 etc.
-    if ! ls dune-common* &> /dev/null; then
-        echo "You have to call installExternal for dune-multidomain from"
-        echo "the same directory where dune-common is located. You"
-        echo "cannot install it in the external folder."
-        return
-    fi
-
     cd $TOPDIR
 }
 
 installMultidomainGrid()
 {
     cd $TOPDIR
+
+    checkLocationForDuneModules dune-multidomaingrid
+    if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
+        return
+    fi
 
     if [ ! -e dune-multidomaingrid ]; then
         git clone -b releases/2.3 git://github.com/smuething/dune-multidomaingrid.git
@@ -82,14 +130,6 @@ installMultidomainGrid()
         return
     fi
 
-    # test for directory dune-common, dune-common-2.4 etc.
-    if ! ls dune-common* &> /dev/null; then
-        echo "You have to call installExternal for dune-multidomaingrid from"
-        echo "the same directory where dune-common is located. You"
-        echo "cannot install it in the external folder."
-        return
-    fi
-
     # apply patch for dune versions newer than 2.3
     cd dune-common
     VERSION=`git status | head -n 1 | awk '{ print $3 }'`
@@ -97,6 +137,56 @@ installMultidomainGrid()
         echo "Applying patch"
         cd $TOPDIR/dune-multidomaingrid
         patch -p1 < $TOPDIR/dumux/patches/multidomaingrid-2.3.patch
+    fi
+
+    cd $TOPDIR
+}
+
+installPDELab()
+{
+    cd $TOPDIR
+
+    checkLocationForDuneModules dune-pdelab
+    if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
+        return
+    fi
+
+    if [ ! -e dune-pdelab ]; then
+        git clone -b releases/2.0 http://git.dune-project.org/repositories/dune-pdelab
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    if  test "$CLEANUP" == "y"; then
+        rm -rf dune-pdelab
+        return
+    fi
+
+    cd $TOPDIR
+}
+
+installTypeTree()
+{
+    cd $TOPDIR
+
+    checkLocationForDuneModules dune-typetree
+    if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
+        return
+    fi
+
+    if [ ! -e dune-typetree ]; then
+        git clone -b releases/2.3 http://git.dune-project.org/repositories/dune-typetree
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    if  test "$CLEANUP" == "y"; then
+        rm -rf dune-typetree
+        return
     fi
 
     cd $TOPDIR
@@ -151,30 +241,18 @@ installUG()
     cd $TOPDIR
 }
 
-installAll()
-{
-    installMETIS
-    installMultidomain
-    installMultidomainGrid
-    installUG
-}
-
-createExternalDirectory()
-{
-    if [ ! -e $EXTDIR ]; then
-        mkdir -v $EXTDIR
-    fi
-}
-
 usage()
 {
     echo "Usage: $0 [OPTIONS] PACKAGES"
     echo ""
     echo "Where PACKAGES is one or more of the following"
     echo "  all              Install everything and the kitchen sink."
+    echo "  cornerpoint      Download dune-cornerpoint."
     echo "  metis            Install the METIS graph partitioner."
     echo "  multidomain      Download dune-multidomain."
-    echo "  multidomaingrid  Download dune-multidomaingrid."
+    echo "  multidomaingrid  Download and patch dune-multidomaingrid."
+    echo "  pdelab           Download dune-pdelab."
+    echo "  typetree         Download dune-typetree."
     echo "  ug               Install the UG grid library."
     echo ""
     echo "The following options are recoginzed:"
@@ -235,7 +313,17 @@ for TMP in "$@"; do
         all)
             SOMETHING_DONE="y"
             createExternalDirectory
-            installAll
+            installCornerpoint
+            installMETIS
+            installMultidomain
+            installMultidomainGrid
+            installPDELab
+            installTypeTree
+            installUG
+            ;;
+        cornerpoint|dune-cornerpoint)
+            SOMETHING_DONE="y"
+            installCornerpoint
             ;;
         metis)
             SOMETHING_DONE="y"
@@ -249,6 +337,14 @@ for TMP in "$@"; do
         multidomaingrid|dune-multidomaingrid)
             SOMETHING_DONE="y"
             installMultidomainGrid
+            ;;
+        pdelab|dune-pdelab)
+            SOMETHING_DONE="y"
+            installPDELab
+            ;;
+        typetree|dune-typetree)
+            SOMETHING_DONE="y"
+            installTypeTree
             ;;
         ug)
             SOMETHING_DONE="y"
