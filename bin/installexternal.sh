@@ -130,13 +130,43 @@ installMultidomainGrid()
         return
     fi
 
-    # apply patch for dune versions newer than 2.3
-    cd dune-common
-    VERSION=`git status | head -n 1 | awk '{ print $3 }'`
-    if  [ "$VERSION" == "releases/2.4" ] || [ "$VERSION" == "master" ]; then
-        echo "Applying patch"
-        cd $TOPDIR/dune-multidomaingrid
-        patch -p1 < $TOPDIR/dumux/patches/multidomaingrid-2.3.patch
+#     # apply patch for dune versions newer than 2.3
+#     cd dune-common
+#     DUNE_VERSION=`git status | head -n 1 | awk '{ print $3 }'`
+#     if  [ "$DUNE_VERSION" == "releases/2.4" ] || [ "$DUNE_VERSION" == "master" ]; then
+#         echo "Applying patch"
+#         cd $TOPDIR/dune-multidomaingrid
+#         patch -p1 < $TOPDIR/dumux/patches/multidomaingrid-2.3.patch
+#     fi
+
+    cd $TOPDIR
+}
+
+installOPM()
+{
+    cd $TOPDIR
+
+    checkLocationForDuneModules opm
+    if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
+        return
+    fi
+
+    if [ ! -e opm-core ]; then
+        git clone -b release/2015.04 https://github.com/OPM/opm-core
+    fi
+
+    if [ ! -e opm-parser ]; then
+        git clone -b release/2015.04 https://github.com/OPM/opm-parser
+    fi
+
+    if  test "$DOWNLOAD_ONLY" == "y"; then
+        return
+    fi
+
+    if  test "$CLEANUP" == "y"; then
+        rm -rf opm-core
+        rm -rf opm-parser
+        return
     fi
 
     cd $TOPDIR
@@ -251,6 +281,7 @@ usage()
     echo "  metis            Install the METIS graph partitioner."
     echo "  multidomain      Download dune-multidomain."
     echo "  multidomaingrid  Download and patch dune-multidomaingrid."
+    echo "  opm              Download opm modules required for dune-cornerpoint."
     echo "  pdelab           Download dune-pdelab."
     echo "  typetree         Download dune-typetree."
     echo "  ug               Install the UG grid library."
@@ -317,6 +348,7 @@ for TMP in "$@"; do
             installMETIS
             installMultidomain
             installMultidomainGrid
+            installOPM
             installPDELab
             installTypeTree
             installUG
@@ -337,6 +369,10 @@ for TMP in "$@"; do
         multidomaingrid|dune-multidomaingrid)
             SOMETHING_DONE="y"
             installMultidomainGrid
+            ;;
+        opm)
+            SOMETHING_DONE="y"
+            installOPM
             ;;
         pdelab|dune-pdelab)
             SOMETHING_DONE="y"
