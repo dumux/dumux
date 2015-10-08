@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <dune/geometry/referenceelements.hh>
+#include <dune/common/timer.hh>
 
 namespace Dumux {
 
@@ -354,8 +355,8 @@ public:
         // Create bounding boxes for all elements
         const unsigned int numLeaves = leafGridView.size(0);
 
-        // log output
-        std::cout << "Start building bounding box tree grid with " << numLeaves << " entites." << std::endl;
+        // start the timer
+        Dune::Timer timer;
 
         // create a vector for leaf boxes (min and max for all dims)
         std::vector<double> leafBoxes(2*dimworld*numLeaves);
@@ -381,7 +382,8 @@ public:
 
         // We are done, log output
         std::cout << "Computed bounding box tree with " << numBoundingBoxes_()
-                  << " nodes for " << numLeaves << " grid entites." << std::endl;
+                  << " nodes for " << numLeaves << " grid entites in "
+                  << timer.stop() << " seconds." << std::endl;
     }
 
     // Compute all intersections between entities and a point
