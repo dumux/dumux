@@ -167,9 +167,6 @@ public:
                 source.divideValues(entities.size());
                 for (unsigned int eIdx : entities)
                 {
-                    // make a copy of the source values
-                    auto sourceValues = source.values();
-
                     if(isBox)
                     {
                         // check in which subcontrolvolume(s) we are
@@ -186,24 +183,22 @@ public:
                             if (refElement.checkInside(geometry.local(globalPos)))
                                 vertices.push_back(model_.dofMapper().subIndex(element, scvIdx, dofCodim));
                         }
+                        auto sourceValues = source.values();
                         sourceValues /= vertices.size();
                         for (unsigned int vIdx : vertices)
                         {
-                            auto vertexSourceValues = sourceValues;
-                            vertexSourceValues /= model_.boxVolume(vIdx);
                             if (pointSourceMap_.count(vIdx))
-                                pointSourceMap_.at(vIdx).push_back(PointSource(source.position(), vertexSourceValues));
+                                pointSourceMap_.at(vIdx).push_back(PointSource(source.position(), sourceValues));
                             else
-                                pointSourceMap_.insert({vIdx, {PointSource(source.position(), vertexSourceValues)}});
+                                pointSourceMap_.insert({vIdx, {PointSource(source.position(), sourceValues)}});
                         }
                     }
                     else
                     {
-                        sourceValues /= boundingBoxTree_->entity(eIdx).geometry().volume();
                         if (pointSourceMap_.count(eIdx))
-                            pointSourceMap_.at(eIdx).push_back(PointSource(source.position(), sourceValues));
+                            pointSourceMap_.at(eIdx).push_back(PointSource(source.position(), source.values()));
                         else
-                            pointSourceMap_.insert({eIdx, {PointSource(source.position(), sourceValues)}});
+                            pointSourceMap_.insert({eIdx, {PointSource(source.position(), source.values())}});
                     }
                 }
             }
@@ -511,8 +506,8 @@ public:
      * \param scvIdx The local subcontrolvolume index
      * \param elemVolVars All volume variables for the element
      *
-     * For this method, the \a values() method of the point sources returns rate mass
-     * generated or annihilate per volume unit. Positive values mean
+     * For this method, the \a values() method of the point sources returns
+     * the absolute rate mass generated or annihilate in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
     void solDependentPointSources(std::vector<PointSource> &pointSources,
@@ -1005,8 +1000,12 @@ public:
             asImp_().solDependentPointSources(pointSources, element, fvGeometry, scvIdx, elemVolVars);
 
             // Add the contributions to the dof source values
+            Scalar volume = isBox ? model_.boxVolume(dofGlobalIdx) : element.geometry().volume();
             for (auto&& pointSource : pointSources)
+            {
                 values += pointSource.values();
+                values /= volume;
+            }
         }
     }
 
