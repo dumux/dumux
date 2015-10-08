@@ -184,9 +184,7 @@ public:
                             auto geometry = fvGeometry.subContVolGeometries[scvIdx];
                             const ReferenceElement &refElement = ReferenceElements::general(geometry.type());
                             if (refElement.checkInside(geometry.local(globalPos)))
-                                vertices.push_back(vertexMapper_.index(element.template subEntity<dim>(scvIdx)));
-                                //vertices.push_back(elementMapper_.subIndex(element, scvIdx, dim));
-                                // TODO subIndex seems not to work?
+                                vertices.push_back(model_.dofMapper().subIndex(element, scvIdx, dofCodim));
                         }
                         sourceValues /= vertices.size();
                         for (unsigned int vIdx : vertices)
@@ -1000,9 +998,7 @@ public:
                     const int scvIdx,
                     const ElementVolumeVariables &elemVolVars) const
     {
-        unsigned int dofGlobalIdx = vertexMapper_.index(element.template subEntity<dofCodim>(isBox ? scvIdx : 0));
-        //unsigned int dofGlobalIdx = elementMapper_.subIndex(element, scvIdx, dofCodim);
-        // TODO subIndex seems not to work?
+        unsigned int dofGlobalIdx = model_.dofMapper().subIndex(element, scvIdx, dofCodim);
         if (pointSourceMap_.count(dofGlobalIdx))
             values += pointSourceMap_.at(dofGlobalIdx).values();
     }
