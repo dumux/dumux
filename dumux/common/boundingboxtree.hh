@@ -395,6 +395,10 @@ public:
         return entities;
     }
 
+    // Get an element from a global element index
+    Element entity(unsigned int eIdx)
+    { return indexToElementMap_->entity(eIdx); }
+
 private:
 
     // Bounding box data. Leaf nodes are indicated by setting child_0 to
