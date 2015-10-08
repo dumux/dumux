@@ -192,19 +192,18 @@ public:
                             auto vertexSourceValues = sourceValues;
                             vertexSourceValues /= model_.boxVolume(vIdx);
                             if (pointSourceMap_.count(vIdx))
-                                pointSourceMap_.at(vIdx).addToValues(vertexSourceValues);
+                                pointSourceMap_.at(vIdx).push_back(PointSource(source.position(), vertexSourceValues));
                             else
-                                pointSourceMap_.insert(std::pair<unsigned int, PointSource>(vIdx, PointSource(source.position(), vertexSourceValues)));
-
+                                pointSourceMap_.insert({vIdx, {PointSource(source.position(), vertexSourceValues)}});
                         }
                     }
                     else
                     {
                         sourceValues /= boundingBoxTree_->entity(eIdx).geometry().volume();
                         if (pointSourceMap_.count(eIdx))
-                            pointSourceMap_.at(eIdx).addToValues(sourceValues);
+                            pointSourceMap_.at(eIdx).push_back(PointSource(source.position(), sourceValues));
                         else
-                            pointSourceMap_.insert(std::pair<unsigned int, PointSource>(eIdx, PointSource(source.position(), sourceValues)));
+                            pointSourceMap_.insert({eIdx, {PointSource(source.position(), sourceValues)}});
                     }
                 }
             }
@@ -1000,7 +999,15 @@ public:
     {
         unsigned int dofGlobalIdx = model_.dofMapper().subIndex(element, scvIdx, dofCodim);
         if (pointSourceMap_.count(dofGlobalIdx))
-            values += pointSourceMap_.at(dofGlobalIdx).values();
+        {
+            // call the solDependent function. Herein the user might fill/add values to the point sources
+            std::vector<PointSource> pointSources = pointSourceMap_.at(dofGlobalIdx);
+            asImp_().solDependentPointSources(pointSources, element, fvGeometry, scvIdx, elemVolVars);
+
+            // Add the contributions to the dof source values
+            for (auto&& pointSource : pointSources)
+                values += pointSource.values();
+        }
     }
 
     /*!
@@ -1081,7 +1088,7 @@ private:
     std::shared_ptr<GridAdaptModel> gridAdapt_;
 
     std::shared_ptr<BoundingBoxTree> boundingBoxTree_;
-    std::map<unsigned int, PointSource> pointSourceMap_;
+    std::map<unsigned int, std::vector<PointSource> > pointSourceMap_;
 };
 } // namespace Dumux
 
