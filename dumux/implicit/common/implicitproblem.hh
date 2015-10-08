@@ -155,7 +155,7 @@ public:
 
         // get and apply point sources if any given in the problem
         std::vector<PointSource> sources;
-        asImp_().pointSources(sources);
+        asImp_().addPointSources(sources);
         if (!sources.empty())
         {
             // build the bounding box tree for fast point in element search
@@ -498,7 +498,31 @@ public:
      * has to return the absolute mass rate in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void pointSources(std::vector<PointSource>& pointSources) const {}
+    void addPointSources(std::vector<PointSource>& pointSources) const {}
+
+    /*!
+     * \brief Evaluate the point sources (added by addPointSources)
+     *        for all phases within a given sub-control-volume.
+     *
+     * This is the method for the case where the point source is
+     * solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param pointSources The vector of point sources
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scvIdx The local subcontrolvolume index
+     * \param elemVolVars All volume variables for the element
+     *
+     * For this method, the \a values() method of the point sources returns rate mass
+     * generated or annihilate per volume unit. Positive values mean
+     * that mass is created, negative ones mean that it vanishes.
+     */
+    void solDependentPointSources(std::vector<PointSource> &pointSources,
+                                  const Element &element,
+                                  const FVElementGeometry &fvGeometry,
+                                  const int scvIdx,
+                                  const ElementVolumeVariables &elemVolVars) const {}
 
     /*!
      * \brief Evaluate the initial value for a control volume.
