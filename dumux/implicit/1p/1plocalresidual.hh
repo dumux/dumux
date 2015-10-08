@@ -159,6 +159,13 @@ public:
                                      this->fvGeometry_(),
                                      scvIdx,
                                      this->curVolVars_());
+
+        // add contribution from possible point sources
+        this->problem_().dofSources(source,
+                                    this->element_(),
+                                    this->fvGeometry_(),
+                                    scvIdx,
+                                    this->curVolVars_());
     }
 
     /*!
