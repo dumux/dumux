@@ -28,6 +28,9 @@
 
 #include <dumux/io/restart.hh>
 #include <dumux/implicit/adaptive/gridadapt.hh>
+#include <dune/geometry/referenceelements.hh>
+#include <dumux/common/pointsource.hh>
+#include <dumux/common/boundingboxtree.hh>
 
 namespace Dumux
 {
@@ -77,12 +80,17 @@ private:
 
     typedef typename GridView::Grid::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
+    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
     enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
 
     typedef ImplicitGridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
+    typedef PointSource<TypeTag> PointSource;
+    typedef BoundingBoxTree<GridView> BoundingBoxTree;
 
     // copying a problem is not a good idea
     ImplicitProblem(const ImplicitProblem &);
@@ -139,9 +147,69 @@ public:
         // set the initial condition of the model
         model().init(asImp_());
 
+        // initialize grid adapt model if we have an adaptive grid
         if (adaptiveGrid)
         {
             gridAdapt().init();
+        }
+
+        // get and apply point sources if any given in the problem
+        std::vector<PointSource> sources;
+        asImp_().pointSources(sources);
+        if (!sources.empty())
+        {
+            // build the bounding box tree for fast point in element search
+            boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
+            // calculate point source locations and save them in a map
+            for (auto&& source : sources)
+            {
+                std::vector<unsigned int> entities = boundingBoxTree_->computeEntityCollisions(source.position());
+                source.divideValues(entities.size());
+                for (unsigned int eIdx : entities)
+                {
+                    // make a copy of the source values
+                    auto sourceValues = source.values();
+
+                    if(isBox)
+                    {
+                        // check in which subcontrolvolume(s) we are
+                        auto element = boundingBoxTree_->entity(eIdx);
+                        FVElementGeometry fvGeometry;
+                        fvGeometry.update(gridView_, element);
+                        auto globalPos = source.position();
+
+                        std::vector<unsigned int> vertices;
+                        for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+                        {
+                            auto geometry = fvGeometry.subContVolGeometries[scvIdx];
+                            const ReferenceElement &refElement = ReferenceElements::general(geometry.type());
+                            if (refElement.checkInside(geometry.local(globalPos)))
+                                vertices.push_back(vertexMapper_.index(element.template subEntity<dim>(scvIdx)));
+                                //vertices.push_back(elementMapper_.subIndex(element, scvIdx, dim));
+                                // TODO subIndex seems not to work?
+                        }
+                        sourceValues /= vertices.size();
+                        for (unsigned int vIdx : vertices)
+                        {
+                            auto vertexSourceValues = sourceValues;
+                            vertexSourceValues /= model_.boxVolume(vIdx);
+                            if (pointSourceMap_.count(vIdx))
+                                pointSourceMap_.at(vIdx).addToValues(vertexSourceValues);
+                            else
+                                pointSourceMap_.insert(std::pair<unsigned int, PointSource>(vIdx, PointSource(source.position(), vertexSourceValues)));
+
+                        }
+                    }
+                    else
+                    {
+                        sourceValues /= boundingBoxTree_->entity(eIdx).geometry().volume();
+                        if (pointSourceMap_.count(eIdx))
+                            pointSourceMap_.at(eIdx).addToValues(sourceValues);
+                        else
+                            pointSourceMap_.insert(std::pair<unsigned int, PointSource>(eIdx, PointSource(source.position(), sourceValues)));
+                    }
+                }
+            }
         }
     }
 
@@ -420,6 +488,19 @@ public:
     }
 
     /*!
+     * \brief Applies a vector of point sources. The point sources
+     *        are possibly solution dependent.
+     *
+     * \param pointSources A vector of Dumux::PointSource s that contain
+              source values for all phases and space positions.
+     *
+     * For this method, the \a values method of the point source
+     * has to return the absolute mass rate in kg/s. Positive values mean
+     * that mass is created, negative ones mean that it vanishes.
+     */
+    void pointSources(std::vector<PointSource>& pointSources) const {}
+
+    /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param values The initial values for the primary variables
@@ -442,7 +523,7 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The dirichlet values for the primary variables
+     * \param values The initial values for the primary variables
      * \param globalPos The position of the center of the finite volume
      *            for which the initial values ought to be
      *            set (in global coordinates)
@@ -453,7 +534,7 @@ public:
                       const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
-        // for Dirichlet conditions)
+        // for initial values)
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
                    "a initialAtPos() method.");
@@ -870,6 +951,39 @@ public:
     }
 
     /*!
+     * \brief Returns the bounding box tree if we have point sources.
+     */
+    BoundingBoxTree& boundingBoxTree()
+    {
+        return *boundingBoxTree_;
+    }
+
+    /*!
+     * \brief Returns the bounding box tree if we have point sources.
+     */
+    const BoundingBoxTree& boundingBoxTree() const
+    {
+        return *boundingBoxTree_;
+    }
+
+    /*!
+     * \brief Adds contribution of point sources for a specific DOF
+     *        to the values.
+     */
+    void dofSources(PrimaryVariables &values,
+                    const Element &element,
+                    const FVElementGeometry &fvGeometry,
+                    const int scvIdx,
+                    const ElementVolumeVariables &elemVolVars) const
+    {
+        unsigned int dofGlobalIdx = vertexMapper_.index(element.template subEntity<dofCodim>(isBox ? scvIdx : 0));
+        //unsigned int dofGlobalIdx = elementMapper_.subIndex(element, scvIdx, dofCodim);
+        // TODO subIndex seems not to work?
+        if (pointSourceMap_.count(dofGlobalIdx))
+            values += pointSourceMap_.at(dofGlobalIdx).values();
+    }
+
+    /*!
      * \brief Capability to introduce problem-specific routines at the
      * beginning of the grid adaptation
      *
@@ -945,6 +1059,9 @@ private:
     std::shared_ptr<VtkMultiWriter> resultWriter_;
 
     std::shared_ptr<GridAdaptModel> gridAdapt_;
+
+    std::shared_ptr<BoundingBoxTree> boundingBoxTree_;
+    std::map<unsigned int, PointSource> pointSourceMap_;
 };
 } // namespace Dumux
 
