@@ -24,6 +24,7 @@
 #ifndef DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 
+#include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
@@ -147,6 +148,25 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                        "_BoxFVElemGeomHelper::fillSubContVolData dim = "
                        << dim << ", numVertices = " << numVertices);
+        }
+    }
+
+    template<class AffineGeometry, class GlobalPosition>
+    static void computeGeometries(BoxFVElementGeometry &fvGeometry,
+                                   int numVertices,
+                                   GlobalPosition *edgeCoord,
+                                   GlobalPosition *faceCoord)
+    {
+        switch (numVertices) {
+        case 4: // quadrilateral
+            std::array<GlobalPosition, 4> corners = {{fvGeometry.subContVol[0].global, edgeCoord[2], fvGeometry.elementGlobal, edgeCoord[0]}};
+            fvGeometry.subContVolGeometries.push_back(AffineGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            corners = {{fvGeometry.subContVol[1].global, edgeCoord[1], fvGeometry.elementGlobal, edgeCoord[2]}};
+            fvGeometry.subContVolGeometries.push_back(AffineGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            corners = {{fvGeometry.subContVol[2].global, edgeCoord[0], fvGeometry.elementGlobal, edgeCoord[3]}};
+            fvGeometry.subContVolGeometries.push_back(AffineGeometry(Dune::GeometryType(Dune::cube, 2), corners));
+            corners = {{fvGeometry.subContVol[3].global, edgeCoord[3], fvGeometry.elementGlobal, edgeCoord[1]}};
+            fvGeometry.subContVolGeometries.push_back(AffineGeometry(Dune::GeometryType(Dune::cube, 2), corners));
         }
     }
 };
@@ -398,6 +418,7 @@ class BoxFVElementGeometry
     typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
+    typedef typename Dune::AffineGeometry<CoordScalar, dim, dimWorld> AffineGeometry;
 
     typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
     typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
@@ -645,6 +666,7 @@ public:
     GlobalPosition elementGlobal; //!< global coordinate of element center
     Scalar elementVolume; //!< element volume
     SubControlVolume subContVol[maxNC]; //!< data of the sub control volumes
+    std::vector<AffineGeometry> subContVolGeometries; //!< geometries of the subcontrol volumes
     SubControlVolumeFace subContVolFace[maxNE]; //!< data of the sub control volume faces
     BoundaryFace boundaryFace[maxBF]; //!< data of the boundary faces
     int numScv; //!< number of subcontrol volumes
@@ -701,6 +723,8 @@ public:
         // _BoxFVElemGeomHelper in order to benefit from more aggressive
         // compiler optimizations...
         BoxFVElemGeomHelper::fillSubContVolData(*this, numScv, edgeCoordinates, faceCoordinates);
+        subContVolGeometries.clear();
+        BoxFVElemGeomHelper::template computeGeometries<AffineGeometry>(*this, numScv, edgeCoordinates, faceCoordinates);
 
         // fill sub control volume face data:
         for (int scvfIdx = 0; scvfIdx < numScvf; scvfIdx++) { // begin loop over edges / sub control volume faces

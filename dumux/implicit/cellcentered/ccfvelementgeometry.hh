@@ -24,6 +24,7 @@
 #ifndef DUMUX_CC_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_CC_FV_ELEMENTGEOMETRY_HH
 
+#include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 
@@ -58,6 +59,7 @@ class CCFVElementGeometry
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
+    typedef typename Dune::AffineGeometry<CoordScalar, dim, dimWorld> AffineGeometry;
 
 public:
     struct SubControlVolume //! FV intersected with element
@@ -88,6 +90,7 @@ public:
     GlobalPosition elementGlobal; //!< global coordinate of element center
     Scalar elementVolume; //!< element volume
     SubControlVolume subContVol[1]; //!< data of the sub control volumes
+    std::vector<AffineGeometry> subContVolGeometries; //!< geometries of the subcontrol volumes
     SubControlVolumeFace subContVolFace[maxNE]; //!< data of the sub control volume faces
     BoundaryFace boundaryFace[maxBF]; //!< data of the boundary faces
     int numScv; //!< number of subcontrol volumes
@@ -230,4 +233,3 @@ public:
 }
 
 #endif
-
