@@ -33,7 +33,8 @@ namespace Properties
 
 // Property forward declarations
 NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(NumPhases);
+NEW_PROP_TAG(GridView);
+NEW_PROP_TAG(PrimaryVariables);
 
 } // end namespace Properties
 
@@ -52,14 +53,27 @@ class PointSource
     typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
 
 public:
+    // Contructor
     PointSource(GlobalPosition pos, PrimaryVariables values)
       : pos_(pos), values_(values) {}
 
-    const PrimaryVariables& value() const
+    //! return the source values
+    const PrimaryVariables& values() const
     { return values_; }
 
+    //! return the source position
     const GlobalPosition& position() const
     { return pos_; }
+
+    //! Divide values by scalar
+    template<class T>
+    void divideValues(T&& n)
+    { values_ /= std::forward<T>(n); }
+
+    //! Add something to the values
+    template<class T>
+    void addToValues(T&& n)
+    { values_ += std::forward<T>(n); }
 
 private:
     GlobalPosition pos_;
