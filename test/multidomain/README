@@ -1,17 +1,22 @@
 == Running the test cases in test/multidomain ==
 
+
+-- Dune 2.3 --
 You need the following versions of the required Dune modules:
 Dune core modules, dune-typetree, dune-multidomaingrid: release (branch) 2.3
 Dune-PDELab, dune-multidomain: release (branch) 2.0
 
+The necessary modules and the correct versions can be obtained by using
+the script located in:
+  bin/installexternal.sh
+
+  
+-- Dune 2.4 --
 Alternatively, you can use version 2.4 of the Dune core modules
-(_not_ dune-typetree which stays at 2.3). In this case, you have to patch
-dune-multidomaingrid. See the patches directory for more information.
+(_not_ dune-typetree which stays at 2.3).
 
-For your convenience we provide the Shell script installRequiredModules.sh
-in the same folder as this README. Alternatively, you can use the script
-checkout-dumux from dumux.org/download/.
 
+-- Other external packages --
 Install the external grid manager UG and a direct linear solver like SuperLU
 or UMFPACK. You need Boost fusion for dune-multidomaingrid.
 
