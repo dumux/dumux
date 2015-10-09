@@ -28,7 +28,6 @@
 
 #include <dumux/io/restart.hh>
 #include <dumux/implicit/adaptive/gridadapt.hh>
-#include <dumux/common/pointsource.hh>
 #include <dumux/common/boundingboxtree.hh>
 
 namespace Dumux
@@ -67,6 +66,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
 
     enum {
         dim = GridView::dimension,
@@ -86,7 +86,6 @@ private:
     enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
 
     typedef ImplicitGridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
-    typedef PointSource<TypeTag> PointSource;
     typedef BoundingBoxTree<GridView> BoundingBoxTree;
 
     // copying a problem is not a good idea

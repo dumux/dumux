@@ -30,6 +30,7 @@
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/pointsource.hh>
 #include <dumux/io/gridcreator.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 
@@ -89,6 +90,9 @@ NEW_PROP_TAG(Problem);
 
 //! Property defining the type of the model which is used to solve the problem
 NEW_PROP_TAG(Model);
+
+//! Property defining the type of point source used
+NEW_PROP_TAG(PointSource);
 
 /*!
  * \brief Specify the maximum size of a time integration [s].
@@ -159,6 +163,9 @@ SET_STRING_PROP(NumericModel, GridParameterGroup, "Grid");
 
 //! Use the DgfGridCreator by default
 SET_TYPE_PROP(NumericModel, GridCreator, Dumux::GridCreator<TypeTag>);
+
+//! Use the minimal point source implementation as default
+SET_TYPE_PROP(NumericModel, PointSource, Dumux::PointSource<TypeTag>);
 
 //! Set default output level to 0 -> only primary variables are added to output
 SET_INT_PROP(NumericModel, VtkOutputLevel, 0);

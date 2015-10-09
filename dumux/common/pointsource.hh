@@ -38,6 +38,10 @@ namespace Properties
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(GridView);
 NEW_PROP_TAG(PrimaryVariables);
+NEW_PROP_TAG(Problem);
+NEW_PROP_TAG(FVElementGeometry);
+NEW_PROP_TAG(PointSource);
+NEW_PROP_TAG(ImplicitIsBox);
 
 } // end namespace Properties
 
@@ -94,6 +98,7 @@ class PointSourceHelper
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
 
     static const int dim = GridView::dimension;
 
@@ -101,7 +106,6 @@ class PointSourceHelper
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
 
-    typedef PointSource<TypeTag> PointSource;
     typedef BoundingBoxTree<GridView> BoundingBoxTree;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
