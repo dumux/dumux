@@ -1,0 +1,27 @@
+diff --git a/dune/grid/multidomaingrid/subdomaingrid/entity.hh b/dune/grid/multidomaingrid/subdomaingrid/entity.hh
+index f65c6a8..e669710 100644
+--- a/dune/grid/multidomaingrid/subdomaingrid/entity.hh
++++ b/dune/grid/multidomaingrid/subdomaingrid/entity.hh
+@@ -413,17 +413,17 @@ public:
+     return false;
+   }
+ 
+-private:
+-
+-  const GridImp& _grid;
+-  MultiDomainEntityPointer _multiDomainEntityPointer;
+-
+   const EntityWrapper& operator=(const EntityWrapper& rhs) {
+     assert(_grid == rhs._grid);
+     reset(rhs._multiDomainEntityPointer);
+     return *this;
+   }
+ 
++private:
++
++  const GridImp& _grid;
++  MultiDomainEntityPointer _multiDomainEntityPointer;
++
+   template<typename MultiDomainIteratorOrEntityPointer>
+   void reset(const MultiDomainIteratorOrEntityPointer& multiDomainEntityPointer) {
+     _multiDomainEntityPointer = multiDomainEntityPointer;

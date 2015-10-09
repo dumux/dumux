@@ -130,14 +130,14 @@ installMultidomainGrid()
         return
     fi
 
-#     # apply patch for dune versions newer than 2.3
-#     cd dune-common
-#     DUNE_VERSION=`git status | head -n 1 | awk '{ print $3 }'`
-#     if  [ "$DUNE_VERSION" == "releases/2.4" ] || [ "$DUNE_VERSION" == "master" ]; then
-#         echo "Applying patch"
-#         cd $TOPDIR/dune-multidomaingrid
-#         patch -p1 < $TOPDIR/dumux/patches/multidomaingrid-2.3.patch
-#     fi
+    # apply patch for dune versions newer than 2.3
+    cd dune-common
+    DUNE_VERSION=`git status | head -n 1 | awk '{ print $3 }'`
+    if  [ "$DUNE_VERSION" == "releases/2.4" ] || [ "$DUNE_VERSION" == "master" ]; then
+        echo "Applying patch"
+        cd $TOPDIR/dune-multidomaingrid
+        patch -p1 < $TOPDIR/dumux/patches/multidomaingrid-2.3.patch
+    fi
 
     cd $TOPDIR
 }
