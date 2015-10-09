@@ -159,7 +159,7 @@ public:
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-            int eIdx = this->elementMapper().map(*eIt);
+            int eIdx = this->elementMapper().index(*eIt);
             (*rank)[eIdx] = this->gridView_().comm().rank();
 
             FVElementGeometry fvGeometry;
@@ -173,7 +173,7 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->dofMapper().map(*eIt, scvIdx, dofCodim);
+                int globalIdx = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
                 for (int nC=0; nC < numContinua; nC++) {
                     (*pw[nC])[globalIdx] = elemVolVars[scvIdx].pressure(wPhaseIdx, nC);
                     (*pn[nC])[globalIdx] = elemVolVars[scvIdx].pressure(nPhaseIdx, nC);
