@@ -235,8 +235,6 @@ public:
         }
 
         storePressureSolution();
-
-        return;
     }
 
     /*! \brief Pressure update
@@ -278,8 +276,6 @@ public:
         ParentType::update();
 
         storePressureSolution();
-
-        return;
     }
 
     /*! \brief Velocity update
@@ -402,11 +398,15 @@ public:
         ScalarSolutionType *pc = 0;
         ScalarSolutionType *potentialW = 0;
         ScalarSolutionType *potentialNw = 0;
+        ScalarSolutionType *mobilityW = 0;
+        ScalarSolutionType *mobilityNW = 0;
 
         if (vtkOutputLevel_ > 0)
         {
             pressureSecond = writer.allocateManagedBuffer(size);
             pc = writer.allocateManagedBuffer(size);
+            mobilityW = writer.allocateManagedBuffer(size);
+            mobilityNW = writer.allocateManagedBuffer(size);
         }
         if (vtkOutputLevel_ > 1)
         {
@@ -441,6 +441,13 @@ public:
             if (vtkOutputLevel_ > 0)
             {
                 (*pc)[i] = cellData.capillaryPressure();
+                (*mobilityW)[i]  = cellData.mobility(wPhaseIdx);
+                (*mobilityNW)[i]  = cellData.mobility(nPhaseIdx);
+                if (compressibility_)
+                {
+                	(*mobilityW)[i] = (*mobilityW)[i]/cellData.density(wPhaseIdx);
+                	(*mobilityNW)[i] = (*mobilityNW)[i]/cellData.density(nPhaseIdx);
+                }
             }
             if (vtkOutputLevel_ > 1)
             {
@@ -474,6 +481,8 @@ public:
         if (vtkOutputLevel_ > 0)
         {
             writer.attachCellData(*pc, "capillary pressure");
+            writer.attachCellData(*mobilityW, "wetting mobility");
+            writer.attachCellData(*mobilityNW, "nonwetting mobility");
         }
         if (vtkOutputLevel_ > 1)
         {
@@ -505,8 +514,6 @@ public:
                 writer.attachCellData(*viscosityNonwetting, "nonwetting viscosity");
             }
         }
-
-        return;
     }
 
     //! Constructs a FVPressure2P object
@@ -587,8 +594,6 @@ void FVPressure2P<TypeTag>::getSource(EntryType& entry, const Element& element
     }
 
     entry[rhs] = volume * (sourcePhase[wPhaseIdx] + sourcePhase[nPhaseIdx]);
-
-    return;
 }
 
 /** \brief Function which calculates the storage entry
@@ -670,8 +675,6 @@ void FVPressure2P<TypeTag>::getStorage(EntryType& entry, const Element& element
             entry[rhs] = ErrorTermFactor_ * error * volume;
         }
     }
-
-    return;
 }
 
 /*! \brief Function which calculates the flux entry
@@ -793,8 +796,6 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
         //add capillary pressure term to right hand side
         entry[rhs] -= 0.5 * (lambdaWI + lambdaWJ) * scalarPerm * (pcI - pcJ) / dist * faceArea;
     }
-
-    return;
 }
 
 /*! \brief Function which calculates the flux entry at a boundary
@@ -1040,8 +1041,6 @@ const Intersection& intersection, const CellData& cellData, const bool first)
     {
         DUNE_THROW(Dune::NotImplemented, "No valid boundary condition type defined for pressure equation!");
     }
-
-    return;
 }
 
 /*! \brief Updates constitutive relations and stores them in the variable class
@@ -1146,7 +1145,6 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         cellData.setPotential(wPhaseIdx, potW);
         cellData.setPotential(nPhaseIdx, potNw);
     }
-    return;
 }
 
 }
