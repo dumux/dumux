@@ -56,7 +56,6 @@ template<class TypeTag> class FVPressure
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
@@ -384,8 +383,7 @@ void FVPressure<TypeTag>::initializeMatrixIndices()
             if (isIt->neighbor())
             {
                 // access neighbor
-                ElementPointer outside = isIt->outside();
-                int eIdxGlobalJ = problem_.variables().index(*outside);
+                int eIdxGlobalJ = problem_.variables().index(isIt->outside());
 
                 // add off diagonal index
                 A_.addindex(eIdxGlobalI, eIdxGlobalJ);
@@ -437,19 +435,19 @@ void FVPressure<TypeTag>::assemble(bool first)
                 /************* handle interior face *****************/
                 if (isIt->neighbor())
                 {
-                    ElementPointer elementNeighbor = isIt->outside();
+                    auto elementNeighbor = isIt->outside();
 
-                    int eIdxGlobalJ = problem_.variables().index(*elementNeighbor);
+                    int eIdxGlobalJ = problem_.variables().index(elementNeighbor);
 
                     // check for hanging nodes
                     // take a hanging node never from the element with smaller level!
-                    bool haveSameLevel = (eIt->level() == elementNeighbor->level());
+                    bool haveSameLevel = (eIt->level() == elementNeighbor.level());
                     // calculate only from one side, but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
                         && (eIdxGlobalI > eIdxGlobalJ) && haveSameLevel
-                        && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                        && elementNeighbor.partitionType() == Dune::InteriorEntity)
                         continue;
 
                     //check for hanging nodes
@@ -467,7 +465,7 @@ void FVPressure<TypeTag>::assemble(bool first)
 
                     // The second condition is needed to not spoil the ghost element entries
                     if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce)
-                        && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                        && elementNeighbor.partitionType() == Dune::InteriorEntity)
                     {
                         f_[eIdxGlobalJ] += entries[rhs];
                         A_[eIdxGlobalJ][eIdxGlobalJ] += entries[matrix];

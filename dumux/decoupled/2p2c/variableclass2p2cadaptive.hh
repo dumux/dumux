@@ -178,7 +178,7 @@ public:
         IdType intersectionID = grid_.localIdSet().subId(
             *irregularIs.inside(), irregularIs.indexInInside(), 1);
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside()->level() < irregularIs.outside()->level())
+        if (irregularIs.inside().level() < irregularIs.outside().level())
         {
             // IS is regarded from larger cell: get the unique number as seen from smaller
             intersectionID = grid_.localIdSet().subId(
@@ -220,16 +220,16 @@ public:
                         const int& globalIdx3)
     {
         IdType intersectionID
-                = grid_.localIdSet().subId(*irregularIs.inside(),
-                                            irregularIs.indexInInside(), 1);
+                = grid_.localIdSet().subId(irregularIs.inside(),
+                                           irregularIs.indexInInside(), 1);
 
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside()->level() < irregularIs.outside()->level())
+        if (irregularIs.inside().level() < irregularIs.outside().level())
         {
             // IS is regarded from larger cell: get the unique number as seen from smaller
             intersectionID
-                = grid_.localIdSet().subId(*irregularIs.outside(),
-                                            irregularIs.indexInOutside(), 1);
+                = grid_.localIdSet().subId(irregularIs.outside(),
+                                           irregularIs.indexInOutside(), 1);
 
             // store as if it was seen from smaller: change i & j
             irregularInterfaceMap_[intersectionID].T1_[first][2] = - T1[0];
@@ -282,16 +282,16 @@ public:
         const int offset = subFaceIdx * 2;
 
         IdType intersectionID
-                = grid_.localIdSet().subId(*irregularIs.inside(),
-                                            irregularIs.indexInInside(), 1);
+                = grid_.localIdSet().subId(irregularIs.inside(),
+                                           irregularIs.indexInInside(), 1);
 
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside()->level() < irregularIs.outside()->level())
+        if (irregularIs.inside().level() < irregularIs.outside().level())
         {
             // IS is regarded from larger cell: get the unique ID as seen from smaller
             intersectionID
-                = grid_.localIdSet().subId(*irregularIs.outside(),
-                                            irregularIs.indexInOutside(), 1);
+                = grid_.localIdSet().subId(irregularIs.outside(),
+                                           irregularIs.indexInOutside(), 1);
 
             // store as if it was seen from smaller: change i & j
             irregularInterfaceMap_[intersectionID].T1_[subFaceIdx][0] = -T1[1];
@@ -331,16 +331,16 @@ public:
                        Scalar weight, int subFaceIdx = -1)
     {
         IdType intersectionID
-                = grid_.localIdSet().subId(*irregularIs.inside(),
-                                            irregularIs.indexInInside(), 1);
+                = grid_.localIdSet().subId(irregularIs.inside(),
+                                           irregularIs.indexInInside(), 1);
 
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside()->level() < irregularIs.outside()->level())
+        if (irregularIs.inside().level() < irregularIs.outside().level())
         {
             // IS is regarded from larger cell: get the unique ID as seen from smaller
             intersectionID
-                = grid_.localIdSet().subId(*irregularIs.outside(),
-                                            irregularIs.indexInOutside(), 1);
+                = grid_.localIdSet().subId(irregularIs.outside(),
+                                           irregularIs.indexInOutside(), 1);
         }
 
         // for subFaceIdx == -1, we weight all subfaces equally
@@ -375,15 +375,15 @@ public:
                         int& globalIdx3)
     {
         IdType intersectionID
-                = grid_.localIdSet().subId(*irregularIs.inside(),
-                                            irregularIs.indexInInside(), 1);
+                = grid_.localIdSet().subId(irregularIs.inside(),
+                                           irregularIs.indexInInside(), 1);
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside()->level() < irregularIs.outside()->level())
+        if (irregularIs.inside().level() < irregularIs.outside().level())
         {
             // IS is regarded from larger cell: get the unique number as seen from smaller
             intersectionID
-                = grid_.localIdSet().subId(*irregularIs.outside(),
-                                            irregularIs.indexInOutside(), 1);
+                = grid_.localIdSet().subId(irregularIs.outside(),
+                                           irregularIs.indexInOutside(), 1);
 
             // check if T1ransmissibility matrix was stored for that IF
             if (irregularInterfaceMap_.find(intersectionID) == irregularInterfaceMap_.end())
@@ -404,8 +404,6 @@ public:
                 T1_secondHalfEdge[0] = -irregularInterfaceMap_[intersectionID].T1_[second][2];
                 T1_secondHalfEdge[1] = -irregularInterfaceMap_[intersectionID].T1_[second][1];
                 T1_secondHalfEdge[2] = -irregularInterfaceMap_[intersectionID].T1_[second][0];
-    //          Dune::dinfo << "mpfa Info retrieved for isID " << intersectionID
-    //                  << "at coordinate " << irregularIs.geometry().center() << " from GlobalIdx " << this->index(*irregularIs.inside())<<std::endl;
                 return 2;
             }
             return 1;
@@ -424,9 +422,6 @@ public:
         {
             secondHalfEdgeIntersectionIt = irregularInterfaceMap_[intersectionID].getIntersection();
             T1_secondHalfEdge = irregularInterfaceMap_[intersectionID].T1_[second];
-
-    //      Dune::dinfo << "mpfa Info retrieved for isID " << intersectionID
-    //              << "at coordinate " << irregularIs.geometry().center() << " from GlobalIdx " << this->index(*irregularIs.inside())<<std::endl;
             return 2;
         }
         return 1;
@@ -461,15 +456,15 @@ public:
         const int offset = subFaceIdx * 2;
 
         IdType intersectionID
-                = grid_.localIdSet().subId(*irregularIs.inside(),
-                                            irregularIs.indexInInside(), 1);
+                = grid_.localIdSet().subId(irregularIs.inside(),
+                                           irregularIs.indexInInside(), 1);
         // mapping is only unique from smaller cell (if *inside and not *outside)
-        if (irregularIs.inside()->level() < irregularIs.outside()->level())
+        if (irregularIs.inside().level() < irregularIs.outside().level())
         {
             // IS is regarded from larger cell: get the unique number as seen from smaller
             intersectionID
-                = grid_.localIdSet().subId(*irregularIs.outside(),
-                                            irregularIs.indexInOutside(), 1);
+                = grid_.localIdSet().subId(irregularIs.outside(),
+                                           irregularIs.indexInOutside(), 1);
 
             // check if T1ransmissibility matrix was stored for that IF
             if (irregularInterfaceMap_.find(intersectionID) == irregularInterfaceMap_.end())

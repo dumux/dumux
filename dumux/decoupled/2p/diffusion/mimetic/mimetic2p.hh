@@ -99,7 +99,6 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
 
     typedef typename GridView::Grid Grid;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
@@ -647,8 +646,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
         //it is enough to evaluate the capillary/gravity flux for neighbors -> not needed anyway at the boundaries!
         if (isIt->neighbor())
         {
-            ElementPointer neighbor = isIt->outside();
-            int eIdxGlobalNeighbor = problem_.variables().index(*neighbor);
+            int eIdxGlobalNeighbor = problem_.variables().index(isIt->outside());
             if (flux >= 0.)
             {
                 switch (pressureType)

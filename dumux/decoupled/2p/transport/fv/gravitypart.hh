@@ -70,7 +70,6 @@ private:
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
@@ -88,9 +87,9 @@ public:
      */
     void getFlux(DimVector& flux, const Intersection& intersection, const Scalar satI, const Scalar satJ) const
     {
-        ElementPointer element = intersection.inside();
+        auto element = intersection.inside();
 
-        int globalIdxI = problem_.variables().index(*element);
+        int globalIdxI = problem_.variables().index(element);
         CellData& cellDataI = problem_.variables().cellData(globalIdxI);
 
         int indexInInside = intersection.indexInInside();
@@ -108,9 +107,9 @@ public:
         }
         else
         {
-            lambdaWI = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satI);
+            lambdaWI = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satI);
             lambdaWI /= viscosity_[wPhaseIdx];
-            lambdaNwI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satI);
+            lambdaNwI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satI);
             lambdaNwI /= viscosity_[nPhaseIdx];
         }
 
@@ -125,17 +124,17 @@ public:
         if (intersection.neighbor())
         {
             // access neighbor
-            ElementPointer neighborPointer = intersection.outside();
+            auto neighbor = intersection.outside();
 
-            int globalIdxJ = problem_.variables().index(*neighborPointer);
+            int globalIdxJ = problem_.variables().index(neighbor);
             CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
 
-            distVec = neighborPointer->geometry().center() - element->geometry().center();
+            distVec = neighbor.geometry().center() - element.geometry().center();
 
             // get permeability
             problem_.spatialParams().meanK(meanPermeability,
-                    problem_.spatialParams().intrinsicPermeability(*element),
-                    problem_.spatialParams().intrinsicPermeability(*neighborPointer));
+                    problem_.spatialParams().intrinsicPermeability(element),
+                    problem_.spatialParams().intrinsicPermeability(neighbor));
 
             //get lambda_bar = lambda_n*f_w
             if (preComput_)
@@ -145,9 +144,9 @@ public:
             }
             else
             {
-                lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
+                lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(neighbor), satJ);
                 lambdaWJ /= viscosity_[wPhaseIdx];
-                lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
+                lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(neighbor), satJ);
                 lambdaNwJ /= viscosity_[nPhaseIdx];
             }
 
@@ -160,14 +159,14 @@ public:
         {
             // get permeability
             problem_.spatialParams().meanK(meanPermeability,
-                    problem_.spatialParams().intrinsicPermeability(*element));
+                    problem_.spatialParams().intrinsicPermeability(element));
 
-            distVec = intersection.geometry().center() - element->geometry().center();
+            distVec = intersection.geometry().center() - element.geometry().center();
 
             //calculate lambda_n*f_w at the boundary
-            lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satJ);
+            lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satJ);
             lambdaWJ /= viscosity_[wPhaseIdx];
-            lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satJ);
+            lambdaNwJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satJ);
             lambdaNwJ /= viscosity_[nPhaseIdx];
 
             //If potential is zero always take value from the boundary!

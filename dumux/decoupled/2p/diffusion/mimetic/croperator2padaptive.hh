@@ -86,7 +86,6 @@ class CROperatorAssemblerTwoPAdaptive
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::IndexSet IS;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef Dune::FieldMatrix<Scalar,1,1> BlockType;
     typedef Dune::BCRSMatrix<BlockType> MatrixType;
     typedef typename MatrixType::block_type MBlockType;

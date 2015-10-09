@@ -117,7 +117,6 @@ template<class TypeTag> class FVPressure2P2C
 
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPtr;
     typedef typename GridView::Intersection Intersection;
 
     // convenience shortcuts for Vectors/Matrices
@@ -348,14 +347,14 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         const Intersection& intersection, const CellData& cellDataI, const bool first)
 {
     entries = 0.;
-    ElementPtr elementPtrI = intersection.inside();
-    int eIdxGlobalI = problem().variables().index(*elementPtrI);
+    auto elementI = intersection.inside();
+    int eIdxGlobalI = problem().variables().index(elementI);
 
     // get global coordinate of cell center
-    const GlobalPosition& globalPos = elementPtrI->geometry().center();
+    const GlobalPosition& globalPos = elementI.geometry().center();
 
     // cell volume & perimeter, assume linear map here
-    Scalar volume = elementPtrI->geometry().volume();
+    Scalar volume = elementI.geometry().volume();
     Scalar perimeter = cellDataI.perimeter();
 //#warning perimeter hack 2D!
 //    perimeter = intersection.geometry().volume()*2;
@@ -363,7 +362,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     const GlobalPosition& gravity_ = problem().gravity();
 
     // get absolute permeability
-    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPtrI));
+    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(elementI));
 
     // get mobilities and fractional flow factors
     Scalar fractionalWI=0, fractionalNWI=0;
@@ -382,12 +381,12 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     Scalar faceArea = intersection.geometry().volume();
 
     // access neighbor
-    ElementPtr neighborPtr = intersection.outside();
-    int eIdxGlobalJ = problem().variables().index(*neighborPtr);
+    auto neighbor = intersection.outside();
+    int eIdxGlobalJ = problem().variables().index(neighbor);
     CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
     // gemotry info of neighbor
-    const GlobalPosition& globalPosNeighbor = neighborPtr->geometry().center();
+    const GlobalPosition& globalPosNeighbor = neighbor.geometry().center();
 
     // distance vector between barycenters
     GlobalPosition distVec = globalPosNeighbor - globalPos;
@@ -399,7 +398,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     unitDistVec /= dist;
 
     DimMatrix permeabilityJ
-        = problem().spatialParams().intrinsicPermeability(*neighborPtr);
+        = problem().spatialParams().intrinsicPermeability(neighbor);
 
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
@@ -439,7 +438,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     {
         // determine volume derivatives
         if (!cellDataJ.hasVolumeDerivatives())
-            asImp_().volumeDerivatives(globalPosNeighbor, *neighborPtr);
+            asImp_().volumeDerivatives(globalPosNeighbor, neighbor);
 
         Scalar dv_dC1 = (cellDataJ.dv(wPhaseIdx)
                     + cellDataI.dv(wPhaseIdx)) / 2; // dV/dm1= dv/dC^1
@@ -507,7 +506,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         }
 
         //perform upwinding if desired
-        if(!upwindWCellData or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father()))
+        if(!upwindWCellData or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementI.father() == neighbor.father()))
         {
             if (cellDataI.wasRefined() && cellDataJ.wasRefined())
             {
@@ -636,8 +635,8 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
 {
     entries = 0.;
     // get global coordinate of cell center
-    ElementPtr elementPtrI = intersection.inside();
-    const GlobalPosition& globalPos = elementPtrI->geometry().center();
+    auto elementI = intersection.inside();
+    const GlobalPosition& globalPos = elementI.geometry().center();
 
     // get normal vector
     const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
@@ -669,7 +668,7 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
     if (bcType.isDirichlet(Indices::pressureEqIdx))
     {
         // get absolute permeability
-        DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPtrI));
+        DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(elementI));
 
         if(regulateBoundaryPermeability)
         {
@@ -742,10 +741,10 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
             else if(GET_PROP_VALUE(TypeTag, BoundaryMobility) == Indices::permDependent)
             {
                 lambdaWBound
-                    = MaterialLaw::krw(problem().spatialParams().materialLawParams(*elementPtrI),
+                    = MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI),
                             BCfluidState.saturation(wPhaseIdx)) / viscosityWBound;
                 lambdaNWBound
-                    = MaterialLaw::krn(problem().spatialParams().materialLawParams(*elementPtrI),
+                    = MaterialLaw::krn(problem().spatialParams().materialLawParams(elementI),
                             BCfluidState.saturation(wPhaseIdx)) / viscosityNWBound;
             }
             // get average density

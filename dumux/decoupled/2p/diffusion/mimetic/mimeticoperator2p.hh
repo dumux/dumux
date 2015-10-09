@@ -61,7 +61,6 @@ class MimeticOperatorAssemblerTwoP: public CROperatorAssemblerTwoP<TypeTag>
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
@@ -226,7 +225,7 @@ public:
 
                 if (isIt->neighbor())
                 {
-                    int neighborIdx = problem.variables().index(*(isIt->outside()));
+                    int neighborIdx = problem.variables().index(isIt->outside());
 
                     CellData& cellDataNeighbor = problem.variables().cellData(neighborIdx);
 

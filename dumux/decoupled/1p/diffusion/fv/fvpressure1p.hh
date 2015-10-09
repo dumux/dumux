@@ -86,7 +86,6 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -244,12 +243,12 @@ template<class TypeTag>
 void FVPressure1P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entry, const Intersection& intersection
         , const CellData& cellData, const bool first)
 {
-    ElementPointer elementI = intersection.inside();
-    ElementPointer elementJ = intersection.outside();
+    auto elementI = intersection.inside();
+    auto elementJ = intersection.outside();
 
     // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = elementI->geometry().center();
-    const GlobalPosition& globalPosJ = elementJ->geometry().center();
+    const GlobalPosition& globalPosI = elementI.geometry().center();
+    const GlobalPosition& globalPosJ = elementJ.geometry().center();
 
     //get face normal
     const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
@@ -266,8 +265,8 @@ void FVPressure1P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entry, const I
     // compute vectorized permeabilities
     DimMatrix meanPermeability(0);
 
-    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
-            problem_.spatialParams().intrinsicPermeability(*elementJ));
+    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(elementI),
+            problem_.spatialParams().intrinsicPermeability(elementJ));
 
     Dune::FieldVector<Scalar, dim> permeability(0);
     meanPermeability.mv(unitOuterNormal, permeability);
@@ -294,10 +293,10 @@ template<class TypeTag>
 void FVPressure1P<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entry,
 const Intersection& intersection, const CellData& cellData, const bool first)
 {
-    ElementPointer element = intersection.inside();
+    auto element = intersection.inside();
 
     // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = element->geometry().center();
+    const GlobalPosition& globalPosI = element.geometry().center();
 
     // center of face in global coordinates
     const GlobalPosition& globalPosJ = intersection.geometry().center();
@@ -327,7 +326,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
         DimMatrix meanPermeability(0);
 
         problem_.spatialParams().meanK(meanPermeability,
-                problem_.spatialParams().intrinsicPermeability(*element));
+                problem_.spatialParams().intrinsicPermeability(element));
 
         Dune::FieldVector<Scalar, dim> permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);

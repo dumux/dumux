@@ -43,7 +43,6 @@ private:
       typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
@@ -179,12 +178,12 @@ public:
                 else
                 {
                     // get element pointer from neighbor
-                    ElementPointer outside = intersection.outside();
-                    int globalIdxJ = problem_.variables().index(*outside);
+                    auto outside = intersection.outside();
+                    int globalIdxJ = problem_.variables().index(outside);
 
                     // treat each intersection only from one side
-                    if (eIt->level() > outside->level()
-                            || (eIt->level() == outside->level() && globalIdxI < globalIdxJ))
+                    if (eIt->level() > outside.level()
+                            || (eIt->level() == outside.level() && globalIdxI < globalIdxJ))
                     {
                         Scalar satJ = 0.;
                         switch (saturationType_)

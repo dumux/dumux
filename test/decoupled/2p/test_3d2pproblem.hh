@@ -171,8 +171,6 @@ enum
 typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
-typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
-typedef typename GridView::Traits::template Codim<dim>::EntityPointer VertexPointer;
 typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -295,7 +293,7 @@ void source(PrimaryVariables &values,const Element& element) const
     int numVertices = element.geometry().corners();
     for(int i = 0; i < numVertices; i++)
     {
-        GlobalPosition globalPos(element.template subEntity<dim>(i)->geometry().center());
+        GlobalPosition globalPos(element.template subEntity<dim>(i).geometry().center());
 
         if (globalPos[0] < inflowEdge_[0] + eps_ && globalPos[1] < inflowEdge_[1] + eps_ && globalPos[2] < inflowEdge_[2] + eps_)
         {
@@ -338,11 +336,11 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
 void boundaryTypes(BoundaryTypes &bcTypes, const Intersection& intersection) const
 {
 #if PROBLEM == 2 //Nine-Spot
-    ElementPointer element = intersection.inside();
-    int numVertices = element->geometry().corners();
+    auto element = intersection.inside();
+    int numVertices = element.geometry().corners();
     for(int i = 0; i < numVertices; i++)
     {
-        GlobalPosition globalPos(element->template subEntity<dim>(i)->geometry().center());
+        GlobalPosition globalPos(element.template subEntity<dim>(i).geometry().center());
 
         if (globalPos[0] > outflowEdge_[0] - eps_ && globalPos[1] > outflowEdge_[1] - eps_ && globalPos[2] > outflowEdge_[2] - eps_)
         {

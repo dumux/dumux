@@ -140,7 +140,6 @@ enum
 typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
-typedef typename Grid::Traits::template Codim<0>::EntityPointer ElementPointer;
 typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
@@ -235,13 +234,13 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 void source(PrimaryVariables &values, const Element &element)
 {
     this->setZero(values);
-    ElementPointer father(element);
+    auto father = element;
     // access level 1 entity
-    while (father->level() != this->gridAdapt().getMinLevel())
+    while (father.level() != this->gridAdapt().getMinLevel())
     {
-        father = father->father();
+        father = father.father();
     }
-    GlobalPosition globalPos = father->geometry().center();
+    GlobalPosition globalPos = father.geometry().center();
     if (fabs(globalPos[0] - 4.8) < 0.5 && fabs(globalPos[1] - 4.8) < 0.5)
         values[Indices::contiNEqIdx] = 0.0001;
 }

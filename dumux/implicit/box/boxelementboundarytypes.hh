@@ -49,7 +49,6 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
 
     enum { dim = GridView::dimension };
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
 
 public:
     /*!
@@ -98,8 +97,7 @@ public:
             (*this)[i].reset();
 
             if (problem.model().onBoundary(element, i)) {
-                const VertexPointer vptr = element.template subEntity<dim>(i);
-                problem.boundaryTypes((*this)[i], *vptr);
+                problem.boundaryTypes((*this)[i], element.template subEntity<dim>(i));
 
                 hasDirichlet_ = hasDirichlet_ || (*this)[i].hasDirichlet();
                 hasNeumann_ = hasNeumann_ || (*this)[i].hasNeumann();

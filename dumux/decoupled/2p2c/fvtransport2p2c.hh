@@ -103,7 +103,6 @@ class FVTransport2P2C
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
@@ -578,26 +577,26 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     fluxEntries = 0.;
     timestepFlux = 0.;
     // cell information
-    ElementPointer elementPtrI= intersection.inside();
-    int eIdxGlobalI = problem().variables().index(*elementPtrI);
+    auto elementI = intersection.inside();
+    int eIdxGlobalI = problem().variables().index(elementI);
 
     // get position
-    const GlobalPosition globalPos = elementPtrI->geometry().center();
+    const GlobalPosition globalPos = elementI.geometry().center();
     const GlobalPosition& gravity_ = problem().gravity();
     // cell volume, assume linear map here
-    Scalar volume = elementPtrI->geometry().volume();
+    Scalar volume = elementI.geometry().volume();
 
     // get values of cell I
     Scalar pressI = problem().pressureModel().pressure(eIdxGlobalI);
     Scalar pcI = cellDataI.capillaryPressure();
-    DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementPtrI));
+    DimMatrix K_I(problem().spatialParams().intrinsicPermeability(elementI));
 
     PhaseVector SmobI(0.);
     SmobI[wPhaseIdx] = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(*elementPtrI).swr())
+                            - problem().spatialParams().materialLawParams(elementI).swr())
                             , 1e-2);
     SmobI[nPhaseIdx] = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(*elementPtrI).snr())
+                                - problem().spatialParams().materialLawParams(elementI).snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
@@ -621,12 +620,12 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     PhaseVector potential(0.);
 
     // access neighbor
-    ElementPointer neighborPtr = intersection.outside();
-    int eIdxGlobalJ = problem().variables().index(*neighborPtr);
+    auto neighbor = intersection.outside();
+    int eIdxGlobalJ = problem().variables().index(neighbor);
     CellData& cellDataJ = problem().variables().cellData(eIdxGlobalJ);
 
     // neighbor cell center in global coordinates
-    const GlobalPosition& globalPosNeighbor = neighborPtr->geometry().center();
+    const GlobalPosition& globalPosNeighbor = neighbor.geometry().center();
 
     // distance vector between barycenters
     GlobalPosition distVec = globalPosNeighbor - globalPos;
@@ -652,7 +651,7 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
     DimMatrix meanK_(0.);
     Dumux::harmonicMeanMatrix(meanK_,
             K_I,
-            problem().spatialParams().intrinsicPermeability(*neighborPtr));
+            problem().spatialParams().intrinsicPermeability(neighbor));
     Dune::FieldVector<Scalar,dim> K(0);
     meanK_.umv(unitDistVec,K);
 
@@ -725,10 +724,10 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
             {
                //check if harmonic weighting is necessary
                 if (potential[phaseIdx] > 0. && (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellDataJ.mobility(phaseIdx), 0.0, 1.0e-30)   // check if outflow induce neglected (i.e. mob=0) phase flux
-                       or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())))
+                       or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementI.father() == neighbor.father())))
                     lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
                 else if (potential[phaseIdx] < 0. && (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(cellDataI.mobility(phaseIdx), 0.0, 1.0e-30) // check if inflow induce neglected phase flux
-                        or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())))
+                        or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementI.father() == neighbor.father())))
                     lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
                 else
                     doUpwinding[phaseIdx] = false;
@@ -764,7 +763,7 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
                     * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx))/SmobI[phaseIdx]);
 
             //d) output
-            if(!(cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())
+            if(!(cellDataI.wasRefined() && cellDataJ.wasRefined() && elementI.father() == neighbor.father())
                     && eIdxGlobalI > eIdxGlobalJ) //(only for one side)
             {
                 averagedFaces_++;
@@ -823,8 +822,8 @@ void FVTransport2P2C<TypeTag>::getFlux(ComponentVector& fluxEntries,
 //
 //        // calculate tortuosity at the nodes i and j needed
 //        // for porous media diffusion coefficient
-//        Scalar poroI = problem().spatialParams().porosity(*elementPtrI);
-//        Scalar poroJ = problem().spatialParams().porosity(*neighborPtr);
+//        Scalar poroI = problem().spatialParams().porosity(elementI);
+//        Scalar poroJ = problem().spatialParams().porosity(neighbor);
 //        Scalar tauI =
 //            1.0/(poroI * poroI) *
 //            pow(poroI * cellDataI.saturation(phaseIdx), 7.0/3);
@@ -873,19 +872,19 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
                                                     const CellData& cellDataI)
 {
     // cell information
-    ElementPointer elementPtrI= intersection.inside();
-    int eIdxGlobalI = problem().variables().index(*elementPtrI);
+    auto elementI = intersection.inside();
+    int eIdxGlobalI = problem().variables().index(elementI);
 
     // get position
-    const GlobalPosition globalPos = elementPtrI->geometry().center();
+    const GlobalPosition globalPos = elementI.geometry().center();
 
     // cell volume, assume linear map here
-    Scalar volume = elementPtrI->geometry().volume();
+    Scalar volume = elementI.geometry().volume();
     const GlobalPosition& gravity_ = problem().gravity();
     // get values of cell I
     Scalar pressI = problem().pressureModel().pressure(eIdxGlobalI);
     Scalar pcI = cellDataI.capillaryPressure();
-    DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementPtrI));
+    DimMatrix K_I(problem().spatialParams().intrinsicPermeability(elementI));
 
     if(regulateBoundaryPermeability)
     {
@@ -895,10 +894,10 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
     }
 
     Scalar SwmobI = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParams().materialLawParams(*elementPtrI).swr())
+                            - problem().spatialParams().materialLawParams(elementI).swr())
                             , 1e-2);
     Scalar SnmobI = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParams().materialLawParams(*elementPtrI).snr())
+                                - problem().spatialParams().materialLawParams(elementI).snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
@@ -996,7 +995,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
                 lambda[wPhaseIdx] = BCfluidState.saturation(wPhaseIdx) / viscosityWBound;
             else
                 lambda[wPhaseIdx] = MaterialLaw::krw(
-                        problem().spatialParams().materialLawParams(*elementPtrI), BCfluidState.saturation(wPhaseIdx))
+                        problem().spatialParams().materialLawParams(elementI), BCfluidState.saturation(wPhaseIdx))
                         / viscosityWBound;
             }
         if (potential[nPhaseIdx] >= 0.)
@@ -1007,7 +1006,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(ComponentVector& fluxEntries,
                 lambda[nPhaseIdx] = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
             else
                 lambda[nPhaseIdx] = MaterialLaw::krn(
-                        problem().spatialParams().materialLawParams(*elementPtrI), BCfluidState.saturation(wPhaseIdx))
+                        problem().spatialParams().materialLawParams(elementI), BCfluidState.saturation(wPhaseIdx))
                         / viscosityNWBound;
             }
         // calculate and standardized velocity
@@ -1092,7 +1091,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     // prepare a flash solver
     CompositionalFlash<TypeTag> flashSolver;
 
-    const ElementPointer eIt= intersection.inside();
+    auto element = intersection.inside();
     // read boundary values
     PrimaryVariables primaryVariablesOnBoundary(0.);
     problem().dirichlet(primaryVariablesOnBoundary, intersection);
@@ -1105,7 +1104,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
         Scalar satBound = primaryVariablesOnBoundary[contiWEqIdx];
         if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         {
-            Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(*eIt),
+            Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
                     satBound);
             switch (pressureType)
             {
@@ -1127,7 +1126,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
             pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
 
         flashSolver.saturationFlash2p2c(BCfluidState, satBound, pressBound,
-                problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
+                problem().spatialParams().porosity(element), problem().temperatureAtPos(globalPosFace));
     }
     else if (bcType == Indices::concentration)
     {
@@ -1135,11 +1134,11 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
         pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
         Scalar Z1Bound = primaryVariablesOnBoundary[contiWEqIdx];
         flashSolver.concentrationFlash2p2c(BCfluidState, Z1Bound, pressBound,
-            problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
+            problem().spatialParams().porosity(element), problem().temperatureAtPos(globalPosFace));
 
         if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         {
-            Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(*eIt),
+            Scalar pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
                     BCfluidState.saturation(wPhaseIdx));
             int maxiter = 3;
             //start iteration loop
@@ -1168,8 +1167,8 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                 Scalar oldPc = pcBound;
                 //update with better pressures
                 flashSolver.concentrationFlash2p2c(BCfluidState, Z1Bound, pressBound,
-                        problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
-                pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(*eIt),
+                        problem().spatialParams().porosity(element), problem().temperatureAtPos(globalPosFace));
+                pcBound = MaterialLaw::pc(problem().spatialParams().materialLawParams(element),
                         BCfluidState.saturation(wPhaseIdx));
                 // TODO: get right criterion, do output for evaluation
                 //converge criterion
@@ -1215,11 +1214,11 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
 
             if (isIt->neighbor())
             {
-                ElementPointer neighbor = isIt->outside();
-                int eIdxGlobalJ = problem_.variables().index(*neighbor);
+                auto neighbor = isIt->outside();
+                int eIdxGlobalJ = problem_.variables().index(neighbor);
 
                 int levelI = eIt->level();
-                int levelJ = neighbor->level();
+                int levelJ = neighbor.level();
 
                 if (eIdxGlobalI < eIdxGlobalJ && levelI <= levelJ)
                 {
@@ -1281,8 +1280,8 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                     it = faceDt.find(indexInInside);
                     if (it != faceDt.end())
                     {
-                        ElementPointer neighbor = isIt->outside();
-                        int eIdxGlobalJ = problem_.variables().index(*neighbor);
+                        auto neighbor = isIt->outside();
+                        int eIdxGlobalJ = problem_.variables().index(neighbor);
 
                         LocalTimesteppingData& localDataJ = timeStepData_[eIdxGlobalJ];
 

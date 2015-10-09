@@ -128,7 +128,6 @@ class FVSaturation2P: public FVTransport<TypeTag>
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -532,18 +531,18 @@ private:
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& intersection, CellData& cellDataI)
 {
-    ElementPointer elementI = intersection.inside();
-    ElementPointer elementJ = intersection.outside();
+    auto elementI = intersection.inside();
+    auto elementJ = intersection.outside();
 
-    const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(*elementJ));
+    const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(elementJ));
 
     // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = elementI->geometry().center();
-    const GlobalPosition& globalPosJ = elementJ->geometry().center();
+    const GlobalPosition& globalPosI = elementI.geometry().center();
+    const GlobalPosition& globalPosJ = elementJ.geometry().center();
 
     // cell volume, assume linear map here
-    Scalar volume = elementI->geometry().volume();
-    Scalar porosity = std::max(problem_.spatialParams().porosity(*elementI), porosityThreshold_);
+    Scalar volume = elementI.geometry().volume();
+    Scalar porosity = std::max(problem_.spatialParams().porosity(elementI), porosityThreshold_);
 
     if (compressibility_)
     {
@@ -573,7 +572,7 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
     // compute distance between cell centers
     Scalar dist = distVec.two_norm();
 
-    bool takeNeighbor = (elementI->level() < elementJ->level());
+    bool takeNeighbor = (elementI.level() < elementJ.level());
     //get phase potentials
     bool upwindWI =
             (takeNeighbor) ? !cellDataJ.fluxData().isUpwindCell(wPhaseIdx, intersection.indexInOutside()) :
@@ -723,17 +722,17 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersection& intersection, CellData& cellDataI)
 {
-    ElementPointer elementI = intersection.inside();
+    auto elementI = intersection.inside();
 
     // get global coordinates of cell centers
-    const GlobalPosition& globalPosI = elementI->geometry().center();
+    const GlobalPosition& globalPosI = elementI.geometry().center();
 
     // center of face in global coordinates
     const GlobalPosition& globalPosJ = intersection.geometry().center();
 
     // cell volume, assume linear map here
-    Scalar volume = elementI->geometry().volume();
-    Scalar porosity = std::max(problem_.spatialParams().porosity(*elementI), porosityThreshold_);
+    Scalar volume = elementI.geometry().volume();
+    Scalar porosity = std::max(problem_.spatialParams().porosity(elementI), porosityThreshold_);
 
     if (compressibility_)
     {
@@ -792,7 +791,7 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         }
         }
 
-        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*elementI), satWBound);
+        Scalar pcBound = MaterialLaw::pc(problem_.spatialParams().materialLawParams(elementI), satWBound);
 
         Scalar lambdaW = 0;
         Scalar lambdaNw = 0;
@@ -810,12 +809,12 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         {
             if (compressibility_)
             {
-                lambdaW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*elementI), satWBound)
+                lambdaW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(elementI), satWBound)
                         / FluidSystem::viscosity(cellDataI.fluidState(), wPhaseIdx);
             }
             else
             {
-                lambdaW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*elementI), satWBound)
+                lambdaW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(elementI), satWBound)
                         / viscosity_[wPhaseIdx];
             }
         }
@@ -832,12 +831,12 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         {
             if (compressibility_)
             {
-                lambdaNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*elementI), satWBound)
+                lambdaNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(elementI), satWBound)
                         / FluidSystem::viscosity(cellDataI.fluidState(), nPhaseIdx);
             }
             else
             {
-                lambdaNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*elementI), satWBound)
+                lambdaNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(elementI), satWBound)
                         / viscosity_[nPhaseIdx];
             }
         }

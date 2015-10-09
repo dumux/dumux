@@ -41,7 +41,6 @@ class ElOnePTwoCLocalJacobian : public ImplicitLocalJacobian<TypeTag>
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     enum {
         dim = GridView::dimension,
     };
@@ -110,7 +109,7 @@ public:
     {
         int dofIdxGlobal;
         FVElementGeometry neighborFVGeom;
-        ElementPointer neighbor(this->element_());
+        auto neighbor = this->element_();
         if (isBox)
         {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
@@ -123,11 +122,11 @@ public:
         else
         {
             neighbor = this->fvElemGeom_.neighbors[col];
-            neighborFVGeom.updateInner(*neighbor);
+            neighborFVGeom.updateInner(neighbor);
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            dofIdxGlobal = this->problemPtr_->elementMapper().index(*neighbor);
+            dofIdxGlobal = this->problemPtr_->elementMapper().index(neighbor);
 #else
-            dofIdxGlobal = this->problemPtr_->elementMapper().map(*neighbor);
+            dofIdxGlobal = this->problemPtr_->elementMapper().map(neighbor);
 #endif
 
         }
@@ -163,7 +162,7 @@ public:
             else{
                 this->curVolVars_[col].update(priVars,
                         this->problem_(),
-                                        *neighbor,
+                                        neighbor,
                                         neighborFVGeom,
                                         /*scvIdx=*/0,
                                         false);
@@ -217,7 +216,7 @@ public:
             else{
                 this->curVolVars_[col].update(priVars,
                         this->problem_(),
-                                        *neighbor,
+                                        neighbor,
                                         neighborFVGeom,
                                         /*scvIdx=*/0,
                                         false);

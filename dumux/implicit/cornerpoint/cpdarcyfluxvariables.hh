@@ -169,7 +169,7 @@ protected:
         // calculate the transmissibilities
         const SpatialParams &spatialParams = problem.spatialParams();
 
-        const Element& elementI = *fvGeometry_.neighbors[face().i];
+        const Element& elementI = fvGeometry_.neighbors[face().i];
         FVElementGeometry fvGeometryI;
         fvGeometryI.subContVol[0].global = elementI.geometry().center();
         auto ki = spatialParams.intrinsicPermeability(elementI, fvGeometryI, 0);
@@ -183,7 +183,7 @@ protected:
         auto tij = ti;
         if (!onBoundary_)
         {
-            const Element& elementJ = *fvGeometry_.neighbors[face().j];
+            const Element& elementJ = fvGeometry_.neighbors[face().j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
             auto kj = spatialParams.intrinsicPermeability(elementJ, fvGeometryJ, 0);
@@ -230,7 +230,7 @@ protected:
                 }
                 else
                 {
-                    const Element& elementJ = *fvGeometry_.neighbors[face().j];
+                    const Element& elementJ = fvGeometry_.neighbors[face().j];
                     auto globalPosJ = elementJ.geometry().center();
                     potentialJ -= density*(problem.gravityAtPos(globalPosJ)*globalPosJ);
                 }

@@ -115,7 +115,9 @@ class FvMpfaL3dInteractionVolume
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     enum
@@ -124,7 +126,8 @@ private:
         dimWorld = GridView::dimensionworld,
     };
 
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename Grid::template Codim<0>::EntitySeed ElementSeed;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
@@ -199,19 +202,19 @@ public:
     }
     //! Store a dune element as a sub volume element
     /*!
-     *  \param pointer The Dune::EntityPointer to the element
+     *  \param element The element
      *  \param subVolumeIdx The local element index in the interaction volume
      */
-    void setSubVolumeElement(ElementPointer pointer, int subVolumeIdx)
+    void setSubVolumeElement(const Element& element, int subVolumeIdx)
     {
         if (!hasSubVolumeElement(subVolumeIdx))
         {
-            elements_[subVolumeIdx].push_back(pointer);
+            elements_[subVolumeIdx].push_back(element.seed());
             elementNum_++;
         }
         else
         {
-            elements_[subVolumeIdx].insert(elements_[subVolumeIdx].begin(), pointer);
+            elements_[subVolumeIdx].insert(elements_[subVolumeIdx].begin(), element.seed());
         }
     }
 
@@ -372,12 +375,12 @@ public:
     /*!
      * \param subVolumeIdx The local element index in the interaction volume
      *
-     * \return Dune::EntityPointer to the interaction volume sub-element.
+     * \return The interaction volume sub-element.
      */
-    ElementPointer& getSubVolumeElement(int subVolumeIdx)
+    Element getSubVolumeElement(int subVolumeIdx)
     {
         if (hasSubVolumeElement(subVolumeIdx))
-            return elements_[subVolumeIdx][0];
+            return GridCreator::grid().entity(elements_[subVolumeIdx][0]);
         else
         {
             std::cout<<"Problems when calling getSubVolumeElement("<<subVolumeIdx<<")\n";
@@ -578,9 +581,9 @@ public:
             if (elements_[i].size() > 0)
             {
             std::cout<<"element "<<i<<":\n";
-            std::cout<<"element level: "<<elements_[i][0]->level()<<"\n";
-            std::cout<<"element position: "<<elements_[i][0]->geometry().center()<<"\n";
-            std::cout<<"element volume: "<<elements_[i][0]->geometry().volume()<<"\n";
+            std::cout<<"element level: "<<GridCreator::grid().entity(elements_[i][0]).level()<<"\n";
+            std::cout<<"element position: "<<GridCreator::grid().entity(elements_[i][0]).geometry().center()<<"\n";
+            std::cout<<"element volume: "<<GridCreator::grid().entity(elements_[i][0]).geometry().volume()<<"\n";
             std::cout<<"face indices on element: "<<indexOnElement_[i]<<"\n";
             std::cout<<"face normals on element: "<<normal_[i]<<"\n";
             std::cout<<"face areas on element: ";
@@ -690,7 +693,7 @@ private:
     BCTypeVector boundaryTypes_;
     std::vector<int> faceType_;
     Dune::FieldVector<IndexVector, subVolumeTotalNum> indexOnElement_;
-    std::vector<std::vector<ElementPointer> > elements_;
+    std::vector<std::vector<ElementSeed> > elements_;
     BCVector neumannValues_;
     BCVector dirichletValues_;
     DimVector centerVertexPos_;

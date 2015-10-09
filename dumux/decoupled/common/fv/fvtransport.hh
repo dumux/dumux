@@ -75,7 +75,6 @@ class FVTransport
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
@@ -478,11 +477,11 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
 
             if (isIt->neighbor())
             {
-                ElementPointer neighbor = isIt->outside();
-                int globalIdxJ = problem_.variables().index(*neighbor);
+                auto neighbor = isIt->outside();
+                int globalIdxJ = problem_.variables().index(neighbor);
 
                 int levelI = eIt->level();
-                int levelJ = neighbor->level();
+                int levelJ = neighbor.level();
 
                 if (globalIdxI < globalIdxJ && levelI <= levelJ)
                 {
@@ -544,8 +543,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
                     it = faceDt.find(indexInInside);
                     if (it != faceDt.end())
                     {
-                        ElementPointer neighbor = isIt->outside();
-                        int globalIdxJ = problem_.variables().index(*neighbor);
+                        int globalIdxJ = problem_.variables().index(isIt->outside());
 
                         LocalTimesteppingData& localDataJ = timeStepData_[globalIdxJ];
 

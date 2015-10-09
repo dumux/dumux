@@ -74,7 +74,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
 
     enum {
@@ -408,7 +407,7 @@ protected:
     {
         int dofIdxGlobal;
         FVElementGeometry neighborFVGeom;
-        ElementPointer neighbor(element_());
+        auto neighbor = element_();
         if (isBox)
         {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
@@ -420,11 +419,11 @@ protected:
         else
         {
             neighbor = fvElemGeom_.neighbors[col];
-            neighborFVGeom.updateInner(*neighbor);
+            neighborFVGeom.updateInner(neighbor);
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            dofIdxGlobal = problemPtr_->elementMapper().index(*neighbor);
+            dofIdxGlobal = problemPtr_->elementMapper().index(neighbor);
 #else
-            dofIdxGlobal = problemPtr_->elementMapper().map(*neighbor);
+            dofIdxGlobal = problemPtr_->elementMapper().map(neighbor);
 #endif
         }
 
@@ -454,7 +453,7 @@ protected:
             else
                 curVolVars_[col].update(priVars,
                                         problem_(),
-                                        *neighbor,
+                                        neighbor,
                                         neighborFVGeom,
                                         /*scvIdx=*/0,
                                         false);
@@ -499,7 +498,7 @@ protected:
             else
                 curVolVars_[col].update(priVars,
                                         problem_(),
-                                        *neighbor,
+                                        neighbor,
                                         neighborFVGeom,
                                         /*scvIdx=*/0,
                                         false);

@@ -36,7 +36,6 @@ class IntersectionMapper
     typedef typename GridView::Grid Grid;
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
@@ -167,10 +166,10 @@ public:
             {
                 if (isIt->neighbor())
                 {
-                    ElementPointer neighbor = isIt->outside();
-                    int globalIdxNeighbor = map(*neighbor);
+                    auto neighbor = isIt->outside();
+                    int globalIdxNeighbor = map(neighbor);
 
-                    if (eIt->level() > neighbor->level() || (eIt->level() == neighbor->level() && eIdxGlobal < globalIdxNeighbor))
+                    if (eIt->level() > neighbor.level() || (eIt->level() == neighbor.level() && eIdxGlobal < globalIdxNeighbor))
                     {
 
                         int faceIdxNeighbor = 0;
@@ -180,12 +179,12 @@ public:
                         }
                         else
                         {
-                            IntersectionIterator isItNEnd = gridView_.iend(*neighbor);
-                            for (IntersectionIterator isItN = gridView_.ibegin(*neighbor); isItN != isItNEnd; ++isItN)
+                            IntersectionIterator isItNEnd = gridView_.iend(neighbor);
+                            for (IntersectionIterator isItN = gridView_.ibegin(neighbor); isItN != isItNEnd; ++isItN)
                             {
                                 if (isItN->neighbor())
                                 {
-                                    if (isItN->outside() == eIt)
+                                    if (isItN->outside() == *eIt)
                                     {
                                         break;
                                     }

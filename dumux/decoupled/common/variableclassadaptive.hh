@@ -55,7 +55,6 @@ private:
     typedef typename GridView::Grid Grid;
     typedef typename Grid::LevelGridView LevelGridView;
     typedef typename LevelGridView::template Codim<0>::Iterator LevelIterator;
-    typedef typename GridView::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef Dune::PersistentContainer<Grid, AdaptedValues> PersistentContainer;
 
 private:
@@ -116,11 +115,10 @@ public:
                 //Average in father
                 if (eIt->level() > 0)
                 {
-                    ElementPointer epFather = eIt->father();
-                    AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
+                    auto father = eIt->father();
+                    AdaptedValues& adaptedValuesFather = adaptationMap_[father];
                     adaptedValuesFather.count += 1;
-                    CellData::storeAdaptionValues(adaptedValues, adaptedValuesFather,
-                                                    *epFather);
+                    CellData::storeAdaptionValues(adaptedValues, adaptedValuesFather, father);
                 }
             }
         }
@@ -171,11 +169,9 @@ public:
                     // value is not in map, interpolate from father element
                     if (eIt->level() > 0)
                     {
-                        ElementPointer epFather = eIt->father();
-
-                        // create new entry: reconstruct from adaptationMap_[*father] to a new
-                        // adaptationMap_[*son]
-                        CellData::reconstructAdaptionValues(adaptationMap_, *epFather, *eIt, problem);
+                        // create new entry: reconstruct from adaptationMap_[father] to a new
+                        // adaptationMap_[son]
+                        CellData::reconstructAdaptionValues(adaptationMap_, eIt->father(), *eIt, problem);
 
                         // access new son
                         AdaptedValues& adaptedValues = adaptationMap_[*eIt];

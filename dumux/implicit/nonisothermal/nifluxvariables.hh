@@ -149,7 +149,7 @@ protected:
         }
         else
         {
-            const Element& elementI = *this->fvGeometry_.neighbors[i];
+            const Element& elementI = this->fvGeometry_.neighbors[i];
             FVElementGeometry fvGeometryI;
             fvGeometryI.subContVol[0].global = elementI.geometry().center();
 
@@ -158,7 +158,7 @@ protected:
                                                                      problem.spatialParams(),
                                                                      elementI, fvGeometryI, 0);
 
-            const Element& elementJ = *this->fvGeometry_.neighbors[j];
+            const Element& elementJ = this->fvGeometry_.neighbors[j];
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 

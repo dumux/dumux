@@ -193,7 +193,9 @@ class FvMpfaL3dInteractionVolumeAdaptive:public FvMpfaL3dInteractionVolume<TypeT
 private:
     typedef FvMpfaL3dInteractionVolume<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     enum
@@ -202,7 +204,8 @@ private:
         dimWorld = GridView::dimensionworld,
     };
 
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename Grid::template Codim<0>::EntitySeed ElementSeed;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
@@ -261,10 +264,10 @@ public:
     }
 
     //!\copydoc FvMpfaL3dInteractionVolume::setSubVolumeElement()
-    void setSubVolumeElement(ElementPointer pointer, int subVolumeIdx)
+    void setSubVolumeElement(const Element& element, int subVolumeIdx)
     {
-            ParentType::setSubVolumeElement(pointer, subVolumeIdx);
-            existingLevel_.insert(pointer->level());
+        ParentType::setSubVolumeElement(element, subVolumeIdx);
+        existingLevel_.insert(element.level());
     }
 
     //! Store the type of hanging-node-interaction volume

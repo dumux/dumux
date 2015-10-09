@@ -79,7 +79,7 @@ public:
 
         for (int i = 0; i < numNeighbors; i++)
         {
-            const Element& neighbor = *(fvGeometry.neighbors[i]);
+            const Element& neighbor = fvGeometry.neighbors[i];
 
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             const PrimaryVariables &solI

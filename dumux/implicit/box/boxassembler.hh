@@ -47,7 +47,6 @@ class BoxAssembler : public ImplicitAssembler<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum{ dim = GridView::dimension };
-    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
 
 public:
     BoxAssembler(): ParentType() {}
@@ -447,10 +446,10 @@ private:
         int numVerticesLocal = element.template count<dim>();
 #endif
         for (int i=0; i < numVerticesLocal; ++i) {
-            const VertexPointer vp = element.template subEntity<dim>(i);
+            auto vertex = element.template subEntity<dim>(i);
 
-            if (vp->partitionType() == Dune::InteriorEntity ||
-                vp->partitionType() == Dune::BorderEntity)
+            if (vertex.partitionType() == Dune::InteriorEntity ||
+                vertex.partitionType() == Dune::BorderEntity)
             {
                 // do not change the non-ghost vertices
                 continue;
@@ -458,9 +457,9 @@ private:
 
             // set main diagonal entries for the vertex
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-            int vIdx = this->vertexMapper_().index(*vp);
+            int vIdx = this->vertexMapper_().index(vertex);
 #else
-            int vIdx = this->vertexMapper_().map(*vp);
+            int vIdx = this->vertexMapper_().map(vertex);
 #endif
             typedef typename JacobianMatrix::block_type BlockType;
             BlockType &J = (*this->matrix_)[vIdx][vIdx];
