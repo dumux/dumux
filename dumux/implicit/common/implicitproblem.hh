@@ -28,7 +28,6 @@
 
 #include <dumux/io/restart.hh>
 #include <dumux/implicit/adaptive/gridadapt.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dumux/common/pointsource.hh>
 #include <dumux/common/boundingboxtree.hh>
 
@@ -80,8 +79,6 @@ private:
 
     typedef typename GridView::Grid::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -156,52 +153,17 @@ public:
         // get and apply point sources if any given in the problem
         std::vector<PointSource> sources;
         asImp_().addPointSources(sources);
+        // if there are point sources compute the DOF to point source map
         if (!sources.empty())
         {
             // build the bounding box tree for fast point in element search
             boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
-            // calculate point source locations and save them in a map
-            for (auto&& source : sources)
-            {
-                std::vector<unsigned int> entities = boundingBoxTree_->computeEntityCollisions(source.position());
-                source.divideValues(entities.size());
-                for (unsigned int eIdx : entities)
-                {
-                    if(isBox)
-                    {
-                        // check in which subcontrolvolume(s) we are
-                        auto element = boundingBoxTree_->entity(eIdx);
-                        FVElementGeometry fvGeometry;
-                        fvGeometry.update(gridView_, element);
-                        auto globalPos = source.position();
 
-                        std::vector<unsigned int> vertices;
-                        for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                        {
-                            auto geometry = fvGeometry.subContVolGeometries[scvIdx];
-                            const ReferenceElement &refElement = ReferenceElements::general(geometry.type());
-                            if (refElement.checkInside(geometry.local(globalPos)))
-                                vertices.push_back(model_.dofMapper().subIndex(element, scvIdx, dofCodim));
-                        }
-                        auto sourceValues = source.values();
-                        sourceValues /= vertices.size();
-                        for (unsigned int vIdx : vertices)
-                        {
-                            if (pointSourceMap_.count(vIdx))
-                                pointSourceMap_.at(vIdx).push_back(PointSource(source.position(), sourceValues));
-                            else
-                                pointSourceMap_.insert({vIdx, {PointSource(source.position(), sourceValues)}});
-                        }
-                    }
-                    else
-                    {
-                        if (pointSourceMap_.count(eIdx))
-                            pointSourceMap_.at(eIdx).push_back(PointSource(source.position(), source.values()));
-                        else
-                            pointSourceMap_.insert({eIdx, {PointSource(source.position(), source.values())}});
-                    }
-                }
-            }
+            // calculate point source locations and save them in a map
+            Dumux::PointSourceHelper<TypeTag>::computePointSourceMap(asImp_(),
+                                                                     boundingBoxTree_,
+                                                                     sources,
+                                                                     pointSourceMap_);
         }
     }
 
