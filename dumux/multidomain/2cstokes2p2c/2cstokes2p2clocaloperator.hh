@@ -207,7 +207,6 @@ class TwoCStokesTwoPTwoCLocalOperator :
 
     typedef typename Stokes2cGridView::template Codim<dim>::EntityPointer VertexPointer1;
     typedef typename TwoPTwoCGridView::template Codim<dim>::EntityPointer VertexPointer2;
-    typedef typename MDGrid::Traits::template Codim<0>::EntityPointer MDElementPointer;
 
     //! \brief The constructor
     TwoCStokesTwoPTwoCLocalOperator(GlobalProblem& globalProblem)
@@ -252,15 +251,12 @@ class TwoCStokesTwoPTwoCLocalOperator :
                          const LFSU2& lfsu_n, const X& unknowns2, const LFSV2& lfsv_n,
                          RES& couplingRes1, RES& couplingRes2) const
     {
-        const MDElementPointer mdElementPointer1 = intersectionGeometry.inside();
-        const MDElementPointer mdElementPointer2 = intersectionGeometry.outside();
-
-        const MDElement& mdElement1 = *mdElementPointer1;
-        const MDElement& mdElement2 = *mdElementPointer2;
+        const MDElement& mdElement1 = intersectionGeometry.inside();
+        const MDElement& mdElement2 = intersectionGeometry.outside();
 
         // the subodmain elements
-        const SDElement1& sdElement1 = *(globalProblem_.sdElementPointer1(mdElement1));
-        const SDElement2& sdElement2 = *(globalProblem_.sdElementPointer2(mdElement2));
+        const SDElement1& sdElement1 = globalProblem_.sdElementPointer1(mdElement1);
+        const SDElement2& sdElement2 = globalProblem_.sdElementPointer2(mdElement2);
 
         // a container for the parameters on each side of the coupling interface (see below)
         CParams cParams;
@@ -294,8 +290,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
             const VertexPointer1 vPtr1 = sdElement1.template subEntity<dim>(vertInElem1);
             const VertexPointer2 vPtr2 = sdElement2.template subEntity<dim>(vertInElem2);
 
-            globalProblem_.sdProblem1().boundaryTypes(cParams.boundaryTypes1, *vPtr1);
-            globalProblem_.sdProblem2().boundaryTypes(cParams.boundaryTypes2, *vPtr2);
+            globalProblem_.sdProblem1().boundaryTypes(cParams.boundaryTypes1, vPtr1);
+            globalProblem_.sdProblem2().boundaryTypes(cParams.boundaryTypes2, vPtr2);
 
             const BoundaryVariables1 boundaryVars1(globalProblem_.sdProblem1(),
                                                    sdElement1,
