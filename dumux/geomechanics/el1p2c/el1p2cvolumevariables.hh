@@ -73,11 +73,7 @@ public:
     {
 
         ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdxGlobal = problem.vertexMapper().subIndex(element, scvIdx, dim);
-#else
-        int vIdxGlobal = problem.vertexMapper().map(element, scvIdx, dim);
-#endif
 
         primaryVars_ = priVars;
         prevPrimaryVars_ = problem.model().prevSol()[vIdxGlobal];

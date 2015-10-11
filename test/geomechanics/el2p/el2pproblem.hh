@@ -259,11 +259,7 @@ public:
         VertexIterator vEndIt = gridView_.template end<dim>();
         for(; vIt != vEndIt; ++vIt)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-            int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
             GlobalPosition globalPos = (*vIt).geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
@@ -305,11 +301,7 @@ public:
         VertexIterator vEndIt = gridView_.template end<dim>();
         for(; vIt != vEndIt; ++vIt)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-            int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
             //
             pInit_[vIdxGlobal] = -this->model().curSol().base()[vIdxGlobal*2][0];
         }
@@ -886,11 +878,7 @@ public:
                             gridView_.template end<GridView::dimension> ();
             for (; vIt != vEndIt; ++vIt)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-                int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
                 pInit_[vIdxGlobal] = -pInit[vIdxGlobal];
             }
         }

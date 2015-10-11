@@ -78,11 +78,7 @@ public:
         const VertexMapper &vertexMapper = problem.vertexMapper();
         // we assert that the i-th shape function is
         // associated to the i-th vertex of the element.
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVertices = element.subEntities(dim);
-#else
-        int numVertices = element.template count<dim>();
-#endif
         this->resize(numVertices);
         for (int scvIdx = 0; scvIdx < numVertices; scvIdx++) {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
@@ -124,11 +120,7 @@ public:
                       const FVElementGeometry &fvGeometry,
                       const ElementSolutionVector& elementSolVector)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVertices = element.subEntities(dim);
-#else
-        int numVertices = element.template count<dim>();
-#endif
         this->resize(numVertices);
         for (int scvIdx = 0; scvIdx < numVertices; scvIdx++)
         {

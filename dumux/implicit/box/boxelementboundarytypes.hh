@@ -81,11 +81,7 @@ public:
     void update(const Problem &problem,
                 const Element &element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVertices = element.subEntities(dim);
-#else
-        int numVertices = element.template count<dim>();
-#endif
 
         this->resize(numVertices);
 

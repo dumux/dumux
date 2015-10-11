@@ -343,13 +343,8 @@ class TwoCStokesTwoPTwoCLocalOperator :
         cParams.fvGeometry1.update(globalProblem_.sdGridView1(), sdElement1);
         cParams.fvGeometry2.update(globalProblem_.sdGridView2(), sdElement2);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         const int numVertsOfElem1 = sdElement1.subEntities(dim);
         const int numVertsOfElem2 = sdElement2.subEntities(dim);
-#else
-        const int numVertsOfElem1 = sdElement1.template count<dim>();
-        const int numVertsOfElem2 = sdElement2.template count<dim>();
-#endif
 
         //bring the local unknowns x_s into a form that can be passed to elemVolVarsCur.update()
         Dune::BlockVector<Dune::FieldVector<Scalar,1>> elementSol1(0.);

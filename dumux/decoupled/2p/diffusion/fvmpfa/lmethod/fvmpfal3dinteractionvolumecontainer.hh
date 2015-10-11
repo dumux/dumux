@@ -320,7 +320,6 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const 
                                                                           std::vector < std::vector<int> >& elemVertMap)
 {
     int eIdxGlobal = problem_.variables().index(element);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
     int vIdxGlobal = problem_.variables().vertexMapper().subIndex(element, 0, dim);
     interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 7);
     elemVertMap[vIdxGlobal][7] = eIdxGlobal;
@@ -352,39 +351,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const 
     vIdxGlobal = problem_.variables().vertexMapper().subIndex(element, 7, dim);
     interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 0);
     elemVertMap[vIdxGlobal][0] = eIdxGlobal;
-#else
-    int vIdxGlobal = problem_.variables().vertexMapper().map(element, 0, dim);
-    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 7);
-    elemVertMap[vIdxGlobal][7] = eIdxGlobal;
 
-    vIdxGlobal = problem_.variables().vertexMapper().map(element, 1, dim);
-    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 6);
-    elemVertMap[vIdxGlobal][6] = eIdxGlobal;
-
-    vIdxGlobal = problem_.variables().vertexMapper().map(element, 2, dim);
-    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 5);
-    elemVertMap[vIdxGlobal][5] = eIdxGlobal;
-
-    vIdxGlobal = problem_.variables().vertexMapper().map(element, 3, dim);
-    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 4);
-    elemVertMap[vIdxGlobal][4] = eIdxGlobal;
-
-    vIdxGlobal = problem_.variables().vertexMapper().map(element, 4, dim);
-    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 3);
-    elemVertMap[vIdxGlobal][3] = eIdxGlobal;
-
-    vIdxGlobal = problem_.variables().vertexMapper().map(element, 5, dim);
-    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 2);
-    elemVertMap[vIdxGlobal][2] = eIdxGlobal;
-
-    vIdxGlobal = problem_.variables().vertexMapper().map(element, 6, dim);
-    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 1);
-    elemVertMap[vIdxGlobal][1] = eIdxGlobal;
-
-    vIdxGlobal = problem_.variables().vertexMapper().map(element, 7, dim);
-    interactionVolumes_[vIdxGlobal].setSubVolumeElement(element, 0);
-    elemVertMap[vIdxGlobal][0] = eIdxGlobal;
-#endif
 }
 
 /*! \brief Stores information with respect to DUNE intersections in the interaction volumes
@@ -452,11 +419,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
             {
                 int localVertIdx = referenceElement.subEntity(indexInInside, 1, i, dim);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int vIdxGlobal = problem_.variables().vertexMapper().subIndex(element, localVertIdx, dim);
-#else
-                int vIdxGlobal = problem_.variables().vertexMapper().map(element, localVertIdx, dim);
-#endif
 
                 InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 

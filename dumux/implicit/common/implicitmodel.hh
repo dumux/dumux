@@ -137,20 +137,12 @@ public:
         if (!isBox || !enableHints_)
             return;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int n = element.subEntities(dim);
-#else
-        int n = element.template count<dim>();
-#endif
         prevVolVars.resize(n);
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-#else
-            int vIdxGlobal = vertexMapper().map(element, i, dim);
-#endif
 
             if (!hintsUsable_[vIdxGlobal]) {
                 curVolVars[i].setHint(NULL);
@@ -169,19 +161,11 @@ public:
         if (!isBox || !enableHints_)
             return;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int n = element.subEntities(dim);
-#else
-        int n = element.template count<dim>();
-#endif
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-#else
-            int vIdxGlobal = vertexMapper().map(element, i, dim);
-#endif
 
             if (!hintsUsable_[vIdxGlobal])
                 curVolVars[i].setHint(NULL);
@@ -206,11 +190,7 @@ public:
 
         for (unsigned int i = 0; i < elemVolVars.size(); ++i)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper().subIndex(element, i, dim);
-#else
-            int vIdxGlobal = vertexMapper().map(element, i, dim);
-#endif
             curHints_[vIdxGlobal] = elemVolVars[i];
             if (!hintsUsable_[vIdxGlobal])
                 prevHints_[vIdxGlobal] = elemVolVars[i];
@@ -266,11 +246,7 @@ public:
             }
             else
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int globalI = elementMapper().index(*eIt);
-#else
-                int globalI = elementMapper().map(*eIt);
-#endif
                 residual[globalI] = localResidual().residual(0);
             }
         }
@@ -615,11 +591,7 @@ public:
     void serializeEntity(std::ostream &outstream,
                          const Entity &entity)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = dofMapper().index(entity);
-#else
-        int dofIdxGlobal = dofMapper().map(entity);
-#endif
 
         // write phase state
         if (!outstream.good()) {
@@ -647,11 +619,7 @@ public:
     void deserializeEntity(std::istream &instream,
                            const Entity &entity)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = dofMapper().index(entity);
-#else
-        int dofIdxGlobal = dofMapper().map(entity);
-#endif
 
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             if (!instream.good())
@@ -861,11 +829,7 @@ public:
     bool onBoundary(const Element &element, const int vIdx) const
     {
         if (isBox)
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             return onBoundary(vertexMapper().subIndex(element, vIdx, dim));
-#else
-            return onBoundary(vertexMapper().map(element, vIdx, dim));
-#endif
         else
             DUNE_THROW(Dune::InvalidStateException,
                        "requested for cell-centered model");
@@ -882,11 +846,7 @@ public:
     bool onBoundary(const Element &element) const
     {
         if (!isBox)
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             return onBoundary(elementMapper().index(element));
-#else
-            return onBoundary(elementMapper().map(element));
-#endif
 
         else
             DUNE_THROW(Dune::InvalidStateException,
@@ -968,11 +928,7 @@ protected:
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
             {
                 // get the global index of the degree of freedom
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int dofIdxGlobal = dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                int dofIdxGlobal = dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
 
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
@@ -1057,21 +1013,13 @@ protected:
                                                             1,
                                                             faceVertexIdx,
                                                             dim);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                             int vIdxGlobal = vertexMapper().subIndex(*eIt, vIdx, dim);
-#else
-                            int vIdxGlobal = vertexMapper().map(*eIt, vIdx, dim);
-#endif
                             boundaryIndices_[vIdxGlobal] = true;
                         }
                     }
                     else
                     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                         int eIdxGlobal = elementMapper().index(*eIt);
-#else
-                        int eIdxGlobal = elementMapper().map(*eIt);
-#endif
                         boundaryIndices_[eIdxGlobal] = true;
                     }
                 }

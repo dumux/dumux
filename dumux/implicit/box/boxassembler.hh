@@ -280,11 +280,7 @@ private:
         const ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
             const Element &element = *eIt;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int numVerticesLocal = element.subEntities(dim);
-#else
-            int numVerticesLocal = element.template count<dim>();
-#endif
 
             // if the element is not in the interior or the process
             // border, all dofs just contain main-diagonal entries
@@ -367,11 +363,8 @@ private:
 
         this->model_().localJacobian().assemble(element);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVerticesLocal = element.subEntities(dim);
-#else
-        int numVerticesLocal = element.template count<dim>();
-#endif
+
         for (int i=0; i < numVerticesLocal; ++ i) {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int globI = this->vertexMapper_().subIndex(element, i, dim);
@@ -418,11 +411,8 @@ private:
     {
         this->model_().localResidual().eval(element);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVerticesLocal = element.subEntities(dim);
-#else
-        int numVerticesLocal = element.template count<dim>();
-#endif
+
         for (int i = 0; i < numVerticesLocal; ++ i) {
 #if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int globI = this->vertexMapper_().subIndex(element, i, dim);
@@ -440,11 +430,8 @@ private:
     // "assemble" a ghost element
     void assembleGhostElement_(const Element &element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numVerticesLocal = element.subEntities(dim);
-#else
-        int numVerticesLocal = element.template count<dim>();
-#endif
+
         for (int i=0; i < numVerticesLocal; ++i) {
             auto vertex = element.template subEntity<dim>(i);
 

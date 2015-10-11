@@ -127,11 +127,7 @@ public:
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-#else
-        int dofIdxGlobal = problem.model().dofMapper().map(element, scvIdx, dofCodim);
-#endif
         int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
 
         Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);

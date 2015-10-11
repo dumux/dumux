@@ -139,11 +139,7 @@ public:
      */
     int index(const Element& element) const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         return elementMapper_.index(element);
-#else
-        return elementMapper_.map(element);
-#endif
     }
 
     //! Get index of vertex (codim dim entity)
@@ -153,11 +149,7 @@ public:
      */
     int index(const Vertex& vertex) const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         return vertexMapper_.index(vertex);
-#else
-        return vertexMapper_.map(vertex);
-#endif
     }
 
     //!Return gridView

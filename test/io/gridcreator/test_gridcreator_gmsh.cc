@@ -75,11 +75,8 @@ public:
                 {
                     // get local vertex index with respect to the element
                     int vIdxLocal = refElement.subEntity(isIt->indexInInside(), 1, vIdx, dim);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int vIdxGlobal = vertexMapper.subIndex(*eIt, vIdxLocal, dim);
-#else
-                    int vIdxGlobal = vertexMapper.map(*eIt, vIdxLocal, dim);
-#endif
+
                     // make sure we always take the lowest non-zero marker (problem dependent!)
                     if (boundaryMarker[vIdxGlobal] == 0)
                         boundaryMarker[vIdxGlobal] = GridCreator::getBoundaryDomainMarker(isIt->boundarySegmentIndex());

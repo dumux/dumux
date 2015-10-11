@@ -85,11 +85,7 @@ public:
                 for (int faceVertexIdx = 0; faceVertexIdx < numFaceVerts; ++faceVertexIdx)
                 {
                     int vIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int vIdxGlobal = problem.vertexMapper().subIndex(*eIt, vIdx, dim);
-#else
-                    int vIdxGlobal = problem.vertexMapper().map(*eIt, vIdx, dim);
-#endif
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                       if (bcTypes.isDirichlet(eqIdx))
                           vertexBC[vIdxGlobal].setDirichlet(eqIdx);
@@ -101,11 +97,8 @@ public:
     void boundaryTypes(BoundaryTypes& values, const Vertex& vertex) const
     {
         values.setAllNeumann();
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdxGlobal = problem_.vertexMapper().index(vertex);
-#else
-        int vIdxGlobal = problem_.vertexMapper().map(vertex);
-#endif
+
 	const BoundaryTypes& bcTypes = vertexBC[vIdxGlobal];
 
         for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
