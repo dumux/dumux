@@ -81,13 +81,8 @@ public:
         {
             const Element& neighbor = fvGeometry.neighbors[i];
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             const PrimaryVariables &solI
                     = globalSol[problem.elementMapper().index(neighbor)];
-#else
-            const PrimaryVariables &solI
-                    = globalSol[problem.elementMapper().map(neighbor)];
-#endif
 
             FVElementGeometry neighborFVGeom;
             neighborFVGeom.updateInner(neighbor);
@@ -110,11 +105,7 @@ public:
                 || elemBCTypes.hasNeumann()
                 || elemBCTypes.hasOutflow())
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 this->resize(numNeighbors + element.subEntities(1));
-#else
-                this->resize(numNeighbors + element.template count<1>());
-#endif
 
                 // add volume variables for the boundary faces
                 IntersectionIterator isIt = problem.gridView().ibegin(element);

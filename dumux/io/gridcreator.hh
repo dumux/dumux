@@ -396,8 +396,6 @@ class GridCreator : public GridCreatorImpl<TypeTag, typename GET_PROP_TYPE(TypeT
 // Specializations //////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-
 /*!
  * \brief Provides a grid creator for YaspGrids
  *        from information in the input file
@@ -590,45 +588,6 @@ private:
         ParentType::maybeRefineGrid();
     }
 };
-
-#else
-
-/*!
- * \brief Provides a grid creator for YaspGrids (Dune 2.3)
- *        from information in the input file
- *
- * All keys are expected to be in group GridParameterGroup.
- * The following keys are recognized:
- * - File : a DGF file to load the coarse grid from
- * - Refinement : the number of global refines to apply initially.
- *
- */
-template<class TypeTag, int dim>
-class GridCreatorImpl<TypeTag, Dune::YaspGrid<dim> >
-          : public GridCreatorBase<TypeTag, Dune::YaspGrid<dim> >
-{
-public:
-    typedef typename Dune::YaspGrid<dim> Grid;
-    typedef GridCreatorBase<TypeTag, Grid> ParentType;
-
-    /*!
-     * \brief Make the grid. This is implemented by specializations of this method.
-     */
-    static void makeGrid()
-    {
-        // Try to create it from a DGF file in GridParameterGroup.File
-        try {
-            const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromDgfFile(fileName, "YaspGrid");
-            ParentType::maybeRefineGrid();
-            return;
-        }
-        catch (Dumux::ParameterException &e) {}
-        catch (...) { throw; }
-    }
-};
-
-#endif
 
 /*!
  * \brief Provides a grid creator for OneDGrids

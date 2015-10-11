@@ -215,11 +215,7 @@ public:
             }
             else
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 std::vector<Scalar> scvfFluxes(element.subEntities(1), 0);
-#else
-                std::vector<Scalar> scvfFluxes(element.template count<1>(), 0);
-#endif
 
                 int fIdxInner = 0;
                 IntersectionIterator isEndIt = problem_.gridView().iend(element);

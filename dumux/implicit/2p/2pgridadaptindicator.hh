@@ -100,11 +100,7 @@ public:
         {
             // calculate minimum and maximum saturation
             // index of the current leaf-elements
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-        	int globalIdxI = problem_.elementMapper().index(*eIt);
-#else
-        	int globalIdxI = problem_.elementMapper().map(*eIt);
-#endif
+            int globalIdxI = problem_.elementMapper().index(*eIt);
 
         	Scalar satI = 0.0;
 

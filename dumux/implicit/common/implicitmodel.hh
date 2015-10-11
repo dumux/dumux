@@ -233,14 +233,9 @@ public:
 
             if (isBox)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 for (int i = 0; i < eIt->subEntities(dim); ++i)
                 {
                     int globalI = vertexMapper().subIndex(*eIt, i, dim);
-#else
-                for (int i = 0; i < eIt->template count<dim>(); ++i) {
-                    int globalI = vertexMapper().map(*eIt, i, dim);
-#endif
                     residual[globalI] += localResidual().residual(i);
                 }
             }
@@ -288,11 +283,7 @@ public:
 
                 if (isBox)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     for (int i = 0; i < eIt->subEntities(dim); ++i)
-#else
-                    for (int i = 0; i < eIt->template count<dim>(); ++i)
-#endif
                     {
                         storage += localResidual().storageTerm()[i];
                     }

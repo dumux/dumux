@@ -391,11 +391,7 @@ public:
         std::vector<ShapeValue> shapeVal;
         localFiniteElement.localBasis().evaluateFunction(localPos, shapeVal);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         for (int i = 0; i < element.subEntities(dim); i++)
-#else
-        for (int i = 0; i < element.template count<dim>(); i++)
-#endif
         {
             int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
             pValue += pInit_[vIdxGlobal] * shapeVal[i];
@@ -820,12 +816,8 @@ public:
             // loop over all vertices
             for (; vIt != vEndIt; ++vIt)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 // get global index of current vertex
                 int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-                int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
                 Dune::FieldVector<double, 3> globalPos =
                                 (*vIt).geometry().corner(0);
 
