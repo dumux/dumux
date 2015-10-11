@@ -136,11 +136,7 @@ public:
             {
                 int indexInInside = isIt->indexInInside();
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int fIdxGlobal = this->faceMapper_.subIndex(*eIt, indexInInside, 1);
-#else
-                int fIdxGlobal = this->faceMapper_.map(*eIt, indexInInside, 1);
-#endif
 
                 pressTrace[indexInInside] = u[fIdxGlobal];
 

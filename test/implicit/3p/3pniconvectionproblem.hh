@@ -218,11 +218,8 @@ public:
                 fvGeometry.update(this->gridView(), *eIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int globalIdx = this->model().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                    int globalIdx = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
+
                     if (isBox)
                         globalPos = eIt->geometry().corner(scvIdx);
                     else

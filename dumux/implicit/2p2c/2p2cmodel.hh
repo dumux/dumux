@@ -164,11 +164,7 @@ public:
         {
             if (!isBox) // i.e. cell-centered discretization
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int eIdxGlobal = this->dofMapper().index(*eIt);
-#else
-                int eIdxGlobal = this->dofMapper().map(*eIt);
-#endif
                 const GlobalPosition &globalPos = eIt->geometry().center();
 
                 // initialize phase presence
@@ -188,11 +184,7 @@ public:
             const VertexIterator &vEndIt = this->gridView_().template end<dim> ();
             for (; vIt != vEndIt; ++vIt)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int vIdxGlobal = this->dofMapper().index(*vIt);
-#else
-                int vIdxGlobal = this->dofMapper().map(*vIt);
-#endif
                 const GlobalPosition &globalPos = vIt->geometry().corner(0);
 
                 // initialize phase presence
@@ -345,11 +337,7 @@ public:
         {
             if(eIt->partitionType() == Dune::InteriorEntity)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int eIdx = this->elementMapper().index(*eIt);
-#else
-                int eIdx = this->elementMapper().map(*eIt);
-#endif
                 (*rank)[eIdx] = this->gridView_().comm().rank();
 
                 FVElementGeometry fvGeometry;
@@ -363,11 +351,8 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
+
                     (*sN)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(nPhaseIdx);
                     (*sW)[dofIdxGlobal]    = elemVolVars[scvIdx].saturation(wPhaseIdx);
                     (*pn)[dofIdxGlobal]    = elemVolVars[scvIdx].pressure(nPhaseIdx);
@@ -458,11 +443,8 @@ public:
         // write primary variables
         ParentType::serializeEntity(outStream, entity);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = this->dofMapper().index(entity);
-#else
-        int dofIdxGlobal = this->dofMapper().map(entity);
-#endif
+
         if (!outStream.good())
             DUNE_THROW(Dune::IOError, "Could not serialize entity " << dofIdxGlobal);
 
@@ -482,11 +464,8 @@ public:
         ParentType::deserializeEntity(inStream, entity);
 
         // read phase presence
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = this->dofMapper().index(entity);
-#else
-        int dofIdxGlobal = this->dofMapper().map(entity);
-#endif
+
         if (!inStream.good())
             DUNE_THROW(Dune::IOError,
                        "Could not deserialize entity " << dofIdxGlobal);
@@ -521,11 +500,7 @@ public:
                 fvGeometry.update(this->gridView_(), *eIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
 
                     if (staticDat_[dofIdxGlobal].visited)
                         continue;

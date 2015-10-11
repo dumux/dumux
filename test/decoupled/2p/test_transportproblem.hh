@@ -144,11 +144,7 @@ public:
         for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eEndIt; ++eIt)
         {
             // cell index
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int eIdxGlobal = this->elementMapper().index(*eIt);
-#else
-            int eIdxGlobal = this->elementMapper().map(*eIt);
-#endif
 
             CellData& cellData = this->variables().cellData(eIdxGlobal);
 

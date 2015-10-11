@@ -346,13 +346,9 @@ public:
              elementIt != this->gridView().template end<0>(); ++elementIt)
         {
             // value from numerical approximation
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             Scalar numericalSolution =
                 this->model().curSol()[this->model().dofMapper().subIndex(*elementIt, 0, 0)];
-#else
-            Scalar numericalSolution =
-                this->model().curSol()[this->model().dofMapper().map(*elementIt, 0, 0)];
-#endif
+
             // integrate over element using a quadrature rule
             Geometry geometry = elementIt->geometry();
             Dune::GeometryType gt = geometry.type();

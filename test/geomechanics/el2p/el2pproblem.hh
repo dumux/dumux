@@ -397,11 +397,7 @@ public:
         for (int i = 0; i < element.template count<dim>(); i++)
 #endif
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
-#else
-            int vIdxGlobal = this->vertexMapper().map(element, i, dim);
-#endif
             pValue += pInit_[vIdxGlobal] * shapeVal[i];
         }
 
@@ -525,11 +521,7 @@ public:
         const GlobalPosition globalPos = vertex.geometry().center();
 
         dirichlet(values, globalPos);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         values[0] = -pInit_[this->vertexMapper().index(vertex)];
-#else
-        values[0] = -pInit_[this->vertexMapper().map(vertex)];
-#endif
     }
 
     /*!

@@ -112,22 +112,14 @@ public:
         auto neighbor = this->element_();
         if (isBox)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             dofIdxGlobal = this->vertexMapper_().subIndex(this->element_(), col, dim);
-#else
-            dofIdxGlobal = this->vertexMapper_().map(this->element_(), col, dim);
-#endif
 
         }
         else
         {
             neighbor = this->fvElemGeom_.neighbors[col];
             neighborFVGeom.updateInner(neighbor);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             dofIdxGlobal = this->problemPtr_->elementMapper().index(neighbor);
-#else
-            dofIdxGlobal = this->problemPtr_->elementMapper().map(neighbor);
-#endif
 
         }
 

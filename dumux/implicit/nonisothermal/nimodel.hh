@@ -115,11 +115,7 @@ public:
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                    int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
                     temperature[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
                 }
             }
