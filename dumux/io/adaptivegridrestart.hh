@@ -23,7 +23,7 @@
 #ifndef DUMUX_ADAPTIVEGRIDRESTART_HH
 #define DUMUX_ADAPTIVEGRIDRESTART_HH
 
-#include <dune/common/deprecated.hh>
+#include <dune/common/version.hh>
 
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid/2d/alugrid.hh>
@@ -36,7 +36,9 @@
 #endif
 
 #include <dune/grid/common/backuprestore.hh>
+#if ! DUNE_VERSION_NEWER(DUNE_COMMON, 3, 0)
 #include <dune/grid/utility/grapedataioformattypes.hh>
+#endif
 
 #include <dumux/common/basicproperties.hh>
 
@@ -118,7 +120,11 @@ public:
         Dune::BackupRestoreFacility<Grid>::backup(problem.grid(), gridName);
 #else
         double time = problem.timeManager().time();
-        problem.grid().template writeGrid<Dune::xdr>(gridName, time);
+        problem.grid().template writeGrid
+#if ! DUNE_VERSION_NEWER(DUNE_COMMON, 3, 0)
+        <Dune::xdr>
+#endif // Dune < 3.0
+        (gridName, time);
 #endif
     }
 
