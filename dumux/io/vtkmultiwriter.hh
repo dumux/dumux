@@ -23,6 +23,12 @@
 #ifndef VTK_MULTI_WRITER_HH
 #define VTK_MULTI_WRITER_HH
 
+#include <iostream>
+#include <limits>
+#include <list>
+#include <memory>
+#include <string>
+
 #include "vtknestedfunction.hh"
 
 #include <dune/common/fvector.hh>
@@ -35,12 +41,6 @@
 #if HAVE_MPI
 #include <mpi.h>
 #endif
-
-#include <list>
-#include <iostream>
-#include <string>
-
-#include <limits>
 
 namespace Dumux {
 /*!
@@ -177,7 +177,7 @@ public:
     {
         sanitizeBuffer_(buf, nComps);
 
-        typedef typename VtkWriter::VTKFunctionPtr FunctionPtr;
+        using FunctionPtr = std::shared_ptr<const typename VtkWriter::VTKFunction>;
         typedef Dumux::VtkNestedFunction<GridView, VertexMapper, DataBuffer> VtkFn;
         FunctionPtr fnPtr(new VtkFn(name,
                                     gridView_,
@@ -208,7 +208,7 @@ public:
     {
         sanitizeBuffer_(buf, nComps);
 
-        typedef typename VtkWriter::VTKFunctionPtr FunctionPtr;
+        using FunctionPtr = std::shared_ptr<const typename VtkWriter::VTKFunction>;
         typedef Dumux::VtkNestedFunction<GridView, ElementMapper, DataBuffer> VtkFn;
         FunctionPtr fnPtr(new VtkFn(name,
                                     gridView_,
