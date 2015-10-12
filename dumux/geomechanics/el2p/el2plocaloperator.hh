@@ -382,7 +382,7 @@ public:
             // get face index of this intersection
             int fIdx = isIt->indexInInside();
             // get dimension of face
-            const int dimIs = Dune::PDELab::IntersectionGeometry<Intersection>::Entity::Geometry::dimension;
+            const int dimIs = Dune::PDELab::IntersectionGeometry<Intersection>::Entity::Geometry::mydimension;
 
             // get reference element for intersection geometry (reference element for face if dim = 3)
             const Dune::ReferenceElement<DT,dimIs>& refElement = Dune::ReferenceElements<DT,dimIs>::general(geomType);
