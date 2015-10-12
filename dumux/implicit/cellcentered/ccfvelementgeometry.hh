@@ -211,11 +211,7 @@ public:
         // treat elements on the boundary
         if (onBoundary)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             for (int bfIdx = 0; bfIdx < element.subEntities(1); bfIdx++)
-#else
-            for (int bfIdx = 0; bfIdx < element.template count<1>(); bfIdx++)
-#endif
             {
                 SubControlVolumeFace& bFace = boundaryFace[bfIdx];
                 bFace.j = numNeighbors + bfIdx;

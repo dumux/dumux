@@ -259,11 +259,7 @@ public:
         VertexIterator vEndIt = gridView_.template end<dim>();
         for(; vIt != vEndIt; ++vIt)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-            int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
             GlobalPosition globalPos = (*vIt).geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
@@ -305,11 +301,7 @@ public:
         VertexIterator vEndIt = gridView_.template end<dim>();
         for(; vIt != vEndIt; ++vIt)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-            int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
             //
             pInit_[vIdxGlobal] = -this->model().curSol().base()[vIdxGlobal*2][0];
         }
@@ -399,17 +391,9 @@ public:
         std::vector<ShapeValue> shapeVal;
         localFiniteElement.localBasis().evaluateFunction(localPos, shapeVal);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         for (int i = 0; i < element.subEntities(dim); i++)
-#else
-        for (int i = 0; i < element.template count<dim>(); i++)
-#endif
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
-#else
-            int vIdxGlobal = this->vertexMapper().map(element, i, dim);
-#endif
             pValue += pInit_[vIdxGlobal] * shapeVal[i];
         }
 
@@ -533,11 +517,7 @@ public:
         const GlobalPosition globalPos = vertex.geometry().center();
 
         dirichlet(values, globalPos);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         values[0] = -pInit_[this->vertexMapper().index(vertex)];
-#else
-        values[0] = -pInit_[this->vertexMapper().map(vertex)];
-#endif
     }
 
     /*!
@@ -836,12 +816,8 @@ public:
             // loop over all vertices
             for (; vIt != vEndIt; ++vIt)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 // get global index of current vertex
                 int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-                int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
                 Dune::FieldVector<double, 3> globalPos =
                                 (*vIt).geometry().corner(0);
 
@@ -886,11 +862,7 @@ public:
                             gridView_.template end<GridView::dimension> ();
             for (; vIt != vEndIt; ++vIt)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int vIdxGlobal = vertexMapper_.index(*vIt);
-#else
-                int vIdxGlobal = vertexMapper_.map(*vIt);
-#endif
                 pInit_[vIdxGlobal] = -pInit[vIdxGlobal];
             }
         }

@@ -275,20 +275,12 @@ private:
         /******* get corner of interest ************/
         // search through corners of large cell with isIt
         int localIdxLarge = 0;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         for(localIdxLarge = 0; localIdxLarge < is.inside().subEntities(dim); ++localIdxLarge)
-#else
-        for(localIdxLarge = 0; localIdxLarge<is.inside().template count<dim>(); ++localIdxLarge)
-#endif
         {
             auto vLarge = is.inside().template subEntity<dim>(localIdxLarge);
 
             // search through corners of small cell with isIt
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             for(int verticeSmall = 0; verticeSmall<is.outside().subEntities(dim); ++verticeSmall)
-#else
-            for(int verticeSmall = 0; verticeSmall<is.outside().template count<dim>(); ++verticeSmall)
-#endif
             {
                 auto vSmall = is.outside().template subEntity<dim>(verticeSmall);
 
@@ -1722,11 +1714,7 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         {
             // loop through remaining 2 points
             std::vector<int> diagonal;
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             for(int verticeSmall = 0; verticeSmall < isIt->outside().subEntities(dim); ++verticeSmall)
-#else
-            for(int verticeSmall = 0; verticeSmall<isIt->outside().template count<dim>(); ++verticeSmall)
-#endif
             {
                 auto vSmall = isIt->outside().template subEntity<dim>(verticeSmall);
 

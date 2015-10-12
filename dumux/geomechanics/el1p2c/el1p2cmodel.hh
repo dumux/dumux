@@ -255,11 +255,7 @@ public:
         {
             if(eIt->partitionType() == Dune::InteriorEntity)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 unsigned int eIdx = this->problem_().model().elementMapper().index(*eIt);
-#else
-                unsigned int eIdx = this->problem_().model().elementMapper().map(*eIt);
-#endif
                 rank[eIdx] = this->gridView_().comm().rank();
 
                 fvGeometry.update(this->gridView_(), *eIt);
@@ -267,19 +263,11 @@ public:
                 elemVolVars.update(this->problem_(), *eIt, fvGeometry, false);
 
                 // loop over all local vertices of the cell
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int numScv = eIt->subEntities(dim);
-#else
-                int numScv = eIt->template count<dim>();
-#endif
 
                 for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     unsigned int vIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dim);
-#else
-                    unsigned int vIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dim);
-#endif
 
                     pressure[vIdxGlobal] = elemVolVars[scvIdx].pressure();
                     moleFraction0[vIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);

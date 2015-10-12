@@ -216,11 +216,7 @@ public:
         for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
         {
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int globalIdxI = problem_.elementMapper().index(*eIt);
-#else
-            int globalIdxI = problem_.elementMapper().map(*eIt);
-#endif
             int level = eIt->level();
             maxLevel_ = std::max(level, maxLevel_);
 
@@ -284,11 +280,8 @@ public:
      */
     bool refine(const Element& element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int idx = problem_.elementMapper().index(element);
-#else
-        int idx = problem_.elementMapper().map(element);
-#endif
+
         if (indicatorVector_[idx] == refineCell)
             return true;
         else if (maxLevel_ == maxAllowedLevel_)

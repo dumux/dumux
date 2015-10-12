@@ -66,11 +66,7 @@ public:
   template<class MessageBuffer, class Entity>
   void gather (MessageBuffer& buff, const Entity& entity) const
   {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
       buff.write(dataVector_[mapper_.index(entity)]);
-#else
-      buff.write(dataVector_[mapper_.map(entity)]);
-#endif
   }
 
   /*! unpack data from message buffer to user
@@ -82,12 +78,7 @@ public:
   {
       DataType x;
       buff.read(x);
-
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
       dataVector_[mapper_.index(entity)] = x;
-#else
-      dataVector_[mapper_.map(entity)] = x;
-#endif
   }
 
   //! constructor

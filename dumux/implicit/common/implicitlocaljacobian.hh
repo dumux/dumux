@@ -410,21 +410,13 @@ protected:
         auto neighbor = element_();
         if (isBox)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             dofIdxGlobal = vertexMapper_().subIndex(element_(), col, dim);
-#else
-            dofIdxGlobal = vertexMapper_().map(element_(), col, dim);
-#endif
         }
         else
         {
             neighbor = fvElemGeom_.neighbors[col];
             neighborFVGeom.updateInner(neighbor);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             dofIdxGlobal = problemPtr_->elementMapper().index(neighbor);
-#else
-            dofIdxGlobal = problemPtr_->elementMapper().map(neighbor);
-#endif
         }
 
         PrimaryVariables priVars(model_().curSol()[dofIdxGlobal]);

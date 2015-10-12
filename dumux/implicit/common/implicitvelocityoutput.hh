@@ -97,11 +97,7 @@ public:
 
                     for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                         int vIdxGlobal = problem_.vertexMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                        int vIdxGlobal = problem_.vertexMapper().map(*eIt, scvIdx, dofCodim);
-#endif
                         cellNum_[vIdxGlobal] += 1;
                     }
                 }
@@ -206,11 +202,8 @@ public:
                 // transform vertex velocities from local to global coordinates
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int vIdxGlobal = problem_.vertexMapper().subIndex(element, scvIdx, dofCodim);
-#else
-                    int vIdxGlobal = problem_.vertexMapper().map(element, scvIdx, dofCodim);
-#endif
+
                     // calculate the subcontrolvolume velocity by the Piola transformation
                     Dune::FieldVector<CoordScalar, dimWorld> scvVelocity(0);
 
@@ -222,11 +215,7 @@ public:
             }
             else
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 std::vector<Scalar> scvfFluxes(element.subEntities(1), 0);
-#else
-                std::vector<Scalar> scvfFluxes(element.template count<1>(), 0);
-#endif
 
                 int fIdxInner = 0;
                 IntersectionIterator isEndIt = problem_.gridView().iend(element);
@@ -323,11 +312,7 @@ public:
 
                 scvVelocity /= geometry.integrationElement(localPos);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int eIdxGlobal = problem_.elementMapper().index(element);
-#else
-                int eIdxGlobal = problem_.elementMapper().map(element);
-#endif
 
                 velocity[eIdxGlobal]= scvVelocity;
             }

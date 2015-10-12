@@ -129,11 +129,8 @@ public:
         typedef typename PressSatLFS::template Child<1>::Type SatLFS;
         const SatLFS& satLFS = pressSatLFS.template child<1>();
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         unsigned int numScv = eg.entity().subEntities(dim);
-#else
-        unsigned int numScv = eg.entity().template count<dim>();
-#endif
+
         for (size_type i = 0; i < (numEq-dim) * numScv; i++)
         {
             // retrieve the local residual value for vertex=i%Vertices and equation i/numScv (here 0 or 1)
@@ -535,11 +532,7 @@ public:
         typedef Dune::PDELab::LocalVector<R> LocalResidualVector;
         typedef Dune::PDELab::WeightedVectorAccumulationView<LocalResidualVector> ResidualView;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         unsigned int numScv = eg.entity().subEntities(dim);
-#else
-        unsigned int numScv = eg.entity().template count<dim>();
-#endif
 
         // loop over all degrees of freedom of the current element
         for (size_type j = 0; j < numScv*numEq; j++)

@@ -212,11 +212,7 @@ public:
 						}
                     	else
                     	{
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    		unsigned int numSubEntities = eIt->subEntities(dofCodim);
-#else
-                    		int numSubEntities = eIt->template count <dofCodim>();
-#endif
+                            unsigned int numSubEntities = eIt->subEntities(dofCodim);
 
                         	for(unsigned int i = 0; i < numSubEntities; i++)
                         	{
@@ -258,11 +254,7 @@ public:
                         }
                         else
                         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-                    		unsigned int numSubEntities= eIt->subEntities(dofCodim);
-#else
-                    		int numSubEntities= eIt->template count <dofCodim>();
-#endif
+                            unsigned int numSubEntities= eIt->subEntities(dofCodim);
                     		const auto geometryI = eIt->geometry();
 
                         	for(unsigned int i = 0; i < numSubEntities; i++)
@@ -394,20 +386,12 @@ public:
 
     int dofIndex(const Problem& problem, const DofEntity& entity) const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 return problem.model().dofMapper().index(entity);
-#else
-                return problem.model().dofMapper().map(entity);
-#endif
     }
 
     int elementIndex(const Problem& problem, const Element& element) const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 return problem.elementMapper().index(element);
-#else
-                return problem.elementMapper().map(element);
-#endif
     }
 
 };

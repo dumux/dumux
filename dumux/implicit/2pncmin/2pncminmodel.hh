@@ -252,11 +252,8 @@ public:
                     fvGeometry,
                     false /* oldSol? */);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int numVerts = elemIt->subEntities(dim);
-#else
-            int numVerts = elemIt->template count<dim> ();
-#endif
+
             for (int i = 0; i < numVerts; ++i)
             {
                 int globalIdx = this->vertexMapper().subIndex(*elemIt, i, dim);

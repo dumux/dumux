@@ -335,11 +335,8 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int dofIdxGlobal = this->model().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
+
                 //reactionSource Output
                 PrimaryVariables source;
                 this->solDependentSource(source, *eIt, fvGeometry, scvIdx, elemVolVars);

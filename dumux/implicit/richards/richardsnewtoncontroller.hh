@@ -100,11 +100,7 @@ public:
                 fvGeometry.update(gridView, *eIt);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int dofIdxGlobal = this->model_().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                    int dofIdxGlobal = this->model_().dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
 
                     // calculate the old wetting phase saturation
                     const SpatialParams &spatialParams = this->problem_().spatialParams();

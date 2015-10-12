@@ -833,11 +833,8 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 //
 //                int globalVertIdx12corner = problem_.variables().index(
 //                        *((*eIt).template subEntity < dim > (localVertIdx12corner)));
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int globalVertIdx12corner = problem_.variables().vertexMapper().subIndex(*eIt, localVertIdx12corner, dim);
-#else
-                int globalVertIdx12corner = problem_.variables().vertexMapper().map(*eIt, localVertIdx12corner, dim);
-#endif
+
 //                std::cout<<"globalVertIdx12corner = "<<globalVertIdx12corner<<"\n";
 
 
@@ -848,11 +845,8 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
 //                    int globalVertIdx14corner = problem_.variables().index(
 //                            *((*eIt).template subEntity < dim > (localVertIdx14corner)));
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int globalVertIdx14corner = problem_.variables().vertexMapper().subIndex(*eIt, localVertIdx14corner, dim);
-#else
-                    int globalVertIdx14corner = problem_.variables().vertexMapper().map(*eIt, localVertIdx14corner, dim);
-#endif
+
 //                    std::cout<<"globalVertIdx14corner = "<<globalVertIdx14corner<<"\n";
 
                     if (globalVertIdx12corner == globalVertIdx14corner)

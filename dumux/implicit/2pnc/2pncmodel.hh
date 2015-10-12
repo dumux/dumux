@@ -176,11 +176,7 @@ public:
         {
             if (!isBox) // i.e. cell-centered discretization
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int dofIdxGlobal = this->dofMapper().index(*eIt);
-#else
-                int dofIdxGlobal = this->dofMapper().map(*eIt);
-#endif
                 const GlobalPosition &globalPos = eIt->geometry().center();
 
                 // initialize phase presence
@@ -200,11 +196,7 @@ public:
             const VertexIterator &vEndIt = this->gridView_().template end<dim> ();
             for (; vIt != vEndIt; ++vIt)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int dofIdxGlobal = this->dofMapper().index(*vIt);
-#else
-                int dofIdxGlobal = this->dofMapper().map(*vIt);
-#endif
                 const GlobalPosition &globalPos = vIt->geometry().corner(0);
 
                 // initialize phase presence
@@ -365,11 +357,7 @@ public:
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
         {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
             int eIdxGlobal = this->problem_().elementMapper().index(*eIt);
-#else
-            int eIdxGlobal = this->problem_().elementMapper().map(*eIt);
-#endif
             (*rank)[eIdxGlobal] = this->gridView_().comm().rank();
             fvGeometry.update(this->gridView_(), *eIt);
 
@@ -380,11 +368,8 @@ public:
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
-#else
-                int dofIdxGlobal = this->dofMapper().map(*eIt, scvIdx, dofCodim);
-#endif
+
                 volVars.update(sol[dofIdxGlobal],
                                this->problem_(),
                                *eIt,
@@ -489,11 +474,8 @@ public:
     {
         // write primary variables
         ParentType::serializeEntity(outStream, entity);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = this->dofMapper().index(entity);
-#else
-        int dofIdxGlobal = this->dofMapper().map(entity);
-#endif
+
         if (!outStream.good())
             DUNE_THROW(Dune::IOError, "Could not serialize vertex " << dofIdxGlobal);
 
@@ -512,11 +494,8 @@ public:
     {
         // read primary variables
         ParentType::deserializeEntity(inStream, entity);
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int dofIdxGlobal = this->dofMapper().index(entity);
-#else
-        int dofIdxGlobal = this->dofMapper().map(entity);
-#endif
+
         if (!inStream.good())
             DUNE_THROW(Dune::IOError,
                        "Could not deserialize vertex " << dofIdxGlobal);
@@ -550,11 +529,8 @@ public:
             fvGeometry.update(this->gridView_(), *it);
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 int dofIdxGlobal = this->dofMapper().subIndex(*it, scvIdx, dim);
-#else
-                int dofIdxGlobal = this->dofMapper().map(*it, scvIdx, dim);
-#endif
+
                 if (staticDat_[dofIdxGlobal].visited)
                     continue;
 

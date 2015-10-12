@@ -100,11 +100,7 @@ public:
         {
             // calculate minimum and maximum saturation
             // index of the current leaf-elements
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
-        	int globalIdxI = problem_.elementMapper().index(*eIt);
-#else
-        	int globalIdxI = problem_.elementMapper().map(*eIt);
-#endif
+            int globalIdxI = problem_.elementMapper().index(*eIt);
 
         	Scalar satI = 0.0;
 
@@ -123,11 +119,7 @@ public:
 
                 for (int i = 0; i < shapeVal.size(); ++i)
                   {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                      int dofIdxGlobal = problem_.model().dofMapper().subIndex(*eIt, i, dofCodim);
-#else
-                     int dofIdxGlobal = problem_.model().dofMapper().map(*eIt, i, dofCodim);
-#endif
                       satI += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
                   }
         	}
@@ -145,11 +137,7 @@ public:
                 {
                     // Access neighbor
                     auto outside = intersection.outside();
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                     int globalIdxJ = problem_.elementMapper().index(outside);
-#else
-                    int globalIdxJ = problem_.elementMapper().map(outside);
-#endif
 
                     // Visit intersection only once
                     if (eIt->level() > outside.level() || (eIt->level() == outside.level() && globalIdxI < globalIdxJ))
@@ -171,11 +159,8 @@ public:
 
                             for (int i = 0; i < shapeVal.size(); ++i)
                               {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                                   int dofIdxGlobal = problem_.model().dofMapper().subIndex(outside, i, dofCodim);
-#else
-                                  int dofIdxGlobal = problem_.model().dofMapper().map(outside, i, dofCodim);
-#endif
+
                                   satJ += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
                               }
                     	}
@@ -217,11 +202,7 @@ public:
      */
     bool refine(const Element& element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         return (indicatorVector_[problem_.elementMapper().index(element)] > refineBound_);
-#else
-        return (indicatorVector_[problem_.elementMapper().map(element)] > refineBound_);
-#endif
     }
 
     /*! \brief Indicator function for marking of grid cells for coarsening
@@ -232,11 +213,7 @@ public:
      */
     bool coarsen(const Element& element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         return (indicatorVector_[problem_.elementMapper().index(element)] < coarsenBound_);
-#else
-        return (indicatorVector_[problem_.elementMapper().map(element)] < coarsenBound_);
-#endif
     }
 
     /*! \brief Initializes the adaptation indicator class*/

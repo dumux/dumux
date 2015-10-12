@@ -434,11 +434,8 @@ public:
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int vIdxGlobal = vertexMapper_().subIndex(element, vIdx, dim);
-#else
-        int vIdxGlobal = vertexMapper_().map(element, vIdx, dim);
-#endif
+
         return vertexColor_[vIdxGlobal];
     }
 

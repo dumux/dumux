@@ -82,11 +82,7 @@ public:
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
         buff.write(gridView_.comm().rank());
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         buff.write(static_cast<int>(map_.index(e)));
-#else
-        buff.write(static_cast<int>(map_.map(e)));
-#endif
     }
 
     template<class MessageBufferImp, class EntityType>
@@ -94,11 +90,7 @@ public:
     {
         BorderIndex bIdx;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         bIdx.localIdx = map_.index(e);
-#else
-        bIdx.localIdx = map_.map(e);
-#endif
         buff.read(bIdx.peerRank);
         buff.read(bIdx.peerIdx);
         bIdx.borderDistance = 0;

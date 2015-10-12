@@ -153,11 +153,8 @@ public:
             for (unsigned int scvIdx=0; scvIdx < numScv; ++scvIdx)
             {
                 // find some global identification
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
                 const unsigned int vIdxGlobal = problem.vertexMapper().subIndex(*eIt, scvIdx, dim);
-#else
-                const unsigned int vIdxGlobal = problem.vertexMapper().map(*eIt, scvIdx, dim);
-#endif
+
                 // only write out if the vertex was not already visited
                 if (isVisited[vIdxGlobal])
                     continue;

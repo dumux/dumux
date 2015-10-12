@@ -406,11 +406,7 @@ public:
     //! Function needed for restart option.
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numFaces = element.subEntities(1);
-#else
-        int numFaces = element.template count<1>();
-#endif
         for (int i=0; i < numFaces; i++)
         {
             int fIdxGlobal = A_.faceMapper().map(element, i, 1);
@@ -420,11 +416,7 @@ public:
 
     void deserializeEntity(std::istream &instream, const Element &element)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 4)
         int numFaces = element.subEntities(1);
-#else
-        int numFaces = element.template count<1>();
-#endif
         for (int i=0; i < numFaces; i++)
         {
             int fIdxGlobal = A_.faceMapper().map(element, i, 1);
