@@ -72,7 +72,6 @@ class NIModel : public GET_PROP_TYPE(TypeTag, IsothermalModel)
     enum {
         dim = GridView::dimension
     };
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -96,24 +95,22 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         ScalarField &temperature = *writer.allocateManagedBuffer(numDofs);
 
-        ElementIterator eIt = this->gridView().template begin<0>();
-        ElementIterator eEndIt = this->gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
                 FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), *eIt);
+                fvGeometry.update(this->gridView_(), element);
 
                 ElementVolumeVariables elemVolVars;
                 elemVolVars.update(this->problem_(),
-                                   *eIt,
+                                   element,
                                    fvGeometry,
                                    false /* oldSol? */);
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
                     temperature[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
                 }
             }

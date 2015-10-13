@@ -58,8 +58,6 @@ class ImplicitGridAdapt
 
     typedef typename GridView::Grid Grid;
     typedef typename Grid::LeafGridView LeafGridView;
-    typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
-    typedef typename GridView::IntersectionIterator LeafIntersectionIterator;
     typedef typename Grid::template Codim<0>::Entity Element;
 
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
@@ -236,24 +234,23 @@ public:
         typedef std::unordered_map<int, int> CoarsenMarkerType;
         CoarsenMarkerType coarsenMarker;
 
-        for (LeafIterator eIt = problem_.gridView().template begin<0>();
-             eIt!=problem_.gridView().template end<0>(); ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // only mark non-ghost elements
-            if (eIt->partitionType() != Dune::GhostEntity)
+            if (element.partitionType() != Dune::GhostEntity)
             {
                 // refine?
-                if (indicator.refine(*eIt) && eIt->level() < levelMax_)
+                if (indicator.refine(element) && element.level() < levelMax_)
                 {
-                    problem_.grid().mark( 1,  *eIt);
+                    problem_.grid().mark( 1,  element);
                     ++marked_;
 
                     // this also refines the neighbor elements
-                    checkNeighborsRefine_(*eIt);
+                    checkNeighborsRefine_(element);
                 }
-                if (indicator.coarsen(*eIt) && eIt->hasFather())
+                if (indicator.coarsen(element) && element.hasFather())
                 {
-                    problem_.grid().mark( -1, *eIt );
+                    problem_.grid().mark( -1, element );
                     ++coarsened_;
                 }
             }
@@ -333,32 +330,31 @@ private:
     /*!
      * @brief Method ensuring the refinement ratio of 2:1
      *
-     * For any given entity, a loop over the neighbors checks weather the
+     * For any given element, a loop over the neighbors checks weather the
      * entities refinement would require that any of the neighbors has
      * to be refined, too.
      * This is done recursively over all levels of the grid.
      *
-     * @param entity Element of interest that is to be refined
-     * @param level level of the refined entity: it is at least 1
+     * @param element Element of interest that is to be refined
+     * @param level level of the refined element: it is at least 1
      * @return true if everything was successful
      */
-    bool checkNeighborsRefine_(const Element &entity, int level = 1)
+    bool checkNeighborsRefine_(const Element &element, int level = 1)
     {
         // this also refines the neighbor elements
-        LeafIntersectionIterator isend = problem_.gridView().iend(entity);
-        for(LeafIntersectionIterator is = problem_.gridView().ibegin(entity); is != isend; ++is)
+        for(const auto& intersection : Dune::intersections(problem_.gridView(), element))
         {
-            if(!is->neighbor())
+            if(!intersection.neighbor())
                 continue;
 
-            auto outside = is->outside();
+            auto outside = intersection.outside();
 
             // only mark non-ghost elements
             if (outside.partitionType() == Dune::GhostEntity)
                 continue;
 
             if ((outside.level() < levelMax_)
-                && (outside.level() < entity.level()))
+                && (outside.level() < element.level()))
             {
                 problem_.grid().mark(1, outside);
                 ++marked_;
@@ -390,24 +386,21 @@ private:
         {
             // run through all cells
             done=true;
-            for (LeafIterator eIt = leafGridView.template begin<0>();
-                 eIt!=leafGridView.template end<0>(); ++eIt)
+            for (const auto& element : Dune::elements(leafGridView))
             {
                 // only mark non-ghost elements
-                if (eIt->partitionType() == Dune::GhostEntity)
+                if (element.partitionType() == Dune::GhostEntity)
                     continue;
 
                 // run through all neighbor-cells (intersections)
-                LeafIntersectionIterator isItend = leafGridView.iend(*eIt);
-                for (LeafIntersectionIterator isIt = leafGridView.ibegin(*eIt); isIt!= isItend; ++isIt)
+                for (const auto& intersection : Dune::intersections(leafGridView, element))
                 {
-                    const typename LeafIntersectionIterator::Intersection intersection = *isIt;
                     if(!intersection.neighbor())
                         continue;
 
-                    if (eIt->level() + maxLevelDelta < intersection.outside().level())
+                    if (element.level() + maxLevelDelta < intersection.outside().level())
                     {
-                        problem_.grid().mark(1, *eIt);
+                        problem_.grid().mark(1, element);
                         done=false;
                     }
                 }

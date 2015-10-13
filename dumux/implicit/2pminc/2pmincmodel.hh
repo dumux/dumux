@@ -57,7 +57,6 @@ class TwoPMincModel : public TwoPModel<TypeTag>
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     enum{ numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum{ numContinua = GET_PROP_VALUE(TypeTag, NumContinua) };
@@ -155,25 +154,23 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            int eIdx = this->elementMapper().index(*eIt);
+            int eIdx = this->elementMapper().index(element);
             (*rank)[eIdx] = this->gridView_().comm().rank();
 
             FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), *eIt);
+            fvGeometry.update(this->gridView_(), element);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                false /* TODO oldSol? */);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int globalIdx = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+                int globalIdx = this->dofMapper().subIndex(element, scvIdx, dofCodim);
                 for (int nC=0; nC < numContinua; nC++) {
                     (*pw[nC])[globalIdx] = elemVolVars[scvIdx].pressure(wPhaseIdx, nC);
                     (*pn[nC])[globalIdx] = elemVolVars[scvIdx].pressure(nPhaseIdx, nC);
@@ -191,8 +188,8 @@ public:
             }
 
             // velocity output
-            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *eIt, wPhaseIdx);
-            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, nPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+            velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
         }
         for (int nC=0; nC<numContinua; nC++)
         {

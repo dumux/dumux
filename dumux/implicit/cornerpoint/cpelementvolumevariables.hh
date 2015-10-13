@@ -45,7 +45,6 @@ class CpElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeT
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     /*!
@@ -106,22 +105,20 @@ public:
                 this->resize(numNeighbors + numFaces);
 
                 // add volume variables for the boundary faces
-                IntersectionIterator isIt = problem.gridView().ibegin(element);
-                IntersectionIterator isEndIt = problem.gridView().iend(element);
-                for (; isIt != isEndIt; ++isIt) {
-                    if (!isIt->boundary())
+                for (const auto& intersection : Dune::intersections(problem.gridView(), element)) {
+                    if (!intersection.boundary())
                         continue;
 
                     BoundaryTypes bcTypes;
-                    problem.boundaryTypes(bcTypes, *isIt);
+                    problem.boundaryTypes(bcTypes, intersection);
 
-                    int fIdx = isIt->indexInInside();
+                    int fIdx = intersection.indexInInside();
                     int indexInVariables = numNeighbors + fIdx;
 
                     if (bcTypes.hasDirichlet())
                     {
                         PrimaryVariables dirichletValues;
-                        problem.dirichlet(dirichletValues, *isIt);
+                        problem.dirichlet(dirichletValues, intersection);
 
                         (*this)[indexInVariables].update(dirichletValues,
                                                          problem,

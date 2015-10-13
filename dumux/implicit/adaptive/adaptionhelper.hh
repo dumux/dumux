@@ -72,8 +72,6 @@ private:
 
     typedef typename GridView::Grid Grid;
     typedef typename Grid::LevelGridView LevelGridView;
-    typedef typename LevelGridView::template Codim<dofCodim>::Iterator LevelIterator;
-    typedef typename LevelGridView::template Codim<0>::Iterator ElementLevelIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dofCodim>::Entity DofEntity;
     typedef Dune::PersistentContainer<Grid, AdaptedValues> PersistentContainer;
@@ -126,25 +124,25 @@ public:
 
             if(!isBox)
             {
-				for (ElementLevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
+				for (const auto& element : Dune::elements(levelView))
 				{
 					//get your map entry
-					AdaptedValues &adaptedValues = adaptionMap_[*eIt];
+					AdaptedValues &adaptedValues = adaptionMap_[element];
 
 					// put your value in the map
-					if (eIt->isLeaf())
+					if (element.isLeaf())
 					{
 						// get index
-						int indexI = this->elementIndex(problem, *eIt);
+						int indexI = this->elementIndex(problem, element);
 
 						storeAdaptionValues(adaptedValues, problem.model().curSol()[indexI]);
 
 						adaptedValues.count = 1;
 					}
 					//Average in father
-					if (eIt->level() > 0)
+					if (element.level() > 0)
 					{
-						AdaptedValues& adaptedValuesFather = adaptionMap_[eIt->father()];
+						AdaptedValues& adaptedValuesFather = adaptionMap_[element.father()];
 						adaptedValuesFather.count += 1;
 						storeAdaptionValues(adaptedValues, adaptedValuesFather);
 					}
@@ -153,13 +151,13 @@ public:
         	}
             else
             {
-				for (LevelIterator dofIt = levelView.template begin<dofCodim>(); dofIt != levelView.template end<dofCodim>(); ++dofIt)
+				for (const auto& entity : Dune::entities(levelView, Dune::Codim<dofCodim>()))
 				{
 					//get your map entry
-					AdaptedValues &adaptedValues = adaptionMap_[*dofIt];
+					AdaptedValues &adaptedValues = adaptionMap_[entity];
 
 					// put your value in the map
-					int indexI = this->dofIndex(problem, *dofIt);
+					int indexI = this->dofIndex(problem, entity);
 
 					storeAdaptionValues(adaptedValues, problem.model().curSol()[indexI]);
 
@@ -191,31 +189,31 @@ public:
         {
             LevelGridView levelView = grid_.levelGridView(level);
 
-            for (ElementLevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
+            for (const auto& element : Dune::elements(levelView))
             {
                 // only treat non-ghosts, ghost data is communicated afterwards
-                if (eIt->partitionType() == Dune::GhostEntity)
+                if (element.partitionType() == Dune::GhostEntity)
                     continue;
 
-                if (!eIt->isNew())
+                if (!element.isNew())
                 {
                     //entry is in map, write in leaf
-                    if (eIt->isLeaf())
+                    if (element.isLeaf())
                     {
                     	if(!isBox)
                     	{
-							AdaptedValues &adaptedValues = adaptionMap_[*eIt];
-							int newIdxI = this->elementIndex(problem, *eIt);
+							AdaptedValues &adaptedValues = adaptionMap_[element];
+							int newIdxI = this->elementIndex(problem, element);
 
 							setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
 						}
                     	else
                     	{
-                            unsigned int numSubEntities = eIt->subEntities(dofCodim);
+                            unsigned int numSubEntities = element.subEntities(dofCodim);
 
                         	for(unsigned int i = 0; i < numSubEntities; i++)
                         	{
-                                auto subEntity = eIt->template subEntity <dofCodim>(i);
+                                auto subEntity = element.template subEntity <dofCodim>(i);
                                 AdaptedValues &adaptedValues = adaptionMap_[subEntity];
     							int newIdxI = this->dofIndex(problem, subEntity);
 
@@ -228,37 +226,37 @@ public:
                 else
                 {
                     // value is not in map, interpolate from father element
-                    if (eIt->level() > 0 && eIt->hasFather())
+                    if (element.level() > 0 && element.hasFather())
                     {
-                        auto epFather = eIt->father();
+                        auto epFather = element.father();
 
                         if(!isBox)
                         {
 							// create new entry: reconstruct from adaptionMap_[*father] to a new
 							// adaptionMap_[*son]
-							reconstructAdaptionValues(adaptionMap_, epFather, *eIt, problem);
+							reconstructAdaptionValues(adaptionMap_, epFather, element, problem);
 
 							// access new son
-							AdaptedValues& adaptedValues = adaptionMap_[*eIt];
+							AdaptedValues& adaptedValues = adaptionMap_[element];
 							adaptedValues.count = 1;
 
 							// if we are on leaf, store reconstructed values of son in CellData object
-							if (eIt->isLeaf())
+							if (element.isLeaf())
 							{
 								// acess new CellData object
-								int newIdxI = this->elementIndex(problem, *eIt);
+								int newIdxI = this->elementIndex(problem, element);
 
 								setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);
 							}
                         }
                         else
                         {
-                            unsigned int numSubEntities= eIt->subEntities(dofCodim);
-                    		const auto geometryI = eIt->geometry();
+                            unsigned int numSubEntities= element.subEntities(dofCodim);
+                    		const auto geometryI = element.geometry();
 
                         	for(unsigned int i = 0; i < numSubEntities; i++)
                         	{
-                        		auto subEntity = eIt->template subEntity <dofCodim>(i);
+                        		auto subEntity = element.template subEntity <dofCodim>(i);
     							AdaptedValues &adaptedValues = adaptionMap_[subEntity];
 
     							if(adaptedValues.count == 0){
@@ -280,7 +278,7 @@ public:
 									adaptedValues.count = 1;
     							}
 
-    							if (eIt->isLeaf())
+    							if (element.isLeaf())
     							{
         							int newIdxI = this->dofIndex(problem, subEntity);
     								setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI]);

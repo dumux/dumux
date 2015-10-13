@@ -266,10 +266,8 @@ protected:
         // calculate the mass flux over the faces and subtract
         // it from the local rates
         int fIdx = -1;
-        IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
-        IntersectionIterator isEndIt = this->gridView_().iend(this->element_());
-        for (; isIt != isEndIt; ++isIt) {
-            if (!isIt->neighbor())
+        for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_())) {
+            if (!intersection.neighbor())
                 continue;
 
             fIdx++;

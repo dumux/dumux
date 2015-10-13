@@ -46,7 +46,6 @@ class CCElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTag
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     /*!
@@ -90,13 +89,11 @@ public:
         if (!problem.model().onBoundary(element))
             return;
 
-        IntersectionIterator isIt = problem.gridView().ibegin(element);
-        IntersectionIterator isEndIt = problem.gridView().iend(element);
-        for (; isIt != isEndIt; ++isIt) {
-            if (!isIt->boundary())
+        for (const auto& intersection : Dune::intersections(problem.gridView(), element)) {
+            if (!intersection.boundary())
                 continue;
 
-            problem.boundaryTypes((*this)[0], *isIt);
+            problem.boundaryTypes((*this)[0], intersection);
 
             hasDirichlet_ = hasDirichlet_ || (*this)[0].hasDirichlet();
             hasNeumann_ = hasNeumann_ || (*this)[0].hasNeumann();

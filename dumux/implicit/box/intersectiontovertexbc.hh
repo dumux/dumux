@@ -72,7 +72,7 @@ public:
                 if (!bcTypes.hasDirichlet())
                     continue;
 
-                int fIdx = isIt->indexInInside();
+                int fIdx = intersection.indexInInside();
                 int numFaceVerts = refElement.size(fIdx, 1, dim);
                 for (int faceVertexIdx = 0; faceVertexIdx < numFaceVerts; ++faceVertexIdx)
                 {
