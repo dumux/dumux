@@ -180,6 +180,7 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -196,6 +197,7 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef Dune::BlockVector<GlobalPosition> InitialStressField;
 
     typedef typename GET_PROP_TYPE(TypeTag, LocalFEMSpace) LocalFEMSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, CO2Table) CO2Table;
     typedef Dumux::CO2<Scalar, CO2Table> CO2;
@@ -209,21 +211,19 @@ public:
      * \param tInitEnd End of initialization period
      */
     El2P_TestProblem(TimeManager &timeManager,
-                    const GridView &gridView,
-                    const Scalar tInitEnd)
+                    const GridView &gridView)
         : ParentType(timeManager, gridView),
-        gridView_(gridView),
-        vertexMapper_(gridView)
+        gridView_(gridView)
     {
         std::cout << "El2P_TestProblem: Initializing the fluid system for the el2p model\n";
 
         // initialize the tables of the fluid system
-        FluidSystem::init(/*Tmin=*/273,
-                          /*Tmax=*/400,
-                          /*nT=*/120,
-                          /*pmin=*/1e5,
-                          /*pmax=*/1e8,
-                          /*np=*/200);
+//         FluidSystem::init(/*Tmin=*/273,
+//                           /*Tmax=*/400,
+//                           /*nT=*/120,
+//                           /*pmin=*/1e5,
+//                           /*pmax=*/1e8,
+//                           /*np=*/200);
 
         // resize the pressure field vector with the number of vertices
         pInit_.resize(gridView.size(dim));
@@ -239,10 +239,31 @@ public:
         // (usually the coupling is switched off for the initialization run)
         coupled_ = false;
         // set initial episode length equal to length of initialization period
+        Scalar tInitEnd = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd);
         this->timeManager().startNextEpisode(tInitEnd);
         // transfer the episode index to spatial parameters
         // (during intialization episode hydraulic different parameters might be applied)
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
+
+        depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
+        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+
+        dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitial);
+    }
+
+    void init()
+    {
+        if (this->timeManager().time() < 1e-8)
+        {
+            // set the initial approximated hydrostatic pressure distribution
+            // based on an averaged brine density
+            // or based on a pressure polynomial
+            this->initializePressure();
+            // output is written
+            this->setOutput(true);
+        }
+
+        ParentType::init();
     }
 
     // note: pInit is < 0 (just due to geomechanics sign convention applied here)
@@ -300,8 +321,7 @@ public:
         VertexIterator vEndIt = gridView_.template end<dim>();
         for(; vIt != vEndIt; ++vIt)
         {
-            int vIdxGlobal = vertexMapper_.index(*vIt);
-            //
+            int vIdxGlobal = this->vertexMapper().index(*vIt);
             pInit_[vIdxGlobal] = -this->model().curSol().base()[vIdxGlobal*2][0];
         }
     }
@@ -675,17 +695,28 @@ public:
     void episodeEnd()
     {
         this->timeManager().startNextEpisode(episodeLength_);
+        // At the end of the initializationRun
+        if (this->timeManager().time() == GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd))
+        {
+            this->timeManager().setTimeStepSize(dt_);
+
+            this->setCoupled(true);
+            // pressure field resulting from the initialization period is applied for the initial
+            // and the Dirichlet boundary conditions
+            this->setPressure();
+            // output is written
+            this->setOutput(true);
+        }
     }
 
 private:
     static constexpr Scalar eps_ = 3e-6;
-    static constexpr Scalar depthBOR_ = 2000;
+    Scalar depthBOR_;
     static constexpr Scalar brineDensity_ = 1059;
-    static constexpr Scalar episodeLength_ = 1e5;
+    Scalar episodeLength_;// = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
 
     std::vector<Scalar> pInit_;
     GridView gridView_;
-    VertexMapper vertexMapper_;
     Scalar dt_;
 public:
     bool initializationRun_, coupled_, output_;
@@ -868,7 +899,7 @@ public:
 
 private:
     static constexpr Scalar eps_ = 3e-6;
-    static constexpr Scalar depthBOR_ = 2000;
+    Scalar depthBOR_;
     std::vector<Scalar> pInit_;
     GridView gridView_;
     VertexMapper vertexMapper_;

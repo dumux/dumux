@@ -26,90 +26,50 @@
 #if HAVE_DUNE_PDELAB
 
 #include <dune/common/precision.hh>
-#include <dumux/common/start.hh>
+#include <dune/common/version.hh>
 #include "el2pproblem.hh"
+#include <dumux/common/start.hh>
 
-int main(int argc, char** argv) {
-    try {
-        typedef TTAG(El2P_TestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
-        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
-        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-        typedef Dune::GridPtr<Grid> GridPointer;
+/*!
+ * \brief Provides an interface for customizing error messages associated with
+ *        reading in parameters.
+ *
+ * \param progName  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
+ */
+void usage(const char *progName, const std::string &errorMsg)
+{
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+        errorMessageOut += progName;
+        errorMessageOut += " [options]\n";
+        errorMessageOut += errorMsg;
+        errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
+                           "\t-TimeManager.TInitEnd          End of the initialization [s] \n"
+                           "\t-TimeManager.TEnd              End of the simulation [s] \n"
+                           "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
+                           "\t-Grid.File                     Name of the file containing the grid \n"
+                           "\t                               definition in DGF format\n"
+                           "\t-Problem.Name                  String for naming of the output files \n"
+                           "\n";
 
-        // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
-
-        if (argc < 5) {
-            std::cout<<"usage: "<<argv[0]<<" grid tEnd_Initialization tEnd dt "<<std::endl;
-            return 1;
-        }
-
-        int argPos = 1;
-        double tEnd(0), dt(0), tInitEnd(0);
-
-        // get the grid name
-        const char *dgfFileName = argv[argPos++];
-        // get the end of the initialization period
-        std::istringstream(argv[argPos++]) >> tInitEnd;
-        // get the end of the real simulation period
-        std::istringstream(argv[argPos++]) >> tEnd;
-        // get the initial time step (applied for initialization and for real simulation)
-        std::istringstream(argv[argPos++]) >> dt;
-
-        // load the grid from file
-        GridPointer gridPtr(dgfFileName);
-        (*gridPtr).loadBalance();
-
-        // Instantiate the time manager
-        TimeManager timeManager;
-
-        // instantiate problem
-        Problem problem(timeManager, gridPtr->leafGridView(), tInitEnd);
-
-        // set the initial approximated hydrostatic pressure distribution
-        // based on an averaged brine density
-        // or based on a pressure polynomial
-        problem.initializePressure();
-
-        // start initialization run to initialize the pressure field correctly
-        timeManager.init(problem, 0.0, // initial time
-                dt, // initial time step
-                tInitEnd); // end of initialization period
-        std::cout<<"tInit: "<<tInitEnd<<" tEnd: "<<tEnd<<" dt: "<<dt<<std::endl;
-        timeManager.run();
-
-        // for the real simulation the coupling between mass balances and momentum equation
-        // is turned on
-        problem.setCoupled(true);
-        // pressure field resulting from the initialization period is applied for the initial
-        // and the Dirichlet boundary conditions
-        problem.setPressure();
-        // output is written
-        problem.setOutput(true);
-        // run the real simulation
-        timeManager.init(problem, tInitEnd, // initial time
-                dt, // initial time step
-                tEnd + tInitEnd); // final time
-
-        timeManager.run();
-
-        return 0;
-    } catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    } catch (...) {
-        std::cerr << "Unknown exception thrown!" << std::endl;
+        std::cout << errorMessageOut << std::endl;
     }
 }
 
+////////////////////////
+// the main function
+////////////////////////
+int main(int argc, char** argv)
+{
+    typedef TTAG(El2P_TestProblem) TypeTag;
+    return Dumux::start<TypeTag>(argc, argv, usage);
+}
+
+
 #else // HAVE_DUNE_PDELAB
 
-#include <iostream>
+#warning You need to have dune-pdelab installed and patched to run this test.
 
-int main()
-{
-#warning You need to have dune-pdelab (>= 2.0) installed to run this test.
-    std::cerr << "You need to have dune-pdelab (>= 2.0) installed to run this test.\n";
-    return 77;
-}
 #endif // HAVE_DUNE_PDELAB
