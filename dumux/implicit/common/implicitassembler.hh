@@ -48,7 +48,6 @@ class ImplicitAssembler
 
     enum{ dim = GridView::dimension };
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
@@ -484,17 +483,14 @@ protected:
         greenElems_ = 0;
 
         // reassemble the elements...
-        ElementIterator eIt = gridView_().template begin<0>();
-        ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            const Element &elem = *eIt;
-            if (elem.partitionType() == Dune::GhostEntity)
+        for (const auto& element : Dune::elements(gridView_())) {
+            if (element.partitionType() == Dune::GhostEntity)
             {
-                asImp_().assembleGhostElement_(elem);
+                asImp_().assembleGhostElement_(element);
             }
             else
             {
-                asImp_().assembleElement_(elem);
+                asImp_().assembleElement_(element);
             }
         }
     }
