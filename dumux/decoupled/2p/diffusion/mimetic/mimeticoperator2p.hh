@@ -27,7 +27,6 @@
  */
 
 #include"croperator2p.hh"
-#include <dune/common/version.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 #include "dumux/decoupled/common/mimetic/mimeticproperties.hh"
 

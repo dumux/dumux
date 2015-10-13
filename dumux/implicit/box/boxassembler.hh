@@ -23,8 +23,6 @@
 #ifndef DUMUX_BOX_ASSEMBLER_HH
 #define DUMUX_BOX_ASSEMBLER_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/common/exceptions.hh>
 #include <dumux/implicit/common/implicitassembler.hh>
 #include <dumux/parallel/vertexhandles.hh>

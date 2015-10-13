@@ -28,7 +28,6 @@
 #ifndef DUMUX_3P3C_MODEL_HH
 #define DUMUX_3P3C_MODEL_HH
 
-#include <dune/common/version.hh>
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 #include "3p3cproperties.hh"
 

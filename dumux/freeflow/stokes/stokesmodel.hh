@@ -24,8 +24,6 @@
  * \brief Base class for all models which use the Stokes box model.
  */
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitmodel.hh>
 
 #include "stokeslocalresidual.hh"

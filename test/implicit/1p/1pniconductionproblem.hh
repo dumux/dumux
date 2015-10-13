@@ -25,7 +25,6 @@
 #define DUMUX_1PNI_CONDUCTION_PROBLEM_HH
 
 #include <math.h>
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/1p/1pmodel.hh>

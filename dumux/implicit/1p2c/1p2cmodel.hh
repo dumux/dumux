@@ -27,8 +27,6 @@
 #ifndef DUMUX_ONEP_TWOC_MODEL_HH
 #define DUMUX_ONEP_TWOC_MODEL_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 #include "1p2cproperties.hh"
 

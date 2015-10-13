@@ -30,7 +30,6 @@
 #include <sstream>
 #include <iomanip>
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/gridfactory.hh>
 

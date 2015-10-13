@@ -26,7 +26,6 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/version.hh>
 #include <dumux/io/gridcreator.hh>
 #include <dumux/common/basicproperties.hh>
 

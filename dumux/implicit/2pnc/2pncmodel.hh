@@ -25,8 +25,6 @@
 #ifndef DUMUX_2PNC_MODEL_HH
 #define DUMUX_2PNC_MODEL_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 
 #include "2pncproperties.hh"

@@ -25,8 +25,6 @@
 #ifndef DUMUX_STOKESNCNI_MODEL_HH
 #define DUMUX_STOKESNCNI_MODEL_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/freeflow/stokesnc/stokesncmodel.hh>
 
 #include "stokesncnilocalresidual.hh"

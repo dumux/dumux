@@ -19,8 +19,6 @@
 #ifndef DUMUX_VARIABLECLASS_HH
 #define DUMUX_VARIABLECLASS_HH
 
-#include <dune/common/version.hh>
-
 #include "decoupledproperties.hh"
 
 // for  parallelization

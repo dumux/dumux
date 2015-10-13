@@ -24,7 +24,6 @@
 #ifndef DUMUX_TEST_TRANSPORT_PROBLEM_HH
 #define DUMUX_TEST_TRANSPORT_PROBLEM_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 

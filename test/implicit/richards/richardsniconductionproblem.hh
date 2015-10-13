@@ -26,7 +26,6 @@
 #define DUMUX_RICHARDS_CONDUCTION_PROBLEM_HH
 
 #include <math.h>
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>

@@ -25,7 +25,6 @@
 #ifndef DUMUX_RICHARDS_MODEL_HH
 #define DUMUX_RICHARDS_MODEL_HH
 
-#include <dune/common/version.hh>
 #include <dumux/implicit/common/implicitmodel.hh>
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 

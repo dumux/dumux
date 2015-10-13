@@ -25,7 +25,6 @@
 #ifndef DUMUX_COLUMNXYLOLPROBLEM_HH
 #define DUMUX_COLUMNXYLOLPROBLEM_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/h2oairxylenefluidsystem.hh>

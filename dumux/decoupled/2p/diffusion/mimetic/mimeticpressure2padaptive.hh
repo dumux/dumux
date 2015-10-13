@@ -25,8 +25,6 @@
  *
  * \brief Model for the pressure equation discretized by mimetic FD.
  */
-#include <dune/common/version.hh>
-
 // dumux environment
 #include <dumux/decoupled/common/mimetic/mimeticproperties.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator2padaptive.hh>

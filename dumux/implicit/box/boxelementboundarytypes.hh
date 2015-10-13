@@ -23,8 +23,6 @@
 #ifndef DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 
-#include <dune/common/version.hh>
-
 #include "boxproperties.hh"
 
 #include <dumux/common/valgrind.hh>

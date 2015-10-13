@@ -25,7 +25,6 @@
 #ifndef DUMUX_VERTEX_HANDLES_HH
 #define DUMUX_VERTEX_HANDLES_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/datahandleif.hh>
 
 

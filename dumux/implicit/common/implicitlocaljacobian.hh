@@ -23,7 +23,6 @@
 #ifndef DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
 #define DUMUX_IMPLICIT_LOCAL_JACOBIAN_HH
 
-#include <dune/common/version.hh>
 #include <dune/istl/matrix.hh>
 
 #include <dumux/common/math.hh>

@@ -23,7 +23,6 @@
 #ifndef DUMUX_VECTOR_EXCHANGE_HH
 #define DUMUX_VECTOR_EXCHANGE_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/datahandleif.hh>
 
 namespace Dumux

@@ -25,8 +25,6 @@
 #ifndef DUMUX_ELASTIC1P2C_MODEL_HH
 #define DUMUX_ELASTIC1P2C_MODEL_HH
 
-#include <dune/common/version.hh>
-
 #include "el1p2cproperties.hh"
 #include <dumux/common/eigenvalues.hh>
 

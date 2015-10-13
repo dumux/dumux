@@ -23,8 +23,6 @@
 #ifndef DUMUX_BOX_EL1P2C_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_BOX_EL1P2C_ELEMENT_VOLUME_VARIABLES_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/box/boxelementvolumevariables.hh>
 

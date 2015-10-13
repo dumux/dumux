@@ -24,7 +24,6 @@
 #ifndef DUMUX_EL2P_TESTPROBLEM_HH
 #define DUMUX_EL2P_TESTPROBLEM_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
 

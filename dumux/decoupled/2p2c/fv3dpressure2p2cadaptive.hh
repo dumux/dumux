@@ -20,7 +20,6 @@
 #define DUMUX_FV3DPRESSURE2P2C_ADAPTIVE_HH
 
 // dune environent:
-#include <dune/common/version.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>

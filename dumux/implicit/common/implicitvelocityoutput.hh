@@ -29,7 +29,6 @@
 #include <unordered_map>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/version.hh>
 #include <dune/istl/bvector.hh>
 
 namespace Dumux

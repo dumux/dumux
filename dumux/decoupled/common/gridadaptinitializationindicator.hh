@@ -22,8 +22,6 @@
 #include "decoupledproperties.hh"
 
 #include <dune/common/dynvector.hh>
-#include <dune/common/version.hh>
-
 /**
  * @file
  * @brief  Class defining a start indicator for grid adaption

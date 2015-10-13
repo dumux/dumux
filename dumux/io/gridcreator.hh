@@ -30,7 +30,6 @@
 #include <sstream>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/version.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>

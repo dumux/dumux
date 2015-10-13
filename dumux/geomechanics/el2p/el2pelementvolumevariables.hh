@@ -23,7 +23,6 @@
 #ifndef DUMUX_BOX_EL2P_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_BOX_EL2P_ELEMENT_VOLUME_VARIABLES_HH
 
-#include <dune/common/version.hh>
 #include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
 
 #include <dumux/implicit/box/boxelementvolumevariables.hh>

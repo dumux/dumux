@@ -29,7 +29,6 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/propertysystem.hh>
 
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 

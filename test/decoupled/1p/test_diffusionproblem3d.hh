@@ -29,7 +29,6 @@
 #elif HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
-#include <dune/common/version.hh>
 #include <dune/grid/uggrid.hh>
 #include <dumux/material/components/unit.hh>
 

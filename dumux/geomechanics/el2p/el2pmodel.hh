@@ -26,7 +26,6 @@
 #ifndef DUMUX_ELASTIC2P_MODEL_HH
 #define DUMUX_ELASTIC2P_MODEL_HH
 
-#include <dune/common/version.hh>
 #include <dune/pdelab/gridfunctionspace/interpolate.hh>
 #include <dumux/common/eigenvalues.hh>
 #include "el2pproperties.hh"

@@ -19,7 +19,6 @@
 #ifndef DUMUX_ADAPTIONHELPER_HH
 #define DUMUX_ADAPTIONHELPER_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>

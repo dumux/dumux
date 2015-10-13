@@ -30,7 +30,6 @@
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/version.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/operators.hh>

@@ -19,8 +19,6 @@
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2P_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2P_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/decoupled/common/impetproperties.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
 #include <dumux/linear/vectorexchange.hh>

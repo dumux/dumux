@@ -27,7 +27,6 @@
 #ifndef DUMUX_1P_MODEL_HH
 #define DUMUX_1P_MODEL_HH
 
-#include <dune/common/version.hh>
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 #include "1pproperties.hh"
 

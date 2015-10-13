@@ -24,8 +24,6 @@
 #ifndef DUMUX_NI_MODEL_HH
 #define DUMUX_NI_MODEL_HH
 
-#include <dune/common/version.hh>
-
 #include "niproperties.hh"
 
 namespace Dumux {

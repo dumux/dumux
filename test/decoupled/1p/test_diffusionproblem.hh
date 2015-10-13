@@ -24,7 +24,6 @@
 #ifndef DUMUX_TEST_2P_PROBLEM_HH
 #define DUMUX_TEST_2P_PROBLEM_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/components/unit.hh>

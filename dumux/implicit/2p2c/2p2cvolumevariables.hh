@@ -25,8 +25,6 @@
 #ifndef DUMUX_2P2C_VOLUME_VARIABLES_HH
 #define DUMUX_2P2C_VOLUME_VARIABLES_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitmodel.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>

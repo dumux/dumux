@@ -23,7 +23,6 @@
 #ifndef DUMUX_MPNC_MODEL_KINETIC_HH
 #define DUMUX_MPNC_MODEL_KINETIC_HH
 
-#include <dune/common/version.hh>
 // equilibrium model
 #include <dumux/implicit/mpnc/mpncmodel.hh>
 

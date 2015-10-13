@@ -19,7 +19,6 @@
 #ifndef DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_HH
 
-#include <dune/common/version.hh>
 // dumux environment
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 #include <dumux/decoupled/common/fv/fvpressure.hh>

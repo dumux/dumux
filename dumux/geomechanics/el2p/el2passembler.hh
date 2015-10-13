@@ -25,7 +25,6 @@
 #ifndef DUMUX_EL2P_ASSEMBLER_HH
 #define DUMUX_EL2P_ASSEMBLER_HH
 
-#include <dune/common/version.hh>
 #include "el2pproperties.hh"
 #include "el2plocaloperator.hh"
 

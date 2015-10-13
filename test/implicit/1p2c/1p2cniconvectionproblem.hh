@@ -26,7 +26,6 @@
 #ifndef DUMUX_1P2CNI_CONVECTION_PROBLEM_HH
 #define DUMUX_1P2CNI_CONVECTION_PROBLEM_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/implicit/1p2c/1p2cmodel.hh>

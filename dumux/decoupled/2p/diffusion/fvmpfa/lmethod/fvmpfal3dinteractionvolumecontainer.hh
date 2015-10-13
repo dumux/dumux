@@ -19,8 +19,6 @@
 #ifndef DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 #define DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 
-#include <dune/common/version.hh>
-
 // dumux environment
 #include <dumux/decoupled/common/pressureproperties.hh>
 #include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>

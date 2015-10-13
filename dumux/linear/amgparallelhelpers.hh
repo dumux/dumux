@@ -25,8 +25,6 @@
 #ifndef DUMUX_AMGPARALLELHELPERS_HH
 #define DUMUX_AMGPARALLELHELPERS_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/box/boxproperties.hh>
 #include <dumux/implicit/cellcentered/ccproperties.hh>
 #include <dumux/decoupled/common/pressureproperties.hh>

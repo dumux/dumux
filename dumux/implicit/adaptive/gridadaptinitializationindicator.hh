@@ -21,7 +21,6 @@
 
 #include <dune/geometry/type.hh>
 #include <dune/common/dynvector.hh>
-#include <dune/common/version.hh>
 #include "gridadaptproperties.hh"
 
 /**

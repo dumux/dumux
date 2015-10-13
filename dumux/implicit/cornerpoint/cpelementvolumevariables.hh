@@ -23,8 +23,6 @@
 #ifndef DUMUX_CP_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_CP_ELEMENT_VOLUME_VARIABLES_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/cellcentered/ccproperties.hh>
 
 namespace Dumux

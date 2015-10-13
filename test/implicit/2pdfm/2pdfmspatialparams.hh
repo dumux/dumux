@@ -23,8 +23,6 @@
 #ifndef DUMUX_TEST_2PDFM_SPATIAL_PARAMETERS_HH
 #define DUMUX_TEST_2PDFM_SPATIAL_PARAMETERS_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/2pdfm/2pdfmmodel.hh>
 #include <dumux/io/artgridcreator.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

@@ -23,8 +23,6 @@
 #ifndef DUMUX_IMPLICIT_ASSEMBLER_HH
 #define DUMUX_IMPLICIT_ASSEMBLER_HH
 
-#include <dune/common/version.hh>
-
 #include "implicitproperties.hh"
 
 namespace Dumux {

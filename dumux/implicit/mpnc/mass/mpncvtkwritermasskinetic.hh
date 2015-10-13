@@ -25,8 +25,6 @@
 #ifndef DUMUX_MPNC_VTK_WRITER_MASS_KINETIC_HH
 #define DUMUX_MPNC_VTK_WRITER_MASS_KINETIC_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/mpnc/mpncvtkwritermodule.hh>
 #include <dumux/implicit/mpnc/mpncpropertieskinetic.hh>
 #include <dumux/implicit/mpnc/mass/mpncvtkwritermass.hh>

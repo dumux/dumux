@@ -23,7 +23,6 @@
 #ifndef DUMUX_ELASTIC2P_BASE_MODEL_HH
 #define DUMUX_ELASTIC2P_BASE_MODEL_HH
 
-#include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
 #include <dune/istl/bvector.hh>
 

@@ -17,7 +17,6 @@
 #ifndef DUMUX_FVMPFAL2DPRESSURE2P_HH
 #define DUMUX_FVMPFAL2DPRESSURE2P_HH
 
-#include <dune/common/version.hh>
 // dumux environment
 #include <dumux/decoupled/common/fv/fvpressure.hh>
 #include <dumux/decoupled/common/fv/mpfa/mpfalinteractionvolume.hh>

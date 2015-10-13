@@ -25,7 +25,6 @@
 #ifndef DUMUX_MPNC_VTK_WRITER_COMMON_HH
 #define DUMUX_MPNC_VTK_WRITER_COMMON_HH
 
-#include <dune/common/version.hh>
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 #include "mpncvtkwritermodule.hh"
 

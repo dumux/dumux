@@ -25,8 +25,6 @@
 #ifndef DUMUX_3P3C_VOLUME_VARIABLES_HH
 #define DUMUX_3P3C_VOLUME_VARIABLES_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitmodel.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>

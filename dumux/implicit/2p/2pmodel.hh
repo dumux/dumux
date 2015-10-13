@@ -26,8 +26,6 @@
 #ifndef DUMUX_TWOP_MODEL_HH
 #define DUMUX_TWOP_MODEL_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitvelocityoutput.hh>
 #include "2pproperties.hh"
 

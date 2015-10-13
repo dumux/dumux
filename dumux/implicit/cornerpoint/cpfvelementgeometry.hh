@@ -24,7 +24,6 @@
 #ifndef DUMUX_CP_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_CP_FV_ELEMENTGEOMETRY_HH
 
-#include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 

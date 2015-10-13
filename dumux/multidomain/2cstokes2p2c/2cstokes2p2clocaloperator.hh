@@ -26,8 +26,6 @@
 
 #include <iostream>
 
-#include <dune/common/version.hh>
-
 #include <dune/pdelab/multidomain/couplingutilities.hh>
 #include <dune/pdelab/localoperator/pattern.hh>
 #include <dune/pdelab/localoperator/idefault.hh>

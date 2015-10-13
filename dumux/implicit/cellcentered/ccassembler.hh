@@ -23,8 +23,6 @@
 #ifndef DUMUX_CC_ASSEMBLER_HH
 #define DUMUX_CC_ASSEMBLER_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/common/implicitassembler.hh>
 
 namespace Dumux {

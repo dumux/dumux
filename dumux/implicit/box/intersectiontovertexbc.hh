@@ -23,8 +23,6 @@
 #ifndef DUMUX_INTERSECTIONTOVERTEXBC_HH
 #define DUMUX_INTERSECTIONTOVERTEXBC_HH
 
-#include <dune/common/version.hh>
-
 #include <dumux/implicit/box/boxproperties.hh>
 
 namespace Dumux

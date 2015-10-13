@@ -23,8 +23,6 @@
 #ifndef DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 #define DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 
-#include <dune/common/version.hh>
-
 #include "richardsproperties.hh"
 
 #include <dumux/nonlinear/newtoncontroller.hh>

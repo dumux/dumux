@@ -25,8 +25,6 @@
 #ifndef DUMUX_MPNC_VTK_WRITER_ENERGY_HH
 #define DUMUX_MPNC_VTK_WRITER_ENERGY_HH
 
-#include <dune/common/version.hh>
-
 #include "../mpncvtkwritermodule.hh"
 
 namespace Dumux
