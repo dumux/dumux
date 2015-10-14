@@ -68,7 +68,7 @@ public:
 
     int map(const Element& element) const
     {
-        return elementMapper_.map(element);
+        return elementMapper_.index(element);
     }
 
     int map(int elemIdx, int fIdx)

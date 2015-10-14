@@ -407,7 +407,7 @@ public:
         int numFaces = element.subEntities(1);
         for (int i=0; i < numFaces; i++)
         {
-            int fIdxGlobal = A_.faceMapper().map(element, i, 1);
+            int fIdxGlobal = A_.faceMapper().subIndex(element, i, 1);
             outstream << pressTrace_[fIdxGlobal][0];
         }
     }
@@ -417,7 +417,7 @@ public:
         int numFaces = element.subEntities(1);
         for (int i=0; i < numFaces; i++)
         {
-            int fIdxGlobal = A_.faceMapper().map(element, i, 1);
+            int fIdxGlobal = A_.faceMapper().subIndex(element, i, 1);
             instream >> pressTrace_[fIdxGlobal][0];
         }
     }

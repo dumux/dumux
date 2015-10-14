@@ -299,7 +299,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int vIdxGlobal = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
+            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(*eIt, vIdx, dim);
 
             InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
 
@@ -318,7 +318,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
                         {
                             for (int vIdx = 0; vIdx < numVertices; vIdx++)
                             {
-                                int globalVertIdxJ = problem_.variables().vertexMapper().map(neighbor, vIdx, dim);
+                                int globalVertIdxJ = problem_.variables().vertexMapper().subIndex(neighbor, vIdx, dim);
 
                                 if (globalVertIdxJ != vIdxGlobal)
                                 {
@@ -386,7 +386,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int vIdxGlobal = problem_.variables().vertexMapper().map(*eIt, vIdx, dim);
+            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(*eIt, vIdx, dim);
 
             InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
             for (int subVolumeIdx = 0; subVolumeIdx < InteractionVolume::subVolumeTotalNum; subVolumeIdx++)
