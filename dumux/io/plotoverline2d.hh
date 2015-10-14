@@ -61,7 +61,6 @@ class PlotOverLine2D
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)               Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem)              Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView)             GridView;
-    typedef typename GridView::template Codim<0>::Iterator        ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry)    FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, DofMapper)            DofMapper;
@@ -139,12 +138,11 @@ public:
         }
 
         // Looping over all elements of the domain
-        ElementIterator eEndIt = problem.gridView().template end<0>();
-        for (ElementIterator eIt = problem.gridView().template begin<0>() ; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem.gridView()))
         {
             // updating the volume variables
-            fvGeometry.update(problem.gridView(), *eIt);
-            elemVolVars.update(problem, *eIt, fvGeometry, false);
+            fvGeometry.update(problem.gridView(), element);
+            elemVolVars.update(problem, element, fvGeometry, false);
 
             // number of scv
             const unsigned int numScv = fvGeometry.numScv;
@@ -152,7 +150,7 @@ public:
             for (unsigned int scvIdx=0; scvIdx < numScv; ++scvIdx)
             {
                 // find some global identification
-                const unsigned int vIdxGlobal = problem.vertexMapper().subIndex(*eIt, scvIdx, dim);
+                const unsigned int vIdxGlobal = problem.vertexMapper().subIndex(element, scvIdx, dim);
 
                 // only write out if the vertex was not already visited
                 if (isVisited[vIdxGlobal])
