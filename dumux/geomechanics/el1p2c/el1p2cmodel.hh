@@ -142,7 +142,6 @@ class ElOnePTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         dim = GridView::dimension
     };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 
@@ -246,26 +245,24 @@ public:
         ElementBoundaryTypes elemBcTypes;
 
         // initialize start and end of element iterator
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
         // loop over all elements (cells)
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
-                unsigned int eIdx = this->problem_().model().elementMapper().index(*eIt);
+                unsigned int eIdx = this->problem_().model().elementMapper().index(element);
                 rank[eIdx] = this->gridView_().comm().rank();
 
-                fvGeometry.update(this->gridView_(), *eIt);
-                elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
-                elemVolVars.update(this->problem_(), *eIt, fvGeometry, false);
+                fvGeometry.update(this->gridView_(), element);
+                elemBcTypes.update(this->problem_(), element, fvGeometry);
+                elemVolVars.update(this->problem_(), element, fvGeometry, false);
 
                 // loop over all local vertices of the cell
-                int numScv = eIt->subEntities(dim);
+                int numScv = element.subEntities(dim);
 
                 for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
                 {
-                    unsigned int vIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dim);
+                    unsigned int vIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
 
                     pressure[vIdxGlobal] = elemVolVars[scvIdx].pressure();
                     moleFraction0[vIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
@@ -288,11 +285,11 @@ public:
                     viscosity[vIdxGlobal] = elemVolVars[scvIdx].viscosity();
                     porosity[vIdxGlobal] = elemVolVars[scvIdx].porosity();
                     Kx[vIdxGlobal] =    this->problem_().spatialParams().intrinsicPermeability(
-                                    *eIt, fvGeometry, scvIdx)[0][0];
+                                    element, fvGeometry, scvIdx)[0][0];
                     // calculate cell quantities by adding up scv quantities and dividing through numScv
                     cellPorosity[eIdx] += elemVolVars[scvIdx].porosity()    / numScv;
                     cellKx[eIdx] += this->problem_().spatialParams().intrinsicPermeability(
-                                    *eIt, fvGeometry, scvIdx)[0][0] / numScv;
+                                    element, fvGeometry, scvIdx)[0][0] / numScv;
                     cellPressure[eIdx] += elemVolVars[scvIdx].pressure()    / numScv;
                 };
 
@@ -307,7 +304,7 @@ public:
 
                     //prepare the flux calculations (set up and prepare geometry, FE gradients)
                     FluxVariables fluxVars(this->problem_(),
-                                        *eIt, fvGeometry,
+                                        element, fvGeometry,
                                         fIdx,
                                         elemVolVars);
 

@@ -71,8 +71,6 @@ class ElasticModel : public GET_PROP_TYPE(TypeTag, BaseModel)
         dim = GridView::dimension
     };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
@@ -120,25 +118,23 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
-            int eIdx = this->problem_().model().elementMapper().index(*eIt);
+            int eIdx = this->problem_().model().elementMapper().index(element);
             rank[eIdx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), element);
+            elemBcTypes.update(this->problem_(), element, fvGeometry);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int vIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dim);
+                int vIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
 
                 volVars.update(sol[vIdxGlobal],
                                this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                scvIdx,
                                false);
@@ -156,7 +152,7 @@ public:
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
-                            *eIt,
+                            element,
                             fvGeometry,
                             false /* isOldSol? */);
 
@@ -166,7 +162,7 @@ public:
                 stress = 0.0;
                 //prepare the flux calculations (set up and prepare geometry, FE gradients)
                 FluxVariables fluxVars(this->problem_(),
-                              *eIt,
+                              element,
                               fvGeometry,
                               fIdx,
                               elemVolVars);
