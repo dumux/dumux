@@ -322,24 +322,24 @@ public:
         ScalarField *reactionSourceH2O = this->resultWriter().allocateManagedBuffer (numDofs);
         ScalarField *reactionSourceO2 = this->resultWriter().allocateManagedBuffer (numDofs);
 
-        for (auto eIt = this->gridView().template begin<0>(); eIt != this->gridView().template end<0>(); ++eIt)
+        for (const auto& element : Dune::elements(this->gridView()))
         {
             FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView(), *eIt);
+            fvGeometry.update(this->gridView(), element);
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(*this,
-                               *eIt,
+                               element,
                                fvGeometry,
                                false /* oldSol? */);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int dofIdxGlobal = this->model().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+                int dofIdxGlobal = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 //reactionSource Output
                 PrimaryVariables source;
-                this->solDependentSource(source, *eIt, fvGeometry, scvIdx, elemVolVars);
+                this->solDependentSource(source, element, fvGeometry, scvIdx, elemVolVars);
 
                 (*reactionSourceH2O)[dofIdxGlobal] = source[wPhaseIdx];
                 (*reactionSourceO2)[dofIdxGlobal] = source[numComponents-1];

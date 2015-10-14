@@ -186,7 +186,6 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -275,12 +274,10 @@ public:
     // initialization of the actual model run and for the pressure Dirichlet boundary values.
     void initializePressure()
     {
-        VertexIterator vIt = gridView_.template begin<dim>();
-        VertexIterator vEndIt = gridView_.template end<dim>();
-        for(; vIt != vEndIt; ++vIt)
+        for(const auto& vertex : Dune::vertices(gridView_))
         {
-            int vIdxGlobal = this->vertexMapper().index(*vIt);
-            GlobalPosition globalPos = (*vIt).geometry().corner(0);
+            int vIdxGlobal = this->vertexMapper().index(vertex);
+            GlobalPosition globalPos = vertex.geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
             pInit_[vIdxGlobal] = -(1.013e5 + (depthBOR_ - globalPos[2]) * brineDensity_ * 9.81);
@@ -317,11 +314,9 @@ public:
 
         this->setInitializationRun(initializationRun_);
         std::cout<<"El2P_TestProblem: initialized pressure field copied to pInit_"<<std::endl;
-        VertexIterator vIt = gridView_.template begin<dim>();
-        VertexIterator vEndIt = gridView_.template end<dim>();
-        for(; vIt != vEndIt; ++vIt)
+        for(const auto& vertex : Dune::vertices(gridView_))
         {
-            int vIdxGlobal = this->vertexMapper().index(*vIt);
+            int vIdxGlobal = this->vertexMapper().index(vertex);
             pInit_[vIdxGlobal] = -this->model().curSol().base()[vIdxGlobal*2][0];
         }
     }
@@ -837,19 +832,15 @@ public:
     inline void evaluateGlobal(const DomainType & position, RangeType & values) const
     {
             bool valueSet;
-            VertexIterator vIt =
-                            gridView_.template begin<GridView::dimension> ();
-            VertexIterator vEndIt =
-                            gridView_.template end<GridView::dimension> ();
             valueSet = false;
 
             // loop over all vertices
-            for (; vIt != vEndIt; ++vIt)
+            for (const auto& vertex : Dune::vertices(gridView_))
             {
                 // get global index of current vertex
-                int vIdxGlobal = vertexMapper_.index(*vIt);
+                int vIdxGlobal = vertexMapper_.index(vertex);
                 Dune::FieldVector<double, 3> globalPos =
-                                (*vIt).geometry().corner(0);
+                                (vertex).geometry().corner(0);
 
                 // compare coordinates of current vertex with position coordinates
                 if (globalPos[0] >= position[0] - eps_ && globalPos[0] <= position[0] + eps_
@@ -886,13 +877,9 @@ public:
         void setPressure(std::vector<Scalar> pInit)
         {
             std::cout << "InitialPressSat: setPressure function called" << std::endl;
-            VertexIterator vIt =
-                            gridView_.template begin<GridView::dimension> ();
-            VertexIterator vEndIt =
-                            gridView_.template end<GridView::dimension> ();
-            for (; vIt != vEndIt; ++vIt)
+            for (const auto& vertex : Dune::vertices(gridView_))
             {
-                int vIdxGlobal = vertexMapper_.index(*vIt);
+                int vIdxGlobal = vertexMapper_.index(vertex);
                 pInit_[vIdxGlobal] = -pInit[vIdxGlobal];
             }
         }

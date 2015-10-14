@@ -342,15 +342,14 @@ public:
         Scalar l2analytic = 0.0;
         const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
 
-        for (auto elementIt = this->gridView().template begin<0>();
-             elementIt != this->gridView().template end<0>(); ++elementIt)
+        for (const auto& element : Dune::elements(this->gridView()))
         {
             // value from numerical approximation
             Scalar numericalSolution =
-                this->model().curSol()[this->model().dofMapper().subIndex(*elementIt, 0, 0)];
+                this->model().curSol()[this->model().dofMapper().subIndex(element, 0, 0)];
 
             // integrate over element using a quadrature rule
-            Geometry geometry = elementIt->geometry();
+            Geometry geometry = element.geometry();
             Dune::GeometryType gt = geometry.type();
             Dune::QuadratureRule<Scalar, dim> rule =
                 Dune::QuadratureRules<Scalar, dim>::rule(gt, qOrder);

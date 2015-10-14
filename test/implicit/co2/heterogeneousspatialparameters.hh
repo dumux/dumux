@@ -83,7 +83,6 @@ class HeterogeneousSpatialParams : public ImplicitSpatialParams<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -136,12 +135,10 @@ public:
         int numElements = gridView_.size(0);
         paramIdx_.resize(numElements);
 
-        ElementIterator eIt = gridView_.template begin<0>();
-        const ElementIterator eEndIt = gridView_.template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_))
         {
-            int eIdx = gridView_.indexSet().index(*eIt);
-            int param = GridCreator::parameters(*eIt)[0];
+            int eIdx = gridView_.indexSet().index(element);
+            int param = GridCreator::parameters(element)[0];
             paramIdx_[eIdx] = param;
         }
     }

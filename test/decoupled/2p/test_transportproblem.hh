@@ -106,8 +106,6 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     enum
@@ -139,24 +137,22 @@ public:
         vel[0] = 1e-5;
 
         // compute update vector
-        ElementIterator eEndIt = this->gridView().template end<0> ();
-        for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView()))
         {
             // cell index
-            int eIdxGlobal = this->elementMapper().index(*eIt);
+            int eIdxGlobal = this->elementMapper().index(element);
 
             CellData& cellData = this->variables().cellData(eIdxGlobal);
 
             // run through all intersections with neighbors and boundary
-            IntersectionIterator isEndIt = this->gridView().iend(*eIt);
-            for (IntersectionIterator isIt = this->gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(this->gridView(), element))
             {
                 // local number of facet
-                int indexInInside = isIt->indexInInside();
+                int indexInInside = intersection.indexInInside();
 
                 cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, vel);
 
-                const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
+                const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
 
                 Scalar pot = vel * unitOuterNormal;
 

@@ -70,7 +70,6 @@ class McWhorterAnalytic
     };
 
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FieldVector<Scalar, dimworld> GlobalPosition;
 
 private:
@@ -95,15 +94,14 @@ private:
         Scalar globalVolume = 0;
         Scalar errorNorm = 0.0;
 
-        ElementIterator eEndIt = problem_.gridView().template end<0> ();
-        for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // get entity
-            int index = problem_.variables().index(*eIt);
+            int index = problem_.variables().index(element);
 
             Scalar sat = problem_.variables().cellData(index).saturation(wPhaseIdx);
 
-            Scalar volume = eIt->geometry().volume();
+            Scalar volume = element.geometry().volume();
 
             Scalar error = analyticSolution_[index] - sat;
 
@@ -131,15 +129,15 @@ private:
 
     void prepareAnalytic()
     {
-    	ElementIterator dummyElement = problem_.gridView().template begin<0>();
-        const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(*dummyElement));
+    	const auto& dummyElement = *problem_.gridView().template begin<0>();
+        const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(dummyElement));
 
         swr_ = materialLawParams.swr();
         snr_ = materialLawParams.snr();
-        porosity_ = problem_.spatialParams().porosity(*dummyElement);
-        permeability_ = problem_.spatialParams().intrinsicPermeability(*dummyElement)[0][0];
+        porosity_ = problem_.spatialParams().porosity(dummyElement);
+        permeability_ = problem_.spatialParams().intrinsicPermeability(dummyElement)[0][0];
         PrimaryVariables initVec;
-        problem_.initial(initVec, *dummyElement);
+        problem_.initial(initVec, dummyElement);
         sInit_ = initVec[saturationIdx];
         Scalar s0 =(1 - snr_ - swr_);
 //        std::cerr<<"\n swr, snr: "<< swr_ << snr_ << "\n";
@@ -156,9 +154,9 @@ private:
             satVec_[i]=satVec_[i-1]+h_;
         }
         FluidState fluidState;
-        fluidState.setTemperature(problem_.temperature(*dummyElement));
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*dummyElement));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*dummyElement));
+        fluidState.setTemperature(problem_.temperature(dummyElement));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(dummyElement));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(dummyElement));
         Scalar viscosityW = FluidSystem::viscosity(fluidState, wPhaseIdx);
         Scalar viscosityNW = FluidSystem::viscosity(fluidState, nPhaseIdx);
 
@@ -301,16 +299,15 @@ private:
 //         std::cout<<" xf_ = "<<xf_<<std::endl;
 
         // iterate over vertices and get analytical saturation solution
-        ElementIterator eEndIt = problem_.gridView().template end<0> ();
-        for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt!= eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // get global coordinate of cell center
-            const GlobalPosition& globalPos = eIt->geometry().center();
+            const GlobalPosition& globalPos = element.geometry().center();
 
 //            std::cout<<"globalPos = "<<globalPos[0]<<", x0 = "<<xf_[0]<<"\n";
 
             // find index of current vertex
-            int index = problem_.variables().index(*eIt);
+            int index = problem_.variables().index(element);
 
             // find x_f next to global coordinate of the vertex
             int xnext = 0;

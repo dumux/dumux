@@ -137,7 +137,6 @@ class TestDiffusion3DProblem: public DiffusionProblem2P<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -174,11 +173,9 @@ public:
     {
         ScalarSolution *exactPressure = this->resultWriter().allocateManagedBuffer(this->gridView().size(0));
 
-        ElementIterator eIt = this->gridView().template begin<0>();
-        ElementIterator eEndIt = this->gridView().template end<0>();
-        for(;eIt != eEndIt; ++eIt)
+        for(const auto& element : Dune::elements(this->gridView()))
         {
-            (*exactPressure)[this->elementMapper().index(*eIt)][0] = exact(eIt->geometry().center());
+            (*exactPressure)[this->elementMapper().index(element)][0] = exact(element.geometry().center());
         }
 
         this->resultWriter().attachCellData(*exactPressure, "exact pressure");
