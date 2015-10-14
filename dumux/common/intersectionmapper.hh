@@ -36,8 +36,6 @@ class IntersectionMapper
     typedef typename GridView::Grid Grid;
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
 
@@ -46,14 +44,12 @@ public:
     : gridView_(gridview), elementMapper_(gridView_), size_(gridView_.size(1)),
       intersectionMapGlobal_(gridView_.size(0)), intersectionMapLocal_(gridView_.size(0))
     {
-        ElementIterator eIt = gridView_.template begin<0>();
+        const auto& element = *gridView_.template begin<0>();
 
         int fIdx = 0;
-
-        IntersectionIterator isEndIt = gridView_.iend(*eIt);
-        for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(gridView_, element))
         {
-            int idxInInside = isIt->indexInInside();
+            int idxInInside = intersection.indexInInside();
 
             standardLocalIdxMap_[idxInInside] = fIdx;
 
@@ -137,17 +133,15 @@ public:
         intersectionMapLocal_.clear();
         intersectionMapLocal_.resize(elementMapper_.size());
 
-        ElementIterator eEndIt = gridView_.template end<0>();
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_))
         {
-            int eIdxGlobal = map(*eIt);
+            int eIdxGlobal = map(element);
 
             int fIdx = 0;
             // run through all intersections with neighbors
-            IntersectionIterator isEndIt = gridView_.iend(*eIt);
-            for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(gridView_, element))
             {
-                int indexInInside = isIt->indexInInside();
+                int indexInInside = intersection.indexInInside();
                 intersectionMapLocal_[eIdxGlobal][fIdx] = indexInInside;
 
                 fIdx++;
@@ -155,36 +149,34 @@ public:
         }
 
         int globalIntersectionIdx = 0;
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_))
         {
-            int eIdxGlobal = map(*eIt);
+            int eIdxGlobal = map(element);
 
             int fIdx = 0;
             // run through all intersections with neighbors
-            IntersectionIterator isEndIt = gridView_.iend(*eIt);
-            for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(gridView_, element))
             {
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                    auto neighbor = isIt->outside();
+                    auto neighbor = intersection.outside();
                     int globalIdxNeighbor = map(neighbor);
 
-                    if (eIt->level() > neighbor.level() || (eIt->level() == neighbor.level() && eIdxGlobal < globalIdxNeighbor))
+                    if (element.level() > neighbor.level() || (element.level() == neighbor.level() && eIdxGlobal < globalIdxNeighbor))
                     {
 
                         int faceIdxNeighbor = 0;
                         if (size(globalIdxNeighbor) == 2 * dim)
                         {
-                            faceIdxNeighbor = standardLocalIdxMap_[isIt->indexInOutside()];
+                            faceIdxNeighbor = standardLocalIdxMap_[intersection.indexInOutside()];
                         }
                         else
                         {
-                            IntersectionIterator isItNEnd = gridView_.iend(neighbor);
-                            for (IntersectionIterator isItN = gridView_.ibegin(neighbor); isItN != isItNEnd; ++isItN)
+                            for (const auto& intersectionNeighbor : Dune::intersections(gridView_, neighbor))
                             {
-                                if (isItN->neighbor())
+                                if (intersectionNeighbor.neighbor())
                                 {
-                                    if (isItN->outside() == *eIt)
+                                    if (intersectionNeighbor.outside() == element)
                                     {
                                         break;
                                     }
