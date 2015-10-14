@@ -279,7 +279,7 @@ public:
         VertexIterator vEndIt = gridView_.template end<dim>();
         for(; vIt != vEndIt; ++vIt)
         {
-            int vIdxGlobal = vertexMapper_.index(*vIt);
+            int vIdxGlobal = this->vertexMapper().index(*vIt);
             GlobalPosition globalPos = (*vIt).geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
