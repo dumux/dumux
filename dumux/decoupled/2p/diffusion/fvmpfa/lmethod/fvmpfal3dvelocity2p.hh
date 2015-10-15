@@ -84,7 +84,6 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename Element::Geometry Geometry;
     typedef typename Geometry::JacobianTransposed JacobianTransposed;
@@ -212,15 +211,14 @@ public:
                 Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
 
                 // run through all intersections with neighbors and boundary
-                IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
                 {
-                    int isIndex = isIt->indexInInside();
+                    int isIndex = intersection.indexInInside();
 
-                    fluxW[isIndex] += isIt->geometry().volume()
-                                * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
-                    fluxNw[isIndex] += isIt->geometry().volume()
-                                * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
+                    fluxW[isIndex] += intersection.geometry().volume()
+                                * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
+                    fluxNw[isIndex] += intersection.geometry().volume()
+                                * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
                 }
 
                 DimVector refVelocity(0);

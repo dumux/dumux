@@ -40,8 +40,7 @@ class GridAdaptionIndicator2P
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
@@ -104,10 +103,8 @@ public:
             globalMax = std::max(satI, globalMax);
 
             // calculate refinement indicator in all cells
-            IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
             {
-                const typename IntersectionIterator::Intersection &intersection = *isIt;
                 // Only consider internal intersections
                 if (intersection.neighbor())
                 {

@@ -53,7 +53,6 @@ template<class TypeTag, class Velocity> class FVVelocity
 
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
 
@@ -109,22 +108,21 @@ void FVVelocity<TypeTag, Velocity>::calculateVelocity()
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
-        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
         {
             /************* handle interior face *****************/
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
-                int isIndex = isIt->indexInInside();
+                int isIndex = intersection.indexInInside();
 
                 if (!cellDataI.fluxData().haveVelocity(isIndex))
-                    velocity_.calculateVelocity(*isIt, cellDataI);
+                    velocity_.calculateVelocity(intersection, cellDataI);
             }   // end neighbor
 
             /************* boundary face ************************/
             else
             {
-                velocity_.calculateVelocityOnBoundary(*isIt, cellDataI);
+                velocity_.calculateVelocityOnBoundary(intersection, cellDataI);
             }
         } //end interfaces loop
     } // end grid traversal

@@ -56,7 +56,6 @@ template<class TypeTag> class FVPressure
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
     // the typenames used for the stiffness matrix and solution vector
@@ -353,10 +352,9 @@ void FVPressure<TypeTag>::initializeMatrixRowSize()
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
         {
-            if (isIt->neighbor())
+            if (intersection.neighbor())
                 rowSize++;
         }
         A_.setrowsize(eIdxGlobalI, rowSize);
@@ -378,12 +376,11 @@ void FVPressure<TypeTag>::initializeMatrixIndices()
         A_.addindex(eIdxGlobalI, eIdxGlobalI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
-            if (isIt->neighbor())
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
+            if (intersection.neighbor())
             {
                 // access neighbor
-                int eIdxGlobalJ = problem_.variables().index(isIt->outside());
+                int eIdxGlobalJ = problem_.variables().index(intersection.outside());
 
                 // add off diagonal index
                 A_.addindex(eIdxGlobalI, eIdxGlobalJ);
@@ -429,13 +426,12 @@ void FVPressure<TypeTag>::assemble(bool first)
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
             {
                 /************* handle interior face *****************/
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                    auto elementNeighbor = isIt->outside();
+                    auto elementNeighbor = intersection.outside();
 
                     int eIdxGlobalJ = problem_.variables().index(elementNeighbor);
 
@@ -452,7 +448,7 @@ void FVPressure<TypeTag>::assemble(bool first)
 
                     //check for hanging nodes
                     entries = 0;
-                    asImp_().getFlux(entries, *isIt, cellDataI, first);
+                    asImp_().getFlux(entries, intersection, cellDataI, first);
 
                     //set right hand side
                     f_[eIdxGlobalI] -= entries[rhs];
@@ -478,7 +474,7 @@ void FVPressure<TypeTag>::assemble(bool first)
                 else
                 {
                     entries = 0;
-                    asImp_().getFluxOnBoundary(entries, *isIt, cellDataI, first);
+                    asImp_().getFluxOnBoundary(entries, intersection, cellDataI, first);
 
                     //set right hand side
                     f_[eIdxGlobalI] += entries[rhs];

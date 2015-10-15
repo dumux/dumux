@@ -101,7 +101,6 @@ template<class TypeTag> class MimeticPressure2PAdaptive
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename Element::Geometry Geometry;
     typedef typename Geometry::JacobianTransposed JacobianTransposed;
@@ -300,15 +299,14 @@ public:
                 std::vector<Scalar> fluxNw(numberOfFaces,0);
 
                 // run through all intersections with neighbors and boundary
-                IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
                 {
-                    int isIndex = isIt->indexInInside();
+                    int isIndex = intersection.indexInInside();
 
-                    fluxW[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
-                    fluxNw[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
+                    fluxW[isIndex] += intersection.geometry().volume()
+                        * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
+                    fluxNw[isIndex] += intersection.geometry().volume()
+                        * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
                 }
 
                 // calculate velocity on reference element as the Raviart-Thomas-0

@@ -103,7 +103,6 @@ class FVTransport2P2C
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -399,18 +398,17 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         double sumfactorout = 0;
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(problem().gridView(), *eIt))
         {
-            int indexInInside = isIt->indexInInside();
+            int indexInInside = intersection.indexInInside();
 
             /****** interior face   *****************/
-            if (isIt->neighbor())
-                getFlux(entries, timestepFlux, *isIt, cellDataI);
+            if (intersection.neighbor())
+                getFlux(entries, timestepFlux, intersection, cellDataI);
 
             /******  Boundary Face   *****************/
-            if (isIt->boundary())
-                getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
+            if (intersection.boundary())
+                getFluxOnBoundary(entries, timestepFlux, intersection, cellDataI);
 
 
             if (localTimeStepping_)
@@ -1207,14 +1205,13 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
         FaceDt faceDt;
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
         {
-            int indexInInside = isIt->indexInInside();
+            int indexInInside = intersection.indexInInside();
 
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
-                auto neighbor = isIt->outside();
+                auto neighbor = intersection.outside();
                 int eIdxGlobalJ = problem_.variables().index(neighbor);
 
                 int levelI = eIt->level();
@@ -1224,7 +1221,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                 {
                     LocalTimesteppingData& localDataJ = timeStepData_[eIdxGlobalJ];
 
-                    int indexInOutside = isIt->indexInOutside();
+                    int indexInOutside = intersection.indexInOutside();
 
                     if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_
                         || localDataJ.faceTargetDt[indexInOutside] < accumulatedDt_ + dtThreshold_)
@@ -1253,7 +1250,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                     }
                 }
             }
-            else if (isIt->boundary())
+            else if (intersection.boundary())
             {
                 if (localDataI.faceTargetDt[indexInInside] < accumulatedDt_ + dtThreshold_)
                 {
@@ -1270,22 +1267,21 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                 localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
             }
 
-            IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
             {
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                    int indexInInside = isIt->indexInInside();
+                    int indexInInside = intersection.indexInInside();
 
                     it = faceDt.find(indexInInside);
                     if (it != faceDt.end())
                     {
-                        auto neighbor = isIt->outside();
+                        auto neighbor = intersection.outside();
                         int eIdxGlobalJ = problem_.variables().index(neighbor);
 
                         LocalTimesteppingData& localDataJ = timeStepData_[eIdxGlobalJ];
 
-                        int indexInOutside = isIt->indexInOutside();
+                        int indexInOutside = intersection.indexInOutside();
 
                         localDataJ.faceTargetDt[indexInOutside] += subCFLFactor_ * it->second;
                     }

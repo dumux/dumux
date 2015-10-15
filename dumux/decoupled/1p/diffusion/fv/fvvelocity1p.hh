@@ -47,21 +47,20 @@ template<class TypeTag>
 class FVVelocity1P
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-     typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
+    typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
 
-     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-typedef typename GridView::Traits::template Codim<0>::Entity Element;
-typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
 
     enum
@@ -132,16 +131,12 @@ public:
             std::vector<Scalar> flux(numberOfFaces,0);
 
             // run through all intersections with neighbors and boundary
-            IntersectionIterator
-            isEndIt = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator
-                    isIt = problem_.gridView().ibegin(*eIt); isIt
-                    !=isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
             {
-                int isIndex = isIt->indexInInside();
+                int isIndex = intersection.indexInInside();
 
-                flux[isIndex] = isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(isIndex));
+                flux[isIndex] = intersection.geometry().volume()
+                        * (intersection.centerUnitOuterNormal() * cellData.fluxData().velocity(isIndex));
             }
 
             // calculate velocity on reference element as the Raviart-Thomas-0

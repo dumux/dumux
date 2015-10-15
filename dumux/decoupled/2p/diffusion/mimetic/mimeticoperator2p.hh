@@ -60,7 +60,6 @@ class MimeticOperatorAssemblerTwoP: public CROperatorAssemblerTwoP<TypeTag>
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -129,17 +128,15 @@ public:
             FieldVector globalPos = eIt->geometry().center();
 
             // get local to global id map and pressure traces
-            IntersectionIterator isIt = problem.gridView().template ibegin(*eIt);
-            const IntersectionIterator &isEndIt = problem.gridView().template iend(*eIt);
-            for (; isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem.gridView(), *eIt))
             {
-                int indexInInside = isIt->indexInInside();
+                int indexInInside = intersection.indexInInside();
 
                 int fIdxGlobal = this->faceMapper_.subIndex(*eIt, indexInInside, 1);
 
                 pressTrace[indexInInside] = u[fIdxGlobal];
 
-                gravPotTrace[indexInInside] = (problem.bBoxMax() - isIt->geometry().center()) * problem.gravity() * densityDiff;
+                gravPotTrace[indexInInside] = (problem.bBoxMax() - intersection.geometry().center()) * problem.gravity() * densityDiff;
             }
 
             switch (pressureType)
@@ -207,10 +204,9 @@ public:
             }
             }
 
-            isIt = problem.gridView().template ibegin(*eIt);
-            for (; isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem.gridView(), *eIt))
             {
-                int idxInInside = isIt->indexInInside();
+                int idxInInside = intersection.indexInInside();
 
                 cellData.fluxData().setUpwindPotential(wPhaseIdx, idxInInside, velocityW[idxInInside]);
                 cellData.fluxData().setUpwindPotential(nPhaseIdx, idxInInside, velocityNw[idxInInside]);
@@ -218,9 +214,9 @@ public:
                 Scalar mobilityW = 0;
                 Scalar mobilityNw = 0;
 
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                    int neighborIdx = problem.variables().index(isIt->outside());
+                    int neighborIdx = problem.variables().index(intersection.outside());
 
                     CellData& cellDataNeighbor = problem.variables().cellData(neighborIdx);
 
@@ -233,17 +229,17 @@ public:
 
                     if (velocityW[idxInInside] >= 0.)
                     {
-                        FieldVector velocity(isIt->centerUnitOuterNormal());
+                        FieldVector velocity(intersection.centerUnitOuterNormal());
                         velocity *= mobilityW/(mobilityW+mobilityNw) * velocityW[idxInInside];
                         cellData.fluxData().addVelocity(wPhaseIdx, idxInInside, velocity);
-                        cellDataNeighbor.fluxData().addVelocity(wPhaseIdx, isIt->indexInOutside(), velocity);
+                        cellDataNeighbor.fluxData().addVelocity(wPhaseIdx, intersection.indexInOutside(), velocity);
                     }
                     if (velocityNw[idxInInside] >= 0.)
                     {
-                        FieldVector velocity(isIt->centerUnitOuterNormal());
+                        FieldVector velocity(intersection.centerUnitOuterNormal());
                         velocity *= mobilityNw/(mobilityW+mobilityNw) * velocityNw[idxInInside];
                         cellData.fluxData().addVelocity(nPhaseIdx, idxInInside, velocity);
-                        cellDataNeighbor.fluxData().addVelocity(nPhaseIdx, isIt->indexInOutside(), velocity);
+                        cellDataNeighbor.fluxData().addVelocity(nPhaseIdx, intersection.indexInOutside(), velocity);
                     }
 
                     cellData.fluxData().setVelocityMarker(idxInInside);
@@ -251,11 +247,11 @@ public:
                 else
                 {
                     BoundaryTypes bctype;
-                    problem.boundaryTypes(bctype, *isIt);
+                    problem.boundaryTypes(bctype, intersection);
                     if (bctype.isDirichlet(satEqIdx))
                     {
                         PrimaryVariables boundValues(0.0);
-                        problem.dirichlet(boundValues, *isIt);
+                        problem.dirichlet(boundValues, intersection);
 
                         if (velocityW[idxInInside] >= 0.)
                         {
@@ -283,12 +279,12 @@ public:
                         mobilityNw = cellData.mobility(nPhaseIdx);
                     }
 
-                    FieldVector velocity(isIt->centerUnitOuterNormal());
+                    FieldVector velocity(intersection.centerUnitOuterNormal());
                     velocity *= mobilityW / (mobilityW + mobilityNw) * velocityW[idxInInside];
                     cellData.fluxData().setVelocity(wPhaseIdx, idxInInside, velocity);
 
                     velocity = 0;
-                    velocity = isIt->centerUnitOuterNormal();
+                    velocity = intersection.centerUnitOuterNormal();
                     velocity *= mobilityNw / (mobilityW + mobilityNw) * velocityNw[idxInInside];
                     cellData.fluxData().setVelocity(nPhaseIdx, idxInInside, velocity);
                     cellData.fluxData().setVelocityMarker(idxInInside);

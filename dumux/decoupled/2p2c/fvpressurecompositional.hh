@@ -107,7 +107,6 @@ template<class TypeTag> class FVPressureCompositional
     // typedefs to abbreviate several dune classes...
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     // convenience shortcuts for Vectors/Matrices
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -687,11 +686,10 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         if(!compositional)
         {
             // run through all intersections with neighbors
-            IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
             {
                 cellData.perimeter()
-                        += isIt->geometry().volume();
+                        += intersection.geometry().volume();
             }
             cellData.globalIdx() = eIdxGlobal;
 

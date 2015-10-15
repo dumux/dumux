@@ -218,24 +218,26 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
         }
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem().gridView().iend(*eIt);
+        for (auto isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
         {
-            int indexInInside = isIt->indexInInside();
+            const auto& intersection = *isIt;
+
+            int indexInInside = intersection.indexInInside();
 
             // handle interior face
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
-                if (enableMPFA && (isIt->outside().level() != eIt->level()))
+                if (enableMPFA && (intersection.outside().level() != eIt->level()))
                     getMpfaFlux(entries, timestepFlux, isIt, cellDataI);
                 else
-                    this->getFlux(entries, timestepFlux, *isIt, cellDataI);
+                    this->getFlux(entries, timestepFlux, intersection, cellDataI);
             }
 
             //     Boundary Face
-            if (isIt->boundary())
+            if (intersection.boundary())
             {
-                this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
+                this->getFluxOnBoundary(entries, timestepFlux, intersection, cellDataI);
             }
 
             if (this->enableLocalTimeStepping())

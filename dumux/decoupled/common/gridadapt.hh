@@ -50,7 +50,6 @@ class GridAdapt
     typedef typename GridView::Grid Grid;
     typedef typename Grid::LeafGridView LeafGridView;
     typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
-    typedef typename GridView::IntersectionIterator LeafIntersectionIterator;
     typedef typename Grid::template Codim<0>::Entity Element;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
@@ -261,12 +260,11 @@ public:
                     {
                         // check if coarsening is possible
                         bool coarsenPossible = true;
-                        LeafIntersectionIterator isend = problem_.gridView().iend(*eIt);
-                        for(LeafIntersectionIterator is = problem_.gridView().ibegin(*eIt); is != isend; ++is)
+                        for(const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
                         {
-                            if(is->neighbor())
+                            if(intersection.neighbor())
                             {
-                                auto outside = is->outside();
+                                auto outside = intersection.outside();
                                 if ((problem_.grid().getMark(outside) > 0)
                                     || outside.level() > eIt->level())
                                 {
@@ -361,13 +359,12 @@ private:
     bool checkNeighborsRefine_(const Element &entity, int level = 1)
     {
         // this also refines the neighbor elements
-        LeafIntersectionIterator isend = problem_.gridView().iend(entity);
-        for(LeafIntersectionIterator is = problem_.gridView().ibegin(entity); is != isend; ++is)
+        for(const auto& intersection : Dune::intersections(problem_.gridView(), entity))
         {
-            if(!is->neighbor())
+            if(!intersection.neighbor())
                 continue;
 
-            auto outside = is->outside();
+            auto outside = intersection.outside();
 
             // only mark non-ghost elements
             if (outside.partitionType() == Dune::GhostEntity)
@@ -414,10 +411,8 @@ private:
                     continue;
 
                 // run through all neighbor-cells (intersections)
-                LeafIntersectionIterator isItend = leafGridView.iend(*eIt);
-                for (LeafIntersectionIterator isIt = leafGridView.ibegin(*eIt); isIt!= isItend; ++isIt)
+                for (const auto& intersection : Dune::intersections(leafGridView, *eIt))
                 {
-                    const typename LeafIntersectionIterator::Intersection intersection = *isIt;
                     if(!intersection.neighbor())
                         continue;
 

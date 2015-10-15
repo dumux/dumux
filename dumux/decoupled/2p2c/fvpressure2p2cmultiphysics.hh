@@ -103,7 +103,6 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     // convenience shortcuts for Vectors/Matrices
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -288,19 +287,18 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem().gridView(), *eIt))
             {
                 /************* handle interior face *****************/
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                    int eIdxGlobalJ = problem().variables().index(isIt->outside());
+                    int eIdxGlobalJ = problem().variables().index(intersection.outside());
 
                     if (cellDataI.subdomain() != 2
                             or problem().variables().cellData(eIdxGlobalJ).subdomain() != 2) // cell in the 1p domain
-                        get1pFlux(entries, *isIt, cellDataI);
+                        get1pFlux(entries, intersection, cellDataI);
                     else
-                        problem().pressureModel().getFlux(entries, *isIt, cellDataI, first);
+                        problem().pressureModel().getFlux(entries, intersection, cellDataI, first);
 
                     //set right hand side
                     this->f_[eIdxGlobalI] -= entries[rhs];
@@ -315,9 +313,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 else
                 {
                     if (cellDataI.subdomain() != 2) //the current cell in the 1p domain
-                        problem().pressureModel().get1pFluxOnBoundary(entries, *isIt, cellDataI);
+                        problem().pressureModel().get1pFluxOnBoundary(entries, intersection, cellDataI);
                     else
-                        problem().pressureModel().getFluxOnBoundary(entries, *isIt, cellDataI, first);
+                        problem().pressureModel().getFluxOnBoundary(entries, intersection, cellDataI, first);
 
                     //set right hand side
                     this->f_[eIdxGlobalI] += entries[rhs];
@@ -810,12 +808,11 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
                 nextSubdomain[eIdxGlobal] = 2;
 
                 // mark neighbors
-                IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt!=isEndIt; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem().gridView(), *eIt))
                 {
-                    if (isIt->neighbor())
+                    if (intersection.neighbor())
                     {
-                        int eIdxGlobalJ = problem().variables().index(isIt->outside());
+                        int eIdxGlobalJ = problem().variables().index(intersection.outside());
                         // mark neighbor Element
                         nextSubdomain[eIdxGlobalJ] = 2;
                     }

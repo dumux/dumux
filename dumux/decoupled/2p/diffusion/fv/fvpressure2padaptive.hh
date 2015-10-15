@@ -82,7 +82,6 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
@@ -306,16 +305,15 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
         // IsIndexJ, the index of the interface from the neighbor-cell point of view
         // GlobalIdxK, the index of the third cell
         // Intersectioniterator around cell I
-        IntersectionIterator isItEndI = problem_.gridView().iend(elementI);
-        for (IntersectionIterator isItI = problem_.gridView().ibegin(elementI); isItI != isItEndI; ++isItI)
+        for (const auto& intersectionI : Dune::intersections(problem_.gridView(), elementI))
         {
-            if (isItI->neighbor())
+            if (intersectionI.neighbor())
             {
-                auto neighbor2 = isItI->outside();
+                auto neighbor2 = intersectionI.outside();
 
                 // make sure we do not choose elemntI as third element
                 // -> faces with hanging node have more than one intersection but only one face index!
-                if (neighbor2 != elementJ && isItI->indexInInside() == isIndexI)
+                if (neighbor2 != elementJ && intersectionI.indexInInside() == isIndexI)
                 {
                     globalIdxK = problem_.variables().index(neighbor2);
                     elementK = neighbor2;

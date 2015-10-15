@@ -75,7 +75,6 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
     };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -159,18 +158,17 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             double sumfactorout = 0;
 
             // run through all intersections with neighbors and boundary
-            IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem().gridView(), *eIt))
             {
-                int indexInInside = isIt->indexInInside();
+                int indexInInside = intersection.indexInInside();
 
                 /****** interior face   *****************/
-                if (isIt->neighbor())
-                    this->getFlux(entries, timestepFlux, *isIt, cellDataI);
+                if (intersection.neighbor())
+                    this->getFlux(entries, timestepFlux, intersection, cellDataI);
 
                 /******  Boundary Face   *****************/
-                if (isIt->boundary())
-                    this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
+                if (intersection.boundary())
+                    this->getFluxOnBoundary(entries, timestepFlux, intersection, cellDataI);
 
                 if (this->enableLocalTimeStepping())
                 {

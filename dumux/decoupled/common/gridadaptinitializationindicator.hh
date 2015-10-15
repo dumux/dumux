@@ -43,7 +43,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -272,15 +271,14 @@ public:
             if (indicatorVector_[globalIdxI] != refineCell && (refineAtDirichletBC_ || refineAtFluxBC_))
             {
                 // Berechne Verfeinerungsindikator an allen Zellen
-                IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
                 {
-                    if (isIt->boundary() && indicatorVector_[globalIdxI] != refineCell)
+                    if (intersection.boundary() && indicatorVector_[globalIdxI] != refineCell)
                     {
                         BoundaryTypes bcTypes;
                         PrimaryVariables values(0.0);
 
-                        virtualHierarchicBCSearch_(bcTypes, values, *eIt, *isIt);
+                        virtualHierarchicBCSearch_(bcTypes, values, *eIt, intersection);
 
 
                         for (int i = 0; i < numEq; i++)

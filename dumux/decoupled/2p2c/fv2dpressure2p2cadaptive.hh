@@ -245,27 +245,28 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
 
         int numberOfIntersections = 0;
         // run through all intersections with neighbors
-        IntersectionIterator isEndIt = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem().gridView().iend(*eIt);
+        for (auto isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
         {
-            cellDataI.perimeter()
-                    += isIt->geometry().volume();
+            const auto& intersection = *isIt;
+
+            cellDataI.perimeter() += intersection.geometry().volume();
             numberOfIntersections++;
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
                 rowSize++;
 
                 // if mpfa is used, more entries might be needed if both halfedges are regarded
-                if (enableMPFA && (enableSecondHalfEdge && isIt->outside().level() != eIt->level()))
+                if (enableMPFA && (enableSecondHalfEdge && intersection.outside().level() != eIt->level()))
                 {
                     GlobalPosition globalPos3(0.);
                     int globalIdx3=-1;
                     TransmissivityMatrix T(0.);
-                    IntersectionIterator additionalIsIt = isIt;
+                    auto additionalIsIt = isIt;
                     TransmissivityMatrix additionalT(0.);
                     // compute Transmissibilities: also examines subcontrolvolume information
                     int halfedgesStored
-                        = problem().variables().getMpfaData(*isIt, additionalIsIt, T, additionalT, globalPos3, globalIdx3);
+                        = problem().variables().getMpfaData(intersection, additionalIsIt, T, additionalT, globalPos3, globalIdx3);
                     if (halfedgesStored == 0)
                         halfedgesStored = problem().pressureModel().computeTransmissibilities(isIt,additionalIsIt, T,additionalT,
                                                                                               globalPos3, globalIdx3 );
@@ -274,11 +275,11 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                     {
                         bool increaseRowSize = true;
                         //check if additional cell is ordinary neighbor of eIt
-                        for (IntersectionIterator isIt2 = problem().gridView().template ibegin(*eIt); isIt2 != isEndIt; ++isIt2)
+                        for (const auto& intersection2 : Dune::intersections(problem_.gridView(), *eIt))
                         {
-                            if(!isIt2->neighbor())
+                            if(!intersection2.neighbor())
                                 continue;
-                            if(additionalIsIt->outside() == isIt2->outside() )
+                            if(additionalIsIt->outside() == intersection2.outside() )
                                 increaseRowSize = false;
                         }
                         //also check if additional cell was already used for another interaction triangle
@@ -311,27 +312,30 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
         this->A_.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isEndIt = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isEndIt; ++isIt)
-            if (isIt->neighbor())
+        const auto isEndIt = problem().gridView().iend(*eIt);
+        for (auto isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        {
+            const auto& intersection = *isIt;
+
+            if (intersection.neighbor())
             {
                 // access neighbor
-                int globalIdxJ = problem().variables().index(isIt->outside());
+                int globalIdxJ = problem().variables().index(intersection.outside());
 
                 // add off diagonal index
                 this->A_.addindex(globalIdxI, globalIdxJ);
 
                 // if mpfa is used, more entries might be needed if both halfedges are regarded
-                if (enableMPFA && (enableSecondHalfEdge && isIt->outside().level() != eIt->level()))
+                if (enableMPFA && (enableSecondHalfEdge && intersection.outside().level() != eIt->level()))
                 {
                     GlobalPosition globalPos3(0.);
                     int globalIdx3=-1;
                     TransmissivityMatrix T(0.);
-                    IntersectionIterator additionalIsIt = isIt;
+                    auto additionalIsIt = isIt;
                     TransmissivityMatrix additionalT(0.);
                     // compute Transmissibilities: also examines subcontrolvolume information
                     int halfedgesStored
-                        = problem().variables().getMpfaData(*isIt, additionalIsIt, T, additionalT, globalPos3, globalIdx3);
+                        = problem().variables().getMpfaData(intersection, additionalIsIt, T, additionalT, globalPos3, globalIdx3);
                     if (halfedgesStored == 0)
                         halfedgesStored = problem().pressureModel().computeTransmissibilities(isIt,additionalIsIt, T,additionalT,
                                                                                               globalPos3, globalIdx3 );
@@ -340,6 +344,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                         this->A_.addindex(globalIdxI, problem().variables().index(additionalIsIt->outside()));
                 }
             }
+        }
     }
     this->A_.endindices();
 
@@ -389,13 +394,15 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            IntersectionIterator isEndIt = problem().gridView().template iend(*eIt);
-            for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isEndIt; ++isIt)
+            auto isEndIt = problem().gridView().template iend(*eIt);
+            for (auto isIt = problem().gridView().template ibegin(*eIt); isIt != isEndIt; ++isIt)
             {
+                const auto& intersection = *isIt;
+
                 /************* handle interior face *****************/
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                    auto elementNeighbor = isIt->outside();
+                    auto elementNeighbor = intersection.outside();
 
                     int globalIdxJ = problem().variables().index(elementNeighbor);
 
@@ -418,7 +425,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                     }
                     else
                     {
-                        problem().pressureModel().getFlux(entries, *isIt, cellDataI, first);
+                        problem().pressureModel().getFlux(entries, intersection, cellDataI, first);
 
                         //set right hand side
                         this->f_[globalIdxI] -= entries[rhs];
@@ -445,7 +452,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                 else
                 {
                     entries = 0;
-                    problem().pressureModel().getFluxOnBoundary(entries, *isIt, cellDataI, first);
+                    problem().pressureModel().getFluxOnBoundary(entries, intersection, cellDataI, first);
 
                     //set right hand side
                     this->f_[globalIdxI] += entries[rhs];
@@ -585,7 +592,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& 
         int globalIdx3=-1;
         TransmissivityMatrix T(0.);
             // prepare second half-edge
-            IntersectionIterator additionalIsIt = intersectionIterator;
+            auto additionalIsIt = intersectionIterator;
             TransmissivityMatrix additionalT(0.);
 
         int halfedgesStored = problem().variables().getMpfaData(*intersectionIterator,
@@ -803,9 +810,11 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         GlobalPosition& globalPos3,
         int& globalIdx3)
 {
+    const auto& intersection = *isIt;
+
     // get geometry information of cellI = cell1, cellJ = cell2
-    auto element = isIt->inside();
-    auto neighbor = isIt->outside();
+    auto element = intersection.inside();
+    auto neighbor = intersection.outside();
     GlobalPosition globalPos1 = element.geometry().center();
     GlobalPosition globalPos2 = neighbor.geometry().center();
     DimMatrix K1(problem().spatialParams().intrinsicPermeability(element));
@@ -813,26 +822,26 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
 
     /** 1) get geometrical information of interaction triangle   */
     // geometry and Data of face IJ in nomenclature of mpfa
-    GlobalPosition globalPosFace12 = isIt->geometry().center();
-    GlobalPosition integrationOuterNormaln12 = isIt->centerUnitOuterNormal();
-    integrationOuterNormaln12 *= isIt->geometry().volume() / 2.0; // TODO: 2.0 only in 2D
+    GlobalPosition globalPosFace12 = intersection.geometry().center();
+    GlobalPosition integrationOuterNormaln12 = intersection.centerUnitOuterNormal();
+    integrationOuterNormaln12 *= intersection.geometry().volume() / 2.0; // TODO: 2.0 only in 2D
 
 
     // nextIs points to next intersection
-    IntersectionIterator nextIs = isIt;
+    auto nextIs = isIt;
     ++nextIs;
-    if (nextIs== problem().gridView().template iend(element))
+    if (nextIs == problem().gridView().template iend(element))
         nextIs = problem().gridView().template ibegin(element);
 
     // get last intersection : --intersection does not exist
     // paceingIt loops one IS bevore prevIs
-    IntersectionIterator prevIs = problem().gridView().template ibegin(element);
-    IntersectionIterator paceingIt = prevIs;
+    auto prevIs = problem().gridView().template ibegin(element);
+    auto paceingIt = prevIs;
     for (++paceingIt; paceingIt != problem().gridView().template iend(element); ++paceingIt)
     {
         if (!paceingIt->neighbor())  // continue if no neighbor found
             ++prevIs;   // we investigate next paceingIt -> prevIs is also increased
-        else if (paceingIt->outside() == isIt->outside())  // we already found prevIs
+        else if (paceingIt->outside() == intersection.outside())  // we already found prevIs
                 break;
         else if (paceingIt == problem().gridView().template iend(element))
                 prevIs = paceingIt; // this could only happen if isIt is begin, so prevIs has to be last.
@@ -840,29 +849,28 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
             ++prevIs;   // we investigate next paceingIt -> prevIs is also increased
     }
 
-//        GlobalPosition prevIsCoords = prevIs->geometry().center();
-//        GlobalPosition nextIsCoords = nextIs->geometry().center();
-
     /** 2) search for face13, face23 */
-    IntersectionIterator face13 = isIt; // as long as isIt13=isIt, it is still not found!
-    IntersectionIterator face23 = isIt; // as long as face23=isIt, it is still not found!
-    // store other intersection for the other interaction region for the other half-edge
+    auto face13 = isIt; // as long as face13 == intersection, it is still not found!
+    auto face23 = isIt; // as long as face23 == intersection, it is still not found!
 
-    IntersectionIterator isIt23End = problem().gridView().iend(neighbor);
-    for (IntersectionIterator isIt23 = problem().gridView().ibegin(neighbor); isIt23 != isIt23End; ++isIt23)
+    // store other intersection for the other interaction region for the other half-edge
+    auto isEndIt = problem().gridView().template iend(neighbor);
+    for (auto isIt23 = problem().gridView().template ibegin(neighbor); isIt23 != isEndIt; ++isIt23)
     {
+        const auto& intersection23 = *isIt23;
+
         // stop search if found
-        if( (face13->outside() != isIt->outside()))
+        if(face13->outside() != intersection.outside())
             break;
 
-        if(!(isIt23->neighbor()))
+        if(!intersection23.neighbor())
             continue;
 
         // either prevIs or nextIs is face13, it is that with common interface with cell2
         // investigate if prevIs points to cell 3
         if (prevIs->neighbor())
         {
-            if (prevIs->outside() == isIt23->outside())
+            if (prevIs->outside() == intersection23.outside())
             {
                 face23 = isIt23;
                 face13 = prevIs;
@@ -872,7 +880,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         // investigate if nextIs points to cell 3
         if (nextIs->neighbor())
         {
-            if (nextIs->outside() == isIt23->outside())
+            if (nextIs->outside() == intersection23.outside())
             {
                 face23 = isIt23;
                 face13 = nextIs;
@@ -880,14 +888,14 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
             }
         }
     }
-    if(face13->outside() == isIt->outside()) //means isIt13 not found yet
+    if(face13->outside() == intersection.outside()) //means isIt13 not found yet
         Dune::dgrave << "is 13 not found!!!" << std::endl;
 
     // get information of cell3
     globalPos3 = face13->outside().geometry().center();
     globalIdx3 = problem().variables().index(face13->outside());
     // get absolute permeability of neighbor cell 3
-    DimMatrix K3(problem().spatialParams().intrinsicPermeability(*(face13->outside())));
+    DimMatrix K3(problem().spatialParams().intrinsicPermeability(*face13->outside()));
 
 
     // get the intersection node /bar^{x_3} between 'isIt' and 'isIt13', denoted as 'corner123'
@@ -895,16 +903,16 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     GlobalPosition corner123(0.);
 
     // get the global coordinate of corner123
-    for (int i = 0; i < isIt->geometry().corners(); ++i)
+    for (int i = 0; i < intersection.geometry().corners(); ++i)
     {
         for (int j = 0; j < face13->geometry().corners(); ++j)
         {
-            if (face13->geometry().corner(j) == isIt->geometry().corner(i))
+            if (face13->geometry().corner(j) == intersection.geometry().corner(i))
             {
                 corner123 = face13->geometry().corner(j);
 
                 // stop outer (i) and inner (j) loop
-                i = isIt->geometry().corners();
+                i = intersection.geometry().corners();
                 break;
             }
         }
@@ -1011,11 +1019,11 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     A.invert();
     D += B.leftmultiply(C.rightmultiply(A));
     T = D[1];
-    if(!enableSecondHalfEdge )//or fabs(isIt->centerUnitOuterNormal()[0])<0.5) // [0]<0.5 => switch off vertical 2hes
+    if(!enableSecondHalfEdge )//or fabs(intersection.centerUnitOuterNormal()[0])<0.5) // [0]<0.5 => switch off vertical 2hes
     {
         T *= 2;
         // set your map entry
-        problem().variables().storeMpfaData(*isIt, T, globalPos3, globalIdx3);
+        problem().variables().storeMpfaData(intersection, T, globalPos3, globalIdx3);
         return 1; // indicates that only 1 halfedge was regarded
     }
     else
@@ -1027,35 +1035,35 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
         GlobalPosition corner1245(0.);
 
         // get the global coordinate of corner1245, which is not connected with face13
-        IntersectionIterator tempIntersection = face13;
+        auto tempIntersection = face13;
         bool corner1245found = false;
         // ensure iterator increases over local end
-        if (tempIntersection== problem().gridView().template iend(element))
+        if (tempIntersection == problem().gridView().template iend(element))
             tempIntersection = problem().gridView().template ibegin(element);
         while (!corner1245found)
         {
             ++tempIntersection;
 
             // ensure iterator increases over local end
-            if (tempIntersection== problem().gridView().template iend(element))
+            if (tempIntersection == problem().gridView().template iend(element))
                 tempIntersection = problem().gridView().template ibegin(element);
             // enshure we do not arrive at isIt
             if (tempIntersection == isIt)
                 continue;
 
             // loop over both corners of is
-            for (int i = 0; i < isIt->geometry().corners(); ++i)
+            for (int i = 0; i < intersection.geometry().corners(); ++i)
             {
                 // test if a corner of additionalIntersectionIt also lies on is
                 for (int j = 0; j < tempIntersection->geometry().corners(); ++j)
                 {
-                    if (tempIntersection->geometry().corner(j) == isIt->geometry().corner(i))
+                    if (tempIntersection->geometry().corner(j) == intersection.geometry().corner(i))
                     {
                         corner1245 = tempIntersection->geometry().corner(j);
                         additionalIntersectionIt = tempIntersection;
 
                         // stop outer (i) and inner (j) loop
-                        i = isIt->geometry().corners();
+                        i = intersection.geometry().corners();
                         // stop also Intersection loop
                         corner1245found = true;
                         break;
@@ -1063,11 +1071,11 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
                 }
             }
         }
-        if (!additionalIntersectionIt->neighbor())// or (additionalIntersectionIt->outside().level() == isIt->inside().level()))
+        if (!additionalIntersectionIt->neighbor())// or (additionalIntersectionIt->outside().level() == intersection.inside().level()))
         {
             T *= 2;
             // set your map entry
-            problem().variables().storeMpfaData(*isIt, T, globalPos3, globalIdx3);
+            problem().variables().storeMpfaData(intersection, T, globalPos3, globalIdx3);
             return 1;
         }
 
@@ -1076,7 +1084,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
                                         corner1245, additionalT);
 
         // store transmissivity data for second half edge
-        problem().variables().storeMpfaData(*isIt, additionalIntersectionIt, T,additionalT, globalPos3, globalIdx3);
+        problem().variables().storeMpfaData(intersection, additionalIntersectionIt, T,additionalT, globalPos3, globalIdx3);
         // return that information about two interaction volumes have been stored
         return 2;
     }
@@ -1116,10 +1124,12 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
                                 GlobalPosition& corner1234,
                                 TransmissivityMatrix& additionalT)
 {
+    const auto& intersection = *isIt;
+
     /****** find all 4 faces *********/
     // store additionalIntersection, which is face23 in 2p mpfa-l naming scheme
-    IntersectionIterator isIt23 = additionalIntersectionIt;
-    IntersectionIterator isIt14 = isIt; //has to be initialized with something
+    auto isIt23 = additionalIntersectionIt;
+    auto isIt14 = isIt; //has to be initialized with something
 
     // search for 4th intersection that connects to corner1245, which is needed
     // for markus implementation of the mpfa
@@ -1127,30 +1137,30 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     // reuse corner1245found bool
     bool face14found = false;
     // repeat search procedure with isIt and face23 (in 2p2c naming)
-    IntersectionIterator tempIntersection = face23_2p2cnaming;
+    auto tempIntersection = face23_2p2cnaming;
 
     while (!face14found)
     {
         ++tempIntersection;
 
         // ensure iterator increases over local end of neighbor J
-        if (tempIntersection== problem().gridView().template iend(*isIt->outside()))
-            tempIntersection = problem().gridView().template ibegin(*isIt->outside());
+        if (tempIntersection== problem().gridView().template iend(*intersection.outside()))
+            tempIntersection = problem().gridView().template ibegin(*intersection.outside());
 
         if(!tempIntersection->neighbor())
             continue;
 
         // enshure we hace not arrived at isIt (but seen from other side)
-        if (tempIntersection->outside() == isIt->inside())
+        if (tempIntersection->outside() == intersection.inside())
             continue; // restart loop to recheck after next increase for local end
 
         // loop over both corners of is
-        for (int i = 0; i < isIt->geometry().corners(); ++i)
+        for (int i = 0; i < intersection.geometry().corners(); ++i)
         {
             // test if a corner of additionalIntersectionIt also lies on is
             for (int j = 0; j < tempIntersection->geometry().corners(); ++j)
             {
-                if (tempIntersection->geometry().corner(j) == isIt->geometry().corner(i))
+                if (tempIntersection->geometry().corner(j) == intersection.geometry().corner(i))
                 {
 //                        // test if this tempIntersection is better than additionalIntersectionIt
 //                        if (tempIntersection->outside().level() > additionalIntersectionIt->outside().level())
@@ -1161,7 +1171,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
 //                        }
                     isIt14 = tempIntersection;
                     // stop outer (i) and inner (j) loop
-                    i = isIt->geometry().corners();
+                    i = intersection.geometry().corners();
                     // stop also Intersection loop
                     face14found = true;
                     break;
@@ -1177,18 +1187,18 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     interactionVolume.setCenterPosition(corner1234);
 
     //***************   store pointer 1
-    interactionVolume.setSubVolumeElement(*isIt->outside(), 0);
-    interactionVolume.setIndexOnElement(isIt->indexInOutside(), 0, 0);
+    interactionVolume.setSubVolumeElement(*intersection.outside(), 0);
+    interactionVolume.setIndexOnElement(intersection.indexInOutside(), 0, 0);
     interactionVolume.setIndexOnElement(isIt14->indexInInside(), 0, 1);
 
     // center of face in global coordinates, i.e., the midpoint of edge 'isIt12'
-    const GlobalPosition& globalPosFace12 = isIt->geometry().center();
+    const GlobalPosition& globalPosFace12 = intersection.geometry().center();
 
     // get face volume
-    Scalar faceVol12 = isIt->geometry().volume() / 2.0;
+    Scalar faceVol12 = intersection.geometry().volume() / 2.0;
 
     // get outer normal vector scaled with half volume of face 'isIt12'
-    Dune::FieldVector<Scalar, dimWorld> unitOuterNormal12 = isIt->centerUnitOuterNormal();
+    Dune::FieldVector<Scalar, dimWorld> unitOuterNormal12 = intersection.centerUnitOuterNormal();
     unitOuterNormal12 *=-1;
 
     // center of face in global coordinates, i.e., the midpoint of edge 'isIt14'
@@ -1211,11 +1221,11 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     interactionVolume.setFacePosition(globalPosFace41, 0, 1);
 
     // access neighbor cell 2 of 'isIt12'
-    auto element2 = isIt->inside();
+    auto element2 = intersection.inside();
 
     //****************     store pointer 2
     interactionVolume.setSubVolumeElement(element2, 1);
-//    interactionVolume.setIndexOnElement(isIt->indexInInside(), 1, 1);
+//    interactionVolume.setIndexOnElement(intersection.indexInInside(), 1, 1);
     interactionVolume.setNormal(unitOuterNormal12, 1, 1);
     interactionVolume.setFaceArea(faceVol12, 1, 1);
     interactionVolume.setFacePosition(globalPosFace12, 1, 1);
@@ -1233,14 +1243,15 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     interactionVolume.setFacePosition(globalPosFace41, 3, 0);
 
     //****************     data for cell 3
-    auto element3 = isIt23->outside();
+    const auto& intersection23 = *isIt23;
+    auto element3 = intersection23.outside();
     //store pointer 3
     interactionVolume.setSubVolumeElement(element3, 2);
 
-    GlobalPosition globalPosFace23 = isIt23->geometry().center();
-    Scalar faceVol23 = isIt23->geometry().volume() / 2.0;
+    GlobalPosition globalPosFace23 = intersection23.geometry().center();
+    Scalar faceVol23 = intersection23.geometry().volume() / 2.0;
     // get outer normal vector scaled with half volume of face : for numbering of n see Aavatsmark, Eigestad
-    GlobalPosition unitOuterNormal23 = isIt23->centerUnitOuterNormal();
+    GlobalPosition unitOuterNormal23 = intersection23.centerUnitOuterNormal();
 
     interactionVolume.setNormal(unitOuterNormal23, 1, 0);
     unitOuterNormal23 *= -1;

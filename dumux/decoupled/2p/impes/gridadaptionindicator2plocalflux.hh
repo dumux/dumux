@@ -62,8 +62,7 @@ class GridAdaptionIndicator2PLocalFlux
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
@@ -220,17 +219,16 @@ public:
             std::vector<Scalar> flux(numberOfFaces,0);
 
             // Calculate refinement indicator on all cells
-            IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
                 if (isSpecialCell)
                 {
                     break;
                 }
 
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(isIt->outside()));
+                const CellData& cellDataJ = problem_.variables().cellData(problem_.variables().index(intersection.outside()));
                 if (!checkPhysicalRange_(cellDataJ))
                 {
                     indicatorVector_[globalIdxI] = refineBound_ + 1.0;
@@ -239,31 +237,30 @@ public:
                 }
                 }
 
-                int idxInInside = isIt->indexInInside();
+                int idxInInside = intersection.indexInInside();
 
                 if (useFluxInd_ || usePercentileFlux_)
                 {
-                    int isIndex = isIt->indexInInside();
-                    flux[isIndex] += (isIt->centerUnitOuterNormal()
-                                      * cellDataI.fluxData().velocityTotal(idxInInside)) * isIt->geometry().volume();
+                    int isIndex = intersection.indexInInside();
+                    flux[isIndex] += (intersection.centerUnitOuterNormal()
+                                      * cellDataI.fluxData().velocityTotal(idxInInside)) * intersection.geometry().volume();
 
                     //Scalar velNorm = cellDataI.fluxData().velocityTotal(idxInInside).two_norm();
                     //indicatorVectorFlux_[globalIdxI] = std::max(velNorm, indicatorVectorFlux_[globalIdxI]);
                 }
 
-                const typename IntersectionIterator::Intersection &intersection = *isIt;
                 // exit, if it is not a neighbor
-                if (isIt->boundary())
+                if (intersection.boundary())
                 {
                     BoundaryTypes bcTypes;
-                    problem_.boundaryTypes(bcTypes, *isIt);
+                    problem_.boundaryTypes(bcTypes, intersection);
 
                     for (int i = 0; i < 2; i++)
                     {
                         if (bcTypes.isNeumann(i))
                         {
                             PrimaryVariables flux(0.0);
-                            problem_.neumann(flux, *isIt);
+                            problem_.neumann(flux, intersection);
 
                             bool fluxBound = false;
                             for (int j = 0; j < 2; j++)
@@ -298,7 +295,7 @@ public:
                         if (bcTypes.isDirichlet(eqIdxSat))
                         {
                             PrimaryVariables sat(0.0);
-                            problem_.dirichlet(sat, *isIt);
+                            problem_.dirichlet(sat, intersection);
                             satJ = sat[eqIdxSat];
                         }
                         Scalar localdelta = std::abs(satI - satJ);
