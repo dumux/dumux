@@ -184,7 +184,7 @@ public:
             FVElementGeometry fvGeometry;
             VolumeVariables volVars;
 
-            const auto& element = *this->gridView().template begin<0>();
+            const auto element = *this->gridView().template begin<0>();
             fvGeometry.update(this->gridView(), element);
             PrimaryVariables initialPriVars(0);
             GlobalPosition globalPos(0);
