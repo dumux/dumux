@@ -52,7 +52,6 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -73,28 +72,26 @@ protected:
      */
     void evalBoundaryFluxes_()
     {
-        IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
-        const IntersectionIterator &isEndIt = this->gridView_().iend(this->element_());
-        for (; isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
         {
             // handle only faces on the boundary
-            if (!isIt->boundary())
+            if (!intersection.boundary())
                 continue;
 
             BoundaryTypes bcTypes;
-            this->problem_().boundaryTypes(bcTypes, *isIt);
+            this->problem_().boundaryTypes(bcTypes, intersection);
 
             // evaluate the Neumann conditions at the boundary face
             if (bcTypes.hasNeumann())
-                this->asImp_().evalNeumannSegment_(isIt, bcTypes);
+                this->asImp_().evalNeumannSegment_(&intersection, bcTypes);
 
             // evaluate the outflow conditions at the boundary face
             if (bcTypes.hasOutflow())
-                this->asImp_().evalOutflowSegment_(isIt, bcTypes);
+                this->asImp_().evalOutflowSegment_(&intersection, bcTypes);
 
             // evaluate the pure Dirichlet conditions at the boundary face
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                this->asImp_().evalDirichletSegment_(isIt, bcTypes);
+                this->asImp_().evalDirichletSegment_(&intersection, bcTypes);
         }
     }
 
@@ -104,25 +101,24 @@ protected:
      */
     void evalDirichlet_()
     {
-        IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
-        const IntersectionIterator &isEndIt = this->gridView_().iend(this->element_());
-        for (; isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
         {
             // handle only faces on the boundary
-            if (!isIt->boundary())
+            if (!intersection.boundary())
                 continue;
 
             BoundaryTypes bcTypes;
-            this->problem_().boundaryTypes(bcTypes, *isIt);
+            this->problem_().boundaryTypes(bcTypes, intersection);
 
             if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
-                this->asImp_().evalDirichletSegmentMixed_(isIt, bcTypes);
+                this->asImp_().evalDirichletSegmentMixed_(&intersection, bcTypes);
         }
     }
 
     /*!
      * \brief Add Neumann boundary conditions for a single intersection
      */
+    template <class IntersectionIterator>
     void evalNeumannSegment_(const IntersectionIterator &isIt,
                              const BoundaryTypes &bcTypes)
     {
@@ -152,6 +148,7 @@ protected:
     /*!
      * \brief Add outflow boundary conditions for a single intersection
      */
+    template <class IntersectionIterator>
     void evalOutflowSegment_(const IntersectionIterator &isIt,
                              const BoundaryTypes &bcTypes)
     {
@@ -211,6 +208,7 @@ protected:
      * \brief Treat Dirichlet boundary conditions in a weak sense for a single
      *        intersection that only has Dirichlet boundary conditions
      */
+    template <class IntersectionIterator>
     void evalDirichletSegment_(const IntersectionIterator &isIt,
                                    const BoundaryTypes &bcTypes)
     {
@@ -236,6 +234,7 @@ protected:
      * \brief Treat Dirichlet boundary conditions in a strong sense for a
      *        single intersection that has mixed D/N boundary conditions
      */
+    template <class IntersectionIterator>
     void evalDirichletSegmentMixed_(const IntersectionIterator &isIt,
                                     const BoundaryTypes &bcTypes)
     {

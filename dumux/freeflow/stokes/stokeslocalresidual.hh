@@ -77,8 +77,6 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     static const bool enableUnsymmetrizedVelocityGradient = GET_PROP_VALUE(TypeTag, EnableUnsymmetrizedVelocityGradient);
@@ -354,16 +352,14 @@ protected:
             // evaluate boundary conditions for the intersections of
             // the current element
             const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-            IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
-            const IntersectionIterator &isEndIt = this->gridView_().iend(this->element_());
-            for (; isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
             {
                 // handle only intersections on the boundary
-                if (!isIt->boundary())
+                if (!intersection.boundary())
                     continue;
 
                 // assemble the boundary for all vertices of the current face
-                const int fIdx = isIt->indexInInside();
+                const int fIdx = intersection.indexInInside();
                 const int numFaceVertices = refElement.size(fIdx, 1, dim);
 
                 // loop over the single vertices on the current face
@@ -410,8 +406,8 @@ protected:
                     }
 
                     // evaluate fluxes at a single boundary segment
-                    asImp_()->evalNeumannSegment_(isIt, scvIdx, boundaryFaceIdx, boundaryVars);
-                    asImp_()->evalOutflowSegment_(isIt, scvIdx, boundaryFaceIdx, boundaryVars);
+                    asImp_()->evalNeumannSegment_(&intersection, scvIdx, boundaryFaceIdx, boundaryVars);
+                    asImp_()->evalOutflowSegment_(&intersection, scvIdx, boundaryFaceIdx, boundaryVars);
 
                     // count the number of outer faces to determine, if we are on
                     // a corner point and if an interpolation should be done
@@ -442,6 +438,7 @@ protected:
      * \brief Evaluate and add Neumann boundary conditions for a single sub-control
      *        volume face to the local residual.
      */
+    template <class IntersectionIterator>
     void evalNeumannSegment_(const IntersectionIterator &isIt,
                              const int scvIdx,
                              const int boundaryFaceIdx,
@@ -506,6 +503,7 @@ protected:
     /*!
      * \brief Evaluate outflow boundary conditions for a single SCV face on the boundary.
      */
+    template <class IntersectionIterator>
     void evalOutflowSegment_(const IntersectionIterator &isIt,
                              const int scvIdx,
                              const int boundaryFaceIdx,
