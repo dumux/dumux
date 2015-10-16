@@ -120,8 +120,6 @@ class TwoCZeroEqTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
     enum { dim = MDGridView::dimension };
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
-    typedef typename MDGrid::template Codim<0>::LeafIterator ElementIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
@@ -171,22 +169,20 @@ public:
         mdGrid.startSubDomainMarking();
 
         // subdivide grid in two subdomains
-        ElementIterator eEndIt = mdGrid.template leafend<0>();
-        for (ElementIterator eIt = mdGrid.template leafbegin<0>();
-             eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(mdGrid.leafGridView()))
         {
             // this is required for parallelization
             // checks if element is within a partition
-            if (eIt->partitionType() != Dune::InteriorEntity)
+            if (element.partitionType() != Dune::InteriorEntity)
                 continue;
 
-            GlobalPosition globalPos = eIt->geometry().center();
+            GlobalPosition globalPos = element.geometry().center();
 
             if (globalPos[1] > interfacePosY_)
-                mdGrid.addToSubDomain(zeroeq2c_,*eIt);
+                mdGrid.addToSubDomain(zeroeq2c_,element);
             else
                 if(globalPos[0] > noDarcyX_)
-                    mdGrid.addToSubDomain(twoPtwoC_,*eIt);
+                    mdGrid.addToSubDomain(twoPtwoC_,element);
         }
         mdGrid.preUpdateSubDomains();
         mdGrid.updateSubDomains();

@@ -74,7 +74,6 @@ class TwoCZeroEqTwoPTwoCSpatialParams : public ImplicitSpatialParams<TypeTag>
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

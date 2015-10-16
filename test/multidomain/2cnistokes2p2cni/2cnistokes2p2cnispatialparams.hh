@@ -80,7 +80,6 @@ class TwoCNIStokesTwoPTwoCNISpatialParams : public ImplicitSpatialParams<TypeTag
     typedef Dune::FieldVector<CoordScalar,dimWorld> DimVector;
 
     typedef typename GridView::IndexSet IndexSet;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -89,7 +88,6 @@ class TwoCNIStokesTwoPTwoCNISpatialParams : public ImplicitSpatialParams<TypeTag
 
     typedef std::vector<Scalar> PermeabilityType;
     typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;

@@ -202,7 +202,6 @@ class TwoCNIStokesTwoPTwoCNIProblem : public MultiDomainProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
 
-    typedef typename MDGrid::template Codim<0>::LeafIterator ElementIterator;
     typedef typename MDGrid::LeafSubDomainInterfaceIterator SDInterfaceIterator;
 
 public:
@@ -295,22 +294,20 @@ public:
         mdGrid.startSubDomainMarking();
 
         // subdivide grid in two subdomains
-        ElementIterator eEndIt = mdGrid.template leafend<0>();
-        for (ElementIterator eIt = mdGrid.template leafbegin<0>();
-             eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(mdGrid.leafGridView()))
         {
             // this is required for parallelization
             // checks if element is within a partition
-            if (eIt->partitionType() != Dune::InteriorEntity)
+            if (element.partitionType() != Dune::InteriorEntity)
                 continue;
 
-            GlobalPosition globalPos = eIt->geometry().center();
+            GlobalPosition globalPos = element.geometry().center();
 
             if (globalPos[1] > interfacePosY_)
-                mdGrid.addToSubDomain(stokes2cni_,*eIt);
+                mdGrid.addToSubDomain(stokes2cni_,element);
             else
                 if(globalPos[0] > noDarcyX_)
-                    mdGrid.addToSubDomain(twoPtwoCNI_,*eIt);
+                    mdGrid.addToSubDomain(twoPtwoCNI_,element);
         }
         mdGrid.preUpdateSubDomains();
         mdGrid.updateSubDomains();
