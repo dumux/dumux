@@ -43,7 +43,6 @@ class BoxAssembler : public ImplicitAssembler<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     enum{ dim = GridView::dimension };
 
 public:
@@ -79,9 +78,6 @@ private:
         if (!this->enablePartialReassemble_())
             return;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-
         // mark the red vertices and update the tolerance of the
         // linearization which actually will get achieved
         this->nextReassembleAccuracy_ = 0;
@@ -96,15 +92,15 @@ private:
         }
 
         // Mark all red elements
-        for (; eIt != eEndIt; ++eIt) {
+        for (const auto& element : Dune::elements(this->gridView_())) {
             // find out whether the current element features a red
             // vertex
             bool isRed = false;
 
-            int numVertices = eIt->subEntities(dim);
+            int numVertices = element.subEntities(dim);
 
             for (int i=0; i < numVertices; ++i) {
-                int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
+                int globalI = this->vertexMapper_().subIndex(element, i, dim);
 
                 if (this->vertexColor_[globalI] == ParentType::Red) {
                     isRed = true;
@@ -114,7 +110,7 @@ private:
 
             // if yes, the element color is also red, else it is not
             // red, i.e. green for the mean time
-            int eIdxGlobal = this->elementMapper_().index(*eIt);
+            int eIdxGlobal = this->elementMapper_().index(element);
 
             if (isRed)
                 this->elementColor_[eIdxGlobal] = ParentType::Red;
@@ -123,18 +119,17 @@ private:
         }
 
         // Mark yellow vertices (as orange for the mean time)
-        eIt = this->gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            int eIdx = this->elementMapper_().index(*eIt);
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            int eIdx = this->elementMapper_().index(element);
 
             if (this->elementColor_[eIdx] != ParentType::Red)
                 continue; // non-red elements do not tint vertices
                           // yellow!
 
-            int numVertices = eIt->subEntities(dim);
+            int numVertices = element.subEntities(dim);
 
             for (int i = 0; i < numVertices; ++i) {
-                int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
+                int globalI = this->vertexMapper_().subIndex(element, i, dim);
 
                 // if a vertex is already red, don't recolor it to
                 // yellow!
@@ -155,9 +150,8 @@ private:
                                 Dune::ForwardCommunication);
 
         // Mark yellow elements
-        eIt = this->gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            int eIdx = this->elementMapper_().index(*eIt);
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            int eIdx = this->elementMapper_().index(element);
 
             if (this->elementColor_[eIdx] == ParentType::Red) {
                 continue; // element is red already!
@@ -166,10 +160,10 @@ private:
             // check whether the element features a yellow
             // (resp. orange at this point) vertex
             bool isYellow = false;
-            int numVertices = eIt->subEntities(dim);
+            int numVertices = element.subEntities(dim);
 
             for (int i = 0; i < numVertices; ++i) {
-                int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
+                int globalI = this->vertexMapper_().subIndex(element, i, dim);
 
                 if (this->vertexColor_[globalI] == ParentType::Orange) {
                     isYellow = true;
@@ -183,18 +177,17 @@ private:
 
         // Demote orange vertices to yellow ones if it has at least
         // one green element as a neighbor.
-        eIt = this->gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            int eIdx = this->elementMapper_().index(*eIt);
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            int eIdx = this->elementMapper_().index(element);
 
             if (this->elementColor_[eIdx] != ParentType::Green)
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
 
-            int numVertices = eIt->subEntities(dim);
+            int numVertices = element.subEntities(dim);
 
             for (int i = 0; i < numVertices; ++i) {
-                int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
+                int globalI = this->vertexMapper_().subIndex(element, i, dim);
 
                 // if a vertex is orange, recolor it to yellow!
                 if (this->vertexColor_[globalI] == ParentType::Orange)
@@ -238,10 +231,7 @@ private:
         // each vertex
         typedef std::set<int> NeighborSet;
         std::vector<NeighborSet> neighbors(numVerticesGlobal);
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        const ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            const Element &element = *eIt;
+        for (const auto& element : Dune::elements(this->gridView_())) {
             int numVerticesLocal = element.subEntities(dim);
 
             // if the element is not in the interior or the process
@@ -250,7 +240,7 @@ private:
                 element.partitionType() != Dune::BorderEntity)
             {
                 for (int i = 0; i < numVerticesLocal; ++i) {
-                    int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
+                    int globalI = this->vertexMapper_().subIndex(element, i, dim);
 
                     neighbors[globalI].insert(globalI);
                 }
@@ -259,10 +249,10 @@ private:
             {
                 // loop over all element vertices
                 for (int i = 0; i < numVerticesLocal - 1; ++i) {
-                    int globalI = this->vertexMapper_().subIndex(*eIt, i, dim);
+                    int globalI = this->vertexMapper_().subIndex(element, i, dim);
 
                     for (int j = i + 1; j < numVerticesLocal; ++j) {
-                        int globalJ = this->vertexMapper_().subIndex(*eIt, j, dim);
+                        int globalJ = this->vertexMapper_().subIndex(element, j, dim);
 
                         // make sure that vertex j is in the neighbor set
                         // of vertex i and vice-versa

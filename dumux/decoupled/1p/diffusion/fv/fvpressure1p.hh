@@ -85,7 +85,6 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -196,9 +195,9 @@ public:
         gravity_(
         problem.gravity())
     {
-        ElementIterator element = problem_.gridView().template begin<0> ();
-        Scalar temperature = problem_.temperature(*element);
-        Scalar referencePress = problem_.referencePressure(*element);
+        auto element = *problem_.gridView().template begin<0> ();
+        Scalar temperature = problem_.temperature(element);
+        Scalar referencePress = problem_.referencePressure(element);
 
         density_ = Fluid::density(temperature, referencePress);
         viscosity_ = Fluid::viscosity(temperature, referencePress);

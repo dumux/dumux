@@ -128,7 +128,6 @@ class ThreePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
 
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -185,9 +184,8 @@ public:
             FVElementGeometry fvGeometry;
             VolumeVariables volVars;
 
-            ElementIterator eIt = this->gridView().template begin<0>();
-            ElementIterator eEndIt = this->gridView().template end<0>();
-            fvGeometry.update(this->gridView(), *eIt);
+            const auto element = *this->gridView().template begin<0>();
+            fvGeometry.update(this->gridView(), element);
             PrimaryVariables initialPriVars(0);
             GlobalPosition globalPos(0);
             initial_(initialPriVars, globalPos);
@@ -195,34 +193,34 @@ public:
             //update the constant volume variables
             volVars.update(initialPriVars,
                            *this,
-                           *eIt,
+                           element,
                            fvGeometry,
                            0,
                            false);
 
-            Scalar porosity = this->spatialParams().porosity(*eIt, fvGeometry, 0);
+            Scalar porosity = this->spatialParams().porosity(element, fvGeometry, 0);
             Scalar densityW = volVars.density(swIdx);
             Scalar heatCapacityW = IapwsH2O::liquidHeatCapacity(initialPriVars[temperatureIdx], initialPriVars[pressureIdx]);
             Scalar storageW =  densityW*heatCapacityW*porosity;
-            Scalar densityS = this->spatialParams().solidDensity(*eIt, fvGeometry, 0);
-            Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(*eIt, fvGeometry, 0);
+            Scalar densityS = this->spatialParams().solidDensity(element, fvGeometry, 0);
+            Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(element, fvGeometry, 0);
             Scalar storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
             std::cout<<"storage: "<<storageTotal<<std::endl;
             Scalar time = std::max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
             Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
             std::cout<<"retarded velocity: "<<retardedFrontVelocity<<std::endl;
 
-            for (; eIt != eEndIt; ++eIt)
+            for (const auto& element : Dune::elements(this->gridView()))
             {
-                fvGeometry.update(this->gridView(), *eIt);
+                fvGeometry.update(this->gridView(), element);
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int globalIdx = this->model().dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+                    int globalIdx = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
 
                     if (isBox)
-                        globalPos = eIt->geometry().corner(scvIdx);
+                        globalPos = element.geometry().corner(scvIdx);
                     else
-                        globalPos = eIt->geometry().center();
+                        globalPos = element.geometry().center();
 
                     (*temperatureExact)[globalIdx] = globalPos[0] < retardedFrontVelocity*time ? temperatureHigh_ : temperatureLow_;
                 }

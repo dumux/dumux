@@ -40,10 +40,8 @@ class TwoPImplicitGridAdaptIndicator
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -90,15 +88,13 @@ public:
         Scalar globalMax = -1e100;
         Scalar globalMin = 1e100;
 
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
         // 1) calculate Indicator -> min, maxvalues
         // loop over all leaf-elements
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt;
-                ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // calculate minimum and maximum saturation
             // index of the current leaf-elements
-            int globalIdxI = problem_.elementMapper().index(*eIt);
+            int globalIdxI = problem_.elementMapper().index(element);
 
         	Scalar satI = 0.0;
 
@@ -107,7 +103,7 @@ public:
         	else
         	{
                 const LocalFiniteElementCache feCache;
-                const auto geometryI = eIt->geometry();
+                const auto geometryI = element.geometry();
             	Dune::GeometryType geomType = geometryI.type();
 
             	GlobalPosition centerI = geometryI.local(geometryI.center());
@@ -117,7 +113,7 @@ public:
 
                 for (int i = 0; i < shapeVal.size(); ++i)
                   {
-                     int dofIdxGlobal = problem_.model().dofMapper().subIndex(*eIt, i, dofCodim);
+                     int dofIdxGlobal = problem_.model().dofMapper().subIndex(element, i, dofCodim);
                       satI += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
                   }
         	}
@@ -126,10 +122,8 @@ public:
             globalMax = std::max(satI, globalMax);
 
             // calculate refinement indicator in all cells
-            IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
-                const typename IntersectionIterator::Intersection &intersection = *isIt;
                 // Only consider internal intersections
                 if (intersection.neighbor())
                 {
@@ -138,7 +132,7 @@ public:
                     int globalIdxJ = problem_.elementMapper().index(outside);
 
                     // Visit intersection only once
-                    if (eIt->level() > outside.level() || (eIt->level() == outside.level() && globalIdxI < globalIdxJ))
+                    if (element.level() > outside.level() || (element.level() == outside.level() && globalIdxI < globalIdxJ))
                     {
                     	Scalar satJ = 0.0;
 

@@ -77,7 +77,6 @@ class StokesncLocalResidual : public StokesLocalResidual<TypeTag>
 	typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 	typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
 	static const bool calculateNavierStokes = GET_PROP_VALUE(TypeTag, EnableNavierStokes);

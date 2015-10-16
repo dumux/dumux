@@ -88,7 +88,6 @@ template<class TypeTag> class BuckleyLeverettAnalytic
     };
 
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FieldVector<Scalar, dimworld> GlobalPosition;
 
 private:
@@ -113,17 +112,17 @@ private:
      */
     void prepareAnalytic()
     {
-    	ElementIterator dummyElement = problem_.gridView().template begin<0>();
-        const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(*dummyElement));
+    	const auto& dummyElement = *problem_.gridView().template begin<0>();
+        const MaterialLawParams& materialLawParams(problem_.spatialParams().materialLawParams(dummyElement));
 
         swr_ = materialLawParams.swr();
         snr_ = materialLawParams.snr();
-        Scalar porosity = problem_.spatialParams().porosity(*dummyElement);
+        Scalar porosity = problem_.spatialParams().porosity(dummyElement);
 
         FluidState fluidState;
-        fluidState.setTemperature(problem_.temperature(*dummyElement));
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*dummyElement));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*dummyElement));
+        fluidState.setTemperature(problem_.temperature(dummyElement));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(dummyElement));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(dummyElement));
         Scalar viscosityW = FluidSystem::viscosity(fluidState, wPhaseIdx);
         Scalar viscosityNW = FluidSystem::viscosity(fluidState, nPhaseIdx);
 
@@ -196,15 +195,14 @@ private:
         Scalar globalVolume = 0;
         Scalar errorNorm = 0.0;
 
-        ElementIterator eEndIt = problem_.gridView().template end<0> ();
-        for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // get entity
-            int index = problem_.variables().index(*eIt);
+            int index = problem_.variables().index(element);
 
             Scalar sat = problem_.variables().cellData(index).saturation(wPhaseIdx);
 
-            Scalar volume = eIt->geometry().volume();
+            Scalar volume = element.geometry().volume();
 
             Scalar error = analyticSolution_[index] - sat;
 
@@ -239,13 +237,12 @@ private:
     	Scalar xMax =  frontParams_[0].second * time;
 
         // iterate over vertices and get analytic saturation solution
-        ElementIterator eEndIt = problem_.gridView().template end<0> ();
-        for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // get global coordinate of cell center
-            GlobalPosition globalPos = eIt->geometry().center();
+            GlobalPosition globalPos = element.geometry().center();
 
-            int index = problem_.variables().index(*eIt);
+            int index = problem_.variables().index(element);
 
             if (globalPos[0] > xMax)
             	analyticSolution_[index] = swr_;

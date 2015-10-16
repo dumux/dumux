@@ -147,7 +147,6 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
@@ -267,28 +266,26 @@ public:
          FVElementGeometry fvGeometry;
          VolumeVariables volVars;
 
-         ElementIterator eIt = this->gridView().template begin<0>();
-         ElementIterator eEndIt = this->gridView().template end<0>();
-         for (; eIt != eEndIt; ++eIt)
+         for (const auto& element : Dune::elements(this->gridView()))
          {
-             int eIdx = this->elementMapper().map(*eIt);
+             int eIdx = this->elementMapper().map(element);
              (*rank)[eIdx] = this->gridView().comm().rank();
-             fvGeometry.update(this->gridView(), *eIt);
+             fvGeometry.update(this->gridView(), element);
 
 
              for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
              {
-                 int dofIdxGlobal = this->model().dofMapper().map(*eIt, scvIdx, dofCodim);
+                 int dofIdxGlobal = this->model().dofMapper().map(element, scvIdx, dofCodim);
                  volVars.update(this->model().curSol()[dofIdxGlobal],
                                 *this,
-                                *eIt,
+                                element,
                                 fvGeometry,
                                 scvIdx,
                                 false);
                  (*boxVolume)[dofIdxGlobal] += fvGeometry.subContVol[scvIdx].volume;
              }
-             (*Kxx)[eIdx] = this->spatialParams().intrinsicPermeability(*eIt, fvGeometry, /*element data*/ 0);
-             (*cellPorosity)[eIdx] = this->spatialParams().porosity(*eIt, fvGeometry, /*element data*/ 0);
+             (*Kxx)[eIdx] = this->spatialParams().intrinsicPermeability(element, fvGeometry, /*element data*/ 0);
+             (*cellPorosity)[eIdx] = this->spatialParams().porosity(element, fvGeometry, /*element data*/ 0);
          }
 
          //pass the scalar fields to the vtkwriter

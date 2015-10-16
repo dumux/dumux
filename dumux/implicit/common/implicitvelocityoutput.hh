@@ -52,8 +52,6 @@ class ImplicitVelocityOutput
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
     enum {
@@ -87,16 +85,14 @@ public:
             {
                 cellNum_.assign(problem_.gridView().size(dofCodim), 0);
 
-                ElementIterator eIt = problem_.gridView().template begin<0>();
-                ElementIterator eEndIt = problem_.gridView().template end<0>();
-                for (; eIt != eEndIt; ++eIt)
+                for (const auto& element : Dune::elements(problem_.gridView()))
                 {
                     FVElementGeometry fvGeometry;
-                    fvGeometry.update(problem_.gridView(), *eIt);
+                    fvGeometry.update(problem_.gridView(), element);
 
                     for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                     {
-                        int vIdxGlobal = problem_.vertexMapper().subIndex(*eIt, scvIdx, dofCodim);
+                        int vIdxGlobal = problem_.vertexMapper().subIndex(element, scvIdx, dofCodim);
                         cellNum_[vIdxGlobal] += 1;
                     }
                 }
@@ -217,13 +213,11 @@ public:
                 std::vector<Scalar> scvfFluxes(element.subEntities(1), 0);
 
                 int fIdxInner = 0;
-                IntersectionIterator isEndIt = problem_.gridView().iend(element);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(element);
-                     isIt != isEndIt; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
                 {
-                    int fIdx = isIt->indexInInside();
+                    int fIdx = intersection.indexInInside();
 
-                    if (isIt->neighbor())
+                    if (intersection.neighbor())
                     {
                         FluxVariables fluxVars(problem_,
                                                element,
@@ -235,7 +229,7 @@ public:
 
                         fIdxInner++;
                     }
-                    else if (isIt->boundary())
+                    else if (intersection.boundary())
                     {
                         FluxVariables fluxVars(problem_,
                                                element,
@@ -254,18 +248,16 @@ public:
                 // Neumann conditions.
                 if (element.hasBoundaryIntersections())
                 {
-                    IntersectionIterator isEndIt = problem_.gridView().iend(element);
-                    for (IntersectionIterator isIt = problem_.gridView().ibegin(element);
-                         isIt != isEndIt; ++isIt)
+                    for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
                     {
-                        if (isIt->boundary())
+                        if (intersection.boundary())
                         {
                             BoundaryTypes bcTypes;
-                            problemBoundaryTypes(bcTypes, *isIt);
+                            problemBoundaryTypes(bcTypes, intersection);
 
                             if (bcTypes.hasNeumann())
                             {
-                                int fIdx = isIt->indexInInside();
+                                int fIdx = intersection.indexInInside();
 
                                 // cubes
                                 if (dim == 1 || geomType.isCube()){

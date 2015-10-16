@@ -85,7 +85,6 @@ class CROperatorAssemblerTwoP
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum {dim=GridView::dimension};
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IndexSet IS;
     typedef Dune::FieldMatrix<Scalar,1,1> BlockType;
     typedef Dune::BCRSMatrix<BlockType> MatrixType;
@@ -133,14 +132,13 @@ public:
         std::vector<bool> visited(size_, false);
 
         // LOOP 1 : Compute row sizes
-        ElementIterator eEndIt = gridView_.template end<0>();
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_))
         {
-            int numFaces = eIt->subEntities(1);
+            int numFaces = element.subEntities(1);
 
             for (int i = 0; i < numFaces; i++)
             {
-                int index = faceMapper_.subIndex(*eIt, i,1);
+                int index = faceMapper_.subIndex(element, i,1);
 
                 if (!visited[index])
                 {
@@ -161,13 +159,13 @@ public:
         visited.assign(size_, false);
 
         // LOOP 2 : insert the nonzeros
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_))
         {
-            int numFaces = eIt->subEntities(1);
+            int numFaces = element.subEntities(1);
 
             for (int i = 0; i < numFaces; i++)
             {
-                int indexI = faceMapper_.subIndex(*eIt, i, 1);
+                int indexI = faceMapper_.subIndex(element, i, 1);
 
                 if (!visited[indexI])
                 {
@@ -176,7 +174,7 @@ public:
                 }
                 for (int k = 0; k < numFaces; k++)
                     if (k != i) {
-                        int indexJ = faceMapper_.subIndex(*eIt, k, 1);
+                        int indexJ = faceMapper_.subIndex(element, k, 1);
 
                         A_.addindex(indexI, indexJ);
                         //std::cout << "indexI = " << indexI << ", added indexJ = " << indexJ << std::endl;
@@ -250,21 +248,20 @@ public:
         Dune::FieldVector<int, 2*dim> local2Global(0);
 
         // run over all leaf elements
-        ElementIterator eEndIt = gridView_.template end<0>();
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_))
         {
-            unsigned int numFaces = eIt->subEntities(1);
+            unsigned int numFaces = element.subEntities(1);
 
             // get local to global id map
             for (unsigned int k = 0; k < numFaces; k++)
             {
-                int alpha = faceMapper_.subIndex(*eIt, k, 1);
+                int alpha = faceMapper_.subIndex(element, k, 1);
                 local2Global[k] = alpha;
             }
 
             // build local stiffness matrix for CR elements
             // inludes rhs and boundary condition information
-            loc.assemble(*eIt, 1); // assemble local stiffness matrix
+            loc.assemble(element, 1); // assemble local stiffness matrix
 
 
             // accumulate local matrix into global matrix for non-hanging nodes
@@ -288,17 +285,17 @@ public:
             }
         }
         // run over all leaf elements
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_))
         {
-            unsigned int numFaces = eIt->subEntities(1);
+            unsigned int numFaces = element.subEntities(1);
 
             // get local to global id map
             for (unsigned int k = 0; k < numFaces; k++)
             {
-                int alpha = faceMapper_.subIndex(*eIt, k, 1);
+                int alpha = faceMapper_.subIndex(element, k, 1);
                 local2Global[k] = alpha;
             }
-            loc.completeRHS(*eIt, local2Global, f);
+            loc.completeRHS(element, local2Global, f);
         }
 
         // put in essential boundary conditions

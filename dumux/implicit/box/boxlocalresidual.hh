@@ -55,7 +55,6 @@ class BoxLocalResidual : public ImplicitLocalResidual<TypeTag>
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GridView::Grid::ctype CoordScalar;
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
@@ -114,15 +113,13 @@ protected:
         Dune::GeometryType geoType = this->element_().geometry().type();
         const ReferenceElement &refElement = ReferenceElements::general(geoType);
 
-        IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
-        const IntersectionIterator &isEndIt = this->gridView_().iend(this->element_());
-        for (; isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
         {
             // handle only faces on the boundary
-            if (isIt->boundary()) {
+            if (intersection.boundary()) {
                 // Assemble the boundary for all vertices of the current
                 // face
-                int fIdx = isIt->indexInInside();
+                int fIdx = intersection.indexInInside();
                 int numFaceVerts = refElement.size(fIdx, 1, dim);
                 for (int faceVertexIdx = 0;
                     faceVertexIdx < numFaceVerts;
@@ -138,11 +135,11 @@ protected:
 
                     // add the residual of all vertices of the boundary
                     // segment
-                    this->asImp_().evalNeumannSegment_(isIt,
+                    this->asImp_().evalNeumannSegment_(&intersection,
                                                        scvIdx,
                                                        boundaryFaceIdx);
                     // evaluate the outflow conditions at the boundary face
-                    this->asImp_().evalOutflowSegment_(isIt,
+                    this->asImp_().evalOutflowSegment_(&intersection,
                                                        scvIdx,
                                                        boundaryFaceIdx);
                 }
@@ -154,6 +151,7 @@ protected:
      * \brief Add Neumann boundary conditions for a single sub-control
      *        volume face to the local residual.
      */
+    template <class IntersectionIterator>
     void evalNeumannSegment_(const IntersectionIterator &isIt,
                              const int scvIdx,
                              const int boundaryFaceIdx)
@@ -194,6 +192,7 @@ protected:
     * \param scvIdx The index of the considered face of the sub-control volume
     * \param boundaryFaceIdx The index of the considered boundary face of the sub control volume
     */
+    template <class IntersectionIterator>
     void evalOutflowSegment_(const IntersectionIterator &isIt,
                             const int scvIdx,
                             const int boundaryFaceIdx)

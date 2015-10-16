@@ -45,8 +45,6 @@ class IntersectionToVertexBC
         dim = GridView::dimension,
     };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
 
     typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
@@ -56,37 +54,33 @@ public:
     IntersectionToVertexBC(const Problem& problem)
     : problem_(problem)
     {
-	vertexBC.resize(problem.vertexMapper().size());
+        vertexBC.resize(problem.vertexMapper().size());
         for (int vIdx = 0; vIdx < vertexBC.size(); vIdx++)
             vertexBC[vIdx].setAllNeumann();
 
-        ElementIterator eIt = problem.gridView().template begin<0>();
-        const ElementIterator eEndIt = problem.gridView().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            Dune::GeometryType geomType = eIt->geometry().type();
+        for (const auto& element : Dune::elements(problem.gridView())) {
+            Dune::GeometryType geomType = element.geometry().type();
             const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
-            IntersectionIterator isIt = problem.gridView().ibegin(*eIt);
-            IntersectionIterator isEndIt = problem.gridView().iend(*eIt);
-            for (; isIt != isEndIt; ++isIt) {
-                if (!isIt->boundary())
+            for (const auto& intersection : Dune::intersections(problem.gridView(), element)) {
+                if (!intersection.boundary())
                     continue;
 
                 BoundaryTypes bcTypes;
-		problem.boundaryTypes(bcTypes, *isIt);
+                problem.boundaryTypes(bcTypes, intersection);
 
-		if (!bcTypes.hasDirichlet())
+                if (!bcTypes.hasDirichlet())
                     continue;
 
-                int fIdx = isIt->indexInInside();
+                int fIdx = intersection.indexInInside();
                 int numFaceVerts = refElement.size(fIdx, 1, dim);
                 for (int faceVertexIdx = 0; faceVertexIdx < numFaceVerts; ++faceVertexIdx)
                 {
                     int vIdx = refElement.subEntity(fIdx, 1, faceVertexIdx, dim);
-                    int vIdxGlobal = problem.vertexMapper().subIndex(*eIt, vIdx, dim);
+                    int vIdxGlobal = problem.vertexMapper().subIndex(element, vIdx, dim);
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                      if (bcTypes.isDirichlet(eqIdx))
-                          vertexBC[vIdxGlobal].setDirichlet(eqIdx);
+                        if (bcTypes.isDirichlet(eqIdx))
+                            vertexBC[vIdxGlobal].setDirichlet(eqIdx);
                 }
             }
         }

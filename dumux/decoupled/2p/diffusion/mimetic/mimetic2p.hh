@@ -99,8 +99,6 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
 
     typedef typename GridView::Grid Grid;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
@@ -139,11 +137,11 @@ public:
 
     void initialize()
     {
-        ElementIterator element = problem_.gridView().template begin<0>();
+        const auto element = *problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -270,10 +268,9 @@ public:
         int eIdxGlobal = problem_.variables().index(element);
 
         Dune::FieldVector<Scalar, 2 * dim> faceVol(0);
-        IntersectionIterator isEndIt = gridView_.iend(element);
-        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(gridView_, element))
         {
-            faceVol[isIt->indexInInside()] = isIt->geometry().volume();
+            faceVol[intersection.indexInInside()] = intersection.geometry().volume();
         }
 
         vel = 0;
@@ -288,10 +285,9 @@ public:
         int eIdxGlobal = problem_.variables().index(element);
 
         Dune::FieldVector<Scalar, 2 * dim> faceVol(0);
-        IntersectionIterator isEndIt = gridView_.iend(element);
-        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(gridView_, element))
         {
-            faceVol[isIt->indexInInside()] = isIt->geometry().volume();
+            faceVol[intersection.indexInInside()] = intersection.geometry().volume();
         }
 
         vel = 0;
@@ -306,13 +302,12 @@ public:
         Dune::FieldVector<Scalar, 2 * dim> c(0);
         Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim> Pi(0);
 
-        IntersectionIterator isEndIt = gridView_.iend(element);
-        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(gridView_, element))
         {
             // local number of facet
-            int idx = isIt->indexInInside();
+            int idx = intersection.indexInInside();
 
-            Scalar faceVol = isIt->geometry().volume();
+            Scalar faceVol = intersection.geometry().volume();
 
             // Corresponding to the element under consideration,
             // calculate the part of the matrix C coupling velocities and element pressures.
@@ -477,17 +472,16 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
     Scalar gravPot = (problem_.bBoxMax() - centerGlobal) * problem_.gravity() * (density_[nPhaseIdx] - density_[wPhaseIdx]);
 
     int i = -1;
-    IntersectionIterator isEndIt = gridView_.iend(element);
-    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
+    for (const auto& intersection : Dune::intersections(gridView_, element))
     {
         // local number of facet
-        i = isIt->indexInInside();
+        i = intersection.indexInInside();
 
-        Dune::FieldVector<Scalar, dim> faceGlobal = isIt->geometry().center();
-        faceVol[i] = isIt->geometry().volume();
+        Dune::FieldVector<Scalar, dim> faceGlobal = intersection.geometry().center();
+        faceVol[i] = intersection.geometry().volume();
 
         // get normal vector
-        const Dune::FieldVector<Scalar, dim>& unitOuterNormal = isIt->centerUnitOuterNormal();
+        const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
         N[i] = unitOuterNormal;
 
@@ -613,9 +607,9 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
     //      std::cout << "Pi = \dim" << Pi << "c = " << c << ", F = " << F << std::endl;
 
     //accumulate fluxes due to capillary potential (pc + gravity!)
-    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != isEndIt; ++isIt)
+    for (const auto& intersection : Dune::intersections(gridView_, element))
     {
-        int idx = isIt->indexInInside();
+        int idx = intersection.indexInInside();
 
         Scalar fracFlow = 0;
 
@@ -624,9 +618,9 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
             flux += W_[eIdxGlobal][idx][j] * faceVol[j] * (gravPot - gravPotFace[j]);
 
         //it is enough to evaluate the capillary/gravity flux for neighbors -> not needed anyway at the boundaries!
-        if (isIt->neighbor())
+        if (intersection.neighbor())
         {
-            int eIdxGlobalNeighbor = problem_.variables().index(isIt->outside());
+            int eIdxGlobalNeighbor = problem_.variables().index(intersection.outside());
             if (flux >= 0.)
             {
                 switch (pressureType)
@@ -648,10 +642,10 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
                 rhs_[eIdxGlobalNeighbor] += (faceVol[idx] * fracFlow * flux);
             }
         }
-        else if (isIt->boundary())
+        else if (intersection.boundary())
         {
             BoundaryTypes bctype;
-            problem_.boundaryTypes(bctype, *isIt);
+            problem_.boundaryTypes(bctype, intersection);
 
             if (bctype.isDirichlet(pressureEqIdx))
             {
@@ -674,7 +668,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
                 else if (flux < 0. && bctype.isDirichlet(satEqIdx))
                 {
                     PrimaryVariables boundValues(0.0);
-                    problem_.dirichlet(boundValues, *isIt);
+                    problem_.dirichlet(boundValues, intersection);
 
                     Scalar krw = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element),
                             boundValues[saturationIdx]);
@@ -714,32 +708,29 @@ template<class TypeTag>
 void MimeticTwoPLocalStiffness<TypeTag>::assembleBC(const Element& element, int k)
 {
     // evaluate boundary conditions via intersection iterator
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-
-    IntersectionIterator endIsIt = gridView_.iend(element);
-    for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != endIsIt; ++isIt)
+    for (const auto& intersection : Dune::intersections(gridView_, element))
     {
-        int faceIndex = isIt->indexInInside();
-        if (isIt->boundary())
+        int faceIndex = intersection.indexInInside();
+        if (intersection.boundary())
         {
-            problem_.boundaryTypes(this->bctype[faceIndex], *isIt);
+            problem_.boundaryTypes(this->bctype[faceIndex], intersection);
             PrimaryVariables boundValues(0.0);
 
             if (this->bctype[faceIndex].isNeumann(pressureEqIdx))
             {
-                problem_.neumann(boundValues, *isIt);
+                problem_.neumann(boundValues, intersection);
                 Scalar J = (boundValues[wPhaseIdx]/density_[wPhaseIdx] + boundValues[nPhaseIdx]/density_[nPhaseIdx]);
-                this->b[faceIndex] -= J * isIt->geometry().volume();
+                this->b[faceIndex] -= J * intersection.geometry().volume();
             }
             else if (this->bctype[faceIndex].isDirichlet(pressureEqIdx))
             {
-                problem_.dirichlet(boundValues, *isIt);
+                problem_.dirichlet(boundValues, intersection);
                 if (pressureType == pw)
                     this->b[faceIndex] = boundValues[pressureIdx] +
-                    (problem_.bBoxMax() - isIt->geometry().center()) * problem_.gravity() * density_[wPhaseIdx];
+                    (problem_.bBoxMax() - intersection.geometry().center()) * problem_.gravity() * density_[wPhaseIdx];
                 else if (pressureType == pn)
                     this->b[faceIndex] = boundValues[pressureIdx] +
-                    (problem_.bBoxMax() - isIt->geometry().center()) * problem_.gravity() * density_[nPhaseIdx];
+                    (problem_.bBoxMax() - intersection.geometry().center()) * problem_.gravity() * density_[nPhaseIdx];
                 else
                     this->b[faceIndex] = boundValues[pressureIdx];
             }

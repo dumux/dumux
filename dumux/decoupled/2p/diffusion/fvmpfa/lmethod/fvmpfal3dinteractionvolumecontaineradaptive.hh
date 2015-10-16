@@ -66,10 +66,6 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
     typedef typename Element::Geometry ElementGeometry;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
@@ -519,17 +515,15 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
             auto element1 = interactionVolume.getSubVolumeElement(0);
 
-            IntersectionIterator isIt = problem_.gridView().ibegin(element1);
-            IntersectionIterator isEndIt = problem_.gridView().iend(element1);
-            for (; isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element1))
             {
-                int idxInInside = isIt->indexInInside();
+                int idxInInside = intersection.indexInInside();
 
                 if (idxInInside == interactionVolume.getIndexOnElement(0, 2))
                 {
-                    if (isIt->neighbor())
+                    if (intersection.neighbor())
                     {
-                        auto outside = isIt->outside();
+                        auto outside = intersection.outside();
                         if (element1.level() > outside.level())
                         {
                             interactionVolume.setSubVolumeElement(outside, 4);
@@ -539,9 +533,9 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 }
                 else if (idxInInside == interactionVolume.getIndexOnElement(0, 1))
                 {
-                    if (isIt->neighbor())
+                    if (intersection.neighbor())
                     {
-                        auto outside = isIt->outside();
+                        auto outside = intersection.outside();
                         if (element1.level() > outside.level())
                         {
                             interactionVolume.setSubVolumeElement(outside, 2);
@@ -554,57 +548,53 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
             auto element45 = interactionVolume.getSubVolumeElement(4);
             auto element23 = interactionVolume.getSubVolumeElement(2);
 
-            IntersectionIterator isIt1 = problem_.gridView().ibegin(element45);
-            IntersectionIterator isIt1End = problem_.gridView().iend(element45);
-            for (; isIt1 != isIt1End; ++isIt1)
+            for (const auto& intersection1 : Dune::intersections(problem_.gridView(), element45))
             {
-                if (isIt1->neighbor())
+                if (intersection1.neighbor())
                 {
-                    auto element45Outside = isIt1->outside();
+                    auto element45Outside = intersection1.outside();
 
-                    IntersectionIterator isIt2 = problem_.gridView().ibegin(element23);
-                    IntersectionIterator isIt2End = problem_.gridView().iend(element23);
-                    for (; isIt2 != isIt2End; ++isIt2)
+                    for (const auto& intersection2 : Dune::intersections(problem_.gridView(), element23))
                     {
-                        if (isIt2->neighbor())
+                        if (intersection2.neighbor())
                         {
-                            auto element23Outside = isIt2->outside();
+                            auto element23Outside = intersection2.outside();
 
                             if (element45Outside == element23Outside && element45Outside != element1
                                 && element45Outside != element2)
                             {
                                 interactionVolume.setSubVolumeElement(element45Outside, 6);
                                 interactionVolume.setSubVolumeElement(element45Outside, 7);
-                                DimVector normal = isIt2->centerUnitOuterNormal();
+                                DimVector normal = intersection2.centerUnitOuterNormal();
                                 interactionVolume.setNormal(normal, 2, 2);
                                 interactionVolume.setNormal(normal, 3, 2);
                                 normal *= -1;
                                 interactionVolume.setNormal(normal, 6, 0);
                                 interactionVolume.setNormal(normal, 7, 0);
 
-                                GlobalPosition globalPosFace = isIt2->geometry().center();
+                                GlobalPosition globalPosFace = intersection2.geometry().center();
                                 interactionVolume.setFacePosition(globalPosFace, 10);
                                 interactionVolume.setFacePosition(globalPosFace, 11);
                                 interactionVolume.setEdgePosition(centerPos, 4);
 
-                                Scalar faceArea = isIt2->geometry().volume()/4.0;
+                                Scalar faceArea = intersection2.geometry().volume()/4.0;
 
                                 interactionVolume.setFaceArea(faceArea, 10);
                                 interactionVolume.setFaceArea(faceArea, 11);
 
-                                normal = isIt1->centerUnitOuterNormal();
+                                normal = intersection1.centerUnitOuterNormal();
                                 interactionVolume.setNormal(normal, 4, 2);
                                 interactionVolume.setNormal(normal, 5, 1);
                                 normal *= -1;
                                 interactionVolume.setNormal(normal, 6, 1);
                                 interactionVolume.setNormal(normal, 7, 2);
 
-                                globalPosFace = isIt1->geometry().center();
+                                globalPosFace = intersection1.geometry().center();
                                 interactionVolume.setFacePosition(globalPosFace, 5);
                                 interactionVolume.setFacePosition(globalPosFace, 7);
                                 interactionVolume.setEdgePosition(centerPos, 1);
 
-                                faceArea = isIt1->geometry().volume()/4.0;
+                                faceArea = intersection1.geometry().volume()/4.0;
 
                                 interactionVolume.setFaceArea(faceArea, 5);
                                 interactionVolume.setFaceArea(faceArea, 7);
@@ -782,28 +772,24 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 auto outside1 = element1;
                 auto outside4 = element4;
 
-                IntersectionIterator isIt1 = problem_.gridView().ibegin(element1);
-                IntersectionIterator isItEnd1 = problem_.gridView().iend(element1);
-                for (; isIt1 != isItEnd1; ++isIt1)
+                for (const auto& intersection1 : Dune::intersections(problem_.gridView(), element1))
                 {
-                    if (isIt1->neighbor())
+                    if (intersection1.neighbor())
                     {
-                        if (isIt1->indexInInside() == interactionVolume.getIndexOnElement(0, 2))
+                        if (intersection1.indexInInside() == interactionVolume.getIndexOnElement(0, 2))
                         {
-                            outside1 = isIt1->outside();
+                            outside1 = intersection1.outside();
                             break;
                         }
                     }
                 }
-                IntersectionIterator isIt4 = problem_.gridView().ibegin(element4);
-                IntersectionIterator isItEnd4 = problem_.gridView().iend(element4);
-                for (; isIt4 != isItEnd4; ++isIt4)
+                for (const auto& intersection4 : Dune::intersections(problem_.gridView(), element4))
                 {
-                    if (isIt4->neighbor())
+                    if (intersection4.neighbor())
                     {
-                        if (isIt4->indexInInside() == interactionVolume.getIndexOnElement(3, 2))
+                        if (intersection4.indexInInside() == interactionVolume.getIndexOnElement(3, 2))
                         {
-                            outside4 = isIt4->outside();
+                            outside4 = intersection4.outside();
                             break;
                         }
                     }
@@ -880,15 +866,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 faceArea = crossProduct(crossProductVector1, crossProductVector2).two_norm()/2.0;
                 interactionVolume.setFaceArea(faceArea, 11);
 
-                IntersectionIterator isIt = problem_.gridView().ibegin(element);
-                IntersectionIterator isEndIt = problem_.gridView().iend(element);
-                for (; isIt != isEndIt; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
                 {
-                    if (isIt->indexInInside() == interactionVolume.getIndexOnElement(0, 2))
+                    if (intersection.indexInInside() == interactionVolume.getIndexOnElement(0, 2))
                     {
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            auto outside = isIt->outside();
+                            auto outside = intersection.outside();
                             if (element.level() > outside.level())
                             {
                                 interactionVolume.setSubVolumeElement(outside, 4);
@@ -910,15 +894,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                 auto element3 = interactionVolume.getSubVolumeElement(2);
                 auto element4 = interactionVolume.getSubVolumeElement(3);
 
-                IntersectionIterator isIt1 = problem_.gridView().ibegin(element1);
-                IntersectionIterator isItEnd1 = problem_.gridView().iend(element1);
-                for (; isIt1 != isItEnd1; ++isIt1)
+                for (const auto& intersection1 : Dune::intersections(problem_.gridView(), element1))
                 {
-                    if (isIt1->neighbor())
+                    if (intersection1.neighbor())
                     {
-                        if (isIt1->indexInInside() == interactionVolume.getIndexOnElement(0, 2))
+                        if (intersection1.indexInInside() == interactionVolume.getIndexOnElement(0, 2))
                         {
-                            auto outside = isIt1->outside();
+                            auto outside = intersection1.outside();
                             if (element1.level() > outside.level())
                             {
                                 interactionVolume.setSubVolumeElement(outside, 4);
@@ -926,15 +908,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         }
                     }
                 }
-                IntersectionIterator isIt2 = problem_.gridView().ibegin(element2);
-                IntersectionIterator isItEnd2 = problem_.gridView().iend(element2);
-                for (; isIt2 != isItEnd2; ++isIt2)
+                for (const auto& intersection2 : Dune::intersections(problem_.gridView(), element2))
                 {
-                    if (isIt2->neighbor())
+                    if (intersection2.neighbor())
                     {
-                        if (isIt2->indexInInside() == interactionVolume.getIndexOnElement(1, 2))
+                        if (intersection2.indexInInside() == interactionVolume.getIndexOnElement(1, 2))
                         {
-                            auto outside = isIt2->outside();
+                            auto outside = intersection2.outside();
                             if (element2.level() > outside.level())
                             {
                                 interactionVolume.setSubVolumeElement(outside, 5);
@@ -944,15 +924,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         }
                     }
                 }
-                IntersectionIterator isIt3 = problem_.gridView().ibegin(element3);
-                IntersectionIterator isItEnd3 = problem_.gridView().iend(element3);
-                for (; isIt3 != isItEnd3; ++isIt3)
+                for (const auto& intersection3 : Dune::intersections(problem_.gridView(), element3))
                 {
-                    if (isIt3->neighbor())
+                    if (intersection3.neighbor())
                     {
-                        if (isIt3->indexInInside() == interactionVolume.getIndexOnElement(2, 2))
+                        if (intersection3.indexInInside() == interactionVolume.getIndexOnElement(2, 2))
                         {
-                            auto outside = isIt3->outside();
+                            auto outside = intersection3.outside();
                             if (element3.level() > outside.level())
                             {
                                 interactionVolume.setSubVolumeElement(outside, 6);
@@ -961,15 +939,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                         }
                     }
                 }
-                IntersectionIterator isIt4 = problem_.gridView().ibegin(element4);
-                IntersectionIterator isItEnd4 = problem_.gridView().iend(element4);
-                for (; isIt4 != isItEnd4; ++isIt4)
+                for (const auto& intersection4 : Dune::intersections(problem_.gridView(), element4))
                 {
-                    if (isIt4->neighbor())
+                    if (intersection4.neighbor())
                     {
-                        if (isIt4->indexInInside() == interactionVolume.getIndexOnElement(3, 2))
+                        if (intersection4.indexInInside() == interactionVolume.getIndexOnElement(3, 2))
                         {
-                            auto outside = isIt4->outside();
+                            auto outside = intersection4.outside();
                             if (element4.level() > outside.level())
                             {
                                 interactionVolume.setSubVolumeElement(outside, 7);
@@ -1047,26 +1023,24 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                     interactionVolume.setFacePosition(element5.geometry().center(), 4);
                     interactionVolume.setFacePosition(element7.geometry().center(), 6);
 
-                    IntersectionIterator isIt = problem_.gridView().ibegin(element5);
-                    IntersectionIterator isEndIt = problem_.gridView().iend(element5);
-                    for (; isIt != isEndIt; ++isIt)
+                    for (const auto& intersection : Dune::intersections(problem_.gridView(), element5))
                     {
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            auto outside = isIt->outside();
+                            auto outside = intersection.outside();
 
                             if (outside == element7 || outside == element8)
                             {
-                                int indexInInside = isIt->indexInInside();
+                                int indexInInside = intersection.indexInInside();
                                 interactionVolume.setIndexOnElement(indexInInside, 4, 2);
                                 interactionVolume.setIndexOnElement(indexInInside, 5, 1);
-                                DimVector normal = isIt->centerUnitOuterNormal();
+                                DimVector normal = intersection.centerUnitOuterNormal();
                                 interactionVolume.setNormal(normal, 4, 2);
                                 interactionVolume.setNormal(normal, 5, 1);
-                                GlobalPosition globalPosFace(isIt->geometry().center());
+                                GlobalPosition globalPosFace(intersection.geometry().center());
                                 interactionVolume.setFacePosition(globalPosFace, 5);
                                 interactionVolume.setFacePosition(globalPosFace, 7);
-                                int indexInOutside = isIt->indexInOutside();
+                                int indexInOutside = intersection.indexInOutside();
                                 interactionVolume.setIndexOnElement(indexInOutside, 6, 1);
                                 interactionVolume.setIndexOnElement(indexInOutside, 7, 2);
                                 normal *= -1;
@@ -1099,26 +1073,24 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                     interactionVolume.setFacePosition(element5.geometry().center(), 7);
                     interactionVolume.setFacePosition(globalPosFace, 6);
 
-                    IntersectionIterator isIt = problem_.gridView().ibegin(element5);
-                    IntersectionIterator isEndIt = problem_.gridView().iend(element5);
-                    for (; isIt != isEndIt; ++isIt)
+                    for (const auto& intersection : Dune::intersections(problem_.gridView(), element5))
                     {
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            auto outside = isIt->outside();
+                            auto outside = intersection.outside();
 
                             if (outside == element6 || outside == element8)
                             {
-                                int indexInInside = isIt->indexInInside();
+                                int indexInInside = intersection.indexInInside();
                                 interactionVolume.setIndexOnElement(indexInInside, 4, 1);
                                 interactionVolume.setIndexOnElement(indexInInside, 6, 2);
-                                DimVector normal = isIt->centerUnitOuterNormal();
+                                DimVector normal = intersection.centerUnitOuterNormal();
                                 interactionVolume.setNormal(normal, 4, 1);
                                 interactionVolume.setNormal(normal, 6, 2);
-                                GlobalPosition globalPosFace(isIt->geometry().center());
+                                GlobalPosition globalPosFace(intersection.geometry().center());
                                 interactionVolume.setFacePosition(globalPosFace, 4);
                                 interactionVolume.setFacePosition(globalPosFace, 6);
-                                int indexInOutside = isIt->indexInOutside();
+                                int indexInOutside = intersection.indexInOutside();
                                 interactionVolume.setIndexOnElement(indexInOutside, 5, 2);
                                 interactionVolume.setIndexOnElement(indexInOutside, 7, 1);
                                 normal *= -1;
@@ -1372,15 +1344,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
                 bool hasFaceOne = false;
                 bool hasFaceTwo = false;
-                IntersectionIterator isIt = problem_.gridView().ibegin(element1);
-                IntersectionIterator isEndIt = problem_.gridView().iend(element1);
-                for (; isIt != isEndIt; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), element1))
                 {
-                    if (isIt->indexInInside() == interactionVolume.getIndexOnElement(0, 1))
+                    if (intersection.indexInInside() == interactionVolume.getIndexOnElement(0, 1))
                     {
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            auto outside = isIt->outside();
+                            auto outside = intersection.outside();
                             if (element1.level() > outside.level())
                             {
                                 interactionVolume.setSubVolumeElement(outside, 2);
@@ -1392,11 +1362,11 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
                             }
                         }
                     }
-                    if (isIt->indexInInside() == interactionVolume.getIndexOnElement(0, 2))
+                    if (intersection.indexInInside() == interactionVolume.getIndexOnElement(0, 2))
                     {
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            auto outside = isIt->outside();
+                            auto outside = intersection.outside();
                             if (element1.level() > outside.level())
                             {
                                 interactionVolume.setSubVolumeElement(outside, 4);
@@ -1511,15 +1481,13 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
             auto element3 = interactionVolume.getSubVolumeElement(2);
 
-            IntersectionIterator isIt = problem_.gridView().ibegin(element3);
-            IntersectionIterator isEndIt = problem_.gridView().iend(element3);
-            for (; isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element3))
             {
-                if (isIt->indexInInside() == interactionVolume.getIndexOnElement(2, 2))
+                if (intersection.indexInInside() == interactionVolume.getIndexOnElement(2, 2))
                 {
-                    if (isIt->neighbor())
+                    if (intersection.neighbor())
                     {
-                        auto outside = isIt->outside();
+                        auto outside = intersection.outside();
                         if (element3.level() > outside.level())
                         {
                             interactionVolume.setSubVolumeElement(outside, 6);
@@ -1624,42 +1592,40 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
     std::vector < std::vector<int> > elemVertMap(problem_.gridView().size(dim), std::vector<int>(8, -1));
 
     //Add elements to the interaction volumes and store element-vertex map
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-        asImp_().storeSubVolumeElements(*eIt, elemVertMap);
+    for (const auto& element : Dune::elements(problem_.gridView()))
+        asImp_().storeSubVolumeElements(element, elemVertMap);
 
     for (unsigned int i = 0; i < asImp_().interactionVolumes_.size(); i++)
         if (asImp_().interactionVolumes_[i].getElementNumber() == 0)
             asImp_().interactionVolumes_[i].printInteractionVolumeInfo();
 
     // Store information related to DUNE intersections for all interaction volumes
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-        asImp_().storeIntersectionInfo(*eIt, elemVertMap);
+    for (const auto& element : Dune::elements(problem_.gridView()))
+        asImp_().storeIntersectionInfo(element, elemVertMap);
 
     faceVertices_.clear();
     faceVertices_.resize(problem_.gridView().size(0));
 
     // Complete storage of the interaction volumes using the previously stored information
     // about the orientation and relationship of the DUNE elements in the interaction volumes (see doc/docextra/3dmpfa)
-    VertexIterator vEndIt = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
+    for (const auto& vertex : Dune::vertices(problem_.gridView()))
     {
-        int vIdxGlobal = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(vertex);
 
         InteractionVolume& interactionVolume = asImp_().interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.getElementNumber() == 8)
         {
-            asImp_().storeInnerInteractionVolume(interactionVolume, *vIt);
+            asImp_().storeInnerInteractionVolume(interactionVolume, vertex);
         }
         else if (interactionVolume.isBoundaryInteractionVolume())
         {
-            asImp_().storeBoundaryInteractionVolume(interactionVolume, *vIt);
+            asImp_().storeBoundaryInteractionVolume(interactionVolume, vertex);
         }
         //hanging node!
         else
         {
-            storeHangingNodeInteractionVolume(interactionVolume, *vIt);
+            storeHangingNodeInteractionVolume(interactionVolume, vertex);
         }
 
         if (!interactionVolume.isBoundaryInteractionVolume())

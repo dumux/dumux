@@ -96,9 +96,7 @@ class StokesncniModel : public StokesncModel<TypeTag>
     enum { useMoles = GET_PROP_VALUE(TypeTag, UseMoles) };
 	enum { numComponents = Indices::numComponents };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+   typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
@@ -141,26 +139,24 @@ public:
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            int idx = this->elementMapper().index(*eIt);
+            int idx = this->elementMapper().index(element);
 
             rank[idx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemBcTypes.update(this->problem_(), *eIt, fvGeometry);
+            fvGeometry.update(this->gridView_(), element);
+            elemBcTypes.update(this->problem_(), element, fvGeometry);
 
-            int numLocalVerts = eIt->subEntities(dim);
+            int numLocalVerts = element.subEntities(dim);
 
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int vIdxGlobal = this->vertexMapper().subIndex(*eIt, i, dim);
+                int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
 
                 volVars.update(sol[vIdxGlobal],
                                this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                i,
                                false);

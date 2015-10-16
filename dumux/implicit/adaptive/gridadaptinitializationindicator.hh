@@ -64,11 +64,9 @@ private:
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
     };
 
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid::ctype CoordScalar;
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
@@ -211,12 +209,11 @@ public:
 
         // 1) calculate Indicator -> min, maxvalues
         // loop over all leaf elements
-        const ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
 
-            int globalIdxI = problem_.elementMapper().index(*eIt);
-            int level = eIt->level();
+            int globalIdxI = problem_.elementMapper().index(element);
+            int level = element.level();
             maxLevel_ = std::max(level, maxLevel_);
 
             if (level < minAllowedLevel_)
@@ -232,13 +229,13 @@ public:
             // get the fvGeometry and elementVolVars needed for the bc and source interfaces
             FVElementGeometry fvGeometry;
             ElementVolumeVariables elemVolVars;
-            fvGeometry.update(problem_.gridView(), *eIt);
-            elemVolVars.update(problem_, *eIt, fvGeometry, false /* oldSol? */);
+            fvGeometry.update(problem_.gridView(), element);
+            elemVolVars.update(problem_, element, fvGeometry, false /* oldSol? */);
 
             // Check if we have to refine around a source term
             if (indicatorVector_[globalIdxI] != refineCell && refineAtSource_)
             {
-                if(hasSource_(*eIt, fvGeometry, elemVolVars))
+                if(hasSource_(element, fvGeometry, elemVolVars))
                 {
                     nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                     indicatorVector_[globalIdxI] = refineCell;
@@ -248,18 +245,17 @@ public:
 
             // get the element boundary types
             ElementBoundaryTypes bcTypes;
-            bcTypes.update(problem_, *eIt, fvGeometry);
+            bcTypes.update(problem_, element, fvGeometry);
 
             // Check if we have to refine at the boundary
             if (indicatorVector_[globalIdxI] != refineCell && (refineAtDirichletBC_ || refineAtFluxBC_))
             {
                 // Calculate the boundary indicator for all boundary intersections
-                const IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
                 {
-                    if (isIt->boundary())
+                    if (intersection.boundary())
                     {
-                        if(hasRefineBC_(bcTypes, *eIt, *isIt, fvGeometry, elemVolVars))
+                        if(hasRefineBC_(bcTypes, element, intersection, fvGeometry, elemVolVars))
                         {
                             nextMaxLevel_ = std::min(std::max(level + 1, nextMaxLevel_), maxAllowedLevel_);
                             indicatorVector_[globalIdxI] = refineCell;

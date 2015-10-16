@@ -51,8 +51,6 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
     enum
@@ -108,11 +106,11 @@ public:
 
         if (!compressibility_)
         {
-            ElementIterator element = problem_.gridView().template begin<0> ();
+            const auto element = *problem_.gridView().template begin<0>();
             FluidState fluidState;
-            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setTemperature(problem_.temperature(*element));
+            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+            fluidState.setTemperature(problem_.temperature(element));
             fluidState.setSaturation(wPhaseIdx, 1.);
             fluidState.setSaturation(nPhaseIdx, 0.);
             density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -206,23 +204,22 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         // We are looking for two things:
         // IsIndexJ, the index of the interface from the neighbor-cell point of view
         // GlobalIdxK, the index of the third cell
-        // for efficienty this is done in one IntersectionIterator-Loop
+        // for efficienty this is done in one intersection loop
 
         // Intersectioniterator around cell I
-        IntersectionIterator isItEndI = problem_.gridView().iend(elementI);
-        for (IntersectionIterator isItI = problem_.gridView().ibegin(elementI); isItI != isItEndI; ++isItI)
+        for (const auto& intersectionI : Dune::intersections(problem_.gridView(), elementI))
         {
-            if (isItI->neighbor())
+            if (intersectionI.neighbor())
             {
-                auto neighbor2 = isItI->outside();
+                auto neighbor2 = intersectionI.outside();
 
                 // make sure we do not choose elemntI as third element
                 // -> faces with hanging node have more than one intersection but only one face index!
-                if (neighbor2 != elementJ && isItI->indexInInside() == isIndexI)
+                if (neighbor2 != elementJ && intersectionI.indexInInside() == isIndexI)
                 {
                     globalIdxK = problem_.variables().index(neighbor2);
                     elementK = neighbor2;
-                    faceAreaSum += isItI->geometry().volume();
+                    faceAreaSum += intersectionI.geometry().volume();
 
                     break;
                 }

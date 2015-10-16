@@ -142,8 +142,6 @@ class TwoPNCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GridView::ctype CoordScalar;
@@ -168,14 +166,12 @@ public:
 
         setSwitched_(false);
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator elemEndIt = this->gridView_().template end<0>();
-        for (; eIt != elemEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
             if (!isBox) // i.e. cell-centered discretization
             {
-                int dofIdxGlobal = this->dofMapper().index(*eIt);
-                const GlobalPosition &globalPos = eIt->geometry().center();
+                int dofIdxGlobal = this->dofMapper().index(element);
+                const GlobalPosition &globalPos = element.geometry().center();
 
                 // initialize phase presence
                 staticDat_[dofIdxGlobal].phasePresence
@@ -190,16 +186,14 @@ public:
 
         if (isBox) // i.e. vertex-centered discretization
         {
-            VertexIterator vIt = this->gridView_().template begin<dim> ();
-            const VertexIterator &vEndIt = this->gridView_().template end<dim> ();
-            for (; vIt != vEndIt; ++vIt)
+            for (const auto& vertex : Dune::vertices(this->gridView_()))
             {
-                int dofIdxGlobal = this->dofMapper().index(*vIt);
-                const GlobalPosition &globalPos = vIt->geometry().corner(0);
+                int dofIdxGlobal = this->dofMapper().index(vertex);
+                const GlobalPosition &globalPos = vertex.geometry().corner(0);
 
                 // initialize phase presence
                 staticDat_[dofIdxGlobal].phasePresence
-                    = this->problem_().initialPhasePresence(*vIt, dofIdxGlobal,
+                    = this->problem_().initialPhasePresence(vertex, dofIdxGlobal,
                                                             globalPos);
                 staticDat_[dofIdxGlobal].wasSwitched = false;
 
@@ -219,13 +213,11 @@ public:
     {
         storage = 0;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        const ElementIterator elemEndIt = this->gridView_().template end<0>();
-        for (; eIt != elemEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
-                this->localResidual().evalPhaseStorage(*eIt, phaseIdx);
+                this->localResidual().evalPhaseStorage(element, phaseIdx);
 
                 for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
                     storage += this->localResidual().storageTerm()[i];
@@ -351,26 +343,24 @@ public:
         VolumeVariables volVars;
         ElementVolumeVariables elemVolVars;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            int eIdxGlobal = this->problem_().elementMapper().index(*eIt);
+            int eIdxGlobal = this->problem_().elementMapper().index(element);
             (*rank)[eIdxGlobal] = this->gridView_().comm().rank();
-            fvGeometry.update(this->gridView_(), *eIt);
+            fvGeometry.update(this->gridView_(), element);
 
             elemVolVars.update(this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                false /* oldSol? */);
 
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 volVars.update(sol[dofIdxGlobal],
                                this->problem_(),
-                               *eIt,
+                               element,
                                fvGeometry,
                                scvIdx,
                                false);
@@ -400,7 +390,7 @@ public:
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     (*molarity[compIdx])[dofIdxGlobal] = (volVars.fluidState().molarity(wPhaseIdx, compIdx));
 
-                Tensor K = perm_(this->problem_().spatialParams().intrinsicPermeability(*eIt, fvGeometry, scvIdx));
+                Tensor K = perm_(this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx));
 
                 for (int j = 0; j<dim; ++j)
                     (*Perm[j])[dofIdxGlobal] = K[j][j] /* volVars.permFactor()*/;
@@ -408,8 +398,8 @@ public:
 
             // velocity output
             if(velocityOutput.enableOutput()){
-                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *eIt, wPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, nPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
             }
 
         } // loop over element
@@ -520,14 +510,12 @@ public:
 
         FVElementGeometry fvGeometry;
         static VolumeVariables volVars;
-        ElementIterator it = this->gridView_().template begin<0> ();
-        const ElementIterator &endit = this->gridView_().template end<0> ();
-        for (; it != endit; ++it)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            fvGeometry.update(this->gridView_(), *it);
+            fvGeometry.update(this->gridView_(), element);
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
             {
-                int dofIdxGlobal = this->dofMapper().subIndex(*it, scvIdx, dim);
+                int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
 
                 if (staticDat_[dofIdxGlobal].visited)
                     continue;
@@ -535,11 +523,11 @@ public:
                 staticDat_[dofIdxGlobal].visited = true;
                 volVars.update(curGlobalSol[dofIdxGlobal],
                                this->problem_(),
-                               *it,
+                               element,
                                fvGeometry,
                                scvIdx,
                                false);
-                const GlobalPosition &global = it->geometry().corner(scvIdx);
+                const GlobalPosition &global = element.geometry().corner(scvIdx);
                 if (primaryVarSwitch_(curGlobalSol, volVars, dofIdxGlobal, global))
                     wasSwitched = true;
             }

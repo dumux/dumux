@@ -162,7 +162,6 @@ class TwoCStokesTwoPTwoCProblem : public MultiDomainProblem<TypeTag>
     typedef typename Stokes2cGridView::template Codim<0>::Entity SDElement1;
     typedef typename TwoPTwoCGridView::template Codim<0>::Entity SDElement2;
 
-    typedef typename MDGrid::template Codim<0>::LeafIterator ElementIterator;
     typedef typename MDGrid::LeafSubDomainInterfaceIterator SDInterfaceIterator;
 
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
@@ -287,22 +286,20 @@ public:
         mdGrid.startSubDomainMarking();
 
         // subdivide grid in two subdomains
-        ElementIterator eEndit = mdGrid.template leafend<0>();
-        for (ElementIterator eIt = mdGrid.template leafbegin<0>();
-             eIt != eEndit; ++eIt)
+        for (const auto& element : Dune::elements(mdGrid.leafGridView()))
         {
             // this is required for parallelization
             // checks if element is within a partition
-            if (eIt->partitionType() != Dune::InteriorEntity)
+            if (element.partitionType() != Dune::InteriorEntity)
                 continue;
 
-            GlobalPosition globalPos = eIt->geometry().center();
+            GlobalPosition globalPos = element.geometry().center();
 
             if (globalPos[1] > interfacePosY_)
-                mdGrid.addToSubDomain(stokes2c_,*eIt);
+                mdGrid.addToSubDomain(stokes2c_,element);
             else
                 if(globalPos[0] > noDarcyX_)
-                    mdGrid.addToSubDomain(twoPtwoC_,*eIt);
+                    mdGrid.addToSubDomain(twoPtwoC_,element);
         }
         mdGrid.preUpdateSubDomains();
         mdGrid.updateSubDomains();

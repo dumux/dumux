@@ -80,8 +80,6 @@ class ThreePModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     };
 
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
@@ -137,28 +135,26 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer (numElements);
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(this->gridView_()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
-                int eIdx = this->problem_().elementMapper().index(*eIt);
+                int eIdx = this->problem_().elementMapper().index(element);
                 (*rank)[eIdx] = this->gridView_().comm().rank();
 
                 FVElementGeometry fvGeometry;
-                fvGeometry.update(this->gridView_(), *eIt);
+                fvGeometry.update(this->gridView_(), element);
 
 
                 ElementVolumeVariables elemVolVars;
                 elemVolVars.update(this->problem_(),
-                                   *eIt,
+                                   element,
                                    fvGeometry,
                                    false /* oldSol? */);
 
                 for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    int dofIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dofCodim);
+                    int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                         (*saturation[phaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].saturation(phaseIdx);
@@ -172,9 +168,9 @@ public:
                 }
 
                 // velocity output
-                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, *eIt, wPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, nPhaseIdx);
-                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, *eIt, gPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
+                velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, gPhaseIdx);
             }
         }
 

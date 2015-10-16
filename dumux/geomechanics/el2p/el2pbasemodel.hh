@@ -65,8 +65,6 @@ class ElTwoPBaseModel
 
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
@@ -244,17 +242,15 @@ public:
     {
         storage = 0;
 
-        ElementIterator eIt = gridView_().template begin<0>();
-        const ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_()))
         {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+            if(element.partitionType() == Dune::InteriorEntity)
             {
-                localResidual().evalStorage(*eIt);
+                localResidual().evalStorage(element);
 
                 if (isBox)
                 {
-                    for (int i = 0; i < eIt->subEntities(dim); ++i)
+                    for (int i = 0; i < element.subEntities(dim); ++i)
                         storage += localResidual().storageTerm()[i];
                 }
                 else
@@ -477,9 +473,9 @@ public:
     void serialize(Restarter &res)
     {
         if (isBox)
-            res.template serializeEntities<dim>(asImp_(), this->gridView_());
+            res.template serializeEntities<dim>(asImp_(), gridView_());
         else
-            res.template serializeEntities<0>(asImp_(), this->gridView_());
+            res.template serializeEntities<0>(asImp_(), gridView_());
     }
 
     /*!
@@ -493,9 +489,9 @@ public:
     void deserialize(Restarter &res)
     {
         if (isBox)
-            res.template deserializeEntities<dim>(asImp_(), this->gridView_());
+            res.template deserializeEntities<dim>(asImp_(), gridView_());
         else
-            res.template deserializeEntities<0>(asImp_(), this->gridView_());
+            res.template deserializeEntities<0>(asImp_(), gridView_());
 
         prevSol() = curSol();
     }
@@ -840,24 +836,22 @@ protected:
         //
         // TODO: the initial condition needs to be unique for
         // each vertex. we should think about the API...
-        ElementIterator eIt = gridView_().template begin<0>();
-        const ElementIterator &eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
+        for (const auto& element : Dune::elements(gridView_())) {
             // deal with the current element
-            fvGeometry.update(gridView_(), *eIt);
+            fvGeometry.update(gridView_(), element);
 
             // loop over all element vertices, i.e. sub control volumes
             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; scvIdx++)
             {
                 // get the global index of the degree of freedom
-                int dofIdxGlobal = dofMapper().map(*eIt, scvIdx, dofCodim);
+                int dofIdxGlobal = dofMapper().map(element, scvIdx, dofCodim);
 
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
                 PrimaryVariables initPriVars;
                 Valgrind::SetUndefined(initPriVars);
                 problem_().initial(initPriVars,
-                                   *eIt,
+                                   element,
                                    fvGeometry,
                                    scvIdx);
                 Valgrind::CheckDefined(initPriVars);
@@ -911,21 +905,17 @@ protected:
         boundaryIndices_.resize(numDofs());
         std::fill(boundaryIndices_.begin(), boundaryIndices_.end(), false);
 
-        ElementIterator eIt = gridView_().template begin<0>();
-        ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            Dune::GeometryType geomType = eIt->geometry().type();
+        for (const auto& element : Dune::elements(gridView_())) {
+            Dune::GeometryType geomType = element.geometry().type();
             const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
-            IntersectionIterator isIt = gridView_().ibegin(*eIt);
-            IntersectionIterator isEndIt = gridView_().iend(*eIt);
-            for (; isIt != isEndIt; ++isIt) {
-                if (isIt->boundary()) {
+            for (const auto& intersection : Dune::intersections(gridView_(), element)) {
+                if (intersection.boundary()) {
                     if (isBox)
                     {
                         // add all vertices on the intersection to the set of
                         // boundary vertices
-                        int fIdx = isIt->indexInInside();
+                        int fIdx = intersection.indexInInside();
                         int numFaceVerts = refElement.size(fIdx, 1, dim);
                         for (int faceVertexIdx = 0;
                              faceVertexIdx < numFaceVerts;
@@ -935,13 +925,13 @@ protected:
                                                                    1,
                                                                    faceVertexIdx,
                                                                    dim);
-                            int vIdxGlobal = vertexMapper().subIndex(*eIt, vIdx, dim);
+                            int vIdxGlobal = vertexMapper().subIndex(element, vIdx, dim);
                             boundaryIndices_[vIdxGlobal] = true;
                         }
                     }
                     else
                     {
-                        int eIdxGlobal = elementMapper().index(*eIt);
+                        int eIdxGlobal = elementMapper().index(element);
                         boundaryIndices_[eIdxGlobal] = true;
                     }
                 }

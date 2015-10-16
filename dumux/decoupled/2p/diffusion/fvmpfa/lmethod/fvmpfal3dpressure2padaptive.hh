@@ -141,8 +141,6 @@ class FvMpfaL3dPressure2pAdaptive: public FvMpfaL3dPressure2p<TypeTag>
         };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::Grid Grid;
     typedef typename Element::Geometry Geometry;
 
@@ -178,11 +176,11 @@ public:
      */
     void initialize(bool solveTwice = true)
     {
-        ElementIterator element = problem_.gridView().template begin<0>();
+        const auto element = *problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -284,22 +282,20 @@ template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int globalIdxI = problem_.variables().index(element);
 
-        int levelI = eIt->level();
+        int levelI = element.level();
 
         std::set<int> neighborIndices;
 
-        int numVertices = eIt->geometry().corners();
+        int numVertices = element.geometry().corners();
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(*eIt, vIdx, dim);
+            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(element, vIdx, dim);
 
             InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
 
@@ -360,7 +356,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
         }
 
         this->A_.setrowsize(globalIdxI, neighborIndices.size());
-    } // end of 'for' ElementIterator
+    } // end of element loop
 
     return;
 }
@@ -369,24 +365,22 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
 template<class TypeTag>
 void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
 {
-    // determine matrix row sizes
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
     // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int globalIdxI = problem_.variables().index(element);
 
-        int levelI = eIt->level();
+        int levelI = element.level();
 
         // add diagonal index
         this->A_.addindex(globalIdxI, globalIdxI);
 
-        int numVertices = eIt->geometry().corners();
+        int numVertices = element.geometry().corners();
 
         for (int vIdx = 0; vIdx < numVertices; vIdx++)
         {
-            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(*eIt, vIdx, dim);
+            int vIdxGlobal = problem_.variables().vertexMapper().subIndex(element, vIdx, dim);
 
             InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
             for (int subVolumeIdx = 0; subVolumeIdx < InteractionVolume::subVolumeTotalNum; subVolumeIdx++)
@@ -409,7 +403,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
                 }
             }
         }
-    } // end of 'for' ElementIterator
+    } // end of element loop
 
     return;
 }
@@ -423,16 +417,15 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    VertexIterator vEndIt = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
+    for (const auto& vertex : Dune::vertices(problem_.gridView()))
     {
 #if HAVE_MPI
-        if (vIt->partitionType() != Dune::InteriorEntity && vIt->partitionType() != Dune::BorderEntity)
+        if (vertex.partitionType() != Dune::InteriorEntity && vertex.partitionType() != Dune::BorderEntity)
         {
             continue;
         }
 #endif
-        int vIdxGlobal = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(vertex);
 
         InteractionVolume& interactionVolume = this->interactionVolumes_.interactionVolume(vIdxGlobal);
 

@@ -494,7 +494,6 @@ class EntityExchanger
     enum { dofCodim = AmgTraits::dofCodim };
     typedef typename GridView::Traits::Grid Grid;
     typedef typename Matrix::block_type BlockType;
-    typedef typename GridView::template Codim<dofCodim>::Iterator EntityIterator;
     typedef typename Grid::Traits::GlobalIdSet IDS;
     typedef typename IDS::IdType IdType;
     typedef typename Matrix::RowIterator RowIterator;
@@ -512,14 +511,12 @@ public:
 
         const GridView& gridView = problem.gridView();
 
-        EntityIterator entityEndIt = gridView.template end<dofCodim>();
-        for (EntityIterator entityIt = gridView.template begin<dofCodim>();
-             entityIt != entityEndIt; ++entityIt)
+        for (const auto& entity : Dune::entities(gridView, Dune::Codim<dofCodim>()))
         {
-            if (entityIt->partitionType() == Dune::BorderEntity)
+            if (entity.partitionType() == Dune::BorderEntity)
             {
-                int localIdx = problem_.model().dofMapper().index(*entityIt);
-                IdType dofIdxGlobal = gridView.grid().globalIdSet().id(*entityIt);
+                int localIdx = problem_.model().dofMapper().index(entity);
+                IdType dofIdxGlobal = gridView.grid().globalIdSet().id(entity);
 
                 std::pair<IdType,int> g2iPair(dofIdxGlobal, localIdx);
                 gid2Index_.insert(g2iPair);

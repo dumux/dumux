@@ -132,10 +132,9 @@ class FvMpfaL2dPressure2pAdaptive: public FVPressure<TypeTag>
 
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename GridView::Grid Grid;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GridView::Intersection Intersection;
+    typedef typename GridView::Grid Grid;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -158,6 +157,9 @@ private:
 
     typedef std::vector<InteractionVolume> GlobalInteractionVolumeVector;
     typedef std::vector<Dune::FieldVector<bool, 2 * dim> > InnerBoundaryVolumeFaces;
+
+    // helper function thats find the correct neighboring intersections
+    Intersection getNextIntersection_(const Element&, const IntersectionIterator&);
 
     //initializes the matrix to store the system of equations
     friend class FVPressure<TypeTag>;
@@ -200,11 +202,11 @@ public:
     {
         ParentType::initialize();
 
-        ElementIterator element = problem_.gridView().template begin<0>();
+        const auto element = *problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -230,10 +232,9 @@ public:
     void storePressureSolution()
     {
         // iterate through leaf grid an evaluate c0 at cell center
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
-            storePressureSolution(*eIt);
+            storePressureSolution(element);
         }
     }
 
@@ -393,11 +394,9 @@ public:
             ScalarSolutionType *potentialSecond = writer.allocateManagedBuffer(size);
             ScalarSolutionType *pc = writer.allocateManagedBuffer(size);
 
-            ElementIterator eItBegin = problem_.gridView().template begin<0>();
-            ElementIterator eEndIt = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
+            for (const auto& element : Dune::elements(problem_.gridView()))
             {
-                int idx = problem_.variables().index(*eIt);
+                int idx = problem_.variables().index(element);
                 CellData& cellData = problem_.variables().cellData(idx);
 
                 (*pc)[idx] = cellData.capillaryPressure();
@@ -546,84 +545,79 @@ private:
 };
 
 template<class TypeTag>
+typename FvMpfaL2dPressure2pAdaptive<TypeTag>::Intersection
+  FvMpfaL2dPressure2pAdaptive<TypeTag>::getNextIntersection_(const Element& element,
+                                                             const IntersectionIterator& isIt)
+{
+    auto isItBegin = problem_.gridView().ibegin(element);
+    const auto isEndIt = problem_.gridView().iend(element);
+
+    auto tempIsIt = isIt;
+    auto nextIsIt = ++tempIsIt;
+
+    // get 'nextIsIt'
+    switch (GET_PROP_VALUE(TypeTag, GridImplementation))
+    {
+        // for ALUGrid and UGGrid
+        case GridTypeIndices::aluGrid:
+        case GridTypeIndices::ugGrid:
+        {
+            if (nextIsIt == isEndIt)
+                nextIsIt = isItBegin;
+
+            break;
+        }
+        default:
+        {
+            DUNE_THROW(Dune::NotImplemented,
+                       "GridType can not be used with adaptive MPFAL!");
+            break;
+        }
+    }
+
+    return *nextIsIt;
+}
+
+template<class TypeTag>
 void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
 {
     // determine matrix row sizes
-    ElementIterator eItBegin = problem_.gridView().template begin<0>();
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int eIdxGlobalI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(element);
 
         // initialize row size
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
-        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = isItBegin; isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem_.gridView().iend(element);
+        for (auto isIt = problem_.gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
-            if (isIt->neighbor())
+            const auto& intersection = *isIt;
+
+            if (intersection.neighbor())
             {
                 rowSize++;
 
-                IntersectionIterator tempisIt = isIt;
-                IntersectionIterator tempisItBegin = isItBegin;
+                auto nextIntersection = getNextIntersection_(element, isIt);
 
-                // 'nextIsIt' iterates over next codimension 1 intersection neighboring with 'isIt'
-                IntersectionIterator nextIsIt = ++tempisIt;
-
-                // get 'nextIsIt'
-                switch (GET_PROP_VALUE(TypeTag, GridImplementation))
+                if (nextIntersection.neighbor())
                 {
-                // for ALUGrid and UGGrid
-                case GridTypeIndices::aluGrid:
-                case GridTypeIndices::ugGrid:
-                {
-                    if (nextIsIt == isEndIt)
-                        nextIsIt = isItBegin;
-
-                    break;
-                }
-                default:
-                {
-                    DUNE_THROW(Dune::NotImplemented,
-                               "GridType cannot be used with adaptive MPFAL!");
-                    break;
-                }
-                }
-
-//            if (isIt->neighbor() && nextIsIt->neighbor())
-//                rowSize++;
-
-                if (nextIsIt->neighbor())
-                {
-                    // access the common neighbor of isIt's and nextIsIt's outside
-                    auto outside = isIt->outside();
-                    auto nextisItoutside = nextIsIt->outside();
-
                     bool isCorner = true;
 
-                    IntersectionIterator innerisItEnd = problem_.gridView().iend(outside);
-                    IntersectionIterator innernextisItEnd = problem_.gridView().iend(nextisItoutside);
-
-                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(outside);
-                            innerisIt != innerisItEnd; ++innerisIt)
+                    for (const auto& innerIntersection
+                         : Dune::intersections(problem_.gridView(), *intersection.outside()))
                     {
-                        for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(nextisItoutside);
-                                innernextisIt != innernextisItEnd; ++innernextisIt)
+                        for (const auto& innerNextIntersection
+                             : Dune::intersections(problem_.gridView(), *nextIntersection.outside()))
                         {
-                            if (innerisIt->neighbor() && innernextisIt->neighbor())
+                            if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                             {
-                                auto innerisItoutside = innerisIt->outside();
-                                auto innernextisItoutside = innernextisIt->outside();
-
-                                if (innerisItoutside == nextisItoutside || innernextisItoutside == outside)
-//                                    if (innerisItoutside == innernextisItoutside && innerisItoutside != eIt)
+                                if (innerIntersection.outside() == nextIntersection.outside()
+                                    || innerNextIntersection.outside() == intersection.outside())
                                 {
                                     isCorner = false;
-//                                    rowSize++;
                                     break;
                                 }
                             }
@@ -633,7 +627,6 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                             break;
                         }
                     }
-
                     if (isCorner)
                     {
                         rowSize++;
@@ -641,117 +634,88 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                 }
             }
 
-        } // end of 'for' IntersectionIterator
+        } // end of intersection loop
 
         rowSize = std::min(rowSize, 13); //in 2-D
 
         // set number of indices in row eIdxGlobalI to rowSize
         this->A_.setrowsize(eIdxGlobalI, rowSize);
 
-    } // end of 'for' ElementIterator
+    } // end of element loop
 
     // indicate that size of all rows is defined
     this->A_.endrowsizes();
     // determine position of matrix entries
-    for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int eIdxGlobalI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(element);
 
         // add diagonal index
         this->A_.addindex(eIdxGlobalI, eIdxGlobalI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
-        IntersectionIterator isEndIt = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = isItBegin; isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem_.gridView().iend(element);
+        for (auto isIt = problem_.gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
-            if (isIt->neighbor())
+            const auto& intersection = *isIt;
+
+            if (intersection.neighbor())
             {
                 // access neighbor
-                auto outside = isIt->outside();
+                auto outside = intersection.outside();
                 int eIdxGlobalJ = problem_.variables().index(outside);
 
                 // add off diagonal index
                 // add index (row,col) to the matrix
                 this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
 
-                if (eIt->level() < outside.level())
+                if (element.level() < outside.level())
                 {
                     continue;
                 }
 
-                IntersectionIterator tempisIt = isIt;
-                IntersectionIterator tempisItBegin = isItBegin;
+                auto nextIntersection = getNextIntersection_(element, isIt);
 
-                // 'nextIsIt' iterates over next codimension 1 intersection neighboring with 'isIt'
-                // sequence of next is anticlockwise of 'isIt'
-                IntersectionIterator nextIsIt = ++tempisIt;
-
-                // get 'nextIsIt'
-                switch (GET_PROP_VALUE(TypeTag, GridImplementation))
+                if (nextIntersection.neighbor())
                 {
-                // for ALUGrid and UGGrid
-                case GridTypeIndices::aluGrid:
-                case GridTypeIndices::ugGrid:
-                {
-                    if (nextIsIt == isEndIt)
-                        nextIsIt = isItBegin;
-
-                    break;
-                }
-                default:
-                {
-                    DUNE_THROW(Dune::NotImplemented,
-                               "GridType cannot be used with adaptive MPFAL!");
-                    break;
-                }
-                }
-
-                if (nextIsIt->neighbor())
-                {
-                    // access the common neighbor of isIt's and nextIsIt's outside
-                    auto nextisItoutside = nextIsIt->outside();
-
-                    if (eIt->level() < nextisItoutside.level())
+                    // access the common neighbor of intersection's and nextIntersection's outside
+                    if (element.level() < nextIntersection.outside().level())
                     {
                         continue;
                     }
 
-                    IntersectionIterator innerisItEnd = problem_.gridView().iend(outside);
-                    IntersectionIterator innernextisItEnd = problem_.gridView().iend(nextisItoutside);
-
-                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside);
-                            innerisIt != innerisItEnd; ++innerisIt)
+                    for (const auto& innerIntersection
+                         : Dune::intersections(problem_.gridView(), *intersection.outside()))
                     {
-                        for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(nextisItoutside);
-                                innernextisIt != innernextisItEnd; ++innernextisIt)
+                        for (const auto& innerNextIntersection
+                             : Dune::intersections(problem_.gridView(), *nextIntersection.outside()))
                         {
-                            if (innerisIt->neighbor() && innernextisIt->neighbor())
+                            if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                             {
-                                auto innerisItoutside = innerisIt->outside();
-                                auto innernextisItoutside = innernextisIt->outside();
+                                auto innerOutside = innerIntersection.outside();
+                                auto nextOutside = nextIntersection.outside();
 
-                                if (innerisItoutside == innernextisItoutside && innerisItoutside != eIt
-                                        && innerisItoutside != nextisItoutside)
+                                if (innerOutside == innerNextIntersection.outside() && innerOutside != element
+                                        && innerOutside != nextOutside)
                                 {
-                                    int eIdxGlobalCorner = problem_.variables().index(innerisItoutside);
+                                    int eIdxGlobalCorner = problem_.variables().index(innerOutside);
 
                                     this->A_.addindex(eIdxGlobalI, eIdxGlobalCorner);
 
-                                    if (eIt->level() > outside->level())
+                                    if (element.level() > outside->level())
                                     {
-                                        int eIdxGlobalJCorner = problem_.variables().index(nextisItoutside);
+                                        int eIdxGlobalJCorner = problem_.variables().index(nextOutside);
 
                                         this->A_.addindex(eIdxGlobalJ, eIdxGlobalJCorner);
                                     }
-                                    if (eIt->level() > nextisItoutside.level())
+                                    if (element.level() > nextOutside.level())
                                     {
-                                        int eIdxGlobalJCorner = problem_.variables().index(nextisItoutside);
+                                        int eIdxGlobalJCorner = problem_.variables().index(nextOutside);
 
                                         this->A_.addindex(eIdxGlobalJCorner, eIdxGlobalJ);
                                     }
-                                    if (eIt->level() > innerisItoutside.level())
+                                    if (element.level() > innerOutside.level())
                                     {
                                         this->A_.addindex(eIdxGlobalCorner, eIdxGlobalI);
                                     }
@@ -761,8 +725,8 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     }
                 }
             }
-        } // end of 'for' IntersectionIterator
-    } // end of 'for' ElementIterator
+        } // end of intersection loop
+    } // end of element loop
 
     // indicate that all indices are defined, check consistency
     this->A_.endindices();
@@ -797,78 +761,55 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
     BoundaryTypes bcType;
 
     // run through all elements
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // get index
-        int eIdxGlobal1 = problem_.variables().index(*eIt);
+        int eIdxGlobal1 = problem_.variables().index(element);
 
-        const ReferenceElement& referenceElement = ReferenceElements::general(eIt->geometry().type());
+        const ReferenceElement& referenceElement = ReferenceElements::general(element.geometry().type());
 
-        IntersectionIterator isIt12Begin = problem_.gridView().ibegin(*eIt);
-        IntersectionIterator isIt12End = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt12 = isIt12Begin; isIt12 != isIt12End; ++isIt12)
+        const auto isEndIt12 = problem_.gridView().iend(element);
+        for (auto isIt12 = problem_.gridView().ibegin(element); isIt12 != isEndIt12; ++isIt12)
         {
-            int indexInInside12 = isIt12->indexInInside();
+            const auto& intersection12 = *isIt12;
 
-            if (isIt12->neighbor())
+            int indexInInside12 = intersection12.indexInInside();
+
+            if (intersection12.neighbor())
             {
-                // access neighbor cell 2 of 'isIt12'
-                auto element2 = isIt12->outside();
+                // access neighbor cell 2 of 'intersection12'
+                auto element2 = intersection12.outside();
                 int eIdxGlobal2 = problem_.variables().index(element2);
 
-                if (eIt->level() < element2.level())
+                if (element.level() < element2.level())
                 {
                     continue;
                 }
 
-                // intersection iterator 'nextIsIt' is used to get geometry information
-                IntersectionIterator tempIsIt = isIt12;
-                IntersectionIterator tempIsItBegin = isIt12Begin;
-                IntersectionIterator isIt14 = ++tempIsIt;
+                auto intersection14 = getNextIntersection_(element, isIt12);
 
-                //get isIt14
-                switch (GET_PROP_VALUE(TypeTag, GridImplementation))
-                {
-                // for ALUGrid and UGGrid
-                case GridTypeIndices::aluGrid:
-                case GridTypeIndices::ugGrid:
-                {
-                    if (isIt14 == isIt12End)
-                        isIt14 = isIt12Begin;
-
-                    break;
-                }
-                default:
-                {
-                    DUNE_THROW(Dune::NotImplemented,
-                               "GridType cannot be used with adaptive MPFAL!");
-                    break;
-                }
-                }
-
-                int indexInInside14 = isIt14->indexInInside();
+                int indexInInside14 = intersection14.indexInInside();
 
                 //get center vertex
                 GlobalPosition corner1234(0);
                 int globalVertIdx1234 = 0;
                 bool finished = false;
                 // get the global coordinate and global vertex index of corner1234
-                for (int i = 0; i < isIt12->geometry().corners(); ++i)
+                for (int i = 0; i < intersection12.geometry().corners(); ++i)
                 {
                     int localVertIdx12corner = referenceElement.subEntity(indexInInside12, dim - 1, i, dim);
 
-                    int globalVertIdx12corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx12corner));
+                    int globalVertIdx12corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx12corner));
 
-                    for (int j = 0; j < isIt14->geometry().corners(); ++j)
+                    for (int j = 0; j < intersection14.geometry().corners(); ++j)
                     {
                         int localVertIdx14corner = referenceElement.subEntity(indexInInside14, dim - 1, j, dim);
 
-                        int globalVertIdx14corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx14corner));
+                        int globalVertIdx14corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx14corner));
 
                         if (globalVertIdx12corner == globalVertIdx14corner)
                         {
-                            corner1234 = eIt->geometry().corner(localVertIdx12corner);
+                            corner1234 = element.geometry().corner(localVertIdx12corner);
 
                             globalVertIdx1234 = globalVertIdx12corner;
 
@@ -895,27 +836,27 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 interactionVolumes_[globalVertIdx1234].setCenterPosition(corner1234);
 
                 //store pointer 1
-                interactionVolumes_[globalVertIdx1234].setSubVolumeElement(*eIt, 0);
+                interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element, 0);
                 interactionVolumes_[globalVertIdx1234].setIndexOnElement(indexInInside12, 0, 0);
                 interactionVolumes_[globalVertIdx1234].setIndexOnElement(indexInInside14, 0, 1);
 
-                // center of face in global coordinates, i.e., the midpoint of edge 'isIt12'
-                const GlobalPosition& globalPosFace12 = isIt12->geometry().center();
+                // center of face in global coordinates, i.e., the midpoint of edge 'intersection12'
+                const GlobalPosition& globalPosFace12 = intersection12.geometry().center();
 
                 // get face volume
-                Scalar faceVol12 = isIt12->geometry().volume() / 2.0;
+                Scalar faceVol12 = intersection12.geometry().volume() / 2.0;
 
-                // get outer normal vector scaled with half volume of face 'isIt12'
-                DimVector unitOuterNormal12 = isIt12->centerUnitOuterNormal();
+                // get outer normal vector scaled with half volume of face 'intersection12'
+                DimVector unitOuterNormal12 = intersection12.centerUnitOuterNormal();
 
-                // center of face in global coordinates, i.e., the midpoint of edge 'isIt14'
-                GlobalPosition globalPosFace41 = isIt14->geometry().center();
+                // center of face in global coordinates, i.e., the midpoint of edge 'intersection14'
+                GlobalPosition globalPosFace41 = intersection14.geometry().center();
 
                 // get face volume
-                Scalar faceVol41 = isIt14->geometry().volume() / 2.0;
+                Scalar faceVol41 = intersection14.geometry().volume() / 2.0;
 
-                // get outer normal vector scaled with half volume of face 'isIt14': for numbering of n see Aavatsmark, Eigestad
-                DimVector unitOuterNormal14 = isIt14->centerUnitOuterNormal();
+                // get outer normal vector scaled with half volume of face 'intersection14': for numbering of n see Aavatsmark, Eigestad
+                DimVector unitOuterNormal14 = intersection14.centerUnitOuterNormal();
 
                 interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal12, 0, 0);
                 interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal14, 0, 1);
@@ -929,21 +870,21 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                 //store pointer 2
                 interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element2, 1);
-                interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt12->indexInOutside(), 1, 1);
+                interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection12.indexInOutside(), 1, 1);
                 interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal12, 1, 1);
                 interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol12, 1, 1);
                 interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace12, 1, 1);
 
-                // 'isIt14' is an interior face
-                if (isIt14->neighbor())
+                // 'intersection14' is an interior face
+                if (intersection14.neighbor())
                 {
                     // neighbor cell 3
                     // access neighbor cell 3
-                    auto element4 = isIt14->outside();
+                    auto element4 = intersection14.outside();
 
                     //store pointer 4
                     interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element4, 3);
-                    interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt14->indexInOutside(), 3, 0);
+                    interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection14.indexInOutside(), 3, 0);
 
                     interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal14, 3, 0);
                     interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol41, 3, 0);
@@ -953,28 +894,26 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     GlobalPosition globalPosFace23(0);
                     GlobalPosition globalPosFace34(0);
 
-                    if (element4.level() < eIt->level())
+                    if (element4.level() < element.level())
                     {
                         bool isHangingNode = false;
 
-                        IntersectionIterator isIt2End = problem_.gridView().iend(element2);
-                        IntersectionIterator isIt4End = problem_.gridView().iend(element4);
-                        for (IntersectionIterator isIt2 = problem_.gridView().ibegin(element2);
-                                isIt2 != isIt2End; ++isIt2)
+                        for (const auto& intersection2
+                             : Dune::intersections(problem_.gridView(), element2))
                         {
                             bool breakLoop = false;
-                            for (IntersectionIterator isIt4 = problem_.gridView().ibegin(element4);
-                                    isIt4 != isIt4End; ++isIt4)
+                            for (const auto& intersection4
+                             : Dune::intersections(problem_.gridView(), element4))
                             {
-                                if (isIt2->neighbor() && isIt4->neighbor())
+                                if (intersection2.neighbor() && intersection4.neighbor())
                                 {
-                                    auto element32 = isIt2->outside();
-                                    auto element34 = isIt4->outside();
+                                    auto element32 = intersection2.outside();
+                                    auto element34 = intersection4.outside();
 
                                     //hanging node!
                                     if (element32 == element4)
                                     {
-                                        if (eIt->level() != element2.level())
+                                        if (element.level() != element2.level())
                                         {
                                             breakLoop = true;
                                             isHangingNode = false;
@@ -983,21 +922,21 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                                         isHangingNode = true;
 
-                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt2->indexInInside(),
+                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection2.indexInInside(),
                                                 1, 0);
-                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt2->indexInOutside(),
+                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection2.indexInOutside(),
                                                 3, 1);
 
-                                        globalPosFace23 = isIt2->geometry().center();
+                                        globalPosFace23 = intersection2.geometry().center();
                                         interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace23, 1, 0);
                                         interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace23, 3, 1);
 
-                                        Scalar faceVol23 = isIt2->geometry().volume() / 2.0;
+                                        Scalar faceVol23 = intersection2.geometry().volume() / 2.0;
                                         interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol23, 1, 0);
                                         interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol23, 3, 1);
 
                                         // get outer normal vector scaled with half volume of face : for numbering of n see Aavatsmark, Eigestad
-                                        DimVector unitOuterNormal23 = isIt2->centerUnitOuterNormal();
+                                        DimVector unitOuterNormal23 = intersection2.centerUnitOuterNormal();
 
                                         interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal23, 1, 0);
                                         unitOuterNormal23 *= -1;
@@ -1005,7 +944,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                     }
                                     else if (element34 == element2)
                                     {
-                                        if (eIt->level() != element2.level())
+                                        if (element.level() != element2.level())
                                         {
                                             breakLoop = true;
                                             isHangingNode = false;
@@ -1014,13 +953,13 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                                         isHangingNode = true;
 
-                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt4->indexInInside(),
+                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection4.indexInInside(),
                                                 3, 1);
-                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt4->indexInOutside(),
+                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection4.indexInOutside(),
                                                 1, 0);
 
                                         // get outer normal vector scaled with half volume of face : for numbering of n see Aavatsmark, Eigestad
-                                        DimVector unitOuterNormal43 = isIt4->centerUnitOuterNormal();
+                                        DimVector unitOuterNormal43 = intersection4.centerUnitOuterNormal();
                                         interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal43, 3, 1);
                                     }
                                 }
@@ -1034,21 +973,21 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                         {
                             bool regularNode = false;
 
-                            for (IntersectionIterator isIt2 = problem_.gridView().ibegin(element2);
-                                    isIt2 != isIt2End; ++isIt2)
+                            for (const auto& intersection2
+                                 : Dune::intersections(problem_.gridView(), element2))
                             {
-                                for (IntersectionIterator isIt4 = problem_.gridView().ibegin(element4);
-                                        isIt4 != isIt4End; ++isIt4)
+                                for (const auto& intersection4
+                                     : Dune::intersections(problem_.gridView(), element4))
                                 {
-                                    if (isIt4->neighbor())
+                                    if (intersection4.neighbor())
                                     {
-                                        auto element41 = isIt4->outside();
+                                        auto element41 = intersection4.outside();
 
-                                        if (element41 == eIt && element41.level() > eIt->level())
+                                        if (element41 == element && element41.level() > element.level())
                                         {
-                                            //adjust values of isIt12 in case of hanging nodes
-                                            globalPosFace41 = isIt4->geometry().center();
-                                            faceVol41 = isIt4->geometry().volume() / 2.0;
+                                            //adjust values of intersection12 in case of hanging nodes
+                                            globalPosFace41 = intersection4.geometry().center();
+                                            faceVol41 = intersection4.geometry().volume() / 2.0;
 
                                             interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol41, 0, 1);
                                             interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace41, 0,
@@ -1059,36 +998,36 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                         }
                                     }
 
-                                    if (isIt2->neighbor() && isIt4->neighbor())
+                                    if (intersection2.neighbor() && intersection4.neighbor())
                                     {
-                                        auto element32 = isIt2->outside();
-                                        auto element34 = isIt4->outside();
+                                        auto element32 = intersection2.outside();
+                                        auto element34 = intersection4.outside();
 
                                         //hanging node!
-                                        if (element32 == element34 && element32 != eIt)
+                                        if (element32 == element34 && element32 != element)
                                         {
                                             //store pointer 3
                                             interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element32,
                                                     2);
 
                                             interactionVolumes_[globalVertIdx1234].setIndexOnElement(
-                                                    isIt2->indexInInside(), 1, 0);
+                                                    intersection2.indexInInside(), 1, 0);
                                             interactionVolumes_[globalVertIdx1234].setIndexOnElement(
-                                                    isIt2->indexInOutside(), 2, 1);
+                                                    intersection2.indexInOutside(), 2, 1);
                                             interactionVolumes_[globalVertIdx1234].setIndexOnElement(
-                                                    isIt4->indexInInside(), 3, 1);
+                                                    intersection4.indexInInside(), 3, 1);
                                             interactionVolumes_[globalVertIdx1234].setIndexOnElement(
-                                                    isIt4->indexInOutside(), 2, 0);
+                                                    intersection4.indexInOutside(), 2, 0);
 
-                                            globalPosFace23 = isIt2->geometry().center();
-                                            globalPosFace34 = isIt4->geometry().center();
+                                            globalPosFace23 = intersection2.geometry().center();
+                                            globalPosFace34 = intersection4.geometry().center();
 
-                                            Scalar faceVol23 = isIt2->geometry().volume() / 2.0;
-                                            Scalar faceVol34 = isIt4->geometry().volume() / 2.0;
+                                            Scalar faceVol23 = intersection2.geometry().volume() / 2.0;
+                                            Scalar faceVol34 = intersection4.geometry().volume() / 2.0;
 
                                             // get outer normal vector scaled with half volume of face : for numbering of n see Aavatsmark, Eigestad
-                                            DimVector unitOuterNormal23 = isIt2->centerUnitOuterNormal();
-                                            DimVector unitOuterNormal43 = isIt4->centerUnitOuterNormal();
+                                            DimVector unitOuterNormal23 = intersection2.centerUnitOuterNormal();
+                                            DimVector unitOuterNormal43 = intersection4.centerUnitOuterNormal();
 
                                             interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal23, 1, 0);
                                             unitOuterNormal23 *= -1;
@@ -1099,19 +1038,17 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                                             if (element32.level() > element2.level())
                                             {
-                                                IntersectionIterator isIt3End = problem_.gridView().iend(
-                                                        element32);
-                                                for (IntersectionIterator isIt3 = problem_.gridView().ibegin(
-                                                        element32); isIt3 != isIt3End; ++isIt3)
+                                                for (const auto& intersection3
+                                                     : Dune::intersections(problem_.gridView(), element32))
                                                 {
-                                                    if (isIt3->neighbor())
+                                                    if (intersection3.neighbor())
                                                     {
-                                                        auto element23 = isIt3->outside();
+                                                        auto element23 = intersection3.outside();
 
                                                         if (element23 == element2)
                                                         {
-                                                            globalPosFace23 = isIt3->geometry().center();
-                                                            faceVol23 = isIt3->geometry().volume() / 2.0;
+                                                            globalPosFace23 = intersection3.geometry().center();
+                                                            faceVol23 = intersection3.geometry().volume() / 2.0;
 
                                                         }
                                                     }
@@ -1126,19 +1063,17 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                                             if (element34.level() > element4.level())
                                             {
-                                                IntersectionIterator isIt3End = problem_.gridView().iend(
-                                                        element34);
-                                                for (IntersectionIterator isIt3 = problem_.gridView().ibegin(
-                                                        element34); isIt3 != isIt3End; ++isIt3)
+                                                for (const auto& intersection3
+                                                     : Dune::intersections(problem_.gridView(), element34))
                                                 {
-                                                    if (isIt3->neighbor())
+                                                    if (intersection3.neighbor())
                                                     {
-                                                        auto element43 = isIt3->outside();
+                                                        auto element43 = intersection3.outside();
 
                                                         if (element43 == element4)
                                                         {
-                                                            globalPosFace34 = isIt3->geometry().center();
-                                                            faceVol34 = isIt3->geometry().volume() / 2.0;
+                                                            globalPosFace34 = intersection3.geometry().center();
+                                                            faceVol34 = intersection3.geometry().volume() / 2.0;
 
                                                         }
                                                     }
@@ -1172,23 +1107,21 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     else
                     {
                         bool regularNode = false;
-                        IntersectionIterator isIt2End = problem_.gridView().iend(element2);
-                        IntersectionIterator isIt4End = problem_.gridView().iend(element4);
-                        for (IntersectionIterator isIt2 = problem_.gridView().ibegin(element2);
-                                isIt2 != isIt2End; ++isIt2)
+                        for (const auto& intersection2
+                             : Dune::intersections(problem_.gridView(), element2))
                         {
-                            for (IntersectionIterator isIt4 = problem_.gridView().ibegin(element4);
-                                    isIt4 != isIt4End; ++isIt4)
+                            for (const auto& intersection4
+                                 : Dune::intersections(problem_.gridView(), element4))
                             {
-                                if (isIt4->neighbor())
+                                if (intersection4.neighbor())
                                 {
-                                    auto element41 = isIt4->outside();
+                                    auto element41 = intersection4.outside();
 
-                                    if (element41 == eIt && element41.level() > eIt->level())
+                                    if (element41 == element && element41.level() > element.level())
                                     {
-                                        //adjust values of isIt12 in case of hanging nodes
-                                        globalPosFace41 = isIt4->geometry().center();
-                                        faceVol41 = isIt4->geometry().volume() / 2.0;
+                                        //adjust values of intersection12 in case of hanging nodes
+                                        globalPosFace41 = intersection4.geometry().center();
+                                        faceVol41 = intersection4.geometry().volume() / 2.0;
 
                                         interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol41, 0, 1);
                                         interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace41, 0, 1);
@@ -1197,36 +1130,36 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                                     }
                                 }
 
-                                if (isIt2->neighbor() && isIt4->neighbor())
+                                if (intersection2.neighbor() && intersection4.neighbor())
                                 {
-                                    auto element32 = isIt2->outside();
-                                    auto element34 = isIt4->outside();
+                                    auto element32 = intersection2.outside();
+                                    auto element34 = intersection4.outside();
 
                                     // find the common neighbor cell between cell 2 and cell 3, except cell 1
-                                    if (element32 == element34 && element32 != eIt)
+                                    if (element32 == element34 && element32 != element)
                                     {
                                         //store pointer 3
                                         interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element32, 2);
 
-                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt2->indexInInside(),
+                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection2.indexInInside(),
                                                 1, 0);
                                         interactionVolumes_[globalVertIdx1234].setIndexOnElement(
-                                                isIt2->indexInOutside(), 2, 1);
-                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt4->indexInInside(),
+                                                intersection2.indexInOutside(), 2, 1);
+                                        interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection4.indexInInside(),
                                                 3, 1);
                                         interactionVolumes_[globalVertIdx1234].setIndexOnElement(
-                                                isIt4->indexInOutside(), 2, 0);
+                                                intersection4.indexInOutside(), 2, 0);
 
-                                        globalPosFace23 = isIt2->geometry().center();
-                                        globalPosFace34 = isIt4->geometry().center();
+                                        globalPosFace23 = intersection2.geometry().center();
+                                        globalPosFace34 = intersection4.geometry().center();
 
-                                        Scalar faceVol23 = isIt2->geometry().volume() / 2.0;
-                                        Scalar faceVol34 = isIt4->geometry().volume() / 2.0;
+                                        Scalar faceVol23 = intersection2.geometry().volume() / 2.0;
+                                        Scalar faceVol34 = intersection4.geometry().volume() / 2.0;
 
                                         // get outer normal vector scaled with half volume of face : for numbering of n see Aavatsmark, Eigestad
-                                        DimVector unitOuterNormal23 = isIt2->centerUnitOuterNormal();
+                                        DimVector unitOuterNormal23 = intersection2.centerUnitOuterNormal();
 
-                                        DimVector unitOuterNormal43 = isIt4->centerUnitOuterNormal();
+                                        DimVector unitOuterNormal43 = intersection4.centerUnitOuterNormal();
 
                                         interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal23, 1, 0);
                                         unitOuterNormal23 *= -1;
@@ -1262,22 +1195,22 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                 }
 
-                // 'isIt14' is on the boundary
+                // 'intersection14' is on the boundary
                 else
                 {
-                    problem_.boundaryTypes(bcType, *isIt14);
+                    problem_.boundaryTypes(bcType, intersection14);
                     PrimaryVariables boundValues(0.0);
 
                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 3);
                     if (bcType.isNeumann(pressEqIdx))
                     {
-                        problem_.neumann(boundValues, *isIt14);
+                        problem_.neumann(boundValues, intersection14);
                         boundValues *= faceVol41;
                         interactionVolumes_[globalVertIdx1234].setNeumannCondition(boundValues, 3);
                     }
                     if (bcType.hasDirichlet())
                     {
-                        problem_.dirichlet(boundValues, *isIt14);
+                        problem_.dirichlet(boundValues, intersection14);
                         interactionVolumes_[globalVertIdx1234].setDirichletCondition(boundValues, 3);
                     }
 
@@ -1295,65 +1228,64 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 
                     bool finished = false;
 
-                    IntersectionIterator isIt2End = problem_.gridView().iend(element2);
-                    for (IntersectionIterator isIt2 = problem_.gridView().ibegin(element2); isIt2 != isIt2End;
-                            ++isIt2)
+                    for (const auto& intersection2
+                         : Dune::intersections(problem_.gridView(), element2))
                     {
-                        if (isIt2->boundary())
+                        if (intersection2.boundary())
                         {
-                            for (int i = 0; i < isIt2->geometry().corners(); ++i)
+                            for (int i = 0; i < intersection2.geometry().corners(); ++i)
                             {
-                                int localVertIdx2corner = referenceElement.subEntity(isIt2->indexInInside(), dim - 1, i,
+                                int localVertIdx2corner = referenceElement.subEntity(intersection2.indexInInside(), dim - 1, i,
                                         dim);
 
                                 int globalVertIdx2corner = problem_.variables().index(element2.template subEntity<dim>(localVertIdx2corner));
 
                                 if (globalVertIdx2corner == globalVertIdx1234)
                                 {
-                                    interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt2->indexInInside(), 1,
+                                    interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection2.indexInInside(), 1,
                                             0);
 
-                                    globalPosFace23 = isIt2->geometry().center();
+                                    globalPosFace23 = intersection2.geometry().center();
 
-                                    faceVol23 = isIt2->geometry().volume() / 2.0;
+                                    faceVol23 = intersection2.geometry().volume() / 2.0;
 
-                                    unitOuterNormal23 = isIt2->centerUnitOuterNormal();
+                                    unitOuterNormal23 = intersection2.centerUnitOuterNormal();
 
                                     interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal23, 1, 0);
                                     interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol23, 1, 0);
                                     interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace23, 1, 0);
 
-                                    problem_.boundaryTypes(bcType, *isIt2);
+                                    problem_.boundaryTypes(bcType, intersection2);
                                     PrimaryVariables boundValues(0.0);
 
                                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 1);
                                     if (bcType.isNeumann(pressEqIdx))
                                     {
-                                        problem_.neumann(boundValues, *isIt2);
+                                        problem_.neumann(boundValues, intersection2);
                                         boundValues *= faceVol23;
                                         interactionVolumes_[globalVertIdx1234].setNeumannCondition(boundValues, 1);
                                     }
                                     if (bcType.hasDirichlet())
                                     {
-                                        problem_.dirichlet(boundValues, *isIt2);
+                                        problem_.dirichlet(boundValues, intersection2);
                                         interactionVolumes_[globalVertIdx1234].setDirichletCondition(boundValues, 1);
                                     }
 
                                     interactionVolumes_[globalVertIdx1234].setOutsideFace(2);
 
 
-                                    if (eIt->level() == element2.level())
+                                    if (element.level() == element2.level())
                                     {
-                                        innerBoundaryVolumeFaces_[eIdxGlobal1][isIt12->indexInInside()] = true;
-                                        innerBoundaryVolumeFaces_[eIdxGlobal2][isIt12->indexInOutside()] = true;
+                                        innerBoundaryVolumeFaces_[eIdxGlobal1][intersection12.indexInInside()] = true;
+                                        innerBoundaryVolumeFaces_[eIdxGlobal2][intersection12.indexInOutside()] = true;
                                     }
-                                    else if (eIt->level() < element2.level())
+                                    else if (element.level() < element2.level())
                                     {
-                                        innerBoundaryVolumeFaces_[eIdxGlobal2][isIt12->indexInOutside()] = true;
+                                        innerBoundaryVolumeFaces_[eIdxGlobal2][intersection12.indexInOutside()] = true;
                                     }
-                                    else if (eIt->level() > element2.level())
+                                    else if (element.level() > element2.level())
                                     {
-                                        innerBoundaryVolumeFaces_[eIdxGlobal1][isIt12->indexInInside()] = true;
+                                        innerBoundaryVolumeFaces_[eIdxGlobal1][intersection12.indexInInside()] = true;
                                     }
 
                                     finished = true;
@@ -1376,58 +1308,35 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 }
             }
 
-            // handle boundary face 'isIt12'
+            // handle boundary face 'intersection12'
             else
             {
-                // intersection iterator 'nextIsIt' is used to get geometry information
-                IntersectionIterator tempIsIt = isIt12;
-                IntersectionIterator tempIsItBegin = isIt12Begin;
-                IntersectionIterator isIt14 = ++tempIsIt;
+                auto intersection14 = getNextIntersection_(element, isIt12);
 
-                //get isIt14
-                switch (GET_PROP_VALUE(TypeTag, GridImplementation))
-                {
-                // for ALUGrid and UGGrid
-                case GridTypeIndices::aluGrid:
-                case GridTypeIndices::ugGrid:
-                {
-                    if (isIt14 == isIt12End)
-                        isIt14 = isIt12Begin;
-
-                    break;
-                }
-                default:
-                {
-                    DUNE_THROW(Dune::NotImplemented,
-                               "GridType cannot be used with adaptive MPFAL!");
-                    break;
-                }
-                }
-
-                int indexInInside14 = isIt14->indexInInside();
+                int indexInInside14 = intersection14.indexInInside();
 
                 //get center vertex
                 GlobalPosition corner1234(0);
                 int globalVertIdx1234 = 0;
 
                 // get the global coordinate and global vertex index of corner1234
-                for (int i = 0; i < isIt12->geometry().corners(); ++i)
+                for (int i = 0; i < intersection12.geometry().corners(); ++i)
                 {
                     bool finished = false;
 
                     int localVertIdx12corner = referenceElement.subEntity(indexInInside12, dim - 1, i, dim);
 
-                    int globalVertIdx12corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx12corner));
+                    int globalVertIdx12corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx12corner));
 
-                    for (int j = 0; j < isIt14->geometry().corners(); ++j)
+                    for (int j = 0; j < intersection14.geometry().corners(); ++j)
                     {
                         int localVertIdx14corner = referenceElement.subEntity(indexInInside14, dim - 1, j, dim);
 
-                        int globalVertIdx14corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx14corner));
+                        int globalVertIdx14corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx14corner));
 
                         if (globalVertIdx12corner == globalVertIdx14corner)
                         {
-                            corner1234 = eIt->geometry().corner(localVertIdx12corner);
+                            corner1234 = element.geometry().corner(localVertIdx12corner);
 
                             globalVertIdx1234 = globalVertIdx12corner;
 
@@ -1454,27 +1363,27 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 interactionVolumes_[globalVertIdx1234].setCenterPosition(corner1234);
 
                 //store pointer 1
-                interactionVolumes_[globalVertIdx1234].setSubVolumeElement(*eIt, 0);
+                interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element, 0);
                 interactionVolumes_[globalVertIdx1234].setIndexOnElement(indexInInside12, 0, 0);
                 interactionVolumes_[globalVertIdx1234].setIndexOnElement(indexInInside14, 0, 1);
 
-                // center of face in global coordinates, i.e., the midpoint of edge 'isIt12'
-                const GlobalPosition& globalPosFace12 = isIt12->geometry().center();
+                // center of face in global coordinates, i.e., the midpoint of edge 'intersection12'
+                const GlobalPosition& globalPosFace12 = intersection12.geometry().center();
 
                 // get face volume
-                Scalar faceVol12 = isIt12->geometry().volume() / 2.0;
+                Scalar faceVol12 = intersection12.geometry().volume() / 2.0;
 
-                // get outer normal vector scaled with half volume of face 'isIt12'
-                DimVector unitOuterNormal12 = isIt12->centerUnitOuterNormal();
+                // get outer normal vector scaled with half volume of face 'intersection12'
+                DimVector unitOuterNormal12 = intersection12.centerUnitOuterNormal();
 
-                // center of face in global coordinates, i.e., the midpoint of edge 'isIt14'
-                const GlobalPosition& globalPosFace41 = isIt14->geometry().center();
+                // center of face in global coordinates, i.e., the midpoint of edge 'intersection14'
+                const GlobalPosition& globalPosFace41 = intersection14.geometry().center();
 
                 // get face volume
-                Scalar faceVol41 = isIt14->geometry().volume() / 2.0;
+                Scalar faceVol41 = intersection14.geometry().volume() / 2.0;
 
-                // get outer normal vector scaled with half volume of face 'isIt14': for numbering of n see Aavatsmark, Eigestad
-                DimVector unitOuterNormal14 = isIt14->centerUnitOuterNormal();
+                // get outer normal vector scaled with half volume of face 'intersection14': for numbering of n see Aavatsmark, Eigestad
+                DimVector unitOuterNormal14 = intersection14.centerUnitOuterNormal();
 
                 interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal12, 0, 0);
                 interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal14, 0, 1);
@@ -1486,38 +1395,38 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                 interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace12, 0, 0);
                 interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace41, 0, 1);
 
-                problem_.boundaryTypes(bcType, *isIt12);
+                problem_.boundaryTypes(bcType, intersection12);
                 PrimaryVariables boundValues(0.0);
 
                 interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 0);
                 if (bcType.isNeumann(pressEqIdx))
                 {
-                    problem_.neumann(boundValues, *isIt12);
+                    problem_.neumann(boundValues, intersection12);
                     boundValues *= faceVol12;
                     interactionVolumes_[globalVertIdx1234].setNeumannCondition(boundValues, 0);
                 }
                 if (bcType.hasDirichlet())
                 {
-                    problem_.dirichlet(boundValues, *isIt12);
+                    problem_.dirichlet(boundValues, intersection12);
                     interactionVolumes_[globalVertIdx1234].setDirichletCondition(boundValues, 0);
                 }
 
-                // 'isIt14' is on boundary
-                if (isIt14->boundary())
+                // 'intersection14' is on boundary
+                if (intersection14.boundary())
                 {
-                    problem_.boundaryTypes(bcType, *isIt14);
+                    problem_.boundaryTypes(bcType, intersection14);
                     PrimaryVariables boundValues(0.0);
 
                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 3);
                     if (bcType.isNeumann(pressEqIdx))
                     {
-                        problem_.neumann(boundValues, *isIt14);
+                        problem_.neumann(boundValues, intersection14);
                         boundValues *= faceVol41;
                         interactionVolumes_[globalVertIdx1234].setNeumannCondition(boundValues, 3);
                     }
                     if (bcType.hasDirichlet())
                     {
-                        problem_.dirichlet(boundValues, *isIt14);
+                        problem_.dirichlet(boundValues, intersection14);
                         interactionVolumes_[globalVertIdx1234].setDirichletCondition(boundValues, 3);
                     }
 
@@ -1525,22 +1434,22 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     interactionVolumes_[globalVertIdx1234].setOutsideFace(2);
                 }
 
-                // 'isIt14' is inside
-                else if (isIt14->neighbor())
+                // 'intersection14' is inside
+                else if (intersection14.neighbor())
                 {
                     // neighbor cell 3
                     // access neighbor cell 3
-                    auto element4 = isIt14->outside();
+                    auto element4 = intersection14.outside();
                     int eIdxGlobal4 = problem_.variables().index(element4);
 
-                    if ((eIt->level() == element4.level() && eIdxGlobal1 > eIdxGlobal4)
-                            || eIt->level() < element4.level())
+                    if ((element.level() == element4.level() && eIdxGlobal1 > eIdxGlobal4)
+                            || element.level() < element4.level())
                     {
                         interactionVolumes_[globalVertIdx1234].reset();
                         continue;
                     }
 
-                    interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt14->indexInOutside(), 3, 0);
+                    interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection14.indexInOutside(), 3, 0);
 
                     //store pointer 4
                     interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element4, 3);
@@ -1552,63 +1461,62 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
                     bool finished = false;
 
                     // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                    IntersectionIterator isIt4End = problem_.gridView().iend(element4);
-                    for (IntersectionIterator isIt4 = problem_.gridView().ibegin(element4); isIt4 != isIt4End;
-                            ++isIt4)
+                    for (const auto& intersection4
+                         : Dune::intersections(problem_.gridView(), element4))
                     {
-                        if (isIt4->boundary())
+                        if (intersection4.boundary())
                         {
-                            for (int i = 0; i < isIt4->geometry().corners(); ++i)
+                            for (int i = 0; i < intersection4.geometry().corners(); ++i)
                             {
-                                int localVertIdx4corner = referenceElement.subEntity(isIt4->indexInInside(), dim - 1, i,
+                                int localVertIdx4corner = referenceElement.subEntity(intersection4.indexInInside(), dim - 1, i,
                                         dim);
 
                                 int globalVertIdx4corner = problem_.variables().index(element4.template subEntity<dim>(localVertIdx4corner));
 
                                 if (globalVertIdx4corner == globalVertIdx1234)
                                 {
-                                    interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt4->indexInInside(), 3,
+                                    interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection4.indexInInside(), 3,
                                             1);
 
-                                    const GlobalPosition& globalPosFace34 = isIt4->geometry().center();
-                                    Scalar faceVol34 = isIt4->geometry().volume() / 2.0;
+                                    const GlobalPosition& globalPosFace34 = intersection4.geometry().center();
+                                    Scalar faceVol34 = intersection4.geometry().volume() / 2.0;
 
-                                    DimVector unitOuterNormal43 = isIt4->centerUnitOuterNormal();
+                                    DimVector unitOuterNormal43 = intersection4.centerUnitOuterNormal();
 
                                     interactionVolumes_[globalVertIdx1234].setNormal(unitOuterNormal43, 3, 1);
                                     interactionVolumes_[globalVertIdx1234].setFaceArea(faceVol34, 3, 1);
                                     interactionVolumes_[globalVertIdx1234].setFacePosition(globalPosFace34, 3, 1);
 
-                                    problem_.boundaryTypes(bcType, *isIt4);
+                                    problem_.boundaryTypes(bcType, intersection4);
                                     PrimaryVariables boundValues(0.0);
 
                                     interactionVolumes_[globalVertIdx1234].setBoundary(bcType, 2);
                                     if (bcType.isNeumann(pressEqIdx))
                                     {
-                                        problem_.neumann(boundValues, *isIt4);
+                                        problem_.neumann(boundValues, intersection4);
                                         boundValues *= faceVol34;
                                         interactionVolumes_[globalVertIdx1234].setNeumannCondition(boundValues, 2);
                                     }
                                     if (bcType.hasDirichlet())
                                     {
-                                        problem_.dirichlet(boundValues, *isIt4);
+                                        problem_.dirichlet(boundValues, intersection4);
                                         interactionVolumes_[globalVertIdx1234].setDirichletCondition(boundValues, 2);
                                     }
 
                                     interactionVolumes_[globalVertIdx1234].setOutsideFace(1);
 
-                                    if (eIt->level() == element4.level())
+                                    if (element.level() == element4.level())
                                     {
-                                        innerBoundaryVolumeFaces_[eIdxGlobal1][isIt14->indexInInside()] = true;
-                                        innerBoundaryVolumeFaces_[eIdxGlobal4][isIt14->indexInOutside()] = true;
+                                        innerBoundaryVolumeFaces_[eIdxGlobal1][intersection14.indexInInside()] = true;
+                                        innerBoundaryVolumeFaces_[eIdxGlobal4][intersection14.indexInOutside()] = true;
                                     }
-                                    if (eIt->level() < element4.level())
+                                    if (element.level() < element4.level())
                                     {
-                                         innerBoundaryVolumeFaces_[eIdxGlobal4][isIt14->indexInOutside()] = true;
+                                         innerBoundaryVolumeFaces_[eIdxGlobal4][intersection14.indexInOutside()] = true;
                                     }
-                                    if (eIt->level() > element4.level())
+                                    if (element.level() > element4.level())
                                     {
-                                        innerBoundaryVolumeFaces_[eIdxGlobal1][isIt14->indexInInside()] = true;
+                                        innerBoundaryVolumeFaces_[eIdxGlobal1][intersection14.indexInInside()] = true;
                                     }
 
 
@@ -1645,10 +1553,9 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
 template<class TypeTag>
 void FvMpfaL2dPressure2pAdaptive<TypeTag>::printInteractionVolumes()
 {
-    VertexIterator vEndIt = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
+    for (const auto& vertex : Dune::vertices(problem_.gridView()))
     {
-        int vIdxGlobal = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(vertex);
 
         InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
@@ -1700,10 +1607,9 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    VertexIterator vEndIt = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
+    for (const auto& vertex : Dune::vertices(problem_.gridView()))
     {
-        int vIdxGlobal = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(vertex);
 
         InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
@@ -2608,14 +2514,13 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
     if (problem_.gridView().comm().size() > 1)
     {
         // set ghost and overlap element entries
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
-            if (eIt->partitionType() == Dune::InteriorEntity)
+            if (element.partitionType() == Dune::InteriorEntity)
                 continue;
 
             // get the global index of the cell
-            int eIdxGlobalI = problem_.variables().index(*eIt);
+            int eIdxGlobalI = problem_.variables().index(element);
 
             this->A_[eIdxGlobalI] = 0.0;
             this->A_[eIdxGlobalI][eIdxGlobalI] = 1.0;
@@ -2634,23 +2539,22 @@ template<class TypeTag>
 void FvMpfaL2dPressure2pAdaptive<TypeTag>::updateMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
-        int eIdxGlobal = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(element);
 
         CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 
-        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt), satW);
+        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
 
         cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW)
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosity_[wPhaseIdx];
-        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW)
+        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosity_[nPhaseIdx];
 
         // initialize mobilities

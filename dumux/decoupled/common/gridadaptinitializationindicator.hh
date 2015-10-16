@@ -43,10 +43,8 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
 
@@ -236,15 +234,13 @@ public:
         if (!enableInitializationIndicator_)
             return;
 
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
         // 1) calculate Indicator -> min, maxvalues
         // Schleife über alle Leaf-Elemente
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt;
-             ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
-            int globalIdxI = problem_.variables().index(*eIt);
+            int globalIdxI = problem_.variables().index(element);
 
-            int level = eIt->level();
+            int level = element.level();
             maxLevel_ = std::max(level, maxLevel_);
 
             if (level < minAllowedLevel_)
@@ -257,7 +253,7 @@ public:
             if (refineAtSource_)
             {
                 PrimaryVariables source(0.0);
-                virtualHierarchicSourceSearch_(source, *eIt);
+                virtualHierarchicSourceSearch_(source, element);
                 for (int i = 0; i < numEq; i++)
                 {
                     if (std::abs(source[i]) > 1e-10)
@@ -272,15 +268,14 @@ public:
             if (indicatorVector_[globalIdxI] != refineCell && (refineAtDirichletBC_ || refineAtFluxBC_))
             {
                 // Berechne Verfeinerungsindikator an allen Zellen
-                IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
                 {
-                    if (isIt->boundary() && indicatorVector_[globalIdxI] != refineCell)
+                    if (intersection.boundary() && indicatorVector_[globalIdxI] != refineCell)
                     {
                         BoundaryTypes bcTypes;
                         PrimaryVariables values(0.0);
 
-                        virtualHierarchicBCSearch_(bcTypes, values, *eIt, *isIt);
+                        virtualHierarchicBCSearch_(bcTypes, values, element, intersection);
 
 
                         for (int i = 0; i < numEq; i++)

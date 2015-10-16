@@ -493,8 +493,6 @@ public:
     };
     typedef typename GridView::ctype DT;
     enum {dim = GridView::dimension};
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout> FaceMapper;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
 
@@ -527,10 +525,9 @@ public:
         fractureEdgesIdx_.resize(nEdges);
         std::fill(isDuneFractureEdge_.begin(), isDuneFractureEdge_.end(), false);
 
-        ElementIterator eEndIt = gridView_.template end<0>();
-        for (ElementIterator eIt = gridView_.template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(gridView_))
         {
-             Dune::GeometryType geomType = eIt->geometry().type();
+             Dune::GeometryType geomType = element.geometry().type();
 
              const typename Dune::ReferenceElementContainer<DT,dim>::value_type&
                  refElement = Dune::ReferenceElements<DT,dim>::general(geomType);
@@ -538,7 +535,7 @@ public:
               // Loop over element faces
               for (int i = 0; i < refElement.size(1); i++)
               {
-                  int indexFace = faceMapper_.subIndex(*eIt, i, 1);
+                  int indexFace = faceMapper_.subIndex(element, i, 1);
 
                   /*
                   * it maps the local element vertices "localV1Idx" -> indexVertex1
@@ -547,16 +544,16 @@ public:
                   */
                   int localV1Idx = refElement.subEntity(i, 1, 0, dim);
                   int localV2Idx = refElement.subEntity(i, 1, 1, dim);
-                  int indexVertex1 = vertexMapper_.subIndex(*eIt, localV1Idx, dim);
-                  int indexVertex2 = vertexMapper_.subIndex(*eIt, localV2Idx, dim);
+                  int indexVertex1 = vertexMapper_.subIndex(element, localV1Idx, dim);
+                  int indexVertex2 = vertexMapper_.subIndex(element, localV2Idx, dim);
 
                   Dune::FieldVector<DT, dim> nodeART_from;
                   Dune::FieldVector<DT, dim> nodeART_to;
                   Dune::FieldVector<DT, dim> nodeDune_from;
                   Dune::FieldVector<DT, dim> nodeDune_to;
 
-                  nodeDune_from = eIt->geometry().corner(localV1Idx);
-                  nodeDune_to = eIt->geometry().corner(localV2Idx);
+                  nodeDune_from = element.geometry().corner(localV1Idx);
+                  nodeDune_to = element.geometry().corner(localV2Idx);
 
                   for (int j=0; j < nEdges; j++)
                   {
@@ -595,12 +592,11 @@ public:
 
 #if PLOT
         int i=0;
-        for (VertexIterator vIt=gridView_.template begin<dim>();
-             vIt != gridView_.template end<dim>(); ++vIt)
+        for (const auto& vertex : Dune::vertices(gridView_))
         {
-            Dune::GeometryType geomType = vIt->type();
+            Dune::GeometryType geomType = vertex.type();
             std::cout << "visiting " << geomType
-                      << " at " << vIt->geometry().corner(0)
+                      << " at " << vertex.geometry().corner(0)
                       << "\t" << isDuneFractureVertex_[i]
                       << std::endl;
             i++;

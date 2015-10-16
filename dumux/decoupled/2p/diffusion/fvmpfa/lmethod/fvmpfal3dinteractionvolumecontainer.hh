@@ -72,10 +72,7 @@ class FvMpfaL3dInteractionVolumeContainer
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
     typedef typename Element::Geometry ElementGeometry;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename Intersection::Geometry IntersectionGeometry;
 
@@ -378,24 +375,22 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
     int levelI = element.level();
 
     // run through all intersections
-    IntersectionIterator isIt = problem_.gridView().ibegin(element);
-    IntersectionIterator isEndIt = problem_.gridView().iend(element);
-    for (; isIt != isEndIt; ++isIt)
+    for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
     {
-        int indexInInside = isIt->indexInInside();
+        int indexInInside = intersection.indexInInside();
 
-        DimVector normal = isIt->centerUnitOuterNormal();
+        DimVector normal = intersection.centerUnitOuterNormal();
 
-        const IntersectionGeometry& isGeometry = isIt->geometry();
+        const IntersectionGeometry& isGeometry = intersection.geometry();
 
         Scalar faceVol = isGeometry.volume();
 
         const DimVector& globalPosFace = isGeometry.center();
 
         bool takeIntersection = true;
-        if (isIt->neighbor())
+        if (intersection.neighbor())
         {
-            auto outside = isIt->outside();
+            auto outside = intersection.outside();
             int eIdxGlobalJ = problem_.variables().index(outside);
 
             if (levelI == outside.level() && eIdxGlobal > eIdxGlobalJ)
@@ -407,10 +402,10 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
         if (takeIntersection)
         {
             addRealFaceArea_(faceVol, eIdxGlobal, indexInInside);
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
-                int eIdxGlobalJ = problem_.variables().index(isIt->outside());
-                addRealFaceArea_(faceVol, eIdxGlobalJ, isIt->indexInOutside());
+                int eIdxGlobalJ = problem_.variables().index(intersection.outside());
+                addRealFaceArea_(faceVol, eIdxGlobalJ, intersection.indexInOutside());
             }
 
             for (int i = 0; i < isGeometry.corners(); i++)
@@ -429,9 +424,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 0, 0);
                         interactionVolume.setFacePosition(globalPosFace, 0);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 1, 1);
                             DimVector normalOutside = normal;
@@ -446,9 +441,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 0, 1);
                         interactionVolume.setFacePosition(globalPosFace, 3);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 2, 0);
                             DimVector normalOutside = normal;
@@ -463,9 +458,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 0, 2);
                         interactionVolume.setFacePosition(globalPosFace, 8);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 4, 0);
                             DimVector normalOutside = normal;
@@ -483,9 +478,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 1, 0);
                         interactionVolume.setFacePosition(globalPosFace, 1);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 3, 1);
                             DimVector normalOutside = normal;
@@ -500,9 +495,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 1, 1);
                         interactionVolume.setFacePosition(globalPosFace, 0);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 0, 0);
                             DimVector normalOutside = normal;
@@ -517,9 +512,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 1, 2);
                         interactionVolume.setFacePosition(globalPosFace, 9);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 5, 0);
                             DimVector normalOutside = normal;
@@ -537,9 +532,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 2, 0);
                         interactionVolume.setFacePosition(globalPosFace, 3);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 0, 1);
                             DimVector normalOutside = normal;
@@ -554,9 +549,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 2, 1);
                         interactionVolume.setFacePosition(globalPosFace, 2);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 3, 0);
                             DimVector normalOutside = normal;
@@ -571,9 +566,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 2, 2);
                         interactionVolume.setFacePosition(globalPosFace, 11);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 6, 0);
                             DimVector normalOutside = normal;
@@ -591,9 +586,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 3, 0);
                         interactionVolume.setFacePosition(globalPosFace, 2);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 2, 1);
                             DimVector normalOutside = normal;
@@ -608,9 +603,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 3, 1);
                         interactionVolume.setFacePosition(globalPosFace, 1);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 1, 0);
                             DimVector normalOutside = normal;
@@ -625,9 +620,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 3, 2);
                         interactionVolume.setFacePosition(globalPosFace, 10);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 7, 0);
                             DimVector normalOutside = normal;
@@ -645,9 +640,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 4, 0);
                         interactionVolume.setFacePosition(globalPosFace, 8);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 0, 2);
                             DimVector normalOutside = normal;
@@ -662,9 +657,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 4, 1);
                         interactionVolume.setFacePosition(globalPosFace, 4);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 5, 2);
                             DimVector normalOutside = normal;
@@ -679,9 +674,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 4, 2);
                         interactionVolume.setFacePosition(globalPosFace, 7);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 6, 1);
                             DimVector normalOutside = normal;
@@ -699,9 +694,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 5, 0);
                         interactionVolume.setFacePosition(globalPosFace, 9);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 1, 2);
                             DimVector normalOutside = normal;
@@ -716,9 +711,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 5, 1);
                         interactionVolume.setFacePosition(globalPosFace, 5);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 7, 2);
                             DimVector normalOutside = normal;
@@ -734,9 +729,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 5, 2);
                         interactionVolume.setFacePosition(globalPosFace, 4);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 4, 1);
                             DimVector normalOutside = normal;
@@ -754,9 +749,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 6, 0);
                         interactionVolume.setFacePosition(globalPosFace, 11);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 2, 2);
                             DimVector normalOutside = normal;
@@ -771,9 +766,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 6, 1);
                         interactionVolume.setFacePosition(globalPosFace, 7);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 4, 2);
                             DimVector normalOutside = normal;
@@ -788,9 +783,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 6, 2);
                         interactionVolume.setFacePosition(globalPosFace, 6);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 7, 1);
                             DimVector normalOutside = normal;
@@ -808,9 +803,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 7, 0);
                         interactionVolume.setFacePosition(globalPosFace, 10);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 3, 2);
                             DimVector normalOutside = normal;
@@ -825,9 +820,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 7, 1);
                         interactionVolume.setFacePosition(globalPosFace, 6);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 6, 2);
                             DimVector normalOutside = normal;
@@ -842,9 +837,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         interactionVolume.setNormal(normal, 7, 2);
                         interactionVolume.setFacePosition(globalPosFace, 5);
 
-                        if (isIt->neighbor())
+                        if (intersection.neighbor())
                         {
-                            int indexInOutside = isIt->indexInOutside();
+                            int indexInOutside = intersection.indexInOutside();
 
                             interactionVolume.setIndexOnElement(indexInOutside, 5, 1);
                             DimVector normalOutside = normal;
@@ -854,61 +849,61 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                         }
                     }
                 }
-                if (isIt->boundary())
+                if (intersection.boundary())
                 {
                     if (elemVertMap[vIdxGlobal][0] == eIdxGlobal)
                     {
                         if (indexInInside == 1)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 0);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 0);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 0);
                             }
                         }
                         else if (indexInInside == 3)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 3);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 3);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 3);
                             }
                         }
                         else if (indexInInside == 5)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 8);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 8);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 8);
                             }
                         }
@@ -917,55 +912,55 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                     {
                         if (indexInInside == 3)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 1);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 1);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 1);
                             }
                         }
                         else if (indexInInside == 0)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 0);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 0);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 0);
                             }
                         }
                         else if (indexInInside == 5)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 9);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 9);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 9);
                             }
                         }
@@ -974,55 +969,55 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                     {
                         if (indexInInside == 2)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 3);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 3);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 3);
                             }
                         }
                         else if (indexInInside == 1)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 2);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 2);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 2);
                             }
                         }
                         else if (indexInInside == 5)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 11);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 11);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 11);
                             }
                         }
@@ -1031,55 +1026,55 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                     {
                         if (indexInInside == 0)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 2);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 2);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 2);
                             }
                         }
                         else if (indexInInside == 2)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 1);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 1);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 1);
                             }
                         }
                         else if (indexInInside == 5)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 10);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 10);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 10);
                             }
                         }
@@ -1088,55 +1083,55 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                     {
                         if (indexInInside == 4)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 8);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 8);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 8);
                             }
                         }
                         else if (indexInInside == 1)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 4);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 4);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 4);
                             }
                         }
                         else if (indexInInside == 3)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 7);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 7);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 7);
                             }
                         }
@@ -1145,55 +1140,55 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                     {
                         if (indexInInside == 4)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 9);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 9);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 9);
                             }
                         }
                         else if (indexInInside == 3)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 5);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 5);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 5);
                             }
                         }
                         else if (indexInInside == 0)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 4);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 4);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 4);
                             }
                         }
@@ -1202,55 +1197,55 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                     {
                         if (indexInInside == 4)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 11);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 11);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 11);
                             }
                         }
                         else if (indexInInside == 2)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 7);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 7);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 7);
                             }
                         }
                         else if (indexInInside == 1)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 6);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 6);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 6);
                             }
                         }
@@ -1259,55 +1254,55 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
                     {
                         if (indexInInside == 4)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 10);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 10);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 10);
                             }
                         }
                         else if (indexInInside == 0)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 6);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 6);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 6);
                             }
                         }
                         else if (indexInInside == 2)
                         {
-                            problem_.boundaryTypes(bcType, *isIt);
+                            problem_.boundaryTypes(bcType, intersection);
                             PrimaryVariables boundValues(0.0);
 
                             interactionVolume.setBoundary(bcType, 5);
                             if (bcType.isNeumann(pressureEqIdx))
                             {
-                                problem_.neumann(boundValues, *isIt);
+                                problem_.neumann(boundValues, intersection);
                                 boundValues *= faceVol/4.0;
                                 interactionVolume.setNeumannCondition(boundValues, 5);
                             }
                             if (bcType.hasDirichlet())
                             {
-                                problem_.dirichlet(boundValues, *isIt);
+                                problem_.dirichlet(boundValues, intersection);
                                 interactionVolume.setDirichletCondition(boundValues, 5);
                             }
                         }
@@ -1997,34 +1992,32 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
     std::vector < std::vector<int> > elemVertMap(problem_.gridView().size(dim), std::vector<int>(8, -1));
 
     //Add elements to the interaction volumes and store element-vertex map
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-        storeSubVolumeElements(*eIt, elemVertMap);
+    for (const auto& element : Dune::elements(problem_.gridView()))
+        storeSubVolumeElements(element, elemVertMap);
 
     for (unsigned int i = 0; i < interactionVolumes_.size(); i++)
         if (interactionVolumes_[i].getElementNumber() == 0)
             interactionVolumes_[i].printInteractionVolumeInfo();
 
     // Store information related to DUNE intersections for all interaction volumes
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-        storeIntersectionInfo(*eIt, elemVertMap);
+    for (const auto& element : Dune::elements(problem_.gridView()))
+        storeIntersectionInfo(element, elemVertMap);
 
     // Complete storage of the interaction volumes using the previously stored information
     // about the orientation and relationship of the DUNE elements in the interaction volumes (see doc/docextra/3dmpfa)
-    VertexIterator vEndIt = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
+    for (const auto& vertex : Dune::vertices(problem_.gridView()))
     {
-        int vIdxGlobal = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(vertex);
 
         InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.getElementNumber() == 8)
         {
-            storeInnerInteractionVolume(interactionVolume, *vIt);
+            storeInnerInteractionVolume(interactionVolume, vertex);
         }
         else if (interactionVolume.isBoundaryInteractionVolume())
         {
-            storeBoundaryInteractionVolume(interactionVolume, *vIt);
+            storeBoundaryInteractionVolume(interactionVolume, vertex);
         }
         else
         {

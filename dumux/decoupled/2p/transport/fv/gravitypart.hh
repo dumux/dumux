@@ -70,7 +70,6 @@ private:
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -204,11 +203,11 @@ public:
     //! For initialization
     void initialize()
     {
-        ElementIterator element = problem_.gridView().template begin<0> ();
+        auto element = *problem_.gridView().template begin<0> ();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);

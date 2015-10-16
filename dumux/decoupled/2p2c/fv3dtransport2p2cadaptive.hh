@@ -90,9 +90,8 @@ class FV3dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar,dim+1> TransmissivityMatrix;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -202,11 +201,10 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
 
     Dune::FieldVector<Scalar, 2> entries(0.), timestepFlux(0.);
     // compute update vector
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // get cell infos
-        int globalIdxI = problem().variables().index(*eIt);
+        int globalIdxI = problem().variables().index(element);
         CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
         if(!impet && cellDataI.subdomain()!=2)   // estimate only necessary in subdomain
@@ -217,27 +215,29 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
         double sumfactorout = 0;
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        const auto isEndIt = problem().gridView().iend(element);
+        for (auto isIt = problem().gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
+            const auto& intersection = *isIt;
+
             // handle interior face
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
-                if (enableMPFA && isIt->outside().level() != eIt->level())
+                if (enableMPFA && intersection.outside().level() != element.level())
                     getMpfaFlux(entries, timestepFlux, isIt, cellDataI);
                 else
-                    this->getFlux(entries, timestepFlux, *isIt, cellDataI);
+                    this->getFlux(entries, timestepFlux, intersection, cellDataI);
             }
 
             //     Boundary Face
-            if (isIt->boundary())
+            if (intersection.boundary())
             {
-                this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
+                this->getFluxOnBoundary(entries, timestepFlux, intersection, cellDataI);
             }
 
             if (this->localTimeStepping_)
             {
-                int indexInInside = isIt->indexInInside();
+                int indexInInside = intersection.indexInInside();
                 typename FVTransport2P2C<TypeTag>::LocalTimesteppingData& localData = this->timeStepData_[globalIdxI];
                 if (localData.faceTargetDt[indexInInside] < this->accumulatedDt_ + this->dtThreshold_)
                 {
@@ -268,13 +268,13 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
 
         /***********     Handle source term     ***************/
         PrimaryVariables q(NAN);
-        problem().source(q, *eIt);
+        problem().source(q, element);
         updateVec[wCompIdx][globalIdxI] += q[contiWEqIdx];
         updateVec[nCompIdx][globalIdxI] += q[contiNEqIdx];
 
         // account for porosity
         sumfactorin = std::max(sumfactorin,sumfactorout)
-                        / problem().spatialParams().porosity(*eIt);
+                        / problem().spatialParams().porosity(element);
 
         //calculate time step
         if (this->localTimeStepping_)
@@ -341,10 +341,12 @@ void FV3dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
                               Dune::FieldVector<Scalar, 2>& timestepFlux,
                               const IntersectionIterator& isIt, CellData& cellDataI)
 {
+    const auto& intersection = *isIt;
+
     fluxEntries = 0.;
     timestepFlux = 0.;
     // cell information
-    auto elementI = isIt->inside();
+    auto elementI = intersection.inside();
     int globalIdxI = problem().variables().index(elementI);
 
     // get position
@@ -373,7 +375,7 @@ void FV3dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     PhaseVector potential(0.);
 
     // access neighbor
-    auto neighbor = isIt->outside();
+    auto neighbor = intersection.outside();
     int globalIdxJ = problem().variables().index(neighbor);
     CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
 
@@ -415,7 +417,7 @@ void FV3dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
     int globalIdxAdditional4=-1;
 
     int halfedgesStored
-        = problem().variables().getMpfaData3D(*isIt, T, globalPos3, globalIdx3, globalPos4, globalIdx4  );
+        = problem().variables().getMpfaData3D(intersection, T, globalPos3, globalIdx3, globalPos4, globalIdx4  );
     if (halfedgesStored == 0)
         halfedgesStored = problem().pressureModel().computeTransmissibilities(isIt,T,
                 globalPos3, globalIdx3,  globalPos4, globalIdx4  );
@@ -459,7 +461,7 @@ void FV3dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
         for(int banana = 1; banana < halfedgesStored; banana ++)
         {
             // get data for second interaction region
-            problem().variables().getMpfaData3D(*isIt, additionalT,
+            problem().variables().getMpfaData3D(intersection, additionalT,
                             globalPosAdditional3, globalIdxAdditional3,
                             globalPosAdditional4, globalIdxAdditional4 ,
                             banana); // offset for second interaction region
@@ -510,18 +512,18 @@ void FV3dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
             if(potential[phaseIdx] > 0.)
             {
                 lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
-                cellDataI.setUpwindCell(isIt->indexInInside(), contiEqIdx, true);
+                cellDataI.setUpwindCell(intersection.indexInInside(), contiEqIdx, true);
             }
             else if(potential[phaseIdx] < 0.)
             {
                 lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
-                cellDataI.setUpwindCell(isIt->indexInInside(), contiEqIdx, false);
+                cellDataI.setUpwindCell(intersection.indexInInside(), contiEqIdx, false);
             }
             else
             {
                 doUpwinding[phaseIdx] = false;
-                cellDataI.setUpwindCell(isIt->indexInInside(), contiEqIdx, false);
-                cellDataJ.setUpwindCell(isIt->indexInOutside(), contiEqIdx, false);
+                cellDataI.setUpwindCell(intersection.indexInInside(), contiEqIdx, false);
+                cellDataJ.setUpwindCell(intersection.indexInOutside(), contiEqIdx, false);
             }
         }
         else // Transport after PE with check on flow direction
@@ -529,9 +531,9 @@ void FV3dTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2
             bool cellIwasUpwindCell;
             //get the information from smaller (higher level) cell, as its IS is unique
             if(elementI.level()>neighbor.level())
-                cellIwasUpwindCell = cellDataI.isUpwindCell(isIt->indexInInside(), contiEqIdx);
+                cellIwasUpwindCell = cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx);
             else // reverse neighbors information gathered
-                cellIwasUpwindCell = !cellDataJ.isUpwindCell(isIt->indexInOutside(), contiEqIdx);
+                cellIwasUpwindCell = !cellDataJ.isUpwindCell(intersection.indexInOutside(), contiEqIdx);
 
             if (potential[phaseIdx] > 0. && cellIwasUpwindCell)
                 lambda[phaseIdx] = cellDataI.mobility(phaseIdx);

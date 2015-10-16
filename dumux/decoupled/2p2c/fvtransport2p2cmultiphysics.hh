@@ -74,9 +74,6 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx
     };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
@@ -145,11 +142,10 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
 
     PhaseVector entries(0.), timestepFlux(0.);
     // compute update vector
-    ElementIterator eEndIt = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // get cell infos
-        int globalIdxI = problem().variables().index(*eIt);
+        int globalIdxI = problem().variables().index(element);
         CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
         if(impet or cellDataI.subdomain()==2)   // estimate only necessary in subdomain
@@ -159,18 +155,17 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             double sumfactorout = 0;
 
             // run through all intersections with neighbors and boundary
-            IntersectionIterator isEndIt = problem().gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem().gridView(), element))
             {
-                int indexInInside = isIt->indexInInside();
+                int indexInInside = intersection.indexInInside();
 
                 /****** interior face   *****************/
-                if (isIt->neighbor())
-                    this->getFlux(entries, timestepFlux, *isIt, cellDataI);
+                if (intersection.neighbor())
+                    this->getFlux(entries, timestepFlux, intersection, cellDataI);
 
                 /******  Boundary Face   *****************/
-                if (isIt->boundary())
-                    this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
+                if (intersection.boundary())
+                    this->getFluxOnBoundary(entries, timestepFlux, intersection, cellDataI);
 
                 if (this->enableLocalTimeStepping())
                 {
@@ -206,13 +201,13 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
 
             /***********     Handle source term     ***************/
             PrimaryVariables q(NAN);
-            problem().source(q, *eIt);
+            problem().source(q, element);
             updateVec[wCompIdx][globalIdxI] += q[Indices::contiWEqIdx];
             updateVec[nCompIdx][globalIdxI] += q[Indices::contiNEqIdx];
 
             // account for porosity in fluxes for time-step
             sumfactorin = std::max(sumfactorin,sumfactorout)
-                            / problem().spatialParams().porosity(*eIt);
+                            / problem().spatialParams().porosity(element);
 
             //calculate time step
             if (this->enableLocalTimeStepping())

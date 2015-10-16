@@ -80,9 +80,7 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
         rhs = ParentType::rhs, matrix = ParentType::matrix
     };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
@@ -103,11 +101,11 @@ public:
 
         if (!compressibility_)
         {
-            ElementIterator element = problem_.gridView().template begin<0>();
+            const auto element = *problem_.gridView().template begin<0>();
             FluidState fluidState;
-            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setTemperature(problem_.temperature(*element));
+            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+            fluidState.setTemperature(problem_.temperature(element));
             fluidState.setSaturation(wPhaseIdx, 1.);
             fluidState.setSaturation(nPhaseIdx, 0.);
             density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -306,16 +304,15 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection
         // IsIndexJ, the index of the interface from the neighbor-cell point of view
         // GlobalIdxK, the index of the third cell
         // Intersectioniterator around cell I
-        IntersectionIterator isItEndI = problem_.gridView().iend(elementI);
-        for (IntersectionIterator isItI = problem_.gridView().ibegin(elementI); isItI != isItEndI; ++isItI)
+        for (const auto& intersectionI : Dune::intersections(problem_.gridView(), elementI))
         {
-            if (isItI->neighbor())
+            if (intersectionI.neighbor())
             {
-                auto neighbor2 = isItI->outside();
+                auto neighbor2 = intersectionI.outside();
 
                 // make sure we do not choose elemntI as third element
                 // -> faces with hanging node have more than one intersection but only one face index!
-                if (neighbor2 != elementJ && isItI->indexInInside() == isIndexI)
+                if (neighbor2 != elementJ && intersectionI.indexInInside() == isIndexI)
                 {
                     globalIdxK = problem_.variables().index(neighbor2);
                     elementK = neighbor2;

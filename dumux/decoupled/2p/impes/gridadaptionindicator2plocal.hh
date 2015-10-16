@@ -39,10 +39,8 @@ class GridAdaptionIndicator2PLocal
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
@@ -82,20 +80,18 @@ public:
 
         Scalar maxLocalDelta = 0;
 
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
         // 1) calculate Indicator -> min, maxvalues
         // loop over all leaf-elements
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt;
-                ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // calculate minimum and maximum saturation
             // index of the current leaf-elements
-            int globalIdxI = problem_.variables().index(*eIt);
+            int globalIdxI = problem_.variables().index(element);
 
             if (refineAtSource_)
             {
             PrimaryVariables source(0.0);
-            problem_.source(source, *eIt);
+            problem_.source(source, element);
             for (int i = 0; i < 2; i++)
             {
                 if (std::abs(source[i]) > 1e-10)
@@ -126,27 +122,25 @@ public:
             globalMax = std::max(satI, globalMax);
 
             // calculate refinement indicator in all cells
-            IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
                 if (indicatorVector_[globalIdxI] == 10)
                 {
                     break;
                 }
 
-                const typename IntersectionIterator::Intersection &intersection = *isIt;
                 // exit, if it is not a neighbor
-                if (isIt->boundary())
+                if (intersection.boundary())
                 {
                     BoundaryTypes bcTypes;
-                    problem_.boundaryTypes(bcTypes, *isIt);
+                    problem_.boundaryTypes(bcTypes, intersection);
 
                     for (int i = 0; i < 2; i++)
                     {
                         if (bcTypes.isNeumann(i))
                         {
                             PrimaryVariables flux(0.0);
-                            problem_.neumann(flux, *isIt);
+                            problem_.neumann(flux, intersection);
 
                             bool fluxBound = false;
                             for (int j = 0; j < 2; j++)
@@ -181,8 +175,8 @@ public:
                     int globalIdxJ = problem_.variables().index(outside);
 
                     // treat each intersection only from one side
-                    if (eIt->level() > outside.level()
-                            || (eIt->level() == outside.level() && globalIdxI < globalIdxJ))
+                    if (element.level() > outside.level()
+                            || (element.level() == outside.level() && globalIdxI < globalIdxJ))
                     {
                         Scalar satJ = 0.;
                         switch (saturationType_)

@@ -120,7 +120,6 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         dimWorld = GridView::dimensionworld
     };
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename Element::Geometry::JacobianInverseTransposed JacobianInverseTransposed;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -326,18 +325,16 @@ public:
         const GridFunctionSpace& gridFunctionSpace = this->problem_().model().jacobianAssembler().gridFunctionSpace();
         const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();
         // initialize start and end of element iterator
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndit = this->gridView_().template end<0>();
         // loop over all elements (cells)
-        for (; eIt != eEndit; ++eIt) {
-            if(eIt->partitionType() == Dune::InteriorEntity)
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            if(element.partitionType() == Dune::InteriorEntity)
             {
 
             // get FE function spaces to calculate gradients (gradient data of momentum balance
             // equation is not stored in fluxvars since it is not evaluated at box integration point)
             // copy the values of the sol vector to the localFunctionSpace values of the current element
             LocalFunctionSpace localFunctionSpace(gridFunctionSpace);
-            localFunctionSpace.bind(*eIt);
+            localFunctionSpace.bind(element);
             std::vector<Scalar> values(localFunctionSpace.size());
             for (typename LocalFunctionSpace::Traits::IndexContainer::size_type k=0; k<localFunctionSpace.size(); ++k)
             {
@@ -356,18 +353,18 @@ public:
             typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::JacobianType JacobianType_V;
             typedef typename ScalarDispLFS::Traits::FiniteElementType::Traits::LocalBasisType::Traits::RangeFieldType RF;
 
-            unsigned int eIdx = this->problem_().model().elementMapper().index(*eIt);
+            unsigned int eIdx = this->problem_().model().elementMapper().index(element);
             rank[eIdx] = this->gridView_().comm().rank();
 
-            fvGeometry.update(this->gridView_(), *eIt);
-            elemVolVars.update(this->problem_(), *eIt, fvGeometry, false);
+            fvGeometry.update(this->gridView_(), element);
+            elemVolVars.update(this->problem_(), element, fvGeometry, false);
 
             // loop over all local vertices of the cell
-            int numScv = eIt->subEntities(dim);
+            int numScv = element.subEntities(dim);
 
             for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
             {
-                unsigned int vIdxGlobal = this->dofMapper().subIndex(*eIt, scvIdx, dim);
+                unsigned int vIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
 
                 Te[vIdxGlobal] = elemVolVars[scvIdx].temperature();
                 pw[vIdxGlobal] = elemVolVars[scvIdx].pressure(wPhaseIdx);
@@ -395,7 +392,7 @@ public:
                 double exponent;
                 exponent = 22.2    * (elemVolVars[scvIdx].effPorosity
                             / elemVolVars[scvIdx].porosity() - 1);
-                Keff =    this->problem_().spatialParams().intrinsicPermeability(    *eIt, fvGeometry, scvIdx)[0][0];
+                Keff =    this->problem_().spatialParams().intrinsicPermeability(    element, fvGeometry, scvIdx)[0][0];
                 Keff *= exp(exponent);
                 effKx[eIdx] += Keff/ numScv;
                 effectivePressure[eIdx] += (pn[vIdxGlobal] * sn[vIdxGlobal]
@@ -404,12 +401,12 @@ public:
                 effPorosity[eIdx] +=elemVolVars[scvIdx].effPorosity / numScv;
             };
 
-            const auto geometry = eIt->geometry();
+            const auto geometry = element.geometry();
 
             const GlobalPosition& cellCenter = geometry.center();
             const GlobalPosition& cellCenterLocal = geometry.local(cellCenter);
 
-            deltaEffPressure[eIdx] = effectivePressure[eIdx] + this->problem().pInit(cellCenter, cellCenterLocal, *eIt);
+            deltaEffPressure[eIdx] = effectivePressure[eIdx] + this->problem().pInit(cellCenter, cellCenterLocal, element);
             // determin changes in effective stress from current solution
             // evaluate gradient of displacement shape functions
             std::vector<JacobianType_V> vRefShapeGradient(dispSize);
@@ -432,7 +429,7 @@ public:
                     uGradient[coordDir].axpy(values[scalarDispLFS.localIndex(i)],vShapeGradient[i]);
             }
 
-            const Dune::FieldVector<Scalar, 2> lameParams =    this->problem_().spatialParams().lameParams(*eIt,fvGeometry, 0);
+            const Dune::FieldVector<Scalar, 2> lameParams =    this->problem_().spatialParams().lameParams(element,fvGeometry, 0);
             const Scalar lambda = lameParams[0];
             const Scalar mu = lameParams[1];
 

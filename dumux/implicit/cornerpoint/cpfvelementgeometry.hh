@@ -58,7 +58,6 @@ class CpFVElementGeometry
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     struct SubControlVolume //! FV intersected with element
@@ -128,16 +127,15 @@ public:
         bool onBoundary = false;
 
         // fill neighbor information and control volume face data:
-        IntersectionIterator isEndIt = gridView.iend(element);
-        for (IntersectionIterator isIt = gridView.ibegin(element); isIt != isEndIt; ++isIt)
+        for (const auto& intersection : Dune::intersections(gridView, element))
         {
-            const auto isGeometry = isIt->geometry();
+            const auto isGeometry = intersection.geometry();
 
             // neighbor information and inner cvf data:
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
                 numNeighbors++;
-                neighbors.push_back(isIt->outside());
+                neighbors.push_back(intersection.outside());
 
                 int scvfIdx = numNeighbors - 2;
                 SubControlVolumeFace& scvFace = subContVolFace[scvfIdx];
@@ -147,7 +145,7 @@ public:
 
                 scvFace.ipGlobal = isGeometry.center();
                 //scvFace.ipLocal =  geometry.local(scvFace.ipGlobal);
-                scvFace.normal = isIt->centerUnitOuterNormal();
+                scvFace.normal = intersection.centerUnitOuterNormal();
                 auto di = scvFace.ipGlobal;
                 di -= elementGlobal;
                 if (scvFace.normal*di < 0)
@@ -172,19 +170,19 @@ public:
                 scvFace.fapIndices[0] = scvFace.i;
                 scvFace.fapIndices[1] = scvFace.j;
 
-                scvFace.fIdx = isIt->indexInInside();
+                scvFace.fIdx = intersection.indexInInside();
             }
 
             // boundary cvf data
-            if (isIt->boundary())
+            if (intersection.boundary())
             {
                 onBoundary = true;
-                int bfIdx = isIt->indexInInside();
+                int bfIdx = intersection.indexInInside();
                 SubControlVolumeFace& bFace = boundaryFace[bfIdx];
 
                 bFace.ipGlobal = isGeometry.center();
                 //bFace.ipLocal =  geometry.local(bFace.ipGlobal);
-                bFace.normal = isIt->centerUnitOuterNormal();
+                bFace.normal = intersection.centerUnitOuterNormal();
                 auto di = bFace.ipGlobal;
                 di -= elementGlobal;
                 if (bFace.normal*di < 0)

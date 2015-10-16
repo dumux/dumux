@@ -174,7 +174,6 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
 typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
 typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
@@ -197,21 +196,19 @@ ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
     Scalar maxDist = this->bBoxMin().two_norm();
 
     // calculate the bounding box of the grid view
-    VertexIterator vIt = gridView.template begin<dim>();
-    const VertexIterator vEndIt = gridView.template end<dim>();
-    for (; vIt!=vEndIt; ++vIt) {
-        GlobalPosition vertexCoord(vIt->geometry().center());
+    for (const auto& vertex : Dune::vertices(gridView)) {
+        GlobalPosition vertexCoord(vertex.geometry().center());
 
         Scalar dist = vertexCoord.two_norm();
         if (dist > maxDist)
         {
             maxDist = dist;
-            outflowEdge_ = vIt->geometry().center();
+            outflowEdge_ = vertex.geometry().center();
         }
         if (dist < minDist)
         {
             minDist = dist;
-            inflowEdge_ = vIt->geometry().center();
+            inflowEdge_ = vertex.geometry().center();
         }
     }
 

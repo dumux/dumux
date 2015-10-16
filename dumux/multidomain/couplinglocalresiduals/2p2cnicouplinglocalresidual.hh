@@ -45,7 +45,6 @@ class TwoPTwoCNICouplingLocalResidual : public NILocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     enum { dim = GridView::dimension };
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
@@ -97,16 +96,14 @@ public:
         {
             // evaluate boundary conditions for the intersections of
             // the current element
-            IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
-            const IntersectionIterator &endIt = this->gridView_().iend(this->element_());
-            for (; isIt != endIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(this->gridView_(), this->element_()))
             {
                 // handle only intersections on the boundary
-                if (!isIt->boundary())
+                if (!intersection.boundary())
                     continue;
 
                 // assemble the boundary for all vertices of the current face
-                const int fIdx = isIt->indexInInside();
+                const int fIdx = intersection.indexInInside();
                 const int numFaceVertices = refElement.size(fIdx, 1, dim);
 
                 // loop over the single vertices on the current face
@@ -122,7 +119,7 @@ public:
                     //for the corner points, the boundary flux across the vertical non-coupling boundary faces
                     //has to be calculated to fulfill the mass balance
                     //convert suddomain intersection into multidomain intersection and check whether it is an outer boundary
-                    if(!GridView::Grid::multiDomainIntersection(*isIt).neighbor()
+                    if(!GridView::Grid::multiDomainIntersection(intersection).neighbor()
                              && this->boundaryHasNeumann_(this->bcTypes_(idx)))
                      {
                          const DimVector& globalPos = this->fvGeometry_().subContVol[idx].global;

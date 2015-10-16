@@ -141,7 +141,6 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
 
@@ -186,11 +185,11 @@ public:
 
         if (!compressibility_)
         {
-            ElementIterator element = problem_.gridView().template begin<0> ();
+            const auto element = *problem_.gridView().template begin<0>();
             FluidState fluidState;
-            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setTemperature(problem_.temperature(*element));
+            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+            fluidState.setTemperature(problem_.temperature(element));
             fluidState.setSaturation(wPhaseIdx, 1.);
             fluidState.setSaturation(nPhaseIdx, 0.);
             density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -299,10 +298,9 @@ public:
     void storePressureSolution()
     {
         // iterate through leaf grid
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
-            storePressureSolution(*eIt);
+            storePressureSolution(element);
         }
     }
 
@@ -1051,20 +1049,19 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()
 {
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
-        int eIdxGlobal = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(element);
 
         CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
-        Scalar temperature = problem_.temperature(*eIt);
+        Scalar temperature = problem_.temperature(element);
 
         //determine phase saturations from primary saturation variable
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 
-        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt), satW);
+        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
 
         //determine phase pressures from primary pressure variable
         Scalar pressW = 0;
@@ -1114,8 +1111,8 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         }
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
-        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW) / viscosity_[wPhaseIdx];
+        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW) / viscosity_[nPhaseIdx];
 
         if (compressibility_)
         {
@@ -1131,7 +1128,7 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNw));
         cellData.setFracFlowFunc(nPhaseIdx, mobilityNw / (mobilityW + mobilityNw));
 
-        Scalar gravityDiff = (problem_.bBoxMax() - eIt->geometry().center()) * gravity_;
+        Scalar gravityDiff = (problem_.bBoxMax() - element.geometry().center()) * gravity_;
 
         Scalar potW = pressW + gravityDiff * density_[wPhaseIdx];
         Scalar potNw = pressNw + gravityDiff * density_[nPhaseIdx];

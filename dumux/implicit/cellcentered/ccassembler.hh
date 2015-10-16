@@ -40,8 +40,6 @@ class CCAssembler : public ImplicitAssembler<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     CCAssembler(): ParentType() {}
@@ -72,14 +70,11 @@ private:
         if (!this->enablePartialReassemble_())
             return;
 
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        ElementIterator eEndIt = this->gridView_().template end<0>();
-
         // mark the red elements and update the tolerance of the
         // linearization which actually will get achieved
         this->nextReassembleAccuracy_ = 0;
-        for (; eIt != eEndIt; ++eIt) {
-            int eIdx = this->elementMapper_().index(*eIt);
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            int eIdx = this->elementMapper_().index(element);
 
             if (this->delta_[eIdx] > relTol)
             {
@@ -96,9 +91,8 @@ private:
         }
 
         // mark the neighbors also red
-        eIt = this->gridView_().template begin<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            int eIdx = this->elementMapper_().index(*eIt);
+        for (const auto& element : Dune::elements(this->gridView_())) {
+            int eIdx = this->elementMapper_().index(element);
 
             if (this->elementColor_[eIdx] == ParentType::Red)
                 continue; // element is red already!
@@ -106,12 +100,11 @@ private:
             if (this->delta_[eIdx] > relTol)
             {
                 // also mark the neighbors
-               IntersectionIterator endIsIt = this->gridView_().iend(*eIt);
-               for (IntersectionIterator isIt = this->gridView_().ibegin(*eIt); isIt != endIsIt; ++isIt)
+               for (const auto& intersection : Dune::intersections(this->gridView_(), element))
                {
-                   if (isIt->neighbor())
+                   if (intersection.neighbor())
                    {
-                       int neighborIdx = this->elementMapper_().index(isIt->outside());
+                       int neighborIdx = this->elementMapper_().index(intersection.outside());
 
                        this->elementColor_[neighborIdx] = ParentType::Red;
                    }
@@ -137,10 +130,7 @@ private:
         // each element
         typedef std::set<int> NeighborSet;
         std::vector<NeighborSet> neighbors(numElements);
-        ElementIterator eIt = this->gridView_().template begin<0>();
-        const ElementIterator eEndIt = this->gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            const Element &element = *eIt;
+        for (const auto& element : Dune::elements(this->gridView_())) {
 
             int globalI = this->elementMapper_().index(element);
 
@@ -152,13 +142,11 @@ private:
             //    continue;
 
             // loop over all neighbors
-            IntersectionIterator isIt = this->gridView_().ibegin(element);
-            const IntersectionIterator &isEndIt = this->gridView_().iend(element);
-            for (; isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(this->gridView_(), element))
             {
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                    int globalJ = this->elementMapper_().index(isIt->outside());
+                    int globalJ = this->elementMapper_().index(intersection.outside());
 
                     neighbors[globalI].insert(globalJ);
                 }
@@ -218,13 +206,12 @@ private:
         // update the diagonal entry
         (*this->matrix_)[globalI][globalI] = this->model_().localJacobian().mat(0,0);
 
-        IntersectionIterator isIt = this->gridView_().ibegin(element);
-        const IntersectionIterator &isEndIt = this->gridView_().iend(element);
-        for (int j = 0; isIt != isEndIt; ++isIt)
+        int j = 0;
+        for (const auto& intersection : Dune::intersections(this->gridView_(), element))
         {
-            if (isIt->neighbor())
+            if (intersection.neighbor())
             {
-                int globalJ = this->elementMapper_().index(isIt->outside());
+                int globalJ = this->elementMapper_().index(intersection.outside());
 
                 (*this->matrix_)[globalI][globalJ] = this->model_().localJacobian().mat(0,++j);
             }

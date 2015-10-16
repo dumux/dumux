@@ -58,9 +58,7 @@ class MimeticOperatorAssemblerTwoP: public CROperatorAssemblerTwoP<TypeTag>
     };
     typedef typename GET_PROP_TYPE(TypeTag, LocalStiffness) LocalStiffness;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -101,14 +99,11 @@ public:
         Dune::FieldVector<Scalar, 2 * dim> pressTrace(0);
         Dune::FieldVector<Scalar, 2 * dim> gravPotTrace(0);
 
-        // run over all level elements
-        ElementIterator eIt = this->gridView_.template begin<0>();
-        ElementIterator eEndIt = this->gridView_.template end<0>();
-
+        const auto element = *this->gridView_.template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem.referencePressure(*eIt));
-        fluidState.setPressure(nPhaseIdx, problem.referencePressure(*eIt));
-        fluidState.setTemperature(problem.temperature(*eIt));
+        fluidState.setPressure(wPhaseIdx, problem.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem.referencePressure(element));
+        fluidState.setTemperature(problem.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         Scalar densityDiff = FluidSystem::density(fluidState, nPhaseIdx) - FluidSystem::density(fluidState, wPhaseIdx);
@@ -121,32 +116,31 @@ public:
             problem.variables().cellData(i).fluxData().resetVelocity();
         }
 
-        for (; eIt != eEndIt; ++eIt)
+        // run over all level elements
+        for (const auto& element : Dune::elements(this->gridView_))
         {
-            int eIdxGlobal = problem.variables().index(*eIt);
+            int eIdxGlobal = problem.variables().index(element);
 
             CellData& cellData = problem.variables().cellData(eIdxGlobal);
-            FieldVector globalPos = eIt->geometry().center();
+            FieldVector globalPos = element.geometry().center();
 
             // get local to global id map and pressure traces
-            IntersectionIterator isIt = problem.gridView().template ibegin(*eIt);
-            const IntersectionIterator &isEndIt = problem.gridView().template iend(*eIt);
-            for (; isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem.gridView(), element))
             {
-                int indexInInside = isIt->indexInInside();
+                int indexInInside = intersection.indexInInside();
 
-                int fIdxGlobal = this->faceMapper_.subIndex(*eIt, indexInInside, 1);
+                int fIdxGlobal = this->faceMapper_.subIndex(element, indexInInside, 1);
 
                 pressTrace[indexInInside] = u[fIdxGlobal];
 
-                gravPotTrace[indexInInside] = (problem.bBoxMax() - isIt->geometry().center()) * problem.gravity() * densityDiff;
+                gravPotTrace[indexInInside] = (problem.bBoxMax() - intersection.geometry().center()) * problem.gravity() * densityDiff;
             }
 
             switch (pressureType)
             {
             case pw:
             {
-                Scalar potW = loc.constructPressure(*eIt, pressTrace);
+                Scalar potW = loc.constructPressure(element, pressTrace);
                 Scalar gravPot = (problem.bBoxMax() - globalPos) * problem.gravity() * densityDiff;
                 Scalar potNw = potW + gravPot;
 
@@ -165,7 +159,7 @@ public:
             }
             case pn:
             {
-                Scalar potNw = loc.constructPressure(*eIt, pressTrace);
+                Scalar potNw = loc.constructPressure(element, pressTrace);
                 Scalar  gravPot = (problem.bBoxMax() - globalPos) * problem.gravity() * densityDiff;
                 Scalar potW = potNw - gravPot;
 
@@ -191,26 +185,25 @@ public:
             {
             case pw:
             {
-                loc.constructVelocity(*eIt, velocityW, pressTrace, cellData.potential(wPhaseIdx));
+                loc.constructVelocity(element, velocityW, pressTrace, cellData.potential(wPhaseIdx));
                 pressTrace += gravPotTrace;
-                loc.constructVelocity(*eIt, velocityNw, pressTrace, cellData.potential(nPhaseIdx));
+                loc.constructVelocity(element, velocityNw, pressTrace, cellData.potential(nPhaseIdx));
 
                 break;
             }
             case pn:
             {
-                loc.constructVelocity(*eIt, velocityW, pressTrace, cellData.potential(nPhaseIdx));
+                loc.constructVelocity(element, velocityW, pressTrace, cellData.potential(nPhaseIdx));
                 pressTrace -= gravPotTrace;
-                loc.constructVelocity(*eIt, velocityNw, pressTrace, cellData.potential(wPhaseIdx));
+                loc.constructVelocity(element, velocityNw, pressTrace, cellData.potential(wPhaseIdx));
 
                 break;
             }
             }
 
-            isIt = problem.gridView().template ibegin(*eIt);
-            for (; isIt != isEndIt; ++isIt)
+            for (const auto& intersection : Dune::intersections(problem.gridView(), element))
             {
-                int idxInInside = isIt->indexInInside();
+                int idxInInside = intersection.indexInInside();
 
                 cellData.fluxData().setUpwindPotential(wPhaseIdx, idxInInside, velocityW[idxInInside]);
                 cellData.fluxData().setUpwindPotential(nPhaseIdx, idxInInside, velocityNw[idxInInside]);
@@ -218,9 +211,9 @@ public:
                 Scalar mobilityW = 0;
                 Scalar mobilityNw = 0;
 
-                if (isIt->neighbor())
+                if (intersection.neighbor())
                 {
-                    int neighborIdx = problem.variables().index(isIt->outside());
+                    int neighborIdx = problem.variables().index(intersection.outside());
 
                     CellData& cellDataNeighbor = problem.variables().cellData(neighborIdx);
 
@@ -233,17 +226,17 @@ public:
 
                     if (velocityW[idxInInside] >= 0.)
                     {
-                        FieldVector velocity(isIt->centerUnitOuterNormal());
+                        FieldVector velocity(intersection.centerUnitOuterNormal());
                         velocity *= mobilityW/(mobilityW+mobilityNw) * velocityW[idxInInside];
                         cellData.fluxData().addVelocity(wPhaseIdx, idxInInside, velocity);
-                        cellDataNeighbor.fluxData().addVelocity(wPhaseIdx, isIt->indexInOutside(), velocity);
+                        cellDataNeighbor.fluxData().addVelocity(wPhaseIdx, intersection.indexInOutside(), velocity);
                     }
                     if (velocityNw[idxInInside] >= 0.)
                     {
-                        FieldVector velocity(isIt->centerUnitOuterNormal());
+                        FieldVector velocity(intersection.centerUnitOuterNormal());
                         velocity *= mobilityNw/(mobilityW+mobilityNw) * velocityNw[idxInInside];
                         cellData.fluxData().addVelocity(nPhaseIdx, idxInInside, velocity);
-                        cellDataNeighbor.fluxData().addVelocity(nPhaseIdx, isIt->indexInOutside(), velocity);
+                        cellDataNeighbor.fluxData().addVelocity(nPhaseIdx, intersection.indexInOutside(), velocity);
                     }
 
                     cellData.fluxData().setVelocityMarker(idxInInside);
@@ -251,11 +244,11 @@ public:
                 else
                 {
                     BoundaryTypes bctype;
-                    problem.boundaryTypes(bctype, *isIt);
+                    problem.boundaryTypes(bctype, intersection);
                     if (bctype.isDirichlet(satEqIdx))
                     {
                         PrimaryVariables boundValues(0.0);
-                        problem.dirichlet(boundValues, *isIt);
+                        problem.dirichlet(boundValues, intersection);
 
                         if (velocityW[idxInInside] >= 0.)
                         {
@@ -263,7 +256,7 @@ public:
                         }
                         else
                         {
-                            mobilityW = MaterialLaw::krw(problem.spatialParams().materialLawParams(*eIt),
+                            mobilityW = MaterialLaw::krw(problem.spatialParams().materialLawParams(element),
                                     boundValues[saturationIdx]) / viscosityW;
                         }
 
@@ -273,7 +266,7 @@ public:
                         }
                         else
                         {
-                            mobilityNw = MaterialLaw::krn(problem.spatialParams().materialLawParams(*eIt),
+                            mobilityNw = MaterialLaw::krn(problem.spatialParams().materialLawParams(element),
                                     boundValues[saturationIdx]) / viscosityNw;
                         }
                     }
@@ -283,12 +276,12 @@ public:
                         mobilityNw = cellData.mobility(nPhaseIdx);
                     }
 
-                    FieldVector velocity(isIt->centerUnitOuterNormal());
+                    FieldVector velocity(intersection.centerUnitOuterNormal());
                     velocity *= mobilityW / (mobilityW + mobilityNw) * velocityW[idxInInside];
                     cellData.fluxData().setVelocity(wPhaseIdx, idxInInside, velocity);
 
                     velocity = 0;
-                    velocity = isIt->centerUnitOuterNormal();
+                    velocity = intersection.centerUnitOuterNormal();
                     velocity *= mobilityNw / (mobilityW + mobilityNw) * velocityNw[idxInInside];
                     cellData.fluxData().setVelocity(nPhaseIdx, idxInInside, velocity);
                     cellData.fluxData().setVelocityMarker(idxInInside);

@@ -83,8 +83,6 @@ class CROperatorAssemblerTwoPAdaptive
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     enum {dim=GridView::dimension};
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::IndexSet IS;
     typedef Dune::FieldMatrix<Scalar,1,1> BlockType;
     typedef Dune::BCRSMatrix<BlockType> MatrixType;
@@ -265,21 +263,20 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
     std::vector<int> local2Global(2*dim);
 
     // run over all leaf elements
-    ElementIterator eendit = gridView_.template end<0>();
-    for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eendit; ++eIt)
+    for (const auto& element : Dune::elements(gridView_))
     {
         // build local stiffness matrix for CR elements
         // inludes rhs and boundary condition information
-        loc.assemble(*eIt, 1); // assemble local stiffness matrix
+        loc.assemble(element, 1); // assemble local stiffness matrix
 
-        int eIdxGlobal = intersectionMapper_.map(*eIt);
+        int eIdxGlobal = intersectionMapper_.map(element);
 
         unsigned int numFaces = intersectionMapper_.size(eIdxGlobal);
         local2Global.resize(numFaces);
 
         for (unsigned int i = 0; i < numFaces; i++)
         {
-                int idx = intersectionMapper_.map(*eIt, i);
+                int idx = intersectionMapper_.map(element, i);
                 local2Global[i] = idx;
         }
 
@@ -305,20 +302,20 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
 
     }
     // run over all leaf elements
-    for (ElementIterator eIt = gridView_.template begin<0>(); eIt!=eendit; ++eIt)
+    for (const auto& element : Dune::elements(gridView_))
     {
-        int eIdxGlobal = intersectionMapper_.map(*eIt);
+        int eIdxGlobal = intersectionMapper_.map(element);
 
         unsigned int numFaces = intersectionMapper_.size(eIdxGlobal);
         local2Global.resize(numFaces);
 
         for (unsigned int i = 0; i < numFaces; i++)
         {
-                int idx = intersectionMapper_.map(*eIt, i);
+                int idx = intersectionMapper_.map(element, i);
                 local2Global[i] = idx;
         }
 
-        loc.completeRHS(*eIt, local2Global, f);
+        loc.completeRHS(element, local2Global, f);
     }
 
     // put in essential boundary conditions

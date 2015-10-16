@@ -395,7 +395,6 @@ class BoxFVElementGeometry
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
@@ -800,11 +799,10 @@ public:
         } // end loop over edges / sub control volume faces
 
         // fill boundary face data:
-        IntersectionIterator isEndIt = gridView.iend(element);
-        for (IntersectionIterator isIt = gridView.ibegin(element); isIt != isEndIt; ++isIt)
-            if (isIt->boundary())
+        for (const auto& intersection : Dune::intersections(gridView, element))
+            if (intersection.boundary())
             {
-                int fIdx = isIt->indexInInside();
+                int fIdx = intersection.indexInInside();
                 int numVerticesOfFace = referenceElement.size(fIdx, 1, dim);
                 for (int vIdxInFace = 0; vIdxInFace < numVerticesOfFace; vIdxInFace++)
                 {
@@ -824,7 +822,7 @@ public:
                         bFace.ipLocal = referenceElement.position(scvIdx, dim)
                                       + referenceElement.position(fIdx, 1);
                         bFace.ipLocal *= 0.5;
-                        bFace.area = 0.5*isIt->geometry().volume();
+                        bFace.area = 0.5*intersection.geometry().volume();
                         break;
                     case 3:
                         int leftEdge;
@@ -847,7 +845,7 @@ public:
                     bFace.i = scvIdx;
                     bFace.j = scvIdx;
 
-                    bFace.normal = isIt->centerUnitOuterNormal();
+                    bFace.normal = intersection.centerUnitOuterNormal();
                     bFace.normal *= bFace.area;
 
                     typedef Dune::FieldVector< Scalar, 1 > ShapeValue;
