@@ -59,7 +59,6 @@ class FVVelocity1P
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
 
@@ -84,9 +83,9 @@ public:
     FVVelocity1P(Problem& problem)
     : problem_(problem), gravity_(problem.gravity())
       {
-        ElementIterator element = problem_.gridView().template begin<0> ();
-        Scalar temperature = problem_.temperature(*element);
-        Scalar referencePress = problem_.referencePressure(*element);
+        const auto element = *problem_.gridView().template begin<0>();
+        Scalar temperature = problem_.temperature(element);
+        Scalar referencePress = problem_.referencePressure(element);
 
         density_ = Fluid::density(temperature, referencePress);
         viscosity_ = Fluid::viscosity(temperature, referencePress);
@@ -113,15 +112,14 @@ public:
                 problem_.gridView().size(0)));
 
         // compute update vector
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // cell index
-            int eIdxGlobal = problem_.variables().index(*eIt);
+            int eIdxGlobal = problem_.variables().index(element);
 
             CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
-            const typename Element::Geometry& geometry = eIt->geometry();
+            const typename Element::Geometry& geometry = element.geometry();
             // get corresponding reference element
             typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
             const Dune::ReferenceElement< Scalar , dim > & refElement =
@@ -131,7 +129,7 @@ public:
             std::vector<Scalar> flux(numberOfFaces,0);
 
             // run through all intersections with neighbors and boundary
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
                 int isIndex = intersection.indexInInside();
 

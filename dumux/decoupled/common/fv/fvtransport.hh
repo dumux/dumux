@@ -74,7 +74,6 @@ class FVTransport
     typedef typename GET_PROP_TYPE(TypeTag, EvalCflFluxFunction) EvalCflFluxFunction;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -294,18 +293,17 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
     updateVec = 0.0;
 
     // compute update vector
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
 #if HAVE_MPI
-        if (eIt->partitionType() != Dune::InteriorEntity)
+        if (element.partitionType() != Dune::InteriorEntity)
         {
             continue;
         }
 #endif
 
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int globalIdxI = problem_.variables().index(element);
 
         CellData& cellDataI = problem_.variables().cellData(globalIdxI);
 
@@ -325,7 +323,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         }
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
         {
             GlobalPosition unitOuterNormal = intersection.centerUnitOuterNormal();
             if (switchNormals_)
@@ -392,17 +390,17 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
             updateVec[globalIdxI] += update;
         }
 
-        //        std::cout<<"updateVec at "<<eIt->geometry().center()<<" : "<<updateVec[globalIdxI]<<"\n";
+        //        std::cout<<"updateVec at "<<element.geometry().center()<<" : "<<updateVec[globalIdxI]<<"\n";
 
         //add source to global update vector
         Scalar source = 0.;
-        asImp_().getSource(source,*eIt, cellDataI);
+        asImp_().getSource(source,element, cellDataI);
         updateVec[globalIdxI] += source;
 
         //calculate time step
         if (localTimeStepping_)
         {
-            Scalar dtCfl = evalCflFluxFunction().getDt(*eIt);
+            Scalar dtCfl = evalCflFluxFunction().getDt(element);
 
             timeStepData_[globalIdxI].dt = dtCfl;
             dt = std::min(dt, dtCfl);
@@ -410,7 +408,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         else
         {
             //calculate time step
-            dt = std::min(dt, evalCflFluxFunction().getDt(*eIt));
+            dt = std::min(dt, evalCflFluxFunction().getDt(element));
         }
 
         //store update
@@ -448,18 +446,17 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
     dt = std::numeric_limits<Scalar>::max();
 
     // update target time-step-sizes
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
 #if HAVE_MPI
-        if (eIt->partitionType() != Dune::InteriorEntity)
+        if (element.partitionType() != Dune::InteriorEntity)
         {
             continue;
         }
 #endif
 
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int globalIdxI = problem_.variables().index(element);
 
         LocalTimesteppingData& localDataI = timeStepData_[globalIdxI];
 
@@ -468,7 +465,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
         FaceDt faceDt;
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
         {
             int indexInInside = intersection.indexInInside();
 
@@ -477,7 +474,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
                 auto neighbor = intersection.outside();
                 int globalIdxJ = problem_.variables().index(neighbor);
 
-                int levelI = eIt->level();
+                int levelI = element.level();
                 int levelJ = neighbor.level();
 
                 if (globalIdxI < globalIdxJ && levelI <= levelJ)
@@ -530,7 +527,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
                 localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
             }
 
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
                 if (intersection.neighbor())
                 {

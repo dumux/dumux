@@ -127,7 +127,6 @@ class FVSaturation2P: public FVTransport<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -1116,11 +1115,11 @@ void FVSaturation2P<TypeTag>::initialize()
 
     if (!compressibility_)
     {
-        ElementIterator element = problem_.gridView().template begin<0> ();
+        const auto element = *problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -1130,13 +1129,12 @@ void FVSaturation2P<TypeTag>::initialize()
     }
 
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         PrimaryVariables initSol(0.0);
-        problem_.initial(initSol, *eIt);
+        problem_.initial(initSol, element);
 
-        int eIdxGlobal = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(element);
 
         CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
@@ -1173,25 +1171,23 @@ void FVSaturation2P<TypeTag>::initialize()
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::updateMaterialLaws()
 {
-    ElementIterator eItBegin = problem_.gridView().template begin<0>();
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
-        int eIdxGlobal = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(element);
 
         CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         //determine phase saturations from primary saturation variable
         Scalar satW = cellData.saturation(wPhaseIdx);
 
-        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt), satW);
+        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
 
         cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
-        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW) / viscosity_[wPhaseIdx];
+        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW) / viscosity_[nPhaseIdx];
 
         // initialize mobilities
         cellData.setMobility(wPhaseIdx, mobilityW);

@@ -72,8 +72,6 @@ class FvMpfaL3dInteractionVolumeContainer
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
     typedef typename Element::Geometry ElementGeometry;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef typename GridView::Intersection Intersection;
     typedef typename Intersection::Geometry IntersectionGeometry;
@@ -1994,34 +1992,32 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
     std::vector < std::vector<int> > elemVertMap(problem_.gridView().size(dim), std::vector<int>(8, -1));
 
     //Add elements to the interaction volumes and store element-vertex map
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-        storeSubVolumeElements(*eIt, elemVertMap);
+    for (const auto& element : Dune::elements(problem_.gridView()))
+        storeSubVolumeElements(element, elemVertMap);
 
     for (unsigned int i = 0; i < interactionVolumes_.size(); i++)
         if (interactionVolumes_[i].getElementNumber() == 0)
             interactionVolumes_[i].printInteractionVolumeInfo();
 
     // Store information related to DUNE intersections for all interaction volumes
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-        storeIntersectionInfo(*eIt, elemVertMap);
+    for (const auto& element : Dune::elements(problem_.gridView()))
+        storeIntersectionInfo(element, elemVertMap);
 
     // Complete storage of the interaction volumes using the previously stored information
     // about the orientation and relationship of the DUNE elements in the interaction volumes (see doc/docextra/3dmpfa)
-    VertexIterator vEndIt = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
+    for (const auto& vertex : Dune::vertices(problem_.gridView()))
     {
-        int vIdxGlobal = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(vertex);
 
         InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.getElementNumber() == 8)
         {
-            storeInnerInteractionVolume(interactionVolume, *vIt);
+            storeInnerInteractionVolume(interactionVolume, vertex);
         }
         else if (interactionVolume.isBoundaryInteractionVolume())
         {
-            storeBoundaryInteractionVolume(interactionVolume, *vIt);
+            storeBoundaryInteractionVolume(interactionVolume, vertex);
         }
         else
         {

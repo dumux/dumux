@@ -123,8 +123,6 @@ class FvMpfaO2dPressure2p: public FVPressure<TypeTag>
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
@@ -179,11 +177,11 @@ public:
     {
         ParentType::initialize();
 
-        ElementIterator eIt = problem_.gridView().template begin<0>();
+        const auto element = *problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*eIt));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*eIt));
-        fluidState.setTemperature(problem_.temperature(*eIt));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -253,10 +251,9 @@ public:
     void storePressureSolution()
     {
         // iterate through leaf grid an evaluate c0 at cell center
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
-            storePressureSolution(*eIt);
+            storePressureSolution(element);
         }
     }
 
@@ -347,11 +344,9 @@ public:
             ScalarSolutionType *potentialSecond = writer.allocateManagedBuffer(size);
             ScalarSolutionType *pc = writer.allocateManagedBuffer(size);
 
-            ElementIterator eItBegin = problem_.gridView().template begin<0>();
-            ElementIterator eEndIt = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
+            for (const auto& element : Dune::elements(problem_.gridView()))
             {
-                int idx = problem_.variables().index(*eIt);
+                int idx = problem_.variables().index(element);
                 CellData& cellData = problem_.variables().cellData(idx);
 
                 (*pc)[idx] = cellData.capillaryPressure();
@@ -560,22 +555,20 @@ template<class TypeTag>
 void FvMpfaO2dPressure2p<TypeTag>::initializeMatrix()
 {
     // determine matrix row sizes
-    ElementIterator eItBegin = problem_.gridView().template begin<0>();
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int eIdxGlobalI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(element);
 
         // initialize row size
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        const auto isEndIt = problem_.gridView().iend(*eIt);
-        for (auto isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem_.gridView().iend(element);
+        for (auto isIt = problem_.gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
             const auto& intersection = *isIt;
-            auto nextIntersection = getNextIntersection_(*eIt, isIt);
+            auto nextIntersection = getNextIntersection_(element, isIt);
 
             if (intersection.neighbor())
                 rowSize++;
@@ -609,20 +602,20 @@ void FvMpfaO2dPressure2p<TypeTag>::initializeMatrix()
     this->A_.endrowsizes();
 
     // determine position of matrix entries
-    for (ElementIterator eIt = eItBegin; eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell index
-        int eIdxGlobalI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(element);
 
         // add diagonal index
         this->A_.addindex(eIdxGlobalI, eIdxGlobalI);
 
         // run through all intersections with neighbors
-        const auto isEndIt = problem_.gridView().iend(*eIt);
-        for (auto isIt = problem_.gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem_.gridView().iend(element);
+        for (auto isIt = problem_.gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
             const auto& intersection = *isIt;
-            auto nextIntersection = getNextIntersection_(*eIt, isIt);
+            auto nextIntersection = getNextIntersection_(element, isIt);
 
             if (intersection.neighbor())
             {
@@ -702,23 +695,22 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
     BoundaryTypes bcType;
 
     // run through all elements
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // get common geometry information for the following computation
 
-        int eIdxGlobal1 = problem_.variables().index(*eIt);
+        int eIdxGlobal1 = problem_.variables().index(element);
         // get global coordinate of cell 1 center
-        const GlobalPosition& globalPos1 = eIt->geometry().center();
+        const GlobalPosition& globalPos1 = element.geometry().center();
 
         // get absolute permeability of neighbor cell 1
-        DimMatrix K1(problem_.spatialParams().intrinsicPermeability(*eIt));
+        DimMatrix K1(problem_.spatialParams().intrinsicPermeability(element));
 
-        const auto isIt12End = problem_.gridView().iend(*eIt);
-        for (auto isIt12 = problem_.gridView().ibegin(*eIt); isIt12 != isIt12End; ++isIt12)
+        const auto isIt12End = problem_.gridView().iend(element);
+        for (auto isIt12 = problem_.gridView().ibegin(element); isIt12 != isIt12End; ++isIt12)
         {
             const auto& intersection12 = *isIt12;
-            auto intersection14 = getNextIntersection_(*eIt, isIt12);
+            auto intersection14 = getNextIntersection_(element, isIt12);
 
             int indexInInside12 = intersection12.indexInInside();
             int indexInInside14 = intersection14.indexInInside();
@@ -726,7 +718,7 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
             // get the intersection node /bar^{x_3} between 'isIt12' and 'isIt14', denoted as 'corner1234'
             // initialization of corner1234
 
-            const ReferenceElement& referenceElement = ReferenceElements::general(eIt->geometry().type());
+            const ReferenceElement& referenceElement = ReferenceElements::general(element.geometry().type());
 
             GlobalPosition corner1234(0);
 
@@ -741,13 +733,13 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
                 int localVertIdx12corner = referenceElement.subEntity(indexInInside12, dim - 1, i, dim);
 
-                int globalVertIdx12corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx12corner));
+                int globalVertIdx12corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx12corner));
 
                 for (int j = 0; j < intersection14.geometry().corners(); ++j)
                 {
                     int localVertIdx14corner = referenceElement.subEntity(indexInInside14, dim - 1, j, dim);
 
-                    int globalVertIdx14corner = problem_.variables().index(eIt->template subEntity<dim>(localVertIdx14corner));
+                    int globalVertIdx14corner = problem_.variables().index(element.template subEntity<dim>(localVertIdx14corner));
 
                     if (globalVertIdx12corner == globalVertIdx14corner)
                     {
@@ -777,7 +769,7 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
             }
 
             //store pointer 1
-            interactionVolumes_[globalVertIdx1234].setSubVolumeElement(*eIt, 0);
+            interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element, 0);
             interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection12.indexInInside(), 0, 0);
             interactionVolumes_[globalVertIdx1234].setIndexOnElement(intersection14.indexInInside(), 0, 1);
 
@@ -881,7 +873,7 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                 auto element34 = intersection4.outside();
 
                                 // find the common neighbor cell between cell 2 and cell 3, except cell 1
-                                if (element32 == element34 && element32 != *eIt)
+                                if (element32 == element34 && element32 != element)
                                 {
                                     //store pointer 3
                                     interactionVolumes_[globalVertIdx1234].setSubVolumeElement(element32, 2);
@@ -1254,10 +1246,9 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
     this->f_ = 0;
 
     // run through all vertices
-    VertexIterator vEndIt = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
+    for (const auto& vertex : Dune::vertices(problem_.gridView()))
     {
-        int vIdxGlobal = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(vertex);
 
         InteractionVolume& interactionVolume = interactionVolumes_[vIdxGlobal];
 
@@ -1903,14 +1894,13 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
     if (problem_.gridView().comm().size() > 1)
     {
         // set ghost and overlap element entries
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
-            if (eIt->partitionType() == Dune::InteriorEntity)
+            if (element.partitionType() == Dune::InteriorEntity)
                 continue;
 
             // get the global index of the cell
-            int eIdxGlobalI = problem_.variables().index(*eIt);
+            int eIdxGlobalI = problem_.variables().index(element);
 
             this->A_[eIdxGlobalI] = 0.0;
             this->A_[eIdxGlobalI][eIdxGlobalI] = 1.0;
@@ -1930,23 +1920,22 @@ template<class TypeTag>
 void FvMpfaO2dPressure2p<TypeTag>::updateMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
-        int eIdxGlobal = problem_.variables().index(*eIt);
+        int eIdxGlobal = problem_.variables().index(element);
 
         CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 
-        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(*eIt), satW);
+        Scalar pc = MaterialLaw::pc(problem_.spatialParams().materialLawParams(element), satW);
 
         cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW)
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosity_[wPhaseIdx];
-        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW)
+        Scalar mobilityNw = MaterialLaw::krn(problem_.spatialParams().materialLawParams(element), satW)
                 / viscosity_[nPhaseIdx];
 
         // initialize mobilities

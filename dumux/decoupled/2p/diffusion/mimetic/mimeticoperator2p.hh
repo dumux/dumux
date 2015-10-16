@@ -58,7 +58,6 @@ class MimeticOperatorAssemblerTwoP: public CROperatorAssemblerTwoP<TypeTag>
     };
     typedef typename GET_PROP_TYPE(TypeTag, LocalStiffness) LocalStiffness;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
@@ -100,14 +99,11 @@ public:
         Dune::FieldVector<Scalar, 2 * dim> pressTrace(0);
         Dune::FieldVector<Scalar, 2 * dim> gravPotTrace(0);
 
-        // run over all level elements
-        ElementIterator eIt = this->gridView_.template begin<0>();
-        ElementIterator eEndIt = this->gridView_.template end<0>();
-
+        const auto element = *this->gridView_.template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem.referencePressure(*eIt));
-        fluidState.setPressure(nPhaseIdx, problem.referencePressure(*eIt));
-        fluidState.setTemperature(problem.temperature(*eIt));
+        fluidState.setPressure(wPhaseIdx, problem.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem.referencePressure(element));
+        fluidState.setTemperature(problem.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         Scalar densityDiff = FluidSystem::density(fluidState, nPhaseIdx) - FluidSystem::density(fluidState, wPhaseIdx);
@@ -120,19 +116,20 @@ public:
             problem.variables().cellData(i).fluxData().resetVelocity();
         }
 
-        for (; eIt != eEndIt; ++eIt)
+        // run over all level elements
+        for (const auto& element : Dune::elements(this->gridView_))
         {
-            int eIdxGlobal = problem.variables().index(*eIt);
+            int eIdxGlobal = problem.variables().index(element);
 
             CellData& cellData = problem.variables().cellData(eIdxGlobal);
-            FieldVector globalPos = eIt->geometry().center();
+            FieldVector globalPos = element.geometry().center();
 
             // get local to global id map and pressure traces
-            for (const auto& intersection : Dune::intersections(problem.gridView(), *eIt))
+            for (const auto& intersection : Dune::intersections(problem.gridView(), element))
             {
                 int indexInInside = intersection.indexInInside();
 
-                int fIdxGlobal = this->faceMapper_.subIndex(*eIt, indexInInside, 1);
+                int fIdxGlobal = this->faceMapper_.subIndex(element, indexInInside, 1);
 
                 pressTrace[indexInInside] = u[fIdxGlobal];
 
@@ -143,7 +140,7 @@ public:
             {
             case pw:
             {
-                Scalar potW = loc.constructPressure(*eIt, pressTrace);
+                Scalar potW = loc.constructPressure(element, pressTrace);
                 Scalar gravPot = (problem.bBoxMax() - globalPos) * problem.gravity() * densityDiff;
                 Scalar potNw = potW + gravPot;
 
@@ -162,7 +159,7 @@ public:
             }
             case pn:
             {
-                Scalar potNw = loc.constructPressure(*eIt, pressTrace);
+                Scalar potNw = loc.constructPressure(element, pressTrace);
                 Scalar  gravPot = (problem.bBoxMax() - globalPos) * problem.gravity() * densityDiff;
                 Scalar potW = potNw - gravPot;
 
@@ -188,23 +185,23 @@ public:
             {
             case pw:
             {
-                loc.constructVelocity(*eIt, velocityW, pressTrace, cellData.potential(wPhaseIdx));
+                loc.constructVelocity(element, velocityW, pressTrace, cellData.potential(wPhaseIdx));
                 pressTrace += gravPotTrace;
-                loc.constructVelocity(*eIt, velocityNw, pressTrace, cellData.potential(nPhaseIdx));
+                loc.constructVelocity(element, velocityNw, pressTrace, cellData.potential(nPhaseIdx));
 
                 break;
             }
             case pn:
             {
-                loc.constructVelocity(*eIt, velocityW, pressTrace, cellData.potential(nPhaseIdx));
+                loc.constructVelocity(element, velocityW, pressTrace, cellData.potential(nPhaseIdx));
                 pressTrace -= gravPotTrace;
-                loc.constructVelocity(*eIt, velocityNw, pressTrace, cellData.potential(wPhaseIdx));
+                loc.constructVelocity(element, velocityNw, pressTrace, cellData.potential(wPhaseIdx));
 
                 break;
             }
             }
 
-            for (const auto& intersection : Dune::intersections(problem.gridView(), *eIt))
+            for (const auto& intersection : Dune::intersections(problem.gridView(), element))
             {
                 int idxInInside = intersection.indexInInside();
 
@@ -259,7 +256,7 @@ public:
                         }
                         else
                         {
-                            mobilityW = MaterialLaw::krw(problem.spatialParams().materialLawParams(*eIt),
+                            mobilityW = MaterialLaw::krw(problem.spatialParams().materialLawParams(element),
                                     boundValues[saturationIdx]) / viscosityW;
                         }
 
@@ -269,7 +266,7 @@ public:
                         }
                         else
                         {
-                            mobilityNw = MaterialLaw::krn(problem.spatialParams().materialLawParams(*eIt),
+                            mobilityNw = MaterialLaw::krn(problem.spatialParams().materialLawParams(element),
                                     boundValues[saturationIdx]) / viscosityNw;
                         }
                     }

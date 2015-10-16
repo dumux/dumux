@@ -105,7 +105,6 @@ template<class TypeTag> class FV2dPressure2P2CAdaptive
     };
 
     // typedefs to abbreviate several dune classes...
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
@@ -227,11 +226,10 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
     this->f_.resize(gridSize_);
 
     // determine matrix row sizes
-    ElementIterator eEndIt = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // cell index
-        int globalIdxI = problem().variables().index(*eIt);
+        int globalIdxI = problem().variables().index(element);
         CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
         // initialize row size
@@ -245,8 +243,8 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
 
         int numberOfIntersections = 0;
         // run through all intersections with neighbors
-        const auto isEndIt = problem().gridView().iend(*eIt);
-        for (auto isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem().gridView().iend(element);
+        for (auto isIt = problem().gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
             const auto& intersection = *isIt;
 
@@ -257,7 +255,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                 rowSize++;
 
                 // if mpfa is used, more entries might be needed if both halfedges are regarded
-                if (enableMPFA && (enableSecondHalfEdge && intersection.outside().level() != eIt->level()))
+                if (enableMPFA && (enableSecondHalfEdge && intersection.outside().level() != element.level()))
                 {
                     GlobalPosition globalPos3(0.);
                     int globalIdx3=-1;
@@ -275,7 +273,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                     {
                         bool increaseRowSize = true;
                         //check if additional cell is ordinary neighbor of eIt
-                        for (const auto& intersection2 : Dune::intersections(problem_.gridView(), *eIt))
+                        for (const auto& intersection2 : Dune::intersections(problem_.gridView(), element))
                         {
                             if(!intersection2.neighbor())
                                 continue;
@@ -303,17 +301,17 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
     this->A_.endrowsizes();
 
     // determine position of matrix entries
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // cell index
-        int globalIdxI = problem().variables().index(*eIt);
+        int globalIdxI = problem().variables().index(element);
 
         // add diagonal index
         this->A_.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
-        const auto isEndIt = problem().gridView().iend(*eIt);
-        for (auto isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem().gridView().iend(element);
+        for (auto isIt = problem().gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
             const auto& intersection = *isIt;
 
@@ -326,7 +324,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::initializeMatrix()
                 this->A_.addindex(globalIdxI, globalIdxJ);
 
                 // if mpfa is used, more entries might be needed if both halfedges are regarded
-                if (enableMPFA && (enableSecondHalfEdge && intersection.outside().level() != eIt->level()))
+                if (enableMPFA && (enableSecondHalfEdge && intersection.outside().level() != element.level()))
                 {
                     GlobalPosition globalPos3(0.);
                     int globalIdx3=-1;
@@ -374,14 +372,13 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
     this->A_ = 0;
     this->f_ = 0;
 
-    ElementIterator eEndIt = problem().gridView().template end<0>();
-    for (ElementIterator eIt = problem().gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // get the global index of the cell
-        int globalIdxI = problem().variables().index(*eIt);
+        int globalIdxI = problem().variables().index(element);
 
         // assemble interior element contributions
-        if (eIt->partitionType() == Dune::InteriorEntity)
+        if (element.partitionType() == Dune::InteriorEntity)
         {
             // get the cell data
             CellData& cellDataI = problem().variables().cellData(globalIdxI);
@@ -389,13 +386,13 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
             Dune::FieldVector<Scalar, 2> entries(0.);
 
             /*****  source term ***********/
-            problem().pressureModel().getSource(entries, *eIt, cellDataI, first);
+            problem().pressureModel().getSource(entries, element, cellDataI, first);
             this->f_[globalIdxI] += entries[rhs];
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            auto isEndIt = problem().gridView().template iend(*eIt);
-            for (auto isIt = problem().gridView().template ibegin(*eIt); isIt != isEndIt; ++isIt)
+            auto isEndIt = problem().gridView().template iend(element);
+            for (auto isIt = problem().gridView().template ibegin(element); isIt != isEndIt; ++isIt)
             {
                 const auto& intersection = *isIt;
 
@@ -408,7 +405,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 
                     //check for hanging nodes
                     //take a hanging node never from the element with smaller level!
-                    bool haveSameLevel = (eIt->level() == elementNeighbor.level());
+                    bool haveSameLevel = (element.level() == elementNeighbor.level());
                     // calculate only from one side, but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
@@ -464,7 +461,7 @@ void FV2dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 
             /*****  storage term ***********/
             entries = 0;
-            problem().pressureModel().getStorage(entries, *eIt, cellDataI, first);
+            problem().pressureModel().getStorage(entries, element, cellDataI, first);
             this->f_[globalIdxI] += entries[rhs];
             // set diagonal entry
             this->A_[globalIdxI][globalIdxI] += entries[matrix];

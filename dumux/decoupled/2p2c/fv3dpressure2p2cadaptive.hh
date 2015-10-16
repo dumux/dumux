@@ -127,7 +127,6 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
     typedef Dune::ReferenceElements<Scalar, dim> ReferenceElementContainer;
     typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
@@ -219,14 +218,13 @@ public:
         int gridSize = problem().gridView().size(0);
         this->pressure().resize(gridSize);
 
-        ElementIterator eItEnd = problem().gridView().template end<0>();
-        for (ElementIterator eIt = problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        for (const auto& element : Dune::elements(problem().gridView()))
         {
             // get the global index of the cell
-            int eIdxGlobalI = problem().variables().index(*eIt);
+            int eIdxGlobalI = problem().variables().index(element);
 
             // assemble interior element contributions
-            if (eIt->partitionType() == Dune::InteriorEntity)
+            if (element.partitionType() == Dune::InteriorEntity)
             {
                 this->pressure()[eIdxGlobalI]
                       = problem().variables().cellData(eIdxGlobalI).pressure(this->pressureType);
@@ -334,11 +332,10 @@ template<class TypeTag>
 void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // cell index
-        int eIdxGlobalI = problem().variables().index(*eIt);
+        int eIdxGlobalI = problem().variables().index(element);
         CellData& cellDataI = problem().variables().cellData(eIdxGlobalI);
 
         // initialize row size
@@ -352,7 +349,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
 
         int numberOfIntersections = 0;
         // run through all intersections with neighbors
-        for (const auto& intersection : Dune::intersections(problem().gridView(), *eIt))
+        for (const auto& intersection : Dune::intersections(problem().gridView(), element))
         {
             cellDataI.perimeter() += intersection.geometry().volume();
             numberOfIntersections++;
@@ -361,11 +358,11 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                 rowSize++;
 
                 // special treatment for hanging nodes in the mpfa case
-                if (enableMPFA && (eIt->level() < intersection.outside().level()))
+                if (enableMPFA && (element.level() < intersection.outside().level()))
                 {
                     // each cell might have 4 hanging nodes with 4 irregular neighbors each
                     // get global ID of Interface from larger cell
-                    int intersectionID = problem().grid().localIdSet().subId(*eIt,
+                    int intersectionID = problem().grid().localIdSet().subId(element,
                             intersection.indexInInside(), 1);
                     //index outside
                     int eIdxGlobalJ = problem().variables().index(intersection.outside());
@@ -389,14 +386,13 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
         std::multimap<int,int>::iterator rangeIt;
 
         // second loop for further sub-faces
-        ElementIterator eItEnd = problem().gridView().template end<0> ();
-        for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+        for (const auto& element : Dune::elements(problem().gridView()))
         {
             // cell index
-            int eIdxGlobalI = problem().variables().index(*eIt);
+            int eIdxGlobalI = problem().variables().index(element);
             // run through all intersections with neighbors
-            const auto isEndIt = problem().gridView().iend(*eIt);
-            for (auto isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            const auto isEndIt = problem().gridView().iend(element);
+            for (auto isIt = problem().gridView().ibegin(element); isIt != isEndIt; ++isIt)
             {
                 const auto& intersection = *isIt;
 
@@ -406,7 +402,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                     int eIdxGlobalJ = problem().variables().index(intersection.outside());
 
                     // if mpfa is used, more entries might be needed if all interactionRegions are regarded
-                    if (intersection.outside().level() > eIt->level()) //look from larger cell
+                    if (intersection.outside().level() > element.level()) //look from larger cell
                     {
                         auto outerCorner = intersection.inside().template subEntity<dim>(0); //initialize with rubbish
                         // prepare additional pointer to cells
@@ -447,7 +443,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             bool additional2isNeighbor(false), additional3isNeighbor(false);
                             // run through all intersections with neighbors if eIt
                             for (const auto& checkIntersection
-                                 : Dune::intersections(problem().gridView(), *eIt))
+                                 : Dune::intersections(problem().gridView(), element))
                             {
                                 if (checkIntersection.neighbor())
                                 {
@@ -579,18 +575,17 @@ template<class TypeTag>
 void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixIndices()
 {
     // determine position of matrix entries
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // cell index
-        int eIdxGlobalI = problem().variables().index(*eIt);
+        int eIdxGlobalI = problem().variables().index(element);
 
         // add diagonal index
         this->A_.addindex(eIdxGlobalI, eIdxGlobalI);
 
         // run through all intersections with neighbors
-        const auto isEndIt = problem().gridView().iend(*eIt);
-        for (auto isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem().gridView().iend(element);
+        for (auto isIt = problem().gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
             const auto& intersection = *isIt;
 
@@ -603,7 +598,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixIndices()
                 this->A_.addindex(eIdxGlobalI, eIdxGlobalJ);
 
                 // special treatment for hanging nodes in the mpfa case
-                if (enableMPFA && (eIt->level() < intersection.outside().level()))
+                if (enableMPFA && (element.level() < intersection.outside().level()))
                 {
                     // prepare stuff to enter transmissibility calculation
                     GlobalPosition globalPos3(0.);
@@ -655,14 +650,13 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
     this->A_ = 0;
     this->f_ = 0;
 
-    ElementIterator eItEnd = problem().gridView().template end<0>();
-    for (ElementIterator eIt = problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // get the global index of the cell
-        int eIdxGlobalI = problem().variables().index(*eIt);
+        int eIdxGlobalI = problem().variables().index(element);
 
         // assemble interior element contributions
-        if (eIt->partitionType() == Dune::InteriorEntity)
+        if (element.partitionType() == Dune::InteriorEntity)
         {
                 // get the cell data
             CellData& cellDataI = problem().variables().cellData(eIdxGlobalI);
@@ -672,17 +666,17 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
             /*****  source term ***********/
 #ifndef noMultiphysics
             if(cellDataI.subdomain() != 2)
-                problem().pressureModel().get1pSource(entries,*eIt, cellDataI);
+                problem().pressureModel().get1pSource(entries,element, cellDataI);
             else
 #endif
-                problem().pressureModel().getSource(entries,*eIt, cellDataI, first);
+                problem().pressureModel().getSource(entries,element, cellDataI, first);
 
             this->f_[eIdxGlobalI] += entries[rhs];
 
             /*****  flux term ***********/
             // iterate over all faces of the cell
-            const auto isEndIt = problem().gridView().iend(*eIt);
-            for (auto isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+            const auto isEndIt = problem().gridView().iend(element);
+            for (auto isIt = problem().gridView().ibegin(element); isIt != isEndIt; ++isIt)
             {
                 const auto& intersection = *isIt;
 
@@ -693,7 +687,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
                     int eIdxGlobalJ = problem().variables().index(neighbor);
                     //check for hanging nodes
                     //take a hanging node never from the element with smaller level!
-                    bool haveSameLevel = (eIt->level() == neighbor.level());
+                    bool haveSameLevel = (element.level() == neighbor.level());
                     // calculate only from one side, but add matrix entries for both sides
                     // the last condition is needed to properly assemble in the presence
                     // of ghost elements
@@ -760,9 +754,9 @@ void FV3dPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 
             /*****  storage term ***********/
             if (cellDataI.subdomain() != 2) //the current cell in the 1p domain
-                asImp_().get1pStorage(entries, *eIt, cellDataI);
+                asImp_().get1pStorage(entries, element, cellDataI);
             else
-                asImp_().getStorage(entries, *eIt, cellDataI, first);
+                asImp_().getStorage(entries, element, cellDataI, first);
 
             this->f_[eIdxGlobalI] += entries[rhs];
             // set diagonal entry
@@ -1299,16 +1293,15 @@ void FV3dPressure2P2CAdaptive<TypeTag>::updateMaterialLaws(bool fromPostTimestep
     {
         Scalar maxError = 0.;
         // iterate through leaf grid an evaluate c0 at cell center
-        ElementIterator eItEnd = problem().gridView().template end<0> ();
-        for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+        for (const auto& element : Dune::elements(problem().gridView()))
         {
-            int eIdxGlobal = problem().variables().index(*eIt);
+            int eIdxGlobal = problem().variables().index(element);
             CellData& cellData = problem().variables().cellData(eIdxGlobal);
 
             if(cellData.fluidStateType() == 0) // i.e. it is complex
-                problem().pressureModel().updateMaterialLawsInElement(*eIt, fromPostTimestep);
+                problem().pressureModel().updateMaterialLawsInElement(element, fromPostTimestep);
             else
-                problem().pressureModel().update1pMaterialLawsInElement(*eIt, cellData, fromPostTimestep);
+                problem().pressureModel().update1pMaterialLawsInElement(element, cellData, fromPostTimestep);
 
             maxError = std::max(maxError, fabs(cellData.volumeError()));
         }

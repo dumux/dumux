@@ -82,8 +82,6 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef typename Element::Geometry Geometry;
     typedef typename Geometry::JacobianTransposed JacobianTransposed;
@@ -163,11 +161,11 @@ public:
     //!Initializes the velocity model
     void initialize(bool solveTwice = true)
     {
-        ElementIterator element = problem_.gridView().template begin<0>();
+        const auto element = *problem_.gridView().template begin<0>();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
@@ -199,11 +197,10 @@ public:
                                                                     dim>(problem_.gridView().size(0)));
 
             // compute update vector
-            ElementIterator eEndIt = problem_.gridView().template end<0>();
-            for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+            for (const auto& element : Dune::elements(problem_.gridView()))
             {
                 // cell index
-                int eIdxGlobal = problem_.variables().index(*eIt);
+                int eIdxGlobal = problem_.variables().index(element);
 
                 CellData & cellData = problem_.variables().cellData(eIdxGlobal);
 
@@ -211,7 +208,7 @@ public:
                 Dune::FieldVector < Scalar, 2 * dim > fluxNw(0);
 
                 // run through all intersections with neighbors and boundary
-                for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
+                for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
                 {
                     int isIndex = intersection.indexInInside();
 
@@ -226,15 +223,15 @@ public:
                 refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
                 refVelocity[2] = 0.5 * (fluxW[5] - fluxW[4]);
 
-                const DimVector& localPos = ReferenceElements::general(eIt->geometry().type()).position(0, 0);
+                const DimVector& localPos = ReferenceElements::general(element.geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
-                const JacobianTransposed jacobianT = eIt->geometry().jacobianTransposed(localPos);
+                const JacobianTransposed jacobianT = element.geometry().jacobianTransposed(localPos);
 
                 // calculate the element velocity by the Piola transformation
                 DimVector elementVelocity(0);
                 jacobianT.umtv(refVelocity, elementVelocity);
-                elementVelocity /= eIt->geometry().integrationElement(localPos);
+                elementVelocity /= element.geometry().integrationElement(localPos);
 
                 velocityWetting[eIdxGlobal] = elementVelocity;
 
@@ -246,7 +243,7 @@ public:
                 // calculate the element velocity by the Piola transformation
                 elementVelocity = 0;
                 jacobianT.umtv(refVelocity, elementVelocity);
-                elementVelocity /= eIt->geometry().integrationElement(localPos);
+                elementVelocity /= element.geometry().integrationElement(localPos);
 
                 velocityNonwetting[eIdxGlobal] = elementVelocity;
             }

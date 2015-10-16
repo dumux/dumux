@@ -51,7 +51,6 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
 
     enum
@@ -107,11 +106,11 @@ public:
 
         if (!compressibility_)
         {
-            ElementIterator element = problem_.gridView().template begin<0> ();
+            const auto element = *problem_.gridView().template begin<0>();
             FluidState fluidState;
-            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setTemperature(problem_.temperature(*element));
+            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+            fluidState.setTemperature(problem_.temperature(element));
             fluidState.setSaturation(wPhaseIdx, 1.);
             fluidState.setSaturation(nPhaseIdx, 0.);
             density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);

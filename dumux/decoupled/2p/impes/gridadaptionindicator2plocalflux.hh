@@ -64,7 +64,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename Grid::LevelGridView::IndexSet IndexSet;
@@ -146,15 +145,13 @@ public:
         Scalar totalVolume = 0;
         Scalar totalVolumeSat = 0;
 
-        ElementIterator eEndIt = problem_.gridView().template end<0>();
         // 1) calculate Indicator -> min, maxvalues
         // Schleife über alle Leaf-Elemente
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt;
-             ++eIt)
+        for (const auto& element : Dune::elements(problem_.gridView()))
         {
             // Bestimme maximale und minimale Sättigung
             // Index des aktuellen Leaf-Elements
-            int globalIdxI = problem_.variables().index(*eIt);
+            int globalIdxI = problem_.variables().index(element);
 
             indicatorVector_[globalIdxI] = 0.5 * (refineBound_ + coarsenBound_);
             if (useSatInd_ || usePercentileSat_)
@@ -172,13 +169,13 @@ public:
                 isSpecialCell = true;
             }
 
-            Scalar volume = eIt->geometry().volume();
+            Scalar volume = element.geometry().volume();
             totalVolume += volume;
 
             if (refineAtSource_)
             {
                 PrimaryVariables source(0.0);
-                problem_.sourceAtPos(source, eIt->geometry().center());
+                problem_.sourceAtPos(source, element.geometry().center());
                 for (int i = 0; i < 2; i++)
                 {
                     if (std::abs(source[i]) > 1e-10)
@@ -209,7 +206,7 @@ public:
                 break;
             }
 
-            const typename Element::Geometry& geometry = eIt->geometry();
+            const typename Element::Geometry& geometry = element.geometry();
             // get corresponding reference element
             typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
             const Dune::ReferenceElement< Scalar , dim > & refElement =

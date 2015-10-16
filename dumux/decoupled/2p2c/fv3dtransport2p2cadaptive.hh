@@ -90,7 +90,6 @@ class FV3dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
@@ -202,11 +201,10 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
 
     Dune::FieldVector<Scalar, 2> entries(0.), timestepFlux(0.);
     // compute update vector
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // get cell infos
-        int globalIdxI = problem().variables().index(*eIt);
+        int globalIdxI = problem().variables().index(element);
         CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
         if(!impet && cellDataI.subdomain()!=2)   // estimate only necessary in subdomain
@@ -217,15 +215,15 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
         double sumfactorout = 0;
 
         // run through all intersections with neighbors and boundary
-        const auto isEndIt = problem().gridView().iend(*eIt);
-        for (auto isIt = problem().gridView().ibegin(*eIt); isIt != isEndIt; ++isIt)
+        const auto isEndIt = problem().gridView().iend(element);
+        for (auto isIt = problem().gridView().ibegin(element); isIt != isEndIt; ++isIt)
         {
             const auto& intersection = *isIt;
 
             // handle interior face
             if (intersection.neighbor())
             {
-                if (enableMPFA && intersection.outside().level() != eIt->level())
+                if (enableMPFA && intersection.outside().level() != element.level())
                     getMpfaFlux(entries, timestepFlux, isIt, cellDataI);
                 else
                     this->getFlux(entries, timestepFlux, intersection, cellDataI);
@@ -270,13 +268,13 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
 
         /***********     Handle source term     ***************/
         PrimaryVariables q(NAN);
-        problem().source(q, *eIt);
+        problem().source(q, element);
         updateVec[wCompIdx][globalIdxI] += q[contiWEqIdx];
         updateVec[nCompIdx][globalIdxI] += q[contiNEqIdx];
 
         // account for porosity
         sumfactorin = std::max(sumfactorin,sumfactorout)
-                        / problem().spatialParams().porosity(*eIt);
+                        / problem().spatialParams().porosity(element);
 
         //calculate time step
         if (this->localTimeStepping_)

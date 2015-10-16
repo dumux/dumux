@@ -102,7 +102,6 @@ class FVTransport2P2C
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -386,11 +385,10 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     ComponentVector entries(0.);
     EntryType timestepFlux(0.);
     // compute update vector
-    ElementIterator eEndIt = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem().gridView()))
     {
         // get cell infos
-        int eIdxGlobalI = problem().variables().index(*eIt);
+        int eIdxGlobalI = problem().variables().index(element);
         CellData& cellDataI = problem().variables().cellData(eIdxGlobalI);
 
         // some variables for time step calculation
@@ -398,7 +396,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         double sumfactorout = 0;
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem().gridView(), *eIt))
+        for (const auto& intersection : Dune::intersections(problem().gridView(), element))
         {
             int indexInInside = intersection.indexInInside();
 
@@ -444,13 +442,13 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 
         /***********     Handle source term     ***************/
         PrimaryVariables q(NAN);
-        problem().source(q, *eIt);
+        problem().source(q, element);
         updateVec[wCompIdx][eIdxGlobalI] += q[contiWEqIdx];
         updateVec[nCompIdx][eIdxGlobalI] += q[contiNEqIdx];
 
         // account for porosity in fluxes for time-step
         sumfactorin = std::max(sumfactorin,sumfactorout)
-                        / problem().spatialParams().porosity(*eIt);
+                        / problem().spatialParams().porosity(element);
 
         //calculate time step
         if (localTimeStepping_)
@@ -1185,18 +1183,17 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
     dt = std::numeric_limits<Scalar>::max();
 
     // update target time-step-sizes
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
 #if HAVE_MPI
-        if (eIt->partitionType() != Dune::InteriorEntity)
+        if (element.partitionType() != Dune::InteriorEntity)
         {
             continue;
         }
 #endif
 
         // cell index
-        int eIdxGlobalI = problem_.variables().index(*eIt);
+        int eIdxGlobalI = problem_.variables().index(element);
 
         LocalTimesteppingData& localDataI = timeStepData_[eIdxGlobalI];
 
@@ -1205,7 +1202,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
         FaceDt faceDt;
 
         // run through all intersections with neighbors and boundary
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
         {
             int indexInInside = intersection.indexInInside();
 
@@ -1214,7 +1211,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                 auto neighbor = intersection.outside();
                 int eIdxGlobalJ = problem_.variables().index(neighbor);
 
-                int levelI = eIt->level();
+                int levelI = element.level();
                 int levelJ = neighbor.level();
 
                 if (eIdxGlobalI < eIdxGlobalJ && levelI <= levelJ)
@@ -1267,7 +1264,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
                 localDataI.faceTargetDt[it->first] += subCFLFactor_ * it->second;
             }
 
-            for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
+            for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
             {
                 if (intersection.neighbor())
                 {

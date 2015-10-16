@@ -50,10 +50,6 @@ template<class TypeTag, class Velocity> class FVVelocity
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-
-    // typedefs to abbreviate several dune classes...
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
 public:
 
     //!Initialize velocity implementation
@@ -99,16 +95,15 @@ private:
 template<class TypeTag, class Velocity>
 void FVVelocity<TypeTag, Velocity>::calculateVelocity()
 {
-    ElementIterator eEndIt = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eEndIt; ++eIt)
+    for (const auto& element : Dune::elements(problem_.gridView()))
     {
         // cell information
-        int globalIdxI = problem_.variables().index(*eIt);
+        int globalIdxI = problem_.variables().index(element);
         CellData& cellDataI = problem_.variables().cellData(globalIdxI);
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
-        for (const auto& intersection : Dune::intersections(problem_.gridView(), *eIt))
+        for (const auto& intersection : Dune::intersections(problem_.gridView(), element))
         {
             /************* handle interior face *****************/
             if (intersection.neighbor())

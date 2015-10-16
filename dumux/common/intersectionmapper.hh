@@ -44,7 +44,7 @@ public:
     : gridView_(gridview), elementMapper_(gridView_), size_(gridView_.size(1)),
       intersectionMapGlobal_(gridView_.size(0)), intersectionMapLocal_(gridView_.size(0))
     {
-        const auto& element = *gridView_.template begin<0>();
+        const auto element = *gridView_.template begin<0>();
 
         int fIdx = 0;
         for (const auto& intersection : Dune::intersections(gridView_, element))

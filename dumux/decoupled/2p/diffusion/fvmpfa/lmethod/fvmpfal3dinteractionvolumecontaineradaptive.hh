@@ -66,8 +66,6 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
     typedef typename Element::Geometry ElementGeometry;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
@@ -1594,42 +1592,40 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInteractionVolum
     std::vector < std::vector<int> > elemVertMap(problem_.gridView().size(dim), std::vector<int>(8, -1));
 
     //Add elements to the interaction volumes and store element-vertex map
-    ElementIterator eEndIt = problem_.gridView().template end<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-        asImp_().storeSubVolumeElements(*eIt, elemVertMap);
+    for (const auto& element : Dune::elements(problem_.gridView()))
+        asImp_().storeSubVolumeElements(element, elemVertMap);
 
     for (unsigned int i = 0; i < asImp_().interactionVolumes_.size(); i++)
         if (asImp_().interactionVolumes_[i].getElementNumber() == 0)
             asImp_().interactionVolumes_[i].printInteractionVolumeInfo();
 
     // Store information related to DUNE intersections for all interaction volumes
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eEndIt; ++eIt)
-        asImp_().storeIntersectionInfo(*eIt, elemVertMap);
+    for (const auto& element : Dune::elements(problem_.gridView()))
+        asImp_().storeIntersectionInfo(element, elemVertMap);
 
     faceVertices_.clear();
     faceVertices_.resize(problem_.gridView().size(0));
 
     // Complete storage of the interaction volumes using the previously stored information
     // about the orientation and relationship of the DUNE elements in the interaction volumes (see doc/docextra/3dmpfa)
-    VertexIterator vEndIt = problem_.gridView().template end<dim>();
-    for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vEndIt; ++vIt)
+    for (const auto& vertex : Dune::vertices(problem_.gridView()))
     {
-        int vIdxGlobal = problem_.variables().index(*vIt);
+        int vIdxGlobal = problem_.variables().index(vertex);
 
         InteractionVolume& interactionVolume = asImp_().interactionVolumes_[vIdxGlobal];
 
         if (interactionVolume.getElementNumber() == 8)
         {
-            asImp_().storeInnerInteractionVolume(interactionVolume, *vIt);
+            asImp_().storeInnerInteractionVolume(interactionVolume, vertex);
         }
         else if (interactionVolume.isBoundaryInteractionVolume())
         {
-            asImp_().storeBoundaryInteractionVolume(interactionVolume, *vIt);
+            asImp_().storeBoundaryInteractionVolume(interactionVolume, vertex);
         }
         //hanging node!
         else
         {
-            storeHangingNodeInteractionVolume(interactionVolume, *vIt);
+            storeHangingNodeInteractionVolume(interactionVolume, vertex);
         }
 
         if (!interactionVolume.isBoundaryInteractionVolume())
