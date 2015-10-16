@@ -577,9 +577,9 @@ void FvMpfaO2dPressure2p<TypeTag>::initializeMatrix()
             if (intersection.neighbor() && nextIntersection.neighbor())
             {
                 for (const auto& innerIntersection
-                     : Dune::intersections(problem_.gridView(), *intersection.outside()))
+                     : Dune::intersections(problem_.gridView(), intersection.outside()))
                     for (const auto& innerNextIntersection
-                         : Dune::intersections(problem_.gridView(), *nextIntersection.outside()))
+                         : Dune::intersections(problem_.gridView(), nextIntersection.outside()))
                     {
                         if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                         {
@@ -630,9 +630,9 @@ void FvMpfaO2dPressure2p<TypeTag>::initializeMatrix()
             if (intersection.neighbor() && nextIntersection.neighbor())
             {
                 for (const auto& innerIntersection
-                     : Dune::intersections(problem_.gridView(), *intersection.outside()))
+                     : Dune::intersections(problem_.gridView(), intersection.outside()))
                     for (const auto& innerNextIntersection
-                         : Dune::intersections(problem_.gridView(), *nextIntersection.outside()))
+                         : Dune::intersections(problem_.gridView(), nextIntersection.outside()))
                     {
                         if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                         {

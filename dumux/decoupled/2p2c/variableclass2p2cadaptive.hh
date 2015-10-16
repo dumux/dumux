@@ -176,13 +176,13 @@ public:
                        const int& globalIdx3)
     {
         IdType intersectionID = grid_.localIdSet().subId(
-            *irregularIs.inside(), irregularIs.indexInInside(), 1);
+            irregularIs.inside(), irregularIs.indexInInside(), 1);
         // mapping is only unique from smaller cell (if *inside and not *outside)
         if (irregularIs.inside().level() < irregularIs.outside().level())
         {
             // IS is regarded from larger cell: get the unique number as seen from smaller
             intersectionID = grid_.localIdSet().subId(
-                *irregularIs.outside(), irregularIs.indexInOutside(), 1);
+                irregularIs.outside(), irregularIs.indexInOutside(), 1);
 
             // store as if it was seen from smaller: change i & j
             irregularInterfaceMap_[intersectionID].T1_[first][2] = - T1[0];

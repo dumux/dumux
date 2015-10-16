@@ -503,7 +503,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
                             additional2isNeighbor = additional3isNeighbor = false;
                             // run through all intersections with neighbors of J
                             for (const auto& checkIntersection
-                                 : Dune::intersections(problem().gridView(), *intersection.outside()))
+                                 : Dune::intersections(problem().gridView(), intersection.outside()))
                             {
                                 if (checkIntersection.neighbor())
                                 {
@@ -1409,14 +1409,14 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     eIdxGlobal4 = problem().variables().index(face24->outside());
     GlobalPosition outerNormaln24 = face24->centerUnitOuterNormal();
     // get absolute permeability of neighbor cell 3
-    DimMatrix K4(problem().spatialParams().intrinsicPermeability(*face24->outside()));
+    DimMatrix K4(problem().spatialParams().intrinsicPermeability(face24->outside()));
 
     // get information of cell6
     globalPos6 = face26->outside().geometry().center();
     eIdxGlobal6 = problem().variables().index(face26->outside());
     GlobalPosition outerNormaln26 = face26->centerUnitOuterNormal();
     // get absolute permeability of neighbor cell 3
-    DimMatrix K6(problem().spatialParams().intrinsicPermeability(*face26->outside()));
+    DimMatrix K6(problem().spatialParams().intrinsicPermeability(face26->outside()));
 
     /**** b) Get Points on the edges (in plane of isIt), 'x'4 and 'x'5 ***********/
     int localFace12 = intersection.indexInOutside(); // isIt is face12

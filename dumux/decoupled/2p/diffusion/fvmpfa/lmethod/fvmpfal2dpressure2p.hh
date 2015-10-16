@@ -600,9 +600,9 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
             if (intersection.neighbor() && nextIntersection.neighbor())
             {
                 for (const auto& innerIntersection
-                     : Dune::intersections(problem_.gridView(), *intersection.outside()))
+                     : Dune::intersections(problem_.gridView(), intersection.outside()))
                     for (const auto& innerNextIntersection
-                         : Dune::intersections(problem_.gridView(), *nextIntersection.outside()))
+                         : Dune::intersections(problem_.gridView(), nextIntersection.outside()))
                     {
                         if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                         {
@@ -653,9 +653,9 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
             if (intersection.neighbor() && nextIntersection.neighbor())
             {
                 for (const auto& innerIntersection
-                     : Dune::intersections(problem_.gridView(), *intersection.outside()))
+                     : Dune::intersections(problem_.gridView(), intersection.outside()))
                     for (const auto& innerNextIntersection
-                         : Dune::intersections(problem_.gridView(), *nextIntersection.outside()))
+                         : Dune::intersections(problem_.gridView(), nextIntersection.outside()))
                     {
                         if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                         {
@@ -956,7 +956,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                         dim);
 
                                 int globalVertIdx2corner = problem_.variables().index(
-                                        *((element2).template subEntity < dim > (localVertIdx2corner)));
+                                        element2.template subEntity < dim > (localVertIdx2corner));
 
                                 if (globalVertIdx2corner == globalVertIdx1234)
                                 {
@@ -1087,7 +1087,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
                                         dim);
 
                                 int globalVertIdx4corner = problem_.variables().index(
-                                        *((element4).template subEntity < dim > (localVertIdx4corner)));
+                                        (element4).template subEntity < dim > (localVertIdx4corner));
 
                                 if (globalVertIdx4corner == globalVertIdx1234)
                                 {

@@ -607,10 +607,10 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     bool isCorner = true;
 
                     for (const auto& innerIntersection
-                         : Dune::intersections(problem_.gridView(), *intersection.outside()))
+                         : Dune::intersections(problem_.gridView(), intersection.outside()))
                     {
                         for (const auto& innerNextIntersection
-                             : Dune::intersections(problem_.gridView(), *nextIntersection.outside()))
+                             : Dune::intersections(problem_.gridView(), nextIntersection.outside()))
                         {
                             if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                             {
@@ -686,10 +686,10 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
                     }
 
                     for (const auto& innerIntersection
-                         : Dune::intersections(problem_.gridView(), *intersection.outside()))
+                         : Dune::intersections(problem_.gridView(), intersection.outside()))
                     {
                         for (const auto& innerNextIntersection
-                             : Dune::intersections(problem_.gridView(), *nextIntersection.outside()))
+                             : Dune::intersections(problem_.gridView(), nextIntersection.outside()))
                         {
                             if (innerIntersection.neighbor() && innerNextIntersection.neighbor())
                             {
@@ -703,7 +703,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::initializeMatrix()
 
                                     this->A_.addindex(eIdxGlobalI, eIdxGlobalCorner);
 
-                                    if (element.level() > outside->level())
+                                    if (element.level() > outside.level())
                                     {
                                         int eIdxGlobalJCorner = problem_.variables().index(nextOutside);
 

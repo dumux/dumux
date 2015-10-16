@@ -892,7 +892,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     globalPos3 = face13->outside().geometry().center();
     globalIdx3 = problem().variables().index(face13->outside());
     // get absolute permeability of neighbor cell 3
-    DimMatrix K3(problem().spatialParams().intrinsicPermeability(*face13->outside()));
+    DimMatrix K3(problem().spatialParams().intrinsicPermeability(face13->outside()));
 
 
     // get the intersection node /bar^{x_3} between 'isIt' and 'isIt13', denoted as 'corner123'
@@ -1141,8 +1141,8 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
         ++tempIntersection;
 
         // ensure iterator increases over local end of neighbor J
-        if (tempIntersection== problem().gridView().template iend(*intersection.outside()))
-            tempIntersection = problem().gridView().template ibegin(*intersection.outside());
+        if (tempIntersection== problem().gridView().template iend(intersection.outside()))
+            tempIntersection = problem().gridView().template ibegin(intersection.outside());
 
         if(!tempIntersection->neighbor())
             continue;
@@ -1184,7 +1184,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     interactionVolume.setCenterPosition(corner1234);
 
     //***************   store pointer 1
-    interactionVolume.setSubVolumeElement(*intersection.outside(), 0);
+    interactionVolume.setSubVolumeElement(intersection.outside(), 0);
     interactionVolume.setIndexOnElement(intersection.indexInOutside(), 0, 0);
     interactionVolume.setIndexOnElement(isIt14->indexInInside(), 0, 1);
 
