@@ -80,9 +80,6 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename Element::Geometry Geometry;
     typedef typename Geometry::JacobianTransposed JacobianTransposed;

@@ -698,8 +698,6 @@ public:
         enum {dim=Grid::dimension, maxIntersections = 12};
         typedef typename Grid::template Codim<0>::Entity Element;
         typedef typename Element::Geometry Geometry;
-        typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-        typedef typename GridView::IntersectionIterator IntersectionIterator;
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
         typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
         typedef typename Dune::ReferenceElements<Scalar, dim-1> ReferenceFaces;

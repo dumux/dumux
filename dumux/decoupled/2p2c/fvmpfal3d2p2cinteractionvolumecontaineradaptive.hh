@@ -68,9 +68,7 @@ class FvMpfaL3d2P2CInteractionVolumeContainerAdaptive : public FvMpfaL3dInteract
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry ElementGeometry;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;

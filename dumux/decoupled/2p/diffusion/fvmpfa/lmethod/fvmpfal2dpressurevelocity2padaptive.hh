@@ -76,7 +76,6 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfa
 
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
     typedef typename Grid::template Codim<0>::Entity::Geometry Geometry;

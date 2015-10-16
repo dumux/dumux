@@ -804,9 +804,6 @@ public:
     typedef typename Dune::MultipleCodimMultipleGeomTypeMapper<GridView,
                         Dune::MCMGVertexLayout> VertexMapper;
 
-    typedef typename GridView::template Codim<GridView::dimension>::Iterator
-                        VertexIterator;
-
     /*!
      * \brief The constructor
      *

@@ -614,12 +614,12 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
                         }
                     }
             }
-        } // end of 'for' IntersectionIterator
+        } // end of intersection loop
 
         // set number of indices in row eIdxGlobalI to rowSize
         this->A_.setrowsize(eIdxGlobalI, rowSize);
 
-    } // end of 'for' ElementIterator
+    } // end of element loop
 
     // indicate that size of all rows is defined
     this->A_.endrowsizes();
@@ -671,8 +671,8 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
                         }
                     }
             }
-        } // end of 'for' IntersectionIterator
-    } // end of 'for' ElementIterator
+        } // end of intersection loop
+    } // end of element loop
 
     // indicate that all indices are defined, check consistency
     this->A_.endindices();

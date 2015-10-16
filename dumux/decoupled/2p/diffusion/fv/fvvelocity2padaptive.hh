@@ -204,7 +204,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         // We are looking for two things:
         // IsIndexJ, the index of the interface from the neighbor-cell point of view
         // GlobalIdxK, the index of the third cell
-        // for efficienty this is done in one IntersectionIterator-Loop
+        // for efficienty this is done in one intersection loop
 
         // Intersectioniterator around cell I
         for (const auto& intersectionI : Dune::intersections(problem_.gridView(), elementI))

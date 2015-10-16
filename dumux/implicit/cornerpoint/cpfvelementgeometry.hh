@@ -58,7 +58,6 @@ class CpFVElementGeometry
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     struct SubControlVolume //! FV intersected with element

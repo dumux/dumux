@@ -733,9 +733,7 @@ void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleElementMatrices(const E
 template<class TypeTag>
 void MimeticTwoPLocalStiffnessAdaptive<TypeTag>::assembleBC(const Element& element, int k)
 {
-    // evaluate boundary conditions via intersection iterator
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-
+    // evaluate boundary conditions via an intersection loop
     unsigned int faceIndex = 0;
     for (const auto& intersection : Dune::intersections(gridView_, element))
     {

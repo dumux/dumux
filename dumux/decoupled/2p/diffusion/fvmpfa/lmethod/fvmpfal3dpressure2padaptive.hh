@@ -356,7 +356,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixRowSize()
         }
 
         this->A_.setrowsize(globalIdxI, neighborIndices.size());
-    } // end of 'for' ElementIterator
+    } // end of element loop
 
     return;
 }
@@ -403,7 +403,7 @@ void FvMpfaL3dPressure2pAdaptive<TypeTag>::initializeMatrixIndices()
                 }
             }
         }
-    } // end of 'for' ElementIterator
+    } // end of element loop
 
     return;
 }
