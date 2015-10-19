@@ -137,7 +137,7 @@ public:
             {
                 ++intersectionIdx;
 
-                int fIdxGlobal = this->intersectionMapper_.map(element, intersectionIdx);
+                int fIdxGlobal = this->intersectionMapper_.subIndex(element, intersectionIdx);
 
                 Scalar pcPotFace = (problem.bBoxMax() - intersection.geometry().center()) * problem.gravity() * densityDiff;
 

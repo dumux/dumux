@@ -414,7 +414,7 @@ public:
         int numFaces = element.subEntities(1);
         for (int i=0; i < numFaces; i++)
         {
-            int isIdxGlobal = A_.intersectionMapper().map(element, i);
+            int isIdxGlobal = A_.intersectionMapper().subIndex(element, i);
             outstream << pressTrace_[isIdxGlobal][0];
         }
     }
@@ -424,7 +424,7 @@ public:
         int numFaces = element.subEntities(1);
         for (int i=0; i < numFaces; i++)
         {
-            int isIdxGlobal = A_.intersectionMapper().map(element, i);
+            int isIdxGlobal = A_.intersectionMapper().subIndex(element, i);
             instream >> pressTrace_[isIdxGlobal][0];
         }
     }

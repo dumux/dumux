@@ -198,7 +198,7 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::updateMatrix()
         int numFaces = intersectionMapper_.size(elemIdx);
         for (int fIdx = 0; fIdx < numFaces; fIdx++)
         {
-            int faceIdxGlobal = intersectionMapper_.map(elemIdx, fIdx);
+            int faceIdxGlobal = intersectionMapper_.subIndex(elemIdx, fIdx);
             if (!visited[faceIdxGlobal])
             {
                 A_.incrementrowsize(faceIdxGlobal);
@@ -223,7 +223,7 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::updateMatrix()
         int numFaces = intersectionMapper_.size(elemIdx);
         for (int fIdx = 0; fIdx < numFaces; fIdx++)
         {
-            int faceIdxGlobalI = intersectionMapper_.map(elemIdx, fIdx);
+            int faceIdxGlobalI = intersectionMapper_.subIndex(elemIdx, fIdx);
             if (!visited[faceIdxGlobalI])
             {
                 A_.addindex(faceIdxGlobalI,faceIdxGlobalI);
@@ -231,7 +231,7 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::updateMatrix()
             }
             for (int k = 0; k < numFaces; k++)
                 if (k != fIdx) {
-                    int faceIdxGlobalJ = intersectionMapper_.map(elemIdx, k);
+                    int faceIdxGlobalJ = intersectionMapper_.subIndex(elemIdx, k);
                     A_.addindex(faceIdxGlobalI, faceIdxGlobalJ);
                 }
 
@@ -269,14 +269,14 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
         // inludes rhs and boundary condition information
         loc.assemble(element, 1); // assemble local stiffness matrix
 
-        int eIdxGlobal = intersectionMapper_.map(element);
+        int eIdxGlobal = intersectionMapper_.index(element);
 
         unsigned int numFaces = intersectionMapper_.size(eIdxGlobal);
         local2Global.resize(numFaces);
 
         for (unsigned int i = 0; i < numFaces; i++)
         {
-                int idx = intersectionMapper_.map(element, i);
+                int idx = intersectionMapper_.subIndex(element, i);
                 local2Global[i] = idx;
         }
 
@@ -304,14 +304,14 @@ void CROperatorAssemblerTwoPAdaptive<TypeTag>::assemble(LocalStiffness& loc, Vec
     // run over all leaf elements
     for (const auto& element : Dune::elements(gridView_))
     {
-        int eIdxGlobal = intersectionMapper_.map(element);
+        int eIdxGlobal = intersectionMapper_.index(element);
 
         unsigned int numFaces = intersectionMapper_.size(eIdxGlobal);
         local2Global.resize(numFaces);
 
         for (unsigned int i = 0; i < numFaces; i++)
         {
-                int idx = intersectionMapper_.map(element, i);
+                int idx = intersectionMapper_.subIndex(element, i);
                 local2Global[i] = idx;
         }
 

@@ -20,16 +20,23 @@
 
 #include<vector>
 #include<unordered_map>
+
+#include<dune/common/deprecated.hh>
 #include<dune/grid/common/mcmgmapper.hh>
 
-/**
- * @file
- * @brief  defines an intersection mapper for mapping of global DOF's assigned to faces which also works for adaptive grids.
+/*!
+ * \file
+ * \brief defines an intersection mapper for mapping of global DOFs assigned
+ *        to faces which also works for adaptive grids.
  */
 
 namespace Dumux
 {
 
+/*!
+ * \brief defines an intersection mapper for mapping of global DOFs assigned
+ *        to faces which also works for adaptive grids.
+ */
 template<class GridView>
 class IntersectionMapper
 {
@@ -62,29 +69,86 @@ public:
         return elementMapper_;
     }
 
+    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use index instead.")
     int map(const Element& element) const
     {
         return elementMapper_.index(element);
     }
 
+    /*!
+     * \brief Map element to array index.
+     *
+     * \param element Reference to element which should be mapped.
+     * \return An index in the range 0 ... Max number of elements in set - 1.
+     */
+    int index(const Element& element) const
+    {
+        return elementMapper_.index(element);
+    }
+
+    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use subIndex instead.")
     int map(int elemIdx, int fIdx)
     {
         return intersectionMapGlobal_[elemIdx][fIdx];
     }
 
+    /*!
+     * \brief Map interface fIdx'th interface of element index to array index.
+     *
+     * \param element Index of element.
+     * \param fIdx Index of interface to map.
+     * \return An index in the range 0 ... Max number of intersections in set - 1.
+     */
+    int subIndex(int elemIdx, int fIdx)
+    {
+        return intersectionMapGlobal_[elemIdx][fIdx];
+    }
+
+    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use subIndex instead.")
     int map(int elemIdx, int fIdx) const
     {
         return (intersectionMapGlobal_[elemIdx].find(fIdx))->second;//use find() for const function!
     }
 
-    int map(const Element& element, int fIdx)
+    /*!
+     * \brief Map interface fIdx'th interface of element index to array index.
+     *
+     * \param element Index of element.
+     * \param fIdx Index of interface to map.
+     * \return An index in the range 0 ... Max number of intersections in set - 1.
+     */
+    int subIndex(int elemIdx, int fIdx) const
     {
-        return intersectionMapGlobal_[map(element)][fIdx];
+        return (intersectionMapGlobal_[elemIdx].find(fIdx))->second;//use find() for const function!
     }
 
+    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use subIndex instead.")
+    int map(const Element& element, int fIdx)
+    {
+        return intersectionMapGlobal_[index(element)][fIdx];
+    }
+
+    /*!
+     * \brief Map interface fIdx'th interface of element to array index.
+     *
+     * \param element Reference to element.
+     * \param fIdx Index of interface to map.
+     * \return An index in the range 0 ... Max number of intersections in set - 1.
+     */
+    int subIndex(const Element& element, int fIdx)
+    {
+        return intersectionMapGlobal_[index(element)][fIdx];
+    }
+
+    DUNE_DEPRECATED_MSG("Map is deprecated in 2.9, use subIndex instead.")
     int map(const Element& element, int fIdx) const
     {
-        return intersectionMapGlobal_[map(element)].find(fIdx)->second;//use find() for const function!
+        return intersectionMapGlobal_[index(element)].find(fIdx)->second;//use find() for const function!
+    }
+
+    int subIndex(const Element& element, int fIdx) const
+    {
+        return intersectionMapGlobal_[index(element)].find(fIdx)->second;//use find() for const function!
     }
 
     int maplocal(int elemIdx, int fIdx)
@@ -121,7 +185,7 @@ public:
 
     unsigned int size (const Element& element) const
     {
-        return intersectionMapLocal_[map(element)].size();
+        return intersectionMapLocal_[index(element)].size();
     }
 
     void update()
@@ -135,7 +199,7 @@ public:
 
         for (const auto& element : Dune::elements(gridView_))
         {
-            int eIdxGlobal = map(element);
+            int eIdxGlobal = index(element);
 
             int fIdx = 0;
             // run through all intersections with neighbors
@@ -151,7 +215,7 @@ public:
         int globalIntersectionIdx = 0;
         for (const auto& element : Dune::elements(gridView_))
         {
-            int eIdxGlobal = map(element);
+            int eIdxGlobal = index(element);
 
             int fIdx = 0;
             // run through all intersections with neighbors
@@ -160,7 +224,7 @@ public:
                 if (intersection.neighbor())
                 {
                     auto neighbor = intersection.outside();
-                    int globalIdxNeighbor = map(neighbor);
+                    int globalIdxNeighbor = index(neighbor);
 
                     if (element.level() > neighbor.level() || (element.level() == neighbor.level() && eIdxGlobal < globalIdxNeighbor))
                     {
