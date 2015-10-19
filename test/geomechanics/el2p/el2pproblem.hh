@@ -42,11 +42,11 @@ class El2P_TestProblem;
 
 
 // initial conditions for momentum balance equation
-template<class GridView, class Scalar, int dim>
+template<class TypeTag, int dim>
 class InitialDisplacement;
 
 // initial conditions for mass balance equations
-template<class GridView, class Scalar>
+template<class TypeTag>
 class InitialPressSat;
 
 namespace Properties {
@@ -56,6 +56,7 @@ NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
 
 // Set the grid type
 SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::YaspGrid<3>);
+
 
 SET_PROP(El2P_TestProblem, PressureFEM)
 {
@@ -100,7 +101,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum{dim = GridView::dimension};
 public:
-    typedef Dumux::InitialDisplacement<GridView, Scalar, dim> type;
+    typedef Dumux::InitialDisplacement<TypeTag, dim> type;
 };
 
 // Set the initial pressure and saturation function
@@ -110,7 +111,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 public:
-    typedef Dumux::InitialPressSat<GridView, Scalar> type;
+    typedef Dumux::InitialPressSat<TypeTag> type;
 };
 
 SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-5);
@@ -272,6 +273,7 @@ public:
     // calculates the real hydrostatic pressure distribution based on the real
     // density distribution. The calculated pressure field is than applied for
     // initialization of the actual model run and for the pressure Dirichlet boundary values.
+
     void initializePressure()
     {
         for(const auto& vertex : Dune::vertices(gridView_))
@@ -428,20 +430,14 @@ public:
     // at episode/simulation end
     bool shouldWriteOutput()
     {
-        if(output_ == false)
-            return false;
-        else
-            return true;
+        return output_;
     }
 
     // returns true if the current solution should be written to
     // disk (i.e. as a drs file)
     bool shouldWriteRestartFile() const
     {
-        if(output_ == false)
-            return false;
-        else
-            return true;
+        return output_;
     }
 
     // \}
@@ -456,28 +452,12 @@ public:
      *        used for which equation on a given boundary control volume.
      *
      * \param values The boundary types for the conservation equations
-     * \param vertex The vertex on the boundary for which the
-     *               conditions needs to be specified
-     *
-     * This function calls boundaryTypes with the global position as argument
-     */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
-    {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
-        boundaryTypes(values, globalPos);
-    }
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary control volume.
-     *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The center of the finite volume which ought to be set.
      *
      *               This function is called directly from dumux/geomechanics/el2p/el2plocaloperator.hh
      *               If it is renamed to boundaryTypesAtPos it should be adjusted there as well.
      */
-    void boundaryTypes(BoundaryTypes &values, const GlobalPosition& globalPos) const
+    void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) const
     {
         values.setAllNeumann();
 
@@ -530,7 +510,7 @@ public:
     {
         const GlobalPosition globalPos = vertex.geometry().center();
 
-        dirichlet(values, globalPos);
+        dirichletAtPos(values, globalPos);
         values[0] = -pInit_[this->vertexMapper().index(vertex)];
     }
 
@@ -544,7 +524,7 @@ public:
      * This function is called directly from dumux/geomechanics/el2p/el2plocaloperator.hh
      * If it is renamed to dirichletAtPos it should be adjusted there as well.
      */
-    void dirichlet(PrimaryVariables &values, const GlobalPosition& globalPos) const
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         values = 0.0;
     }
@@ -565,20 +545,6 @@ public:
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
      *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     */
-    void neumann(PrimaryVariables &values,
-            const Element &element,
-            const FVElementGeometry &fvGeometry,
-            const Intersection &intersection,
-            int scvIdx,
-            int boundaryFaceIdx) const
-    {
-        const GlobalPosition globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
-
-        neumann(values, globalPos);
-    }
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
@@ -592,7 +558,7 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVariables &values, const GlobalPosition& globalPos) const
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         values = 0;
     }
@@ -735,15 +701,17 @@ public:
  *    changed during initialization of the pressure field are set to zero again.
  *
  */
-template<typename GridView, typename Scalar, int dim>
+template<class TypeTag, int dim>
 class InitialDisplacement :
 public Dune::PDELab::AnalyticGridFunctionBase<
-    Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,dim>,
-    InitialDisplacement<GridView,Scalar,dim> >
+    Dune::PDELab::AnalyticGridFunctionTraits<typename GET_PROP_TYPE(TypeTag, GridView),typename GET_PROP_TYPE(TypeTag, Scalar),dim>,
+    InitialDisplacement<TypeTag,dim> >
 {
 public:
-    typedef Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,dim> Traits;
-    typedef Dune::PDELab::AnalyticGridFunctionBase<Traits, InitialDisplacement<GridView,Scalar,dim> > BaseT;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef Dune::PDELab::AnalyticGridFunctionTraits<typename GET_PROP_TYPE(TypeTag, GridView),typename GET_PROP_TYPE(TypeTag, Scalar),dim> Traits;
+    typedef Dune::PDELab::AnalyticGridFunctionBase<Traits, InitialDisplacement<TypeTag,dim> > BaseT;
 
     typedef typename Traits::DomainType DomainType;
     typedef typename Traits::RangeType RangeType;
@@ -782,23 +750,26 @@ public:
  *    calculated during initialization
  *
  */
-template<typename GridView, typename Scalar>
+template<class TypeTag>
 class InitialPressSat :
 public Dune::PDELab::AnalyticGridFunctionBase<
-    Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,2>,
-    InitialPressSat<GridView,Scalar> >
+    Dune::PDELab::AnalyticGridFunctionTraits<typename GET_PROP_TYPE(TypeTag, GridView),typename GET_PROP_TYPE(TypeTag, Scalar),2>,
+    InitialPressSat<TypeTag> >
 {
 public:
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,2> Traits;
-    typedef Dune::PDELab::AnalyticGridFunctionBase<Traits, InitialPressSat<GridView,Scalar> > BaseT;
+    typedef Dune::PDELab::AnalyticGridFunctionBase<Traits, InitialPressSat<TypeTag>> BaseT;
 
     typedef typename Traits::DomainType DomainType;
     typedef typename Traits::RangeType RangeType;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
         // indices of the primary variables
-            pressureIdx = 0,
-            saturationIdx = 1
+            pressureIdx = Indices::pwIdx,
+            saturationIdx = Indices::snIdx,
     };
 
     typedef typename Dune::MultipleCodimMultipleGeomTypeMapper<GridView,

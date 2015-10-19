@@ -398,7 +398,7 @@ public:
 
                 // evaluate boundary condition type
                 BoundaryTypes boundaryTypes;
-                model_.problem().boundaryTypes(boundaryTypes, globalPos);
+                model_.problem().boundaryTypesAtPos(boundaryTypes, globalPos);
 
                 // skip rest if we are on Dirichlet boundary
                 if (!boundaryTypes.hasNeumann())
@@ -410,7 +410,7 @@ public:
 
                 // evaluate stress boundary condition. The stress change is assumed to be in normal direction (i.e. traction)
                 PrimaryVariables traction;
-                model_.problem().neumann(traction, globalPos);
+                model_.problem().neumannAtPos(traction, globalPos);
 
                 // get quadrature rule weight for intersection
                 const RF qWeight = it->weight() * intersection.geometry().integrationElement(it->position());
@@ -464,13 +464,13 @@ public:
 
                             // evaluate boundary condition type
                             BoundaryTypes boundaryTypes;
-                            model_.problem().boundaryTypes(boundaryTypes, globalPos);
+                            model_.problem().boundaryTypesAtPos(boundaryTypes, globalPos);
 
                             if (boundaryTypes.isDirichlet(Indices::u(coordDir)))
                             {
                                 // set value of dirichlet BC
                                 PrimaryVariables dirichletValues;
-                                model_.problem().dirichlet(dirichletValues, globalPos);
+                                model_.problem().dirichletAtPos(dirichletValues, globalPos);
                                 // retrieve residual value which has already been calculated for the given vertex before it
                                 // was clear that we are on a Dirichlet boundary
                                 Scalar tmpResVal = r.container().base()[(numEq-dim)*dispSize + coordDir*dispSize + i];
