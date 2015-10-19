@@ -61,7 +61,7 @@ void printUsage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if !HAVE_UG && !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID)
+#if !HAVE_UG && !HAVE_DUNE_ALUGRID
 #warning Evaporation Atmosphere not built, needs either UG or dune-ALUGrid for the log mesh.
     std::cerr << "Evaporation Atmosphere not built, needs either UG or dune-ALUGrid for the log mesh." << std::endl;
     return 77;

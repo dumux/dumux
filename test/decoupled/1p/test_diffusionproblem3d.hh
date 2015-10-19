@@ -22,11 +22,9 @@
 #ifndef DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 #define DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG
+#if HAVE_DUNE_ALUGRID || HAVE_UG
 
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid/3d/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
 #include <dune/grid/uggrid.hh>
@@ -57,7 +55,7 @@ namespace Properties
 NEW_TYPE_TAG(DiffusionTestProblem, INHERITS_FROM(DecoupledTwoP, TestDiffusionSpatialParams3d));
 
 // Set the grid type
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 #else
 SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::UGGrid<3>);
@@ -270,6 +268,6 @@ private:
 };
 } //end namespace
 
-#endif // HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UGGRID
+#endif // HAVE_DUNE_ALUGRID || HAVE_UGGRID
 
 #endif

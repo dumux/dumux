@@ -31,15 +31,13 @@
 #include <dumux/implicit/common/implicitporousmediaproblem.hh>
 
 // The DUNE grid used
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if  HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #elif HAVE_UG
 #include <dune/grid/uggrid.hh>
 #else
 #include <dune/grid/yaspgrid.hh>
-#endif // HAVE_ALUGRID, HAVE_UG
+#endif // HAVE_DUNE_ALUGRID, HAVE_UG
 
 // Spatially dependent parameters
 #include "tutorialspatialparams_coupled.hh"
@@ -63,13 +61,13 @@ SET_PROP(TutorialProblemCoupled, Problem) /*@\label{tutorial-coupled:set-problem
 { typedef Dumux::TutorialProblemCoupled<TypeTag> type;};
 
 // Set grid and the grid creator to be used
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID /*@\label{tutorial-coupled:set-grid}@*/
+#if HAVE_DUNE_ALUGRID /*@\label{tutorial-coupled:set-grid}@*/
 SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid-ALU}@*/
 #elif HAVE_UG
 SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::UGGrid<2>);
 #else
 SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::YaspGrid<2>);
-#endif // HAVE_ALUGRID
+#endif // HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
 
 // Set the wetting phase
@@ -127,9 +125,9 @@ public:
         : ParentType(timeManager, gridView)
         , eps_(3e-6)
     {
-#if !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG)
-      std::cout << "If you want to use simplices instead of cubes, install and use ALUGrid or UGGrid." << std::endl;
-#endif // !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG)
+#if !(HAVE_DUNE_ALUGRID || HAVE_UG)
+      std::cout << "If you want to use simplices instead of cubes, install and use dune-ALUGrid or UGGrid." << std::endl;
+#endif // !(HAVE_DUNE_ALUGRID || HAVE_UG)
     }
 
     //! Specifies the problem name. This is used as a prefix for files

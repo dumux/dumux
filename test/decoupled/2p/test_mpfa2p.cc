@@ -23,7 +23,7 @@
 
 #include "config.h"
 
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 
 #include "test_mpfa2pproblem.hh"
 #include <dumux/common/start.hh>

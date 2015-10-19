@@ -24,9 +24,7 @@
 #ifndef DUMUX_TEST_ADAPTIVE3D_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE3D_2P2C_PROBLEM_HH
 
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #else
 #include <dune/grid/yaspgrid.hh>
@@ -53,7 +51,7 @@ namespace Properties
 NEW_TYPE_TAG(Adaptive2p2c3d, INHERITS_FROM(DecoupledTwoPTwoCAdaptive,Test2P2CSpatialParams, MPFAProperties));
 
 // Set the grid type
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(Adaptive2p2c3d, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 #else
 SET_TYPE_PROP(Adaptive2p2c3d, Grid, Dune::YaspGrid<3>);

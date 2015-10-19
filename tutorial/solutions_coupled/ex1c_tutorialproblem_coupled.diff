@@ -14,14 +14,14 @@ Index: tutorialproblem_coupled.hh
 @@ -64,13 +64,13 @@
  
  // Set grid and the grid creator to be used
- #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID /*@\label{tutorial-coupled:set-grid}@*/
+ #if HAVE_DUNE_ALUGRID /*@\label{tutorial-coupled:set-grid}@*/
 -SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid-ALU}@*/
 +SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::simplex, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid-ALU}@*/
  #elif HAVE_UG
  SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::UGGrid<2>);
  #else
  SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::YaspGrid<2>);
- #endif // HAVE_ALUGRID
+ #endif // HAVE_DUNE_ALUGRID
 -SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
 +SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::SimplexGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
  

@@ -23,9 +23,7 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKESTESTPROBLEM_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKESTESTPROBLEM_HH
 
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid/2d/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #elif HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
@@ -52,7 +50,7 @@ namespace Dumux
     NEW_TYPE_TAG(NavierStokesTestProblem, INHERITS_FROM(BoxStokes));
 
     // Set the grid type
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
     SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #elif HAVE_UG
     SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::UGGrid<2>);
