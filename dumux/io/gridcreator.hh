@@ -56,11 +56,6 @@
 #include <dune/alugrid/grid.hh>
 #include <dune/alugrid/dgf.hh>
 #endif
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid/3d/alugrid.hh>
-#include <dune/grid/alugrid/2d/alugrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfalu.hh>
-#endif
 
 // FoamGrid specific includes
 #if HAVE_DUNE_FOAMGRID
@@ -813,7 +808,7 @@ private:
 
 #endif // HAVE_UG
 
-#if HAVE_DUNE_ALUGRID || HAVE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 
 /*!
  * \brief Provides a grid creator for Dune ALUGrids
@@ -906,7 +901,7 @@ public:
     }
 };
 
-#endif // HAVE_DUNE_ALUGRID || HAVE_ALUGRID
+#endif // HAVE_DUNE_ALUGRID
 
 #if HAVE_DUNE_FOAMGRID
 

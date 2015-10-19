@@ -24,9 +24,7 @@
 #ifndef DUMUX_TEST_3D2P_PROBLEM_HH
 #define DUMUX_TEST_3D2P_PROBLEM_HH
 
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid/3d/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
 
@@ -64,7 +62,7 @@ namespace Properties
 NEW_TYPE_TAG(ThreeDTwoPTestProblem, INHERITS_FROM(Test3d2pSpatialParams));
 
 // Set the grid type
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(ThreeDTwoPTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 #endif
 

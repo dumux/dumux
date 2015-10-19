@@ -28,9 +28,7 @@
 #if HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #endif
-#if HAVE_ALUGRID
-#include <dune/grid/io/file/dgfparser/dgfalu.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>

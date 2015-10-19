@@ -24,9 +24,7 @@
 #ifndef DUMUX_HETEROGENEOUS_PROBLEM_HH
 #define DUMUX_HETEROGENEOUS_PROBLEM_HH
 
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid/2d/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #else
 #warning ALUGrid is necessary for this test.
@@ -56,7 +54,7 @@ NEW_TYPE_TAG(HeterogeneousBoxProblem, INHERITS_FROM(BoxModel, HeterogeneousProbl
 NEW_TYPE_TAG(HeterogeneousCCProblem, INHERITS_FROM(CCModel, HeterogeneousProblem));
 
 // Set the grid type
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #else
 SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::YaspGrid<2>);

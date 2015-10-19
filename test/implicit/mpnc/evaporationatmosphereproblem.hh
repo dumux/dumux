@@ -50,9 +50,7 @@
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#ifdef HAVE_ALUGRID
-#include <dune/grid/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
 
@@ -87,7 +85,7 @@ NEW_TYPE_TAG(EvaporationAtmosphereProblem,
 // Set the grid type
 SET_PROP(EvaporationAtmosphereProblem, Grid)
 {
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
     typedef typename Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 #else
     typedef typename Dune::UGGrid<2> type;

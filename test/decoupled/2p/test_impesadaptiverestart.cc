@@ -24,7 +24,7 @@
  */
 #include "config.h"
 
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 
 #include "test_impesadaptiveproblem.hh"
 #include <dumux/common/start.hh>
@@ -42,12 +42,6 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-#if HAVE_ALUGRID
-                                       "\t-Grid.NumberOfCellsX   Resolution in x-direction [-]\n"
-                                       "\t-Grid.NumberOfCellsY   Resolution in y-direction [-]\n"
-                                       "\t-Grid.UpperRightX      Length of the domain [m]\n"
-                                       "\t-Grid.UpperRightY      Height of the domain [m]\n"
-#endif
                                        "\t-Problem.Name          Name passed to the output routines \n"
                                        "\t-Restart               Restart time [s] \n";
         std::cout << errorMessageOut
@@ -70,4 +64,4 @@ int main()
     std::cerr << "You need to have dune-ALUGrid installed to run this test\n";
     return 77;
 }
-#endif // HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#endif // HAVE_DUNE_ALUGRID

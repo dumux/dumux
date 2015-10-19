@@ -50,10 +50,10 @@ NEW_TYPE_TAG(TwoCNIZeroEqTwoPTwoCNIProblem, INHERITS_FROM(TwoCNIStokesTwoPTwoCNI
 // Set the grid type
 #if HAVE_UG
 SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Grid, Dune::UGGrid<2>);
-#elif HAVE_ALUGRID
+#elif HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #else
-#error Requires UG or ALUGrid.
+SET_TYPE_PROP(TwoCNIZeroEqTwoPTwoCNIProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the global problem

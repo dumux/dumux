@@ -20,9 +20,9 @@ Index: tutorialproblem_coupled.hh
 +            std::cerr << "Unknown exception thrown!\n";
 +            exit(1);
 +        }
- #if !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG)
+ #if !(HAVE_DUNE_ALUGRID || HAVE_UG)
        std::cout << "If you want to use simplices instead of cubes, install and use ALUGrid or UGGrid." << std::endl;
- #endif // !(HAVE_ALUGRID || HAVE_DUNE_ALUGRID || HAVE_UG)
+ #endif // !(HAVE_DUNE_ALUGRID || HAVE_UG)
 @@ -194,7 +208,7 @@
          if (globalPos[0] > right - eps_) {
              // oil outflux of 30 g/(m * s) on the right boundary.
