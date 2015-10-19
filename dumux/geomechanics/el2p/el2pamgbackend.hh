@@ -92,9 +92,9 @@ private:
             // loop over all element vertices
             int n = element.template count<dim>();
             for (int i = 0; i < n - 1; ++i) {
-                int globalI = this->problem().vertexMapper().map(element, i, dim);
+                int globalI = this->problem().vertexMapper().subIndex(element, i, dim);
                 for (int j = i + 1; j < n; ++j) {
-                    int globalJ = this->problem().vertexMapper().map(element, j, dim);
+                    int globalJ = this->problem().vertexMapper().subIndex(element, j, dim);
                     // make sure that vertex j is in the neighbor set
                     // of vertex i and vice-versa
                     neighbors[globalI].insert(globalJ);
