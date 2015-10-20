@@ -132,24 +132,24 @@ public:
                         if (refElement.checkInside(geometry.local(globalPos)))
                             vertices.push_back(problem.model().dofMapper().subIndex(element, scvIdx, dofCodim));
                     }
-                    auto sourceValues = source.values();
-                    sourceValues /= vertices.size();
                     for (unsigned int vIdx : vertices)
                     {
                         // add the pointsource to the DOF map
                         if (pointSourceMap.count(vIdx))
-                            pointSourceMap.at(vIdx).push_back(PointSource(source.position(), sourceValues));
+                            pointSourceMap.at(vIdx).push_back(source);
                         else
-                            pointSourceMap.insert({vIdx, {PointSource(source.position(), sourceValues)}});
+                            pointSourceMap.insert({vIdx, {source}});
+                        // split equally on the number of vertices
+                        pointSourceMap.at(vIdx).back() /= vertices.size();
                     }
                 }
                 else
                 {
                     // add the pointsource to the DOF map
                     if (pointSourceMap.count(eIdx))
-                        pointSourceMap.at(eIdx).push_back(PointSource(source.position(), source.values()));
+                        pointSourceMap.at(eIdx).push_back(source);
                     else
-                        pointSourceMap.insert({eIdx, {PointSource(source.position(), source.values())}});
+                        pointSourceMap.insert({eIdx, {source}});
                 }
             }
         }
