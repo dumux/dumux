@@ -928,18 +928,24 @@ public:
     }
 
     /*!
-     * \brief Returns the bounding box tree if we have point sources.
+     * \brief Returns the bounding box tree of the grid
      */
     BoundingBoxTree& boundingBoxTree()
     {
+        if(!boundingBoxTree_)
+            boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
+
         return *boundingBoxTree_;
     }
 
     /*!
-     * \brief Returns the bounding box tree if we have point sources.
+     * \brief Returns the bounding box tree of the grid
      */
     const BoundingBoxTree& boundingBoxTree() const
     {
+        if(!boundingBoxTree_)
+            boundingBoxTree_ = std::make_shared<BoundingBoxTree>(gridView_);
+
         return *boundingBoxTree_;
     }
 
