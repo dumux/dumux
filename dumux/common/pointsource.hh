@@ -50,41 +50,30 @@ NEW_PROP_TAG(ImplicitIsBox);
  * \brief A point source base class
  */
 template<class TypeTag>
-class PointSource
+class PointSource : public GET_PROP_TYPE(TypeTag, PrimaryVariables)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     static const int dimworld = GridView::dimensionworld;
     typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
 
 public:
-    // Contructor
+    // Constructor
     PointSource(GlobalPosition pos, PrimaryVariables values)
-      : pos_(pos), values_(values) {}
+      : PrimaryVariables(values), pos_(pos) {}
 
     //! return the source values
     const PrimaryVariables& values() const
-    { return values_; }
+    { return *this; }
 
     //! return the source position
     const GlobalPosition& position() const
     { return pos_; }
 
-    //! Divide values by scalar
-    template<class T>
-    void divideValues(T&& n)
-    { values_ /= std::forward<T>(n); }
-
-    //! Add something to the values
-    template<class T>
-    void addToValues(T&& n)
-    { values_ += std::forward<T>(n); }
-
 private:
     GlobalPosition pos_;
-    PrimaryVariables values_;
 };
 
 
@@ -123,7 +112,7 @@ public:
             // compute in which elements the point source falls
             std::vector<unsigned int> entities = boundingBoxTree->computeEntityCollisions(source.position());
             // split the source values equally among all concerned entities
-            source.divideValues(entities.size());
+            source /= entities.size();
             // loop over all concernes elements
             for (unsigned int eIdx : entities)
             {
