@@ -963,15 +963,15 @@ public:
         if (pointSourceMap_.count(dofGlobalIdx))
         {
             // call the solDependent function. Herein the user might fill/add values to the point sources
-            std::vector<PointSource> pointSources = pointSourceMap_.at(dofGlobalIdx);
+            auto pointSources = pointSourceMap_.at(dofGlobalIdx);
             asImp_().solDependentPointSources(pointSources, element, fvGeometry, scvIdx, elemVolVars);
 
             // Add the contributions to the dof source values
             Scalar volume = isBox ? model_.boxVolume(dofGlobalIdx) : element.geometry().volume();
             for (auto&& pointSource : pointSources)
             {
+                pointSource /= volume;
                 values += pointSource.values();
-                values /= volume;
             }
         }
     }
